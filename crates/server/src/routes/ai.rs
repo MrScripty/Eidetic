@@ -186,6 +186,7 @@ async fn run_generation(
         let _ = state
             .events_tx
             .send(ServerEvent::BeatUpdated { clip_id });
+        state.trigger_save();
     }
 
     state.generating.lock().remove(&clip_id);
@@ -247,11 +248,140 @@ async fn config(
     Json(serde_json::to_value(&*config).unwrap())
 }
 
-/// Stub — Sprint 4 will implement the edit reaction pipeline.
-async fn react() -> Json<serde_json::Value> {
-    Json(serde_json::json!({
-        "error": "AI edit reaction not yet implemented (Sprint 4)"
-    }))
+#[derive(Deserialize)]
+struct ReactBody {
+    clip_id: Uuid,
+}
+
+async fn react(
+    State(state): State<AppState>,
+    Json(body): Json<ReactBody>,
+) -> Json<serde_json::Value> {
+    let clip_id = ClipId(body.clip_id);
+
+    // Gather edit context and downstream beats while holding lock.
+    let (edit_context, downstream_info) = {
+        let project_guard = state.project.lock();
+        let Some(project) = project_guard.as_ref() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
+
+        let edit_ctx = match eidetic_core::ai::consistency::build_edit_context(project, clip_id) {
+            Ok(ctx) => ctx,
+            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        };
+
+        let downstream_ids = eidetic_core::ai::consistency::downstream_clip_ids(project, clip_id);
+        let mut downstream: Vec<(Uuid, String, String)> = Vec::new();
+        for did in downstream_ids {
+            if let Ok(clip) = project.timeline.clip(did) {
+                let script = clip
+                    .content
+                    .user_refined_script
+                    .as_ref()
+                    .or(clip.content.generated_script.as_ref())
+                    .cloned()
+                    .unwrap_or_default();
+                if !script.is_empty() {
+                    downstream.push((did.0, clip.name.clone(), script));
+                }
+            }
+        }
+
+        (edit_ctx, downstream)
+    };
+
+    if downstream_info.is_empty() {
+        return Json(serde_json::json!({ "status": "no_downstream_beats" }));
+    }
+
+    // Spawn the consistency check task.
+    let state_clone = state.clone();
+    let source_clip_id = body.clip_id;
+    tokio::spawn(async move {
+        run_consistency_check(state_clone, source_clip_id, edit_context, downstream_info).await;
+    });
+
+    Json(serde_json::json!({ "status": "checking" }))
+}
+
+async fn run_consistency_check(
+    state: AppState,
+    source_clip_id: Uuid,
+    edit_context: eidetic_core::ai::backend::EditContext,
+    downstream_beats: Vec<(Uuid, String, String)>,
+) {
+    use crate::prompt_format::build_consistency_prompt;
+
+    let config = state.ai_config.lock().clone();
+    let backend = Backend::from_config(&config);
+    let prompt = build_consistency_prompt(&edit_context, &downstream_beats);
+
+    let response = match backend.generate_full(&prompt, &config).await {
+        Ok(text) => text,
+        Err(e) => {
+            tracing::error!("Consistency check failed for clip {source_clip_id}: {e}");
+            let _ = state.events_tx.send(ServerEvent::ConsistencyComplete {
+                source_clip_id,
+                suggestion_count: 0,
+            });
+            return;
+        }
+    };
+
+    // Parse JSON from the response — the LLM may wrap it in markdown code fences.
+    let json_str = extract_json_array(&response);
+    let suggestions: Vec<RawConsistencySuggestion> =
+        serde_json::from_str(json_str).unwrap_or_default();
+
+    let count = suggestions.len();
+    for s in suggestions {
+        let _ = state.events_tx.send(ServerEvent::ConsistencySuggestion {
+            source_clip_id,
+            target_clip_id: s.target_clip_id,
+            original_text: s.original_text,
+            suggested_text: s.suggested_text,
+            reason: s.reason,
+        });
+    }
+
+    let _ = state.events_tx.send(ServerEvent::ConsistencyComplete {
+        source_clip_id,
+        suggestion_count: count,
+    });
+}
+
+#[derive(Deserialize)]
+struct RawConsistencySuggestion {
+    target_clip_id: Uuid,
+    original_text: String,
+    suggested_text: String,
+    reason: String,
+}
+
+/// Extract the first JSON array from LLM output, handling markdown code fences.
+fn extract_json_array(text: &str) -> &str {
+    // Try to find content within ```json ... ``` fences.
+    if let Some(start) = text.find("```json") {
+        let after_fence = &text[start + 7..];
+        if let Some(end) = after_fence.find("```") {
+            return after_fence[..end].trim();
+        }
+    }
+    // Try plain ``` fences.
+    if let Some(start) = text.find("```") {
+        let after_fence = &text[start + 3..];
+        if let Some(end) = after_fence.find("```") {
+            return after_fence[..end].trim();
+        }
+    }
+    // Try to find a bare JSON array.
+    if let Some(start) = text.find('[') {
+        if let Some(end) = text.rfind(']') {
+            return &text[start..=end];
+        }
+    }
+    text.trim()
 }
 
 /// Stub — generation handles this inline for now.

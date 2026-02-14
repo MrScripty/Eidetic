@@ -1,4 +1,6 @@
-use eidetic_core::ai::backend::GenerateRequest;
+use uuid::Uuid;
+
+use eidetic_core::ai::backend::{EditContext, GenerateRequest};
 use eidetic_core::timeline::timing::TimeRange;
 
 /// A structured chat prompt ready for serialization to any backend API.
@@ -139,4 +141,57 @@ fn build_user_message(request: &GenerateRequest) -> String {
     user.push_str("Write ONLY the screenplay text for this beat. Do not include metadata, comments, or explanations.");
 
     user
+}
+
+/// Build a chat prompt for the consistency reaction pipeline.
+///
+/// `downstream_beats` is a slice of `(clip_id, beat_name, current_script)` tuples.
+pub(crate) fn build_consistency_prompt(
+    edit_context: &EditContext,
+    downstream_beats: &[(Uuid, String, String)],
+) -> ChatPrompt {
+    let system = String::from(
+        "You are a script consistency analyst for a 30-minute TV episode. \
+         Given an edit to a screenplay beat, identify necessary changes to \
+         downstream beats to maintain continuity.\n\n\
+         RULES:\n\
+         - Only suggest changes that are strictly necessary for consistency \
+           (character names, plot references, continuity details).\n\
+         - Do not rewrite scenes for style — only fix factual/continuity breaks.\n\
+         - If no changes are needed, return an empty JSON array.\n\
+         - Return ONLY valid JSON, no commentary.",
+    );
+
+    let mut user = String::from("A screenplay beat was edited. Analyze whether downstream beats need updates.\n\n");
+
+    user.push_str(&format!(
+        "EDITED BEAT: {}\n\nBEFORE:\n{}\n\nAFTER:\n{}\n\n",
+        edit_context.beat_clip.name,
+        edit_context.previous_script,
+        edit_context.new_script,
+    ));
+
+    if !downstream_beats.is_empty() {
+        user.push_str("DOWNSTREAM BEATS TO CHECK:\n\n");
+        for (id, name, script) in downstream_beats {
+            user.push_str(&format!("--- Beat: {} (ID: {}) ---\n{}\n\n", name, id, script));
+        }
+    }
+
+    user.push_str(
+        "Respond with a JSON array of suggested changes:\n\
+         ```json\n\
+         [\n\
+           {\n\
+             \"target_clip_id\": \"<uuid of the downstream beat>\",\n\
+             \"original_text\": \"<exact snippet from the downstream beat to replace>\",\n\
+             \"suggested_text\": \"<replacement text>\",\n\
+             \"reason\": \"<brief explanation of why this change is needed>\"\n\
+           }\n\
+         ]\n\
+         ```\n\
+         Return `[]` if no changes are needed.",
+    );
+
+    ChatPrompt { system, user }
 }

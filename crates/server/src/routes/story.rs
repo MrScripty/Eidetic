@@ -63,6 +63,7 @@ async fn create_arc(
     let json = serde_json::to_value(&arc).unwrap();
     project.arcs.push(arc);
     let _ = state.events_tx.send(ServerEvent::StoryChanged);
+    state.trigger_save();
     Json(json)
 }
 
@@ -116,6 +117,7 @@ async fn delete_arc(
     let deleted = before != project.arcs.len();
     if deleted {
         let _ = state.events_tx.send(ServerEvent::StoryChanged);
+        state.trigger_save();
     }
     Json(serde_json::json!({ "deleted": deleted }))
 }
@@ -154,6 +156,7 @@ async fn create_character(
     let json = serde_json::to_value(&character).unwrap();
     project.characters.push(character);
     let _ = state.events_tx.send(ServerEvent::StoryChanged);
+    state.trigger_save();
     Json(json)
 }
 
@@ -210,6 +213,7 @@ async fn delete_character(
     let deleted = before != project.characters.len();
     if deleted {
         let _ = state.events_tx.send(ServerEvent::StoryChanged);
+        state.trigger_save();
     }
     Json(serde_json::json!({ "deleted": deleted }))
 }

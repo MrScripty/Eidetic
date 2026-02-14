@@ -55,6 +55,7 @@ async fn update_notes(
             }
             let json = serde_json::to_value(&clip.content).unwrap();
             let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            state.trigger_save();
             Json(json)
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
@@ -82,6 +83,7 @@ async fn update_script(
             clip.content.status = ContentStatus::UserRefined;
             let json = serde_json::to_value(&clip.content).unwrap();
             let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            state.trigger_save();
             Json(json)
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
@@ -102,6 +104,7 @@ async fn lock_beat(
             clip.locked = true;
             clip.content.status = ContentStatus::UserWritten;
             let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            state.trigger_save();
             Json(serde_json::json!({ "locked": true }))
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
@@ -131,6 +134,7 @@ async fn unlock_beat(
                 ContentStatus::Empty
             };
             let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            state.trigger_save();
             Json(serde_json::json!({ "locked": false }))
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),

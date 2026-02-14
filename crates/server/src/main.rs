@@ -1,4 +1,5 @@
 mod ai_backends;
+mod persistence;
 mod prompt_format;
 mod routes;
 mod state;

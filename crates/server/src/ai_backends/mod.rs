@@ -35,6 +35,27 @@ impl Backend {
         }
     }
 
+    /// Generate and collect the full response into a single string.
+    pub async fn generate_full(
+        &self,
+        prompt: &ChatPrompt,
+        config: &AiConfig,
+    ) -> Result<String, Error> {
+        use futures::StreamExt;
+        let mut stream = self.generate(prompt, config).await?;
+        let mut full = String::new();
+        while let Some(item) = stream.next().await {
+            match item {
+                Ok(token) => full.push_str(&token),
+                Err(e) => {
+                    tracing::warn!("Stream error during full generation: {e}");
+                    break;
+                }
+            }
+        }
+        Ok(full)
+    }
+
     pub async fn health_check(&self) -> Result<BackendStatus, Error> {
         match self {
             Backend::Ollama(b) => b.health_check().await,
