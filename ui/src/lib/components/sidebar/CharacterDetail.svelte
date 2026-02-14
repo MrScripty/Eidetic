@@ -28,7 +28,7 @@
 	}
 
 	async function handleColorSelect(rgb: readonly [number, number, number]) {
-		await updateCharacter(character.id, { color: [...rgb] });
+		await updateCharacter(character.id, { color: { r: rgb[0], g: rgb[1], b: rgb[2] } });
 	}
 
 	async function handleDelete() {

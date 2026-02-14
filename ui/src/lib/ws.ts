@@ -1,4 +1,7 @@
-type MessageHandler = (data: Record<string, unknown>) => void;
+import type { ServerMessage } from './types.js';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MessageHandler = (data: any) => void;
 
 /**
  * WebSocket client with automatic reconnection and event dispatch.
@@ -29,9 +32,8 @@ export class WsClient {
 
 		this.ws.onmessage = (event) => {
 			try {
-				const msg = JSON.parse(event.data as string) as Record<string, unknown>;
-				const type = msg.type as string;
-				const handlers = this.handlers.get(type);
+				const msg = JSON.parse(event.data as string) as ServerMessage;
+				const handlers = this.handlers.get(msg.type);
 				if (handlers) {
 					for (const handler of handlers) {
 						handler(msg);
@@ -61,7 +63,10 @@ export class WsClient {
 		this.ws = null;
 	}
 
-	on(type: string, handler: MessageHandler): () => void {
+	on<T extends ServerMessage['type']>(
+		type: T,
+		handler: (data: Extract<ServerMessage, { type: T }>) => void,
+	): () => void {
 		if (!this.handlers.has(type)) {
 			this.handlers.set(type, new Set());
 		}

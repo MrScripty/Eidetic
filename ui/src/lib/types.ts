@@ -243,6 +243,28 @@ export interface ArcProgression {
 	issues: ProgressionIssue[];
 }
 
+// --- WebSocket Messages ---
+
+export type ServerMessage =
+	| { type: 'timeline_changed' }
+	| { type: 'scenes_changed' }
+	| { type: 'story_changed' }
+	| { type: 'beat_updated'; clip_id: string }
+	| { type: 'generation_progress'; clip_id: string; token: string; tokens_generated: number }
+	| { type: 'generation_complete'; clip_id: string }
+	| { type: 'generation_error'; clip_id: string; error: string }
+	| {
+			type: 'consistency_suggestion';
+			source_clip_id: string;
+			target_clip_id: string;
+			original_text: string;
+			suggested_text: string;
+			reason: string;
+	  }
+	| { type: 'consistency_complete'; source_clip_id: string; suggestion_count: number }
+	| { type: 'undo_redo_changed'; can_undo: boolean; can_redo: boolean }
+	| { type: 'project_mutated' };
+
 // --- Helpers ---
 
 export function colorToHex(c: Color): string {

@@ -67,7 +67,7 @@
 						const clipRight = timeToX(clip.time_range.end_ms) - timelineState.scrollX;
 						// Check rough position match.
 						if (Math.abs(bounds.width - (clipRight - clipLeft)) < 10) {
-							await createRelationship(connectionDrag.fromClipId, clip.id, 'causal');
+							await createRelationship(connectionDrag.fromClipId, clip.id, 'Causal');
 							connectionDrag.fromClipId = null;
 							return;
 						}

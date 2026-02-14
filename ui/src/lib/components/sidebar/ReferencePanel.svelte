@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { ReferenceDocument } from '$lib/types.js';
+	import type { ReferenceDocument, ReferenceType } from '$lib/types.js';
 	import { uploadReference, listReferences, deleteReference } from '$lib/api.js';
 	import { notify } from '$lib/stores/notifications.svelte.js';
 
 	let refs = $state<ReferenceDocument[]>([]);
 	let name = $state('');
 	let content = $state('');
-	let docType = $state('style_guide');
+	let docType = $state<ReferenceType>('StyleGuide');
 
 	$effect(() => {
 		listReferences().then((r) => (refs = r)).catch(() => {});
@@ -42,10 +42,10 @@
 	<div class="ref-form">
 		<input type="text" bind:value={name} placeholder="Document name" />
 		<select bind:value={docType}>
-			<option value="style_guide">Style Guide</option>
-			<option value="character_bible">Character Bible</option>
-			<option value="world_building">World Building</option>
-			<option value="previous_episode">Previous Episode</option>
+			<option value="StyleGuide">Style Guide</option>
+			<option value="CharacterBible">Character Bible</option>
+			<option value="WorldBuilding">World Building</option>
+			<option value="PreviousEpisode">Previous Episode</option>
 			<option value="custom">Custom</option>
 		</select>
 		<textarea bind:value={content} placeholder="Paste reference text..." rows="4"></textarea>

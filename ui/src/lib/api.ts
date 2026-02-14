@@ -1,4 +1,4 @@
-import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression } from './types.js';
+import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, BeatClip, BeatContent, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType } from './types.js';
 
 const BASE = '/api';
 
@@ -7,6 +7,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 		headers: { 'Content-Type': 'application/json' },
 		...options,
 	});
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		throw new Error((body as Record<string, string>).error || `HTTP ${res.status}`);
+	}
 	return res.json() as Promise<T>;
 }
 
@@ -36,14 +40,14 @@ export function listArcs(): Promise<StoryArc[]> {
 	return request('/arcs');
 }
 
-export function createArc(name: string, arc_type: string, color?: [number, number, number]): Promise<StoryArc> {
+export function createArc(name: string, arc_type: ArcType, color?: [number, number, number]): Promise<StoryArc> {
 	return request('/arcs', {
 		method: 'POST',
 		body: JSON.stringify({ name, arc_type, color }),
 	});
 }
 
-export function updateArc(id: string, updates: Record<string, unknown>): Promise<StoryArc> {
+export function updateArc(id: string, updates: Partial<Omit<StoryArc, 'id'>>): Promise<StoryArc> {
 	return request(`/arcs/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(updates),
@@ -71,7 +75,7 @@ export function createCharacter(name: string, color?: [number, number, number]):
 	});
 }
 
-export function updateCharacter(id: string, updates: Record<string, unknown>): Promise<Character> {
+export function updateCharacter(id: string, updates: Partial<Omit<Character, 'id'>>): Promise<Character> {
 	return request(`/characters/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(updates),
@@ -84,29 +88,29 @@ export function deleteCharacter(id: string): Promise<{ deleted: boolean }> {
 
 // --- Timeline ---
 
-export function getTimeline() {
+export function getTimeline(): Promise<Timeline> {
 	return request('/timeline');
 }
 
-export function createClip(trackId: string, name: string, beatType: string, startMs: number, endMs: number) {
+export function createClip(trackId: string, name: string, beatType: string, startMs: number, endMs: number): Promise<BeatClip> {
 	return request('/timeline/clips', {
 		method: 'POST',
 		body: JSON.stringify({ track_id: trackId, name, beat_type: beatType, start_ms: startMs, end_ms: endMs }),
 	});
 }
 
-export function updateClip(id: string, updates: { name?: string; start_ms?: number; end_ms?: number }) {
+export function updateClip(id: string, updates: { name?: string; start_ms?: number; end_ms?: number }): Promise<BeatClip> {
 	return request(`/timeline/clips/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(updates),
 	});
 }
 
-export function deleteClip(id: string) {
+export function deleteClip(id: string): Promise<{ deleted: boolean }> {
 	return request(`/timeline/clips/${id}`, { method: 'DELETE' });
 }
 
-export function splitClip(id: string, atMs: number) {
+export function splitClip(id: string, atMs: number): Promise<{ left: BeatClip; right: BeatClip }> {
 	return request(`/timeline/clips/${id}/split`, {
 		method: 'POST',
 		body: JSON.stringify({ at_ms: atMs }),
@@ -115,48 +119,48 @@ export function splitClip(id: string, atMs: number) {
 
 // --- Beats ---
 
-export function getBeat(id: string) {
+export function getBeat(id: string): Promise<BeatContent> {
 	return request(`/beats/${id}`);
 }
 
-export function updateBeatNotes(id: string, notes: string) {
+export function updateBeatNotes(id: string, notes: string): Promise<BeatContent> {
 	return request(`/beats/${id}/notes`, {
 		method: 'PUT',
 		body: JSON.stringify({ notes }),
 	});
 }
 
-export function updateBeatScript(id: string, script: string) {
+export function updateBeatScript(id: string, script: string): Promise<BeatContent> {
 	return request(`/beats/${id}/script`, {
 		method: 'PUT',
 		body: JSON.stringify({ script }),
 	});
 }
 
-export function lockBeat(id: string) {
+export function lockBeat(id: string): Promise<BeatContent> {
 	return request(`/beats/${id}/lock`, { method: 'POST' });
 }
 
-export function unlockBeat(id: string) {
+export function unlockBeat(id: string): Promise<BeatContent> {
 	return request(`/beats/${id}/unlock`, { method: 'POST' });
 }
 
 // --- Scenes ---
 
-export function getScenes() {
+export function getScenes(): Promise<InferredScene[]> {
 	return request('/scenes');
 }
 
 // --- Relationships ---
 
-export function createRelationship(fromClip: string, toClip: string, type_: string) {
+export function createRelationship(fromClip: string, toClip: string, type_: RelationshipType): Promise<Relationship> {
 	return request('/timeline/relationships', {
 		method: 'POST',
 		body: JSON.stringify({ from_clip: fromClip, to_clip: toClip, relationship_type: type_ }),
 	});
 }
 
-export function deleteRelationship(id: string) {
+export function deleteRelationship(id: string): Promise<{ deleted: boolean }> {
 	return request(`/timeline/relationships/${id}`, { method: 'DELETE' });
 }
 
@@ -179,7 +183,7 @@ export function listReferences(): Promise<ReferenceDocument[]> {
 	return request('/references');
 }
 
-export function uploadReference(name: string, content: string, docType: string): Promise<ReferenceDocument> {
+export function uploadReference(name: string, content: string, docType: ReferenceType): Promise<ReferenceDocument> {
 	return request('/references', {
 		method: 'POST',
 		body: JSON.stringify({ name, content, doc_type: docType }),

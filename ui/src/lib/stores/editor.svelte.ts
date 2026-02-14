@@ -1,6 +1,11 @@
 import type { ClipId, BeatClip, AiStatus, ConsistencySuggestion } from '../types.js';
 
-/** Transient UI state for the beat editor panel. Frontend-owned. */
+/**
+ * Transient UI state for the beat editor panel. Frontend-owned.
+ *
+ * TODO: Split into focused stores (selectionState, generationState, aiState)
+ * once all consumers have been migrated. Tracked in Sprint 2.
+ */
 export const editorState = $state<{
 	selectedClipId: ClipId | null;
 	selectedClip: BeatClip | null;

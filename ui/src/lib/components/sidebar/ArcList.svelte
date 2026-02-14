@@ -8,7 +8,7 @@
 	} = $props();
 
 	async function handleAdd() {
-		await createArc('New Arc', 'a_plot');
+		await createArc('New Arc', 'APlot');
 	}
 </script>
 
