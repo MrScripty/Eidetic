@@ -156,7 +156,14 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="arc-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="track-label" oncontextmenu={handleTrackContextMenu}>{label}</div>
+	<div class="track-label" oncontextmenu={handleTrackContextMenu}>
+		<span class="track-label-text">{label}</span>
+		<button
+			class="track-delete-btn"
+			title="Delete Track"
+			onclick={() => ondeletetrack(track.id)}
+		>&times;</button>
+	</div>
 	<div class="track-lane" class:blade-mode={timelineState.activeTool === 'blade'} ondblclick={handleDblClick}>
 		{#each visibleClips as clip (clip.id)}
 			{@const bounds = clipBounds(clip.id)}
@@ -220,13 +227,42 @@
 	.track-label {
 		width: 80px;
 		flex-shrink: 0;
-		padding: 0 8px;
+		padding: 0 4px 0 8px;
 		font-size: 0.75rem;
 		color: var(--color-text-secondary);
-		text-align: right;
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 2px;
+		overflow: hidden;
+	}
+
+	.track-label-text {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.track-delete-btn {
+		display: none;
+		background: none;
+		border: none;
+		color: var(--color-text-muted);
+		font-size: 0.85rem;
+		line-height: 1;
+		cursor: pointer;
+		padding: 0 2px;
+		flex-shrink: 0;
+		border-radius: 2px;
+	}
+
+	.track-label:hover .track-delete-btn {
+		display: block;
+	}
+
+	.track-delete-btn:hover {
+		color: #ef4444;
+		background: rgba(239, 68, 68, 0.15);
 	}
 
 	.track-lane {
