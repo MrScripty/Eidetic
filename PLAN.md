@@ -20,9 +20,9 @@ a clear path to deploying as a full web application (potentially with WASM for t
 | **Scope** | Feature parity with Celtx; film, TV, stage, novel | 30-min TV episodes only |
 | **UI hosting** | CEF (Chromium Embedded Framework), offscreen rendering | Lightweight local HTTP server (e.g., `axum`) |
 | **Deployment** | Desktop-only binary with embedded assets | Local server now; web deployment via WASM later |
-| **Editor model** | Traditional document editor (ProseMirror-style) | Timeline with markers + arc overlays + clip-based text decomposition |
+| **Editor model** | Traditional document editor (ProseMirror-style) | Arc tracks with beat clips (NLE-style) + contextual beat editor above |
 | **AI role** | Assistant panel, suggestions, auto-complete (Phase 4) | Core from day one; generates and reacts to edits live |
-| **Story structure** | Beat sheets, outlines, character catalog (Phase 3) | Story arcs, characters, beats, scenes as **markers on a timeline with relationship arcs** |
+| **Story structure** | Beat sheets, outlines, character catalog (Phase 3) | Story arcs as tracks, beats as clips, scenes inferred from vertical overlap, edge-bundled relationship curves |
 | **Format support** | Fountain, FDX, PDF, HTML, plain text | Minimal — native project format only, PDF export later |
 | **Script types** | Screenplay, TV (1hr/30min), stage, multi-col A/V, novel | 30-min TV episode only |
 | **Phase count** | 8 phases, script engine before AI | 5 phases, AI integrated from Phase 1 |
@@ -63,18 +63,18 @@ a clear path to deploying as a full web application (potentially with WASM for t
 │  │                     Svelte 5 SPA                                  │  │
 │  │                                                                   │  │
 │  │  ┌───────────────────────────────────────────────────────────┐    │  │
-│  │  │  Script View (top)                                        │    │  │
-│  │  │  Generated + user-edited screenplay, inline editing       │    │  │
+│  │  │  Beat Editor (top)                                        │    │  │
+│  │  │  Beat notes → generated script → user-refined script      │    │  │
 │  │  └───────────────────────────────────────────────────────────┘    │  │
 │  │  ┌───────────────────────────────────────────────────────────┐    │  │
-│  │  │  Annotated Timeline (bottom)                              │    │  │
+│  │  │  Timeline (bottom)                                        │    │  │
 │  │  │                                                           │    │  │
-│  │  │   Relationship arcs ──╮    ╭──── drawn as curves          │    │  │
-│  │  │    ╭───────╮  ╭───╮  │    │  ╭───────╮                   │    │  │
-│  │  │  ──┤Beat A ├──┤B  ├──╯ ╭──╯──┤Beat C ├──── Markers       │    │  │
-│  │  │  ──┴───────┴──┴───┴────┴─────┴───────┴──── on timeline   │    │  │
-│  │  │  ══[  Scene 1 clip  ]══[  Scene 2 clip  ]══ Script clips  │    │  │
-│  │  │  ──────────────────────────────────────────── Time ruler   │    │  │
+│  │  │   Edge-bundled relationship curves                        │    │  │
+│  │  │  ──╭────────────────────────╮──╭──────╮────────────────   │    │  │
+│  │  │  ══[Setup]══[Complication]══[Escalation]══[Climax]═════   │    │  │
+│  │  │  ═════[Setup]═══[Complication]══════════[Payoff]═══════   │    │  │
+│  │  │  ══[Beat]═══════════[Beat]════════════════[Callback]═══   │    │  │
+│  │  │  ──▏Cold Open▕▏ Act 1 ▕▏   Act 2   ▕▏Act 3▕▏Tag▕─────   │    │  │
 │  │  └───────────────────────────────────────────────────────────┘    │  │
 │  │                                                                   │  │
 │  │  REST + WebSocket ────────────────────────────────────────────┐   │  │
@@ -88,10 +88,10 @@ a clear path to deploying as a full web application (potentially with WASM for t
 │  ┌───────────────┐     ┌─────────────────────────────────────┐   │      │
 │  │  axum / tower  │◄───┤        eidetic-core (library)       │   │      │
 │  │  HTTP + WS     │    │                                     │   │      │
-│  │  server        │    │  • Story graph (arcs, beats, scenes)│   │      │
-│  │                │    │  • Timeline engine (clips, tracks,   │   │      │
-│  │  Serves:       │    │    markers, relationship arcs)       │   │      │
-│  │  • Static UI   │    │  • Character model                  │   │      │
+│  │  server        │    │  • Story arcs, characters            │   │      │
+│  │                │    │  • Timeline engine (arc tracks,      │   │      │
+│  │  Serves:       │    │    beat clips, relationships)        │   │      │
+│  │  • Static UI   │    │  • Scene inference from overlap      │   │      │
 │  │  • REST API    │    │  • Script generation + formatting   │   │      │
 │  │  • WS streams  │    │  • AI orchestration                 │   │      │
 │  └───────────────┘     └──────────────┬──────────────────────┘   │      │
@@ -111,15 +111,16 @@ Future: eidetic-core ──(compile to WASM)──> runs entirely in browser
 ### Separation of Concerns
 
 - **`eidetic-core`** — Pure Rust library. No IO, no networking, no UI. Defines the data model
-  (story graph, timeline, clips, characters), script generation logic, AI prompt construction,
-  and all domain operations. Designed to compile to WASM.
+  (arc tracks, beat clips, relationships, characters, scene inference), script generation
+  logic, AI prompt construction, and all domain operations. Designed to compile to WASM.
 
 - **`eidetic-server`** — Thin binary that wraps `eidetic-core` with an `axum` HTTP/WebSocket
   server. Serves the compiled Svelte SPA as static files. Handles file I/O, AI backend
   communication, and exposes the core API over REST + WebSocket.
 
-- **`ui/`** — Svelte 5 SPA. Renders the two-panel layout (script view above, annotated timeline
-  below). Communicates with the server via REST (commands) and WebSocket (streaming updates).
+- **`ui/`** — Svelte 5 SPA. Renders the two-panel layout (beat editor above, timeline below)
+  with a collapsible sidebar for arcs and characters. Communicates with the server via REST
+  (commands) and WebSocket (streaming updates).
 
 ---
 
@@ -128,123 +129,149 @@ Future: eidetic-core ──(compile to WASM)──> runs entirely in browser
 ### 1. The Annotated Timeline
 
 The timeline is the central workspace. It represents the **runtime** of the episode (~22
-minutes for a 30-min TV episode, ~22 pages at 1 page/minute). Rather than having a separate
-node graph panel, story structure elements live **directly on the timeline** as markers, with
-**relationship arcs drawn as curves above the tracks** to show how story elements connect.
+minutes for a 30-min TV episode, ~22 pages at 1 page/minute). The primary organizing unit is
+**arc tracks** — each story arc (A-plot, B-plot, C-runner) gets its own track, and the beats
+within each arc are represented as **clips** on that track. This mirrors how TV writers
+"break" a story: arcs interleave across the episode, and the timeline makes that structure
+visible and directly manipulable.
+
+**Relationship arcs** (hierarchical edge-bundled curves) are drawn above the tracks to show
+how beats across different arcs connect — causal links, character connections, thematic ties.
 
 The timeline has three visual layers, stacked vertically:
 
 ```
-    Relationship Arcs (curves drawn between markers)
-    ╭─────────────────────╮        ╭──────╮
-    │                     │        │      │
-────┼─────────────────────┼────────┼──────┼──────────────────────
-    ▼                     ▼        ▼      ▼
-    Markers (story elements pinned to time positions)
-  [Beat:       [Beat:     [Beat:  [Beat:        [Beat:
-   Inciting     Midpoint   B-plot  Climax        Tag]
-   Incident]    Reversal]  Payoff] Resolution]
+    Relationship Arcs (edge-bundled curves between beat clips)
+    ╭──────────────────────────╮       ╭──────╮
+    │    bundles together      │       │      │
+────┼──────────────────────────┼───────┼──────┼──────────────────
+    │                          │       │      │
+    Arc Tracks (one track per story arc, beats as clips)
+  ══[Setup]════[Complication]══════[Escalation]═══[Climax]══[Resolution]══  A-Plot
+  ═════[Setup]═════[Complication]══════════════[Payoff]═══════════════════  B-Plot
+  ═══[Beat]═══════════════[Beat]═══════════════════════[Callback]════════  C-Runner
 
 ────────────────────────────────────────────────────────────────
-    Tracks (clips representing content with time ranges)
-  ═══[ Scene 1 clip ]═══[ Scene 2 clip ]═══[ Scene 3 clip ]═══  Script track
-  ───[ A-plot ──────────────────────── ]───[ A-plot ───── ]───  Arc track
-  ───────────[ B-plot ─────── ]────────────────────────────────  Arc track
-  ▏ Cold Open ▕▏  Act One     ▕▏  Act Two      ▕▏Act Three▕▏Tag▕  Structure
+    Structure bar (act breaks, commercial breaks)
+  ▏ Cold Open ▕▏  Act One     ▕▏  Act Two      ▕▏Act Three▕▏Tag▕
 ────────────────────────────────────────────────────────────────
   0:00       2:30         9:30         16:30     21:30  22:00   Time ruler
 ```
 
-**Markers** are the story graph made spatial. Each marker is pinned to a time position on the
-timeline and represents a story element:
+**Arc tracks** are the primary content layer. Each track belongs to a story arc and contains
+beat clips — the narrative turning points of that arc:
 
-- **Beat markers** — Narrative turning points (inciting incident, midpoint, climax, etc.)
-- **Character markers** — Character entrances, exits, or key moments
-- **Scene boundary markers** — Where one scene ends and another begins
-- **Structural markers** — Act breaks, commercial breaks, cold open/tag boundaries
+- **A-plot track** — The main story. Clips represent its beats: setup, complication,
+  escalation, climax, resolution.
+- **B-plot track** — The secondary story. Typically fewer beats, interleaving with the A-plot.
+- **C-runner track** — A running gag or minor thread. Usually 3 beats: setup, callback, payoff.
+- **Additional tracks** — Users can add more tracks for subplots, thematic threads, or any
+  other narrative layer.
 
-**Relationship arcs** are curves drawn in the space above the tracks, connecting markers to
-show how story elements relate to each other:
+Beat clips on arc tracks behave like NLE clips:
 
-- Beat → Beat arcs (causal chain: "this must happen before that")
-- Arc → Beat arcs (this beat advances this story arc), color-coded per arc
-- Character → Beat arcs (this character drives this beat)
-- Any marker → any marker (user-defined thematic or structural links)
+- **Drag to move** — Reposition beats on the timeline
+- **Drag edges to resize** — Adjust how much screen time a beat occupies
+- **Split** — Razor tool to decompose a beat into finer sub-beats
+- **Gaps are meaningful** — Time ranges where no clip exists on a track mean that arc is not
+  on screen during that period
 
-The arcs are drawn as bezier curves between their source and target markers. Color-coding
-distinguishes arc types (e.g., A-plot arcs in blue, B-plot in green, character arcs in amber).
-The user can toggle arc visibility by type to reduce visual clutter.
+**Scenes emerge from vertical overlap.** Rather than explicitly defining scenes, scenes are
+**inferred** from the timeline. A vertical slice through the timeline at any point reveals
+which arcs are active — that combination defines a scene. Scene boundaries appear wherever the
+active combination of arcs changes. For example, if the A-plot and B-plot clips overlap at a
+time position, that's a scene that serves both arcs simultaneously.
 
-**Tracks** sit below the markers and carry content with time ranges (like an NLE):
+**Relationship arcs** are edge-bundled curves drawn above the tracks, connecting beat clips
+across different arc tracks to show how story elements relate:
 
-- **Script tracks** — Text "clips" containing generated or user-written script content
-- **Arc tracks** — One per story arc, showing which time ranges that arc occupies
-- **Structure track** — Read-only visual of the act structure (cold open, acts, tag)
+- Beat → Beat (causal: "this must happen before that")
+- Beat → Beat across arcs (convergence: "these two arcs intersect here")
+- Character → Beat (this character drives this beat)
+- Any clip → any clip (user-defined thematic or structural links)
+
+The curves use **hierarchical edge bundling** — related connections share a common path
+("bundle") and splay apart near their endpoints. Color-coding distinguishes connection types
+(e.g., A-plot connections in blue, B-plot in green, character links in amber). Users can
+toggle visibility by type or arc to reduce clutter.
+
+**Structure bar** sits below the tracks as a read-only reference showing the standard act
+structure (cold open, acts, commercial breaks, tag). Beat clips snap to act break positions
+when dragged near them.
 
 ```rust
-/// The central data structure: timeline with markers, arcs, and tracks.
+/// The central data structure: timeline with arc tracks and structure.
 pub struct Timeline {
     pub total_duration: Duration,      // ~22 minutes for 30-min TV
-    pub markers: Vec<Marker>,          // Story elements pinned to time
-    pub relationships: Vec<Relationship>, // Arcs drawn between markers
-    pub tracks: Vec<Track>,            // Content tracks (clips)
-    pub structure_markers: Vec<StructureMarker>, // Act breaks, commercials
+    pub tracks: Vec<ArcTrack>,         // One track per story arc
+    pub relationships: Vec<Relationship>, // Edge-bundled curves between clips
+    pub structure: EpisodeStructure,   // Act breaks, commercial breaks
 }
 
-/// A story element pinned to a position on the timeline.
-pub struct Marker {
-    pub id: MarkerId,
-    pub time_position: Duration,       // Where on the timeline
-    pub marker_type: MarkerType,
+/// A track belonging to a story arc, containing beat clips.
+pub struct ArcTrack {
+    pub id: TrackId,
+    pub arc_id: ArcId,                 // Which story arc this track represents
+    pub clips: Vec<BeatClip>,          // Beat clips on this track
+}
+
+/// A beat clip on an arc track — a narrative turning point with a time range.
+pub struct BeatClip {
+    pub id: ClipId,
+    pub time_range: TimeRange,
+    pub beat_type: BeatType,           // Setup, Complication, Climax, etc.
     pub name: String,
-    pub description: String,           // User-provided context for AI
-    pub color: Option<Color>,          // Visual color override
+    pub content: BeatContent,          // What the user has written for this beat
+    pub locked: bool,                  // If true, AI won't regenerate
 }
 
-pub enum MarkerType {
-    Beat {
-        beat_type: BeatType,           // Inciting, Midpoint, Climax, etc.
-        arc_id: Option<ArcId>,         // Which story arc this advances
-    },
-    CharacterMoment {
-        character_id: CharacterId,
-        moment_type: MomentType,       // Entrance, Exit, Revelation, etc.
-    },
-    SceneBoundary {
-        heading: String,               // INT./EXT. LOCATION - TIME
-        character_ids: Vec<CharacterId>,
-    },
+/// The content of a beat clip, progressing through stages.
+pub struct BeatContent {
+    pub beat_notes: String,            // User's markdown description of what happens
+    pub generated_script: Option<String>, // AI-generated screenplay text
+    pub user_refined_script: Option<String>, // User's edits to the generated script
+    pub status: ContentStatus,
 }
 
-/// A visual arc drawn between two markers to show their relationship.
+pub enum ContentStatus {
+    Empty,           // No content yet
+    NotesOnly,       // User has written beat notes, no script generated
+    Generating,      // AI is currently generating script
+    Generated,       // AI has generated script from beat notes
+    UserRefined,     // User has edited the generated script
+    UserWritten,     // User wrote the script directly (no AI generation)
+}
+
+/// A visual connection drawn between two beat clips.
 pub struct Relationship {
     pub id: RelationshipId,
-    pub from_marker: MarkerId,
-    pub to_marker: MarkerId,
+    pub from_clip: ClipId,
+    pub to_clip: ClipId,
     pub relationship_type: RelationshipType,
     pub color: Color,                  // Derived from arc color or type
 }
 
 pub enum RelationshipType {
     Causal,          // "this causes that" (beat → beat)
-    AdvancesArc {    // "this beat advances this arc"
-        arc_id: ArcId,
+    Convergence {    // "these arcs intersect at this point"
+        arc_ids: Vec<ArcId>,
     },
-    CharacterDrives, // "this character drives this beat"
+    CharacterDrives { // "this character drives this beat"
+        character_id: CharacterId,
+    },
     Thematic,        // User-defined thematic link
 }
 
-/// A named story arc (A-plot, B-plot, etc.) — not on the timeline itself,
-/// but referenced by markers and relationships.
+/// A named story arc (A-plot, B-plot, etc.) with its own track.
 pub struct StoryArc {
     pub id: ArcId,
     pub name: String,
     pub description: String,
     pub arc_type: ArcType,             // APlot, BPlot, CRunner
-    pub color: Color,                  // Color for all related arcs/markers
+    pub color: Color,                  // Color for the track and its clips
 }
 
-/// A character — also not directly on the timeline, but referenced by markers.
+/// A character — referenced by beat clips and relationships.
 pub struct Character {
     pub id: CharacterId,
     pub name: String,
@@ -253,35 +280,16 @@ pub struct Character {
     pub color: Color,
 }
 
-/// A content track containing clips.
-pub struct Track {
-    pub id: TrackId,
-    pub name: String,
-    pub track_type: TrackType,
-    pub clips: Vec<Clip>,
+/// The episode's act structure (pre-placed, adjustable).
+pub struct EpisodeStructure {
+    pub template_name: String,         // e.g., "Standard 30-Min Comedy"
+    pub segments: Vec<StructureSegment>,
 }
 
-pub enum TrackType {
-    Script,  // Text clips (generated or user-written)
-    Arc {    // Visual region showing arc presence
-        arc_id: ArcId,
-    },
-}
-
-/// A clip on a track — a block of content with a time range.
-pub struct Clip {
-    pub id: ClipId,
+pub struct StructureSegment {
+    pub segment_type: SegmentType,     // ColdOpen, Act, CommercialBreak, Tag
     pub time_range: TimeRange,
-    pub content: ClipContent,
-    pub locked: bool,                  // If true, AI won't regenerate
-}
-
-pub enum ClipContent {
-    ScriptText {
-        text: String,
-        generation_status: GenStatus,  // Empty, Generating, Generated, UserWritten
-    },
-    ArcPresence,                       // Just a colored region (no text)
+    pub label: String,
 }
 
 pub struct TimeRange {
@@ -290,73 +298,127 @@ pub struct TimeRange {
 }
 ```
 
-**User interactions on the timeline:**
+### 2. The Default Template
 
-- **Add marker:** Click on the timeline to place a new beat, character moment, or scene boundary
-- **Connect markers:** Drag from one marker to another to create a relationship arc
-- **Move markers:** Drag markers left/right to adjust their time position
-- **Edit markers:** Click a marker to open a popover for editing name, description, type
-- **Drag clip edges:** Adjust duration (AI regenerates to fit the new timing)
-- **Split clips:** Razor tool to decompose a clip for finer editing
-- **Rearrange clips:** Drag clips to reorder scenes
-- **Toggle arc visibility:** Filter which relationship arcs are shown by type or story arc
-- **Snap to structure:** Markers snap to act break positions when dragged near them
+A new project starts with a pre-configured timeline reflecting standard 30-minute TV episode
+structure. The user sees arc tracks already in place with standard beat clips positioned at
+conventional timing:
 
-### 2. The Script View
+```text
+A-Plot:  ═[Setup]══════════[Complication]══════════[Escalation]════[Climax]══[Resolution]═
+B-Plot:  ══════[Setup]══════════[Complication]═══════════════[Payoff]══════════════════════
+C-Runner:═[Beat]════════════════════[Beat]═══════════════════════════[Callback]════════════
+         |Cold Open|   Act 1    |         Act 2          |    Act 3     |Tag|
+         0:00     2:30         9:30                     16:30         21:30 22:00
+```
 
-Above the timeline, the user sees the **generated script** — a formatted, editable view of
-the episode's screenplay. This is the "output" that the timeline produces.
+All clips are empty (no content written yet) but positioned at conventional timing. The user
+can immediately start clicking clips and writing beat notes, or rearrange the structure first.
+
+**Subgenre presets** offer different starting configurations:
+
+- **Multi-cam sitcom** (Seinfeld-style) — More interleaving, shorter beats, rapid A/B cutting
+- **Single-cam dramedy** (Scrubs-style) — Longer, more flowing scenes, fewer cuts between arcs
+- **Animated comedy** (Bob's Burgers-style) — Flexible act structure, C-runner emphasis
+
+The template is a starting point — every clip, track, and structural marker is fully
+adjustable.
+
+### 3. The Beat Editor
+
+Above the timeline, the user sees the **beat editor** — a contextual panel that displays and
+edits the content of the currently selected beat clip. This is where the writing happens.
+
+The beat editor progresses through three stages for each beat:
+
+**Stage 1: Beat Notes (Markdown)**
+When a clip is first selected, the editor shows a markdown writing area. The user describes
+what happens in this beat — the **turn** (what changes from beginning to end):
+
+> *Jake finds the letter hidden in the couch cushions. He reads it and realizes his roommate
+> has been lying about the landlord. He's furious but decides to set a trap instead of
+> confronting him directly.*
+
+Beat notes capture: who's present, what happens, what changes emotionally. This is the raw
+material the AI uses for generation.
+
+**Stage 2: Generated Script**
+When the user triggers generation (or it runs automatically), the AI produces formatted
+screenplay text from the beat notes, character profiles, and surrounding context. The
+generated script appears in the editor, formatted as proper screenplay elements (scene
+headings, action, dialogue, parentheticals).
+
+**Stage 3: User-Refined Script**
+The user can edit the generated script directly. Edits are tracked — the AI treats
+user-written text as canonical and won't overwrite it. The user can also bypass generation
+entirely and write the script for a beat from scratch.
 
 Key behaviors:
-- **Live generation:** As the user places markers and defines beats, scenes, and arcs on
-  the timeline, the AI generates script text to fill the corresponding time slots
-- **Inline editing:** The user can type directly into the script. Edits are tracked and
-  the AI treats user-written text as canonical (it won't overwrite it)
-- **User-written beats:** The user can write certain scenes/beats themselves. The AI fills
-  in the transitions and connecting tissue between user-written sections
-- **Consistency reactions:** When the user edits the script, the AI can update downstream
-  content to remain consistent (e.g., if a character's name changes in an edit, the AI
-  updates subsequent references)
-- **Contextual awareness:** The AI uses the full timeline structure (markers, relationships,
-  arcs, characters), surrounding script text, and any RAG-retrieved reference material to
-  generate coherent output
 
-### 3. AI Integration (Core, Not Afterthought)
+- **Clip selection drives the editor:** Click a beat clip on the timeline to load its content
+- **Live generation:** The AI generates script text from beat notes + character info + context
+- **Lock/unlock:** Mark a beat as user-written (locked) so the AI won't regenerate it
+- **Fill gaps:** Write beats A and C yourself; the AI generates beat B to bridge them
+- **Consistency reactions:** When the user edits a beat's script, the AI can suggest updates
+  to downstream beats (presented as a side-by-side diff for accept/reject)
+
+### 4. Scene Inference
+
+Scenes are not explicitly created by the user — they **emerge from the timeline**. A scene is
+defined by the vertical overlap of beat clips across arc tracks at a given time position.
+
+```
+A-Plot:  ═══════[Complication]═══════════
+B-Plot:  ═══[Setup]═════════════════════
+                   ↑
+                   This overlap = a scene serving both A and B plots
+```
+
+When the AI generates script for overlapping beats, it weaves both arcs into a single scene —
+characters from both storylines interact, and the dialogue serves dual purposes. This is one
+of the key craft skills in TV writing, and the timeline makes it visually explicit.
+
+Scene boundaries appear wherever the active combination of arcs changes. The system derives:
+
+- **Scene headings** (INT./EXT. LOCATION - TIME) from the beat notes or user input
+- **Character presence** from which arcs are active and which characters are assigned to them
+- **Scene duration** from the overlapping time range
+
+### 5. AI Integration (Core, Not Afterthought)
 
 Unlike Plan A where AI is Phase 4, here AI is integral from Phase 1. The AI:
 
-- **Generates script from structure:** Given beats, scenes, characters, and timing
-  constraints, produces formatted screenplay text
+- **Generates script from beat notes:** Given the user's beat description, characters, arc
+  context, and timing constraints, produces formatted screenplay text
+- **Weaves overlapping arcs:** When beats from different arcs overlap on the timeline, the
+  AI generates scenes that serve multiple storylines simultaneously
 - **Reacts to user edits:** When the user modifies script text, the AI can propagate
-  consistency changes to surrounding generated sections
-- **Fills gaps:** User writes beat A and beat C; AI generates beat B to bridge them
+  consistency changes to surrounding beats (presented as side-by-side diffs)
+- **Fills gaps:** User writes beats A and C; AI generates beat B to bridge them
 - **Respects constraints:** Generated text must fit within the time allocation of its
   clip on the timeline (approximately 1 page per minute of screen time)
 - **Uses RAG:** Reference materials, style guides, character bibles, and previous
   episodes can be indexed and retrieved for context
 
-### 4. Characters and Story Arcs (Sidebar Entities)
+### 6. Characters and Story Arcs (Sidebar Entities)
 
-Characters and story arcs are not placed directly on the timeline — they are **persistent
-entities** managed in a sidebar panel. They are _referenced by_ markers and relationships on
-the timeline.
+Characters and story arcs are **persistent entities** managed in a collapsible sidebar panel.
 
-- **Characters** have a name, description, voice notes (how they speak), and a color. When a
-  character marker or scene boundary references a character, that character's color appears on
-  the marker. The AI uses voice notes to maintain consistent dialogue.
+- **Story arcs** are the primary structural element. Each arc has a name, description, type
+  (A-plot, B-plot, C-runner), and a color. Creating an arc automatically creates a
+  corresponding track on the timeline. The arc's color is used for its track, clips, and
+  relationship curves.
 
-- **Story arcs** have a name, description, type (A-plot, B-plot, C-runner), and a color.
-  Beats that advance an arc inherit its color. Arc tracks on the timeline show colored regions
-  where each arc is active. Relationship arcs connecting beats to their parent story arc use
-  the arc's color.
+- **Characters** have a name, description, voice notes (how they speak), and a color. Beat
+  clips can reference characters who appear in that beat. The AI uses voice notes to maintain
+  consistent dialogue across the episode.
 
 The sidebar provides list views for managing characters and arcs, with detail panels for
-editing their properties. These entities are the "vocabulary" that the timeline markers
-reference.
+editing their properties.
 
 ```rust
 pub trait AiBackend: Send + Sync {
-    /// Generate script text for a given context
+    /// Generate script text for a beat clip given its notes and context
     async fn generate(&self, request: GenerateRequest) -> Result<GenerateStream>;
 
     /// React to a user edit and suggest consistency updates
@@ -367,12 +429,13 @@ pub trait AiBackend: Send + Sync {
 }
 
 pub struct GenerateRequest {
-    pub scene: Scene,
-    pub beat: Beat,
-    pub characters: Vec<Character>,
-    pub surrounding_context: SurroundingContext,
-    pub time_budget: Duration,        // target screen time
-    pub user_written_anchors: Vec<Anchor>, // text the user wrote that must be preserved
+    pub beat_clip: BeatClip,           // The beat to generate for
+    pub arc: StoryArc,                 // Which arc this beat belongs to
+    pub overlapping_beats: Vec<(BeatClip, StoryArc)>, // Beats on other arcs at same time
+    pub characters: Vec<Character>,    // Characters present in this beat
+    pub surrounding_context: SurroundingContext, // Adjacent beat scripts
+    pub time_budget: Duration,         // Target screen time for this beat
+    pub user_written_anchors: Vec<Anchor>, // Text the user wrote that must be preserved
     pub style_notes: Option<String>,
     pub rag_context: Vec<RagChunk>,
 }
@@ -396,10 +459,11 @@ Eidetic/
 │   │       ├── lib.rs          # Public API
 │   │       ├── timeline/       # Timeline engine (central data model)
 │   │       │   ├── mod.rs
-│   │       │   ├── marker.rs   # Markers (beats, character moments, scene boundaries)
-│   │       │   ├── relationship.rs # Relationship arcs between markers
-│   │       │   ├── track.rs    # Tracks and track types
-│   │       │   ├── clip.rs     # Clips (text clips, arc regions)
+│   │       │   ├── track.rs    # Arc tracks
+│   │       │   ├── clip.rs     # Beat clips (content, status, time ranges)
+│   │       │   ├── relationship.rs # Edge-bundled relationships between clips
+│   │       │   ├── scene.rs    # Scene inference from vertical clip overlap
+│   │       │   ├── structure.rs # Episode structure (act breaks, templates)
 │   │       │   └── timing.rs   # Duration math, page-to-time conversion
 │   │       ├── story/          # Story entities (referenced by timeline)
 │   │       │   ├── mod.rs
@@ -451,34 +515,32 @@ Eidetic/
 │   │   ├── app.css             # Global styles, Pantograph dark theme
 │   │   ├── routes/
 │   │   │   ├── +layout.svelte
-│   │   │   └── +page.svelte    # Main app layout (three-panel)
+│   │   │   └── +page.svelte    # Main app layout
 │   │   ├── lib/
 │   │   │   ├── api.ts          # REST API client
 │   │   │   ├── ws.ts           # WebSocket client for streaming
 │   │   │   ├── types.ts        # TypeScript types mirroring Rust models
 │   │   │   └── stores/
 │   │   │       ├── project.svelte.ts
-│   │   │       ├── timeline.svelte.ts   # Markers, relationships, tracks, clips
+│   │   │       ├── timeline.svelte.ts   # Arc tracks, beat clips, relationships
 │   │   │       ├── story.svelte.ts      # Arcs, characters
-│   │   │       └── script.svelte.ts
+│   │   │       └── editor.svelte.ts     # Beat editor state (selected clip, content)
 │   │   └── components/
 │   │       ├── layout/
-│   │       │   ├── AppShell.svelte       # Two-panel layout (script + timeline)
+│   │       │   ├── AppShell.svelte       # Two-panel layout (editor + timeline)
 │   │       │   ├── PanelResizer.svelte   # Draggable panel boundary
 │   │       │   └── Sidebar.svelte        # Collapsible sidebar (arcs, characters)
-│   │       ├── script/
-│   │       │   ├── ScriptView.svelte     # Formatted script display + editing
-│   │       │   ├── ScriptElement.svelte  # Individual script element renderer
-│   │       │   └── InlineEditor.svelte   # Contenteditable inline editing
+│   │       ├── editor/
+│   │       │   ├── BeatEditor.svelte     # Contextual editor for selected beat clip
+│   │       │   ├── BeatNotes.svelte      # Markdown editor for beat description
+│   │       │   ├── ScriptView.svelte     # Generated/refined screenplay display
+│   │       │   └── DiffView.svelte       # Side-by-side diff for consistency suggestions
 │   │       ├── timeline/
 │   │       │   ├── Timeline.svelte       # Main timeline component (all layers)
-│   │       │   ├── MarkerLayer.svelte    # Renders markers above tracks
-│   │       │   ├── Marker.svelte         # Individual marker (beat, scene, etc.)
-│   │       │   ├── MarkerPopover.svelte  # Edit popover for a marker
-│   │       │   ├── ArcLayer.svelte       # Renders relationship curves above markers
-│   │       │   ├── RelationshipArc.svelte # Single bezier curve between markers
-│   │       │   ├── Track.svelte          # Single track lane
-│   │       │   ├── Clip.svelte           # Draggable/resizable clip
+│   │       │   ├── ArcTrack.svelte       # Single arc track lane
+│   │       │   ├── BeatClip.svelte       # Draggable/resizable beat clip
+│   │       │   ├── RelationshipLayer.svelte # Edge-bundled curves above tracks
+│   │       │   ├── RelationshipArc.svelte # Single bundled curve
 │   │       │   ├── TimeRuler.svelte      # Time ruler at bottom
 │   │       │   └── StructureBar.svelte   # Act structure visual (cold open, acts, tag)
 │   │       ├── sidebar/
@@ -520,26 +582,29 @@ POST   /api/characters                 # Create character
 PUT    /api/characters/:id             # Update character
 DELETE /api/characters/:id             # Delete character
 
-# Timeline (markers, relationships, tracks, clips)
-GET    /api/timeline                   # Full timeline state
-POST   /api/timeline/markers           # Create marker (beat, scene boundary, etc.)
-PUT    /api/timeline/markers/:id       # Update marker (position, type, description)
-DELETE /api/timeline/markers/:id       # Delete marker
-POST   /api/timeline/relationships     # Create relationship arc between markers
-DELETE /api/timeline/relationships/:id # Delete relationship arc
-PUT    /api/timeline/clips/:id         # Update clip (resize, move)
-POST   /api/timeline/clips/:id/split   # Split a clip
-POST   /api/timeline/tracks            # Add track
-DELETE /api/timeline/tracks/:id        # Remove track
+# Timeline (arc tracks, beat clips, relationships)
+GET    /api/timeline                   # Full timeline state (all tracks, clips, relationships)
+POST   /api/timeline/tracks            # Add arc track (creates track for an arc)
+DELETE /api/timeline/tracks/:id        # Remove arc track
+POST   /api/timeline/clips             # Create beat clip on a track
+PUT    /api/timeline/clips/:id         # Update beat clip (resize, move, rename)
+DELETE /api/timeline/clips/:id         # Delete beat clip
+POST   /api/timeline/clips/:id/split   # Split a beat clip into sub-beats
+POST   /api/timeline/relationships     # Create relationship between clips
+DELETE /api/timeline/relationships/:id # Delete relationship
 
-# Script
-GET    /api/script                     # Full generated script
-PUT    /api/script/sections/:id        # User edit to a script section
-POST   /api/script/lock/:id            # Lock a section (mark as user-written)
-POST   /api/script/unlock/:id          # Unlock a section (allow AI regeneration)
+# Beat content (editor)
+GET    /api/beats/:id                  # Get beat content (notes + script)
+PUT    /api/beats/:id/notes            # Update beat notes (markdown)
+PUT    /api/beats/:id/script           # User edit to generated/refined script
+POST   /api/beats/:id/lock             # Lock beat (mark as user-written)
+POST   /api/beats/:id/unlock           # Unlock beat (allow AI regeneration)
+
+# Scenes (inferred, read-only)
+GET    /api/scenes                     # List inferred scenes from clip overlap
 
 # AI
-POST   /api/ai/generate               # Generate script for a clip/scene
+POST   /api/ai/generate               # Generate script for a beat clip
 POST   /api/ai/react                   # React to user edit, get consistency suggestions
 POST   /api/ai/summarize              # Summarize a section
 GET    /api/ai/status                  # AI backend status
@@ -550,15 +615,17 @@ PUT    /api/ai/config                  # Configure AI backend
 
 ```typescript
 // Server -> Client
-{ type: "script_updated", data: { section_id, text, status } }
+{ type: "beat_updated", data: { clip_id, notes, script, status } }
 { type: "generation_progress", data: { clip_id, tokens_generated, token } }
-{ type: "generation_complete", data: { clip_id, text } }
-{ type: "consistency_suggestion", data: { section_id, original, suggested, reason } }
-{ type: "timeline_changed", data: { timeline } }  // markers, relationships, clips
+{ type: "generation_complete", data: { clip_id, script_text } }
+{ type: "consistency_suggestion", data: { clip_id, original, suggested, reason } }
+{ type: "timeline_changed", data: { tracks, relationships } }
+{ type: "scenes_changed", data: { scenes } }  // re-inferred from clip overlap
 
 // Client -> Server
-{ type: "subscribe", data: { channels: ["script", "generation", "timeline"] } }
-{ type: "user_edit", data: { section_id, text, cursor_pos } }
+{ type: "subscribe", data: { channels: ["beats", "generation", "timeline", "scenes"] } }
+{ type: "beat_notes_edit", data: { clip_id, notes, cursor_pos } }
+{ type: "beat_script_edit", data: { clip_id, script_text, cursor_pos } }
 { type: "accept_suggestion", data: { suggestion_id } }
 { type: "reject_suggestion", data: { suggestion_id } }
 ```
@@ -590,101 +657,367 @@ and commercial breaks are pre-placed but adjustable.
 
 ### Generation Pipeline
 
-```
-1. User places beat and scene boundary markers on the timeline
-2. User connects markers with relationship arcs and assigns them to story arcs
-3. For each clip that needs generation:
+```text
+1. User writes beat notes (markdown) for a beat clip on the timeline
+2. User connects beat clips with relationship arcs across arc tracks
+3. For each beat clip that needs script generation:
    a. Gather context:
-      - The beat description and scene description
-      - Character profiles for all characters in the scene
-      - Preceding script text (user-written or previously generated)
-      - Following script text (if any user-written anchors exist ahead)
-      - Story arc context (what this beat is advancing)
+      - The beat notes (user's markdown description of what happens)
+      - The story arc this beat belongs to (name, description, type)
+      - Overlapping beat clips from other arc tracks (for scene weaving)
+      - Character profiles for all characters present in this beat
+      - Preceding beat scripts (user-written or previously generated)
+      - Following beat scripts (if any user-written anchors exist ahead)
+      - Relationship arcs connecting this beat to others (causal, thematic)
       - RAG-retrieved reference material
    b. Construct prompt with:
       - System prompt: "You are a TV screenwriter. Write in standard screenplay format."
-      - Time/page budget: "This scene should be approximately N pages."
+      - Time/page budget: "This beat should be approximately N pages."
       - Character voices: Descriptions of how each character speaks
-      - Constraints: "The scene must end with [beat description]"
+      - Scene weaving: "This scene also advances [B-plot]: [B-plot beat notes]"
+      - Constraints: "The beat must accomplish: [beat notes summary]"
       - Anchors: "The following user-written text must appear verbatim: ..."
-   c. Stream generation token-by-token to the UI
+   c. Stream generation token-by-token to the beat editor via WebSocket
    d. Format the output as proper script elements
 ```
 
 ### Edit Reaction Pipeline
 
-```
-1. User edits script text in the Script View
-2. The edit is diffed against the previous version
+```text
+1. User edits a beat's script in the beat editor
+2. The edit is diffed against the previous generated version
 3. The diff + surrounding context is sent to the AI
 4. The AI identifies what changed semantically:
-   - Character name change? → Update all subsequent references
-   - Plot point changed? → Flag downstream scenes for regeneration
-   - Dialogue tone shift? → Adjust character voice in adjacent scenes
-5. Suggestions are presented to the user (not auto-applied)
+   - Character name change? → Update all subsequent references in other beats
+   - Plot point changed? → Flag downstream beats for regeneration
+   - Dialogue tone shift? → Adjust character voice in adjacent beats
+5. Suggestions are presented as side-by-side diffs (not auto-applied)
 6. User accepts/rejects each suggestion
 ```
 
 ---
 
-## Phase Roadmap
+## Multi-Agent Implementation Plan
 
-### Phase 1: Skeleton + Server + Annotated Timeline
+Work is divided across four parallel agents. Each agent owns a vertical slice of the
+codebase and can work independently between **sync points** — integration milestones
+where agents merge, test cross-boundary contracts, and align on the next sprint.
 
-- [ ] Cargo workspace with `core` and `server` crates
-- [ ] `eidetic-core`: Timeline data model (markers, relationships, tracks, clips, time ranges)
-- [ ] `eidetic-core`: Story entity models (arcs, characters)
-- [ ] `eidetic-core`: Basic script element types (scene heading, action, character, dialogue,
-      parenthetical, transition) — 30-min TV format only
-- [ ] `eidetic-server`: axum HTTP server serving static files
-- [ ] `eidetic-server`: REST API for timeline operations, story entity CRUD
-- [ ] `eidetic-server`: WebSocket endpoint for streaming updates
-- [ ] Svelte 5 SPA skeleton with Pantograph dark theme
-- [ ] Two-panel layout: script view (top), annotated timeline (bottom)
-- [ ] Collapsible sidebar for story arcs and characters
-- [ ] Timeline: marker layer (draggable markers), relationship arc layer (bezier curves),
-      track layer (clips), time ruler, act break structure bar
-- [ ] Marker interactions: add, move, edit popover, connect (drag to create relationship)
-- [ ] Wire up REST API to Svelte stores
+### Agent Definitions
 
-### Phase 2: Script Generation + AI Core
+| Agent | Scope | Crate / Directory | Key Expertise |
+| --- | --- | --- | --- |
+| **A1 — Core Engine** | Data model, timeline logic, scene inference, script elements | `crates/core/` | Rust, domain modeling, algorithms |
+| **A2 — Server** | HTTP/WS server, persistence, AI backend wiring, static hosting | `crates/server/` | Rust, axum, networking, file I/O |
+| **A3 — Frontend** | Svelte 5 SPA, timeline visualization, beat editor, sidebar | `ui/` | Svelte 5, TypeScript, D3, CSS |
+| **A4 — AI/ML** | Prompt engineering, generation pipeline, consistency engine, RAG | `crates/core/src/ai/` + `crates/server/src/ai_backends/` | LLM integration, prompt design |
 
-- [ ] `eidetic-core`: AI backend trait and prompt construction
-- [ ] `eidetic-server`: llama.cpp backend implementation (local inference)
-- [ ] `eidetic-server`: API backend implementation (OpenAI/Anthropic)
-- [ ] Generate script text from beat + scene + character context
-- [ ] Stream tokens to the UI via WebSocket
-- [ ] Display generated script in the Script View with proper formatting
-- [ ] Timeline clip status indicators (empty, generating, generated, user-written)
-- [ ] Basic context windowing (fit relevant context into model context length)
+### Dependency Graph
 
-### Phase 3: Interactive Editing + Consistency
+```
+            ┌──────────────────────────────────────┐
+            │       A1 — Core Engine               │
+            │  (data model, timeline, inference)    │
+            └──────────┬───────────┬───────────────┘
+                       │           │
+              depends  │           │  depends
+                       ▼           ▼
+            ┌──────────────┐   ┌──────────────────┐
+            │  A2 — Server │   │  A4 — AI/ML      │
+            │  (wraps core │   │  (trait in core,  │
+            │   with HTTP) │   │   backends in     │
+            └──────┬───────┘   │   server)         │
+                   │           └────────┬──────────┘
+                   │                    │
+              REST/WS API         AI endpoints
+                   │                    │
+                   ▼                    ▼
+            ┌──────────────────────────────────────┐
+            │       A3 — Frontend                  │
+            │  (consumes API, renders everything)   │
+            └──────────────────────────────────────┘
+```
 
-- [ ] Inline script editing (contenteditable in Script View)
-- [ ] User edit tracking (diff user changes vs generated text)
-- [ ] Lock/unlock sections (mark as user-written vs AI-regeneratable)
-- [ ] Edit reaction pipeline: AI detects semantic changes and suggests updates
-- [ ] Consistency suggestion UI (accept/reject per suggestion)
-- [ ] Timeline clip splitting (decompose a clip for finer editing)
-- [ ] Timeline clip resizing (adjust time allocation, trigger regeneration)
-- [ ] "Fill gaps" mode: user writes beats A and C, AI generates B
+**Critical path:** A1 defines types → A2 + A4 consume them → A3 consumes A2's API.
+A3 can start immediately with mock data and hardcoded types, converging with real
+API at each sync point.
 
-### Phase 4: RAG + Context Enrichment
+---
 
-- [ ] Reference material indexing (character bibles, style guides, previous episodes)
-- [ ] RAG retrieval for generation context
-- [ ] Character voice consistency (learn from user-written dialogue samples)
-- [ ] Episode-level consistency checking (continuity across scenes)
-- [ ] Story arc progression tracking (does the A-plot advance sufficiently?)
+### Sprint 1 — Foundation (parallel kickoff)
 
-### Phase 5: Polish + Export
+> **Goal:** Compilable workspace, core types, server skeleton, UI shell, AI research.
+> All agents start simultaneously. A3 works against mock data.
 
-- [ ] PDF export (standard TV screenplay format)
-- [ ] Project save/load (JSON-based project file)
-- [ ] Undo/redo for graph, timeline, and script edits
-- [ ] Keyboard shortcuts
-- [ ] WASM compilation of `eidetic-core` (proof of concept)
-- [ ] Performance optimization for large scripts
+**A1 — Core Engine**
+
+- [ ] Cargo workspace setup (`Cargo.toml` with `core` and `server` members)
+- [ ] Timeline data model: `Timeline`, `ArcTrack`, `BeatClip`, `TimeRange`
+- [ ] Story entity models: `StoryArc`, `Character`
+- [ ] `EpisodeStructure` and `StructureSegment` types
+- [ ] Default 30-min TV template (cold open, 3 acts, tag) with standard timings
+- [ ] `Relationship` and `RelationshipType` types
+- [ ] ID types (`TrackId`, `ClipId`, `ArcId`, `CharacterId`, `RelationshipId`)
+- [ ] Unit tests for core data model construction and validation
+
+**A2 — Server**
+
+- [ ] `eidetic-server` crate skeleton with `axum` dependency
+- [ ] Static file serving (serve compiled Svelte SPA from `dist/ui/`)
+- [ ] Application state management (`Arc<Mutex<...>>` or similar)
+- [ ] Stub REST routes returning hardcoded JSON (matching A1 types via `serde`)
+- [ ] WebSocket endpoint scaffold (connect, subscribe, echo)
+- [ ] CORS configuration for dev mode (Vite on different port)
+
+**A3 — Frontend**
+
+- [ ] Svelte 5 SPA scaffold (`ui/` with Vite, Tailwind, TypeScript)
+- [ ] Pantograph dark theme: CSS custom properties, global styles
+- [ ] `AppShell.svelte`: two-panel layout (beat editor top, timeline bottom)
+- [ ] `PanelResizer.svelte`: draggable divider between panels
+- [ ] `Sidebar.svelte`: collapsible sidebar shell (arcs, characters tabs)
+- [ ] TypeScript types mirroring Rust models (`types.ts`)
+- [ ] Mock stores with hardcoded data (`timeline.svelte.ts`, `story.svelte.ts`)
+- [ ] `Timeline.svelte`: container with placeholder tracks and time ruler
+- [ ] `TimeRuler.svelte`: time axis rendering (0:00 – 22:00)
+- [ ] `StructureBar.svelte`: act structure visualization
+
+**A4 — AI/ML**
+
+- [ ] Research and document prompt templates for beat → script generation
+- [ ] Define `AiBackend` trait signature in `crates/core/src/ai/backend.rs`
+- [ ] Define `GenerateRequest`, `GenerateStream`, `ConsistencyUpdate` types
+- [ ] Design context window packing strategy (what fits, priority order)
+- [ ] Prototype prompt with a sample beat → script (offline, manual testing)
+
+#### ✦ Sync Point 1 — "Hello World"
+> **Criteria:** `cargo build` succeeds. `npm run dev` shows the two-panel layout.
+> Server serves stub API and static files. Types are aligned across Rust and TypeScript.
+
+---
+
+### Sprint 2 — Timeline Interactivity + API Wiring
+
+> **Goal:** Interactive timeline with real data flowing through the server.
+> A3 drops mocks and connects to A2's real API backed by A1's types.
+
+**A1 — Core Engine**
+
+- [ ] Timeline operations: add/remove tracks, add/move/resize/delete clips
+- [ ] Clip split logic (razor tool: one clip → two clips at a time point)
+- [ ] Relationship CRUD (create, delete, query relationships for a clip)
+- [ ] Scene inference engine: compute scenes from vertical clip overlap
+- [ ] Subgenre presets (multi-cam, single-cam, animated) as template variants
+- [ ] `BeatContent` and `ContentStatus` progression logic
+- [ ] Project model (`Project` struct aggregating timeline + arcs + characters)
+
+**A2 — Server**
+
+- [ ] REST API: project CRUD (`POST/GET/PUT /api/project`)
+- [ ] REST API: story entity CRUD (`/api/arcs`, `/api/characters`)
+- [ ] REST API: timeline operations (`/api/timeline/*`)
+- [ ] REST API: beat content (`/api/beats/:id`, `/api/beats/:id/notes`)
+- [ ] REST API: scene list (`GET /api/scenes`)
+- [ ] WebSocket: broadcast `timeline_changed` and `scenes_changed` events
+- [ ] In-memory project state (no persistence to disk yet)
+
+**A3 — Frontend**
+
+- [ ] `api.ts`: REST client matching all server endpoints
+- [ ] `ws.ts`: WebSocket client with reconnection and event dispatch
+- [ ] Replace mock stores with live API-backed Svelte stores
+- [ ] `ArcTrack.svelte`: render beat clips on a horizontal track lane
+- [ ] `BeatClip.svelte`: draggable + resizable clip (pointer events + transforms)
+- [ ] Beat clip interactions: add (click empty space), move (drag), resize (edge drag)
+- [ ] Clip split interaction (razor cursor mode)
+- [ ] `RelationshipLayer.svelte`: D3 hierarchical edge-bundled curves above tracks
+- [ ] `RelationshipArc.svelte`: single bezier curve with color coding
+- [ ] Drag-to-connect: draw a relationship arc between two clips
+- [ ] `ArcList.svelte` + `ArcDetail.svelte`: sidebar arc management
+- [ ] `CharacterList.svelte` + `CharacterDetail.svelte`: sidebar character management
+- [ ] `BeatEditor.svelte`: contextual panel for selected clip
+- [ ] `BeatNotes.svelte`: markdown editor for beat descriptions
+- [ ] Default template rendering on new project (A-plot, B-plot, C-runner pre-placed)
+- [ ] Subgenre preset picker (modal on project creation)
+
+**A4 — AI/ML**
+
+- [ ] Prompt construction module (`crates/core/src/ai/prompt.rs`)
+- [ ] Context assembly: gather beat notes, arc info, characters, surrounding scripts
+- [ ] Overlapping beat detection (query timeline for beats at same time position)
+- [ ] Scene weaving prompt: multi-arc scene generation instructions
+- [ ] Context window budgeting (`crates/core/src/ai/context.rs`)
+
+#### ✦ Sync Point 2 — "Interactive Timeline"
+> **Criteria:** User can create a project, manage arcs/characters in the sidebar,
+> manipulate beat clips on the timeline (drag, resize, split, connect), write beat
+> notes in the editor, and see inferred scenes update in real time. All data flows
+> through REST/WS to the core engine and back.
+
+---
+
+### Sprint 3 — AI Generation Pipeline
+
+> **Goal:** Beat notes produce AI-generated screenplay. Streaming tokens appear
+> in the beat editor. Scene weaving merges overlapping arcs into unified scenes.
+
+**A1 — Core Engine**
+
+- [ ] Script element types: `SceneHeading`, `Action`, `Character`, `Dialogue`,
+      `Parenthetical`, `Transition` — 30-min TV format only
+- [ ] Script formatting rules (margins, caps, spacing for TV format)
+- [ ] Script merge logic: combine user-written anchors with AI-generated text
+- [ ] Time-to-page conversion (1 page ≈ 1 minute, clip duration → page budget)
+
+**A2 — Server**
+
+- [ ] llama.cpp backend implementation (`ai_backends/llama.rs`)
+  - [ ] Model loading and inference (up to 80B parameters)
+  - [ ] Streaming token output via channel
+- [ ] OpenRouter backend implementation (`ai_backends/api.rs`)
+  - [ ] HTTP client for OpenRouter API
+  - [ ] Streaming SSE token parsing
+- [ ] `POST /api/ai/generate`: assemble `GenerateRequest`, call backend, stream response
+- [ ] `GET /api/ai/status`: backend health and model info
+- [ ] `PUT /api/ai/config`: switch backends, set model, adjust parameters
+- [ ] WebSocket: stream `generation_progress` and `generation_complete` events
+
+**A3 — Frontend**
+
+- [ ] `ScriptView.svelte`: formatted screenplay display (scene headings, dialogue, etc.)
+- [ ] Streaming generation UX: tokens appear incrementally in the beat editor
+- [ ] Beat editor stage progression UI (notes → generating → generated → refined)
+- [ ] Beat clip status indicators (color/icon for empty, notes, generating, generated, written)
+- [ ] "Generate" button on beat editor (trigger generation for selected clip)
+- [ ] AI status indicator in UI (backend connected, model loaded, generating)
+- [ ] AI configuration panel (backend selection, model, parameters)
+
+**A4 — AI/ML**
+
+- [ ] End-to-end generation pipeline: beat notes → prompt → LLM → formatted script
+- [ ] Scene weaving: unified prompt for overlapping beats across arcs
+- [ ] Character voice injection: embed voice notes into generation prompts
+- [ ] Time budget enforcement: instruct model to produce ~N pages for clip duration
+- [ ] User-written anchor preservation: integrate locked text into generation
+- [ ] Output parsing: extract script elements from raw LLM output
+- [ ] Quality validation: basic checks on generated output (length, format, characters)
+
+#### ✦ Sync Point 3 — "AI Writes"
+> **Criteria:** User writes beat notes, clicks generate, and sees formatted screenplay
+> stream into the beat editor. Overlapping beats produce woven multi-arc scenes.
+> Both llama.cpp (local) and OpenRouter (API) backends work.
+
+---
+
+### Sprint 4 — Interactive Editing + Consistency
+
+> **Goal:** User can edit generated script inline. AI reacts to edits with
+> consistency suggestions. Gap-filling and beat splitting work end-to-end.
+
+**A1 — Core Engine**
+
+- [ ] Edit tracking: diff user changes against generated text
+- [ ] Consistency engine (`crates/core/src/ai/consistency.rs`)
+  - [ ] Semantic change detection (character name, plot point, tone shift)
+  - [ ] Downstream beat identification (which beats are affected by an edit)
+  - [ ] Suggestion generation (proposed updates + reasoning)
+- [ ] Beat locking/unlocking logic (mark as user-written, exclude from regeneration)
+- [ ] Gap detection: identify time ranges with missing content between user-written beats
+
+**A2 — Server**
+
+- [ ] `PUT /api/beats/:id/script`: accept user edits, trigger consistency check
+- [ ] `POST /api/beats/:id/lock` / `POST /api/beats/:id/unlock`
+- [ ] `POST /api/ai/react`: edit reaction endpoint (diff → suggestions)
+- [ ] WebSocket: stream `consistency_suggestion` events
+- [ ] Persistence: project save/load to JSON files (`persistence.rs`)
+
+**A3 — Frontend**
+
+- [ ] Inline script editing in the beat editor (contenteditable or textarea)
+- [ ] `DiffView.svelte`: side-by-side diff for consistency suggestions
+- [ ] Accept/reject UI per suggestion
+- [ ] Lock/unlock toggle on beat clips (visual indicator + click handler)
+- [ ] Beat clip splitting UX (razor tool cursor, click to split)
+- [ ] Beat clip resize with regeneration prompt ("Regenerate for new duration?")
+- [ ] "Fill gaps" mode: highlight empty beats between user-written ones, offer generation
+
+**A4 — AI/ML**
+
+- [ ] Edit reaction pipeline: diff → semantic analysis → downstream impact → suggestions
+- [ ] Character name propagation (rename across all beats)
+- [ ] Plot point change detection and downstream flagging
+- [ ] Dialogue tone consistency checking
+- [ ] Gap-fill generation: produce bridging content between user-written beats A and C
+
+#### ✦ Sync Point 4 — "Collaborative Editing"
+> **Criteria:** User can edit generated scripts inline, lock beats, split beats, and
+> resize beats. AI suggests consistency updates as side-by-side diffs. Gap filling
+> generates bridging content. Projects save and load from disk.
+
+---
+
+### Sprint 5 — RAG, Polish, Export
+
+> **Goal:** Reference materials enhance generation. PDF export produces
+> industry-standard scripts. Core compiles to WASM.
+
+**A1 — Core Engine**
+
+- [ ] WASM compilation target (`wasm32-unknown-unknown`) — proof of concept
+- [ ] Undo/redo command stack (timeline, beat content, relationship operations)
+- [ ] Performance: optimize scene inference for large timelines
+- [ ] Story arc progression analysis (does each arc advance sufficiently?)
+
+**A2 — Server**
+
+- [ ] PDF export endpoint (`POST /api/export/pdf`) — standard TV screenplay format
+- [ ] Reference material ingestion endpoint (upload character bibles, style guides)
+- [ ] Embedding generation for RAG (local or API-based)
+- [ ] Vector storage for RAG chunks (in-memory or SQLite-backed)
+- [ ] Iroh P2P integration scaffold (real-time collaboration foundation)
+
+**A3 — Frontend**
+
+- [ ] PDF export UI (button + progress + download)
+- [ ] Undo/redo controls (Ctrl+Z/Ctrl+Y, toolbar buttons)
+- [ ] Keyboard shortcuts (navigation, clip manipulation, editor commands)
+- [ ] Reference material upload UI
+- [ ] Performance: virtualized timeline rendering for large projects
+- [ ] Polish: animations, transitions, loading states, error handling
+
+**A4 — AI/ML**
+
+- [ ] RAG pipeline: index reference materials → retrieve relevant chunks → inject into prompts
+- [ ] Character voice learning: analyze user-written dialogue to refine voice profiles
+- [ ] Episode-level consistency checking (continuity across all beats and scenes)
+- [ ] Story arc progression tracking (flag arcs that stall or lack resolution)
+- [ ] Prompt optimization based on generation quality feedback
+
+#### ✦ Sync Point 5 — "Release Candidate"
+> **Criteria:** Full workflow end-to-end. RAG enhances generation quality. PDF export
+> produces properly formatted TV scripts. Undo/redo works across all operations.
+> `eidetic-core` compiles to WASM. Project files save/load reliably.
+
+---
+
+### Agent Coordination Rules
+
+1. **Shared contract first.** Before each sprint, agents agree on the types and API
+   signatures they'll consume. A1 defines Rust types, A2 defines REST/WS contracts,
+   A3 defines TypeScript mirrors. Changes to shared contracts require a mini-sync.
+
+2. **Feature flags over branches.** All agents commit to `main`. Incomplete features
+   are gated behind flags or stub implementations, not long-lived branches.
+
+3. **Mock → Real progression.** A3 starts every sprint with mocks for new endpoints
+   and swaps them for real API calls as A2 delivers. Mocks must match the agreed contract.
+
+4. **Vertical slices at sync points.** Each sync point is a demo: one user-facing
+   workflow working end-to-end, not a collection of isolated modules.
+
+5. **A1 never blocks.** Core types are defined first in each sprint. If A1 is still
+   refining logic, A2/A3/A4 work against the type signatures (which are stable early).
 
 ---
 
@@ -720,7 +1053,7 @@ we support exactly one: 30-minute TV episodes. This constrains:
 - AI prompts are tuned for episodic TV writing
 
 **Expansion path:** Additional formats can be added as "timeline templates" later, but the
-core data model (graph + timeline + clips) is format-agnostic.
+core data model (arc tracks + beat clips + relationships) is format-agnostic.
 
 ### 4. AI-First, Not AI-Later
 
@@ -729,42 +1062,53 @@ default, with user edits as refinements. This inverts the traditional screenwrit
 model (user writes everything, AI assists occasionally).
 
 **The user's workflow:**
-1. Define story arcs, characters, and beats
-2. Place beats on the timeline
-3. AI generates a complete first draft
-4. User reads, edits, rewrites sections they want to control
-5. AI adjusts surrounding content for consistency
-6. Iterate until satisfied
 
-### 5. Annotated Timeline = Script
+1. Start from a template (standard 30-min TV, or a subgenre preset)
+2. Define story arcs and characters in the sidebar
+3. Adjust beat clips on the arc tracks — move, resize, add, remove
+4. Click a beat clip and write beat notes describing what happens (the "turn")
+5. Connect beats across arcs with relationship arcs to show causal/thematic links
+6. AI generates screenplay for each beat, weaving overlapping arcs into unified scenes
+7. User reads, edits, rewrites beats they want to control (lock as user-written)
+8. AI suggests consistency updates to downstream beats (side-by-side diff)
+9. Iterate until satisfied
 
-The script is a **derived artifact** of the annotated timeline, not the primary data
-structure. This is the fundamental difference from Plan A (and from every existing
-screenwriting tool). Markers hold "what happens and why." Tracks hold "when and for how long."
-Relationship arcs show how story elements connect. The script is the textual rendering of all
-of these, unified in a single timeline workspace.
+### 5. Timeline Drives the Script
+
+The script is a **derived artifact** of the timeline, not the primary data structure. This is
+the fundamental difference from Plan A (and from every existing screenwriting tool). Arc
+tracks hold "which storylines and when." Beat clips hold "what happens and why." Relationship
+arcs show how beats connect across storylines. Scenes emerge from vertical overlap. The script
+is the textual rendering of all of these, unified in a single timeline workspace.
 
 ---
 
-## Open Questions
+## Resolved Questions
 
-1. **Timeline rendering approach:** Build the annotated timeline (markers, relationship arcs,
-   tracks, clips) with HTML/CSS/SVG, or use HTML5 Canvas for the whole thing? SVG is easier
-   to make interactive (click handlers, drag, popovers) but Canvas performs better at scale.
-   A hybrid approach (Canvas for tracks/clips, SVG overlay for markers/arcs) may be ideal.
+1. **Timeline rendering approach:** Undecided between HTML/CSS/SVG and HTML5 Canvas — both
+   have merits. SVG is easier for interactivity (click handlers, drag, popovers) while Canvas
+   performs better at scale. A hybrid approach remains a possibility. **To be resolved during
+   prototyping.**
 
-2. **Relationship arc drawing:** Bezier curves between markers need to avoid visual clutter
-   when many arcs exist. Options: bundled edges, arc grouping by story arc, fade on hover,
-   or a filter panel to show/hide by type. Need to prototype to find the right balance.
+2. **Relationship arc drawing:** **Hierarchical edge bundling** — bezier curves that
+   magnetically bundle along shared paths where relationships are similar, then splay out as
+   they approach their individual endpoints. Inspired by Danny Holten's hierarchical edge
+   bundling technique combined with Sankey-like flow aesthetics. Implementation will use D3's
+   edge bundling algorithms. Reference examples:
+   - [Hierarchical Edge Bundling](https://observablehq.com/@d3/hierarchical-edge-bundling/2)
+   - [Radial Cluster](https://observablehq.com/@d3/radial-cluster/2)
+   - [Sankey Diagram](https://observablehq.com/@d3/sankey/2)
 
-3. **AI model requirements:** What model size is needed for acceptable script generation?
-   7B models are fast but may produce weak dialogue. 13B+ is better but requires more
-   VRAM. The pluggable backend means users can choose local vs. API.
+3. **AI model requirements:**
+   - **Local inference:** Support models up to 80B parameters via llama.cpp. Target models
+     include Qwen3-30B-A3B-Instruct, famino-12B, and abliterated/Gutenberg-tuned models.
+   - **API inference:** **OpenRouter** integration for easy model switching across providers
+     (OpenAI, Anthropic, open-source hosted models, etc.) via a single API.
 
-4. **Conflict resolution:** When the AI suggests consistency updates that conflict with
-   other user edits, how should conflicts be presented? Inline diff markers?
-   Side-by-side comparison?
+4. **Conflict resolution:** **Side-by-side diff.** When AI consistency suggestions conflict
+   with user edits, present both versions in a side-by-side diff view for the user to
+   choose between.
 
-5. **Collaboration (future):** The REST+WS architecture naturally supports multi-user
-   access. Should we design the API with multi-tenancy in mind from the start, or keep
-   it single-user and add collaboration later?
+5. **Collaboration:** **Iroh P2P.** Collaboration will use [Iroh](https://iroh.computer/),
+   a peer-to-peer networking library, for real-time multi-user collaboration without
+   requiring a central server.
