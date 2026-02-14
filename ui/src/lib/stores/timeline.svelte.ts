@@ -1,6 +1,8 @@
 import type { Timeline, InferredScene, TimeRange } from '../types.js';
 import { TIMELINE } from '../types.js';
 
+export type TimelineTool = 'select' | 'blade';
+
 /** Reactive timeline state. Populated from the server after project creation. */
 export const timelineState = $state<{
 	timeline: Timeline | null;
@@ -9,12 +11,21 @@ export const timelineState = $state<{
 	scrollX: number;
 	/** Measured width of the timeline viewport container. */
 	viewportWidth: number;
+	/** Playhead position in milliseconds. */
+	playheadMs: number;
+	/** Active editing tool. */
+	activeTool: TimelineTool;
+	/** Whether clip snapping is enabled. */
+	snapping: boolean;
 }>({
 	timeline: null,
 	scenes: [],
 	zoom: 1.0,
 	scrollX: 0,
 	viewportWidth: 0,
+	playheadMs: 0,
+	activeTool: 'select',
+	snapping: true,
 });
 
 /** Convert a time range to pixel coordinates at current zoom. */
@@ -35,6 +46,13 @@ export function rangeWidth(range: TimeRange): number {
 /** Total timeline width in pixels at current zoom. */
 export function totalWidth(): number {
 	return TIMELINE.DURATION_MS * TIMELINE.DEFAULT_PX_PER_MS * timelineState.zoom;
+}
+
+/** Set zoom so the entire timeline fits within the viewport. */
+export function zoomToFit(): void {
+	if (timelineState.viewportWidth <= 0) return;
+	timelineState.zoom = timelineState.viewportWidth / (TIMELINE.DURATION_MS * TIMELINE.DEFAULT_PX_PER_MS);
+	timelineState.scrollX = 0;
 }
 
 /** Transient state for drag-to-connect relationship creation. */
