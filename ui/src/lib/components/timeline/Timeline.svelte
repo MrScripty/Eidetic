@@ -3,13 +3,27 @@
 	import StructureBar from './StructureBar.svelte';
 	import TimeRuler from './TimeRuler.svelte';
 	import RelationshipLayer from './RelationshipLayer.svelte';
-	import { timelineState, totalWidth, connectionDrag, timeToX } from '$lib/stores/timeline.svelte.js';
+	import Playhead from './Playhead.svelte';
+	import TimelineToolbar from './TimelineToolbar.svelte';
+	import { timelineState, totalWidth, connectionDrag, timeToX, zoomToFit } from '$lib/stores/timeline.svelte.js';
+	import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { TIMELINE, colorToHex } from '$lib/types.js';
 	import type { StoryArc, TimelineGap } from '$lib/types.js';
 	import { createRelationship, getGaps } from '$lib/api.js';
 
 	let gaps = $state<TimelineGap[]>([]);
+	let scrollbarEl: HTMLDivElement | undefined = $state();
+	let scrollbarSyncing = false;
+	let hasAutoFit = false;
+
+	// Auto zoom-to-fit when timeline first loads and viewport is measured.
+	$effect(() => {
+		if (!hasAutoFit && timelineState.timeline && timelineState.viewportWidth > 0) {
+			hasAutoFit = true;
+			zoomToFit();
+		}
+	});
 
 	// Refetch gaps when timeline changes.
 	$effect(() => {
@@ -27,14 +41,52 @@
 	}
 
 	function onwheel(e: WheelEvent) {
+		e.preventDefault();
 		if (e.ctrlKey) {
-			e.preventDefault();
 			const factor = e.deltaY > 0 ? 0.9 : 1.1;
-			timelineState.zoom = Math.max(0.1, Math.min(10, timelineState.zoom * factor));
+			timelineState.zoom = Math.max(0.005, Math.min(10, timelineState.zoom * factor));
 		} else {
-			timelineState.scrollX = Math.max(0, timelineState.scrollX + e.deltaX);
+			const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+			const maxScroll = Math.max(0, totalWidth() - timelineState.viewportWidth);
+			timelineState.scrollX = Math.max(0, Math.min(maxScroll, timelineState.scrollX + delta));
 		}
 	}
+
+	function onScrollbar(e: Event) {
+		const el = e.currentTarget as HTMLDivElement;
+		if (!scrollbarSyncing) {
+			timelineState.scrollX = el.scrollLeft;
+		}
+	}
+
+	// Keep scrollbar in sync when scrollX changes from wheel/zoom.
+	$effect(() => {
+		const sx = timelineState.scrollX;
+		if (scrollbarEl && Math.abs(scrollbarEl.scrollLeft - sx) > 1) {
+			scrollbarSyncing = true;
+			scrollbarEl.scrollLeft = sx;
+			scrollbarSyncing = false;
+		}
+	});
+
+	// Register timeline tool shortcuts.
+	$effect(() => {
+		const unsubs = [
+			registerShortcut({
+				key: 'a', description: 'Selection tool', skipInInput: true,
+				action: () => { timelineState.activeTool = 'select'; },
+			}),
+			registerShortcut({
+				key: 'b', description: 'Blade tool', skipInInput: true,
+				action: () => { timelineState.activeTool = 'blade'; },
+			}),
+			registerShortcut({
+				key: 'n', description: 'Toggle snapping', skipInInput: true,
+				action: () => { timelineState.snapping = !timelineState.snapping; },
+			}),
+		];
+		return () => unsubs.forEach(fn => fn());
+	});
 
 	function handleConnectStart(clipId: string, x: number, y: number) {
 		connectionDrag.active = true;
@@ -83,25 +135,40 @@
 </script>
 
 <div class="timeline-container" {onwheel} bind:clientWidth={timelineState.viewportWidth}>
+	<TimelineToolbar />
+
+	<!-- Time ruler at top -->
+	<TimeRuler
+		durationMs={TIMELINE.DURATION_MS}
+		width={totalWidth()}
+		offsetX={timelineState.scrollX}
+	/>
+
+	<!-- Playhead overlay (covers tracks area) -->
+	<div class="timeline-content" style="position: relative; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+	<Playhead />
+
 	<!-- Relationship curves above tracks -->
 	<div class="relationship-wrapper">
 		<RelationshipLayer offsetX={timelineState.scrollX} />
 	</div>
 
 	<!-- Arc tracks -->
-	<div class="tracks" style="width: {totalWidth()}px; transform: translateX(-{timelineState.scrollX}px)">
-		{#if timelineState.timeline}
-			{#each timelineState.timeline.tracks as track}
-				{@const arc = arcForTrack(track.arc_id)}
-				<ArcTrack
-					{track}
-					color={arc ? colorToHex(arc.color) : '#888'}
-					label={arc?.name ?? 'Unknown'}
-					gaps={gapsForTrack(track.id)}
-					onconnectstart={handleConnectStart}
-				/>
-			{/each}
-		{/if}
+	<div class="tracks">
+		<div class="tracks-content" style="width: {totalWidth()}px; transform: translateX(-{timelineState.scrollX}px)">
+			{#if timelineState.timeline}
+				{#each timelineState.timeline.tracks as track}
+					{@const arc = arcForTrack(track.arc_id)}
+					<ArcTrack
+						{track}
+						color={arc ? colorToHex(arc.color) : '#888'}
+						label={arc?.name ?? 'Unknown'}
+						gaps={gapsForTrack(track.id)}
+						onconnectstart={handleConnectStart}
+					/>
+				{/each}
+			{/if}
+		</div>
 	</div>
 
 	<!-- Structure bar -->
@@ -113,21 +180,23 @@
 		/>
 	{/if}
 
-	<!-- Time ruler -->
-	<TimeRuler
-		durationMs={TIMELINE.DURATION_MS}
-		width={totalWidth()}
-		offsetX={timelineState.scrollX}
-	/>
+	</div>
+
+	<!-- Horizontal scrollbar -->
+	<div class="timeline-scrollbar" bind:this={scrollbarEl} onscroll={onScrollbar}>
+		<div style="width: {totalWidth()}px; height: 1px;"></div>
+	</div>
 </div>
 
 <style>
 	.timeline-container {
 		display: flex;
 		flex-direction: column;
+		width: 100%;
 		height: 100%;
 		overflow: hidden;
 		user-select: none;
+		position: relative;
 	}
 
 	.relationship-wrapper {
@@ -142,5 +211,20 @@
 		flex: 1;
 		overflow: hidden;
 		position: relative;
+		min-width: 0;
+	}
+
+	.tracks-content {
+		position: relative;
+		height: 100%;
+	}
+
+	.timeline-scrollbar {
+		flex-shrink: 0;
+		overflow-x: auto;
+		overflow-y: hidden;
+		height: 12px;
+		background: var(--color-bg-secondary);
+		border-top: 1px solid var(--color-border-subtle);
 	}
 </style>

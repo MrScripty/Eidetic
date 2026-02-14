@@ -1,12 +1,20 @@
 <script lang="ts">
 	import { TIMELINE, formatTime } from '$lib/types.js';
-	import { timeToX } from '$lib/stores/timeline.svelte.js';
+	import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
 
 	let { durationMs, width, offsetX }: {
 		durationMs: number;
 		width: number;
 		offsetX: number;
 	} = $props();
+
+	function handleClick(e: MouseEvent) {
+		const target = e.currentTarget as HTMLElement;
+		const rect = target.getBoundingClientRect();
+		const localX = e.clientX - rect.left;
+		const timeMs = xToTime(localX + offsetX);
+		timelineState.playheadMs = Math.max(0, Math.min(timeMs, TIMELINE.DURATION_MS));
+	}
 
 	/** Generate tick marks at sensible intervals based on zoom level. */
 	function ticks(): { ms: number; label: string; major: boolean }[] {
@@ -25,7 +33,9 @@
 	}
 </script>
 
-<div class="time-ruler" style="height: {TIMELINE.TIME_RULER_HEIGHT_PX}px">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="time-ruler" style="height: {TIMELINE.TIME_RULER_HEIGHT_PX}px" onclick={handleClick}>
 	<div class="ruler-track" style="width: {width}px; transform: translateX(-{offsetX}px)">
 		{#each ticks() as tick}
 			<div
@@ -45,10 +55,11 @@
 <style>
 	.time-ruler {
 		flex-shrink: 0;
-		border-top: 1px solid var(--color-border-default);
+		border-bottom: 1px solid var(--color-border-default);
 		overflow: hidden;
 		position: relative;
 		background: var(--color-bg-secondary);
+		cursor: pointer;
 	}
 
 	.ruler-track {
