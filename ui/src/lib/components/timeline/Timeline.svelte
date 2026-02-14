@@ -5,12 +5,13 @@
 	import RelationshipLayer from './RelationshipLayer.svelte';
 	import Playhead from './Playhead.svelte';
 	import TimelineToolbar from './TimelineToolbar.svelte';
-	import { timelineState, totalWidth, connectionDrag, timeToX, zoomToFit } from '$lib/stores/timeline.svelte.js';
+	import { timelineState, totalWidth, connectionDrag, timeToX, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { TIMELINE, colorToHex } from '$lib/types.js';
 	import type { StoryArc, TimelineGap } from '$lib/types.js';
-	import { createRelationship, getGaps } from '$lib/api.js';
+	import { createRelationship, getGaps, closeGap, closeAllGaps } from '$lib/api.js';
+	import { editorState } from '$lib/stores/editor.svelte.js';
 
 	let gaps = $state<TimelineGap[]>([]);
 	let scrollbarEl: HTMLDivElement | undefined = $state();
@@ -44,7 +45,7 @@
 		e.preventDefault();
 		if (e.ctrlKey) {
 			const factor = e.deltaY > 0 ? 0.9 : 1.1;
-			timelineState.zoom = Math.max(0.005, Math.min(10, timelineState.zoom * factor));
+			zoomTo(timelineState.zoom * factor);
 		} else {
 			const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
 			const maxScroll = Math.max(0, totalWidth() - timelineState.viewportWidth);
@@ -84,9 +85,42 @@
 				key: 'n', description: 'Toggle snapping', skipInInput: true,
 				action: () => { timelineState.snapping = !timelineState.snapping; },
 			}),
+			registerShortcut({
+				key: 'g', description: 'Close gap before selected clip', skipInInput: true,
+				action: () => { handleCloseGapBeforeSelected(); },
+			}),
+			registerShortcut({
+				key: 'g', shift: true, description: 'Close all gaps on track', skipInInput: true,
+				action: () => { handleCloseAllGapsOnTrack(); },
+			}),
 		];
 		return () => unsubs.forEach(fn => fn());
 	});
+
+	async function handleCloseGapBeforeSelected() {
+		const clipId = editorState.selectedClipId;
+		if (!clipId || !timelineState.timeline) return;
+		// Find the track containing the selected clip.
+		for (const track of timelineState.timeline.tracks) {
+			const clip = track.clips.find(c => c.id === clipId);
+			if (clip) {
+				// The gap ends at the selected clip's start.
+				await closeGap(track.id, clip.time_range.start_ms);
+				return;
+			}
+		}
+	}
+
+	async function handleCloseAllGapsOnTrack() {
+		const clipId = editorState.selectedClipId;
+		if (!clipId || !timelineState.timeline) return;
+		for (const track of timelineState.timeline.tracks) {
+			if (track.clips.some(c => c.id === clipId)) {
+				await closeAllGaps(track.id);
+				return;
+			}
+		}
+	}
 
 	function handleConnectStart(clipId: string, x: number, y: number) {
 		connectionDrag.active = true;

@@ -258,6 +258,60 @@ impl Timeline {
         Err(Error::ClipNotFound(clip_id.0))
     }
 
+    /// Close a specific gap on a track by shifting all clips after it leftward.
+    ///
+    /// `gap_end_ms` is the start time of the first clip after the gap. All clips
+    /// starting at or after this point are shifted left by the gap's duration.
+    pub fn close_gap(&mut self, track_id: TrackId, gap_end_ms: u64) -> Result<()> {
+        let track = self.track_mut(track_id)?;
+        let mut sorted_indices: Vec<usize> = (0..track.clips.len()).collect();
+        sorted_indices.sort_by_key(|&i| track.clips[i].time_range.start_ms);
+
+        // Find the gap: the space between the last clip ending before gap_end_ms and gap_end_ms.
+        let mut gap_start_ms: u64 = 0;
+        for &i in &sorted_indices {
+            let end = track.clips[i].time_range.end_ms;
+            if end <= gap_end_ms {
+                gap_start_ms = gap_start_ms.max(end);
+            }
+        }
+
+        if gap_start_ms >= gap_end_ms {
+            return Ok(()); // No gap to close.
+        }
+
+        let shift = gap_end_ms - gap_start_ms;
+
+        for clip in &mut track.clips {
+            if clip.time_range.start_ms >= gap_end_ms {
+                clip.time_range.start_ms -= shift;
+                clip.time_range.end_ms -= shift;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Close all gaps on a track, making clips contiguous from the first clip's position.
+    pub fn close_all_gaps(&mut self, track_id: TrackId) -> Result<()> {
+        let track = self.track_mut(track_id)?;
+        track.clips.sort_by_key(|c| c.time_range.start_ms);
+
+        let mut cursor = match track.clips.first() {
+            Some(c) => c.time_range.start_ms,
+            None => return Ok(()),
+        };
+
+        for clip in &mut track.clips {
+            let duration = clip.time_range.end_ms - clip.time_range.start_ms;
+            clip.time_range.start_ms = cursor;
+            clip.time_range.end_ms = cursor + duration;
+            cursor += duration;
+        }
+
+        Ok(())
+    }
+
     /// Find gaps on all tracks where no beat clips exist.
     ///
     /// Returns gaps longer than `min_duration_ms` between consecutive clips

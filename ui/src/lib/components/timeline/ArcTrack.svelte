@@ -3,7 +3,7 @@
 	import { TIMELINE } from '$lib/types.js';
 	import { xToTime, timeToX, timelineState } from '$lib/stores/timeline.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
-	import { updateClip, createClip, deleteClip, splitClip, fillGap, generateScript } from '$lib/api.js';
+	import { updateClip, createClip, deleteClip, splitClip, fillGap, closeGap, generateScript } from '$lib/api.js';
 	import { startGeneration } from '$lib/stores/editor.svelte.js';
 	import { notify } from '$lib/stores/notifications.svelte.js';
 	import BeatClip from './BeatClip.svelte';
@@ -106,8 +106,26 @@
 		}
 	}
 
+	let gapContextMenu: { x: number; y: number; gap: TimelineGap } | null = $state(null);
+
 	async function handleFillGap(gap: TimelineGap) {
 		await fillGap(gap.track_id, gap.time_range.start_ms, gap.time_range.end_ms);
+	}
+
+	async function handleCloseGap(gap: TimelineGap) {
+		gapContextMenu = null;
+		await closeGap(gap.track_id, gap.time_range.end_ms);
+	}
+
+	function handleGapContextMenu(e: MouseEvent, gap: TimelineGap) {
+		e.preventDefault();
+		e.stopPropagation();
+		gapContextMenu = { x: e.clientX, y: e.clientY, gap };
+		function dismiss() {
+			gapContextMenu = null;
+			document.removeEventListener('click', dismiss);
+		}
+		setTimeout(() => document.addEventListener('click', dismiss), 0);
 	}
 
 	async function handleDblClick(e: MouseEvent) {
@@ -148,8 +166,9 @@
 			<div
 				class="gap-marker"
 				style="left: {timeToX(gap.time_range.start_ms)}px; width: {timeToX(gap.time_range.end_ms) - timeToX(gap.time_range.start_ms)}px"
-				title="Click to fill gap"
+				title="Click to fill gap · Right-click for options"
 				onclick={() => handleFillGap(gap)}
+				oncontextmenu={(e) => handleGapContextMenu(e, gap)}
 			>
 				<span class="gap-label">+</span>
 			</div>
@@ -163,6 +182,13 @@
 		</div>
 	{/if}
 </div>
+
+{#if gapContextMenu}
+	<div class="gap-context-menu" style="left: {gapContextMenu.x}px; top: {gapContextMenu.y}px">
+		<button onclick={() => { handleFillGap(gapContextMenu!.gap); gapContextMenu = null; }}>Fill Gap</button>
+		<button onclick={() => handleCloseGap(gapContextMenu!.gap)}>Close Gap</button>
+	</div>
+{/if}
 
 <style>
 	.arc-track {
@@ -254,5 +280,32 @@
 		background: var(--color-bg-surface);
 		color: var(--color-text-secondary);
 		cursor: pointer;
+	}
+
+	.gap-context-menu {
+		position: fixed;
+		z-index: 100;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 4px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		padding: 4px 0;
+		min-width: 120px;
+	}
+
+	.gap-context-menu button {
+		display: block;
+		width: 100%;
+		padding: 6px 12px;
+		background: none;
+		border: none;
+		color: var(--color-text-primary);
+		font-size: 0.85rem;
+		cursor: pointer;
+		text-align: left;
+	}
+
+	.gap-context-menu button:hover {
+		background: var(--color-bg-hover);
 	}
 </style>

@@ -177,6 +177,19 @@ export function fillGap(trackId: string, startMs: number, endMs: number): Promis
 	});
 }
 
+export function closeGap(trackId: string, gapEndMs: number): Promise<Timeline> {
+	return request(`/timeline/tracks/${trackId}/close-gap`, {
+		method: 'POST',
+		body: JSON.stringify({ gap_end_ms: gapEndMs }),
+	});
+}
+
+export function closeAllGaps(trackId: string): Promise<Timeline> {
+	return request(`/timeline/tracks/${trackId}/close-all-gaps`, {
+		method: 'POST',
+	});
+}
+
 // --- References ---
 
 export function listReferences(): Promise<ReferenceDocument[]> {

@@ -24,6 +24,8 @@ pub fn router() -> Router<AppState> {
         .route("/timeline/relationships", post(create_relationship))
         .route("/timeline/relationships/{id}", delete(delete_relationship))
         .route("/scenes", get(get_scenes))
+        .route("/timeline/tracks/{id}/close-gap", post(close_gap))
+        .route("/timeline/tracks/{id}/close-all-gaps", post(close_all_gaps))
         .route("/timeline/gaps", get(get_gaps))
         .route("/timeline/gaps/fill", post(fill_gap))
 }
@@ -325,6 +327,54 @@ async fn fill_gap(
             let _ = state.events_tx.send(ServerEvent::ScenesChanged);
             state.trigger_save();
             Json(json)
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct CloseGapRequest {
+    gap_end_ms: u64,
+}
+
+async fn close_gap(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<CloseGapRequest>,
+) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
+    let mut guard = state.project.lock();
+    let Some(project) = guard.as_mut() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    match project.timeline.close_gap(TrackId(id), body.gap_end_ms) {
+        Ok(()) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            state.trigger_save();
+            Json(serde_json::to_value(&project.timeline).unwrap())
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+async fn close_all_gaps(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
+    let mut guard = state.project.lock();
+    let Some(project) = guard.as_mut() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    match project.timeline.close_all_gaps(TrackId(id)) {
+        Ok(()) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            state.trigger_save();
+            Json(serde_json::to_value(&project.timeline).unwrap())
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
