@@ -1,10 +1,13 @@
 <script lang="ts">
+	import type { ExtractionResult } from '$lib/types.js';
+	import { colorToHex } from '$lib/types.js';
 	import {
 		editorState,
 		startGeneration,
 		removeConsistencySuggestion,
 		clearConsistencySuggestions,
 	} from '$lib/stores/editor.svelte.js';
+	import { entitiesForClip } from '$lib/stores/story.svelte.js';
 	import {
 		updateBeatNotes,
 		updateBeatScript,
@@ -13,9 +16,12 @@
 		getBeat,
 		generateScript,
 		reactToEdit,
+		extractEntities,
+		removeClipRef,
 	} from '$lib/api.js';
 	import ScriptView from './ScriptView.svelte';
 	import DiffView from './DiffView.svelte';
+	import EntityExtractPanel from '../sidebar/bible/EntityExtractPanel.svelte';
 
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 	let scriptDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -131,6 +137,30 @@
 	function handleRejectSuggestion(targetClipId: string) {
 		removeConsistencySuggestion(targetClipId);
 	}
+
+	// Entity extraction
+	let extracting = $state(false);
+	let extractionResult: ExtractionResult | null = $state(null);
+
+	const linkedEntities = $derived(
+		editorState.selectedClipId ? entitiesForClip(editorState.selectedClipId) : []
+	);
+
+	async function handleExtract() {
+		if (!editorState.selectedClipId) return;
+		extracting = true;
+		extractionResult = null;
+		try {
+			extractionResult = await extractEntities(editorState.selectedClipId);
+		} finally {
+			extracting = false;
+		}
+	}
+
+	async function handleUnlinkEntity(entityId: string) {
+		if (!editorState.selectedClipId) return;
+		await removeClipRef(entityId, editorState.selectedClipId);
+	}
 </script>
 
 <div class="beat-editor">
@@ -163,6 +193,39 @@
 				oninput={handleNotesInput}
 				disabled={clip.locked}
 			></textarea>
+
+			<!-- Linked entities -->
+			<div class="entity-chips-section">
+				<label class="section-label">
+					Entities
+					<button
+						class="extract-btn"
+						disabled={extracting || !clip.content.generated_script}
+						onclick={handleExtract}
+					>
+						{extracting ? 'Extracting...' : 'Extract'}
+					</button>
+				</label>
+				<div class="entity-chips">
+					{#each linkedEntities as entity (entity.id)}
+						<span class="entity-chip" style="border-color: {colorToHex(entity.color)}">
+							{entity.name}
+							<button class="chip-remove" onclick={() => handleUnlinkEntity(entity.id)}>&times;</button>
+						</span>
+					{/each}
+					{#if linkedEntities.length === 0}
+						<span class="chip-empty">No linked entities</span>
+					{/if}
+				</div>
+			</div>
+
+			{#if extractionResult && editorState.selectedClipId}
+				<EntityExtractPanel
+					result={extractionResult}
+					clipId={editorState.selectedClipId}
+					onclose={() => extractionResult = null}
+				/>
+			{/if}
 
 			{#if isGenerating}
 				<label class="section-label">
@@ -422,6 +485,69 @@
 		border-radius: 4px;
 		color: var(--color-danger-light);
 		font-size: 0.85rem;
+	}
+
+	.entity-chips-section {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.entity-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+	}
+
+	.entity-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 2px 8px;
+		font-size: 0.75rem;
+		color: var(--color-text-primary);
+		background: var(--color-bg-surface);
+		border: 1px solid;
+		border-radius: 12px;
+		cursor: default;
+	}
+
+	.chip-remove {
+		background: none;
+		border: none;
+		color: var(--color-text-muted);
+		cursor: pointer;
+		font-size: 0.8rem;
+		padding: 0;
+		line-height: 1;
+	}
+
+	.chip-remove:hover {
+		color: var(--color-danger);
+	}
+
+	.chip-empty {
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+
+	.extract-btn {
+		font-size: 0.65rem;
+		padding: 1px 8px;
+		border-radius: 8px;
+		border: 1px solid var(--color-bible-development);
+		background: var(--color-bg-surface);
+		color: var(--color-bible-development);
+		cursor: pointer;
+	}
+
+	.extract-btn:hover:not(:disabled) {
+		background: var(--color-bg-hover);
+	}
+
+	.extract-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	.empty-state {

@@ -8,7 +8,7 @@ import {
 	setGenerationError,
 	addConsistencySuggestion,
 } from './editor.svelte.js';
-import { getTimeline, getScenes, listArcs, listCharacters, getBeat } from '$lib/api.js';
+import { getTimeline, getScenes, listArcs, listEntities, getBeat } from '$lib/api.js';
 
 /** Register WebSocket event handlers that update Svelte stores. */
 export function setupWsHandlers(ws: WsClient) {
@@ -24,9 +24,9 @@ export function setupWsHandlers(ws: WsClient) {
 
 	ws.on('story_changed', async () => {
 		const arcs = await listArcs();
-		const characters = await listCharacters();
+		const entities = await listEntities();
 		storyState.arcs = arcs;
-		storyState.characters = characters;
+		storyState.entities = entities;
 	});
 
 	ws.on('beat_updated', async (data) => {
@@ -80,8 +80,18 @@ export function setupWsHandlers(ws: WsClient) {
 		const scenes = await getScenes();
 		timelineState.scenes = scenes;
 		const arcs = await listArcs();
-		const characters = await listCharacters();
+		const entities = await listEntities();
 		storyState.arcs = arcs;
-		storyState.characters = characters;
+		storyState.entities = entities;
+	});
+
+	ws.on('bible_changed', async () => {
+		const entities = await listEntities();
+		storyState.entities = entities;
+	});
+
+	ws.on('entity_extraction_complete', (_data) => {
+		// Refresh entities after extraction (new entities/snapshots may have been committed).
+		listEntities().then(entities => storyState.entities = entities);
 	});
 }

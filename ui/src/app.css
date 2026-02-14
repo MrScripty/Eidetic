@@ -58,6 +58,14 @@
 	--color-rel-character: #77dd77;
 	--color-rel-default: #888888;
 
+	/* Entity categories */
+	--color-entity-character: #6495ed;
+	--color-entity-location: #22c55e;
+	--color-entity-prop: #f97316;
+	--color-entity-theme: #a855f7;
+	--color-entity-event: #ef4444;
+	--color-bible-development: #14b8a6;
+
 	/* Structure segments */
 	--color-segment-cold-open: #4a5568;
 	--color-segment-main-titles: #2d3748;

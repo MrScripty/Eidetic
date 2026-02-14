@@ -74,7 +74,7 @@ export interface Relationship {
 export type RelationshipType =
 	| 'Causal'
 	| { Convergence: { arc_ids: ArcId[] } }
-	| { CharacterDrives: { character_id: CharacterId } }
+	| { EntityDrives: { entity_id: string } }
 	| 'Thematic';
 
 // --- Episode structure ---
@@ -110,12 +110,77 @@ export interface Color {
 	b: number;
 }
 
-export interface Character {
-	id: CharacterId;
+// --- Story Bible ---
+
+export type EntityId = string;
+
+export type EntityCategory = 'Character' | 'Location' | 'Prop' | 'Theme' | 'Event';
+
+export interface Entity {
+	id: EntityId;
+	category: EntityCategory;
 	name: string;
+	tagline: string;
 	description: string;
-	voice_notes: string;
+	details: EntityDetails;
+	snapshots: EntitySnapshot[];
+	clip_refs: ClipId[];
+	relations: EntityRelation[];
 	color: Color;
+	locked: boolean;
+}
+
+export type EntityDetails =
+	| { type: 'Character'; traits: string[]; voice_notes: string; character_relations: [EntityId, string][]; audience_knowledge: string }
+	| { type: 'Location'; int_ext: string; scene_heading_name: string; atmosphere: string }
+	| { type: 'Prop'; owner_entity_id: EntityId | null; significance: string }
+	| { type: 'Theme'; manifestation: string }
+	| { type: 'Event'; timeline_ms: number | null; is_backstory: boolean; involved_entity_ids: EntityId[] };
+
+export interface EntitySnapshot {
+	at_ms: number;
+	source_clip_id: ClipId | null;
+	description: string;
+	state_overrides?: SnapshotOverrides | null;
+}
+
+export interface SnapshotOverrides {
+	traits?: string[];
+	audience_knowledge?: string;
+	emotional_state?: string;
+	atmosphere?: string;
+	owner_entity_id?: EntityId | null;
+	significance?: string;
+	custom?: [string, string][];
+}
+
+export interface EntityRelation {
+	target_entity_id: EntityId;
+	label: string;
+}
+
+export interface StoryBible {
+	entities: Entity[];
+}
+
+export interface ExtractionResult {
+	new_entities: SuggestedEntity[];
+	snapshot_suggestions: SuggestedSnapshot[];
+	clip_ref_suggestions: EntityId[];
+}
+
+export interface SuggestedEntity {
+	name: string;
+	category: EntityCategory;
+	tagline: string;
+	description: string;
+}
+
+export interface SuggestedSnapshot {
+	entity_name: string;
+	description: string;
+	emotional_state?: string;
+	audience_knowledge?: string;
 }
 
 // --- Scenes (inferred) ---
@@ -160,7 +225,7 @@ export interface Project {
 	name: string;
 	timeline: Timeline;
 	arcs: StoryArc[];
-	characters: Character[];
+	bible: StoryBible;
 	references?: ReferenceDocument[];
 }
 
@@ -192,6 +257,8 @@ export const PANEL = {
 	MIN_SCRIPT_HEIGHT_PX: 120,
 	/** Sidebar width (px). */
 	SIDEBAR_WIDTH_PX: 280,
+	/** Sidebar expanded width when viewing entity detail (px). */
+	SIDEBAR_EXPANDED_WIDTH_PX: 420,
 } as const;
 
 // --- AI Configuration ---
@@ -265,7 +332,9 @@ export type ServerMessage =
 	  }
 	| { type: 'consistency_complete'; source_clip_id: string; suggestion_count: number }
 	| { type: 'undo_redo_changed'; can_undo: boolean; can_redo: boolean }
-	| { type: 'project_mutated' };
+	| { type: 'project_mutated' }
+	| { type: 'bible_changed' }
+	| { type: 'entity_extraction_complete'; clip_id: string; new_entity_count: number; snapshot_count: number };
 
 // --- Helpers ---
 

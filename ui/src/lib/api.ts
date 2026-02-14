@@ -1,4 +1,4 @@
-import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, ArcTrack, BeatClip, BeatContent, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType } from './types.js';
+import type { Project, StoryArc, Entity, EntityCategory, EntityDetails, EntitySnapshot, EntityRelation, ExtractionResult, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, ArcTrack, BeatClip, BeatContent, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType, Color } from './types.js';
 
 const BASE = '/api';
 
@@ -62,28 +62,100 @@ export function getArcProgression(): Promise<ArcProgression[]> {
 	return request('/arcs/progression');
 }
 
-// --- Characters ---
+// --- Bible entities ---
 
-export function listCharacters(): Promise<Character[]> {
-	return request('/characters');
+export function listEntities(): Promise<Entity[]> {
+	return request('/bible/entities');
 }
 
-export function createCharacter(name: string, color?: [number, number, number]): Promise<Character> {
-	return request('/characters', {
+export function getEntity(id: string): Promise<Entity> {
+	return request(`/bible/entities/${id}`);
+}
+
+export function createEntity(data: {
+	name: string;
+	category: EntityCategory;
+	tagline?: string;
+	description?: string;
+	details?: EntityDetails;
+	color?: Color;
+}): Promise<Entity> {
+	return request('/bible/entities', {
 		method: 'POST',
-		body: JSON.stringify({ name, color }),
+		body: JSON.stringify(data),
 	});
 }
 
-export function updateCharacter(id: string, updates: Partial<Omit<Character, 'id'>>): Promise<Character> {
-	return request(`/characters/${id}`, {
+export function updateEntity(id: string, updates: Partial<Omit<Entity, 'id'>>): Promise<Entity> {
+	return request(`/bible/entities/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(updates),
 	});
 }
 
-export function deleteCharacter(id: string): Promise<{ deleted: boolean }> {
-	return request(`/characters/${id}`, { method: 'DELETE' });
+export function deleteEntity(id: string): Promise<{ deleted: boolean }> {
+	return request(`/bible/entities/${id}`, { method: 'DELETE' });
+}
+
+// --- Entity snapshots ---
+
+export function addSnapshot(entityId: string, snapshot: Omit<EntitySnapshot, 'source_clip_id'> & { source_clip_id?: string | null }): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/snapshots`, {
+		method: 'POST',
+		body: JSON.stringify(snapshot),
+	});
+}
+
+export function updateSnapshot(entityId: string, idx: number, snapshot: Partial<EntitySnapshot>): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/snapshots/${idx}`, {
+		method: 'PUT',
+		body: JSON.stringify(snapshot),
+	});
+}
+
+export function deleteSnapshot(entityId: string, idx: number): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/snapshots/${idx}`, { method: 'DELETE' });
+}
+
+// --- Entity relations ---
+
+export function addRelation(entityId: string, relation: EntityRelation): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/relations`, {
+		method: 'POST',
+		body: JSON.stringify(relation),
+	});
+}
+
+export function deleteRelation(entityId: string, idx: number): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/relations/${idx}`, { method: 'DELETE' });
+}
+
+// --- Entity clip refs ---
+
+export function addClipRef(entityId: string, clipId: string): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/clip-refs`, {
+		method: 'POST',
+		body: JSON.stringify({ clip_id: clipId }),
+	});
+}
+
+export function removeClipRef(entityId: string, clipId: string): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/clip-refs/${clipId}`, { method: 'DELETE' });
+}
+
+// --- Entity extraction ---
+
+export function extractEntities(clipId: string): Promise<ExtractionResult> {
+	return request('/ai/extract', {
+		method: 'POST',
+		body: JSON.stringify({ clip_id: clipId }),
+	});
+}
+
+// --- Bible resolve at time ---
+
+export function resolveEntitiesAtTime(timeMs: number): Promise<Entity[]> {
+	return request(`/bible/at?time_ms=${timeMs}`);
 }
 
 // --- Timeline ---

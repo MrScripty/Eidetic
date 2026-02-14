@@ -95,7 +95,7 @@
 		projectState.current = project;
 		timelineState.timeline = project.timeline;
 		storyState.arcs = project.arcs;
-		storyState.characters = project.characters;
+		storyState.entities = project.bible.entities;
 	}
 </script>
 

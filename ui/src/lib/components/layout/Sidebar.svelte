@@ -3,22 +3,19 @@
 	import { PANEL } from '$lib/types.js';
 	import ArcList from '../sidebar/ArcList.svelte';
 	import ArcDetail from '../sidebar/ArcDetail.svelte';
-	import CharacterList from '../sidebar/CharacterList.svelte';
-	import CharacterDetail from '../sidebar/CharacterDetail.svelte';
+	import StoryBibleTab from '../sidebar/bible/StoryBibleTab.svelte';
 	import AiConfigPanel from '../sidebar/AiConfigPanel.svelte';
 	import ReferencePanel from '../sidebar/ReferencePanel.svelte';
 	import ProgressionPanel from '../sidebar/ProgressionPanel.svelte';
 
 	let { onclose }: { onclose: () => void } = $props();
-	let activeTab: 'arcs' | 'characters' | 'ai' | 'refs' = $state('arcs');
+	let activeTab: 'arcs' | 'bible' | 'ai' | 'refs' = $state('arcs');
 	let selectedArcId: string | null = $state(null);
-	let selectedCharacterId: string | null = $state(null);
 	let showProgression = $state(false);
 
-	function switchTab(tab: 'arcs' | 'characters' | 'ai' | 'refs') {
+	function switchTab(tab: 'arcs' | 'bible' | 'ai' | 'refs') {
 		activeTab = tab;
 		selectedArcId = null;
-		selectedCharacterId = null;
 	}
 </script>
 
@@ -34,10 +31,10 @@
 			</button>
 			<button
 				class="tab"
-				class:active={activeTab === 'characters'}
-				onclick={() => switchTab('characters')}
+				class:active={activeTab === 'bible'}
+				onclick={() => switchTab('bible')}
 			>
-				Characters
+				Bible
 			</button>
 			<button
 				class="tab"
@@ -73,17 +70,8 @@
 				<ArcList onselect={(id) => selectedArcId = id} />
 				<button class="toggle-view" onclick={() => showProgression = true}>Analysis</button>
 			{/if}
-		{:else if activeTab === 'characters'}
-			{#if selectedCharacterId}
-				{@const character = storyState.characters.find(c => c.id === selectedCharacterId)}
-				{#if character}
-					<CharacterDetail {character} onback={() => selectedCharacterId = null} />
-				{:else}
-					<CharacterList onselect={(id) => selectedCharacterId = id} />
-				{/if}
-			{:else}
-				<CharacterList onselect={(id) => selectedCharacterId = id} />
-			{/if}
+		{:else if activeTab === 'bible'}
+			<StoryBibleTab />
 		{:else if activeTab === 'ai'}
 			<AiConfigPanel />
 		{:else}

@@ -11,7 +11,7 @@
 		if (type === 'Causal') return 'var(--color-rel-causal)';
 		if (type === 'Thematic') return 'var(--color-rel-thematic)';
 		if (typeof type === 'object' && 'Convergence' in type) return 'var(--color-rel-convergence)';
-		if (typeof type === 'object' && 'CharacterDrives' in type) return 'var(--color-rel-character)';
+		if (typeof type === 'object' && 'EntityDrives' in type) return 'var(--color-rel-character)';
 		return 'var(--color-rel-default)';
 	}
 
