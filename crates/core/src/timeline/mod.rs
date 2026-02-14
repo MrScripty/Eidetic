@@ -8,11 +8,22 @@ pub mod track;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
+use crate::story::arc::ArcId;
 use clip::{BeatClip, ClipId};
 use relationship::{Relationship, RelationshipId};
 use structure::EpisodeStructure;
 use timing::TimeRange;
 use track::{ArcTrack, TrackId};
+
+/// A gap on a track where no beat clip exists.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimelineGap {
+    pub track_id: TrackId,
+    pub arc_id: ArcId,
+    pub time_range: TimeRange,
+    pub preceding_clip_id: Option<ClipId>,
+    pub following_clip_id: Option<ClipId>,
+}
 
 /// The central data structure: a timeline with arc tracks and episode structure.
 ///
@@ -245,5 +256,58 @@ impl Timeline {
         }
 
         Err(Error::ClipNotFound(clip_id.0))
+    }
+
+    /// Find gaps on all tracks where no beat clips exist.
+    ///
+    /// Returns gaps longer than `min_duration_ms` between consecutive clips
+    /// and between the timeline edges and the first/last clips.
+    pub fn find_gaps(&self, min_duration_ms: u64) -> Vec<TimelineGap> {
+        let mut gaps = Vec::new();
+
+        for track in &self.tracks {
+            let mut sorted: Vec<&BeatClip> = track.clips.iter().collect();
+            sorted.sort_by_key(|c| c.time_range.start_ms);
+
+            let mut cursor = 0u64;
+            let mut prev_clip_id: Option<ClipId> = None;
+
+            for clip in &sorted {
+                if clip.time_range.start_ms > cursor {
+                    let duration = clip.time_range.start_ms - cursor;
+                    if duration >= min_duration_ms {
+                        if let Ok(range) = TimeRange::new(cursor, clip.time_range.start_ms) {
+                            gaps.push(TimelineGap {
+                                track_id: track.id,
+                                arc_id: track.arc_id,
+                                time_range: range,
+                                preceding_clip_id: prev_clip_id,
+                                following_clip_id: Some(clip.id),
+                            });
+                        }
+                    }
+                }
+                cursor = clip.time_range.end_ms;
+                prev_clip_id = Some(clip.id);
+            }
+
+            // Gap between last clip and timeline end.
+            if cursor < self.total_duration_ms {
+                let duration = self.total_duration_ms - cursor;
+                if duration >= min_duration_ms {
+                    if let Ok(range) = TimeRange::new(cursor, self.total_duration_ms) {
+                        gaps.push(TimelineGap {
+                            track_id: track.id,
+                            arc_id: track.arc_id,
+                            time_range: range,
+                            preceding_clip_id: prev_clip_id,
+                            following_clip_id: None,
+                        });
+                    }
+                }
+            }
+        }
+
+        gaps
     }
 }
