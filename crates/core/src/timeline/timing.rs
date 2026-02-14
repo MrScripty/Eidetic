@@ -47,6 +47,17 @@ impl TimeRange {
     pub fn estimated_pages(&self) -> f64 {
         self.duration_ms() as f64 / 60_000.0
     }
+
+    /// Human-readable page budget instruction for AI prompts.
+    pub fn page_budget_instruction(&self) -> String {
+        let pages = self.estimated_pages();
+        let total_seconds = self.duration_ms() / 1000;
+        let minutes = total_seconds / 60;
+        let seconds = total_seconds % 60;
+        format!(
+            "approximately {pages:.1} pages ({minutes}:{seconds:02} of screen time)"
+        )
+    }
 }
 
 /// Format milliseconds as MM:SS for display.

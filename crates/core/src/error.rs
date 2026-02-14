@@ -36,6 +36,18 @@ pub enum Error {
 
     #[error("serialization failed: {0}")]
     Serialization(#[from] serde_json::Error),
+
+    #[error("AI backend error: {0}")]
+    AiBackend(String),
+
+    #[error("generation already in progress for clip {0}")]
+    GenerationInProgress(Uuid),
+
+    #[error("clip is locked and cannot be regenerated: {0}")]
+    ClipLocked(Uuid),
+
+    #[error("clip has no beat notes to generate from: {0}")]
+    NoBeatNotes(Uuid),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
