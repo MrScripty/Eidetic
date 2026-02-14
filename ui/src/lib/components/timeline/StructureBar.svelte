@@ -10,11 +10,11 @@
 	} = $props();
 
 	const segmentColors: Record<string, string> = {
-		ColdOpen: '#4a5568',
-		MainTitles: '#2d3748',
-		Act: '#374151',
-		CommercialBreak: '#1f2937',
-		Tag: '#4a5568',
+		ColdOpen: 'var(--color-segment-cold-open)',
+		MainTitles: 'var(--color-segment-main-titles)',
+		Act: 'var(--color-segment-act)',
+		CommercialBreak: 'var(--color-segment-commercial)',
+		Tag: 'var(--color-segment-tag)',
 	};
 </script>
 
@@ -28,7 +28,7 @@
 					style="
 						left: {timeToX(segment.time_range.start_ms)}px;
 						width: {segWidth}px;
-						background: {segmentColors[segment.segment_type] ?? '#374151'};
+						background: {segmentColors[segment.segment_type] ?? 'var(--color-segment-act)'};
 					"
 					title={segment.label}
 				>

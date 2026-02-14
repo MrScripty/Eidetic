@@ -71,21 +71,21 @@
 		height: 0;
 		border-left: 6px solid transparent;
 		border-right: 6px solid transparent;
-		border-top: 8px solid #ef4444;
+		border-top: 8px solid var(--color-playhead);
 		flex-shrink: 0;
 	}
 
 	.playhead-line {
 		width: 2px;
 		flex: 1;
-		background: #ef4444;
+		background: var(--color-playhead);
 	}
 
 	.playhead.dragging .playhead-line {
-		background: #f87171;
+		background: var(--color-playhead-active);
 	}
 
 	.playhead.dragging .playhead-head {
-		border-top-color: #f87171;
+		border-top-color: var(--color-playhead-active);
 	}
 </style>

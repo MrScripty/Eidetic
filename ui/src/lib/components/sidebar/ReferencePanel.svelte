@@ -157,7 +157,7 @@
 	}
 
 	.ref-delete:hover {
-		color: #ef4444;
+		color: var(--color-danger);
 	}
 
 	.ref-empty {

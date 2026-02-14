@@ -145,11 +145,11 @@
 	}
 
 	.status-dot.connected {
-		background: #22c55e;
+		background: var(--color-success);
 	}
 
 	.status-dot.disconnected {
-		background: #ef4444;
+		background: var(--color-danger);
 	}
 
 	.status-text {
@@ -207,7 +207,7 @@
 	.save-btn {
 		padding: 8px 16px;
 		background: var(--color-accent);
-		color: #fff;
+		color: var(--color-text-on-dark);
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
@@ -227,11 +227,11 @@
 
 	.save-message {
 		font-size: 0.75rem;
-		color: #f87171;
+		color: var(--color-danger-light);
 		text-align: center;
 	}
 
 	.save-message.success {
-		color: #22c55e;
+		color: var(--color-success);
 	}
 </style>

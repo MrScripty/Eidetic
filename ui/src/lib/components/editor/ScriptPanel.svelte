@@ -64,7 +64,7 @@
 					<div class="beat-header">
 						<span
 							class="arc-dot"
-							style="background: {arc ? colorToHex(arc.color) : '#888'}"
+							style="background: {arc ? colorToHex(arc.color) : 'var(--color-rel-default)'}"
 						></span>
 						<span class="beat-name">{entry.clip.name}</span>
 						<span class="beat-type">{entry.clip.beat_type}</span>

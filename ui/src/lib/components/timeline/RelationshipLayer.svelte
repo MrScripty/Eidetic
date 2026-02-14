@@ -8,11 +8,11 @@
 	let { offsetX }: { offsetX: number } = $props();
 
 	function relationshipColor(type: RelationshipType): string {
-		if (type === 'Causal') return '#6495ed';
-		if (type === 'Thematic') return '#a855f7';
-		if (typeof type === 'object' && 'Convergence' in type) return '#ffb347';
-		if (typeof type === 'object' && 'CharacterDrives' in type) return '#77dd77';
-		return '#888';
+		if (type === 'Causal') return 'var(--color-rel-causal)';
+		if (type === 'Thematic') return 'var(--color-rel-thematic)';
+		if (typeof type === 'object' && 'Convergence' in type) return 'var(--color-rel-convergence)';
+		if (typeof type === 'object' && 'CharacterDrives' in type) return 'var(--color-rel-character)';
+		return 'var(--color-rel-default)';
 	}
 
 	function clipCenter(clipId: string): { x: number; y: number } | null {

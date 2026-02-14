@@ -1,32 +1,98 @@
 @import "tailwindcss";
 
-/* Pantograph dark theme — CSS custom properties */
+/* Pantograph dark grey theme */
 @theme {
-	--color-bg-primary: #1a1a2e;
-	--color-bg-secondary: #16213e;
-	--color-bg-surface: #1f2b47;
-	--color-bg-elevated: #253350;
-	--color-bg-hover: #2d3f5f;
+	/* Backgrounds — Tailwind neutral scale matching Pantograph */
+	--color-bg-primary: #171717;
+	--color-bg-secondary: #262626;
+	--color-bg-surface: #262626;
+	--color-bg-elevated: #404040;
+	--color-bg-hover: #525252;
 
-	--color-text-primary: #e0e0e0;
-	--color-text-secondary: #a0a0b8;
+	/* Text */
+	--color-text-primary: #e5e7eb;
+	--color-text-secondary: #9ca3af;
 	--color-text-muted: #6b7280;
+	--color-text-on-light: #000000;
+	--color-text-on-dark: #ffffff;
 
-	--color-border-default: #2d3f5f;
-	--color-border-subtle: #253350;
+	/* Borders */
+	--color-border-default: #404040;
+	--color-border-subtle: #2a2a2a;
 
-	--color-accent: #6495ed;
-	--color-accent-hover: #7ba8f0;
+	/* Accent */
+	--color-accent: #3b82f6;
+	--color-accent-hover: #60a5fa;
 
+	/* Plot line colors */
 	--color-a-plot: #6495ed;
 	--color-b-plot: #77dd77;
 	--color-c-runner: #ffb347;
 
+	/* Content status */
 	--color-status-empty: #4b5563;
 	--color-status-notes: #eab308;
 	--color-status-generating: #a855f7;
 	--color-status-generated: #22c55e;
 	--color-status-written: #3b82f6;
+
+	/* Semantic feedback */
+	--color-danger: #ef4444;
+	--color-danger-light: #f87171;
+	--color-success: #22c55e;
+	--color-success-light: #4ade80;
+	--color-warning: #f59e0b;
+	--color-info: #3b82f6;
+
+	/* Playhead */
+	--color-playhead: #ef4444;
+	--color-playhead-active: #f87171;
+
+	/* Blade tool */
+	--color-blade: #ff4444;
+
+	/* Relationship arcs */
+	--color-rel-causal: #6495ed;
+	--color-rel-thematic: #a855f7;
+	--color-rel-convergence: #ffb347;
+	--color-rel-character: #77dd77;
+	--color-rel-default: #888888;
+
+	/* Structure segments */
+	--color-segment-cold-open: #4a5568;
+	--color-segment-main-titles: #2d3748;
+	--color-segment-act: #374151;
+	--color-segment-commercial: #1f2937;
+	--color-segment-tag: #4a5568;
+
+	/* White overlays on dark backgrounds */
+	--color-overlay-faint: rgba(255, 255, 255, 0.04);
+	--color-overlay-subtle: rgba(255, 255, 255, 0.08);
+	--color-overlay-light: rgba(255, 255, 255, 0.1);
+	--color-overlay-border: rgba(255, 255, 255, 0.12);
+	--color-overlay-medium: rgba(255, 255, 255, 0.15);
+	--color-overlay-strong: rgba(255, 255, 255, 0.3);
+	--color-overlay-bright: rgba(255, 255, 255, 0.4);
+	--color-overlay-vivid: rgba(255, 255, 255, 0.6);
+	--color-overlay-intense: rgba(255, 255, 255, 0.8);
+
+	/* Dark overlays / shadows */
+	--color-shadow: rgba(0, 0, 0, 0.3);
+	--color-shadow-medium: rgba(0, 0, 0, 0.4);
+	--color-shadow-heavy: rgba(0, 0, 0, 0.8);
+
+	/* Feedback backgrounds (alpha variants) */
+	--color-danger-bg: rgba(239, 68, 68, 0.15);
+	--color-danger-border: rgba(239, 68, 68, 0.4);
+	--color-blade-glow: rgba(255, 68, 68, 0.6);
+	--color-success-bg: rgba(34, 197, 94, 0.15);
+	--color-success-bg-strong: rgba(34, 197, 94, 0.2);
+	--color-success-bg-hover: rgba(34, 197, 94, 0.35);
+	--color-success-border: rgba(34, 197, 94, 0.4);
+	--color-warning-bg: rgba(245, 158, 11, 0.15);
+
+	/* Fitting mode outline */
+	--color-fitting-outline: rgba(255, 200, 0, 0.6);
 }
 
 html, body {

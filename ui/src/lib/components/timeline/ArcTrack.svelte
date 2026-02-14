@@ -264,8 +264,8 @@
 	}
 
 	.track-delete-btn:hover {
-		color: #ef4444;
-		background: rgba(239, 68, 68, 0.15);
+		color: var(--color-danger);
+		background: var(--color-danger-bg);
 	}
 
 	.track-lane {
@@ -282,7 +282,7 @@
 		position: absolute;
 		top: 4px;
 		bottom: 4px;
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--color-overlay-faint);
 		border: 1px dashed var(--color-border-subtle);
 		border-radius: 4px;
 		cursor: pointer;
@@ -293,7 +293,7 @@
 	}
 
 	.gap-marker:hover {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--color-overlay-light);
 		border-color: var(--color-border-default);
 	}
 
@@ -347,7 +347,7 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: 4px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		box-shadow: 0 4px 12px var(--color-shadow);
 		padding: 4px 0;
 		min-width: 120px;
 	}
@@ -369,6 +369,6 @@
 	}
 
 	.delete-track-btn:hover {
-		color: #ef4444 !important;
+		color: var(--color-danger) !important;
 	}
 </style>

@@ -339,10 +339,10 @@
 	}
 
 	.ai-dot.connected {
-		background: #22c55e;
+		background: var(--color-success);
 	}
 
 	.ai-dot.disconnected {
-		background: #ef4444;
+		background: var(--color-danger);
 	}
 </style>

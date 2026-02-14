@@ -259,11 +259,11 @@
 		color: var(--color-text-secondary);
 	}
 
-	.status-badge[data-status="NotesOnly"] { background: var(--color-status-notes); color: #000; }
-	.status-badge[data-status="Generating"] { background: var(--color-status-generating); color: #fff; }
-	.status-badge[data-status="Generated"] { background: var(--color-status-generated); color: #000; }
-	.status-badge[data-status="UserRefined"] { background: var(--color-status-written); color: #fff; }
-	.status-badge[data-status="UserWritten"] { background: var(--color-status-written); color: #fff; }
+	.status-badge[data-status="NotesOnly"] { background: var(--color-status-notes); color: var(--color-text-on-light); }
+	.status-badge[data-status="Generating"] { background: var(--color-status-generating); color: var(--color-text-on-dark); }
+	.status-badge[data-status="Generated"] { background: var(--color-status-generated); color: var(--color-text-on-light); }
+	.status-badge[data-status="UserRefined"] { background: var(--color-status-written); color: var(--color-text-on-dark); }
+	.status-badge[data-status="UserWritten"] { background: var(--color-status-written); color: var(--color-text-on-dark); }
 
 	.lock-toggle {
 		font-size: 0.75rem;
@@ -294,7 +294,7 @@
 
 	.generate-btn:hover:not(:disabled) {
 		background: var(--color-accent);
-		color: #fff;
+		color: var(--color-text-on-dark);
 	}
 
 	.generate-btn:disabled {
@@ -417,10 +417,10 @@
 
 	.error-banner {
 		padding: 8px 12px;
-		background: rgba(239, 68, 68, 0.15);
-		border: 1px solid rgba(239, 68, 68, 0.4);
+		background: var(--color-danger-bg);
+		border: 1px solid var(--color-danger-border);
 		border-radius: 4px;
-		color: #f87171;
+		color: var(--color-danger-light);
 		font-size: 0.85rem;
 	}
 

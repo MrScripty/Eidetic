@@ -38,20 +38,20 @@
 		pointer-events: auto;
 		min-width: 200px;
 		max-width: 360px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		box-shadow: 0 4px 12px var(--color-shadow);
 	}
 
 	.toast-info {
-		border-left: 3px solid #3b82f6;
+		border-left: 3px solid var(--color-info);
 	}
 	.toast-success {
-		border-left: 3px solid #22c55e;
+		border-left: 3px solid var(--color-success);
 	}
 	.toast-warning {
-		border-left: 3px solid #f59e0b;
+		border-left: 3px solid var(--color-warning);
 	}
 	.toast-error {
-		border-left: 3px solid #ef4444;
+		border-left: 3px solid var(--color-danger);
 	}
 
 	.toast-message {

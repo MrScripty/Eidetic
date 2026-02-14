@@ -55,14 +55,14 @@
 	}
 
 	.diff-line.removed {
-		background: rgba(239, 68, 68, 0.15);
-		color: #f87171;
+		background: var(--color-danger-bg);
+		color: var(--color-danger-light);
 		text-decoration: line-through;
 	}
 
 	.diff-line.added {
-		background: rgba(34, 197, 94, 0.15);
-		color: #4ade80;
+		background: var(--color-success-bg);
+		color: var(--color-success-light);
 	}
 
 	.diff-reason {
@@ -86,13 +86,13 @@
 	}
 
 	.accept-btn {
-		background: rgba(34, 197, 94, 0.2);
-		color: #4ade80;
-		border-color: rgba(34, 197, 94, 0.4) !important;
+		background: var(--color-success-bg-strong);
+		color: var(--color-success-light);
+		border-color: var(--color-success-border) !important;
 	}
 
 	.accept-btn:hover {
-		background: rgba(34, 197, 94, 0.35);
+		background: var(--color-success-bg-hover);
 	}
 
 	.reject-btn {

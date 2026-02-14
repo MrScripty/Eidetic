@@ -298,7 +298,7 @@
 		position: absolute;
 		top: 4px;
 		height: calc(100% - 8px);
-		border: 1px solid rgba(0, 0, 0, 0.4);
+		border: 1px solid var(--color-shadow-medium);
 		border-radius: 4px;
 		cursor: grab;
 		display: flex;
@@ -310,7 +310,7 @@
 		padding: 0 8px;
 		min-width: 0;
 		user-select: none;
-		box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.15), inset -1px 0 0 rgba(255, 255, 255, 0.15);
+		box-shadow: inset 1px 0 0 var(--color-overlay-medium), inset -1px 0 0 var(--color-overlay-medium);
 	}
 
 	.beat-clip:hover {
@@ -324,7 +324,7 @@
 	}
 
 	.beat-clip.locked {
-		border: 1px dashed rgba(255, 255, 255, 0.4);
+		border: 1px dashed var(--color-overlay-bright);
 	}
 
 	.beat-clip.dragging {
@@ -333,7 +333,7 @@
 	}
 
 	.beat-clip.fitting {
-		outline: 2px dashed rgba(255, 200, 0, 0.6);
+		outline: 2px dashed var(--color-fitting-outline);
 		outline-offset: 1px;
 	}
 
@@ -348,21 +348,21 @@
 		height: 100%;
 		cursor: ew-resize;
 		z-index: 1;
-		background: rgba(255, 255, 255, 0.08);
+		background: var(--color-overlay-subtle);
 	}
 
 	.resize-handle.left {
 		left: 0;
-		border-right: 1px solid rgba(255, 255, 255, 0.12);
+		border-right: 1px solid var(--color-overlay-border);
 	}
 
 	.resize-handle.right {
 		right: 0;
-		border-left: 1px solid rgba(255, 255, 255, 0.12);
+		border-left: 1px solid var(--color-overlay-border);
 	}
 
 	.resize-handle:hover {
-		background: rgba(255, 255, 255, 0.3);
+		background: var(--color-overlay-strong);
 	}
 
 	.status-dot {
@@ -374,7 +374,7 @@
 
 	.clip-name {
 		font-size: 0.7rem;
-		color: rgba(0, 0, 0, 0.8);
+		color: var(--color-shadow-heavy);
 		font-weight: 600;
 		text-overflow: ellipsis;
 		overflow: hidden;
@@ -386,14 +386,14 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.4);
-		border: 1px solid rgba(255, 255, 255, 0.6);
+		background: var(--color-overlay-bright);
+		border: 1px solid var(--color-overlay-vivid);
 		flex-shrink: 0;
 		cursor: crosshair;
 	}
 
 	.connect-handle:hover {
-		background: rgba(255, 255, 255, 0.8);
+		background: var(--color-overlay-intense);
 	}
 
 	.blade-preview {
@@ -401,10 +401,10 @@
 		top: 0;
 		bottom: 0;
 		width: 2px;
-		background: #ff4444;
+		background: var(--color-blade);
 		pointer-events: none;
 		z-index: 2;
-		box-shadow: 0 0 4px rgba(255, 68, 68, 0.6);
+		box-shadow: 0 0 4px var(--color-blade-glow);
 	}
 
 	.context-menu {
@@ -413,7 +413,7 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: 4px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		box-shadow: 0 4px 12px var(--color-shadow);
 		padding: 4px 0;
 		min-width: 120px;
 	}
@@ -435,6 +435,6 @@
 	}
 
 	.context-menu button.danger {
-		color: #e55;
+		color: var(--color-danger);
 	}
 </style>

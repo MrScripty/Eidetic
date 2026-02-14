@@ -124,18 +124,18 @@
 	}
 
 	.badge-ok {
-		background: rgba(34, 197, 94, 0.15);
-		color: #22c55e;
+		background: var(--color-success-bg);
+		color: var(--color-success);
 	}
 
 	.badge-warn {
-		background: rgba(245, 158, 11, 0.15);
-		color: #f59e0b;
+		background: var(--color-warning-bg);
+		color: var(--color-warning);
 	}
 
 	.badge-error {
-		background: rgba(239, 68, 68, 0.15);
-		color: #ef4444;
+		background: var(--color-danger-bg);
+		color: var(--color-danger);
 	}
 
 	.arc-stats {
@@ -148,7 +148,7 @@
 	}
 
 	.missing {
-		color: #f59e0b;
+		color: var(--color-warning);
 	}
 
 	.issue-list {
@@ -165,13 +165,13 @@
 	}
 
 	.issue-warning {
-		border-color: #f59e0b;
-		color: #f59e0b;
+		border-color: var(--color-warning);
+		color: var(--color-warning);
 	}
 
 	.issue-error {
-		border-color: #ef4444;
-		color: #ef4444;
+		border-color: var(--color-danger);
+		color: var(--color-danger);
 	}
 
 	.empty-msg {

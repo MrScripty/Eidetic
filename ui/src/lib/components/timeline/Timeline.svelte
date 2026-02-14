@@ -216,7 +216,7 @@
 					{@const arc = arcForTrack(track.arc_id)}
 					<ArcTrack
 						{track}
-						color={arc ? colorToHex(arc.color) : '#888'}
+						color={arc ? colorToHex(arc.color) : 'var(--color-rel-default)'}
 						label={arc?.name ?? 'Unknown'}
 						gaps={gapsForTrack(track.id)}
 						onconnectstart={handleConnectStart}
