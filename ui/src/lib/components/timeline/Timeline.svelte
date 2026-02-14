@@ -225,7 +225,7 @@
 				{/each}
 			{/if}
 			<!-- Add track row -->
-			<button class="add-track-row" onclick={handleAddTrack} title="Add new track">
+			<button class="add-track-row" style="transform: translateX({timelineState.scrollX}px)" onclick={handleAddTrack} title="Add new track">
 				<span class="add-track-plus">+</span> Add Track
 			</button>
 		</div>

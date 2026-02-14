@@ -156,7 +156,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="arc-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="track-label" oncontextmenu={handleTrackContextMenu}>
+	<div class="track-label" style="transform: translateX({timelineState.scrollX}px)" oncontextmenu={handleTrackContextMenu}>
 		<span class="track-label-text">{label}</span>
 		<button
 			class="track-delete-btn"
@@ -235,6 +235,9 @@
 		justify-content: flex-end;
 		gap: 2px;
 		overflow: hidden;
+		position: relative;
+		z-index: 2;
+		background: var(--color-bg-primary);
 	}
 
 	.track-label-text {
