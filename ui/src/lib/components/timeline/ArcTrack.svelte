@@ -1,39 +1,75 @@
 <script lang="ts">
 	import type { ArcTrack as ArcTrackType } from '$lib/types.js';
 	import { TIMELINE } from '$lib/types.js';
-	import { timeToX, rangeWidth } from '$lib/stores/timeline.svelte.js';
+	import { xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
+	import { updateClip, createClip, deleteClip, splitClip } from '$lib/api.js';
+	import BeatClip from './BeatClip.svelte';
 
-	let { track, color, label }: {
+	let { track, color, label, onconnectstart }: {
 		track: ArcTrackType;
 		color: string;
 		label: string;
+		onconnectstart: (clipId: string, x: number, y: number) => void;
 	} = $props();
 
 	function selectClip(clip: ArcTrackType['clips'][number]) {
 		editorState.selectedClipId = clip.id;
 		editorState.selectedClip = clip;
 	}
+
+	async function handleMove(clipId: string, startMs: number, endMs: number) {
+		await updateClip(clipId, { start_ms: startMs, end_ms: endMs });
+	}
+
+	async function handleResize(clipId: string, startMs: number, endMs: number) {
+		await updateClip(clipId, { start_ms: startMs, end_ms: endMs });
+	}
+
+	async function handleDelete(clipId: string) {
+		if (editorState.selectedClipId === clipId) {
+			editorState.selectedClipId = null;
+			editorState.selectedClip = null;
+		}
+		await deleteClip(clipId);
+	}
+
+	async function handleSplit(clipId: string, atMs: number) {
+		if (editorState.selectedClipId === clipId) {
+			editorState.selectedClipId = null;
+			editorState.selectedClip = null;
+		}
+		await splitClip(clipId, atMs);
+	}
+
+	async function handleDblClick(e: MouseEvent) {
+		const target = e.currentTarget as HTMLElement;
+		const rect = target.getBoundingClientRect();
+		const localX = e.clientX - rect.left;
+		const timeMs = xToTime(localX + timelineState.scrollX);
+		const defaultDuration = 60_000;
+		const startMs = Math.max(0, Math.round(timeMs - defaultDuration / 2));
+		const endMs = Math.min(startMs + defaultDuration, TIMELINE.DURATION_MS);
+		await createClip(track.id, 'New Beat', 'setup', startMs, endMs);
+	}
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="arc-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
 	<div class="track-label">{label}</div>
-	<div class="track-lane">
-		{#each track.clips as clip}
-			<button
-				class="beat-clip"
-				class:selected={editorState.selectedClipId === clip.id}
-				class:locked={clip.locked}
-				style="
-					left: {timeToX(clip.time_range.start_ms)}px;
-					width: {rangeWidth(clip.time_range)}px;
-					background: {color};
-				"
-				onclick={() => selectClip(clip)}
-				title="{clip.name} ({clip.content.status})"
-			>
-				<span class="clip-name">{clip.name}</span>
-			</button>
+	<div class="track-lane" ondblclick={handleDblClick}>
+		{#each track.clips as clip (clip.id)}
+			<BeatClip
+				{clip}
+				{color}
+				selected={editorState.selectedClipId === clip.id}
+				onselect={() => selectClip(clip)}
+				onmove={(s, e) => handleMove(clip.id, s, e)}
+				onresize={(s, e) => handleResize(clip.id, s, e)}
+				ondelete={() => handleDelete(clip.id)}
+				onsplit={(atMs) => handleSplit(clip.id, atMs)}
+				onconnectstart={onconnectstart}
+			/>
 		{/each}
 	</div>
 </div>
@@ -61,45 +97,5 @@
 		flex: 1;
 		position: relative;
 		height: 100%;
-	}
-
-	.beat-clip {
-		position: absolute;
-		top: 4px;
-		height: calc(100% - 8px);
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		overflow: hidden;
-		opacity: 0.85;
-		transition: opacity 0.1s, outline 0.1s;
-		padding: 0 4px;
-		min-width: 0;
-	}
-
-	.beat-clip:hover {
-		opacity: 1;
-	}
-
-	.beat-clip.selected {
-		outline: 2px solid var(--color-accent);
-		outline-offset: 1px;
-		opacity: 1;
-	}
-
-	.beat-clip.locked {
-		border: 1px dashed rgba(255, 255, 255, 0.4);
-	}
-
-	.clip-name {
-		font-size: 0.7rem;
-		color: rgba(0, 0, 0, 0.8);
-		font-weight: 600;
-		text-overflow: ellipsis;
-		overflow: hidden;
-		white-space: nowrap;
 	}
 </style>
