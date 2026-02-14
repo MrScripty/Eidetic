@@ -1,8 +1,10 @@
-use crate::ai::backend::{GenerateRequest, SurroundingContext};
+use crate::ai::backend::GenerateRequest;
 use crate::ai::context::overlapping_beats;
 use crate::error::{Error, Result};
 use crate::project::Project;
 use crate::timeline::clip::ClipId;
+
+use super::helpers::gather_surrounding_scripts;
 
 /// Build a [`GenerateRequest`] for a specific beat clip from the project state.
 ///
@@ -57,47 +59,6 @@ pub fn build_generate_request(project: &Project, clip_id: ClipId) -> Result<Gene
         style_notes: None,
         rag_context: vec![],
     })
-}
-
-/// Extract scripts from adjacent clips on the same track.
-///
-/// Looks at up to `WINDOW` clips before and after the target on the same track,
-/// collecting any generated or user-refined scripts.
-fn gather_surrounding_scripts(
-    track: &crate::timeline::track::ArcTrack,
-    clip_id: ClipId,
-) -> SurroundingContext {
-    const WINDOW: usize = 2;
-
-    let Some(idx) = track.clips.iter().position(|c| c.id == clip_id) else {
-        return SurroundingContext::default();
-    };
-
-    let preceding_scripts = track.clips[idx.saturating_sub(WINDOW)..idx]
-        .iter()
-        .filter_map(|c| best_script(c))
-        .collect();
-
-    let after_start = idx + 1;
-    let after_end = (after_start + WINDOW).min(track.clips.len());
-    let following_scripts = track.clips[after_start..after_end]
-        .iter()
-        .filter_map(|c| best_script(c))
-        .collect();
-
-    SurroundingContext {
-        preceding_scripts,
-        following_scripts,
-    }
-}
-
-/// Return the best available script text for a clip (user-refined > generated).
-fn best_script(clip: &crate::timeline::clip::BeatClip) -> Option<String> {
-    clip.content
-        .user_refined_script
-        .as_ref()
-        .or(clip.content.generated_script.as_ref())
-        .cloned()
 }
 
 #[cfg(test)]
