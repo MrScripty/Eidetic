@@ -188,6 +188,8 @@ export const PANEL = {
 	MIN_EDITOR_HEIGHT_PX: 150,
 	/** Minimum height of the timeline panel (px). */
 	MIN_TIMELINE_HEIGHT_PX: 200,
+	/** Minimum height of the script panel (px). */
+	MIN_SCRIPT_HEIGHT_PX: 120,
 	/** Sidebar width (px). */
 	SIDEBAR_WIDTH_PX: 280,
 } as const;

@@ -2,6 +2,7 @@
 	import Sidebar from './Sidebar.svelte';
 	import PanelResizer from './PanelResizer.svelte';
 	import BeatEditor from '../editor/BeatEditor.svelte';
+	import ScriptPanel from '../editor/ScriptPanel.svelte';
 	import Timeline from '../timeline/Timeline.svelte';
 	import { PANEL } from '$lib/types.js';
 	import { projectState } from '$lib/stores/project.svelte.js';
@@ -72,6 +73,7 @@
 
 	let sidebarOpen = $state(true);
 	let editorHeight = $state(300);
+	let scriptHeight = $state(250);
 
 	async function handleExportPdf() {
 		try {
@@ -139,6 +141,15 @@
 			<PanelResizer
 				min={PANEL.MIN_EDITOR_HEIGHT_PX}
 				bind:position={editorHeight}
+			/>
+
+			<div class="script-panel" style="height: {scriptHeight}px">
+				<ScriptPanel />
+			</div>
+
+			<PanelResizer
+				min={PANEL.MIN_SCRIPT_HEIGHT_PX}
+				bind:position={scriptHeight}
 			/>
 
 			<div class="timeline-panel" style="flex: 1; min-height: {PANEL.MIN_TIMELINE_HEIGHT_PX}px">
@@ -236,6 +247,12 @@
 
 	.editor-panel {
 		overflow: auto;
+		border-bottom: 1px solid var(--color-border-default);
+		background: var(--color-bg-secondary);
+	}
+
+	.script-panel {
+		overflow: hidden;
 		border-bottom: 1px solid var(--color-border-default);
 		background: var(--color-bg-secondary);
 	}
