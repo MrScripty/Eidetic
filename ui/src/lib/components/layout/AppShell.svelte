@@ -7,7 +7,16 @@
 	import { projectState } from '$lib/stores/project.svelte.js';
 	import { timelineState } from '$lib/stores/timeline.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
-	import { createProject } from '$lib/api.js';
+	import { editorState } from '$lib/stores/editor.svelte.js';
+	import { createProject, getAiStatus } from '$lib/api.js';
+
+	$effect(() => {
+		getAiStatus().then(s => editorState.aiStatus = s).catch(() => {});
+		const interval = setInterval(() => {
+			getAiStatus().then(s => editorState.aiStatus = s).catch(() => {});
+		}, 30_000);
+		return () => clearInterval(interval);
+	});
 
 	let sidebarOpen = $state(true);
 	let editorHeight = $state(300);
@@ -63,6 +72,16 @@
 		<button class="sidebar-toggle" onclick={() => sidebarOpen = true}>
 			&#9776;
 		</button>
+	{/if}
+
+	{#if projectState.current}
+		<div class="ai-indicator" title={editorState.aiStatus?.connected ? `AI: ${editorState.aiStatus.model ?? 'connected'}` : 'AI: disconnected'}>
+			<span
+				class="ai-dot"
+				class:connected={editorState.aiStatus?.connected}
+				class:disconnected={editorState.aiStatus && !editorState.aiStatus.connected}
+			></span>
+		</div>
 	{/if}
 </div>
 
@@ -146,5 +165,34 @@
 		cursor: pointer;
 		font-size: 1.2rem;
 		z-index: 10;
+	}
+
+	.ai-indicator {
+		position: fixed;
+		bottom: 8px;
+		right: 12px;
+		z-index: 10;
+		display: flex;
+		align-items: center;
+		padding: 4px 8px;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: 10px;
+		cursor: default;
+	}
+
+	.ai-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--color-text-muted);
+	}
+
+	.ai-dot.connected {
+		background: #22c55e;
+	}
+
+	.ai-dot.disconnected {
+		background: #ef4444;
 	}
 </style>

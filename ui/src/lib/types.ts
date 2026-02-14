@@ -163,6 +163,27 @@ export const PANEL = {
 	SIDEBAR_WIDTH_PX: 280,
 } as const;
 
+// --- AI Configuration ---
+
+export type BackendType = 'ollama' | 'open_router';
+
+export interface AiConfig {
+	backend_type: BackendType;
+	model: string;
+	temperature: number;
+	max_tokens: number;
+	base_url: string;
+	api_key: string | null;
+}
+
+export interface AiStatus {
+	backend: BackendType;
+	model?: string;
+	connected: boolean;
+	message?: string;
+	error?: string;
+}
+
 // --- Helpers ---
 
 export function colorToHex(c: Color): string {

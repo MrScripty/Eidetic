@@ -2,7 +2,12 @@ import type { WsClient } from '$lib/ws.js';
 import type { Timeline, InferredScene, StoryArc, Character, BeatContent } from '$lib/types.js';
 import { timelineState } from './timeline.svelte.js';
 import { storyState } from './story.svelte.js';
-import { editorState } from './editor.svelte.js';
+import {
+	editorState,
+	appendStreamingToken,
+	completeGeneration,
+	setGenerationError,
+} from './editor.svelte.js';
 import { getTimeline, getScenes, listArcs, listCharacters, getBeat } from '$lib/api.js';
 
 /** Register WebSocket event handlers that update Svelte stores. */
@@ -30,5 +35,28 @@ export function setupWsHandlers(ws: WsClient) {
 			const content = (await getBeat(clipId)) as BeatContent;
 			editorState.selectedClip.content = content;
 		}
+	});
+
+	ws.on('generation_progress', (data) => {
+		const clipId = data.clip_id as string;
+		const token = data.token as string;
+		const tokensGenerated = data.tokens_generated as number;
+		appendStreamingToken(clipId, token, tokensGenerated);
+	});
+
+	ws.on('generation_complete', async (data) => {
+		const clipId = data.clip_id as string;
+		completeGeneration(clipId);
+		// Refresh clip content from server.
+		if (editorState.selectedClipId === clipId && editorState.selectedClip) {
+			const content = (await getBeat(clipId)) as BeatContent;
+			editorState.selectedClip.content = content;
+		}
+	});
+
+	ws.on('generation_error', (data) => {
+		const clipId = data.clip_id as string;
+		const error = data.error as string;
+		setGenerationError(clipId, error);
 	});
 }

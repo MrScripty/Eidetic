@@ -5,13 +5,14 @@
 	import ArcDetail from '../sidebar/ArcDetail.svelte';
 	import CharacterList from '../sidebar/CharacterList.svelte';
 	import CharacterDetail from '../sidebar/CharacterDetail.svelte';
+	import AiConfigPanel from '../sidebar/AiConfigPanel.svelte';
 
 	let { onclose }: { onclose: () => void } = $props();
-	let activeTab: 'arcs' | 'characters' = $state('arcs');
+	let activeTab: 'arcs' | 'characters' | 'ai' = $state('arcs');
 	let selectedArcId: string | null = $state(null);
 	let selectedCharacterId: string | null = $state(null);
 
-	function switchTab(tab: 'arcs' | 'characters') {
+	function switchTab(tab: 'arcs' | 'characters' | 'ai') {
 		activeTab = tab;
 		selectedArcId = null;
 		selectedCharacterId = null;
@@ -35,6 +36,13 @@
 			>
 				Characters
 			</button>
+			<button
+				class="tab"
+				class:active={activeTab === 'ai'}
+				onclick={() => switchTab('ai')}
+			>
+				AI
+			</button>
 		</div>
 		<button class="close-btn" onclick={onclose}>&times;</button>
 	</div>
@@ -51,7 +59,7 @@
 			{:else}
 				<ArcList onselect={(id) => selectedArcId = id} />
 			{/if}
-		{:else}
+		{:else if activeTab === 'characters'}
 			{#if selectedCharacterId}
 				{@const character = storyState.characters.find(c => c.id === selectedCharacterId)}
 				{#if character}
@@ -62,6 +70,8 @@
 			{:else}
 				<CharacterList onselect={(id) => selectedCharacterId = id} />
 			{/if}
+		{:else}
+			<AiConfigPanel />
 		{/if}
 	</div>
 </aside>

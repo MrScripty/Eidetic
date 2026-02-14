@@ -1,4 +1,4 @@
-import type { Project, StoryArc, Character } from './types.js';
+import type { Project, StoryArc, Character, AiStatus, AiConfig } from './types.js';
 
 const BASE = '/api';
 
@@ -154,4 +154,24 @@ export function createRelationship(fromClip: string, toClip: string, type_: stri
 
 export function deleteRelationship(id: string) {
 	return request(`/timeline/relationships/${id}`, { method: 'DELETE' });
+}
+
+// --- AI ---
+
+export function generateScript(clipId: string): Promise<{ status: string; clip_id: string }> {
+	return request('/ai/generate', {
+		method: 'POST',
+		body: JSON.stringify({ clip_id: clipId }),
+	});
+}
+
+export function getAiStatus(): Promise<AiStatus> {
+	return request('/ai/status');
+}
+
+export function updateAiConfig(updates: Partial<AiConfig>): Promise<AiConfig> {
+	return request('/ai/config', {
+		method: 'PUT',
+		body: JSON.stringify(updates),
+	});
 }
