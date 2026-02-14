@@ -1,0 +1,16 @@
+[package]
+name = "eidetic-core"
+description = "Core library for Eidetic — timeline engine, data model, AI orchestration"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+futures = { workspace = true }
+
+[dev-dependencies]
