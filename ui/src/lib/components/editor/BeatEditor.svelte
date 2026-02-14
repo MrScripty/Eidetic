@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { editorState } from '$lib/stores/editor.svelte.js';
+	import { updateBeatNotes, lockBeat, unlockBeat, getBeat } from '$lib/api.js';
+
+	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	function statusLabel(status: string): string {
 		switch (status) {
@@ -12,6 +15,34 @@
 			default: return status;
 		}
 	}
+
+	function handleNotesInput(e: Event) {
+		const value = (e.target as HTMLTextAreaElement).value;
+		if (editorState.selectedClip) {
+			editorState.selectedClip.content.beat_notes = value;
+		}
+		if (debounceTimer) clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(async () => {
+			if (editorState.selectedClipId) {
+				await updateBeatNotes(editorState.selectedClipId, value);
+			}
+		}, 500);
+	}
+
+	async function handleToggleLock() {
+		if (!editorState.selectedClipId || !editorState.selectedClip) return;
+		if (editorState.selectedClip.locked) {
+			await unlockBeat(editorState.selectedClipId);
+			editorState.selectedClip.locked = false;
+		} else {
+			await lockBeat(editorState.selectedClipId);
+			editorState.selectedClip.locked = true;
+		}
+		const content = await getBeat(editorState.selectedClipId) as typeof editorState.selectedClip.content;
+		if (editorState.selectedClip) {
+			editorState.selectedClip.content = content;
+		}
+	}
 </script>
 
 <div class="beat-editor">
@@ -22,9 +53,12 @@
 			<span class="status-badge" data-status={clip.content.status}>
 				{statusLabel(clip.content.status)}
 			</span>
-			{#if clip.locked}
-				<span class="lock-badge">Locked</span>
-			{/if}
+			<button class="lock-toggle" class:locked={clip.locked} onclick={handleToggleLock}>
+				{clip.locked ? 'Unlock' : 'Lock'}
+			</button>
+			<button class="generate-btn" disabled title="Coming in Sprint 3">
+				Generate
+			</button>
 		</div>
 
 		<div class="editor-body">
@@ -33,6 +67,8 @@
 				class="notes-input"
 				placeholder="Describe what happens in this beat..."
 				value={clip.content.beat_notes}
+				oninput={handleNotesInput}
+				disabled={clip.locked}
 			></textarea>
 
 			{#if clip.content.generated_script}
@@ -89,12 +125,30 @@
 	.status-badge[data-status="Generated"] { background: var(--color-status-generated); color: #000; }
 	.status-badge[data-status="UserWritten"] { background: var(--color-status-written); color: #fff; }
 
-	.lock-badge {
-		font-size: 0.7rem;
-		padding: 2px 8px;
+	.lock-toggle {
+		font-size: 0.75rem;
+		padding: 2px 10px;
 		border-radius: 10px;
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+	}
+
+	.lock-toggle.locked {
 		background: var(--color-bg-hover);
+		color: var(--color-text-primary);
+	}
+
+	.generate-btn {
+		font-size: 0.75rem;
+		padding: 2px 10px;
+		border-radius: 10px;
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
 		color: var(--color-text-muted);
+		cursor: not-allowed;
+		margin-left: auto;
 	}
 
 	.editor-body {
@@ -127,6 +181,11 @@
 	.notes-input:focus {
 		outline: none;
 		border-color: var(--color-accent);
+	}
+
+	.notes-input:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	.script-display {
