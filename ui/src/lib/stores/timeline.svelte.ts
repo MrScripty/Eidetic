@@ -33,3 +33,20 @@ export function rangeWidth(range: TimeRange): number {
 export function totalWidth(): number {
 	return TIMELINE.DURATION_MS * TIMELINE.DEFAULT_PX_PER_MS * timelineState.zoom;
 }
+
+/** Transient state for drag-to-connect relationship creation. */
+export const connectionDrag = $state<{
+	active: boolean;
+	fromClipId: string | null;
+	fromX: number;
+	fromY: number;
+	currentX: number;
+	currentY: number;
+}>({
+	active: false,
+	fromClipId: null,
+	fromX: 0,
+	fromY: 0,
+	currentX: 0,
+	currentY: 0,
+});
