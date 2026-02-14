@@ -5,7 +5,7 @@
 	import Timeline from '../timeline/Timeline.svelte';
 	import { PANEL } from '$lib/types.js';
 	import { projectState } from '$lib/stores/project.svelte.js';
-	import { timelineState, zoomToFit } from '$lib/stores/timeline.svelte.js';
+	import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
 	import { createProject, getAiStatus, undo, redo, saveProject, deleteClip, exportPdf } from '$lib/api.js';
@@ -52,11 +52,11 @@
 			}),
 			registerShortcut({
 				key: '=', ctrl: true, description: 'Zoom in',
-				action: () => { timelineState.zoom = Math.min(timelineState.zoom * 1.25, 10); },
+				action: () => { zoomTo(timelineState.zoom * 1.25); },
 			}),
 			registerShortcut({
 				key: '-', ctrl: true, description: 'Zoom out',
-				action: () => { timelineState.zoom = Math.max(timelineState.zoom / 1.25, 0.005); },
+				action: () => { zoomTo(timelineState.zoom / 1.25); },
 			}),
 			registerShortcut({
 				key: '0', ctrl: true, description: 'Zoom to fit',

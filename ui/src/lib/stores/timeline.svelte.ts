@@ -48,6 +48,19 @@ export function totalWidth(): number {
 	return TIMELINE.DURATION_MS * TIMELINE.DEFAULT_PX_PER_MS * timelineState.zoom;
 }
 
+/** Zoom to a new level, keeping the playhead at the same viewport position. */
+export function zoomTo(newZoom: number): void {
+	newZoom = Math.max(0.005, Math.min(10, newZoom));
+	const pxPerMs = TIMELINE.DEFAULT_PX_PER_MS;
+	// Playhead pixel position relative to viewport before zoom.
+	const playheadViewportX = timelineState.playheadMs * pxPerMs * timelineState.zoom - timelineState.scrollX;
+	timelineState.zoom = newZoom;
+	// Adjust scroll so the playhead stays at the same viewport position.
+	const newPlayheadAbsX = timelineState.playheadMs * pxPerMs * newZoom;
+	const maxScroll = Math.max(0, totalWidth() - timelineState.viewportWidth);
+	timelineState.scrollX = Math.max(0, Math.min(maxScroll, newPlayheadAbsX - playheadViewportX));
+}
+
 /** Set zoom so the entire timeline fits within the viewport. */
 export function zoomToFit(): void {
 	if (timelineState.viewportWidth <= 0) return;

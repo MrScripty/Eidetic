@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { timelineState, zoomToFit } from '$lib/stores/timeline.svelte.js';
+	import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { formatTime } from '$lib/types.js';
 </script>
 
@@ -46,7 +46,7 @@
 	<button
 		class="tl-btn"
 		title="Zoom Out (Ctrl+-)"
-		onclick={() => timelineState.zoom = Math.max(0.005, timelineState.zoom / 1.25)}
+		onclick={() => zoomTo(timelineState.zoom / 1.25)}
 	>&#8722;</button>
 
 	<button
@@ -63,7 +63,7 @@
 	<button
 		class="tl-btn"
 		title="Zoom In (Ctrl+=)"
-		onclick={() => timelineState.zoom = Math.min(10, timelineState.zoom * 1.25)}
+		onclick={() => zoomTo(timelineState.zoom * 1.25)}
 	>+</button>
 
 	<div class="tl-sep"></div>
