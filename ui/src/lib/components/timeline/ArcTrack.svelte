@@ -6,6 +6,7 @@
 	import { updateClip, createClip, deleteClip, splitClip, fillGap, generateScript } from '$lib/api.js';
 	import { startGeneration } from '$lib/stores/editor.svelte.js';
 	import BeatClip from './BeatClip.svelte';
+	import type { BeatClip as BeatClipType } from '$lib/types.js';
 
 	let { track, color, label, gaps = [], onconnectstart }: {
 		track: ArcTrackType;
@@ -14,6 +15,30 @@
 		gaps?: TimelineGap[];
 		onconnectstart: (clipId: string, x: number, y: number) => void;
 	} = $props();
+
+	// Viewport-aware clip filtering: only render clips whose pixel range
+	// intersects the visible viewport [scrollX, scrollX + viewportWidth].
+	let visibleClips = $derived.by(() => {
+		const vw = timelineState.viewportWidth;
+		if (vw <= 0) return track.clips; // Fallback: render all if not measured yet.
+		const sx = timelineState.scrollX;
+		return track.clips.filter((c: BeatClipType) => {
+			const left = timeToX(c.time_range.start_ms);
+			const right = timeToX(c.time_range.end_ms);
+			return right >= sx && left <= sx + vw;
+		});
+	});
+
+	let visibleGaps = $derived.by(() => {
+		const vw = timelineState.viewportWidth;
+		if (vw <= 0) return gaps;
+		const sx = timelineState.scrollX;
+		return gaps.filter((g) => {
+			const left = timeToX(g.time_range.start_ms);
+			const right = timeToX(g.time_range.end_ms);
+			return right >= sx && left <= sx + vw;
+		});
+	});
 
 	function selectClip(clip: ArcTrackType['clips'][number]) {
 		editorState.selectedClipId = clip.id;
@@ -83,7 +108,7 @@
 <div class="arc-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
 	<div class="track-label">{label}</div>
 	<div class="track-lane" ondblclick={handleDblClick}>
-		{#each track.clips as clip (clip.id)}
+		{#each visibleClips as clip (clip.id)}
 			<BeatClip
 				{clip}
 				{color}
@@ -96,7 +121,7 @@
 				onconnectstart={onconnectstart}
 			/>
 		{/each}
-		{#each gaps as gap}
+		{#each visibleGaps as gap}
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div

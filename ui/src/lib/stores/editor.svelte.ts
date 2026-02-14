@@ -18,6 +18,10 @@ export const editorState = $state<{
 	consistencySuggestions: ConsistencySuggestion[];
 	/** Whether a consistency check is in progress. */
 	checkingConsistency: boolean;
+	/** Whether undo is available. */
+	canUndo: boolean;
+	/** Whether redo is available. */
+	canRedo: boolean;
 }>({
 	selectedClipId: null,
 	selectedClip: null,
@@ -28,6 +32,8 @@ export const editorState = $state<{
 	aiStatus: null,
 	consistencySuggestions: [],
 	checkingConsistency: false,
+	canUndo: false,
+	canRedo: false,
 });
 
 /** Reset streaming state and begin a new generation. */

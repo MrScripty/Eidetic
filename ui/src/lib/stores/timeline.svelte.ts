@@ -7,11 +7,14 @@ export const timelineState = $state<{
 	scenes: InferredScene[];
 	zoom: number;
 	scrollX: number;
+	/** Measured width of the timeline viewport container. */
+	viewportWidth: number;
 }>({
 	timeline: null,
 	scenes: [],
 	zoom: 1.0,
 	scrollX: 0,
+	viewportWidth: 0,
 });
 
 /** Convert a time range to pixel coordinates at current zoom. */

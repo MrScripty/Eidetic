@@ -82,7 +82,7 @@
 	}
 </script>
 
-<div class="timeline-container" {onwheel}>
+<div class="timeline-container" {onwheel} bind:clientWidth={timelineState.viewportWidth}>
 	<!-- Relationship curves above tracks -->
 	<div class="relationship-wrapper">
 		<RelationshipLayer offsetX={timelineState.scrollX} />

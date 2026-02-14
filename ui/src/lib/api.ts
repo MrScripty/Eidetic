@@ -1,4 +1,4 @@
-import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap } from './types.js';
+import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression } from './types.js';
 
 const BASE = '/api';
 
@@ -52,6 +52,10 @@ export function updateArc(id: string, updates: Record<string, unknown>): Promise
 
 export function deleteArc(id: string): Promise<{ deleted: boolean }> {
 	return request(`/arcs/${id}`, { method: 'DELETE' });
+}
+
+export function getArcProgression(): Promise<ArcProgression[]> {
+	return request('/arcs/progression');
 }
 
 // --- Characters ---
@@ -169,6 +173,23 @@ export function fillGap(trackId: string, startMs: number, endMs: number): Promis
 	});
 }
 
+// --- References ---
+
+export function listReferences(): Promise<ReferenceDocument[]> {
+	return request('/references');
+}
+
+export function uploadReference(name: string, content: string, docType: string): Promise<ReferenceDocument> {
+	return request('/references', {
+		method: 'POST',
+		body: JSON.stringify({ name, content, doc_type: docType }),
+	});
+}
+
+export function deleteReference(id: string): Promise<{ deleted: boolean }> {
+	return request(`/references/${id}`, { method: 'DELETE' });
+}
+
 // --- AI ---
 
 export function generateScript(clipId: string): Promise<{ status: string; clip_id: string }> {
@@ -194,6 +215,27 @@ export function reactToEdit(clipId: string): Promise<{ status: string }> {
 		method: 'POST',
 		body: JSON.stringify({ clip_id: clipId }),
 	});
+}
+
+// --- Export ---
+
+export async function exportPdf(): Promise<Blob> {
+	const res = await fetch(`${BASE}/export/pdf`, { method: 'POST' });
+	if (!res.ok) {
+		const err = await res.json();
+		throw new Error(err.error || 'Export failed');
+	}
+	return res.blob();
+}
+
+// --- Undo/Redo ---
+
+export function undo(): Promise<Project> {
+	return request('/project/undo', { method: 'POST' });
+}
+
+export function redo(): Promise<Project> {
+	return request('/project/redo', { method: 'POST' });
 }
 
 // --- Persistence ---

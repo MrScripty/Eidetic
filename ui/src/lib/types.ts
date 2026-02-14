@@ -136,6 +136,24 @@ export interface TimelineGap {
 	following_clip_id: ClipId | null;
 }
 
+// --- Reference Documents ---
+
+export type ReferenceId = string;
+
+export type ReferenceType =
+	| 'CharacterBible'
+	| 'StyleGuide'
+	| 'WorldBuilding'
+	| 'PreviousEpisode'
+	| { Custom: string };
+
+export interface ReferenceDocument {
+	id: ReferenceId;
+	name: string;
+	content: string;
+	doc_type: ReferenceType;
+}
+
 // --- Project ---
 
 export interface Project {
@@ -143,6 +161,7 @@ export interface Project {
 	timeline: Timeline;
 	arcs: StoryArc[];
 	characters: Character[];
+	references?: ReferenceDocument[];
 }
 
 // --- UI constants ---
@@ -202,6 +221,26 @@ export interface ConsistencySuggestion {
 	original_text: string;
 	suggested_text: string;
 	reason: string;
+}
+
+// --- Arc Progression ---
+
+export type Severity = 'Warning' | 'Error';
+
+export interface ProgressionIssue {
+	severity: Severity;
+	message: string;
+}
+
+export interface ArcProgression {
+	arc_id: string;
+	arc_name: string;
+	beat_count: number;
+	has_setup: boolean;
+	has_resolution: boolean;
+	coverage_percent: number;
+	longest_gap_ms: number;
+	issues: ProgressionIssue[];
 }
 
 // --- Helpers ---

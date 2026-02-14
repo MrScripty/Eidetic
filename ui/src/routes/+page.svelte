@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import AppShell from '$lib/components/layout/AppShell.svelte';
+	import ToastContainer from '$lib/components/layout/ToastContainer.svelte';
 	import { WsClient } from '$lib/ws.js';
 	import { setupWsHandlers } from '$lib/stores/wsHandlers.js';
 
@@ -18,3 +19,4 @@
 </svelte:head>
 
 <AppShell />
+<ToastContainer />

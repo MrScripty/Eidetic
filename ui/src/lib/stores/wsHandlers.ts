@@ -78,4 +78,9 @@ export function setupWsHandlers(ws: WsClient) {
 			// No suggestions — nothing to show.
 		}
 	});
+
+	ws.on('undo_redo_changed', (data) => {
+		editorState.canUndo = data.can_undo as boolean;
+		editorState.canRedo = data.can_redo as boolean;
+	});
 }

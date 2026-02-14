@@ -6,13 +6,16 @@
 	import CharacterList from '../sidebar/CharacterList.svelte';
 	import CharacterDetail from '../sidebar/CharacterDetail.svelte';
 	import AiConfigPanel from '../sidebar/AiConfigPanel.svelte';
+	import ReferencePanel from '../sidebar/ReferencePanel.svelte';
+	import ProgressionPanel from '../sidebar/ProgressionPanel.svelte';
 
 	let { onclose }: { onclose: () => void } = $props();
-	let activeTab: 'arcs' | 'characters' | 'ai' = $state('arcs');
+	let activeTab: 'arcs' | 'characters' | 'ai' | 'refs' = $state('arcs');
 	let selectedArcId: string | null = $state(null);
 	let selectedCharacterId: string | null = $state(null);
+	let showProgression = $state(false);
 
-	function switchTab(tab: 'arcs' | 'characters' | 'ai') {
+	function switchTab(tab: 'arcs' | 'characters' | 'ai' | 'refs') {
 		activeTab = tab;
 		selectedArcId = null;
 		selectedCharacterId = null;
@@ -43,13 +46,23 @@
 			>
 				AI
 			</button>
+			<button
+				class="tab"
+				class:active={activeTab === 'refs'}
+				onclick={() => switchTab('refs')}
+			>
+				Refs
+			</button>
 		</div>
 		<button class="close-btn" onclick={onclose}>&times;</button>
 	</div>
 
 	<div class="sidebar-content">
 		{#if activeTab === 'arcs'}
-			{#if selectedArcId}
+			{#if showProgression}
+				<ProgressionPanel />
+				<button class="toggle-view" onclick={() => showProgression = false}>Back to Arcs</button>
+			{:else if selectedArcId}
 				{@const arc = storyState.arcs.find(a => a.id === selectedArcId)}
 				{#if arc}
 					<ArcDetail {arc} onback={() => selectedArcId = null} />
@@ -58,6 +71,7 @@
 				{/if}
 			{:else}
 				<ArcList onselect={(id) => selectedArcId = id} />
+				<button class="toggle-view" onclick={() => showProgression = true}>Analysis</button>
 			{/if}
 		{:else if activeTab === 'characters'}
 			{#if selectedCharacterId}
@@ -70,8 +84,10 @@
 			{:else}
 				<CharacterList onselect={(id) => selectedCharacterId = id} />
 			{/if}
-		{:else}
+		{:else if activeTab === 'ai'}
 			<AiConfigPanel />
+		{:else}
+			<ReferencePanel />
 		{/if}
 	</div>
 </aside>
@@ -128,5 +144,21 @@
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.toggle-view {
+		margin: 4px 8px;
+		padding: 4px 10px;
+		font-size: 0.7rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 4px;
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		align-self: flex-start;
+	}
+
+	.toggle-view:hover {
+		background: var(--color-bg-hover);
 	}
 </style>
