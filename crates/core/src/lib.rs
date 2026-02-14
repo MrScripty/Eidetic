@@ -1,6 +1,7 @@
 pub mod ai;
 pub mod error;
 pub mod project;
+pub mod reference;
 pub mod script;
 pub mod story;
 pub mod timeline;
