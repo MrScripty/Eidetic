@@ -1,5 +1,6 @@
 mod ai_backends;
 mod embeddings;
+pub mod error;
 mod export;
 mod persistence;
 mod prompt_format;

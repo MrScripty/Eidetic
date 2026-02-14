@@ -17,7 +17,6 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/ai/generate", post(generate))
         .route("/ai/react", post(react))
-        .route("/ai/summarize", post(summarize))
         .route("/ai/status", get(status))
         .route("/ai/config", put(config))
 }
@@ -113,10 +112,10 @@ async fn run_generation(
     // RAG: retrieve relevant reference chunks if vector store has entries.
     if !state.vector_store.lock().is_empty() {
         let query = &request.beat_clip.content.beat_notes;
-        let embed_client = EmbeddingClient::new(&config.base_url, "nomic-embed-text");
+        let embed_client = EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
         if let Ok(query_embedding) = embed_client.embed(query).await {
             let store = state.vector_store.lock();
-            let results = store.search(&query_embedding, 3);
+            let results = store.search(&query_embedding, crate::state::constants::RAG_TOP_K);
             request.rag_context = results
                 .into_iter()
                 .map(|(chunk, score)| RagChunk {
@@ -405,9 +404,3 @@ fn extract_json_array(text: &str) -> &str {
     text.trim()
 }
 
-/// Stub — generation handles this inline for now.
-async fn summarize() -> Json<serde_json::Value> {
-    Json(serde_json::json!({
-        "error": "AI summarization not yet implemented"
-    }))
-}

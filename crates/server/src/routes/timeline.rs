@@ -287,7 +287,7 @@ async fn get_gaps(State(state): State<AppState>) -> Json<serde_json::Value> {
     let guard = state.project.lock();
     match guard.as_ref() {
         Some(p) => {
-            let gaps = p.timeline.find_gaps(30_000);
+            let gaps = p.timeline.find_gaps(crate::state::constants::GAP_THRESHOLD_MS);
             Json(serde_json::to_value(&gaps).unwrap())
         }
         None => Json(serde_json::json!([])),

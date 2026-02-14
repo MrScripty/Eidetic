@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 use eidetic_core::Template;
 
+use crate::error::ApiError;
 use crate::persistence;
 use crate::state::{AppState, ServerEvent};
 
@@ -46,11 +47,17 @@ async fn create_project(
     Json(json)
 }
 
-async fn get_project(State(state): State<AppState>) -> Json<serde_json::Value> {
+async fn get_project(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, ApiError> {
     let guard = state.project.lock();
     match guard.as_ref() {
-        Some(project) => Json(serde_json::to_value(project).unwrap()),
-        None => Json(serde_json::json!({ "error": "no project loaded" })),
+        Some(project) => {
+            let json = serde_json::to_value(project)
+                .map_err(|e| ApiError::internal(e.to_string()))?;
+            Ok(Json(json))
+        }
+        None => Err(ApiError::no_project()),
     }
 }
 
@@ -140,60 +147,62 @@ async fn list_projects() -> Json<serde_json::Value> {
     Json(serde_json::to_value(&entries).unwrap())
 }
 
-async fn undo(State(state): State<AppState>) -> Json<serde_json::Value> {
+async fn undo(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, ApiError> {
     let mut undo_guard = state.undo_stack.lock();
     let mut project_guard = state.project.lock();
     let Some(current) = project_guard.as_ref() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match undo_guard.undo(current.clone()) {
         Some(prev) => {
-            let json = serde_json::to_value(&prev).unwrap();
+            let json = serde_json::to_value(&prev)
+                .map_err(|e| ApiError::internal(e.to_string()))?;
             *project_guard = Some(prev);
             let can_undo = undo_guard.can_undo();
             let can_redo = undo_guard.can_redo();
             drop(undo_guard);
             drop(project_guard);
-            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
-            let _ = state.events_tx.send(ServerEvent::StoryChanged);
+            let _ = state.events_tx.send(ServerEvent::ProjectMutated);
             let _ = state.events_tx.send(ServerEvent::UndoRedoChanged {
                 can_undo,
                 can_redo,
             });
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        None => Json(serde_json::json!({ "error": "nothing to undo" })),
+        None => Err(ApiError::conflict("nothing to undo")),
     }
 }
 
-async fn redo(State(state): State<AppState>) -> Json<serde_json::Value> {
+async fn redo(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, ApiError> {
     let mut undo_guard = state.undo_stack.lock();
     let mut project_guard = state.project.lock();
     let Some(current) = project_guard.as_ref() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match undo_guard.redo(current.clone()) {
         Some(next) => {
-            let json = serde_json::to_value(&next).unwrap();
+            let json = serde_json::to_value(&next)
+                .map_err(|e| ApiError::internal(e.to_string()))?;
             *project_guard = Some(next);
             let can_undo = undo_guard.can_undo();
             let can_redo = undo_guard.can_redo();
             drop(undo_guard);
             drop(project_guard);
-            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
-            let _ = state.events_tx.send(ServerEvent::StoryChanged);
+            let _ = state.events_tx.send(ServerEvent::ProjectMutated);
             let _ = state.events_tx.send(ServerEvent::UndoRedoChanged {
                 can_undo,
                 can_redo,
             });
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        None => Json(serde_json::json!({ "error": "nothing to redo" })),
+        None => Err(ApiError::conflict("nothing to redo")),
     }
 }

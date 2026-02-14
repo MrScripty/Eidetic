@@ -10,6 +10,30 @@ use tokio::sync::broadcast;
 use crate::persistence;
 use crate::vector_store::VectorStore;
 
+/// Server configuration constants.
+pub mod constants {
+    /// Maximum number of undo snapshots to retain.
+    pub const UNDO_STACK_DEPTH: usize = 50;
+    /// Default AI model identifier.
+    pub const DEFAULT_AI_MODEL: &str = "qwen3:30b-a3b";
+    /// Default AI temperature.
+    pub const DEFAULT_TEMPERATURE: f32 = 0.7;
+    /// Default max tokens for generation.
+    pub const DEFAULT_MAX_TOKENS: usize = 4096;
+    /// Default Ollama base URL.
+    pub const DEFAULT_OLLAMA_URL: &str = "http://localhost:11434";
+    /// Minimum gap duration in ms for gap detection.
+    pub const GAP_THRESHOLD_MS: u64 = 30_000;
+    /// Reference document chunk size in characters.
+    pub const REFERENCE_CHUNK_SIZE: usize = 500;
+    /// Reference document chunk overlap in characters.
+    pub const REFERENCE_CHUNK_OVERLAP: usize = 50;
+    /// Embedding model name.
+    pub const EMBEDDING_MODEL: &str = "nomic-embed-text";
+    /// Number of top RAG results to include.
+    pub const RAG_TOP_K: usize = 3;
+}
+
 /// Events broadcast to all connected WebSocket clients after mutations.
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -18,6 +42,7 @@ pub enum ServerEvent {
     ScenesChanged,
     BeatUpdated { clip_id: uuid::Uuid },
     StoryChanged,
+    ProjectMutated,
     GenerationProgress {
         clip_id: uuid::Uuid,
         token: String,
@@ -125,10 +150,10 @@ impl Default for AiConfig {
     fn default() -> Self {
         Self {
             backend_type: BackendType::Ollama,
-            model: "qwen3:30b-a3b".into(),
-            temperature: 0.7,
-            max_tokens: 4096,
-            base_url: "http://localhost:11434".into(),
+            model: constants::DEFAULT_AI_MODEL.into(),
+            temperature: constants::DEFAULT_TEMPERATURE,
+            max_tokens: constants::DEFAULT_MAX_TOKENS,
+            base_url: constants::DEFAULT_OLLAMA_URL.into(),
             api_key: None,
         }
     }
@@ -171,7 +196,7 @@ impl AppState {
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
             project_path,
-            undo_stack: Arc::new(Mutex::new(UndoStack::new(50))),
+            undo_stack: Arc::new(Mutex::new(UndoStack::new(constants::UNDO_STACK_DEPTH))),
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
         }

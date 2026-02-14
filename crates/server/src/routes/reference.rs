@@ -47,7 +47,11 @@ async fn upload_reference(
     let json = serde_json::to_value(&doc).unwrap();
 
     // Chunk the document for embedding.
-    let chunks = chunk_document(&doc, 500, 50);
+    let chunks = chunk_document(
+        &doc,
+        crate::state::constants::REFERENCE_CHUNK_SIZE,
+        crate::state::constants::REFERENCE_CHUNK_OVERLAP,
+    );
 
     // Store the document in the project.
     {
@@ -63,7 +67,7 @@ async fn upload_reference(
     let state_clone = state.clone();
     tokio::spawn(async move {
         let config = state_clone.ai_config.lock().clone();
-        let client = EmbeddingClient::new(&config.base_url, "nomic-embed-text");
+        let client = EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
 
         for chunk in chunks {
             match client.embed(&chunk.content).await {
