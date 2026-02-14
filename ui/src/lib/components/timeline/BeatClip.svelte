@@ -20,6 +20,7 @@
 	} = $props();
 
 	let dragging = $state(false);
+	let fitting = $state(false);
 	let resizingSide: 'left' | 'right' | null = $state(null);
 	let previewStartMs = $state(0);
 	let previewEndMs = $state(0);
@@ -82,28 +83,50 @@
 		function onPointerMove(ev: PointerEvent) {
 			const deltaPx = ev.clientX - startClientX;
 			const deltaMs = xToTime(deltaPx);
-			let newStart = Math.max(leftBoundMs, Math.round(origStart + deltaMs));
-			let newEnd = newStart + duration;
-			// Clamp to right boundary (next clip or timeline end).
-			if (newEnd > rightBoundMs) {
-				newEnd = rightBoundMs;
-				newStart = newEnd - duration;
+
+			if (ev.shiftKey) {
+				// Fit-to-fill: clip edges clamp independently, duration may shrink.
+				fitting = true;
+				let newStart = Math.max(leftBoundMs, Math.round(origStart + deltaMs));
+				let newEnd = newStart + duration;
+				if (newEnd > rightBoundMs) newEnd = rightBoundMs;
+				if (newStart < leftBoundMs) newStart = leftBoundMs;
+				// Enforce minimum 5s duration.
+				if (newEnd - newStart >= 5000) {
+					previewStartMs = newStart;
+					previewEndMs = newEnd;
+				}
+			} else {
+				// Normal drag: preserve duration, clamp both edges.
+				fitting = false;
+				let newStart = Math.max(leftBoundMs, Math.round(origStart + deltaMs));
+				let newEnd = newStart + duration;
+				if (newEnd > rightBoundMs) {
+					newEnd = rightBoundMs;
+					newStart = newEnd - duration;
+				}
+				if (newStart < leftBoundMs) {
+					newStart = leftBoundMs;
+					newEnd = newStart + duration;
+				}
+				previewStartMs = newStart;
+				previewEndMs = newEnd;
 			}
-			// Re-clamp left in case duration pushed it back.
-			if (newStart < leftBoundMs) {
-				newStart = leftBoundMs;
-				newEnd = newStart + duration;
-			}
-			previewStartMs = newStart;
-			previewEndMs = newEnd;
 		}
 
 		function onPointerUp() {
+			const wasFitting = fitting;
 			dragging = false;
+			fitting = false;
 			target.removeEventListener('pointermove', onPointerMove);
 			target.removeEventListener('pointerup', onPointerUp);
 			if (previewStartMs !== clip.time_range.start_ms || previewEndMs !== clip.time_range.end_ms) {
-				onmove(previewStartMs, previewEndMs);
+				const durationChanged = (previewEndMs - previewStartMs) !== duration;
+				if (wasFitting && durationChanged) {
+					onresize(previewStartMs, previewEndMs);
+				} else {
+					onmove(previewStartMs, previewEndMs);
+				}
 			}
 		}
 
@@ -217,6 +240,7 @@
 	class:selected
 	class:locked={clip.locked}
 	class:dragging
+	class:fitting
 	class:blade-mode={timelineState.activeTool === 'blade'}
 	style="
 		left: {timeToX(displayStart)}px;
@@ -306,6 +330,11 @@
 	.beat-clip.dragging {
 		cursor: grabbing;
 		opacity: 0.7;
+	}
+
+	.beat-clip.fitting {
+		outline: 2px dashed rgba(255, 200, 0, 0.6);
+		outline-offset: 1px;
 	}
 
 	.beat-clip.blade-mode {
