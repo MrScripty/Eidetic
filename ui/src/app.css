@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Pantograph dark theme — CSS custom properties */
+@theme {
+	--color-bg-primary: #1a1a2e;
+	--color-bg-secondary: #16213e;
+	--color-bg-surface: #1f2b47;
+	--color-bg-elevated: #253350;
+	--color-bg-hover: #2d3f5f;
+
+	--color-text-primary: #e0e0e0;
+	--color-text-secondary: #a0a0b8;
+	--color-text-muted: #6b7280;
+
+	--color-border-default: #2d3f5f;
+	--color-border-subtle: #253350;
+
+	--color-accent: #6495ed;
+	--color-accent-hover: #7ba8f0;
+
+	--color-a-plot: #6495ed;
+	--color-b-plot: #77dd77;
+	--color-c-runner: #ffb347;
+
+	--color-status-empty: #4b5563;
+	--color-status-notes: #eab308;
+	--color-status-generating: #a855f7;
+	--color-status-generated: #22c55e;
+	--color-status-written: #3b82f6;
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	overflow: hidden;
+	background: var(--color-bg-primary);
+	color: var(--color-text-primary);
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--color-border-default);
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--color-bg-hover);
+}
