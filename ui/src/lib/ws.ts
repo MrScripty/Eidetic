@@ -29,11 +29,12 @@ export class WsClient {
 
 		this.ws.onmessage = (event) => {
 			try {
-				const msg = JSON.parse(event.data as string) as { type: string; data?: Record<string, unknown> };
-				const handlers = this.handlers.get(msg.type);
+				const msg = JSON.parse(event.data as string) as Record<string, unknown>;
+				const type = msg.type as string;
+				const handlers = this.handlers.get(type);
 				if (handlers) {
 					for (const handler of handlers) {
-						handler(msg.data ?? {});
+						handler(msg);
 					}
 				}
 			} catch {
