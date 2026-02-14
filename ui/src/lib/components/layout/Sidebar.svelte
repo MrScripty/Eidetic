@@ -1,10 +1,21 @@
 <script lang="ts">
 	import { storyState } from '$lib/stores/story.svelte.js';
-	import { colorToHex } from '$lib/types.js';
 	import { PANEL } from '$lib/types.js';
+	import ArcList from '../sidebar/ArcList.svelte';
+	import ArcDetail from '../sidebar/ArcDetail.svelte';
+	import CharacterList from '../sidebar/CharacterList.svelte';
+	import CharacterDetail from '../sidebar/CharacterDetail.svelte';
 
 	let { onclose }: { onclose: () => void } = $props();
 	let activeTab: 'arcs' | 'characters' = $state('arcs');
+	let selectedArcId: string | null = $state(null);
+	let selectedCharacterId: string | null = $state(null);
+
+	function switchTab(tab: 'arcs' | 'characters') {
+		activeTab = tab;
+		selectedArcId = null;
+		selectedCharacterId = null;
+	}
 </script>
 
 <aside class="sidebar" style="width: {PANEL.SIDEBAR_WIDTH_PX}px">
@@ -13,14 +24,14 @@
 			<button
 				class="tab"
 				class:active={activeTab === 'arcs'}
-				onclick={() => activeTab = 'arcs'}
+				onclick={() => switchTab('arcs')}
 			>
 				Arcs
 			</button>
 			<button
 				class="tab"
 				class:active={activeTab === 'characters'}
-				onclick={() => activeTab = 'characters'}
+				onclick={() => switchTab('characters')}
 			>
 				Characters
 			</button>
@@ -30,30 +41,27 @@
 
 	<div class="sidebar-content">
 		{#if activeTab === 'arcs'}
-			<ul class="entity-list">
-				{#each storyState.arcs as arc}
-					<li class="entity-item">
-						<span class="color-dot" style="background: {colorToHex(arc.color)}"></span>
-						<span class="entity-name">{arc.name}</span>
-						<span class="entity-type">{typeof arc.arc_type === 'string' ? arc.arc_type : arc.arc_type.Custom}</span>
-					</li>
-				{/each}
-				{#if storyState.arcs.length === 0}
-					<li class="empty-state">No arcs yet</li>
+			{#if selectedArcId}
+				{@const arc = storyState.arcs.find(a => a.id === selectedArcId)}
+				{#if arc}
+					<ArcDetail {arc} onback={() => selectedArcId = null} />
+				{:else}
+					<ArcList onselect={(id) => selectedArcId = id} />
 				{/if}
-			</ul>
+			{:else}
+				<ArcList onselect={(id) => selectedArcId = id} />
+			{/if}
 		{:else}
-			<ul class="entity-list">
-				{#each storyState.characters as character}
-					<li class="entity-item">
-						<span class="color-dot" style="background: {colorToHex(character.color)}"></span>
-						<span class="entity-name">{character.name}</span>
-					</li>
-				{/each}
-				{#if storyState.characters.length === 0}
-					<li class="empty-state">No characters yet</li>
+			{#if selectedCharacterId}
+				{@const character = storyState.characters.find(c => c.id === selectedCharacterId)}
+				{#if character}
+					<CharacterDetail {character} onback={() => selectedCharacterId = null} />
+				{:else}
+					<CharacterList onselect={(id) => selectedCharacterId = id} />
 				{/if}
-			</ul>
+			{:else}
+				<CharacterList onselect={(id) => selectedCharacterId = id} />
+			{/if}
 		{/if}
 	</div>
 </aside>
@@ -107,51 +115,8 @@
 
 	.sidebar-content {
 		flex: 1;
-		overflow-y: auto;
-		padding: 8px 0;
-	}
-
-	.entity-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	.entity-item {
+		overflow: hidden;
 		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 8px 12px;
-		cursor: pointer;
-		transition: background 0.1s;
-	}
-
-	.entity-item:hover {
-		background: var(--color-bg-hover);
-	}
-
-	.color-dot {
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-
-	.entity-name {
-		flex: 1;
-		color: var(--color-text-primary);
-		font-size: 0.9rem;
-	}
-
-	.entity-type {
-		color: var(--color-text-muted);
-		font-size: 0.75rem;
-	}
-
-	.empty-state {
-		padding: 16px 12px;
-		color: var(--color-text-muted);
-		font-size: 0.85rem;
-		text-align: center;
+		flex-direction: column;
 	}
 </style>

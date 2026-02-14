@@ -43,7 +43,7 @@ export function createArc(name: string, arc_type: string, color?: [number, numbe
 	});
 }
 
-export function updateArc(id: string, updates: Partial<StoryArc>): Promise<StoryArc> {
+export function updateArc(id: string, updates: Record<string, unknown>): Promise<StoryArc> {
 	return request(`/arcs/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(updates),
@@ -67,7 +67,7 @@ export function createCharacter(name: string, color?: [number, number, number]):
 	});
 }
 
-export function updateCharacter(id: string, updates: Partial<Character>): Promise<Character> {
+export function updateCharacter(id: string, updates: Record<string, unknown>): Promise<Character> {
 	return request(`/characters/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(updates),
