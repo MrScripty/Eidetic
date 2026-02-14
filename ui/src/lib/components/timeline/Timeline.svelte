@@ -10,7 +10,7 @@
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { TIMELINE, colorToHex } from '$lib/types.js';
 	import type { StoryArc, TimelineGap } from '$lib/types.js';
-	import { createRelationship, getGaps, closeGap, closeAllGaps } from '$lib/api.js';
+	import { createRelationship, getGaps, closeGap, closeAllGaps, createArc, addTrack, removeTrack, deleteArc } from '$lib/api.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
 
 	let gaps = $state<TimelineGap[]>([]);
@@ -122,6 +122,27 @@
 		}
 	}
 
+	async function handleAddTrack() {
+		try {
+			const arc = await createArc('New Arc', 'APlot');
+			await addTrack(arc.id);
+		} catch (e) {
+			// Timeline refreshes via WS event on success.
+		}
+	}
+
+	async function handleDeleteTrack(trackId: string) {
+		if (!timelineState.timeline) return;
+		const track = timelineState.timeline.tracks.find(t => t.id === trackId);
+		if (!track) return;
+		try {
+			await removeTrack(trackId);
+			await deleteArc(track.arc_id).catch(() => {});
+		} catch (e) {
+			// Timeline refreshes via WS event on success.
+		}
+	}
+
 	function handleConnectStart(clipId: string, x: number, y: number) {
 		connectionDrag.active = true;
 		connectionDrag.fromClipId = clipId;
@@ -199,9 +220,14 @@
 						label={arc?.name ?? 'Unknown'}
 						gaps={gapsForTrack(track.id)}
 						onconnectstart={handleConnectStart}
+						ondeletetrack={handleDeleteTrack}
 					/>
 				{/each}
 			{/if}
+			<!-- Add track row -->
+			<button class="add-track-row" onclick={handleAddTrack} title="Add new track">
+				<span class="add-track-plus">+</span> Add Track
+			</button>
 		</div>
 	</div>
 
@@ -251,6 +277,33 @@
 	.tracks-content {
 		position: relative;
 		height: 100%;
+	}
+
+	.add-track-row {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		width: 80px;
+		padding: 4px 8px;
+		background: none;
+		border: 1px dashed var(--color-border-subtle);
+		border-radius: 4px;
+		color: var(--color-text-muted);
+		font-size: 0.7rem;
+		cursor: pointer;
+		margin: 4px 0 4px 0;
+		white-space: nowrap;
+	}
+
+	.add-track-row:hover {
+		background: var(--color-bg-hover);
+		border-color: var(--color-border-default);
+		color: var(--color-text-secondary);
+	}
+
+	.add-track-plus {
+		font-size: 0.9rem;
+		line-height: 1;
 	}
 
 	.timeline-scrollbar {

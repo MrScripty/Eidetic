@@ -1,4 +1,4 @@
-import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, BeatClip, BeatContent, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType } from './types.js';
+import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, ArcTrack, BeatClip, BeatContent, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType } from './types.js';
 
 const BASE = '/api';
 
@@ -162,6 +162,19 @@ export function createRelationship(fromClip: string, toClip: string, type_: Rela
 
 export function deleteRelationship(id: string): Promise<{ deleted: boolean }> {
 	return request(`/timeline/relationships/${id}`, { method: 'DELETE' });
+}
+
+// --- Tracks ---
+
+export function addTrack(arcId: string): Promise<ArcTrack> {
+	return request('/timeline/tracks', {
+		method: 'POST',
+		body: JSON.stringify({ arc_id: arcId }),
+	});
+}
+
+export function removeTrack(trackId: string): Promise<ArcTrack> {
+	return request(`/timeline/tracks/${trackId}`, { method: 'DELETE' });
 }
 
 // --- Gaps ---

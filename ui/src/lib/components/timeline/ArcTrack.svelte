@@ -9,12 +9,13 @@
 	import BeatClip from './BeatClip.svelte';
 	import type { BeatClip as BeatClipType } from '$lib/types.js';
 
-	let { track, color, label, gaps = [], onconnectstart }: {
+	let { track, color, label, gaps = [], onconnectstart, ondeletetrack }: {
 		track: ArcTrackType;
 		color: string;
 		label: string;
 		gaps?: TimelineGap[];
 		onconnectstart: (clipId: string, x: number, y: number) => void;
+		ondeletetrack: (trackId: string) => void;
 	} = $props();
 
 	// Viewport-aware clip filtering: only render clips whose pixel range
@@ -107,6 +108,18 @@
 	}
 
 	let gapContextMenu: { x: number; y: number; gap: TimelineGap } | null = $state(null);
+	let trackContextMenu: { x: number; y: number } | null = $state(null);
+
+	function handleTrackContextMenu(e: MouseEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		trackContextMenu = { x: e.clientX, y: e.clientY };
+		function dismiss() {
+			trackContextMenu = null;
+			document.removeEventListener('click', dismiss);
+		}
+		setTimeout(() => document.addEventListener('click', dismiss), 0);
+	}
 
 	async function handleFillGap(gap: TimelineGap) {
 		await fillGap(gap.track_id, gap.time_range.start_ms, gap.time_range.end_ms);
@@ -142,7 +155,8 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="arc-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
-	<div class="track-label">{label}</div>
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="track-label" oncontextmenu={handleTrackContextMenu}>{label}</div>
 	<div class="track-lane" class:blade-mode={timelineState.activeTool === 'blade'} ondblclick={handleDblClick}>
 		{#each visibleClips as clip (clip.id)}
 			{@const bounds = clipBounds(clip.id)}
@@ -187,6 +201,12 @@
 	<div class="gap-context-menu" style="left: {gapContextMenu.x}px; top: {gapContextMenu.y}px">
 		<button onclick={() => { handleFillGap(gapContextMenu!.gap); gapContextMenu = null; }}>Fill Gap</button>
 		<button onclick={() => handleCloseGap(gapContextMenu!.gap)}>Close Gap</button>
+	</div>
+{/if}
+
+{#if trackContextMenu}
+	<div class="gap-context-menu" style="left: {trackContextMenu.x}px; top: {trackContextMenu.y}px">
+		<button class="delete-track-btn" onclick={() => { trackContextMenu = null; ondeletetrack(track.id); }}>Delete Track</button>
 	</div>
 {/if}
 
@@ -307,5 +327,9 @@
 
 	.gap-context-menu button:hover {
 		background: var(--color-bg-hover);
+	}
+
+	.delete-track-btn:hover {
+		color: #ef4444 !important;
 	}
 </style>
