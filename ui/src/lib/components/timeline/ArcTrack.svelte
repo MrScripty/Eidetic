@@ -5,6 +5,7 @@
 	import { editorState } from '$lib/stores/editor.svelte.js';
 	import { updateClip, createClip, deleteClip, splitClip, fillGap, generateScript } from '$lib/api.js';
 	import { startGeneration } from '$lib/stores/editor.svelte.js';
+	import { notify } from '$lib/stores/notifications.svelte.js';
 	import BeatClip from './BeatClip.svelte';
 	import type { BeatClip as BeatClipType } from '$lib/types.js';
 
@@ -39,6 +40,19 @@
 			return right >= sx && left <= sx + vw;
 		});
 	});
+
+	/** Sorted clips for boundary lookups. */
+	let sortedClips = $derived(
+		[...track.clips].sort((a, b) => a.time_range.start_ms - b.time_range.start_ms)
+	);
+
+	/** Get the boundary constraints for a clip (end of previous clip, start of next clip). */
+	function clipBounds(clipId: string): { left: number; right: number } {
+		const idx = sortedClips.findIndex(c => c.id === clipId);
+		const left = idx > 0 ? sortedClips[idx - 1].time_range.end_ms : 0;
+		const right = idx < sortedClips.length - 1 ? sortedClips[idx + 1].time_range.start_ms : TIMELINE.DURATION_MS;
+		return { left, right };
+	}
 
 	function selectClip(clip: ArcTrackType['clips'][number]) {
 		editorState.selectedClipId = clip.id;
@@ -85,7 +99,11 @@
 			editorState.selectedClipId = null;
 			editorState.selectedClip = null;
 		}
-		await splitClip(clipId, atMs);
+		try {
+			await splitClip(clipId, atMs);
+		} catch (e) {
+			notify('error', `Split failed: ${e instanceof Error ? e.message : 'unknown error'}`);
+		}
 	}
 
 	async function handleFillGap(gap: TimelineGap) {
@@ -107,12 +125,15 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="arc-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
 	<div class="track-label">{label}</div>
-	<div class="track-lane" ondblclick={handleDblClick}>
+	<div class="track-lane" class:blade-mode={timelineState.activeTool === 'blade'} ondblclick={handleDblClick}>
 		{#each visibleClips as clip (clip.id)}
+			{@const bounds = clipBounds(clip.id)}
 			<BeatClip
 				{clip}
 				{color}
 				selected={editorState.selectedClipId === clip.id}
+				leftBoundMs={bounds.left}
+				rightBoundMs={bounds.right}
 				onselect={() => selectClip(clip)}
 				onmove={(s, e) => handleMove(clip.id, s, e)}
 				onresize={(s, e) => handleResize(clip.id, s, e)}
@@ -166,6 +187,10 @@
 		flex: 1;
 		position: relative;
 		height: 100%;
+	}
+
+	.track-lane.blade-mode {
+		cursor: crosshair;
 	}
 
 	.gap-marker {

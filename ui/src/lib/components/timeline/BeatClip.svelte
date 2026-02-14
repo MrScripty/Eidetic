@@ -1,12 +1,16 @@
 <script lang="ts">
 	import type { BeatClip as BeatClipType, ContentStatus } from '$lib/types.js';
 	import { TIMELINE } from '$lib/types.js';
-	import { timeToX, xToTime } from '$lib/stores/timeline.svelte.js';
+	import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
 
-	let { clip, color, selected, onselect, onmove, onresize, ondelete, onsplit, onconnectstart }: {
+	let { clip, color, selected, leftBoundMs = 0, rightBoundMs = TIMELINE.DURATION_MS, onselect, onmove, onresize, ondelete, onsplit, onconnectstart }: {
 		clip: BeatClipType;
 		color: string;
 		selected: boolean;
+		/** Earliest allowed start_ms (end of previous clip, or 0). */
+		leftBoundMs?: number;
+		/** Latest allowed end_ms (start of next clip, or DURATION_MS). */
+		rightBoundMs?: number;
 		onselect: () => void;
 		onmove: (startMs: number, endMs: number) => void;
 		onresize: (startMs: number, endMs: number) => void;
@@ -20,6 +24,10 @@
 	let previewStartMs = $state(0);
 	let previewEndMs = $state(0);
 	let contextMenu: { x: number; y: number } | null = $state(null);
+
+	// Blade cut preview: tracks cursor position as a ratio [0..1] within the clip.
+	let bladeHovering = $state(false);
+	let bladeRatio = $state(0);
 
 	// Use preview values during drag, actual values otherwise.
 	let displayStart = $derived(dragging || resizingSide ? previewStartMs : clip.time_range.start_ms);
@@ -37,7 +45,26 @@
 		}
 	}
 
+	function handleBladeClick(e: PointerEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		// Calculate split time from click position relative to clip's on-screen bounds.
+		const rect = (e.currentTarget as HTMLElement).closest('.beat-clip')!.getBoundingClientRect();
+		const localX = e.clientX - rect.left;
+		const ratio = Math.max(0, Math.min(1, localX / rect.width));
+		const duration = clip.time_range.end_ms - clip.time_range.start_ms;
+		const splitMs = Math.round(clip.time_range.start_ms + ratio * duration);
+		// Ensure minimum 5s on each side.
+		if (splitMs - clip.time_range.start_ms >= 5000 && clip.time_range.end_ms - splitMs >= 5000) {
+			onsplit(splitMs);
+		}
+	}
+
 	function handlePointerDown(e: PointerEvent) {
+		if (timelineState.activeTool === 'blade') {
+			handleBladeClick(e);
+			return;
+		}
 		if (resizingSide) return;
 		e.preventDefault();
 		e.stopPropagation();
@@ -55,12 +82,17 @@
 		function onPointerMove(ev: PointerEvent) {
 			const deltaPx = ev.clientX - startClientX;
 			const deltaMs = xToTime(deltaPx);
-			let newStart = Math.max(0, Math.round(origStart + deltaMs));
+			let newStart = Math.max(leftBoundMs, Math.round(origStart + deltaMs));
 			let newEnd = newStart + duration;
-			// Clamp to timeline bounds.
-			if (newEnd > TIMELINE.DURATION_MS) {
-				newEnd = TIMELINE.DURATION_MS;
+			// Clamp to right boundary (next clip or timeline end).
+			if (newEnd > rightBoundMs) {
+				newEnd = rightBoundMs;
 				newStart = newEnd - duration;
+			}
+			// Re-clamp left in case duration pushed it back.
+			if (newStart < leftBoundMs) {
+				newStart = leftBoundMs;
+				newEnd = newStart + duration;
 			}
 			previewStartMs = newStart;
 			previewEndMs = newEnd;
@@ -80,6 +112,10 @@
 	}
 
 	function handleResizeStart(e: PointerEvent, side: 'left' | 'right') {
+		if (timelineState.activeTool === 'blade') {
+			handleBladeClick(e);
+			return;
+		}
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -96,13 +132,13 @@
 			const deltaPx = ev.clientX - startClientX;
 			const deltaMs = xToTime(deltaPx);
 			if (side === 'left') {
-				const newStart = Math.max(0, Math.round(origStart + deltaMs));
-				if (origEnd - newStart >= 5000) { // min 5 seconds
+				const newStart = Math.max(leftBoundMs, Math.round(origStart + deltaMs));
+				if (origEnd - newStart >= 5000) {
 					previewStartMs = newStart;
 				}
 			} else {
 				let newEnd = Math.round(origEnd + deltaMs);
-				newEnd = Math.min(newEnd, TIMELINE.DURATION_MS);
+				newEnd = Math.min(newEnd, rightBoundMs);
 				if (newEnd - origStart >= 5000) {
 					previewEndMs = newEnd;
 				}
@@ -148,10 +184,30 @@
 	}
 
 	function handleConnectStart(e: PointerEvent) {
+		if (timelineState.activeTool === 'blade') {
+			handleBladeClick(e);
+			return;
+		}
 		e.preventDefault();
 		e.stopPropagation();
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
 		onconnectstart(clip.id, rect.left + rect.width / 2, rect.top + rect.height / 2);
+	}
+
+	function handleBladeMove(e: PointerEvent) {
+		if (timelineState.activeTool !== 'blade') {
+			bladeHovering = false;
+			return;
+		}
+		const el = (e.currentTarget as HTMLElement).closest('.beat-clip');
+		if (!el) return;
+		const rect = el.getBoundingClientRect();
+		bladeRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+		bladeHovering = true;
+	}
+
+	function handleBladeLeave() {
+		bladeHovering = false;
 	}
 </script>
 
@@ -161,12 +217,15 @@
 	class:selected
 	class:locked={clip.locked}
 	class:dragging
+	class:blade-mode={timelineState.activeTool === 'blade'}
 	style="
 		left: {timeToX(displayStart)}px;
 		width: {timeToX(displayEnd) - timeToX(displayStart)}px;
 		background: {color};
 	"
 	onpointerdown={handlePointerDown}
+	onpointermove={handleBladeMove}
+	onpointerleave={handleBladeLeave}
 	oncontextmenu={handleContextMenu}
 >
 	<!-- Left resize handle -->
@@ -193,6 +252,11 @@
 		class="resize-handle right"
 		onpointerdown={(e) => handleResizeStart(e, 'right')}
 	></div>
+
+	<!-- Blade cut preview line -->
+	{#if bladeHovering && timelineState.activeTool === 'blade'}
+		<div class="blade-preview" style="left: {bladeRatio * 100}%"></div>
+	{/if}
 </div>
 
 {#if contextMenu}
@@ -210,7 +274,7 @@
 		position: absolute;
 		top: 4px;
 		height: calc(100% - 8px);
-		border: none;
+		border: 1px solid rgba(0, 0, 0, 0.4);
 		border-radius: 4px;
 		cursor: grab;
 		display: flex;
@@ -222,6 +286,7 @@
 		padding: 0 8px;
 		min-width: 0;
 		user-select: none;
+		box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.15), inset -1px 0 0 rgba(255, 255, 255, 0.15);
 	}
 
 	.beat-clip:hover {
@@ -243,6 +308,10 @@
 		opacity: 0.7;
 	}
 
+	.beat-clip.blade-mode {
+		cursor: crosshair;
+	}
+
 	.resize-handle {
 		position: absolute;
 		top: 0;
@@ -250,18 +319,21 @@
 		height: 100%;
 		cursor: ew-resize;
 		z-index: 1;
+		background: rgba(255, 255, 255, 0.08);
 	}
 
 	.resize-handle.left {
 		left: 0;
+		border-right: 1px solid rgba(255, 255, 255, 0.12);
 	}
 
 	.resize-handle.right {
 		right: 0;
+		border-left: 1px solid rgba(255, 255, 255, 0.12);
 	}
 
 	.resize-handle:hover {
-		background: rgba(255, 255, 255, 0.2);
+		background: rgba(255, 255, 255, 0.3);
 	}
 
 	.status-dot {
@@ -293,6 +365,17 @@
 
 	.connect-handle:hover {
 		background: rgba(255, 255, 255, 0.8);
+	}
+
+	.blade-preview {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 2px;
+		background: #ff4444;
+		pointer-events: none;
+		z-index: 2;
+		box-shadow: 0 0 4px rgba(255, 68, 68, 0.6);
 	}
 
 	.context-menu {
