@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::story::arc::ArcId;
-use crate::story::character::CharacterId;
+use crate::story::bible::EntityId;
 use super::clip::ClipId;
 
 /// Unique identifier for a relationship between clips.
@@ -47,8 +47,8 @@ pub enum RelationshipType {
     Causal,
     /// "these arcs intersect at this point."
     Convergence { arc_ids: Vec<ArcId> },
-    /// "this character drives this beat."
-    CharacterDrives { character_id: CharacterId },
+    /// "this entity drives this beat."
+    EntityDrives { entity_id: EntityId },
     /// User-defined thematic or structural link.
     Thematic,
 }

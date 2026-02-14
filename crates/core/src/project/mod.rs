@@ -2,16 +2,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::reference::ReferenceDocument;
 use crate::story::arc::StoryArc;
-use crate::story::character::Character;
+use crate::story::bible::StoryBible;
 use crate::timeline::Timeline;
 
-/// A complete Eidetic project, aggregating the timeline, arcs, and characters.
+/// A complete Eidetic project, aggregating the timeline, arcs, and story bible.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
     pub name: String,
     pub timeline: Timeline,
     pub arcs: Vec<StoryArc>,
-    pub characters: Vec<Character>,
+    #[serde(default)]
+    pub bible: StoryBible,
     #[serde(default)]
     pub references: Vec<ReferenceDocument>,
 }
@@ -22,7 +23,7 @@ impl Project {
             name: name.into(),
             timeline,
             arcs: Vec::new(),
-            characters: Vec::new(),
+            bible: StoryBible::new(),
             references: Vec::new(),
         }
     }

@@ -2,6 +2,7 @@ use crate::ai::backend::GenerateRequest;
 use crate::ai::context::overlapping_beats;
 use crate::error::{Error, Result};
 use crate::project::Project;
+use crate::story::bible::gather_bible_context;
 use crate::timeline::clip::ClipId;
 
 use super::helpers::gather_surrounding_scripts;
@@ -11,7 +12,7 @@ use super::helpers::gather_surrounding_scripts;
 /// Gathers:
 /// - The target clip and its parent arc
 /// - Overlapping beats from other tracks at the same time position
-/// - All project characters (filtered later by the AI)
+/// - Story bible entities resolved at this beat's time position
 /// - Surrounding scripts (up to 2 preceding and 2 following) from the same arc track
 pub fn build_generate_request(project: &Project, clip_id: ClipId) -> Result<GenerateRequest> {
     let timeline = &project.timeline;
@@ -43,8 +44,10 @@ pub fn build_generate_request(project: &Project, clip_id: ClipId) -> Result<Gene
     // Gather surrounding scripts from the same track (up to 2 before, 2 after).
     let surrounding_context = gather_surrounding_scripts(track, clip_id);
 
-    // Include all characters — the AI model can determine relevance from beat notes.
-    let characters = project.characters.clone();
+    // Gather bible context resolved at the beat's midpoint time.
+    let beat_mid_ms = beat_clip.time_range.start_ms
+        + beat_clip.time_range.duration_ms() / 2;
+    let bible_context = gather_bible_context(&project.bible, clip_id, beat_mid_ms);
 
     let time_budget_ms = beat_clip.time_range.duration_ms();
 
@@ -52,7 +55,7 @@ pub fn build_generate_request(project: &Project, clip_id: ClipId) -> Result<Gene
         beat_clip,
         arc,
         overlapping_beats: overlapping,
-        characters,
+        bible_context,
         surrounding_context,
         time_budget_ms,
         user_written_anchors: vec![],
@@ -77,7 +80,6 @@ mod tests {
         assert_eq!(req.beat_clip.id, first_clip_id);
         assert_eq!(req.arc.id, timeline.tracks[0].arc_id);
         assert_eq!(req.time_budget_ms, req.beat_clip.time_range.duration_ms());
-        assert!(!req.characters.is_empty() || project.characters.is_empty());
     }
 
     #[test]

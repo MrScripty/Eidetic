@@ -19,10 +19,14 @@ pub enum ContextPriority {
     Overlapping = 1,
     /// Adjacent beats on the same arc track.
     Adjacent = 2,
-    /// Arc and character descriptions.
-    EntityDescriptions = 3,
+    /// Story bible entities directly referenced by this clip (full text).
+    BibleReferenced = 3,
+    /// Arc descriptions.
+    EntityDescriptions = 4,
+    /// Story bible entities not directly referenced (compact text).
+    BibleNearby = 5,
     /// Scripts from farther beats for consistency.
-    FartherContext = 4,
+    FartherContext = 6,
 }
 
 /// Rough token estimation: ~4 characters per token.

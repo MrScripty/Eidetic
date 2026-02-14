@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
 use crate::story::arc::StoryArc;
-use crate::story::character::Character;
+use crate::story::bible::{BibleContext, ExtractionResult, ResolvedEntity};
 use crate::timeline::clip::BeatClip;
 
 /// Token-by-token stream of generated script text.
@@ -33,6 +33,14 @@ pub trait AiBackend: Send + Sync {
         &self,
         text: &str,
     ) -> impl std::future::Future<Output = Result<String, Error>> + Send;
+
+    /// Extract entities and development points from a generated script.
+    fn extract_entities(
+        &self,
+        script: &str,
+        existing_entities: &[ResolvedEntity],
+        time_ms: u64,
+    ) -> impl std::future::Future<Output = Result<ExtractionResult, Error>> + Send;
 }
 
 /// Everything the AI needs to generate script for a single beat.
@@ -44,8 +52,8 @@ pub struct GenerateRequest {
     pub arc: StoryArc,
     /// Beats on other arcs at the same time position (for scene weaving).
     pub overlapping_beats: Vec<(BeatClip, StoryArc)>,
-    /// Characters present in this beat.
-    pub characters: Vec<Character>,
+    /// Story bible entities resolved at this beat's time position.
+    pub bible_context: BibleContext,
     /// Scripts from adjacent beats (preceding / following).
     pub surrounding_context: SurroundingContext,
     /// Target screen time for this beat (milliseconds).

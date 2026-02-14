@@ -12,8 +12,8 @@ pub enum Error {
     #[error("arc not found: {0}")]
     ArcNotFound(Uuid),
 
-    #[error("character not found: {0}")]
-    CharacterNotFound(Uuid),
+    #[error("entity not found: {0}")]
+    EntityNotFound(Uuid),
 
     #[error("relationship not found: {0}")]
     RelationshipNotFound(Uuid),
