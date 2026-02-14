@@ -1,4 +1,4 @@
-import type { ClipId, BeatClip, AiStatus } from '../types.js';
+import type { ClipId, BeatClip, AiStatus, ConsistencySuggestion } from '../types.js';
 
 /** Transient UI state for the beat editor panel. Frontend-owned. */
 export const editorState = $state<{
@@ -14,6 +14,10 @@ export const editorState = $state<{
 	generationError: string | null;
 	/** Last-known AI backend status. */
 	aiStatus: AiStatus | null;
+	/** Pending consistency suggestions from the AI. */
+	consistencySuggestions: ConsistencySuggestion[];
+	/** Whether a consistency check is in progress. */
+	checkingConsistency: boolean;
 }>({
 	selectedClipId: null,
 	selectedClip: null,
@@ -22,6 +26,8 @@ export const editorState = $state<{
 	streamingTokenCount: 0,
 	generationError: null,
 	aiStatus: null,
+	consistencySuggestions: [],
+	checkingConsistency: false,
 });
 
 /** Reset streaming state and begin a new generation. */
@@ -53,4 +59,25 @@ export function setGenerationError(clipId: string, error: string) {
 		editorState.generationError = error;
 		editorState.streamingClipId = null;
 	}
+}
+
+/** Add a consistency suggestion from the AI. */
+export function addConsistencySuggestion(suggestion: ConsistencySuggestion) {
+	editorState.consistencySuggestions = [
+		...editorState.consistencySuggestions,
+		suggestion,
+	];
+}
+
+/** Remove a consistency suggestion by target clip ID. */
+export function removeConsistencySuggestion(targetClipId: string) {
+	editorState.consistencySuggestions = editorState.consistencySuggestions.filter(
+		(s) => s.target_clip_id !== targetClipId
+	);
+}
+
+/** Clear all consistency suggestions. */
+export function clearConsistencySuggestions() {
+	editorState.consistencySuggestions = [];
+	editorState.checkingConsistency = false;
 }

@@ -126,6 +126,16 @@ export interface InferredScene {
 	contributing_clips: ClipId[];
 }
 
+// --- Timeline gaps ---
+
+export interface TimelineGap {
+	track_id: TrackId;
+	arc_id: ArcId;
+	time_range: TimeRange;
+	preceding_clip_id: ClipId | null;
+	following_clip_id: ClipId | null;
+}
+
 // --- Project ---
 
 export interface Project {
@@ -182,6 +192,16 @@ export interface AiStatus {
 	connected: boolean;
 	message?: string;
 	error?: string;
+}
+
+// --- Consistency ---
+
+export interface ConsistencySuggestion {
+	source_clip_id: ClipId;
+	target_clip_id: ClipId;
+	original_text: string;
+	suggested_text: string;
+	reason: string;
 }
 
 // --- Helpers ---

@@ -1,4 +1,4 @@
-import type { Project, StoryArc, Character, AiStatus, AiConfig } from './types.js';
+import type { Project, StoryArc, Character, AiStatus, AiConfig, TimelineGap } from './types.js';
 
 const BASE = '/api';
 
@@ -156,6 +156,19 @@ export function deleteRelationship(id: string) {
 	return request(`/timeline/relationships/${id}`, { method: 'DELETE' });
 }
 
+// --- Gaps ---
+
+export function getGaps(): Promise<TimelineGap[]> {
+	return request('/timeline/gaps');
+}
+
+export function fillGap(trackId: string, startMs: number, endMs: number): Promise<unknown> {
+	return request('/timeline/gaps/fill', {
+		method: 'POST',
+		body: JSON.stringify({ track_id: trackId, start_ms: startMs, end_ms: endMs }),
+	});
+}
+
 // --- AI ---
 
 export function generateScript(clipId: string): Promise<{ status: string; clip_id: string }> {
@@ -174,4 +187,31 @@ export function updateAiConfig(updates: Partial<AiConfig>): Promise<AiConfig> {
 		method: 'PUT',
 		body: JSON.stringify(updates),
 	});
+}
+
+export function reactToEdit(clipId: string): Promise<{ status: string }> {
+	return request('/ai/react', {
+		method: 'POST',
+		body: JSON.stringify({ clip_id: clipId }),
+	});
+}
+
+// --- Persistence ---
+
+export function saveProject(path?: string): Promise<{ saved?: string; error?: string }> {
+	return request('/project/save', {
+		method: 'POST',
+		body: JSON.stringify({ path }),
+	});
+}
+
+export function loadProject(path: string): Promise<Project> {
+	return request('/project/load', {
+		method: 'POST',
+		body: JSON.stringify({ path }),
+	});
+}
+
+export function listProjects(): Promise<{ name: string; path: string; modified: string }[]> {
+	return request('/project/list');
 }

@@ -1,15 +1,17 @@
 <script lang="ts">
-	import type { ArcTrack as ArcTrackType } from '$lib/types.js';
+	import type { ArcTrack as ArcTrackType, TimelineGap } from '$lib/types.js';
 	import { TIMELINE } from '$lib/types.js';
-	import { xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
+	import { xToTime, timeToX, timelineState } from '$lib/stores/timeline.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
-	import { updateClip, createClip, deleteClip, splitClip } from '$lib/api.js';
+	import { updateClip, createClip, deleteClip, splitClip, fillGap, generateScript } from '$lib/api.js';
+	import { startGeneration } from '$lib/stores/editor.svelte.js';
 	import BeatClip from './BeatClip.svelte';
 
-	let { track, color, label, onconnectstart }: {
+	let { track, color, label, gaps = [], onconnectstart }: {
 		track: ArcTrackType;
 		color: string;
 		label: string;
+		gaps?: TimelineGap[];
 		onconnectstart: (clipId: string, x: number, y: number) => void;
 	} = $props();
 
@@ -22,8 +24,27 @@
 		await updateClip(clipId, { start_ms: startMs, end_ms: endMs });
 	}
 
+	let regenPromptClipId: string | null = $state(null);
+
 	async function handleResize(clipId: string, startMs: number, endMs: number) {
 		await updateClip(clipId, { start_ms: startMs, end_ms: endMs });
+		// Check if this clip has generated/refined script.
+		const clip = track.clips.find(c => c.id === clipId);
+		if (clip && (clip.content.generated_script || clip.content.user_refined_script)) {
+			regenPromptClipId = clipId;
+		}
+	}
+
+	async function handleRegenerate() {
+		if (!regenPromptClipId) return;
+		const clipId = regenPromptClipId;
+		regenPromptClipId = null;
+		startGeneration(clipId);
+		await generateScript(clipId);
+	}
+
+	function dismissRegenPrompt() {
+		regenPromptClipId = null;
 	}
 
 	async function handleDelete(clipId: string) {
@@ -40,6 +61,10 @@
 			editorState.selectedClip = null;
 		}
 		await splitClip(clipId, atMs);
+	}
+
+	async function handleFillGap(gap: TimelineGap) {
+		await fillGap(gap.track_id, gap.time_range.start_ms, gap.time_range.end_ms);
 	}
 
 	async function handleDblClick(e: MouseEvent) {
@@ -71,7 +96,26 @@
 				onconnectstart={onconnectstart}
 			/>
 		{/each}
+		{#each gaps as gap}
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="gap-marker"
+				style="left: {timeToX(gap.time_range.start_ms)}px; width: {timeToX(gap.time_range.end_ms) - timeToX(gap.time_range.start_ms)}px"
+				title="Click to fill gap"
+				onclick={() => handleFillGap(gap)}
+			>
+				<span class="gap-label">+</span>
+			</div>
+		{/each}
 	</div>
+	{#if regenPromptClipId}
+		<div class="regen-prompt">
+			<span>Duration changed. Regenerate?</span>
+			<button class="regen-btn" onclick={handleRegenerate}>Regenerate</button>
+			<button class="keep-btn" onclick={dismissRegenPrompt}>Keep</button>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -97,5 +141,68 @@
 		flex: 1;
 		position: relative;
 		height: 100%;
+	}
+
+	.gap-marker {
+		position: absolute;
+		top: 4px;
+		bottom: 4px;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px dashed var(--color-border-subtle);
+		border-radius: 4px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: background 0.15s;
+	}
+
+	.gap-marker:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: var(--color-border-default);
+	}
+
+	.gap-label {
+		font-size: 1rem;
+		color: var(--color-text-muted);
+		pointer-events: none;
+	}
+
+	.regen-prompt {
+		position: absolute;
+		right: 0;
+		top: 50%;
+		transform: translateY(-50%);
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 2px 8px;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 4px;
+		font-size: 0.7rem;
+		color: var(--color-text-secondary);
+		z-index: 5;
+		white-space: nowrap;
+	}
+
+	.regen-btn {
+		font-size: 0.65rem;
+		padding: 1px 8px;
+		border-radius: 8px;
+		border: 1px solid var(--color-accent);
+		background: var(--color-bg-surface);
+		color: var(--color-accent);
+		cursor: pointer;
+	}
+
+	.keep-btn {
+		font-size: 0.65rem;
+		padding: 1px 8px;
+		border-radius: 8px;
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+		color: var(--color-text-secondary);
+		cursor: pointer;
 	}
 </style>

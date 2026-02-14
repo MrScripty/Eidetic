@@ -7,6 +7,7 @@ import {
 	appendStreamingToken,
 	completeGeneration,
 	setGenerationError,
+	addConsistencySuggestion,
 } from './editor.svelte.js';
 import { getTimeline, getScenes, listArcs, listCharacters, getBeat } from '$lib/api.js';
 
@@ -58,5 +59,23 @@ export function setupWsHandlers(ws: WsClient) {
 		const clipId = data.clip_id as string;
 		const error = data.error as string;
 		setGenerationError(clipId, error);
+	});
+
+	ws.on('consistency_suggestion', (data) => {
+		addConsistencySuggestion({
+			source_clip_id: data.source_clip_id as string,
+			target_clip_id: data.target_clip_id as string,
+			original_text: data.original_text as string,
+			suggested_text: data.suggested_text as string,
+			reason: data.reason as string,
+		});
+	});
+
+	ws.on('consistency_complete', (data) => {
+		editorState.checkingConsistency = false;
+		const count = data.suggestion_count as number;
+		if (count === 0) {
+			// No suggestions — nothing to show.
+		}
 	});
 }

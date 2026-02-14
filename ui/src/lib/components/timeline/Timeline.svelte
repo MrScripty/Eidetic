@@ -6,8 +6,21 @@
 	import { timelineState, totalWidth, connectionDrag, timeToX } from '$lib/stores/timeline.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { TIMELINE, colorToHex } from '$lib/types.js';
-	import type { StoryArc } from '$lib/types.js';
-	import { createRelationship } from '$lib/api.js';
+	import type { StoryArc, TimelineGap } from '$lib/types.js';
+	import { createRelationship, getGaps } from '$lib/api.js';
+
+	let gaps = $state<TimelineGap[]>([]);
+
+	// Refetch gaps when timeline changes.
+	$effect(() => {
+		if (timelineState.timeline) {
+			getGaps().then(g => gaps = g).catch(() => {});
+		}
+	});
+
+	function gapsForTrack(trackId: string): TimelineGap[] {
+		return gaps.filter(g => g.track_id === trackId);
+	}
 
 	function arcForTrack(arcId: string): StoryArc | undefined {
 		return storyState.arcs.find(a => a.id === arcId);
@@ -84,6 +97,7 @@
 					{track}
 					color={arc ? colorToHex(arc.color) : '#888'}
 					label={arc?.name ?? 'Unknown'}
+					gaps={gapsForTrack(track.id)}
 					onconnectstart={handleConnectStart}
 				/>
 			{/each}
