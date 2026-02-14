@@ -17,6 +17,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/ai/generate", post(generate))
         .route("/ai/react", post(react))
+        .route("/ai/extract", post(extract_entities))
         .route("/ai/status", get(status))
         .route("/ai/config", put(config))
 }
@@ -207,6 +208,12 @@ async fn run_generation(
             .events_tx
             .send(ServerEvent::BeatUpdated { clip_id });
         state.trigger_save();
+
+        // Auto-extract entities from the newly generated script.
+        let extract_state = state.clone();
+        tokio::spawn(async move {
+            auto_extract_and_commit(extract_state, clip_id).await;
+        });
     }
 
     state.generating.lock().remove(&clip_id);
@@ -377,6 +384,283 @@ struct RawConsistencySuggestion {
     original_text: String,
     suggested_text: String,
     reason: String,
+}
+
+// ──────────────────────────────────────────────
+// Entity Extraction
+// ──────────────────────────────────────────────
+
+#[derive(Deserialize)]
+struct ExtractBody {
+    clip_id: Uuid,
+}
+
+/// Manual extraction endpoint — awaits the LLM and returns results for user review.
+async fn extract_entities(
+    State(state): State<AppState>,
+    Json(body): Json<ExtractBody>,
+) -> Json<serde_json::Value> {
+    let clip_id = ClipId(body.clip_id);
+
+    // Gather the script and known entities while holding the lock briefly.
+    let (script, known_entities, time_ms) = {
+        let project_guard = state.project.lock();
+        let Some(project) = project_guard.as_ref() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
+
+        let clip = match project.timeline.clip(clip_id) {
+            Ok(c) => c,
+            Err(_) => {
+                return Json(serde_json::json!({ "error": "clip not found" }));
+            }
+        };
+
+        let script = clip
+            .content
+            .user_refined_script
+            .as_ref()
+            .or(clip.content.generated_script.as_ref())
+            .cloned()
+            .unwrap_or_default();
+
+        if script.trim().is_empty() {
+            return Json(serde_json::json!({ "error": "clip has no script to extract from" }));
+        }
+
+        let time_ms = clip.time_range.start_ms + clip.time_range.duration_ms() / 2;
+
+        // Build resolved entities list for the extraction prompt.
+        let known: Vec<eidetic_core::story::bible::ResolvedEntity> = project
+            .bible
+            .entities
+            .iter()
+            .map(|e| eidetic_core::story::bible::ResolvedEntity {
+                entity_id: e.id,
+                name: e.name.clone(),
+                category: e.category.clone(),
+                compact_text: e.to_prompt_text(time_ms),
+                full_text: None,
+            })
+            .collect();
+
+        (script, known, time_ms)
+    };
+
+    // Run extraction synchronously — await the LLM response.
+    match run_extraction(&state, &script, &known_entities, time_ms).await {
+        Some(result) => Json(serde_json::to_value(&result).unwrap()),
+        None => Json(serde_json::json!({
+            "new_entities": [],
+            "snapshot_suggestions": [],
+            "clip_ref_suggestions": []
+        })),
+    }
+}
+
+/// Core extraction logic — calls the LLM and parses the result.
+/// Returns `None` if extraction fails.
+async fn run_extraction(
+    state: &AppState,
+    script: &str,
+    known_entities: &[eidetic_core::story::bible::ResolvedEntity],
+    time_ms: u64,
+) -> Option<eidetic_core::story::bible::ExtractionResult> {
+    use crate::prompt_format::build_extraction_prompt;
+
+    let config = state.ai_config.lock().clone();
+    let backend = Backend::from_config(&config);
+    let prompt = build_extraction_prompt(script, known_entities, time_ms);
+
+    let response = match backend.generate_full(&prompt, &config).await {
+        Ok(text) => text,
+        Err(e) => {
+            tracing::error!("Entity extraction failed: {e}");
+            return None;
+        }
+    };
+
+    let json_str = extract_json_object(&response);
+    match serde_json::from_str(json_str) {
+        Ok(result) => Some(result),
+        Err(e) => {
+            tracing::warn!("Failed to parse extraction result: {e}");
+            tracing::debug!("Raw extraction response: {response}");
+            None
+        }
+    }
+}
+
+/// Auto-extraction after generation — runs extraction and commits results to the bible.
+async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
+    use eidetic_core::story::bible::{
+        Entity, EntityCategory, EntitySnapshot, SnapshotOverrides,
+    };
+    use eidetic_core::story::arc::Color;
+
+    // Gather context from the project.
+    let (script, known_entities, time_ms) = {
+        let project_guard = state.project.lock();
+        let Some(project) = project_guard.as_ref() else {
+            return;
+        };
+
+        let clip = match project.timeline.clip(ClipId(clip_id)) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+
+        let script = clip
+            .content
+            .user_refined_script
+            .as_ref()
+            .or(clip.content.generated_script.as_ref())
+            .cloned()
+            .unwrap_or_default();
+
+        if script.trim().is_empty() {
+            return;
+        }
+
+        let time_ms = clip.time_range.start_ms + clip.time_range.duration_ms() / 2;
+
+        let known: Vec<eidetic_core::story::bible::ResolvedEntity> = project
+            .bible
+            .entities
+            .iter()
+            .map(|e| eidetic_core::story::bible::ResolvedEntity {
+                entity_id: e.id,
+                name: e.name.clone(),
+                category: e.category.clone(),
+                compact_text: e.to_prompt_text(time_ms),
+                full_text: None,
+            })
+            .collect();
+
+        (script, known, time_ms)
+    };
+
+    // Run extraction.
+    let result = match run_extraction(&state, &script, &known_entities, time_ms).await {
+        Some(r) => r,
+        None => return,
+    };
+
+    let new_count = result.new_entities.len();
+    let snapshot_count = result.snapshot_suggestions.len();
+
+    if new_count == 0 && snapshot_count == 0 && result.clip_ref_suggestions.is_empty() {
+        return;
+    }
+
+    // Default colors per category.
+    fn category_color(cat: &EntityCategory) -> Color {
+        match cat {
+            EntityCategory::Character => Color { r: 100, g: 149, b: 237 }, // cornflower blue
+            EntityCategory::Location => Color { r: 34, g: 197, b: 94 },    // green
+            EntityCategory::Prop => Color { r: 249, g: 115, b: 22 },       // orange
+            EntityCategory::Theme => Color { r: 168, g: 85, b: 247 },      // purple
+            EntityCategory::Event => Color { r: 239, g: 68, b: 68 },       // red
+        }
+    }
+
+    // Commit results to the bible.
+    {
+        let mut project_guard = state.project.lock();
+        let Some(project) = project_guard.as_mut() else {
+            return;
+        };
+
+        let clip_id_typed = ClipId(clip_id);
+
+        // Create new entities.
+        for sug in &result.new_entities {
+            let mut entity = Entity::new(
+                sug.name.clone(),
+                sug.category.clone(),
+                category_color(&sug.category),
+            );
+            entity.tagline = sug.tagline.clone();
+            entity.description = sug.description.clone();
+            entity.clip_refs.push(clip_id_typed);
+            project.bible.entities.push(entity);
+        }
+
+        // Apply snapshot suggestions to matching entities.
+        for sug in &result.snapshot_suggestions {
+            let entity = project.bible.entities.iter_mut().find(|e| {
+                e.name.eq_ignore_ascii_case(&sug.entity_name)
+            });
+            if let Some(entity) = entity {
+                let overrides = if sug.emotional_state.is_some() || sug.audience_knowledge.is_some() {
+                    Some(SnapshotOverrides {
+                        emotional_state: sug.emotional_state.clone(),
+                        audience_knowledge: sug.audience_knowledge.clone(),
+                        ..Default::default()
+                    })
+                } else {
+                    None
+                };
+                entity.add_snapshot(EntitySnapshot {
+                    at_ms: time_ms,
+                    source_clip_id: Some(clip_id_typed),
+                    description: sug.description.clone(),
+                    state_overrides: overrides,
+                });
+                // Also add clip ref if not already present.
+                if !entity.clip_refs.contains(&clip_id_typed) {
+                    entity.clip_refs.push(clip_id_typed);
+                }
+            }
+        }
+
+        // Add clip refs for suggested existing entities.
+        for entity_id in &result.clip_ref_suggestions {
+            if let Some(entity) = project.bible.entities.iter_mut().find(|e| e.id == *entity_id) {
+                if !entity.clip_refs.contains(&clip_id_typed) {
+                    entity.clip_refs.push(clip_id_typed);
+                }
+            }
+        }
+    }
+
+    // Notify frontend.
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    let _ = state.events_tx.send(ServerEvent::EntityExtractionComplete {
+        clip_id,
+        new_entity_count: new_count,
+        snapshot_count,
+    });
+    state.trigger_save();
+
+    tracing::info!(
+        "Auto-extraction for clip {clip_id}: {new_count} new entities, {snapshot_count} snapshots — committed to bible"
+    );
+}
+
+/// Extract a JSON object from LLM output, handling markdown code fences.
+fn extract_json_object(text: &str) -> &str {
+    // Try to find content within ```json ... ``` fences.
+    if let Some(start) = text.find("```json") {
+        let after_fence = &text[start + 7..];
+        if let Some(end) = after_fence.find("```") {
+            return after_fence[..end].trim();
+        }
+    }
+    // Try plain ``` fences.
+    if let Some(start) = text.find("```") {
+        let after_fence = &text[start + 3..];
+        if let Some(end) = after_fence.find("```") {
+            return after_fence[..end].trim();
+        }
+    }
+    // Try to find a bare JSON object.
+    if let Some(start) = text.find('{') {
+        if let Some(end) = text.rfind('}') {
+            return &text[start..=end];
+        }
+    }
+    text.trim()
 }
 
 /// Extract the first JSON array from LLM output, handling markdown code fences.

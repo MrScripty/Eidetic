@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use eidetic_core::ai::backend::{EditContext, GenerateRequest};
+use eidetic_core::story::bible::ResolvedEntity;
 use eidetic_core::timeline::timing::TimeRange;
 
 /// A structured chat prompt ready for serialization to any backend API.
@@ -30,18 +31,24 @@ fn build_system_message(request: &GenerateRequest) -> String {
          - Transitions: CUT TO:, SMASH CUT TO:, etc. (use sparingly)\n",
     );
 
-    // Character voices.
-    if !request.characters.is_empty() {
-        system.push_str("\nCHARACTER VOICES:\n");
-        for character in &request.characters {
-            system.push_str(&format!("- {}", character.name));
-            if !character.description.is_empty() {
-                system.push_str(&format!(": {}", character.description));
+    // Story bible — entities directly referenced by this beat (full detail).
+    if !request.bible_context.referenced_entities.is_empty() {
+        system.push_str("\nSTORY BIBLE — Key entities in this scene:\n");
+        for entity in &request.bible_context.referenced_entities {
+            if let Some(ref full) = entity.full_text {
+                system.push_str(full);
+                system.push('\n');
+            } else {
+                system.push_str(&format!("- {}\n", entity.compact_text));
             }
-            if !character.voice_notes.is_empty() {
-                system.push_str(&format!(" — Voice: {}", character.voice_notes));
-            }
-            system.push('\n');
+        }
+    }
+
+    // Other active entities (compact, for awareness).
+    if !request.bible_context.nearby_entities.is_empty() {
+        system.push_str("\nOTHER ACTIVE ENTITIES (for awareness):\n");
+        for entity in &request.bible_context.nearby_entities {
+            system.push_str(&format!("- {}\n", entity.compact_text));
         }
     }
 
@@ -204,6 +211,69 @@ pub(crate) fn build_consistency_prompt(
          ]\n\
          ```\n\
          Return `[]` if no changes are needed.",
+    );
+
+    ChatPrompt { system, user }
+}
+
+/// Build a chat prompt for entity extraction from a generated script.
+pub(crate) fn build_extraction_prompt(
+    script: &str,
+    existing_entities: &[ResolvedEntity],
+    time_ms: u64,
+) -> ChatPrompt {
+    let system = String::from(
+        "You are a story analyst for a 30-minute TV episode. \
+         Given a screenplay beat, identify characters, locations, props, themes, \
+         and events present in the scene, along with any character development points.\n\n\
+         RULES:\n\
+         - Match existing entities by name when possible (case-insensitive).\n\
+         - Only suggest genuinely NEW entities — do not re-suggest existing ones.\n\
+         - Focus on meaningful development points (introductions, revelations, transformations).\n\
+         - Keep taglines under 15 words.\n\
+         - Return ONLY valid JSON, no commentary.",
+    );
+
+    let mut user = String::from("Analyze this screenplay beat and extract entities and development points.\n\n");
+
+    user.push_str(&format!("TIMELINE POSITION: {}ms\n\n", time_ms));
+
+    user.push_str("SCRIPT:\n");
+    user.push_str(script);
+    user.push_str("\n\n");
+
+    if !existing_entities.is_empty() {
+        user.push_str("KNOWN ENTITIES (do NOT re-suggest these as new):\n");
+        for entity in existing_entities {
+            user.push_str(&format!("- {} [{}]\n", entity.name, entity.category));
+        }
+        user.push('\n');
+    }
+
+    user.push_str(
+        "Respond with JSON in this exact format:\n\
+         ```json\n\
+         {\n\
+           \"new_entities\": [\n\
+             {\n\
+               \"name\": \"<entity name>\",\n\
+               \"category\": \"Character\" | \"Location\" | \"Prop\" | \"Theme\" | \"Event\",\n\
+               \"tagline\": \"<brief description, under 15 words>\",\n\
+               \"description\": \"<fuller description>\"\n\
+             }\n\
+           ],\n\
+           \"snapshot_suggestions\": [\n\
+             {\n\
+               \"entity_name\": \"<name of existing or new entity>\",\n\
+               \"description\": \"<what changed or what we learn>\",\n\
+               \"emotional_state\": \"<optional: character's feeling>\",\n\
+               \"audience_knowledge\": \"<optional: what audience now knows>\"\n\
+             }\n\
+           ],\n\
+           \"clip_ref_suggestions\": [\"<uuid of entities that appear in this scene>\"]\n\
+         }\n\
+         ```\n\
+         Return `{\"new_entities\": [], \"snapshot_suggestions\": [], \"clip_ref_suggestions\": []}` if nothing noteworthy.",
     );
 
     ChatPrompt { system, user }

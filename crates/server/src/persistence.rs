@@ -46,14 +46,82 @@ pub async fn save_project(project: &Project, path: &Path) -> Result<(), String> 
 }
 
 /// Load a project from a JSON file on disk.
+/// Handles migration from v1 format (characters field) to v2 (bible field).
 pub async fn load_project(path: &Path) -> Result<Project, String> {
     let data = fs::read_to_string(path)
         .await
         .map_err(|e| format!("read error: {e}"))?;
-    let project: Project =
+
+    let mut project: Project =
         serde_json::from_str(&data).map_err(|e| format!("deserialize error: {e}"))?;
+
+    // Migrate v1 characters into bible entities if bible is empty and JSON had characters.
+    if project.bible.entities.is_empty() {
+        if let Ok(raw) = serde_json::from_str::<serde_json::Value>(&data) {
+            if let Some(chars) = raw.get("characters").and_then(|v| v.as_array()) {
+                migrate_v1_characters(&mut project, chars);
+                if !project.bible.entities.is_empty() {
+                    tracing::info!(
+                        "migrated {} v1 characters to bible entities",
+                        project.bible.entities.len()
+                    );
+                }
+            }
+        }
+    }
+
     tracing::debug!("loaded project from {}", path.display());
     Ok(project)
+}
+
+/// Convert v1 Character objects into Entity objects in the story bible.
+fn migrate_v1_characters(project: &mut Project, chars: &[serde_json::Value]) {
+    use eidetic_core::story::arc::Color;
+    use eidetic_core::story::bible::{Entity, EntityCategory, EntityDetails};
+
+    for ch in chars {
+        let name = ch
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("Unknown")
+            .to_string();
+        let description = ch
+            .get("description")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let voice_notes = ch
+            .get("voice_notes")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+
+        let color = ch
+            .get("color")
+            .and_then(|v| {
+                let r = v.get("r").and_then(|x| x.as_u64())? as u8;
+                let g = v.get("g").and_then(|x| x.as_u64())? as u8;
+                let b = v.get("b").and_then(|x| x.as_u64())? as u8;
+                Some(Color::new(r, g, b))
+            })
+            .unwrap_or(Color::new(200, 200, 200));
+
+        let mut entity = Entity::new(name, EntityCategory::Character, color);
+        entity.description = description.clone();
+        entity.tagline = if description.len() > 100 {
+            format!("{}...", &description[..97])
+        } else {
+            description
+        };
+        entity.details = EntityDetails::Character {
+            traits: Vec::new(),
+            voice_notes,
+            character_relations: Vec::new(),
+            audience_knowledge: String::new(),
+        };
+
+        project.bible.add_entity(entity);
+    }
 }
 
 /// List saved projects under a base directory.

@@ -70,6 +70,12 @@ pub enum ServerEvent {
         can_undo: bool,
         can_redo: bool,
     },
+    BibleChanged,
+    EntityExtractionComplete {
+        clip_id: uuid::Uuid,
+        new_entity_count: usize,
+        snapshot_count: usize,
+    },
 }
 
 /// Snapshot-based undo/redo stack.
