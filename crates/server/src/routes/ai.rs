@@ -6,8 +6,10 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::ai_backends::Backend;
+use crate::embeddings::EmbeddingClient;
 use crate::prompt_format::build_chat_prompt;
 use crate::state::{AppState, BackendType, ServerEvent};
+use eidetic_core::ai::backend::RagChunk;
 use eidetic_core::ai::prompt::build_generate_request;
 use eidetic_core::timeline::clip::{ClipId, ContentStatus};
 
@@ -103,10 +105,29 @@ async fn generate(
 async fn run_generation(
     state: AppState,
     clip_id: Uuid,
-    request: eidetic_core::ai::backend::GenerateRequest,
+    mut request: eidetic_core::ai::backend::GenerateRequest,
 ) {
     let config = state.ai_config.lock().clone();
     let backend = Backend::from_config(&config);
+
+    // RAG: retrieve relevant reference chunks if vector store has entries.
+    if !state.vector_store.lock().is_empty() {
+        let query = &request.beat_clip.content.beat_notes;
+        let embed_client = EmbeddingClient::new(&config.base_url, "nomic-embed-text");
+        if let Ok(query_embedding) = embed_client.embed(query).await {
+            let store = state.vector_store.lock();
+            let results = store.search(&query_embedding, 3);
+            request.rag_context = results
+                .into_iter()
+                .map(|(chunk, score)| RagChunk {
+                    source: chunk.document_name.clone(),
+                    content: chunk.content.clone(),
+                    relevance_score: score,
+                })
+                .collect();
+        }
+    }
+
     let prompt = build_chat_prompt(&request);
 
     let stream_result = backend.generate(&prompt, &config).await;

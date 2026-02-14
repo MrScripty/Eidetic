@@ -1,5 +1,7 @@
 mod ai;
+mod export;
 mod project;
+mod reference;
 mod script;
 mod story;
 mod timeline;
@@ -16,4 +18,6 @@ pub fn api_router() -> Router<AppState> {
         .merge(timeline::router())
         .merge(script::router())
         .merge(ai::router())
+        .merge(export::router())
+        .merge(reference::router())
 }

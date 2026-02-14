@@ -42,6 +42,7 @@ async fn update_notes(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateNotesRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -72,6 +73,7 @@ async fn update_script(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateScriptRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -94,6 +96,7 @@ async fn lock_beat(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -115,6 +118,7 @@ async fn unlock_beat(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));

@@ -133,6 +133,19 @@ fn build_user_message(request: &GenerateRequest) -> String {
         user.push('\n');
     }
 
+    // RAG reference material.
+    if !request.rag_context.is_empty() {
+        user.push_str("REFERENCE MATERIAL (use to inform tone, world details, and character voices):\n");
+        for chunk in &request.rag_context {
+            user.push_str(&format!(
+                "--- {} (relevance: {:.0}%) ---\n{}\n\n",
+                chunk.source,
+                chunk.relevance_score * 100.0,
+                chunk.content,
+            ));
+        }
+    }
+
     // Style notes.
     if let Some(notes) = &request.style_notes {
         user.push_str(&format!("STYLE NOTES: {notes}\n\n"));

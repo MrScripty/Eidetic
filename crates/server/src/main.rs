@@ -1,9 +1,12 @@
 mod ai_backends;
+mod embeddings;
+mod export;
 mod persistence;
 mod prompt_format;
 mod routes;
 mod state;
 mod static_files;
+mod vector_store;
 mod ws;
 
 use std::net::SocketAddr;

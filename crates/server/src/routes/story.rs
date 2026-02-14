@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use eidetic_core::story::arc::{ArcType, Color, StoryArc};
 use eidetic_core::story::character::Character;
+use eidetic_core::story::progression::analyze_all_arcs;
 
 use crate::state::{AppState, ServerEvent};
 
@@ -19,6 +20,7 @@ pub fn router() -> Router<AppState> {
         .route("/characters", post(create_character))
         .route("/characters/{id}", put(update_character))
         .route("/characters/{id}", delete(delete_character))
+        .route("/arcs/progression", get(arc_progression))
 }
 
 // --- Arcs ---
@@ -42,6 +44,7 @@ async fn create_arc(
     State(state): State<AppState>,
     Json(body): Json<CreateArcRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -72,6 +75,7 @@ async fn update_arc(
     Path(id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -107,6 +111,7 @@ async fn delete_arc(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -142,6 +147,7 @@ async fn create_character(
     State(state): State<AppState>,
     Json(body): Json<CreateCharacterRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -165,6 +171,7 @@ async fn update_character(
     Path(id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -203,6 +210,7 @@ async fn delete_character(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -216,4 +224,15 @@ async fn delete_character(
         state.trigger_save();
     }
     Json(serde_json::json!({ "deleted": deleted }))
+}
+
+async fn arc_progression(State(state): State<AppState>) -> Json<serde_json::Value> {
+    let guard = state.project.lock();
+    match guard.as_ref() {
+        Some(p) => {
+            let progressions = analyze_all_arcs(p);
+            Json(serde_json::to_value(&progressions).unwrap())
+        }
+        None => Json(serde_json::json!([])),
+    }
 }

@@ -45,6 +45,7 @@ async fn add_track(
     State(state): State<AppState>,
     Json(body): Json<AddTrackRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -67,6 +68,7 @@ async fn remove_track(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -96,6 +98,7 @@ async fn create_clip(
     State(state): State<AppState>,
     Json(body): Json<CreateClipRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -133,6 +136,7 @@ async fn update_clip(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateClipRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -168,6 +172,7 @@ async fn delete_clip(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -194,6 +199,7 @@ async fn split_clip(
     Path(id): Path<Uuid>,
     Json(body): Json<SplitClipRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -221,6 +227,7 @@ async fn create_relationship(
     State(state): State<AppState>,
     Json(body): Json<CreateRelationshipRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -249,6 +256,7 @@ async fn delete_relationship(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -297,6 +305,7 @@ async fn fill_gap(
     State(state): State<AppState>,
     Json(body): Json<FillGapRequest>,
 ) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));

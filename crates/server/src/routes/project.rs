@@ -6,7 +6,7 @@ use serde::Deserialize;
 use eidetic_core::Template;
 
 use crate::persistence;
-use crate::state::AppState;
+use crate::state::{AppState, ServerEvent};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -16,6 +16,8 @@ pub fn router() -> Router<AppState> {
         .route("/project/save", post(save_project))
         .route("/project/load", post(load_project))
         .route("/project/list", get(list_projects))
+        .route("/project/undo", post(undo))
+        .route("/project/redo", post(redo))
 }
 
 #[derive(Deserialize)]
@@ -136,4 +138,62 @@ async fn list_projects() -> Json<serde_json::Value> {
     let base_dir = persistence::default_project_dir();
     let entries = persistence::list_projects(&base_dir).await;
     Json(serde_json::to_value(&entries).unwrap())
+}
+
+async fn undo(State(state): State<AppState>) -> Json<serde_json::Value> {
+    let mut undo_guard = state.undo_stack.lock();
+    let mut project_guard = state.project.lock();
+    let Some(current) = project_guard.as_ref() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    match undo_guard.undo(current.clone()) {
+        Some(prev) => {
+            let json = serde_json::to_value(&prev).unwrap();
+            *project_guard = Some(prev);
+            let can_undo = undo_guard.can_undo();
+            let can_redo = undo_guard.can_redo();
+            drop(undo_guard);
+            drop(project_guard);
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            let _ = state.events_tx.send(ServerEvent::StoryChanged);
+            let _ = state.events_tx.send(ServerEvent::UndoRedoChanged {
+                can_undo,
+                can_redo,
+            });
+            state.trigger_save();
+            Json(json)
+        }
+        None => Json(serde_json::json!({ "error": "nothing to undo" })),
+    }
+}
+
+async fn redo(State(state): State<AppState>) -> Json<serde_json::Value> {
+    let mut undo_guard = state.undo_stack.lock();
+    let mut project_guard = state.project.lock();
+    let Some(current) = project_guard.as_ref() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    match undo_guard.redo(current.clone()) {
+        Some(next) => {
+            let json = serde_json::to_value(&next).unwrap();
+            *project_guard = Some(next);
+            let can_undo = undo_guard.can_undo();
+            let can_redo = undo_guard.can_redo();
+            drop(undo_guard);
+            drop(project_guard);
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            let _ = state.events_tx.send(ServerEvent::StoryChanged);
+            let _ = state.events_tx.send(ServerEvent::UndoRedoChanged {
+                can_undo,
+                can_redo,
+            });
+            state.trigger_save();
+            Json(json)
+        }
+        None => Json(serde_json::json!({ "error": "nothing to redo" })),
+    }
 }

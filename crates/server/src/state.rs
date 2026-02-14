@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
 use crate::persistence;
+use crate::vector_store::VectorStore;
 
 /// Events broadcast to all connected WebSocket clients after mutations.
 #[derive(Debug, Clone, Serialize)]
@@ -40,6 +41,65 @@ pub enum ServerEvent {
         source_clip_id: uuid::Uuid,
         suggestion_count: usize,
     },
+    UndoRedoChanged {
+        can_undo: bool,
+        can_redo: bool,
+    },
+}
+
+/// Snapshot-based undo/redo stack.
+///
+/// Before each mutation, the current `Project` is cloned onto the undo stack.
+/// Undo restores the previous state; redo re-applies undone changes.
+/// Capped at `max_depth` entries (~50 snapshots ≈ 2.5MB for a typical project).
+pub struct UndoStack {
+    undo: Vec<Project>,
+    redo: Vec<Project>,
+    max_depth: usize,
+}
+
+impl UndoStack {
+    pub fn new(max_depth: usize) -> Self {
+        Self {
+            undo: Vec::new(),
+            redo: Vec::new(),
+            max_depth,
+        }
+    }
+
+    /// Push the current state onto the undo stack before a mutation.
+    /// Clears the redo stack (new branch of history).
+    pub fn push(&mut self, snapshot: Project) {
+        if self.undo.len() >= self.max_depth {
+            self.undo.remove(0);
+        }
+        self.undo.push(snapshot);
+        self.redo.clear();
+    }
+
+    /// Undo: restore the most recent snapshot. Caller provides current state
+    /// which is pushed onto the redo stack.
+    pub fn undo(&mut self, current: Project) -> Option<Project> {
+        let prev = self.undo.pop()?;
+        self.redo.push(current);
+        Some(prev)
+    }
+
+    /// Redo: re-apply the most recently undone state. Caller provides current
+    /// state which is pushed onto the undo stack.
+    pub fn redo(&mut self, current: Project) -> Option<Project> {
+        let next = self.redo.pop()?;
+        self.undo.push(current);
+        Some(next)
+    }
+
+    pub fn can_undo(&self) -> bool {
+        !self.undo.is_empty()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        !self.redo.is_empty()
+    }
 }
 
 /// Which AI backend to use.
@@ -84,6 +144,10 @@ pub struct AppState {
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
     /// Path where the current project is saved on disk.
     pub project_path: Arc<Mutex<Option<PathBuf>>>,
+    /// Snapshot-based undo/redo stack for project mutations.
+    pub undo_stack: Arc<Mutex<UndoStack>>,
+    /// In-memory vector store for RAG reference material.
+    pub vector_store: Arc<Mutex<VectorStore>>,
     /// Channel to signal the auto-save background task.
     save_tx: tokio::sync::mpsc::Sender<()>,
 }
@@ -107,6 +171,8 @@ impl AppState {
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
             project_path,
+            undo_stack: Arc::new(Mutex::new(UndoStack::new(50))),
+            vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
         }
     }
@@ -114,6 +180,27 @@ impl AppState {
     /// Signal that the project has been mutated and should be auto-saved.
     pub fn trigger_save(&self) {
         let _ = self.save_tx.try_send(());
+    }
+
+    /// Snapshot the current project state before a mutation for undo support.
+    ///
+    /// Call this at the start of every mutation handler, before acquiring
+    /// the project lock for writing.
+    pub fn snapshot_for_undo(&self) {
+        let project_guard = self.project.lock();
+        if let Some(p) = project_guard.as_ref() {
+            let snapshot = p.clone();
+            drop(project_guard);
+            let mut undo = self.undo_stack.lock();
+            undo.push(snapshot);
+            let can_undo = undo.can_undo();
+            let can_redo = undo.can_redo();
+            drop(undo);
+            let _ = self.events_tx.send(ServerEvent::UndoRedoChanged {
+                can_undo,
+                can_redo,
+            });
+        }
     }
 }
 
