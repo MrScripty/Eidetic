@@ -7,7 +7,7 @@ use uuid::Uuid;
 use eidetic_core::story::arc::{ArcType, Color, StoryArc};
 use eidetic_core::story::character::Character;
 
-use crate::state::AppState;
+use crate::state::{AppState, ServerEvent};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -62,6 +62,7 @@ async fn create_arc(
     let arc = StoryArc::new(body.name, arc_type, color);
     let json = serde_json::to_value(&arc).unwrap();
     project.arcs.push(arc);
+    let _ = state.events_tx.send(ServerEvent::StoryChanged);
     Json(json)
 }
 
@@ -82,7 +83,20 @@ async fn update_arc(
         if let Some(desc) = body.get("description").and_then(|v| v.as_str()) {
             arc.description = desc.to_string();
         }
-        Json(serde_json::to_value(&*arc).unwrap())
+        if let Some(color_arr) = body.get("color").and_then(|v| v.as_array()) {
+            if color_arr.len() == 3 {
+                if let (Some(r), Some(g), Some(b)) = (
+                    color_arr[0].as_u64(),
+                    color_arr[1].as_u64(),
+                    color_arr[2].as_u64(),
+                ) {
+                    arc.color = Color::new(r as u8, g as u8, b as u8);
+                }
+            }
+        }
+        let json = serde_json::to_value(&*arc).unwrap();
+        let _ = state.events_tx.send(ServerEvent::StoryChanged);
+        Json(json)
     } else {
         Json(serde_json::json!({ "error": "arc not found" }))
     }
@@ -99,7 +113,11 @@ async fn delete_arc(
 
     let before = project.arcs.len();
     project.arcs.retain(|a| a.id.0 != id);
-    Json(serde_json::json!({ "deleted": before != project.arcs.len() }))
+    let deleted = before != project.arcs.len();
+    if deleted {
+        let _ = state.events_tx.send(ServerEvent::StoryChanged);
+    }
+    Json(serde_json::json!({ "deleted": deleted }))
 }
 
 // --- Characters ---
@@ -135,6 +153,7 @@ async fn create_character(
     let character = Character::new(body.name, color);
     let json = serde_json::to_value(&character).unwrap();
     project.characters.push(character);
+    let _ = state.events_tx.send(ServerEvent::StoryChanged);
     Json(json)
 }
 
@@ -158,7 +177,20 @@ async fn update_character(
         if let Some(voice) = body.get("voice_notes").and_then(|v| v.as_str()) {
             ch.voice_notes = voice.to_string();
         }
-        Json(serde_json::to_value(&*ch).unwrap())
+        if let Some(color_arr) = body.get("color").and_then(|v| v.as_array()) {
+            if color_arr.len() == 3 {
+                if let (Some(r), Some(g), Some(b)) = (
+                    color_arr[0].as_u64(),
+                    color_arr[1].as_u64(),
+                    color_arr[2].as_u64(),
+                ) {
+                    ch.color = Color::new(r as u8, g as u8, b as u8);
+                }
+            }
+        }
+        let json = serde_json::to_value(&*ch).unwrap();
+        let _ = state.events_tx.send(ServerEvent::StoryChanged);
+        Json(json)
     } else {
         Json(serde_json::json!({ "error": "character not found" }))
     }
@@ -175,5 +207,9 @@ async fn delete_character(
 
     let before = project.characters.len();
     project.characters.retain(|c| c.id.0 != id);
-    Json(serde_json::json!({ "deleted": before != project.characters.len() }))
+    let deleted = before != project.characters.len();
+    if deleted {
+        let _ = state.events_tx.send(ServerEvent::StoryChanged);
+    }
+    Json(serde_json::json!({ "deleted": deleted }))
 }

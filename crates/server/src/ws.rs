@@ -2,15 +2,17 @@ use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::State;
 use axum::response::IntoResponse;
 use futures::StreamExt;
+use tokio::sync::broadcast;
 
-use crate::state::AppState;
+use crate::state::{AppState, ServerEvent};
 
 /// WebSocket upgrade handler.
-pub async fn ws_handler(ws: WebSocketUpgrade, State(_state): State<AppState>) -> impl IntoResponse {
-    ws.on_upgrade(handle_socket)
+pub async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
+    let rx = state.events_tx.subscribe();
+    ws.on_upgrade(|socket| handle_socket(socket, rx))
 }
 
-async fn handle_socket(mut socket: WebSocket) {
+async fn handle_socket(mut socket: WebSocket, mut rx: broadcast::Receiver<ServerEvent>) {
     // Send a welcome message so clients know the connection is alive.
     if socket
         .send(Message::Text(
@@ -22,18 +24,34 @@ async fn handle_socket(mut socket: WebSocket) {
         return;
     }
 
-    // Echo loop — Sprint 2 will replace this with real event dispatch.
-    while let Some(Ok(msg)) = socket.next().await {
-        match msg {
-            Message::Text(text) => {
-                // Parse and handle subscribe / beat_notes_edit / etc.
-                // For now, echo back.
-                if socket.send(Message::Text(text)).await.is_err() {
-                    break;
+    loop {
+        tokio::select! {
+            // Forward broadcast events to the WebSocket client.
+            result = rx.recv() => {
+                match result {
+                    Ok(event) => {
+                        let json = serde_json::to_string(&event).unwrap();
+                        if socket.send(Message::Text(json.into())).await.is_err() {
+                            break;
+                        }
+                    }
+                    Err(broadcast::error::RecvError::Lagged(n)) => {
+                        tracing::warn!("WebSocket client lagged, skipped {n} events");
+                    }
+                    Err(broadcast::error::RecvError::Closed) => break,
                 }
             }
-            Message::Close(_) => break,
-            _ => {}
+            // Listen for client messages (subscribe, etc.).
+            msg = socket.next() => {
+                match msg {
+                    Some(Ok(Message::Close(_))) | None => break,
+                    Some(Ok(_)) => {
+                        // Client messages (subscribe, etc.) — acknowledged but not
+                        // filtered yet. All events are forwarded to all clients.
+                    }
+                    Some(Err(_)) => break,
+                }
+            }
         }
     }
 }

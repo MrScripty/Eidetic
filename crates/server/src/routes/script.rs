@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use eidetic_core::timeline::clip::{ClipId, ContentStatus};
 
-use crate::state::AppState;
+use crate::state::{AppState, ServerEvent};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -53,7 +53,9 @@ async fn update_notes(
             if clip.content.status == ContentStatus::Empty {
                 clip.content.status = ContentStatus::NotesOnly;
             }
-            Json(serde_json::to_value(&clip.content).unwrap())
+            let json = serde_json::to_value(&clip.content).unwrap();
+            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            Json(json)
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
@@ -78,7 +80,9 @@ async fn update_script(
         Ok(clip) => {
             clip.content.user_refined_script = Some(body.script);
             clip.content.status = ContentStatus::UserRefined;
-            Json(serde_json::to_value(&clip.content).unwrap())
+            let json = serde_json::to_value(&clip.content).unwrap();
+            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            Json(json)
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
@@ -97,6 +101,7 @@ async fn lock_beat(
         Ok(clip) => {
             clip.locked = true;
             clip.content.status = ContentStatus::UserWritten;
+            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
             Json(serde_json::json!({ "locked": true }))
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
@@ -125,6 +130,7 @@ async fn unlock_beat(
             } else {
                 ContentStatus::Empty
             };
+            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
             Json(serde_json::json!({ "locked": false }))
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),

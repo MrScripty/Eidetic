@@ -10,7 +10,7 @@ use eidetic_core::timeline::relationship::{Relationship, RelationshipId, Relatio
 use eidetic_core::timeline::timing::TimeRange;
 use eidetic_core::timeline::track::{ArcTrack, TrackId};
 
-use crate::state::AppState;
+use crate::state::{AppState, ServerEvent};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -51,7 +51,11 @@ async fn add_track(
     let track = ArcTrack::new(ArcId(body.arc_id));
     let json = serde_json::to_value(&track).unwrap();
     match project.timeline.add_track(track) {
-        Ok(()) => Json(json),
+        Ok(()) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            Json(json)
+        }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
 }
@@ -66,7 +70,11 @@ async fn remove_track(
     };
 
     match project.timeline.remove_track(TrackId(id)) {
-        Ok(track) => Json(serde_json::to_value(&track).unwrap()),
+        Ok(track) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            Json(serde_json::to_value(&track).unwrap())
+        }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
 }
@@ -99,7 +107,11 @@ async fn create_clip(
     let json = serde_json::to_value(&clip).unwrap();
 
     match project.timeline.add_clip(TrackId(body.track_id), clip) {
-        Ok(()) => Json(json),
+        Ok(()) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            Json(json)
+        }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
 }
@@ -137,7 +149,10 @@ async fn update_clip(
             if let Some(name) = body.name {
                 clip.name = name;
             }
-            Json(serde_json::to_value(&*clip).unwrap())
+            let json = serde_json::to_value(&*clip).unwrap();
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            Json(json)
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
@@ -153,7 +168,11 @@ async fn delete_clip(
     };
 
     match project.timeline.remove_clip(ClipId(id)) {
-        Ok(clip) => Json(serde_json::to_value(&clip).unwrap()),
+        Ok(clip) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
+            Json(serde_json::to_value(&clip).unwrap())
+        }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
 }
@@ -175,6 +194,8 @@ async fn split_clip(
 
     match project.timeline.split_clip(ClipId(id), body.at_ms) {
         Ok((left, right)) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScenesChanged);
             Json(serde_json::json!({ "left_id": left.0, "right_id": right.0 }))
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
@@ -207,7 +228,10 @@ async fn create_relationship(
     let json = serde_json::to_value(&rel).unwrap();
 
     match project.timeline.add_relationship(rel) {
-        Ok(()) => Json(json),
+        Ok(()) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            Json(json)
+        }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
 }
@@ -222,7 +246,10 @@ async fn delete_relationship(
     };
 
     match project.timeline.remove_relationship(RelationshipId(id)) {
-        Ok(rel) => Json(serde_json::to_value(&rel).unwrap()),
+        Ok(rel) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            Json(serde_json::to_value(&rel).unwrap())
+        }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
 }
