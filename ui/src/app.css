@@ -66,6 +66,11 @@
 	--color-entity-event: #ef4444;
 	--color-bible-development: #14b8a6;
 
+	/* Character progression markers */
+	--color-marker-snapshot: #14b8a6;
+	--color-marker-event: #ef4444;
+	--color-marker-mention: #6495ed;
+
 	/* Structure segments */
 	--color-segment-cold-open: #4a5568;
 	--color-segment-main-titles: #2d3748;

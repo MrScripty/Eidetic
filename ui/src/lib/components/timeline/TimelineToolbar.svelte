@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
+	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 	import { formatTime } from '$lib/types.js';
 </script>
 
@@ -37,6 +38,21 @@
 	>
 		<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
 			<path d="M7 1C4.5 1 2.5 3 2.5 5.5c0 1.5.7 2.8 1.8 3.7L7 13l2.7-3.8c1.1-.9 1.8-2.2 1.8-3.7C11.5 3 9.5 1 7 1zm0 6.5a2 2 0 110-4 2 2 0 010 4z"/>
+		</svg>
+	</button>
+
+	<div class="tl-sep"></div>
+
+	<!-- Character timeline toggle -->
+	<button
+		class="tl-btn"
+		class:active={characterTimelineState.visible}
+		title="Character Timeline (C)"
+		onclick={() => characterTimelineState.visible = !characterTimelineState.visible}
+	>
+		<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+			<circle cx="7" cy="4" r="2.5"/>
+			<path d="M3 12c0-2.2 1.8-4 4-4s4 1.8 4 4"/>
 		</svg>
 	</button>
 

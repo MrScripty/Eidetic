@@ -12,6 +12,7 @@
 	import type { StoryArc, TimelineGap } from '$lib/types.js';
 	import { createRelationship, getGaps, closeGap, closeAllGaps, createArc, addTrack, removeTrack, deleteArc } from '$lib/api.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
+	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 
 	let gaps = $state<TimelineGap[]>([]);
 	let scrollbarEl: HTMLDivElement | undefined = $state();
@@ -92,6 +93,10 @@
 			registerShortcut({
 				key: 'g', shift: true, description: 'Close all gaps on track', skipInInput: true,
 				action: () => { handleCloseAllGapsOnTrack(); },
+			}),
+			registerShortcut({
+				key: 'c', description: 'Toggle character timeline', skipInInput: true,
+				action: () => { characterTimelineState.visible = !characterTimelineState.visible; },
 			}),
 		];
 		return () => unsubs.forEach(fn => fn());
