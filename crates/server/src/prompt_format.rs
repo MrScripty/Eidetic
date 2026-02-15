@@ -110,6 +110,20 @@ fn build_user_message(request: &GenerateRequest) -> String {
         );
     }
 
+    // Cross-track continuity recaps — distilled scene state summaries.
+    if !request.surrounding_context.preceding_recaps.is_empty() {
+        user.push_str(
+            "CONTINUITY CONTEXT — Scene recaps from preceding clips across all storylines.\n\
+             THESE ARE ESTABLISHED FACTS. Your output must not contradict them:\n\n",
+        );
+        for entry in &request.surrounding_context.preceding_recaps {
+            user.push_str(&format!(
+                "--- {} / {} ---\n{}\n\n",
+                entry.arc_name, entry.clip_name, entry.recap,
+            ));
+        }
+    }
+
     // Surrounding scripts for continuity.
     if !request.surrounding_context.preceding_scripts.is_empty() {
         user.push_str("PRECEDING SCRIPT (for continuity):\n");
@@ -224,12 +238,19 @@ pub(crate) fn build_extraction_prompt(
 ) -> ChatPrompt {
     let system = String::from(
         "You are a story analyst for a 30-minute TV episode. \
-         Given a screenplay beat, identify characters, locations, props, themes, \
+         Given a screenplay beat, identify ALL characters, locations, props, themes, \
          and events present in the scene, along with any character development points.\n\n\
+         SCREENPLAY PARSING HINTS:\n\
+         - Scene headings (INT./EXT. lines) indicate locations.\n\
+         - Character names in ALLCAPS above dialogue lines indicate speaking characters.\n\
+         - Characters mentioned in action/description lines are also present.\n\
+         - Characters referred to by pronoun or nickname should be identified by their full name when possible.\n\n\
          RULES:\n\
-         - Match existing entities by name when possible (case-insensitive).\n\
-         - Only suggest genuinely NEW entities — do not re-suggest existing ones.\n\
-         - Focus on meaningful development points (introductions, revelations, transformations).\n\
+         - `entities_present` MUST list the name of EVERY character, location, and notable entity \
+         that appears in or is mentioned in the scene — both existing and new. This is the most \
+         important field. Do not omit anyone.\n\
+         - `new_entities` should ONLY contain entities not already in the KNOWN ENTITIES list.\n\
+         - Snapshots are for meaningful development points (introductions, revelations, transformations).\n\
          - Keep taglines under 15 words.\n\
          - Return ONLY valid JSON, no commentary.",
     );
@@ -243,7 +264,7 @@ pub(crate) fn build_extraction_prompt(
     user.push_str("\n\n");
 
     if !existing_entities.is_empty() {
-        user.push_str("KNOWN ENTITIES (do NOT re-suggest these as new):\n");
+        user.push_str("KNOWN ENTITIES (do NOT re-suggest these as new, but DO include them in entities_present if they appear):\n");
         for entity in existing_entities {
             user.push_str(&format!("- {} [{}]\n", entity.name, entity.category));
         }
@@ -254,9 +275,10 @@ pub(crate) fn build_extraction_prompt(
         "Respond with JSON in this exact format:\n\
          ```json\n\
          {\n\
+           \"entities_present\": [\"<name of every entity appearing in this scene, existing or new>\"],\n\
            \"new_entities\": [\n\
              {\n\
-               \"name\": \"<entity name>\",\n\
+               \"name\": \"<entity name — only if NOT in known entities>\",\n\
                \"category\": \"Character\" | \"Location\" | \"Prop\" | \"Theme\" | \"Event\",\n\
                \"tagline\": \"<brief description, under 15 words>\",\n\
                \"description\": \"<fuller description>\"\n\
@@ -267,13 +289,64 @@ pub(crate) fn build_extraction_prompt(
                \"entity_name\": \"<name of existing or new entity>\",\n\
                \"description\": \"<what changed or what we learn>\",\n\
                \"emotional_state\": \"<optional: character's feeling>\",\n\
-               \"audience_knowledge\": \"<optional: what audience now knows>\"\n\
+               \"audience_knowledge\": \"<optional: what audience now knows>\",\n\
+               \"location\": \"<optional: where this entity is, e.g. INT. CABIN - MORNING>\"\n\
              }\n\
-           ],\n\
-           \"clip_ref_suggestions\": [\"<uuid of entities that appear in this scene>\"]\n\
+           ]\n\
          }\n\
          ```\n\
-         Return `{\"new_entities\": [], \"snapshot_suggestions\": [], \"clip_ref_suggestions\": []}` if nothing noteworthy.",
+         Return `{\"entities_present\": [], \"new_entities\": [], \"snapshot_suggestions\": []}` if no entities found.",
+    );
+
+    ChatPrompt { system, user }
+}
+
+/// Build a chat prompt to generate a compact scene recap from a script.
+///
+/// The recap captures scene-end state, established facts, and narrative
+/// events in ~100-200 tokens of structured text. If a preceding recap
+/// is provided, the generated recap carries forward still-relevant facts
+/// (rolling summary behavior).
+pub(crate) fn build_recap_prompt(
+    script: &str,
+    preceding_recap: Option<&str>,
+) -> ChatPrompt {
+    let system = String::from(
+        "You are a script continuity analyst. Given a screenplay scene, produce a \
+         compact structured recap that captures the scene's end state. This recap \
+         will be used as context for writing subsequent scenes to maintain continuity.\n\n\
+         FORMAT (use this exact structure):\n\
+         SCENE END STATE:\n\
+         - Location: [INT/EXT. LOCATION - TIME]\n\
+         - Characters present: [list]\n\
+         - [Brief physical/emotional state of each character]\n\n\
+         KEY ESTABLISHED FACTS:\n\
+         - [Relationships, names, details that must remain consistent]\n\n\
+         WHAT JUST HAPPENED:\n\
+         - [3-5 bullet points summarizing key events in order]\n\n\
+         RULES:\n\
+         - Keep the total recap under 200 tokens.\n\
+         - Focus on FACTS that downstream scenes must respect.\n\
+         - Include character locations and physical states at scene end.\n\
+         - Carry forward any still-relevant facts from the preceding recap.\n\
+         - Do NOT include analysis or suggestions — only factual statements.\n\
+         - Return ONLY the recap text, no commentary.",
+    );
+
+    let mut user = String::from("Generate a scene recap for this screenplay beat:\n\n");
+    user.push_str("SCRIPT:\n");
+    user.push_str(script);
+    user.push('\n');
+
+    if let Some(prev) = preceding_recap {
+        user.push_str("\nPRECEDING SCENE RECAP (carry forward still-relevant facts):\n");
+        user.push_str(prev);
+        user.push('\n');
+    }
+
+    user.push_str(
+        "\nProduce the scene recap now. Use the exact format specified. \
+         Be concise — aim for 100-150 tokens.",
     );
 
     ChatPrompt { system, user }

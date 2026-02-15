@@ -167,6 +167,10 @@ pub struct SnapshotOverrides {
     pub significance: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub custom: Option<Vec<(String, String)>>,
+    /// Where this entity currently is (for characters/props).
+    /// e.g., "INT. CABIN - MORNING"
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub location: Option<String>,
 }
 
 // ──────────────────────────────────────────────
@@ -264,6 +268,9 @@ impl Entity {
             text.push_str(&format!(" [At this point: {}]", snapshot.description));
 
             if let Some(ref overrides) = snapshot.state_overrides {
+                if let Some(ref location) = overrides.location {
+                    text.push_str(&format!(" (Location: {})", location));
+                }
                 if let Some(ref emotional) = overrides.emotional_state {
                     text.push_str(&format!(" (Feeling: {})", emotional));
                 }
@@ -330,6 +337,9 @@ impl Entity {
         if let Some(snapshot) = self.active_snapshot_at(time_ms) {
             text.push_str(&format!("\n\nCurrent state: {}", snapshot.description));
             if let Some(ref overrides) = snapshot.state_overrides {
+                if let Some(ref location) = overrides.location {
+                    text.push_str(&format!("\nLocation: {}", location));
+                }
                 if let Some(ref emotional) = overrides.emotional_state {
                     text.push_str(&format!("\nEmotional state: {}", emotional));
                 }
@@ -476,8 +486,10 @@ pub struct ExtractionResult {
     pub new_entities: Vec<SuggestedEntity>,
     #[serde(default)]
     pub snapshot_suggestions: Vec<SuggestedSnapshot>,
+    /// Names of all entities (existing or new) that appear in this scene.
+    /// Resolved to entity IDs server-side.
     #[serde(default)]
-    pub clip_ref_suggestions: Vec<EntityId>,
+    pub entities_present: Vec<String>,
 }
 
 /// A new entity suggested by AI extraction.
@@ -499,6 +511,9 @@ pub struct SuggestedSnapshot {
     pub emotional_state: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audience_knowledge: Option<String>,
+    /// Where this entity is located at the time of the snapshot.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub location: Option<String>,
 }
 
 // ──────────────────────────────────────────────

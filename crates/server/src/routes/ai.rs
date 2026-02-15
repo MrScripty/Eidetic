@@ -196,7 +196,7 @@ async fn run_generation(
             let mut project_guard = state.project.lock();
             if let Some(project) = project_guard.as_mut() {
                 if let Ok(clip) = project.timeline.clip_mut(ClipId(clip_id)) {
-                    clip.content.generated_script = Some(full_text);
+                    clip.content.generated_script = Some(full_text.clone());
                     clip.content.status = ContentStatus::Generated;
                 }
             }
@@ -209,6 +209,9 @@ async fn run_generation(
             .send(ServerEvent::BeatUpdated { clip_id });
         state.trigger_save();
 
+        // Generate scene recap for continuity context (non-fatal).
+        generate_scene_recap(&state, clip_id, &full_text).await;
+
         // Auto-extract entities from the newly generated script.
         let extract_state = state.clone();
         tokio::spawn(async move {
@@ -217,6 +220,76 @@ async fn run_generation(
     }
 
     state.generating.lock().remove(&clip_id);
+}
+
+/// Generate a compact scene recap after script generation.
+///
+/// This is a lightweight AI call (~100-200 output tokens) that captures
+/// the scene's end state for use as continuity context in subsequent
+/// generations. Failures are logged but do not block the main flow.
+async fn generate_scene_recap(state: &AppState, clip_id: Uuid, script: &str) {
+    use crate::prompt_format::build_recap_prompt;
+
+    // Find the preceding clip's recap for rolling summary behavior.
+    let preceding_recap = {
+        let project_guard = state.project.lock();
+        let Some(project) = project_guard.as_ref() else {
+            return;
+        };
+
+        let track = match project.timeline.track_for_clip(ClipId(clip_id)) {
+            Some(t) => t,
+            None => return,
+        };
+
+        let idx = track.clips.iter().position(|c| c.id.0 == clip_id);
+        idx.and_then(|i| {
+            if i > 0 {
+                track.clips[i - 1].content.scene_recap.clone()
+            } else {
+                None
+            }
+        })
+    };
+
+    let config = state.ai_config.lock().clone();
+    let backend = Backend::from_config(&config);
+
+    // Use reduced max_tokens for the recap to save compute.
+    let mut recap_config = config.clone();
+    recap_config.max_tokens = 512;
+
+    let prompt = build_recap_prompt(script, preceding_recap.as_deref());
+
+    let recap_text = match backend.generate_full(&prompt, &recap_config).await {
+        Ok(text) => text.trim().to_string(),
+        Err(e) => {
+            tracing::warn!("Scene recap generation failed for clip {clip_id}: {e}");
+            return;
+        }
+    };
+
+    if recap_text.is_empty() {
+        tracing::warn!("Scene recap was empty for clip {clip_id}");
+        return;
+    }
+
+    // Store the recap on the clip.
+    {
+        let mut project_guard = state.project.lock();
+        if let Some(project) = project_guard.as_mut() {
+            if let Ok(clip) = project.timeline.clip_mut(ClipId(clip_id)) {
+                clip.content.scene_recap = Some(recap_text);
+            }
+        }
+    }
+
+    let _ = state
+        .events_tx
+        .send(ServerEvent::BeatUpdated { clip_id });
+    state.trigger_save();
+
+    tracing::info!("Scene recap generated for clip {clip_id}");
 }
 
 async fn status(State(state): State<AppState>) -> Json<serde_json::Value> {
@@ -453,7 +526,7 @@ async fn extract_entities(
         None => Json(serde_json::json!({
             "new_entities": [],
             "snapshot_suggestions": [],
-            "clip_ref_suggestions": []
+            "entities_present": []
         })),
     }
 }
@@ -549,7 +622,7 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
     let new_count = result.new_entities.len();
     let snapshot_count = result.snapshot_suggestions.len();
 
-    if new_count == 0 && snapshot_count == 0 && result.clip_ref_suggestions.is_empty() {
+    if new_count == 0 && snapshot_count == 0 && result.entities_present.is_empty() {
         return;
     }
 
@@ -592,10 +665,14 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
                 e.name.eq_ignore_ascii_case(&sug.entity_name)
             });
             if let Some(entity) = entity {
-                let overrides = if sug.emotional_state.is_some() || sug.audience_knowledge.is_some() {
+                let overrides = if sug.emotional_state.is_some()
+                    || sug.audience_knowledge.is_some()
+                    || sug.location.is_some()
+                {
                     Some(SnapshotOverrides {
                         emotional_state: sug.emotional_state.clone(),
                         audience_knowledge: sug.audience_knowledge.clone(),
+                        location: sug.location.clone(),
                         ..Default::default()
                     })
                 } else {
@@ -614,9 +691,11 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
             }
         }
 
-        // Add clip refs for suggested existing entities.
-        for entity_id in &result.clip_ref_suggestions {
-            if let Some(entity) = project.bible.entities.iter_mut().find(|e| e.id == *entity_id) {
+        // Add clip refs for all entities present in the scene (resolved by name).
+        for name in &result.entities_present {
+            if let Some(entity) = project.bible.entities.iter_mut().find(|e| {
+                e.name.eq_ignore_ascii_case(name)
+            }) {
                 if !entity.clip_refs.contains(&clip_id_typed) {
                     entity.clip_refs.push(clip_id_typed);
                 }
