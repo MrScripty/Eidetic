@@ -15,6 +15,8 @@ export const editorState = $state<{
 	streamingText: string;
 	/** Number of tokens received so far. */
 	streamingTokenCount: number;
+	/** Formatted AI prompt context (system + user) for the active generation. */
+	generationContext: { system: string; user: string } | null;
 	/** Error from a failed generation. */
 	generationError: string | null;
 	/** Last-known AI backend status. */
@@ -33,6 +35,7 @@ export const editorState = $state<{
 	streamingClipId: null,
 	streamingText: '',
 	streamingTokenCount: 0,
+	generationContext: null,
 	generationError: null,
 	aiStatus: null,
 	consistencySuggestions: [],
@@ -46,6 +49,7 @@ export function startGeneration(clipId: string) {
 	editorState.streamingClipId = clipId;
 	editorState.streamingText = '';
 	editorState.streamingTokenCount = 0;
+	editorState.generationContext = null;
 	editorState.generationError = null;
 }
 
@@ -61,6 +65,13 @@ export function appendStreamingToken(clipId: string, token: string, count: numbe
 export function completeGeneration(clipId: string) {
 	if (editorState.streamingClipId === clipId) {
 		editorState.streamingClipId = null;
+	}
+}
+
+/** Store the AI generation context (formatted prompts). */
+export function setGenerationContext(clipId: string, system: string, user: string) {
+	if (editorState.streamingClipId === clipId) {
+		editorState.generationContext = { system, user };
 	}
 }
 

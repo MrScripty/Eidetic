@@ -229,10 +229,25 @@
 
 			{#if isGenerating}
 				<label class="section-label">
-					Generating Script
-					<span class="token-count">{editorState.streamingTokenCount} tokens</span>
+					AI Context
+					<span class="token-count">{editorState.streamingTokenCount} tokens generated</span>
 				</label>
-				<ScriptView text={editorState.streamingText} streaming={true} entities={storyState.entities} />
+				{#if editorState.generationContext}
+					<div class="context-display">
+						<details open>
+							<summary class="context-heading">System Prompt</summary>
+							<pre class="context-text">{editorState.generationContext.system}</pre>
+						</details>
+						<details open>
+							<summary class="context-heading">User Prompt</summary>
+							<pre class="context-text">{editorState.generationContext.user}</pre>
+						</details>
+					</div>
+				{:else}
+					<div class="context-display">
+						<p class="context-loading">Building prompt...</p>
+					</div>
+				{/if}
 			{:else if editing}
 				<label class="section-label">
 					Editing Script
@@ -396,6 +411,49 @@
 		color: var(--color-text-muted);
 		text-transform: none;
 		letter-spacing: normal;
+	}
+
+	.context-display {
+		flex: 1;
+		overflow: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-height: 0;
+	}
+
+	.context-heading {
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.context-text {
+		font-family: 'Courier New', monospace;
+		font-size: 0.75rem;
+		line-height: 1.4;
+		color: var(--color-text-secondary);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: 4px;
+		padding: 8px 12px;
+		margin: 0;
+		white-space: pre-wrap;
+		word-wrap: break-word;
+		overflow: auto;
+		max-height: 300px;
+	}
+
+	.context-loading {
+		font-size: 0.8rem;
+		color: var(--color-text-muted);
+		font-style: italic;
+		margin: 8px 0;
+		animation: pulse 1.5s ease-in-out infinite;
 	}
 
 	.notes-input {

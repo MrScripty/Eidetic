@@ -334,6 +334,7 @@ export type ServerMessage =
 	| { type: 'scenes_changed' }
 	| { type: 'story_changed' }
 	| { type: 'beat_updated'; clip_id: string }
+	| { type: 'generation_context'; clip_id: string; system_prompt: string; user_prompt: string }
 	| { type: 'generation_progress'; clip_id: string; token: string; tokens_generated: number }
 	| { type: 'generation_complete'; clip_id: string }
 	| { type: 'generation_error'; clip_id: string; error: string }

@@ -5,6 +5,7 @@ import {
 	editorState,
 	appendStreamingToken,
 	completeGeneration,
+	setGenerationContext,
 	setGenerationError,
 	addConsistencySuggestion,
 } from './editor.svelte.js';
@@ -35,6 +36,10 @@ export function setupWsHandlers(ws: WsClient) {
 			const content = await getBeat(clipId);
 			editorState.selectedClip.content = content;
 		}
+	});
+
+	ws.on('generation_context', (data) => {
+		setGenerationContext(data.clip_id, data.system_prompt, data.user_prompt);
 	});
 
 	ws.on('generation_progress', (data) => {
