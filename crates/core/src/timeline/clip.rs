@@ -61,6 +61,10 @@ pub struct BeatContent {
     /// User's edits to the generated script.
     pub user_refined_script: Option<String>,
     pub status: ContentStatus,
+    /// Compact structured recap of the scene's end state, generated after
+    /// script generation. Used as continuity context for subsequent clips.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scene_recap: Option<String>,
 }
 
 /// Tracks the content lifecycle of a beat clip.

@@ -5,7 +5,7 @@ use crate::project::Project;
 use crate::story::bible::gather_bible_context;
 use crate::timeline::clip::ClipId;
 
-use super::helpers::gather_surrounding_scripts;
+use super::helpers::{gather_recap_context, gather_surrounding_scripts};
 
 /// Build a [`GenerateRequest`] for a specific beat clip from the project state.
 ///
@@ -42,7 +42,11 @@ pub fn build_generate_request(project: &Project, clip_id: ClipId) -> Result<Gene
         .collect();
 
     // Gather surrounding scripts from the same track (up to 2 before, 2 after).
-    let surrounding_context = gather_surrounding_scripts(track, clip_id);
+    let mut surrounding_context = gather_surrounding_scripts(track, clip_id);
+
+    // Gather cross-track recaps for continuity.
+    surrounding_context.preceding_recaps =
+        gather_recap_context(&project.timeline, &project.arcs, clip_id);
 
     // Gather bible context resolved at the beat's midpoint time.
     let beat_mid_ms = beat_clip.time_range.start_ms

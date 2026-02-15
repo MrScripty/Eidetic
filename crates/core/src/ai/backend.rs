@@ -69,6 +69,21 @@ pub struct GenerateRequest {
 pub struct SurroundingContext {
     pub preceding_scripts: Vec<String>,
     pub following_scripts: Vec<String>,
+    /// Recaps from clips across ALL tracks that temporally precede the
+    /// target clip's start time. Ordered chronologically (earliest first).
+    #[serde(default)]
+    pub preceding_recaps: Vec<RecapEntry>,
+}
+
+/// A scene recap from a preceding clip, including source identification.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecapEntry {
+    pub arc_name: String,
+    pub clip_name: String,
+    /// End time of the source clip (ms), for ordering.
+    pub end_time_ms: u64,
+    /// The recap text.
+    pub recap: String,
 }
 
 /// A chunk of reference material retrieved via RAG.
