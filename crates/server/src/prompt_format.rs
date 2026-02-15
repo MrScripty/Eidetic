@@ -249,7 +249,10 @@ pub(crate) fn build_extraction_prompt(
          - `entities_present` MUST list the name of EVERY character, location, and notable entity \
          that appears in or is mentioned in the scene — both existing and new. This is the most \
          important field. Do not omit anyone.\n\
-         - `new_entities` should ONLY contain entities not already in the KNOWN ENTITIES list.\n\
+         - `new_entities` MUST contain EVERY entity from the scene that is NOT in the KNOWN ENTITIES list. \
+         If a character speaks, appears, or is mentioned and they are not in the known list, add them. \
+         Even minor or unnamed characters (e.g. \"Bartender\", \"Guard #1\") should be included.\n\
+         - Err on the side of including too many new entities rather than too few.\n\
          - Snapshots are for meaningful development points (introductions, revelations, transformations).\n\
          - Keep taglines under 15 words.\n\
          - Return ONLY valid JSON, no commentary.",
@@ -278,8 +281,8 @@ pub(crate) fn build_extraction_prompt(
            \"entities_present\": [\"<name of every entity appearing in this scene, existing or new>\"],\n\
            \"new_entities\": [\n\
              {\n\
-               \"name\": \"<entity name — only if NOT in known entities>\",\n\
-               \"category\": \"Character\" | \"Location\" | \"Prop\" | \"Theme\" | \"Event\",\n\
+               \"name\": \"<entity name — MUST NOT be in known entities list>\",\n\
+               \"category\": \"<one of: Character, Location, Prop, Theme, Event>\",\n\
                \"tagline\": \"<brief description, under 15 words>\",\n\
                \"description\": \"<fuller description>\"\n\
              }\n\
@@ -295,6 +298,8 @@ pub(crate) fn build_extraction_prompt(
            ]\n\
          }\n\
          ```\n\
+         IMPORTANT: Every character, location, prop, theme, or event that appears in the script \
+         and is NOT in the KNOWN ENTITIES list MUST appear in new_entities. Do not skip any.\n\
          Return `{\"entities_present\": [], \"new_entities\": [], \"snapshot_suggestions\": []}` if no entities found.",
     );
 
