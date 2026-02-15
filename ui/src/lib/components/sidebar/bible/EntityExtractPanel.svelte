@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ExtractionResult, EntityCategory } from '$lib/types.js';
-	import { createEntity, addSnapshot, addClipRef, listEntities } from '$lib/api.js';
+	import { commitExtraction, listEntities } from '$lib/api.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 
 	let { result, clipId, onclose }: {
@@ -30,48 +30,13 @@
 		applying = true;
 		applyError = null;
 		try {
-			// Create accepted new entities
-			for (let i = 0; i < result.new_entities.length; i++) {
-				if (!entityAccepted[i]) continue;
-				const sug = result.new_entities[i]!;
-				const entity = await createEntity({
-					name: sug.name,
-					category: sug.category,
-					tagline: sug.tagline,
-					description: sug.description,
-				});
-				// Link to this clip
-				await addClipRef(entity.id, clipId);
-			}
+			// Send the full result + acceptance flags to the server.
+			// The server handles dedup, category inference from script
+			// structure, and entity creation in one atomic operation.
+			await commitExtraction(clipId, result, entityAccepted, snapshotAccepted);
 
-			// Refresh entity list so snapshot matching can find newly created entities
+			// Refresh entity list after server-side commit.
 			storyState.entities = await listEntities();
-
-			// Apply accepted snapshots to matching existing entities
-			for (let i = 0; i < result.snapshot_suggestions.length; i++) {
-				if (!snapshotAccepted[i]) continue;
-				const sug = result.snapshot_suggestions[i]!;
-				const match = storyState.entities.find(
-					e => e.name.toLowerCase() === sug.entity_name.toLowerCase()
-				);
-				if (match) {
-					await addSnapshot(match.id, {
-						at_ms: 0,
-						description: sug.description,
-					});
-				}
-			}
-
-			// Add clip refs for all entities present in the scene (resolve names to IDs)
-			const currentEntities = storyState.entities;
-			for (const name of result.entities_present) {
-				const match = currentEntities.find(
-					e => e.name.toLowerCase() === name.toLowerCase()
-				);
-				if (match && !match.clip_refs.includes(clipId)) {
-					await addClipRef(match.id, clipId).catch(() => {});
-				}
-			}
 
 			onclose();
 		} catch (err) {

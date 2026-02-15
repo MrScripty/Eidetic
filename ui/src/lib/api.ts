@@ -152,6 +152,23 @@ export function extractEntities(clipId: string): Promise<ExtractionResult> {
 	});
 }
 
+export function commitExtraction(
+	clipId: string,
+	result: ExtractionResult,
+	acceptedEntities: boolean[],
+	acceptedSnapshots: boolean[],
+): Promise<{ new_entity_count: number; snapshot_count: number }> {
+	return request('/ai/extract/commit', {
+		method: 'POST',
+		body: JSON.stringify({
+			clip_id: clipId,
+			result,
+			accepted_entities: acceptedEntities,
+			accepted_snapshots: acceptedSnapshots,
+		}),
+	});
+}
+
 // --- Bible resolve at time ---
 
 export function resolveEntitiesAtTime(timeMs: number): Promise<Entity[]> {
