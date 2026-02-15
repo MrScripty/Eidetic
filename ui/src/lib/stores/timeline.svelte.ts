@@ -68,6 +68,18 @@ export function zoomToFit(): void {
 	timelineState.scrollX = 0;
 }
 
+/** Zoom and scroll so a specific time range fills the viewport (with padding). */
+export function zoomToRange(startMs: number, endMs: number): void {
+	if (timelineState.viewportWidth <= 0) return;
+	const durationMs = endMs - startMs;
+	if (durationMs <= 0) return;
+	const padding = durationMs * 0.1; // 10% padding on each side
+	const paddedStart = Math.max(0, startMs - padding);
+	const paddedDuration = durationMs + padding * 2;
+	timelineState.zoom = timelineState.viewportWidth / (paddedDuration * TIMELINE.DEFAULT_PX_PER_MS);
+	timelineState.scrollX = paddedStart * TIMELINE.DEFAULT_PX_PER_MS * timelineState.zoom;
+}
+
 /** Transient state for drag-to-connect relationship creation. */
 export const connectionDrag = $state<{
 	active: boolean;

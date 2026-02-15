@@ -21,6 +21,8 @@ export interface ArcTrack {
 	id: TrackId;
 	arc_id: ArcId;
 	clips: BeatClip[];
+	sub_beats: BeatClip[];
+	sub_beats_visible: boolean;
 }
 
 export interface BeatClip {
@@ -30,6 +32,7 @@ export interface BeatClip {
 	name: string;
 	content: BeatContent;
 	locked: boolean;
+	parent_clip_id: ClipId | null;
 }
 
 export interface TimeRange {
@@ -190,6 +193,20 @@ export interface SuggestedSnapshot {
 	location?: string;
 }
 
+// --- Beat Planning ---
+
+export interface BeatProposal {
+	name: string;
+	beat_type: BeatType;
+	outline: string;
+	weight: number;
+}
+
+export interface BeatPlan {
+	scene_clip_id: ClipId;
+	beats: BeatProposal[];
+}
+
 // --- Scenes (inferred) ---
 
 export interface InferredScene {
@@ -255,6 +272,10 @@ export const TIMELINE = {
 	TIME_RULER_HEIGHT_PX: 28,
 	/** Height of the character progression track. */
 	CHARACTER_TRACK_HEIGHT_PX: 40,
+	/** Height of the beat subtrack row. */
+	BEAT_SUBTRACK_HEIGHT_PX: 36,
+	/** Width of track label column. */
+	LABEL_WIDTH_PX: 80,
 } as const;
 
 export const PANEL = {

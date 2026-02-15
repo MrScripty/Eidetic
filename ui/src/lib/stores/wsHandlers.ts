@@ -32,9 +32,20 @@ export function setupWsHandlers(ws: WsClient) {
 
 	ws.on('beat_updated', async (data) => {
 		const clipId = data.clip_id;
+		const content = await getBeat(clipId);
 		if (editorState.selectedClipId === clipId && editorState.selectedClip) {
-			const content = await getBeat(clipId);
 			editorState.selectedClip.content = content;
+		}
+		// Update timeline data so ScriptPanel reflects the change.
+		if (timelineState.timeline) {
+			for (const track of timelineState.timeline.tracks) {
+				const clip = track.clips.find(c => c.id === clipId)
+					?? track.sub_beats.find(b => b.id === clipId);
+				if (clip) {
+					clip.content = content;
+					break;
+				}
+			}
 		}
 	});
 
@@ -48,12 +59,22 @@ export function setupWsHandlers(ws: WsClient) {
 
 	ws.on('generation_complete', async (data) => {
 		const clipId = data.clip_id;
-		completeGeneration(clipId);
-		// Refresh clip content from server.
+		// Fetch and update content BEFORE clearing streaming to avoid flicker.
+		const content = await getBeat(clipId);
 		if (editorState.selectedClipId === clipId && editorState.selectedClip) {
-			const content = await getBeat(clipId);
 			editorState.selectedClip.content = content;
 		}
+		if (timelineState.timeline) {
+			for (const track of timelineState.timeline.tracks) {
+				const clip = track.clips.find(c => c.id === clipId)
+					?? track.sub_beats.find(b => b.id === clipId);
+				if (clip) {
+					clip.content = content;
+					break;
+				}
+			}
+		}
+		completeGeneration(clipId);
 	});
 
 	ws.on('generation_error', (data) => {

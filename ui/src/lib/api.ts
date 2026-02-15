@@ -1,4 +1,4 @@
-import type { Project, StoryArc, Entity, EntityCategory, EntityDetails, EntitySnapshot, EntityRelation, ExtractionResult, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, ArcTrack, BeatClip, BeatContent, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType, Color } from './types.js';
+import type { Project, StoryArc, Entity, EntityCategory, EntityDetails, EntitySnapshot, EntityRelation, ExtractionResult, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, ArcTrack, BeatClip, BeatContent, BeatPlan, BeatProposal, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType, Color } from './types.js';
 
 const BASE = '/api';
 
@@ -333,6 +333,54 @@ export function reactToEdit(clipId: string): Promise<{ status: string }> {
 	return request('/ai/react', {
 		method: 'POST',
 		body: JSON.stringify({ clip_id: clipId }),
+	});
+}
+
+export function planBeats(clipId: string): Promise<BeatPlan> {
+	return request('/ai/plan-beats', {
+		method: 'POST',
+		body: JSON.stringify({ clip_id: clipId }),
+	});
+}
+
+export function generateBeats(parentClipId: string): Promise<{ status: string; parent_clip_id: string; beat_count: number }> {
+	return request('/ai/generate-beats', {
+		method: 'POST',
+		body: JSON.stringify({ parent_clip_id: parentClipId }),
+	});
+}
+
+// --- Sub-beats ---
+
+export function applyBeats(clipId: string, beats: BeatProposal[]): Promise<{ ok: boolean; beats: BeatClip[] }> {
+	return request(`/timeline/clips/${clipId}/apply-beats`, {
+		method: 'POST',
+		body: JSON.stringify({ beats }),
+	});
+}
+
+export function createSubBeat(parentClipId: string, trackId: string, name: string, beatType: string, startMs: number, endMs: number): Promise<BeatClip> {
+	return request('/timeline/sub-beats', {
+		method: 'POST',
+		body: JSON.stringify({ parent_clip_id: parentClipId, track_id: trackId, name, beat_type: beatType, start_ms: startMs, end_ms: endMs }),
+	});
+}
+
+export function updateSubBeat(id: string, updates: { name?: string; start_ms?: number; end_ms?: number }): Promise<BeatClip> {
+	return request(`/timeline/sub-beats/${id}`, {
+		method: 'PUT',
+		body: JSON.stringify(updates),
+	});
+}
+
+export function deleteSubBeat(id: string): Promise<{ deleted: boolean }> {
+	return request(`/timeline/sub-beats/${id}`, { method: 'DELETE' });
+}
+
+export function setSubBeatsVisible(trackId: string, visible: boolean): Promise<void> {
+	return request(`/timeline/tracks/${trackId}/sub-beats-visible`, {
+		method: 'PUT',
+		body: JSON.stringify({ visible }),
 	});
 }
 
