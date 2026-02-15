@@ -43,6 +43,11 @@ pub enum ServerEvent {
     BeatUpdated { clip_id: uuid::Uuid },
     StoryChanged,
     ProjectMutated,
+    GenerationContext {
+        clip_id: uuid::Uuid,
+        system_prompt: String,
+        user_prompt: String,
+    },
     GenerationProgress {
         clip_id: uuid::Uuid,
         token: String,
@@ -173,6 +178,8 @@ pub struct AppState {
     pub ai_config: Arc<Mutex<AiConfig>>,
     /// Clip IDs currently being generated — prevents duplicate requests.
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
+    /// Clip IDs currently undergoing entity extraction — prevents duplicate/concurrent runs.
+    pub extracting: Arc<Mutex<HashSet<uuid::Uuid>>>,
     /// Path where the current project is saved on disk.
     pub project_path: Arc<Mutex<Option<PathBuf>>>,
     /// Snapshot-based undo/redo stack for project mutations.
@@ -201,6 +208,7 @@ impl AppState {
             events_tx,
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
+            extracting: Arc::new(Mutex::new(HashSet::new())),
             project_path,
             undo_stack: Arc::new(Mutex::new(UndoStack::new(constants::UNDO_STACK_DEPTH))),
             vector_store: Arc::new(Mutex::new(VectorStore::new())),

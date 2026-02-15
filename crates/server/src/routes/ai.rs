@@ -18,6 +18,7 @@ pub fn router() -> Router<AppState> {
         .route("/ai/generate", post(generate))
         .route("/ai/react", post(react))
         .route("/ai/extract", post(extract_entities))
+        .route("/ai/extract/commit", post(commit_extraction))
         .route("/ai/status", get(status))
         .route("/ai/config", put(config))
 }
@@ -129,6 +130,13 @@ async fn run_generation(
     }
 
     let prompt = build_chat_prompt(&request);
+
+    // Broadcast the formatted prompt context to connected clients.
+    let _ = state.events_tx.send(ServerEvent::GenerationContext {
+        clip_id,
+        system_prompt: prompt.system.clone(),
+        user_prompt: prompt.user.clone(),
+    });
 
     let stream_result = backend.generate(&prompt, &config).await;
 
@@ -475,6 +483,21 @@ async fn extract_entities(
 ) -> Json<serde_json::Value> {
     let clip_id = ClipId(body.clip_id);
 
+    // Prevent concurrent extractions on the same clip.
+    if !state.extracting.lock().insert(body.clip_id) {
+        return Json(serde_json::json!({ "error": "extraction already in progress for this clip" }));
+    }
+
+    let result = extract_entities_inner(&state, clip_id).await;
+
+    state.extracting.lock().remove(&body.clip_id);
+    result
+}
+
+async fn extract_entities_inner(
+    state: &AppState,
+    clip_id: ClipId,
+) -> Json<serde_json::Value> {
     // Gather the script and known entities while holding the lock briefly.
     let (script, known_entities, time_ms) = {
         let project_guard = state.project.lock();
@@ -521,7 +544,7 @@ async fn extract_entities(
     };
 
     // Run extraction synchronously — await the LLM response.
-    match run_extraction(&state, &script, &known_entities, time_ms).await {
+    match run_extraction(state, &script, &known_entities, time_ms).await {
         Some(result) => Json(serde_json::to_value(&result).unwrap()),
         None => Json(serde_json::json!({
             "new_entities": [],
@@ -531,7 +554,7 @@ async fn extract_entities(
     }
 }
 
-/// Core extraction logic — calls the LLM and parses the result.
+/// Core extraction logic — calls the LLM with JSON mode and parses the result.
 /// Returns `None` if extraction fails.
 async fn run_extraction(
     state: &AppState,
@@ -545,7 +568,8 @@ async fn run_extraction(
     let backend = Backend::from_config(&config);
     let prompt = build_extraction_prompt(script, known_entities, time_ms);
 
-    let response = match backend.generate_full(&prompt, &config).await {
+    // Use JSON mode so the model is constrained to produce valid JSON.
+    let response = match backend.generate_json(&prompt, &config).await {
         Ok(text) => text,
         Err(e) => {
             tracing::error!("Entity extraction failed: {e}");
@@ -553,6 +577,8 @@ async fn run_extraction(
         }
     };
 
+    // With JSON mode the response should be clean, but still strip fences
+    // as a safety net.
     let json_str = extract_json_object(&response);
     match serde_json::from_str(json_str) {
         Ok(result) => Some(result),
@@ -571,16 +597,26 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
     };
     use eidetic_core::story::arc::Color;
 
+    // Prevent concurrent extractions on the same clip (manual + auto race).
+    if !state.extracting.lock().insert(clip_id) {
+        tracing::info!("Skipping auto-extraction for clip {clip_id} — extraction already in progress");
+        return;
+    }
+
     // Gather context from the project.
     let (script, known_entities, time_ms) = {
         let project_guard = state.project.lock();
         let Some(project) = project_guard.as_ref() else {
+            state.extracting.lock().remove(&clip_id);
             return;
         };
 
         let clip = match project.timeline.clip(ClipId(clip_id)) {
             Ok(c) => c,
-            Err(_) => return,
+            Err(_) => {
+                state.extracting.lock().remove(&clip_id);
+                return;
+            }
         };
 
         let script = clip
@@ -592,6 +628,7 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
             .unwrap_or_default();
 
         if script.trim().is_empty() {
+            state.extracting.lock().remove(&clip_id);
             return;
         }
 
@@ -616,13 +653,19 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
     // Run extraction.
     let result = match run_extraction(&state, &script, &known_entities, time_ms).await {
         Some(r) => r,
-        None => return,
+        None => {
+            state.extracting.lock().remove(&clip_id);
+            return;
+        }
     };
 
-    let new_count = result.new_entities.len();
     let snapshot_count = result.snapshot_suggestions.len();
 
-    if new_count == 0 && snapshot_count == 0 && result.entities_present.is_empty() {
+    if result.new_entities.is_empty() && snapshot_count == 0 && result.entities_present.is_empty() {
+        tracing::info!(
+            "Auto-extraction for clip {clip_id}: LLM returned no entities, snapshots, or present names — skipping commit"
+        );
+        state.extracting.lock().remove(&clip_id);
         return;
     }
 
@@ -637,17 +680,73 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
         }
     }
 
+    // Parse the script to identify character cues and scene headings for
+    // category inference.  LLMs often put entities only in `entities_present`
+    // (bare names, no category) rather than `new_entities`, so we need to be
+    // able to infer categories from the screenplay structure.
+    use eidetic_core::script::format::parse_script_elements;
+    use eidetic_core::script::element::ScriptElement;
+    use std::collections::HashSet;
+
+    let elements = parse_script_elements(&script);
+    let script_characters: HashSet<String> = elements
+        .iter()
+        .filter_map(|el| match el {
+            ScriptElement::Character(name) => {
+                // Strip parenthetical extensions like "(V.O.)" or "(CONT'D)".
+                let base = if let Some(i) = name.find('(') {
+                    name[..i].trim()
+                } else {
+                    name.trim()
+                };
+                Some(base.to_lowercase())
+            }
+            _ => None,
+        })
+        .collect();
+    let script_locations: HashSet<String> = elements
+        .iter()
+        .filter_map(|el| match el {
+            ScriptElement::SceneHeading(h) => Some(h.to_lowercase()),
+            _ => None,
+        })
+        .collect();
+
+    // Build a category lookup from new_entities (LLM-assigned categories).
+    let new_entity_categories: std::collections::HashMap<String, EntityCategory> = result
+        .new_entities
+        .iter()
+        .map(|sug| (sug.name.to_lowercase(), sug.category.clone()))
+        .collect();
+
     // Commit results to the bible.
-    {
+    let new_count = {
         let mut project_guard = state.project.lock();
         let Some(project) = project_guard.as_mut() else {
+            state.extracting.lock().remove(&clip_id);
             return;
         };
 
         let clip_id_typed = ClipId(clip_id);
+        let mut created = 0usize;
 
-        // Create new entities.
+        // Create new entities — skip duplicates (case-insensitive).
         for sug in &result.new_entities {
+            let already_exists = project.bible.entities.iter().any(|e| {
+                e.name.eq_ignore_ascii_case(&sug.name)
+            });
+            if already_exists {
+                tracing::debug!("Skipping duplicate entity '{}' — already in bible", sug.name);
+                // Still add clip ref to the existing entity.
+                if let Some(entity) = project.bible.entities.iter_mut().find(|e| {
+                    e.name.eq_ignore_ascii_case(&sug.name)
+                }) {
+                    if !entity.clip_refs.contains(&clip_id_typed) {
+                        entity.clip_refs.push(clip_id_typed);
+                    }
+                }
+                continue;
+            }
             let mut entity = Entity::new(
                 sug.name.clone(),
                 sug.category.clone(),
@@ -657,6 +756,7 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
             entity.description = sug.description.clone();
             entity.clip_refs.push(clip_id_typed);
             project.bible.entities.push(entity);
+            created += 1;
         }
 
         // Apply snapshot suggestions to matching entities.
@@ -688,20 +788,64 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
                 if !entity.clip_refs.contains(&clip_id_typed) {
                     entity.clip_refs.push(clip_id_typed);
                 }
+            } else {
+                tracing::warn!(
+                    "Snapshot suggestion for '{}' has no matching bible entity — skipped",
+                    sug.entity_name,
+                );
             }
         }
 
         // Add clip refs for all entities present in the scene (resolved by name).
+        // If a name doesn't match any bible entity (including ones just created
+        // from new_entities), create the entity with a category inferred from
+        // the screenplay structure.
         for name in &result.entities_present {
-            if let Some(entity) = project.bible.entities.iter_mut().find(|e| {
+            let found = project.bible.entities.iter_mut().find(|e| {
                 e.name.eq_ignore_ascii_case(name)
-            }) {
+            });
+            if let Some(entity) = found {
                 if !entity.clip_refs.contains(&clip_id_typed) {
                     entity.clip_refs.push(clip_id_typed);
                 }
+            } else {
+                // Infer category: check new_entities first, then screenplay structure.
+                let cat = new_entity_categories
+                    .get(&name.to_lowercase())
+                    .cloned()
+                    .unwrap_or_else(|| {
+                        let lower = name.to_lowercase();
+                        if script_locations.contains(&lower)
+                            || lower.starts_with("int.")
+                            || lower.starts_with("ext.")
+                        {
+                            EntityCategory::Location
+                        } else if script_characters.contains(&lower) {
+                            EntityCategory::Character
+                        } else {
+                            // Not a character cue or scene heading → Prop.
+                            EntityCategory::Prop
+                        }
+                    });
+                tracing::info!(
+                    "Creating entity '{}' [{}] from entities_present (missing from new_entities)",
+                    name, cat
+                );
+                let mut entity = Entity::new(
+                    name.clone(),
+                    cat.clone(),
+                    category_color(&cat),
+                );
+                entity.clip_refs.push(clip_id_typed);
+                project.bible.entities.push(entity);
+                created += 1;
             }
         }
-    }
+
+        created
+    };
+
+    state.extracting.lock().remove(&clip_id);
 
     // Notify frontend.
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
@@ -715,6 +859,227 @@ async fn auto_extract_and_commit(state: AppState, clip_id: Uuid) {
     tracing::info!(
         "Auto-extraction for clip {clip_id}: {new_count} new entities, {snapshot_count} snapshots — committed to bible"
     );
+}
+
+// ──────────────────────────────────────────────
+// Commit Extraction (manual path)
+// ──────────────────────────────────────────────
+
+/// Request body for committing manually-reviewed extraction results.
+#[derive(Deserialize)]
+struct CommitExtractionBody {
+    clip_id: Uuid,
+    result: eidetic_core::story::bible::ExtractionResult,
+    /// Indices of `new_entities` the user accepted (true = accepted).
+    accepted_entities: Vec<bool>,
+    /// Indices of `snapshot_suggestions` the user accepted.
+    accepted_snapshots: Vec<bool>,
+}
+
+/// Server-side commit of extraction results — handles dedup, category inference,
+/// and entity creation using the same logic as auto-extraction.
+async fn commit_extraction(
+    State(state): State<AppState>,
+    Json(body): Json<CommitExtractionBody>,
+) -> Json<serde_json::Value> {
+    use eidetic_core::story::bible::{
+        Entity, EntityCategory, EntitySnapshot, SnapshotOverrides,
+    };
+    use eidetic_core::story::arc::Color;
+    use eidetic_core::script::format::parse_script_elements;
+    use eidetic_core::script::element::ScriptElement;
+
+    fn category_color(cat: &EntityCategory) -> Color {
+        match cat {
+            EntityCategory::Character => Color { r: 100, g: 149, b: 237 },
+            EntityCategory::Location => Color { r: 34, g: 197, b: 94 },
+            EntityCategory::Prop => Color { r: 249, g: 115, b: 22 },
+            EntityCategory::Theme => Color { r: 168, g: 85, b: 247 },
+            EntityCategory::Event => Color { r: 239, g: 68, b: 68 },
+        }
+    }
+
+    let clip_id = body.clip_id;
+    let clip_id_typed = ClipId(clip_id);
+    let result = body.result;
+
+    // Get the script text for category inference.
+    let (script, time_ms) = {
+        let project_guard = state.project.lock();
+        let Some(project) = project_guard.as_ref() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
+        let clip = match project.timeline.clip(clip_id_typed) {
+            Ok(c) => c,
+            Err(_) => return Json(serde_json::json!({ "error": "clip not found" })),
+        };
+        let script = clip
+            .content
+            .user_refined_script
+            .as_ref()
+            .or(clip.content.generated_script.as_ref())
+            .cloned()
+            .unwrap_or_default();
+        let time_ms = clip.time_range.start_ms + clip.time_range.duration_ms() / 2;
+        (script, time_ms)
+    };
+
+    // Parse screenplay structure for category inference.
+    let elements = parse_script_elements(&script);
+    let script_characters: std::collections::HashSet<String> = elements
+        .iter()
+        .filter_map(|el| match el {
+            ScriptElement::Character(name) => {
+                let base = if let Some(i) = name.find('(') {
+                    name[..i].trim()
+                } else {
+                    name.trim()
+                };
+                Some(base.to_lowercase())
+            }
+            _ => None,
+        })
+        .collect();
+    let script_locations: std::collections::HashSet<String> = elements
+        .iter()
+        .filter_map(|el| match el {
+            ScriptElement::SceneHeading(h) => Some(h.to_lowercase()),
+            _ => None,
+        })
+        .collect();
+
+    let new_entity_categories: std::collections::HashMap<String, EntityCategory> = result
+        .new_entities
+        .iter()
+        .map(|sug| (sug.name.to_lowercase(), sug.category.clone()))
+        .collect();
+
+    state.snapshot_for_undo();
+
+    let mut created = 0usize;
+    let mut snapshot_count = 0usize;
+
+    {
+        let mut project_guard = state.project.lock();
+        let Some(project) = project_guard.as_mut() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
+
+        // Create accepted new entities — skip duplicates.
+        for (i, sug) in result.new_entities.iter().enumerate() {
+            if !body.accepted_entities.get(i).copied().unwrap_or(false) {
+                continue;
+            }
+            let already_exists = project.bible.entities.iter().any(|e| {
+                e.name.eq_ignore_ascii_case(&sug.name)
+            });
+            if already_exists {
+                if let Some(entity) = project.bible.entities.iter_mut().find(|e| {
+                    e.name.eq_ignore_ascii_case(&sug.name)
+                }) {
+                    if !entity.clip_refs.contains(&clip_id_typed) {
+                        entity.clip_refs.push(clip_id_typed);
+                    }
+                }
+                continue;
+            }
+            let mut entity = Entity::new(
+                sug.name.clone(),
+                sug.category.clone(),
+                category_color(&sug.category),
+            );
+            entity.tagline = sug.tagline.clone();
+            entity.description = sug.description.clone();
+            entity.clip_refs.push(clip_id_typed);
+            project.bible.entities.push(entity);
+            created += 1;
+        }
+
+        // Apply accepted snapshots.
+        for (i, sug) in result.snapshot_suggestions.iter().enumerate() {
+            if !body.accepted_snapshots.get(i).copied().unwrap_or(false) {
+                continue;
+            }
+            let entity = project.bible.entities.iter_mut().find(|e| {
+                e.name.eq_ignore_ascii_case(&sug.entity_name)
+            });
+            if let Some(entity) = entity {
+                let overrides = if sug.emotional_state.is_some()
+                    || sug.audience_knowledge.is_some()
+                    || sug.location.is_some()
+                {
+                    Some(SnapshotOverrides {
+                        emotional_state: sug.emotional_state.clone(),
+                        audience_knowledge: sug.audience_knowledge.clone(),
+                        location: sug.location.clone(),
+                        ..Default::default()
+                    })
+                } else {
+                    None
+                };
+                entity.add_snapshot(EntitySnapshot {
+                    at_ms: time_ms,
+                    source_clip_id: Some(clip_id_typed),
+                    description: sug.description.clone(),
+                    state_overrides: overrides,
+                });
+                if !entity.clip_refs.contains(&clip_id_typed) {
+                    entity.clip_refs.push(clip_id_typed);
+                }
+                snapshot_count += 1;
+            }
+        }
+
+        // Create entities for unmatched entities_present names.
+        for name in &result.entities_present {
+            let found = project.bible.entities.iter_mut().find(|e| {
+                e.name.eq_ignore_ascii_case(name)
+            });
+            if let Some(entity) = found {
+                if !entity.clip_refs.contains(&clip_id_typed) {
+                    entity.clip_refs.push(clip_id_typed);
+                }
+            } else {
+                let cat = new_entity_categories
+                    .get(&name.to_lowercase())
+                    .cloned()
+                    .unwrap_or_else(|| {
+                        let lower = name.to_lowercase();
+                        if script_locations.contains(&lower)
+                            || lower.starts_with("int.")
+                            || lower.starts_with("ext.")
+                        {
+                            EntityCategory::Location
+                        } else if script_characters.contains(&lower) {
+                            EntityCategory::Character
+                        } else {
+                            EntityCategory::Prop
+                        }
+                    });
+                let mut entity = Entity::new(
+                    name.clone(),
+                    cat.clone(),
+                    category_color(&cat),
+                );
+                entity.clip_refs.push(clip_id_typed);
+                project.bible.entities.push(entity);
+                created += 1;
+            }
+        }
+    }
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    let _ = state.events_tx.send(ServerEvent::EntityExtractionComplete {
+        clip_id,
+        new_entity_count: created,
+        snapshot_count,
+    });
+    state.trigger_save();
+
+    Json(serde_json::json!({
+        "new_entity_count": created,
+        "snapshot_count": snapshot_count,
+    }))
 }
 
 /// Extract a JSON object from LLM output, handling markdown code fences.
