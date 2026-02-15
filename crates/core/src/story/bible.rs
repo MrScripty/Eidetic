@@ -1,6 +1,6 @@
 use std::fmt;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
 use super::arc::Color;
@@ -30,13 +30,35 @@ impl fmt::Display for EntityId {
 // Entity Category
 // ──────────────────────────────────────────────
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum EntityCategory {
     Character,
     Location,
     Prop,
     Theme,
     Event,
+}
+
+/// Case-insensitive deserialization so LLM responses like "character" or
+/// "CHARACTER" parse correctly instead of silently failing.
+impl<'de> Deserialize<'de> for EntityCategory {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.to_ascii_lowercase().as_str() {
+            "character" => Ok(Self::Character),
+            "location" => Ok(Self::Location),
+            "prop" => Ok(Self::Prop),
+            "theme" => Ok(Self::Theme),
+            "event" => Ok(Self::Event),
+            other => Err(serde::de::Error::unknown_variant(
+                other,
+                &["Character", "Location", "Prop", "Theme", "Event"],
+            )),
+        }
+    }
 }
 
 impl fmt::Display for EntityCategory {
