@@ -7,15 +7,17 @@ use uuid::Uuid;
 
 use crate::ai_backends::Backend;
 use crate::embeddings::EmbeddingClient;
-use crate::prompt_format::build_chat_prompt;
+use crate::prompt_format::{build_beat_plan_prompt, build_chat_prompt};
 use crate::state::{AppState, BackendType, ServerEvent};
-use eidetic_core::ai::backend::RagChunk;
-use eidetic_core::ai::prompt::build_generate_request;
+use eidetic_core::ai::backend::{BeatPlan, BeatProposal, RagChunk};
+use eidetic_core::ai::prompt::{build_generate_request, build_plan_beats_request};
 use eidetic_core::timeline::clip::{ClipId, ContentStatus};
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/ai/generate", post(generate))
+        .route("/ai/plan-beats", post(plan_beats))
+        .route("/ai/generate-beats", post(generate_beats))
         .route("/ai/react", post(react))
         .route("/ai/extract", post(extract_entities))
         .route("/ai/extract/commit", post(commit_extraction))
@@ -100,6 +102,201 @@ async fn generate(
     Json(serde_json::json!({
         "status": "started",
         "clip_id": body.clip_id.to_string(),
+    }))
+}
+
+// ---------------------------------------------------------------------------
+// Beat planning
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+struct PlanBeatsBody {
+    clip_id: Uuid,
+}
+
+/// AI-powered beat decomposition: analyzes a scene clip's notes and returns
+/// a structured beat plan that the user can edit before applying.
+async fn plan_beats(
+    State(state): State<AppState>,
+    Json(body): Json<PlanBeatsBody>,
+) -> Json<serde_json::Value> {
+    let clip_id = ClipId(body.clip_id);
+
+    // Build the request while holding the project lock briefly.
+    let request = {
+        let project_guard = state.project.lock();
+        let Some(project) = project_guard.as_ref() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
+
+        let clip = match project.timeline.clip(clip_id) {
+            Ok(c) => c,
+            Err(_) => {
+                return Json(
+                    serde_json::json!({ "error": format!("clip not found: {}", body.clip_id) }),
+                );
+            }
+        };
+
+        if clip.content.beat_notes.trim().is_empty() {
+            return Json(serde_json::json!({ "error": "clip has no beat notes" }));
+        }
+
+        match build_plan_beats_request(project, clip_id) {
+            Ok(req) => req,
+            Err(e) => {
+                return Json(serde_json::json!({ "error": e.to_string() }));
+            }
+        }
+    };
+
+    let config = state.ai_config.lock().clone();
+    let backend = Backend::from_config(&config);
+
+    let prompt = build_beat_plan_prompt(&request);
+
+    let json_text = match backend.generate_json(&prompt, &config).await {
+        Ok(text) => text,
+        Err(e) => {
+            tracing::error!("Beat planning failed for clip {}: {e}", body.clip_id);
+            return Json(serde_json::json!({ "error": e.to_string() }));
+        }
+    };
+
+    // Parse the JSON response into beat proposals.
+    // The AI may return: a bare array, {"beats": [...]}, or a single object.
+    let beats: Vec<BeatProposal> = match serde_json::from_str::<Vec<BeatProposal>>(&json_text) {
+        Ok(b) => b,
+        Err(_) => {
+            // Try wrapped format: {"beats": [...]}
+            #[derive(serde::Deserialize)]
+            struct Wrapped { beats: Vec<BeatProposal> }
+            match serde_json::from_str::<Wrapped>(&json_text) {
+                Ok(w) => w.beats,
+                Err(_) => {
+                    // Try single object (AI sometimes returns one beat instead of an array).
+                    match serde_json::from_str::<BeatProposal>(&json_text) {
+                        Ok(single) => vec![single],
+                        Err(e) => {
+                            tracing::warn!(
+                                "Failed to parse beat plan JSON for clip {}: {e}\nRaw: {json_text}",
+                                body.clip_id
+                            );
+                            return Json(serde_json::json!({
+                                "error": format!("failed to parse AI response: {e}"),
+                                "raw": json_text,
+                            }));
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    let plan = BeatPlan {
+        scene_clip_id: clip_id,
+        beats,
+    };
+
+    Json(serde_json::to_value(&plan).unwrap())
+}
+
+// ---------------------------------------------------------------------------
+// Batch beat generation
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+struct GenerateBeatsBody {
+    parent_clip_id: Uuid,
+}
+
+/// Generate script content for all sub-beats of a parent clip sequentially.
+/// Each beat's generation includes the preceding sibling beats' scripts as context.
+async fn generate_beats(
+    State(state): State<AppState>,
+    Json(body): Json<GenerateBeatsBody>,
+) -> Json<serde_json::Value> {
+    let parent_id = ClipId(body.parent_clip_id);
+
+    // Collect sub-beat IDs in order.
+    let sub_beat_ids: Vec<Uuid> = {
+        let project_guard = state.project.lock();
+        let Some(project) = project_guard.as_ref() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
+
+        let track = match project.timeline.track_for_clip(parent_id) {
+            Some(t) => t,
+            None => {
+                return Json(serde_json::json!({ "error": "parent clip not found" }));
+            }
+        };
+
+        let mut beats: Vec<&eidetic_core::timeline::clip::BeatClip> =
+            track.sub_beats_for_clip(parent_id);
+        beats.sort_by_key(|b| b.time_range.start_ms);
+        beats.iter().map(|b| b.id.0).collect()
+    };
+
+    if sub_beat_ids.is_empty() {
+        return Json(serde_json::json!({ "error": "no sub-beats found for this clip" }));
+    }
+
+    // Spawn sequential generation for each sub-beat.
+    let beat_count = sub_beat_ids.len();
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        for beat_uuid in &sub_beat_ids {
+            let beat_id = ClipId(*beat_uuid);
+
+            // Build request for this beat.
+            let request = {
+                let project_guard = state_clone.project.lock();
+                let Some(project) = project_guard.as_ref() else {
+                    break;
+                };
+
+                let clip = match project.timeline.clip(beat_id) {
+                    Ok(c) => c,
+                    Err(_) => continue,
+                };
+
+                if clip.locked {
+                    continue;
+                }
+
+                match build_generate_request(project, beat_id) {
+                    Ok(req) => req,
+                    Err(e) => {
+                        tracing::error!("Failed to build request for sub-beat {beat_uuid}: {e}");
+                        continue;
+                    }
+                }
+            };
+
+            // Mark as generating.
+            state_clone.generating.lock().insert(*beat_uuid);
+            {
+                let mut project_guard = state_clone.project.lock();
+                if let Some(project) = project_guard.as_mut() {
+                    if let Ok(clip) = project.timeline.clip_mut(beat_id) {
+                        clip.content.status = ContentStatus::Generating;
+                    }
+                }
+            }
+            let _ = state_clone
+                .events_tx
+                .send(ServerEvent::BeatUpdated { clip_id: *beat_uuid });
+
+            // Run generation (reuses the existing generation logic).
+            run_generation(state_clone.clone(), *beat_uuid, request).await;
+        }
+    });
+
+    Json(serde_json::json!({
+        "status": "started",
+        "parent_clip_id": body.parent_clip_id.to_string(),
+        "beat_count": beat_count,
     }))
 }
 

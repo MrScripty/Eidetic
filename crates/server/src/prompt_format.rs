@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use eidetic_core::ai::backend::{EditContext, GenerateRequest};
+use eidetic_core::ai::backend::{EditContext, GenerateRequest, PlanBeatsRequest};
 use eidetic_core::story::bible::ResolvedEntity;
 use eidetic_core::timeline::timing::TimeRange;
 
@@ -89,6 +89,22 @@ fn build_user_message(request: &GenerateRequest) -> String {
     user.push_str("BEAT NOTES:\n");
     user.push_str(&request.beat_clip.content.beat_notes);
     user.push_str("\n\n");
+
+    // Sub-beat context: parent scene notes and sibling beat structure.
+    if let Some(ref parent_notes) = request.parent_scene_notes {
+        user.push_str("SCENE CONTEXT (parent scene this beat belongs to):\n");
+        user.push_str(parent_notes);
+        user.push_str("\n\n");
+    }
+
+    if !request.sibling_beat_outlines.is_empty() {
+        user.push_str("SCENE BEAT STRUCTURE (all beats in this scene — you are writing one of these):\n");
+        for (name, beat_type, outline) in &request.sibling_beat_outlines {
+            let marker = if *name == request.beat_clip.name { " ← YOU ARE HERE" } else { "" };
+            user.push_str(&format!("- {} ({}): {}{}\n", name, beat_type, outline, marker));
+        }
+        user.push_str("\nWrite ONLY the beat marked above. Stay focused on this single beat.\n\n");
+    }
 
     // Scene weaving for overlapping beats.
     if !request.overlapping_beats.is_empty() {
@@ -352,6 +368,116 @@ pub(crate) fn build_recap_prompt(
     user.push_str(
         "\nProduce the scene recap now. Use the exact format specified. \
          Be concise — aim for 100-150 tokens.",
+    );
+
+    ChatPrompt { system, user }
+}
+
+/// Build a chat prompt for beat planning — decomposing a scene clip into beats.
+pub(crate) fn build_beat_plan_prompt(request: &PlanBeatsRequest) -> ChatPrompt {
+    let mut system = String::from(
+        "You are a story structure analyst for a 30-minute TV episode. \
+         Given a scene description, break it down into individual narrative beats.\n\n\
+         BEAT TYPES (choose the most appropriate for each):\n\
+         - Setup: Establishes setting, characters, or situation\n\
+         - Complication: Introduces a problem or obstacle\n\
+         - Escalation: Raises stakes or tension\n\
+         - Climax: Peak moment of conflict or revelation\n\
+         - Resolution: Resolves the immediate conflict\n\
+         - Payoff: Delivers on earlier setup\n\
+         - Callback: References earlier material\n\n\
+         RULES:\n\
+         - Propose 3-7 beats depending on scene complexity.\n\
+         - Each beat should be a single dramatic moment or shift.\n\
+         - Outlines should be 1-2 sentences describing what happens.\n\
+         - Weights represent relative duration (1.0 = normal, 0.5 = brief, 2.0 = extended).\n\
+         - Beats should flow naturally from one to the next.\n\
+         - Return ONLY valid JSON, no commentary.\n",
+    );
+
+    // Story bible — entities directly referenced by this scene (full detail).
+    if !request.bible_context.referenced_entities.is_empty() {
+        system.push_str("\nSTORY BIBLE — Key entities in this scene:\n");
+        for entity in &request.bible_context.referenced_entities {
+            if let Some(ref full) = entity.full_text {
+                system.push_str(full);
+                system.push('\n');
+            } else {
+                system.push_str(&format!("- {}\n", entity.compact_text));
+            }
+        }
+    }
+
+    // Other active entities (compact, for awareness).
+    if !request.bible_context.nearby_entities.is_empty() {
+        system.push_str("\nOTHER ACTIVE ENTITIES (characters, locations, props available):\n");
+        for entity in &request.bible_context.nearby_entities {
+            system.push_str(&format!("- {}\n", entity.compact_text));
+        }
+    }
+
+    system.push_str(
+        "\nInclude which characters, locations, and props are involved in each beat's outline. \
+         Reference entity names from the story bible when applicable.\n",
+    );
+
+    let mut user = String::from("Break this scene into individual narrative beats:\n\n");
+
+    // Arc context.
+    user.push_str(&format!(
+        "STORY ARC: {} ({:?})",
+        request.arc.name, request.arc.arc_type,
+    ));
+    if !request.arc.description.is_empty() {
+        user.push_str(&format!(" — {}", request.arc.description));
+    }
+    user.push('\n');
+
+    // Scene info.
+    user.push_str(&format!(
+        "SCENE: {} ({:?})\n",
+        request.beat_clip.name, request.beat_clip.beat_type,
+    ));
+
+    // Scene notes.
+    user.push_str("SCENE NOTES:\n");
+    user.push_str(&request.beat_clip.content.beat_notes);
+    user.push_str("\n\n");
+
+    // Duration context.
+    let duration_ms = request.beat_clip.time_range.duration_ms();
+    let duration_sec = duration_ms / 1000;
+    user.push_str(&format!(
+        "SCENE DURATION: {} seconds ({} minutes {} seconds)\n\n",
+        duration_sec,
+        duration_sec / 60,
+        duration_sec % 60,
+    ));
+
+    // Cross-track continuity.
+    if !request.surrounding_context.preceding_recaps.is_empty() {
+        user.push_str("CONTINUITY CONTEXT:\n");
+        for entry in &request.surrounding_context.preceding_recaps {
+            user.push_str(&format!(
+                "- {} / {}: {}\n",
+                entry.arc_name, entry.clip_name, entry.recap,
+            ));
+        }
+        user.push('\n');
+    }
+
+    user.push_str(
+        "Respond with a JSON array of beats:\n\
+         ```json\n\
+         [\n\
+           {\n\
+             \"name\": \"<short descriptive name>\",\n\
+             \"beat_type\": \"<one of: Setup, Complication, Escalation, Climax, Resolution, Payoff, Callback>\",\n\
+             \"outline\": \"<1-2 sentence description of what happens in this beat>\",\n\
+             \"weight\": <relative duration, e.g. 1.0>\n\
+           }\n\
+         ]\n\
+         ```",
     );
 
     ChatPrompt { system, user }

@@ -17,10 +17,15 @@ pub fn router() -> Router<AppState> {
         .route("/timeline", get(get_timeline))
         .route("/timeline/tracks", post(add_track))
         .route("/timeline/tracks/{id}", delete(remove_track))
+        .route("/timeline/tracks/{id}/sub-beats-visible", put(set_sub_beats_visible))
         .route("/timeline/clips", post(create_clip))
         .route("/timeline/clips/{id}", put(update_clip))
         .route("/timeline/clips/{id}", delete(delete_clip))
         .route("/timeline/clips/{id}/split", post(split_clip))
+        .route("/timeline/clips/{id}/apply-beats", post(apply_beats))
+        .route("/timeline/sub-beats", post(create_sub_beat))
+        .route("/timeline/sub-beats/{id}", put(update_sub_beat))
+        .route("/timeline/sub-beats/{id}", delete(delete_sub_beat))
         .route("/timeline/relationships", post(create_relationship))
         .route("/timeline/relationships/{id}", delete(delete_relationship))
         .route("/scenes", get(get_scenes))
@@ -144,13 +149,22 @@ async fn update_clip(
         return Json(serde_json::json!({ "error": "no project loaded" }));
     };
 
-    // If position changed, use move_clip for validation.
+    // If position changed, use move_clip or resize_parent_clip for validation.
     if let (Some(start), Some(end)) = (body.start_ms, body.end_ms) {
         let range = match TimeRange::new(start, end) {
             Ok(r) => r,
             Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
         };
-        if let Err(e) = project.timeline.move_clip(ClipId(id), range) {
+        // Check if this clip has sub-beats; if so, use proportional resize.
+        let has_sub_beats = project.timeline.tracks.iter().any(|t| {
+            t.clips.iter().any(|c| c.id == ClipId(id))
+                && t.sub_beats.iter().any(|b| b.parent_clip_id == Some(ClipId(id)))
+        });
+        if has_sub_beats {
+            if let Err(e) = project.timeline.resize_parent_clip(ClipId(id), range) {
+                return Json(serde_json::json!({ "error": e.to_string() }));
+            }
+        } else if let Err(e) = project.timeline.move_clip(ClipId(id), range) {
             return Json(serde_json::json!({ "error": e.to_string() }));
         }
     }
@@ -375,6 +389,249 @@ async fn close_all_gaps(
             let _ = state.events_tx.send(ServerEvent::ScenesChanged);
             state.trigger_save();
             Json(serde_json::to_value(&project.timeline).unwrap())
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Sub-beat CRUD & beat planning
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+struct SetSubBeatsVisibleRequest {
+    visible: bool,
+}
+
+async fn set_sub_beats_visible(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<SetSubBeatsVisibleRequest>,
+) -> Json<serde_json::Value> {
+    let mut guard = state.project.lock();
+    let Some(project) = guard.as_mut() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    match project
+        .timeline
+        .set_sub_beats_visible(TrackId(id), body.visible)
+    {
+        Ok(()) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            Json(serde_json::json!({ "ok": true }))
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct ApplyBeatsRequest {
+    beats: Vec<ApplyBeatEntry>,
+}
+
+#[derive(Deserialize)]
+struct ApplyBeatEntry {
+    name: String,
+    beat_type: String,
+    outline: String,
+    weight: f32,
+}
+
+/// Apply a beat plan to a scene clip: creates sub-beat clips on the track's
+/// beat subtrack, distributing time proportionally by weight.
+async fn apply_beats(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<ApplyBeatsRequest>,
+) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
+    let mut guard = state.project.lock();
+    let Some(project) = guard.as_mut() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    let parent_id = ClipId(id);
+
+    // Get parent clip's time range.
+    let parent_range = match project.timeline.clip(parent_id) {
+        Ok(c) => c.time_range,
+        Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+    };
+
+    // Find which track owns this clip.
+    let track_id = match project.timeline.track_for_clip(parent_id) {
+        Some(t) => t.id,
+        None => return Json(serde_json::json!({ "error": "track not found for clip" })),
+    };
+
+    // Clear existing sub-beats for this parent.
+    if let Err(e) = project.timeline.clear_sub_beats_for_clip(parent_id) {
+        return Json(serde_json::json!({ "error": e.to_string() }));
+    }
+
+    // Calculate total weight.
+    let total_weight: f32 = body.beats.iter().map(|b| b.weight.max(0.1)).sum();
+    let parent_duration = parent_range.end_ms - parent_range.start_ms;
+
+    // Distribute time proportionally.
+    let mut cursor = parent_range.start_ms;
+    let mut created_beats = Vec::new();
+
+    for (i, beat_entry) in body.beats.iter().enumerate() {
+        let weight = beat_entry.weight.max(0.1);
+        let beat_duration = if i == body.beats.len() - 1 {
+            // Last beat gets the remainder to avoid rounding gaps.
+            parent_range.end_ms - cursor
+        } else {
+            ((weight / total_weight) * parent_duration as f32) as u64
+        };
+
+        let end = (cursor + beat_duration).min(parent_range.end_ms);
+        let time_range = match TimeRange::new(cursor, end) {
+            Ok(r) => r,
+            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        };
+
+        let mut sub_beat =
+            BeatClip::new_sub_beat(&beat_entry.name, parse_beat_type(&beat_entry.beat_type), time_range, parent_id);
+        sub_beat.content.beat_notes = beat_entry.outline.clone();
+        sub_beat.content.status = eidetic_core::timeline::clip::ContentStatus::NotesOnly;
+
+        created_beats.push(serde_json::to_value(&sub_beat).unwrap());
+
+        if let Err(e) = project.timeline.add_sub_beat(track_id, sub_beat) {
+            return Json(serde_json::json!({ "error": e.to_string() }));
+        }
+
+        cursor = end;
+    }
+
+    // Auto-expand the subtrack.
+    let _ = project
+        .timeline
+        .set_sub_beats_visible(track_id, true);
+
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    state.trigger_save();
+
+    Json(serde_json::json!({
+        "ok": true,
+        "beats": created_beats,
+    }))
+}
+
+#[derive(Deserialize)]
+struct CreateSubBeatRequest {
+    parent_clip_id: Uuid,
+    track_id: Uuid,
+    name: String,
+    beat_type: String,
+    start_ms: u64,
+    end_ms: u64,
+}
+
+async fn create_sub_beat(
+    State(state): State<AppState>,
+    Json(body): Json<CreateSubBeatRequest>,
+) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
+    let mut guard = state.project.lock();
+    let Some(project) = guard.as_mut() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    let time_range = match TimeRange::new(body.start_ms, body.end_ms) {
+        Ok(r) => r,
+        Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+    };
+
+    let sub_beat = BeatClip::new_sub_beat(
+        body.name,
+        parse_beat_type(&body.beat_type),
+        time_range,
+        ClipId(body.parent_clip_id),
+    );
+    let json = serde_json::to_value(&sub_beat).unwrap();
+
+    match project
+        .timeline
+        .add_sub_beat(TrackId(body.track_id), sub_beat)
+    {
+        Ok(()) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            state.trigger_save();
+            Json(json)
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+async fn update_sub_beat(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<UpdateClipRequest>,
+) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
+    let mut guard = state.project.lock();
+    let Some(project) = guard.as_mut() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    // Move sub-beat if position changed.
+    if let (Some(start), Some(end)) = (body.start_ms, body.end_ms) {
+        let range = match TimeRange::new(start, end) {
+            Ok(r) => r,
+            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        };
+        // Validate sub-beat stays within parent bounds.
+        if let Ok(sub_beat) = project.timeline.clip(ClipId(id)) {
+            if let Some(parent_id) = sub_beat.parent_clip_id {
+                if let Ok(parent) = project.timeline.clip(parent_id) {
+                    if range.start_ms < parent.time_range.start_ms
+                        || range.end_ms > parent.time_range.end_ms
+                    {
+                        return Json(serde_json::json!({
+                            "error": "sub-beat must stay within parent clip boundaries"
+                        }));
+                    }
+                }
+            }
+        }
+        if let Err(e) = project.timeline.move_clip(ClipId(id), range) {
+            return Json(serde_json::json!({ "error": e.to_string() }));
+        }
+    }
+
+    match project.timeline.clip_mut(ClipId(id)) {
+        Ok(clip) => {
+            if let Some(name) = body.name {
+                clip.name = name;
+            }
+            let json = serde_json::to_value(&*clip).unwrap();
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            state.trigger_save();
+            Json(json)
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+async fn delete_sub_beat(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    state.snapshot_for_undo();
+    let mut guard = state.project.lock();
+    let Some(project) = guard.as_mut() else {
+        return Json(serde_json::json!({ "error": "no project loaded" }));
+    };
+
+    match project.timeline.remove_sub_beat(ClipId(id)) {
+        Ok(clip) => {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            state.trigger_save();
+            Json(serde_json::to_value(&clip).unwrap())
         }
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
