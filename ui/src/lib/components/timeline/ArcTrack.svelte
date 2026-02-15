@@ -3,19 +3,17 @@
 	import { TIMELINE } from '$lib/types.js';
 	import { xToTime, timeToX, timelineState } from '$lib/stores/timeline.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
-	import { updateClip, createClip, deleteClip, splitClip, fillGap, closeGap, generateScript } from '$lib/api.js';
+	import { updateClip, updateSubBeat, createClip, deleteClip, deleteSubBeat, splitClip, fillGap, closeGap, generateScript } from '$lib/api.js';
 	import { startGeneration } from '$lib/stores/editor.svelte.js';
 	import { notify } from '$lib/stores/notifications.svelte.js';
 	import BeatClip from './BeatClip.svelte';
 	import type { BeatClip as BeatClipType } from '$lib/types.js';
 
-	let { track, color, label, gaps = [], onconnectstart, ondeletetrack }: {
+	let { track, color, gaps = [], onconnectstart }: {
 		track: ArcTrackType;
 		color: string;
-		label: string;
 		gaps?: TimelineGap[];
 		onconnectstart: (clipId: string, x: number, y: number) => void;
-		ondeletetrack: (trackId: string) => void;
 	} = $props();
 
 	// Viewport-aware clip filtering: only render clips whose pixel range
@@ -25,6 +23,18 @@
 		if (vw <= 0) return track.clips; // Fallback: render all if not measured yet.
 		const sx = timelineState.scrollX;
 		return track.clips.filter((c: BeatClipType) => {
+			const left = timeToX(c.time_range.start_ms);
+			const right = timeToX(c.time_range.end_ms);
+			return right >= sx && left <= sx + vw;
+		});
+	});
+
+	let visibleSubBeats = $derived.by(() => {
+		if (!track.sub_beats_visible || track.sub_beats.length === 0) return [];
+		const vw = timelineState.viewportWidth;
+		if (vw <= 0) return track.sub_beats;
+		const sx = timelineState.scrollX;
+		return track.sub_beats.filter((c: BeatClipType) => {
 			const left = timeToX(c.time_range.start_ms);
 			const right = timeToX(c.time_range.end_ms);
 			return right >= sx && left <= sx + vw;
@@ -47,11 +57,31 @@
 		[...track.clips].sort((a, b) => a.time_range.start_ms - b.time_range.start_ms)
 	);
 
+	/** Sorted sub-beats for boundary lookups. */
+	let sortedSubBeats = $derived(
+		[...track.sub_beats].sort((a, b) => a.time_range.start_ms - b.time_range.start_ms)
+	);
+
 	/** Get the boundary constraints for a clip (end of previous clip, start of next clip). */
 	function clipBounds(clipId: string): { left: number; right: number } {
 		const idx = sortedClips.findIndex(c => c.id === clipId);
-		const left = idx > 0 ? sortedClips[idx - 1].time_range.end_ms : 0;
-		const right = idx < sortedClips.length - 1 ? sortedClips[idx + 1].time_range.start_ms : TIMELINE.DURATION_MS;
+		const left = idx > 0 ? sortedClips[idx - 1]!.time_range.end_ms : 0;
+		const right = idx < sortedClips.length - 1 ? sortedClips[idx + 1]!.time_range.start_ms : TIMELINE.DURATION_MS;
+		return { left, right };
+	}
+
+	/** Get boundary constraints for a sub-beat (within its parent clip, between siblings). */
+	function subBeatBounds(beatId: string): { left: number; right: number } {
+		const beat = track.sub_beats.find(b => b.id === beatId);
+		if (!beat || !beat.parent_clip_id) return { left: 0, right: TIMELINE.DURATION_MS };
+
+		const parent = track.clips.find(c => c.id === beat.parent_clip_id);
+		if (!parent) return { left: 0, right: TIMELINE.DURATION_MS };
+
+		const siblings = sortedSubBeats.filter(b => b.parent_clip_id === beat.parent_clip_id);
+		const idx = siblings.findIndex(b => b.id === beatId);
+		const left = idx > 0 ? siblings[idx - 1]!.time_range.end_ms : parent.time_range.start_ms;
+		const right = idx < siblings.length - 1 ? siblings[idx + 1]!.time_range.start_ms : parent.time_range.end_ms;
 		return { left, right };
 	}
 
@@ -108,18 +138,6 @@
 	}
 
 	let gapContextMenu: { x: number; y: number; gap: TimelineGap } | null = $state(null);
-	let trackContextMenu: { x: number; y: number } | null = $state(null);
-
-	function handleTrackContextMenu(e: MouseEvent) {
-		e.preventDefault();
-		e.stopPropagation();
-		trackContextMenu = { x: e.clientX, y: e.clientY };
-		function dismiss() {
-			trackContextMenu = null;
-			document.removeEventListener('click', dismiss);
-		}
-		setTimeout(() => document.addEventListener('click', dismiss), 0);
-	}
 
 	async function handleFillGap(gap: TimelineGap) {
 		await fillGap(gap.track_id, gap.time_range.start_ms, gap.time_range.end_ms);
@@ -141,6 +159,22 @@
 		setTimeout(() => document.addEventListener('click', dismiss), 0);
 	}
 
+	async function handleSubBeatMove(beatId: string, startMs: number, endMs: number) {
+		await updateSubBeat(beatId, { start_ms: startMs, end_ms: endMs });
+	}
+
+	async function handleSubBeatResize(beatId: string, startMs: number, endMs: number) {
+		await updateSubBeat(beatId, { start_ms: startMs, end_ms: endMs });
+	}
+
+	async function handleSubBeatDelete(beatId: string) {
+		if (editorState.selectedClipId === beatId) {
+			editorState.selectedClipId = null;
+			editorState.selectedClip = null;
+		}
+		await deleteSubBeat(beatId);
+	}
+
 	async function handleDblClick(e: MouseEvent) {
 		const target = e.currentTarget as HTMLElement;
 		const rect = target.getBoundingClientRect();
@@ -155,15 +189,6 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="arc-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="track-label" style="transform: translateX({timelineState.scrollX}px)" oncontextmenu={handleTrackContextMenu}>
-		<span class="track-label-text">{label}</span>
-		<button
-			class="track-delete-btn"
-			title="Delete Track"
-			onclick={() => ondeletetrack(track.id)}
-		>&times;</button>
-	</div>
 	<div class="track-lane" class:blade-mode={timelineState.activeTool === 'blade'} ondblclick={handleDblClick}>
 		{#each visibleClips as clip (clip.id)}
 			{@const bounds = clipBounds(clip.id)}
@@ -204,6 +229,31 @@
 	{/if}
 </div>
 
+{#if track.sub_beats_visible && track.sub_beats.length > 0}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="beat-subtrack" style="height: {TIMELINE.BEAT_SUBTRACK_HEIGHT_PX}px">
+		<div class="subtrack-lane">
+			{#each visibleSubBeats as beat (beat.id)}
+				{@const bounds = subBeatBounds(beat.id)}
+				<BeatClip
+					clip={beat}
+					{color}
+					compact
+					selected={editorState.selectedClipId === beat.id}
+					leftBoundMs={bounds.left}
+					rightBoundMs={bounds.right}
+					onselect={() => selectClip(beat)}
+					onmove={(s, e) => handleSubBeatMove(beat.id, s, e)}
+					onresize={(s, e) => handleSubBeatResize(beat.id, s, e)}
+					ondelete={() => handleSubBeatDelete(beat.id)}
+					onsplit={() => {}}
+					onconnectstart={() => {}}
+				/>
+			{/each}
+		</div>
+	</div>
+{/if}
+
 {#if gapContextMenu}
 	<div class="gap-context-menu" style="left: {gapContextMenu.x}px; top: {gapContextMenu.y}px">
 		<button onclick={() => { handleFillGap(gapContextMenu!.gap); gapContextMenu = null; }}>Fill Gap</button>
@@ -211,65 +261,14 @@
 	</div>
 {/if}
 
-{#if trackContextMenu}
-	<div class="gap-context-menu" style="left: {trackContextMenu.x}px; top: {trackContextMenu.y}px">
-		<button class="delete-track-btn" onclick={() => { trackContextMenu = null; ondeletetrack(track.id); }}>Delete Track</button>
-	</div>
-{/if}
 
 <style>
 	.arc-track {
-		display: flex;
-		align-items: center;
+		position: relative;
 		border-bottom: 1px solid var(--color-border-subtle);
 	}
 
-	.track-label {
-		width: 80px;
-		flex-shrink: 0;
-		padding: 0 4px 0 8px;
-		font-size: 0.75rem;
-		color: var(--color-text-secondary);
-		display: flex;
-		align-items: center;
-		justify-content: flex-end;
-		gap: 2px;
-		overflow: hidden;
-		position: relative;
-		z-index: 2;
-		background: var(--color-bg-primary);
-	}
-
-	.track-label-text {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.track-delete-btn {
-		display: none;
-		background: none;
-		border: none;
-		color: var(--color-text-muted);
-		font-size: 0.85rem;
-		line-height: 1;
-		cursor: pointer;
-		padding: 0 2px;
-		flex-shrink: 0;
-		border-radius: 2px;
-	}
-
-	.track-label:hover .track-delete-btn {
-		display: block;
-	}
-
-	.track-delete-btn:hover {
-		color: var(--color-danger);
-		background: var(--color-danger-bg);
-	}
-
 	.track-lane {
-		flex: 1;
 		position: relative;
 		height: 100%;
 	}
@@ -368,7 +367,14 @@
 		background: var(--color-bg-hover);
 	}
 
-	.delete-track-btn:hover {
-		color: var(--color-danger) !important;
+	.beat-subtrack {
+		position: relative;
+		border-bottom: 1px solid var(--color-border-subtle);
+		background: var(--color-bg-secondary);
+	}
+
+	.subtrack-lane {
+		position: relative;
+		height: 100%;
 	}
 </style>

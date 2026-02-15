@@ -15,6 +15,18 @@
 		return 'var(--color-rel-default)';
 	}
 
+	function trackYOffset(trackIdx: number): number {
+		let y = 0;
+		for (let i = 0; i < trackIdx; i++) {
+			const t = timelineState.timeline!.tracks[i]!;
+			y += TIMELINE.TRACK_HEIGHT_PX;
+			if (t.sub_beats_visible && t.sub_beats.length > 0) {
+				y += TIMELINE.BEAT_SUBTRACK_HEIGHT_PX;
+			}
+		}
+		return y;
+	}
+
 	function clipCenter(clipId: string): { x: number; y: number } | null {
 		if (!timelineState.timeline) return null;
 		for (let trackIdx = 0; trackIdx < timelineState.timeline.tracks.length; trackIdx++) {
@@ -24,7 +36,7 @@
 				const midMs = (clip.time_range.start_ms + clip.time_range.end_ms) / 2;
 				return {
 					x: timeToX(midMs),
-					y: trackIdx * TIMELINE.TRACK_HEIGHT_PX + TIMELINE.TRACK_HEIGHT_PX / 2,
+					y: trackYOffset(trackIdx) + TIMELINE.TRACK_HEIGHT_PX / 2,
 				};
 			}
 		}

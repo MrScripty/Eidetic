@@ -4,10 +4,11 @@
 	import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
 	import { entitiesForClip } from '$lib/stores/story.svelte.js';
 
-	let { clip, color, selected, leftBoundMs = 0, rightBoundMs = TIMELINE.DURATION_MS, onselect, onmove, onresize, ondelete, onsplit, onconnectstart }: {
+	let { clip, color, selected, compact = false, leftBoundMs = 0, rightBoundMs = TIMELINE.DURATION_MS, onselect, onmove, onresize, ondelete, onsplit, onconnectstart }: {
 		clip: BeatClipType;
 		color: string;
 		selected: boolean;
+		compact?: boolean;
 		/** Earliest allowed start_ms (end of previous clip, or 0). */
 		leftBoundMs?: number;
 		/** Latest allowed end_ms (start of next clip, or DURATION_MS). */
@@ -246,6 +247,7 @@
 	class:locked={clip.locked}
 	class:dragging
 	class:fitting
+	class:compact
 	class:blade-mode={timelineState.activeTool === 'blade'}
 	style="
 		left: {timeToX(displayStart)}px;
@@ -268,12 +270,14 @@
 	<span class="status-dot" style="background: {statusColor(clip.content.status)}"></span>
 	<span class="clip-name">{clip.name}</span>
 
-	<!-- Connection handle -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		class="connect-handle"
-		onpointerdown={handleConnectStart}
-	></div>
+	{#if !compact}
+		<!-- Connection handle -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="connect-handle"
+			onpointerdown={handleConnectStart}
+		></div>
+	{/if}
 
 	<!-- Right resize handle -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -283,7 +287,7 @@
 	></div>
 
 	<!-- Entity indicator dots -->
-	{#if entityDots.length > 0}
+	{#if !compact && entityDots.length > 0}
 		<div class="entity-dots">
 			{#each entityDots as entity (entity.id)}
 				<span class="entity-dot" style="background: {colorToHex(entity.color)}" title={entity.name}></span>
@@ -445,6 +449,24 @@
 		pointer-events: none;
 		z-index: 2;
 		box-shadow: 0 0 4px var(--color-blade-glow);
+	}
+
+	.beat-clip.compact {
+		padding: 0 4px;
+		gap: 2px;
+	}
+
+	.beat-clip.compact .clip-name {
+		font-size: 0.6rem;
+	}
+
+	.beat-clip.compact .status-dot {
+		width: 4px;
+		height: 4px;
+	}
+
+	.beat-clip.compact .resize-handle {
+		width: 3px;
 	}
 
 	.context-menu {
