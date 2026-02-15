@@ -41,6 +41,50 @@ pub fn gather_surrounding_scripts(
     }
 }
 
+/// Gather surrounding scripts from sibling sub-beats on the same track.
+///
+/// For a sub-beat, the "surrounding" context is the other sub-beats
+/// belonging to the same parent clip, ordered by time.
+pub fn gather_surrounding_sub_beat_scripts(
+    track: &ArcTrack,
+    clip_id: ClipId,
+) -> SurroundingContext {
+    // Find this sub-beat's parent.
+    let parent_id = match track.sub_beats.iter().find(|b| b.id == clip_id) {
+        Some(b) => match b.parent_clip_id {
+            Some(pid) => pid,
+            None => return SurroundingContext::default(),
+        },
+        None => return SurroundingContext::default(),
+    };
+
+    // Get all siblings sorted by time.
+    let mut siblings: Vec<&BeatClip> = track.sub_beats_for_clip(parent_id);
+    siblings.sort_by_key(|b| b.time_range.start_ms);
+
+    let Some(idx) = siblings.iter().position(|b| b.id == clip_id) else {
+        return SurroundingContext::default();
+    };
+
+    let preceding_scripts = siblings[idx.saturating_sub(CONTEXT_WINDOW)..idx]
+        .iter()
+        .filter_map(|c| best_script_or_outline(c))
+        .collect();
+
+    let after_start = idx + 1;
+    let after_end = (after_start + CONTEXT_WINDOW).min(siblings.len());
+    let following_scripts = siblings[after_start..after_end]
+        .iter()
+        .filter_map(|c| best_script_or_outline(c))
+        .collect();
+
+    SurroundingContext {
+        preceding_scripts,
+        following_scripts,
+        preceding_recaps: Vec::new(),
+    }
+}
+
 /// Return the best available script text for a clip (user-refined > generated).
 pub fn best_script(clip: &BeatClip) -> Option<String> {
     clip.content
@@ -48,6 +92,19 @@ pub fn best_script(clip: &BeatClip) -> Option<String> {
         .as_ref()
         .or(clip.content.generated_script.as_ref())
         .cloned()
+}
+
+/// Return the best available context for a sub-beat:
+/// script if available, otherwise beat notes (outline from planning).
+pub fn best_script_or_outline(clip: &BeatClip) -> Option<String> {
+    best_script(clip).or_else(|| {
+        let notes = &clip.content.beat_notes;
+        if notes.trim().is_empty() {
+            None
+        } else {
+            Some(format!("[BEAT OUTLINE: {} ({:?})]\n{}", clip.name, clip.beat_type, notes))
+        }
+    })
 }
 
 /// Gather scene recaps from ALL tracks for clips that end before the

@@ -62,6 +62,13 @@ pub struct GenerateRequest {
     pub user_written_anchors: Vec<String>,
     pub style_notes: Option<String>,
     pub rag_context: Vec<RagChunk>,
+    /// If this is a sub-beat, the parent scene clip's beat notes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_scene_notes: Option<String>,
+    /// If this is a sub-beat, outlines of all sibling beats for structural context.
+    /// Vec of (name, beat_type_label, outline).
+    #[serde(default)]
+    pub sibling_beat_outlines: Vec<(String, String, String)>,
 }
 
 /// Adjacent beat scripts for context.
@@ -110,4 +117,37 @@ pub struct ConsistencyUpdate {
     pub original_text: String,
     pub suggested_text: String,
     pub reason: String,
+}
+
+/// A single proposed beat in a beat plan.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BeatProposal {
+    /// Name for this beat (e.g., "Yuri confronts Vladimir").
+    pub name: String,
+    /// Structural type of this beat.
+    pub beat_type: crate::timeline::clip::BeatType,
+    /// 1-2 sentence description of what happens.
+    pub outline: String,
+    /// Relative duration weight (1.0 = normal, 2.0 = twice as long).
+    pub weight: f32,
+}
+
+/// AI-generated beat plan for decomposing a scene clip into sub-beats.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BeatPlan {
+    pub scene_clip_id: crate::timeline::clip::ClipId,
+    pub beats: Vec<BeatProposal>,
+}
+
+/// Everything the AI needs to plan beats for a scene clip.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlanBeatsRequest {
+    /// The scene clip to decompose.
+    pub beat_clip: BeatClip,
+    /// Which arc this clip belongs to.
+    pub arc: StoryArc,
+    /// Story bible entities resolved at this beat's time position.
+    pub bible_context: BibleContext,
+    /// Scripts from adjacent beats.
+    pub surrounding_context: SurroundingContext,
 }
