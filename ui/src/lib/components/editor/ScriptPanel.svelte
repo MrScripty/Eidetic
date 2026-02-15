@@ -55,10 +55,11 @@
 			{#each sortedClips as entry (entry.clip.id)}
 				{@const arc = arcFor(entry.arcId)}
 				{@const text = scriptText(entry.clip)}
+				{@const streamText = editorState.streamingClipId === entry.clip.id && editorState.streamingText ? editorState.streamingText : null}
 				<div
 					class="script-beat"
 					class:selected={editorState.selectedClipId === entry.clip.id}
-					class:dimmed={!text}
+					class:dimmed={!text && !streamText}
 					data-clip-id={entry.clip.id}
 				>
 					<div class="beat-header">
@@ -71,6 +72,8 @@
 					</div>
 					{#if text}
 						<ScriptView {text} entities={storyState.entities} />
+					{:else if streamText}
+						<ScriptView text={streamText} streaming={true} entities={storyState.entities} />
 					{:else}
 						<p class="no-script">No script generated</p>
 					{/if}
