@@ -6,17 +6,38 @@
 	import { colorToHex } from '$lib/types.js';
 	import type { BeatClip, StoryArc } from '$lib/types.js';
 
-	/** All clips sorted by start time across all tracks. */
+	/** All clips sorted by start time across all tracks, with sub-beats nested under parents. */
 	let sortedClips = $derived.by(() => {
 		const tl = timelineState.timeline;
 		if (!tl) return [];
-		const entries: { clip: BeatClip; arcId: string }[] = [];
+		const entries: { clip: BeatClip; arcId: string; isSubBeat?: boolean }[] = [];
 		for (const track of tl.tracks) {
 			for (const clip of track.clips) {
 				entries.push({ clip, arcId: track.arc_id });
+				// Insert sub-beats for this parent clip, sorted by start time.
+				const children = track.sub_beats
+					.filter(sb => sb.parent_clip_id === clip.id)
+					.sort((a, b) => a.time_range.start_ms - b.time_range.start_ms);
+				for (const child of children) {
+					entries.push({ clip: child, arcId: track.arc_id, isSubBeat: true });
+				}
 			}
 		}
-		entries.sort((a, b) => a.clip.time_range.start_ms - b.clip.time_range.start_ms);
+		entries.sort((a, b) => {
+			// Sort by parent's start time first (sub-beats use their parent's position).
+			const aParentStart = a.isSubBeat
+				? tl.tracks.flatMap(t => t.clips).find(c => c.id === a.clip.parent_clip_id)?.time_range.start_ms ?? a.clip.time_range.start_ms
+				: a.clip.time_range.start_ms;
+			const bParentStart = b.isSubBeat
+				? tl.tracks.flatMap(t => t.clips).find(c => c.id === b.clip.parent_clip_id)?.time_range.start_ms ?? b.clip.time_range.start_ms
+				: b.clip.time_range.start_ms;
+			if (aParentStart !== bParentStart) return aParentStart - bParentStart;
+			// Parent comes before its children.
+			if (!a.isSubBeat && b.isSubBeat && b.clip.parent_clip_id === a.clip.id) return -1;
+			if (!b.isSubBeat && a.isSubBeat && a.clip.parent_clip_id === b.clip.id) return 1;
+			// Sub-beats sorted by their own start time.
+			return a.clip.time_range.start_ms - b.clip.time_range.start_ms;
+		});
 		return entries;
 	});
 
@@ -60,6 +81,7 @@
 					class="script-beat"
 					class:selected={editorState.selectedClipId === entry.clip.id}
 					class:dimmed={!text && !streamText}
+					class:sub-beat={entry.isSubBeat}
 					data-clip-id={entry.clip.id}
 				>
 					<div class="beat-header">
@@ -74,6 +96,8 @@
 						<ScriptView {text} entities={storyState.entities} />
 					{:else if streamText}
 						<ScriptView text={streamText} streaming={true} entities={storyState.entities} />
+					{:else if entry.isSubBeat && entry.clip.content.beat_notes}
+						<p class="beat-outline">{entry.clip.content.beat_notes}</p>
 					{:else}
 						<p class="no-script">No script generated</p>
 					{/if}
@@ -114,8 +138,13 @@
 
 	.script-panel-body {
 		flex: 1;
-		overflow-y: auto;
+		overflow-x: auto;
+		overflow-y: hidden;
 		padding: 8px 12px;
+		column-width: 40ch;
+		column-gap: 24px;
+		column-rule: 1px solid var(--color-border-subtle);
+		column-fill: auto;
 	}
 
 	.script-empty {
@@ -131,6 +160,7 @@
 		border-radius: 4px;
 		border: 1px solid transparent;
 		padding: 4px;
+		break-inside: avoid;
 	}
 
 	.script-beat.selected {
@@ -165,6 +195,25 @@
 		font-size: 0.65rem;
 		color: var(--color-text-muted);
 		text-transform: capitalize;
+	}
+
+	.script-beat.sub-beat {
+		margin-left: 12px;
+		border-left: 2px solid var(--color-border-subtle);
+		padding-left: 8px;
+		margin-bottom: 8px;
+	}
+
+	.script-beat.sub-beat .beat-name {
+		font-size: 0.7rem;
+	}
+
+	.beat-outline {
+		font-size: 0.7rem;
+		color: var(--color-text-muted);
+		font-style: italic;
+		margin: 4px 0;
+		padding-left: 14px;
 	}
 
 	.no-script {

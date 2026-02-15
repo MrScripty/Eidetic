@@ -4,10 +4,13 @@
 	import {
 		editorState,
 		startGeneration,
+		startBatchGeneration,
+		setBatchTotalCount,
 		removeConsistencySuggestion,
 		clearConsistencySuggestions,
 	} from '$lib/stores/editor.svelte.js';
 	import { storyState, entitiesForClip } from '$lib/stores/story.svelte.js';
+	import { timelineState, zoomToRange } from '$lib/stores/timeline.svelte.js';
 	import {
 		updateBeatNotes,
 		updateBeatScript,
@@ -18,6 +21,9 @@
 		reactToEdit,
 		extractEntities,
 		removeClipRef,
+		planBeats,
+		generateBeats,
+		applyBeats,
 	} from '$lib/api.js';
 	import ScriptView from './ScriptView.svelte';
 	import DiffView from './DiffView.svelte';
@@ -31,8 +37,45 @@
 	let previousScript = $state('');
 
 	let isGenerating = $derived(
-		editorState.streamingClipId != null &&
-		editorState.streamingClipId === editorState.selectedClipId
+		(editorState.streamingClipId != null &&
+		editorState.streamingClipId === editorState.selectedClipId) ||
+		(editorState.batchParentClipId != null &&
+		editorState.batchParentClipId === editorState.selectedClipId)
+	);
+
+	// Beat planning state
+	let planning = $state(false);
+
+	// Track and sub-beat context
+	let selectedTrack = $derived.by(() => {
+		if (!editorState.selectedClipId || !timelineState.timeline) return null;
+		return timelineState.timeline.tracks.find(t =>
+			t.clips.some(c => c.id === editorState.selectedClipId) ||
+			t.sub_beats.some(b => b.id === editorState.selectedClipId)
+		) ?? null;
+	});
+
+	let isSubBeat = $derived(editorState.selectedClip?.parent_clip_id != null);
+
+	let hasSubBeats = $derived.by(() => {
+		if (!selectedTrack || !editorState.selectedClipId) return false;
+		return selectedTrack.sub_beats.some(b => b.parent_clip_id === editorState.selectedClipId);
+	});
+
+	let parentClip = $derived.by(() => {
+		if (!isSubBeat || !editorState.selectedClip || !selectedTrack) return null;
+		return selectedTrack.clips.find(c => c.id === editorState.selectedClip!.parent_clip_id) ?? null;
+	});
+
+	let siblingBeats = $derived.by(() => {
+		if (!isSubBeat || !editorState.selectedClip || !selectedTrack) return [];
+		return selectedTrack.sub_beats
+			.filter(b => b.parent_clip_id === editorState.selectedClip!.parent_clip_id)
+			.sort((a, b) => a.time_range.start_ms - b.time_range.start_ms);
+	});
+
+	let currentBeatIndex = $derived(
+		siblingBeats.findIndex(b => b.id === editorState.selectedClipId)
 	);
 
 	// Exit editing when switching clips.
@@ -124,6 +167,14 @@
 		if (!editorState.selectedClip.content.beat_notes.trim()) return;
 		if (isGenerating) return;
 
+		// If this scene clip has sub-beats, generate all beats instead.
+		if (hasSubBeats) {
+			startBatchGeneration(editorState.selectedClipId);
+			const result = await generateBeats(editorState.selectedClipId);
+			setBatchTotalCount(result.beat_count);
+			return;
+		}
+
 		startGeneration(editorState.selectedClipId);
 		editorState.selectedClip.content.status = 'Generating';
 		await generateScript(editorState.selectedClipId);
@@ -161,6 +212,29 @@
 		if (!editorState.selectedClipId) return;
 		await removeClipRef(entityId, editorState.selectedClipId);
 	}
+
+	// Beat planning — applies directly to timeline and zooms to fit
+	async function handlePlanBeats() {
+		if (!editorState.selectedClipId || !editorState.selectedClip) return;
+		planning = true;
+		try {
+			const plan = await planBeats(editorState.selectedClipId);
+			await applyBeats(editorState.selectedClipId, plan.beats);
+			// Zoom to the parent clip's time range so beats are visible
+			const clip = editorState.selectedClip;
+			zoomToRange(clip.time_range.start_ms, clip.time_range.end_ms);
+		} finally {
+			planning = false;
+		}
+	}
+
+	function navigateBeat(direction: -1 | 1) {
+		const targetIdx = currentBeatIndex + direction;
+		if (targetIdx < 0 || targetIdx >= siblingBeats.length) return;
+		const target = siblingBeats[targetIdx]!;
+		editorState.selectedClipId = target.id;
+		editorState.selectedClip = target;
+	}
 </script>
 
 <div class="beat-editor">
@@ -180,9 +254,51 @@
 				onclick={handleGenerate}
 				disabled={!clip.content.beat_notes.trim() || clip.locked || isGenerating}
 			>
-				{isGenerating ? 'Generating...' : 'Generate'}
+				{#if isGenerating}
+					Generating...
+				{:else if hasSubBeats}
+					Generate Beats
+				{:else}
+					Generate
+				{/if}
 			</button>
 		</div>
+
+		<!-- Sub-beat: parent context and navigation -->
+		{#if isSubBeat && parentClip}
+			<div class="sub-beat-context">
+				<div class="sub-beat-nav">
+					<button
+						class="nav-btn"
+						disabled={currentBeatIndex <= 0}
+						onclick={() => navigateBeat(-1)}
+					>&lsaquo; Prev</button>
+					<span class="nav-position">Beat {currentBeatIndex + 1} of {siblingBeats.length}</span>
+					<button
+						class="nav-btn"
+						disabled={currentBeatIndex >= siblingBeats.length - 1}
+						onclick={() => navigateBeat(1)}
+					>Next &rsaquo;</button>
+				</div>
+				<details class="parent-context">
+					<summary class="parent-summary">Scene: {parentClip.name}</summary>
+					<p class="parent-notes">{parentClip.content.beat_notes || 'No scene notes'}</p>
+				</details>
+			</div>
+		{/if}
+
+		<!-- Scene clip: beat planning actions -->
+		{#if !isSubBeat}
+			<div class="beat-actions">
+				<button
+					class="plan-btn"
+					onclick={handlePlanBeats}
+					disabled={planning || !clip.content.beat_notes.trim()}
+				>
+					{planning ? 'Planning...' : hasSubBeats ? 'Replan Beats' : 'Plan Beats'}
+				</button>
+			</div>
+		{/if}
 
 		<div class="editor-body">
 			<label class="section-label">Beat Notes</label>
@@ -604,6 +720,91 @@
 	}
 
 	.extract-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.sub-beat-context {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		margin-bottom: 8px;
+	}
+
+	.sub-beat-nav {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.nav-btn {
+		font-size: 0.7rem;
+		padding: 2px 8px;
+		border-radius: 4px;
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+	}
+
+	.nav-btn:hover:not(:disabled) {
+		background: var(--color-bg-hover);
+	}
+
+	.nav-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	.nav-position {
+		font-size: 0.7rem;
+		color: var(--color-text-muted);
+	}
+
+	.parent-context {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: 4px;
+		padding: 4px 8px;
+	}
+
+	.parent-summary {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.parent-notes {
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+		margin: 4px 0 0;
+		white-space: pre-wrap;
+	}
+
+	.beat-actions {
+		display: flex;
+		gap: 8px;
+		margin-bottom: 8px;
+	}
+
+	.plan-btn {
+		font-size: 0.75rem;
+		padding: 3px 12px;
+		border-radius: 10px;
+		border: 1px solid var(--color-accent);
+		background: var(--color-bg-surface);
+		color: var(--color-accent);
+		cursor: pointer;
+	}
+
+	.plan-btn:hover:not(:disabled) {
+		background: var(--color-accent);
+		color: var(--color-text-on-dark);
+	}
+
+	.plan-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
