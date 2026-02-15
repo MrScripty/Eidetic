@@ -2,10 +2,9 @@
 	import type { EntityCategory } from '$lib/types.js';
 	import { createEntity } from '$lib/api.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
+	import { bibleState, selectEntity } from '$lib/stores/bible.svelte.js';
 	import EntityCard from './EntityCard.svelte';
-	import EntityDetail from './EntityDetail.svelte';
 
-	let selectedEntityId: string | null = $state(null);
 	let searchQuery = $state('');
 	let activeFilter: EntityCategory | 'All' = $state('All');
 
@@ -26,10 +25,6 @@
 		return list;
 	});
 
-	const selectedEntity = $derived(
-		selectedEntityId ? storyState.entities.find(e => e.id === selectedEntityId) : null
-	);
-
 	async function handleAdd(category: EntityCategory) {
 		const defaults: Record<EntityCategory, string> = {
 			Character: 'New Character',
@@ -39,7 +34,11 @@
 			Event: 'New Event',
 		};
 		const entity = await createEntity({ name: defaults[category], category });
-		selectedEntityId = entity.id;
+		selectEntity(entity.id);
+	}
+
+	function handleSelect(id: string) {
+		selectEntity(bibleState.selectedEntityId === id ? null : id);
 	}
 
 	function filterLabel(cat: EntityCategory | 'All'): string {
@@ -59,62 +58,62 @@
 	}
 </script>
 
-{#if selectedEntity}
-	<EntityDetail entity={selectedEntity} onback={() => selectedEntityId = null} />
-{:else}
-	<div class="bible-tab">
-		<div class="search-bar">
-			<input
-				class="search-input"
-				type="text"
-				placeholder="Search entities..."
-				bind:value={searchQuery}
-			/>
-		</div>
-
-		<div class="filter-pills">
-			{#each categories as cat}
-				<button
-					class="pill"
-					class:active={activeFilter === cat}
-					style={activeFilter === cat ? `color: ${filterColor(cat)}; border-color: ${filterColor(cat)}` : ''}
-					onclick={() => activeFilter = cat}
-				>
-					{filterLabel(cat)}
-				</button>
-			{/each}
-		</div>
-
-		<ul class="entity-list">
-			{#each filteredEntities() as entity (entity.id)}
-				<li>
-					<EntityCard {entity} onselect={(id) => selectedEntityId = id} />
-				</li>
-			{/each}
-			{#if filteredEntities().length === 0}
-				<li class="empty-state">
-					{searchQuery ? 'No matching entities' : 'No entities yet'}
-				</li>
-			{/if}
-		</ul>
-
-		<div class="add-buttons">
-			{#if activeFilter !== 'All'}
-				<button class="add-btn" onclick={() => handleAdd(activeFilter as EntityCategory)}>
-					+ Add {activeFilter}
-				</button>
-			{:else}
-				<div class="add-menu">
-					<button class="add-btn-small" style="color: var(--color-entity-character)" onclick={() => handleAdd('Character')}>+ Chr</button>
-					<button class="add-btn-small" style="color: var(--color-entity-location)" onclick={() => handleAdd('Location')}>+ Loc</button>
-					<button class="add-btn-small" style="color: var(--color-entity-prop)" onclick={() => handleAdd('Prop')}>+ Prp</button>
-					<button class="add-btn-small" style="color: var(--color-entity-theme)" onclick={() => handleAdd('Theme')}>+ Thm</button>
-					<button class="add-btn-small" style="color: var(--color-entity-event)" onclick={() => handleAdd('Event')}>+ Evt</button>
-				</div>
-			{/if}
-		</div>
+<div class="bible-tab">
+	<div class="search-bar">
+		<input
+			class="search-input"
+			type="text"
+			placeholder="Search entities..."
+			bind:value={searchQuery}
+		/>
 	</div>
-{/if}
+
+	<div class="filter-pills">
+		{#each categories as cat}
+			<button
+				class="pill"
+				class:active={activeFilter === cat}
+				style={activeFilter === cat ? `color: ${filterColor(cat)}; border-color: ${filterColor(cat)}` : ''}
+				onclick={() => activeFilter = cat}
+			>
+				{filterLabel(cat)}
+			</button>
+		{/each}
+	</div>
+
+	<ul class="entity-list">
+		{#each filteredEntities() as entity (entity.id)}
+			<li>
+				<EntityCard
+					{entity}
+					selected={bibleState.selectedEntityId === entity.id}
+					onselect={handleSelect}
+				/>
+			</li>
+		{/each}
+		{#if filteredEntities().length === 0}
+			<li class="empty-state">
+				{searchQuery ? 'No matching entities' : 'No entities yet'}
+			</li>
+		{/if}
+	</ul>
+
+	<div class="add-buttons">
+		{#if activeFilter !== 'All'}
+			<button class="add-btn" onclick={() => handleAdd(activeFilter as EntityCategory)}>
+				+ Add {activeFilter}
+			</button>
+		{:else}
+			<div class="add-menu">
+				<button class="add-btn-small" style="color: var(--color-entity-character)" onclick={() => handleAdd('Character')}>+ Chr</button>
+				<button class="add-btn-small" style="color: var(--color-entity-location)" onclick={() => handleAdd('Location')}>+ Loc</button>
+				<button class="add-btn-small" style="color: var(--color-entity-prop)" onclick={() => handleAdd('Prop')}>+ Prp</button>
+				<button class="add-btn-small" style="color: var(--color-entity-theme)" onclick={() => handleAdd('Theme')}>+ Thm</button>
+				<button class="add-btn-small" style="color: var(--color-entity-event)" onclick={() => handleAdd('Event')}>+ Evt</button>
+			</div>
+		{/if}
+	</div>
+</div>
 
 <style>
 	.bible-tab {

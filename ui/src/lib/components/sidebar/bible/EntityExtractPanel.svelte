@@ -62,9 +62,15 @@
 				}
 			}
 
-			// Add clip refs for suggested entity IDs
-			for (const entityId of result.clip_ref_suggestions) {
-				await addClipRef(entityId, clipId).catch(() => {});
+			// Add clip refs for all entities present in the scene (resolve names to IDs)
+			const currentEntities = storyState.entities;
+			for (const name of result.entities_present) {
+				const match = currentEntities.find(
+					e => e.name.toLowerCase() === name.toLowerCase()
+				);
+				if (match && !match.clip_refs.includes(clipId)) {
+					await addClipRef(match.id, clipId).catch(() => {});
+				}
 			}
 
 			onclose();
@@ -91,7 +97,7 @@
 	);
 
 	const anySelected = $derived(
-		entityAccepted.some(Boolean) || snapshotAccepted.some(Boolean) || result.clip_ref_suggestions.length > 0
+		entityAccepted.some(Boolean) || snapshotAccepted.some(Boolean) || result.entities_present.length > 0
 	);
 </script>
 

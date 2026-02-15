@@ -4,11 +4,16 @@
 	import BeatEditor from '../editor/BeatEditor.svelte';
 	import ScriptPanel from '../editor/ScriptPanel.svelte';
 	import Timeline from '../timeline/Timeline.svelte';
+	import CharacterTimeline from '../timeline/CharacterTimeline.svelte';
+	import RelationshipPanel from '../relationship/RelationshipPanel.svelte';
+	import EntityDetail from '../sidebar/bible/EntityDetail.svelte';
 	import { PANEL } from '$lib/types.js';
+	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 	import { projectState } from '$lib/stores/project.svelte.js';
 	import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
+	import { bibleState, selectEntity } from '$lib/stores/bible.svelte.js';
 	import { createProject, getAiStatus, undo, redo, saveProject, deleteClip, exportPdf } from '$lib/api.js';
 	import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
 	import { notify } from '$lib/stores/notifications.svelte.js';
@@ -73,7 +78,18 @@
 
 	let sidebarOpen = $state(true);
 	let editorHeight = $state(300);
-	let scriptHeight = $state(250);
+	let upperHeight = $state(400);
+	let relationshipPanelOpen = $state(false);
+	let relationshipPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
+
+	const selectedEntity = $derived(
+		bibleState.selectedEntityId
+			? storyState.entities.find(e => e.id === bibleState.selectedEntityId) ?? null
+			: null
+	);
+
+	/** Right panel is open when graph is toggled OR an entity is selected. */
+	const rightPanelOpen = $derived(relationshipPanelOpen || selectedEntity !== null);
 
 	async function handleExportPdf() {
 		try {
@@ -101,61 +117,108 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="app-shell" class:sidebar-open={sidebarOpen}>
-	{#if sidebarOpen}
-		<Sidebar onclose={() => sidebarOpen = false} />
-	{/if}
+<div class="app-shell" class:has-project={projectState.current}>
+	{#if projectState.current}
+		<div class="upper-section" style="height: {upperHeight}px">
+			{#if sidebarOpen}
+				<Sidebar onclose={() => sidebarOpen = false} />
+			{/if}
 
-	<div class="main-area">
-		{#if projectState.current}
-			<div class="toolbar">
-				<button
-					class="toolbar-btn"
-					title="Undo (Ctrl+Z)"
-					disabled={!editorState.canUndo}
-					onclick={() => undo().catch(() => {})}
-				>&#8617;</button>
-				<button
-					class="toolbar-btn"
-					title="Redo (Ctrl+Shift+Z)"
-					disabled={!editorState.canRedo}
-					onclick={() => redo().catch(() => {})}
-				>&#8618;</button>
-				<div class="toolbar-sep"></div>
-				<button
-					class="toolbar-btn"
-					title="Save (Ctrl+S)"
-					onclick={() => saveProject().catch(() => {})}
-				>&#128190;</button>
-				<button
-					class="toolbar-btn"
-					title="Export PDF (Ctrl+Shift+E)"
-					onclick={handleExportPdf}
-				>PDF</button>
+			<div class="main-area">
+				<div class="toolbar">
+					<button
+						class="toolbar-btn"
+						title="Undo (Ctrl+Z)"
+						disabled={!editorState.canUndo}
+						onclick={() => undo().catch(() => {})}
+					>&#8617;</button>
+					<button
+						class="toolbar-btn"
+						title="Redo (Ctrl+Shift+Z)"
+						disabled={!editorState.canRedo}
+						onclick={() => redo().catch(() => {})}
+					>&#8618;</button>
+					<div class="toolbar-sep"></div>
+					<button
+						class="toolbar-btn"
+						title="Save (Ctrl+S)"
+						onclick={() => saveProject().catch(() => {})}
+					>&#128190;</button>
+					<button
+						class="toolbar-btn"
+						title="Export PDF (Ctrl+Shift+E)"
+						onclick={handleExportPdf}
+					>PDF</button>
+					<div class="toolbar-sep"></div>
+					<button
+						class="toolbar-btn"
+						class:active={relationshipPanelOpen}
+						title="Toggle relationship graph"
+						onclick={() => relationshipPanelOpen = !relationshipPanelOpen}
+					>Graph</button>
+				</div>
+
+				<div class="editor-panel" style="height: {editorHeight}px">
+					<BeatEditor />
+				</div>
+
+				<PanelResizer
+					min={PANEL.MIN_EDITOR_HEIGHT_PX}
+					bind:position={editorHeight}
+				/>
+
+				<div class="script-panel">
+					<ScriptPanel />
+				</div>
 			</div>
 
-			<div class="editor-panel" style="height: {editorHeight}px">
-				<BeatEditor />
+			{#if rightPanelOpen}
+				<PanelResizer
+					orientation="vertical"
+					min={PANEL.MIN_RELATIONSHIP_WIDTH_PX}
+					max={PANEL.MAX_RELATIONSHIP_WIDTH_PX}
+					bind:position={relationshipPanelWidth}
+				/>
+				<aside class="right-panel" style="width: {relationshipPanelWidth}px">
+					{#if relationshipPanelOpen}
+						<RelationshipPanel
+							width={relationshipPanelWidth}
+							onclose={() => relationshipPanelOpen = false}
+							compact={selectedEntity !== null}
+						/>
+					{/if}
+					{#if selectedEntity}
+						{#if relationshipPanelOpen}
+							<div class="panel-divider"></div>
+						{/if}
+						<div class="entity-detail-panel">
+							<EntityDetail entity={selectedEntity} onback={() => selectEntity(null)} />
+						</div>
+					{/if}
+				</aside>
+			{/if}
+		</div>
+
+		<PanelResizer
+			min={300}
+			bind:position={upperHeight}
+		/>
+
+		<div class="timeline-panel" style="flex: 1; min-height: {PANEL.MIN_TIMELINE_HEIGHT_PX}px">
+			<Timeline />
+		</div>
+
+		{#if characterTimelineState.visible}
+			<div class="char-timeline-panel">
+				<CharacterTimeline />
 			</div>
+		{/if}
+	{:else}
+		{#if sidebarOpen}
+			<Sidebar onclose={() => sidebarOpen = false} />
+		{/if}
 
-			<PanelResizer
-				min={PANEL.MIN_EDITOR_HEIGHT_PX}
-				bind:position={editorHeight}
-			/>
-
-			<div class="script-panel" style="height: {scriptHeight}px">
-				<ScriptPanel />
-			</div>
-
-			<PanelResizer
-				min={PANEL.MIN_SCRIPT_HEIGHT_PX}
-				bind:position={scriptHeight}
-			/>
-
-			<div class="timeline-panel" style="flex: 1; min-height: {PANEL.MIN_TIMELINE_HEIGHT_PX}px">
-				<Timeline />
-			</div>
-		{:else}
+		<div class="main-area">
 			<div class="welcome">
 				<h1>Eidetic</h1>
 				<p>AI-driven script writing for 30-minute TV episodes</p>
@@ -171,8 +234,8 @@
 					</button>
 				</div>
 			</div>
-		{/if}
-	</div>
+		</div>
+	{/if}
 
 	{#if !sidebarOpen}
 		<button class="sidebar-toggle" onclick={() => sidebarOpen = true}>
@@ -181,7 +244,7 @@
 	{/if}
 
 	{#if projectState.current}
-		<div class="ai-indicator" title={editorState.aiStatus?.connected ? `AI: ${editorState.aiStatus.model ?? 'connected'}` : 'AI: disconnected'}>
+		<div class="ai-indicator" style="right: {rightPanelOpen ? relationshipPanelWidth + 16 : 12}px" title={editorState.aiStatus?.connected ? `AI: ${editorState.aiStatus.model ?? 'connected'}` : 'AI: disconnected'}>
 			<span
 				class="ai-dot"
 				class:connected={editorState.aiStatus?.connected}
@@ -196,6 +259,16 @@
 		display: flex;
 		height: 100vh;
 		width: 100vw;
+		overflow: hidden;
+	}
+
+	.app-shell.has-project {
+		flex-direction: column;
+	}
+
+	.upper-section {
+		display: flex;
+		flex-shrink: 0;
 		overflow: hidden;
 	}
 
@@ -238,6 +311,12 @@
 		cursor: default;
 	}
 
+	.toolbar-btn.active {
+		background: var(--color-bg-hover);
+		color: var(--color-accent);
+		border-color: var(--color-border-default);
+	}
+
 	.toolbar-sep {
 		width: 1px;
 		height: 16px;
@@ -252,12 +331,19 @@
 	}
 
 	.script-panel {
+		flex: 1;
 		overflow: hidden;
-		border-bottom: 1px solid var(--color-border-default);
 		background: var(--color-bg-secondary);
 	}
 
 	.timeline-panel {
+		overflow: hidden;
+		background: var(--color-bg-primary);
+	}
+
+	.char-timeline-panel {
+		flex-shrink: 0;
+		height: 120px;
 		overflow: hidden;
 		background: var(--color-bg-primary);
 	}
@@ -317,10 +403,30 @@
 		z-index: 10;
 	}
 
+	.right-panel {
+		display: flex;
+		flex-direction: column;
+		background: var(--color-bg-secondary);
+		border-left: 1px solid var(--color-border-default);
+		flex-shrink: 0;
+		overflow: hidden;
+	}
+
+	.panel-divider {
+		height: 1px;
+		background: var(--color-border-default);
+		flex-shrink: 0;
+	}
+
+	.entity-detail-panel {
+		flex: 1;
+		overflow: hidden;
+		min-height: 0;
+	}
+
 	.ai-indicator {
 		position: fixed;
 		bottom: 8px;
-		right: 12px;
 		z-index: 10;
 		display: flex;
 		align-items: center;

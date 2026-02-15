@@ -2,8 +2,9 @@
 	import type { Entity } from '$lib/types.js';
 	import { colorToHex } from '$lib/types.js';
 
-	let { entity, onselect }: {
+	let { entity, selected = false, onselect }: {
 		entity: Entity;
+		selected?: boolean;
 		onselect: (id: string) => void;
 	} = $props();
 
@@ -27,7 +28,7 @@
 	}
 </script>
 
-<button class="entity-card" onclick={() => onselect(entity.id)}>
+<button class="entity-card" class:selected onclick={() => onselect(entity.id)}>
 	<span class="color-dot" style="background: {colorToHex(entity.color)}"></span>
 	<span class="entity-name">{entity.name}</span>
 	<span class="category-badge" style="color: {categoryColor(entity.category)}">
@@ -56,6 +57,12 @@
 
 	.entity-card:hover {
 		background: var(--color-bg-hover);
+	}
+
+	.entity-card.selected {
+		background: var(--color-bg-surface);
+		border-left: 2px solid var(--color-accent);
+		padding-left: 10px;
 	}
 
 	.color-dot {

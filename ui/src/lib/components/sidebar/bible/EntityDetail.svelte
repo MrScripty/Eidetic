@@ -86,7 +86,7 @@
 
 <div class="entity-detail">
 	<div class="detail-header">
-		<button class="back-btn" onclick={onback}>&larr; Back</button>
+		<button class="back-btn" onclick={onback}>&times; Close</button>
 		<span class="category-label" style="color: {categoryColor(entity.category)}">{entity.category}</span>
 		<div class="header-actions">
 			<button

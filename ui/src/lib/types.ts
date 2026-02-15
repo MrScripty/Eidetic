@@ -52,6 +52,8 @@ export interface BeatContent {
 	generated_script: string | null;
 	user_refined_script: string | null;
 	status: ContentStatus;
+	/** Compact structured recap of scene end state for continuity. */
+	scene_recap?: string | null;
 }
 
 export type ContentStatus =
@@ -152,6 +154,8 @@ export interface SnapshotOverrides {
 	owner_entity_id?: EntityId | null;
 	significance?: string;
 	custom?: [string, string][];
+	/** Where this entity is located at this point in the timeline. */
+	location?: string;
 }
 
 export interface EntityRelation {
@@ -166,7 +170,8 @@ export interface StoryBible {
 export interface ExtractionResult {
 	new_entities: SuggestedEntity[];
 	snapshot_suggestions: SuggestedSnapshot[];
-	clip_ref_suggestions: EntityId[];
+	/** Names of all entities (existing or new) present in the scene. */
+	entities_present: string[];
 }
 
 export interface SuggestedEntity {
@@ -181,6 +186,8 @@ export interface SuggestedSnapshot {
 	description: string;
 	emotional_state?: string;
 	audience_knowledge?: string;
+	/** Where this entity is located. */
+	location?: string;
 }
 
 // --- Scenes (inferred) ---
@@ -246,6 +253,8 @@ export const TIMELINE = {
 	STRUCTURE_BAR_HEIGHT_PX: 32,
 	/** Height of the time ruler. */
 	TIME_RULER_HEIGHT_PX: 28,
+	/** Height of the character progression track. */
+	CHARACTER_TRACK_HEIGHT_PX: 40,
 } as const;
 
 export const PANEL = {
@@ -259,6 +268,12 @@ export const PANEL = {
 	SIDEBAR_WIDTH_PX: 280,
 	/** Sidebar expanded width when viewing entity detail (px). */
 	SIDEBAR_EXPANDED_WIDTH_PX: 420,
+	/** Minimum width of the relationship panel (px). */
+	MIN_RELATIONSHIP_WIDTH_PX: 240,
+	/** Default width of the relationship panel (px). */
+	DEFAULT_RELATIONSHIP_WIDTH_PX: 320,
+	/** Maximum width of the relationship panel (px). */
+	MAX_RELATIONSHIP_WIDTH_PX: 600,
 } as const;
 
 // --- AI Configuration ---
