@@ -101,6 +101,53 @@ impl OllamaBackend {
         Ok(Box::pin(token_stream))
     }
 
+    /// Non-streaming generation with JSON mode enabled.
+    /// Ollama will constrain output to valid JSON.
+    pub async fn generate_json(&self, prompt: &ChatPrompt, config: &AiConfig) -> Result<String, Error> {
+        let url = format!("{}/api/chat", self.base_url);
+        let body = serde_json::json!({
+            "model": config.model,
+            "messages": [
+                { "role": "system", "content": prompt.system },
+                { "role": "user", "content": prompt.user }
+            ],
+            "stream": false,
+            "format": "json",
+            "options": {
+                "temperature": config.temperature,
+                "num_predict": config.max_tokens,
+            }
+        });
+
+        let response = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await
+            .map_err(|e| Error::AiBackend(format!("Ollama request failed: {e}")))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_else(|_| "unknown".into());
+            return Err(Error::AiBackend(format!("Ollama returned {status}: {text}")));
+        }
+
+        let value: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| Error::AiBackend(format!("Ollama response parse error: {e}")))?;
+
+        let content = value
+            .get("message")
+            .and_then(|m| m.get("content"))
+            .and_then(|c| c.as_str())
+            .unwrap_or("")
+            .to_owned();
+
+        Ok(content)
+    }
+
     pub async fn health_check(&self) -> Result<BackendStatus, Error> {
         let url = format!("{}/api/tags", self.base_url);
         match self.client.get(&url).send().await {

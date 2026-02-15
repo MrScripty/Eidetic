@@ -107,6 +107,61 @@ impl OpenRouterBackend {
         Ok(Box::pin(token_stream))
     }
 
+    /// Non-streaming generation with JSON mode enabled.
+    /// Uses OpenAI-compatible `response_format` parameter.
+    pub async fn generate_json(&self, prompt: &ChatPrompt, config: &AiConfig) -> Result<String, Error> {
+        let api_key = config
+            .api_key
+            .as_deref()
+            .filter(|k| !k.is_empty())
+            .ok_or_else(|| Error::AiBackend("OpenRouter API key not configured".into()))?;
+
+        let body = serde_json::json!({
+            "model": config.model,
+            "messages": [
+                { "role": "system", "content": prompt.system },
+                { "role": "user", "content": prompt.user }
+            ],
+            "stream": false,
+            "temperature": config.temperature,
+            "max_tokens": config.max_tokens,
+            "response_format": { "type": "json_object" },
+        });
+
+        let response = self
+            .client
+            .post(OPENROUTER_URL)
+            .header("Authorization", format!("Bearer {api_key}"))
+            .header("HTTP-Referer", "https://eidetic.app")
+            .header("X-Title", "Eidetic")
+            .json(&body)
+            .send()
+            .await
+            .map_err(|e| Error::AiBackend(format!("OpenRouter request failed: {e}")))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_else(|_| "unknown".into());
+            return Err(Error::AiBackend(format!("OpenRouter returned {status}: {text}")));
+        }
+
+        let value: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| Error::AiBackend(format!("OpenRouter response parse error: {e}")))?;
+
+        let content = value
+            .get("choices")
+            .and_then(|c| c.get(0))
+            .and_then(|c| c.get("message"))
+            .and_then(|m| m.get("content"))
+            .and_then(|c| c.as_str())
+            .unwrap_or("")
+            .to_owned();
+
+        Ok(content)
+    }
+
     pub async fn health_check(&self) -> Result<BackendStatus, Error> {
         // A lightweight check — just verify we can reach OpenRouter.
         match self.client.get("https://openrouter.ai/api/v1/models").send().await {

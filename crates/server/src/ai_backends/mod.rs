@@ -56,6 +56,19 @@ impl Backend {
         Ok(full)
     }
 
+    /// Non-streaming generation with JSON mode — constrains the model to
+    /// produce valid JSON output.  Used for structured extraction results.
+    pub async fn generate_json(
+        &self,
+        prompt: &ChatPrompt,
+        config: &AiConfig,
+    ) -> Result<String, Error> {
+        match self {
+            Backend::Ollama(b) => b.generate_json(prompt, config).await,
+            Backend::OpenRouter(b) => b.generate_json(prompt, config).await,
+        }
+    }
+
     pub async fn health_check(&self) -> Result<BackendStatus, Error> {
         match self {
             Backend::Ollama(b) => b.health_check().await,
