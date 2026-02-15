@@ -1,4 +1,7 @@
 <script lang="ts">
+	import type { Entity, EntityCategory } from '$lib/types.js';
+	import { colorToHex } from '$lib/types.js';
+
 	type ScriptElement =
 		| { type: 'scene_heading'; text: string }
 		| { type: 'action'; text: string }
@@ -7,9 +10,69 @@
 		| { type: 'dialogue'; text: string }
 		| { type: 'transition'; text: string };
 
-	let { text, streaming = false }: { text: string; streaming?: boolean } = $props();
+	const HIGHLIGHT_CATEGORIES: EntityCategory[] = ['Character', 'Location', 'Prop'];
+
+	let { text, streaming = false, entities = [] }: {
+		text: string;
+		streaming?: boolean;
+		entities?: Entity[];
+	} = $props();
 
 	let elements: ScriptElement[] = $derived(parseScriptText(text));
+
+	/** Entities filtered to highlightable categories. */
+	let highlightEntities = $derived(
+		entities.filter(e => HIGHLIGHT_CATEGORIES.includes(e.category))
+	);
+
+	/** Regex matching any entity name (longest first, case-insensitive, word-boundary). */
+	let entityRegex = $derived.by(() => {
+		if (highlightEntities.length === 0) return null;
+		const names = highlightEntities
+			.map(e => e.name)
+			.sort((a, b) => b.length - a.length)
+			.map(escapeRegex);
+		return new RegExp(`\\b(${names.join('|')})\\b`, 'gi');
+	});
+
+	/** Fast lookup from lowercase name → entity. */
+	let entityMap = $derived.by(() => {
+		const map = new Map<string, Entity>();
+		for (const e of highlightEntities) {
+			map.set(e.name.toLowerCase(), e);
+		}
+		return map;
+	});
+
+	function escapeRegex(s: string): string {
+		return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	}
+
+	function escapeHtml(s: string): string {
+		return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+	}
+
+	/** Return HTML string with entity names wrapped in colored spans. */
+	function highlightText(raw: string): string {
+		if (!entityRegex) return escapeHtml(raw);
+		let result = '';
+		let lastIndex = 0;
+		entityRegex.lastIndex = 0;
+		let match: RegExpExecArray | null;
+		while ((match = entityRegex.exec(raw)) !== null) {
+			result += escapeHtml(raw.slice(lastIndex, match.index));
+			const entity = entityMap.get(match[0].toLowerCase());
+			if (entity) {
+				const hex = colorToHex(entity.color);
+				result += `<span class="entity-hl" style="border-color:${hex}" title="${escapeHtml(entity.category)}: ${escapeHtml(entity.name)}">${escapeHtml(match[0])}</span>`;
+			} else {
+				result += escapeHtml(match[0]);
+			}
+			lastIndex = match.index + match[0].length;
+		}
+		result += escapeHtml(raw.slice(lastIndex));
+		return result;
+	}
 
 	/**
 	 * Client-side screenplay parser. Mirrors the Rust parser in format.rs.
@@ -111,18 +174,34 @@
 
 <div class="script-view" class:streaming>
 	{#each elements as el}
-		{#if el.type === 'scene_heading'}
-			<p class="el scene-heading">{el.text}</p>
-		{:else if el.type === 'action'}
-			<p class="el action">{el.text}</p>
-		{:else if el.type === 'character'}
-			<p class="el character">{el.text}</p>
-		{:else if el.type === 'parenthetical'}
-			<p class="el parenthetical">({el.text})</p>
-		{:else if el.type === 'dialogue'}
-			<p class="el dialogue">{el.text}</p>
-		{:else if el.type === 'transition'}
-			<p class="el transition">{el.text}</p>
+		{#if highlightEntities.length > 0}
+			{#if el.type === 'scene_heading'}
+				<p class="el scene-heading">{@html highlightText(el.text)}</p>
+			{:else if el.type === 'action'}
+				<p class="el action">{@html highlightText(el.text)}</p>
+			{:else if el.type === 'character'}
+				<p class="el character">{@html highlightText(el.text)}</p>
+			{:else if el.type === 'parenthetical'}
+				<p class="el parenthetical">({@html highlightText(el.text)})</p>
+			{:else if el.type === 'dialogue'}
+				<p class="el dialogue">{@html highlightText(el.text)}</p>
+			{:else if el.type === 'transition'}
+				<p class="el transition">{@html highlightText(el.text)}</p>
+			{/if}
+		{:else}
+			{#if el.type === 'scene_heading'}
+				<p class="el scene-heading">{el.text}</p>
+			{:else if el.type === 'action'}
+				<p class="el action">{el.text}</p>
+			{:else if el.type === 'character'}
+				<p class="el character">{el.text}</p>
+			{:else if el.type === 'parenthetical'}
+				<p class="el parenthetical">({el.text})</p>
+			{:else if el.type === 'dialogue'}
+				<p class="el dialogue">{el.text}</p>
+			{:else if el.type === 'transition'}
+				<p class="el transition">{el.text}</p>
+			{/if}
 		{/if}
 	{/each}
 	{#if streaming}
@@ -187,6 +266,11 @@
 		text-transform: uppercase;
 		text-align: right;
 		margin-top: 1em;
+	}
+
+	.script-view :global(.entity-hl) {
+		border-bottom: 2px solid;
+		cursor: default;
 	}
 
 	.cursor-blink {

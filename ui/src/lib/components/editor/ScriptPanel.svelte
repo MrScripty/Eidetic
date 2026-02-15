@@ -70,7 +70,7 @@
 						<span class="beat-type">{entry.clip.beat_type}</span>
 					</div>
 					{#if text}
-						<ScriptView {text} />
+						<ScriptView {text} entities={storyState.entities} />
 					{:else}
 						<p class="no-script">No script generated</p>
 					{/if}

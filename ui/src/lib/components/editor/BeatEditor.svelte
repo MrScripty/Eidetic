@@ -7,7 +7,7 @@
 		removeConsistencySuggestion,
 		clearConsistencySuggestions,
 	} from '$lib/stores/editor.svelte.js';
-	import { entitiesForClip } from '$lib/stores/story.svelte.js';
+	import { storyState, entitiesForClip } from '$lib/stores/story.svelte.js';
 	import {
 		updateBeatNotes,
 		updateBeatScript,
@@ -232,7 +232,7 @@
 					Generating Script
 					<span class="token-count">{editorState.streamingTokenCount} tokens</span>
 				</label>
-				<ScriptView text={editorState.streamingText} streaming={true} />
+				<ScriptView text={editorState.streamingText} streaming={true} entities={storyState.entities} />
 			{:else if editing}
 				<label class="section-label">
 					Editing Script
@@ -250,7 +250,7 @@
 						<button class="edit-btn" onclick={startEditing}>Edit</button>
 					{/if}
 				</label>
-				<ScriptView text={clip.content.user_refined_script} />
+				<ScriptView text={clip.content.user_refined_script} entities={storyState.entities} />
 			{:else if clip.content.generated_script}
 				<label class="section-label">
 					Generated Script
@@ -258,7 +258,7 @@
 						<button class="edit-btn" onclick={startEditing}>Edit</button>
 					{/if}
 				</label>
-				<ScriptView text={clip.content.generated_script} />
+				<ScriptView text={clip.content.generated_script} entities={storyState.entities} />
 			{/if}
 
 			{#if editorState.generationError}
