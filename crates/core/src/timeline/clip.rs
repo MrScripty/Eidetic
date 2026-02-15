@@ -23,6 +23,9 @@ pub struct BeatClip {
     pub content: BeatContent,
     /// If true, AI won't regenerate this clip's script.
     pub locked: bool,
+    /// If set, this clip is a sub-beat belonging to a parent clip on the main track.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_clip_id: Option<ClipId>,
 }
 
 impl BeatClip {
@@ -34,6 +37,24 @@ impl BeatClip {
             name: name.into(),
             content: BeatContent::default(),
             locked: false,
+            parent_clip_id: None,
+        }
+    }
+
+    pub fn new_sub_beat(
+        name: impl Into<String>,
+        beat_type: BeatType,
+        time_range: TimeRange,
+        parent_clip_id: ClipId,
+    ) -> Self {
+        Self {
+            id: ClipId::new(),
+            time_range,
+            beat_type,
+            name: name.into(),
+            content: BeatContent::default(),
+            locked: false,
+            parent_clip_id: Some(parent_clip_id),
         }
     }
 }

@@ -73,7 +73,12 @@ impl Timeline {
 
         let track = self.tracks.remove(idx);
 
-        let clip_ids: Vec<ClipId> = track.clips.iter().map(|c| c.id).collect();
+        let clip_ids: Vec<ClipId> = track
+            .clips
+            .iter()
+            .chain(track.sub_beats.iter())
+            .map(|c| c.id)
+            .collect();
         self.relationships
             .retain(|r| !clip_ids.contains(&r.from_clip) && !clip_ids.contains(&r.to_clip));
 
@@ -96,11 +101,12 @@ impl Timeline {
             .ok_or(Error::TrackNotFound(id.0))
     }
 
-    /// Find the track containing a specific clip.
+    /// Find the track containing a specific clip (checks both clips and sub-beats).
     pub fn track_for_clip(&self, clip_id: ClipId) -> Option<&ArcTrack> {
-        self.tracks
-            .iter()
-            .find(|t| t.clips.iter().any(|c| c.id == clip_id))
+        self.tracks.iter().find(|t| {
+            t.clips.iter().any(|c| c.id == clip_id)
+                || t.sub_beats.iter().any(|c| c.id == clip_id)
+        })
     }
 
     /// Add a clip to a track, validating it fits within the timeline duration.
@@ -131,10 +137,33 @@ impl Timeline {
     }
 
     /// Remove a clip by ID from any track. Also removes relationships referencing it.
+    /// If the clip is a parent with sub-beats, all its sub-beats are also removed.
     pub fn remove_clip(&mut self, clip_id: ClipId) -> Result<BeatClip> {
         for track in &mut self.tracks {
             if let Some(idx) = track.clips.iter().position(|c| c.id == clip_id) {
                 let clip = track.clips.remove(idx);
+                // Cascade-delete any sub-beats belonging to this parent clip.
+                let removed_sub_ids: Vec<ClipId> = track
+                    .sub_beats
+                    .iter()
+                    .filter(|b| b.parent_clip_id == Some(clip_id))
+                    .map(|b| b.id)
+                    .collect();
+                track
+                    .sub_beats
+                    .retain(|b| b.parent_clip_id != Some(clip_id));
+                // Remove relationships referencing this clip or its sub-beats.
+                self.relationships.retain(|r| {
+                    r.from_clip != clip_id
+                        && r.to_clip != clip_id
+                        && !removed_sub_ids.contains(&r.from_clip)
+                        && !removed_sub_ids.contains(&r.to_clip)
+                });
+                return Ok(clip);
+            }
+            // Also check sub-beats.
+            if let Some(idx) = track.sub_beats.iter().position(|c| c.id == clip_id) {
+                let clip = track.sub_beats.remove(idx);
                 self.relationships
                     .retain(|r| r.from_clip != clip_id && r.to_clip != clip_id);
                 return Ok(clip);
@@ -143,20 +172,20 @@ impl Timeline {
         Err(Error::ClipNotFound(clip_id.0))
     }
 
-    /// Find a clip by ID across all tracks.
+    /// Find a clip by ID across all tracks (checks both clips and sub-beats).
     pub fn clip(&self, id: ClipId) -> Result<&BeatClip> {
         self.tracks
             .iter()
-            .flat_map(|t| &t.clips)
+            .flat_map(|t| t.clips.iter().chain(t.sub_beats.iter()))
             .find(|c| c.id == id)
             .ok_or(Error::ClipNotFound(id.0))
     }
 
-    /// Find a clip by ID across all tracks (mutable).
+    /// Find a clip by ID across all tracks (mutable, checks both clips and sub-beats).
     pub fn clip_mut(&mut self, id: ClipId) -> Result<&mut BeatClip> {
         self.tracks
             .iter_mut()
-            .flat_map(|t| &mut t.clips)
+            .flat_map(|t| t.clips.iter_mut().chain(t.sub_beats.iter_mut()))
             .find(|c| c.id == id)
             .ok_or(Error::ClipNotFound(id.0))
     }
@@ -180,7 +209,7 @@ impl Timeline {
         Ok(self.relationships.remove(idx))
     }
 
-    /// Get all clips that overlap a given time position (vertical slice).
+    /// Get all main track clips that overlap a given time position (vertical slice).
     pub fn clips_at(&self, time_ms: u64) -> Vec<(&ArcTrack, &BeatClip)> {
         self.tracks
             .iter()
@@ -188,6 +217,21 @@ impl Timeline {
                 track
                     .clips
                     .iter()
+                    .filter(move |clip| clip.time_range.contains(time_ms))
+                    .map(move |clip| (track, clip))
+            })
+            .collect()
+    }
+
+    /// Get all clips and sub-beats that overlap a given time position.
+    pub fn all_clips_at(&self, time_ms: u64) -> Vec<(&ArcTrack, &BeatClip)> {
+        self.tracks
+            .iter()
+            .flat_map(|track| {
+                track
+                    .clips
+                    .iter()
+                    .chain(track.sub_beats.iter())
                     .filter(move |clip| clip.time_range.contains(time_ms))
                     .map(move |clip| (track, clip))
             })
@@ -223,6 +267,7 @@ impl Timeline {
             name: format!("{} (L)", name),
             content: clip::BeatContent::default(),
             locked,
+            parent_clip_id: None,
         };
 
         let right = BeatClip {
@@ -232,6 +277,7 @@ impl Timeline {
             name: format!("{} (R)", name),
             content: clip::BeatContent::default(),
             locked,
+            parent_clip_id: None,
         };
 
         // Find which track the clip is on and replace it.
@@ -363,5 +409,124 @@ impl Timeline {
         }
 
         gaps
+    }
+
+    /// Add a sub-beat to a track, validating it fits within its parent clip's time range.
+    pub fn add_sub_beat(&mut self, track_id: TrackId, sub_beat: BeatClip) -> Result<()> {
+        let parent_id = sub_beat
+            .parent_clip_id
+            .ok_or_else(|| Error::InvalidOperation("sub-beat must have parent_clip_id".into()))?;
+
+        let track = self.track(track_id)?;
+        let parent = track.clip(parent_id)?;
+        let parent_range = parent.time_range;
+
+        if sub_beat.time_range.start_ms < parent_range.start_ms
+            || sub_beat.time_range.end_ms > parent_range.end_ms
+        {
+            return Err(Error::InvalidOperation(
+                "sub-beat must be within parent clip's time range".into(),
+            ));
+        }
+
+        sub_beat.time_range.validate()?;
+        let track = self.track_mut(track_id)?;
+        track.sub_beats.push(sub_beat);
+        track.sort_sub_beats();
+        Ok(())
+    }
+
+    /// Remove a single sub-beat by ID.
+    pub fn remove_sub_beat(&mut self, clip_id: ClipId) -> Result<BeatClip> {
+        for track in &mut self.tracks {
+            if let Some(idx) = track.sub_beats.iter().position(|c| c.id == clip_id) {
+                let clip = track.sub_beats.remove(idx);
+                self.relationships
+                    .retain(|r| r.from_clip != clip_id && r.to_clip != clip_id);
+                return Ok(clip);
+            }
+        }
+        Err(Error::ClipNotFound(clip_id.0))
+    }
+
+    /// Resize a parent clip and proportionally adjust all its sub-beats.
+    pub fn resize_parent_clip(
+        &mut self,
+        clip_id: ClipId,
+        new_range: TimeRange,
+    ) -> Result<()> {
+        new_range.validate()?;
+        if new_range.end_ms > self.total_duration_ms {
+            return Err(Error::ClipExceedsTimeline {
+                clip_end_ms: new_range.end_ms,
+                timeline_ms: self.total_duration_ms,
+            });
+        }
+
+        // Find the track and update both the clip and its sub-beats.
+        for track in &mut self.tracks {
+            if let Some(clip_idx) = track.clips.iter().position(|c| c.id == clip_id) {
+                let old_range = track.clips[clip_idx].time_range;
+                let old_duration = old_range.end_ms - old_range.start_ms;
+                let new_duration = new_range.end_ms - new_range.start_ms;
+
+                // Update parent clip.
+                track.clips[clip_idx].time_range = new_range;
+
+                // Proportionally adjust sub-beats.
+                if old_duration > 0 {
+                    for sub_beat in &mut track.sub_beats {
+                        if sub_beat.parent_clip_id == Some(clip_id) {
+                            let start_ratio = (sub_beat.time_range.start_ms - old_range.start_ms)
+                                as f64
+                                / old_duration as f64;
+                            let end_ratio = (sub_beat.time_range.end_ms - old_range.start_ms)
+                                as f64
+                                / old_duration as f64;
+
+                            sub_beat.time_range.start_ms =
+                                new_range.start_ms + (start_ratio * new_duration as f64) as u64;
+                            sub_beat.time_range.end_ms =
+                                new_range.start_ms + (end_ratio * new_duration as f64) as u64;
+
+                            // Clamp to parent boundaries.
+                            sub_beat.time_range.start_ms =
+                                sub_beat.time_range.start_ms.max(new_range.start_ms);
+                            sub_beat.time_range.end_ms =
+                                sub_beat.time_range.end_ms.min(new_range.end_ms);
+                        }
+                    }
+                }
+
+                return Ok(());
+            }
+        }
+
+        Err(Error::ClipNotFound(clip_id.0))
+    }
+
+    /// Toggle sub-beats visibility for a track.
+    pub fn set_sub_beats_visible(&mut self, track_id: TrackId, visible: bool) -> Result<()> {
+        self.track_mut(track_id)?.sub_beats_visible = visible;
+        Ok(())
+    }
+
+    /// Remove all sub-beats for a parent clip.
+    pub fn clear_sub_beats_for_clip(&mut self, parent_clip_id: ClipId) -> Result<()> {
+        for track in &mut self.tracks {
+            let removed_ids: Vec<ClipId> = track
+                .sub_beats
+                .iter()
+                .filter(|b| b.parent_clip_id == Some(parent_clip_id))
+                .map(|b| b.id)
+                .collect();
+            track
+                .sub_beats
+                .retain(|b| b.parent_clip_id != Some(parent_clip_id));
+            self.relationships.retain(|r| {
+                !removed_ids.contains(&r.from_clip) && !removed_ids.contains(&r.to_clip)
+            });
+        }
+        Ok(())
     }
 }

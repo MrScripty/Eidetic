@@ -48,6 +48,9 @@ pub enum Error {
 
     #[error("clip has no beat notes to generate from: {0}")]
     NoBeatNotes(Uuid),
+
+    #[error("invalid operation: {0}")]
+    InvalidOperation(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
