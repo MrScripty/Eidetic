@@ -8,6 +8,7 @@ use eidetic_core::Template;
 use crate::error::ApiError;
 use crate::persistence;
 use crate::state::{AppState, ServerEvent};
+use crate::ydoc::{ContentField, DocCommand};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -41,6 +42,8 @@ async fn create_project(
     let project = template.build_project(body.name);
     let save_path = persistence::project_save_path(&project.name);
     let json = serde_json::to_value(&project).unwrap();
+    // Populate Y.Doc with all node text from the new project.
+    populate_ydoc_from_project(&state, &project).await;
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(save_path);
     state.trigger_save();
@@ -137,6 +140,8 @@ async fn load_project(
     match persistence::load_project(&path).await {
         Ok(project) => {
             let json = serde_json::to_value(&project).unwrap();
+            // Populate Y.Doc with all node text from the loaded project.
+            populate_ydoc_from_project(&state, &project).await;
             *state.project.lock() = Some(project);
             // Normalize save path to .db so future auto-saves write SQLite.
             let save_path = if path.extension().map_or(false, |ext| ext == "json") {
@@ -215,5 +220,42 @@ async fn redo(
             Ok(Json(json))
         }
         None => Err(ApiError::conflict("nothing to redo")),
+    }
+}
+
+/// Populate the Y.Doc with all node text content from a project.
+///
+/// Called on project create/load to initialize the CRDT layer from
+/// the project's cached text fields.
+async fn populate_ydoc_from_project(state: &AppState, project: &eidetic_core::Project) {
+    for node in &project.timeline.nodes {
+        let _ = state
+            .doc_tx
+            .send(DocCommand::EnsureNode { node_id: node.id })
+            .await;
+
+        if !node.content.notes.is_empty() {
+            let _ = state
+                .doc_tx
+                .send(DocCommand::WriteNodeContent {
+                    node_id: node.id,
+                    field: ContentField::Notes,
+                    text: node.content.notes.clone(),
+                    author: "system:load".into(),
+                })
+                .await;
+        }
+
+        if !node.content.content.is_empty() {
+            let _ = state
+                .doc_tx
+                .send(DocCommand::WriteNodeContent {
+                    node_id: node.id,
+                    field: ContentField::Content,
+                    text: node.content.content.clone(),
+                    author: "system:load".into(),
+                })
+                .await;
+        }
     }
 }

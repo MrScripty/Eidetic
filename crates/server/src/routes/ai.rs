@@ -9,6 +9,7 @@ use crate::ai_backends::Backend;
 use crate::embeddings::EmbeddingClient;
 use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
 use crate::state::{AppState, BackendType, ServerEvent};
+use crate::ydoc::{ContentField, DocCommand};
 use eidetic_core::ai::backend::{ChildPlan, ChildProposal, RagChunk};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
@@ -401,6 +402,16 @@ async fn run_generation(
                 }
             }
         }
+        // Mirror content to Y.Doc (authoritative CRDT source).
+        let _ = state
+            .doc_tx
+            .send(DocCommand::WriteNodeContent {
+                node_id,
+                field: ContentField::Content,
+                text: full_text.clone(),
+                author: format!("ai:gen-{node_uuid}"),
+            })
+            .await;
         let _ = state
             .events_tx
             .send(ServerEvent::GenerationComplete { node_id: node_uuid });

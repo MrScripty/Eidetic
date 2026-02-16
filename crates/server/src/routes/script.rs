@@ -7,6 +7,7 @@ use uuid::Uuid;
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
 
 use crate::state::{AppState, ServerEvent};
+use crate::ydoc::{ContentField, DocCommand};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -43,24 +44,33 @@ async fn update_notes(
     Json(body): Json<UpdateNotesRequest>,
 ) -> Json<serde_json::Value> {
     state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
-    };
+    let json = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
 
-    match project.timeline.node_mut(NodeId(id)) {
-        Ok(node) => {
-            node.content.notes = body.notes;
-            if node.content.status == ContentStatus::Empty {
-                node.content.status = ContentStatus::NotesOnly;
+        match project.timeline.node_mut(NodeId(id)) {
+            Ok(node) => {
+                node.content.notes = body.notes.clone();
+                if node.content.status == ContentStatus::Empty {
+                    node.content.status = ContentStatus::NotesOnly;
+                }
+                serde_json::to_value(&node.content).unwrap()
             }
-            let json = serde_json::to_value(&node.content).unwrap();
-            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
-            state.trigger_save();
-            Json(json)
+            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
-    }
+    };
+    // Mirror to Y.Doc (fire-and-forget).
+    let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+        node_id: NodeId(id),
+        field: ContentField::Notes,
+        text: body.notes,
+        author: "human:rest".into(),
+    });
+    let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
+    state.trigger_save();
+    Json(json)
 }
 
 #[derive(Deserialize)]
@@ -74,22 +84,31 @@ async fn update_script(
     Json(body): Json<UpdateScriptRequest>,
 ) -> Json<serde_json::Value> {
     state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
-    };
+    let json = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
 
-    match project.timeline.node_mut(NodeId(id)) {
-        Ok(node) => {
-            node.content.content = body.script;
-            node.content.status = ContentStatus::HasContent;
-            let json = serde_json::to_value(&node.content).unwrap();
-            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
-            state.trigger_save();
-            Json(json)
+        match project.timeline.node_mut(NodeId(id)) {
+            Ok(node) => {
+                node.content.content = body.script.clone();
+                node.content.status = ContentStatus::HasContent;
+                serde_json::to_value(&node.content).unwrap()
+            }
+            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
-    }
+    };
+    // Mirror to Y.Doc (fire-and-forget).
+    let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+        node_id: NodeId(id),
+        field: ContentField::Content,
+        text: body.script,
+        author: "human:rest".into(),
+    });
+    let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
+    state.trigger_save();
+    Json(json)
 }
 
 async fn lock_node(

@@ -11,6 +11,7 @@ use eidetic_core::timeline::timing::TimeRange;
 use eidetic_core::timeline::track::TrackId;
 
 use crate::state::{AppState, ServerEvent};
+use crate::ydoc::{ContentField, DocCommand};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -91,10 +92,14 @@ async fn create_node(
         node.beat_type = Some(parse_beat_type(bt_str));
     }
 
+    let node_id = node.id;
     let json = serde_json::to_value(&node).unwrap();
 
     match project.timeline.add_node(node) {
         Ok(()) => {
+            drop(guard);
+            // Ensure node exists in Y.Doc (fire-and-forget).
+            let _ = state.doc_tx.try_send(DocCommand::EnsureNode { node_id });
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
             state.trigger_save();
@@ -138,6 +143,7 @@ async fn update_node(
         }
     }
 
+    let notes_text = body.notes.clone();
     match project.timeline.node_mut(node_id) {
         Ok(node) => {
             if let Some(name) = body.name {
@@ -157,6 +163,16 @@ async fn update_node(
                 node.locked = locked;
             }
             let json = serde_json::to_value(&*node).unwrap();
+            drop(guard);
+            // Mirror notes to Y.Doc if they were updated (fire-and-forget).
+            if let Some(notes) = notes_text {
+                let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+                    node_id,
+                    field: ContentField::Notes,
+                    text: notes,
+                    author: "human:rest".into(),
+                });
+            }
             let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
@@ -178,6 +194,11 @@ async fn delete_node(
 
     match project.timeline.remove_node(NodeId(id)) {
         Ok(node) => {
+            drop(guard);
+            // Remove from Y.Doc (fire-and-forget).
+            let _ = state.doc_tx.try_send(DocCommand::RemoveNode {
+                node_id: NodeId(id),
+            });
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
             state.trigger_save();
@@ -466,6 +487,30 @@ async fn apply_children(
         bible_changed = true;
     }
 
+    // Collect node IDs and outlines for Y.Doc mirroring.
+    let children_for_doc: Vec<(NodeId, String)> = node_entities
+        .iter()
+        .zip(body.children.iter())
+        .map(|((nid, _, _, _), entry)| (*nid, entry.outline.clone()))
+        .collect();
+
+    drop(guard);
+
+    // Mirror each child node to Y.Doc (ensure + write notes, fire-and-forget).
+    for (child_id, outline) in children_for_doc {
+        let _ = state
+            .doc_tx
+            .try_send(DocCommand::EnsureNode { node_id: child_id });
+        if !outline.is_empty() {
+            let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+                node_id: child_id,
+                field: ContentField::Notes,
+                text: outline,
+                author: "ai:decompose".into(),
+            });
+        }
+    }
+
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
     if bible_changed {
@@ -740,10 +785,14 @@ async fn fill_gap(
         StoryNode::new("Bridge", level, time_range)
     };
 
+    let node_id = node.id;
     let json = serde_json::to_value(&node).unwrap();
 
     match project.timeline.add_node(node) {
         Ok(()) => {
+            drop(guard);
+            // Ensure node exists in Y.Doc (fire-and-forget).
+            let _ = state.doc_tx.try_send(DocCommand::EnsureNode { node_id });
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
             state.trigger_save();
