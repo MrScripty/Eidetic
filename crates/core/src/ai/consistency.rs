@@ -1,73 +1,63 @@
 use crate::ai::backend::EditContext;
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::project::Project;
-use crate::timeline::clip::ClipId;
+use crate::timeline::node::{NodeId, StoryNode};
 use crate::timeline::relationship::RelationshipType;
 
-use super::helpers::gather_surrounding_scripts;
+use super::helpers::gather_surrounding_context;
 
 /// Build an [`EditContext`] for the consistency reaction pipeline.
 ///
-/// Compares the clip's `generated_script` (the "before") with its
-/// `user_refined_script` (the "after"), plus surrounding scripts
-/// for context.
-pub fn build_edit_context(project: &Project, clip_id: ClipId) -> Result<EditContext> {
-    let clip = project.timeline.clip(clip_id)?.clone();
+/// With the CRDT model, there is no separate "before" and "after" — the
+/// content field holds the current text. The reactive AI pipeline (Phase 4)
+/// will replace this with change-based diffing from Y.Doc.
+pub fn build_edit_context(project: &Project, node_id: NodeId) -> Result<EditContext> {
+    let node = project.timeline.node(node_id)?.clone();
 
-    let previous_script = clip
-        .content
-        .generated_script
-        .clone()
-        .unwrap_or_default();
+    // In the CRDT model we only have the current content — no "previous" baseline.
+    let previous_script = String::new();
+    let new_script = node.content.content.clone();
 
-    let new_script = clip
-        .content
-        .user_refined_script
-        .clone()
-        .unwrap_or_default();
-
-    let track = project
-        .timeline
-        .track_for_clip(clip_id)
-        .ok_or(Error::ClipNotFound(clip_id.0))?;
-
-    let surrounding_context = gather_surrounding_scripts(track, clip_id);
+    let surrounding_context = gather_surrounding_context(&project.timeline, node_id);
 
     Ok(EditContext {
-        beat_clip: clip,
+        node,
         previous_script,
         new_script,
         surrounding_context,
     })
 }
 
-/// Find clip IDs that are downstream of the edited clip and might need updates.
+/// Find node IDs that are downstream of the edited node and might need updates.
 ///
 /// "Downstream" means:
-/// - Clips that come after this one on the same track (chronologically)
-/// - Clips connected via Causal relationships from this clip
+/// - Later sibling nodes at the same level (chronologically after)
+/// - All descendants of those later siblings
+/// - Nodes connected via Causal relationships from this node
 ///
-/// Locked clips are excluded (user has taken ownership of their content).
-pub fn downstream_clip_ids(project: &Project, clip_id: ClipId) -> Vec<ClipId> {
+/// Locked nodes are excluded (user has taken ownership of their content).
+pub fn downstream_node_ids(project: &Project, node_id: NodeId) -> Vec<NodeId> {
     let mut ids = Vec::new();
 
-    // Clips after this one on the same track.
-    if let Some(track) = project.timeline.track_for_clip(clip_id) {
-        if let Some(idx) = track.clips.iter().position(|c| c.id == clip_id) {
-            for clip in &track.clips[idx + 1..] {
-                if !clip.locked && has_script(clip) {
-                    ids.push(clip.id);
-                }
-            }
+    let Ok(node) = project.timeline.node(node_id) else {
+        return ids;
+    };
+    let target_end = node.time_range.end_ms;
+
+    // Later siblings at the same level.
+    let siblings = project.timeline.siblings_of(node_id);
+    for sibling in siblings {
+        if sibling.time_range.start_ms >= target_end && !sibling.locked && has_content(sibling) {
+            ids.push(sibling.id);
         }
     }
 
-    // Clips connected via causal relationships from this clip.
+    // Nodes connected via causal relationships from this node.
     for rel in &project.timeline.relationships {
-        if rel.from_clip == clip_id && matches!(rel.relationship_type, RelationshipType::Causal) {
-            if let Ok(target) = project.timeline.clip(rel.to_clip) {
-                if !target.locked && has_script(target) && !ids.contains(&rel.to_clip) {
-                    ids.push(rel.to_clip);
+        if rel.from_node == node_id && matches!(rel.relationship_type, RelationshipType::Causal) {
+            if let Ok(target) = project.timeline.node(rel.to_node) {
+                if !target.locked && has_content(target) && !ids.contains(&rel.to_node) {
+                    ids.push(rel.to_node);
                 }
             }
         }
@@ -76,44 +66,54 @@ pub fn downstream_clip_ids(project: &Project, clip_id: ClipId) -> Vec<ClipId> {
     ids
 }
 
-fn has_script(clip: &crate::timeline::clip::BeatClip) -> bool {
-    clip.content.generated_script.is_some() || clip.content.user_refined_script.is_some()
+fn has_content(node: &StoryNode) -> bool {
+    !node.content.content.is_empty()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Template;
+    use crate::timeline::node::StoryLevel;
 
     #[test]
-    fn downstream_excludes_locked_clips() {
+    fn downstream_excludes_locked_nodes() {
         let mut project = Template::MultiCam.build_project("Test");
-        let track = &mut project.timeline.tracks[0];
-        // Lock the second clip.
-        if track.clips.len() > 1 {
-            track.clips[1].locked = true;
+
+        // Get scene nodes and lock the second one.
+        let scenes: Vec<NodeId> = project
+            .timeline
+            .nodes_at_level(StoryLevel::Scene)
+            .iter()
+            .map(|n| n.id)
+            .collect();
+
+        if scenes.len() > 1 {
+            project.timeline.node_mut(scenes[1]).unwrap().locked = true;
         }
 
-        let first_id = project.timeline.tracks[0].clips[0].id;
-        let downstream = downstream_clip_ids(&project, first_id);
-        // The locked clip should be excluded.
+        let downstream = downstream_node_ids(&project, scenes[0]);
         for id in &downstream {
-            let clip = project.timeline.clip(*id).unwrap();
-            assert!(!clip.locked);
+            let node = project.timeline.node(*id).unwrap();
+            assert!(!node.locked);
         }
     }
 
     #[test]
-    fn build_edit_context_returns_scripts() {
+    fn build_edit_context_returns_content() {
         let mut project = Template::MultiCam.build_project("Test");
-        let clip_id = project.timeline.tracks[0].clips[0].id;
-        // Set some script content.
-        let clip = project.timeline.clip_mut(clip_id).unwrap();
-        clip.content.generated_script = Some("Original script.".into());
-        clip.content.user_refined_script = Some("Edited script.".into());
 
-        let ctx = build_edit_context(&project, clip_id).unwrap();
-        assert_eq!(ctx.previous_script, "Original script.");
+        let scenes = project.timeline.nodes_at_level(StoryLevel::Scene);
+        if scenes.is_empty() {
+            return; // Template may not have scenes yet.
+        }
+        let node_id = scenes[0].id;
+
+        let node = project.timeline.node_mut(node_id).unwrap();
+        node.content.content = "Edited script.".into();
+
+        let ctx = build_edit_context(&project, node_id).unwrap();
+        assert!(ctx.previous_script.is_empty());
         assert_eq!(ctx.new_script, "Edited script.");
     }
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { timeToX } from '$lib/stores/timeline.svelte.js';
-	import { timelineState } from '$lib/stores/timeline.svelte.js';
+	import { timelineState, findNode } from '$lib/stores/timeline.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
 	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 	import { formatTime } from '$lib/types.js';
@@ -11,7 +11,7 @@
 		id: string;
 		kind: MarkerKind;
 		timeMs: number;
-		clipId: string | null;
+		nodeId: string | null;
 		label: string;
 		detail: string;
 	}
@@ -21,14 +21,12 @@
 	let hovered = $derived(characterTimelineState.hoveredMarkerId === marker.id);
 
 	function handleClick() {
-		if (marker.clipId && timelineState.timeline) {
-			editorState.selectedClipId = marker.clipId;
-			for (const track of timelineState.timeline.tracks) {
-				const clip = track.clips.find(c => c.id === marker.clipId);
-				if (clip) {
-					editorState.selectedClip = clip;
-					break;
-				}
+		if (marker.nodeId && timelineState.timeline) {
+			editorState.selectedNodeId = marker.nodeId;
+			const node = findNode(marker.nodeId);
+			if (node) {
+				editorState.selectedNode = node;
+				editorState.selectedLevel = node.level;
 			}
 		} else {
 			timelineState.playheadMs = marker.timeMs;

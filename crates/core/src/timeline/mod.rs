@@ -1,6 +1,5 @@
-pub mod clip;
+pub mod node;
 pub mod relationship;
-pub mod scene;
 pub mod structure;
 pub mod timing;
 pub mod track;
@@ -9,34 +8,38 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
 use crate::story::arc::ArcId;
-use clip::{BeatClip, ClipId};
+use node::{NodeArc, NodeId, StoryLevel, StoryNode};
 use relationship::{Relationship, RelationshipId};
 use structure::EpisodeStructure;
 use timing::TimeRange;
-use track::{ArcTrack, TrackId};
+use track::{Track, TrackId};
 
-/// A gap on a track where no beat clip exists.
+/// A gap on a track where no story node exists.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimelineGap {
-    pub track_id: TrackId,
-    pub arc_id: ArcId,
+    pub level: StoryLevel,
     pub time_range: TimeRange,
-    pub preceding_clip_id: Option<ClipId>,
-    pub following_clip_id: Option<ClipId>,
+    pub preceding_node_id: Option<NodeId>,
+    pub following_node_id: Option<NodeId>,
 }
 
-/// The central data structure: a timeline with arc tracks and episode structure.
+/// The central data structure: a timeline with hierarchy-level tracks.
 ///
-/// Represents the full runtime of an episode (~22 min for 30-min TV). Arc tracks
-/// hold beat clips; relationships connect clips across tracks; the structure bar
-/// marks act breaks.
+/// Represents the full runtime of an episode (~22 min for 30-min TV). Tracks
+/// are organized by story level (Act, Sequence, Scene, Beat). Nodes at each
+/// level form a tree via `parent_id`. Arcs are tagged onto nodes via `node_arcs`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timeline {
     /// Total episode duration (typically ~22 min content for a 30-min slot).
     pub total_duration_ms: u64,
-    /// One track per story arc, each containing beat clips.
-    pub tracks: Vec<ArcTrack>,
-    /// Edge-bundled curves connecting clips across tracks.
+    /// One track per hierarchy level.
+    pub tracks: Vec<Track>,
+    /// All story nodes, flat list. Tree structure via `parent_id`.
+    pub nodes: Vec<StoryNode>,
+    /// Many-to-many arc tagging for nodes.
+    #[serde(default)]
+    pub node_arcs: Vec<NodeArc>,
+    /// Edge-bundled curves connecting nodes.
     pub relationships: Vec<Relationship>,
     /// Act structure (cold open, acts, commercial breaks, tag).
     pub structure: EpisodeStructure,
@@ -47,46 +50,18 @@ impl Timeline {
     pub fn new(total_duration_ms: u64, structure: EpisodeStructure) -> Self {
         Self {
             total_duration_ms,
-            tracks: Vec::new(),
+            tracks: Track::default_set(),
+            nodes: Vec::new(),
+            node_arcs: Vec::new(),
             relationships: Vec::new(),
             structure,
         }
     }
 
-    /// Add an arc track. Fails if this arc already has a track.
-    pub fn add_track(&mut self, track: ArcTrack) -> Result<()> {
-        if self.tracks.iter().any(|t| t.arc_id == track.arc_id) {
-            return Err(Error::DuplicateArcTrack(track.arc_id.0));
-        }
-        self.tracks.push(track);
-        Ok(())
-    }
-
-    /// Remove a track by ID, returning it. Also removes relationships that
-    /// reference clips on this track.
-    pub fn remove_track(&mut self, id: TrackId) -> Result<ArcTrack> {
-        let idx = self
-            .tracks
-            .iter()
-            .position(|t| t.id == id)
-            .ok_or(Error::TrackNotFound(id.0))?;
-
-        let track = self.tracks.remove(idx);
-
-        let clip_ids: Vec<ClipId> = track
-            .clips
-            .iter()
-            .chain(track.sub_beats.iter())
-            .map(|c| c.id)
-            .collect();
-        self.relationships
-            .retain(|r| !clip_ids.contains(&r.from_clip) && !clip_ids.contains(&r.to_clip));
-
-        Ok(track)
-    }
+    // ────────────────── Track operations ──────────────────
 
     /// Find a track by ID.
-    pub fn track(&self, id: TrackId) -> Result<&ArcTrack> {
+    pub fn track(&self, id: TrackId) -> Result<&Track> {
         self.tracks
             .iter()
             .find(|t| t.id == id)
@@ -94,107 +69,374 @@ impl Timeline {
     }
 
     /// Find a track by ID (mutable).
-    pub fn track_mut(&mut self, id: TrackId) -> Result<&mut ArcTrack> {
+    pub fn track_mut(&mut self, id: TrackId) -> Result<&mut Track> {
         self.tracks
             .iter_mut()
             .find(|t| t.id == id)
             .ok_or(Error::TrackNotFound(id.0))
     }
 
-    /// Find the track containing a specific clip (checks both clips and sub-beats).
-    pub fn track_for_clip(&self, clip_id: ClipId) -> Option<&ArcTrack> {
-        self.tracks.iter().find(|t| {
-            t.clips.iter().any(|c| c.id == clip_id)
-                || t.sub_beats.iter().any(|c| c.id == clip_id)
-        })
+    /// Find a track by story level.
+    pub fn track_for_level(&self, level: StoryLevel) -> Option<&Track> {
+        self.tracks.iter().find(|t| t.level == level)
     }
 
-    /// Add a clip to a track, validating it fits within the timeline duration.
-    pub fn add_clip(&mut self, track_id: TrackId, clip: BeatClip) -> Result<()> {
-        if clip.time_range.end_ms > self.total_duration_ms {
-            return Err(Error::ClipExceedsTimeline {
-                clip_end_ms: clip.time_range.end_ms,
+    // ────────────────── Node lookups ──────────────────
+
+    /// Find a node by ID.
+    pub fn node(&self, id: NodeId) -> Result<&StoryNode> {
+        self.nodes
+            .iter()
+            .find(|n| n.id == id)
+            .ok_or(Error::NodeNotFound(id.0))
+    }
+
+    /// Find a node by ID (mutable).
+    pub fn node_mut(&mut self, id: NodeId) -> Result<&mut StoryNode> {
+        self.nodes
+            .iter_mut()
+            .find(|n| n.id == id)
+            .ok_or(Error::NodeNotFound(id.0))
+    }
+
+    /// Get all nodes at a given hierarchy level, sorted by start time.
+    pub fn nodes_at_level(&self, level: StoryLevel) -> Vec<&StoryNode> {
+        let mut nodes: Vec<&StoryNode> = self
+            .nodes
+            .iter()
+            .filter(|n| n.level == level)
+            .collect();
+        nodes.sort_by_key(|n| n.time_range.start_ms);
+        nodes
+    }
+
+    /// Get direct children of a parent node, sorted by sort_order then start time.
+    pub fn children_of(&self, parent_id: NodeId) -> Vec<&StoryNode> {
+        let mut children: Vec<&StoryNode> = self
+            .nodes
+            .iter()
+            .filter(|n| n.parent_id == Some(parent_id))
+            .collect();
+        children.sort_by_key(|n| (n.sort_order, n.time_range.start_ms));
+        children
+    }
+
+    /// Get all descendants of a node (recursive).
+    pub fn descendants_of(&self, parent_id: NodeId) -> Vec<&StoryNode> {
+        let mut result = Vec::new();
+        let mut stack = vec![parent_id];
+        while let Some(pid) = stack.pop() {
+            for node in &self.nodes {
+                if node.parent_id == Some(pid) {
+                    result.push(node);
+                    stack.push(node.id);
+                }
+            }
+        }
+        result.sort_by_key(|n| (n.level, n.time_range.start_ms));
+        result
+    }
+
+    /// Walk up from a node to the root, returning ancestors in order
+    /// (immediate parent first, root last).
+    pub fn ancestors_of(&self, node_id: NodeId) -> Vec<&StoryNode> {
+        let mut ancestors = Vec::new();
+        let mut current = self.node(node_id).ok();
+        while let Some(node) = current {
+            if let Some(pid) = node.parent_id {
+                if let Ok(parent) = self.node(pid) {
+                    ancestors.push(parent);
+                    current = Some(parent);
+                    continue;
+                }
+            }
+            break;
+        }
+        ancestors
+    }
+
+    /// Get sibling nodes (same parent, same level, excluding self).
+    pub fn siblings_of(&self, node_id: NodeId) -> Vec<&StoryNode> {
+        let node = match self.node(node_id) {
+            Ok(n) => n,
+            Err(_) => return Vec::new(),
+        };
+        let parent_id = node.parent_id;
+        let level = node.level;
+        let mut siblings: Vec<&StoryNode> = self
+            .nodes
+            .iter()
+            .filter(|n| n.parent_id == parent_id && n.level == level && n.id != node_id)
+            .collect();
+        siblings.sort_by_key(|n| (n.sort_order, n.time_range.start_ms));
+        siblings
+    }
+
+    // ────────────────── Node mutations ──────────────────
+
+    /// Add a node to the timeline, validating it fits within bounds.
+    pub fn add_node(&mut self, node: StoryNode) -> Result<()> {
+        if node.time_range.end_ms > self.total_duration_ms {
+            return Err(Error::NodeExceedsTimeline {
+                node_end_ms: node.time_range.end_ms,
                 timeline_ms: self.total_duration_ms,
             });
         }
-        clip.time_range.validate()?;
-        self.track_mut(track_id)?.clips.push(clip);
+        node.time_range.validate()?;
+
+        // Validate parent-child level relationship.
+        if let Some(parent_id) = node.parent_id {
+            let parent = self.node(parent_id)?;
+            let expected_child_level = parent.level.child_level().ok_or_else(|| {
+                Error::InvalidHierarchy(format!(
+                    "{} nodes cannot have children",
+                    parent.level
+                ))
+            })?;
+            if node.level != expected_child_level {
+                return Err(Error::InvalidHierarchy(format!(
+                    "expected {} child for {} parent, got {}",
+                    expected_child_level, parent.level, node.level
+                )));
+            }
+        } else if node.level != StoryLevel::Premise {
+            // Only Premise-level nodes can be parentless.
+            return Err(Error::InvalidHierarchy(format!(
+                "{} nodes must have a parent",
+                node.level
+            )));
+        } else if self.nodes.iter().any(|n| n.level == StoryLevel::Premise) {
+            // Only one Premise node is allowed per timeline.
+            return Err(Error::InvalidHierarchy(
+                "only one Premise node is allowed".to_string(),
+            ));
+        }
+
+        self.nodes.push(node);
         Ok(())
     }
 
-    /// Move a clip to a new time range.
-    pub fn move_clip(&mut self, clip_id: ClipId, new_range: TimeRange) -> Result<()> {
+    /// Remove a node by ID. Cascades to all descendants.
+    /// Also removes relationships and arc tags referencing removed nodes.
+    pub fn remove_node(&mut self, id: NodeId) -> Result<StoryNode> {
+        let idx = self
+            .nodes
+            .iter()
+            .position(|n| n.id == id)
+            .ok_or(Error::NodeNotFound(id.0))?;
+
+        let node = self.nodes.remove(idx);
+
+        // Collect all descendant IDs.
+        let descendant_ids: Vec<NodeId> = self.descendants_of(id).iter().map(|n| n.id).collect();
+
+        // Remove descendants.
+        self.nodes.retain(|n| !descendant_ids.contains(&n.id));
+
+        // Collect all removed IDs (node + descendants).
+        let mut all_removed = descendant_ids;
+        all_removed.push(id);
+
+        // Clean up relationships.
+        self.relationships.retain(|r| {
+            !all_removed.contains(&r.from_node) && !all_removed.contains(&r.to_node)
+        });
+
+        // Clean up arc tags.
+        self.node_arcs
+            .retain(|na| !all_removed.contains(&na.node_id));
+
+        Ok(node)
+    }
+
+    /// Move/resize a node to a new time range, proportionally adjusting all descendants.
+    pub fn resize_node(&mut self, node_id: NodeId, new_range: TimeRange) -> Result<()> {
         new_range.validate()?;
         if new_range.end_ms > self.total_duration_ms {
-            return Err(Error::ClipExceedsTimeline {
-                clip_end_ms: new_range.end_ms,
+            return Err(Error::NodeExceedsTimeline {
+                node_end_ms: new_range.end_ms,
                 timeline_ms: self.total_duration_ms,
             });
         }
-        let clip = self.clip_mut(clip_id)?;
-        clip.time_range = new_range;
+
+        let node = self.node(node_id)?;
+        let old_range = node.time_range;
+        let old_duration = old_range.end_ms - old_range.start_ms;
+        let new_duration = new_range.end_ms - new_range.start_ms;
+
+        // Collect descendant IDs before mutating.
+        let descendant_ids: Vec<NodeId> = self.descendants_of(node_id).iter().map(|n| n.id).collect();
+
+        // Update the node itself.
+        self.node_mut(node_id)?.time_range = new_range;
+
+        // Proportionally adjust all descendants.
+        if old_duration > 0 {
+            for desc_id in descendant_ids {
+                if let Ok(desc) = self.node_mut(desc_id) {
+                    let start_ratio =
+                        (desc.time_range.start_ms.saturating_sub(old_range.start_ms)) as f64
+                            / old_duration as f64;
+                    let end_ratio =
+                        (desc.time_range.end_ms.saturating_sub(old_range.start_ms)) as f64
+                            / old_duration as f64;
+
+                    desc.time_range.start_ms =
+                        (new_range.start_ms + (start_ratio * new_duration as f64) as u64)
+                            .max(new_range.start_ms);
+                    desc.time_range.end_ms =
+                        (new_range.start_ms + (end_ratio * new_duration as f64) as u64)
+                            .min(new_range.end_ms);
+                }
+            }
+        }
+
         Ok(())
     }
 
-    /// Remove a clip by ID from any track. Also removes relationships referencing it.
-    /// If the clip is a parent with sub-beats, all its sub-beats are also removed.
-    pub fn remove_clip(&mut self, clip_id: ClipId) -> Result<BeatClip> {
-        for track in &mut self.tracks {
-            if let Some(idx) = track.clips.iter().position(|c| c.id == clip_id) {
-                let clip = track.clips.remove(idx);
-                // Cascade-delete any sub-beats belonging to this parent clip.
-                let removed_sub_ids: Vec<ClipId> = track
-                    .sub_beats
-                    .iter()
-                    .filter(|b| b.parent_clip_id == Some(clip_id))
-                    .map(|b| b.id)
-                    .collect();
-                track
-                    .sub_beats
-                    .retain(|b| b.parent_clip_id != Some(clip_id));
-                // Remove relationships referencing this clip or its sub-beats.
-                self.relationships.retain(|r| {
-                    r.from_clip != clip_id
-                        && r.to_clip != clip_id
-                        && !removed_sub_ids.contains(&r.from_clip)
-                        && !removed_sub_ids.contains(&r.to_clip)
-                });
-                return Ok(clip);
-            }
-            // Also check sub-beats.
-            if let Some(idx) = track.sub_beats.iter().position(|c| c.id == clip_id) {
-                let clip = track.sub_beats.remove(idx);
-                self.relationships
-                    .retain(|r| r.from_clip != clip_id && r.to_clip != clip_id);
-                return Ok(clip);
+    /// Split a node at the given time point, producing two nodes.
+    /// Returns the IDs of the two resulting nodes.
+    pub fn split_node(&mut self, node_id: NodeId, at_ms: u64) -> Result<(NodeId, NodeId)> {
+        let node = self.node(node_id)?;
+        let range = node.time_range;
+
+        if at_ms <= range.start_ms || at_ms >= range.end_ms {
+            return Err(Error::SplitOutOfRange {
+                split_ms: at_ms,
+                start_ms: range.start_ms,
+                end_ms: range.end_ms,
+            });
+        }
+
+        let level = node.level;
+        let parent_id = node.parent_id;
+        let beat_type = node.beat_type.clone();
+        let name = node.name.clone();
+        let locked = node.locked;
+        let sort_order = node.sort_order;
+
+        let left_id = NodeId::new();
+        let right_id = NodeId::new();
+
+        let left = StoryNode {
+            id: left_id,
+            parent_id,
+            level,
+            sort_order,
+            time_range: TimeRange::new(range.start_ms, at_ms)?,
+            name: format!("{} (L)", name),
+            content: node::NodeContent::default(),
+            beat_type: beat_type.clone(),
+            locked,
+        };
+
+        let right = StoryNode {
+            id: right_id,
+            parent_id,
+            level,
+            sort_order: sort_order + 1,
+            time_range: TimeRange::new(at_ms, range.end_ms)?,
+            name: format!("{} (R)", name),
+            content: node::NodeContent::default(),
+            beat_type,
+            locked,
+        };
+
+        // Remove the original node (but NOT its descendants — they'll be reassigned).
+        let idx = self
+            .nodes
+            .iter()
+            .position(|n| n.id == node_id)
+            .ok_or(Error::NodeNotFound(node_id.0))?;
+        self.nodes.remove(idx);
+
+        // Reassign children to left or right based on midpoint.
+        for child in &mut self.nodes {
+            if child.parent_id == Some(node_id) {
+                let child_mid =
+                    child.time_range.start_ms + (child.time_range.end_ms - child.time_range.start_ms) / 2;
+                if child_mid < at_ms {
+                    child.parent_id = Some(left_id);
+                } else {
+                    child.parent_id = Some(right_id);
+                }
             }
         }
-        Err(Error::ClipNotFound(clip_id.0))
+
+        // Add the two new nodes (bypass validation since we know they fit).
+        self.nodes.push(left);
+        self.nodes.push(right);
+
+        // Repoint relationships.
+        for rel in &mut self.relationships {
+            if rel.from_node == node_id {
+                rel.from_node = left_id;
+            }
+            if rel.to_node == node_id {
+                rel.to_node = right_id;
+            }
+        }
+
+        // Repoint arc tags.
+        let arc_ids: Vec<ArcId> = self.arcs_for_node(node_id);
+        self.node_arcs.retain(|na| na.node_id != node_id);
+        for arc_id in arc_ids {
+            self.node_arcs.push(NodeArc {
+                node_id: left_id,
+                arc_id,
+            });
+            self.node_arcs.push(NodeArc {
+                node_id: right_id,
+                arc_id,
+            });
+        }
+
+        Ok((left_id, right_id))
     }
 
-    /// Find a clip by ID across all tracks (checks both clips and sub-beats).
-    pub fn clip(&self, id: ClipId) -> Result<&BeatClip> {
-        self.tracks
+    // ────────────────── Arc tagging ──────────────────
+
+    /// Get all arc IDs tagged on a node.
+    pub fn arcs_for_node(&self, node_id: NodeId) -> Vec<ArcId> {
+        self.node_arcs
             .iter()
-            .flat_map(|t| t.clips.iter().chain(t.sub_beats.iter()))
-            .find(|c| c.id == id)
-            .ok_or(Error::ClipNotFound(id.0))
+            .filter(|na| na.node_id == node_id)
+            .map(|na| na.arc_id)
+            .collect()
     }
 
-    /// Find a clip by ID across all tracks (mutable, checks both clips and sub-beats).
-    pub fn clip_mut(&mut self, id: ClipId) -> Result<&mut BeatClip> {
-        self.tracks
-            .iter_mut()
-            .flat_map(|t| t.clips.iter_mut().chain(t.sub_beats.iter_mut()))
-            .find(|c| c.id == id)
-            .ok_or(Error::ClipNotFound(id.0))
+    /// Get all node IDs tagged with a specific arc.
+    pub fn nodes_for_arc(&self, arc_id: ArcId) -> Vec<NodeId> {
+        self.node_arcs
+            .iter()
+            .filter(|na| na.arc_id == arc_id)
+            .map(|na| na.node_id)
+            .collect()
     }
 
-    /// Add a relationship between two clips.
+    /// Tag a node with an arc. No-op if already tagged.
+    pub fn tag_node(&mut self, node_id: NodeId, arc_id: ArcId) {
+        if !self
+            .node_arcs
+            .iter()
+            .any(|na| na.node_id == node_id && na.arc_id == arc_id)
+        {
+            self.node_arcs.push(NodeArc { node_id, arc_id });
+        }
+    }
+
+    /// Remove an arc tag from a node.
+    pub fn untag_node(&mut self, node_id: NodeId, arc_id: ArcId) {
+        self.node_arcs
+            .retain(|na| !(na.node_id == node_id && na.arc_id == arc_id));
+    }
+
+    // ────────────────── Relationships ──────────────────
+
+    /// Add a relationship between two nodes.
     pub fn add_relationship(&mut self, rel: Relationship) -> Result<()> {
-        // Verify both clips exist.
-        self.clip(rel.from_clip)?;
-        self.clip(rel.to_clip)?;
+        self.node(rel.from_node)?;
+        self.node(rel.to_node)?;
         self.relationships.push(rel);
         Ok(())
     }
@@ -209,201 +451,52 @@ impl Timeline {
         Ok(self.relationships.remove(idx))
     }
 
-    /// Get all main track clips that overlap a given time position (vertical slice).
-    pub fn clips_at(&self, time_ms: u64) -> Vec<(&ArcTrack, &BeatClip)> {
-        self.tracks
+    // ────────────────── Queries ──────────────────
+
+    /// Get all nodes at a given level that overlap a given time position.
+    pub fn nodes_at(&self, level: StoryLevel, time_ms: u64) -> Vec<&StoryNode> {
+        self.nodes
             .iter()
-            .flat_map(|track| {
-                track
-                    .clips
-                    .iter()
-                    .filter(move |clip| clip.time_range.contains(time_ms))
-                    .map(move |clip| (track, clip))
-            })
+            .filter(|n| n.level == level && n.time_range.contains(time_ms))
             .collect()
     }
 
-    /// Get all clips and sub-beats that overlap a given time position.
-    pub fn all_clips_at(&self, time_ms: u64) -> Vec<(&ArcTrack, &BeatClip)> {
-        self.tracks
-            .iter()
-            .flat_map(|track| {
-                track
-                    .clips
-                    .iter()
-                    .chain(track.sub_beats.iter())
-                    .filter(move |clip| clip.time_range.contains(time_ms))
-                    .map(move |clip| (track, clip))
-            })
-            .collect()
-    }
-
-    /// Split a clip at the given time point, producing two clips.
-    /// Returns the IDs of the two resulting clips.
-    pub fn split_clip(&mut self, clip_id: ClipId, at_ms: u64) -> Result<(ClipId, ClipId)> {
-        let clip = self.clip(clip_id)?;
-        let range = clip.time_range;
-
-        if at_ms <= range.start_ms || at_ms >= range.end_ms {
-            return Err(Error::SplitOutOfRange {
-                split_ms: at_ms,
-                start_ms: range.start_ms,
-                end_ms: range.end_ms,
-            });
-        }
-
-        // Clone fields we need before mutating.
-        let beat_type = clip.beat_type.clone();
-        let name = clip.name.clone();
-        let locked = clip.locked;
-
-        let left_id = ClipId::new();
-        let right_id = ClipId::new();
-
-        let left = BeatClip {
-            id: left_id,
-            time_range: TimeRange::new(range.start_ms, at_ms)?,
-            beat_type: beat_type.clone(),
-            name: format!("{} (L)", name),
-            content: clip::BeatContent::default(),
-            locked,
-            parent_clip_id: None,
-        };
-
-        let right = BeatClip {
-            id: right_id,
-            time_range: TimeRange::new(at_ms, range.end_ms)?,
-            beat_type,
-            name: format!("{} (R)", name),
-            content: clip::BeatContent::default(),
-            locked,
-            parent_clip_id: None,
-        };
-
-        // Find which track the clip is on and replace it.
-        for track in &mut self.tracks {
-            if let Some(idx) = track.clips.iter().position(|c| c.id == clip_id) {
-                track.clips.remove(idx);
-                track.clips.insert(idx, left);
-                track.clips.insert(idx + 1, right);
-
-                // Repoint relationships from the old clip to the left half.
-                for rel in &mut self.relationships {
-                    if rel.from_clip == clip_id {
-                        rel.from_clip = left_id;
-                    }
-                    if rel.to_clip == clip_id {
-                        rel.to_clip = right_id;
-                    }
-                }
-
-                return Ok((left_id, right_id));
-            }
-        }
-
-        Err(Error::ClipNotFound(clip_id.0))
-    }
-
-    /// Close a specific gap on a track by shifting all clips after it leftward.
-    ///
-    /// `gap_end_ms` is the start time of the first clip after the gap. All clips
-    /// starting at or after this point are shifted left by the gap's duration.
-    pub fn close_gap(&mut self, track_id: TrackId, gap_end_ms: u64) -> Result<()> {
-        let track = self.track_mut(track_id)?;
-        let mut sorted_indices: Vec<usize> = (0..track.clips.len()).collect();
-        sorted_indices.sort_by_key(|&i| track.clips[i].time_range.start_ms);
-
-        // Find the gap: the space between the last clip ending before gap_end_ms and gap_end_ms.
-        let mut gap_start_ms: u64 = 0;
-        for &i in &sorted_indices {
-            let end = track.clips[i].time_range.end_ms;
-            if end <= gap_end_ms {
-                gap_start_ms = gap_start_ms.max(end);
-            }
-        }
-
-        if gap_start_ms >= gap_end_ms {
-            return Ok(()); // No gap to close.
-        }
-
-        let shift = gap_end_ms - gap_start_ms;
-
-        for clip in &mut track.clips {
-            if clip.time_range.start_ms >= gap_end_ms {
-                clip.time_range.start_ms -= shift;
-                clip.time_range.end_ms -= shift;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Close all gaps on a track, making clips contiguous from the first clip's position.
-    pub fn close_all_gaps(&mut self, track_id: TrackId) -> Result<()> {
-        let track = self.track_mut(track_id)?;
-        track.clips.sort_by_key(|c| c.time_range.start_ms);
-
-        let mut cursor = match track.clips.first() {
-            Some(c) => c.time_range.start_ms,
-            None => return Ok(()),
-        };
-
-        for clip in &mut track.clips {
-            let duration = clip.time_range.end_ms - clip.time_range.start_ms;
-            clip.time_range.start_ms = cursor;
-            clip.time_range.end_ms = cursor + duration;
-            cursor += duration;
-        }
-
-        Ok(())
-    }
-
-    /// Find gaps on all tracks where no beat clips exist.
-    ///
-    /// Returns gaps longer than `min_duration_ms` between consecutive clips
-    /// and between the timeline edges and the first/last clips.
-    pub fn find_gaps(&self, min_duration_ms: u64) -> Vec<TimelineGap> {
+    /// Find gaps at a given level where no nodes exist.
+    pub fn find_gaps(&self, level: StoryLevel, min_duration_ms: u64) -> Vec<TimelineGap> {
+        let nodes = self.nodes_at_level(level);
         let mut gaps = Vec::new();
+        let mut cursor = 0u64;
+        let mut prev_node_id: Option<NodeId> = None;
 
-        for track in &self.tracks {
-            let mut sorted: Vec<&BeatClip> = track.clips.iter().collect();
-            sorted.sort_by_key(|c| c.time_range.start_ms);
-
-            let mut cursor = 0u64;
-            let mut prev_clip_id: Option<ClipId> = None;
-
-            for clip in &sorted {
-                if clip.time_range.start_ms > cursor {
-                    let duration = clip.time_range.start_ms - cursor;
-                    if duration >= min_duration_ms {
-                        if let Ok(range) = TimeRange::new(cursor, clip.time_range.start_ms) {
-                            gaps.push(TimelineGap {
-                                track_id: track.id,
-                                arc_id: track.arc_id,
-                                time_range: range,
-                                preceding_clip_id: prev_clip_id,
-                                following_clip_id: Some(clip.id),
-                            });
-                        }
-                    }
-                }
-                cursor = clip.time_range.end_ms;
-                prev_clip_id = Some(clip.id);
-            }
-
-            // Gap between last clip and timeline end.
-            if cursor < self.total_duration_ms {
-                let duration = self.total_duration_ms - cursor;
+        for node in &nodes {
+            if node.time_range.start_ms > cursor {
+                let duration = node.time_range.start_ms - cursor;
                 if duration >= min_duration_ms {
-                    if let Ok(range) = TimeRange::new(cursor, self.total_duration_ms) {
+                    if let Ok(range) = TimeRange::new(cursor, node.time_range.start_ms) {
                         gaps.push(TimelineGap {
-                            track_id: track.id,
-                            arc_id: track.arc_id,
+                            level,
                             time_range: range,
-                            preceding_clip_id: prev_clip_id,
-                            following_clip_id: None,
+                            preceding_node_id: prev_node_id,
+                            following_node_id: Some(node.id),
                         });
                     }
+                }
+            }
+            cursor = node.time_range.end_ms;
+            prev_node_id = Some(node.id);
+        }
+
+        // Gap between last node and timeline end.
+        if cursor < self.total_duration_ms {
+            let duration = self.total_duration_ms - cursor;
+            if duration >= min_duration_ms {
+                if let Ok(range) = TimeRange::new(cursor, self.total_duration_ms) {
+                    gaps.push(TimelineGap {
+                        level,
+                        time_range: range,
+                        preceding_node_id: prev_node_id,
+                        following_node_id: None,
+                    });
                 }
             }
         }
@@ -411,122 +504,30 @@ impl Timeline {
         gaps
     }
 
-    /// Add a sub-beat to a track, validating it fits within its parent clip's time range.
-    pub fn add_sub_beat(&mut self, track_id: TrackId, sub_beat: BeatClip) -> Result<()> {
-        let parent_id = sub_beat
-            .parent_clip_id
-            .ok_or_else(|| Error::InvalidOperation("sub-beat must have parent_clip_id".into()))?;
+    /// Remove all children of a specific parent node.
+    pub fn clear_children_of(&mut self, parent_id: NodeId) -> Result<()> {
+        let child_ids: Vec<NodeId> = self
+            .children_of(parent_id)
+            .iter()
+            .map(|n| n.id)
+            .collect();
 
-        let track = self.track(track_id)?;
-        let parent = track.clip(parent_id)?;
-        let parent_range = parent.time_range;
-
-        if sub_beat.time_range.start_ms < parent_range.start_ms
-            || sub_beat.time_range.end_ms > parent_range.end_ms
-        {
-            return Err(Error::InvalidOperation(
-                "sub-beat must be within parent clip's time range".into(),
-            ));
-        }
-
-        sub_beat.time_range.validate()?;
-        let track = self.track_mut(track_id)?;
-        track.sub_beats.push(sub_beat);
-        track.sort_sub_beats();
-        Ok(())
-    }
-
-    /// Remove a single sub-beat by ID.
-    pub fn remove_sub_beat(&mut self, clip_id: ClipId) -> Result<BeatClip> {
-        for track in &mut self.tracks {
-            if let Some(idx) = track.sub_beats.iter().position(|c| c.id == clip_id) {
-                let clip = track.sub_beats.remove(idx);
-                self.relationships
-                    .retain(|r| r.from_clip != clip_id && r.to_clip != clip_id);
-                return Ok(clip);
-            }
-        }
-        Err(Error::ClipNotFound(clip_id.0))
-    }
-
-    /// Resize a parent clip and proportionally adjust all its sub-beats.
-    pub fn resize_parent_clip(
-        &mut self,
-        clip_id: ClipId,
-        new_range: TimeRange,
-    ) -> Result<()> {
-        new_range.validate()?;
-        if new_range.end_ms > self.total_duration_ms {
-            return Err(Error::ClipExceedsTimeline {
-                clip_end_ms: new_range.end_ms,
-                timeline_ms: self.total_duration_ms,
-            });
-        }
-
-        // Find the track and update both the clip and its sub-beats.
-        for track in &mut self.tracks {
-            if let Some(clip_idx) = track.clips.iter().position(|c| c.id == clip_id) {
-                let old_range = track.clips[clip_idx].time_range;
-                let old_duration = old_range.end_ms - old_range.start_ms;
-                let new_duration = new_range.end_ms - new_range.start_ms;
-
-                // Update parent clip.
-                track.clips[clip_idx].time_range = new_range;
-
-                // Proportionally adjust sub-beats.
-                if old_duration > 0 {
-                    for sub_beat in &mut track.sub_beats {
-                        if sub_beat.parent_clip_id == Some(clip_id) {
-                            let start_ratio = (sub_beat.time_range.start_ms - old_range.start_ms)
-                                as f64
-                                / old_duration as f64;
-                            let end_ratio = (sub_beat.time_range.end_ms - old_range.start_ms)
-                                as f64
-                                / old_duration as f64;
-
-                            sub_beat.time_range.start_ms =
-                                new_range.start_ms + (start_ratio * new_duration as f64) as u64;
-                            sub_beat.time_range.end_ms =
-                                new_range.start_ms + (end_ratio * new_duration as f64) as u64;
-
-                            // Clamp to parent boundaries.
-                            sub_beat.time_range.start_ms =
-                                sub_beat.time_range.start_ms.max(new_range.start_ms);
-                            sub_beat.time_range.end_ms =
-                                sub_beat.time_range.end_ms.min(new_range.end_ms);
-                        }
-                    }
-                }
-
-                return Ok(());
+        // Collect all descendant IDs (children + their descendants).
+        let mut all_removed = Vec::new();
+        for child_id in &child_ids {
+            all_removed.push(*child_id);
+            for desc in self.descendants_of(*child_id) {
+                all_removed.push(desc.id);
             }
         }
 
-        Err(Error::ClipNotFound(clip_id.0))
-    }
+        self.nodes.retain(|n| !all_removed.contains(&n.id));
+        self.relationships.retain(|r| {
+            !all_removed.contains(&r.from_node) && !all_removed.contains(&r.to_node)
+        });
+        self.node_arcs
+            .retain(|na| !all_removed.contains(&na.node_id));
 
-    /// Toggle sub-beats visibility for a track.
-    pub fn set_sub_beats_visible(&mut self, track_id: TrackId, visible: bool) -> Result<()> {
-        self.track_mut(track_id)?.sub_beats_visible = visible;
-        Ok(())
-    }
-
-    /// Remove all sub-beats for a parent clip.
-    pub fn clear_sub_beats_for_clip(&mut self, parent_clip_id: ClipId) -> Result<()> {
-        for track in &mut self.tracks {
-            let removed_ids: Vec<ClipId> = track
-                .sub_beats
-                .iter()
-                .filter(|b| b.parent_clip_id == Some(parent_clip_id))
-                .map(|b| b.id)
-                .collect();
-            track
-                .sub_beats
-                .retain(|b| b.parent_clip_id != Some(parent_clip_id));
-            self.relationships.retain(|r| {
-                !removed_ids.contains(&r.from_clip) && !removed_ids.contains(&r.to_clip)
-            });
-        }
         Ok(())
     }
 }

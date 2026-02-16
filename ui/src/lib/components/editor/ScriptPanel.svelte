@@ -1,61 +1,42 @@
 <script lang="ts">
 	import ScriptView from './ScriptView.svelte';
-	import { timelineState } from '$lib/stores/timeline.svelte.js';
+	import { timelineState, scrollToNode, nodesAtLevel } from '$lib/stores/timeline.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
 	import { colorToHex } from '$lib/types.js';
-	import type { BeatClip, StoryArc } from '$lib/types.js';
+	import type { StoryNode } from '$lib/types.js';
 
-	/** All clips sorted by start time across all tracks, with sub-beats nested under parents. */
-	let sortedClips = $derived.by(() => {
-		const tl = timelineState.timeline;
-		if (!tl) return [];
-		const entries: { clip: BeatClip; arcId: string; isSubBeat?: boolean }[] = [];
-		for (const track of tl.tracks) {
-			for (const clip of track.clips) {
-				entries.push({ clip, arcId: track.arc_id });
-				// Insert sub-beats for this parent clip, sorted by start time.
-				const children = track.sub_beats
-					.filter(sb => sb.parent_clip_id === clip.id)
-					.sort((a, b) => a.time_range.start_ms - b.time_range.start_ms);
-				for (const child of children) {
-					entries.push({ clip: child, arcId: track.arc_id, isSubBeat: true });
-				}
-			}
-		}
-		entries.sort((a, b) => {
-			// Sort by parent's start time first (sub-beats use their parent's position).
-			const aParentStart = a.isSubBeat
-				? tl.tracks.flatMap(t => t.clips).find(c => c.id === a.clip.parent_clip_id)?.time_range.start_ms ?? a.clip.time_range.start_ms
-				: a.clip.time_range.start_ms;
-			const bParentStart = b.isSubBeat
-				? tl.tracks.flatMap(t => t.clips).find(c => c.id === b.clip.parent_clip_id)?.time_range.start_ms ?? b.clip.time_range.start_ms
-				: b.clip.time_range.start_ms;
-			if (aParentStart !== bParentStart) return aParentStart - bParentStart;
-			// Parent comes before its children.
-			if (!a.isSubBeat && b.isSubBeat && b.clip.parent_clip_id === a.clip.id) return -1;
-			if (!b.isSubBeat && a.isSubBeat && a.clip.parent_clip_id === b.clip.id) return 1;
-			// Sub-beats sorted by their own start time.
-			return a.clip.time_range.start_ms - b.clip.time_range.start_ms;
-		});
-		return entries;
+	/** All Beat-level nodes sorted by start time — these contain the scripts. */
+	let sortedNodes = $derived.by(() => {
+		return nodesAtLevel('Beat');
 	});
 
-	function arcFor(arcId: string): StoryArc | undefined {
-		return storyState.arcs.find(a => a.id === arcId);
+	/** Get the primary arc color for a node from node_arcs. */
+	function arcColorForNode(nodeId: string): string {
+		const nodeArcs = timelineState.timeline?.node_arcs.filter(na => na.node_id === nodeId) ?? [];
+		if (nodeArcs.length === 0) return 'var(--color-rel-default)';
+		const arc = storyState.arcs.find(a => a.id === nodeArcs[0]!.arc_id);
+		return arc ? colorToHex(arc.color) : 'var(--color-rel-default)';
 	}
 
-	function scriptText(clip: BeatClip): string | null {
-		return clip.content.user_refined_script || clip.content.generated_script || null;
+	function scriptText(node: StoryNode): string | null {
+		return node.content.content || null;
+	}
+
+
+	function handleNodeClick(node: StoryNode) {
+		editorState.selectedNodeId = node.id;
+		editorState.selectedNode = node;
+		scrollToNode(node.time_range.start_ms, node.time_range.end_ms);
 	}
 
 	let scrollContainer: HTMLDivElement | undefined = $state();
 
-	// Auto-scroll to selected clip's section.
+	// Auto-scroll to selected node's section.
 	$effect(() => {
-		const selId = editorState.selectedClipId;
+		const selId = editorState.selectedNodeId;
 		if (selId && scrollContainer) {
-			const el = scrollContainer.querySelector(`[data-clip-id="${selId}"]`);
+			const el = scrollContainer.querySelector(`[data-node-id="${selId}"]`);
 			if (el) {
 				el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 			}
@@ -66,38 +47,41 @@
 <div class="script-panel" bind:this={scrollContainer}>
 	<div class="script-panel-header">
 		<span class="script-panel-title">Script</span>
-		<span class="script-panel-count">{sortedClips.filter(e => scriptText(e.clip)).length} / {sortedClips.length} beats</span>
+		<span class="script-panel-count">{sortedNodes.filter(n => scriptText(n)).length} / {sortedNodes.length} beats</span>
 	</div>
 
 	<div class="script-panel-body">
-		{#if sortedClips.length === 0}
-			<p class="script-empty">No clips on the timeline yet.</p>
+		{#if sortedNodes.length === 0}
+			<p class="script-empty">No beat nodes on the timeline yet.</p>
 		{:else}
-			{#each sortedClips as entry (entry.clip.id)}
-				{@const arc = arcFor(entry.arcId)}
-				{@const text = scriptText(entry.clip)}
-				{@const streamText = editorState.streamingClipId === entry.clip.id && editorState.streamingText ? editorState.streamingText : null}
+			{#each sortedNodes as node (node.id)}
+				{@const text = scriptText(node)}
+				{@const streamText = editorState.streamingNodeId === node.id && editorState.streamingText ? editorState.streamingText : null}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div
 					class="script-beat"
-					class:selected={editorState.selectedClipId === entry.clip.id}
+					class:selected={editorState.selectedNodeId === node.id}
 					class:dimmed={!text && !streamText}
-					class:sub-beat={entry.isSubBeat}
-					data-clip-id={entry.clip.id}
+					data-node-id={node.id}
+					onclick={() => handleNodeClick(node)}
 				>
 					<div class="beat-header">
 						<span
 							class="arc-dot"
-							style="background: {arc ? colorToHex(arc.color) : 'var(--color-rel-default)'}"
+							style="background: {arcColorForNode(node.id)}"
 						></span>
-						<span class="beat-name">{entry.clip.name}</span>
-						<span class="beat-type">{entry.clip.beat_type}</span>
+						<span class="beat-name">{node.name}</span>
+						{#if node.beat_type}
+							<span class="beat-type">{typeof node.beat_type === 'string' ? node.beat_type : node.beat_type.Custom}</span>
+						{/if}
 					</div>
 					{#if text}
 						<ScriptView {text} entities={storyState.entities} />
 					{:else if streamText}
 						<ScriptView text={streamText} streaming={true} entities={storyState.entities} />
-					{:else if entry.isSubBeat && entry.clip.content.beat_notes}
-						<p class="beat-outline">{entry.clip.content.beat_notes}</p>
+					{:else if node.content.notes}
+						<p class="beat-outline">{node.content.notes}</p>
 					{:else}
 						<p class="no-script">No script generated</p>
 					{/if}
@@ -161,6 +145,13 @@
 		border: 1px solid transparent;
 		padding: 4px;
 		break-inside: avoid;
+		cursor: pointer;
+		transition: border-color 0.1s, background 0.1s;
+	}
+
+	.script-beat:hover:not(.selected) {
+		border-color: var(--color-border-default);
+		background: var(--color-bg-hover);
 	}
 
 	.script-beat.selected {
@@ -195,17 +186,6 @@
 		font-size: 0.65rem;
 		color: var(--color-text-muted);
 		text-transform: capitalize;
-	}
-
-	.script-beat.sub-beat {
-		margin-left: 12px;
-		border-left: 2px solid var(--color-border-subtle);
-		padding-left: 8px;
-		margin-bottom: 8px;
-	}
-
-	.script-beat.sub-beat .beat-name {
-		font-size: 0.7rem;
 	}
 
 	.beat-outline {

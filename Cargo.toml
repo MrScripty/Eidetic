@@ -26,3 +26,5 @@ reqwest = { version = "0.12", features = ["json", "stream"] }
 tokio-stream = "0.1"
 dirs = "6"
 genpdf = "0.2"
+rusqlite = { version = "0.32", features = ["bundled"] }
+yrs = { version = "0.25", features = ["sync"] }

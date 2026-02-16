@@ -20,5 +20,9 @@
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
     "vite": "^6.1.0"
+  },
+  "dependencies": {
+    "lib0": "^0.2.117",
+    "yjs": "^13.6.29"
   }
 }

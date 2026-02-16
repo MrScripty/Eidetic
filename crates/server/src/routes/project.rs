@@ -64,6 +64,7 @@ async fn get_project(
 #[derive(Deserialize)]
 pub struct UpdateProjectRequest {
     pub name: Option<String>,
+    pub premise: Option<String>,
 }
 
 async fn update_project(
@@ -75,6 +76,9 @@ async fn update_project(
         Some(project) => {
             if let Some(name) = body.name {
                 project.name = name;
+            }
+            if let Some(premise) = body.premise {
+                project.premise = premise;
             }
             let json = serde_json::to_value(&*project).unwrap();
             drop(guard);
@@ -134,7 +138,14 @@ async fn load_project(
         Ok(project) => {
             let json = serde_json::to_value(&project).unwrap();
             *state.project.lock() = Some(project);
-            *state.project_path.lock() = Some(path);
+            // Normalize save path to .db so future auto-saves write SQLite.
+            let save_path = if path.extension().map_or(false, |ext| ext == "json") {
+                path.with_file_name("project.db")
+            } else {
+                path
+            };
+            *state.project_path.lock() = Some(save_path);
+            state.trigger_save();
             Json(json)
         }
         Err(e) => Json(serde_json::json!({ "error": e })),

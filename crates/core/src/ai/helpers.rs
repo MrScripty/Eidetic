@@ -1,37 +1,57 @@
 use crate::ai::backend::{RecapEntry, SurroundingContext};
 use crate::story::arc::StoryArc;
-use crate::timeline::clip::{BeatClip, ClipId};
-use crate::timeline::track::ArcTrack;
+use crate::timeline::node::{NodeId, StoryLevel, StoryNode};
 use crate::timeline::Timeline;
 
-/// Default context window: number of clips before and after to include.
+/// Default context window: number of sibling nodes before and after to include.
 const CONTEXT_WINDOW: usize = 2;
 
-/// Maximum number of recaps to include across all tracks.
+/// Maximum number of recaps to include.
 const MAX_RECAPS: usize = 6;
 
-/// Gather surrounding scripts from adjacent clips on the same track.
+/// Gather surrounding content from sibling nodes (same parent, same level).
 ///
-/// Looks at up to `CONTEXT_WINDOW` clips before and after the target,
-/// collecting any generated or user-refined scripts.
-pub fn gather_surrounding_scripts(
-    track: &ArcTrack,
-    clip_id: ClipId,
+/// Looks at up to `CONTEXT_WINDOW` siblings before and after the target,
+/// collecting any generated or user-refined content.
+pub fn gather_surrounding_context(
+    timeline: &Timeline,
+    node_id: NodeId,
 ) -> SurroundingContext {
-    let Some(idx) = track.clips.iter().position(|c| c.id == clip_id) else {
+    let Ok(node) = timeline.node(node_id) else {
         return SurroundingContext::default();
     };
 
-    let preceding_scripts = track.clips[idx.saturating_sub(CONTEXT_WINDOW)..idx]
+    let siblings = timeline.siblings_of(node_id);
+
+    // Find where the target node would sit chronologically among siblings.
+    let target_start = node.time_range.start_ms;
+
+    // Split siblings into before and after by time.
+    let preceding: Vec<&StoryNode> = siblings
         .iter()
-        .filter_map(|c| best_script(c))
+        .filter(|s| s.time_range.start_ms < target_start)
+        .copied()
         .collect();
 
-    let after_start = idx + 1;
-    let after_end = (after_start + CONTEXT_WINDOW).min(track.clips.len());
-    let following_scripts = track.clips[after_start..after_end]
+    let following: Vec<&StoryNode> = siblings
         .iter()
-        .filter_map(|c| best_script(c))
+        .filter(|s| s.time_range.start_ms > target_start)
+        .copied()
+        .collect();
+
+    // Take the last CONTEXT_WINDOW preceding and first CONTEXT_WINDOW following.
+    let preceding_scripts = preceding
+        .iter()
+        .rev()
+        .take(CONTEXT_WINDOW)
+        .rev()
+        .filter_map(|n| best_text(n))
+        .collect();
+
+    let following_scripts = following
+        .iter()
+        .take(CONTEXT_WINDOW)
+        .filter_map(|n| best_text(n))
         .collect();
 
     SurroundingContext {
@@ -41,114 +61,78 @@ pub fn gather_surrounding_scripts(
     }
 }
 
-/// Gather surrounding scripts from sibling sub-beats on the same track.
-///
-/// For a sub-beat, the "surrounding" context is the other sub-beats
-/// belonging to the same parent clip, ordered by time.
-pub fn gather_surrounding_sub_beat_scripts(
-    track: &ArcTrack,
-    clip_id: ClipId,
-) -> SurroundingContext {
-    // Find this sub-beat's parent.
-    let parent_id = match track.sub_beats.iter().find(|b| b.id == clip_id) {
-        Some(b) => match b.parent_clip_id {
-            Some(pid) => pid,
-            None => return SurroundingContext::default(),
-        },
-        None => return SurroundingContext::default(),
-    };
-
-    // Get all siblings sorted by time.
-    let mut siblings: Vec<&BeatClip> = track.sub_beats_for_clip(parent_id);
-    siblings.sort_by_key(|b| b.time_range.start_ms);
-
-    let Some(idx) = siblings.iter().position(|b| b.id == clip_id) else {
-        return SurroundingContext::default();
-    };
-
-    let preceding_scripts = siblings[idx.saturating_sub(CONTEXT_WINDOW)..idx]
-        .iter()
-        .filter_map(|c| best_script_or_outline(c))
-        .collect();
-
-    let after_start = idx + 1;
-    let after_end = (after_start + CONTEXT_WINDOW).min(siblings.len());
-    let following_scripts = siblings[after_start..after_end]
-        .iter()
-        .filter_map(|c| best_script_or_outline(c))
-        .collect();
-
-    SurroundingContext {
-        preceding_scripts,
-        following_scripts,
-        preceding_recaps: Vec::new(),
+/// Return the script/outline content for a node, if any.
+pub fn best_text(node: &StoryNode) -> Option<String> {
+    if node.content.content.is_empty() {
+        None
+    } else {
+        Some(node.content.content.clone())
     }
 }
 
-/// Return the best available script text for a clip (user-refined > generated).
-pub fn best_script(clip: &BeatClip) -> Option<String> {
-    clip.content
-        .user_refined_script
-        .as_ref()
-        .or(clip.content.generated_script.as_ref())
-        .cloned()
-}
-
-/// Return the best available context for a sub-beat:
-/// script if available, otherwise beat notes (outline from planning).
-pub fn best_script_or_outline(clip: &BeatClip) -> Option<String> {
-    best_script(clip).or_else(|| {
-        let notes = &clip.content.beat_notes;
+/// Return the best available context for a node:
+/// text if available, otherwise notes (outline from planning).
+pub fn best_text_or_outline(node: &StoryNode) -> Option<String> {
+    best_text(node).or_else(|| {
+        let notes = &node.content.notes;
         if notes.trim().is_empty() {
             None
         } else {
-            Some(format!("[BEAT OUTLINE: {} ({:?})]\n{}", clip.name, clip.beat_type, notes))
+            let type_label = node
+                .beat_type
+                .as_ref()
+                .map(|bt| format!("{:?}", bt))
+                .unwrap_or_else(|| node.level.to_string());
+            Some(format!("[OUTLINE: {} ({})]\n{}", node.name, type_label, notes))
         }
     })
 }
 
-/// Gather scene recaps from ALL tracks for clips that end before the
-/// target clip's start time. Returns the most recent recaps, ordered
-/// chronologically (earliest first).
+/// Gather scene recaps from preceding nodes for continuity context.
 ///
-/// This provides cross-track continuity: when generating for Track A Clip 3,
-/// we include recaps from Track B Clip 1 and Track B Clip 2 if they
-/// temporally precede it.
+/// Looks at Scene-level nodes that end before the target node's start time
+/// and have scene recaps. For Beat-level targets, looks at sibling beats
+/// and preceding scenes.
 pub fn gather_recap_context(
     timeline: &Timeline,
     arcs: &[StoryArc],
-    target_clip_id: ClipId,
+    target_node_id: NodeId,
 ) -> Vec<RecapEntry> {
-    let Ok(target_clip) = timeline.clip(target_clip_id) else {
+    let Ok(target) = timeline.node(target_node_id) else {
         return vec![];
     };
-    let target_start = target_clip.time_range.start_ms;
+    let target_start = target.time_range.start_ms;
 
     let mut entries: Vec<RecapEntry> = Vec::new();
 
-    for track in &timeline.tracks {
-        let arc_name = arcs
-            .iter()
-            .find(|a| a.id == track.arc_id)
-            .map(|a| a.name.as_str())
-            .unwrap_or("Unknown Arc");
+    // Gather recaps from all Scene-level nodes that precede the target.
+    for node in &timeline.nodes {
+        if node.id == target_node_id {
+            continue;
+        }
+        // Only include nodes that end before or at the target's start.
+        if node.time_range.end_ms > target_start {
+            continue;
+        }
+        // Only include Scene and Beat level nodes (they have recaps).
+        if node.level != StoryLevel::Scene && node.level != StoryLevel::Beat {
+            continue;
+        }
+        if let Some(ref recap) = node.content.scene_recap {
+            // Find arc names for this node.
+            let arc_ids = timeline.arcs_for_node(node.id);
+            let arc_name = arc_ids
+                .first()
+                .and_then(|aid| arcs.iter().find(|a| a.id == *aid))
+                .map(|a| a.name.as_str())
+                .unwrap_or("Untagged");
 
-        for clip in &track.clips {
-            if clip.id == target_clip_id {
-                continue;
-            }
-            // Only include clips that end before or at the target's start.
-            if clip.time_range.end_ms > target_start {
-                continue;
-            }
-            if let Some(ref recap) = clip.content.scene_recap {
-                entries.push(RecapEntry {
-                    arc_name: arc_name.to_string(),
-                    clip_name: clip.name.clone(),
-                    end_time_ms: clip.time_range.end_ms,
-                    recap: recap.clone(),
-                });
-            }
+            entries.push(RecapEntry {
+                arc_name: arc_name.to_string(),
+                node_name: node.name.clone(),
+                end_time_ms: node.time_range.end_ms,
+                recap: recap.clone(),
+            });
         }
     }
 

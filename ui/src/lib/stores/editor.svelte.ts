@@ -1,22 +1,23 @@
-import type { ClipId, BeatClip, AiStatus, ConsistencySuggestion } from '../types.js';
+import type { NodeId, StoryNode, StoryLevel, AiStatus, ConsistencySuggestion } from '../types.js';
 
 /**
- * Transient UI state for the beat editor panel. Frontend-owned.
- *
- * TODO: Split into focused stores (selectionState, generationState, aiState)
- * once all consumers have been migrated. Tracked in Sprint 2.
+ * Transient UI state for the node editor panel. Frontend-owned.
  */
 export const editorState = $state<{
-	selectedClipId: ClipId | null;
-	selectedClip: BeatClip | null;
-	/** Clip ID currently streaming generation. */
-	streamingClipId: ClipId | null;
+	selectedNodeId: NodeId | null;
+	selectedNode: StoryNode | null;
+	/** Selected hierarchy level for the editor panel. */
+	selectedLevel: StoryLevel | null;
+	/** Node ID currently streaming generation. */
+	streamingNodeId: NodeId | null;
 	/** Accumulated streaming text during generation. */
 	streamingText: string;
 	/** Number of tokens received so far. */
 	streamingTokenCount: number;
 	/** Formatted AI prompt context (system + user) for the active generation. */
 	generationContext: { system: string; user: string } | null;
+	/** Node ID that the generationContext belongs to. */
+	lastGenerationNodeId: NodeId | null;
 	/** Error from a failed generation. */
 	generationError: string | null;
 	/** Last-known AI backend status. */
@@ -29,47 +30,48 @@ export const editorState = $state<{
 	canUndo: boolean;
 	/** Whether redo is available. */
 	canRedo: boolean;
-	/** Parent clip ID during batch beat generation. */
-	batchParentClipId: ClipId | null;
-	/** Total number of beats in batch generation. */
+	/** Parent node ID during batch child generation. */
+	batchParentNodeId: NodeId | null;
+	/** Total number of children in batch generation. */
 	batchTotalCount: number;
-	/** Number of beats completed in batch generation. */
+	/** Number of children completed in batch generation. */
 	batchCompletedCount: number;
 }>({
-	selectedClipId: null,
-	selectedClip: null,
-	streamingClipId: null,
+	selectedNodeId: null,
+	selectedNode: null,
+	selectedLevel: null,
+	streamingNodeId: null,
 	streamingText: '',
 	streamingTokenCount: 0,
 	generationContext: null,
+	lastGenerationNodeId: null,
 	generationError: null,
 	aiStatus: null,
 	consistencySuggestions: [],
 	checkingConsistency: false,
 	canUndo: false,
 	canRedo: false,
-	batchParentClipId: null,
+	batchParentNodeId: null,
 	batchTotalCount: 0,
 	batchCompletedCount: 0,
 });
 
-/** Reset streaming state and begin a new generation for a single clip. */
-export function startGeneration(clipId: string) {
-	editorState.streamingClipId = clipId;
+/** Reset streaming state and begin a new generation for a single node. */
+export function startGeneration(nodeId: string) {
+	editorState.streamingNodeId = nodeId;
 	editorState.streamingText = '';
 	editorState.streamingTokenCount = 0;
 	editorState.generationContext = null;
 	editorState.generationError = null;
-	// Clear any batch state when starting individual generation.
-	editorState.batchParentClipId = null;
+	editorState.batchParentNodeId = null;
 }
 
-/** Start batch generation tracking for all sub-beats of a parent clip. */
-export function startBatchGeneration(parentClipId: string) {
-	editorState.batchParentClipId = parentClipId;
+/** Start batch generation tracking for all children of a parent node. */
+export function startBatchGeneration(parentNodeId: string) {
+	editorState.batchParentNodeId = parentNodeId;
 	editorState.batchTotalCount = 0;
 	editorState.batchCompletedCount = 0;
-	editorState.streamingClipId = null;
+	editorState.streamingNodeId = null;
 	editorState.streamingText = '';
 	editorState.streamingTokenCount = 0;
 	editorState.generationContext = null;
@@ -80,18 +82,17 @@ export function startBatchGeneration(parentClipId: string) {
 export function setBatchTotalCount(count: number) {
 	editorState.batchTotalCount = count;
 	if (editorState.batchCompletedCount >= count && count > 0) {
-		editorState.batchParentClipId = null;
+		editorState.batchParentNodeId = null;
 	}
 }
 
 /** Append a streaming token if it matches the active generation. */
-export function appendStreamingToken(clipId: string, token: string, count: number) {
-	if (editorState.streamingClipId === clipId) {
+export function appendStreamingToken(nodeId: string, token: string, count: number) {
+	if (editorState.streamingNodeId === nodeId) {
 		editorState.streamingText += token;
 		editorState.streamingTokenCount = count;
-	} else if (editorState.batchParentClipId != null) {
-		// New sub-beat starting during batch — auto-switch streaming target.
-		editorState.streamingClipId = clipId;
+	} else if (editorState.batchParentNodeId != null) {
+		editorState.streamingNodeId = nodeId;
 		editorState.streamingText = token;
 		editorState.streamingTokenCount = count;
 		editorState.generationContext = null;
@@ -99,43 +100,43 @@ export function appendStreamingToken(clipId: string, token: string, count: numbe
 }
 
 /** Finalize a completed generation. */
-export function completeGeneration(clipId: string) {
-	if (editorState.streamingClipId === clipId) {
-		editorState.streamingClipId = null;
+export function completeGeneration(nodeId: string) {
+	if (editorState.streamingNodeId === nodeId) {
+		editorState.streamingNodeId = null;
 		editorState.streamingText = '';
 	}
-	if (editorState.batchParentClipId != null) {
+	if (editorState.batchParentNodeId != null) {
 		editorState.batchCompletedCount++;
 		if (editorState.batchCompletedCount >= editorState.batchTotalCount && editorState.batchTotalCount > 0) {
-			editorState.batchParentClipId = null;
+			editorState.batchParentNodeId = null;
 		}
 	}
 }
 
 /** Store the AI generation context (formatted prompts). */
-export function setGenerationContext(clipId: string, system: string, user: string) {
-	// Auto-switch for batch mode if a new sub-beat's context arrives.
-	if (editorState.batchParentClipId != null && editorState.streamingClipId !== clipId) {
-		editorState.streamingClipId = clipId;
+export function setGenerationContext(nodeId: string, system: string, user: string) {
+	if (editorState.batchParentNodeId != null && editorState.streamingNodeId !== nodeId) {
+		editorState.streamingNodeId = nodeId;
 		editorState.streamingText = '';
 		editorState.streamingTokenCount = 0;
 	}
-	if (editorState.streamingClipId === clipId) {
+	if (editorState.streamingNodeId === nodeId) {
 		editorState.generationContext = { system, user };
+		editorState.lastGenerationNodeId = nodeId;
 	}
 }
 
 /** Record a generation error. */
-export function setGenerationError(clipId: string, error: string) {
-	if (editorState.streamingClipId === clipId) {
+export function setGenerationError(nodeId: string, error: string) {
+	if (editorState.streamingNodeId === nodeId) {
 		editorState.generationError = error;
-		editorState.streamingClipId = null;
+		editorState.streamingNodeId = null;
 		editorState.streamingText = '';
 	}
-	if (editorState.batchParentClipId != null) {
+	if (editorState.batchParentNodeId != null) {
 		editorState.batchCompletedCount++;
 		if (editorState.batchCompletedCount >= editorState.batchTotalCount && editorState.batchTotalCount > 0) {
-			editorState.batchParentClipId = null;
+			editorState.batchParentNodeId = null;
 		}
 	}
 }
@@ -148,10 +149,10 @@ export function addConsistencySuggestion(suggestion: ConsistencySuggestion) {
 	];
 }
 
-/** Remove a consistency suggestion by target clip ID. */
-export function removeConsistencySuggestion(targetClipId: string) {
+/** Remove a consistency suggestion by target node ID. */
+export function removeConsistencySuggestion(targetNodeId: string) {
 	editorState.consistencySuggestions = editorState.consistencySuggestions.filter(
-		(s) => s.target_clip_id !== targetClipId
+		(s) => s.target_node_id !== targetNodeId
 	);
 }
 

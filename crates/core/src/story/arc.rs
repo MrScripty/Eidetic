@@ -11,10 +11,17 @@ impl ArcId {
     }
 }
 
-/// A named story arc (A-plot, B-plot, etc.) with its own track on the timeline.
+/// A named story arc (A-plot, B-plot, etc.) that threads through the narrative.
+///
+/// Arcs are hierarchical tags — any story node at any level can be tagged with
+/// one or more arcs. Arcs can contain sub-arcs (e.g., a character's personal arc
+/// within the main A-plot).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoryArc {
     pub id: ArcId,
+    /// For sub-arcs: the parent arc this belongs to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_arc_id: Option<ArcId>,
     pub name: String,
     pub description: String,
     pub arc_type: ArcType,
@@ -25,6 +32,23 @@ impl StoryArc {
     pub fn new(name: impl Into<String>, arc_type: ArcType, color: Color) -> Self {
         Self {
             id: ArcId::new(),
+            parent_arc_id: None,
+            name: name.into(),
+            description: String::new(),
+            arc_type,
+            color,
+        }
+    }
+
+    pub fn new_sub_arc(
+        name: impl Into<String>,
+        arc_type: ArcType,
+        color: Color,
+        parent_arc_id: ArcId,
+    ) -> Self {
+        Self {
+            id: ArcId::new(),
+            parent_arc_id: Some(parent_arc_id),
             name: name.into(),
             description: String::new(),
             arc_type,
@@ -33,7 +57,7 @@ impl StoryArc {
     }
 }
 
-/// The role this arc plays in the episode structure.
+/// The role this arc plays in the story structure.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ArcType {
     APlot,
@@ -42,7 +66,7 @@ pub enum ArcType {
     Custom(String),
 }
 
-/// An RGB color used for tracks, clips, and relationship curves.
+/// An RGB color used for tracks, nodes, and relationship curves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Color {
     pub r: u8,

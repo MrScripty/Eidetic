@@ -1,137 +1,102 @@
-use crate::ai::backend::{GenerateRequest, PlanBeatsRequest};
-use crate::ai::context::overlapping_beats;
+use crate::ai::backend::{GenerateChildrenRequest, GenerateRequest};
 use crate::error::{Error, Result};
 use crate::project::Project;
 use crate::story::bible::{gather_bible_context, BibleContext, ResolvedEntity};
-use crate::timeline::clip::ClipId;
+use crate::timeline::node::NodeId;
 
-use super::helpers::{gather_recap_context, gather_surrounding_scripts, gather_surrounding_sub_beat_scripts};
+use super::helpers::{gather_recap_context, gather_surrounding_context};
 
-/// Build a [`GenerateRequest`] for a specific beat clip from the project state.
+/// Build a [`GenerateRequest`] for a specific story node from the project state.
 ///
 /// Gathers:
-/// - The target clip and its parent arc
-/// - Overlapping beats from other tracks at the same time position
-/// - Story bible entities resolved at this beat's time position
-/// - Surrounding scripts (up to 2 preceding and 2 following) from the same arc track
-pub fn build_generate_request(project: &Project, clip_id: ClipId) -> Result<GenerateRequest> {
+/// - The target node and its tagged arcs
+/// - Ancestor chain (parent, grandparent, etc.)
+/// - Sibling nodes at the same level
+/// - Story bible entities resolved at this node's time position
+/// - Surrounding content from sibling nodes
+pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<GenerateRequest> {
     let timeline = &project.timeline;
 
-    // Find the target clip.
-    let beat_clip = timeline.clip(clip_id)?.clone();
+    let target_node = timeline.node(node_id)?.clone();
 
-    // Find which track (and therefore which arc) owns this clip.
-    let track = timeline
-        .track_for_clip(clip_id)
-        .ok_or(Error::ClipNotFound(clip_id.0))?;
-
-    let arc = project
+    // Gather tagged arcs for this node.
+    let arc_ids = timeline.arcs_for_node(node_id);
+    let tagged_arcs: Vec<_> = project
         .arcs
         .iter()
-        .find(|a| a.id == track.arc_id)
-        .ok_or(Error::ArcNotFound(track.arc_id.0))?
-        .clone();
-
-    // Collect overlapping beats from other arc tracks.
-    let overlapping = overlapping_beats(timeline, clip_id)
-        .into_iter()
-        .filter_map(|(ov_track, ov_clip)| {
-            let ov_arc = project.arcs.iter().find(|a| a.id == ov_track.arc_id)?;
-            Some((ov_clip.clone(), ov_arc.clone()))
-        })
+        .filter(|a| arc_ids.contains(&a.id))
+        .cloned()
         .collect();
 
-    // For sub-beats, gather surrounding context from sibling sub-beats.
-    // For main clips, gather from the main track as before.
-    let mut surrounding_context = if beat_clip.parent_clip_id.is_some() {
-        gather_surrounding_sub_beat_scripts(track, clip_id)
-    } else {
-        gather_surrounding_scripts(track, clip_id)
-    };
+    // Gather ancestor chain (parent, grandparent, etc.).
+    let ancestor_chain: Vec<_> = timeline.ancestors_of(node_id).into_iter().cloned().collect();
 
-    // Gather cross-track recaps for continuity.
+    // Gather siblings at the same level.
+    let siblings: Vec<_> = timeline.siblings_of(node_id).into_iter().cloned().collect();
+
+    // Gather surrounding context from siblings.
+    let mut surrounding_context = gather_surrounding_context(timeline, node_id);
+
+    // Gather cross-node recaps for continuity.
     surrounding_context.preceding_recaps =
-        gather_recap_context(&project.timeline, &project.arcs, clip_id);
+        gather_recap_context(&project.timeline, &project.arcs, node_id);
 
-    // Gather bible context resolved at the beat's midpoint time.
-    let beat_mid_ms = beat_clip.time_range.start_ms
-        + beat_clip.time_range.duration_ms() / 2;
-    let bible_context = gather_bible_context(&project.bible, clip_id, beat_mid_ms);
+    // Gather bible context resolved at the node's midpoint time.
+    let node_mid_ms = target_node.time_range.start_ms
+        + target_node.time_range.duration_ms() / 2;
+    let bible_context = gather_bible_context(&project.bible, node_id, node_mid_ms);
 
-    let time_budget_ms = beat_clip.time_range.duration_ms();
-
-    // If this is a sub-beat, gather parent context and sibling outlines.
-    let (parent_scene_notes, sibling_beat_outlines) =
-        if let Some(parent_id) = beat_clip.parent_clip_id {
-            let parent_notes = timeline
-                .clip(parent_id)
-                .ok()
-                .map(|p| p.content.beat_notes.clone());
-
-            let siblings: Vec<(String, String, String)> = track
-                .sub_beats_for_clip(parent_id)
-                .into_iter()
-                .map(|b| {
-                    (
-                        b.name.clone(),
-                        format!("{:?}", b.beat_type),
-                        b.content.beat_notes.clone(),
-                    )
-                })
-                .collect();
-
-            (parent_notes, siblings)
-        } else {
-            (None, vec![])
-        };
+    let time_budget_ms = target_node.time_range.duration_ms();
 
     Ok(GenerateRequest {
-        beat_clip,
-        arc,
-        overlapping_beats: overlapping,
+        target_node,
+        tagged_arcs,
+        ancestor_chain,
+        siblings,
         bible_context,
         surrounding_context,
         time_budget_ms,
         user_written_anchors: vec![],
         style_notes: None,
         rag_context: vec![],
-        parent_scene_notes,
-        sibling_beat_outlines,
     })
 }
 
-/// Build a [`PlanBeatsRequest`] for decomposing a scene clip into beats.
+/// Build a [`GenerateChildrenRequest`] for decomposing a parent node into children.
 ///
-/// Gathers the same context as `build_generate_request` minus overlapping beats
-/// and RAG, since beat planning only needs the scene's own context.
-pub fn build_plan_beats_request(project: &Project, clip_id: ClipId) -> Result<PlanBeatsRequest> {
+/// Gathers the same context as `build_generate_request` but focused on the
+/// parent node. The AI will use this to generate child proposals.
+pub fn build_generate_children_request(
+    project: &Project,
+    parent_node_id: NodeId,
+) -> Result<GenerateChildrenRequest> {
     let timeline = &project.timeline;
 
-    let beat_clip = timeline.clip(clip_id)?.clone();
+    let parent_node = timeline.node(parent_node_id)?.clone();
 
-    let track = timeline
-        .track_for_clip(clip_id)
-        .ok_or(Error::ClipNotFound(clip_id.0))?;
+    let target_child_level = parent_node.level.child_level().ok_or_else(|| {
+        Error::InvalidHierarchy(format!(
+            "{} nodes cannot have children",
+            parent_node.level
+        ))
+    })?;
 
-    let arc = project
+    let arc_ids = timeline.arcs_for_node(parent_node_id);
+    let tagged_arcs: Vec<_> = project
         .arcs
         .iter()
-        .find(|a| a.id == track.arc_id)
-        .ok_or(Error::ArcNotFound(track.arc_id.0))?
-        .clone();
+        .filter(|a| arc_ids.contains(&a.id))
+        .cloned()
+        .collect();
 
-    let mut surrounding_context = gather_surrounding_scripts(track, clip_id);
+    let mut surrounding_context = gather_surrounding_context(timeline, parent_node_id);
     surrounding_context.preceding_recaps =
-        gather_recap_context(&project.timeline, &project.arcs, clip_id);
+        gather_recap_context(timeline, &project.arcs, parent_node_id);
 
-    let beat_mid_ms =
-        beat_clip.time_range.start_ms + beat_clip.time_range.duration_ms() / 2;
+    let node_mid_ms =
+        parent_node.time_range.start_ms + parent_node.time_range.duration_ms() / 2;
 
-    // For beat planning, include ALL entities with full detail.
-    // Unlike generation, the clip hasn't been processed yet so clip_refs
-    // won't reference it — gather_bible_context would put everything in
-    // "nearby" (compact only). The planner needs full entity info to
-    // reference characters, locations, and props in beat outlines.
+    // For child planning, include ALL entities with full detail.
     let bible_context = BibleContext {
         referenced_entities: project
             .bible
@@ -141,24 +106,34 @@ pub fn build_plan_beats_request(project: &Project, clip_id: ClipId) -> Result<Pl
                 entity_id: e.id,
                 name: e.name.clone(),
                 category: e.category.clone(),
-                compact_text: e.to_prompt_text(beat_mid_ms),
-                full_text: Some(e.to_full_prompt_text(beat_mid_ms)),
+                compact_text: e.to_prompt_text(node_mid_ms),
+                full_text: Some(e.to_full_prompt_text(node_mid_ms)),
             })
             .collect(),
         nearby_entities: Vec::new(),
     };
 
-    Ok(PlanBeatsRequest {
-        beat_clip,
-        arc,
+    // Include episode structure for Premise → Act decomposition.
+    let episode_structure = if parent_node.level == crate::timeline::node::StoryLevel::Premise {
+        Some(timeline.structure.clone())
+    } else {
+        None
+    };
+
+    Ok(GenerateChildrenRequest {
+        parent_node,
+        target_child_level,
+        tagged_arcs,
         bible_context,
         surrounding_context,
+        episode_structure,
     })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::timeline::node::StoryLevel;
     use crate::Template;
 
     #[test]
@@ -166,34 +141,21 @@ mod tests {
         let project = Template::MultiCam.build_project("Test");
         let timeline = &project.timeline;
 
-        let first_clip_id = timeline.tracks[0].clips[0].id;
-        let req = build_generate_request(&project, first_clip_id).unwrap();
+        // Get the first scene node.
+        let scenes = timeline.nodes_at_level(StoryLevel::Scene);
+        assert!(!scenes.is_empty(), "template should have scene nodes");
 
-        assert_eq!(req.beat_clip.id, first_clip_id);
-        assert_eq!(req.arc.id, timeline.tracks[0].arc_id);
-        assert_eq!(req.time_budget_ms, req.beat_clip.time_range.duration_ms());
+        let first_scene_id = scenes[0].id;
+        let req = build_generate_request(&project, first_scene_id).unwrap();
+
+        assert_eq!(req.target_node.id, first_scene_id);
+        assert_eq!(req.time_budget_ms, req.target_node.time_range.duration_ms());
     }
 
     #[test]
-    fn surrounding_scripts_window() {
+    fn build_request_node_not_found() {
         let project = Template::MultiCam.build_project("Test");
-        let timeline = &project.timeline;
-        let track = &timeline.tracks[0];
-
-        // First clip has no preceding scripts.
-        let ctx = gather_surrounding_scripts(track, track.clips[0].id);
-        assert!(ctx.preceding_scripts.is_empty());
-
-        // Last clip has no following scripts.
-        let last = track.clips.last().unwrap();
-        let ctx = gather_surrounding_scripts(track, last.id);
-        assert!(ctx.following_scripts.is_empty());
-    }
-
-    #[test]
-    fn build_request_clip_not_found() {
-        let project = Template::MultiCam.build_project("Test");
-        let bogus_id = ClipId::new();
+        let bogus_id = NodeId::new();
         let result = build_generate_request(&project, bogus_id);
         assert!(result.is_err());
     }

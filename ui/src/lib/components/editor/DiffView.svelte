@@ -10,7 +10,7 @@
 
 <div class="diff-view">
 	<div class="diff-header">
-		<span class="diff-target">Target: {suggestion.target_clip_id.slice(0, 8)}...</span>
+		<span class="diff-target">Target: {suggestion.target_node_id.slice(0, 8)}...</span>
 	</div>
 
 	<div class="diff-body">

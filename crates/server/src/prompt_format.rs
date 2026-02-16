@@ -1,7 +1,9 @@
 use uuid::Uuid;
 
-use eidetic_core::ai::backend::{EditContext, GenerateRequest, PlanBeatsRequest};
+use eidetic_core::ai::backend::{EditContext, GenerateChildrenRequest, GenerateRequest};
 use eidetic_core::story::bible::ResolvedEntity;
+use eidetic_core::timeline::node::StoryLevel;
+use eidetic_core::timeline::structure::SegmentType;
 use eidetic_core::timeline::timing::TimeRange;
 
 /// A structured chat prompt ready for serialization to any backend API.
@@ -11,6 +13,9 @@ pub(crate) struct ChatPrompt {
 }
 
 /// Build a chat prompt from a `GenerateRequest`.
+///
+/// Works for any hierarchy level — adapts instructions based on the target
+/// node's level (Beat → screenplay format, higher levels → structural outline).
 pub(crate) fn build_chat_prompt(request: &GenerateRequest) -> ChatPrompt {
     ChatPrompt {
         system: build_system_message(request),
@@ -19,21 +24,36 @@ pub(crate) fn build_chat_prompt(request: &GenerateRequest) -> ChatPrompt {
 }
 
 fn build_system_message(request: &GenerateRequest) -> String {
-    let mut system = String::from(
-        "You are an experienced TV screenwriter writing a 30-minute comedy/drama episode. \
-         Write in standard screenplay format.\n\n\
-         FORMAT RULES:\n\
-         - Scene headings: INT. or EXT. followed by LOCATION - TIME OF DAY (in ALL CAPS)\n\
-         - Action lines: present tense, vivid but concise\n\
-         - Character names: ALL CAPS, centered above their dialogue\n\
-         - Parentheticals: in (parentheses) below character name, only when absolutely necessary\n\
-         - Dialogue: natural, character-specific speech patterns\n\
-         - Transitions: CUT TO:, SMASH CUT TO:, etc. (use sparingly)\n",
-    );
+    let level = request.target_node.level;
 
-    // Story bible — entities directly referenced by this beat (full detail).
+    let mut system = if level == StoryLevel::Beat {
+        String::from(
+            "You are an experienced TV screenwriter writing a 30-minute comedy/drama episode. \
+             Write in standard screenplay format.\n\n\
+             FORMAT RULES:\n\
+             - Scene headings: INT. or EXT. followed by LOCATION - TIME OF DAY (in ALL CAPS)\n\
+             - Action lines: present tense, vivid but concise\n\
+             - Character names: ALL CAPS, centered above their dialogue\n\
+             - Parentheticals: in (parentheses) below character name, only when absolutely necessary\n\
+             - Dialogue: natural, character-specific speech patterns\n\
+             - Transitions: CUT TO:, SMASH CUT TO:, etc. (use sparingly)\n",
+        )
+    } else {
+        format!(
+            "You are an experienced TV story editor working on a 30-minute comedy/drama episode. \
+             Write a structural outline for this {} node.\n\n\
+             FORMAT RULES:\n\
+             - Write in clear prose, not screenplay format.\n\
+             - Describe what happens narratively — key events, character dynamics, emotional beats.\n\
+             - Focus on story structure and dramatic progression.\n\
+             - Be specific about character actions and motivations.\n",
+            level.label()
+        )
+    };
+
+    // Story bible — entities directly referenced by this node (full detail).
     if !request.bible_context.referenced_entities.is_empty() {
-        system.push_str("\nSTORY BIBLE — Key entities in this scene:\n");
+        system.push_str("\nSTORY BIBLE — Key entities in this section:\n");
         for entity in &request.bible_context.referenced_entities {
             if let Some(ref full) = entity.full_text {
                 system.push_str(full);
@@ -52,97 +72,130 @@ fn build_system_message(request: &GenerateRequest) -> String {
         }
     }
 
-    // Page budget.
-    let time_range = TimeRange {
-        start_ms: 0,
-        end_ms: request.time_budget_ms,
-    };
-    system.push_str(&format!(
-        "\nPAGE BUDGET:\nThis beat should be {}. \
-         Do not significantly exceed or fall short of this target.\n",
-        time_range.page_budget_instruction()
-    ));
+    // Page budget (only for Beat level).
+    if level == StoryLevel::Beat {
+        let time_range = TimeRange {
+            start_ms: 0,
+            end_ms: request.time_budget_ms,
+        };
+        system.push_str(&format!(
+            "\nPAGE BUDGET:\nThis beat should be {}. \
+             Do not significantly exceed or fall short of this target.\n",
+            time_range.page_budget_instruction()
+        ));
+    }
 
     system
 }
 
 fn build_user_message(request: &GenerateRequest) -> String {
-    let mut user = String::from("Write the screenplay for the following beat:\n\n");
+    let level = request.target_node.level;
+    let level_name = level.label().to_lowercase();
+
+    let mut user = if level == StoryLevel::Beat {
+        String::from("Write the screenplay for the following beat:\n\n")
+    } else {
+        format!(
+            "Write a structural outline for the following {}:\n\n",
+            level_name
+        )
+    };
 
     // Arc context.
-    user.push_str(&format!(
-        "STORY ARC: {} ({:?})",
-        request.arc.name, request.arc.arc_type,
-    ));
-    if !request.arc.description.is_empty() {
-        user.push_str(&format!(" — {}", request.arc.description));
+    if !request.tagged_arcs.is_empty() {
+        user.push_str("STORY ARCS: ");
+        let arc_strs: Vec<String> = request
+            .tagged_arcs
+            .iter()
+            .map(|a| {
+                let mut s = format!("{} ({:?})", a.name, a.arc_type);
+                if !a.description.is_empty() {
+                    s.push_str(&format!(" — {}", a.description));
+                }
+                s
+            })
+            .collect();
+        user.push_str(&arc_strs.join("; "));
+        user.push('\n');
     }
-    user.push('\n');
 
-    // Beat info.
+    // Node info.
     user.push_str(&format!(
-        "BEAT: {} ({:?})\n",
-        request.beat_clip.name, request.beat_clip.beat_type,
+        "{}: {}\n",
+        level.label().to_uppercase(),
+        request.target_node.name,
     ));
+    if let Some(ref bt) = request.target_node.beat_type {
+        user.push_str(&format!("BEAT TYPE: {:?}\n", bt));
+    }
 
-    // Beat notes — the primary content.
-    user.push_str("BEAT NOTES:\n");
-    user.push_str(&request.beat_clip.content.beat_notes);
+    // Notes — the primary content.
+    user.push_str(&format!("{} NOTES:\n", level.label().to_uppercase()));
+    user.push_str(&request.target_node.content.notes);
     user.push_str("\n\n");
 
-    // Sub-beat context: parent scene notes and sibling beat structure.
-    if let Some(ref parent_notes) = request.parent_scene_notes {
-        user.push_str("SCENE CONTEXT (parent scene this beat belongs to):\n");
-        user.push_str(parent_notes);
-        user.push_str("\n\n");
-    }
-
-    if !request.sibling_beat_outlines.is_empty() {
-        user.push_str("SCENE BEAT STRUCTURE (all beats in this scene — you are writing one of these):\n");
-        for (name, beat_type, outline) in &request.sibling_beat_outlines {
-            let marker = if *name == request.beat_clip.name { " ← YOU ARE HERE" } else { "" };
-            user.push_str(&format!("- {} ({}): {}{}\n", name, beat_type, outline, marker));
+    // Ancestor context (parent, grandparent, etc.).
+    if !request.ancestor_chain.is_empty() {
+        user.push_str("CONTEXT HIERARCHY:\n");
+        for ancestor in &request.ancestor_chain {
+            user.push_str(&format!(
+                "- {} ({}): {}\n",
+                ancestor.name,
+                ancestor.level.label(),
+                if ancestor.content.notes.is_empty() {
+                    "[no notes]"
+                } else {
+                    &ancestor.content.notes
+                },
+            ));
         }
-        user.push_str("\nWrite ONLY the beat marked above. Stay focused on this single beat.\n\n");
+        user.push('\n');
     }
 
-    // Scene weaving for overlapping beats.
-    if !request.overlapping_beats.is_empty() {
-        user.push_str(
-            "SCENE WEAVING — This scene also advances these storylines simultaneously:\n",
-        );
-        for (clip, arc) in &request.overlapping_beats {
-            user.push_str(&format!("- {} ({}): ", arc.name, clip.name));
-            if clip.content.beat_notes.is_empty() {
-                user.push_str("[no notes yet]");
+    // Sibling context (same level, same parent).
+    if !request.siblings.is_empty() {
+        user.push_str(&format!(
+            "SIBLING {}S (other {}s at this level — you are writing one of these):\n",
+            level.label().to_uppercase(),
+            level_name,
+        ));
+        for sibling in &request.siblings {
+            let marker = if sibling.id == request.target_node.id {
+                " ← YOU ARE HERE"
             } else {
-                user.push_str(&clip.content.beat_notes);
-            }
-            user.push('\n');
+                ""
+            };
+            let text = sibling.best_text();
+            let preview = if text.len() > 200 {
+                format!("{}...", &text[..200])
+            } else {
+                text.to_string()
+            };
+            user.push_str(&format!("- {}: {}{}\n", sibling.name, preview, marker));
         }
-        user.push_str(
-            "Weave all storylines into a single unified scene. \
-             Characters from different arcs should interact naturally.\n\n",
-        );
+        user.push_str(&format!(
+            "\nWrite ONLY the {} marked above. Stay focused.\n\n",
+            level_name
+        ));
     }
 
-    // Cross-track continuity recaps — distilled scene state summaries.
+    // Cross-node continuity recaps.
     if !request.surrounding_context.preceding_recaps.is_empty() {
         user.push_str(
-            "CONTINUITY CONTEXT — Scene recaps from preceding clips across all storylines.\n\
+            "CONTINUITY CONTEXT — Recaps from preceding nodes across all storylines.\n\
              THESE ARE ESTABLISHED FACTS. Your output must not contradict them:\n\n",
         );
         for entry in &request.surrounding_context.preceding_recaps {
             user.push_str(&format!(
                 "--- {} / {} ---\n{}\n\n",
-                entry.arc_name, entry.clip_name, entry.recap,
+                entry.arc_name, entry.node_name, entry.recap,
             ));
         }
     }
 
     // Surrounding scripts for continuity.
     if !request.surrounding_context.preceding_scripts.is_empty() {
-        user.push_str("PRECEDING SCRIPT (for continuity):\n");
+        user.push_str("PRECEDING CONTENT (for continuity):\n");
         for script in &request.surrounding_context.preceding_scripts {
             user.push_str(script);
             user.push_str("\n---\n");
@@ -152,7 +205,7 @@ fn build_user_message(request: &GenerateRequest) -> String {
 
     if !request.surrounding_context.following_scripts.is_empty() {
         user.push_str(
-            "FOLLOWING SCRIPT (for continuity — your output should lead naturally into this):\n",
+            "FOLLOWING CONTENT (for continuity — your output should lead naturally into this):\n",
         );
         for script in &request.surrounding_context.following_scripts {
             user.push_str(script);
@@ -172,7 +225,9 @@ fn build_user_message(request: &GenerateRequest) -> String {
 
     // RAG reference material.
     if !request.rag_context.is_empty() {
-        user.push_str("REFERENCE MATERIAL (use to inform tone, world details, and character voices):\n");
+        user.push_str(
+            "REFERENCE MATERIAL (use to inform tone, world details, and character voices):\n",
+        );
         for chunk in &request.rag_context {
             user.push_str(&format!(
                 "--- {} (relevance: {:.0}%) ---\n{}\n\n",
@@ -188,43 +243,56 @@ fn build_user_message(request: &GenerateRequest) -> String {
         user.push_str(&format!("STYLE NOTES: {notes}\n\n"));
     }
 
-    user.push_str("Write ONLY the screenplay text for this beat. Do not include metadata, comments, or explanations.");
+    if level == StoryLevel::Beat {
+        user.push_str(
+            "Write ONLY the screenplay text for this beat. \
+             Do not include metadata, comments, or explanations.",
+        );
+    } else {
+        user.push_str(&format!(
+            "Write ONLY the structural outline for this {}. \
+             Do not include metadata, comments, or explanations.",
+            level_name
+        ));
+    }
 
     user
 }
 
 /// Build a chat prompt for the consistency reaction pipeline.
 ///
-/// `downstream_beats` is a slice of `(clip_id, beat_name, current_script)` tuples.
+/// `downstream_nodes` is a slice of `(node_id, node_name, current_text)` tuples.
 pub(crate) fn build_consistency_prompt(
     edit_context: &EditContext,
-    downstream_beats: &[(Uuid, String, String)],
+    downstream_nodes: &[(Uuid, String, String)],
 ) -> ChatPrompt {
     let system = String::from(
         "You are a script consistency analyst for a 30-minute TV episode. \
-         Given an edit to a screenplay beat, identify necessary changes to \
-         downstream beats to maintain continuity.\n\n\
+         Given an edit to a story node, identify necessary changes to \
+         downstream nodes to maintain continuity.\n\n\
          RULES:\n\
          - Only suggest changes that are strictly necessary for consistency \
            (character names, plot references, continuity details).\n\
-         - Do not rewrite scenes for style — only fix factual/continuity breaks.\n\
+         - Do not rewrite content for style — only fix factual/continuity breaks.\n\
          - If no changes are needed, return an empty JSON array.\n\
          - Return ONLY valid JSON, no commentary.",
     );
 
-    let mut user = String::from("A screenplay beat was edited. Analyze whether downstream beats need updates.\n\n");
+    let mut user =
+        String::from("A story node was edited. Analyze whether downstream nodes need updates.\n\n");
 
     user.push_str(&format!(
-        "EDITED BEAT: {}\n\nBEFORE:\n{}\n\nAFTER:\n{}\n\n",
-        edit_context.beat_clip.name,
-        edit_context.previous_script,
-        edit_context.new_script,
+        "EDITED NODE: {}\n\nBEFORE:\n{}\n\nAFTER:\n{}\n\n",
+        edit_context.node.name, edit_context.previous_script, edit_context.new_script,
     ));
 
-    if !downstream_beats.is_empty() {
-        user.push_str("DOWNSTREAM BEATS TO CHECK:\n\n");
-        for (id, name, script) in downstream_beats {
-            user.push_str(&format!("--- Beat: {} (ID: {}) ---\n{}\n\n", name, id, script));
+    if !downstream_nodes.is_empty() {
+        user.push_str("DOWNSTREAM NODES TO CHECK:\n\n");
+        for (id, name, text) in downstream_nodes {
+            user.push_str(&format!(
+                "--- Node: {} (ID: {}) ---\n{}\n\n",
+                name, id, text
+            ));
         }
     }
 
@@ -233,8 +301,8 @@ pub(crate) fn build_consistency_prompt(
          ```json\n\
          [\n\
            {\n\
-             \"target_clip_id\": \"<uuid of the downstream beat>\",\n\
-             \"original_text\": \"<exact snippet from the downstream beat to replace>\",\n\
+             \"target_node_id\": \"<uuid of the downstream node>\",\n\
+             \"original_text\": \"<exact snippet from the downstream node to replace>\",\n\
              \"suggested_text\": \"<replacement text>\",\n\
              \"reason\": \"<brief explanation of why this change is needed>\"\n\
            }\n\
@@ -246,7 +314,7 @@ pub(crate) fn build_consistency_prompt(
     ChatPrompt { system, user }
 }
 
-/// Build a chat prompt for entity extraction from a generated script.
+/// Build a chat prompt for entity extraction from generated text.
 pub(crate) fn build_extraction_prompt(
     script: &str,
     existing_entities: &[ResolvedEntity],
@@ -256,6 +324,17 @@ pub(crate) fn build_extraction_prompt(
         "You are a story analyst for a 30-minute TV episode. \
          Given a screenplay beat, identify ALL characters, locations, props, themes, \
          and events present in the scene, along with any character development points.\n\n\
+         CATEGORY DEFINITIONS:\n\
+         - Character: A person, animal, or personified entity that acts, speaks, or is directly addressed.\n\
+         - Location: The physical setting/environment, including ALL atmospheric and environmental \
+           elements (weather, terrain, ambient features, background furniture, architectural elements, \
+           natural features like snow, trees, fog, rain). If characters do not directly interact with \
+           it, it is part of the Location, NOT a Prop.\n\
+         - Prop: An object a character directly handles, picks up, uses, wears, or that has specific \
+           plot significance. Must involve character agency or narrative function. Environmental/ \
+           atmospheric elements are NEVER props.\n\
+         - Theme: An abstract concept, motif, or recurring idea explored in the scene.\n\
+         - Event: A significant plot occurrence, turning point, or backstory revelation.\n\n\
          SCREENPLAY PARSING HINTS:\n\
          - Scene headings (INT./EXT. lines) indicate locations.\n\
          - Character names in ALLCAPS above dialogue lines indicate speaking characters.\n\
@@ -269,12 +348,15 @@ pub(crate) fn build_extraction_prompt(
          If a character speaks, appears, or is mentioned and they are not in the known list, add them. \
          Even minor or unnamed characters (e.g. \"Bartender\", \"Guard #1\") should be included.\n\
          - Err on the side of including too many new entities rather than too few.\n\
+         - Do NOT tag environmental elements (snow, rain, fog, trees, furniture) as Props. \
+         They belong to the Location.\n\
          - Snapshots are for meaningful development points (introductions, revelations, transformations).\n\
          - Keep taglines under 15 words.\n\
          - Return ONLY valid JSON, no commentary.",
     );
 
-    let mut user = String::from("Analyze this screenplay beat and extract entities and development points.\n\n");
+    let mut user =
+        String::from("Analyze this screenplay beat and extract entities and development points.\n\n");
 
     user.push_str(&format!("TIMELINE POSITION: {}ms\n\n", time_ms));
 
@@ -283,7 +365,9 @@ pub(crate) fn build_extraction_prompt(
     user.push_str("\n\n");
 
     if !existing_entities.is_empty() {
-        user.push_str("KNOWN ENTITIES (do NOT re-suggest these as new, but DO include them in entities_present if they appear):\n");
+        user.push_str(
+            "KNOWN ENTITIES (do NOT re-suggest these as new, but DO include them in entities_present if they appear):\n",
+        );
         for entity in existing_entities {
             user.push_str(&format!("- {} [{}]\n", entity.name, entity.category));
         }
@@ -323,15 +407,7 @@ pub(crate) fn build_extraction_prompt(
 }
 
 /// Build a chat prompt to generate a compact scene recap from a script.
-///
-/// The recap captures scene-end state, established facts, and narrative
-/// events in ~100-200 tokens of structured text. If a preceding recap
-/// is provided, the generated recap carries forward still-relevant facts
-/// (rolling summary behavior).
-pub(crate) fn build_recap_prompt(
-    script: &str,
-    preceding_recap: Option<&str>,
-) -> ChatPrompt {
+pub(crate) fn build_recap_prompt(script: &str, preceding_recap: Option<&str>) -> ChatPrompt {
     let system = String::from(
         "You are a script continuity analyst. Given a screenplay scene, produce a \
          compact structured recap that captures the scene's end state. This recap \
@@ -373,31 +449,87 @@ pub(crate) fn build_recap_prompt(
     ChatPrompt { system, user }
 }
 
-/// Build a chat prompt for beat planning — decomposing a scene clip into beats.
-pub(crate) fn build_beat_plan_prompt(request: &PlanBeatsRequest) -> ChatPrompt {
-    let mut system = String::from(
+/// Build a chat prompt for decomposing a parent node into children.
+///
+/// Works for any level: Act → Sequences, Sequence → Scenes, Scene → Beats.
+pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatPrompt {
+    let parent_level = request.parent_node.level;
+    let child_level = request.target_child_level;
+    let child_label = child_level.label().to_lowercase();
+
+    let mut system = format!(
         "You are a story structure analyst for a 30-minute TV episode. \
-         Given a scene description, break it down into individual narrative beats.\n\n\
-         BEAT TYPES (choose the most appropriate for each):\n\
-         - Setup: Establishes setting, characters, or situation\n\
-         - Complication: Introduces a problem or obstacle\n\
-         - Escalation: Raises stakes or tension\n\
-         - Climax: Peak moment of conflict or revelation\n\
-         - Resolution: Resolves the immediate conflict\n\
-         - Payoff: Delivers on earlier setup\n\
-         - Callback: References earlier material\n\n\
-         RULES:\n\
-         - Propose 3-7 beats depending on scene complexity.\n\
-         - Each beat should be a single dramatic moment or shift.\n\
-         - Outlines should be 1-2 sentences describing what happens.\n\
-         - Weights represent relative duration (1.0 = normal, 0.5 = brief, 2.0 = extended).\n\
-         - Beats should flow naturally from one to the next.\n\
-         - Return ONLY valid JSON, no commentary.\n",
+         Given a {} description, break it down into individual {}s.\n\n",
+        parent_level.label().to_lowercase(),
+        child_label,
     );
 
-    // Story bible — entities directly referenced by this scene (full detail).
+    if child_level == StoryLevel::Beat {
+        system.push_str(
+            "BEAT TYPES (choose the most appropriate for each):\n\
+             - Setup: Establishes setting, characters, or situation\n\
+             - Complication: Introduces a problem or obstacle\n\
+             - Escalation: Raises stakes or tension\n\
+             - Climax: Peak moment of conflict or revelation\n\
+             - Resolution: Resolves the immediate conflict\n\
+             - Payoff: Delivers on earlier setup\n\
+             - Callback: References earlier material\n\n",
+        );
+    }
+
+    // Premise → Acts: provide the episode's act structure.
+    if parent_level == StoryLevel::Premise {
+        if let Some(ref structure) = request.episode_structure {
+            system.push_str("EPISODE STRUCTURE:\n");
+            system.push_str("This is a TV episode. You MUST generate one act for each structural \
+                             segment below. Each act's name should match the segment label. \
+                             Use the durations as weight guidance.\n\n");
+            for seg in &structure.segments {
+                let kind = match seg.segment_type {
+                    SegmentType::ColdOpen => "Cold Open",
+                    SegmentType::MainTitles => continue, // skip titles
+                    SegmentType::Act => "Act",
+                    SegmentType::CommercialBreak => continue, // skip breaks
+                    SegmentType::Tag => "Tag",
+                };
+                let dur_sec = seg.time_range.duration_ms() / 1000;
+                system.push_str(&format!(
+                    "- {} \"{}\" — {} min {} sec\n",
+                    kind,
+                    seg.label,
+                    dur_sec / 60,
+                    dur_sec % 60,
+                ));
+            }
+            system.push('\n');
+        } else {
+            system.push_str(
+                "EPISODE STRUCTURE:\n\
+                 This is a standard 30-minute TV comedy (~22 min content). You MUST generate \
+                 at least these acts:\n\
+                 - Cold Open (~2 min) — hook the audience\n\
+                 - Act One (~7 min) — establish the premise and central conflict\n\
+                 - Act Two (~7 min) — complications and escalation\n\
+                 - Act Three (~5 min) — climax and resolution\n\
+                 - Tag (~30 sec) — final joke or button\n\n",
+            );
+        }
+    }
+
+    system.push_str(&format!(
+        "RULES:\n\
+         - Propose 3-7 {}s depending on complexity.\n\
+         - Each {} should be a coherent unit of story.\n\
+         - Outlines should be 1-2 sentences describing what happens.\n\
+         - Weights represent relative duration (1.0 = normal, 0.5 = brief, 2.0 = extended).\n\
+         - {}s should flow naturally from one to the next.\n\
+         - Return ONLY valid JSON, no commentary.\n",
+        child_label, child_label, child_label,
+    ));
+
+    // Story bible context.
     if !request.bible_context.referenced_entities.is_empty() {
-        system.push_str("\nSTORY BIBLE — Key entities in this scene:\n");
+        system.push_str("\nSTORY BIBLE — Key entities:\n");
         for entity in &request.bible_context.referenced_entities {
             if let Some(ref full) = entity.full_text {
                 system.push_str(full);
@@ -408,77 +540,107 @@ pub(crate) fn build_beat_plan_prompt(request: &PlanBeatsRequest) -> ChatPrompt {
         }
     }
 
-    // Other active entities (compact, for awareness).
     if !request.bible_context.nearby_entities.is_empty() {
-        system.push_str("\nOTHER ACTIVE ENTITIES (characters, locations, props available):\n");
+        system.push_str("\nOTHER ACTIVE ENTITIES:\n");
         for entity in &request.bible_context.nearby_entities {
             system.push_str(&format!("- {}\n", entity.compact_text));
         }
     }
 
-    system.push_str(
-        "\nInclude which characters, locations, and props are involved in each beat's outline. \
-         Reference entity names from the story bible when applicable.\n",
+    if child_level == StoryLevel::Beat || child_level == StoryLevel::Scene {
+        system.push_str(
+            "\nFor each child, explicitly list the characters, location, and props involved.\n",
+        );
+    }
+
+    let mut user = format!(
+        "Break this {} into individual {}s:\n\n",
+        parent_level.label().to_lowercase(),
+        child_label,
     );
 
-    let mut user = String::from("Break this scene into individual narrative beats:\n\n");
-
     // Arc context.
-    user.push_str(&format!(
-        "STORY ARC: {} ({:?})",
-        request.arc.name, request.arc.arc_type,
-    ));
-    if !request.arc.description.is_empty() {
-        user.push_str(&format!(" — {}", request.arc.description));
+    if !request.tagged_arcs.is_empty() {
+        user.push_str("STORY ARCS: ");
+        let arc_strs: Vec<String> = request
+            .tagged_arcs
+            .iter()
+            .map(|a| {
+                let mut s = format!("{} ({:?})", a.name, a.arc_type);
+                if !a.description.is_empty() {
+                    s.push_str(&format!(" — {}", a.description));
+                }
+                s
+            })
+            .collect();
+        user.push_str(&arc_strs.join("; "));
+        user.push('\n');
     }
-    user.push('\n');
 
-    // Scene info.
+    // Parent info.
     user.push_str(&format!(
-        "SCENE: {} ({:?})\n",
-        request.beat_clip.name, request.beat_clip.beat_type,
+        "{}: {}\n",
+        parent_level.label().to_uppercase(),
+        request.parent_node.name,
     ));
 
-    // Scene notes.
-    user.push_str("SCENE NOTES:\n");
-    user.push_str(&request.beat_clip.content.beat_notes);
+    // Parent notes.
+    user.push_str(&format!(
+        "{} NOTES:\n",
+        parent_level.label().to_uppercase()
+    ));
+    user.push_str(&request.parent_node.content.notes);
     user.push_str("\n\n");
 
     // Duration context.
-    let duration_ms = request.beat_clip.time_range.duration_ms();
+    let duration_ms = request.parent_node.time_range.duration_ms();
     let duration_sec = duration_ms / 1000;
     user.push_str(&format!(
-        "SCENE DURATION: {} seconds ({} minutes {} seconds)\n\n",
+        "DURATION: {} seconds ({} minutes {} seconds)\n\n",
         duration_sec,
         duration_sec / 60,
         duration_sec % 60,
     ));
 
-    // Cross-track continuity.
+    // Continuity.
     if !request.surrounding_context.preceding_recaps.is_empty() {
         user.push_str("CONTINUITY CONTEXT:\n");
         for entry in &request.surrounding_context.preceding_recaps {
             user.push_str(&format!(
                 "- {} / {}: {}\n",
-                entry.arc_name, entry.clip_name, entry.recap,
+                entry.arc_name, entry.node_name, entry.recap,
             ));
         }
         user.push('\n');
     }
 
-    user.push_str(
-        "Respond with a JSON array of beats:\n\
+    // JSON format for response.
+    let beat_type_field = if child_level == StoryLevel::Beat {
+        "\"beat_type\": \"<one of: Setup, Complication, Escalation, Climax, Resolution, Payoff, Callback>\",\n             "
+    } else {
+        ""
+    };
+
+    let entity_fields = if child_level == StoryLevel::Beat || child_level == StoryLevel::Scene {
+        ",\n             \"characters\": [\"<character names present>\"],\n             \"location\": \"<scene heading or null if unchanged>\",\n             \"props\": [\"<props characters interact with>\"]"
+    } else {
+        ""
+    };
+
+    user.push_str(&format!(
+        "Respond with a JSON array of {}s:\n\
          ```json\n\
          [\n\
-           {\n\
+           {{\n\
              \"name\": \"<short descriptive name>\",\n\
-             \"beat_type\": \"<one of: Setup, Complication, Escalation, Climax, Resolution, Payoff, Callback>\",\n\
-             \"outline\": \"<1-2 sentence description of what happens in this beat>\",\n\
-             \"weight\": <relative duration, e.g. 1.0>\n\
-           }\n\
+             {}\
+             \"outline\": \"<1-2 sentence description>\",\n\
+             \"weight\": <relative duration, e.g. 1.0>{}\n\
+           }}\n\
          ]\n\
          ```",
-    );
+        child_label, beat_type_field, entity_fields,
+    ));
 
     ChatPrompt { system, user }
 }

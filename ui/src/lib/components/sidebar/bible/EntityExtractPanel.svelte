@@ -3,9 +3,9 @@
 	import { commitExtraction, listEntities } from '$lib/api.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 
-	let { result, clipId, onclose }: {
+	let { result, nodeId, onclose }: {
 		result: ExtractionResult;
-		clipId: string;
+		nodeId: string;
 		onclose: () => void;
 	} = $props();
 
@@ -33,7 +33,7 @@
 			// Send the full result + acceptance flags to the server.
 			// The server handles dedup, category inference from script
 			// structure, and entity creation in one atomic operation.
-			await commitExtraction(clipId, result, entityAccepted, snapshotAccepted);
+			await commitExtraction(nodeId, result, entityAccepted, snapshotAccepted);
 
 			// Refresh entity list after server-side commit.
 			storyState.entities = await listEntities();

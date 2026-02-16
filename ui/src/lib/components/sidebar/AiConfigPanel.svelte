@@ -5,7 +5,7 @@
 
 	let config = $state<AiConfig>({
 		backend_type: 'ollama',
-		model: 'qwen3:30b-a3b',
+		model: 'auto',
 		temperature: 0.7,
 		max_tokens: 4096,
 		base_url: 'http://localhost:11434',
@@ -63,7 +63,7 @@
 		></span>
 		<span class="status-text">
 			{#if editorState.aiStatus?.connected}
-				Connected — {editorState.aiStatus.model ?? config.model}
+				Connected — {editorState.aiStatus.model || config.model}
 			{:else if editorState.aiStatus?.error}
 				{editorState.aiStatus.error}
 			{:else}
@@ -82,7 +82,7 @@
 
 	<label class="field">
 		<span class="field-label">Model</span>
-		<input type="text" bind:value={config.model} placeholder="e.g. qwen3:30b-a3b" />
+		<input type="text" bind:value={config.model} placeholder="auto (detect loaded model)" />
 	</label>
 
 	{#if config.backend_type === 'ollama'}

@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { timelineState, timeToX, totalWidth, zoomTo, xToTime } from '$lib/stores/timeline.svelte.js';
+	import { timelineState, timeToX, totalWidth, zoomTo, xToTime, findNode } from '$lib/stores/timeline.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 	import { TIMELINE, colorToHex, formatTime } from '$lib/types.js';
-	import type { BeatClip } from '$lib/types.js';
 	import CharacterMarker from './CharacterMarker.svelte';
 	import type { ProgressionMarker } from './CharacterMarker.svelte';
 
@@ -33,16 +32,6 @@
 		}
 	});
 
-	/** Helper: find a clip by ID across all tracks. */
-	function findClipById(clipId: string): BeatClip | null {
-		if (!timelineState.timeline) return null;
-		for (const track of timelineState.timeline.tracks) {
-			const clip = track.clips.find(c => c.id === clipId);
-			if (clip) return clip;
-		}
-		return null;
-	}
-
 	/** Derive all progression markers for the selected character. */
 	let markers = $derived.by((): ProgressionMarker[] => {
 		const char = selectedCharacter;
@@ -57,7 +46,7 @@
 					id: `snap-${char.id}-${i}`,
 					kind: 'snapshot',
 					timeMs: snap.at_ms,
-					clipId: snap.source_clip_id ?? null,
+					nodeId: snap.source_node_id ?? null,
 					label: snap.description,
 					detail: snap.state_overrides?.emotional_state
 						? `Feeling: ${snap.state_overrides.emotional_state}`
@@ -79,7 +68,7 @@
 						id: `event-${entity.id}`,
 						kind: 'event',
 						timeMs: entity.details.timeline_ms,
-						clipId: entity.clip_refs[0] ?? null,
+						nodeId: entity.node_refs[0] ?? null,
 						label: entity.name,
 						detail: entity.tagline,
 					});
@@ -87,19 +76,19 @@
 			}
 		}
 
-		// 3. Script mentions — clips that reference this character
+		// 3. Script mentions — nodes that reference this character
 		if (characterTimelineState.showMentions) {
-			for (const clipId of char.clip_refs) {
-				const clip = findClipById(clipId);
-				if (clip) {
-					const midMs = (clip.time_range.start_ms + clip.time_range.end_ms) / 2;
+			for (const nodeId of char.node_refs) {
+				const node = findNode(nodeId);
+				if (node) {
+					const midMs = (node.time_range.start_ms + node.time_range.end_ms) / 2;
 					result.push({
-						id: `mention-${clipId}`,
+						id: `mention-${nodeId}`,
 						kind: 'mention',
 						timeMs: midMs,
-						clipId,
-						label: clip.name,
-						detail: `Referenced in "${clip.name}"`,
+						nodeId,
+						label: node.name,
+						detail: `Referenced in "${node.name}"`,
 					});
 				}
 			}

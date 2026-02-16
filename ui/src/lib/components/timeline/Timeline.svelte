@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ArcTrack from './ArcTrack.svelte';
+	import LevelTrack from './LevelTrack.svelte';
 	import StructureBar from './StructureBar.svelte';
 	import TimeRuler from './TimeRuler.svelte';
 	import RelationshipLayer from './RelationshipLayer.svelte';
@@ -7,11 +7,9 @@
 	import TimelineToolbar from './TimelineToolbar.svelte';
 	import { timelineState, totalWidth, connectionDrag, timeToX, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
-	import { storyState } from '$lib/stores/story.svelte.js';
-	import { TIMELINE, colorToHex } from '$lib/types.js';
-	import type { StoryArc, TimelineGap } from '$lib/types.js';
-	import { createRelationship, getGaps, closeGap, closeAllGaps, createArc, addTrack, removeTrack, deleteArc, setSubBeatsVisible } from '$lib/api.js';
-	import { editorState } from '$lib/stores/editor.svelte.js';
+	import { TIMELINE } from '$lib/types.js';
+	import type { TimelineGap, StoryLevel } from '$lib/types.js';
+	import { createRelationship, getGaps, removeTrack } from '$lib/api.js';
 	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 
 	let gaps = $state<TimelineGap[]>([]);
@@ -34,12 +32,8 @@
 		}
 	});
 
-	function gapsForTrack(trackId: string): TimelineGap[] {
-		return gaps.filter(g => g.track_id === trackId);
-	}
-
-	function arcForTrack(arcId: string): StoryArc | undefined {
-		return storyState.arcs.find(a => a.id === arcId);
+	function gapsForLevel(level: StoryLevel): TimelineGap[] {
+		return gaps.filter(g => g.level === level);
 	}
 
 	function onwheel(e: WheelEvent) {
@@ -87,14 +81,6 @@
 				action: () => { timelineState.snapping = !timelineState.snapping; },
 			}),
 			registerShortcut({
-				key: 'g', description: 'Close gap before selected clip', skipInInput: true,
-				action: () => { handleCloseGapBeforeSelected(); },
-			}),
-			registerShortcut({
-				key: 'g', shift: true, description: 'Close all gaps on track', skipInInput: true,
-				action: () => { handleCloseAllGapsOnTrack(); },
-			}),
-			registerShortcut({
 				key: 'c', description: 'Toggle character timeline', skipInInput: true,
 				action: () => { characterTimelineState.visible = !characterTimelineState.visible; },
 			}),
@@ -102,57 +88,9 @@
 		return () => unsubs.forEach(fn => fn());
 	});
 
-	async function handleCloseGapBeforeSelected() {
-		const clipId = editorState.selectedClipId;
-		if (!clipId || !timelineState.timeline) return;
-		for (const track of timelineState.timeline.tracks) {
-			const clip = track.clips.find(c => c.id === clipId);
-			if (clip) {
-				await closeGap(track.id, clip.time_range.start_ms);
-				return;
-			}
-		}
-	}
-
-	async function handleCloseAllGapsOnTrack() {
-		const clipId = editorState.selectedClipId;
-		if (!clipId || !timelineState.timeline) return;
-		for (const track of timelineState.timeline.tracks) {
-			if (track.clips.some(c => c.id === clipId)) {
-				await closeAllGaps(track.id);
-				return;
-			}
-		}
-	}
-
-	async function handleAddTrack() {
-		try {
-			const arc = await createArc('New Arc', 'APlot');
-			await addTrack(arc.id);
-		} catch (e) {
-			// Timeline refreshes via WS event on success.
-		}
-	}
-
-	async function handleDeleteTrack(trackId: string) {
-		if (!timelineState.timeline) return;
-		const track = timelineState.timeline.tracks.find(t => t.id === trackId);
-		if (!track) return;
-		try {
-			await removeTrack(trackId);
-			await deleteArc(track.arc_id).catch(() => {});
-		} catch (e) {
-			// Timeline refreshes via WS event on success.
-		}
-	}
-
-	async function handleToggleSubBeats(trackId: string, visible: boolean) {
-		await setSubBeatsVisible(trackId, visible);
-	}
-
-	function handleConnectStart(clipId: string, x: number, y: number) {
+	function handleConnectStart(nodeId: string, x: number, y: number) {
 		connectionDrag.active = true;
-		connectionDrag.fromClipId = clipId;
+		connectionDrag.fromNodeId = nodeId;
 		connectionDrag.fromX = x;
 		connectionDrag.fromY = y;
 		connectionDrag.currentX = x;
@@ -169,23 +107,22 @@
 			connectionDrag.active = false;
 
 			const target = document.elementFromPoint(e.clientX, e.clientY);
-			const clipEl = target?.closest('.beat-clip');
-			if (clipEl && timelineState.timeline && connectionDrag.fromClipId) {
-				const bounds = clipEl.getBoundingClientRect();
-				for (const track of timelineState.timeline.tracks) {
-					for (const clip of track.clips) {
-						if (clip.id === connectionDrag.fromClipId) continue;
-						const clipLeft = timeToX(clip.time_range.start_ms) - timelineState.scrollX;
-						const clipRight = timeToX(clip.time_range.end_ms) - timelineState.scrollX;
-						if (Math.abs(bounds.width - (clipRight - clipLeft)) < 10) {
-							await createRelationship(connectionDrag.fromClipId, clip.id, 'Causal');
-							connectionDrag.fromClipId = null;
-							return;
-						}
+			const clipEl = target?.closest('.node-clip');
+			if (clipEl && timelineState.timeline && connectionDrag.fromNodeId) {
+				// Find which node was dropped on by checking bounds
+				for (const node of timelineState.timeline.nodes) {
+					if (node.id === connectionDrag.fromNodeId) continue;
+					const nodeLeft = timeToX(node.time_range.start_ms) - timelineState.scrollX;
+					const nodeRight = timeToX(node.time_range.end_ms) - timelineState.scrollX;
+					const bounds = clipEl.getBoundingClientRect();
+					if (Math.abs(bounds.width - (nodeRight - nodeLeft)) < 10) {
+						await createRelationship(connectionDrag.fromNodeId, node.id, 'Causal');
+						connectionDrag.fromNodeId = null;
+						return;
 					}
 				}
 			}
-			connectionDrag.fromClipId = null;
+			connectionDrag.fromNodeId = null;
 		}
 
 		document.addEventListener('pointermove', onPointerMove);
@@ -204,6 +141,14 @@
 			document.removeEventListener('click', dismiss);
 		}
 		setTimeout(() => document.addEventListener('click', dismiss), 0);
+	}
+
+	async function handleDeleteTrack(trackId: string) {
+		try {
+			await removeTrack(trackId);
+		} catch (e) {
+			// Timeline refreshes via WS event on success.
+		}
 	}
 </script>
 
@@ -225,35 +170,17 @@
 				<div class="labels-tracks">
 					{#if timelineState.timeline}
 						{#each timelineState.timeline.tracks as track}
-							{@const arc = arcForTrack(track.arc_id)}
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
 								class="track-label"
-								style="height: {TIMELINE.TRACK_HEIGHT_PX}px"
+								style="height: {track.collapsed ? 0 : TIMELINE.TRACK_HEIGHT_PX}px"
+								class:collapsed={track.collapsed}
 								oncontextmenu={(e) => handleTrackContextMenu(e, track.id)}
 							>
-								{#if track.sub_beats.length > 0}
-									<button class="subtrack-toggle" title="Toggle beats" onclick={() => handleToggleSubBeats(track.id, !track.sub_beats_visible)}>
-										{track.sub_beats_visible ? '▼' : '▶'}
-									</button>
-								{/if}
-								<span class="track-label-text">{arc?.name ?? 'Unknown'}</span>
-								<button
-									class="track-delete-btn"
-									title="Delete Track"
-									onclick={() => handleDeleteTrack(track.id)}
-								>&times;</button>
+								<span class="track-label-text">{track.label}</span>
 							</div>
-							{#if track.sub_beats_visible && track.sub_beats.length > 0}
-								<div class="subtrack-label" style="height: {TIMELINE.BEAT_SUBTRACK_HEIGHT_PX}px">
-									<span class="subtrack-label-text">beats</span>
-								</div>
-							{/if}
 						{/each}
 					{/if}
-					<button class="add-track-row" onclick={handleAddTrack} title="Add new track">
-						<span class="add-track-plus">+</span> Add Track
-					</button>
 				</div>
 
 				<!-- Spacer matching structure bar -->
@@ -282,16 +209,14 @@
 					<RelationshipLayer offsetX={timelineState.scrollX} />
 				</div>
 
-				<!-- Arc tracks -->
+				<!-- Level tracks -->
 				<div class="tracks">
 					<div class="tracks-content" style="width: {totalWidth()}px; transform: translateX(-{timelineState.scrollX}px)">
 						{#if timelineState.timeline}
 							{#each timelineState.timeline.tracks as track}
-								{@const arc = arcForTrack(track.arc_id)}
-								<ArcTrack
+								<LevelTrack
 									{track}
-									color={arc ? colorToHex(arc.color) : 'var(--color-rel-default)'}
-									gaps={gapsForTrack(track.id)}
+									gaps={gapsForLevel(track.level)}
 									onconnectstart={handleConnectStart}
 								/>
 							{/each}
@@ -341,7 +266,7 @@
 		overflow: hidden;
 	}
 
-	/* ── Label column (fixed, always visible) ── */
+	/* -- Label column (fixed, always visible) -- */
 
 	.label-column {
 		width: 80px;
@@ -401,96 +326,17 @@
 		border-bottom: 1px solid var(--color-border-subtle);
 	}
 
+	.track-label.collapsed {
+		display: none;
+	}
+
 	.track-label-text {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	.track-delete-btn {
-		display: none;
-		background: none;
-		border: none;
-		color: var(--color-text-muted);
-		font-size: 0.85rem;
-		line-height: 1;
-		cursor: pointer;
-		padding: 0 2px;
-		flex-shrink: 0;
-		border-radius: 2px;
-	}
-
-	.track-label:hover .track-delete-btn {
-		display: block;
-	}
-
-	.track-delete-btn:hover {
-		color: var(--color-danger);
-		background: var(--color-danger-bg);
-	}
-
-	.subtrack-toggle {
-		background: none;
-		border: none;
-		color: var(--color-text-muted);
-		font-size: 0.55rem;
-		line-height: 1;
-		cursor: pointer;
-		padding: 0 1px;
-		flex-shrink: 0;
-	}
-
-	.subtrack-toggle:hover {
-		color: var(--color-text-secondary);
-	}
-
-	.subtrack-label {
-		display: flex;
-		align-items: center;
-		justify-content: flex-end;
-		padding: 0 4px 0 8px;
-		font-size: 0.65rem;
-		color: var(--color-text-muted);
-		overflow: hidden;
-		border-bottom: 1px solid var(--color-border-subtle);
-		background: var(--color-bg-secondary);
-	}
-
-	.subtrack-label-text {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-style: italic;
-	}
-
-	.add-track-row {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		width: 100%;
-		padding: 4px 8px;
-		background: none;
-		border: 1px dashed var(--color-border-subtle);
-		border-radius: 4px;
-		color: var(--color-text-muted);
-		font-size: 0.7rem;
-		cursor: pointer;
-		margin: 4px 0;
-		white-space: nowrap;
-	}
-
-	.add-track-row:hover {
-		background: var(--color-bg-hover);
-		border-color: var(--color-border-default);
-		color: var(--color-text-secondary);
-	}
-
-	.add-track-plus {
-		font-size: 0.9rem;
-		line-height: 1;
-	}
-
-	/* ── Time content column ── */
+	/* -- Time content column -- */
 
 	.time-column {
 		flex: 1;
@@ -537,7 +383,7 @@
 		border-top: 1px solid var(--color-border-subtle);
 	}
 
-	/* ── Context menu ── */
+	/* -- Context menu -- */
 
 	.context-menu {
 		position: fixed;

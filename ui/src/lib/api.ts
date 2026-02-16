@@ -1,4 +1,10 @@
-import type { Project, StoryArc, Entity, EntityCategory, EntityDetails, EntitySnapshot, EntityRelation, ExtractionResult, AiStatus, AiConfig, TimelineGap, ReferenceDocument, ArcProgression, Timeline, ArcTrack, BeatClip, BeatContent, BeatPlan, BeatProposal, InferredScene, Relationship, ArcType, RelationshipType, ReferenceType, Color } from './types.js';
+import type {
+	Project, StoryArc, Entity, EntityCategory, EntityDetails, EntitySnapshot,
+	EntityRelation, ExtractionResult, AiStatus, AiConfig, TimelineGap,
+	ReferenceDocument, ArcProgression, Timeline, Track, StoryNode,
+	NodeContent, ChildPlan, ChildProposal, Relationship, ArcType,
+	RelationshipType, ReferenceType, Color, StoryLevel,
+} from './types.js';
 
 const BASE = '/api';
 
@@ -27,7 +33,7 @@ export function getProject(): Promise<Project> {
 	return request('/project');
 }
 
-export function updateProject(updates: { name?: string }): Promise<Project> {
+export function updateProject(updates: { name?: string; premise?: string }): Promise<Project> {
 	return request('/project', {
 		method: 'PUT',
 		body: JSON.stringify(updates),
@@ -99,7 +105,7 @@ export function deleteEntity(id: string): Promise<{ deleted: boolean }> {
 
 // --- Entity snapshots ---
 
-export function addSnapshot(entityId: string, snapshot: Omit<EntitySnapshot, 'source_clip_id'> & { source_clip_id?: string | null }): Promise<Entity> {
+export function addSnapshot(entityId: string, snapshot: Omit<EntitySnapshot, 'source_node_id'> & { source_node_id?: string | null }): Promise<Entity> {
 	return request(`/bible/entities/${entityId}/snapshots`, {
 		method: 'POST',
 		body: JSON.stringify(snapshot),
@@ -130,30 +136,30 @@ export function deleteRelation(entityId: string, idx: number): Promise<Entity> {
 	return request(`/bible/entities/${entityId}/relations/${idx}`, { method: 'DELETE' });
 }
 
-// --- Entity clip refs ---
+// --- Entity node refs ---
 
-export function addClipRef(entityId: string, clipId: string): Promise<Entity> {
-	return request(`/bible/entities/${entityId}/clip-refs`, {
+export function addNodeRef(entityId: string, nodeId: string): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/node-refs`, {
 		method: 'POST',
-		body: JSON.stringify({ clip_id: clipId }),
+		body: JSON.stringify({ node_id: nodeId }),
 	});
 }
 
-export function removeClipRef(entityId: string, clipId: string): Promise<Entity> {
-	return request(`/bible/entities/${entityId}/clip-refs/${clipId}`, { method: 'DELETE' });
+export function removeNodeRef(entityId: string, nodeId: string): Promise<Entity> {
+	return request(`/bible/entities/${entityId}/node-refs/${nodeId}`, { method: 'DELETE' });
 }
 
 // --- Entity extraction ---
 
-export function extractEntities(clipId: string): Promise<ExtractionResult> {
+export function extractEntities(nodeId: string): Promise<ExtractionResult> {
 	return request('/ai/extract', {
 		method: 'POST',
-		body: JSON.stringify({ clip_id: clipId }),
+		body: JSON.stringify({ node_id: nodeId }),
 	});
 }
 
 export function commitExtraction(
-	clipId: string,
+	nodeId: string,
 	result: ExtractionResult,
 	acceptedEntities: boolean[],
 	acceptedSnapshots: boolean[],
@@ -161,7 +167,7 @@ export function commitExtraction(
 	return request('/ai/extract/commit', {
 		method: 'POST',
 		body: JSON.stringify({
-			clip_id: clipId,
+			node_id: nodeId,
 			result,
 			accepted_entities: acceptedEntities,
 			accepted_snapshots: acceptedSnapshots,
@@ -181,71 +187,92 @@ export function getTimeline(): Promise<Timeline> {
 	return request('/timeline');
 }
 
-export function createClip(trackId: string, name: string, beatType: string, startMs: number, endMs: number): Promise<BeatClip> {
-	return request('/timeline/clips', {
+// --- Nodes ---
+
+export function createNode(data: {
+	parent_id?: string | null;
+	level: StoryLevel;
+	name: string;
+	beat_type?: string | null;
+	start_ms: number;
+	end_ms: number;
+}): Promise<StoryNode> {
+	return request('/timeline/nodes', {
 		method: 'POST',
-		body: JSON.stringify({ track_id: trackId, name, beat_type: beatType, start_ms: startMs, end_ms: endMs }),
+		body: JSON.stringify(data),
 	});
 }
 
-export function updateClip(id: string, updates: { name?: string; start_ms?: number; end_ms?: number }): Promise<BeatClip> {
-	return request(`/timeline/clips/${id}`, {
+export function updateNode(id: string, updates: { name?: string; start_ms?: number; end_ms?: number }): Promise<StoryNode> {
+	return request(`/timeline/nodes/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify(updates),
 	});
 }
 
-export function deleteClip(id: string): Promise<{ deleted: boolean }> {
-	return request(`/timeline/clips/${id}`, { method: 'DELETE' });
+export function deleteNode(id: string): Promise<{ deleted: boolean }> {
+	return request(`/timeline/nodes/${id}`, { method: 'DELETE' });
 }
 
-export function splitClip(id: string, atMs: number): Promise<{ left: BeatClip; right: BeatClip }> {
-	return request(`/timeline/clips/${id}/split`, {
+export function splitNode(id: string, atMs: number): Promise<{ left: StoryNode; right: StoryNode }> {
+	return request(`/timeline/nodes/${id}/split`, {
 		method: 'POST',
 		body: JSON.stringify({ at_ms: atMs }),
 	});
 }
 
-// --- Beats ---
-
-export function getBeat(id: string): Promise<BeatContent> {
-	return request(`/beats/${id}`);
+export function resizeNode(id: string, startMs: number, endMs: number): Promise<StoryNode> {
+	return request(`/timeline/nodes/${id}/resize`, {
+		method: 'POST',
+		body: JSON.stringify({ start_ms: startMs, end_ms: endMs }),
+	});
 }
 
-export function updateBeatNotes(id: string, notes: string): Promise<BeatContent> {
-	return request(`/beats/${id}/notes`, {
+export function getNodeChildren(id: string): Promise<StoryNode[]> {
+	return request(`/timeline/nodes/${id}/children`);
+}
+
+export function applyChildren(nodeId: string, children: ChildProposal[]): Promise<{ ok: boolean; children: StoryNode[] }> {
+	return request(`/timeline/nodes/${nodeId}/apply-children`, {
+		method: 'POST',
+		body: JSON.stringify({ children }),
+	});
+}
+
+// --- Node content ---
+
+export function getNodeContent(id: string): Promise<NodeContent> {
+	return request(`/nodes/${id}/content`);
+}
+
+export function updateNodeNotes(id: string, notes: string): Promise<NodeContent> {
+	return request(`/nodes/${id}/notes`, {
 		method: 'PUT',
 		body: JSON.stringify({ notes }),
 	});
 }
 
-export function updateBeatScript(id: string, script: string): Promise<BeatContent> {
-	return request(`/beats/${id}/script`, {
+export function updateNodeScript(id: string, script: string): Promise<NodeContent> {
+	return request(`/nodes/${id}/script`, {
 		method: 'PUT',
 		body: JSON.stringify({ script }),
 	});
 }
 
-export function lockBeat(id: string): Promise<BeatContent> {
-	return request(`/beats/${id}/lock`, { method: 'POST' });
+export function lockNode(id: string): Promise<NodeContent> {
+	return request(`/nodes/${id}/lock`, { method: 'POST' });
 }
 
-export function unlockBeat(id: string): Promise<BeatContent> {
-	return request(`/beats/${id}/unlock`, { method: 'POST' });
-}
-
-// --- Scenes ---
-
-export function getScenes(): Promise<InferredScene[]> {
-	return request('/scenes');
+export function unlockNode(id: string): Promise<NodeContent> {
+	return request(`/nodes/${id}/unlock`, { method: 'POST' });
 }
 
 // --- Relationships ---
 
-export function createRelationship(fromClip: string, toClip: string, type_: RelationshipType): Promise<Relationship> {
+export function createRelationship(fromNode: string, toNode: string, type_: RelationshipType): Promise<Relationship> {
 	return request('/timeline/relationships', {
 		method: 'POST',
-		body: JSON.stringify({ from_clip: fromClip, to_clip: toClip, relationship_type: type_ }),
+		body: JSON.stringify({ from_node: fromNode, to_node: toNode, relationship_type: type_ }),
 	});
 }
 
@@ -255,40 +282,48 @@ export function deleteRelationship(id: string): Promise<{ deleted: boolean }> {
 
 // --- Tracks ---
 
-export function addTrack(arcId: string): Promise<ArcTrack> {
+export function createTrack(level: StoryLevel, label: string): Promise<Track> {
 	return request('/timeline/tracks', {
 		method: 'POST',
-		body: JSON.stringify({ arc_id: arcId }),
+		body: JSON.stringify({ level, label }),
 	});
 }
 
-export function removeTrack(trackId: string): Promise<ArcTrack> {
+export function updateTrack(trackId: string, updates: { label?: string; collapsed?: boolean }): Promise<Track> {
+	return request(`/timeline/tracks/${trackId}`, {
+		method: 'PUT',
+		body: JSON.stringify(updates),
+	});
+}
+
+export function removeTrack(trackId: string): Promise<{ deleted: boolean }> {
 	return request(`/timeline/tracks/${trackId}`, { method: 'DELETE' });
+}
+
+// --- Node-Arc tagging ---
+
+export function tagNodeWithArc(nodeId: string, arcId: string): Promise<{ ok: boolean }> {
+	return request('/timeline/node-arcs', {
+		method: 'POST',
+		body: JSON.stringify({ node_id: nodeId, arc_id: arcId }),
+	});
+}
+
+export function untagNodeFromArc(nodeId: string, arcId: string): Promise<{ ok: boolean }> {
+	return request(`/timeline/node-arcs/${nodeId}/${arcId}`, { method: 'DELETE' });
 }
 
 // --- Gaps ---
 
-export function getGaps(): Promise<TimelineGap[]> {
-	return request('/timeline/gaps');
+export function getGaps(level?: StoryLevel): Promise<TimelineGap[]> {
+	const query = level ? `?level=${level}` : '';
+	return request(`/timeline/gaps${query}`);
 }
 
-export function fillGap(trackId: string, startMs: number, endMs: number): Promise<unknown> {
+export function fillGap(level: StoryLevel, startMs: number, endMs: number): Promise<unknown> {
 	return request('/timeline/gaps/fill', {
 		method: 'POST',
-		body: JSON.stringify({ track_id: trackId, start_ms: startMs, end_ms: endMs }),
-	});
-}
-
-export function closeGap(trackId: string, gapEndMs: number): Promise<Timeline> {
-	return request(`/timeline/tracks/${trackId}/close-gap`, {
-		method: 'POST',
-		body: JSON.stringify({ gap_end_ms: gapEndMs }),
-	});
-}
-
-export function closeAllGaps(trackId: string): Promise<Timeline> {
-	return request(`/timeline/tracks/${trackId}/close-all-gaps`, {
-		method: 'POST',
+		body: JSON.stringify({ level, start_ms: startMs, end_ms: endMs }),
 	});
 }
 
@@ -311,10 +346,10 @@ export function deleteReference(id: string): Promise<{ deleted: boolean }> {
 
 // --- AI ---
 
-export function generateScript(clipId: string): Promise<{ status: string; clip_id: string }> {
+export function generateContent(nodeId: string): Promise<{ status: string; node_id: string }> {
 	return request('/ai/generate', {
 		method: 'POST',
-		body: JSON.stringify({ clip_id: clipId }),
+		body: JSON.stringify({ node_id: nodeId }),
 	});
 }
 
@@ -329,58 +364,28 @@ export function updateAiConfig(updates: Partial<AiConfig>): Promise<AiConfig> {
 	});
 }
 
-export function reactToEdit(clipId: string): Promise<{ status: string }> {
+export function reactToEdit(nodeId: string): Promise<{ status: string }> {
 	return request('/ai/react', {
 		method: 'POST',
-		body: JSON.stringify({ clip_id: clipId }),
+		body: JSON.stringify({ node_id: nodeId }),
 	});
 }
 
-export function planBeats(clipId: string): Promise<BeatPlan> {
-	return request('/ai/plan-beats', {
+export function getAiContext(nodeId: string): Promise<{ system: string; user: string }> {
+	return request(`/ai/context/${nodeId}`);
+}
+
+export function generateChildren(nodeId: string): Promise<ChildPlan> {
+	return request('/ai/generate-children', {
 		method: 'POST',
-		body: JSON.stringify({ clip_id: clipId }),
+		body: JSON.stringify({ node_id: nodeId }),
 	});
 }
 
-export function generateBeats(parentClipId: string): Promise<{ status: string; parent_clip_id: string; beat_count: number }> {
-	return request('/ai/generate-beats', {
+export function generateBatch(parentNodeId: string): Promise<{ status: string; parent_node_id: string; child_count: number }> {
+	return request('/ai/generate-batch', {
 		method: 'POST',
-		body: JSON.stringify({ parent_clip_id: parentClipId }),
-	});
-}
-
-// --- Sub-beats ---
-
-export function applyBeats(clipId: string, beats: BeatProposal[]): Promise<{ ok: boolean; beats: BeatClip[] }> {
-	return request(`/timeline/clips/${clipId}/apply-beats`, {
-		method: 'POST',
-		body: JSON.stringify({ beats }),
-	});
-}
-
-export function createSubBeat(parentClipId: string, trackId: string, name: string, beatType: string, startMs: number, endMs: number): Promise<BeatClip> {
-	return request('/timeline/sub-beats', {
-		method: 'POST',
-		body: JSON.stringify({ parent_clip_id: parentClipId, track_id: trackId, name, beat_type: beatType, start_ms: startMs, end_ms: endMs }),
-	});
-}
-
-export function updateSubBeat(id: string, updates: { name?: string; start_ms?: number; end_ms?: number }): Promise<BeatClip> {
-	return request(`/timeline/sub-beats/${id}`, {
-		method: 'PUT',
-		body: JSON.stringify(updates),
-	});
-}
-
-export function deleteSubBeat(id: string): Promise<{ deleted: boolean }> {
-	return request(`/timeline/sub-beats/${id}`, { method: 'DELETE' });
-}
-
-export function setSubBeatsVisible(trackId: string, visible: boolean): Promise<void> {
-	return request(`/timeline/tracks/${trackId}/sub-beats-visible`, {
-		method: 'PUT',
-		body: JSON.stringify({ visible }),
+		body: JSON.stringify({ parent_node_id: parentNodeId }),
 	});
 }
 

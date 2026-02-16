@@ -9,7 +9,7 @@ import {
 	setGenerationError,
 	addConsistencySuggestion,
 } from './editor.svelte.js';
-import { getTimeline, getScenes, listArcs, listEntities, getBeat } from '$lib/api.js';
+import { getTimeline, listArcs, listEntities, getNodeContent } from '$lib/api.js';
 
 /** Register WebSocket event handlers that update Svelte stores. */
 export function setupWsHandlers(ws: WsClient) {
@@ -18,9 +18,9 @@ export function setupWsHandlers(ws: WsClient) {
 		timelineState.timeline = timeline;
 	});
 
-	ws.on('scenes_changed', async () => {
-		const scenes = await getScenes();
-		timelineState.scenes = scenes;
+	ws.on('hierarchy_changed', async () => {
+		const timeline = await getTimeline();
+		timelineState.timeline = timeline;
 	});
 
 	ws.on('story_changed', async () => {
@@ -30,61 +30,53 @@ export function setupWsHandlers(ws: WsClient) {
 		storyState.entities = entities;
 	});
 
-	ws.on('beat_updated', async (data) => {
-		const clipId = data.clip_id;
-		const content = await getBeat(clipId);
-		if (editorState.selectedClipId === clipId && editorState.selectedClip) {
-			editorState.selectedClip.content = content;
+	ws.on('node_updated', async (data) => {
+		const nodeId = data.node_id;
+		const content = await getNodeContent(nodeId);
+		if (editorState.selectedNodeId === nodeId && editorState.selectedNode) {
+			editorState.selectedNode.content = content;
 		}
 		// Update timeline data so ScriptPanel reflects the change.
 		if (timelineState.timeline) {
-			for (const track of timelineState.timeline.tracks) {
-				const clip = track.clips.find(c => c.id === clipId)
-					?? track.sub_beats.find(b => b.id === clipId);
-				if (clip) {
-					clip.content = content;
-					break;
-				}
+			const node = timelineState.timeline.nodes.find(n => n.id === nodeId);
+			if (node) {
+				node.content = content;
 			}
 		}
 	});
 
 	ws.on('generation_context', (data) => {
-		setGenerationContext(data.clip_id, data.system_prompt, data.user_prompt);
+		setGenerationContext(data.node_id, data.system_prompt, data.user_prompt);
 	});
 
 	ws.on('generation_progress', (data) => {
-		appendStreamingToken(data.clip_id, data.token, data.tokens_generated);
+		appendStreamingToken(data.node_id, data.token, data.tokens_generated);
 	});
 
 	ws.on('generation_complete', async (data) => {
-		const clipId = data.clip_id;
+		const nodeId = data.node_id;
 		// Fetch and update content BEFORE clearing streaming to avoid flicker.
-		const content = await getBeat(clipId);
-		if (editorState.selectedClipId === clipId && editorState.selectedClip) {
-			editorState.selectedClip.content = content;
+		const content = await getNodeContent(nodeId);
+		if (editorState.selectedNodeId === nodeId && editorState.selectedNode) {
+			editorState.selectedNode.content = content;
 		}
 		if (timelineState.timeline) {
-			for (const track of timelineState.timeline.tracks) {
-				const clip = track.clips.find(c => c.id === clipId)
-					?? track.sub_beats.find(b => b.id === clipId);
-				if (clip) {
-					clip.content = content;
-					break;
-				}
+			const node = timelineState.timeline.nodes.find(n => n.id === nodeId);
+			if (node) {
+				node.content = content;
 			}
 		}
-		completeGeneration(clipId);
+		completeGeneration(nodeId);
 	});
 
 	ws.on('generation_error', (data) => {
-		setGenerationError(data.clip_id, data.error);
+		setGenerationError(data.node_id, data.error);
 	});
 
 	ws.on('consistency_suggestion', (data) => {
 		addConsistencySuggestion({
-			source_clip_id: data.source_clip_id,
-			target_clip_id: data.target_clip_id,
+			source_node_id: data.source_node_id,
+			target_node_id: data.target_node_id,
 			original_text: data.original_text,
 			suggested_text: data.suggested_text,
 			reason: data.reason,
@@ -103,8 +95,6 @@ export function setupWsHandlers(ws: WsClient) {
 	ws.on('project_mutated', async () => {
 		const timeline = await getTimeline();
 		timelineState.timeline = timeline;
-		const scenes = await getScenes();
-		timelineState.scenes = scenes;
 		const arcs = await listArcs();
 		const entities = await listEntities();
 		storyState.arcs = arcs;
@@ -117,7 +107,6 @@ export function setupWsHandlers(ws: WsClient) {
 	});
 
 	ws.on('entity_extraction_complete', (_data) => {
-		// Refresh entities after extraction (new entities/snapshots may have been committed).
 		listEntities().then(entities => storyState.entities = entities);
 	});
 }

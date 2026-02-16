@@ -3,36 +3,49 @@
 // --- IDs (all UUIDs as strings) ---
 
 export type TrackId = string;
-export type ClipId = string;
+export type NodeId = string;
 export type ArcId = string;
 export type CharacterId = string;
 export type RelationshipId = string;
+
+// --- Story hierarchy levels ---
+
+export type StoryLevel = 'Premise' | 'Act' | 'Sequence' | 'Scene' | 'Beat';
 
 // --- Timeline ---
 
 export interface Timeline {
 	total_duration_ms: number;
-	tracks: ArcTrack[];
+	tracks: Track[];
+	nodes: StoryNode[];
+	node_arcs: NodeArc[];
 	relationships: Relationship[];
 	structure: EpisodeStructure;
 }
 
-export interface ArcTrack {
+export interface Track {
 	id: TrackId;
-	arc_id: ArcId;
-	clips: BeatClip[];
-	sub_beats: BeatClip[];
-	sub_beats_visible: boolean;
+	level: StoryLevel;
+	label: string;
+	sort_order: number;
+	collapsed: boolean;
 }
 
-export interface BeatClip {
-	id: ClipId;
+export interface StoryNode {
+	id: NodeId;
+	parent_id: NodeId | null;
+	level: StoryLevel;
+	sort_order: number;
 	time_range: TimeRange;
-	beat_type: BeatType;
 	name: string;
-	content: BeatContent;
+	content: NodeContent;
+	beat_type: BeatType | null;
 	locked: boolean;
-	parent_clip_id: ClipId | null;
+}
+
+export interface NodeArc {
+	node_id: NodeId;
+	arc_id: ArcId;
 }
 
 export interface TimeRange {
@@ -50,12 +63,11 @@ export type BeatType =
 	| 'Callback'
 	| { Custom: string };
 
-export interface BeatContent {
-	beat_notes: string;
-	generated_script: string | null;
-	user_refined_script: string | null;
+export interface NodeContent {
+	notes: string;
+	/** Script/outline text. Replaces the old generated_text + user_refined_text split. */
+	content: string;
 	status: ContentStatus;
-	/** Compact structured recap of scene end state for continuity. */
 	scene_recap?: string | null;
 }
 
@@ -63,16 +75,14 @@ export type ContentStatus =
 	| 'Empty'
 	| 'NotesOnly'
 	| 'Generating'
-	| 'Generated'
-	| 'UserRefined'
-	| 'UserWritten';
+	| 'HasContent';
 
 // --- Relationships ---
 
 export interface Relationship {
 	id: RelationshipId;
-	from_clip: ClipId;
-	to_clip: ClipId;
+	from_node: NodeId;
+	to_node: NodeId;
 	relationship_type: RelationshipType;
 }
 
@@ -105,6 +115,7 @@ export interface StoryArc {
 	description: string;
 	arc_type: ArcType;
 	color: Color;
+	parent_arc_id: ArcId | null;
 }
 
 export type ArcType = 'APlot' | 'BPlot' | 'CRunner' | { Custom: string };
@@ -129,7 +140,7 @@ export interface Entity {
 	description: string;
 	details: EntityDetails;
 	snapshots: EntitySnapshot[];
-	clip_refs: ClipId[];
+	node_refs: NodeId[];
 	relations: EntityRelation[];
 	color: Color;
 	locked: boolean;
@@ -144,7 +155,7 @@ export type EntityDetails =
 
 export interface EntitySnapshot {
 	at_ms: number;
-	source_clip_id: ClipId | null;
+	source_node_id: NodeId | null;
 	description: string;
 	state_overrides?: SnapshotOverrides | null;
 }
@@ -157,7 +168,6 @@ export interface SnapshotOverrides {
 	owner_entity_id?: EntityId | null;
 	significance?: string;
 	custom?: [string, string][];
-	/** Where this entity is located at this point in the timeline. */
 	location?: string;
 }
 
@@ -173,7 +183,6 @@ export interface StoryBible {
 export interface ExtractionResult {
 	new_entities: SuggestedEntity[];
 	snapshot_suggestions: SuggestedSnapshot[];
-	/** Names of all entities (existing or new) present in the scene. */
 	entities_present: string[];
 }
 
@@ -189,40 +198,34 @@ export interface SuggestedSnapshot {
 	description: string;
 	emotional_state?: string;
 	audience_knowledge?: string;
-	/** Where this entity is located. */
 	location?: string;
 }
 
-// --- Beat Planning ---
+// --- Child Planning (replaces Beat Planning) ---
 
-export interface BeatProposal {
+export interface ChildProposal {
 	name: string;
-	beat_type: BeatType;
+	beat_type: BeatType | null;
 	outline: string;
 	weight: number;
+	characters?: string[];
+	location?: string | null;
+	props?: string[];
 }
 
-export interface BeatPlan {
-	scene_clip_id: ClipId;
-	beats: BeatProposal[];
-}
-
-// --- Scenes (inferred) ---
-
-export interface InferredScene {
-	time_range: TimeRange;
-	active_arcs: ArcId[];
-	contributing_clips: ClipId[];
+export interface ChildPlan {
+	parent_node_id: NodeId;
+	target_child_level: StoryLevel;
+	children: ChildProposal[];
 }
 
 // --- Timeline gaps ---
 
 export interface TimelineGap {
-	track_id: TrackId;
-	arc_id: ArcId;
+	level: StoryLevel;
 	time_range: TimeRange;
-	preceding_clip_id: ClipId | null;
-	following_clip_id: ClipId | null;
+	preceding_node_id: NodeId | null;
+	following_node_id: NodeId | null;
 }
 
 // --- Reference Documents ---
@@ -247,6 +250,7 @@ export interface ReferenceDocument {
 
 export interface Project {
 	name: string;
+	premise: string;
 	timeline: Timeline;
 	arcs: StoryArc[];
 	bible: StoryBible;
@@ -272,8 +276,6 @@ export const TIMELINE = {
 	TIME_RULER_HEIGHT_PX: 28,
 	/** Height of the character progression track. */
 	CHARACTER_TRACK_HEIGHT_PX: 40,
-	/** Height of the beat subtrack row. */
-	BEAT_SUBTRACK_HEIGHT_PX: 36,
 	/** Width of track label column. */
 	LABEL_WIDTH_PX: 80,
 } as const;
@@ -321,8 +323,8 @@ export interface AiStatus {
 // --- Consistency ---
 
 export interface ConsistencySuggestion {
-	source_clip_id: ClipId;
-	target_clip_id: ClipId;
+	source_node_id: NodeId;
+	target_node_id: NodeId;
 	original_text: string;
 	suggested_text: string;
 	reason: string;
@@ -352,26 +354,26 @@ export interface ArcProgression {
 
 export type ServerMessage =
 	| { type: 'timeline_changed' }
-	| { type: 'scenes_changed' }
+	| { type: 'hierarchy_changed' }
 	| { type: 'story_changed' }
-	| { type: 'beat_updated'; clip_id: string }
-	| { type: 'generation_context'; clip_id: string; system_prompt: string; user_prompt: string }
-	| { type: 'generation_progress'; clip_id: string; token: string; tokens_generated: number }
-	| { type: 'generation_complete'; clip_id: string }
-	| { type: 'generation_error'; clip_id: string; error: string }
+	| { type: 'node_updated'; node_id: string }
+	| { type: 'generation_context'; node_id: string; system_prompt: string; user_prompt: string }
+	| { type: 'generation_progress'; node_id: string; token: string; tokens_generated: number }
+	| { type: 'generation_complete'; node_id: string }
+	| { type: 'generation_error'; node_id: string; error: string }
 	| {
 			type: 'consistency_suggestion';
-			source_clip_id: string;
-			target_clip_id: string;
+			source_node_id: string;
+			target_node_id: string;
 			original_text: string;
 			suggested_text: string;
 			reason: string;
 	  }
-	| { type: 'consistency_complete'; source_clip_id: string; suggestion_count: number }
+	| { type: 'consistency_complete'; source_node_id: string; suggestion_count: number }
 	| { type: 'undo_redo_changed'; can_undo: boolean; can_redo: boolean }
 	| { type: 'project_mutated' }
 	| { type: 'bible_changed' }
-	| { type: 'entity_extraction_complete'; clip_id: string; new_entity_count: number; snapshot_count: number };
+	| { type: 'entity_extraction_complete'; node_id: string; new_entity_count: number; snapshot_count: number };
 
 // --- Helpers ---
 
@@ -387,4 +389,31 @@ export function formatTime(ms: number): string {
 	const minutes = Math.floor(totalSeconds / 60);
 	const seconds = totalSeconds % 60;
 	return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/** Get the child level for a given story level. */
+export function childLevel(level: StoryLevel): StoryLevel | null {
+	switch (level) {
+		case 'Premise': return 'Act';
+		case 'Act': return 'Sequence';
+		case 'Sequence': return 'Scene';
+		case 'Scene': return 'Beat';
+		case 'Beat': return null;
+	}
+}
+
+/** Get the parent level for a given story level. */
+export function parentLevel(level: StoryLevel): StoryLevel | null {
+	switch (level) {
+		case 'Premise': return null;
+		case 'Act': return 'Premise';
+		case 'Sequence': return 'Act';
+		case 'Scene': return 'Sequence';
+		case 'Beat': return 'Scene';
+	}
+}
+
+/** Get the best display text for a node (content > notes). */
+export function bestText(node: StoryNode): string {
+	return node.content.content || node.content.notes;
 }

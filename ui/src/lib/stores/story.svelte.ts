@@ -14,7 +14,7 @@ export function entitiesByCategory(category: EntityCategory): Entity[] {
 	return storyState.entities.filter(e => e.category === category);
 }
 
-/** Get all entities that reference a specific clip. */
-export function entitiesForClip(clipId: string): Entity[] {
-	return storyState.entities.filter(e => e.clip_refs.includes(clipId));
+/** Get all entities that reference a specific node. */
+export function entitiesForNode(nodeId: string): Entity[] {
+	return storyState.entities.filter(e => e.node_refs.includes(nodeId));
 }

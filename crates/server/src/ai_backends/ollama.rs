@@ -21,14 +21,67 @@ impl OllamaBackend {
         }
     }
 
+    /// Query Ollama for the currently loaded/running model via `/api/ps`.
+    /// Falls back to the first available model from `/api/tags` if nothing is running.
+    /// Returns `Err` if Ollama is unreachable or has no models.
+    pub async fn resolve_running_model(&self) -> Result<String, Error> {
+        // First try /api/ps — models currently loaded in memory.
+        let ps_url = format!("{}/api/ps", self.base_url);
+        if let Ok(resp) = self.client.get(&ps_url).send().await {
+            if resp.status().is_success() {
+                if let Ok(body) = resp.json::<serde_json::Value>().await {
+                    if let Some(models) = body.get("models").and_then(|m| m.as_array()) {
+                        if let Some(name) = models
+                            .first()
+                            .and_then(|m| m.get("name"))
+                            .and_then(|n| n.as_str())
+                        {
+                            return Ok(name.to_owned());
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback: first model from /api/tags.
+        let tags_url = format!("{}/api/tags", self.base_url);
+        let resp = self
+            .client
+            .get(&tags_url)
+            .send()
+            .await
+            .map_err(|e| Error::AiBackend(format!("Cannot reach Ollama: {e}")))?;
+        let body: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| Error::AiBackend(format!("Failed to parse Ollama tags: {e}")))?;
+        body.get("models")
+            .and_then(|m| m.as_array())
+            .and_then(|arr| arr.first())
+            .and_then(|m| m.get("name"))
+            .and_then(|n| n.as_str())
+            .map(|s| s.to_owned())
+            .ok_or_else(|| Error::AiBackend("No models available in Ollama".into()))
+    }
+
+    /// Return the model name to use — resolves "auto" / empty to the running model.
+    async fn effective_model(&self, config: &AiConfig) -> Result<String, Error> {
+        if config.model.is_empty() || config.model.eq_ignore_ascii_case("auto") {
+            self.resolve_running_model().await
+        } else {
+            Ok(config.model.clone())
+        }
+    }
+
     pub async fn generate(
         &self,
         prompt: &ChatPrompt,
         config: &AiConfig,
     ) -> Result<GenerateStream, Error> {
+        let model = self.effective_model(config).await?;
         let url = format!("{}/api/chat", self.base_url);
         let body = serde_json::json!({
-            "model": config.model,
+            "model": model,
             "messages": [
                 { "role": "system", "content": prompt.system },
                 { "role": "user", "content": prompt.user }
@@ -104,9 +157,10 @@ impl OllamaBackend {
     /// Non-streaming generation with JSON mode enabled.
     /// Ollama will constrain output to valid JSON.
     pub async fn generate_json(&self, prompt: &ChatPrompt, config: &AiConfig) -> Result<String, Error> {
+        let model = self.effective_model(config).await?;
         let url = format!("{}/api/chat", self.base_url);
         let body = serde_json::json!({
-            "model": config.model,
+            "model": model,
             "messages": [
                 { "role": "system", "content": prompt.system },
                 { "role": "user", "content": prompt.user }
@@ -166,14 +220,21 @@ impl OllamaBackend {
                             .collect()
                     })
                     .unwrap_or_default();
-                let message = if models.is_empty() {
-                    "Connected, no models loaded".into()
-                } else {
-                    format!("Connected, {} models available", models.len())
+
+                // Check which model is actually loaded/running.
+                let running_model = self.resolve_running_model().await.ok();
+
+                let message = match &running_model {
+                    Some(m) => format!("Connected, running {m}"),
+                    None if models.is_empty() => "Connected, no models available".into(),
+                    None => format!("Connected, {} models available (none running)", models.len()),
                 };
+
                 Ok(BackendStatus {
                     connected: true,
-                    model: models.first().cloned().unwrap_or_default(),
+                    model: running_model.unwrap_or_else(|| {
+                        models.first().cloned().unwrap_or_default()
+                    }),
                     backend_type: BackendType::Ollama,
                     message,
                 })

@@ -4,20 +4,20 @@ use axum::{Json, Router};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use eidetic_core::timeline::clip::{ClipId, ContentStatus};
+use eidetic_core::timeline::node::{ContentStatus, NodeId};
 
 use crate::state::{AppState, ServerEvent};
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/beats/{id}", get(get_beat))
-        .route("/beats/{id}/notes", put(update_notes))
-        .route("/beats/{id}/script", put(update_script))
-        .route("/beats/{id}/lock", post(lock_beat))
-        .route("/beats/{id}/unlock", post(unlock_beat))
+        .route("/nodes/{id}/content", get(get_node_content))
+        .route("/nodes/{id}/notes", put(update_notes))
+        .route("/nodes/{id}/script", put(update_script))
+        .route("/nodes/{id}/lock", post(lock_node))
+        .route("/nodes/{id}/unlock", post(unlock_node))
 }
 
-async fn get_beat(
+async fn get_node_content(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
@@ -26,8 +26,8 @@ async fn get_beat(
         return Json(serde_json::json!({ "error": "no project loaded" }));
     };
 
-    match project.timeline.clip(ClipId(id)) {
-        Ok(clip) => Json(serde_json::to_value(&clip.content).unwrap()),
+    match project.timeline.node(NodeId(id)) {
+        Ok(node) => Json(serde_json::to_value(&node.content).unwrap()),
         Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
     }
 }
@@ -48,14 +48,14 @@ async fn update_notes(
         return Json(serde_json::json!({ "error": "no project loaded" }));
     };
 
-    match project.timeline.clip_mut(ClipId(id)) {
-        Ok(clip) => {
-            clip.content.beat_notes = body.notes;
-            if clip.content.status == ContentStatus::Empty {
-                clip.content.status = ContentStatus::NotesOnly;
+    match project.timeline.node_mut(NodeId(id)) {
+        Ok(node) => {
+            node.content.notes = body.notes;
+            if node.content.status == ContentStatus::Empty {
+                node.content.status = ContentStatus::NotesOnly;
             }
-            let json = serde_json::to_value(&clip.content).unwrap();
-            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            let json = serde_json::to_value(&node.content).unwrap();
+            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             state.trigger_save();
             Json(json)
         }
@@ -79,12 +79,12 @@ async fn update_script(
         return Json(serde_json::json!({ "error": "no project loaded" }));
     };
 
-    match project.timeline.clip_mut(ClipId(id)) {
-        Ok(clip) => {
-            clip.content.user_refined_script = Some(body.script);
-            clip.content.status = ContentStatus::UserRefined;
-            let json = serde_json::to_value(&clip.content).unwrap();
-            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+    match project.timeline.node_mut(NodeId(id)) {
+        Ok(node) => {
+            node.content.content = body.script;
+            node.content.status = ContentStatus::HasContent;
+            let json = serde_json::to_value(&node.content).unwrap();
+            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             state.trigger_save();
             Json(json)
         }
@@ -92,7 +92,7 @@ async fn update_script(
     }
 }
 
-async fn lock_beat(
+async fn lock_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
@@ -102,11 +102,11 @@ async fn lock_beat(
         return Json(serde_json::json!({ "error": "no project loaded" }));
     };
 
-    match project.timeline.clip_mut(ClipId(id)) {
-        Ok(clip) => {
-            clip.locked = true;
-            clip.content.status = ContentStatus::UserWritten;
-            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+    match project.timeline.node_mut(NodeId(id)) {
+        Ok(node) => {
+            node.locked = true;
+            // Status unchanged — locking doesn't alter content state.
+            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             state.trigger_save();
             Json(serde_json::json!({ "locked": true }))
         }
@@ -114,7 +114,7 @@ async fn lock_beat(
     }
 }
 
-async fn unlock_beat(
+async fn unlock_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
@@ -124,20 +124,18 @@ async fn unlock_beat(
         return Json(serde_json::json!({ "error": "no project loaded" }));
     };
 
-    match project.timeline.clip_mut(ClipId(id)) {
-        Ok(clip) => {
-            clip.locked = false;
-            // Revert status based on what content exists.
-            clip.content.status = if clip.content.user_refined_script.is_some() {
-                ContentStatus::UserRefined
-            } else if clip.content.generated_script.is_some() {
-                ContentStatus::Generated
-            } else if !clip.content.beat_notes.is_empty() {
+    match project.timeline.node_mut(NodeId(id)) {
+        Ok(node) => {
+            node.locked = false;
+            // Recompute status from current content state.
+            node.content.status = if !node.content.content.is_empty() {
+                ContentStatus::HasContent
+            } else if !node.content.notes.is_empty() {
                 ContentStatus::NotesOnly
             } else {
                 ContentStatus::Empty
             };
-            let _ = state.events_tx.send(ServerEvent::BeatUpdated { clip_id: id });
+            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             state.trigger_save();
             Json(serde_json::json!({ "locked": false }))
         }

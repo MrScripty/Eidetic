@@ -4,7 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
 use super::arc::Color;
-use crate::timeline::clip::ClipId;
+use crate::timeline::node::NodeId;
 
 // ──────────────────────────────────────────────
 // Entity ID
@@ -82,39 +82,26 @@ impl fmt::Display for EntityCategory {
 #[serde(tag = "type")]
 pub enum EntityDetails {
     Character {
-        /// Personality traits (concise list for prompts).
         traits: Vec<String>,
-        /// How this character speaks.
         voice_notes: String,
-        /// Relationships to other characters: (entity_id, label).
         character_relations: Vec<(EntityId, String)>,
-        /// What the audience currently knows about this character.
         audience_knowledge: String,
     },
     Location {
-        /// e.g., "INT", "EXT", "INT/EXT"
         int_ext: String,
-        /// e.g., "Central Perk", "Monica's Apartment"
         scene_heading_name: String,
-        /// Physical description and atmosphere.
         atmosphere: String,
     },
     Prop {
-        /// Who currently possesses this prop.
         owner_entity_id: Option<EntityId>,
-        /// Narrative significance.
         significance: String,
     },
     Theme {
-        /// How this theme manifests (imagery, dialogue patterns, motifs).
         manifestation: String,
     },
     Event {
-        /// When this event occurs in the timeline (if on-screen).
         timeline_ms: Option<u64>,
-        /// Whether this is backstory (pre-episode) or on-screen.
         is_backstory: bool,
-        /// Which entities are involved.
         involved_entity_ids: Vec<EntityId>,
     },
 }
@@ -154,25 +141,17 @@ impl EntityDetails {
 // ──────────────────────────────────────────────
 
 /// A snapshot of an entity's state at a specific point in the timeline.
-///
-/// Snapshots are anchored to absolute timeline positions (milliseconds).
-/// The system resolves "state at time X" by finding the latest snapshot
-/// where `at_ms <= X`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EntitySnapshot {
-    /// Timeline position this snapshot describes (milliseconds).
     pub at_ms: u64,
-    /// Optional clip that triggered this state change.
-    pub source_clip_id: Option<ClipId>,
-    /// What changed — free-form text describing the delta.
+    /// Optional node that triggered this state change.
+    pub source_node_id: Option<NodeId>,
     pub description: String,
-    /// Category-specific state overrides. Only changed fields are set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub state_overrides: Option<SnapshotOverrides>,
 }
 
 /// Optional structured state changes within a snapshot.
-/// Each field is `Option` — only set fields override the baseline.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SnapshotOverrides {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -189,8 +168,6 @@ pub struct SnapshotOverrides {
     pub significance: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub custom: Option<Vec<(String, String)>>,
-    /// Where this entity currently is (for characters/props).
-    /// e.g., "INT. CABIN - MORNING"
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub location: Option<String>,
 }
@@ -199,11 +176,9 @@ pub struct SnapshotOverrides {
 // Entity Relations
 // ──────────────────────────────────────────────
 
-/// A directed relationship from one entity to another.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EntityRelation {
     pub target_entity_id: EntityId,
-    /// e.g., "lives at", "owns", "fears", "works at"
     pub label: String,
 }
 
@@ -211,33 +186,23 @@ pub struct EntityRelation {
 // Entity
 // ──────────────────────────────────────────────
 
-/// A story bible entity — a shared narrative element tracked across clips.
-///
-/// The baseline fields describe the entity's default state.
-/// `snapshots` capture how the entity changes at specific timeline positions.
+/// A story bible entity — a shared narrative element tracked across nodes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entity {
     pub id: EntityId,
     pub category: EntityCategory,
     pub name: String,
-    /// Brief summary used in compact context (~50 tokens).
     pub tagline: String,
-    /// Full description — used when token budget allows.
     pub description: String,
-    /// Category-specific structured fields.
     pub details: EntityDetails,
-    /// How this entity develops over the timeline. Sorted ascending by `at_ms`.
     #[serde(default)]
     pub snapshots: Vec<EntitySnapshot>,
-    /// Which clips explicitly reference this entity.
+    /// Which nodes explicitly reference this entity.
     #[serde(default)]
-    pub clip_refs: Vec<ClipId>,
-    /// Links to other entities.
+    pub node_refs: Vec<NodeId>,
     #[serde(default)]
     pub relations: Vec<EntityRelation>,
-    /// Display color in the UI.
     pub color: Color,
-    /// If true, AI extraction won't modify this entity.
     #[serde(default)]
     pub locked: bool,
 }
@@ -253,14 +218,13 @@ impl Entity {
             description: String::new(),
             details: EntityDetails::default_for(&category_clone),
             snapshots: Vec::new(),
-            clip_refs: Vec::new(),
+            node_refs: Vec::new(),
             relations: Vec::new(),
             color,
             locked: false,
         }
     }
 
-    /// Add a snapshot, maintaining sort order by `at_ms`.
     pub fn add_snapshot(&mut self, snapshot: EntitySnapshot) {
         let pos = self
             .snapshots
@@ -268,13 +232,10 @@ impl Entity {
         self.snapshots.insert(pos, snapshot);
     }
 
-    /// Ensure snapshots are sorted by `at_ms`.
     pub fn sort_snapshots(&mut self) {
         self.snapshots.sort_by_key(|s| s.at_ms);
     }
 
-    /// Resolve this entity's effective state at a given timeline position.
-    /// Returns the latest snapshot at or before `time_ms`, if any.
     pub fn active_snapshot_at(&self, time_ms: u64) -> Option<&EntitySnapshot> {
         self.snapshots
             .iter()
@@ -282,7 +243,6 @@ impl Entity {
             .find(|s| s.at_ms <= time_ms)
     }
 
-    /// Build a compact text representation for inclusion in AI prompts (~50-100 tokens).
     pub fn to_prompt_text(&self, time_ms: u64) -> String {
         let mut text = format!("[{}] {}: {}", self.category, self.name, self.tagline);
 
@@ -305,7 +265,6 @@ impl Entity {
         text
     }
 
-    /// Build a full text representation for when token budget allows (~200-400 tokens).
     pub fn to_full_prompt_text(&self, time_ms: u64) -> String {
         let mut text = format!(
             "## {} ({})\n{}\n{}",
@@ -379,7 +338,6 @@ impl Entity {
 // Story Bible (top-level container)
 // ──────────────────────────────────────────────
 
-/// The Story Bible — a collection of shared entity profiles.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct StoryBible {
     pub entities: Vec<Entity>,
@@ -392,30 +350,25 @@ impl StoryBible {
         }
     }
 
-    /// Find an entity by ID.
     pub fn entity(&self, id: EntityId) -> Option<&Entity> {
         self.entities.iter().find(|e| e.id == id)
     }
 
-    /// Find an entity by ID (mutable).
     pub fn entity_mut(&mut self, id: EntityId) -> Option<&mut Entity> {
         self.entities.iter_mut().find(|e| e.id == id)
     }
 
-    /// Get all entities of a given category.
     pub fn by_category(&self, cat: &EntityCategory) -> Vec<&Entity> {
         self.entities.iter().filter(|e| &e.category == cat).collect()
     }
 
-    /// Get all entities referenced by a specific clip.
-    pub fn entities_for_clip(&self, clip_id: ClipId) -> Vec<&Entity> {
+    pub fn entities_for_node(&self, node_id: NodeId) -> Vec<&Entity> {
         self.entities
             .iter()
-            .filter(|e| e.clip_refs.contains(&clip_id))
+            .filter(|e| e.node_refs.contains(&node_id))
             .collect()
     }
 
-    /// Find an entity by name (case-insensitive).
     pub fn find_by_name(&self, name: &str) -> Option<&Entity> {
         let lower = name.to_lowercase();
         self.entities
@@ -423,12 +376,10 @@ impl StoryBible {
             .find(|e| e.name.to_lowercase() == lower)
     }
 
-    /// Add an entity to the bible.
     pub fn add_entity(&mut self, entity: Entity) {
         self.entities.push(entity);
     }
 
-    /// Remove an entity by ID. Returns the removed entity if found.
     pub fn remove_entity(&mut self, id: EntityId) -> Option<Entity> {
         let pos = self.entities.iter().position(|e| e.id == id)?;
         Some(self.entities.remove(pos))
@@ -439,31 +390,24 @@ impl StoryBible {
 // AI Context Types
 // ──────────────────────────────────────────────
 
-/// Story bible entities relevant to a beat, resolved at the beat's time position.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BibleContext {
-    /// Entities directly referenced by this clip (full detail).
     pub referenced_entities: Vec<ResolvedEntity>,
-    /// All other entities (compact form).
     pub nearby_entities: Vec<ResolvedEntity>,
 }
 
-/// An entity resolved at a specific time point, ready for prompt inclusion.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResolvedEntity {
     pub entity_id: EntityId,
     pub name: String,
     pub category: EntityCategory,
-    /// Compact prompt text (~50-100 tokens).
     pub compact_text: String,
-    /// Full prompt text (~200-400 tokens). Only included for directly referenced entities.
     pub full_text: Option<String>,
 }
 
-/// Build bible context for a clip at a given time.
 pub fn gather_bible_context(
     bible: &StoryBible,
-    clip_id: ClipId,
+    node_id: NodeId,
     time_ms: u64,
 ) -> BibleContext {
     let mut referenced = Vec::new();
@@ -472,7 +416,7 @@ pub fn gather_bible_context(
     for entity in &bible.entities {
         let compact = entity.to_prompt_text(time_ms);
 
-        if entity.clip_refs.contains(&clip_id) {
+        if entity.node_refs.contains(&node_id) {
             referenced.push(ResolvedEntity {
                 entity_id: entity.id,
                 name: entity.name.clone(),
@@ -501,20 +445,16 @@ pub fn gather_bible_context(
 // AI Extraction Types
 // ──────────────────────────────────────────────
 
-/// Result of AI entity extraction from a generated script.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtractionResult {
     #[serde(default)]
     pub new_entities: Vec<SuggestedEntity>,
     #[serde(default)]
     pub snapshot_suggestions: Vec<SuggestedSnapshot>,
-    /// Names of all entities (existing or new) that appear in this scene.
-    /// Resolved to entity IDs server-side.
     #[serde(default)]
     pub entities_present: Vec<String>,
 }
 
-/// A new entity suggested by AI extraction.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SuggestedEntity {
     pub name: String,
@@ -523,17 +463,14 @@ pub struct SuggestedEntity {
     pub description: String,
 }
 
-/// A development snapshot suggested by AI extraction.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SuggestedSnapshot {
-    /// Matched against existing entity names.
     pub entity_name: String,
     pub description: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub emotional_state: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audience_knowledge: Option<String>,
-    /// Where this entity is located at the time of the snapshot.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub location: Option<String>,
 }
@@ -565,7 +502,7 @@ mod tests {
         assert_eq!(entity.name, "Test");
         assert!(matches!(entity.details, EntityDetails::Location { .. }));
         assert!(entity.snapshots.is_empty());
-        assert!(entity.clip_refs.is_empty());
+        assert!(entity.node_refs.is_empty());
     }
 
     #[test]
@@ -574,19 +511,19 @@ mod tests {
 
         entity.add_snapshot(EntitySnapshot {
             at_ms: 300_000,
-            source_clip_id: None,
+            source_node_id: None,
             description: "Learns the truth".into(),
             state_overrides: None,
         });
         entity.add_snapshot(EntitySnapshot {
             at_ms: 100_000,
-            source_clip_id: None,
+            source_node_id: None,
             description: "Enters the scene".into(),
             state_overrides: None,
         });
         entity.add_snapshot(EntitySnapshot {
             at_ms: 200_000,
-            source_clip_id: None,
+            source_node_id: None,
             description: "Gets suspicious".into(),
             state_overrides: None,
         });
@@ -603,50 +540,45 @@ mod tests {
 
         entity.add_snapshot(EntitySnapshot {
             at_ms: 100_000,
-            source_clip_id: None,
+            source_node_id: None,
             description: "Enters the scene".into(),
             state_overrides: None,
         });
         entity.add_snapshot(EntitySnapshot {
             at_ms: 300_000,
-            source_clip_id: None,
+            source_node_id: None,
             description: "Learns the truth".into(),
             state_overrides: None,
         });
 
-        // Before any snapshot
         assert!(entity.active_snapshot_at(50_000).is_none());
 
-        // At first snapshot
         let snap = entity.active_snapshot_at(100_000).unwrap();
         assert_eq!(snap.description, "Enters the scene");
 
-        // Between snapshots
         let snap = entity.active_snapshot_at(200_000).unwrap();
         assert_eq!(snap.description, "Enters the scene");
 
-        // At second snapshot
         let snap = entity.active_snapshot_at(300_000).unwrap();
         assert_eq!(snap.description, "Learns the truth");
 
-        // After all snapshots
         let snap = entity.active_snapshot_at(500_000).unwrap();
         assert_eq!(snap.description, "Learns the truth");
     }
 
     #[test]
-    fn bible_entities_for_clip() {
+    fn bible_entities_for_node() {
         let mut bible = StoryBible::new();
-        let clip_id = ClipId::new();
+        let node_id = NodeId::new();
 
         let mut jake = test_character();
-        jake.clip_refs.push(clip_id);
+        jake.node_refs.push(node_id);
         bible.add_entity(jake);
 
         let maria = Entity::new("Maria", EntityCategory::Character, Color::B_PLOT);
         bible.add_entity(maria);
 
-        let found = bible.entities_for_clip(clip_id);
+        let found = bible.entities_for_node(node_id);
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].name, "Jake");
     }
@@ -666,16 +598,16 @@ mod tests {
     #[test]
     fn gather_context_splits_referenced_and_nearby() {
         let mut bible = StoryBible::new();
-        let clip_id = ClipId::new();
+        let node_id = NodeId::new();
 
         let mut jake = test_character();
-        jake.clip_refs.push(clip_id);
+        jake.node_refs.push(node_id);
         bible.add_entity(jake);
 
         let maria = Entity::new("Maria", EntityCategory::Character, Color::B_PLOT);
         bible.add_entity(maria);
 
-        let ctx = gather_bible_context(&bible, clip_id, 150_000);
+        let ctx = gather_bible_context(&bible, node_id, 150_000);
         assert_eq!(ctx.referenced_entities.len(), 1);
         assert_eq!(ctx.referenced_entities[0].name, "Jake");
         assert!(ctx.referenced_entities[0].full_text.is_some());
@@ -690,7 +622,7 @@ mod tests {
         let mut entity = test_character();
         entity.add_snapshot(EntitySnapshot {
             at_ms: 100_000,
-            source_clip_id: None,
+            source_node_id: None,
             description: "Discovers the letter".into(),
             state_overrides: Some(SnapshotOverrides {
                 emotional_state: Some("anxious".into()),
@@ -714,7 +646,7 @@ mod tests {
         let mut entity = test_character();
         entity.add_snapshot(EntitySnapshot {
             at_ms: 100_000,
-            source_clip_id: Some(ClipId::new()),
+            source_node_id: Some(NodeId::new()),
             description: "Enters scene".into(),
             state_overrides: Some(SnapshotOverrides {
                 emotional_state: Some("happy".into()),

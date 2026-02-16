@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { RelationshipType } from '$lib/types.js';
 	import { TIMELINE } from '$lib/types.js';
-	import { timelineState, timeToX, totalWidth } from '$lib/stores/timeline.svelte.js';
+	import { timelineState, timeToX, totalWidth, findNode } from '$lib/stores/timeline.svelte.js';
 	import { connectionDrag } from '$lib/stores/timeline.svelte.js';
 	import RelationshipArc from './RelationshipArc.svelte';
 
@@ -16,31 +16,20 @@
 	}
 
 	function trackYOffset(trackIdx: number): number {
-		let y = 0;
-		for (let i = 0; i < trackIdx; i++) {
-			const t = timelineState.timeline!.tracks[i]!;
-			y += TIMELINE.TRACK_HEIGHT_PX;
-			if (t.sub_beats_visible && t.sub_beats.length > 0) {
-				y += TIMELINE.BEAT_SUBTRACK_HEIGHT_PX;
-			}
-		}
-		return y;
+		return trackIdx * TIMELINE.TRACK_HEIGHT_PX;
 	}
 
-	function clipCenter(clipId: string): { x: number; y: number } | null {
+	function nodeCenter(nodeId: string): { x: number; y: number } | null {
 		if (!timelineState.timeline) return null;
-		for (let trackIdx = 0; trackIdx < timelineState.timeline.tracks.length; trackIdx++) {
-			const track = timelineState.timeline.tracks[trackIdx]!;
-			const clip = track.clips.find(c => c.id === clipId);
-			if (clip) {
-				const midMs = (clip.time_range.start_ms + clip.time_range.end_ms) / 2;
-				return {
-					x: timeToX(midMs),
-					y: trackYOffset(trackIdx) + TIMELINE.TRACK_HEIGHT_PX / 2,
-				};
-			}
-		}
-		return null;
+		const node = findNode(nodeId);
+		if (!node) return null;
+		const trackIdx = timelineState.timeline.tracks.findIndex(t => t.level === node.level);
+		if (trackIdx === -1) return null;
+		const midMs = (node.time_range.start_ms + node.time_range.end_ms) / 2;
+		return {
+			x: timeToX(midMs),
+			y: trackYOffset(trackIdx) + TIMELINE.TRACK_HEIGHT_PX / 2,
+		};
 	}
 </script>
 
@@ -50,8 +39,8 @@
 >
 	{#if timelineState.timeline}
 		{#each timelineState.timeline.relationships as rel (rel.id)}
-			{@const from = clipCenter(rel.from_clip)}
-			{@const to = clipCenter(rel.to_clip)}
+			{@const from = nodeCenter(rel.from_node)}
+			{@const to = nodeCenter(rel.to_node)}
 			{#if from && to}
 				<RelationshipArc
 					fromX={from.x}

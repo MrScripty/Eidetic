@@ -9,7 +9,7 @@ use eidetic_core::story::bible::{
     Entity, EntityCategory, EntityDetails, EntityRelation, EntitySnapshot, SnapshotOverrides,
 };
 use eidetic_core::story::progression::analyze_all_arcs;
-use eidetic_core::timeline::clip::ClipId;
+use eidetic_core::timeline::node::NodeId;
 
 use crate::state::{AppState, ServerEvent};
 
@@ -36,12 +36,12 @@ pub fn router() -> Router<AppState> {
             delete(delete_snapshot),
         )
         .route(
-            "/bible/entities/{id}/clip-refs",
-            post(add_clip_ref),
+            "/bible/entities/{id}/node-refs",
+            post(add_node_ref),
         )
         .route(
-            "/bible/entities/{id}/clip-refs/{clip_id}",
-            delete(remove_clip_ref),
+            "/bible/entities/{id}/node-refs/{node_id}",
+            delete(remove_node_ref),
         )
         .route(
             "/bible/entities/{id}/relations",
@@ -317,7 +317,7 @@ async fn delete_entity(
 #[derive(Deserialize)]
 struct AddSnapshotRequest {
     at_ms: u64,
-    source_clip_id: Option<Uuid>,
+    source_node_id: Option<Uuid>,
     description: String,
     #[serde(default)]
     state_overrides: Option<SnapshotOverrides>,
@@ -341,7 +341,7 @@ async fn add_snapshot(
 
     let snapshot = EntitySnapshot {
         at_ms: body.at_ms,
-        source_clip_id: body.source_clip_id.map(ClipId),
+        source_node_id: body.source_node_id.map(NodeId),
         description: body.description,
         state_overrides: body.state_overrides,
     };
@@ -418,18 +418,18 @@ async fn delete_snapshot(
 }
 
 // ──────────────────────────────────────────────
-// Clip References
+// Node References
 // ──────────────────────────────────────────────
 
 #[derive(Deserialize)]
-struct AddClipRefRequest {
-    clip_id: Uuid,
+struct AddNodeRefRequest {
+    node_id: Uuid,
 }
 
-async fn add_clip_ref(
+async fn add_node_ref(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(body): Json<AddClipRefRequest>,
+    Json(body): Json<AddNodeRefRequest>,
 ) -> Json<serde_json::Value> {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
@@ -442,20 +442,20 @@ async fn add_clip_ref(
         return Json(serde_json::json!({ "error": "entity not found" }));
     };
 
-    let clip_id = ClipId(body.clip_id);
-    if !entity.clip_refs.contains(&clip_id) {
-        entity.clip_refs.push(clip_id);
+    let node_id = NodeId(body.node_id);
+    if !entity.node_refs.contains(&node_id) {
+        entity.node_refs.push(node_id);
     }
 
-    let json = serde_json::to_value(&entity.clip_refs).unwrap();
+    let json = serde_json::to_value(&entity.node_refs).unwrap();
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
     state.trigger_save();
     Json(json)
 }
 
-async fn remove_clip_ref(
+async fn remove_node_ref(
     State(state): State<AppState>,
-    Path((id, clip_id)): Path<(Uuid, Uuid)>,
+    Path((id, node_id)): Path<(Uuid, Uuid)>,
 ) -> Json<serde_json::Value> {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
@@ -468,8 +468,8 @@ async fn remove_clip_ref(
         return Json(serde_json::json!({ "error": "entity not found" }));
     };
 
-    let target = ClipId(clip_id);
-    entity.clip_refs.retain(|c| *c != target);
+    let target = NodeId(node_id);
+    entity.node_refs.retain(|n| *n != target);
 
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
     state.trigger_save();

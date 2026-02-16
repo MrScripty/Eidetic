@@ -268,13 +268,13 @@
 		<div class="section-divider"></div>
 		<DevelopmentTimeline {entity} />
 
-		<!-- Clip References -->
-		{#if entity.clip_refs.length > 0}
+		<!-- Node References -->
+		{#if entity.node_refs.length > 0}
 			<div class="section-divider"></div>
-			<span class="field-label">Linked Clips ({entity.clip_refs.length})</span>
-			<div class="clip-refs">
-				{#each entity.clip_refs as clipId}
-					<span class="clip-ref">{clipId.slice(0, 8)}</span>
+			<span class="field-label">Linked Nodes ({entity.node_refs.length})</span>
+			<div class="node-refs">
+				{#each entity.node_refs as nodeId}
+					<span class="node-ref">{nodeId.slice(0, 8)}</span>
 				{/each}
 			</div>
 		{/if}
@@ -530,13 +530,13 @@
 		padding: 2px 0;
 	}
 
-	.clip-refs {
+	.node-refs {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 4px;
 	}
 
-	.clip-ref {
+	.node-ref {
 		font-size: 0.7rem;
 		color: var(--color-text-secondary);
 		background: var(--color-bg-elevated);

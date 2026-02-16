@@ -14,8 +14,8 @@ use crate::vector_store::VectorStore;
 pub mod constants {
     /// Maximum number of undo snapshots to retain.
     pub const UNDO_STACK_DEPTH: usize = 50;
-    /// Default AI model identifier.
-    pub const DEFAULT_AI_MODEL: &str = "qwen3:30b-a3b";
+    /// Default AI model identifier.  "auto" means detect whatever Ollama has loaded.
+    pub const DEFAULT_AI_MODEL: &str = "auto";
     /// Default AI temperature.
     pub const DEFAULT_TEMPERATURE: f32 = 0.7;
     /// Default max tokens for generation.
@@ -39,36 +39,36 @@ pub mod constants {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerEvent {
     TimelineChanged,
-    ScenesChanged,
-    BeatUpdated { clip_id: uuid::Uuid },
+    HierarchyChanged,
+    NodeUpdated { node_id: uuid::Uuid },
     StoryChanged,
     ProjectMutated,
     GenerationContext {
-        clip_id: uuid::Uuid,
+        node_id: uuid::Uuid,
         system_prompt: String,
         user_prompt: String,
     },
     GenerationProgress {
-        clip_id: uuid::Uuid,
+        node_id: uuid::Uuid,
         token: String,
         tokens_generated: usize,
     },
     GenerationComplete {
-        clip_id: uuid::Uuid,
+        node_id: uuid::Uuid,
     },
     GenerationError {
-        clip_id: uuid::Uuid,
+        node_id: uuid::Uuid,
         error: String,
     },
     ConsistencySuggestion {
-        source_clip_id: uuid::Uuid,
-        target_clip_id: uuid::Uuid,
+        source_node_id: uuid::Uuid,
+        target_node_id: uuid::Uuid,
         original_text: String,
         suggested_text: String,
         reason: String,
     },
     ConsistencyComplete {
-        source_clip_id: uuid::Uuid,
+        source_node_id: uuid::Uuid,
         suggestion_count: usize,
     },
     UndoRedoChanged {
@@ -77,7 +77,7 @@ pub enum ServerEvent {
     },
     BibleChanged,
     EntityExtractionComplete {
-        clip_id: uuid::Uuid,
+        node_id: uuid::Uuid,
         new_entity_count: usize,
         snapshot_count: usize,
     },
@@ -176,9 +176,9 @@ pub struct AppState {
     pub project: Arc<Mutex<Option<Project>>>,
     pub events_tx: broadcast::Sender<ServerEvent>,
     pub ai_config: Arc<Mutex<AiConfig>>,
-    /// Clip IDs currently being generated — prevents duplicate requests.
+    /// Node IDs currently being generated — prevents duplicate requests.
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
-    /// Clip IDs currently undergoing entity extraction — prevents duplicate/concurrent runs.
+    /// Node IDs currently undergoing entity extraction — prevents duplicate/concurrent runs.
     pub extracting: Arc<Mutex<HashSet<uuid::Uuid>>>,
     /// Path where the current project is saved on disk.
     pub project_path: Arc<Mutex<Option<PathBuf>>>,

@@ -14,7 +14,7 @@
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
 	import { bibleState, selectEntity } from '$lib/stores/bible.svelte.js';
-	import { createProject, getAiStatus, undo, redo, saveProject, deleteClip, exportPdf } from '$lib/api.js';
+	import { getAiStatus, undo, redo, saveProject, deleteNode, exportPdf } from '$lib/api.js';
 	import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
 	import { notify } from '$lib/stores/notifications.svelte.js';
 
@@ -46,13 +46,14 @@
 				action: () => { saveProject().then(() => notify('success', 'Saved')).catch(() => notify('error', 'Save failed')); },
 			}),
 			registerShortcut({
-				key: 'Delete', description: 'Delete selected clip', skipInInput: true,
+				key: 'Delete', description: 'Delete selected node', skipInInput: true,
 				action: () => {
-					if (editorState.selectedClipId) {
-						const id = editorState.selectedClipId;
-						editorState.selectedClipId = null;
-						editorState.selectedClip = null;
-						deleteClip(id).catch(() => {});
+					if (editorState.selectedNodeId) {
+						const id = editorState.selectedNodeId;
+						editorState.selectedNodeId = null;
+						editorState.selectedNode = null;
+						editorState.selectedLevel = null;
+						deleteNode(id).catch(() => {});
 					}
 				},
 			}),
@@ -106,13 +107,6 @@
 		}
 	}
 
-	async function handleNewProject(template: string) {
-		const project = await createProject('Untitled Episode', template);
-		projectState.current = project;
-		timelineState.timeline = project.timeline;
-		storyState.arcs = project.arcs;
-		storyState.entities = project.bible.entities;
-	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -213,31 +207,9 @@
 				<CharacterTimeline />
 			</div>
 		{/if}
-	{:else}
-		{#if sidebarOpen}
-			<Sidebar onclose={() => sidebarOpen = false} />
-		{/if}
-
-		<div class="main-area">
-			<div class="welcome">
-				<h1>Eidetic</h1>
-				<p>AI-driven script writing for 30-minute TV episodes</p>
-				<div class="template-picker">
-					<button onclick={() => handleNewProject('multi_cam')}>
-						Multi-Cam Sitcom
-					</button>
-					<button onclick={() => handleNewProject('single_cam')}>
-						Single-Cam Dramedy
-					</button>
-					<button onclick={() => handleNewProject('animated')}>
-						Animated Comedy
-					</button>
-				</div>
-			</div>
-		</div>
 	{/if}
 
-	{#if !sidebarOpen}
+	{#if !sidebarOpen && projectState.current}
 		<button class="sidebar-toggle" onclick={() => sidebarOpen = true}>
 			&#9776;
 		</button>
@@ -346,47 +318,6 @@
 		height: 120px;
 		overflow: hidden;
 		background: var(--color-bg-primary);
-	}
-
-	.welcome {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 16px;
-		color: var(--color-text-secondary);
-	}
-
-	.welcome h1 {
-		font-size: 2.5rem;
-		font-weight: 300;
-		color: var(--color-text-primary);
-		margin: 0;
-	}
-
-	.welcome p {
-		margin: 0 0 24px;
-	}
-
-	.template-picker {
-		display: flex;
-		gap: 12px;
-	}
-
-	.template-picker button {
-		padding: 12px 24px;
-		background: var(--color-bg-surface);
-		color: var(--color-text-primary);
-		border: 1px solid var(--color-border-default);
-		border-radius: 6px;
-		cursor: pointer;
-		font-size: 0.9rem;
-		transition: background 0.15s;
-	}
-
-	.template-picker button:hover {
-		background: var(--color-bg-hover);
 	}
 
 	.sidebar-toggle {

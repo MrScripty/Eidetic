@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ExtractionResult } from '$lib/types.js';
-	import { colorToHex } from '$lib/types.js';
+	import { colorToHex, childLevel } from '$lib/types.js';
 	import {
 		editorState,
 		startGeneration,
@@ -9,21 +9,22 @@
 		removeConsistencySuggestion,
 		clearConsistencySuggestions,
 	} from '$lib/stores/editor.svelte.js';
-	import { storyState, entitiesForClip } from '$lib/stores/story.svelte.js';
-	import { timelineState, zoomToRange } from '$lib/stores/timeline.svelte.js';
+	import { storyState, entitiesForNode } from '$lib/stores/story.svelte.js';
+	import { timelineState, zoomToRange, childrenOf, findNode } from '$lib/stores/timeline.svelte.js';
 	import {
-		updateBeatNotes,
-		updateBeatScript,
-		lockBeat,
-		unlockBeat,
-		getBeat,
-		generateScript,
+		updateNodeNotes,
+		updateNodeScript,
+		lockNode,
+		unlockNode,
+		getNodeContent,
+		generateContent,
 		reactToEdit,
 		extractEntities,
-		removeClipRef,
-		planBeats,
-		generateBeats,
-		applyBeats,
+		removeNodeRef,
+		generateChildren,
+		generateBatch,
+		applyChildren,
+		getAiContext,
 	} from '$lib/api.js';
 	import ScriptView from './ScriptView.svelte';
 	import DiffView from './DiffView.svelte';
@@ -37,50 +38,115 @@
 	let previousScript = $state('');
 
 	let isGenerating = $derived(
-		(editorState.streamingClipId != null &&
-		editorState.streamingClipId === editorState.selectedClipId) ||
-		(editorState.batchParentClipId != null &&
-		editorState.batchParentClipId === editorState.selectedClipId)
+		(editorState.streamingNodeId != null &&
+		editorState.streamingNodeId === editorState.selectedNodeId) ||
+		(editorState.batchParentNodeId != null &&
+		editorState.batchParentNodeId === editorState.selectedNodeId)
 	);
 
-	// Beat planning state
+	// Child planning state
 	let planning = $state(false);
 
-	// Track and sub-beat context
-	let selectedTrack = $derived.by(() => {
-		if (!editorState.selectedClipId || !timelineState.timeline) return null;
-		return timelineState.timeline.tracks.find(t =>
-			t.clips.some(c => c.id === editorState.selectedClipId) ||
-			t.sub_beats.some(b => b.id === editorState.selectedClipId)
-		) ?? null;
+	// Node hierarchy context
+	let isChildNode = $derived(editorState.selectedNode?.parent_id != null);
+
+	let childNodes = $derived.by(() => {
+		if (!editorState.selectedNodeId) return [];
+		return childrenOf(editorState.selectedNodeId);
 	});
 
-	let isSubBeat = $derived(editorState.selectedClip?.parent_clip_id != null);
+	let hasChildren = $derived(childNodes.length > 0);
 
-	let hasSubBeats = $derived.by(() => {
-		if (!selectedTrack || !editorState.selectedClipId) return false;
-		return selectedTrack.sub_beats.some(b => b.parent_clip_id === editorState.selectedClipId);
+	let parentNode = $derived.by(() => {
+		if (!isChildNode || !editorState.selectedNode) return null;
+		return findNode(editorState.selectedNode.parent_id!) ?? null;
 	});
 
-	let parentClip = $derived.by(() => {
-		if (!isSubBeat || !editorState.selectedClip || !selectedTrack) return null;
-		return selectedTrack.clips.find(c => c.id === editorState.selectedClip!.parent_clip_id) ?? null;
+	let siblingNodes = $derived.by(() => {
+		if (!isChildNode || !editorState.selectedNode?.parent_id) return [];
+		return childrenOf(editorState.selectedNode.parent_id);
 	});
 
-	let siblingBeats = $derived.by(() => {
-		if (!isSubBeat || !editorState.selectedClip || !selectedTrack) return [];
-		return selectedTrack.sub_beats
-			.filter(b => b.parent_clip_id === editorState.selectedClip!.parent_clip_id)
-			.sort((a, b) => a.time_range.start_ms - b.time_range.start_ms);
-	});
-
-	let currentBeatIndex = $derived(
-		siblingBeats.findIndex(b => b.id === editorState.selectedClipId)
+	let currentNodeIndex = $derived(
+		siblingNodes.findIndex(n => n.id === editorState.selectedNodeId)
 	);
 
-	// Exit editing when switching clips.
+	// Adjacent nodes at the parent level.
+	let adjacentParents = $derived.by(() => {
+		if (!isChildNode || !parentNode) return { before: null, after: null };
+		const parentLevel = parentNode.level;
+		const allAtLevel = timelineState.timeline?.nodes
+			.filter(n => n.level === parentLevel)
+			.sort((a, b) => a.time_range.start_ms - b.time_range.start_ms) ?? [];
+		const idx = allAtLevel.findIndex(n => n.id === parentNode!.id);
+		if (idx < 0) return { before: null, after: null };
+		return {
+			before: idx > 0 ? allAtLevel[idx - 1] : null,
+			after: idx < allAtLevel.length - 1 ? allAtLevel[idx + 1] : null,
+		};
+	});
+
+	// Persistent context preview
+	let nodeContext: { system: string; user: string } | null = $state(null);
+	let contextLoading = $state(false);
+	let contextNodeId: string | null = $state(null);
+
+	// Auto-fetch context when the selected node changes.
 	$effect(() => {
-		editorState.selectedClipId;
+		const nodeId = editorState.selectedNodeId;
+		const notes = editorState.selectedNode?.content.notes;
+		if (!nodeId || !notes?.trim()) {
+			nodeContext = null;
+			contextNodeId = null;
+			return;
+		}
+		if (nodeId === contextNodeId && nodeContext) return;
+		contextLoading = true;
+		contextNodeId = nodeId;
+		getAiContext(nodeId)
+			.then((ctx) => {
+				if (editorState.selectedNodeId === nodeId) {
+					nodeContext = ctx;
+				}
+			})
+			.catch(() => {
+				if (editorState.selectedNodeId === nodeId) {
+					nodeContext = null;
+				}
+			})
+			.finally(() => {
+				if (editorState.selectedNodeId === nodeId) {
+					contextLoading = false;
+				}
+			});
+	});
+
+	function refreshContext() {
+		const nodeId = editorState.selectedNodeId;
+		if (!nodeId) return;
+		contextLoading = true;
+		contextNodeId = nodeId;
+		getAiContext(nodeId)
+			.then((ctx) => {
+				if (editorState.selectedNodeId === nodeId) {
+					nodeContext = ctx;
+				}
+			})
+			.catch(() => {
+				if (editorState.selectedNodeId === nodeId) {
+					nodeContext = null;
+				}
+			})
+			.finally(() => {
+				if (editorState.selectedNodeId === nodeId) {
+					contextLoading = false;
+				}
+			});
+	}
+
+	// Exit editing when switching nodes.
+	$effect(() => {
+		editorState.selectedNodeId;
 		if (editing) finishEditing();
 	});
 
@@ -89,30 +155,28 @@
 			case 'Empty': return 'No content';
 			case 'NotesOnly': return 'Notes written';
 			case 'Generating': return 'AI generating...';
-			case 'Generated': return 'AI generated';
-			case 'UserRefined': return 'User refined';
-			case 'UserWritten': return 'User written';
+			case 'HasContent': return 'Has content';
 			default: return status;
 		}
 	}
 
 	function handleNotesInput(e: Event) {
 		const value = (e.target as HTMLTextAreaElement).value;
-		if (editorState.selectedClip) {
-			editorState.selectedClip.content.beat_notes = value;
+		if (editorState.selectedNode) {
+			editorState.selectedNode.content.notes = value;
 		}
 		if (debounceTimer) clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(async () => {
-			if (editorState.selectedClipId) {
-				await updateBeatNotes(editorState.selectedClipId, value);
+			if (editorState.selectedNodeId) {
+				await updateNodeNotes(editorState.selectedNodeId, value);
 			}
 		}, 500);
 	}
 
 	function startEditing() {
-		if (!editorState.selectedClip || editorState.selectedClip.locked || isGenerating) return;
-		const clip = editorState.selectedClip;
-		editingText = clip.content.user_refined_script ?? clip.content.generated_script ?? '';
+		if (!editorState.selectedNode || editorState.selectedNode.locked || isGenerating) return;
+		const node = editorState.selectedNode;
+		editingText = node.content.content ?? '';
 		previousScript = editingText;
 		editing = true;
 	}
@@ -121,8 +185,8 @@
 		editingText = (e.target as HTMLTextAreaElement).value;
 		if (scriptDebounceTimer) clearTimeout(scriptDebounceTimer);
 		scriptDebounceTimer = setTimeout(async () => {
-			if (editorState.selectedClipId) {
-				await updateBeatScript(editorState.selectedClipId, editingText);
+			if (editorState.selectedNodeId) {
+				await updateNodeScript(editorState.selectedNodeId, editingText);
 			}
 		}, 800);
 	}
@@ -130,63 +194,61 @@
 	async function finishEditing() {
 		if (!editing) return;
 		editing = false;
-		// Flush any pending debounced save.
 		if (scriptDebounceTimer) {
 			clearTimeout(scriptDebounceTimer);
 			scriptDebounceTimer = null;
 		}
-		if (editorState.selectedClipId && editingText !== previousScript) {
-			await updateBeatScript(editorState.selectedClipId, editingText);
-			// Trigger consistency check.
+		if (editorState.selectedNodeId && editingText !== previousScript) {
+			await updateNodeScript(editorState.selectedNodeId, editingText);
 			editorState.checkingConsistency = true;
 			clearConsistencySuggestions();
 			editorState.checkingConsistency = true;
-			await reactToEdit(editorState.selectedClipId);
+			await reactToEdit(editorState.selectedNodeId);
 		}
 	}
 
 	async function handleToggleLock() {
-		if (!editorState.selectedClipId || !editorState.selectedClip) return;
+		if (!editorState.selectedNodeId || !editorState.selectedNode) return;
 		if (editing) await finishEditing();
-		if (editorState.selectedClip.locked) {
-			await unlockBeat(editorState.selectedClipId);
-			editorState.selectedClip.locked = false;
+		if (editorState.selectedNode.locked) {
+			await unlockNode(editorState.selectedNodeId);
+			editorState.selectedNode.locked = false;
 		} else {
-			await lockBeat(editorState.selectedClipId);
-			editorState.selectedClip.locked = true;
+			await lockNode(editorState.selectedNodeId);
+			editorState.selectedNode.locked = true;
 		}
-		const content = await getBeat(editorState.selectedClipId) as typeof editorState.selectedClip.content;
-		if (editorState.selectedClip) {
-			editorState.selectedClip.content = content;
+		const content = await getNodeContent(editorState.selectedNodeId) as typeof editorState.selectedNode.content;
+		if (editorState.selectedNode) {
+			editorState.selectedNode.content = content;
 		}
 	}
 
 	async function handleGenerate() {
-		if (!editorState.selectedClipId || !editorState.selectedClip) return;
-		if (editorState.selectedClip.locked) return;
-		if (!editorState.selectedClip.content.beat_notes.trim()) return;
+		if (!editorState.selectedNodeId || !editorState.selectedNode) return;
+		if (editorState.selectedNode.locked) return;
+		if (!editorState.selectedNode.content.notes.trim()) return;
 		if (isGenerating) return;
 
-		// If this scene clip has sub-beats, generate all beats instead.
-		if (hasSubBeats) {
-			startBatchGeneration(editorState.selectedClipId);
-			const result = await generateBeats(editorState.selectedClipId);
-			setBatchTotalCount(result.beat_count);
+		// If this node has children, generate all children instead.
+		if (hasChildren) {
+			startBatchGeneration(editorState.selectedNodeId);
+			const result = await generateBatch(editorState.selectedNodeId);
+			setBatchTotalCount(result.child_count);
 			return;
 		}
 
-		startGeneration(editorState.selectedClipId);
-		editorState.selectedClip.content.status = 'Generating';
-		await generateScript(editorState.selectedClipId);
+		startGeneration(editorState.selectedNodeId);
+		editorState.selectedNode.content.status = 'Generating';
+		await generateContent(editorState.selectedNodeId);
 	}
 
-	async function handleAcceptSuggestion(targetClipId: string, suggestedText: string) {
-		await updateBeatScript(targetClipId, suggestedText);
-		removeConsistencySuggestion(targetClipId);
+	async function handleAcceptSuggestion(targetNodeId: string, suggestedText: string) {
+		await updateNodeScript(targetNodeId, suggestedText);
+		removeConsistencySuggestion(targetNodeId);
 	}
 
-	function handleRejectSuggestion(targetClipId: string) {
-		removeConsistencySuggestion(targetClipId);
+	function handleRejectSuggestion(targetNodeId: string) {
+		removeConsistencySuggestion(targetNodeId);
 	}
 
 	// Entity extraction
@@ -194,120 +256,195 @@
 	let extractionResult: ExtractionResult | null = $state(null);
 
 	const linkedEntities = $derived(
-		editorState.selectedClipId ? entitiesForClip(editorState.selectedClipId) : []
+		editorState.selectedNodeId ? entitiesForNode(editorState.selectedNodeId) : []
 	);
 
 	async function handleExtract() {
-		if (!editorState.selectedClipId) return;
+		if (!editorState.selectedNodeId) return;
 		extracting = true;
 		extractionResult = null;
 		try {
-			extractionResult = await extractEntities(editorState.selectedClipId);
+			extractionResult = await extractEntities(editorState.selectedNodeId);
 		} finally {
 			extracting = false;
 		}
 	}
 
 	async function handleUnlinkEntity(entityId: string) {
-		if (!editorState.selectedClipId) return;
-		await removeClipRef(entityId, editorState.selectedClipId);
+		if (!editorState.selectedNodeId) return;
+		await removeNodeRef(entityId, editorState.selectedNodeId);
 	}
 
-	// Beat planning — applies directly to timeline and zooms to fit
-	async function handlePlanBeats() {
-		if (!editorState.selectedClipId || !editorState.selectedClip) return;
+	// Child planning — generates children and applies to timeline
+	async function handleGenerateChildren() {
+		if (!editorState.selectedNodeId || !editorState.selectedNode) return;
 		planning = true;
 		try {
-			const plan = await planBeats(editorState.selectedClipId);
-			await applyBeats(editorState.selectedClipId, plan.beats);
-			// Zoom to the parent clip's time range so beats are visible
-			const clip = editorState.selectedClip;
-			zoomToRange(clip.time_range.start_ms, clip.time_range.end_ms);
+			const plan = await generateChildren(editorState.selectedNodeId);
+			await applyChildren(editorState.selectedNodeId, plan.children);
+			const node = editorState.selectedNode;
+			zoomToRange(node.time_range.start_ms, node.time_range.end_ms);
 		} finally {
 			planning = false;
 		}
 	}
 
-	function navigateBeat(direction: -1 | 1) {
-		const targetIdx = currentBeatIndex + direction;
-		if (targetIdx < 0 || targetIdx >= siblingBeats.length) return;
-		const target = siblingBeats[targetIdx]!;
-		editorState.selectedClipId = target.id;
-		editorState.selectedClip = target;
+	function navigateNode(direction: -1 | 1) {
+		const targetIdx = currentNodeIndex + direction;
+		if (targetIdx < 0 || targetIdx >= siblingNodes.length) return;
+		const target = siblingNodes[targetIdx]!;
+		editorState.selectedNodeId = target.id;
+		editorState.selectedNode = target;
 	}
+
+	let childLevelName = $derived(
+		editorState.selectedNode ? childLevel(editorState.selectedNode.level) : null
+	);
 </script>
 
 <div class="beat-editor">
-	{#if editorState.selectedClip}
-		{@const clip = editorState.selectedClip}
+	{#if editorState.selectedNode}
+		{@const node = editorState.selectedNode}
 		<div class="editor-header">
-			<h3 class="clip-title">{clip.name}</h3>
-			<span class="status-badge" data-status={clip.content.status}>
-				{statusLabel(clip.content.status)}
+			<h3 class="clip-title">{node.name}</h3>
+			<span class="level-badge">{node.level}</span>
+			<span class="status-badge" data-status={node.content.status}>
+				{statusLabel(node.content.status)}
 			</span>
-			<button class="lock-toggle" class:locked={clip.locked} onclick={handleToggleLock}>
-				{clip.locked ? 'Unlock' : 'Lock'}
+			<button class="lock-toggle" class:locked={node.locked} onclick={handleToggleLock}>
+				{node.locked ? 'Unlock' : 'Lock'}
 			</button>
 			<button
 				class="generate-btn"
 				class:generating={isGenerating}
 				onclick={handleGenerate}
-				disabled={!clip.content.beat_notes.trim() || clip.locked || isGenerating}
+				disabled={!node.content.notes.trim() || node.locked || isGenerating}
 			>
 				{#if isGenerating}
 					Generating...
-				{:else if hasSubBeats}
-					Generate Beats
+				{:else if hasChildren}
+					Generate {childLevelName}s
 				{:else}
 					Generate
 				{/if}
 			</button>
 		</div>
 
-		<!-- Sub-beat: parent context and navigation -->
-		{#if isSubBeat && parentClip}
+		<!-- Child node: context panel with parent, sibling structure, and bible entries -->
+		{#if isChildNode && parentNode}
 			<div class="sub-beat-context">
 				<div class="sub-beat-nav">
 					<button
 						class="nav-btn"
-						disabled={currentBeatIndex <= 0}
-						onclick={() => navigateBeat(-1)}
+						disabled={currentNodeIndex <= 0}
+						onclick={() => navigateNode(-1)}
 					>&lsaquo; Prev</button>
-					<span class="nav-position">Beat {currentBeatIndex + 1} of {siblingBeats.length}</span>
+					<span class="nav-position">{node.level} {currentNodeIndex + 1} of {siblingNodes.length}</span>
 					<button
 						class="nav-btn"
-						disabled={currentBeatIndex >= siblingBeats.length - 1}
-						onclick={() => navigateBeat(1)}
+						disabled={currentNodeIndex >= siblingNodes.length - 1}
+						onclick={() => navigateNode(1)}
 					>Next &rsaquo;</button>
 				</div>
-				<details class="parent-context">
-					<summary class="parent-summary">Scene: {parentClip.name}</summary>
-					<p class="parent-notes">{parentClip.content.beat_notes || 'No scene notes'}</p>
-				</details>
+
+				<!-- Parent node notes -->
+				<div class="context-card">
+					<div class="context-card-header">{parentNode.level}: {parentNode.name}</div>
+					<p class="context-card-body">{parentNode.content.notes || 'No notes'}</p>
+				</div>
+
+				<!-- Sibling structure -->
+				{#if siblingNodes.length > 1}
+					<details class="context-card" open>
+						<summary class="context-card-header clickable">{node.level} Structure</summary>
+						<div class="beat-structure">
+							{#each siblingNodes as sibling, i}
+								<button
+									class="beat-outline-item"
+									class:current={sibling.id === editorState.selectedNodeId}
+									onclick={() => { editorState.selectedNodeId = sibling.id; editorState.selectedNode = sibling; }}
+								>
+									<span class="beat-outline-number">{i + 1}</span>
+									<div class="beat-outline-info">
+										<span class="beat-outline-name">{sibling.name} {#if sibling.beat_type}<span class="beat-outline-type">{typeof sibling.beat_type === 'string' ? sibling.beat_type : sibling.beat_type.Custom}</span>{/if}</span>
+										<span class="beat-outline-text">{sibling.content.notes || '\u2014'}</span>
+									</div>
+								</button>
+							{/each}
+						</div>
+					</details>
+				{/if}
+
+				<!-- Adjacent parent-level nodes -->
+				{#if adjacentParents.before || adjacentParents.after}
+					<details class="context-card">
+						<summary class="context-card-header clickable">Adjacent {parentNode.level}s</summary>
+						<div class="adjacent-scenes">
+							{#if adjacentParents.before}
+								<div class="adjacent-scene">
+									<span class="adjacent-scene-label">Previous</span>
+									<span class="adjacent-scene-name">{adjacentParents.before.name}</span>
+									<p class="adjacent-scene-notes">{adjacentParents.before.content.notes || 'No notes'}</p>
+								</div>
+							{/if}
+							{#if adjacentParents.after}
+								<div class="adjacent-scene">
+									<span class="adjacent-scene-label">Next</span>
+									<span class="adjacent-scene-name">{adjacentParents.after.name}</span>
+									<p class="adjacent-scene-notes">{adjacentParents.after.content.notes || 'No notes'}</p>
+								</div>
+							{/if}
+						</div>
+					</details>
+				{/if}
+
+				<!-- Relevant bible entities -->
+				{#if linkedEntities.length > 0}
+					<details class="context-card" open>
+						<summary class="context-card-header clickable">Bible Entries ({linkedEntities.length})</summary>
+						<div class="bible-entries">
+							{#each linkedEntities as entity (entity.id)}
+								<div class="bible-entry">
+									<div class="bible-entry-header">
+										<span class="bible-entry-dot" style="background: {colorToHex(entity.color)}"></span>
+										<span class="bible-entry-name">{entity.name}</span>
+										<span class="bible-entry-category">{entity.category}</span>
+									</div>
+									{#if entity.tagline}
+										<p class="bible-entry-tagline">{entity.tagline}</p>
+									{/if}
+									{#if entity.description}
+										<p class="bible-entry-description">{entity.description}</p>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					</details>
+				{/if}
 			</div>
 		{/if}
 
-		<!-- Scene clip: beat planning actions -->
-		{#if !isSubBeat}
+		<!-- Parent node: generate children actions -->
+		{#if !isChildNode && childLevelName}
 			<div class="beat-actions">
 				<button
 					class="plan-btn"
-					onclick={handlePlanBeats}
-					disabled={planning || !clip.content.beat_notes.trim()}
+					onclick={handleGenerateChildren}
+					disabled={planning || !node.content.notes.trim()}
 				>
-					{planning ? 'Planning...' : hasSubBeats ? 'Replan Beats' : 'Plan Beats'}
+					{planning ? 'Planning...' : hasChildren ? `Replan ${childLevelName}s` : `Plan ${childLevelName}s`}
 				</button>
 			</div>
 		{/if}
 
 		<div class="editor-body">
-			<label class="section-label">Beat Notes</label>
+			<label class="section-label">Notes</label>
 			<textarea
 				class="notes-input"
-				placeholder="Describe what happens in this beat..."
-				value={clip.content.beat_notes}
+				placeholder="Describe what happens in this {node.level.toLowerCase()}..."
+				value={node.content.notes}
 				oninput={handleNotesInput}
-				disabled={clip.locked}
+				disabled={node.locked}
 			></textarea>
 
 			<!-- Linked entities -->
@@ -316,7 +453,7 @@
 					Entities
 					<button
 						class="extract-btn"
-						disabled={extracting || !clip.content.generated_script}
+						disabled={extracting || !node.content.content}
 						onclick={handleExtract}
 					>
 						{extracting ? 'Extracting...' : 'Extract'}
@@ -335,35 +472,19 @@
 				</div>
 			</div>
 
-			{#if extractionResult && editorState.selectedClipId}
+			{#if extractionResult && editorState.selectedNodeId}
 				<EntityExtractPanel
 					result={extractionResult}
-					clipId={editorState.selectedClipId}
+					nodeId={editorState.selectedNodeId}
 					onclose={() => extractionResult = null}
 				/>
 			{/if}
 
 			{#if isGenerating}
 				<label class="section-label">
-					AI Context
+					Generating
 					<span class="token-count">{editorState.streamingTokenCount} tokens generated</span>
 				</label>
-				{#if editorState.generationContext}
-					<div class="context-display">
-						<details open>
-							<summary class="context-heading">System Prompt</summary>
-							<pre class="context-text">{editorState.generationContext.system}</pre>
-						</details>
-						<details open>
-							<summary class="context-heading">User Prompt</summary>
-							<pre class="context-text">{editorState.generationContext.user}</pre>
-						</details>
-					</div>
-				{:else}
-					<div class="context-display">
-						<p class="context-loading">Building prompt...</p>
-					</div>
-				{/if}
 			{:else if editing}
 				<label class="section-label">
 					Editing Script
@@ -374,22 +495,14 @@
 					value={editingText}
 					oninput={handleScriptInput}
 				></textarea>
-			{:else if clip.content.user_refined_script}
+			{:else if node.content.content}
 				<label class="section-label">
-					Refined Script
-					{#if !clip.locked}
+					Script
+					{#if !node.locked}
 						<button class="edit-btn" onclick={startEditing}>Edit</button>
 					{/if}
 				</label>
-				<ScriptView text={clip.content.user_refined_script} entities={storyState.entities} />
-			{:else if clip.content.generated_script}
-				<label class="section-label">
-					Generated Script
-					{#if !clip.locked}
-						<button class="edit-btn" onclick={startEditing}>Edit</button>
-					{/if}
-				</label>
-				<ScriptView text={clip.content.generated_script} entities={storyState.entities} />
+				<ScriptView text={node.content.content} entities={storyState.entities} />
 			{/if}
 
 			{#if editorState.generationError}
@@ -404,19 +517,47 @@
 							<span class="checking-spinner">checking...</span>
 						{/if}
 					</label>
-					{#each editorState.consistencySuggestions as suggestion (suggestion.target_clip_id)}
+					{#each editorState.consistencySuggestions as suggestion (suggestion.target_node_id)}
 						<DiffView
 							{suggestion}
-							onaccept={() => handleAcceptSuggestion(suggestion.target_clip_id, suggestion.suggested_text)}
-							onreject={() => handleRejectSuggestion(suggestion.target_clip_id)}
+							onaccept={() => handleAcceptSuggestion(suggestion.target_node_id, suggestion.suggested_text)}
+							onreject={() => handleRejectSuggestion(suggestion.target_node_id)}
 						/>
 					{/each}
 				</div>
 			{/if}
+
+			<!-- Raw AI prompt preview (debug) -->
+			{#if node.content.notes.trim()}
+				<details class="context-panel">
+					<summary class="context-panel-summary">
+						Raw AI Prompt
+						<button class="context-refresh-btn" onclick={(e) => { e.stopPropagation(); refreshContext(); }} disabled={contextLoading}>
+							{contextLoading ? 'Loading...' : 'Refresh'}
+						</button>
+					</summary>
+					{#if nodeContext}
+						<div class="context-display">
+							<details>
+								<summary class="context-heading">System Prompt</summary>
+								<pre class="context-text">{nodeContext.system}</pre>
+							</details>
+							<details open>
+								<summary class="context-heading">User Prompt</summary>
+								<pre class="context-text">{nodeContext.user}</pre>
+							</details>
+						</div>
+					{:else if contextLoading}
+						<p class="context-loading">Loading context...</p>
+					{:else}
+						<p class="context-loading">No context available</p>
+					{/if}
+				</details>
+			{/if}
 		</div>
 	{:else}
 		<div class="empty-state">
-			<p>Select a beat clip on the timeline to edit</p>
+			<p>Select a node on the timeline to edit</p>
 		</div>
 	{/if}
 </div>
@@ -445,6 +586,16 @@
 		color: var(--color-text-primary);
 	}
 
+	.level-badge {
+		font-size: 0.6rem;
+		padding: 1px 6px;
+		border-radius: 8px;
+		background: var(--color-bg-hover);
+		color: var(--color-text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
 	.status-badge {
 		font-size: 0.7rem;
 		padding: 2px 8px;
@@ -455,9 +606,7 @@
 
 	.status-badge[data-status="NotesOnly"] { background: var(--color-status-notes); color: var(--color-text-on-light); }
 	.status-badge[data-status="Generating"] { background: var(--color-status-generating); color: var(--color-text-on-dark); }
-	.status-badge[data-status="Generated"] { background: var(--color-status-generated); color: var(--color-text-on-light); }
-	.status-badge[data-status="UserRefined"] { background: var(--color-status-written); color: var(--color-text-on-dark); }
-	.status-badge[data-status="UserWritten"] { background: var(--color-status-written); color: var(--color-text-on-dark); }
+	.status-badge[data-status="HasContent"] { background: var(--color-status-generated); color: var(--color-text-on-light); }
 
 	.lock-toggle {
 		font-size: 0.75rem;
@@ -570,6 +719,57 @@
 		font-style: italic;
 		margin: 8px 0;
 		animation: pulse 1.5s ease-in-out infinite;
+	}
+
+	.context-panel {
+		margin-top: 4px;
+		border: 1px solid var(--color-border-subtle);
+		border-radius: 4px;
+		background: var(--color-bg-surface);
+	}
+
+	.context-panel-summary {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-text-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+		user-select: none;
+		padding: 6px 10px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.context-panel-summary:hover {
+		color: var(--color-text-primary);
+	}
+
+	.context-refresh-btn {
+		font-size: 0.6rem;
+		padding: 1px 6px;
+		border-radius: 6px;
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-primary);
+		color: var(--color-text-muted);
+		cursor: pointer;
+		margin-left: auto;
+	}
+
+	.context-refresh-btn:hover:not(:disabled) {
+		background: var(--color-bg-hover);
+		color: var(--color-text-secondary);
+	}
+
+	.context-refresh-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.context-panel > .context-display,
+	.context-panel > .context-loading {
+		padding: 0 10px 8px;
 	}
 
 	.notes-input {
@@ -761,26 +961,206 @@
 		color: var(--color-text-muted);
 	}
 
-	.parent-context {
+	.context-card {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-subtle);
 		border-radius: 4px;
-		padding: 4px 8px;
+		padding: 6px 8px;
 	}
 
-	.parent-summary {
-		font-size: 0.75rem;
+	.context-card-header {
+		font-size: 0.7rem;
 		font-weight: 600;
 		color: var(--color-text-secondary);
-		cursor: pointer;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 		user-select: none;
 	}
 
-	.parent-notes {
+	.context-card-header.clickable {
+		cursor: pointer;
+	}
+
+	.context-card-header.clickable:hover {
+		color: var(--color-text-primary);
+	}
+
+	.context-card-body {
 		font-size: 0.75rem;
 		color: var(--color-text-muted);
 		margin: 4px 0 0;
 		white-space: pre-wrap;
+		line-height: 1.4;
+	}
+
+	.beat-structure {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		margin-top: 4px;
+	}
+
+	.beat-outline-item {
+		display: flex;
+		align-items: flex-start;
+		gap: 6px;
+		padding: 3px 6px;
+		border-radius: 3px;
+		border: 1px solid transparent;
+		background: none;
+		text-align: left;
+		cursor: pointer;
+		font-family: inherit;
+		color: var(--color-text-secondary);
+		width: 100%;
+	}
+
+	.beat-outline-item:hover {
+		background: var(--color-bg-hover);
+	}
+
+	.beat-outline-item.current {
+		background: rgba(var(--color-accent-rgb, 99, 102, 241), 0.1);
+		border-color: var(--color-accent);
+	}
+
+	.beat-outline-number {
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: var(--color-text-muted);
+		min-width: 14px;
+		text-align: center;
+		padding-top: 1px;
+		flex-shrink: 0;
+	}
+
+	.beat-outline-info {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		min-width: 0;
+	}
+
+	.beat-outline-name {
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--color-text-primary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.beat-outline-type {
+		font-weight: 400;
+		color: var(--color-text-muted);
+		font-size: 0.6rem;
+	}
+
+	.beat-outline-text {
+		font-size: 0.65rem;
+		color: var(--color-text-muted);
+		line-height: 1.3;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.adjacent-scenes {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		margin-top: 4px;
+	}
+
+	.adjacent-scene {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+
+	.adjacent-scene-label {
+		font-size: 0.55rem;
+		font-weight: 700;
+		color: var(--color-text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.adjacent-scene-name {
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--color-text-primary);
+	}
+
+	.adjacent-scene-notes {
+		font-size: 0.65rem;
+		color: var(--color-text-muted);
+		margin: 0;
+		line-height: 1.3;
+		white-space: pre-wrap;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.bible-entries {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-top: 4px;
+	}
+
+	.bible-entry {
+		padding: 3px 0;
+	}
+
+	.bible-entry-header {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.bible-entry-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	.bible-entry-name {
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--color-text-primary);
+	}
+
+	.bible-entry-category {
+		font-size: 0.55rem;
+		color: var(--color-text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.bible-entry-tagline {
+		font-size: 0.65rem;
+		color: var(--color-text-secondary);
+		margin: 1px 0 0 10px;
+		font-style: italic;
+	}
+
+	.bible-entry-description {
+		font-size: 0.65rem;
+		color: var(--color-text-muted);
+		margin: 1px 0 0 10px;
+		line-height: 1.3;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 
 	.beat-actions {

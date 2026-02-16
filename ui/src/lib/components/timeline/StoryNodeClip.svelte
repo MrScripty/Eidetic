@@ -1,24 +1,24 @@
 <script lang="ts">
-	import type { BeatClip as BeatClipType, ContentStatus } from '$lib/types.js';
+	import type { StoryNode, ContentStatus } from '$lib/types.js';
 	import { TIMELINE, colorToHex } from '$lib/types.js';
 	import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
-	import { entitiesForClip } from '$lib/stores/story.svelte.js';
+	import { entitiesForNode } from '$lib/stores/story.svelte.js';
 
-	let { clip, color, selected, compact = false, leftBoundMs = 0, rightBoundMs = TIMELINE.DURATION_MS, onselect, onmove, onresize, ondelete, onsplit, onconnectstart }: {
-		clip: BeatClipType;
+	let { node, color, selected, compact = false, leftBoundMs = 0, rightBoundMs = TIMELINE.DURATION_MS, onselect, onmove, onresize, ondelete, onsplit, onconnectstart }: {
+		node: StoryNode;
 		color: string;
 		selected: boolean;
 		compact?: boolean;
-		/** Earliest allowed start_ms (end of previous clip, or 0). */
+		/** Earliest allowed start_ms (end of previous node, or 0). */
 		leftBoundMs?: number;
-		/** Latest allowed end_ms (start of next clip, or DURATION_MS). */
+		/** Latest allowed end_ms (start of next node, or DURATION_MS). */
 		rightBoundMs?: number;
 		onselect: () => void;
 		onmove: (startMs: number, endMs: number) => void;
 		onresize: (startMs: number, endMs: number) => void;
 		ondelete: () => void;
 		onsplit: (atMs: number) => void;
-		onconnectstart: (clipId: string, x: number, y: number) => void;
+		onconnectstart: (nodeId: string, x: number, y: number) => void;
 	} = $props();
 
 	let dragging = $state(false);
@@ -28,22 +28,20 @@
 	let previewEndMs = $state(0);
 	let contextMenu: { x: number; y: number } | null = $state(null);
 
-	// Blade cut preview: tracks cursor position as a ratio [0..1] within the clip.
+	// Blade cut preview: tracks cursor position as a ratio [0..1] within the node.
 	let bladeHovering = $state(false);
 	let bladeRatio = $state(0);
 
 	// Use preview values during drag, actual values otherwise.
-	let displayStart = $derived(dragging || resizingSide ? previewStartMs : clip.time_range.start_ms);
-	let displayEnd = $derived(dragging || resizingSide ? previewEndMs : clip.time_range.end_ms);
+	let displayStart = $derived(dragging || resizingSide ? previewStartMs : node.time_range.start_ms);
+	let displayEnd = $derived(dragging || resizingSide ? previewEndMs : node.time_range.end_ms);
 
 	function statusColor(status: ContentStatus): string {
 		switch (status) {
 			case 'Empty': return 'var(--color-text-muted)';
 			case 'NotesOnly': return 'var(--color-status-notes)';
 			case 'Generating': return 'var(--color-status-generating)';
-			case 'Generated': return 'var(--color-status-generated)';
-			case 'UserRefined': return 'var(--color-status-written)';
-			case 'UserWritten': return 'var(--color-status-written)';
+			case 'HasContent': return 'var(--color-status-generated)';
 			default: return 'var(--color-text-muted)';
 		}
 	}
@@ -51,14 +49,12 @@
 	function handleBladeClick(e: PointerEvent) {
 		e.preventDefault();
 		e.stopPropagation();
-		// Calculate split time from click position relative to clip's on-screen bounds.
-		const rect = (e.currentTarget as HTMLElement).closest('.beat-clip')!.getBoundingClientRect();
+		const rect = (e.currentTarget as HTMLElement).closest('.node-clip')!.getBoundingClientRect();
 		const localX = e.clientX - rect.left;
 		const ratio = Math.max(0, Math.min(1, localX / rect.width));
-		const duration = clip.time_range.end_ms - clip.time_range.start_ms;
-		const splitMs = Math.round(clip.time_range.start_ms + ratio * duration);
-		// Ensure minimum 5s on each side.
-		if (splitMs - clip.time_range.start_ms >= 5000 && clip.time_range.end_ms - splitMs >= 5000) {
+		const duration = node.time_range.end_ms - node.time_range.start_ms;
+		const splitMs = Math.round(node.time_range.start_ms + ratio * duration);
+		if (splitMs - node.time_range.start_ms >= 5000 && node.time_range.end_ms - splitMs >= 5000) {
 			onsplit(splitMs);
 		}
 	}
@@ -76,30 +72,27 @@
 		const target = e.currentTarget as HTMLElement;
 		target.setPointerCapture(e.pointerId);
 		dragging = true;
-		previewStartMs = clip.time_range.start_ms;
-		previewEndMs = clip.time_range.end_ms;
+		previewStartMs = node.time_range.start_ms;
+		previewEndMs = node.time_range.end_ms;
 		const startClientX = e.clientX;
-		const origStart = clip.time_range.start_ms;
-		const duration = clip.time_range.end_ms - clip.time_range.start_ms;
+		const origStart = node.time_range.start_ms;
+		const duration = node.time_range.end_ms - node.time_range.start_ms;
 
 		function onPointerMove(ev: PointerEvent) {
 			const deltaPx = ev.clientX - startClientX;
 			const deltaMs = xToTime(deltaPx);
 
 			if (ev.shiftKey) {
-				// Fit-to-fill: clip edges clamp independently, duration may shrink.
 				fitting = true;
 				let newStart = Math.max(leftBoundMs, Math.round(origStart + deltaMs));
 				let newEnd = newStart + duration;
 				if (newEnd > rightBoundMs) newEnd = rightBoundMs;
 				if (newStart < leftBoundMs) newStart = leftBoundMs;
-				// Enforce minimum 5s duration.
 				if (newEnd - newStart >= 5000) {
 					previewStartMs = newStart;
 					previewEndMs = newEnd;
 				}
 			} else {
-				// Normal drag: preserve duration, clamp both edges.
 				fitting = false;
 				let newStart = Math.max(leftBoundMs, Math.round(origStart + deltaMs));
 				let newEnd = newStart + duration;
@@ -122,7 +115,7 @@
 			fitting = false;
 			target.removeEventListener('pointermove', onPointerMove);
 			target.removeEventListener('pointerup', onPointerUp);
-			if (previewStartMs !== clip.time_range.start_ms || previewEndMs !== clip.time_range.end_ms) {
+			if (previewStartMs !== node.time_range.start_ms || previewEndMs !== node.time_range.end_ms) {
 				const durationChanged = (previewEndMs - previewStartMs) !== duration;
 				if (wasFitting && durationChanged) {
 					onresize(previewStartMs, previewEndMs);
@@ -147,11 +140,11 @@
 		const target = e.currentTarget as HTMLElement;
 		target.setPointerCapture(e.pointerId);
 		resizingSide = side;
-		previewStartMs = clip.time_range.start_ms;
-		previewEndMs = clip.time_range.end_ms;
+		previewStartMs = node.time_range.start_ms;
+		previewEndMs = node.time_range.end_ms;
 		const startClientX = e.clientX;
-		const origStart = clip.time_range.start_ms;
-		const origEnd = clip.time_range.end_ms;
+		const origStart = node.time_range.start_ms;
+		const origEnd = node.time_range.end_ms;
 
 		function onPointerMove(ev: PointerEvent) {
 			const deltaPx = ev.clientX - startClientX;
@@ -174,7 +167,7 @@
 			resizingSide = null;
 			target.removeEventListener('pointermove', onPointerMove);
 			target.removeEventListener('pointerup', onPointerUp);
-			if (previewStartMs !== clip.time_range.start_ms || previewEndMs !== clip.time_range.end_ms) {
+			if (previewStartMs !== node.time_range.start_ms || previewEndMs !== node.time_range.end_ms) {
 				onresize(previewStartMs, previewEndMs);
 			}
 		}
@@ -192,7 +185,6 @@
 			contextMenu = null;
 			document.removeEventListener('click', dismissMenu);
 		}
-		// Dismiss on next click anywhere.
 		setTimeout(() => document.addEventListener('click', dismissMenu), 0);
 	}
 
@@ -202,8 +194,7 @@
 	}
 
 	function handleSplit(e: MouseEvent) {
-		// Split at the midpoint of the clip.
-		const mid = Math.round((clip.time_range.start_ms + clip.time_range.end_ms) / 2);
+		const mid = Math.round((node.time_range.start_ms + node.time_range.end_ms) / 2);
 		contextMenu = null;
 		onsplit(mid);
 	}
@@ -216,7 +207,7 @@
 		e.preventDefault();
 		e.stopPropagation();
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-		onconnectstart(clip.id, rect.left + rect.width / 2, rect.top + rect.height / 2);
+		onconnectstart(node.id, rect.left + rect.width / 2, rect.top + rect.height / 2);
 	}
 
 	function handleBladeMove(e: PointerEvent) {
@@ -224,7 +215,7 @@
 			bladeHovering = false;
 			return;
 		}
-		const el = (e.currentTarget as HTMLElement).closest('.beat-clip');
+		const el = (e.currentTarget as HTMLElement).closest('.node-clip');
 		if (!el) return;
 		const rect = el.getBoundingClientRect();
 		bladeRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -235,16 +226,16 @@
 		bladeHovering = false;
 	}
 
-	const clipEntities = $derived(entitiesForClip(clip.id));
-	const entityDots = $derived(clipEntities.slice(0, 4));
-	const entityOverflow = $derived(Math.max(0, clipEntities.length - 4));
+	const nodeEntities = $derived(entitiesForNode(node.id));
+	const entityDots = $derived(nodeEntities.slice(0, 4));
+	const entityOverflow = $derived(Math.max(0, nodeEntities.length - 4));
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="beat-clip"
+	class="node-clip"
 	class:selected
-	class:locked={clip.locked}
+	class:locked={node.locked}
 	class:dragging
 	class:fitting
 	class:compact
@@ -266,9 +257,9 @@
 		onpointerdown={(e) => handleResizeStart(e, 'left')}
 	></div>
 
-	<!-- Clip content -->
-	<span class="status-dot" style="background: {statusColor(clip.content.status)}"></span>
-	<span class="clip-name">{clip.name}</span>
+	<!-- Node content -->
+	<span class="status-dot" style="background: {statusColor(node.content.status)}"></span>
+	<span class="clip-name">{node.name}</span>
 
 	{#if !compact}
 		<!-- Connection handle -->
@@ -315,7 +306,7 @@
 {/if}
 
 <style>
-	.beat-clip {
+	.node-clip {
 		position: absolute;
 		top: 4px;
 		height: calc(100% - 8px);
@@ -334,31 +325,31 @@
 		box-shadow: inset 1px 0 0 var(--color-overlay-medium), inset -1px 0 0 var(--color-overlay-medium);
 	}
 
-	.beat-clip:hover {
+	.node-clip:hover {
 		opacity: 1;
 	}
 
-	.beat-clip.selected {
+	.node-clip.selected {
 		outline: 2px solid var(--color-accent);
 		outline-offset: 1px;
 		opacity: 1;
 	}
 
-	.beat-clip.locked {
+	.node-clip.locked {
 		border: 1px dashed var(--color-overlay-bright);
 	}
 
-	.beat-clip.dragging {
+	.node-clip.dragging {
 		cursor: grabbing;
 		opacity: 0.7;
 	}
 
-	.beat-clip.fitting {
+	.node-clip.fitting {
 		outline: 2px dashed var(--color-fitting-outline);
 		outline-offset: 1px;
 	}
 
-	.beat-clip.blade-mode {
+	.node-clip.blade-mode {
 		cursor: crosshair;
 	}
 
@@ -451,21 +442,21 @@
 		box-shadow: 0 0 4px var(--color-blade-glow);
 	}
 
-	.beat-clip.compact {
+	.node-clip.compact {
 		padding: 0 4px;
 		gap: 2px;
 	}
 
-	.beat-clip.compact .clip-name {
+	.node-clip.compact .clip-name {
 		font-size: 0.6rem;
 	}
 
-	.beat-clip.compact .status-dot {
+	.node-clip.compact .status-dot {
 		width: 4px;
 		height: 4px;
 	}
 
-	.beat-clip.compact .resize-handle {
+	.node-clip.compact .resize-handle {
 		width: 3px;
 	}
 

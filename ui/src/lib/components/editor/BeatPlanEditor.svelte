@@ -1,16 +1,21 @@
 <script lang="ts">
-	import type { BeatProposal, BeatType } from '$lib/types.js';
+	import type { ChildProposal, BeatType } from '$lib/types.js';
 
 	let { beats, onapply, oncancel }: {
-		beats: BeatProposal[];
-		onapply: (beats: BeatProposal[]) => void;
+		beats: ChildProposal[];
+		onapply: (beats: ChildProposal[]) => void;
 		oncancel: () => void;
 	} = $props();
 
-	let editableBeats = $state<BeatProposal[]>([]);
+	let editableBeats = $state<ChildProposal[]>([]);
 
 	$effect(() => {
-		editableBeats = beats.map(b => ({ ...b }));
+		editableBeats = beats.map(b => ({
+			...b,
+			characters: b.characters ? [...b.characters] : [],
+			props: b.props ? [...b.props] : [],
+			location: b.location ?? null,
+		}));
 	});
 
 	const beatTypes: BeatType[] = ['Setup', 'Complication', 'Escalation', 'Climax', 'Resolution', 'Payoff', 'Callback'];
@@ -21,7 +26,7 @@
 	}
 
 	function addBeat() {
-		editableBeats = [...editableBeats, { name: 'New Beat', beat_type: 'Setup', outline: '', weight: 1.0 }];
+		editableBeats = [...editableBeats, { name: 'New Beat', beat_type: 'Setup', outline: '', weight: 1.0, characters: [], props: [], location: null }];
 	}
 
 	function removeBeat(idx: number) {
@@ -36,6 +41,36 @@
 		const total = totalWeight();
 		if (total === 0) return '0%';
 		return `${Math.round((w / total) * 100)}%`;
+	}
+
+	// --- Tag editing helpers ---
+	function removeTag(beatIdx: number, field: 'characters' | 'props', tagIdx: number) {
+		const beat = editableBeats[beatIdx];
+		if (!beat) return;
+		const list = beat[field];
+		if (list) {
+			beat[field] = list.filter((_, i) => i !== tagIdx);
+		}
+	}
+
+	function addTag(beatIdx: number, field: 'characters' | 'props', event: KeyboardEvent) {
+		if (event.key !== 'Enter') return;
+		const input = event.target as HTMLInputElement;
+		const value = input.value.trim();
+		if (!value) return;
+
+		const beat = editableBeats[beatIdx];
+		if (!beat) return;
+		const list = beat[field] ?? [];
+		if (!list.includes(value)) {
+			beat[field] = [...list, value];
+		}
+		input.value = '';
+	}
+
+	function clearLocation(beatIdx: number) {
+		const beat = editableBeats[beatIdx];
+		if (beat) beat.location = null;
 	}
 </script>
 
@@ -84,6 +119,60 @@
 					placeholder="Beat outline..."
 					rows="2"
 				></textarea>
+
+				<!-- Entity tags -->
+				<div class="entity-tags">
+					{#if beat.location}
+						<div class="tag-row">
+							<span class="tag-label">LOC</span>
+							<span class="tag location-tag">
+								{beat.location}
+								<button class="tag-remove" onclick={() => clearLocation(i)}>&times;</button>
+							</span>
+						</div>
+					{/if}
+
+					{#if (beat.characters && beat.characters.length > 0) || true}
+						<div class="tag-row">
+							<span class="tag-label">CHR</span>
+							<div class="tag-list">
+								{#each beat.characters ?? [] as char, ci}
+									<span class="tag character-tag">
+										{char}
+										<button class="tag-remove" onclick={() => removeTag(i, 'characters', ci)}>&times;</button>
+									</span>
+								{/each}
+								<input
+									class="tag-add-input"
+									type="text"
+									placeholder="+ character"
+									onkeydown={(e) => addTag(i, 'characters', e)}
+								/>
+							</div>
+						</div>
+					{/if}
+
+					{#if (beat.props && beat.props.length > 0) || true}
+						<div class="tag-row">
+							<span class="tag-label">PROP</span>
+							<div class="tag-list">
+								{#each beat.props ?? [] as prop, pi}
+									<span class="tag prop-tag">
+										{prop}
+										<button class="tag-remove" onclick={() => removeTag(i, 'props', pi)}>&times;</button>
+									</span>
+								{/each}
+								<input
+									class="tag-add-input"
+									type="text"
+									placeholder="+ prop"
+									onkeydown={(e) => addTag(i, 'props', e)}
+								/>
+							</div>
+						</div>
+					{/if}
+				</div>
+
 				<div class="beat-weight-row">
 					<label class="weight-label">Weight</label>
 					<input
@@ -257,6 +346,104 @@
 	.beat-outline-input:focus {
 		outline: none;
 		border-color: var(--color-accent);
+	}
+
+	/* Entity tags */
+	.entity-tags {
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+	}
+
+	.tag-row {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		flex-wrap: wrap;
+	}
+
+	.tag-label {
+		font-size: 0.55rem;
+		font-weight: 700;
+		color: var(--color-text-muted);
+		width: 28px;
+		flex-shrink: 0;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.tag-list {
+		display: flex;
+		align-items: center;
+		gap: 3px;
+		flex-wrap: wrap;
+	}
+
+	.tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		padding: 1px 5px;
+		border-radius: 3px;
+		font-size: 0.65rem;
+		font-weight: 500;
+		white-space: nowrap;
+	}
+
+	.character-tag {
+		background: rgba(100, 149, 237, 0.15);
+		color: rgb(100, 149, 237);
+		border: 1px solid rgba(100, 149, 237, 0.3);
+	}
+
+	.location-tag {
+		background: rgba(34, 197, 94, 0.15);
+		color: rgb(34, 197, 94);
+		border: 1px solid rgba(34, 197, 94, 0.3);
+	}
+
+	.prop-tag {
+		background: rgba(249, 115, 22, 0.15);
+		color: rgb(249, 115, 22);
+		border: 1px solid rgba(249, 115, 22, 0.3);
+	}
+
+	.tag-remove {
+		background: none;
+		border: none;
+		color: inherit;
+		font-size: 0.7rem;
+		cursor: pointer;
+		padding: 0;
+		line-height: 1;
+		opacity: 0.6;
+	}
+
+	.tag-remove:hover {
+		opacity: 1;
+	}
+
+	.tag-add-input {
+		padding: 1px 4px;
+		font-size: 0.6rem;
+		background: transparent;
+		color: var(--color-text-muted);
+		border: 1px dashed var(--color-border-default);
+		border-radius: 3px;
+		width: 80px;
+		min-width: 60px;
+	}
+
+	.tag-add-input:focus {
+		outline: none;
+		border-color: var(--color-accent);
+		color: var(--color-text-primary);
+		border-style: solid;
+	}
+
+	.tag-add-input::placeholder {
+		color: var(--color-text-muted);
+		opacity: 0.6;
 	}
 
 	.beat-weight-row {

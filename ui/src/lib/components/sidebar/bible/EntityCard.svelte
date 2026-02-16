@@ -34,9 +34,9 @@
 	<span class="category-badge" style="color: {categoryColor(entity.category)}">
 		{categoryLabels[entity.category] ?? entity.category}
 	</span>
-	{#if entity.clip_refs.length > 0}
-		<span class="ref-count" title="{entity.clip_refs.length} linked clips">
-			{entity.clip_refs.length}
+	{#if entity.node_refs.length > 0}
+		<span class="ref-count" title="{entity.node_refs.length} linked nodes">
+			{entity.node_refs.length}
 		</span>
 	{/if}
 </button>

@@ -1,5 +1,6 @@
 use eidetic_core::script::element::ScriptElement;
 use eidetic_core::script::format::parse_script_elements;
+use eidetic_core::timeline::node::StoryLevel;
 use eidetic_core::Project;
 use genpdf::elements::{Break, PageBreak, Paragraph, StyledElement};
 use genpdf::fonts::FontFamily;
@@ -70,59 +71,20 @@ pub fn generate_screenplay_pdf(project: &Project) -> Result<Vec<u8>, String> {
     // Start new page for content.
     doc.push(PageBreak::new());
 
-    // Gather clips sorted by time (using scene inference for ordering).
-    let scenes = project.timeline.infer_scenes();
-    let mut rendered_clips = std::collections::HashSet::new();
-
-    for scene in &scenes {
-        for clip_id in &scene.contributing_clips {
-            if rendered_clips.contains(&clip_id.0) {
-                continue;
-            }
-            rendered_clips.insert(clip_id.0);
-
-            let clip = match project.timeline.clip(*clip_id) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-
-            let script_text = clip
-                .content
-                .user_refined_script
-                .as_deref()
-                .or(clip.content.generated_script.as_deref());
-
-            let Some(text) = script_text else {
-                continue;
-            };
-
-            let elements = parse_script_elements(text);
-            for elem in &elements {
-                render_element(&mut doc, elem);
-            }
-        }
-    }
-
-    // Also render any clips not covered by scenes (standalone clips).
-    let mut all_clips: Vec<_> = project
+    // Gather Beat-level nodes sorted by time — these contain the scripts.
+    let mut beats: Vec<_> = project
         .timeline
-        .tracks
-        .iter()
-        .flat_map(|t| &t.clips)
-        .filter(|c| !rendered_clips.contains(&c.id.0))
+        .nodes_at_level(StoryLevel::Beat)
+        .into_iter()
+        .cloned()
         .collect();
-    all_clips.sort_by_key(|c| c.time_range.start_ms);
+    beats.sort_by_key(|n| n.time_range.start_ms);
 
-    for clip in all_clips {
-        let script_text = clip
-            .content
-            .user_refined_script
-            .as_deref()
-            .or(clip.content.generated_script.as_deref());
-
-        let Some(text) = script_text else {
+    for beat in &beats {
+        if beat.content.content.is_empty() {
             continue;
-        };
+        }
+        let text = &beat.content.content;
 
         let elements = parse_script_elements(text);
         for elem in &elements {
