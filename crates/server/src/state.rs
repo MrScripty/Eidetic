@@ -9,6 +9,7 @@ use tokio::sync::broadcast;
 
 use crate::persistence;
 use crate::vector_store::VectorStore;
+use crate::ydoc::{self, DocCommand, DocUpdate};
 
 /// Server configuration constants.
 pub mod constants {
@@ -173,8 +174,13 @@ impl Default for AiConfig {
 /// Shared application state, wrapped in an Arc for use as axum state.
 #[derive(Clone)]
 pub struct AppState {
+    /// Structural data — single source of truth for hierarchy, timing, arcs.
     pub project: Arc<Mutex<Option<Project>>>,
     pub events_tx: broadcast::Sender<ServerEvent>,
+    /// Channel to the Y.Doc manager task (single source of truth for text content).
+    pub doc_tx: tokio::sync::mpsc::Sender<DocCommand>,
+    /// Broadcasts Y.Doc binary updates to WebSocket clients.
+    pub doc_update_tx: broadcast::Sender<DocUpdate>,
     pub ai_config: Arc<Mutex<AiConfig>>,
     /// Node IDs currently being generated — prevents duplicate requests.
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
@@ -203,9 +209,15 @@ impl AppState {
         let save_path = project_path.clone();
         tokio::spawn(auto_save_task(save_rx, save_project, save_path));
 
+        // Spawn the Y.Doc manager task (owns the CRDT doc, receives commands via channel).
+        // The change_rx will be consumed by the AI reactor in a later phase.
+        let (doc_tx, doc_update_tx, _change_rx) = ydoc::spawn_doc_manager();
+
         Self {
             project,
             events_tx,
+            doc_tx,
+            doc_update_tx,
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
             extracting: Arc::new(Mutex::new(HashSet::new())),
