@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ExtractionResult } from '$lib/types.js';
+	import type { YTextEvent } from 'yjs';
 	import { colorToHex, childLevel } from '$lib/types.js';
 	import {
 		editorState,
@@ -26,6 +27,7 @@
 		applyChildren,
 		getAiContext,
 	} from '$lib/api.js';
+	import { getNodeNotes, getNodeContent as getYNodeContent } from '$lib/yjs.js';
 	import ScriptView from './ScriptView.svelte';
 	import DiffView from './DiffView.svelte';
 	import EntityExtractPanel from '../sidebar/bible/EntityExtractPanel.svelte';
@@ -148,6 +150,37 @@
 	$effect(() => {
 		editorState.selectedNodeId;
 		if (editing) finishEditing();
+	});
+
+	// Observe Y.Text changes for the selected node (CRDT live sync).
+	// When content arrives via binary WS (AI generation, other clients),
+	// the local Y.Doc updates and this effect reflects it in the UI.
+	$effect(() => {
+		const nodeId = editorState.selectedNodeId;
+		if (!nodeId) return;
+
+		const yNotes = getNodeNotes(nodeId);
+		const yContent = getYNodeContent(nodeId);
+
+		const onNotesChange = (_event: YTextEvent) => {
+			if (editorState.selectedNode && editorState.selectedNodeId === nodeId) {
+				editorState.selectedNode.content.notes = yNotes.toString();
+			}
+		};
+
+		const onContentChange = (_event: YTextEvent) => {
+			if (editorState.selectedNode && editorState.selectedNodeId === nodeId) {
+				editorState.selectedNode.content.content = yContent.toString();
+			}
+		};
+
+		yNotes.observe(onNotesChange);
+		yContent.observe(onContentChange);
+
+		return () => {
+			yNotes.unobserve(onNotesChange);
+			yContent.unobserve(onContentChange);
+		};
 	});
 
 	function statusLabel(status: string): string {
