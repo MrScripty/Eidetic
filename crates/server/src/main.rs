@@ -9,6 +9,7 @@ mod state;
 mod static_files;
 mod vector_store;
 mod ws;
+mod ydoc;
 
 use std::net::SocketAddr;
 
