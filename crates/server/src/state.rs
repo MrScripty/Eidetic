@@ -207,11 +207,14 @@ impl AppState {
         // Spawn the debounced auto-save background task.
         let save_project = project.clone();
         let save_path = project_path.clone();
-        tokio::spawn(auto_save_task(save_rx, save_project, save_path));
 
         // Spawn the Y.Doc manager task (owns the CRDT doc, receives commands via channel).
         // The change_rx will be consumed by the AI reactor in a later phase.
         let (doc_tx, doc_update_tx, _change_rx) = ydoc::spawn_doc_manager();
+
+        // Start auto-save (needs doc_tx to serialize Y.Doc state).
+        let save_doc_tx = doc_tx.clone();
+        tokio::spawn(auto_save_task(save_rx, save_project, save_path, save_doc_tx));
 
         Self {
             project,
@@ -260,6 +263,7 @@ async fn auto_save_task(
     mut rx: tokio::sync::mpsc::Receiver<()>,
     project: Arc<Mutex<Option<Project>>>,
     project_path: Arc<Mutex<Option<PathBuf>>>,
+    doc_tx: tokio::sync::mpsc::Sender<ydoc::DocCommand>,
 ) {
     loop {
         // Wait for the first save signal.
@@ -281,7 +285,10 @@ async fn auto_save_task(
             }
         };
 
-        if let Err(e) = persistence::save_project(&proj_json, &path).await {
+        // Serialize Y.Doc state alongside structural data.
+        let ydoc_state = ydoc::serialize_doc(&doc_tx).await;
+
+        if let Err(e) = persistence::save_project(&proj_json, &path, ydoc_state).await {
             tracing::error!("auto-save failed: {e}");
         }
     }

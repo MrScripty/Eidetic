@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS schema_meta (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
-INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('version', '2');
+INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('version', '3');
 
 CREATE TABLE IF NOT EXISTS project (
     id                INTEGER PRIMARY KEY CHECK (id = 1),
@@ -161,6 +161,11 @@ CREATE TABLE IF NOT EXISTS reference_documents (
     content  TEXT NOT NULL,
     doc_type TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS ydoc_state (
+    id    INTEGER PRIMARY KEY CHECK (id = 1),
+    state BLOB NOT NULL
+);
 "#;
 
 fn create_schema(conn: &Connection) -> Result<(), String> {
@@ -181,7 +186,8 @@ fn clear_all_tables(conn: &Connection) -> Result<(), String> {
          DELETE FROM arcs;
          DELETE FROM reference_documents;
          DELETE FROM episode_structure;
-         DELETE FROM project;",
+         DELETE FROM project;
+         DELETE FROM ydoc_state;",
     )
     .map_err(|e| format!("clear error: {e}"))
 }
@@ -189,16 +195,27 @@ fn clear_all_tables(conn: &Connection) -> Result<(), String> {
 // ─── Save ──────────────────────────────────────────────────────────
 
 /// Save a project to disk as a SQLite database.
-pub async fn save_project(project: &Project, path: &Path) -> Result<(), String> {
+///
+/// If `ydoc_state` is provided, it is persisted atomically alongside the
+/// project data in the same transaction.
+pub async fn save_project(
+    project: &Project,
+    path: &Path,
+    ydoc_state: Option<Vec<u8>>,
+) -> Result<(), String> {
     let project = project.clone();
     let path = path.to_path_buf();
 
-    tokio::task::spawn_blocking(move || save_project_sync(&project, &path))
+    tokio::task::spawn_blocking(move || save_project_sync(&project, &path, ydoc_state.as_deref()))
         .await
         .map_err(|e| format!("spawn_blocking error: {e}"))?
 }
 
-fn save_project_sync(project: &Project, path: &Path) -> Result<(), String> {
+fn save_project_sync(
+    project: &Project,
+    path: &Path,
+    ydoc_state: Option<&[u8]>,
+) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| format!("mkdir error: {e}"))?;
     }
@@ -282,6 +299,15 @@ fn save_project_sync(project: &Project, path: &Path) -> Result<(), String> {
     // Reference documents.
     for doc in &project.references {
         insert_reference_document(&tx, doc)?;
+    }
+
+    // Y.Doc CRDT state (persisted atomically with structural data).
+    if let Some(state) = ydoc_state {
+        tx.execute(
+            "INSERT INTO ydoc_state (id, state) VALUES (1, ?1)",
+            params![state],
+        )
+        .map_err(|e| format!("insert ydoc_state: {e}"))?;
     }
 
     tx.commit().map_err(|e| format!("commit error: {e}"))?;
@@ -496,12 +522,17 @@ fn insert_reference_document(conn: &Connection, doc: &ReferenceDocument) -> Resu
 
 /// Load a project from disk. Handles both SQLite (.db) and legacy JSON (.json) files.
 /// If only a .json sibling exists for a .db path, auto-migrates to SQLite.
-pub async fn load_project(path: &Path) -> Result<Project, String> {
+///
+/// Returns `(project, ydoc_state)` where `ydoc_state` is the persisted CRDT
+/// blob (if any). When `None`, the caller should populate Y.Doc from the
+/// project's cached text fields.
+pub async fn load_project(path: &Path) -> Result<(Project, Option<Vec<u8>>), String> {
     let path = path.to_path_buf();
 
-    // Legacy JSON path.
+    // Legacy JSON path — no ydoc_state.
     if path.extension().map_or(false, |ext| ext == "json") {
-        return load_project_json(&path).await;
+        let project = load_project_json(&path).await?;
+        return Ok((project, None));
     }
 
     // If .db doesn't exist, check for a .json sibling and auto-migrate.
@@ -513,9 +544,9 @@ pub async fn load_project(path: &Path) -> Result<Project, String> {
                 json_sibling.display()
             );
             let project = load_project_json(&json_sibling).await?;
-            save_project(&project, &path).await?;
+            save_project(&project, &path, None).await?;
             tracing::info!("migrated project from JSON to SQLite: {}", path.display());
-            return Ok(project);
+            return Ok((project, None));
         }
     }
 
@@ -524,7 +555,7 @@ pub async fn load_project(path: &Path) -> Result<Project, String> {
         .map_err(|e| format!("spawn_blocking error: {e}"))?
 }
 
-fn load_project_sync(path: &Path) -> Result<Project, String> {
+fn load_project_sync(path: &Path) -> Result<(Project, Option<Vec<u8>>), String> {
     let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("sqlite open error: {e}"))?;
 
@@ -533,11 +564,27 @@ fn load_project_sync(path: &Path) -> Result<Project, String> {
 
     if version == 1 {
         drop(conn);
-        return load_and_migrate_v1(path);
+        let project = load_and_migrate_v1(path)?;
+        return Ok((project, None));
     }
 
-    // v2 schema — load directly.
-    load_project_v2(&conn, path)
+    // v2 or v3 schema — load directly.
+    let project = load_project_v2(&conn, path)?;
+
+    // Read ydoc_state if present (v3+).
+    let ydoc_state = if version >= 3 {
+        read_ydoc_state(&conn)?
+    } else {
+        None
+    };
+
+    // If v2, migrate the schema to v3 on next save. No immediate rewrite needed
+    // since the schema is forward-compatible (CREATE TABLE IF NOT EXISTS).
+    if version == 2 {
+        tracing::info!("project at {} is schema v2, will migrate to v3 on next save", path.display());
+    }
+
+    Ok((project, ydoc_state))
 }
 
 fn read_schema_version(conn: &Connection) -> u32 {
@@ -549,6 +596,18 @@ fn read_schema_version(conn: &Connection) -> u32 {
     .ok()
     .and_then(|v| v.parse::<u32>().ok())
     .unwrap_or(1)
+}
+
+fn read_ydoc_state(conn: &Connection) -> Result<Option<Vec<u8>>, String> {
+    match conn.query_row(
+        "SELECT state FROM ydoc_state WHERE id = 1",
+        [],
+        |row| row.get::<_, Vec<u8>>(0),
+    ) {
+        Ok(state) => Ok(Some(state)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(format!("read ydoc_state: {e}")),
+    }
 }
 
 fn load_project_v2(conn: &Connection, path: &Path) -> Result<Project, String> {
@@ -1109,8 +1168,8 @@ fn load_and_migrate_v1(path: &Path) -> Result<Project, String> {
 
     drop(conn);
 
-    // Rewrite the database as v2.
-    save_project_sync(&project, path)?;
+    // Rewrite the database as v3.
+    save_project_sync(&project, path, None)?;
 
     tracing::info!("migrated project from v1 to v2: {}", path.display());
     Ok(project)

@@ -666,6 +666,24 @@ pub async fn get_diff(doc_tx: &mpsc::Sender<DocCommand>, sv: Vec<u8>) -> Option<
     reply_rx.await.ok()
 }
 
+/// Helper: load persisted doc state into the manager.
+pub async fn load_doc(
+    doc_tx: &mpsc::Sender<DocCommand>,
+    state: Vec<u8>,
+) -> Result<(), String> {
+    let (reply_tx, reply_rx) = oneshot::channel();
+    doc_tx
+        .send(DocCommand::Load {
+            state,
+            reply: reply_tx,
+        })
+        .await
+        .map_err(|_| "doc manager channel closed".to_string())?;
+    reply_rx
+        .await
+        .map_err(|_| "doc manager reply dropped".to_string())?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

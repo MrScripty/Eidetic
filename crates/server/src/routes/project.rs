@@ -117,7 +117,10 @@ async fn save_project(
                 .unwrap_or_else(|| persistence::project_save_path(&project.name))
         });
 
-    match persistence::save_project(&project, &path).await {
+    // Serialize Y.Doc state to persist alongside structural data.
+    let ydoc_state = crate::ydoc::serialize_doc(&state.doc_tx).await;
+
+    match persistence::save_project(&project, &path, ydoc_state).await {
         Ok(()) => {
             *state.project_path.lock() = Some(path.clone());
             Json(serde_json::json!({ "saved": path.display().to_string() }))
@@ -138,10 +141,20 @@ async fn load_project(
     let path = std::path::PathBuf::from(&body.path);
 
     match persistence::load_project(&path).await {
-        Ok(project) => {
+        Ok((project, ydoc_state)) => {
             let json = serde_json::to_value(&project).unwrap();
-            // Populate Y.Doc with all node text from the loaded project.
-            populate_ydoc_from_project(&state, &project).await;
+
+            // Restore Y.Doc: prefer persisted blob, fall back to populating
+            // from the project's cached text fields.
+            if let Some(blob) = ydoc_state {
+                if let Err(e) = crate::ydoc::load_doc(&state.doc_tx, blob).await {
+                    tracing::warn!("failed to load Y.Doc state, populating from project: {e}");
+                    populate_ydoc_from_project(&state, &project).await;
+                }
+            } else {
+                populate_ydoc_from_project(&state, &project).await;
+            }
+
             *state.project.lock() = Some(project);
             // Normalize save path to .db so future auto-saves write SQLite.
             let save_path = if path.extension().map_or(false, |ext| ext == "json") {
