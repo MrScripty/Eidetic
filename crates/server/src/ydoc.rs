@@ -135,6 +135,18 @@ pub enum DocCommand {
         tokens: String,
         author: String,
     },
+    /// Replace a character range in a Y.Text field (used by diffusion infilling).
+    ///
+    /// Removes `[start..end)` and inserts `new_text` at `start` with author
+    /// attribution. Clamps indices to the current Y.Text length.
+    RewriteRegion {
+        node_id: NodeId,
+        field: ContentField,
+        start: usize,
+        end: usize,
+        new_text: String,
+        author: String,
+    },
     /// Shutdown the manager task.
     Shutdown,
 }
@@ -301,6 +313,18 @@ async fn run_doc_manager(
                 append_to_node_field(&doc, &node_id, ContentField::Content, &tokens, &author);
             }
 
+            DocCommand::RewriteRegion {
+                node_id,
+                field,
+                start,
+                end,
+                new_text,
+                author,
+            } => {
+                *pending_origin.lock().unwrap() = 0;
+                rewrite_region(&doc, &node_id, field, start, end, &new_text, &author);
+            }
+
             DocCommand::Shutdown => {
                 tracing::info!("Y.Doc manager shutting down");
                 break;
@@ -408,6 +432,51 @@ fn append_to_node_field(
     let len = ytext.len(&txn);
     let attrs = Attrs::from([("author".into(), Any::String(author.into()))]);
     ytext.insert_with_attributes(&mut txn, len, text, attrs);
+}
+
+/// Replace a character range in a Y.Text field with new text.
+///
+/// Clamps `start` and `end` to the current Y.Text length.
+/// If `start >= end` after clamping, logs a warning and does nothing.
+fn rewrite_region(
+    doc: &Doc,
+    node_id: &NodeId,
+    field: ContentField,
+    start: usize,
+    end: usize,
+    new_text: &str,
+    author: &str,
+) {
+    let node_key = node_id.0.to_string();
+    let field_name = match field {
+        ContentField::Notes => "notes",
+        ContentField::Content => "content",
+    };
+
+    let mut txn = doc.transact_mut();
+    let nodes = txn.get_or_insert_map("nodes");
+    let node_map = get_or_create_node_map(&nodes, &mut txn, &node_key);
+    let ytext = get_or_create_text_field(&node_map, &mut txn, field_name);
+
+    let len = ytext.len(&txn) as usize;
+    let clamped_start = start.min(len);
+    let clamped_end = end.min(len);
+
+    if clamped_start >= clamped_end {
+        tracing::warn!(
+            "rewrite_region: start ({start}) >= end ({end}) after clamping to len {len} — no-op"
+        );
+        return;
+    }
+
+    // Remove the old range, then insert the replacement.
+    let remove_len = (clamped_end - clamped_start) as u32;
+    ytext.remove_range(&mut txn, clamped_start as u32, remove_len);
+
+    if !new_text.is_empty() {
+        let attrs = Attrs::from([("author".into(), Any::String(author.into()))]);
+        ytext.insert_with_attributes(&mut txn, clamped_start as u32, new_text, attrs);
+    }
 }
 
 /// Read a snapshot of a node's text content from Y.Doc.
