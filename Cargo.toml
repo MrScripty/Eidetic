@@ -28,3 +28,5 @@ dirs = "6"
 genpdf = "0.2"
 rusqlite = { version = "0.32", features = ["bundled"] }
 yrs = { version = "0.25", features = ["sync"] }
+pyo3 = { version = "0.23", features = ["auto-initialize"] }
+pumas-library = { path = "../Pumas-Library/rust/crates/pumas-core" }

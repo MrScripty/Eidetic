@@ -26,3 +26,5 @@ dirs = { workspace = true }
 genpdf = { workspace = true }
 rusqlite = { workspace = true }
 yrs = { workspace = true }
+pyo3 = { workspace = true }
+pumas-library = { workspace = true }
