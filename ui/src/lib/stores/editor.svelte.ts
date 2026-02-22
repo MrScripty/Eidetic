@@ -1,4 +1,4 @@
-import type { NodeId, StoryNode, StoryLevel, AiStatus, ConsistencySuggestion } from '../types.js';
+import type { NodeId, StoryNode, StoryLevel, AiStatus, ConsistencySuggestion, DiffusionStatus } from '../types.js';
 
 /**
  * Transient UI state for the node editor panel. Frontend-owned.
@@ -22,6 +22,8 @@ export const editorState = $state<{
 	generationError: string | null;
 	/** Last-known AI backend status. */
 	aiStatus: AiStatus | null;
+	/** Last-known diffusion LLM status. */
+	diffusionStatus: DiffusionStatus | null;
 	/** Pending consistency suggestions from the AI. */
 	consistencySuggestions: ConsistencySuggestion[];
 	/** Whether a consistency check is in progress. */
@@ -47,6 +49,7 @@ export const editorState = $state<{
 	lastGenerationNodeId: null,
 	generationError: null,
 	aiStatus: null,
+	diffusionStatus: null,
 	consistencySuggestions: [],
 	checkingConsistency: false,
 	canUndo: false,

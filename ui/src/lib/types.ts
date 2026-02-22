@@ -373,7 +373,40 @@ export type ServerMessage =
 	| { type: 'undo_redo_changed'; can_undo: boolean; can_redo: boolean }
 	| { type: 'project_mutated' }
 	| { type: 'bible_changed' }
-	| { type: 'entity_extraction_complete'; node_id: string; new_entity_count: number; snapshot_count: number };
+	| { type: 'entity_extraction_complete'; node_id: string; new_entity_count: number; snapshot_count: number }
+	| { type: 'diffusion_progress'; node_id: string; step: number; total_steps: number }
+	| { type: 'diffusion_complete'; node_id: string }
+	| { type: 'diffusion_error'; node_id: string; error: string };
+
+// --- Diffusion ---
+
+export interface DiffuseRequest {
+	node_id: string;
+	anchor_ranges: { start: number; end: number }[];
+	mask_budget: number;
+}
+
+export interface DiffusionStatus {
+	model_loaded: boolean;
+	model_path: string | null;
+	device: string;
+}
+
+// --- Model Library ---
+
+export interface ModelEntry {
+	id: string;
+	name: string;
+	path: string;
+	model_type: string;
+	size_bytes: number | null;
+	tags: string[];
+}
+
+export interface ModelListResponse {
+	models: ModelEntry[];
+	total_count: number;
+}
 
 // --- Helpers ---
 

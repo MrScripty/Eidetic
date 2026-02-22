@@ -3,7 +3,8 @@ import type {
 	EntityRelation, ExtractionResult, AiStatus, AiConfig, TimelineGap,
 	ReferenceDocument, ArcProgression, Timeline, Track, StoryNode,
 	NodeContent, ChildPlan, ChildProposal, Relationship, ArcType,
-	RelationshipType, ReferenceType, Color, StoryLevel,
+	RelationshipType, ReferenceType, Color, StoryLevel, DiffusionStatus,
+	ModelListResponse,
 } from './types.js';
 
 const BASE = '/api';
@@ -387,6 +388,35 @@ export function generateBatch(parentNodeId: string): Promise<{ status: string; p
 		method: 'POST',
 		body: JSON.stringify({ parent_node_id: parentNodeId }),
 	});
+}
+
+// --- Diffusion LLM ---
+
+export function getDiffusionStatus(): Promise<DiffusionStatus> {
+	return request('/ai/diffusion/status');
+}
+
+export function loadDiffusionModel(model_path: string, device: string = 'cuda'): Promise<{ status: string; model_path: string; device: string }> {
+	return request('/ai/diffusion/load', {
+		method: 'POST',
+		body: JSON.stringify({ model_path, device }),
+	});
+}
+
+export function unloadDiffusionModel(): Promise<{ status: string }> {
+	return request('/ai/diffusion/unload', { method: 'POST' });
+}
+
+// --- Model Library ---
+
+export function listModels(params?: { q?: string; model_type?: string; limit?: number; offset?: number }): Promise<ModelListResponse> {
+	const query = new URLSearchParams();
+	if (params?.q) query.set('q', params.q);
+	if (params?.model_type) query.set('model_type', params.model_type);
+	if (params?.limit) query.set('limit', String(params.limit));
+	if (params?.offset) query.set('offset', String(params.offset));
+	const qs = query.toString();
+	return request(`/models${qs ? `?${qs}` : ''}`);
 }
 
 // --- Export ---
