@@ -7,9 +7,11 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
+use crate::diffusion::{self, DiffuseCmd, DiffuseUpdate};
 use crate::persistence;
 use crate::vector_store::VectorStore;
 use crate::ydoc::{self, DocCommand, DocUpdate};
+use pumas_library::ModelLibrary;
 
 /// Server configuration constants.
 pub mod constants {
@@ -71,6 +73,18 @@ pub enum ServerEvent {
     ConsistencyComplete {
         source_node_id: uuid::Uuid,
         suggestion_count: usize,
+    },
+    DiffusionProgress {
+        node_id: uuid::Uuid,
+        step: usize,
+        total_steps: usize,
+    },
+    DiffusionComplete {
+        node_id: uuid::Uuid,
+    },
+    DiffusionError {
+        node_id: uuid::Uuid,
+        error: String,
     },
     UndoRedoChanged {
         can_undo: bool,
@@ -156,6 +170,40 @@ pub struct AiConfig {
     pub max_tokens: usize,
     pub base_url: String,
     pub api_key: Option<String>,
+    /// Path to the diffusion model (safetensors or HuggingFace model ID).
+    #[serde(default)]
+    pub diffusion_model_path: Option<String>,
+    /// Device for diffusion inference ("cuda" or "cpu").
+    #[serde(default = "default_diffusion_device")]
+    pub diffusion_device: String,
+    /// Denoising steps per block for diffusion infilling.
+    #[serde(default = "default_diffusion_steps")]
+    pub diffusion_steps_per_block: usize,
+    /// Block length for semi-autoregressive decoding.
+    #[serde(default = "default_diffusion_block_length")]
+    pub diffusion_block_length: usize,
+    /// Sampling temperature for diffusion inference.
+    #[serde(default = "default_diffusion_temperature")]
+    pub diffusion_temperature: f32,
+    /// Confidence threshold for unmasking tokens.
+    #[serde(default = "default_diffusion_threshold")]
+    pub diffusion_dynamic_threshold: f32,
+}
+
+fn default_diffusion_device() -> String {
+    "cuda".into()
+}
+fn default_diffusion_steps() -> usize {
+    4
+}
+fn default_diffusion_block_length() -> usize {
+    4
+}
+fn default_diffusion_temperature() -> f32 {
+    1.0
+}
+fn default_diffusion_threshold() -> f32 {
+    0.9
 }
 
 impl Default for AiConfig {
@@ -167,6 +215,12 @@ impl Default for AiConfig {
             max_tokens: constants::DEFAULT_MAX_TOKENS,
             base_url: constants::DEFAULT_OLLAMA_URL.into(),
             api_key: None,
+            diffusion_model_path: None,
+            diffusion_device: default_diffusion_device(),
+            diffusion_steps_per_block: default_diffusion_steps(),
+            diffusion_block_length: default_diffusion_block_length(),
+            diffusion_temperature: default_diffusion_temperature(),
+            diffusion_dynamic_threshold: default_diffusion_threshold(),
         }
     }
 }
@@ -194,10 +248,18 @@ pub struct AppState {
     pub vector_store: Arc<Mutex<VectorStore>>,
     /// Channel to signal the auto-save background task.
     save_tx: tokio::sync::mpsc::Sender<()>,
+    /// Channel to the diffusion manager thread (optional AI infrastructure).
+    pub diffuse_tx: tokio::sync::mpsc::Sender<DiffuseCmd>,
+    /// Broadcasts diffusion denoising progress to WebSocket clients.
+    pub diffuse_update_tx: tokio::sync::broadcast::Sender<DiffuseUpdate>,
+    /// Node IDs currently undergoing diffusion — prevents duplicate/concurrent runs.
+    pub diffusing: Arc<Mutex<HashSet<uuid::Uuid>>>,
+    /// Model library from Pumas for listing available local models.
+    pub model_library: Option<Arc<ModelLibrary>>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         let (events_tx, _) = broadcast::channel(256);
         let (save_tx, save_rx) = tokio::sync::mpsc::channel(16);
 
@@ -216,6 +278,15 @@ impl AppState {
         let save_doc_tx = doc_tx.clone();
         tokio::spawn(auto_save_task(save_rx, save_project, save_path, save_doc_tx));
 
+        // Spawn the diffusion manager on a dedicated OS thread.
+        // JoinHandle is intentionally dropped — the manager shuts down via
+        // DiffuseCmd::Shutdown sent through diffuse_tx when the server exits.
+        let (diffuse_tx, diffuse_update_tx, _diffuse_handle) =
+            diffusion::spawn_diffusion_manager();
+
+        // Initialize the Pumas model library (optional — best-effort).
+        let model_library = Self::init_model_library().await;
+
         Self {
             project,
             events_tx,
@@ -228,7 +299,73 @@ impl AppState {
             undo_stack: Arc::new(Mutex::new(UndoStack::new(constants::UNDO_STACK_DEPTH))),
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
+            diffuse_tx,
+            diffuse_update_tx,
+            diffusing: Arc::new(Mutex::new(HashSet::new())),
+            model_library,
         }
+    }
+
+    /// Initialize the Pumas model library from env or sibling directory.
+    ///
+    /// Looks for `PUMAS_MODELS_DIR` env var first, then tries a sibling
+    /// `Pumas-Library/shared-resources/models/` directory relative to the binary.
+    async fn init_model_library() -> Option<Arc<ModelLibrary>> {
+        // 1. Explicit env var
+        if let Ok(dir) = std::env::var("PUMAS_MODELS_DIR") {
+            let path = PathBuf::from(&dir);
+            if path.is_dir() {
+                match ModelLibrary::new(&path).await {
+                    Ok(lib) => {
+                        tracing::info!("Pumas model library loaded from PUMAS_MODELS_DIR: {dir}");
+                        return Some(Arc::new(lib));
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to open model library at {dir}: {e}");
+                    }
+                }
+            }
+        }
+
+        // 2. Well-known sibling path (for co-located installs)
+        let exe_dir = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.to_path_buf()));
+        if let Some(exe_dir) = exe_dir {
+            // Walk up to find the workspace root (contains Cargo.toml)
+            let mut candidate = exe_dir.as_path();
+            for _ in 0..6 {
+                let sibling = candidate
+                    .parent()
+                    .map(|p| p.join("Pumas-Library/shared-resources/models"));
+                if let Some(ref path) = sibling {
+                    if path.is_dir() {
+                        match ModelLibrary::new(path).await {
+                            Ok(lib) => {
+                                tracing::info!(
+                                    "Pumas model library loaded from sibling: {}",
+                                    path.display()
+                                );
+                                return Some(Arc::new(lib));
+                            }
+                            Err(e) => {
+                                tracing::warn!(
+                                    "Failed to open model library at {}: {e}",
+                                    path.display()
+                                );
+                            }
+                        }
+                    }
+                }
+                match candidate.parent() {
+                    Some(p) => candidate = p,
+                    None => break,
+                }
+            }
+        }
+
+        tracing::info!("No Pumas model library found (set PUMAS_MODELS_DIR to enable)");
+        None
     }
 
     /// Signal that the project has been mutated and should be auto-saved.

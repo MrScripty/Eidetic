@@ -1,4 +1,5 @@
 mod ai_backends;
+mod diffusion;
 mod embeddings;
 pub mod error;
 mod export;
@@ -25,7 +26,7 @@ async fn main() {
         )
         .init();
 
-    let app_state = state::AppState::new();
+    let app_state = state::AppState::new().await;
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
