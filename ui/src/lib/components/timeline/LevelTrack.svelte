@@ -136,7 +136,7 @@
 
 {#if !track.collapsed}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="level-track" style="height: {TIMELINE.TRACK_HEIGHT_PX}px">
+	<div class="level-track" style="height: {TIMELINE.TRACK_ROW_HEIGHT_PX}px">
 		<div class="track-lane" class:blade-mode={timelineState.activeTool === 'blade'} ondblclick={handleDblClick}>
 			{#each visibleNodes as node (node.id)}
 				{@const bounds = nodeBounds(node.id)}
@@ -180,6 +180,7 @@
 <style>
 	.level-track {
 		position: relative;
+		box-sizing: border-box;
 		border-bottom: 1px solid var(--color-border-subtle);
 	}
 

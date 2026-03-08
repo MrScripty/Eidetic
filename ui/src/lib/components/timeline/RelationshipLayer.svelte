@@ -16,7 +16,7 @@
 	}
 
 	function trackYOffset(trackIdx: number): number {
-		return trackIdx * TIMELINE.TRACK_HEIGHT_PX;
+		return trackIdx * TIMELINE.TRACK_ROW_HEIGHT_PX;
 	}
 
 	function nodeCenter(nodeId: string): { x: number; y: number } | null {

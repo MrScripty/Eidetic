@@ -268,12 +268,26 @@ export const TIMELINE = {
 	DEFAULT_PX_PER_MS: 0.08,
 	/** Track lane height in pixels. */
 	TRACK_HEIGHT_PX: 48,
+	/** Total track row height including the row divider. */
+	TRACK_ROW_HEIGHT_PX: 49,
 	/** Gap between tracks. */
 	TRACK_GAP_PX: 4,
 	/** Height of the structure bar. */
 	STRUCTURE_BAR_HEIGHT_PX: 32,
+	/** Total structure bar height including its top border. */
+	STRUCTURE_BAR_TOTAL_HEIGHT_PX: 33,
 	/** Height of the time ruler. */
 	TIME_RULER_HEIGHT_PX: 28,
+	/** Total time ruler height including its bottom border. */
+	TIME_RULER_TOTAL_HEIGHT_PX: 29,
+	/** Timeline toolbar height including its bottom border. */
+	TOOLBAR_HEIGHT_PX: 29,
+	/** Relationship lane height including its bottom border. */
+	RELATIONSHIP_HEIGHT_PX: 41,
+	/** Horizontal scrollbar height including its top border. */
+	SCROLLBAR_HEIGHT_PX: 13,
+	/** Visible track count for the default episode template. */
+	DEFAULT_VISIBLE_TRACKS: 5,
 	/** Height of the character progression track. */
 	CHARACTER_TRACK_HEIGHT_PX: 40,
 	/** Width of track label column. */
@@ -283,8 +297,14 @@ export const TIMELINE = {
 export const PANEL = {
 	/** Minimum height of the beat editor panel (px). */
 	MIN_EDITOR_HEIGHT_PX: 150,
+	/** Minimum height of the upper workspace above the timeline stack (px). */
+	MIN_UPPER_WORKSPACE_HEIGHT_PX: 300,
 	/** Minimum height of the timeline panel (px). */
 	MIN_TIMELINE_HEIGHT_PX: 200,
+	/** Fixed height of the optional character timeline panel (px). */
+	CHARACTER_TIMELINE_HEIGHT_PX: 120,
+	/** Height of the horizontal panel resizer row (px). */
+	RESIZER_HEIGHT_PX: 6,
 	/** Minimum height of the script panel (px). */
 	MIN_SCRIPT_HEIGHT_PX: 120,
 	/** Sidebar width (px). */
@@ -298,6 +318,21 @@ export const PANEL = {
 	/** Maximum width of the relationship panel (px). */
 	MAX_RELATIONSHIP_WIDTH_PX: 600,
 } as const;
+
+export function timelineTrackRowsHeightPx(trackCount: number): number {
+	return trackCount * TIMELINE.TRACK_ROW_HEIGHT_PX;
+}
+
+export function mainTimelinePanelHeightPx(
+	visibleTrackCount = TIMELINE.DEFAULT_VISIBLE_TRACKS,
+): number {
+	return TIMELINE.TOOLBAR_HEIGHT_PX
+		+ TIMELINE.TIME_RULER_TOTAL_HEIGHT_PX
+		+ TIMELINE.RELATIONSHIP_HEIGHT_PX
+		+ timelineTrackRowsHeightPx(visibleTrackCount)
+		+ TIMELINE.STRUCTURE_BAR_TOTAL_HEIGHT_PX
+		+ TIMELINE.SCROLLBAR_HEIGHT_PX;
+}
 
 // --- AI Configuration ---
 

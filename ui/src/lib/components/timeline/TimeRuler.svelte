@@ -35,7 +35,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="time-ruler" style="height: {TIMELINE.TIME_RULER_HEIGHT_PX}px" onclick={handleClick}>
+<div class="time-ruler" style="height: {TIMELINE.TIME_RULER_TOTAL_HEIGHT_PX}px" onclick={handleClick}>
 	<div class="ruler-track" style="width: {width}px; transform: translateX(-{offsetX}px)">
 		{#each ticks() as tick}
 			<div
@@ -55,6 +55,7 @@
 <style>
 	.time-ruler {
 		flex-shrink: 0;
+		box-sizing: border-box;
 		border-bottom: 1px solid var(--color-border-default);
 		overflow: hidden;
 		position: relative;

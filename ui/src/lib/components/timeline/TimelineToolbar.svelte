@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
-	import { formatTime } from '$lib/types.js';
+	import { TIMELINE, formatTime } from '$lib/types.js';
 </script>
 
-<div class="tl-toolbar">
+<div class="tl-toolbar" style="height: {TIMELINE.TOOLBAR_HEIGHT_PX}px">
 	<!-- Tool modes -->
 	<button
 		class="tl-btn"
@@ -93,6 +93,7 @@
 		display: flex;
 		align-items: center;
 		gap: 2px;
+		box-sizing: border-box;
 		padding: 2px 8px;
 		background: var(--color-bg-secondary);
 		border-bottom: 1px solid var(--color-border-subtle);

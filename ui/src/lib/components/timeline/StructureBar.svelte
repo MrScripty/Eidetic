@@ -18,7 +18,7 @@
 	};
 </script>
 
-<div class="structure-bar" style="height: {TIMELINE.STRUCTURE_BAR_HEIGHT_PX}px">
+<div class="structure-bar" style="height: {TIMELINE.STRUCTURE_BAR_TOTAL_HEIGHT_PX}px">
 	<div class="structure-track" style="width: {width}px; transform: translateX(-{offsetX}px)">
 		{#each structure.segments as segment}
 			{@const segWidth = rangeWidth(segment.time_range)}
@@ -42,6 +42,7 @@
 <style>
 	.structure-bar {
 		flex-shrink: 0;
+		box-sizing: border-box;
 		border-top: 1px solid var(--color-border-default);
 		overflow: hidden;
 		position: relative;
