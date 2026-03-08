@@ -33,6 +33,7 @@ Use shared exported layout constants for row and chrome budgets, keep the main t
 - The main timeline viewport width is measured from the time-content column, not the fixed label column.
 - Wheel zoom and horizontal scroll operate on the shared timeline store; vertical overflow stays inside the timeline content viewport.
 - The default shell height is based on the five built-in timeline tracks.
+- The timeline renders the clamped shell height it is given; it does not own the user-preferred timeline height state.
 
 ## Revisit Triggers
 - Track virtualization becomes necessary for very large projects.
@@ -59,10 +60,10 @@ Use shared exported layout constants for row and chrome budgets, keep the main t
 - `Timeline.svelte` is consumed as a full main-panel component and reads timeline state from shared stores.
 - `LevelTrack.svelte` expects a `track`, optional `gaps`, and an `onconnectstart` callback from its parent viewport.
 - Consumers should not override row/chrome heights locally; use shared constants/helpers from `$lib/types.js`.
+- Shell/layout consumers are responsible for preserving preferred timeline height across viewport resize and passing only the rendered height budget down to this directory.
 - The optional character timeline is a sibling panel, not part of the main timeline’s scroll surface.
 
 ## Structured Producer Contract
 - Shared timeline layout helpers in `$lib/types.js` are the canonical producer for row and chrome sizing used by this directory.
 - Consumers can rely on `mainTimelinePanelHeightPx()` representing the default five-track shell budget unless the README or helper contract changes.
 - If timeline layout semantics change, update this README in the same change so downstream component consumers understand the new height/overflow rules.
-

@@ -21,7 +21,7 @@ The app shell has to coordinate multiple panels with different layout rules. The
 - Layout code already lives in large Svelte components, so new shell behavior should stay isolated where possible.
 
 ## Decision
-Keep the main composition in `AppShell.svelte` but isolate the bottom timeline stack in `BottomTimelineStack.svelte` so the shell owns panel composition while the bottom stack owns fixed-height timeline anchoring.
+Keep the main composition in `AppShell.svelte` but isolate the bottom timeline stack in `BottomTimelineStack.svelte` so the shell owns panel composition, the shell owns the user-selected timeline height, and the bottom stack only renders the clamped height it is given.
 
 ## Alternatives Rejected
 - Leaving the timeline directly in `AppShell.svelte` with more inline sizing logic: rejected because `AppShell.svelte` already exceeds the decomposition review threshold.
@@ -30,6 +30,7 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 ## Invariants
 - The timeline stack is the bottom-most shell region whenever a project is open.
 - Fixed-height timeline sizing is derived from shared constants, not component-local literals.
+- The user-selected main timeline height is preserved across window resize; viewport changes may clamp the rendered height temporarily but do not overwrite the preferred value.
 - The upper workspace gets leftover vertical space after the timeline stack claims its budget.
 
 ## Revisit Triggers
@@ -57,6 +58,7 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 ## API Consumer Contract
 - `AppShell.svelte` is the composition root for project-active layout.
 - `BottomTimelineStack.svelte` exposes no custom props; it renders from shared stores and shared layout helpers.
+- `AppShell.svelte` owns the preferred timeline height and passes the currently rendered height into `BottomTimelineStack.svelte`.
 - Consumers should not duplicate the bottom stack markup elsewhere; alternative shell layouts should compose this module or replace it explicitly.
 - If resizer ownership changes, update this README to record which module owns the vertical split behavior.
 
@@ -64,4 +66,3 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 - None identified as of 2026-03-08.
 - Reason: this directory renders UI composition and does not emit persisted machine-consumed artifacts.
 - Revisit trigger: a future layout module starts generating saved panel presets or serialized workspace layout metadata.
-

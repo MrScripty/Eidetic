@@ -78,7 +78,7 @@
 
 	let sidebarOpen = $state(true);
 	let editorHeight = $state(300);
-	let timelineHeight = $state(mainTimelinePanelHeightPx());
+	let timelinePreferredHeight = $state(mainTimelinePanelHeightPx());
 	let relationshipPanelOpen = $state(false);
 	let relationshipPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
 	let windowHeight = $state(0);
@@ -104,12 +104,12 @@
 				- bottomStackExtraHeight,
 		);
 	});
-
-	$effect(() => {
-		if (timelineHeight > maxTimelineHeight) {
-			timelineHeight = maxTimelineHeight;
-		}
-	});
+	const timelineHeight = $derived(
+		Math.max(
+			PANEL.MIN_TIMELINE_HEIGHT_PX,
+			Math.min(timelinePreferredHeight, maxTimelineHeight),
+		)
+	);
 
 	async function handleExportPdf() {
 		try {
@@ -223,7 +223,7 @@
 			min={PANEL.MIN_TIMELINE_HEIGHT_PX}
 			max={maxTimelineHeight}
 			reverse={true}
-			bind:position={timelineHeight}
+			bind:position={timelinePreferredHeight}
 		/>
 
 		<BottomTimelineStack {timelineHeight} />
