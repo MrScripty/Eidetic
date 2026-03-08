@@ -7,15 +7,20 @@
 	import TimelineToolbar from './TimelineToolbar.svelte';
 	import { timelineState, totalWidth, connectionDrag, timeToX, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
-	import { TIMELINE } from '$lib/types.js';
+	import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/types.js';
 	import type { TimelineGap, StoryLevel } from '$lib/types.js';
 	import { createRelationship, getGaps, removeTrack } from '$lib/api.js';
 	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 
 	let gaps = $state<TimelineGap[]>([]);
 	let scrollbarEl: HTMLDivElement | undefined = $state();
+	let contentScrollEl: HTMLDivElement | undefined = $state();
 	let scrollbarSyncing = false;
 	let hasAutoFit = false;
+	let visibleTrackCount = $derived(
+		timelineState.timeline?.tracks.filter(track => !track.collapsed).length ?? 0
+	);
+	let trackRowsHeight = $derived(timelineTrackRowsHeightPx(visibleTrackCount));
 
 	// Auto zoom-to-fit when timeline first loads and viewport is measured.
 	$effect(() => {
@@ -41,6 +46,13 @@
 		if (e.ctrlKey) {
 			const factor = e.deltaY > 0 ? 0.9 : 1.1;
 			zoomTo(timelineState.zoom * factor);
+		} else if (
+			contentScrollEl
+			&& contentScrollEl.scrollHeight > contentScrollEl.clientHeight
+			&& Math.abs(e.deltaY) > Math.abs(e.deltaX)
+			&& !e.shiftKey
+		) {
+			contentScrollEl.scrollTop += e.deltaY;
 		} else {
 			const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
 			const maxScroll = Math.max(0, totalWidth() - timelineState.viewportWidth);
@@ -152,91 +164,97 @@
 	}
 </script>
 
-<div class="timeline-container">
+<div
+	class="timeline-container"
+	style="
+		--timeline-label-width: {TIMELINE.LABEL_WIDTH_PX}px;
+		--timeline-ruler-height: {TIMELINE.TIME_RULER_TOTAL_HEIGHT_PX}px;
+		--timeline-relationship-height: {TIMELINE.RELATIONSHIP_HEIGHT_PX}px;
+		--timeline-track-row-height: {TIMELINE.TRACK_ROW_HEIGHT_PX}px;
+		--timeline-structure-height: {TIMELINE.STRUCTURE_BAR_TOTAL_HEIGHT_PX}px;
+		--timeline-scrollbar-height: {TIMELINE.SCROLLBAR_HEIGHT_PX}px;
+	"
+>
 	<TimelineToolbar />
 
 	<div class="timeline-body" {onwheel}>
-		<!-- Fixed label column (always visible, not affected by scroll/zoom) -->
-		<div class="label-column">
-			<!-- Spacer matching time ruler height -->
-			<div class="label-spacer ruler-spacer"></div>
+		<div class="ruler-row">
+			<div class="label-corner"></div>
 
-			<!-- Labels matching timeline-content rows -->
-			<div class="label-content">
-				<!-- Spacer matching relationship wrapper -->
-				<div class="label-spacer rel-spacer"></div>
-
-				<!-- Track labels -->
-				<div class="labels-tracks">
-					{#if timelineState.timeline}
-						{#each timelineState.timeline.tracks as track}
-							<!-- svelte-ignore a11y_no_static_element_interactions -->
-							<div
-								class="track-label"
-								style="height: {track.collapsed ? 0 : TIMELINE.TRACK_HEIGHT_PX}px"
-								class:collapsed={track.collapsed}
-								oncontextmenu={(e) => handleTrackContextMenu(e, track.id)}
-							>
-								<span class="track-label-text">{track.label}</span>
-							</div>
-						{/each}
-					{/if}
-				</div>
-
-				<!-- Spacer matching structure bar -->
-				<div class="label-spacer structure-spacer"></div>
+			<div class="time-ruler-column" bind:clientWidth={timelineState.viewportWidth}>
+				<TimeRuler
+					durationMs={TIMELINE.DURATION_MS}
+					width={totalWidth()}
+					offsetX={timelineState.scrollX}
+				/>
 			</div>
-
-			<!-- Spacer matching scrollbar -->
-			<div class="label-spacer scrollbar-spacer"></div>
 		</div>
 
-		<!-- Scrollable time content column -->
-		<div class="time-column" bind:clientWidth={timelineState.viewportWidth}>
-			<!-- Time ruler at top -->
-			<TimeRuler
-				durationMs={TIMELINE.DURATION_MS}
-				width={totalWidth()}
-				offsetX={timelineState.scrollX}
-			/>
+		<div class="content-viewport">
+			<div class="content-scroll" bind:this={contentScrollEl}>
+				<div class="label-column">
+					<div class="label-spacer rel-spacer"></div>
 
-			<!-- Time-aligned content (playhead, relationships, tracks, structure) -->
-			<div class="timeline-content">
-				<Playhead />
-
-				<!-- Relationship curves above tracks -->
-				<div class="relationship-wrapper">
-					<RelationshipLayer offsetX={timelineState.scrollX} />
-				</div>
-
-				<!-- Level tracks -->
-				<div class="tracks">
-					<div class="tracks-content" style="width: {totalWidth()}px; transform: translateX(-{timelineState.scrollX}px)">
+					<div class="labels-tracks">
 						{#if timelineState.timeline}
 							{#each timelineState.timeline.tracks as track}
-								<LevelTrack
-									{track}
-									gaps={gapsForLevel(track.level)}
-									onconnectstart={handleConnectStart}
-								/>
+								<!-- svelte-ignore a11y_no_static_element_interactions -->
+								<div
+									class="track-label"
+									style="height: {track.collapsed ? 0 : TIMELINE.TRACK_ROW_HEIGHT_PX}px"
+									class:collapsed={track.collapsed}
+									oncontextmenu={(e) => handleTrackContextMenu(e, track.id)}
+								>
+									<span class="track-label-text">{track.label}</span>
+								</div>
 							{/each}
 						{/if}
 					</div>
+
+					<div class="label-spacer structure-spacer"></div>
 				</div>
 
-				<!-- Structure bar -->
-				{#if timelineState.timeline}
-					<StructureBar
-						structure={timelineState.timeline.structure}
-						width={totalWidth()}
-						offsetX={timelineState.scrollX}
-					/>
-				{/if}
-			</div>
+				<div class="time-column">
+					<div class="timeline-content">
+						<Playhead />
 
-			<!-- Horizontal scrollbar -->
-			<div class="timeline-scrollbar" bind:this={scrollbarEl} onscroll={onScrollbar}>
-				<div style="width: {totalWidth()}px; height: 1px;"></div>
+						<div class="relationship-wrapper">
+							<RelationshipLayer offsetX={timelineState.scrollX} />
+						</div>
+
+						<div class="tracks" style="height: {trackRowsHeight}px">
+							<div class="tracks-content" style="width: {totalWidth()}px; transform: translateX(-{timelineState.scrollX}px)">
+								{#if timelineState.timeline}
+									{#each timelineState.timeline.tracks as track}
+										<LevelTrack
+											{track}
+											gaps={gapsForLevel(track.level)}
+											onconnectstart={handleConnectStart}
+										/>
+									{/each}
+								{/if}
+							</div>
+						</div>
+
+						{#if timelineState.timeline}
+							<StructureBar
+								structure={timelineState.timeline.structure}
+								width={totalWidth()}
+								offsetX={timelineState.scrollX}
+							/>
+						{/if}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="scrollbar-row">
+			<div class="label-spacer scrollbar-spacer"></div>
+
+			<div class="time-scrollbar-column">
+				<div class="timeline-scrollbar" bind:this={scrollbarEl} onscroll={onScrollbar}>
+					<div style="width: {totalWidth()}px; height: 1px;"></div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -262,59 +280,59 @@
 
 	.timeline-body {
 		display: flex;
+		flex-direction: column;
 		flex: 1;
 		overflow: hidden;
+		min-height: 0;
 	}
 
-	/* -- Label column (fixed, always visible) -- */
-
-	.label-column {
-		width: 80px;
-		flex-shrink: 0;
+	.ruler-row,
+	.scrollbar-row {
 		display: flex;
-		flex-direction: column;
+		flex-shrink: 0;
+	}
+
+	.label-corner,
+	.label-column,
+	.scrollbar-spacer {
+		width: var(--timeline-label-width);
+		flex-shrink: 0;
 		background: var(--color-bg-primary);
 		border-right: 1px solid var(--color-border-default);
-		z-index: 5;
 	}
 
-	.label-spacer {
-		flex-shrink: 0;
-	}
-
-	.ruler-spacer {
-		height: 28px; /* TIMELINE.TIME_RULER_HEIGHT_PX */
+	.label-corner {
+		height: var(--timeline-ruler-height);
+		box-sizing: border-box;
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
-	.rel-spacer {
-		height: 40px;
-		border-bottom: 1px solid var(--color-border-subtle);
-	}
-
-	.structure-spacer {
-		height: 33px; /* STRUCTURE_BAR_HEIGHT_PX + 1px border */
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.scrollbar-spacer {
-		height: 12px;
-		border-top: 1px solid var(--color-border-subtle);
-	}
-
-	.label-content {
+	.time-ruler-column,
+	.time-scrollbar-column {
 		flex: 1;
+		min-width: 0;
+	}
+
+	.content-viewport {
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	.content-scroll {
+		display: flex;
+		height: 100%;
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
+
+	.label-column {
 		display: flex;
 		flex-direction: column;
-		overflow: hidden;
-	}
-
-	.labels-tracks {
-		flex: 1;
-		overflow: hidden;
 	}
 
 	.track-label {
+		box-sizing: border-box;
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
@@ -340,30 +358,28 @@
 
 	.time-column {
 		flex: 1;
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
 		min-width: 0;
 	}
 
 	.timeline-content {
 		position: relative;
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
 	}
 
-	.relationship-wrapper {
+	.label-spacer {
 		flex-shrink: 0;
-		height: 40px;
+		box-sizing: border-box;
+	}
+
+	.rel-spacer,
+	.relationship-wrapper {
+		height: var(--timeline-relationship-height);
+		box-sizing: border-box;
 		border-bottom: 1px solid var(--color-border-subtle);
 		background: var(--color-bg-primary);
 		overflow: visible;
 	}
 
 	.tracks {
-		flex: 1;
 		overflow: hidden;
 		position: relative;
 		min-width: 0;
@@ -374,12 +390,23 @@
 		height: 100%;
 	}
 
+	.structure-spacer {
+		height: var(--timeline-structure-height);
+		border-top: 1px solid var(--color-border-default);
+	}
+
 	.timeline-scrollbar {
-		flex-shrink: 0;
+		height: var(--timeline-scrollbar-height);
+		box-sizing: border-box;
 		overflow-x: auto;
 		overflow-y: hidden;
-		height: 12px;
 		background: var(--color-bg-secondary);
+		border-top: 1px solid var(--color-border-subtle);
+	}
+
+	.scrollbar-spacer {
+		height: var(--timeline-scrollbar-height);
+		box-sizing: border-box;
 		border-top: 1px solid var(--color-border-subtle);
 	}
 

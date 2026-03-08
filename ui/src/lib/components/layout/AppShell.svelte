@@ -1,13 +1,12 @@
 <script lang="ts">
 	import Sidebar from './Sidebar.svelte';
 	import PanelResizer from './PanelResizer.svelte';
+	import BottomTimelineStack from './BottomTimelineStack.svelte';
 	import BeatEditor from '../editor/BeatEditor.svelte';
 	import ScriptPanel from '../editor/ScriptPanel.svelte';
-	import Timeline from '../timeline/Timeline.svelte';
-	import CharacterTimeline from '../timeline/CharacterTimeline.svelte';
 	import RelationshipPanel from '../relationship/RelationshipPanel.svelte';
 	import EntityDetail from '../sidebar/bible/EntityDetail.svelte';
-	import { PANEL } from '$lib/types.js';
+	import { PANEL, mainTimelinePanelHeightPx } from '$lib/types.js';
 	import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
 	import { projectState } from '$lib/stores/project.svelte.js';
 	import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
@@ -79,9 +78,10 @@
 
 	let sidebarOpen = $state(true);
 	let editorHeight = $state(300);
-	let upperHeight = $state(400);
+	let timelineHeight = $state(mainTimelinePanelHeightPx());
 	let relationshipPanelOpen = $state(false);
 	let relationshipPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
+	let windowHeight = $state(0);
 
 	const selectedEntity = $derived(
 		bibleState.selectedEntityId
@@ -91,6 +91,25 @@
 
 	/** Right panel is open when graph is toggled OR an entity is selected. */
 	const rightPanelOpen = $derived(relationshipPanelOpen || selectedEntity !== null);
+	const bottomStackExtraHeight = $derived(
+		characterTimelineState.visible ? PANEL.CHARACTER_TIMELINE_HEIGHT_PX : 0
+	);
+	const maxTimelineHeight = $derived.by(() => {
+		if (windowHeight <= 0) return Infinity;
+		return Math.max(
+			PANEL.MIN_TIMELINE_HEIGHT_PX,
+			windowHeight
+				- PANEL.MIN_UPPER_WORKSPACE_HEIGHT_PX
+				- PANEL.RESIZER_HEIGHT_PX
+				- bottomStackExtraHeight,
+		);
+	});
+
+	$effect(() => {
+		if (timelineHeight > maxTimelineHeight) {
+			timelineHeight = maxTimelineHeight;
+		}
+	});
 
 	async function handleExportPdf() {
 		try {
@@ -109,11 +128,18 @@
 
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window bind:innerHeight={windowHeight} onkeydown={handleKeydown} />
 
-<div class="app-shell" class:has-project={projectState.current}>
+<div
+	class="app-shell"
+	class:has-project={projectState.current}
+	style="
+		--panel-resizer-height: {PANEL.RESIZER_HEIGHT_PX}px;
+		{windowHeight > 0 ? `height: ${windowHeight}px;` : ''}
+	"
+>
 	{#if projectState.current}
-		<div class="upper-section" style="height: {upperHeight}px">
+		<div class="upper-section">
 			{#if sidebarOpen}
 				<Sidebar onclose={() => sidebarOpen = false} />
 			{/if}
@@ -194,19 +220,13 @@
 		</div>
 
 		<PanelResizer
-			min={300}
-			bind:position={upperHeight}
+			min={PANEL.MIN_TIMELINE_HEIGHT_PX}
+			max={maxTimelineHeight}
+			reverse={true}
+			bind:position={timelineHeight}
 		/>
 
-		<div class="timeline-panel" style="flex: 1; min-height: {PANEL.MIN_TIMELINE_HEIGHT_PX}px">
-			<Timeline />
-		</div>
-
-		{#if characterTimelineState.visible}
-			<div class="char-timeline-panel">
-				<CharacterTimeline />
-			</div>
-		{/if}
+		<BottomTimelineStack {timelineHeight} />
 	{/if}
 
 	{#if !sidebarOpen && projectState.current}
@@ -235,13 +255,18 @@
 	}
 
 	.app-shell.has-project {
-		flex-direction: column;
+		display: grid;
+		grid-template-rows: minmax(0, 1fr) var(--panel-resizer-height) auto;
 	}
 
 	.upper-section {
 		display: flex;
-		flex-shrink: 0;
 		overflow: hidden;
+		min-height: 0;
+	}
+
+	:global(.app-shell.has-project > .resizer) {
+		height: var(--panel-resizer-height);
 	}
 
 	.main-area {
@@ -306,18 +331,6 @@
 		flex: 1;
 		overflow: hidden;
 		background: var(--color-bg-secondary);
-	}
-
-	.timeline-panel {
-		overflow: hidden;
-		background: var(--color-bg-primary);
-	}
-
-	.char-timeline-panel {
-		flex-shrink: 0;
-		height: 120px;
-		overflow: hidden;
-		background: var(--color-bg-primary);
 	}
 
 	.sidebar-toggle {

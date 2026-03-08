@@ -4,6 +4,7 @@
 		max = Infinity,
 		position = $bindable(300),
 		orientation = 'horizontal' as 'horizontal' | 'vertical',
+		reverse = false,
 	} = $props();
 
 	let dragging = $state(false);
@@ -21,9 +22,10 @@
 
 	function onpointermove(e: PointerEvent) {
 		if (!dragging) return;
-		const delta = orientation === 'vertical'
+		const rawDelta = orientation === 'vertical'
 			? -(e.clientX - startX)
 			: (e.clientY - startY);
+		const delta = reverse ? -rawDelta : rawDelta;
 		position = Math.max(min, Math.min(max, startPos + delta));
 	}
 
