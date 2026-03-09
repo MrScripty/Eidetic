@@ -14,11 +14,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 		headers: { 'Content-Type': 'application/json' },
 		...options,
 	});
+	const body = await res.json().catch(() => null);
 	if (!res.ok) {
-		const body = await res.json().catch(() => ({}));
-		throw new Error((body as Record<string, string>).error || `HTTP ${res.status}`);
+		throw new Error((body as Record<string, string> | null)?.error || `HTTP ${res.status}`);
 	}
-	return res.json() as Promise<T>;
+	if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
+		throw new Error(body.error);
+	}
+	return body as T;
 }
 
 // --- Project ---

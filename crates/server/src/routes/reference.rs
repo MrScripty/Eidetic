@@ -6,8 +6,10 @@ use uuid::Uuid;
 
 use eidetic_core::reference::{chunk_document, ReferenceDocument, ReferenceId, ReferenceType};
 
+use crate::error::{json_value, ApiError, ApiJson};
 use crate::embeddings::EmbeddingClient;
 use crate::state::AppState;
+use crate::validation;
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -16,11 +18,11 @@ pub fn router() -> Router<AppState> {
         .route("/references/{id}", delete(delete_reference))
 }
 
-async fn list_references(State(state): State<AppState>) -> Json<serde_json::Value> {
+async fn list_references(State(state): State<AppState>) -> ApiJson {
     let guard = state.project.lock();
     match guard.as_ref() {
-        Some(p) => Json(serde_json::to_value(&p.references).unwrap()),
-        None => Json(serde_json::json!([])),
+        Some(p) => json_value(&p.references),
+        None => Err(ApiError::no_project()),
     }
 }
 
@@ -34,7 +36,12 @@ struct UploadReferenceRequest {
 async fn upload_reference(
     State(state): State<AppState>,
     Json(body): Json<UploadReferenceRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
+    validation::validate_name(&body.name, "reference name")?;
+    if body.content.trim().is_empty() {
+        return Err(ApiError::bad_request("reference content is required"));
+    }
+
     let doc_type = match body.doc_type.as_str() {
         "character_bible" => ReferenceType::CharacterBible,
         "style_guide" => ReferenceType::StyleGuide,
@@ -44,7 +51,7 @@ async fn upload_reference(
     };
 
     let doc = ReferenceDocument::new(body.name, body.content, doc_type);
-    let json = serde_json::to_value(&doc).unwrap();
+    let json = serde_json::to_value(&doc).map_err(|e| ApiError::internal(e.to_string()))?;
 
     // Chunk the document for embedding.
     let chunks = chunk_document(
@@ -57,7 +64,7 @@ async fn upload_reference(
     {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
+            return Err(ApiError::no_project());
         };
         project.references.push(doc);
     }
@@ -82,19 +89,19 @@ async fn upload_reference(
         tracing::info!("Reference material embedding complete");
     });
 
-    Json(json)
+    Ok(Json(json))
 }
 
 async fn delete_reference(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     let ref_id = ReferenceId(id);
 
     {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
+            return Err(ApiError::no_project());
         };
         project.references.retain(|r| r.id != ref_id);
     }
@@ -103,5 +110,5 @@ async fn delete_reference(
     state.vector_store.lock().remove_document(ref_id);
     state.trigger_save();
 
-    Json(serde_json::json!({ "deleted": true }))
+    Ok(Json(serde_json::json!({ "deleted": true })))
 }

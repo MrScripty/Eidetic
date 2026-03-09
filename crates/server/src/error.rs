@@ -1,10 +1,14 @@
 use axum::http::StatusCode;
+use axum::Json;
 use axum::response::{IntoResponse, Response};
+use serde::Serialize;
 use serde_json::json;
 
 /// Unified API error type that returns proper HTTP status codes.
 #[derive(Debug)]
 pub struct ApiError(pub StatusCode, pub String);
+
+pub type ApiJson = Result<Json<serde_json::Value>, ApiError>;
 
 impl ApiError {
     pub fn not_found(msg: impl Into<String>) -> Self {
@@ -33,4 +37,10 @@ impl IntoResponse for ApiError {
         let body = axum::Json(json!({ "error": self.1 }));
         (self.0, body).into_response()
     }
+}
+
+pub fn json_value<T: Serialize>(value: T) -> ApiJson {
+    serde_json::to_value(value)
+        .map(Json)
+        .map_err(|e| ApiError::internal(e.to_string()))
 }

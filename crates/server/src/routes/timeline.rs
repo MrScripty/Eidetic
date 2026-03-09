@@ -10,7 +10,9 @@ use eidetic_core::timeline::relationship::{Relationship, RelationshipId, Relatio
 use eidetic_core::timeline::timing::TimeRange;
 use eidetic_core::timeline::track::TrackId;
 
+use crate::error::{json_value, ApiError, ApiJson};
 use crate::state::{AppState, ServerEvent};
+use crate::validation;
 use crate::ydoc::{ContentField, DocCommand};
 
 pub fn router() -> Router<AppState> {
@@ -42,11 +44,11 @@ pub fn router() -> Router<AppState> {
 
 // ─── Timeline ──────────────────────────────────────────────────────
 
-async fn get_timeline(State(state): State<AppState>) -> Json<serde_json::Value> {
+async fn get_timeline(State(state): State<AppState>) -> ApiJson {
     let guard = state.project.lock();
     match guard.as_ref() {
-        Some(p) => Json(serde_json::to_value(&p.timeline).unwrap()),
-        None => Json(serde_json::json!({ "error": "no project loaded" })),
+        Some(p) => json_value(&p.timeline),
+        None => Err(ApiError::no_project()),
     }
 }
 
@@ -65,21 +67,22 @@ struct CreateNodeRequest {
 async fn create_node(
     State(state): State<AppState>,
     Json(body): Json<CreateNodeRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
+    validation::validate_name(&body.name, "node name")?;
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let level = match parse_story_level(&body.level) {
         Some(l) => l,
-        None => return Json(serde_json::json!({ "error": "invalid level" })),
+        None => return Err(ApiError::bad_request("invalid level")),
     };
 
     let time_range = match TimeRange::new(body.start_ms, body.end_ms) {
         Ok(r) => r,
-        Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => return Err(ApiError::bad_request(e.to_string())),
     };
 
     let mut node = if let Some(parent_uuid) = body.parent_id {
@@ -93,7 +96,7 @@ async fn create_node(
     }
 
     let node_id = node.id;
-    let json = serde_json::to_value(&node).unwrap();
+    let json = serde_json::to_value(&node).map_err(|e| ApiError::internal(e.to_string()))?;
 
     match project.timeline.add_node(node) {
         Ok(()) => {
@@ -103,9 +106,9 @@ async fn create_node(
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
@@ -123,11 +126,11 @@ async fn update_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateNodeRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let node_id = NodeId(id);
@@ -136,10 +139,10 @@ async fn update_node(
     if let (Some(start), Some(end)) = (body.start_ms, body.end_ms) {
         let range = match TimeRange::new(start, end) {
             Ok(r) => r,
-            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+            Err(e) => return Err(ApiError::bad_request(e.to_string())),
         };
         if let Err(e) = project.timeline.resize_node(node_id, range) {
-            return Json(serde_json::json!({ "error": e.to_string() }));
+            return Err(ApiError::bad_request(e.to_string()));
         }
     }
 
@@ -147,6 +150,7 @@ async fn update_node(
     match project.timeline.node_mut(node_id) {
         Ok(node) => {
             if let Some(name) = body.name {
+                validation::validate_name(&name, "node name")?;
                 node.name = name;
             }
             if let Some(notes) = body.notes {
@@ -162,7 +166,8 @@ async fn update_node(
             if let Some(locked) = body.locked {
                 node.locked = locked;
             }
-            let json = serde_json::to_value(&*node).unwrap();
+            let json = serde_json::to_value(&*node)
+                .map_err(|e| ApiError::internal(e.to_string()))?;
             drop(guard);
             // Mirror notes to Y.Doc if they were updated (fire-and-forget).
             if let Some(notes) = notes_text {
@@ -176,20 +181,20 @@ async fn update_node(
             let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
 async fn delete_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match project.timeline.remove_node(NodeId(id)) {
@@ -202,9 +207,9 @@ async fn delete_node(
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
             state.trigger_save();
-            Json(serde_json::to_value(&node).unwrap())
+            json_value(&node)
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
@@ -217,11 +222,11 @@ async fn split_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<SplitNodeRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match project.timeline.split_node(NodeId(id), body.at_ms) {
@@ -229,9 +234,9 @@ async fn split_node(
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
             state.trigger_save();
-            Json(serde_json::json!({ "left_id": left.0, "right_id": right.0 }))
+            Ok(Json(serde_json::json!({ "left_id": left.0, "right_id": right.0 })))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
@@ -245,39 +250,39 @@ async fn resize_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<ResizeNodeRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let range = match TimeRange::new(body.start_ms, body.end_ms) {
         Ok(r) => r,
-        Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => return Err(ApiError::bad_request(e.to_string())),
     };
 
     match project.timeline.resize_node(NodeId(id), range) {
         Ok(()) => {
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
-            Json(serde_json::json!({ "ok": true }))
+            Ok(Json(serde_json::json!({ "ok": true })))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
 async fn get_children(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     let guard = state.project.lock();
     match guard.as_ref() {
         Some(p) => {
             let children = p.timeline.children_of(NodeId(id));
-            Json(serde_json::to_value(&children).unwrap())
+            json_value(&children)
         }
-        None => Json(serde_json::json!([])),
+        None => Err(ApiError::no_project()),
     }
 }
 
@@ -306,7 +311,7 @@ async fn apply_children(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<ApplyChildrenRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     use eidetic_core::story::arc::Color;
     use eidetic_core::story::bible::{Entity, EntityCategory, EntityDetails};
     use eidetic_core::timeline::node::ContentStatus;
@@ -314,7 +319,7 @@ async fn apply_children(
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let parent_id = NodeId(id);
@@ -322,21 +327,17 @@ async fn apply_children(
     // Get parent node info.
     let (parent_range, parent_level) = match project.timeline.node(parent_id) {
         Ok(n) => (n.time_range, n.level),
-        Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => return Err(ApiError::bad_request(e.to_string())),
     };
 
     let child_level = match parent_level.child_level() {
         Some(l) => l,
-        None => {
-            return Json(
-                serde_json::json!({ "error": "this node level cannot have children" }),
-            )
-        }
+        None => return Err(ApiError::bad_request("this node level cannot have children")),
     };
 
     // Clear existing children of this parent.
     if let Err(e) = project.timeline.clear_children_of(parent_id) {
-        return Json(serde_json::json!({ "error": e.to_string() }));
+        return Err(ApiError::bad_request(e.to_string()));
     }
 
     // Calculate total weight.
@@ -352,6 +353,7 @@ async fn apply_children(
     let parent_arc_ids = project.timeline.arcs_for_node(parent_id);
 
     for (i, entry) in body.children.iter().enumerate() {
+        validation::validate_name(&entry.name, "child node name")?;
         let weight = entry.weight.max(0.1);
         let duration = if i == body.children.len() - 1 {
             parent_range.end_ms - cursor
@@ -362,7 +364,7 @@ async fn apply_children(
         let end = (cursor + duration).min(parent_range.end_ms);
         let time_range = match TimeRange::new(cursor, end) {
             Ok(r) => r,
-            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+            Err(e) => return Err(ApiError::bad_request(e.to_string())),
         };
 
         let mut node = StoryNode::new_child(&entry.name, child_level, time_range, parent_id);
@@ -374,7 +376,9 @@ async fn apply_children(
         }
 
         let node_id = node.id;
-        created_nodes.push(serde_json::to_value(&node).unwrap());
+        created_nodes.push(
+            serde_json::to_value(&node).map_err(|e| ApiError::internal(e.to_string()))?,
+        );
 
         // Add node directly to timeline (bypass add_node validation since we know it's correct).
         project.timeline.nodes.push(node);
@@ -518,10 +522,10 @@ async fn apply_children(
     }
     state.trigger_save();
 
-    Json(serde_json::json!({
+    Ok(Json(serde_json::json!({
         "ok": true,
         "children": created_nodes,
-    }))
+    })))
 }
 
 // ─── Track CRUD ────────────────────────────────────────────────────
@@ -535,30 +539,31 @@ struct CreateTrackRequest {
 async fn create_track(
     State(state): State<AppState>,
     Json(body): Json<CreateTrackRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     use eidetic_core::timeline::track::Track;
 
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let level = match parse_story_level(&body.level) {
         Some(l) => l,
-        None => return Json(serde_json::json!({ "error": "invalid level" })),
+        None => return Err(ApiError::bad_request("invalid level")),
     };
 
     let mut track = Track::new(level);
     if let Some(label) = body.label {
+        validation::validate_name(&label, "track label")?;
         track.label = label;
     }
 
-    let json = serde_json::to_value(&track).unwrap();
+    let json = serde_json::to_value(&track).map_err(|e| ApiError::internal(e.to_string()))?;
     project.timeline.tracks.push(track);
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     state.trigger_save();
-    Json(json)
+    Ok(Json(json))
 }
 
 #[derive(Deserialize)]
@@ -571,37 +576,39 @@ async fn update_track(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateTrackRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match project.timeline.track_mut(TrackId(id)) {
         Ok(track) => {
             if let Some(label) = body.label {
+                validation::validate_name(&label, "track label")?;
                 track.label = label;
             }
             if let Some(collapsed) = body.collapsed {
                 track.collapsed = collapsed;
             }
-            let json = serde_json::to_value(&*track).unwrap();
+            let json = serde_json::to_value(&*track)
+                .map_err(|e| ApiError::internal(e.to_string()))?;
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
 async fn delete_track(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let track_id = TrackId(id);
@@ -615,9 +622,9 @@ async fn delete_track(
             let track = project.timeline.tracks.remove(i);
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
-            Json(serde_json::to_value(&track).unwrap())
+            json_value(&track)
         }
-        None => Json(serde_json::json!({ "error": "track not found" })),
+        None => Err(ApiError::not_found("track not found")),
     }
 }
 
@@ -632,11 +639,11 @@ struct TagNodeArcRequest {
 async fn tag_node_with_arc(
     State(state): State<AppState>,
     Json(body): Json<TagNodeArcRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     project
@@ -644,17 +651,17 @@ async fn tag_node_with_arc(
         .tag_node(NodeId(body.node_id), ArcId(body.arc_id));
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     state.trigger_save();
-    Json(serde_json::json!({ "ok": true }))
+    Ok(Json(serde_json::json!({ "ok": true })))
 }
 
 async fn untag_node_from_arc(
     State(state): State<AppState>,
     Path((node_id, arc_id)): Path<(Uuid, Uuid)>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     project
@@ -662,7 +669,7 @@ async fn untag_node_from_arc(
         .untag_node(NodeId(node_id), ArcId(arc_id));
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     state.trigger_save();
-    Json(serde_json::json!({ "ok": true }))
+    Ok(Json(serde_json::json!({ "ok": true })))
 }
 
 // ─── Relationships ─────────────────────────────────────────────────
@@ -677,11 +684,11 @@ struct CreateRelationshipRequest {
 async fn create_relationship(
     State(state): State<AppState>,
     Json(body): Json<CreateRelationshipRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let rel_type = match body.relationship_type.as_str() {
@@ -691,35 +698,35 @@ async fn create_relationship(
     };
 
     let rel = Relationship::new(NodeId(body.from_node), NodeId(body.to_node), rel_type);
-    let json = serde_json::to_value(&rel).unwrap();
+    let json = serde_json::to_value(&rel).map_err(|e| ApiError::internal(e.to_string()))?;
 
     match project.timeline.add_relationship(rel) {
         Ok(()) => {
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
 async fn delete_relationship(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match project.timeline.remove_relationship(RelationshipId(id)) {
         Ok(rel) => {
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
-            Json(serde_json::to_value(&rel).unwrap())
+            json_value(&rel)
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
@@ -733,7 +740,7 @@ struct GapQuery {
 async fn get_gaps(
     State(state): State<AppState>,
     Query(query): Query<GapQuery>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     let guard = state.project.lock();
     match guard.as_ref() {
         Some(p) => {
@@ -745,9 +752,9 @@ async fn get_gaps(
             let gaps = p
                 .timeline
                 .find_gaps(level, crate::state::constants::GAP_THRESHOLD_MS);
-            Json(serde_json::to_value(&gaps).unwrap())
+            json_value(&gaps)
         }
-        None => Json(serde_json::json!([])),
+        None => Err(ApiError::no_project()),
     }
 }
 
@@ -762,21 +769,21 @@ struct FillGapRequest {
 async fn fill_gap(
     State(state): State<AppState>,
     Json(body): Json<FillGapRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     let level = match parse_story_level(&body.level) {
         Some(l) => l,
-        None => return Json(serde_json::json!({ "error": "invalid level" })),
+        None => return Err(ApiError::bad_request("invalid level")),
     };
 
     let time_range = match TimeRange::new(body.start_ms, body.end_ms) {
         Ok(r) => r,
-        Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => return Err(ApiError::bad_request(e.to_string())),
     };
 
     let node = if let Some(parent_uuid) = body.parent_id {
@@ -786,7 +793,7 @@ async fn fill_gap(
     };
 
     let node_id = node.id;
-    let json = serde_json::to_value(&node).unwrap();
+    let json = serde_json::to_value(&node).map_err(|e| ApiError::internal(e.to_string()))?;
 
     match project.timeline.add_node(node) {
         Ok(()) => {
@@ -796,9 +803,9 @@ async fn fill_gap(
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 

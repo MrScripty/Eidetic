@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
 
+use crate::error::{json_value, ApiError, ApiJson};
 use crate::state::{AppState, ServerEvent};
 use crate::ydoc::{ContentField, DocCommand};
 
@@ -21,15 +22,15 @@ pub fn router() -> Router<AppState> {
 async fn get_node_content(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     let guard = state.project.lock();
     let Some(project) = guard.as_ref() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match project.timeline.node(NodeId(id)) {
-        Ok(node) => Json(serde_json::to_value(&node.content).unwrap()),
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Ok(node) => json_value(&node.content),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
@@ -42,12 +43,12 @@ async fn update_notes(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateNotesRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let json = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
+            return Err(ApiError::no_project());
         };
 
         match project.timeline.node_mut(NodeId(id)) {
@@ -56,9 +57,10 @@ async fn update_notes(
                 if node.content.status == ContentStatus::Empty {
                     node.content.status = ContentStatus::NotesOnly;
                 }
-                serde_json::to_value(&node.content).unwrap()
+                serde_json::to_value(&node.content)
+                    .map_err(|e| ApiError::internal(e.to_string()))?
             }
-            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+            Err(e) => return Err(ApiError::bad_request(e.to_string())),
         }
     };
     // Mirror to Y.Doc (fire-and-forget).
@@ -70,7 +72,7 @@ async fn update_notes(
     });
     let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
     state.trigger_save();
-    Json(json)
+    Ok(Json(json))
 }
 
 #[derive(Deserialize)]
@@ -82,21 +84,22 @@ async fn update_script(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateScriptRequest>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let json = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
+            return Err(ApiError::no_project());
         };
 
         match project.timeline.node_mut(NodeId(id)) {
             Ok(node) => {
                 node.content.content = body.script.clone();
                 node.content.status = ContentStatus::HasContent;
-                serde_json::to_value(&node.content).unwrap()
+                serde_json::to_value(&node.content)
+                    .map_err(|e| ApiError::internal(e.to_string()))?
             }
-            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+            Err(e) => return Err(ApiError::bad_request(e.to_string())),
         }
     };
     // Mirror to Y.Doc (fire-and-forget).
@@ -108,17 +111,17 @@ async fn update_script(
     });
     let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
     state.trigger_save();
-    Json(json)
+    Ok(Json(json))
 }
 
 async fn lock_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match project.timeline.node_mut(NodeId(id)) {
@@ -127,20 +130,20 @@ async fn lock_node(
             // Status unchanged — locking doesn't alter content state.
             let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             state.trigger_save();
-            Json(serde_json::json!({ "locked": true }))
+            Ok(Json(serde_json::json!({ "locked": true })))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
 
 async fn unlock_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
+) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
     match project.timeline.node_mut(NodeId(id)) {
@@ -156,8 +159,8 @@ async fn unlock_node(
             };
             let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             state.trigger_save();
-            Json(serde_json::json!({ "locked": false }))
+            Ok(Json(serde_json::json!({ "locked": false })))
         }
-        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+        Err(e) => Err(ApiError::bad_request(e.to_string())),
     }
 }
