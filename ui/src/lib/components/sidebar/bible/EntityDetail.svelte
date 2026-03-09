@@ -33,6 +33,10 @@
 		}
 	}
 
+	function fieldId(name: string): string {
+		return `${entity.id}-${name}`;
+	}
+
 	function debounceUpdate(updates: Partial<Omit<Entity, 'id'>>) {
 		if (debounceTimer) clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(async () => {
@@ -100,16 +104,18 @@
 	</div>
 
 	<div class="detail-body">
-		<label class="field-label">Name</label>
+		<label class="field-label" for={fieldId('name')}>Name</label>
 		<input
+			id={fieldId('name')}
 			class="field-input"
 			type="text"
 			value={entity.name}
 			oninput={(e) => handleField('name', (e.target as HTMLInputElement).value)}
 		/>
 
-		<label class="field-label">Tagline</label>
+		<label class="field-label" for={fieldId('tagline')}>Tagline</label>
 		<input
+			id={fieldId('tagline')}
 			class="field-input"
 			type="text"
 			value={entity.tagline}
@@ -117,8 +123,9 @@
 			oninput={(e) => handleField('tagline', (e.target as HTMLInputElement).value)}
 		/>
 
-		<label class="field-label">Description</label>
+		<label class="field-label" for={fieldId('description')}>Description</label>
 		<textarea
+			id={fieldId('description')}
 			class="field-textarea"
 			value={entity.description}
 			placeholder="Full description..."
@@ -127,24 +134,27 @@
 
 		<!-- Category-specific fields -->
 		{#if entity.details.type === 'Character'}
-			<label class="field-label">Voice Notes</label>
+			<label class="field-label" for={fieldId('voice-notes')}>Voice Notes</label>
 			<textarea
+				id={fieldId('voice-notes')}
 				class="field-textarea"
 				value={entity.details.voice_notes}
 				placeholder="How does this character speak? Mannerisms, vocabulary, tone..."
 				oninput={(e) => handleDetails({ voice_notes: (e.target as HTMLTextAreaElement).value } as any)}
 			></textarea>
 
-			<label class="field-label">Audience Knowledge</label>
+			<label class="field-label" for={fieldId('audience-knowledge')}>Audience Knowledge</label>
 			<textarea
+				id={fieldId('audience-knowledge')}
 				class="field-textarea small"
 				value={entity.details.audience_knowledge}
 				placeholder="What the audience knows about this character..."
 				oninput={(e) => handleDetails({ audience_knowledge: (e.target as HTMLTextAreaElement).value } as any)}
 			></textarea>
 
-			<label class="field-label">Traits</label>
+			<label class="field-label" for={fieldId('traits')}>Traits</label>
 			<input
+				id={fieldId('traits')}
 				class="field-input"
 				type="text"
 				value={entity.details.traits.join(', ')}
@@ -153,8 +163,9 @@
 			/>
 
 		{:else if entity.details.type === 'Location'}
-			<label class="field-label">INT/EXT</label>
+			<label class="field-label" for={fieldId('int-ext')}>INT/EXT</label>
 			<input
+				id={fieldId('int-ext')}
 				class="field-input"
 				type="text"
 				value={entity.details.int_ext}
@@ -162,8 +173,9 @@
 				oninput={(e) => handleDetails({ int_ext: (e.target as HTMLInputElement).value } as any)}
 			/>
 
-			<label class="field-label">Scene Heading Name</label>
+			<label class="field-label" for={fieldId('scene-heading-name')}>Scene Heading Name</label>
 			<input
+				id={fieldId('scene-heading-name')}
 				class="field-input"
 				type="text"
 				value={entity.details.scene_heading_name}
@@ -171,8 +183,9 @@
 				oninput={(e) => handleDetails({ scene_heading_name: (e.target as HTMLInputElement).value } as any)}
 			/>
 
-			<label class="field-label">Atmosphere</label>
+			<label class="field-label" for={fieldId('atmosphere')}>Atmosphere</label>
 			<textarea
+				id={fieldId('atmosphere')}
 				class="field-textarea small"
 				value={entity.details.atmosphere}
 				placeholder="Visual feel, lighting, mood..."
@@ -180,8 +193,9 @@
 			></textarea>
 
 		{:else if entity.details.type === 'Prop'}
-			<label class="field-label">Significance</label>
+			<label class="field-label" for={fieldId('significance')}>Significance</label>
 			<textarea
+				id={fieldId('significance')}
 				class="field-textarea small"
 				value={entity.details.significance}
 				placeholder="Why is this prop important?"
@@ -189,8 +203,9 @@
 			></textarea>
 
 		{:else if entity.details.type === 'Theme'}
-			<label class="field-label">Manifestation</label>
+			<label class="field-label" for={fieldId('manifestation')}>Manifestation</label>
 			<textarea
+				id={fieldId('manifestation')}
 				class="field-textarea small"
 				value={entity.details.manifestation}
 				placeholder="How does this theme manifest in the story?"
@@ -209,12 +224,14 @@
 		{/if}
 
 		<!-- Color -->
-		<label class="field-label">Color</label>
+		<div class="field-label">Color</div>
 		<div class="color-presets">
 			{#each COLOR_PRESETS as rgb}
 				<button
+					type="button"
 					class="color-swatch"
 					class:active={entity.color.r === rgb[0] && entity.color.g === rgb[1] && entity.color.b === rgb[2]}
+					aria-label={`Set entity color to rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`}
 					style="background: rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
 					onclick={() => handleColorSelect(rgb)}
 				></button>

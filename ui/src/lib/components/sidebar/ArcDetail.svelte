@@ -44,28 +44,32 @@
 	</div>
 
 	<div class="detail-body">
-		<label class="field-label">Name</label>
+		<label class="field-label" for={`arc-name-${arc.id}`}>Name</label>
 		<input
+			id={`arc-name-${arc.id}`}
 			class="field-input"
 			type="text"
 			value={arc.name}
 			oninput={(e) => handleInput('name', (e.target as HTMLInputElement).value)}
 		/>
 
-		<label class="field-label">Description</label>
+		<label class="field-label" for={`arc-description-${arc.id}`}>Description</label>
 		<textarea
+			id={`arc-description-${arc.id}`}
 			class="field-textarea"
 			value={arc.description}
 			placeholder="Describe this story arc..."
 			oninput={(e) => handleInput('description', (e.target as HTMLTextAreaElement).value)}
 		></textarea>
 
-		<label class="field-label">Color</label>
+		<div class="field-label">Color</div>
 		<div class="color-presets">
 			{#each COLOR_PRESETS as rgb}
 				<button
+					type="button"
 					class="color-swatch"
 					class:active={arc.color.r === rgb[0] && arc.color.g === rgb[1] && arc.color.b === rgb[2]}
+					aria-label={`Set arc color to rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`}
 					style="background: rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
 					onclick={() => handleColorSelect(rgb)}
 				></button>

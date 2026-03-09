@@ -471,8 +471,9 @@
 		{/if}
 
 		<div class="editor-body">
-			<label class="section-label">Notes</label>
+			<label class="section-label" for={`notes-${node.id}`}>Notes</label>
 			<textarea
+				id={`notes-${node.id}`}
 				class="notes-input"
 				placeholder="Describe what happens in this {node.level.toLowerCase()}..."
 				value={node.content.notes}
@@ -482,7 +483,7 @@
 
 			<!-- Linked entities -->
 			<div class="entity-chips-section">
-				<label class="section-label">
+				<div class="section-label section-label-row">
 					Entities
 					<button
 						class="extract-btn"
@@ -491,7 +492,7 @@
 					>
 						{extracting ? 'Extracting...' : 'Extract'}
 					</button>
-				</label>
+				</div>
 				<div class="entity-chips">
 					{#each linkedEntities as entity (entity.id)}
 						<span class="entity-chip" style="border-color: {colorToHex(entity.color)}">
@@ -514,27 +515,27 @@
 			{/if}
 
 			{#if isGenerating}
-				<label class="section-label">
+				<div class="section-label section-label-row">
 					Generating
 					<span class="token-count">{editorState.streamingTokenCount} tokens generated</span>
-				</label>
+				</div>
 			{:else if editing}
-				<label class="section-label">
+				<div class="section-label section-label-row">
 					Editing Script
 					<button class="done-edit-btn" onclick={finishEditing}>Done Editing</button>
-				</label>
+				</div>
 				<textarea
 					class="script-edit"
 					value={editingText}
 					oninput={handleScriptInput}
 				></textarea>
 			{:else if node.content.content}
-				<label class="section-label">
+				<div class="section-label section-label-row">
 					Script
 					{#if !node.locked}
 						<button class="edit-btn" onclick={startEditing}>Edit</button>
 					{/if}
-				</label>
+				</div>
 				<ScriptView text={node.content.content} entities={storyState.entities} />
 			{/if}
 
@@ -544,12 +545,12 @@
 
 			{#if editorState.checkingConsistency || editorState.consistencySuggestions.length > 0}
 				<div class="suggestions-panel">
-					<label class="section-label">
+					<div class="section-label section-label-row">
 						Consistency Suggestions
 						{#if editorState.checkingConsistency}
 							<span class="checking-spinner">checking...</span>
 						{/if}
-					</label>
+					</div>
 					{#each editorState.consistencySuggestions as suggestion (suggestion.target_node_id)}
 						<DiffView
 							{suggestion}

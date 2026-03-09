@@ -44,10 +44,11 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
+<button
+	type="button"
 	class="marker marker-{marker.kind}"
 	class:hovered
+	aria-label={`${marker.label}${marker.detail ? `, ${marker.detail}` : ''} at ${formatTime(marker.timeMs)}`}
 	style="left: {timeToX(marker.timeMs)}px"
 	onclick={handleClick}
 	onpointerenter={handlePointerEnter}
@@ -55,7 +56,7 @@
 	title="{marker.label}{marker.detail ? ' — ' + marker.detail : ''} [{formatTime(marker.timeMs)}]"
 >
 	<div class="marker-shape"></div>
-</div>
+</button>
 
 <style>
 	.marker {
@@ -64,6 +65,9 @@
 		transform: translate(-50%, -50%);
 		cursor: pointer;
 		z-index: 1;
+		padding: 0;
+		border: none;
+		background: transparent;
 	}
 
 	.marker:hover {

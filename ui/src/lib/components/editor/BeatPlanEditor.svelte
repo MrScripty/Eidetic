@@ -174,8 +174,9 @@
 				</div>
 
 				<div class="beat-weight-row">
-					<label class="weight-label">Weight</label>
+					<label class="weight-label" for={`beat-weight-${i}`}>Weight</label>
 					<input
+						id={`beat-weight-${i}`}
 						class="weight-input"
 						type="range"
 						min="0.5"

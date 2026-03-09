@@ -32,24 +32,42 @@
 	function onpointerup() {
 		dragging = false;
 	}
+
+	function onkeydown(event: KeyboardEvent) {
+		const decreaseKey = orientation === 'vertical' ? 'ArrowLeft' : 'ArrowUp';
+		const increaseKey = orientation === 'vertical' ? 'ArrowRight' : 'ArrowDown';
+		const step = 24;
+
+		if (event.key !== decreaseKey && event.key !== increaseKey) {
+			return;
+		}
+
+		event.preventDefault();
+		const rawDelta = event.key === increaseKey ? step : -step;
+		const delta = reverse ? -rawDelta : rawDelta;
+		position = Math.max(min, Math.min(max, position + delta));
+	}
 </script>
 
-<div
+<button
+	type="button"
 	class="resizer"
 	class:active={dragging}
 	class:vertical={orientation === 'vertical'}
-	role="separator"
-	aria-orientation={orientation}
-	tabindex="0"
+	aria-label="Resize panels"
 	{onpointerdown}
 	{onpointermove}
 	{onpointerup}
-></div>
+	{onkeydown}
+></button>
 
 <style>
 	.resizer {
+		width: 100%;
 		height: 6px;
 		cursor: row-resize;
+		padding: 0;
+		border: none;
 		background: var(--color-border-subtle);
 		flex-shrink: 0;
 		transition: background 0.15s;

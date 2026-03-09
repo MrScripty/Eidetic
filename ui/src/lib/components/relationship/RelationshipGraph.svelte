@@ -73,6 +73,15 @@
 		const t = nodeMap.get(edge.targetId);
 		return s && t ? (s.y + t.y) / 2 : 0;
 	}
+
+	function handleNodeKeydown(event: KeyboardEvent, nodeId: string) {
+		if (event.key !== 'Enter' && event.key !== ' ') {
+			return;
+		}
+
+		event.preventDefault();
+		onselect(nodeId);
+	}
 </script>
 
 <svg
@@ -113,6 +122,7 @@
 			class:dimmed={isNodeDimmed(node.id)}
 			transform="translate({node.x}, {node.y})"
 			onclick={() => onselect(node.id)}
+			onkeydown={(event) => handleNodeKeydown(event, node.id)}
 			onmouseenter={() => onhover(node.id)}
 			onmouseleave={() => onhover(null)}
 			role="button"
