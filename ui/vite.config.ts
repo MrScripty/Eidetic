@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -12,5 +14,9 @@ export default defineConfig({
 				ws: true
 			}
 		}
+	},
+	test: {
+		environment: 'node',
+		include: ['src/**/*.test.ts'],
 	}
 });

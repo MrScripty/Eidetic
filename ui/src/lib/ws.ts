@@ -2,8 +2,7 @@ import * as Y from 'yjs';
 import type { ServerMessage } from './types.js';
 import { ydoc } from './yjs.js';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MessageHandler = (data: any) => void;
+type MessageHandler = (data: ServerMessage) => void;
 
 /**
  * WebSocket client with automatic reconnection and event dispatch.
@@ -13,155 +12,157 @@ type MessageHandler = (data: any) => void;
  * - **Text frames**: JSON-encoded ServerEvent messages
  */
 export class WsClient {
-	private ws: WebSocket | null = null;
-	private handlers = new Map<string, Set<MessageHandler>>();
-	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-	private url: string;
-	private yjsSyncActive = false;
-	private manualClose = false;
-	private yjsOutgoingAttached = false;
-	private readonly yjsUpdateHandler = (update: Uint8Array, origin: unknown) => {
-		// Don't echo back updates that came from the server.
-		if (origin === 'server') return;
-		if (!this.yjsSyncActive) return;
-		this.sendBinary(update);
-	};
+  private ws: WebSocket | null = null;
+  private handlers = new Map<string, Set<MessageHandler>>();
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private url: string;
+  private yjsSyncActive = false;
+  private manualClose = false;
+  private yjsOutgoingAttached = false;
+  private readonly yjsUpdateHandler = (update: Uint8Array, origin: unknown) => {
+    // Don't echo back updates that came from the server.
+    if (origin === 'server') return;
+    if (!this.yjsSyncActive) return;
+    this.sendBinary(update);
+  };
 
-	constructor(url = `ws://${window.location.host}/ws`) {
-		this.url = url;
-	}
+  constructor(url = `ws://${window.location.host}/ws`) {
+    this.url = url;
+  }
 
-	connect(): void {
-		if (this.ws && this.ws.readyState !== WebSocket.CLOSED) return;
-		this.manualClose = false;
-		this.attachYjsOutgoing();
+  connect(): void {
+    if (this.ws && this.ws.readyState !== WebSocket.CLOSED) return;
+    this.manualClose = false;
+    this.attachYjsOutgoing();
 
-		this.ws = new WebSocket(this.url);
-		// Receive binary frames as ArrayBuffer (for CRDT updates).
-		this.ws.binaryType = 'arraybuffer';
+    this.ws = new WebSocket(this.url);
+    // Receive binary frames as ArrayBuffer (for CRDT updates).
+    this.ws.binaryType = 'arraybuffer';
 
-		this.ws.onopen = () => {
-			console.log('[ws] connected');
-			this.yjsSyncActive = true;
-			// Subscribe to all channels.
-			this.send({ type: 'subscribe', data: { channels: ['beats', 'generation', 'timeline', 'scenes'] } });
-		};
+    this.ws.onopen = () => {
+      console.log('[ws] connected');
+      this.yjsSyncActive = true;
+      // Subscribe to all channels.
+      this.send({
+        type: 'subscribe',
+        data: { channels: ['beats', 'generation', 'timeline', 'scenes'] },
+      });
+    };
 
-		this.ws.onmessage = (event: MessageEvent) => {
-			if (event.data instanceof ArrayBuffer) {
-				// Binary frame → CRDT update from server.
-				this.handleCrdtUpdate(new Uint8Array(event.data));
-				return;
-			}
+    this.ws.onmessage = (event: MessageEvent) => {
+      if (event.data instanceof ArrayBuffer) {
+        // Binary frame → CRDT update from server.
+        this.handleCrdtUpdate(new Uint8Array(event.data));
+        return;
+      }
 
-			// Text frame → JSON ServerEvent.
-			try {
-				const parsed = JSON.parse(event.data as string) as unknown;
-				if (!isServerMessage(parsed)) {
-					return;
-				}
-				const handlers = this.handlers.get(parsed.type);
-				if (handlers) {
-					for (const handler of handlers) {
-						handler(parsed);
-					}
-				}
-			} catch {
-				// Ignore malformed messages.
-			}
-		};
+      // Text frame → JSON ServerEvent.
+      try {
+        const parsed = JSON.parse(event.data as string) as unknown;
+        if (!isServerMessage(parsed)) {
+          return;
+        }
+        const handlers = this.handlers.get(parsed.type);
+        if (handlers) {
+          for (const handler of handlers) {
+            handler(parsed);
+          }
+        }
+      } catch {
+        // Ignore malformed messages.
+      }
+    };
 
-		this.ws.onclose = () => {
-			this.yjsSyncActive = false;
-			if (this.manualClose) {
-				return;
-			}
-			console.log('[ws] disconnected, reconnecting in 2s...');
-			this.scheduleReconnect();
-		};
+    this.ws.onclose = () => {
+      this.yjsSyncActive = false;
+      if (this.manualClose) {
+        return;
+      }
+      console.log('[ws] disconnected, reconnecting in 2s...');
+      this.scheduleReconnect();
+    };
 
-		this.ws.onerror = () => {
-			this.ws?.close();
-		};
+    this.ws.onerror = () => {
+      this.ws?.close();
+    };
+  }
 
-	}
+  disconnect(): void {
+    this.manualClose = true;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.yjsSyncActive = false;
+    this.detachYjsOutgoing();
+    this.ws?.close();
+    this.ws = null;
+  }
 
-	disconnect(): void {
-		this.manualClose = true;
-		if (this.reconnectTimer) {
-			clearTimeout(this.reconnectTimer);
-			this.reconnectTimer = null;
-		}
-		this.yjsSyncActive = false;
-		this.detachYjsOutgoing();
-		this.ws?.close();
-		this.ws = null;
-	}
+  on<T extends ServerMessage['type']>(
+    type: T,
+    handler: (data: Extract<ServerMessage, { type: T }>) => void,
+  ): () => void {
+    if (!this.handlers.has(type)) {
+      this.handlers.set(type, new Set());
+    }
+    this.handlers.get(type)!.add(handler as MessageHandler);
 
-	on<T extends ServerMessage['type']>(
-		type: T,
-		handler: (data: Extract<ServerMessage, { type: T }>) => void,
-	): () => void {
-		if (!this.handlers.has(type)) {
-			this.handlers.set(type, new Set());
-		}
-		this.handlers.get(type)!.add(handler);
+    // Return unsubscribe function.
+    return () => {
+      this.handlers.get(type)?.delete(handler as MessageHandler);
+    };
+  }
 
-		// Return unsubscribe function.
-		return () => {
-			this.handlers.get(type)?.delete(handler);
-		};
-	}
+  send(data: unknown): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data));
+    }
+  }
 
-	send(data: unknown): void {
-		if (this.ws?.readyState === WebSocket.OPEN) {
-			this.ws.send(JSON.stringify(data));
-		}
-	}
+  /** Send a binary CRDT update to the server. */
+  sendBinary(data: Uint8Array): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(data);
+    }
+  }
 
-	/** Send a binary CRDT update to the server. */
-	sendBinary(data: Uint8Array): void {
-		if (this.ws?.readyState === WebSocket.OPEN) {
-			this.ws.send(data);
-		}
-	}
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer) return;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, 2000);
+  }
 
-	private scheduleReconnect(): void {
-		if (this.reconnectTimer) return;
-		this.reconnectTimer = setTimeout(() => {
-			this.reconnectTimer = null;
-			this.connect();
-		}, 2000);
-	}
+  /** Apply an incoming binary CRDT update to the local Y.Doc. */
+  private handleCrdtUpdate(data: Uint8Array): void {
+    try {
+      Y.applyUpdate(ydoc, data, 'server');
+    } catch (e) {
+      console.warn('[ws] failed to apply CRDT update:', e);
+    }
+  }
 
-	/** Apply an incoming binary CRDT update to the local Y.Doc. */
-	private handleCrdtUpdate(data: Uint8Array): void {
-		try {
-			Y.applyUpdate(ydoc, data, 'server');
-		} catch (e) {
-			console.warn('[ws] failed to apply CRDT update:', e);
-		}
-	}
+  /** Listen for local Y.Doc changes and send them to the server. */
+  private attachYjsOutgoing(): void {
+    if (this.yjsOutgoingAttached) return;
+    ydoc.on('update', this.yjsUpdateHandler);
+    this.yjsOutgoingAttached = true;
+  }
 
-	/** Listen for local Y.Doc changes and send them to the server. */
-	private attachYjsOutgoing(): void {
-		if (this.yjsOutgoingAttached) return;
-		ydoc.on('update', this.yjsUpdateHandler);
-		this.yjsOutgoingAttached = true;
-	}
-
-	private detachYjsOutgoing(): void {
-		if (!this.yjsOutgoingAttached) return;
-		ydoc.off('update', this.yjsUpdateHandler);
-		this.yjsOutgoingAttached = false;
-	}
+  private detachYjsOutgoing(): void {
+    if (!this.yjsOutgoingAttached) return;
+    ydoc.off('update', this.yjsUpdateHandler);
+    this.yjsOutgoingAttached = false;
+  }
 }
 
 function isServerMessage(value: unknown): value is ServerMessage {
-	return Boolean(
-		value
-		&& typeof value === 'object'
-		&& 'type' in value
-		&& typeof (value as { type: unknown }).type === 'string',
-	);
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    'type' in value &&
+    typeof (value as { type: unknown }).type === 'string',
+  );
 }
