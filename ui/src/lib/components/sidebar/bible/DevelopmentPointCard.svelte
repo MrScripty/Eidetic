@@ -10,7 +10,13 @@
 	} = $props();
 
 	let editing = $state(false);
-	let editDescription = $state(snapshot.description);
+	let editDescription = $state('');
+
+	$effect(() => {
+		if (!editing) {
+			editDescription = snapshot.description;
+		}
+	});
 
 	function save() {
 		if (editDescription.trim() && editDescription !== snapshot.description) {

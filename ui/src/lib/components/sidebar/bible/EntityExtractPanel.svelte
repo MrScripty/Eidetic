@@ -9,9 +9,17 @@
 		onclose: () => void;
 	} = $props();
 
-	let entityAccepted = $state<boolean[]>(result.new_entities.map(() => true));
-	let snapshotAccepted = $state<boolean[]>(result.snapshot_suggestions.map(() => true));
+	let entityAccepted = $state<boolean[]>([]);
+	let snapshotAccepted = $state<boolean[]>([]);
 	let applying = $state(false);
+	let lastResult = $state<ExtractionResult | null>(null);
+
+	$effect(() => {
+		if (lastResult === result) return;
+		lastResult = result;
+		entityAccepted = result.new_entities.map(() => true);
+		snapshotAccepted = result.snapshot_suggestions.map(() => true);
+	});
 
 	function categoryColor(cat: EntityCategory): string {
 		switch (cat) {
