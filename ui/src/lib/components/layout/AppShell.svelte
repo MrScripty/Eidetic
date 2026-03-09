@@ -12,17 +12,14 @@
 	import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
 	import { storyState } from '$lib/stores/story.svelte.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
+	import { startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
 	import { bibleState, selectEntity } from '$lib/stores/bible.svelte.js';
-	import { getAiStatus, undo, redo, saveProject, deleteNode, exportPdf } from '$lib/api.js';
+	import { undo, redo, saveProject, deleteNode, exportPdf } from '$lib/api.js';
 	import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
 	import { notify } from '$lib/stores/notifications.svelte.js';
 
 	$effect(() => {
-		getAiStatus().then(s => editorState.aiStatus = s).catch(() => {});
-		const interval = setInterval(() => {
-			getAiStatus().then(s => editorState.aiStatus = s).catch(() => {});
-		}, 30_000);
-		return () => clearInterval(interval);
+		return startAiStatusPolling();
 	});
 
 	// Register keyboard shortcuts.

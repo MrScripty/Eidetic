@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { AiConfig, BackendType, ModelEntry } from '$lib/types.js';
 	import { editorState } from '$lib/stores/editor.svelte.js';
-	import { getAiStatus, updateAiConfig, getDiffusionStatus, loadDiffusionModel, unloadDiffusionModel, listModels } from '$lib/api.js';
+	import { refreshAiStatus } from '$lib/stores/aiStatus.svelte.js';
+	import { updateAiConfig, getDiffusionStatus, loadDiffusionModel, unloadDiffusionModel, listModels } from '$lib/api.js';
 
 	let config = $state<AiConfig>({
 		backend_type: 'ollama',
@@ -37,11 +38,7 @@
 	);
 
 	async function checkStatus() {
-		try {
-			editorState.aiStatus = await getAiStatus();
-		} catch {
-			editorState.aiStatus = { backend: config.backend_type, connected: false, error: 'Failed to reach server' };
-		}
+		await refreshAiStatus();
 	}
 
 	async function checkDiffusionStatus() {
@@ -136,14 +133,9 @@
 
 	// Check status on mount
 	$effect(() => {
-		checkStatus();
+		void checkStatus();
 		checkDiffusionStatus();
 		loadLibraryModels();
-		const interval = setInterval(() => {
-			checkStatus();
-			checkDiffusionStatus();
-		}, 30_000);
-		return () => clearInterval(interval);
 	});
 </script>
 

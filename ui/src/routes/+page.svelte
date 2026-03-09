@@ -10,8 +10,11 @@
 
 	onMount(() => {
 		ws.connect();
-		setupWsHandlers(ws);
-		return () => ws.disconnect();
+		const teardownHandlers = setupWsHandlers(ws);
+		return () => {
+			teardownHandlers();
+			ws.disconnect();
+		};
 	});
 </script>
 

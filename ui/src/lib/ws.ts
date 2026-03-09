@@ -18,13 +18,23 @@ export class WsClient {
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	private url: string;
 	private yjsSyncActive = false;
+	private manualClose = false;
+	private yjsOutgoingAttached = false;
+	private readonly yjsUpdateHandler = (update: Uint8Array, origin: unknown) => {
+		// Don't echo back updates that came from the server.
+		if (origin === 'server') return;
+		if (!this.yjsSyncActive) return;
+		this.sendBinary(update);
+	};
 
 	constructor(url = `ws://${window.location.host}/ws`) {
 		this.url = url;
 	}
 
 	connect(): void {
-		if (this.ws?.readyState === WebSocket.OPEN) return;
+		if (this.ws && this.ws.readyState !== WebSocket.CLOSED) return;
+		this.manualClose = false;
+		this.attachYjsOutgoing();
 
 		this.ws = new WebSocket(this.url);
 		// Receive binary frames as ArrayBuffer (for CRDT updates).
@@ -46,11 +56,14 @@ export class WsClient {
 
 			// Text frame → JSON ServerEvent.
 			try {
-				const msg = JSON.parse(event.data as string) as ServerMessage;
-				const handlers = this.handlers.get(msg.type);
+				const parsed = JSON.parse(event.data as string) as unknown;
+				if (!isServerMessage(parsed)) {
+					return;
+				}
+				const handlers = this.handlers.get(parsed.type);
 				if (handlers) {
 					for (const handler of handlers) {
-						handler(msg);
+						handler(parsed);
 					}
 				}
 			} catch {
@@ -59,8 +72,11 @@ export class WsClient {
 		};
 
 		this.ws.onclose = () => {
-			console.log('[ws] disconnected, reconnecting in 2s...');
 			this.yjsSyncActive = false;
+			if (this.manualClose) {
+				return;
+			}
+			console.log('[ws] disconnected, reconnecting in 2s...');
 			this.scheduleReconnect();
 		};
 
@@ -68,16 +84,16 @@ export class WsClient {
 			this.ws?.close();
 		};
 
-		// Wire outgoing Y.Doc updates → server.
-		this.setupYjsOutgoing();
 	}
 
 	disconnect(): void {
+		this.manualClose = true;
 		if (this.reconnectTimer) {
 			clearTimeout(this.reconnectTimer);
 			this.reconnectTimer = null;
 		}
 		this.yjsSyncActive = false;
+		this.detachYjsOutgoing();
 		this.ws?.close();
 		this.ws = null;
 	}
@@ -128,12 +144,24 @@ export class WsClient {
 	}
 
 	/** Listen for local Y.Doc changes and send them to the server. */
-	private setupYjsOutgoing(): void {
-		ydoc.on('update', (update: Uint8Array, origin: unknown) => {
-			// Don't echo back updates that came from the server.
-			if (origin === 'server') return;
-			if (!this.yjsSyncActive) return;
-			this.sendBinary(update);
-		});
+	private attachYjsOutgoing(): void {
+		if (this.yjsOutgoingAttached) return;
+		ydoc.on('update', this.yjsUpdateHandler);
+		this.yjsOutgoingAttached = true;
 	}
+
+	private detachYjsOutgoing(): void {
+		if (!this.yjsOutgoingAttached) return;
+		ydoc.off('update', this.yjsUpdateHandler);
+		this.yjsOutgoingAttached = false;
+	}
+}
+
+function isServerMessage(value: unknown): value is ServerMessage {
+	return Boolean(
+		value
+		&& typeof value === 'object'
+		&& 'type' in value
+		&& typeof (value as { type: unknown }).type === 'string',
+	);
 }
