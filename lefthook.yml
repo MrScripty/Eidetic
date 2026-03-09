@@ -11,7 +11,8 @@ pre-commit:
       run: cd ui && npm run typecheck
 
     rustfmt:
-      run: cargo fmt --check
+      glob: "*.rs"
+      run: rustfmt --check {staged_files}
 
 pre-push:
   commands:
