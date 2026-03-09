@@ -8,6 +8,7 @@ mod prompt_format;
 mod routes;
 mod state;
 mod static_files;
+mod validation;
 mod vector_store;
 mod ws;
 mod ydoc;
@@ -15,7 +16,8 @@ mod ydoc;
 use std::net::SocketAddr;
 
 use axum::Router;
-use tower_http::cors::{Any, CorsLayer};
+use axum::http::{header, Method};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -28,10 +30,14 @@ async fn main() {
 
     let app_state = state::AppState::new().await;
 
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    let cors = CorsLayer::new().allow_origin(AllowOrigin::predicate(|origin, _request_parts| {
+        origin
+            .to_str()
+            .map(validation::is_allowed_local_origin)
+            .unwrap_or(false)
+    }))
+    .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+    .allow_headers([header::CONTENT_TYPE]);
 
     let app = Router::new()
         .nest("/api", routes::api_router())

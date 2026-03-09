@@ -3,6 +3,7 @@ use axum::response::{IntoResponse, Response};
 use serde_json::json;
 
 /// Unified API error type that returns proper HTTP status codes.
+#[derive(Debug)]
 pub struct ApiError(pub StatusCode, pub String);
 
 impl ApiError {

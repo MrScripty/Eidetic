@@ -8,6 +8,7 @@ use eidetic_core::Template;
 use crate::error::ApiError;
 use crate::persistence;
 use crate::state::{AppState, ServerEvent};
+use crate::validation;
 use crate::ydoc::{ContentField, DocCommand};
 
 pub fn router() -> Router<AppState> {
@@ -32,7 +33,9 @@ pub struct CreateProjectRequest {
 async fn create_project(
     State(state): State<AppState>,
     Json(body): Json<CreateProjectRequest>,
-) -> Json<serde_json::Value> {
+) -> Result<Json<serde_json::Value>, ApiError> {
+    validation::validate_name(&body.name, "project name")?;
+
     let template = match body.template.as_str() {
         "single_cam" => Template::SingleCam,
         "animated" => Template::Animated,
@@ -40,14 +43,20 @@ async fn create_project(
     };
 
     let project = template.build_project(body.name);
-    let save_path = persistence::project_save_path(&project.name);
-    let json = serde_json::to_value(&project).unwrap();
+    let project_root = persistence::default_project_dir();
+    let save_path = validation::validate_project_path(
+        persistence::project_save_path(&project.name)
+            .to_string_lossy()
+            .as_ref(),
+        &project_root,
+    )?;
+    let json = serde_json::to_value(&project).map_err(|e| ApiError::internal(e.to_string()))?;
     // Populate Y.Doc with all node text from the new project.
     populate_ydoc_from_project(&state, &project).await;
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(save_path);
     state.trigger_save();
-    Json(json)
+    Ok(Json(json))
 }
 
 async fn get_project(
@@ -73,22 +82,24 @@ pub struct UpdateProjectRequest {
 async fn update_project(
     State(state): State<AppState>,
     Json(body): Json<UpdateProjectRequest>,
-) -> Json<serde_json::Value> {
+) -> Result<Json<serde_json::Value>, ApiError> {
     let mut guard = state.project.lock();
     match guard.as_mut() {
         Some(project) => {
             if let Some(name) = body.name {
+                validation::validate_name(&name, "project name")?;
                 project.name = name;
             }
             if let Some(premise) = body.premise {
                 project.premise = premise;
             }
-            let json = serde_json::to_value(&*project).unwrap();
+            let json = serde_json::to_value(&*project)
+                .map_err(|e| ApiError::internal(e.to_string()))?;
             drop(guard);
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        None => Json(serde_json::json!({ "error": "no project loaded" })),
+        None => Err(ApiError::no_project()),
     }
 }
 
@@ -100,22 +111,23 @@ struct SaveRequest {
 async fn save_project(
     State(state): State<AppState>,
     Json(body): Json<SaveRequest>,
-) -> Json<serde_json::Value> {
+) -> Result<Json<serde_json::Value>, ApiError> {
     let project = state.project.lock().clone();
     let Some(project) = project else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
+        return Err(ApiError::no_project());
     };
 
-    let path = body
-        .path
-        .map(std::path::PathBuf::from)
-        .unwrap_or_else(|| {
-            state
-                .project_path
-                .lock()
-                .clone()
-                .unwrap_or_else(|| persistence::project_save_path(&project.name))
-        });
+    let project_root = persistence::default_project_dir();
+    let requested_path = body.path.unwrap_or_else(|| {
+        state
+            .project_path
+            .lock()
+            .clone()
+            .unwrap_or_else(|| persistence::project_save_path(&project.name))
+            .display()
+            .to_string()
+    });
+    let path = validation::validate_project_path(&requested_path, &project_root)?;
 
     // Serialize Y.Doc state to persist alongside structural data.
     let ydoc_state = crate::ydoc::serialize_doc(&state.doc_tx).await;
@@ -123,9 +135,9 @@ async fn save_project(
     match persistence::save_project(&project, &path, ydoc_state).await {
         Ok(()) => {
             *state.project_path.lock() = Some(path.clone());
-            Json(serde_json::json!({ "saved": path.display().to_string() }))
+            Ok(Json(serde_json::json!({ "saved": path.display().to_string() })))
         }
-        Err(e) => Json(serde_json::json!({ "error": e })),
+        Err(e) => Err(ApiError::internal(e)),
     }
 }
 
@@ -137,12 +149,14 @@ struct LoadRequest {
 async fn load_project(
     State(state): State<AppState>,
     Json(body): Json<LoadRequest>,
-) -> Json<serde_json::Value> {
-    let path = std::path::PathBuf::from(&body.path);
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let project_root = persistence::default_project_dir();
+    let path = validation::validate_project_path(&body.path, &project_root)?;
 
     match persistence::load_project(&path).await {
         Ok((project, ydoc_state)) => {
-            let json = serde_json::to_value(&project).unwrap();
+            let json = serde_json::to_value(&project)
+                .map_err(|e| ApiError::internal(e.to_string()))?;
 
             // Restore Y.Doc: prefer persisted blob, fall back to populating
             // from the project's cached text fields.
@@ -164,9 +178,9 @@ async fn load_project(
             };
             *state.project_path.lock() = Some(save_path);
             state.trigger_save();
-            Json(json)
+            Ok(Json(json))
         }
-        Err(e) => Json(serde_json::json!({ "error": e })),
+        Err(e) => Err(ApiError::bad_request(e)),
     }
 }
 
@@ -270,5 +284,71 @@ async fn populate_ydoc_from_project(state: &AppState, project: &eidetic_core::Pr
                 })
                 .await;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::router;
+    use crate::state::AppState;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::util::ServiceExt;
+
+    #[tokio::test]
+    async fn create_project_rejects_invalid_name() {
+        let app = router().with_state(AppState::new().await);
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/project")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"name":"bad/name","template":"multi_cam"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn save_project_without_loaded_project_returns_not_found() {
+        let app = router().with_state(AppState::new().await);
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/project/save")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn load_project_rejects_path_outside_root() {
+        let app = router().with_state(AppState::new().await);
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/project/load")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"path":"/tmp/outside/project.db"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
 }
