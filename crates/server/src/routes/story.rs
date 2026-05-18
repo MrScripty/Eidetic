@@ -5,9 +5,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use eidetic_core::story::arc::{ArcType, Color, StoryArc};
-use eidetic_core::story::bible::EntityId;
 use eidetic_core::story::progression::analyze_all_arcs;
-use eidetic_core::timeline::node::NodeId;
 
 use crate::error::{ApiError, ApiJson, json_value};
 use crate::state::{AppState, ServerEvent};
@@ -20,12 +18,6 @@ pub fn router() -> Router<AppState> {
         .route("/arcs/{id}", put(update_arc))
         .route("/arcs/{id}", delete(delete_arc))
         .route("/arcs/progression", get(arc_progression))
-        // Bible entity routes
-        .route("/bible/entities", get(list_entities))
-        .route(
-            "/bible/entities/{id}/node-refs/{node_id}",
-            delete(remove_node_ref),
-        )
 }
 
 // ──────────────────────────────────────────────
@@ -140,43 +132,4 @@ async fn arc_progression(State(state): State<AppState>) -> ApiJson {
         }
         None => Err(ApiError::no_project()),
     }
-}
-
-// ──────────────────────────────────────────────
-// Bible Entities
-// ──────────────────────────────────────────────
-
-async fn list_entities(State(state): State<AppState>) -> ApiJson {
-    let guard = state.project.lock();
-    match guard.as_ref() {
-        Some(p) => json_value(&p.bible.entities),
-        None => Err(ApiError::no_project()),
-    }
-}
-
-// ──────────────────────────────────────────────
-// Node References
-// ──────────────────────────────────────────────
-
-async fn remove_node_ref(
-    State(state): State<AppState>,
-    Path((id, node_id)): Path<(Uuid, Uuid)>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    let target = NodeId(node_id);
-    entity.node_refs.retain(|n| *n != target);
-
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(serde_json::json!({ "deleted": true })))
 }
