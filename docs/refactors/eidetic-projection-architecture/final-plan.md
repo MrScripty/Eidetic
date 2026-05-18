@@ -222,6 +222,7 @@ Completed slices:
 - `refactor(server): remove legacy apply children route` removed the legacy child-plan application route and its direct story-bible entity mutation side effects after the command/projection replacement landed.
 - `feat(server): add timeline relationship commands` added backend command routes for creating and deleting timeline relationships, returning updated timeline render projections and covering invalid endpoints/unknown relationship IDs.
 - `feat(ui): add timeline relationship command helpers` added focused TypeScript command DTOs and frontend API helpers for backend-confirmed relationship create/delete commands.
+- `feat(ui): cache timeline relationship projections` routed relationship create/delete command responses into the timeline render projection cache without optimistic local patching.
 
 Discovered issues:
 

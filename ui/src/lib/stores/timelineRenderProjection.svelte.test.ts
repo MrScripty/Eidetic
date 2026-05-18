@@ -3,14 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyTimelineChildren,
   createTimelineNode,
+  createTimelineRelationship,
   deleteTimelineNode,
+  deleteTimelineRelationship,
   setTimelineNodeRange,
   splitTimelineNode,
 } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
 import {
   applyCreateTimelineNodeCommand,
+  applyCreateTimelineRelationshipCommand,
   applyDeleteTimelineNodeCommand,
+  applyDeleteTimelineRelationshipCommand,
   applySplitTimelineNodeCommand,
   applyTimelineChildrenCommand,
   applyTimelineNodeRangeCommand,
@@ -23,7 +27,9 @@ import {
 vi.mock('$lib/commandApi.js', () => ({
   applyTimelineChildren: vi.fn(),
   createTimelineNode: vi.fn(),
+  createTimelineRelationship: vi.fn(),
   deleteTimelineNode: vi.fn(),
+  deleteTimelineRelationship: vi.fn(),
   setTimelineNodeRange: vi.fn(),
   splitTimelineNode: vi.fn(),
 }));
@@ -34,7 +40,9 @@ vi.mock('$lib/projectionApi.js', () => ({
 
 const applyTimelineChildrenMock = vi.mocked(applyTimelineChildren);
 const createTimelineNodeMock = vi.mocked(createTimelineNode);
+const createTimelineRelationshipMock = vi.mocked(createTimelineRelationship);
 const deleteTimelineNodeMock = vi.mocked(deleteTimelineNode);
+const deleteTimelineRelationshipMock = vi.mocked(deleteTimelineRelationship);
 const setTimelineNodeRangeMock = vi.mocked(setTimelineNodeRange);
 const splitTimelineNodeMock = vi.mocked(splitTimelineNode);
 const getTimelineRenderProjectionMock = vi.mocked(getTimelineRenderProjection);
@@ -84,7 +92,9 @@ beforeEach(() => {
   clearTimelineRenderProjection();
   applyTimelineChildrenMock.mockReset();
   createTimelineNodeMock.mockReset();
+  createTimelineRelationshipMock.mockReset();
   deleteTimelineNodeMock.mockReset();
+  deleteTimelineRelationshipMock.mockReset();
   setTimelineNodeRangeMock.mockReset();
   splitTimelineNodeMock.mockReset();
   getTimelineRenderProjectionMock.mockReset();
@@ -304,6 +314,115 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toEqual(projection);
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBe('children invalid');
+  });
+
+  it('stores create relationship timeline command response projections without local patching', async () => {
+    createTimelineRelationshipMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection,
+    });
+
+    await expect(
+      applyCreateTimelineRelationshipCommand(
+        {
+          relationship_id: 'rel.theme',
+          from_node_id: 'node.scene.beach',
+          to_node_id: 'node.scene.arrival',
+          relationship_type: 'Thematic',
+        },
+        'command-timeline-relationship-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection,
+    });
+
+    expect(createTimelineRelationshipMock).toHaveBeenCalledWith(
+      {
+        relationship_id: 'rel.theme',
+        from_node_id: 'node.scene.beach',
+        to_node_id: 'node.scene.arrival',
+        relationship_type: 'Thematic',
+      },
+      'command-timeline-relationship-1',
+    );
+    expect(getTimelineRenderProjectionMock).not.toHaveBeenCalled();
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('records create relationship timeline command errors and leaves cached projections unchanged', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+    createTimelineRelationshipMock.mockRejectedValue(new Error('relationship invalid'));
+
+    await expect(
+      applyCreateTimelineRelationshipCommand({
+        relationship_id: 'rel.theme',
+        from_node_id: 'node.scene.unknown',
+        to_node_id: 'node.scene.arrival',
+        relationship_type: 'Thematic',
+      }),
+    ).rejects.toThrow('relationship invalid');
+
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBe('relationship invalid');
+  });
+
+  it('stores delete relationship timeline command response projections without local patching', async () => {
+    const emptyRelationshipProjection = {
+      ...projection,
+      version: 8,
+      payload: {
+        ...projection.payload,
+        relationships: [],
+      },
+    };
+    deleteTimelineRelationshipMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: emptyRelationshipProjection,
+    });
+
+    await expect(
+      applyDeleteTimelineRelationshipCommand(
+        {
+          relationship_id: 'rel.theme',
+        },
+        'command-timeline-relationship-delete-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: emptyRelationshipProjection,
+    });
+
+    expect(deleteTimelineRelationshipMock).toHaveBeenCalledWith(
+      {
+        relationship_id: 'rel.theme',
+      },
+      'command-timeline-relationship-delete-1',
+    );
+    expect(getTimelineRenderProjectionMock).not.toHaveBeenCalled();
+    expect(getCachedTimelineRenderProjection()).toEqual(emptyRelationshipProjection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('records delete relationship timeline command errors and leaves cached projections unchanged', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+    deleteTimelineRelationshipMock.mockRejectedValue(new Error('relationship delete invalid'));
+
+    await expect(
+      applyDeleteTimelineRelationshipCommand({
+        relationship_id: 'rel.unknown',
+      }),
+    ).rejects.toThrow('relationship delete invalid');
+
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBe('relationship delete invalid');
   });
 
   it('stores split timeline command response projections without local patching', async () => {

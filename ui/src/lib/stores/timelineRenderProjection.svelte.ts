@@ -1,7 +1,9 @@
 import {
   applyTimelineChildren,
   createTimelineNode,
+  createTimelineRelationship,
   deleteTimelineNode,
+  deleteTimelineRelationship,
   setTimelineNodeRange,
   splitTimelineNode,
 } from '$lib/commandApi.js';
@@ -10,7 +12,9 @@ import type {
   ApplyTimelineChildrenCommand,
   CommandId,
   CreateTimelineNodeCommand,
+  CreateTimelineRelationshipCommand,
   DeleteTimelineNodeCommand,
+  DeleteTimelineRelationshipCommand,
   ProjectionEnvelope,
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
@@ -116,6 +120,50 @@ export async function applyTimelineChildrenCommand(
     timelineRenderProjectionState.error = errorMessage(
       error,
       'Failed to apply timeline children command',
+    );
+    throw error;
+  } finally {
+    timelineRenderProjectionState.pending = false;
+  }
+}
+
+export async function applyCreateTimelineRelationshipCommand(
+  payload: CreateTimelineRelationshipCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  timelineRenderProjectionState.pending = true;
+  timelineRenderProjectionState.error = undefined;
+
+  try {
+    const response = await createTimelineRelationship(payload, commandId);
+    timelineRenderProjectionState.projection = response.projection;
+    return response;
+  } catch (error) {
+    timelineRenderProjectionState.error = errorMessage(
+      error,
+      'Failed to apply timeline create relationship command',
+    );
+    throw error;
+  } finally {
+    timelineRenderProjectionState.pending = false;
+  }
+}
+
+export async function applyDeleteTimelineRelationshipCommand(
+  payload: DeleteTimelineRelationshipCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  timelineRenderProjectionState.pending = true;
+  timelineRenderProjectionState.error = undefined;
+
+  try {
+    const response = await deleteTimelineRelationship(payload, commandId);
+    timelineRenderProjectionState.projection = response.projection;
+    return response;
+  } catch (error) {
+    timelineRenderProjectionState.error = errorMessage(
+      error,
+      'Failed to apply timeline delete relationship command',
     );
     throw error;
   } finally {
