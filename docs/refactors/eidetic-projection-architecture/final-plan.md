@@ -165,6 +165,7 @@ Completed slices:
 - `feat(ui): add bible graph snapshot field command helper` added frontend command and projection-store helpers for snapshot field updates, caching only returned backend node-detail projections without optimistic snapshot insertion.
 - `feat(ui): show bible graph snapshots` added a read-only projection-backed snapshot list in graph node details so persisted node-scoped snapshots are visible without using legacy entity snapshot APIs.
 - `feat(ui): add bible graph snapshot editor` added a local-draft snapshot creation form that submits snapshot field commands and waits for backend node-detail projections instead of inserting snapshots client-side.
+- `refactor(ui): split bible graph dto types` moved bible graph command/projection DTOs out of the oversized shared frontend type file while re-exporting them for existing import compatibility.
 
 Discovered issues:
 
@@ -177,7 +178,7 @@ Discovered issues:
 - Frontend bible editing currently mutates broad `Entity` caches and whole detail objects (`EntityDetail.svelte`, `story.svelte.ts`, `api.ts`, and websocket invalidation handlers). UI command adoption must use focused projection stores and avoid optimistic local patching or treating form state as canonical.
 - Resolved: `crates/server/src/bible_graph_store.rs` exceeded the 500-line decomposition threshold while owning schema setup, node state, part/field state, and projection reads. It was split into schema, node/projection, and part/field storage modules before edge/snapshot work.
 - Resolved: `ui/src/lib/components/sidebar/bible/StoryBibleTab.svelte` exceeded the 250-line component decomposition threshold after moving list/navigation to graph projections. Category/root mapping and graph-node creation controls were extracted before schema editor work.
-- `ui/src/lib/types.ts` remains a large shared DTO file and now contains both legacy and projection-era contracts. Snapshot DTOs were added there to keep the current contract boundary compiling, but split contracts by ownership boundary before adding script, render, semantic proposal, Bevy bridge DTOs, or snapshot UI editing helpers.
+- Partially resolved: bible graph command/projection DTOs were split out of `ui/src/lib/types.ts` into a focused module. `types.ts` remains above the preferred decomposition threshold because it still mixes legacy story, projection primitives, extraction, script, AI, and settings contracts; split those before adding script, render, semantic proposal, or Bevy bridge DTOs.
 - Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.
 
 ## Concurrent Worker Policy
