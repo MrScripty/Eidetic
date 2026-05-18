@@ -240,7 +240,6 @@ export interface Project {
   name: string;
   premise: string;
   timeline: Timeline;
-  arcs: StoryArc[];
   references?: ReferenceDocument[];
 }
 

@@ -272,6 +272,7 @@ Completed slices:
 - `refactor(story): project arc progression analysis` replaced the final legacy `/arcs/progression` read path with a backend story arc progression projection, updated the Svelte analysis panel to consume the projection, and fixed the frontend contract from stale `beat_count` to backend `node_count`.
 - `refactor(ui): hydrate arcs from projections` stopped seeding sidebar arc state from the broad project payload during project creation/load and refreshes the backend story arc projection instead.
 - `refactor(ui): remove story arc bridge store` deleted the separate frontend `storyState` arc cache and moved arc sidebar/timeline consumers to the backend story arc projection cache directly.
+- `refactor(ui): remove project arc dto field` removed `Project.arcs` from the frontend project DTO so arc UI cannot accidentally rebuild broad project-payload ownership instead of consuming story arc projections.
 
 Discovered issues:
 
