@@ -1,4 +1,8 @@
-import { createBibleGraphNode, ensureCanonicalBibleRoots } from '$lib/commandApi.js';
+import {
+  createBibleGraphNode,
+  ensureCanonicalBibleRoots,
+  setBibleGraphField,
+} from '$lib/commandApi.js';
 import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
@@ -12,6 +16,7 @@ import type {
   CommandId,
   CreateBibleGraphNodeCommand,
   ProjectionEnvelope,
+  SetBibleGraphFieldCommand,
 } from '../types.js';
 
 export interface BibleGraphNodeProjectionKey {
@@ -144,6 +149,30 @@ export async function createBibleGraphNodeProjection(
     bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
       error,
       'Failed to create bible graph node',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.pending[keyString] = false;
+  }
+}
+
+export async function setBibleGraphFieldProjection(
+  payload: SetBibleGraphFieldCommand,
+  commandId?: CommandId,
+): Promise<BibleGraphNodeCommandResponse> {
+  const key = { node_id: payload.node_id };
+  const keyString = cacheKey(key);
+  bibleGraphNodeProjectionState.pending[keyString] = true;
+  bibleGraphNodeProjectionState.errors[keyString] = undefined;
+
+  try {
+    const response = await setBibleGraphField(payload, commandId);
+    bibleGraphNodeProjectionState.projections[keyString] = response.projection;
+    return response;
+  } catch (error) {
+    bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
+      error,
+      'Failed to set bible graph field',
     );
     throw error;
   } finally {

@@ -139,6 +139,7 @@ Completed slices:
 - `feat(ui): add canonical bible root command helper` added a typed frontend command helper for initializing backend-owned canonical bible root nodes.
 - `feat(ui): cache canonical bible root command projections` routed canonical-root command responses into the bible graph node-list projection cache.
 - `feat(server): add bible graph field command` added typed part/field current-state rows, a transactional graph-field command, and populated node-detail projections versioned from node and field revision history.
+- `feat(ui): add bible graph field command helper` added typed frontend command and projection-store helpers for backend-owned bible graph field updates without invalidating node-list projections or mutating legacy entity state.
 
 Discovered issues:
 

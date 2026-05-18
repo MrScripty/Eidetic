@@ -255,6 +255,18 @@ export interface CreateBibleGraphNodeCommand {
   sort_order?: number;
 }
 
+export interface SetBibleGraphFieldCommand {
+  node_id: BibleGraphNodeId;
+  part_id: BibleGraphPartId;
+  part_key: BibleGraphPartKey;
+  part_name: string;
+  part_sort_order: number;
+  field_id: BibleGraphFieldId;
+  field_key: BibleGraphFieldKey;
+  value?: FieldValue | null;
+  field_sort_order: number;
+}
+
 export interface EnsureCanonicalBibleRootsCommand {}
 
 export interface ObjectFieldProjection {

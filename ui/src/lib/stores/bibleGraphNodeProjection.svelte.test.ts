@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createBibleGraphNode, ensureCanonicalBibleRoots } from '$lib/commandApi.js';
+import {
+  createBibleGraphNode,
+  ensureCanonicalBibleRoots,
+  setBibleGraphField,
+} from '$lib/commandApi.js';
 import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
 } from '$lib/projectionApi.js';
 import { storyState } from './story.svelte.js';
+import type { BibleNodeDetailProjection, ProjectionEnvelope } from '../types.js';
 import {
   bibleGraphNodeProjectionState,
   clearBibleGraphNodeListProjection,
@@ -18,11 +23,13 @@ import {
   isBibleGraphNodeProjectionPending,
   refreshBibleGraphNodeListProjection,
   refreshBibleGraphNodeProjection,
+  setBibleGraphFieldProjection,
 } from './bibleGraphNodeProjection.svelte.js';
 
 vi.mock('$lib/commandApi.js', () => ({
   createBibleGraphNode: vi.fn(),
   ensureCanonicalBibleRoots: vi.fn(),
+  setBibleGraphField: vi.fn(),
 }));
 
 vi.mock('$lib/projectionApi.js', () => ({
@@ -32,6 +39,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 
 const createBibleGraphNodeMock = vi.mocked(createBibleGraphNode);
 const ensureCanonicalBibleRootsMock = vi.mocked(ensureCanonicalBibleRoots);
+const setBibleGraphFieldMock = vi.mocked(setBibleGraphField);
 const getBibleGraphNodeProjectionMock = vi.mocked(getBibleGraphNodeProjection);
 const getBibleGraphNodeListProjectionMock = vi.mocked(getBibleGraphNodeListProjection);
 
@@ -65,6 +73,35 @@ const listProjection = {
   },
 };
 
+const fieldProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  version: 3,
+  change_event_id: 'event-field-1',
+  payload: {
+    ...projection.payload,
+    parts: [
+      {
+        part: {
+          id: 'part.character.profile',
+          node_id: 'node.character/ada one',
+          part_key: 'profile',
+          name: 'Profile',
+          system_owned: false,
+          sort_order: 1,
+        },
+        fields: [
+          {
+            id: 'field.character.profile.summary',
+            part_id: 'part.character.profile',
+            field_key: 'summary',
+            value: { type: 'text', value: 'A precise engineer.' },
+            sort_order: 2,
+          },
+        ],
+      },
+    ],
+  },
+};
+
 function resetProjectionState(): void {
   for (const keyString of Object.keys(bibleGraphNodeProjectionState.projections)) {
     delete bibleGraphNodeProjectionState.projections[keyString];
@@ -85,6 +122,7 @@ beforeEach(() => {
   storyState.entities = [];
   createBibleGraphNodeMock.mockReset();
   ensureCanonicalBibleRootsMock.mockReset();
+  setBibleGraphFieldMock.mockReset();
   getBibleGraphNodeProjectionMock.mockReset();
   getBibleGraphNodeListProjectionMock.mockReset();
 });
@@ -237,6 +275,78 @@ describe('bible graph node projection store', () => {
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBe('node conflict');
+  });
+
+  it('stores field command response projections without invalidating cached node lists', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    await refreshBibleGraphNodeListProjection();
+    setBibleGraphFieldMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: fieldProjection,
+    });
+
+    await expect(
+      setBibleGraphFieldProjection(
+        {
+          node_id: 'node.character/ada one',
+          part_id: 'part.character.profile',
+          part_key: 'profile',
+          part_name: 'Profile',
+          part_sort_order: 1,
+          field_id: 'field.character.profile.summary',
+          field_key: 'summary',
+          value: { type: 'text', value: 'A precise engineer.' },
+          field_sort_order: 2,
+        },
+        'command-field-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: fieldProjection,
+    });
+
+    expect(setBibleGraphFieldMock).toHaveBeenCalledWith(
+      {
+        node_id: 'node.character/ada one',
+        part_id: 'part.character.profile',
+        part_key: 'profile',
+        part_name: 'Profile',
+        part_sort_order: 1,
+        field_id: 'field.character.profile.summary',
+        field_key: 'summary',
+        value: { type: 'text', value: 'A precise engineer.' },
+        field_sort_order: 2,
+      },
+      'command-field-1',
+    );
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(fieldProjection);
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(listProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('records field command errors and leaves cached projections unchanged', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
+    await refreshBibleGraphNodeProjection(key);
+    setBibleGraphFieldMock.mockRejectedValue(new Error('field rejected'));
+
+    await expect(
+      setBibleGraphFieldProjection({
+        node_id: 'node.character/ada one',
+        part_id: 'part.character.profile',
+        part_key: 'profile',
+        part_name: 'Profile',
+        part_sort_order: 1,
+        field_id: 'field.character.profile.summary',
+        field_key: 'summary',
+        value: { type: 'text', value: 'A precise engineer.' },
+        field_sort_order: 2,
+      }),
+    ).rejects.toThrow('field rejected');
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBe('field rejected');
   });
 
   it('clears cached graph node projection state for one node', async () => {
