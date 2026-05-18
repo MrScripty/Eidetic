@@ -7,7 +7,7 @@ use eidetic_core::contracts::{
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
-use eidetic_core::timeline::relationship::Relationship;
+use eidetic_core::timeline::relationship::{Relationship, RelationshipType};
 use eidetic_core::timeline::timing::TimeRange;
 use rusqlite::Connection;
 use thiserror::Error;
@@ -158,6 +158,60 @@ pub(crate) fn record_set_timeline_node_notes_history(
         conn,
         command,
         "timeline.node_notes",
+        &event,
+        &[revision],
+    )?)
+}
+
+pub(crate) fn record_create_timeline_relationship_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<CreateTimelineRelationshipCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "timeline.relationship_create")?
+    {
+        return Ok(outcome);
+    }
+
+    project.timeline.node(command.payload.from_node_id)?;
+    project.timeline.node(command.payload.to_node_id)?;
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        "create timeline relationship",
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::TimelineRelationship,
+        command.payload.relationship_id.0.to_string(),
+        event.id,
+        RevisionOperation::Create,
+    )
+    .with_field(FieldDelta::new(
+        "from_node_id",
+        None,
+        Some(FieldValue::Text(command.payload.from_node_id.0.to_string())),
+    ))
+    .with_field(FieldDelta::new(
+        "to_node_id",
+        None,
+        Some(FieldValue::Text(command.payload.to_node_id.0.to_string())),
+    ))
+    .with_field(FieldDelta::new(
+        "relationship_type",
+        None,
+        Some(FieldValue::Text(encode_relationship_type(
+            &command.payload.relationship_type,
+        )?)),
+    ));
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "timeline.relationship_create",
         &event,
         &[revision],
     )?)
@@ -380,6 +434,16 @@ fn encode_content_status(status: ContentStatus) -> String {
         ContentStatus::HasContent => "HasContent",
     }
     .to_string()
+}
+
+fn encode_relationship_type(
+    relationship_type: &RelationshipType,
+) -> Result<String, TimelineCommandError> {
+    serde_json::to_string(relationship_type).map_err(|error| {
+        TimelineCommandError::Core(eidetic_core::Error::InvalidOperation(format!(
+            "invalid relationship type: {error}"
+        )))
+    })
 }
 
 #[derive(Debug, Error)]

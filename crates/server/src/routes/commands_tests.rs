@@ -1000,6 +1000,128 @@ async fn create_timeline_relationship_command_returns_timeline_render_projection
             && relationship["to_node_id"] == to_node.0.to_string()
     }));
 
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineRelationship,
+        &relationship_id.0.to_string(),
+    )
+    .expect("timeline relationship revisions");
+    assert_eq!(revisions.len(), 1);
+    assert_eq!(
+        revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Create
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "from_node_id"
+                && field.new_value == Some(FieldValue::Text(from_node.0.to_string())))
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "relationship_type"
+                && field.new_value == Some(FieldValue::Text("\"Thematic\"".to_string())))
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_relationship_command_replays_duplicate_command() {
+    let path = temp_db_path("creates-timeline-relationship-duplicate");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_relationship_command_body_with_id(
+        uuid::Uuid::new_v4(),
+        relationship_id,
+        from_node,
+        to_node,
+    );
+
+    let first = app
+        .clone()
+        .oneshot(create_timeline_relationship_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(create_timeline_relationship_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let relationships = value["projection"]["payload"]["relationships"]
+        .as_array()
+        .expect("timeline relationships");
+    assert_eq!(
+        relationships
+            .iter()
+            .filter(|relationship| relationship["relationship_id"] == relationship_id.0.to_string())
+            .count(),
+        1
+    );
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineRelationship,
+        &relationship_id.0.to_string(),
+    )
+    .expect("timeline relationship revisions");
+    assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_relationship_command_rejects_conflicting_duplicate_command() {
+    let path = temp_db_path("creates-timeline-relationship-conflict");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    let command_id = uuid::Uuid::new_v4();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let original = create_timeline_relationship_command_body_with_id(
+        command_id,
+        eidetic_core::timeline::relationship::RelationshipId::new(),
+        from_node,
+        to_node,
+    );
+    let conflicting = create_timeline_relationship_command_body_with_id(
+        command_id,
+        eidetic_core::timeline::relationship::RelationshipId::new(),
+        to_node,
+        from_node,
+    );
+
+    let first = app
+        .clone()
+        .oneshot(create_timeline_relationship_command_request(original))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(create_timeline_relationship_command_request(conflicting))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::CONFLICT);
+
     let _ = std::fs::remove_file(path);
 }
 
@@ -1912,8 +2034,22 @@ fn create_timeline_relationship_command_body(
     from_node_id: eidetic_core::timeline::node::NodeId,
     to_node_id: eidetic_core::timeline::node::NodeId,
 ) -> serde_json::Value {
+    create_timeline_relationship_command_body_with_id(
+        uuid::Uuid::new_v4(),
+        relationship_id,
+        from_node_id,
+        to_node_id,
+    )
+}
+
+fn create_timeline_relationship_command_body_with_id(
+    command_id: uuid::Uuid,
+    relationship_id: eidetic_core::timeline::relationship::RelationshipId,
+    from_node_id: eidetic_core::timeline::node::NodeId,
+    to_node_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4(),
+        "id": command_id,
         "payload": {
             "relationship_id": relationship_id,
             "from_node_id": from_node_id,
