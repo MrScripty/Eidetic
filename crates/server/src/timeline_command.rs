@@ -1,16 +1,18 @@
-use eidetic_core::contracts::{
-    ApplyTimelineChildrenCommand, CommandEnvelope, ProjectionEnvelope, TimelineRenderProjection,
-};
 #[cfg(test)]
 use eidetic_core::contracts::{
-    CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
+    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
+    DeleteTimelineRelationshipCommand, ProjectionEnvelope, SetTimelineNodeLockCommand,
+    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    TimelineRenderProjection,
 };
+#[cfg(test)]
 use eidetic_core::project::Project;
+#[cfg(test)]
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
 #[cfg(test)]
 use eidetic_core::timeline::relationship::Relationship;
+#[cfg(test)]
 use eidetic_core::timeline::timing::TimeRange;
 use thiserror::Error;
 
@@ -145,6 +147,7 @@ pub(crate) fn apply_create_timeline_node(
     ))
 }
 
+#[cfg(test)]
 pub(crate) fn apply_timeline_children(
     project: &mut Project,
     command: &CommandEnvelope<ApplyTimelineChildrenCommand>,

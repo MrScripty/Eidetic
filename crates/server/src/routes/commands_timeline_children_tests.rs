@@ -189,6 +189,63 @@ async fn apply_timeline_children_command_replays_duplicate_command() {
 }
 
 #[tokio::test]
+async fn apply_timeline_children_command_validates_against_sqlite_when_project_mirror_is_stale() {
+    let path = temp_db_path("applies-timeline-children-stale-mirror");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let original_child = project
+        .timeline
+        .children_of(parent.id)
+        .first()
+        .expect("original child")
+        .id;
+    let first_child_id = eidetic_core::timeline::node::NodeId::new();
+    let second_child_id = eidetic_core::timeline::node::NodeId::new();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed child current state");
+    let mut stale_project = project;
+    stale_project
+        .timeline
+        .remove_node(parent.id)
+        .expect("make mirror stale");
+    *state.project.lock() = Some(stale_project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = apply_timeline_children_command_body(parent.id, first_child_id, second_child_id);
+
+    let response = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != original_child.0.to_string())
+    );
+    assert!(clips.iter().any(|clip| {
+        clip["node_id"] == first_child_id.0.to_string()
+            && clip["parent_id"] == parent.id.0.to_string()
+            && clip["name"] == "First child"
+    }));
+    assert!(clips.iter().any(|clip| {
+        clip["node_id"] == second_child_id.0.to_string()
+            && clip["parent_id"] == parent.id.0.to_string()
+            && clip["name"] == "Second child"
+    }));
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn apply_timeline_children_command_rejects_conflicting_duplicate_command() {
     let path = temp_db_path("applies-timeline-children-conflict");
     let state = AppState::new().await;
