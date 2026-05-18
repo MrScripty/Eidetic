@@ -1903,6 +1903,103 @@ async fn delete_timeline_node_command_returns_timeline_render_projection() {
             .all(|clip| clip["node_id"] != node.id.0.to_string())
     );
 
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node.id.0.to_string(),
+    )
+    .expect("timeline node revisions");
+    assert_eq!(revisions.len(), 1);
+    assert_eq!(
+        revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Delete
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "name"
+                && field.old_value == Some(FieldValue::Text(node.name.clone()))
+                && field.new_value.is_none())
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn delete_timeline_node_command_replays_duplicate_command() {
+    let path = temp_db_path("deletes-timeline-node-duplicate");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = delete_timeline_node_command_body_with_id(uuid::Uuid::new_v4(), node.id);
+
+    let first = app
+        .clone()
+        .oneshot(delete_timeline_node_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(delete_timeline_node_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != node.id.0.to_string())
+    );
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node.id.0.to_string(),
+    )
+    .expect("timeline node revisions");
+    assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn delete_timeline_node_command_rejects_conflicting_duplicate_command() {
+    let path = temp_db_path("deletes-timeline-node-conflict");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let first_node_id = project.timeline.nodes[0].id;
+    let second_node_id = project.timeline.nodes[1].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let command_id = uuid::Uuid::new_v4();
+    let original = delete_timeline_node_command_body_with_id(command_id, first_node_id);
+    let conflicting = delete_timeline_node_command_body_with_id(command_id, second_node_id);
+
+    let first = app
+        .clone()
+        .oneshot(delete_timeline_node_command_request(original))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(delete_timeline_node_command_request(conflicting))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::CONFLICT);
+
     let _ = std::fs::remove_file(path);
 }
 
@@ -2399,8 +2496,15 @@ fn timeline_node_notes_command_body(
 fn delete_timeline_node_command_body(
     node_id: eidetic_core::timeline::node::NodeId,
 ) -> serde_json::Value {
+    delete_timeline_node_command_body_with_id(uuid::Uuid::new_v4(), node_id)
+}
+
+fn delete_timeline_node_command_body_with_id(
+    command_id: uuid::Uuid,
+    node_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4(),
+        "id": command_id,
         "payload": {
             "node_id": node_id,
         }

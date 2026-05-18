@@ -5,13 +5,15 @@ use eidetic_core::contracts::{
     ObjectKind, ObjectRevision, RevisionOperation, SetTimelineNodeLockCommand,
     SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
 };
-use eidetic_core::timeline::node::{BeatType, ContentStatus, StoryLevel};
-use eidetic_core::timeline::relationship::RelationshipType;
+use eidetic_core::timeline::node::{ContentStatus, StoryLevel};
 use eidetic_core::timeline::timing::TimeRange;
 use rusqlite::Connection;
 
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::timeline_command::TimelineCommandError;
+use crate::timeline_command_history_codec::{
+    encode_beat_type, encode_content_status, encode_relationship_type, encode_story_level,
+};
 
 pub(crate) fn record_set_timeline_node_range_history(
     conn: &mut Connection,
@@ -364,38 +366,6 @@ pub(crate) fn record_create_timeline_node_history(
         &event,
         &[revision],
     )?)
-}
-
-fn encode_content_status(status: ContentStatus) -> String {
-    match status {
-        ContentStatus::Empty => "Empty",
-        ContentStatus::NotesOnly => "NotesOnly",
-        ContentStatus::Generating => "Generating",
-        ContentStatus::HasContent => "HasContent",
-    }
-    .to_string()
-}
-
-fn encode_story_level(level: StoryLevel) -> String {
-    level.label().to_string()
-}
-
-fn encode_beat_type(beat_type: &BeatType) -> Result<String, TimelineCommandError> {
-    serde_json::to_string(beat_type).map_err(|error| {
-        TimelineCommandError::Core(eidetic_core::Error::InvalidOperation(format!(
-            "invalid beat type: {error}"
-        )))
-    })
-}
-
-fn encode_relationship_type(
-    relationship_type: &RelationshipType,
-) -> Result<String, TimelineCommandError> {
-    serde_json::to_string(relationship_type).map_err(|error| {
-        TimelineCommandError::Core(eidetic_core::Error::InvalidOperation(format!(
-            "invalid relationship type: {error}"
-        )))
-    })
 }
 
 fn validate_create_timeline_node(

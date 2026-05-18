@@ -17,6 +17,7 @@ pub(crate) use crate::timeline_command_history::{
     record_delete_timeline_relationship_history, record_set_timeline_node_lock_history,
     record_set_timeline_node_notes_history, record_set_timeline_node_range_history,
 };
+pub(crate) use crate::timeline_node_delete_history::record_delete_timeline_node_history;
 
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
