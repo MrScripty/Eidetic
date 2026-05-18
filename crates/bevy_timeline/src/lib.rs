@@ -3,6 +3,12 @@ use eidetic_core::contracts::TimelineRenderProjection;
 use eidetic_core::timeline::node::NodeId;
 use thiserror::Error;
 
+mod scene;
+
+pub use scene::{
+    TimelineClipEntity, TimelineSceneStats, TimelineTrackEntity, rebuild_timeline_scene,
+};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TimelineRendererCommand {
     SelectNode { node_id: NodeId },
@@ -41,6 +47,7 @@ impl TimelineRendererApp {
         let mut app = App::new();
         app.insert_resource(TimelineRenderState::default());
         app.insert_resource(TimelineRendererCommandQueue::default());
+        app.insert_resource(TimelineSceneStats::default());
         Self { app }
     }
 
@@ -48,7 +55,8 @@ impl TimelineRendererApp {
         self.app
             .world_mut()
             .resource_mut::<TimelineRenderState>()
-            .projection = Some(projection);
+            .projection = Some(projection.clone());
+        rebuild_timeline_scene(self.app.world_mut(), &projection);
     }
 
     pub fn projection_clip_count(&self) -> usize {
@@ -59,6 +67,11 @@ impl TimelineRendererApp {
             .as_ref()
             .map(|projection| projection.clips.len())
             .unwrap_or_default()
+    }
+
+    pub fn scene_counts(&self) -> (usize, usize) {
+        let stats = self.app.world().resource::<TimelineSceneStats>();
+        (stats.track_count, stats.clip_count)
     }
 
     pub fn select_node(&mut self, node_id: NodeId) -> Result<(), TimelineRendererError> {
@@ -115,6 +128,25 @@ mod tests {
             vec![TimelineRendererCommand::SelectNode { node_id }]
         );
         assert!(renderer.drain_commands().is_empty());
+    }
+
+    #[test]
+    fn renderer_app_rebuilds_scene_entities_from_projection() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(renderer.scene_counts(), (1, 1));
+
+        renderer.set_projection(TimelineRenderProjection {
+            total_duration_ms: 10_000,
+            tracks: Vec::new(),
+            clips: Vec::new(),
+            relationships: Vec::new(),
+        });
+
+        assert_eq!(renderer.scene_counts(), (0, 0));
     }
 
     #[test]

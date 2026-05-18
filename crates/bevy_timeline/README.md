@@ -11,6 +11,7 @@ Current scope:
 
 - Keep Bevy dependencies isolated from domain and server crates.
 - Receive `TimelineRenderProjection` snapshots.
+- Rebuild read-only Bevy ECS entities for tracks and clips.
 - Validate selectable clip/node IDs before emitting commands.
 
 Future scope:
