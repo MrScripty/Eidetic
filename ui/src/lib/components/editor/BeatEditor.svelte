@@ -11,16 +11,16 @@
   import { timelineState, zoomToRange, childrenOf, findNode } from '$lib/stores/timeline.svelte.js';
   import {
     updateNodeNotes,
-    lockNode,
-    unlockNode,
-    getNodeContent,
     generateContent,
     removeNodeRef,
     generateChildren,
     generateBatch,
     getAiContext,
   } from '$lib/api.js';
-  import { applyTimelineChildrenCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import {
+    applyTimelineChildrenCommand,
+    applyTimelineNodeLockCommand,
+  } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { getNodeNotes } from '$lib/yjs.js';
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -183,19 +183,12 @@
 
   async function handleToggleLock() {
     if (!editorState.selectedNodeId || !editorState.selectedNode) return;
-    if (editorState.selectedNode.locked) {
-      await unlockNode(editorState.selectedNodeId);
-      editorState.selectedNode.locked = false;
-    } else {
-      await lockNode(editorState.selectedNodeId);
-      editorState.selectedNode.locked = true;
-    }
-    const content = (await getNodeContent(
-      editorState.selectedNodeId,
-    )) as typeof editorState.selectedNode.content;
-    if (editorState.selectedNode) {
-      editorState.selectedNode.content = content;
-    }
+    const locked = !editorState.selectedNode.locked;
+    await applyTimelineNodeLockCommand({
+      node_id: editorState.selectedNodeId,
+      locked,
+    });
+    if (editorState.selectedNode) editorState.selectedNode.locked = locked;
   }
 
   async function handleGenerate() {
