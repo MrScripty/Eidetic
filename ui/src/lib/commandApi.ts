@@ -5,10 +5,12 @@ import type {
   CreateBibleGraphNodeCommand,
   EnsureCanonicalBibleRootsCommand,
   ObjectFieldCommandResponse,
+  ScriptDocumentCommandResponse,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
   SetBibleGraphSnapshotFieldCommand,
   SetObjectFieldCommand,
+  SetScriptBlockCommand,
 } from './types.js';
 
 const BASE = '/api';
@@ -116,6 +118,21 @@ export function ensureCanonicalBibleRoots(
   };
 
   return request('/commands/bible-graph/canonical-roots', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setScriptBlock(
+  payload: SetScriptBlockCommand,
+  commandId = createCommandId(),
+): Promise<ScriptDocumentCommandResponse> {
+  const command: CommandEnvelope<SetScriptBlockCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/script/block', {
     method: 'POST',
     body: JSON.stringify(command),
   });

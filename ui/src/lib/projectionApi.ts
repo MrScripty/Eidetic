@@ -5,6 +5,8 @@ import type {
   ObjectFieldProjection,
   ObjectKind,
   ProjectionEnvelope,
+  ScriptDocumentId,
+  ScriptDocumentProjection,
 } from './types.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
 
@@ -17,6 +19,10 @@ export interface ObjectFieldProjectionKey {
 
 export interface BibleGraphNodeProjectionKey {
   node_id: BibleGraphNodeId;
+}
+
+export interface ScriptDocumentProjectionKey {
+  document_id: ScriptDocumentId;
 }
 
 async function getJson<T>(path: string): Promise<T> {
@@ -59,4 +65,11 @@ export function getBibleGraphSchemaListProjection(): Promise<
   ProjectionEnvelope<BibleGraphSchemaListProjection>
 > {
   return getJson('/projections/bible-graph/schemas');
+}
+
+export function getScriptDocumentProjection({
+  document_id,
+}: ScriptDocumentProjectionKey): Promise<ProjectionEnvelope<ScriptDocumentProjection>> {
+  const params = new URLSearchParams({ document_id });
+  return getJson(`/projections/script/document?${params.toString()}`);
 }
