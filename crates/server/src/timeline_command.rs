@@ -1,5 +1,6 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, ProjectionEnvelope, SetTimelineNodeRangeCommand, TimelineRenderProjection,
+    CommandEnvelope, ProjectionEnvelope, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::timing::TimeRange;
@@ -14,6 +15,20 @@ pub(crate) fn apply_set_timeline_node_range(
     project
         .timeline
         .resize_node(command.payload.node_id, range)
+        .map_err(TimelineCommandError::Core)?;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_split_timeline_node(
+    project: &mut Project,
+    command: &CommandEnvelope<SplitTimelineNodeCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    project
+        .timeline
+        .split_node(command.payload.node_id, command.payload.at_ms)
         .map_err(TimelineCommandError::Core)?;
 
     Ok(ProjectionEnvelope::initial(
@@ -72,5 +87,43 @@ mod tests {
         };
 
         assert!(apply_set_timeline_node_range(&mut project, &command).is_err());
+    }
+
+    #[test]
+    fn split_timeline_node_returns_projection_without_original_node() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let node = project.timeline.nodes[0].clone();
+        let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: SplitTimelineNodeCommand {
+                node_id: node.id,
+                at_ms: split_ms,
+            },
+        };
+
+        let projection = apply_split_timeline_node(&mut project, &command).unwrap();
+
+        assert!(
+            projection
+                .payload
+                .clips
+                .iter()
+                .all(|clip| clip.node_id != node.id)
+        );
+        assert!(
+            projection
+                .payload
+                .clips
+                .iter()
+                .any(|clip| clip.start_ms == node.time_range.start_ms && clip.end_ms == split_ms)
+        );
+        assert!(
+            projection
+                .payload
+                .clips
+                .iter()
+                .any(|clip| clip.start_ms == split_ms && clip.end_ms == node.time_range.end_ms)
+        );
     }
 }

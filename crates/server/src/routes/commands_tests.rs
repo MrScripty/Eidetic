@@ -557,6 +557,67 @@ async fn timeline_node_range_command_requires_loaded_project() {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[tokio::test]
+async fn split_timeline_node_command_returns_timeline_render_projection() {
+    let path = temp_db_path("splits-timeline-node");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = split_timeline_node_command_body(node.id, split_ms);
+
+    let response = app
+        .oneshot(split_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != node.id.0.to_string())
+    );
+    assert!(clips.iter().any(|clip| {
+        clip["start_ms"] == node.time_range.start_ms && clip["end_ms"] == split_ms
+    }));
+    assert!(
+        clips.iter().any(|clip| {
+            clip["start_ms"] == split_ms && clip["end_ms"] == node.time_range.end_ms
+        })
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn split_timeline_node_command_rejects_out_of_range_split() {
+    let path = temp_db_path("rejects-invalid-timeline-split");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = split_timeline_node_command_body(node.id, node.time_range.start_ms);
+
+    let response = app
+        .oneshot(split_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -624,6 +685,15 @@ fn timeline_node_range_command_request(body: serde_json::Value) -> Request<Body>
     Request::builder()
         .method("POST")
         .uri("/commands/timeline/node-range")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn split_timeline_node_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/split-node")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -783,6 +853,19 @@ fn timeline_node_range_command_body(
             "node_id": node_id,
             "start_ms": start_ms,
             "end_ms": end_ms,
+        }
+    })
+}
+
+fn split_timeline_node_command_body(
+    node_id: eidetic_core::timeline::node::NodeId,
+    at_ms: u64,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "node_id": node_id,
+            "at_ms": at_ms,
         }
     })
 }

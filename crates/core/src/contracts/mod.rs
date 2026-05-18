@@ -30,7 +30,7 @@ pub use script_document::{
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
     SetScriptLockCommand,
 };
-pub use timeline_command::SetTimelineNodeRangeCommand;
+pub use timeline_command::{SetTimelineNodeRangeCommand, SplitTimelineNodeCommand};
 pub use timeline_render::{
     TimelineRenderClip, TimelineRenderProjection, TimelineRenderRelationship, TimelineRenderTrack,
 };

@@ -6,7 +6,8 @@ use eidetic_core::contracts::{
     BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, ProjectionEnvelope,
     ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
     SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetTimelineNodeRangeCommand, TimelineRenderProjection,
+    SetScriptLockCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    TimelineRenderProjection,
 };
 use serde::Serialize;
 
@@ -41,6 +42,7 @@ pub fn router() -> Router<AppState> {
             "/commands/timeline/node-range",
             post(set_timeline_node_range),
         )
+        .route("/commands/timeline/split-node", post(split_timeline_node))
 }
 
 #[derive(Debug, Serialize)]
@@ -199,6 +201,29 @@ async fn set_timeline_node_range(
     };
 
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn split_timeline_node(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SplitTimelineNodeCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = timeline_command::apply_split_timeline_node(project, &command)
+            .map_err(map_timeline_command_error)?;
+        TimelineCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
     state.trigger_save();
     crate::error::json_value(response)
 }
