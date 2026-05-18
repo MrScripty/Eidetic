@@ -18,6 +18,7 @@ import type {
   SetScriptBlockCommand,
   SetScriptLockCommand,
   SetTimelineNodeLockCommand,
+  SetTimelineNodeNotesCommand,
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
@@ -248,6 +249,21 @@ export function setTimelineNodeLock(
   };
 
   return request('/commands/timeline/node-lock', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setTimelineNodeNotes(
+  payload: SetTimelineNodeNotesCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<SetTimelineNodeNotesCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/node-notes', {
     method: 'POST',
     body: JSON.stringify(command),
   });

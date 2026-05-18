@@ -28,6 +28,11 @@ export interface SetTimelineNodeLockCommand {
   locked: boolean;
 }
 
+export interface SetTimelineNodeNotesCommand {
+  node_id: string;
+  notes: string;
+}
+
 export interface CreateTimelineNodeCommand {
   node_id: string;
   parent_id: string | null;
