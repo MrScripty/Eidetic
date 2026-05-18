@@ -74,6 +74,7 @@ const projection: ProjectionEnvelope<BibleNodeDetailProjection> = {
         sort_order: 1,
       },
     ],
+    snapshots: [],
   },
 };
 
@@ -133,6 +134,7 @@ const targetProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
     parts: [],
     incoming_edges: [],
     outgoing_edges: [],
+    snapshots: [],
   },
 };
 

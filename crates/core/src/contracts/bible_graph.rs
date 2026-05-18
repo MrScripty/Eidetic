@@ -42,6 +42,8 @@ non_empty_string_id!(BibleGraphNodeId);
 non_empty_string_id!(BibleGraphPartId);
 non_empty_string_id!(BibleGraphFieldId);
 non_empty_string_id!(BibleGraphEdgeId);
+non_empty_string_id!(BibleGraphSnapshotId);
+non_empty_string_id!(BibleGraphSnapshotFieldId);
 non_empty_string_id!(BibleGraphSchemaKey);
 non_empty_string_id!(BibleGraphPartKey);
 non_empty_string_id!(BibleGraphFieldKey);
@@ -158,6 +160,24 @@ pub struct SetBibleGraphEdgeCommand {
     pub sort_order: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SetBibleGraphSnapshotFieldCommand {
+    pub snapshot_id: BibleGraphSnapshotId,
+    pub node_id: BibleGraphNodeId,
+    pub at_ms: u64,
+    pub label: String,
+    #[serde(default)]
+    pub snapshot_sort_order: u32,
+    pub field_id: BibleGraphSnapshotFieldId,
+    pub part_key: BibleGraphPartKey,
+    pub part_name: String,
+    pub field_key: BibleGraphFieldKey,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<FieldValue>,
+    #[serde(default)]
+    pub field_sort_order: u32,
+}
+
 impl CreateBibleGraphNodeCommand {
     pub fn into_node(self) -> BibleGraphNode {
         BibleGraphNode {
@@ -181,6 +201,30 @@ impl SetBibleGraphEdgeCommand {
             label: self.label,
             directed: self.directed,
             sort_order: self.sort_order,
+        }
+    }
+}
+
+impl SetBibleGraphSnapshotFieldCommand {
+    pub fn to_snapshot(&self) -> BibleGraphSnapshot {
+        BibleGraphSnapshot {
+            id: self.snapshot_id.clone(),
+            node_id: self.node_id.clone(),
+            at_ms: self.at_ms,
+            label: self.label.clone(),
+            sort_order: self.snapshot_sort_order,
+        }
+    }
+
+    pub fn into_field(self) -> BibleGraphSnapshotField {
+        BibleGraphSnapshotField {
+            id: self.field_id,
+            snapshot_id: self.snapshot_id,
+            part_key: self.part_key,
+            part_name: self.part_name,
+            field_key: self.field_key,
+            value: self.value,
+            sort_order: self.field_sort_order,
         }
     }
 }
@@ -246,11 +290,41 @@ pub struct BibleGraphEdge {
     pub sort_order: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphSnapshot {
+    pub id: BibleGraphSnapshotId,
+    pub node_id: BibleGraphNodeId,
+    pub at_ms: u64,
+    pub label: String,
+    #[serde(default)]
+    pub sort_order: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BibleGraphSnapshotField {
+    pub id: BibleGraphSnapshotFieldId,
+    pub snapshot_id: BibleGraphSnapshotId,
+    pub part_key: BibleGraphPartKey,
+    pub part_name: String,
+    pub field_key: BibleGraphFieldKey,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<FieldValue>,
+    #[serde(default)]
+    pub sort_order: u32,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BibleGraphPartProjection {
     pub part: BibleGraphPart,
     #[serde(default)]
     pub fields: Vec<BibleGraphField>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BibleGraphSnapshotProjection {
+    pub snapshot: BibleGraphSnapshot,
+    #[serde(default)]
+    pub fields: Vec<BibleGraphSnapshotField>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -262,6 +336,8 @@ pub struct BibleNodeDetailProjection {
     pub incoming_edges: Vec<BibleGraphEdge>,
     #[serde(default)]
     pub outgoing_edges: Vec<BibleGraphEdge>,
+    #[serde(default)]
+    pub snapshots: Vec<BibleGraphSnapshotProjection>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -371,6 +447,25 @@ mod tests {
                 directed: true,
                 sort_order: 0,
             }],
+            snapshots: vec![BibleGraphSnapshotProjection {
+                snapshot: BibleGraphSnapshot {
+                    id: BibleGraphSnapshotId::new("snapshot.beach.sequence-1").unwrap(),
+                    node_id: BibleGraphNodeId::new("node.location.beach").unwrap(),
+                    at_ms: 12_000,
+                    label: "Sequence 1 state".to_string(),
+                    sort_order: 0,
+                },
+                fields: vec![BibleGraphSnapshotField {
+                    id: BibleGraphSnapshotFieldId::new("snapshot-field.beach.weather.current")
+                        .unwrap(),
+                    snapshot_id: BibleGraphSnapshotId::new("snapshot.beach.sequence-1").unwrap(),
+                    part_key: BibleGraphPartKey::new("weather").unwrap(),
+                    part_name: "Weather".to_string(),
+                    field_key: BibleGraphFieldKey::new("current").unwrap(),
+                    value: Some(FieldValue::Text("rainy".to_string())),
+                    sort_order: 0,
+                }],
+            }],
         };
 
         let json = serde_json::to_string(&projection).unwrap();
@@ -421,6 +516,29 @@ mod tests {
 
         let json = serde_json::to_string(&command).unwrap();
         let round_trip: SetBibleGraphFieldCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn set_snapshot_field_command_round_trips_with_typed_value() {
+        let command = SetBibleGraphSnapshotFieldCommand {
+            snapshot_id: BibleGraphSnapshotId::new("snapshot.place.beach.sequence-1").unwrap(),
+            node_id: BibleGraphNodeId::new("node.place.beach").unwrap(),
+            at_ms: 12_000,
+            label: "Sequence 1 state".to_string(),
+            snapshot_sort_order: 3,
+            field_id: BibleGraphSnapshotFieldId::new("snapshot-field.place.beach.weather.current")
+                .unwrap(),
+            part_key: BibleGraphPartKey::new("weather").unwrap(),
+            part_name: "Weather".to_string(),
+            field_key: BibleGraphFieldKey::new("current").unwrap(),
+            value: Some(FieldValue::Text("rainy".to_string())),
+            field_sort_order: 2,
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let round_trip: SetBibleGraphSnapshotFieldCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
     }

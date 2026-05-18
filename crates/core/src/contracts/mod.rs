@@ -8,9 +8,11 @@ pub use bible_graph::{
     BibleGraphContractError, BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphField,
     BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeId,
     BibleGraphNodeListProjection, BibleGraphPart, BibleGraphPartId, BibleGraphPartKey,
-    BibleGraphPartProjection, BibleGraphSchemaKey, BibleNodeDetailProjection, CanonicalBibleRoot,
-    CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, SetBibleGraphEdgeCommand,
-    SetBibleGraphFieldCommand, canonical_bible_root_nodes,
+    BibleGraphPartProjection, BibleGraphSchemaKey, BibleGraphSnapshot, BibleGraphSnapshotField,
+    BibleGraphSnapshotFieldId, BibleGraphSnapshotId, BibleGraphSnapshotProjection,
+    BibleNodeDetailProjection, CanonicalBibleRoot, CreateBibleGraphNodeCommand,
+    EnsureCanonicalBibleRootsCommand, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
 };
 pub use bible_graph_defaults::{
     BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphFieldDefault, BibleGraphFieldSchemaProjection,

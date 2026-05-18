@@ -54,6 +54,7 @@ const projection: ProjectionEnvelope<BibleNodeDetailProjection> = {
         sort_order: 1,
       },
     ],
+    snapshots: [],
   },
 };
 

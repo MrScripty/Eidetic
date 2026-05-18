@@ -243,6 +243,8 @@ export type BibleGraphNodeId = string;
 export type BibleGraphPartId = string;
 export type BibleGraphFieldId = string;
 export type BibleGraphEdgeId = string;
+export type BibleGraphSnapshotId = string;
+export type BibleGraphSnapshotFieldId = string;
 export type BibleGraphSchemaKey = string;
 export type BibleGraphPartKey = string;
 export type BibleGraphFieldKey = string;
@@ -275,6 +277,20 @@ export interface SetBibleGraphEdgeCommand {
   label: string;
   directed?: boolean;
   sort_order?: number;
+}
+
+export interface SetBibleGraphSnapshotFieldCommand {
+  snapshot_id: BibleGraphSnapshotId;
+  node_id: BibleGraphNodeId;
+  at_ms: number;
+  label: string;
+  snapshot_sort_order?: number;
+  field_id: BibleGraphSnapshotFieldId;
+  part_key: BibleGraphPartKey;
+  part_name: string;
+  field_key: BibleGraphFieldKey;
+  value?: FieldValue | null;
+  field_sort_order?: number;
 }
 
 export interface EnsureCanonicalBibleRootsCommand {}
@@ -331,9 +347,32 @@ export interface BibleGraphEdge {
   sort_order: number;
 }
 
+export interface BibleGraphSnapshot {
+  id: BibleGraphSnapshotId;
+  node_id: BibleGraphNodeId;
+  at_ms: number;
+  label: string;
+  sort_order: number;
+}
+
+export interface BibleGraphSnapshotField {
+  id: BibleGraphSnapshotFieldId;
+  snapshot_id: BibleGraphSnapshotId;
+  part_key: BibleGraphPartKey;
+  part_name: string;
+  field_key: BibleGraphFieldKey;
+  value?: FieldValue | null;
+  sort_order: number;
+}
+
 export interface BibleGraphPartProjection {
   part: BibleGraphPart;
   fields: BibleGraphField[];
+}
+
+export interface BibleGraphSnapshotProjection {
+  snapshot: BibleGraphSnapshot;
+  fields: BibleGraphSnapshotField[];
 }
 
 export interface BibleNodeDetailProjection {
@@ -341,6 +380,7 @@ export interface BibleNodeDetailProjection {
   parts: BibleGraphPartProjection[];
   incoming_edges: BibleGraphEdge[];
   outgoing_edges: BibleGraphEdge[];
+  snapshots: BibleGraphSnapshotProjection[];
 }
 
 export interface BibleGraphNodeListProjection {

@@ -116,6 +116,7 @@ pub(crate) fn load_node_detail_projection(
         parts,
         incoming_edges,
         outgoing_edges,
+        snapshots: Vec::new(),
     }))
 }
 
