@@ -188,11 +188,10 @@ async fn create_story_arc(
     Json(command): Json<CommandEnvelope<CreateStoryArcCommand>>,
 ) -> ApiJson {
     let path = active_project_path(&state)?;
+    if state.project.lock().is_none() {
+        return Err(ApiError::no_project());
+    }
     let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         story_arc_store::create_schema(&conn).map_err(map_history_error)?;
@@ -200,7 +199,6 @@ async fn create_story_arc(
             .map_err(map_story_arc_command_error)?;
         let projection =
             story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
-        project.arcs = projection.payload.arcs.clone();
         StoryArcCommandResponse {
             outcome,
             projection,
@@ -218,11 +216,10 @@ async fn update_story_arc(
     Json(command): Json<CommandEnvelope<SetStoryArcMetadataCommand>>,
 ) -> ApiJson {
     let path = active_project_path(&state)?;
+    if state.project.lock().is_none() {
+        return Err(ApiError::no_project());
+    }
     let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         story_arc_store::create_schema(&conn).map_err(map_history_error)?;
@@ -231,7 +228,6 @@ async fn update_story_arc(
                 .map_err(map_story_arc_command_error)?;
         let projection =
             story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
-        project.arcs = projection.payload.arcs.clone();
         StoryArcCommandResponse {
             outcome,
             projection,
@@ -249,11 +245,10 @@ async fn delete_story_arc(
     Json(command): Json<CommandEnvelope<DeleteStoryArcCommand>>,
 ) -> ApiJson {
     let path = active_project_path(&state)?;
+    if state.project.lock().is_none() {
+        return Err(ApiError::no_project());
+    }
     let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         story_arc_store::create_schema(&conn).map_err(map_history_error)?;
@@ -261,7 +256,6 @@ async fn delete_story_arc(
             .map_err(map_story_arc_command_error)?;
         let projection =
             story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
-        project.arcs = projection.payload.arcs.clone();
         StoryArcCommandResponse {
             outcome,
             projection,
