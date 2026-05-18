@@ -457,5 +457,13 @@ fn map_story_arc_command_error(error: StoryArcCommandError) -> ApiError {
 }
 
 #[cfg(test)]
-#[path = "commands_tests.rs"]
-mod tests;
+#[path = "commands_object_story_tests.rs"]
+mod object_story_tests;
+
+#[cfg(test)]
+#[path = "commands_bible_tests.rs"]
+mod bible_tests;
+
+#[cfg(test)]
+#[path = "commands_script_tests.rs"]
+mod script_tests;
