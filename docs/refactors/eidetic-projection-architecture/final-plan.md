@@ -259,6 +259,7 @@ Completed slices:
 - `refactor(core): remove entity-driven timeline relationship` removed the legacy timeline relationship variant that referenced bible entity IDs; bible semantics now belong to graph edges/projections.
 - `refactor(ai): remove legacy bible context field` removed the always-empty legacy bible entity context from AI request DTOs and prompt formatting; future AI context should come from graph-backed projections.
 - `refactor(core): remove legacy story bible module` deleted the old `story::bible` entity/snapshot/relation module after project, timeline, persistence, and AI request contracts stopped depending on it.
+- `refactor(ai): remove unused context packing helpers` deleted the dead generic AI context-packing module after request DTOs stopped carrying legacy bible context, and updated AI module documentation around the remaining prompt request assembly surface.
 
 Discovered issues:
 

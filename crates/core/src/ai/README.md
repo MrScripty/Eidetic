@@ -1,14 +1,13 @@
 # crates/core/src/ai
 
 ## Purpose
-This directory packages the domain-side AI helpers that turn project state into prompt context, recap windows, and consistency-analysis inputs.
+This directory packages the domain-side AI helpers that turn project state into generation requests, recap windows, and consistency-analysis inputs.
 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
 | `backend.rs` | Shared request/response shapes used by server-side AI backends. |
 | `prompt.rs` | Prompt assembly for generation and child-planning flows. |
-| `context.rs` | Budgeting and ranking helpers for prompt context packing. |
 | `consistency.rs` | Diff-friendly consistency analysis helpers. |
 | `helpers.rs` | Shared recap and neighboring-node extraction utilities. |
 
@@ -17,19 +16,17 @@ AI backends need a consistent, domain-aware input shape so prompt behavior stays
 
 ## Constraints
 - Prompt inputs must be derived from authoritative project state.
-- Token budgeting has to stay deterministic enough for tests.
 - The server should consume prepared request shapes rather than reimplementing story logic.
 
 ## Decision
-Keep prompt and context assembly in core, where it can reuse timeline/story rules directly and stay testable without HTTP or backend adapters.
+Keep prompt request assembly in core, where it can reuse timeline/story rules directly and stay testable without HTTP or backend adapters.
 
 ## Alternatives Rejected
 - Building prompts in the server routes: rejected because route code should stay transport-focused.
-- Building prompts in the UI: rejected because backend-owned project state and token budgeting belong with the domain model.
+- Building prompts in the UI: rejected because backend-owned project state belongs with the domain model.
 
 ## Invariants
 - Prompt helpers consume domain types rather than raw JSON fragments.
-- Context packing remains bounded and test-covered.
 - Backend adapters treat these request shapes as the canonical source for generation inputs.
 
 ## Revisit Triggers

@@ -1,7 +1,7 @@
 use crate::ai::backend::{RecapEntry, SurroundingContext};
 use crate::story::arc::StoryArc;
-use crate::timeline::node::{NodeId, StoryLevel, StoryNode};
 use crate::timeline::Timeline;
+use crate::timeline::node::{NodeId, StoryLevel, StoryNode};
 
 /// Default context window: number of sibling nodes before and after to include.
 const CONTEXT_WINDOW: usize = 2;
@@ -13,10 +13,7 @@ const MAX_RECAPS: usize = 6;
 ///
 /// Looks at up to `CONTEXT_WINDOW` siblings before and after the target,
 /// collecting any generated or user-refined content.
-pub fn gather_surrounding_context(
-    timeline: &Timeline,
-    node_id: NodeId,
-) -> SurroundingContext {
+pub fn gather_surrounding_context(timeline: &Timeline, node_id: NodeId) -> SurroundingContext {
     let Ok(node) = timeline.node(node_id) else {
         return SurroundingContext::default();
     };
@@ -83,7 +80,10 @@ pub fn best_text_or_outline(node: &StoryNode) -> Option<String> {
                 .as_ref()
                 .map(|bt| format!("{:?}", bt))
                 .unwrap_or_else(|| node.level.to_string());
-            Some(format!("[OUTLINE: {} ({})]\n{}", node.name, type_label, notes))
+            Some(format!(
+                "[OUTLINE: {} ({})]\n{}",
+                node.name, type_label, notes
+            ))
         }
     })
 }
