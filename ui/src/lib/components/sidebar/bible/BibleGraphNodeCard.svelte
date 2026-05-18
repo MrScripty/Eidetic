@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { BibleGraphNode, EntityCategory } from '$lib/types.js';
+  import type { BibleGraphNode } from '$lib/types.js';
+  import { categoryColor, type BibleGraphCategory } from './bibleGraphCategories.js';
 
   let {
     node,
@@ -8,12 +9,12 @@
     onselect,
   }: {
     node: BibleGraphNode;
-    category: EntityCategory | 'Other';
+    category: BibleGraphCategory;
     selected?: boolean;
     onselect: (id: string) => void;
   } = $props();
 
-  const categoryLabels: Record<EntityCategory | 'Other', string> = {
+  const categoryLabels: Record<BibleGraphCategory, string> = {
     Character: 'CHR',
     Location: 'LOC',
     Prop: 'PRP',
@@ -21,23 +22,6 @@
     Event: 'EVT',
     Other: 'OTH',
   };
-
-  function categoryColor(cat: EntityCategory | 'Other'): string {
-    switch (cat) {
-      case 'Character':
-        return 'var(--color-entity-character)';
-      case 'Location':
-        return 'var(--color-entity-location)';
-      case 'Prop':
-        return 'var(--color-entity-prop)';
-      case 'Theme':
-        return 'var(--color-entity-theme)';
-      case 'Event':
-        return 'var(--color-entity-event)';
-      default:
-        return 'var(--color-text-muted)';
-    }
-  }
 </script>
 
 <button class="node-card" class:selected onclick={() => onselect(node.id)}>

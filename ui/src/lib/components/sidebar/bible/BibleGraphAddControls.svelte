@@ -1,0 +1,72 @@
+<script lang="ts">
+  import type { EntityCategory } from '$lib/types.js';
+  import { categoryColor, type BibleGraphFilter } from './bibleGraphCategories.js';
+
+  let {
+    activeFilter,
+    onadd,
+  }: {
+    activeFilter: BibleGraphFilter;
+    onadd: (category: EntityCategory) => void;
+  } = $props();
+
+  const categories: EntityCategory[] = ['Character', 'Location', 'Prop', 'Theme', 'Event'];
+</script>
+
+<div class="add-buttons">
+  {#if activeFilter !== 'All'}
+    <button class="add-btn" onclick={() => onadd(activeFilter)}>+ Add {activeFilter}</button>
+  {:else}
+    <div class="add-menu">
+      {#each categories as category}
+        <button
+          class="add-btn-small"
+          style="color: {categoryColor(category)}"
+          onclick={() => onadd(category)}>+ {category.slice(0, 3)}</button
+        >
+      {/each}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .add-buttons {
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .add-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  .add-btn:hover {
+    background: var(--color-bg-hover);
+  }
+
+  .add-menu {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .add-btn-small {
+    padding: 6px 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+
+  .add-btn-small:hover {
+    background: var(--color-bg-hover);
+  }
+</style>
