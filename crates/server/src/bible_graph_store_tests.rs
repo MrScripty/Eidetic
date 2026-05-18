@@ -1,5 +1,7 @@
 use super::*;
-use eidetic_core::contracts::{BibleGraphSchemaKey, ChangeEventKind, CommandEnvelope};
+use eidetic_core::contracts::{
+    BibleGraphSchemaKey, ChangeEventKind, CommandEnvelope, FieldValue, SetBibleGraphFieldCommand,
+};
 
 #[derive(Debug, serde::Serialize)]
 struct TestCommand;
@@ -88,6 +90,59 @@ fn node_list_projection_returns_nodes_in_stable_order() {
         "node.character.ada"
     );
     assert_eq!(projection.payload.nodes[1].id.as_str(), "node.place.beach");
+}
+
+#[test]
+fn node_detail_projection_includes_parts_and_fields() {
+    let mut conn = memory_connection();
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    let command = CommandEnvelope::new(SetBibleGraphFieldCommand {
+        node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        part_id: eidetic_core::contracts::BibleGraphPartId::new("part.character.profile").unwrap(),
+        part_key: eidetic_core::contracts::BibleGraphPartKey::new("profile").unwrap(),
+        part_name: "Profile".to_string(),
+        part_sort_order: 1,
+        field_id: eidetic_core::contracts::BibleGraphFieldId::new("field.character.tagline")
+            .unwrap(),
+        field_key: eidetic_core::contracts::BibleGraphFieldKey::new("tagline").unwrap(),
+        value: Some(FieldValue::Text("Reluctant detective".to_string())),
+        field_sort_order: 2,
+    });
+    let event = eidetic_core::contracts::ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        "set field",
+    );
+    let revision = eidetic_core::contracts::ObjectRevision::new(
+        ObjectKind::BiblePartField,
+        command.payload.field_id.as_str(),
+        event.id,
+        eidetic_core::contracts::RevisionOperation::Update,
+    );
+    history_store::record_change_with(
+        &mut conn,
+        &command,
+        "test.set_field",
+        &event,
+        &[revision],
+        |tx| set_field_in_transaction(tx, &command.payload, event.id),
+    )
+    .unwrap();
+
+    let projection = load_node_detail_projection_envelope(
+        &conn,
+        &BibleGraphNodeId::new("node.character.ada").unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+
+    assert_eq!(projection.version, ProjectionVersion(3));
+    assert_eq!(projection.payload.parts.len(), 1);
+    assert_eq!(projection.payload.parts[0].fields.len(), 1);
+    assert_eq!(
+        projection.payload.parts[0].fields[0].value,
+        Some(FieldValue::Text("Reluctant detective".to_string()))
+    );
 }
 
 fn seed_node(conn: &mut Connection, node_id: &str, name: &str, sort_order: u32) {

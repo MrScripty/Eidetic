@@ -6,7 +6,7 @@ use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope, CreateBibleGraphNodeCommand,
-    FieldValue, ObjectKind, SetObjectFieldCommand,
+    FieldValue, ObjectKind, SetBibleGraphFieldCommand, SetObjectFieldCommand,
 };
 use tower::util::ServiceExt;
 
@@ -153,6 +153,30 @@ async fn bible_graph_node_projection_returns_persisted_node() {
 }
 
 #[tokio::test]
+async fn bible_graph_node_projection_returns_persisted_parts_and_fields() {
+    let path = temp_db_path("bible-node-fields-persisted");
+    seed_bible_graph_node(&path, "node.character.ada", "Ada");
+    seed_bible_graph_field(&path, "Reluctant detective");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(bible_node_projection_request("node.character.ada"))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 3);
+    assert_eq!(value["payload"]["parts"][0]["part"]["name"], "Profile");
+    assert_eq!(
+        value["payload"]["parts"][0]["fields"][0]["value"]["value"],
+        "Reluctant detective"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_graph_node_list_projection_returns_empty_list_when_absent() {
     let path = temp_db_path("bible-node-list-empty");
     let app = app_with_project_path(path.clone()).await;
@@ -213,6 +237,23 @@ fn seed_bible_graph_node(path: &PathBuf, node_id: &str, name: &str) {
         sort_order: 3,
     });
     crate::bible_graph_command::apply_create_bible_graph_node(&mut conn, &command, 100).unwrap();
+}
+
+fn seed_bible_graph_field(path: &PathBuf, value: &str) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    let command = CommandEnvelope::new(SetBibleGraphFieldCommand {
+        node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        part_id: eidetic_core::contracts::BibleGraphPartId::new("part.character.profile").unwrap(),
+        part_key: eidetic_core::contracts::BibleGraphPartKey::new("profile").unwrap(),
+        part_name: "Profile".to_string(),
+        part_sort_order: 1,
+        field_id: eidetic_core::contracts::BibleGraphFieldId::new("field.character.tagline")
+            .unwrap(),
+        field_key: eidetic_core::contracts::BibleGraphFieldKey::new("tagline").unwrap(),
+        value: Some(FieldValue::Text(value.to_string())),
+        field_sort_order: 2,
+    });
+    crate::bible_graph_command::apply_set_bible_graph_field(&mut conn, &command, 200).unwrap();
 }
 
 fn projection_request(object_kind: &str, object_id: &str) -> Request<Body> {

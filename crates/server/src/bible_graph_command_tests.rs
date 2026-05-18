@@ -1,6 +1,7 @@
 use super::*;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
+    FieldValue, SetBibleGraphFieldCommand,
 };
 
 fn memory_connection() -> Connection {
@@ -16,6 +17,21 @@ fn create_command(node_id: &str, name: &str) -> CommandEnvelope<CreateBibleGraph
         schema_key: BibleGraphSchemaKey::new("character").unwrap(),
         name: name.to_string(),
         sort_order: 7,
+    })
+}
+
+fn field_command(value: Option<FieldValue>) -> CommandEnvelope<SetBibleGraphFieldCommand> {
+    CommandEnvelope::new(SetBibleGraphFieldCommand {
+        node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        part_id: eidetic_core::contracts::BibleGraphPartId::new("part.character.profile").unwrap(),
+        part_key: eidetic_core::contracts::BibleGraphPartKey::new("profile").unwrap(),
+        part_name: "Profile".to_string(),
+        part_sort_order: 1,
+        field_id: eidetic_core::contracts::BibleGraphFieldId::new("field.character.tagline")
+            .unwrap(),
+        field_key: eidetic_core::contracts::BibleGraphFieldKey::new("tagline").unwrap(),
+        value,
+        field_sort_order: 2,
     })
 }
 
@@ -150,6 +166,65 @@ fn ensure_canonical_roots_is_noop_when_roots_already_exist_for_new_command() {
     assert_eq!(table_count(&conn, "change_events"), 1);
     assert_eq!(table_count(&conn, "object_revisions"), 8);
     assert_eq!(table_count(&conn, "bible_graph_nodes"), 8);
+}
+
+#[test]
+fn set_bible_graph_field_creates_part_field_and_updates_projection() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let field = field_command(Some(FieldValue::Text("Reluctant detective".to_string())));
+
+    let (outcome, projection) = apply_set_bible_graph_field(&mut conn, &field, 200).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(
+        projection.version,
+        eidetic_core::contracts::ProjectionVersion(3)
+    );
+    assert_eq!(projection.payload.parts.len(), 1);
+    assert_eq!(projection.payload.parts[0].part.name, "Profile");
+    assert_eq!(projection.payload.parts[0].fields.len(), 1);
+    assert_eq!(
+        projection.payload.parts[0].fields[0].value,
+        Some(FieldValue::Text("Reluctant detective".to_string()))
+    );
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "change_events"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+    assert_eq!(table_count(&conn, "bible_graph_parts"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_fields"), 1);
+}
+
+#[test]
+fn duplicate_set_field_command_is_idempotent() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let field = field_command(Some(FieldValue::Text("Reluctant detective".to_string())));
+
+    let (first, _) = apply_set_bible_graph_field(&mut conn, &field, 200).unwrap();
+    let (second, projection) = apply_set_bible_graph_field(&mut conn, &field, 200).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(projection.payload.parts[0].fields.len(), 1);
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+}
+
+#[test]
+fn set_field_rejects_missing_node_without_history_rows() {
+    let mut conn = memory_connection();
+    let field = field_command(Some(FieldValue::Text("Reluctant detective".to_string())));
+
+    let error = apply_set_bible_graph_field(&mut conn, &field, 200).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 0);
+    assert_eq!(table_count(&conn, "object_revisions"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_parts"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_fields"), 0);
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {

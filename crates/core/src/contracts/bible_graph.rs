@@ -129,6 +129,22 @@ pub struct CreateBibleGraphNodeCommand {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnsureCanonicalBibleRootsCommand {}
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SetBibleGraphFieldCommand {
+    pub node_id: BibleGraphNodeId,
+    pub part_id: BibleGraphPartId,
+    pub part_key: BibleGraphPartKey,
+    pub part_name: String,
+    #[serde(default)]
+    pub part_sort_order: u32,
+    pub field_id: BibleGraphFieldId,
+    pub field_key: BibleGraphFieldKey,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<FieldValue>,
+    #[serde(default)]
+    pub field_sort_order: u32,
+}
+
 impl CreateBibleGraphNodeCommand {
     pub fn into_node(self) -> BibleGraphNode {
         BibleGraphNode {
@@ -358,6 +374,26 @@ mod tests {
 
         let json = serde_json::to_string(&command).unwrap();
         let round_trip: EnsureCanonicalBibleRootsCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn set_field_command_round_trips_with_typed_value() {
+        let command = SetBibleGraphFieldCommand {
+            node_id: BibleGraphNodeId::new("node.place.beach").unwrap(),
+            part_id: BibleGraphPartId::new("part.place.weather").unwrap(),
+            part_key: BibleGraphPartKey::new("weather").unwrap(),
+            part_name: "Weather".to_string(),
+            part_sort_order: 1,
+            field_id: BibleGraphFieldId::new("field.place.weather.current").unwrap(),
+            field_key: BibleGraphFieldKey::new("current").unwrap(),
+            value: Some(FieldValue::Text("rainy".to_string())),
+            field_sort_order: 2,
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let round_trip: SetBibleGraphFieldCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
     }

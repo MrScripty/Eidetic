@@ -5,7 +5,8 @@ use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
-    BibleGraphNodeId, BibleGraphSchemaKey, EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind,
+    BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartId, BibleGraphPartKey,
+    BibleGraphSchemaKey, EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind,
 };
 use serde_json::json;
 use tower::util::ServiceExt;
@@ -215,10 +216,49 @@ async fn bible_graph_roots_command_returns_node_list_projection() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn bible_graph_field_command_returns_populated_node_detail_projection() {
+    let path = temp_db_path("sets-bible-graph-field");
+    let app = app_with_project_path(path.clone()).await;
+    let node = bible_graph_node_command_body("node.character.ada", "Ada");
+    let field = bible_graph_field_command_body(Some(json_text("Reluctant detective")));
+
+    let create_response = app
+        .clone()
+        .oneshot(bible_graph_command_request(node))
+        .await
+        .expect("create route response");
+    let field_response = app
+        .oneshot(bible_graph_field_command_request(field))
+        .await
+        .expect("field route response");
+
+    assert_eq!(create_response.status(), StatusCode::OK);
+    assert_eq!(field_response.status(), StatusCode::OK);
+    let value = response_json(field_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(value["projection"]["version"], 3);
+    assert_eq!(
+        value["projection"]["payload"]["parts"][0]["fields"][0]["value"]["value"],
+        "Reluctant detective"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
         .uri("/commands/object-field")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn bible_graph_field_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/bible-graph/field")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -280,6 +320,23 @@ fn bible_graph_node_command_body(node_id: &str, name: &str) -> serde_json::Value
             "schema_key": BibleGraphSchemaKey::new("character").unwrap(),
             "name": name,
             "sort_order": 3,
+        }
+    })
+}
+
+fn bible_graph_field_command_body(value: Option<serde_json::Value>) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "node_id": BibleGraphNodeId::new("node.character.ada").unwrap(),
+            "part_id": BibleGraphPartId::new("part.character.profile").unwrap(),
+            "part_key": BibleGraphPartKey::new("profile").unwrap(),
+            "part_name": "Profile",
+            "part_sort_order": 1,
+            "field_id": BibleGraphFieldId::new("field.character.tagline").unwrap(),
+            "field_key": BibleGraphFieldKey::new("tagline").unwrap(),
+            "value": value,
+            "field_sort_order": 2,
         }
     })
 }
