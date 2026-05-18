@@ -579,6 +579,8 @@ describe('command api helpers', () => {
         {
           node_id: 'node.scene.beach',
           at_ms: 2_500,
+          left_node_id: 'node.scene.beach.a',
+          right_node_id: 'node.scene.beach.b',
         },
         'command-timeline-split-1',
       ),
@@ -594,6 +596,8 @@ describe('command api helpers', () => {
           payload: {
             node_id: 'node.scene.beach',
             at_ms: 2_500,
+            left_node_id: 'node.scene.beach.a',
+            right_node_id: 'node.scene.beach.b',
           },
         }),
       }),

@@ -1478,10 +1478,18 @@ async fn split_timeline_node_command_returns_timeline_render_projection() {
     let project = Template::MultiCam.build_project("Commands Test");
     let node = project.timeline.nodes[0].clone();
     let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    let left_node_id = eidetic_core::timeline::node::NodeId::new();
+    let right_node_id = eidetic_core::timeline::node::NodeId::new();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
     let app = router().with_state(state);
-    let body = split_timeline_node_command_body(node.id, split_ms);
+    let body = split_timeline_node_command_body_with_result_ids(
+        uuid::Uuid::new_v4(),
+        node.id,
+        split_ms,
+        left_node_id,
+        right_node_id,
+    );
 
     let response = app
         .oneshot(split_timeline_node_command_request(body))
@@ -1500,13 +1508,149 @@ async fn split_timeline_node_command_returns_timeline_render_projection() {
             .all(|clip| clip["node_id"] != node.id.0.to_string())
     );
     assert!(clips.iter().any(|clip| {
-        clip["start_ms"] == node.time_range.start_ms && clip["end_ms"] == split_ms
+        clip["node_id"] == left_node_id.0.to_string()
+            && clip["start_ms"] == node.time_range.start_ms
+            && clip["end_ms"] == split_ms
     }));
-    assert!(
-        clips.iter().any(|clip| {
-            clip["start_ms"] == split_ms && clip["end_ms"] == node.time_range.end_ms
-        })
+    assert!(clips.iter().any(|clip| {
+        clip["node_id"] == right_node_id.0.to_string()
+            && clip["start_ms"] == split_ms
+            && clip["end_ms"] == node.time_range.end_ms
+    }));
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let original_revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node.id.0.to_string(),
+    )
+    .expect("original timeline node revisions");
+    assert_eq!(original_revisions.len(), 1);
+    assert_eq!(
+        original_revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Delete
     );
+    let left_revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &left_node_id.0.to_string(),
+    )
+    .expect("left timeline node revisions");
+    assert_eq!(left_revisions.len(), 1);
+    assert_eq!(
+        left_revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Create
+    );
+    assert!(
+        left_revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "start_ms"
+                && field.old_value.is_none()
+                && field.new_value == Some(FieldValue::Integer(node.time_range.start_ms as i64)))
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn split_timeline_node_command_replays_duplicate_command() {
+    let path = temp_db_path("splits-timeline-node-duplicate");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    let left_node_id = eidetic_core::timeline::node::NodeId::new();
+    let right_node_id = eidetic_core::timeline::node::NodeId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = split_timeline_node_command_body_with_result_ids(
+        uuid::Uuid::new_v4(),
+        node.id,
+        split_ms,
+        left_node_id,
+        right_node_id,
+    );
+
+    let first = app
+        .clone()
+        .oneshot(split_timeline_node_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(split_timeline_node_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != node.id.0.to_string())
+    );
+    assert!(
+        clips
+            .iter()
+            .any(|clip| clip["node_id"] == left_node_id.0.to_string())
+    );
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node.id.0.to_string(),
+    )
+    .expect("original timeline node revisions");
+    assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn split_timeline_node_command_rejects_conflicting_duplicate_command() {
+    let path = temp_db_path("splits-timeline-node-conflict");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let command_id = uuid::Uuid::new_v4();
+    let original = split_timeline_node_command_body_with_result_ids(
+        command_id,
+        node.id,
+        split_ms,
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+    );
+    let conflicting = split_timeline_node_command_body_with_result_ids(
+        command_id,
+        node.id,
+        split_ms + 1,
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+    );
+
+    let first = app
+        .clone()
+        .oneshot(split_timeline_node_command_request(original))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(split_timeline_node_command_request(conflicting))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::CONFLICT);
 
     let _ = std::fs::remove_file(path);
 }
@@ -2458,11 +2602,29 @@ fn split_timeline_node_command_body(
     node_id: eidetic_core::timeline::node::NodeId,
     at_ms: u64,
 ) -> serde_json::Value {
+    split_timeline_node_command_body_with_result_ids(
+        uuid::Uuid::new_v4(),
+        node_id,
+        at_ms,
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+    )
+}
+
+fn split_timeline_node_command_body_with_result_ids(
+    command_id: uuid::Uuid,
+    node_id: eidetic_core::timeline::node::NodeId,
+    at_ms: u64,
+    left_node_id: eidetic_core::timeline::node::NodeId,
+    right_node_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4(),
+        "id": command_id,
         "payload": {
             "node_id": node_id,
             "at_ms": at_ms,
+            "left_node_id": left_node_id,
+            "right_node_id": right_node_id,
         }
     })
 }

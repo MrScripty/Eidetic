@@ -17,6 +17,8 @@ export interface SetTimelineNodeRangeCommand {
 export interface SplitTimelineNodeCommand {
   node_id: string;
   at_ms: number;
+  left_node_id: string;
+  right_node_id: string;
 }
 
 export interface DeleteTimelineNodeCommand {

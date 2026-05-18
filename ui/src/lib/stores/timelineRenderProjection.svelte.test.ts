@@ -583,6 +583,8 @@ describe('timeline render projection store', () => {
         {
           node_id: 'node.scene.beach',
           at_ms: 2_500,
+          left_node_id: 'node.scene.beach.a',
+          right_node_id: 'node.scene.beach.b',
         },
         'command-timeline-split-1',
       ),
@@ -595,6 +597,8 @@ describe('timeline render projection store', () => {
       {
         node_id: 'node.scene.beach',
         at_ms: 2_500,
+        left_node_id: 'node.scene.beach.a',
+        right_node_id: 'node.scene.beach.b',
       },
       'command-timeline-split-1',
     );
@@ -613,6 +617,8 @@ describe('timeline render projection store', () => {
       applySplitTimelineNodeCommand({
         node_id: 'node.scene.beach',
         at_ms: 1_000,
+        left_node_id: 'node.scene.beach.left',
+        right_node_id: 'node.scene.beach.right',
       }),
     ).rejects.toThrow('split invalid');
 

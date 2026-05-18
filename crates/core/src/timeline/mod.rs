@@ -101,11 +101,7 @@ impl Timeline {
 
     /// Get all nodes at a given hierarchy level, sorted by start time.
     pub fn nodes_at_level(&self, level: StoryLevel) -> Vec<&StoryNode> {
-        let mut nodes: Vec<&StoryNode> = self
-            .nodes
-            .iter()
-            .filter(|n| n.level == level)
-            .collect();
+        let mut nodes: Vec<&StoryNode> = self.nodes.iter().filter(|n| n.level == level).collect();
         nodes.sort_by_key(|n| n.time_range.start_ms);
         nodes
     }
@@ -188,10 +184,7 @@ impl Timeline {
         if let Some(parent_id) = node.parent_id {
             let parent = self.node(parent_id)?;
             let expected_child_level = parent.level.child_level().ok_or_else(|| {
-                Error::InvalidHierarchy(format!(
-                    "{} nodes cannot have children",
-                    parent.level
-                ))
+                Error::InvalidHierarchy(format!("{} nodes cannot have children", parent.level))
             })?;
             if node.level != expected_child_level {
                 return Err(Error::InvalidHierarchy(format!(
@@ -238,9 +231,8 @@ impl Timeline {
         all_removed.push(id);
 
         // Clean up relationships.
-        self.relationships.retain(|r| {
-            !all_removed.contains(&r.from_node) && !all_removed.contains(&r.to_node)
-        });
+        self.relationships
+            .retain(|r| !all_removed.contains(&r.from_node) && !all_removed.contains(&r.to_node));
 
         // Clean up arc tags.
         self.node_arcs
@@ -265,7 +257,8 @@ impl Timeline {
         let new_duration = new_range.end_ms - new_range.start_ms;
 
         // Collect descendant IDs before mutating.
-        let descendant_ids: Vec<NodeId> = self.descendants_of(node_id).iter().map(|n| n.id).collect();
+        let descendant_ids: Vec<NodeId> =
+            self.descendants_of(node_id).iter().map(|n| n.id).collect();
 
         // Update the node itself.
         self.node_mut(node_id)?.time_range = new_range;
@@ -274,19 +267,19 @@ impl Timeline {
         if old_duration > 0 {
             for desc_id in descendant_ids {
                 if let Ok(desc) = self.node_mut(desc_id) {
-                    let start_ratio =
-                        (desc.time_range.start_ms.saturating_sub(old_range.start_ms)) as f64
-                            / old_duration as f64;
-                    let end_ratio =
-                        (desc.time_range.end_ms.saturating_sub(old_range.start_ms)) as f64
-                            / old_duration as f64;
+                    let start_ratio = (desc.time_range.start_ms.saturating_sub(old_range.start_ms))
+                        as f64
+                        / old_duration as f64;
+                    let end_ratio = (desc.time_range.end_ms.saturating_sub(old_range.start_ms))
+                        as f64
+                        / old_duration as f64;
 
-                    desc.time_range.start_ms =
-                        (new_range.start_ms + (start_ratio * new_duration as f64) as u64)
-                            .max(new_range.start_ms);
-                    desc.time_range.end_ms =
-                        (new_range.start_ms + (end_ratio * new_duration as f64) as u64)
-                            .min(new_range.end_ms);
+                    desc.time_range.start_ms = (new_range.start_ms
+                        + (start_ratio * new_duration as f64) as u64)
+                        .max(new_range.start_ms);
+                    desc.time_range.end_ms = (new_range.start_ms
+                        + (end_ratio * new_duration as f64) as u64)
+                        .min(new_range.end_ms);
                 }
             }
         }
@@ -296,7 +289,28 @@ impl Timeline {
 
     /// Split a node at the given time point, producing two nodes.
     /// Returns the IDs of the two resulting nodes.
-    pub fn split_node(&mut self, node_id: NodeId, at_ms: u64) -> Result<(NodeId, NodeId)> {
+    pub fn split_node(
+        &mut self,
+        node_id: NodeId,
+        at_ms: u64,
+        left_id: NodeId,
+        right_id: NodeId,
+    ) -> Result<(NodeId, NodeId)> {
+        if left_id == right_id {
+            return Err(Error::InvalidOperation(
+                "split node ids must be distinct".to_string(),
+            ));
+        }
+        if self
+            .nodes
+            .iter()
+            .any(|n| n.id == left_id || n.id == right_id)
+        {
+            return Err(Error::InvalidOperation(
+                "split node ids already exist".to_string(),
+            ));
+        }
+
         let node = self.node(node_id)?;
         let range = node.time_range;
 
@@ -314,9 +328,6 @@ impl Timeline {
         let name = node.name.clone();
         let locked = node.locked;
         let sort_order = node.sort_order;
-
-        let left_id = NodeId::new();
-        let right_id = NodeId::new();
 
         let left = StoryNode {
             id: left_id,
@@ -353,8 +364,8 @@ impl Timeline {
         // Reassign children to left or right based on midpoint.
         for child in &mut self.nodes {
             if child.parent_id == Some(node_id) {
-                let child_mid =
-                    child.time_range.start_ms + (child.time_range.end_ms - child.time_range.start_ms) / 2;
+                let child_mid = child.time_range.start_ms
+                    + (child.time_range.end_ms - child.time_range.start_ms) / 2;
                 if child_mid < at_ms {
                     child.parent_id = Some(left_id);
                 } else {
@@ -506,11 +517,7 @@ impl Timeline {
 
     /// Remove all children of a specific parent node.
     pub fn clear_children_of(&mut self, parent_id: NodeId) -> Result<()> {
-        let child_ids: Vec<NodeId> = self
-            .children_of(parent_id)
-            .iter()
-            .map(|n| n.id)
-            .collect();
+        let child_ids: Vec<NodeId> = self.children_of(parent_id).iter().map(|n| n.id).collect();
 
         // Collect all descendant IDs (children + their descendants).
         let mut all_removed = Vec::new();
@@ -522,9 +529,8 @@ impl Timeline {
         }
 
         self.nodes.retain(|n| !all_removed.contains(&n.id));
-        self.relationships.retain(|r| {
-            !all_removed.contains(&r.from_node) && !all_removed.contains(&r.to_node)
-        });
+        self.relationships
+            .retain(|r| !all_removed.contains(&r.from_node) && !all_removed.contains(&r.to_node));
         self.node_arcs
             .retain(|na| !all_removed.contains(&na.node_id));
 

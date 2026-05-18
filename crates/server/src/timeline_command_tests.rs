@@ -61,11 +61,15 @@ fn split_timeline_node_returns_projection_without_original_node() {
     let mut project = Template::MultiCam.build_project("Timeline Command Test");
     let node = project.timeline.nodes[0].clone();
     let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    let left_node_id = NodeId::new();
+    let right_node_id = NodeId::new();
     let command = CommandEnvelope {
         id: CommandId::new(),
         payload: SplitTimelineNodeCommand {
             node_id: node.id,
             at_ms: split_ms,
+            left_node_id,
+            right_node_id,
         },
     };
 
@@ -83,14 +87,18 @@ fn split_timeline_node_returns_projection_without_original_node() {
             .payload
             .clips
             .iter()
-            .any(|clip| clip.start_ms == node.time_range.start_ms && clip.end_ms == split_ms)
+            .any(|clip| clip.node_id == left_node_id
+                && clip.start_ms == node.time_range.start_ms
+                && clip.end_ms == split_ms)
     );
     assert!(
         projection
             .payload
             .clips
             .iter()
-            .any(|clip| clip.start_ms == split_ms && clip.end_ms == node.time_range.end_ms)
+            .any(|clip| clip.node_id == right_node_id
+                && clip.start_ms == split_ms
+                && clip.end_ms == node.time_range.end_ms)
     );
 }
 

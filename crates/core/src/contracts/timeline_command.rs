@@ -14,6 +14,8 @@ pub struct SetTimelineNodeRangeCommand {
 pub struct SplitTimelineNodeCommand {
     pub node_id: NodeId,
     pub at_ms: u64,
+    pub left_node_id: NodeId,
+    pub right_node_id: NodeId,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

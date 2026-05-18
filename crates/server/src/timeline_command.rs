@@ -18,6 +18,7 @@ pub(crate) use crate::timeline_command_history::{
     record_set_timeline_node_notes_history, record_set_timeline_node_range_history,
 };
 pub(crate) use crate::timeline_node_delete_history::record_delete_timeline_node_history;
+pub(crate) use crate::timeline_node_split_history::record_split_timeline_node_history;
 
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
@@ -41,7 +42,12 @@ pub(crate) fn apply_split_timeline_node(
 ) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
     project
         .timeline
-        .split_node(command.payload.node_id, command.payload.at_ms)
+        .split_node(
+            command.payload.node_id,
+            command.payload.at_ms,
+            command.payload.left_node_id,
+            command.payload.right_node_id,
+        )
         .map_err(TimelineCommandError::Core)?;
 
     Ok(ProjectionEnvelope::initial(

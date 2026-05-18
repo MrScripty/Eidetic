@@ -141,6 +141,8 @@
       await applySplitTimelineNodeCommand({
         node_id: nodeId,
         at_ms: atMs,
+        left_node_id: crypto.randomUUID(),
+        right_node_id: crypto.randomUUID(),
       });
     } catch (e) {
       notify('error', `Split failed: ${e instanceof Error ? e.message : 'unknown error'}`);
