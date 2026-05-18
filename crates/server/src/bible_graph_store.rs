@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
-    BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaKey,
-    BibleNodeDetailProjection, ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion,
-    SetBibleGraphFieldCommand, canonical_bible_root_nodes,
+    BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPartProjection,
+    BibleGraphSchemaKey, BibleNodeDetailProjection, ChangeEventId, ObjectKind, ProjectionEnvelope,
+    ProjectionVersion, SetBibleGraphFieldCommand, canonical_bible_root_nodes,
+    default_part_projections_for_node,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
@@ -102,7 +103,10 @@ pub(crate) fn load_node_detail_projection(
     let Some(node) = node else {
         return Ok(None);
     };
-    let parts = bible_graph_field_store::load_part_projections(conn, node_id)?;
+    let parts = merge_default_part_projections(
+        &node,
+        bible_graph_field_store::load_part_projections(conn, node_id)?,
+    );
 
     let incoming_edges = bible_graph_edge_store::load_incoming_edges(conn, node_id)?;
     let outgoing_edges = bible_graph_edge_store::load_outgoing_edges(conn, node_id)?;
@@ -113,6 +117,57 @@ pub(crate) fn load_node_detail_projection(
         incoming_edges,
         outgoing_edges,
     }))
+}
+
+fn merge_default_part_projections(
+    node: &BibleGraphNode,
+    persisted_parts: Vec<BibleGraphPartProjection>,
+) -> Vec<BibleGraphPartProjection> {
+    let mut parts = default_part_projections_for_node(node);
+
+    for persisted_part in persisted_parts {
+        if let Some(default_part) = parts
+            .iter_mut()
+            .find(|part| part.part.part_key.as_str() == persisted_part.part.part_key.as_str())
+        {
+            merge_persisted_fields(default_part, persisted_part);
+        } else {
+            parts.push(persisted_part);
+        }
+    }
+
+    parts.sort_by(|a, b| {
+        a.part
+            .sort_order
+            .cmp(&b.part.sort_order)
+            .then_with(|| a.part.name.cmp(&b.part.name))
+            .then_with(|| a.part.id.as_str().cmp(b.part.id.as_str()))
+    });
+    parts
+}
+
+fn merge_persisted_fields(
+    default_part: &mut BibleGraphPartProjection,
+    persisted_part: BibleGraphPartProjection,
+) {
+    for persisted_field in persisted_part.fields {
+        if let Some(default_field) = default_part
+            .fields
+            .iter_mut()
+            .find(|field| field.field_key.as_str() == persisted_field.field_key.as_str())
+        {
+            *default_field = persisted_field;
+        } else {
+            default_part.fields.push(persisted_field);
+        }
+    }
+
+    default_part.fields.sort_by(|a, b| {
+        a.sort_order
+            .cmp(&b.sort_order)
+            .then_with(|| a.field_key.as_str().cmp(b.field_key.as_str()))
+            .then_with(|| a.id.as_str().cmp(b.id.as_str()))
+    });
 }
 
 pub(crate) fn load_node_detail_projection_envelope(

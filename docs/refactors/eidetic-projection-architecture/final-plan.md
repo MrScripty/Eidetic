@@ -150,6 +150,7 @@ Completed slices:
 - `feat(ui): show bible graph node edges` rendered incoming and outgoing bible graph edges from node-detail projections without reading legacy entity relationship state.
 - `feat(ui): add bible graph edge command helper` added typed frontend command/store helpers for backend-owned edge writes, caching only the returned source-node projection and invalidating stale target-node detail projections.
 - `test(ui): split bible graph projection store tests` separated projection read/cache tests from command cache-write tests to keep graph projection store coverage under decomposition thresholds before schema editor work.
+- `feat(server): project bible graph schema defaults` added core-owned built-in graph schema defaults, projected expected empty parts/fields for known schemas without persisting empty rows, overlaid persisted field values, and validated known-schema field commands.
 
 Discovered issues:
 

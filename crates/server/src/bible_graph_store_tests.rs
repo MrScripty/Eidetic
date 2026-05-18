@@ -77,6 +77,55 @@ fn node_projection_envelope_uses_revision_history_version() {
 }
 
 #[test]
+fn known_schema_node_detail_projection_includes_default_parts_without_persisting_rows() {
+    let mut conn = memory_connection();
+    let command = CommandEnvelope::new(TestCommand);
+    let event = eidetic_core::contracts::ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        "create character",
+    );
+    let node = BibleGraphNode {
+        id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        parent_id: None,
+        schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+        name: "Ada".to_string(),
+        system_owned: false,
+        sort_order: 3,
+    };
+    let revision = eidetic_core::contracts::ObjectRevision::new(
+        ObjectKind::BibleNode,
+        node.id.as_str(),
+        event.id,
+        eidetic_core::contracts::RevisionOperation::Create,
+    );
+    history_store::record_change_with(
+        &mut conn,
+        &command,
+        "test.create_node",
+        &event,
+        &[revision],
+        |tx| insert_node_in_transaction(tx, &node, event.id),
+    )
+    .unwrap();
+
+    let projection = load_node_detail_projection_envelope(&conn, &node.id)
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(
+        projection.payload.parts[0].part.part_key.as_str(),
+        "profile"
+    );
+    assert_eq!(
+        projection.payload.parts[0].fields[1].field_key.as_str(),
+        "tagline"
+    );
+    assert_eq!(table_count(&conn, "bible_graph_parts"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_fields"), 0);
+}
+
+#[test]
 fn node_list_projection_returns_nodes_in_stable_order() {
     let mut conn = memory_connection();
     seed_node(&mut conn, "node.place.beach", "Beach", 20);
@@ -235,4 +284,11 @@ fn seed_node(conn: &mut Connection, node_id: &str, name: &str, sort_order: u32) 
         |tx| insert_node_in_transaction(tx, &node, event.id),
     )
     .unwrap();
+}
+
+fn table_count(conn: &Connection, table: &str) -> i64 {
+    conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
+        row.get(0)
+    })
+    .unwrap()
 }

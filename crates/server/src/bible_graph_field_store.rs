@@ -63,30 +63,36 @@ fn upsert_part_in_transaction(
     command: &SetBibleGraphFieldCommand,
     event_id: ChangeEventId,
 ) -> Result<(), HistoryStoreError> {
-    let existing_node_id = tx
+    let existing_part = tx
         .query_row(
-            "SELECT node_id FROM bible_graph_parts WHERE id = ?1 AND deleted_event_id IS NULL",
+            "SELECT node_id, part_key FROM bible_graph_parts WHERE id = ?1 AND deleted_event_id IS NULL",
             [command.part_id.as_str()],
-            |row| row.get::<_, String>(0),
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
         )
         .optional()?;
 
-    match existing_node_id {
-        Some(node_id) if node_id != command.node_id.as_str() => {
+    match existing_part {
+        Some((node_id, _)) if node_id != command.node_id.as_str() => {
             Err(HistoryStoreError::InvalidValue(format!(
                 "bible graph part {} does not belong to node {}",
                 command.part_id.as_str(),
                 command.node_id.as_str()
             )))
         }
+        Some((_, part_key)) if part_key != command.part_key.as_str() => {
+            Err(HistoryStoreError::InvalidValue(format!(
+                "bible graph part {} already has key {}",
+                command.part_id.as_str(),
+                part_key
+            )))
+        }
         Some(_) => {
             tx.execute(
                 "UPDATE bible_graph_parts
-                 SET part_key = ?2, name = ?3, sort_order = ?4
+                 SET name = ?2, sort_order = ?3
                  WHERE id = ?1",
                 params![
                     command.part_id.as_str(),
-                    command.part_key.as_str(),
                     command.part_name,
                     command.part_sort_order as i64,
                 ],
@@ -117,20 +123,27 @@ fn upsert_field_in_transaction(
     command: &SetBibleGraphFieldCommand,
     event_id: ChangeEventId,
 ) -> Result<(), HistoryStoreError> {
-    let existing_part_id = tx
+    let existing_field = tx
         .query_row(
-            "SELECT part_id FROM bible_graph_fields WHERE id = ?1 AND deleted_event_id IS NULL",
+            "SELECT part_id, field_key FROM bible_graph_fields WHERE id = ?1 AND deleted_event_id IS NULL",
             [command.field_id.as_str()],
-            |row| row.get::<_, String>(0),
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
         )
         .optional()?;
 
-    if let Some(part_id) = existing_part_id {
+    if let Some((part_id, field_key)) = existing_field {
         if part_id != command.part_id.as_str() {
             return Err(HistoryStoreError::InvalidValue(format!(
                 "bible graph field {} does not belong to part {}",
                 command.field_id.as_str(),
                 command.part_id.as_str()
+            )));
+        }
+        if field_key != command.field_key.as_str() {
+            return Err(HistoryStoreError::InvalidValue(format!(
+                "bible graph field {} already has key {}",
+                command.field_id.as_str(),
+                field_key
             )));
         }
     }
@@ -148,7 +161,6 @@ fn upsert_field_in_transaction(
          )
          ON CONFLICT(id) DO UPDATE SET
             part_id = excluded.part_id,
-            field_key = excluded.field_key,
             value_type = excluded.value_type,
             text_value = excluded.text_value,
             integer_value = excluded.integer_value,

@@ -2,7 +2,7 @@ use eidetic_core::contracts::{
     BibleGraphEdge, BibleGraphNode, BibleNodeDetailProjection, ChangeEvent, ChangeEventKind,
     CommandEnvelope, CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldDelta,
     FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, builtin_bible_graph_schema,
 };
 use rusqlite::Connection;
 
@@ -120,6 +120,7 @@ pub(crate) fn apply_set_bible_graph_field(
                 command.payload.node_id.as_str()
             ))
         })?;
+    validate_field_schema(&before, &command.payload)?;
     let old_value = before
         .parts
         .iter()
@@ -263,6 +264,37 @@ fn validate_field_command(
         return Err(BibleGraphCommandError::InvalidCommand(
             "part_name is required".to_string(),
         ));
+    }
+    Ok(())
+}
+
+fn validate_field_schema(
+    projection: &BibleNodeDetailProjection,
+    command: &SetBibleGraphFieldCommand,
+) -> Result<(), BibleGraphCommandError> {
+    let Some(schema) = builtin_bible_graph_schema(&projection.node.schema_key) else {
+        return Ok(());
+    };
+    let Some(part) = schema.part(&command.part_key) else {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "part_key {} is not valid for bible graph schema {}",
+            command.part_key.as_str(),
+            projection.node.schema_key.as_str()
+        )));
+    };
+    if part.name != command.part_name {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "part_name {} does not match schema part {}",
+            command.part_name, part.name
+        )));
+    }
+    if part.field(&command.field_key).is_none() {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "field_key {} is not valid for bible graph schema {} part {}",
+            command.field_key.as_str(),
+            projection.node.schema_key.as_str(),
+            command.part_key.as_str()
+        )));
     }
     Ok(())
 }

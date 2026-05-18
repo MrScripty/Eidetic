@@ -1,4 +1,5 @@
 mod bible_graph;
+mod bible_graph_defaults;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -10,6 +11,10 @@ pub use bible_graph::{
     BibleGraphPartProjection, BibleGraphSchemaKey, BibleNodeDetailProjection, CanonicalBibleRoot,
     CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, SetBibleGraphEdgeCommand,
     SetBibleGraphFieldCommand, canonical_bible_root_nodes,
+};
+pub use bible_graph_defaults::{
+    BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphFieldDefault, BibleGraphPartDefault,
+    BibleGraphSchemaDefault, builtin_bible_graph_schema, default_part_projections_for_node,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

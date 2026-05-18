@@ -148,7 +148,11 @@ async fn bible_graph_node_projection_returns_persisted_node() {
     assert_eq!(value["version"], 2);
     assert_eq!(value["payload"]["node"]["id"], "node.character.ada");
     assert_eq!(value["payload"]["node"]["name"], "Ada");
-    assert_eq!(value["payload"]["parts"], serde_json::json!([]));
+    assert_eq!(value["payload"]["parts"][0]["part"]["part_key"], "profile");
+    assert_eq!(
+        value["payload"]["parts"][0]["fields"][1]["field_key"],
+        "tagline"
+    );
 
     let _ = std::fs::remove_file(path);
 }

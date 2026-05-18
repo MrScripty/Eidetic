@@ -157,8 +157,12 @@ async fn bible_graph_node_command_returns_projection() {
     );
     assert_eq!(value["projection"]["payload"]["node"]["name"], "Ada");
     assert_eq!(
-        value["projection"]["payload"]["parts"],
-        serde_json::json!([])
+        value["projection"]["payload"]["parts"][0]["part"]["part_key"],
+        "profile"
+    );
+    assert_eq!(
+        value["projection"]["payload"]["parts"][0]["fields"][1]["field_key"],
+        "tagline"
     );
 
     let _ = std::fs::remove_file(path);

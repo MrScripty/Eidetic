@@ -112,7 +112,22 @@ fn create_bible_graph_node_records_history_and_projection() {
     assert_eq!(projection.payload.node.id.as_str(), "node.character.ada");
     assert_eq!(projection.payload.node.name, "Ada");
     assert_eq!(projection.payload.node.schema_key.as_str(), "character");
-    assert!(projection.payload.parts.is_empty());
+    assert_eq!(
+        projection.payload.parts[0].part.part_key.as_str(),
+        "profile"
+    );
+    assert_eq!(
+        projection.payload.parts[0].fields[1].field_key.as_str(),
+        "tagline"
+    );
+    assert!(
+        projection
+            .payload
+            .parts
+            .iter()
+            .flat_map(|part| part.fields.iter())
+            .all(|field| field.value.is_none())
+    );
     assert_eq!(table_count(&conn, "commands"), 1);
     assert_eq!(table_count(&conn, "change_events"), 1);
     assert_eq!(table_count(&conn, "object_revisions"), 1);
@@ -244,11 +259,20 @@ fn set_bible_graph_field_creates_part_field_and_updates_projection() {
         projection.version,
         eidetic_core::contracts::ProjectionVersion(3)
     );
-    assert_eq!(projection.payload.parts.len(), 1);
-    assert_eq!(projection.payload.parts[0].part.name, "Profile");
-    assert_eq!(projection.payload.parts[0].fields.len(), 1);
+    let profile = projection
+        .payload
+        .parts
+        .iter()
+        .find(|part| part.part.part_key.as_str() == "profile")
+        .unwrap();
+    assert_eq!(profile.part.name, "Profile");
     assert_eq!(
-        projection.payload.parts[0].fields[0].value,
+        profile
+            .fields
+            .iter()
+            .find(|field| field.field_key.as_str() == "tagline")
+            .unwrap()
+            .value,
         Some(FieldValue::Text("Reluctant detective".to_string()))
     );
     assert_eq!(table_count(&conn, "commands"), 2);
@@ -270,9 +294,34 @@ fn duplicate_set_field_command_is_idempotent() {
 
     assert_eq!(first, RecordChangeOutcome::Recorded);
     assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
-    assert_eq!(projection.payload.parts[0].fields.len(), 1);
+    assert!(
+        projection
+            .payload
+            .parts
+            .iter()
+            .flat_map(|part| part.fields.iter())
+            .any(|field| field.field_key.as_str() == "tagline"
+                && field.value == Some(FieldValue::Text("Reluctant detective".to_string())))
+    );
     assert_eq!(table_count(&conn, "commands"), 2);
     assert_eq!(table_count(&conn, "object_revisions"), 2);
+}
+
+#[test]
+fn set_field_rejects_unknown_field_for_known_schema_without_history_rows() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let mut field = field_command(Some(FieldValue::Text("Reluctant detective".to_string())));
+    field.payload.field_key = eidetic_core::contracts::BibleGraphFieldKey::new("unknown").unwrap();
+
+    let error = apply_set_bible_graph_field(&mut conn, &field, 200).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_parts"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_fields"), 0);
 }
 
 #[test]
