@@ -149,6 +149,7 @@ Completed slices:
 - `feat(server): persist bible graph edges` added a typed graph edge command route, relational edge current-state storage, endpoint validation, and incoming/outgoing edge loading in node-detail projections.
 - `feat(ui): show bible graph node edges` rendered incoming and outgoing bible graph edges from node-detail projections without reading legacy entity relationship state.
 - `feat(ui): add bible graph edge command helper` added typed frontend command/store helpers for backend-owned edge writes, caching only the returned source-node projection and invalidating stale target-node detail projections.
+- `test(ui): split bible graph projection store tests` separated projection read/cache tests from command cache-write tests to keep graph projection store coverage under decomposition thresholds before schema editor work.
 
 Discovered issues:
 
@@ -162,7 +163,7 @@ Discovered issues:
 - Resolved: `crates/server/src/bible_graph_store.rs` exceeded the 500-line decomposition threshold while owning schema setup, node state, part/field state, and projection reads. It was split into schema, node/projection, and part/field storage modules before edge/snapshot work.
 - Resolved: `ui/src/lib/components/sidebar/bible/StoryBibleTab.svelte` exceeded the 250-line component decomposition threshold after moving list/navigation to graph projections. Category/root mapping and graph-node creation controls were extracted before schema editor work.
 - `ui/src/lib/types.ts` remains a large shared DTO file and now contains both legacy and projection-era contracts. Split contracts by ownership boundary before adding script, render, semantic proposal, or Bevy bridge DTOs.
-- `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` now exceeds the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Split graph projection store tests by command/read concern before adding schema editors or snapshot behavior.
+- Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.
 
 ## Concurrent Worker Policy
 
