@@ -10,15 +10,9 @@
   } from '$lib/stores/timeline.svelte.js';
   import { editorState, startGeneration } from '$lib/stores/editor.svelte.js';
   import { storyState } from '$lib/stores/story.svelte.js';
-  import {
-    updateNode,
-    deleteNode,
-    splitNode,
-    createNode,
-    fillGap,
-    generateContent,
-  } from '$lib/api.js';
+  import { deleteNode, splitNode, createNode, fillGap, generateContent } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
+  import { applyTimelineNodeRangeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
   import StoryNodeClip from './StoryNodeClip.svelte';
 
   let {
@@ -85,13 +79,21 @@
   }
 
   async function handleMove(nodeId: string, startMs: number, endMs: number) {
-    await updateNode(nodeId, { start_ms: startMs, end_ms: endMs });
+    await applyTimelineNodeRangeCommand({
+      node_id: nodeId,
+      start_ms: startMs,
+      end_ms: endMs,
+    });
   }
 
   let regenPromptNodeId: string | null = $state(null);
 
   async function handleResize(nodeId: string, startMs: number, endMs: number) {
-    await updateNode(nodeId, { start_ms: startMs, end_ms: endMs });
+    await applyTimelineNodeRangeCommand({
+      node_id: nodeId,
+      start_ms: startMs,
+      end_ms: endMs,
+    });
     const node = levelNodes.find((n) => n.id === nodeId);
     if (node && node.content.content) {
       regenPromptNodeId = nodeId;
