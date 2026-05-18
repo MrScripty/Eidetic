@@ -1,7 +1,13 @@
-import { deleteTimelineNode, setTimelineNodeRange, splitTimelineNode } from '$lib/commandApi.js';
+import {
+  createTimelineNode,
+  deleteTimelineNode,
+  setTimelineNodeRange,
+  splitTimelineNode,
+} from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
 import type {
   CommandId,
+  CreateTimelineNodeCommand,
   DeleteTimelineNodeCommand,
   ProjectionEnvelope,
   SetTimelineNodeRangeCommand,
@@ -64,6 +70,28 @@ export async function applyTimelineNodeRangeCommand(
     timelineRenderProjectionState.error = errorMessage(
       error,
       'Failed to apply timeline node range command',
+    );
+    throw error;
+  } finally {
+    timelineRenderProjectionState.pending = false;
+  }
+}
+
+export async function applyCreateTimelineNodeCommand(
+  payload: CreateTimelineNodeCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  timelineRenderProjectionState.pending = true;
+  timelineRenderProjectionState.error = undefined;
+
+  try {
+    const response = await createTimelineNode(payload, commandId);
+    timelineRenderProjectionState.projection = response.projection;
+    return response;
+  } catch (error) {
+    timelineRenderProjectionState.error = errorMessage(
+      error,
+      'Failed to apply timeline create node command',
     );
     throw error;
   } finally {

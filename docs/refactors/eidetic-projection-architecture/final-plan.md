@@ -208,6 +208,7 @@ Completed slices:
 - `feat(renderer): emit timeline delete commands` added validated renderer command emission for node deletion requests so future Bevy delete interactions can flow through backend-confirmed timeline commands.
 - `feat(server): add timeline create node command` added a backend command route for validated timeline node creation that returns the updated timeline render projection.
 - `feat(ui): add timeline create command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed timeline node creation commands.
+- `feat(ui): cache timeline create projections` routed create timeline command responses into the timeline render projection cache without optimistic local patching.
 
 Discovered issues:
 
