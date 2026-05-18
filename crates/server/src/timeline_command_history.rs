@@ -99,8 +99,8 @@ pub(crate) fn record_set_timeline_node_lock_history(
         Some(FieldValue::Bool(node.locked)),
         Some(FieldValue::Bool(command.payload.locked)),
     ));
-    let mut updated_node = node.clone();
-    updated_node.locked = command.payload.locked;
+    let mut next_timeline = project.timeline.clone();
+    next_timeline.node_mut(command.payload.node_id)?.locked = command.payload.locked;
 
     Ok(history_store::record_change_with(
         conn,
@@ -108,7 +108,7 @@ pub(crate) fn record_set_timeline_node_lock_history(
         "timeline.node_lock",
         &event,
         &[revision],
-        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &[updated_node]),
+        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes),
     )?)
 }
 
@@ -156,7 +156,8 @@ pub(crate) fn record_set_timeline_node_notes_history(
             Some(FieldValue::Text(encode_content_status(new_status))),
         ));
     }
-    let mut updated_node = node.clone();
+    let mut next_timeline = project.timeline.clone();
+    let updated_node = next_timeline.node_mut(command.payload.node_id)?;
     updated_node.content.notes = command.payload.notes.clone();
     updated_node.content.status = new_status;
 
@@ -166,7 +167,7 @@ pub(crate) fn record_set_timeline_node_notes_history(
         "timeline.node_notes",
         &event,
         &[revision],
-        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &[updated_node]),
+        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes),
     )?)
 }
 

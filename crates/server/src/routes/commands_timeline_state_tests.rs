@@ -18,7 +18,7 @@ async fn timeline_node_lock_command_returns_timeline_render_projection() {
     let node = project.timeline.nodes[0].clone();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = timeline_node_lock_command_body(node.id, true);
 
     let response = app
@@ -79,7 +79,7 @@ async fn timeline_node_lock_command_replays_duplicate_command() {
     let node = project.timeline.nodes[0].clone();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let command_id = uuid::Uuid::new_v4();
     let body = json!({
         "id": command_id,
@@ -94,6 +94,15 @@ async fn timeline_node_lock_command_replays_duplicate_command() {
         .oneshot(timeline_node_lock_command_request(body.clone()))
         .await
         .expect("first route response");
+    state
+        .project
+        .lock()
+        .as_mut()
+        .expect("project")
+        .timeline
+        .node_mut(node.id)
+        .expect("node")
+        .locked = false;
     let second = app
         .oneshot(timeline_node_lock_command_request(body))
         .await
@@ -132,7 +141,7 @@ async fn timeline_node_lock_command_rejects_conflicting_duplicate_command() {
     let node = project.timeline.nodes[0].clone();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let command_id = uuid::Uuid::new_v4();
     let original = json!({
         "id": command_id,
@@ -171,7 +180,7 @@ async fn timeline_node_lock_command_rejects_unknown_node() {
     let state = AppState::new().await;
     *state.project.lock() = Some(Template::MultiCam.build_project("Commands Test"));
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = timeline_node_lock_command_body(eidetic_core::timeline::node::NodeId::new(), true);
 
     let response = app
@@ -268,7 +277,7 @@ async fn timeline_node_notes_command_replays_duplicate_command() {
         eidetic_core::timeline::node::ContentStatus::Empty;
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let command_id = uuid::Uuid::new_v4();
     let body = json!({
         "id": command_id,
@@ -283,6 +292,16 @@ async fn timeline_node_notes_command_replays_duplicate_command() {
         .oneshot(timeline_node_notes_command_request(body.clone()))
         .await
         .expect("first route response");
+    let mut guard = state.project.lock();
+    let stale_node = guard
+        .as_mut()
+        .expect("project")
+        .timeline
+        .node_mut(node.id)
+        .expect("node");
+    stale_node.content.notes.clear();
+    stale_node.content.status = eidetic_core::timeline::node::ContentStatus::Empty;
+    drop(guard);
     let second = app
         .oneshot(timeline_node_notes_command_request(body))
         .await
