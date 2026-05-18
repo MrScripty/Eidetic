@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setScriptBlock } from '$lib/commandApi.js';
+import { setScriptBlock, setScriptLock } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
 import {
   applyScriptBlockCommand,
+  applyScriptLockCommand,
   clearScriptDocumentProjection,
   getCachedScriptDocumentProjection,
   getScriptDocumentProjectionError,
@@ -14,6 +15,7 @@ import {
 
 vi.mock('$lib/commandApi.js', () => ({
   setScriptBlock: vi.fn(),
+  setScriptLock: vi.fn(),
 }));
 
 vi.mock('$lib/projectionApi.js', () => ({
@@ -21,6 +23,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 }));
 
 const setScriptBlockMock = vi.mocked(setScriptBlock);
+const setScriptLockMock = vi.mocked(setScriptLock);
 const getScriptDocumentProjectionMock = vi.mocked(getScriptDocumentProjection);
 
 const key = {
@@ -80,6 +83,7 @@ function resetProjectionState(): void {
 beforeEach(() => {
   resetProjectionState();
   setScriptBlockMock.mockReset();
+  setScriptLockMock.mockReset();
   getScriptDocumentProjectionMock.mockReset();
 });
 
@@ -179,6 +183,38 @@ describe('script document projection store', () => {
     expect(getCachedScriptDocumentProjection(key)).toEqual(projection);
     expect(isScriptDocumentProjectionPending(key)).toBe(false);
     expect(getScriptDocumentProjectionError(key)).toBe('command conflict');
+  });
+
+  it('stores lock command response projections by explicit document id', async () => {
+    setScriptLockMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection,
+    });
+
+    await expect(
+      applyScriptLockCommand(
+        {
+          lock_id: 'script.lock.action-1',
+          span_id: 'script.block.action-1.span.main',
+          reason: 'User approved wording.',
+        },
+        'script.document/main one',
+        'command-lock-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection,
+    });
+
+    expect(setScriptLockMock).toHaveBeenCalledWith(
+      {
+        lock_id: 'script.lock.action-1',
+        span_id: 'script.block.action-1.span.main',
+        reason: 'User approved wording.',
+      },
+      'command-lock-1',
+    );
+    expect(getCachedScriptDocumentProjection(key)).toEqual(projection);
   });
 
   it('clears cached projection state for one script document', async () => {

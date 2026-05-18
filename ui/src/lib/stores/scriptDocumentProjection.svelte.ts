@@ -1,4 +1,4 @@
-import { setScriptBlock } from '$lib/commandApi.js';
+import { setScriptBlock, setScriptLock } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
 import type {
   CommandId,
@@ -7,6 +7,7 @@ import type {
   ScriptDocumentProjection,
   ScriptDocumentCommandResponse,
   SetScriptBlockCommand,
+  SetScriptLockCommand,
 } from '../types.js';
 
 export interface ScriptDocumentProjectionKey {
@@ -89,6 +90,32 @@ export async function applyScriptBlockCommand(
     scriptDocumentProjectionState.errors[cacheKey] = errorMessage(
       error,
       'Failed to apply script block command',
+    );
+    throw error;
+  } finally {
+    scriptDocumentProjectionState.pending[cacheKey] = false;
+  }
+}
+
+export async function applyScriptLockCommand(
+  payload: SetScriptLockCommand,
+  documentId: ScriptDocumentId,
+  commandId?: CommandId,
+): Promise<ScriptDocumentCommandResponse> {
+  const cacheKey = projectionKey({
+    document_id: documentId,
+  });
+  scriptDocumentProjectionState.pending[cacheKey] = true;
+  scriptDocumentProjectionState.errors[cacheKey] = undefined;
+
+  try {
+    const response = await setScriptLock(payload, commandId);
+    scriptDocumentProjectionState.projections[cacheKey] = response.projection;
+    return response;
+  } catch (error) {
+    scriptDocumentProjectionState.errors[cacheKey] = errorMessage(
+      error,
+      'Failed to apply script lock command',
     );
     throw error;
   } finally {

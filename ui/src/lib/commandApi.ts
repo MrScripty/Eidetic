@@ -11,6 +11,7 @@ import type {
   SetBibleGraphSnapshotFieldCommand,
   SetObjectFieldCommand,
   SetScriptBlockCommand,
+  SetScriptLockCommand,
 } from './types.js';
 
 const BASE = '/api';
@@ -133,6 +134,21 @@ export function setScriptBlock(
   };
 
   return request('/commands/script/block', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setScriptLock(
+  payload: SetScriptLockCommand,
+  commandId = createCommandId(),
+): Promise<ScriptDocumentCommandResponse> {
+  const command: CommandEnvelope<SetScriptLockCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/script/lock', {
     method: 'POST',
     body: JSON.stringify(command),
   });

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { setScriptBlock } from './commandApi.js';
+import { setScriptBlock, setScriptLock } from './commandApi.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -132,5 +132,96 @@ describe('script command api helpers', () => {
         'command-script-1',
       ),
     ).rejects.toThrow('segment range invalid');
+  });
+
+  it('sends script lock commands and returns versioned script projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 6,
+        change_event_id: 'event-lock-1',
+        payload: {
+          document: {
+            id: 'script.document.main',
+            title: 'Pilot',
+            sort_order: 0,
+          },
+          segments: [
+            {
+              segment: {
+                id: 'script.segment.beat-1',
+                document_id: 'script.document.main',
+                source_node_id: 'node.beat.opening',
+                start_ms: 1000,
+                end_ms: 5000,
+                status: 'current',
+                sort_order: 1,
+              },
+              blocks: [
+                {
+                  block: {
+                    id: 'script.block.action-1',
+                    segment_id: 'script.segment.beat-1',
+                    block_kind: 'action',
+                    text: 'Ada enters with a wet umbrella.',
+                    sort_order: 2,
+                  },
+                  spans: [
+                    {
+                      id: 'script.block.action-1.span.main',
+                      block_id: 'script.block.action-1',
+                      start_byte: 0,
+                      end_byte: 31,
+                      provenance: 'user_edited',
+                    },
+                  ],
+                  locks: [
+                    {
+                      id: 'script.lock.action-1',
+                      span_id: 'script.block.action-1.span.main',
+                      reason: 'User approved wording.',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setScriptLock(
+        {
+          lock_id: 'script.lock.action-1',
+          span_id: 'script.block.action-1.span.main',
+          reason: 'User approved wording.',
+        },
+        'command-lock-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/script/lock',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-lock-1',
+          payload: {
+            lock_id: 'script.lock.action-1',
+            span_id: 'script.block.action-1.span.main',
+            reason: 'User approved wording.',
+          },
+        }),
+      }),
+    );
   });
 });
