@@ -255,6 +255,7 @@ export interface ObjectFieldCommandResponse {
 
 export * from './bibleGraphTypes.js';
 export * from './scriptTypes.js';
+export * from './timelineRenderTypes.js';
 
 // --- Child Planning (replaces Beat Planning) ---
 

@@ -7,6 +7,7 @@ import type {
   ProjectionEnvelope,
   ScriptDocumentId,
   ScriptDocumentProjection,
+  TimelineRenderProjection,
 } from './types.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
 
@@ -72,4 +73,10 @@ export function getScriptDocumentProjection({
 }: ScriptDocumentProjectionKey): Promise<ProjectionEnvelope<ScriptDocumentProjection>> {
   const params = new URLSearchParams({ document_id });
   return getJson(`/projections/script/document?${params.toString()}`);
+}
+
+export function getTimelineRenderProjection(): Promise<
+  ProjectionEnvelope<TimelineRenderProjection>
+> {
+  return getJson('/projections/timeline/render');
 }
