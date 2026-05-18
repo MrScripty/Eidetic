@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::story::arc::ArcId;
 use super::timing::TimeRange;
+use crate::story::arc::ArcId;
 
 // ──────────────────────────────────────────────
 // Node ID
@@ -82,7 +82,13 @@ impl StoryLevel {
 
     /// All levels in hierarchy order.
     pub fn all() -> &'static [StoryLevel] {
-        &[Self::Premise, Self::Act, Self::Sequence, Self::Scene, Self::Beat]
+        &[
+            Self::Premise,
+            Self::Act,
+            Self::Sequence,
+            Self::Scene,
+            Self::Beat,
+        ]
     }
 }
 
@@ -127,8 +133,6 @@ pub enum ContentStatus {
     /// AI is currently generating.
     Generating,
     /// Content present (attribution in Y.Doc distinguishes human vs AI).
-    /// Aliases map legacy variants from v2 schema.
-    #[serde(alias = "Generated", alias = "UserRefined", alias = "UserWritten")]
     HasContent,
 }
 
@@ -141,13 +145,11 @@ pub enum ContentStatus {
 /// With the CRDT layer, `notes` and `content` are cached from Y.Doc.
 /// The Y.Doc is the single source of truth for text; these fields are
 /// populated at load time and refreshed via sync.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NodeContent {
     /// User's description/notes for this node (cached from Y.Doc).
     pub notes: String,
-    /// Script/outline text (cached from Y.Doc). Replaces the old
-    /// `generated_text` + `user_refined_text` split — attribution now
-    /// lives in Y.Doc text attributes.
+    /// Script/outline text cached from Y.Doc. Attribution lives in Y.Doc text attributes.
     #[serde(default)]
     pub content: String,
     /// Derived from Y.Doc state; tracked externally during generation.
@@ -156,50 +158,6 @@ pub struct NodeContent {
     /// Server-computed, not CRDT-managed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scene_recap: Option<String>,
-}
-
-/// Custom Deserialize for NodeContent that handles both the new schema
-/// (`content` field) and legacy v2 schema (`generated_text` + `user_refined_text`).
-impl<'de> Deserialize<'de> for NodeContent {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct Raw {
-            #[serde(default)]
-            notes: String,
-            #[serde(default)]
-            content: String,
-            // Legacy fields — only present in v2 JSON.
-            #[serde(default)]
-            generated_text: Option<String>,
-            #[serde(default)]
-            user_refined_text: Option<String>,
-            #[serde(default)]
-            status: ContentStatus,
-            #[serde(default)]
-            scene_recap: Option<String>,
-        }
-
-        let raw = Raw::deserialize(deserializer)?;
-
-        // Migrate: if `content` is empty, populate from legacy fields.
-        let content = if raw.content.is_empty() {
-            raw.user_refined_text
-                .or(raw.generated_text)
-                .unwrap_or_default()
-        } else {
-            raw.content
-        };
-
-        Ok(NodeContent {
-            notes: raw.notes,
-            content,
-            status: raw.status,
-            scene_recap: raw.scene_recap,
-        })
-    }
 }
 
 // ──────────────────────────────────────────────
@@ -232,11 +190,7 @@ pub struct StoryNode {
 }
 
 impl StoryNode {
-    pub fn new(
-        name: impl Into<String>,
-        level: StoryLevel,
-        time_range: TimeRange,
-    ) -> Self {
+    pub fn new(name: impl Into<String>, level: StoryLevel, time_range: TimeRange) -> Self {
         Self {
             id: NodeId::new(),
             parent_id: None,

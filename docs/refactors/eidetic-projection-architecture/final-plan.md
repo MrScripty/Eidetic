@@ -262,6 +262,7 @@ Completed slices:
 - `refactor(ai): remove unused context packing helpers` deleted the dead generic AI context-packing module after request DTOs stopped carrying legacy bible context, and updated AI module documentation around the remaining prompt request assembly surface.
 - `refactor(server): stop snapshotting arc mutations` removed the final route-level cloned-project snapshot writes and now-unused snapshot push helper from legacy story arc create/update/delete handlers while leaving the current arc mutation behavior intact until arc command/projection contracts replace it.
 - `refactor(project): remove empty snapshot undo routes` deleted the cloned-project undo/redo routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags after snapshot producers were removed.
+- `refactor(core): remove legacy node content aliases` removed legacy `generated_text` / `user_refined_text` node-content deserialization and old content-status aliases from core because compatibility with old project data is outside this refactor.
 
 Discovered issues:
 
