@@ -1178,6 +1178,121 @@ async fn timeline_node_lock_command_returns_timeline_render_projection() {
         .expect("locked clip");
     assert_eq!(clip["locked"], true);
 
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node.id.0.to_string(),
+    )
+    .expect("timeline node revisions");
+    assert_eq!(revisions.len(), 1);
+    assert_eq!(
+        revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Update
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "locked"
+                && field.old_value == Some(FieldValue::Bool(false))
+                && field.new_value == Some(FieldValue::Bool(true)))
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn timeline_node_lock_command_replays_duplicate_command() {
+    let path = temp_db_path("timeline-node-lock-duplicate");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let command_id = uuid::Uuid::new_v4();
+    let body = json!({
+        "id": command_id,
+        "payload": {
+            "node_id": node.id,
+            "locked": true,
+        }
+    });
+
+    let first = app
+        .clone()
+        .oneshot(timeline_node_lock_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(timeline_node_lock_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    let clip = clips
+        .iter()
+        .find(|clip| clip["node_id"] == node.id.0.to_string())
+        .expect("locked clip");
+    assert_eq!(clip["locked"], true);
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node.id.0.to_string(),
+    )
+    .expect("timeline node revisions");
+    assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn timeline_node_lock_command_rejects_conflicting_duplicate_command() {
+    let path = temp_db_path("timeline-node-lock-conflict");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let command_id = uuid::Uuid::new_v4();
+    let original = json!({
+        "id": command_id,
+        "payload": {
+            "node_id": node.id,
+            "locked": true,
+        }
+    });
+    let conflicting = json!({
+        "id": command_id,
+        "payload": {
+            "node_id": node.id,
+            "locked": false,
+        }
+    });
+
+    let first = app
+        .clone()
+        .oneshot(timeline_node_lock_command_request(original))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(timeline_node_lock_command_request(conflicting))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::CONFLICT);
+
     let _ = std::fs::remove_file(path);
 }
 

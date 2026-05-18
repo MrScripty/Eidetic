@@ -69,6 +69,46 @@ pub(crate) fn record_set_timeline_node_range_history(
     )?)
 }
 
+pub(crate) fn record_set_timeline_node_lock_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<SetTimelineNodeLockCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "timeline.node_lock")?
+    {
+        return Ok(outcome);
+    }
+
+    let node = project.timeline.node(command.payload.node_id)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("set timeline node lock {}", node.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::TimelineNode,
+        command.payload.node_id.0.to_string(),
+        event.id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "locked",
+        Some(FieldValue::Bool(node.locked)),
+        Some(FieldValue::Bool(command.payload.locked)),
+    ));
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "timeline.node_lock",
+        &event,
+        &[revision],
+    )?)
+}
+
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
     command: &CommandEnvelope<SetTimelineNodeRangeCommand>,
