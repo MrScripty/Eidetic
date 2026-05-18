@@ -7,7 +7,7 @@ use eidetic_core::Template;
 
 use crate::error::ApiError;
 use crate::persistence;
-use crate::state::{AppState, ServerEvent};
+use crate::state::AppState;
 use crate::validation;
 use crate::ydoc::{ContentField, DocCommand};
 
@@ -19,8 +19,6 @@ pub fn router() -> Router<AppState> {
         .route("/project/save", post(save_project))
         .route("/project/load", post(load_project))
         .route("/project/list", get(list_projects))
-        .route("/project/undo", post(undo))
-        .route("/project/redo", post(redo))
 }
 
 #[derive(Deserialize)]
@@ -59,14 +57,12 @@ async fn create_project(
     Ok(Json(json))
 }
 
-async fn get_project(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+async fn get_project(State(state): State<AppState>) -> Result<Json<serde_json::Value>, ApiError> {
     let guard = state.project.lock();
     match guard.as_ref() {
         Some(project) => {
-            let json = serde_json::to_value(project)
-                .map_err(|e| ApiError::internal(e.to_string()))?;
+            let json =
+                serde_json::to_value(project).map_err(|e| ApiError::internal(e.to_string()))?;
             Ok(Json(json))
         }
         None => Err(ApiError::no_project()),
@@ -93,8 +89,8 @@ async fn update_project(
             if let Some(premise) = body.premise {
                 project.premise = premise;
             }
-            let json = serde_json::to_value(&*project)
-                .map_err(|e| ApiError::internal(e.to_string()))?;
+            let json =
+                serde_json::to_value(&*project).map_err(|e| ApiError::internal(e.to_string()))?;
             drop(guard);
             state.trigger_save();
             Ok(Json(json))
@@ -135,7 +131,9 @@ async fn save_project(
     match persistence::save_project(&project, &path, ydoc_state).await {
         Ok(()) => {
             *state.project_path.lock() = Some(path.clone());
-            Ok(Json(serde_json::json!({ "saved": path.display().to_string() })))
+            Ok(Json(
+                serde_json::json!({ "saved": path.display().to_string() }),
+            ))
         }
         Err(e) => Err(ApiError::internal(e)),
     }
@@ -155,8 +153,8 @@ async fn load_project(
 
     match persistence::load_project(&path).await {
         Ok((project, ydoc_state)) => {
-            let json = serde_json::to_value(&project)
-                .map_err(|e| ApiError::internal(e.to_string()))?;
+            let json =
+                serde_json::to_value(&project).map_err(|e| ApiError::internal(e.to_string()))?;
 
             // Restore Y.Doc: prefer persisted blob, fall back to populating
             // from the project's cached text fields.
@@ -188,66 +186,6 @@ async fn list_projects() -> Json<serde_json::Value> {
     let base_dir = persistence::default_project_dir();
     let entries = persistence::list_projects(&base_dir).await;
     Json(serde_json::to_value(&entries).unwrap())
-}
-
-async fn undo(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let mut undo_guard = state.undo_stack.lock();
-    let mut project_guard = state.project.lock();
-    let Some(current) = project_guard.as_ref() else {
-        return Err(ApiError::no_project());
-    };
-
-    match undo_guard.undo(current.clone()) {
-        Some(prev) => {
-            let json = serde_json::to_value(&prev)
-                .map_err(|e| ApiError::internal(e.to_string()))?;
-            *project_guard = Some(prev);
-            let can_undo = undo_guard.can_undo();
-            let can_redo = undo_guard.can_redo();
-            drop(undo_guard);
-            drop(project_guard);
-            let _ = state.events_tx.send(ServerEvent::ProjectMutated);
-            let _ = state.events_tx.send(ServerEvent::UndoRedoChanged {
-                can_undo,
-                can_redo,
-            });
-            state.trigger_save();
-            Ok(Json(json))
-        }
-        None => Err(ApiError::conflict("nothing to undo")),
-    }
-}
-
-async fn redo(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let mut undo_guard = state.undo_stack.lock();
-    let mut project_guard = state.project.lock();
-    let Some(current) = project_guard.as_ref() else {
-        return Err(ApiError::no_project());
-    };
-
-    match undo_guard.redo(current.clone()) {
-        Some(next) => {
-            let json = serde_json::to_value(&next)
-                .map_err(|e| ApiError::internal(e.to_string()))?;
-            *project_guard = Some(next);
-            let can_undo = undo_guard.can_undo();
-            let can_redo = undo_guard.can_redo();
-            drop(undo_guard);
-            drop(project_guard);
-            let _ = state.events_tx.send(ServerEvent::ProjectMutated);
-            let _ = state.events_tx.send(ServerEvent::UndoRedoChanged {
-                can_undo,
-                can_redo,
-            });
-            state.trigger_save();
-            Ok(Json(json))
-        }
-        None => Err(ApiError::conflict("nothing to redo")),
-    }
 }
 
 /// Populate the Y.Doc with all node text content from a project.

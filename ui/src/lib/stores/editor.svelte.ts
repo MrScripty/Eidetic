@@ -30,10 +30,6 @@ export const editorState = $state<{
   aiStatus: AiStatus | null;
   /** Last-known diffusion LLM status. */
   diffusionStatus: DiffusionStatus | null;
-  /** Whether undo is available. */
-  canUndo: boolean;
-  /** Whether redo is available. */
-  canRedo: boolean;
   /** Parent node ID during batch child generation. */
   batchParentNodeId: NodeId | null;
   /** Total number of children in batch generation. */
@@ -52,8 +48,6 @@ export const editorState = $state<{
   generationError: null,
   aiStatus: null,
   diffusionStatus: null,
-  canUndo: false,
-  canRedo: false,
   batchParentNodeId: null,
   batchTotalCount: 0,
   batchCompletedCount: 0,

@@ -374,8 +374,6 @@ export type ServerMessage =
   | { type: 'generation_progress'; node_id: string; token: string; tokens_generated: number }
   | { type: 'generation_complete'; node_id: string }
   | { type: 'generation_error'; node_id: string; error: string }
-  | { type: 'undo_redo_changed'; can_undo: boolean; can_redo: boolean }
-  | { type: 'project_mutated' }
   | { type: 'bible_changed' }
   | { type: 'script_changed' }
   | { type: 'diffusion_progress'; node_id: string; step: number; total_steps: number }

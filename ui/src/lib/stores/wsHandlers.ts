@@ -79,19 +79,6 @@ export function setupWsHandlers(ws: WsClient) {
       setGenerationError(data.node_id, data.error);
     }),
 
-    ws.on('undo_redo_changed', (data) => {
-      editorState.canUndo = data.can_undo;
-      editorState.canRedo = data.can_redo;
-    }),
-
-    ws.on('project_mutated', async () => {
-      const timeline = await getTimeline();
-      timelineState.timeline = timeline;
-      await refreshTimelineRenderProjection().catch(() => {});
-      const arcs = await listArcs();
-      storyState.arcs = arcs;
-    }),
-
     ws.on('bible_changed', async () => {
       await refreshBibleGraphNodeListProjection().catch(() => {});
     }),

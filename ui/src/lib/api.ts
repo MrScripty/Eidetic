@@ -220,16 +220,6 @@ export async function exportPdf(): Promise<Blob> {
   return res.blob();
 }
 
-// --- Undo/Redo ---
-
-export function undo(): Promise<Project> {
-  return request('/project/undo', { method: 'POST' });
-}
-
-export function redo(): Promise<Project> {
-  return request('/project/redo', { method: 'POST' });
-}
-
 // --- Persistence ---
 
 export function saveProject(path?: string): Promise<{ saved?: string; error?: string }> {

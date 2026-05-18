@@ -11,7 +11,7 @@
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
   import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
-  import { undo, redo, saveProject, exportPdf } from '$lib/api.js';
+  import { saveProject, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import { applyDeleteTimelineNodeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
@@ -23,31 +23,6 @@
   // Register keyboard shortcuts.
   $effect(() => {
     const unsubs = [
-      registerShortcut({
-        key: 'z',
-        ctrl: true,
-        description: 'Undo',
-        action: () => {
-          undo().catch(() => {});
-        },
-      }),
-      registerShortcut({
-        key: 'z',
-        ctrl: true,
-        shift: true,
-        description: 'Redo',
-        action: () => {
-          redo().catch(() => {});
-        },
-      }),
-      registerShortcut({
-        key: 'y',
-        ctrl: true,
-        description: 'Redo',
-        action: () => {
-          redo().catch(() => {});
-        },
-      }),
       registerShortcut({
         key: 's',
         ctrl: true,
@@ -163,19 +138,6 @@
 
       <div class="main-area">
         <div class="toolbar">
-          <button
-            class="toolbar-btn"
-            title="Undo (Ctrl+Z)"
-            disabled={!editorState.canUndo}
-            onclick={() => undo().catch(() => {})}>&#8617;</button
-          >
-          <button
-            class="toolbar-btn"
-            title="Redo (Ctrl+Shift+Z)"
-            disabled={!editorState.canRedo}
-            onclick={() => redo().catch(() => {})}>&#8618;</button
-          >
-          <div class="toolbar-sep"></div>
           <button
             class="toolbar-btn"
             title="Save (Ctrl+S)"
@@ -308,13 +270,6 @@
   .toolbar-btn:disabled {
     opacity: 0.35;
     cursor: default;
-  }
-
-  .toolbar-sep {
-    width: 1px;
-    height: 16px;
-    background: var(--color-border-subtle);
-    margin: 0 4px;
   }
 
   .editor-panel {

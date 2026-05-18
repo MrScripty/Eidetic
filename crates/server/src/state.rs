@@ -45,7 +45,6 @@ pub enum ServerEvent {
         node_id: uuid::Uuid,
     },
     StoryChanged,
-    ProjectMutated,
     GenerationContext {
         node_id: uuid::Uuid,
         system_prompt: String,
@@ -75,54 +74,8 @@ pub enum ServerEvent {
         node_id: uuid::Uuid,
         error: String,
     },
-    UndoRedoChanged {
-        can_undo: bool,
-        can_redo: bool,
-    },
     BibleChanged,
     ScriptChanged,
-}
-
-/// Legacy snapshot-based undo/redo stack.
-///
-/// Kept only for the existing undo/redo routes until revision-backed history
-/// replaces them. New mutation paths do not push cloned project snapshots.
-pub struct UndoStack {
-    undo: Vec<Project>,
-    redo: Vec<Project>,
-}
-
-impl UndoStack {
-    pub fn new() -> Self {
-        Self {
-            undo: Vec::new(),
-            redo: Vec::new(),
-        }
-    }
-
-    /// Undo: restore the most recent snapshot. Caller provides current state
-    /// which is pushed onto the redo stack.
-    pub fn undo(&mut self, current: Project) -> Option<Project> {
-        let prev = self.undo.pop()?;
-        self.redo.push(current);
-        Some(prev)
-    }
-
-    /// Redo: re-apply the most recently undone state. Caller provides current
-    /// state which is pushed onto the undo stack.
-    pub fn redo(&mut self, current: Project) -> Option<Project> {
-        let next = self.redo.pop()?;
-        self.undo.push(current);
-        Some(next)
-    }
-
-    pub fn can_undo(&self) -> bool {
-        !self.undo.is_empty()
-    }
-
-    pub fn can_redo(&self) -> bool {
-        !self.redo.is_empty()
-    }
 }
 
 /// Which AI backend to use.
@@ -212,8 +165,6 @@ pub struct AppState {
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
     /// Path where the current project is saved on disk.
     pub project_path: Arc<Mutex<Option<PathBuf>>>,
-    /// Snapshot-based undo/redo stack for project mutations.
-    pub undo_stack: Arc<Mutex<UndoStack>>,
     /// In-memory vector store for RAG reference material.
     pub vector_store: Arc<Mutex<VectorStore>>,
     /// Channel to signal the auto-save background task.
@@ -269,7 +220,6 @@ impl AppState {
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
             project_path,
-            undo_stack: Arc::new(Mutex::new(UndoStack::new())),
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
             diffuse_tx,
