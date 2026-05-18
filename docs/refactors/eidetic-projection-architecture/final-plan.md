@@ -213,6 +213,7 @@ Completed slices:
 - `feat(renderer): emit timeline create commands` added validated renderer command emission for node creation requests so future Bevy create interactions can flow through backend-confirmed timeline commands.
 - `refactor(ui): route timeline gap fill through commands` moved the existing gap-fill interaction onto the backend timeline create command/projection path instead of the legacy fill-gap route.
 - `refactor(ui): remove legacy structural timeline helpers` removed unused frontend helpers for legacy create, update, delete, split, resize, and fill-gap timeline mutation routes after their UI callers moved to command/projection paths.
+- `refactor(server): remove legacy structural timeline routes` removed legacy create, update, delete, split, resize, and fill-gap timeline mutation routes after replacement command/projection paths landed.
 
 Discovered issues:
 
