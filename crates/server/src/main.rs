@@ -9,6 +9,7 @@ mod persistence;
 mod prompt_format;
 mod revision_projection;
 mod routes;
+mod sqlite;
 mod state;
 mod static_files;
 mod validation;

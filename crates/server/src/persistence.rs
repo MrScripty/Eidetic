@@ -221,14 +221,8 @@ fn save_project_sync(
         std::fs::create_dir_all(parent).map_err(|e| format!("mkdir error: {e}"))?;
     }
 
-    let conn = Connection::open(path).map_err(|e| format!("sqlite open error: {e}"))?;
-
-    conn.execute_batch(
-        "PRAGMA journal_mode = WAL;
-         PRAGMA synchronous = NORMAL;
-         PRAGMA foreign_keys = ON;",
-    )
-    .map_err(|e| format!("pragma error: {e}"))?;
+    let conn = crate::sqlite::open_write_connection(path)
+        .map_err(|e| format!("sqlite open error: {e}"))?;
 
     create_schema(&conn)?;
 

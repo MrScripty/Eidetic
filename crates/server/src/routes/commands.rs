@@ -4,7 +4,6 @@ use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{CommandEnvelope, ProjectionEnvelope, SetObjectFieldCommand};
-use rusqlite::Connection;
 use serde::Serialize;
 
 use crate::error::{ApiError, ApiJson};
@@ -51,13 +50,8 @@ fn apply_command_at_path(
     path: PathBuf,
     command: CommandEnvelope<SetObjectFieldCommand>,
 ) -> Result<ObjectFieldCommandResponse, ApiError> {
-    let mut conn = Connection::open(path).map_err(|e| ApiError::internal(e.to_string()))?;
-    conn.execute_batch(
-        "PRAGMA journal_mode = WAL;
-         PRAGMA synchronous = NORMAL;
-         PRAGMA foreign_keys = ON;",
-    )
-    .map_err(|e| ApiError::internal(e.to_string()))?;
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
     history_store::create_schema(&conn).map_err(map_history_error)?;
     let (outcome, projection) =
         object_field_command::apply_set_object_field(&mut conn, &command, 0)

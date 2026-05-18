@@ -8,6 +8,7 @@ This directory contains the local Axum host for Eidetic: route registration, per
 |-------------|-------------|
 | `main.rs` | Server bootstrap, routing, CORS policy, and static hosting. |
 | `routes/` | HTTP handlers for project, command, timeline, story, AI, export, and reference workflows. |
+| `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |
@@ -44,7 +45,7 @@ Keep transport, persistence, and realtime coordination in the server crate while
 - `persistence.rs` or `ydoc.rs` gains another unrelated concern.
 
 ## Dependencies
-**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `diffusion/`, `history_store.rs`, `object_field_command.rs`, `revision_projection.rs`.
+**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `diffusion/`, `sqlite.rs`, `history_store.rs`, `object_field_command.rs`, `revision_projection.rs`.
 **External:** `axum`, `tower-http`, `tokio`, `rusqlite`, `yrs`, `pyo3`, `reqwest`.
 
 ## Related ADRs
