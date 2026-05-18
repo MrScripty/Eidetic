@@ -109,14 +109,7 @@ async fn unlock_node(
     match project.timeline.node_mut(NodeId(id)) {
         Ok(node) => {
             node.locked = false;
-            // Recompute status from current content state.
-            node.content.status = if !node.content.content.is_empty() {
-                ContentStatus::HasContent
-            } else if !node.content.notes.is_empty() {
-                ContentStatus::NotesOnly
-            } else {
-                ContentStatus::Empty
-            };
+            // Status unchanged; script text is owned by script document projections.
             let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
             state.trigger_save();
             Ok(Json(serde_json::json!({ "locked": false })))
