@@ -10,7 +10,7 @@
   } from '$lib/stores/timeline.svelte.js';
   import { editorState, startGeneration } from '$lib/stores/editor.svelte.js';
   import { storyState } from '$lib/stores/story.svelte.js';
-  import { fillGap, generateContent } from '$lib/api.js';
+  import { generateContent } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import {
     applyCreateTimelineNodeCommand,
@@ -147,7 +147,19 @@
   }
 
   async function handleFillGap(gap: TimelineGap) {
-    await fillGap(track.level, gap.time_range.start_ms, gap.time_range.end_ms);
+    try {
+      await applyCreateTimelineNodeCommand({
+        node_id: crypto.randomUUID(),
+        parent_id: null,
+        level: track.level,
+        name: 'Bridge',
+        start_ms: gap.time_range.start_ms,
+        end_ms: gap.time_range.end_ms,
+        beat_type: null,
+      });
+    } catch (error) {
+      notify('error', `Fill gap failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
   }
 
   async function handleDblClick(e: MouseEvent) {

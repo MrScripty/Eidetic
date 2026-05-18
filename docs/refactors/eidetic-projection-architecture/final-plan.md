@@ -211,6 +211,7 @@ Completed slices:
 - `feat(ui): cache timeline create projections` routed create timeline command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route timeline double-click create through commands` moved the existing DOM timeline double-click create handler onto the backend timeline create command/projection path.
 - `feat(renderer): emit timeline create commands` added validated renderer command emission for node creation requests so future Bevy create interactions can flow through backend-confirmed timeline commands.
+- `refactor(ui): route timeline gap fill through commands` moved the existing gap-fill interaction onto the backend timeline create command/projection path instead of the legacy fill-gap route.
 
 Discovered issues:
 
