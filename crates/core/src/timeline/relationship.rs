@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::story::arc::ArcId;
-use crate::story::bible::EntityId;
 use super::node::NodeId;
+use crate::story::arc::ArcId;
 
 /// Unique identifier for a relationship between nodes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -28,11 +27,7 @@ pub struct Relationship {
 }
 
 impl Relationship {
-    pub fn new(
-        from_node: NodeId,
-        to_node: NodeId,
-        relationship_type: RelationshipType,
-    ) -> Self {
+    pub fn new(from_node: NodeId, to_node: NodeId, relationship_type: RelationshipType) -> Self {
         Self {
             id: RelationshipId::new(),
             from_node,
@@ -49,8 +44,6 @@ pub enum RelationshipType {
     Causal,
     /// "these arcs intersect at this point."
     Convergence { arc_ids: Vec<ArcId> },
-    /// "this entity drives this node."
-    EntityDrives { entity_id: EntityId },
     /// User-defined thematic or structural link.
     Thematic,
 }

@@ -85,7 +85,6 @@ export interface Relationship {
 export type RelationshipType =
   | 'Causal'
   | { Convergence: { arc_ids: ArcId[] } }
-  | { EntityDrives: { entity_id: string } }
   | 'Thematic';
 
 // --- Episode structure ---

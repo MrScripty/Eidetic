@@ -256,6 +256,7 @@ Completed slices:
 - `refactor(server): remove legacy json bible migration` removed the old JSON character-to-entity migration path so legacy JSON loading no longer populates `StoryBible.entities`.
 - `refactor(server): stop persisting legacy bible entities` removed legacy entity tables, save/load loops, and v1 entity readers from project SQLite persistence so project persistence no longer owns story bible entity state.
 - `refactor(core): remove project bible field` removed `Project.bible` from shared core/server/frontend project DTOs after project persistence stopped loading or saving legacy bible entities.
+- `refactor(core): remove entity-driven timeline relationship` removed the legacy timeline relationship variant that referenced bible entity IDs; bible semantics now belong to graph edges/projections.
 
 Discovered issues:
 
