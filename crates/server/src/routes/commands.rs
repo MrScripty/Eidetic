@@ -3,11 +3,12 @@ use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
     ApplyTimelineChildrenCommand, BibleNodeDetailProjection, CommandEnvelope,
-    CreateBibleGraphNodeCommand, CreateTimelineNodeCommand, DeleteTimelineNodeCommand,
-    ProjectionEnvelope, ScriptDocumentProjection, SetBibleGraphEdgeCommand,
-    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand,
-    SetScriptBlockCommand, SetScriptLockCommand, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand, TimelineRenderProjection,
+    CreateBibleGraphNodeCommand, CreateTimelineNodeCommand, CreateTimelineRelationshipCommand,
+    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ProjectionEnvelope,
+    ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
+    SetScriptLockCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    TimelineRenderProjection,
 };
 use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use serde::Serialize;
@@ -46,6 +47,14 @@ pub fn router() -> Router<AppState> {
             post(set_timeline_node_range),
         )
         .route("/commands/timeline/create-node", post(create_timeline_node))
+        .route(
+            "/commands/timeline/create-relationship",
+            post(create_timeline_relationship),
+        )
+        .route(
+            "/commands/timeline/delete-relationship",
+            post(delete_timeline_relationship),
+        )
         .route(
             "/commands/timeline/apply-children",
             post(apply_timeline_children),
@@ -278,6 +287,50 @@ async fn apply_timeline_children(
     }
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn create_timeline_relationship(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<CreateTimelineRelationshipCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = timeline_command::apply_create_timeline_relationship(project, &command)
+            .map_err(map_timeline_command_error)?;
+        TimelineCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn delete_timeline_relationship(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<DeleteTimelineRelationshipCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = timeline_command::apply_delete_timeline_relationship(project, &command)
+            .map_err(map_timeline_command_error)?;
+        TimelineCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     state.trigger_save();
     crate::error::json_value(response)
 }

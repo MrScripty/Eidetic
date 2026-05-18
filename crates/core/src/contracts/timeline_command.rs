@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::timeline::node::{BeatType, NodeId, StoryLevel};
+use crate::timeline::relationship::{RelationshipId, RelationshipType};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SetTimelineNodeRangeCommand {
@@ -44,4 +45,17 @@ pub struct ApplyTimelineChildCommand {
     pub outline: String,
     pub weight: f32,
     pub beat_type: Option<BeatType>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CreateTimelineRelationshipCommand {
+    pub relationship_id: RelationshipId,
+    pub from_node_id: NodeId,
+    pub to_node_id: NodeId,
+    pub relationship_type: RelationshipType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeleteTimelineRelationshipCommand {
+    pub relationship_id: RelationshipId,
 }

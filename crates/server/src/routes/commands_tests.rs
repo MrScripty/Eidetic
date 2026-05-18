@@ -695,6 +695,125 @@ async fn apply_timeline_children_command_rejects_unknown_parent() {
 }
 
 #[tokio::test]
+async fn create_timeline_relationship_command_returns_timeline_render_projection() {
+    let path = temp_db_path("creates-timeline-relationship");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_relationship_command_body(relationship_id, from_node, to_node);
+
+    let response = app
+        .oneshot(create_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let relationships = value["projection"]["payload"]["relationships"]
+        .as_array()
+        .expect("timeline relationships");
+    assert!(relationships.iter().any(|relationship| {
+        relationship["relationship_id"] == relationship_id.0.to_string()
+            && relationship["from_node_id"] == from_node.0.to_string()
+            && relationship["to_node_id"] == to_node.0.to_string()
+    }));
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_relationship_command_rejects_unknown_endpoint() {
+    let path = temp_db_path("rejects-unknown-timeline-relationship-node");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let to_node = project.timeline.nodes[0].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_relationship_command_body(
+        eidetic_core::timeline::relationship::RelationshipId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+        to_node,
+    );
+
+    let response = app
+        .oneshot(create_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn delete_timeline_relationship_command_returns_timeline_render_projection() {
+    let path = temp_db_path("deletes-timeline-relationship");
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    let mut relationship = eidetic_core::timeline::relationship::Relationship::new(
+        from_node,
+        to_node,
+        eidetic_core::timeline::relationship::RelationshipType::Thematic,
+    );
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    relationship.id = relationship_id;
+    project.timeline.add_relationship(relationship).unwrap();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = delete_timeline_relationship_command_body(relationship_id);
+
+    let response = app
+        .oneshot(delete_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let relationships = value["projection"]["payload"]["relationships"]
+        .as_array()
+        .expect("timeline relationships");
+    assert!(
+        relationships
+            .iter()
+            .all(|relationship| relationship["relationship_id"] != relationship_id.0.to_string())
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn delete_timeline_relationship_command_rejects_unknown_relationship() {
+    let path = temp_db_path("rejects-unknown-timeline-relationship-delete");
+    let state = AppState::new().await;
+    *state.project.lock() = Some(Template::MultiCam.build_project("Commands Test"));
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = delete_timeline_relationship_command_body(
+        eidetic_core::timeline::relationship::RelationshipId::new(),
+    );
+
+    let response = app
+        .oneshot(delete_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn split_timeline_node_command_returns_timeline_render_projection() {
     let path = temp_db_path("splits-timeline-node");
     let state = AppState::new().await;
@@ -892,6 +1011,24 @@ fn apply_timeline_children_command_request(body: serde_json::Value) -> Request<B
     Request::builder()
         .method("POST")
         .uri("/commands/timeline/apply-children")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn create_timeline_relationship_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/create-relationship")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn delete_timeline_relationship_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/delete-relationship")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -1120,6 +1257,33 @@ fn apply_timeline_children_command_body(
                     "beat_type": null,
                 }
             ]
+        }
+    })
+}
+
+fn create_timeline_relationship_command_body(
+    relationship_id: eidetic_core::timeline::relationship::RelationshipId,
+    from_node_id: eidetic_core::timeline::node::NodeId,
+    to_node_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "relationship_id": relationship_id,
+            "from_node_id": from_node_id,
+            "to_node_id": to_node_id,
+            "relationship_type": eidetic_core::timeline::relationship::RelationshipType::Thematic,
+        }
+    })
+}
+
+fn delete_timeline_relationship_command_body(
+    relationship_id: eidetic_core::timeline::relationship::RelationshipId,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "relationship_id": relationship_id,
         }
     })
 }

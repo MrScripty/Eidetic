@@ -1,10 +1,12 @@
 use eidetic_core::contracts::{
     ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
-    DeleteTimelineNodeCommand, ProjectionEnvelope, SetTimelineNodeRangeCommand,
+    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
+    DeleteTimelineRelationshipCommand, ProjectionEnvelope, SetTimelineNodeRangeCommand,
     SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
+use eidetic_core::timeline::relationship::Relationship;
 use eidetic_core::timeline::timing::TimeRange;
 use thiserror::Error;
 
@@ -143,6 +145,41 @@ pub(crate) fn apply_timeline_children(
         }
         cursor = end_ms;
     }
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_create_timeline_relationship(
+    project: &mut Project,
+    command: &CommandEnvelope<CreateTimelineRelationshipCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    let mut relationship = Relationship::new(
+        command.payload.from_node_id,
+        command.payload.to_node_id,
+        command.payload.relationship_type.clone(),
+    );
+    relationship.id = command.payload.relationship_id;
+
+    project
+        .timeline
+        .add_relationship(relationship)
+        .map_err(TimelineCommandError::Core)?;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_delete_timeline_relationship(
+    project: &mut Project,
+    command: &CommandEnvelope<DeleteTimelineRelationshipCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    project
+        .timeline
+        .remove_relationship(command.payload.relationship_id)
+        .map_err(TimelineCommandError::Core)?;
 
     Ok(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
@@ -358,6 +395,77 @@ mod tests {
                 .any(|clip| clip.node_id == second_child_id
                     && clip.parent_id == Some(parent.id)
                     && clip.name == "Second child")
+        );
+    }
+
+    #[test]
+    fn create_timeline_relationship_returns_projection_with_relationship() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let from_node = project.timeline.nodes[0].id;
+        let to_node = project.timeline.nodes[1].id;
+        let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: CreateTimelineRelationshipCommand {
+                relationship_id,
+                from_node_id: from_node,
+                to_node_id: to_node,
+                relationship_type: eidetic_core::timeline::relationship::RelationshipType::Thematic,
+            },
+        };
+
+        let projection = apply_create_timeline_relationship(&mut project, &command).unwrap();
+
+        assert!(projection.payload.relationships.iter().any(|relationship| {
+            relationship.relationship_id == relationship_id
+                && relationship.from_node_id == from_node
+                && relationship.to_node_id == to_node
+        }));
+    }
+
+    #[test]
+    fn create_timeline_relationship_rejects_unknown_endpoint() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let to_node = project.timeline.nodes[0].id;
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: CreateTimelineRelationshipCommand {
+                relationship_id: eidetic_core::timeline::relationship::RelationshipId::new(),
+                from_node_id: eidetic_core::timeline::node::NodeId::new(),
+                to_node_id: to_node,
+                relationship_type: eidetic_core::timeline::relationship::RelationshipType::Causal,
+            },
+        };
+
+        assert!(apply_create_timeline_relationship(&mut project, &command).is_err());
+    }
+
+    #[test]
+    fn delete_timeline_relationship_returns_projection_without_relationship() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let from_node = project.timeline.nodes[0].id;
+        let to_node = project.timeline.nodes[1].id;
+        let mut relationship = Relationship::new(
+            from_node,
+            to_node,
+            eidetic_core::timeline::relationship::RelationshipType::Thematic,
+        );
+        let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+        relationship.id = relationship_id;
+        project.timeline.add_relationship(relationship).unwrap();
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: DeleteTimelineRelationshipCommand { relationship_id },
+        };
+
+        let projection = apply_delete_timeline_relationship(&mut project, &command).unwrap();
+
+        assert!(
+            projection
+                .payload
+                .relationships
+                .iter()
+                .all(|relationship| relationship.relationship_id != relationship_id)
         );
     }
 }

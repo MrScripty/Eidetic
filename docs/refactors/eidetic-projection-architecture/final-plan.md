@@ -220,6 +220,7 @@ Completed slices:
 - `refactor(ui): route child planning through timeline commands` moved BeatEditor child-plan application onto the backend timeline apply-children command/projection path instead of the legacy apply-children route.
 - `refactor(ui): remove legacy apply children helper` removed the unused frontend helper for the legacy child-plan application route after BeatEditor moved to command/projection APIs.
 - `refactor(server): remove legacy apply children route` removed the legacy child-plan application route and its direct story-bible entity mutation side effects after the command/projection replacement landed.
+- `feat(server): add timeline relationship commands` added backend command routes for creating and deleting timeline relationships, returning updated timeline render projections and covering invalid endpoints/unknown relationship IDs.
 
 Discovered issues:
 
