@@ -13,6 +13,7 @@ import {
   MAIN_SCRIPT_DOCUMENT_ID,
   refreshScriptDocumentProjection,
 } from './scriptDocumentProjection.svelte.js';
+import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 
 /** Register WebSocket event handlers that update Svelte stores. */
 export function setupWsHandlers(ws: WsClient) {
@@ -20,11 +21,13 @@ export function setupWsHandlers(ws: WsClient) {
     ws.on('timeline_changed', async () => {
       const timeline = await getTimeline();
       timelineState.timeline = timeline;
+      await refreshTimelineRenderProjection().catch(() => {});
     }),
 
     ws.on('hierarchy_changed', async () => {
       const timeline = await getTimeline();
       timelineState.timeline = timeline;
+      await refreshTimelineRenderProjection().catch(() => {});
     }),
 
     ws.on('story_changed', async () => {
@@ -85,6 +88,7 @@ export function setupWsHandlers(ws: WsClient) {
     ws.on('project_mutated', async () => {
       const timeline = await getTimeline();
       timelineState.timeline = timeline;
+      await refreshTimelineRenderProjection().catch(() => {});
       const arcs = await listArcs();
       const entities = await listEntities();
       storyState.arcs = arcs;
