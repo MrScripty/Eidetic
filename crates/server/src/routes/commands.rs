@@ -6,6 +6,7 @@ use eidetic_core::contracts::{
     BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, ProjectionEnvelope,
     ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
     SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
+    SetScriptLockCommand,
 };
 use serde::Serialize;
 
@@ -34,6 +35,7 @@ pub fn router() -> Router<AppState> {
             post(ensure_canonical_bible_roots),
         )
         .route("/commands/script/block", post(set_script_block))
+        .route("/commands/script/lock", post(set_script_lock))
 }
 
 #[derive(Debug, Serialize)]
@@ -155,6 +157,19 @@ async fn set_script_block(
     crate::error::json_value(response)
 }
 
+async fn set_script_lock(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SetScriptLockCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response = tokio::task::spawn_blocking(move || set_script_lock_at_path(path, command))
+        .await
+        .map_err(|e| ApiError::internal(format!("script lock command task failed: {e}")))??;
+
+    let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+    crate::error::json_value(response)
+}
+
 fn apply_command_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<SetObjectFieldCommand>,
@@ -268,6 +283,22 @@ fn set_script_block_at_path(
         .map_err(|e| ApiError::internal(e.to_string()))?;
     let (outcome, projection) =
         script_document_command::apply_set_script_block(&mut conn, &command, 0)
+            .map_err(map_script_document_error)?;
+
+    Ok(ScriptDocumentCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
+fn set_script_lock_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<SetScriptLockCommand>,
+) -> Result<ScriptDocumentCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        script_document_command::apply_set_script_lock(&mut conn, &command, 0)
             .map_err(map_script_document_error)?;
 
     Ok(ScriptDocumentCommandResponse {

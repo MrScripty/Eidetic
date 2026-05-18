@@ -8,7 +8,8 @@ use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId,
     BibleGraphPartId, BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId,
     BibleGraphSnapshotId, EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind, ScriptBlockId,
-    ScriptBlockKind, ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus,
+    ScriptBlockKind, ScriptDocumentId, ScriptLockId, ScriptSegmentId, ScriptSegmentStatus,
+    ScriptSpanId,
 };
 use serde_json::json;
 use tower::util::ServiceExt;
@@ -439,6 +440,52 @@ async fn script_block_command_rejects_invalid_segment_range() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn script_lock_command_returns_script_document_projection() {
+    let path = temp_db_path("sets-script-lock");
+    let app = app_with_project_path(path.clone()).await;
+    let block = script_block_command_body("Ada enters with a wet umbrella.");
+    let lock = script_lock_command_body("User approved wording.");
+
+    let block_response = app
+        .clone()
+        .oneshot(script_block_command_request(block))
+        .await
+        .expect("block route response");
+    let lock_response = app
+        .oneshot(script_lock_command_request(lock))
+        .await
+        .expect("lock route response");
+
+    assert_eq!(block_response.status(), StatusCode::OK);
+    assert_eq!(lock_response.status(), StatusCode::OK);
+    let value = response_json(lock_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(value["projection"]["version"], 6);
+    assert_eq!(
+        value["projection"]["payload"]["segments"][0]["blocks"][0]["locks"][0]["reason"],
+        "User approved wording."
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn script_lock_command_rejects_missing_span() {
+    let path = temp_db_path("rejects-missing-script-span");
+    let app = app_with_project_path(path.clone()).await;
+    let body = script_lock_command_body("User approved wording.");
+
+    let response = app
+        .oneshot(script_lock_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -488,6 +535,15 @@ fn script_block_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
         .uri("/commands/script/block")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn script_lock_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/script/lock")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -620,6 +676,17 @@ fn script_block_command_body(text: &str) -> serde_json::Value {
             "block_kind": ScriptBlockKind::Action,
             "text": text,
             "sort_order": 2,
+        }
+    })
+}
+
+fn script_lock_command_body(reason: &str) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "lock_id": ScriptLockId::new("script.lock.action-1").unwrap(),
+            "span_id": ScriptSpanId::new("script.block.action-1.span.main").unwrap(),
+            "reason": reason,
         }
     })
 }

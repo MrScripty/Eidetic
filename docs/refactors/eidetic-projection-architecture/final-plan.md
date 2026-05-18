@@ -171,6 +171,7 @@ Completed slices:
 - `feat(ui): add script document api helpers` added typed frontend helpers and focused tests for script block commands and script document projection reads without introducing local canonical script state.
 - `feat(ui): cache script document projections` added a focused script document projection store that caches backend reads and command responses by document ID while preserving backend ownership of script state.
 - `feat(ui): render script panel from projections` moved the script panel read path from Beat node content to the backend-owned main script document projection and refreshes that projection on `script_changed` websocket events.
+- `feat(server): add script document lock command` added a transactional script lock command route that validates existing spans, records lock revisions, upserts lock rows, returns updated script document projections, and emits `script_changed`.
 
 Discovered issues:
 

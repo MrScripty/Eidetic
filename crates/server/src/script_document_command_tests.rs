@@ -1,7 +1,7 @@
 use super::*;
 use eidetic_core::contracts::{
-    ProjectionVersion, ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptSegmentId,
-    ScriptSegmentStatus,
+    ProjectionVersion, ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptLockId,
+    ScriptSegmentId, ScriptSegmentStatus, ScriptSpanId, SetScriptLockCommand,
 };
 
 fn memory_connection() -> Connection {
@@ -25,6 +25,14 @@ fn block_command(text: &str) -> CommandEnvelope<SetScriptBlockCommand> {
         block_kind: ScriptBlockKind::Action,
         text: text.to_string(),
         sort_order: 2,
+    })
+}
+
+fn lock_command(reason: &str) -> CommandEnvelope<SetScriptLockCommand> {
+    CommandEnvelope::new(SetScriptLockCommand {
+        lock_id: ScriptLockId::new("script.lock.action-1").unwrap(),
+        span_id: ScriptSpanId::new("script.block.action-1.span.main").unwrap(),
+        reason: reason.to_string(),
     })
 }
 
@@ -85,6 +93,60 @@ fn set_script_block_rejects_invalid_segment_range_without_writes() {
     assert_eq!(table_count(&conn, "commands"), 0);
     assert_eq!(table_count(&conn, "object_revisions"), 0);
     assert_eq!(table_count(&conn, "script_documents"), 0);
+}
+
+#[test]
+fn set_script_lock_records_history_and_projection() {
+    let mut conn = memory_connection();
+    let block = block_command("Ada enters with a wet umbrella.");
+    apply_set_script_block(&mut conn, &block, 100).unwrap();
+    let command = lock_command("User approved wording.");
+
+    let (outcome, projection) = apply_set_script_lock(&mut conn, &command, 200).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(projection.version, ProjectionVersion(6));
+    assert_eq!(
+        projection.payload.segments[0].blocks[0].locks[0].reason,
+        "User approved wording."
+    );
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 5);
+    assert_eq!(table_count(&conn, "script_locks"), 1);
+}
+
+#[test]
+fn duplicate_set_script_lock_command_is_idempotent() {
+    let mut conn = memory_connection();
+    let block = block_command("Ada enters with a wet umbrella.");
+    apply_set_script_block(&mut conn, &block, 100).unwrap();
+    let command = lock_command("User approved wording.");
+
+    let (first, _) = apply_set_script_lock(&mut conn, &command, 200).unwrap();
+    let (second, projection) = apply_set_script_lock(&mut conn, &command, 200).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(projection.payload.segments[0].blocks[0].locks.len(), 1);
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 5);
+    assert_eq!(table_count(&conn, "script_locks"), 1);
+}
+
+#[test]
+fn set_script_lock_rejects_missing_span_without_writes() {
+    let mut conn = memory_connection();
+    let command = lock_command("User approved wording.");
+
+    let error = apply_set_script_lock(&mut conn, &command, 200).unwrap_err();
+
+    assert!(matches!(
+        error,
+        ScriptDocumentCommandError::InvalidCommand(_)
+    ));
+    assert_eq!(table_count(&conn, "commands"), 0);
+    assert_eq!(table_count(&conn, "object_revisions"), 0);
+    assert_eq!(table_count(&conn, "script_locks"), 0);
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {

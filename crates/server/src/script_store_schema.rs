@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS script_locks (
     span_id          TEXT NOT NULL REFERENCES script_spans(id),
     reason           TEXT NOT NULL CHECK (reason <> ''),
     created_event_id TEXT NOT NULL REFERENCES change_events(id),
+    updated_event_id TEXT NOT NULL REFERENCES change_events(id),
     deleted_event_id TEXT REFERENCES change_events(id)
 );
 CREATE INDEX IF NOT EXISTS idx_script_locks_span

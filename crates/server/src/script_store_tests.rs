@@ -59,16 +59,7 @@ fn script_document_projection_includes_segments_blocks_spans_and_locks() {
             upsert_segment_in_transaction(tx, &segment, event.id)?;
             upsert_block_in_transaction(tx, &block, event.id)?;
             upsert_span_in_transaction(tx, &span, event.id)?;
-            tx.execute(
-                "INSERT INTO script_locks (id, span_id, reason, created_event_id)
-                 VALUES (?1, ?2, ?3, ?4)",
-                rusqlite::params![
-                    lock.id.as_str(),
-                    lock.span_id.as_str(),
-                    lock.reason,
-                    event.id.0.to_string(),
-                ],
-            )?;
+            upsert_lock_in_transaction(tx, &lock, event.id)?;
             Ok(())
         },
     )

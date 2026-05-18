@@ -1,8 +1,8 @@
 use eidetic_core::contracts::{
     ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectKind,
     ObjectRevision, ProjectionEnvelope, RevisionOperation, ScriptBlock, ScriptDocument,
-    ScriptDocumentProjection, ScriptSegment, ScriptSegmentStatus, ScriptSpan, ScriptSpanId,
-    ScriptSpanProvenance, SetScriptBlockCommand,
+    ScriptDocumentProjection, ScriptLock, ScriptSegment, ScriptSegmentStatus, ScriptSpan,
+    ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
 };
 use rusqlite::Connection;
 
@@ -69,6 +69,63 @@ pub(crate) fn apply_set_script_block(
     Ok((outcome, projection))
 }
 
+pub(crate) fn apply_set_script_lock(
+    conn: &mut Connection,
+    command: &CommandEnvelope<SetScriptLockCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<ScriptDocumentProjection>,
+    ),
+    ScriptDocumentCommandError,
+> {
+    validate_lock_command(&command.payload)?;
+    script_store::create_schema(conn)?;
+
+    if !script_store::span_exists(conn, &command.payload.span_id)? {
+        return Err(ScriptDocumentCommandError::InvalidCommand(
+            "span_id does not reference an existing script span".to_string(),
+        ));
+    }
+    let document_id = script_store::document_id_for_span(conn, &command.payload.span_id)?
+        .ok_or_else(|| {
+            ScriptDocumentCommandError::InvalidCommand(
+                "span_id does not reference a script document".to_string(),
+            )
+        })?;
+    let lock = command_lock(&command.payload);
+    let lock_exists = script_store::lock_exists(conn, &lock.id)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("set script lock {}", command.payload.lock_id.as_str()),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revisions = vec![lock_revision(&lock, lock_exists, event.id)];
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "script.set_lock",
+        &event,
+        &revisions,
+        |tx| {
+            script_store::upsert_lock_in_transaction(tx, &lock, event.id)?;
+            Ok(())
+        },
+    )?;
+    let projection = script_store::load_document_projection_envelope(conn, &document_id)?
+        .ok_or_else(|| {
+            ScriptDocumentCommandError::Store(HistoryStoreError::InvalidValue(format!(
+                "script document projection missing after lock update: {}",
+                document_id.as_str()
+            )))
+        })?;
+
+    Ok((outcome, projection))
+}
+
 fn validate_block_command(
     command: &SetScriptBlockCommand,
 ) -> Result<(), ScriptDocumentCommandError> {
@@ -87,6 +144,15 @@ fn validate_block_command(
     {
         return Err(ScriptDocumentCommandError::InvalidCommand(
             "segment time is too large".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_lock_command(command: &SetScriptLockCommand) -> Result<(), ScriptDocumentCommandError> {
+    if command.reason.trim().is_empty() {
+        return Err(ScriptDocumentCommandError::InvalidCommand(
+            "reason is required".to_string(),
         ));
     }
     Ok(())
@@ -119,6 +185,14 @@ fn command_block(command: &SetScriptBlockCommand) -> ScriptBlock {
         block_kind: command.block_kind.clone(),
         text: command.text.clone(),
         sort_order: command.sort_order,
+    }
+}
+
+fn command_lock(command: &SetScriptLockCommand) -> ScriptLock {
+    ScriptLock {
+        id: command.lock_id.clone(),
+        span_id: command.span_id.clone(),
+        reason: command.reason.clone(),
     }
 }
 
@@ -291,6 +365,37 @@ fn span_revision(
         "end_byte",
         None,
         Some(FieldValue::Integer(i64::from(span.end_byte))),
+    ))
+}
+
+fn lock_revision(
+    lock: &ScriptLock,
+    exists: bool,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> ObjectRevision {
+    let operation = if exists {
+        RevisionOperation::Update
+    } else {
+        RevisionOperation::Create
+    };
+    ObjectRevision::new(
+        ObjectKind::ScriptLock,
+        lock.id.as_str(),
+        event_id,
+        operation,
+    )
+    .with_field(FieldDelta::new(
+        "span_id",
+        None,
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::ScriptSpan,
+            id: lock.span_id.as_str().to_string(),
+        }),
+    ))
+    .with_field(FieldDelta::new(
+        "reason",
+        None,
+        Some(FieldValue::Text(lock.reason.clone())),
     ))
 }
 

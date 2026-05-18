@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
     ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion, ScriptBlock, ScriptBlockId,
     ScriptBlockProjection, ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptLock,
-    ScriptSegment, ScriptSegmentId, ScriptSegmentProjection, ScriptSpan,
+    ScriptLockId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection, ScriptSpan,
+    ScriptSpanId,
 };
 use rusqlite::{Connection, OptionalExtension, Transaction, params};
 
@@ -133,6 +134,82 @@ pub(crate) fn upsert_span_in_transaction(
         ],
     )?;
     Ok(())
+}
+
+pub(crate) fn upsert_lock_in_transaction(
+    tx: &Transaction<'_>,
+    lock: &ScriptLock,
+    event_id: ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    tx.execute(
+        "INSERT INTO script_locks (
+            id, span_id, reason, created_event_id, updated_event_id
+         ) VALUES (?1, ?2, ?3, ?4, ?4)
+         ON CONFLICT(id) DO UPDATE SET
+            span_id = excluded.span_id,
+            reason = excluded.reason,
+            updated_event_id = excluded.updated_event_id,
+            deleted_event_id = NULL",
+        params![
+            lock.id.as_str(),
+            lock.span_id.as_str(),
+            lock.reason,
+            event_id.0.to_string(),
+        ],
+    )?;
+    Ok(())
+}
+
+pub(crate) fn span_exists(
+    conn: &Connection,
+    span_id: &ScriptSpanId,
+) -> Result<bool, HistoryStoreError> {
+    conn.query_row(
+        "SELECT EXISTS(
+            SELECT 1 FROM script_spans
+            WHERE id = ?1 AND deleted_event_id IS NULL
+         )",
+        [span_id.as_str()],
+        |row| row.get::<_, bool>(0),
+    )
+    .map_err(Into::into)
+}
+
+pub(crate) fn lock_exists(
+    conn: &Connection,
+    lock_id: &ScriptLockId,
+) -> Result<bool, HistoryStoreError> {
+    conn.query_row(
+        "SELECT EXISTS(
+            SELECT 1 FROM script_locks
+            WHERE id = ?1 AND deleted_event_id IS NULL
+         )",
+        [lock_id.as_str()],
+        |row| row.get::<_, bool>(0),
+    )
+    .map_err(Into::into)
+}
+
+pub(crate) fn document_id_for_span(
+    conn: &Connection,
+    span_id: &ScriptSpanId,
+) -> Result<Option<ScriptDocumentId>, HistoryStoreError> {
+    conn.query_row(
+        "SELECT segments.document_id
+         FROM script_spans spans
+         INNER JOIN script_blocks blocks ON blocks.id = spans.block_id
+         INNER JOIN script_segments segments ON segments.id = blocks.segment_id
+         WHERE spans.id = ?1
+            AND spans.deleted_event_id IS NULL
+            AND blocks.deleted_event_id IS NULL
+            AND segments.deleted_event_id IS NULL",
+        [span_id.as_str()],
+        |row| row.get::<_, String>(0),
+    )
+    .optional()?
+    .map(ScriptDocumentId::new)
+    .transpose()
+    .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))
 }
 
 pub(crate) fn load_document_projection(
