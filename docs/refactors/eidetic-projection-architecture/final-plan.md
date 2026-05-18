@@ -109,6 +109,20 @@ Before implementation begins:
 - Commit each verified logical slice before starting the next implementation slice.
 - Keep lockfile, generated contract, schema, and fixture changes owned by one serial integration step unless a specific worker plan says otherwise.
 
+## Implementation Progress Log
+
+Completed slices:
+
+- `docs(refactor): add projection architecture plan` added this consolidated plan, the codebase impact review, and supporting planning notes.
+- `fix(build): correct pumas library path` corrected the workspace path to the local Pumas library crate so Cargo can resolve workspace metadata.
+- `fix(build): update pumas dependency lockfile` refreshed `Cargo.lock` for the corrected local Pumas library path.
+
+Discovered issues:
+
+- Commit hooks report `Can't find lefthook in PATH`. Commits succeed, but tooling setup is incomplete and should be fixed before treating hook execution as a verified gate.
+- Baseline `cargo fmt --all -- --check` reports pre-existing formatting drift in server files. Do not mix that repo-wide cleanup into feature slices; either add a dedicated formatting cleanup slice or intentionally defer it with CI expectations updated.
+- The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.
+
 ## Concurrent Worker Policy
 
 No parallel worker execution is assumed by this plan.
