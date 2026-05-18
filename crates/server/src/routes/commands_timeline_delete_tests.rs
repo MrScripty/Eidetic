@@ -16,6 +16,15 @@ async fn delete_timeline_node_command_returns_timeline_render_projection() {
     let state = AppState::new().await;
     let project = Template::MultiCam.build_project("Commands Test");
     let node = project.timeline.nodes[0].clone();
+    let descendant_ids: Vec<_> = project
+        .timeline
+        .descendants_of(node.id)
+        .iter()
+        .map(|descendant| descendant.id)
+        .collect();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed node current state");
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
     let app = router().with_state(state);
@@ -39,6 +48,17 @@ async fn delete_timeline_node_command_returns_timeline_render_projection() {
     );
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    for removed_node_id in std::iter::once(node.id).chain(descendant_ids.iter().copied()) {
+        let persisted_count = conn
+            .query_row(
+                "SELECT COUNT(*) FROM nodes WHERE id = ?1",
+                [removed_node_id.0.to_string()],
+                |row| row.get::<_, i64>(0),
+            )
+            .expect("persisted removed node count");
+        assert_eq!(persisted_count, 0);
+    }
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineNode,

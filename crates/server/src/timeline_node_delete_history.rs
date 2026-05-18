@@ -14,6 +14,8 @@ use crate::timeline_command_history_codec::{
     encode_arc_ids, encode_beat_type, encode_content_status, encode_relationship_type,
     encode_story_level,
 };
+use crate::timeline_node_store;
+use crate::timeline_relationship_store;
 
 pub(crate) fn record_delete_timeline_node_history(
     conn: &mut Connection,
@@ -40,6 +42,10 @@ pub(crate) fn record_delete_timeline_node_history(
                 || removed_node_ids.contains(&relationship.to_node)
         })
         .collect();
+    let removed_relationship_ids: Vec<_> = removed_relationships
+        .iter()
+        .map(|relationship| relationship.id)
+        .collect();
 
     let event = ChangeEvent::new(
         command.id,
@@ -59,12 +65,19 @@ pub(crate) fn record_delete_timeline_node_history(
         revisions.push(deleted_relationship_revision(relationship, event.id)?);
     }
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.node_delete",
         &event,
         &revisions,
+        |tx| {
+            timeline_relationship_store::delete_relationships_in_transaction(
+                tx,
+                &removed_relationship_ids,
+            )?;
+            timeline_node_store::delete_nodes_in_transaction(tx, &removed_node_ids)
+        },
     )?)
 }
 

@@ -49,3 +49,19 @@ pub(crate) fn delete_relationship_in_transaction(
     )?;
     Ok(())
 }
+
+pub(crate) fn delete_relationships_in_transaction(
+    tx: &Transaction<'_>,
+    relationship_ids: &[RelationshipId],
+) -> Result<(), HistoryStoreError> {
+    tx.execute_batch(TIMELINE_RELATIONSHIP_SCHEMA_SQL)?;
+
+    for relationship_id in relationship_ids {
+        tx.execute(
+            "DELETE FROM relationships WHERE id = ?1",
+            [relationship_id.0.to_string()],
+        )?;
+    }
+
+    Ok(())
+}

@@ -1,3 +1,4 @@
+use eidetic_core::timeline::node::NodeId;
 use eidetic_core::timeline::node::StoryNode;
 use rusqlite::{Transaction, params};
 
@@ -18,6 +19,12 @@ CREATE TABLE IF NOT EXISTS nodes (
 );
 CREATE INDEX IF NOT EXISTS idx_nodes_parent ON nodes(parent_id) WHERE parent_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_nodes_level ON nodes(level);
+
+CREATE TABLE IF NOT EXISTS node_arcs (
+    node_id TEXT NOT NULL,
+    arc_id  TEXT NOT NULL,
+    PRIMARY KEY (node_id, arc_id)
+);
 "#;
 
 pub(crate) fn upsert_nodes_in_transaction(
@@ -69,6 +76,23 @@ fn upsert_node(tx: &Transaction<'_>, node: &StoryNode) -> Result<(), HistoryStor
             node.locked as i64,
         ],
     )?;
+
+    Ok(())
+}
+
+pub(crate) fn delete_nodes_in_transaction(
+    tx: &Transaction<'_>,
+    node_ids: &[NodeId],
+) -> Result<(), HistoryStoreError> {
+    tx.execute_batch(TIMELINE_NODE_SCHEMA_SQL)?;
+
+    for node_id in node_ids {
+        tx.execute(
+            "DELETE FROM node_arcs WHERE node_id = ?1",
+            [node_id.0.to_string()],
+        )?;
+        tx.execute("DELETE FROM nodes WHERE id = ?1", [node_id.0.to_string()])?;
+    }
 
     Ok(())
 }
