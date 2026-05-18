@@ -25,6 +25,7 @@ mod state;
 mod static_files;
 mod story_arc_command;
 mod timeline_command;
+mod timeline_command_history;
 mod validation;
 mod vector_store;
 mod ws;

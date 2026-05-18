@@ -283,6 +283,7 @@ Completed slices:
 - `feat(timeline): shadow record relationship create history` records timeline relationship create command IDs and `TimelineRelationship` revisions into the existing history tables while suppressing duplicate replay relationship insertion.
 - `feat(timeline): shadow record relationship delete history` records timeline relationship delete command IDs and `TimelineRelationship` delete revisions into the existing history tables while suppressing duplicate replay side effects.
 - `feat(timeline): shadow record node create history` records timeline node create command IDs and `TimelineNode` create revisions into the existing history tables while suppressing duplicate replay node creation and Y.Doc ensure side effects.
+- `refactor(server): split timeline command history` extracted timeline command history-recording helpers from the timeline mutation applicator to restore module decomposition before adding node-delete and child-replacement history.
 
 Discovered issues:
 
@@ -306,6 +307,7 @@ Discovered issues:
 - Resolved: legacy AI extraction and consistency routes read `node.content.content` and committed bible/script side effects directly. Those routes, frontend consumers, automatic generation follow-up mutation, and emitted websocket events were removed; future semantic work must re-enter through proposal contracts.
 - Resolved: `unlock_node` derived content status from legacy `node.content.content`. Unlock now leaves status unchanged because script document projections own durable screenplay text.
 - Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.
+- Resolved: `crates/server/src/timeline_command.rs` exceeded the 500-line decomposition threshold after adding timeline command history recording. History-recording helpers were split into `timeline_command_history.rs` so the mutation applicator remains easier to reason about before the larger node-delete and child-replacement slices.
 
 ## Concurrent Worker Policy
 
