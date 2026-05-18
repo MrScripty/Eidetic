@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod contracts;
 pub mod error;
 pub mod project;
 pub mod reference;

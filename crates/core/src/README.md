@@ -7,6 +7,7 @@ This directory contains the pure Rust domain layer for Eidetic: project aggregat
 | File/Folder | Description |
 |-------------|-------------|
 | `lib.rs` | Public crate surface and module wiring for the core library. |
+| `contracts/` | Host-agnostic command, event, revision, and projection contracts for backend-owned state. |
 | `timeline/` | Timeline nodes, tracks, relationships, structure, and timing rules. |
 | `story/` | Story arcs, bible entities, and progression analysis. |
 | `script/` | Screenplay parsing, formatting, and merge helpers. |
@@ -38,7 +39,7 @@ Keep narrative behavior, data structures, and AI-facing domain helpers in one ho
 - Oversized modules listed in `ADR-001` gain another unrelated responsibility.
 
 ## Dependencies
-**Internal:** `timeline/`, `story/`, `script/`, `project/`, `ai/`.
+**Internal:** `contracts/`, `timeline/`, `story/`, `script/`, `project/`, `ai/`.
 **External:** `serde`, `uuid`, `thiserror`, `futures`.
 
 ## Related ADRs
@@ -58,6 +59,6 @@ assert!(!project.timeline.nodes.is_empty());
 - Revisit trigger: the crate is exposed through WASM bindings, an SDK, or another process boundary.
 
 ## Structured Producer Contract
-- Core structs in this directory define the stable project/timeline/story shapes persisted by the server and mirrored by the UI.
+- Core structs in this directory define the stable contract, project, timeline, story, and script shapes persisted by the server and mirrored by the UI.
 - Compatibility-sensitive field changes must land with persistence, route, and frontend updates in the same change.
 - Regeneration rules for saved projects are handled by the server persistence layer, not by ad hoc client migration.
