@@ -18,6 +18,8 @@ use crate::timeline_command_history_codec::{
     encode_arc_ids, encode_beat_type, encode_content_status, encode_relationship_type,
     encode_story_level,
 };
+use crate::timeline_node_store;
+use crate::timeline_relationship_store;
 
 pub(crate) fn record_apply_timeline_children_history(
     conn: &mut Connection,
@@ -43,6 +45,10 @@ pub(crate) fn record_apply_timeline_children_history(
                 || removed_node_ids.contains(&relationship.to_node)
         })
         .collect();
+    let removed_relationship_ids: Vec<_> = removed_relationships
+        .iter()
+        .map(|relationship| relationship.id)
+        .collect();
 
     let parent = project.timeline.node(command.payload.parent_id)?;
     let parent_arc_ids = project.timeline.arcs_for_node(parent.id);
@@ -63,9 +69,9 @@ pub(crate) fn record_apply_timeline_children_history(
     for relationship in removed_relationships {
         revisions.push(deleted_relationship_revision(relationship, event.id)?);
     }
-    for planned_child in child_plan {
+    for planned_child in &child_plan {
         revisions.push(created_child_revision(
-            &planned_child.child,
+            planned_child.child,
             command.payload.parent_id,
             planned_child.level,
             planned_child.time_range,
@@ -74,13 +80,48 @@ pub(crate) fn record_apply_timeline_children_history(
             event.id,
         )?);
     }
+    let mut next_timeline = project.timeline.clone();
+    next_timeline.clear_children_of(command.payload.parent_id)?;
+    for planned_child in &child_plan {
+        let mut node = StoryNode::new_child(
+            &planned_child.child.name,
+            planned_child.level,
+            planned_child.time_range,
+            command.payload.parent_id,
+        );
+        node.id = planned_child.child.node_id;
+        node.sort_order = planned_child.sort_order;
+        node.content.notes = planned_child.child.outline.clone();
+        if !node.content.notes.is_empty() {
+            node.content.status = ContentStatus::NotesOnly;
+        }
+        node.beat_type = planned_child.child.beat_type.clone();
 
-    Ok(history_store::record_change(
+        next_timeline.add_node(node)?;
+        for arc_id in &parent_arc_ids {
+            next_timeline.tag_node(planned_child.child.node_id, *arc_id);
+        }
+    }
+
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.children_apply",
         &event,
         &revisions,
+        |tx| {
+            timeline_relationship_store::delete_relationships_in_transaction(
+                tx,
+                &removed_relationship_ids,
+            )?;
+            timeline_node_store::delete_nodes_in_transaction(tx, &removed_node_ids)?;
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
+            timeline_node_store::replace_node_arcs_in_transaction(tx, &next_timeline.node_arcs)?;
+            timeline_relationship_store::upsert_relationships_in_transaction(
+                tx,
+                &next_timeline.relationships,
+            )
+        },
     )?)
 }
 

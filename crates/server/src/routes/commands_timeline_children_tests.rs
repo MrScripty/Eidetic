@@ -24,6 +24,9 @@ async fn apply_timeline_children_command_returns_timeline_render_projection() {
         .id;
     let first_child_id = eidetic_core::timeline::node::NodeId::new();
     let second_child_id = eidetic_core::timeline::node::NodeId::new();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed child current state");
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
     let app = router().with_state(state);
@@ -57,6 +60,34 @@ async fn apply_timeline_children_command_returns_timeline_render_projection() {
     }));
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let original_child_count = conn
+        .query_row(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?1",
+            [original_child.0.to_string()],
+            |row| row.get::<_, i64>(0),
+        )
+        .expect("original child count");
+    assert_eq!(original_child_count, 0);
+    let first_child = conn
+        .query_row(
+            "SELECT parent_id, name, content_json FROM nodes WHERE id = ?1",
+            [first_child_id.0.to_string()],
+            |row| {
+                Ok((
+                    row.get::<_, Option<String>>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            },
+        )
+        .expect("persisted first child");
+    assert_eq!(first_child.0, Some(parent.id.0.to_string()));
+    assert_eq!(first_child.1, "First child");
+    let first_child_content: serde_json::Value =
+        serde_json::from_str(&first_child.2).expect("first child content");
+    assert_eq!(first_child_content["notes"], "First outline");
+    assert_eq!(first_child_content["status"], "NotesOnly");
+
     let deleted_revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineNode,
