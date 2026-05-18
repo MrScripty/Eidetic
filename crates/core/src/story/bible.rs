@@ -237,100 +237,7 @@ impl Entity {
     }
 
     pub fn active_snapshot_at(&self, time_ms: u64) -> Option<&EntitySnapshot> {
-        self.snapshots
-            .iter()
-            .rev()
-            .find(|s| s.at_ms <= time_ms)
-    }
-
-    pub fn to_prompt_text(&self, time_ms: u64) -> String {
-        let mut text = format!("[{}] {}: {}", self.category, self.name, self.tagline);
-
-        if let Some(snapshot) = self.active_snapshot_at(time_ms) {
-            text.push_str(&format!(" [At this point: {}]", snapshot.description));
-
-            if let Some(ref overrides) = snapshot.state_overrides {
-                if let Some(ref location) = overrides.location {
-                    text.push_str(&format!(" (Location: {})", location));
-                }
-                if let Some(ref emotional) = overrides.emotional_state {
-                    text.push_str(&format!(" (Feeling: {})", emotional));
-                }
-                if let Some(ref knowledge) = overrides.audience_knowledge {
-                    text.push_str(&format!(" (Audience knows: {})", knowledge));
-                }
-            }
-        }
-
-        text
-    }
-
-    pub fn to_full_prompt_text(&self, time_ms: u64) -> String {
-        let mut text = format!(
-            "## {} ({})\n{}\n{}",
-            self.name, self.category, self.tagline, self.description
-        );
-
-        match &self.details {
-            EntityDetails::Character {
-                traits,
-                voice_notes,
-                audience_knowledge,
-                ..
-            } => {
-                if !traits.is_empty() {
-                    text.push_str(&format!("\nTraits: {}", traits.join(", ")));
-                }
-                if !voice_notes.is_empty() {
-                    text.push_str(&format!("\nVoice: {}", voice_notes));
-                }
-                if !audience_knowledge.is_empty() {
-                    text.push_str(&format!("\nAudience knowledge: {}", audience_knowledge));
-                }
-            }
-            EntityDetails::Location {
-                int_ext,
-                scene_heading_name,
-                atmosphere,
-            } => {
-                text.push_str(&format!("\nScene heading: {}. {}", int_ext, scene_heading_name));
-                if !atmosphere.is_empty() {
-                    text.push_str(&format!("\nAtmosphere: {}", atmosphere));
-                }
-            }
-            EntityDetails::Prop { significance, .. } => {
-                if !significance.is_empty() {
-                    text.push_str(&format!("\nSignificance: {}", significance));
-                }
-            }
-            EntityDetails::Theme { manifestation } => {
-                if !manifestation.is_empty() {
-                    text.push_str(&format!("\nManifests as: {}", manifestation));
-                }
-            }
-            EntityDetails::Event { is_backstory, .. } => {
-                if *is_backstory {
-                    text.push_str("\n(Backstory event — not shown on screen)");
-                }
-            }
-        }
-
-        if let Some(snapshot) = self.active_snapshot_at(time_ms) {
-            text.push_str(&format!("\n\nCurrent state: {}", snapshot.description));
-            if let Some(ref overrides) = snapshot.state_overrides {
-                if let Some(ref location) = overrides.location {
-                    text.push_str(&format!("\nLocation: {}", location));
-                }
-                if let Some(ref emotional) = overrides.emotional_state {
-                    text.push_str(&format!("\nEmotional state: {}", emotional));
-                }
-                if let Some(ref knowledge) = overrides.audience_knowledge {
-                    text.push_str(&format!("\nAudience knows: {}", knowledge));
-                }
-            }
-        }
-
-        text
+        self.snapshots.iter().rev().find(|s| s.at_ms <= time_ms)
     }
 }
 
@@ -356,17 +263,6 @@ impl StoryBible {
 
     pub fn entity_mut(&mut self, id: EntityId) -> Option<&mut Entity> {
         self.entities.iter_mut().find(|e| e.id == id)
-    }
-
-    pub fn by_category(&self, cat: &EntityCategory) -> Vec<&Entity> {
-        self.entities.iter().filter(|e| &e.category == cat).collect()
-    }
-
-    pub fn entities_for_node(&self, node_id: NodeId) -> Vec<&Entity> {
-        self.entities
-            .iter()
-            .filter(|e| e.node_refs.contains(&node_id))
-            .collect()
     }
 
     pub fn find_by_name(&self, name: &str) -> Option<&Entity> {
@@ -403,42 +299,6 @@ pub struct ResolvedEntity {
     pub category: EntityCategory,
     pub compact_text: String,
     pub full_text: Option<String>,
-}
-
-pub fn gather_bible_context(
-    bible: &StoryBible,
-    node_id: NodeId,
-    time_ms: u64,
-) -> BibleContext {
-    let mut referenced = Vec::new();
-    let mut nearby = Vec::new();
-
-    for entity in &bible.entities {
-        let compact = entity.to_prompt_text(time_ms);
-
-        if entity.node_refs.contains(&node_id) {
-            referenced.push(ResolvedEntity {
-                entity_id: entity.id,
-                name: entity.name.clone(),
-                category: entity.category.clone(),
-                compact_text: compact,
-                full_text: Some(entity.to_full_prompt_text(time_ms)),
-            });
-        } else {
-            nearby.push(ResolvedEntity {
-                entity_id: entity.id,
-                name: entity.name.clone(),
-                category: entity.category.clone(),
-                compact_text: compact,
-                full_text: None,
-            });
-        }
-    }
-
-    BibleContext {
-        referenced_entities: referenced,
-        nearby_entities: nearby,
-    }
 }
 
 // ──────────────────────────────────────────────
@@ -564,80 +424,6 @@ mod tests {
 
         let snap = entity.active_snapshot_at(500_000).unwrap();
         assert_eq!(snap.description, "Learns the truth");
-    }
-
-    #[test]
-    fn bible_entities_for_node() {
-        let mut bible = StoryBible::new();
-        let node_id = NodeId::new();
-
-        let mut jake = test_character();
-        jake.node_refs.push(node_id);
-        bible.add_entity(jake);
-
-        let maria = Entity::new("Maria", EntityCategory::Character, Color::B_PLOT);
-        bible.add_entity(maria);
-
-        let found = bible.entities_for_node(node_id);
-        assert_eq!(found.len(), 1);
-        assert_eq!(found[0].name, "Jake");
-    }
-
-    #[test]
-    fn bible_by_category() {
-        let mut bible = StoryBible::new();
-        bible.add_entity(Entity::new("Jake", EntityCategory::Character, Color::A_PLOT));
-        bible.add_entity(Entity::new("Apartment", EntityCategory::Location, Color::B_PLOT));
-        bible.add_entity(Entity::new("Maria", EntityCategory::Character, Color::C_RUNNER));
-
-        assert_eq!(bible.by_category(&EntityCategory::Character).len(), 2);
-        assert_eq!(bible.by_category(&EntityCategory::Location).len(), 1);
-        assert_eq!(bible.by_category(&EntityCategory::Prop).len(), 0);
-    }
-
-    #[test]
-    fn gather_context_splits_referenced_and_nearby() {
-        let mut bible = StoryBible::new();
-        let node_id = NodeId::new();
-
-        let mut jake = test_character();
-        jake.node_refs.push(node_id);
-        bible.add_entity(jake);
-
-        let maria = Entity::new("Maria", EntityCategory::Character, Color::B_PLOT);
-        bible.add_entity(maria);
-
-        let ctx = gather_bible_context(&bible, node_id, 150_000);
-        assert_eq!(ctx.referenced_entities.len(), 1);
-        assert_eq!(ctx.referenced_entities[0].name, "Jake");
-        assert!(ctx.referenced_entities[0].full_text.is_some());
-
-        assert_eq!(ctx.nearby_entities.len(), 1);
-        assert_eq!(ctx.nearby_entities[0].name, "Maria");
-        assert!(ctx.nearby_entities[0].full_text.is_none());
-    }
-
-    #[test]
-    fn prompt_text_includes_snapshot() {
-        let mut entity = test_character();
-        entity.add_snapshot(EntitySnapshot {
-            at_ms: 100_000,
-            source_node_id: None,
-            description: "Discovers the letter".into(),
-            state_overrides: Some(SnapshotOverrides {
-                emotional_state: Some("anxious".into()),
-                ..Default::default()
-            }),
-        });
-
-        let compact = entity.to_prompt_text(150_000);
-        assert!(compact.contains("Jake"));
-        assert!(compact.contains("Discovers the letter"));
-        assert!(compact.contains("anxious"));
-
-        let full = entity.to_full_prompt_text(150_000);
-        assert!(full.contains("Detective Jake Peralta"));
-        assert!(full.contains("Discovers the letter"));
     }
 
     #[test]
