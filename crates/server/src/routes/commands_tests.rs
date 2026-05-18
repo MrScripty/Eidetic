@@ -618,6 +618,58 @@ async fn split_timeline_node_command_rejects_out_of_range_split() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn delete_timeline_node_command_returns_timeline_render_projection() {
+    let path = temp_db_path("deletes-timeline-node");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = delete_timeline_node_command_body(node.id);
+
+    let response = app
+        .oneshot(delete_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != node.id.0.to_string())
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn delete_timeline_node_command_rejects_unknown_node() {
+    let path = temp_db_path("rejects-unknown-timeline-delete");
+    let state = AppState::new().await;
+    *state.project.lock() = Some(Template::MultiCam.build_project("Commands Test"));
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = delete_timeline_node_command_body(eidetic_core::timeline::node::NodeId(
+        uuid::Uuid::new_v4(),
+    ));
+
+    let response = app
+        .oneshot(delete_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -694,6 +746,15 @@ fn split_timeline_node_command_request(body: serde_json::Value) -> Request<Body>
     Request::builder()
         .method("POST")
         .uri("/commands/timeline/split-node")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn delete_timeline_node_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/delete-node")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -866,6 +927,17 @@ fn split_timeline_node_command_body(
         "payload": {
             "node_id": node_id,
             "at_ms": at_ms,
+        }
+    })
+}
+
+fn delete_timeline_node_command_body(
+    node_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "node_id": node_id,
         }
     })
 }

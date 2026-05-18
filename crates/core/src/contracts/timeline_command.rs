@@ -14,3 +14,8 @@ pub struct SplitTimelineNodeCommand {
     pub node_id: NodeId,
     pub at_ms: u64,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeleteTimelineNodeCommand {
+    pub node_id: NodeId,
+}

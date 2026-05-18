@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, ProjectionEnvelope, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
-    TimelineRenderProjection,
+    CommandEnvelope, DeleteTimelineNodeCommand, ProjectionEnvelope, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::timing::TimeRange;
@@ -29,6 +29,20 @@ pub(crate) fn apply_split_timeline_node(
     project
         .timeline
         .split_node(command.payload.node_id, command.payload.at_ms)
+        .map_err(TimelineCommandError::Core)?;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_delete_timeline_node(
+    project: &mut Project,
+    command: &CommandEnvelope<DeleteTimelineNodeCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    project
+        .timeline
+        .remove_node(command.payload.node_id)
         .map_err(TimelineCommandError::Core)?;
 
     Ok(ProjectionEnvelope::initial(
@@ -124,6 +138,33 @@ mod tests {
                 .clips
                 .iter()
                 .any(|clip| clip.start_ms == split_ms && clip.end_ms == node.time_range.end_ms)
+        );
+    }
+
+    #[test]
+    fn delete_timeline_node_returns_projection_without_deleted_subtree() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let parent = project.timeline.nodes[0].clone();
+        let child_id = project
+            .timeline
+            .nodes
+            .iter()
+            .find(|node| node.parent_id == Some(parent.id))
+            .expect("child node")
+            .id;
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: DeleteTimelineNodeCommand { node_id: parent.id },
+        };
+
+        let projection = apply_delete_timeline_node(&mut project, &command).unwrap();
+
+        assert!(
+            projection
+                .payload
+                .clips
+                .iter()
+                .all(|clip| clip.node_id != parent.id && clip.node_id != child_id)
         );
     }
 }

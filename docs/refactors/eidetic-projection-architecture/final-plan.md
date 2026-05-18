@@ -201,6 +201,7 @@ Completed slices:
 - `feat(ui): cache timeline split projections` routed split timeline command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route timeline split through commands` moved the existing DOM timeline split handler onto the backend timeline split command/projection path instead of the legacy split route.
 - `feat(renderer): emit timeline split commands` added validated renderer command emission for node split requests so future Bevy split interactions can flow through backend-confirmed timeline commands.
+- `feat(server): add timeline delete node command` added a backend command route for validated timeline node deletion that returns the updated timeline render projection.
 
 Discovered issues:
 
@@ -208,7 +209,7 @@ Discovered issues:
 - Baseline `cargo fmt --all -- --check` reports pre-existing formatting drift in server files. Do not mix that repo-wide cleanup into feature slices; either add a dedicated formatting cleanup slice or intentionally defer it with CI expectations updated.
 - `rustfmt` on `crates/server/src/main.rs` can recurse through out-of-line modules and reformat unrelated baseline-drift server files. Until the dedicated formatting cleanup lands, format/check only newly added or intentionally touched Rust files and inspect `git status` before staging.
 - Adding Bevy 0.16.1 to an isolated leaf crate pulled 94 packages into `Cargo.lock`. Keep subsequent renderer features behind the leaf crate/package boundary, avoid default Bevy features unless needed, and run dependency reviews before adding window/render/asset/text features.
-- Timeline node range commands currently update backend-owned in-memory project state and trigger the existing save path, but they do not yet write sparse SQLite object revisions or command idempotency records. Migrate timeline structural commands to the same revision/history storage model before claiming durable undo/redo or replay for timeline edits.
+- Timeline structural commands currently update backend-owned in-memory project state and trigger the existing save path, but they do not yet write sparse SQLite object revisions or command idempotency records. Migrate timeline structural commands to the same revision/history storage model before claiming durable undo/redo or replay for timeline edits.
 - `cargo test -p eidetic-server history_store` passes but reports pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs`. These warnings block a future `-D warnings` gate and need a cleanup or ownership decision before CI can enforce warning-free server builds.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.
 - The command route currently opens the active SQLite project path per request because `AppState` has no backend-owned database connection owner yet. Before broad route adoption, add an explicit database lifecycle owner with the same concurrency/shutdown discipline as the rest of the backend.
