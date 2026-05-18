@@ -164,6 +164,7 @@ Completed slices:
 - `feat(server): add bible graph snapshot field command` added validated snapshot-field command application and an HTTP command route that records bible snapshot revisions and returns updated node-detail projections.
 - `feat(ui): add bible graph snapshot field command helper` added frontend command and projection-store helpers for snapshot field updates, caching only returned backend node-detail projections without optimistic snapshot insertion.
 - `feat(ui): show bible graph snapshots` added a read-only projection-backed snapshot list in graph node details so persisted node-scoped snapshots are visible without using legacy entity snapshot APIs.
+- `feat(ui): add bible graph snapshot editor` added a local-draft snapshot creation form that submits snapshot field commands and waits for backend node-detail projections instead of inserting snapshots client-side.
 
 Discovered issues:
 

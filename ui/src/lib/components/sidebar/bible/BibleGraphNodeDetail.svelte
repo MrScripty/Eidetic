@@ -9,6 +9,7 @@
   import BibleGraphEdgeEditor from './BibleGraphEdgeEditor.svelte';
   import BibleGraphEdgeList from './BibleGraphEdgeList.svelte';
   import BibleGraphPartFields from './BibleGraphPartFields.svelte';
+  import BibleGraphSnapshotEditor from './BibleGraphSnapshotEditor.svelte';
   import BibleGraphSnapshotList from './BibleGraphSnapshotList.svelte';
 
   let {
@@ -61,6 +62,11 @@
         <p class="muted">No parts</p>
       {/if}
 
+      <BibleGraphSnapshotEditor
+        nodeId={projection.payload.node.id}
+        parts={projection.payload.parts}
+        nextSortOrder={projection.payload.snapshots.length + 1}
+      />
       <BibleGraphSnapshotList snapshots={projection.payload.snapshots} />
 
       <BibleGraphEdgeEditor
