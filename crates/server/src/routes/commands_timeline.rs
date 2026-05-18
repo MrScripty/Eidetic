@@ -261,20 +261,13 @@ async fn split_timeline_node(
 ) -> ApiJson {
     let path = active_project_path(&state)?;
     let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
+        let project = timeline_command_project(&state, &path).await?;
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         history_store::create_schema(&conn).map_err(map_history_error)?;
         let outcome =
-            timeline_command::record_split_timeline_node_history(&mut conn, project, &command, 0)
+            timeline_command::record_split_timeline_node_history(&mut conn, &project, &command, 0)
                 .map_err(map_timeline_command_error)?;
-        if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_split_timeline_node(project, &command)
-                .map_err(map_timeline_command_error)?;
-        }
         let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
             .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
