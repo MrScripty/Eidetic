@@ -202,6 +202,7 @@ Completed slices:
 - `refactor(ui): route timeline split through commands` moved the existing DOM timeline split handler onto the backend timeline split command/projection path instead of the legacy split route.
 - `feat(renderer): emit timeline split commands` added validated renderer command emission for node split requests so future Bevy split interactions can flow through backend-confirmed timeline commands.
 - `feat(server): add timeline delete node command` added a backend command route for validated timeline node deletion that returns the updated timeline render projection.
+- `feat(ui): add timeline delete command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed timeline node deletion commands.
 
 Discovered issues:
 

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createBibleGraphNode,
+  deleteTimelineNode,
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
@@ -245,6 +246,51 @@ describe('command api helpers', () => {
           payload: {
             node_id: 'node.scene.beach',
             at_ms: 2_500,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends timeline delete node commands and returns timeline render projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [],
+          clips: [],
+          relationships: [],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      deleteTimelineNode(
+        {
+          node_id: 'node.scene.beach',
+        },
+        'command-timeline-delete-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/timeline/delete-node',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-timeline-delete-1',
+          payload: {
+            node_id: 'node.scene.beach',
           },
         }),
       }),

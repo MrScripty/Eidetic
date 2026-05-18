@@ -3,6 +3,7 @@ import type {
   BibleGraphRootsCommandResponse,
   CommandEnvelope,
   CreateBibleGraphNodeCommand,
+  DeleteTimelineNodeCommand,
   EnsureCanonicalBibleRootsCommand,
   ObjectFieldCommandResponse,
   ScriptDocumentCommandResponse,
@@ -182,6 +183,21 @@ export function splitTimelineNode(
   };
 
   return request('/commands/timeline/split-node', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function deleteTimelineNode(
+  payload: DeleteTimelineNodeCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<DeleteTimelineNodeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/delete-node', {
     method: 'POST',
     body: JSON.stringify(command),
   });

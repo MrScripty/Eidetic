@@ -11,6 +11,10 @@ export interface SplitTimelineNodeCommand {
   at_ms: number;
 }
 
+export interface DeleteTimelineNodeCommand {
+  node_id: string;
+}
+
 export interface TimelineCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<TimelineRenderProjection>;
