@@ -10,9 +10,12 @@
   } from '$lib/stores/timeline.svelte.js';
   import { editorState, startGeneration } from '$lib/stores/editor.svelte.js';
   import { storyState } from '$lib/stores/story.svelte.js';
-  import { deleteNode, splitNode, createNode, fillGap, generateContent } from '$lib/api.js';
+  import { deleteNode, createNode, fillGap, generateContent } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
-  import { applyTimelineNodeRangeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import {
+    applySplitTimelineNodeCommand,
+    applyTimelineNodeRangeCommand,
+  } from '$lib/stores/timelineRenderProjection.svelte.js';
   import StoryNodeClip from './StoryNodeClip.svelte';
 
   let {
@@ -128,7 +131,10 @@
       editorState.selectedLevel = null;
     }
     try {
-      await splitNode(nodeId, atMs);
+      await applySplitTimelineNodeCommand({
+        node_id: nodeId,
+        at_ms: atMs,
+      });
     } catch (e) {
       notify('error', `Split failed: ${e instanceof Error ? e.message : 'unknown error'}`);
     }
