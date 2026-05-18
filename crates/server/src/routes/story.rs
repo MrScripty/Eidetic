@@ -5,13 +5,11 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use eidetic_core::story::arc::{ArcType, Color, StoryArc};
-use eidetic_core::story::bible::{
-    Entity, EntityCategory, EntityDetails, EntityRelation, EntitySnapshot, SnapshotOverrides,
-};
+use eidetic_core::story::bible::EntityId;
 use eidetic_core::story::progression::analyze_all_arcs;
 use eidetic_core::timeline::node::NodeId;
 
-use crate::error::{json_value, ApiError, ApiJson};
+use crate::error::{ApiError, ApiJson, json_value};
 use crate::state::{AppState, ServerEvent};
 use crate::validation;
 
@@ -24,36 +22,10 @@ pub fn router() -> Router<AppState> {
         .route("/arcs/progression", get(arc_progression))
         // Bible entity routes
         .route("/bible/entities", get(list_entities))
-        .route("/bible/entities", post(create_entity))
-        .route("/bible/entities/{id}", get(get_entity))
-        .route("/bible/entities/{id}", put(update_entity))
-        .route("/bible/entities/{id}", delete(delete_entity))
-        .route("/bible/entities/{id}/snapshots", post(add_snapshot))
-        .route(
-            "/bible/entities/{id}/snapshots/{idx}",
-            put(update_snapshot),
-        )
-        .route(
-            "/bible/entities/{id}/snapshots/{idx}",
-            delete(delete_snapshot),
-        )
-        .route(
-            "/bible/entities/{id}/node-refs",
-            post(add_node_ref),
-        )
         .route(
             "/bible/entities/{id}/node-refs/{node_id}",
             delete(remove_node_ref),
         )
-        .route(
-            "/bible/entities/{id}/relations",
-            post(add_relation),
-        )
-        .route(
-            "/bible/entities/{id}/relations/{idx}",
-            delete(remove_relation),
-        )
-        .route("/bible/at", get(resolve_entities_at_time))
 }
 
 // ──────────────────────────────────────────────
@@ -75,10 +47,7 @@ struct CreateArcRequest {
     color: Option<[u8; 3]>,
 }
 
-async fn create_arc(
-    State(state): State<AppState>,
-    Json(body): Json<CreateArcRequest>,
-) -> ApiJson {
+async fn create_arc(State(state): State<AppState>, Json(body): Json<CreateArcRequest>) -> ApiJson {
     validation::validate_name(&body.name, "arc name")?;
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
@@ -145,10 +114,7 @@ async fn update_arc(
     }
 }
 
-async fn delete_arc(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
+async fn delete_arc(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
@@ -188,280 +154,9 @@ async fn list_entities(State(state): State<AppState>) -> ApiJson {
     }
 }
 
-async fn get_entity(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
-    let guard = state.project.lock();
-    let Some(project) = guard.as_ref() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    match project.bible.entity(entity_id) {
-        Some(entity) => json_value(entity),
-        None => Err(ApiError::not_found("entity not found")),
-    }
-}
-
-#[derive(Deserialize)]
-struct CreateEntityRequest {
-    name: String,
-    category: EntityCategory,
-    #[serde(default)]
-    tagline: Option<String>,
-    #[serde(default)]
-    description: Option<String>,
-    color: Option<[u8; 3]>,
-}
-
-async fn create_entity(
-    State(state): State<AppState>,
-    Json(body): Json<CreateEntityRequest>,
-) -> ApiJson {
-    validation::validate_name(&body.name, "entity name")?;
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let color = body
-        .color
-        .map(|[r, g, b]| Color::new(r, g, b))
-        .unwrap_or(Color::new(200, 200, 200));
-
-    let mut entity = Entity::new(body.name, body.category, color);
-    if let Some(tagline) = body.tagline {
-        entity.tagline = tagline;
-    }
-    if let Some(description) = body.description {
-        entity.description = description;
-    }
-    let json = serde_json::to_value(&entity).map_err(|e| ApiError::internal(e.to_string()))?;
-    project.bible.add_entity(entity);
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(json))
-}
-
-async fn update_entity(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(body): Json<serde_json::Value>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    if let Some(name) = body.get("name").and_then(|v| v.as_str()) {
-        validation::validate_name(name, "entity name")?;
-        entity.name = name.to_string();
-    }
-    if let Some(tagline) = body.get("tagline").and_then(|v| v.as_str()) {
-        entity.tagline = tagline.to_string();
-    }
-    if let Some(desc) = body.get("description").and_then(|v| v.as_str()) {
-        entity.description = desc.to_string();
-    }
-    if let Some(locked) = body.get("locked").and_then(|v| v.as_bool()) {
-        entity.locked = locked;
-    }
-    if let Some(color_arr) = body.get("color").and_then(|v| v.as_array()) {
-        if color_arr.len() == 3 {
-            if let (Some(r), Some(g), Some(b)) = (
-                color_arr[0].as_u64(),
-                color_arr[1].as_u64(),
-                color_arr[2].as_u64(),
-            ) {
-                entity.color = Color::new(r as u8, g as u8, b as u8);
-            }
-        }
-    }
-    // Update category-specific details if provided.
-    if let Some(details) = body.get("details") {
-        if let Ok(parsed) = serde_json::from_value::<EntityDetails>(details.clone()) {
-            entity.details = parsed;
-        }
-    }
-
-    let json = serde_json::to_value(&*entity).map_err(|e| ApiError::internal(e.to_string()))?;
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(json))
-}
-
-async fn delete_entity(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let deleted = project.bible.remove_entity(entity_id).is_some();
-    if deleted {
-        let _ = state.events_tx.send(ServerEvent::BibleChanged);
-        state.trigger_save();
-    }
-    Ok(Json(serde_json::json!({ "deleted": deleted })))
-}
-
-// ──────────────────────────────────────────────
-// Snapshots
-// ──────────────────────────────────────────────
-
-#[derive(Deserialize)]
-struct AddSnapshotRequest {
-    at_ms: u64,
-    source_node_id: Option<Uuid>,
-    description: String,
-    #[serde(default)]
-    state_overrides: Option<SnapshotOverrides>,
-}
-
-async fn add_snapshot(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(body): Json<AddSnapshotRequest>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    let snapshot = EntitySnapshot {
-        at_ms: body.at_ms,
-        source_node_id: body.source_node_id.map(NodeId),
-        description: body.description,
-        state_overrides: body.state_overrides,
-    };
-
-    entity.add_snapshot(snapshot);
-    let json = serde_json::to_value(&entity.snapshots)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(json))
-}
-
-async fn update_snapshot(
-    State(state): State<AppState>,
-    Path((id, idx)): Path<(Uuid, usize)>,
-    Json(body): Json<serde_json::Value>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    let Some(snapshot) = entity.snapshots.get_mut(idx) else {
-        return Err(ApiError::bad_request("snapshot index out of range"));
-    };
-
-    if let Some(at_ms) = body.get("at_ms").and_then(|v| v.as_u64()) {
-        snapshot.at_ms = at_ms;
-    }
-    if let Some(desc) = body.get("description").and_then(|v| v.as_str()) {
-        snapshot.description = desc.to_string();
-    }
-    if let Some(overrides) = body.get("state_overrides") {
-        snapshot.state_overrides = serde_json::from_value(overrides.clone()).ok();
-    }
-
-    // Re-sort if at_ms changed.
-    entity.sort_snapshots();
-
-    let json = serde_json::to_value(&entity.snapshots)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(json))
-}
-
-async fn delete_snapshot(
-    State(state): State<AppState>,
-    Path((id, idx)): Path<(Uuid, usize)>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    if idx >= entity.snapshots.len() {
-        return Err(ApiError::bad_request("snapshot index out of range"));
-    }
-
-    entity.snapshots.remove(idx);
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(serde_json::json!({ "deleted": true })))
-}
-
 // ──────────────────────────────────────────────
 // Node References
 // ──────────────────────────────────────────────
-
-#[derive(Deserialize)]
-struct AddNodeRefRequest {
-    node_id: Uuid,
-}
-
-async fn add_node_ref(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(body): Json<AddNodeRefRequest>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    let node_id = NodeId(body.node_id);
-    if !entity.node_refs.contains(&node_id) {
-        entity.node_refs.push(node_id);
-    }
-
-    let json = serde_json::to_value(&entity.node_refs)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(json))
-}
 
 async fn remove_node_ref(
     State(state): State<AppState>,
@@ -473,7 +168,7 @@ async fn remove_node_ref(
         return Err(ApiError::no_project());
     };
 
-    let entity_id = eidetic_core::story::bible::EntityId(id);
+    let entity_id = EntityId(id);
     let Some(entity) = project.bible.entity_mut(entity_id) else {
         return Err(ApiError::not_found("entity not found"));
     };
@@ -484,103 +179,4 @@ async fn remove_node_ref(
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
     state.trigger_save();
     Ok(Json(serde_json::json!({ "deleted": true })))
-}
-
-// ──────────────────────────────────────────────
-// Relations
-// ──────────────────────────────────────────────
-
-#[derive(Deserialize)]
-struct AddRelationRequest {
-    target_entity_id: Uuid,
-    label: String,
-}
-
-async fn add_relation(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(body): Json<AddRelationRequest>,
-) -> ApiJson {
-    validation::validate_name(&body.label, "relation label")?;
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    entity.relations.push(EntityRelation {
-        target_entity_id: eidetic_core::story::bible::EntityId(body.target_entity_id),
-        label: body.label,
-    });
-
-    let json = serde_json::to_value(&entity.relations)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(json))
-}
-
-async fn remove_relation(
-    State(state): State<AppState>,
-    Path((id, idx)): Path<(Uuid, usize)>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let entity_id = eidetic_core::story::bible::EntityId(id);
-    let Some(entity) = project.bible.entity_mut(entity_id) else {
-        return Err(ApiError::not_found("entity not found"));
-    };
-
-    if idx >= entity.relations.len() {
-        return Err(ApiError::bad_request("relation index out of range"));
-    }
-
-    entity.relations.remove(idx);
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    state.trigger_save();
-    Ok(Json(serde_json::json!({ "deleted": true })))
-}
-
-// ──────────────────────────────────────────────
-// Resolve entities at a point in time
-// ──────────────────────────────────────────────
-
-#[derive(Deserialize)]
-struct ResolveAtQuery {
-    time_ms: u64,
-}
-
-async fn resolve_entities_at_time(
-    State(state): State<AppState>,
-    axum::extract::Query(query): axum::extract::Query<ResolveAtQuery>,
-) -> ApiJson {
-    let guard = state.project.lock();
-    let Some(project) = guard.as_ref() else {
-        return Err(ApiError::no_project());
-    };
-
-    let resolved: Vec<serde_json::Value> = project
-        .bible
-        .entities
-        .iter()
-        .map(|entity| {
-            let snapshot = entity.active_snapshot_at(query.time_ms);
-            serde_json::json!({
-                "entity": entity,
-                "active_snapshot": snapshot,
-                "compact_text": entity.to_prompt_text(query.time_ms),
-            })
-        })
-        .collect();
-
-    Ok(Json(serde_json::json!(resolved)))
 }

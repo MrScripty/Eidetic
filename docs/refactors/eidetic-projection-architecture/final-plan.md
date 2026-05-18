@@ -244,6 +244,7 @@ Completed slices:
 - `refactor(ui): remove legacy extraction websocket event` removed the stale `entity_extraction_complete` websocket contract and handler from the deleted extraction workflow.
 - `refactor(ui): remove legacy entity detail panel` removed stale legacy entity selection state and unused entity detail/development timeline components after bible details moved to graph projections.
 - `refactor(ui): remove unused legacy entity helpers` removed unused frontend helpers for legacy entity CRUD, snapshots, relations, node-ref add, and resolve-at-time APIs after graph projection UI replacement.
+- `refactor(server): remove unused legacy entity routes` removed unused legacy entity CRUD, snapshot, relation, node-ref add, and resolve-at-time routes after graph projection replacement, leaving only active legacy entity read/unlink paths.
 
 Discovered issues:
 
