@@ -6,6 +6,11 @@ export interface SetTimelineNodeRangeCommand {
   end_ms: number;
 }
 
+export interface SplitTimelineNodeCommand {
+  node_id: string;
+  at_ms: number;
+}
+
 export interface TimelineCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<TimelineRenderProjection>;

@@ -13,6 +13,7 @@ import type {
   SetScriptBlockCommand,
   SetScriptLockCommand,
   SetTimelineNodeRangeCommand,
+  SplitTimelineNodeCommand,
   TimelineCommandResponse,
 } from './types.js';
 
@@ -166,6 +167,21 @@ export function setTimelineNodeRange(
   };
 
   return request('/commands/timeline/node-range', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function splitTimelineNode(
+  payload: SplitTimelineNodeCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<SplitTimelineNodeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/split-node', {
     method: 'POST',
     body: JSON.stringify(command),
   });

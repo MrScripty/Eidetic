@@ -197,6 +197,7 @@ Completed slices:
 - `refactor(ui): route timeline drag resize through commands` moved the existing DOM timeline move/resize handlers onto the backend timeline node range command/projection path without optimistic local timeline mutation.
 - `feat(ui): add timeline nudge shortcuts` added keyboard-accessible selected-node nudge commands that submit backend timeline node range commands instead of mutating local timeline state.
 - `feat(server): add timeline split node command` added a backend command route for validated timeline node split operations that returns the updated timeline render projection.
+- `feat(ui): add timeline split command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed timeline node split commands.
 
 Discovered issues:
 

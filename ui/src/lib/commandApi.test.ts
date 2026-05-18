@@ -8,6 +8,7 @@ import {
   setBibleGraphSnapshotField,
   setObjectField,
   setTimelineNodeRange,
+  splitTimelineNode,
 } from './commandApi.js';
 
 afterEach(() => {
@@ -160,6 +161,90 @@ describe('command api helpers', () => {
             node_id: 'node.scene.beach',
             start_ms: 1_000,
             end_ms: 4_000,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends timeline split node commands and returns timeline render projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [
+            {
+              track_id: 'track.scene',
+              level: 'Scene',
+              label: 'Scenes',
+              sort_order: 30,
+              collapsed: false,
+            },
+          ],
+          clips: [
+            {
+              node_id: 'node.scene.beach.a',
+              parent_id: null,
+              track_id: 'track.scene',
+              level: 'Scene',
+              name: 'Beach argument A',
+              start_ms: 1_000,
+              end_ms: 2_500,
+              sort_order: 10,
+              locked: false,
+              content_status: 'NotesOnly',
+              beat_type: null,
+              arc_ids: [],
+            },
+            {
+              node_id: 'node.scene.beach.b',
+              parent_id: null,
+              track_id: 'track.scene',
+              level: 'Scene',
+              name: 'Beach argument B',
+              start_ms: 2_500,
+              end_ms: 4_000,
+              sort_order: 11,
+              locked: false,
+              content_status: 'NotesOnly',
+              beat_type: null,
+              arc_ids: [],
+            },
+          ],
+          relationships: [],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      splitTimelineNode(
+        {
+          node_id: 'node.scene.beach',
+          at_ms: 2_500,
+        },
+        'command-timeline-split-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/timeline/split-node',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-timeline-split-1',
+          payload: {
+            node_id: 'node.scene.beach',
+            at_ms: 2_500,
           },
         }),
       }),
