@@ -1,6 +1,11 @@
 <script lang="ts">
   import type { EntityCategory } from '$lib/types.js';
-  import { categoryColor, type BibleGraphFilter } from './bibleGraphCategories.js';
+  import {
+    bibleGraphCategories,
+    categoryColor,
+    categoryShortLabel,
+    type BibleGraphFilter,
+  } from './bibleGraphCategories.js';
 
   let {
     activeFilter,
@@ -11,8 +16,6 @@
     disabledCategories: Set<EntityCategory>;
     onadd: (category: EntityCategory) => void;
   } = $props();
-
-  const categories: EntityCategory[] = ['Character', 'Location', 'Prop', 'Theme', 'Event'];
 </script>
 
 <div class="add-buttons">
@@ -26,12 +29,12 @@
     </button>
   {:else}
     <div class="add-menu">
-      {#each categories as category}
+      {#each bibleGraphCategories as category}
         <button
           class="add-btn-small"
           disabled={disabledCategories.has(category)}
           style="color: {categoryColor(category)}"
-          onclick={() => onadd(category)}>+ {category.slice(0, 3)}</button
+          onclick={() => onadd(category)}>+ {categoryShortLabel(category)}</button
         >
       {/each}
     </div>

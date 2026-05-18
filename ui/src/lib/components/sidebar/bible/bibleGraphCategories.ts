@@ -4,14 +4,15 @@ import type { BibleGraphNode, BibleGraphNodeId, EntityCategory } from '$lib/type
 export type BibleGraphFilter = EntityCategory | 'All';
 export type BibleGraphCategory = EntityCategory | 'Other';
 
-export const bibleGraphFilters: BibleGraphFilter[] = [
-  'All',
+export const bibleGraphCategories: EntityCategory[] = [
   'Character',
   'Location',
   'Prop',
   'Theme',
   'Event',
 ];
+
+export const bibleGraphFilters: BibleGraphFilter[] = ['All', ...bibleGraphCategories];
 
 export const canonicalParents: Record<EntityCategory, BibleGraphNodeId> = {
   Character: 'canonical.characters',
@@ -47,15 +48,44 @@ export const defaultNames: Record<EntityCategory, string> = {
 
 export function filterLabel(filter: BibleGraphFilter): string {
   if (filter === 'All') return 'All';
-  return filter.slice(0, 3);
+  return categoryShortLabel(filter);
+}
+
+export function categorySchemaKey(
+  category: EntityCategory,
+  projection: BibleGraphSchemaListProjection | undefined,
+): string | undefined {
+  const schemaKey = schemaKeys[category];
+  if (!projection?.schemas.some((schema) => schema.schema_key === schemaKey)) return undefined;
+  return schemaKey;
 }
 
 export function categorySchemaAvailable(
   category: EntityCategory,
   projection: BibleGraphSchemaListProjection | undefined,
 ): boolean {
-  if (!projection) return false;
-  return projection.schemas.some((schema) => schema.schema_key === schemaKeys[category]);
+  return categorySchemaKey(category, projection) !== undefined;
+}
+
+export function newNodeName(category: EntityCategory): string {
+  return defaultNames[category];
+}
+
+export function categoryShortLabel(category: BibleGraphCategory): string {
+  switch (category) {
+    case 'Character':
+      return 'CHR';
+    case 'Location':
+      return 'LOC';
+    case 'Prop':
+      return 'PRP';
+    case 'Theme':
+      return 'THM';
+    case 'Event':
+      return 'EVT';
+    case 'Other':
+      return 'OTH';
+  }
 }
 
 export function categoryColor(category: BibleGraphFilter | BibleGraphCategory): string {

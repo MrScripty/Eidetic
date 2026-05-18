@@ -19,10 +19,11 @@
   import {
     canonicalParents,
     canonicalRootSchemaKeys,
+    bibleGraphCategories,
     categorySchemaAvailable,
-    defaultNames,
+    categorySchemaKey,
+    newNodeName,
     nodeCategory,
-    schemaKeys,
     type BibleGraphFilter,
   } from './bibleGraphCategories.js';
 
@@ -35,7 +36,7 @@
   const graphNodes = $derived(nodeListProjection?.payload.nodes ?? []);
   const disabledAddCategories = $derived(
     new Set(
-      (['Character', 'Location', 'Prop', 'Theme', 'Event'] as EntityCategory[]).filter(
+      bibleGraphCategories.filter(
         (category) => !categorySchemaAvailable(category, schemaProjection?.payload),
       ),
     ),
@@ -59,16 +60,20 @@
       if (!categorySchemaAvailable(category, schemaProjection?.payload)) {
         await refreshBibleGraphSchemaListProjection();
       }
-      if (!categorySchemaAvailable(category, getCachedBibleGraphSchemaListProjection()?.payload)) {
+      const schemaKey = categorySchemaKey(
+        category,
+        getCachedBibleGraphSchemaListProjection()?.payload,
+      );
+      if (!schemaKey) {
         throw new Error(`Schema unavailable for ${category}`);
       }
       const parentId = await ensureRootForCategory(category);
-      const nodeId = `node.${schemaKeys[category]}.${crypto.randomUUID()}`;
+      const nodeId = `node.${schemaKey}.${crypto.randomUUID()}`;
       await createBibleGraphNodeProjection({
         node_id: nodeId,
         parent_id: parentId,
-        schema_key: schemaKeys[category],
-        name: defaultNames[category],
+        schema_key: schemaKey,
+        name: newNodeName(category),
         sort_order: nextSortOrder(category),
       });
       selectBibleGraphNode(nodeId);

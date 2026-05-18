@@ -1,6 +1,10 @@
 <script lang="ts">
   import type { BibleGraphNode } from '$lib/types.js';
-  import { categoryColor, type BibleGraphCategory } from './bibleGraphCategories.js';
+  import {
+    categoryColor,
+    categoryShortLabel,
+    type BibleGraphCategory,
+  } from './bibleGraphCategories.js';
 
   let {
     node,
@@ -13,22 +17,13 @@
     selected?: boolean;
     onselect: (id: string) => void;
   } = $props();
-
-  const categoryLabels: Record<BibleGraphCategory, string> = {
-    Character: 'CHR',
-    Location: 'LOC',
-    Prop: 'PRP',
-    Theme: 'THM',
-    Event: 'EVT',
-    Other: 'OTH',
-  };
 </script>
 
 <button class="node-card" class:selected onclick={() => onselect(node.id)}>
   <span class="color-dot" style="background: {categoryColor(category)}"></span>
   <span class="node-name">{node.name}</span>
   <span class="category-badge" style="color: {categoryColor(category)}">
-    {categoryLabels[category]}
+    {categoryShortLabel(category)}
   </span>
   {#if node.system_owned}
     <span class="system-badge">ROOT</span>
