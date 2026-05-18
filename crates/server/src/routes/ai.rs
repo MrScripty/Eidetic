@@ -3,15 +3,20 @@ use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use futures::StreamExt;
 use serde::Deserialize;
+use std::path::PathBuf;
 use uuid::Uuid;
 
 use crate::ai_backends::Backend;
 use crate::embeddings::EmbeddingClient;
 use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
+use crate::script_document_command;
 use crate::state::{AppState, BackendType, ServerEvent};
-use crate::ydoc::{ContentField, DocCommand};
 use eidetic_core::ai::backend::{ChildPlan, ChildProposal, RagChunk};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
+use eidetic_core::contracts::{
+    CommandEnvelope, CommandId, ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptSegmentId,
+    ScriptSegmentStatus, ScriptSpanProvenance, SetScriptBlockCommand,
+};
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
 
 pub fn router() -> Router<AppState> {
@@ -39,7 +44,7 @@ async fn generate(
     let node_id = NodeId(body.node_id);
 
     // Validate and build the request while holding the project lock briefly.
-    let request = {
+    let (request, project_path) = {
         let project_guard = state.project.lock();
         let Some(project) = project_guard.as_ref() else {
             return Json(serde_json::json!({ "error": "no project loaded" }));
@@ -66,12 +71,16 @@ async fn generate(
             return Json(serde_json::json!({ "error": "generation already in progress" }));
         }
 
-        match build_generate_request(project, node_id) {
+        let request = match build_generate_request(project, node_id) {
             Ok(req) => req,
             Err(e) => {
                 return Json(serde_json::json!({ "error": e.to_string() }));
             }
-        }
+        };
+        let Some(project_path) = state.project_path.lock().clone() else {
+            return Json(serde_json::json!({ "error": "no project loaded" }));
+        };
+        (request, project_path)
     };
 
     // Mark as generating.
@@ -94,7 +103,7 @@ async fn generate(
     let state_clone = state.clone();
     let node_uuid = body.node_id;
     tokio::spawn(async move {
-        run_generation(state_clone, node_uuid, request).await;
+        run_generation(state_clone, project_path, node_uuid, request).await;
     });
 
     Json(serde_json::json!({
@@ -155,10 +164,7 @@ async fn generate_children(
     let json_text = match backend.generate_json(&prompt, &config).await {
         Ok(text) => text,
         Err(e) => {
-            tracing::error!(
-                "Child decomposition failed for node {}: {e}",
-                body.node_id
-            );
+            tracing::error!("Child decomposition failed for node {}: {e}", body.node_id);
             return Json(serde_json::json!({ "error": e.to_string() }));
         }
     };
@@ -170,7 +176,13 @@ async fn generate_children(
         Err(_) => {
             #[derive(serde::Deserialize)]
             struct Wrapped {
-                #[serde(alias = "acts", alias = "beats", alias = "children", alias = "sequences", alias = "scenes")]
+                #[serde(
+                    alias = "acts",
+                    alias = "beats",
+                    alias = "children",
+                    alias = "sequences",
+                    alias = "scenes"
+                )]
                 items: Vec<ChildProposal>,
             }
             match serde_json::from_str::<Wrapped>(&json_text) {
@@ -260,9 +272,7 @@ async fn generate_batch(
                 match build_generate_request(project, child_id) {
                     Ok(req) => req,
                     Err(e) => {
-                        tracing::error!(
-                            "Failed to build request for child node {child_uuid}: {e}"
-                        );
+                        tracing::error!("Failed to build request for child node {child_uuid}: {e}");
                         continue;
                     }
                 }
@@ -282,7 +292,16 @@ async fn generate_batch(
                 node_id: *child_uuid,
             });
 
-            run_generation(state_clone.clone(), *child_uuid, request).await;
+            let Some(project_path) = state_clone.project_path.lock().clone() else {
+                let _ = state_clone.events_tx.send(ServerEvent::GenerationError {
+                    node_id: *child_uuid,
+                    error: "no project loaded".to_string(),
+                });
+                state_clone.generating.lock().remove(child_uuid);
+                continue;
+            };
+
+            run_generation(state_clone.clone(), project_path, *child_uuid, request).await;
         }
     });
 
@@ -295,6 +314,7 @@ async fn generate_batch(
 
 async fn run_generation(
     state: AppState,
+    project_path: PathBuf,
     node_uuid: Uuid,
     mut request: eidetic_core::ai::backend::GenerateRequest,
 ) {
@@ -305,10 +325,8 @@ async fn run_generation(
     // RAG: retrieve relevant reference chunks if vector store has entries.
     if !state.vector_store.lock().is_empty() {
         let query = &request.target_node.content.notes;
-        let embed_client = EmbeddingClient::new(
-            &config.base_url,
-            crate::state::constants::EMBEDDING_MODEL,
-        );
+        let embed_client =
+            EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
         if let Ok(query_embedding) = embed_client.embed(query).await {
             let store = state.vector_store.lock();
             let results = store.search(&query_embedding, crate::state::constants::RAG_TOP_K);
@@ -370,9 +388,7 @@ async fn run_generation(
                 });
             }
             Err(e) => {
-                tracing::warn!(
-                    "Stream error during generation for node {node_uuid}: {e}"
-                );
+                tracing::warn!("Stream error during generation for node {node_uuid}: {e}");
                 break;
             }
         }
@@ -393,31 +409,50 @@ async fn run_generation(
             error: "AI produced no output".into(),
         });
     } else {
-        {
+        let metadata = {
             let mut project_guard = state.project.lock();
-            if let Some(project) = project_guard.as_mut() {
-                if let Ok(node) = project.timeline.node_mut(node_id) {
-                    node.content.content = full_text.clone();
-                    node.content.status = ContentStatus::HasContent;
-                }
+            let Some(project) = project_guard.as_mut() else {
+                let _ = state.events_tx.send(ServerEvent::GenerationError {
+                    node_id: node_uuid,
+                    error: "no project loaded".into(),
+                });
+                state.generating.lock().remove(&node_uuid);
+                return;
+            };
+            let Ok(node) = project.timeline.node_mut(node_id) else {
+                let _ = state.events_tx.send(ServerEvent::GenerationError {
+                    node_id: node_uuid,
+                    error: "node not found".into(),
+                });
+                state.generating.lock().remove(&node_uuid);
+                return;
+            };
+            node.content.status = ContentStatus::HasContent;
+            GeneratedScriptMetadata {
+                project_name: project.name.clone(),
+                start_ms: node.time_range.start_ms,
+                end_ms: node.time_range.end_ms,
             }
+        };
+        if let Err(error) =
+            persist_generated_script_block(project_path, node_uuid, metadata, full_text.clone())
+                .await
+        {
+            tracing::error!("Failed to persist generated script for node {node_uuid}: {error}");
+            let _ = state.events_tx.send(ServerEvent::GenerationError {
+                node_id: node_uuid,
+                error,
+            });
+            state.generating.lock().remove(&node_uuid);
+            return;
         }
-        // Mirror content to Y.Doc (authoritative CRDT source).
-        let _ = state
-            .doc_tx
-            .send(DocCommand::WriteNodeContent {
-                node_id,
-                field: ContentField::Content,
-                text: full_text.clone(),
-                author: format!("ai:gen-{node_uuid}"),
-            })
-            .await;
         let _ = state
             .events_tx
             .send(ServerEvent::GenerationComplete { node_id: node_uuid });
         let _ = state
             .events_tx
             .send(ServerEvent::NodeUpdated { node_id: node_uuid });
+        let _ = state.events_tx.send(ServerEvent::ScriptChanged);
         state.trigger_save();
 
         // Generate scene recap for continuity context (non-fatal).
@@ -426,11 +461,67 @@ async fn run_generation(
         // Auto-extract entities from the newly generated text.
         let extract_state = state.clone();
         tokio::spawn(async move {
-            auto_extract_and_commit(extract_state, node_uuid).await;
+            auto_extract_and_commit(extract_state, node_uuid, full_text).await;
         });
     }
 
     state.generating.lock().remove(&node_uuid);
+}
+
+#[derive(Debug, Clone)]
+struct GeneratedScriptMetadata {
+    project_name: String,
+    start_ms: u64,
+    end_ms: u64,
+}
+
+async fn persist_generated_script_block(
+    project_path: PathBuf,
+    node_uuid: Uuid,
+    metadata: GeneratedScriptMetadata,
+    full_text: String,
+) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&project_path)
+            .map_err(|error| error.to_string())?;
+        let command =
+            generated_script_block_command(Uuid::new_v4(), node_uuid, metadata, full_text)?;
+        script_document_command::apply_set_script_block(&mut conn, &command, 0)
+            .map_err(|error| error.to_string())?;
+        Ok(())
+    })
+    .await
+    .map_err(|error| format!("script persistence task failed: {error}"))?
+}
+
+fn generated_script_block_command(
+    command_id: Uuid,
+    node_uuid: Uuid,
+    metadata: GeneratedScriptMetadata,
+    full_text: String,
+) -> Result<CommandEnvelope<SetScriptBlockCommand>, String> {
+    Ok(CommandEnvelope {
+        id: CommandId(command_id),
+        payload: SetScriptBlockCommand {
+            document_id: ScriptDocumentId::new("script.document.main")
+                .map_err(|error| error.to_string())?,
+            document_title: metadata.project_name,
+            document_sort_order: 0,
+            segment_id: ScriptSegmentId::new(format!("script.segment.{node_uuid}"))
+                .map_err(|error| error.to_string())?,
+            source_node_id: Some(node_uuid.to_string()),
+            segment_start_ms: metadata.start_ms,
+            segment_end_ms: metadata.end_ms,
+            segment_status: ScriptSegmentStatus::Current,
+            segment_sort_order: 0,
+            block_id: ScriptBlockId::new(format!("script.block.{node_uuid}.generated"))
+                .map_err(|error| error.to_string())?,
+            block_kind: ScriptBlockKind::Action,
+            text: full_text,
+            span_provenance: ScriptSpanProvenance::AiGenerated,
+            sort_order: 0,
+        },
+    })
 }
 
 /// Generate a compact scene recap after content generation.
@@ -607,14 +698,12 @@ async fn react(
             return Json(serde_json::json!({ "error": "no project loaded" }));
         };
 
-        let edit_ctx =
-            match eidetic_core::ai::consistency::build_edit_context(project, node_id) {
-                Ok(ctx) => ctx,
-                Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
-            };
+        let edit_ctx = match eidetic_core::ai::consistency::build_edit_context(project, node_id) {
+            Ok(ctx) => ctx,
+            Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+        };
 
-        let downstream_ids =
-            eidetic_core::ai::consistency::downstream_node_ids(project, node_id);
+        let downstream_ids = eidetic_core::ai::consistency::downstream_node_ids(project, node_id);
         let mut downstream: Vec<(Uuid, String, String)> = Vec::new();
         for did in downstream_ids {
             if let Ok(node) = project.timeline.node(did) {
@@ -635,8 +724,7 @@ async fn react(
     let state_clone = state.clone();
     let source_node_id = body.node_id;
     tokio::spawn(async move {
-        run_consistency_check(state_clone, source_node_id, edit_context, downstream_info)
-            .await;
+        run_consistency_check(state_clone, source_node_id, edit_context, downstream_info).await;
     });
 
     Json(serde_json::json!({ "status": "checking" }))
@@ -657,9 +745,7 @@ async fn run_consistency_check(
     let response = match backend.generate_full(&prompt, &config).await {
         Ok(text) => text,
         Err(e) => {
-            tracing::error!(
-                "Consistency check failed for node {source_node_id}: {e}"
-            );
+            tracing::error!("Consistency check failed for node {source_node_id}: {e}");
             let _ = state.events_tx.send(ServerEvent::ConsistencyComplete {
                 source_node_id,
                 suggestion_count: 0,
@@ -725,10 +811,7 @@ async fn extract_entities(
     result
 }
 
-async fn extract_entities_inner(
-    state: &AppState,
-    node_id: NodeId,
-) -> Json<serde_json::Value> {
+async fn extract_entities_inner(state: &AppState, node_id: NodeId) -> Json<serde_json::Value> {
     let (script, known_entities, time_ms) = {
         let project_guard = state.project.lock();
         let Some(project) = project_guard.as_ref() else {
@@ -745,9 +828,7 @@ async fn extract_entities_inner(
         let script = node.content.content.clone();
 
         if script.trim().is_empty() {
-            return Json(
-                serde_json::json!({ "error": "node has no content to extract from" }),
-            );
+            return Json(serde_json::json!({ "error": "node has no content to extract from" }));
         }
 
         let time_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
@@ -811,7 +892,7 @@ async fn run_extraction(
 }
 
 /// Auto-extraction after generation — runs extraction and commits results to the bible.
-async fn auto_extract_and_commit(state: AppState, node_uuid: Uuid) {
+async fn auto_extract_and_commit(state: AppState, node_uuid: Uuid, script: String) {
     use eidetic_core::script::element::ScriptElement;
     use eidetic_core::script::format::parse_script_elements;
     use eidetic_core::story::arc::Color;
@@ -827,7 +908,7 @@ async fn auto_extract_and_commit(state: AppState, node_uuid: Uuid) {
         return;
     }
 
-    let (script, known_entities, time_ms) = {
+    let (known_entities, time_ms) = {
         let project_guard = state.project.lock();
         let Some(project) = project_guard.as_ref() else {
             state.extracting.lock().remove(&node_uuid);
@@ -841,8 +922,6 @@ async fn auto_extract_and_commit(state: AppState, node_uuid: Uuid) {
                 return;
             }
         };
-
-        let script = node.content.content.clone();
 
         if script.trim().is_empty() {
             state.extracting.lock().remove(&node_uuid);
@@ -864,7 +943,7 @@ async fn auto_extract_and_commit(state: AppState, node_uuid: Uuid) {
             })
             .collect();
 
-        (script, known, time_ms)
+        (known, time_ms)
     };
 
     let result = match run_extraction(&state, &script, &known_entities, time_ms).await {
@@ -877,10 +956,7 @@ async fn auto_extract_and_commit(state: AppState, node_uuid: Uuid) {
 
     let snapshot_count = result.snapshot_suggestions.len();
 
-    if result.new_entities.is_empty()
-        && snapshot_count == 0
-        && result.entities_present.is_empty()
-    {
+    if result.new_entities.is_empty() && snapshot_count == 0 && result.entities_present.is_empty() {
         tracing::info!(
             "Auto-extraction for node {node_uuid}: LLM returned no entities — skipping commit"
         );
@@ -1026,8 +1102,7 @@ async fn auto_extract_and_commit(state: AppState, node_uuid: Uuid) {
                             EntityCategory::Prop
                         }
                     });
-                let mut entity =
-                    Entity::new(name.clone(), cat.clone(), category_color(&cat));
+                let mut entity = Entity::new(name.clone(), cat.clone(), category_color(&cat));
                 entity.node_refs.push(node_id);
                 project.bible.entities.push(entity);
                 created += 1;
@@ -1238,8 +1313,7 @@ async fn commit_extraction(
                             EntityCategory::Prop
                         }
                     });
-                let mut entity =
-                    Entity::new(name.clone(), cat.clone(), category_color(&cat));
+                let mut entity = Entity::new(name.clone(), cat.clone(), category_color(&cat));
                 entity.node_refs.push(node_id);
                 project.bible.entities.push(entity);
                 created += 1;
@@ -1303,4 +1377,45 @@ fn extract_json_array(text: &str) -> &str {
         }
     }
     text.trim()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generated_script_block_command_targets_main_document_with_ai_provenance() {
+        let command_id = Uuid::new_v4();
+        let node_uuid = Uuid::new_v4();
+        let command = generated_script_block_command(
+            command_id,
+            node_uuid,
+            GeneratedScriptMetadata {
+                project_name: "Pilot".to_string(),
+                start_ms: 1_000,
+                end_ms: 5_000,
+            },
+            "INT. KITCHEN - MORNING\n\nAda enters.".to_string(),
+        )
+        .unwrap();
+
+        assert_eq!(command.id, CommandId(command_id));
+        assert_eq!(command.payload.document_id.as_str(), "script.document.main");
+        assert_eq!(command.payload.document_title, "Pilot");
+        assert_eq!(
+            command.payload.segment_id.as_str(),
+            format!("script.segment.{node_uuid}")
+        );
+        assert_eq!(
+            command.payload.source_node_id.as_deref(),
+            Some(node_uuid.to_string().as_str())
+        );
+        assert_eq!(command.payload.segment_start_ms, 1_000);
+        assert_eq!(command.payload.segment_end_ms, 5_000);
+        assert_eq!(command.payload.block_kind, ScriptBlockKind::Action);
+        assert_eq!(
+            command.payload.span_provenance,
+            ScriptSpanProvenance::AiGenerated
+        );
+    }
 }

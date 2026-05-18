@@ -175,6 +175,7 @@ Completed slices:
 - `feat(ui): add script lock command helper` added typed frontend script lock command support and projection-store cache updates for accepted lock responses.
 - `feat(server): export script document projections` moved PDF export off Beat node screenplay blobs and onto the backend-owned main script document projection, with tests proving export does not fall back to legacy node script content.
 - `feat(core): add script block span provenance` extended script block commands with explicit span provenance so AI-generated and user-edited script writes can enter the same backend command path without corrupting provenance.
+- `feat(server): persist generated script blocks` routed successful AI screenplay generation through backend-owned script document block commands with AI provenance, emits `script_changed`, and stops mirroring generated screenplay text into timeline node content/Y.Doc.
 
 Discovered issues:
 
