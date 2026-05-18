@@ -198,51 +198,6 @@ export function getTimeline(): Promise<Timeline> {
 
 // --- Nodes ---
 
-export function createNode(data: {
-  parent_id?: string | null;
-  level: StoryLevel;
-  name: string;
-  beat_type?: string | null;
-  start_ms: number;
-  end_ms: number;
-}): Promise<StoryNode> {
-  return request('/timeline/nodes', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-export function updateNode(
-  id: string,
-  updates: { name?: string; start_ms?: number; end_ms?: number },
-): Promise<StoryNode> {
-  return request(`/timeline/nodes/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(updates),
-  });
-}
-
-export function deleteNode(id: string): Promise<{ deleted: boolean }> {
-  return request(`/timeline/nodes/${id}`, { method: 'DELETE' });
-}
-
-export function splitNode(
-  id: string,
-  atMs: number,
-): Promise<{ left: StoryNode; right: StoryNode }> {
-  return request(`/timeline/nodes/${id}/split`, {
-    method: 'POST',
-    body: JSON.stringify({ at_ms: atMs }),
-  });
-}
-
-export function resizeNode(id: string, startMs: number, endMs: number): Promise<StoryNode> {
-  return request(`/timeline/nodes/${id}/resize`, {
-    method: 'POST',
-    body: JSON.stringify({ start_ms: startMs, end_ms: endMs }),
-  });
-}
-
 export function getNodeChildren(id: string): Promise<StoryNode[]> {
   return request(`/timeline/nodes/${id}/children`);
 }
@@ -336,13 +291,6 @@ export function untagNodeFromArc(nodeId: string, arcId: string): Promise<{ ok: b
 export function getGaps(level?: StoryLevel): Promise<TimelineGap[]> {
   const query = level ? `?level=${level}` : '';
   return request(`/timeline/gaps${query}`);
-}
-
-export function fillGap(level: StoryLevel, startMs: number, endMs: number): Promise<unknown> {
-  return request('/timeline/gaps/fill', {
-    method: 'POST',
-    body: JSON.stringify({ level, start_ms: startMs, end_ms: endMs }),
-  });
 }
 
 // --- References ---
