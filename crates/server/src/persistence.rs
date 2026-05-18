@@ -182,6 +182,7 @@ fn save_project_sync(
 
     create_schema(&conn)?;
     let arcs = arcs_for_project_save(&conn, project)?;
+    let timeline = timeline_for_project_save(&conn, project)?;
 
     let tx = conn
         .unchecked_transaction()
@@ -195,17 +196,17 @@ fn save_project_sync(
         params![
             project.name,
             project.premise,
-            project.timeline.total_duration_ms as i64
+            timeline.total_duration_ms as i64
         ],
     )
     .map_err(|e| format!("insert project: {e}"))?;
 
     // Episode structure.
-    let segments_json = serde_json::to_string(&project.timeline.structure.segments)
+    let segments_json = serde_json::to_string(&timeline.structure.segments)
         .map_err(|e| format!("serialize segments: {e}"))?;
     tx.execute(
         "INSERT INTO episode_structure (id, template_name, segments_json) VALUES (1, ?1, ?2)",
-        params![project.timeline.structure.template_name, segments_json],
+        params![timeline.structure.template_name, segments_json],
     )
     .map_err(|e| format!("insert episode_structure: {e}"))?;
 
@@ -215,22 +216,22 @@ fn save_project_sync(
     }
 
     // Tracks.
-    for track in &project.timeline.tracks {
+    for track in &timeline.tracks {
         insert_track(&tx, track)?;
     }
 
     // Nodes.
-    for node in &project.timeline.nodes {
+    for node in &timeline.nodes {
         insert_node(&tx, node)?;
     }
 
     // Node-Arc tags.
-    for node_arc in &project.timeline.node_arcs {
+    for node_arc in &timeline.node_arcs {
         insert_node_arc(&tx, node_arc)?;
     }
 
     // Relationships.
-    for rel in &project.timeline.relationships {
+    for rel in &timeline.relationships {
         insert_relationship(&tx, rel)?;
     }
 
@@ -267,6 +268,79 @@ fn arcs_for_project_save(conn: &Connection, project: &Project) -> Result<Vec<Sto
     }
 
     Ok(project.arcs.clone())
+}
+
+fn timeline_for_project_save(conn: &Connection, project: &Project) -> Result<Timeline, String> {
+    let timeline_revision_count =
+        crate::history_store::load_revision_summary_for_kind(conn, ObjectKind::TimelineNode)
+            .map_err(|e| format!("load timeline node revision summary: {e}"))?
+            .revision_count
+            + crate::history_store::load_revision_summary_for_kind(
+                conn,
+                ObjectKind::TimelineRelationship,
+            )
+            .map_err(|e| format!("load timeline relationship revision summary: {e}"))?
+            .revision_count;
+
+    if timeline_revision_count == 0 && !timeline_current_state_exists(conn)? {
+        return Ok(project.timeline.clone());
+    }
+
+    let (total_duration_ms, structure) = persisted_timeline_metadata(conn)?.unwrap_or_else(|| {
+        (
+            project.timeline.total_duration_ms,
+            project.timeline.structure.clone(),
+        )
+    });
+    let tracks = persisted_tracks_or_project_tracks(conn, project)?;
+    Ok(Timeline {
+        total_duration_ms,
+        tracks,
+        nodes: read_nodes(conn)?,
+        node_arcs: read_node_arcs(conn)?,
+        relationships: read_relationships(conn)?,
+        structure,
+    })
+}
+
+fn timeline_current_state_exists(conn: &Connection) -> Result<bool, String> {
+    Ok(table_has_rows(conn, "nodes")?
+        || table_has_rows(conn, "node_arcs")?
+        || table_has_rows(conn, "relationships")?)
+}
+
+fn table_has_rows(conn: &Connection, table_name: &str) -> Result<bool, String> {
+    let sql = format!("SELECT EXISTS(SELECT 1 FROM {table_name} LIMIT 1)");
+    conn.query_row(&sql, [], |row| row.get::<_, bool>(0))
+        .map_err(|e| format!("read {table_name} row presence: {e}"))
+}
+
+fn persisted_timeline_metadata(
+    conn: &Connection,
+) -> Result<Option<(u64, EpisodeStructure)>, String> {
+    let total_duration_ms = match conn.query_row(
+        "SELECT total_duration_ms FROM project WHERE id = 1",
+        [],
+        |row| row.get::<_, i64>(0),
+    ) {
+        Ok(total_duration_ms) => total_duration_ms as u64,
+        Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(None),
+        Err(e) => return Err(format!("read project timeline metadata: {e}")),
+    };
+
+    Ok(Some((total_duration_ms, read_episode_structure(conn)?)))
+}
+
+fn persisted_tracks_or_project_tracks(
+    conn: &Connection,
+    project: &Project,
+) -> Result<Vec<Track>, String> {
+    let tracks = read_tracks(conn)?;
+    if tracks.is_empty() {
+        Ok(project.timeline.tracks.clone())
+    } else {
+        Ok(tracks)
+    }
 }
 
 fn insert_arc(conn: &Connection, arc: &StoryArc) -> Result<(), String> {
@@ -799,9 +873,13 @@ pub async fn list_projects(base_dir: &Path) -> Vec<ProjectEntry> {
 
 #[cfg(test)]
 mod tests {
-    use eidetic_core::contracts::{CommandEnvelope, DeleteStoryArcCommand};
+    use eidetic_core::Template;
+    use eidetic_core::contracts::{
+        CommandEnvelope, DeleteStoryArcCommand, DeleteTimelineNodeCommand,
+    };
     use eidetic_core::story::arc::{ArcType, Color, StoryArc};
     use eidetic_core::timeline::Timeline;
+    use eidetic_core::timeline::relationship::{Relationship, RelationshipType};
     use eidetic_core::timeline::structure::EpisodeStructure;
     use uuid::Uuid;
 
@@ -869,6 +947,85 @@ mod tests {
 
         let (loaded, _) = load_project_sync(&path).expect("load project");
         assert!(loaded.arcs.is_empty());
+
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn broad_save_preserves_existing_sqlite_timeline_nodes_when_project_mirror_is_stale() {
+        let path = temp_project_path("preserve-timeline-nodes");
+        let mut project = Template::MultiCam.build_project("Persistence Test");
+        let node_id = project.timeline.nodes[0].id;
+
+        save_project_sync(&project, &path, None).expect("initial save");
+        {
+            let conn = crate::sqlite::open_write_connection(&path).expect("open sqlite");
+            conn.execute(
+                "UPDATE nodes SET name = ?1 WHERE id = ?2",
+                rusqlite::params!["SQLite Canonical Node", node_id.0.to_string()],
+            )
+            .expect("rename sqlite node");
+        }
+
+        project.timeline.node_mut(node_id).unwrap().name = "Stale Mirror Node".to_string();
+        save_project_sync(&project, &path, None).expect("second save");
+
+        let (loaded, _) = load_project_sync(&path).expect("load project");
+        let loaded_node = loaded.timeline.node(node_id).expect("loaded node");
+        assert_eq!(loaded_node.name, "SQLite Canonical Node");
+
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn broad_save_does_not_resurrect_deleted_timeline_nodes_after_history_exists() {
+        let path = temp_project_path("deleted-timeline-nodes");
+        let project = Template::MultiCam.build_project("Persistence Test");
+        let node_id = project.timeline.nodes[0].id;
+
+        save_project_sync(&project, &path, None).expect("initial save");
+        {
+            let mut conn = crate::sqlite::open_write_connection(&path).expect("open sqlite");
+            crate::timeline_command::record_delete_timeline_node_history(
+                &mut conn,
+                &project,
+                &CommandEnvelope::new(DeleteTimelineNodeCommand { node_id }),
+                1,
+            )
+            .expect("delete timeline node");
+        }
+
+        save_project_sync(&project, &path, None).expect("second save");
+
+        let (loaded, _) = load_project_sync(&path).expect("load project");
+        assert!(loaded.timeline.node(node_id).is_err());
+
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn broad_save_preserves_existing_sqlite_timeline_relationships() {
+        let path = temp_project_path("preserve-timeline-relationships");
+        let mut project = Template::MultiCam.build_project("Persistence Test");
+        let from_node = project.timeline.nodes[0].id;
+        let to_node = project.timeline.nodes[1].id;
+        let relationship = Relationship::new(from_node, to_node, RelationshipType::Thematic);
+        let relationship_id = relationship.id;
+        project.timeline.add_relationship(relationship).unwrap();
+
+        save_project_sync(&project, &path, None).expect("initial save");
+
+        project.timeline.relationships.clear();
+        save_project_sync(&project, &path, None).expect("second save");
+
+        let (loaded, _) = load_project_sync(&path).expect("load project");
+        assert!(
+            loaded
+                .timeline
+                .relationships
+                .iter()
+                .any(|relationship| relationship.id == relationship_id)
+        );
 
         let _ = std::fs::remove_file(path);
     }
