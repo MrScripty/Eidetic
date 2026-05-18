@@ -210,6 +210,7 @@ Completed slices:
 - `feat(ui): add timeline create command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed timeline node creation commands.
 - `feat(ui): cache timeline create projections` routed create timeline command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route timeline double-click create through commands` moved the existing DOM timeline double-click create handler onto the backend timeline create command/projection path.
+- `feat(renderer): emit timeline create commands` added validated renderer command emission for node creation requests so future Bevy create interactions can flow through backend-confirmed timeline commands.
 
 Discovered issues:
 

@@ -1,5 +1,5 @@
 use eidetic_core::contracts::TimelineRenderProjection;
-use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
 use eidetic_core::timeline::track::TrackId;
 use wasm_bindgen::prelude::*;
 
@@ -61,21 +61,35 @@ impl WasmTimelineRenderer {
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
+    pub fn request_create_node(
+        &mut self,
+        node_id: String,
+        parent_id: Option<String>,
+        level: String,
+        name: String,
+        start_ms: u64,
+        end_ms: u64,
+        beat_type: Option<String>,
+    ) -> Result<(), JsValue> {
+        let node_id = parse_node_id(&node_id)?;
+        let parent_id = parent_id.as_deref().map(parse_node_id).transpose()?;
+        let level = parse_story_level(&level)?;
+        let beat_type = beat_type.as_deref().map(parse_beat_type).transpose()?;
+
+        self.renderer
+            .request_create_node(node_id, parent_id, level, name, start_ms, end_ms, beat_type)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+
     pub fn request_split_node(&mut self, node_id: String, at_ms: u64) -> Result<(), JsValue> {
-        let node_id = NodeId(
-            uuid::Uuid::parse_str(&node_id)
-                .map_err(|error| JsValue::from_str(&format!("invalid node id: {error}")))?,
-        );
+        let node_id = parse_node_id(&node_id)?;
         self.renderer
             .request_split_node(node_id, at_ms)
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     pub fn request_delete_node(&mut self, node_id: String) -> Result<(), JsValue> {
-        let node_id = NodeId(
-            uuid::Uuid::parse_str(&node_id)
-                .map_err(|error| JsValue::from_str(&format!("invalid node id: {error}")))?,
-        );
+        let node_id = parse_node_id(&node_id)?;
         self.renderer
             .request_delete_node(node_id)
             .map_err(|error| JsValue::from_str(&error.to_string()))
@@ -115,5 +129,36 @@ impl WasmTimelineRenderer {
 impl Default for WasmTimelineRenderer {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+fn parse_node_id(value: &str) -> Result<NodeId, JsValue> {
+    Ok(NodeId(uuid::Uuid::parse_str(value).map_err(|error| {
+        JsValue::from_str(&format!("invalid node id: {error}"))
+    })?))
+}
+
+fn parse_story_level(value: &str) -> Result<StoryLevel, JsValue> {
+    match value {
+        "Premise" | "premise" => Ok(StoryLevel::Premise),
+        "Act" | "act" => Ok(StoryLevel::Act),
+        "Sequence" | "sequence" => Ok(StoryLevel::Sequence),
+        "Scene" | "scene" => Ok(StoryLevel::Scene),
+        "Beat" | "beat" => Ok(StoryLevel::Beat),
+        _ => Err(JsValue::from_str("invalid story level")),
+    }
+}
+
+fn parse_beat_type(value: &str) -> Result<BeatType, JsValue> {
+    match value {
+        "Setup" | "setup" => Ok(BeatType::Setup),
+        "Complication" | "complication" => Ok(BeatType::Complication),
+        "Escalation" | "escalation" => Ok(BeatType::Escalation),
+        "Climax" | "climax" => Ok(BeatType::Climax),
+        "Resolution" | "resolution" => Ok(BeatType::Resolution),
+        "Payoff" | "payoff" => Ok(BeatType::Payoff),
+        "Callback" | "callback" => Ok(BeatType::Callback),
+        custom if !custom.is_empty() => Ok(BeatType::Custom(custom.to_string())),
+        _ => Err(JsValue::from_str("invalid beat type")),
     }
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::{App, Resource};
 use eidetic_core::contracts::TimelineRenderProjection;
-use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
 use eidetic_core::timeline::track::TrackId;
 use serde::Serialize;
 use thiserror::Error;
@@ -34,6 +34,15 @@ pub enum TimelineRendererCommand {
     },
     DeleteNode {
         node_id: NodeId,
+    },
+    CreateNode {
+        node_id: NodeId,
+        parent_id: Option<NodeId>,
+        level: StoryLevel,
+        name: String,
+        start_ms: u64,
+        end_ms: u64,
+        beat_type: Option<BeatType>,
     },
 }
 
@@ -266,6 +275,57 @@ impl TimelineRendererApp {
                 node_id,
                 start_ms,
                 end_ms,
+            });
+        Ok(())
+    }
+
+    pub fn request_create_node(
+        &mut self,
+        node_id: NodeId,
+        parent_id: Option<NodeId>,
+        level: StoryLevel,
+        name: String,
+        start_ms: u64,
+        end_ms: u64,
+        beat_type: Option<BeatType>,
+    ) -> Result<(), TimelineRendererError> {
+        let duration_ms = {
+            let state = self.app.world().resource::<TimelineRenderState>();
+            let projection = state
+                .projection
+                .as_ref()
+                .ok_or(TimelineRendererError::MissingProjection)?;
+            if let Some(parent_id) = parent_id
+                && !projection
+                    .clips
+                    .iter()
+                    .any(|clip| clip.node_id == parent_id)
+            {
+                return Err(TimelineRendererError::UnknownNode { node_id: parent_id });
+            }
+            projection.total_duration_ms
+        };
+
+        if start_ms >= end_ms || end_ms > duration_ms {
+            return Err(TimelineRendererError::InvalidNodeRange {
+                start_ms,
+                end_ms,
+                duration_ms,
+            });
+        }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineRendererCommandQueue>()
+            .commands
+            .push(TimelineRendererCommand::CreateNode {
+                node_id,
+                parent_id,
+                level,
+                name,
+                start_ms,
+                end_ms,
+                beat_type,
             });
         Ok(())
     }
@@ -531,6 +591,62 @@ mod tests {
                 end_ms: 2_000,
                 duration_ms: 10_000
             })
+        );
+        assert!(renderer.drain_commands().is_empty());
+    }
+
+    #[test]
+    fn renderer_app_emits_validated_create_node_command() {
+        let parent_id = NodeId::new();
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(parent_id));
+
+        assert_eq!(
+            renderer.request_create_node(
+                node_id,
+                Some(parent_id),
+                StoryLevel::Act,
+                "Inserted act".to_string(),
+                2_000,
+                5_000,
+                None,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            renderer.drain_commands(),
+            vec![TimelineRendererCommand::CreateNode {
+                node_id,
+                parent_id: Some(parent_id),
+                level: StoryLevel::Act,
+                name: "Inserted act".to_string(),
+                start_ms: 2_000,
+                end_ms: 5_000,
+                beat_type: None
+            }]
+        );
+    }
+
+    #[test]
+    fn renderer_app_rejects_create_node_command_with_unknown_parent() {
+        let known_node_id = NodeId::new();
+        let parent_id = NodeId::new();
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(known_node_id));
+
+        assert_eq!(
+            renderer.request_create_node(
+                node_id,
+                Some(parent_id),
+                StoryLevel::Act,
+                "Inserted act".to_string(),
+                2_000,
+                5_000,
+                None,
+            ),
+            Err(TimelineRendererError::UnknownNode { node_id: parent_id })
         );
         assert!(renderer.drain_commands().is_empty());
     }
