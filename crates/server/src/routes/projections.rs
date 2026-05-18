@@ -4,7 +4,7 @@ use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
     BibleNodeDetailProjection, ObjectKind, ProjectionEnvelope, ScriptDocumentId,
-    ScriptDocumentProjection, builtin_bible_graph_schema_list_projection,
+    ScriptDocumentProjection, TimelineRenderProjection, builtin_bible_graph_schema_list_projection,
 };
 use serde::Deserialize;
 
@@ -38,6 +38,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/script/document",
             get(get_script_document_projection),
+        )
+        .route(
+            "/projections/timeline/render",
+            get(get_timeline_render_projection),
         )
 }
 
@@ -115,6 +119,17 @@ async fn get_script_document_projection(
     .map_err(|e| ApiError::internal(format!("script document projection task failed: {e}")))??;
 
     crate::error::json_value(projection)
+}
+
+async fn get_timeline_render_projection(State(state): State<AppState>) -> ApiJson {
+    let guard = state.project.lock();
+    let Some(project) = guard.as_ref() else {
+        return Err(ApiError::no_project());
+    };
+
+    crate::error::json_value(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
 }
 
 fn load_projection_at_path(

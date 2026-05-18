@@ -1,6 +1,7 @@
 mod bible_graph;
 mod bible_graph_defaults;
 mod script_document;
+mod timeline_render;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -27,6 +28,9 @@ pub use script_document::{
     ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
     SetScriptLockCommand,
+};
+pub use timeline_render::{
+    TimelineRenderClip, TimelineRenderProjection, TimelineRenderRelationship, TimelineRenderTrack,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

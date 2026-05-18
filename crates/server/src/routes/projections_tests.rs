@@ -321,6 +321,52 @@ async fn script_document_projection_returns_persisted_script_blocks() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn timeline_render_projection_requires_loaded_project() {
+    let app = router().with_state(AppState::new().await);
+
+    let response = app
+        .oneshot(timeline_render_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn timeline_render_projection_returns_backend_timeline_read_model() {
+    let path = temp_db_path("timeline-render");
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("Projection Test");
+    project.timeline.nodes.clear();
+    project.timeline.node_arcs.clear();
+    project.timeline.relationships.clear();
+    let scene = eidetic_core::timeline::node::StoryNode::new(
+        "Beach argument",
+        eidetic_core::timeline::node::StoryLevel::Scene,
+        eidetic_core::timeline::timing::TimeRange::new(1_000, 4_000).unwrap(),
+    );
+    project.timeline.nodes.push(scene);
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+
+    let response = app
+        .oneshot(timeline_render_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 1);
+    assert_eq!(value["payload"]["tracks"][0]["level"], "Premise");
+    assert_eq!(value["payload"]["clips"][0]["name"], "Beach argument");
+    assert_eq!(value["payload"]["clips"][0]["start_ms"], 1_000);
+    assert_eq!(value["payload"]["clips"][0]["end_ms"], 4_000);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_weather_field(path: &PathBuf, weather: &str) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     history_store::create_schema(&conn).unwrap();
@@ -437,6 +483,14 @@ fn script_document_projection_request(document_id: &str) -> Request<Body> {
         .uri(format!(
             "/projections/script/document?document_id={document_id}"
         ))
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn timeline_render_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/timeline/render")
         .body(Body::empty())
         .unwrap()
 }

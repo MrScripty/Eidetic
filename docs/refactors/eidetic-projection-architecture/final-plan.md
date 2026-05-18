@@ -181,6 +181,7 @@ Completed slices:
 - `refactor(ui): remove legacy extraction and consistency UI` deleted orphaned extraction review/diff components, frontend helpers, websocket handlers, and editor store state that depended on node-owned screenplay text, keeping future semantic review work off stale UI state.
 - `refactor(server): remove legacy AI script mutation routes` deleted `/ai/react`, `/ai/extract`, `/ai/extract/commit`, automatic post-generation bible mutation, and their websocket events/prompt helpers so AI no longer commits legacy graph/script changes directly from node screenplay text.
 - `fix(server): decouple unlock from screenplay content` stopped node unlock from recalculating status from legacy `node.content.content`; node locks now leave script-related status untouched because durable script text is backend-owned by script document projections.
+- `feat(server): add timeline render projection` added a backend-owned, layout-neutral timeline render projection contract and HTTP projection route for future Bevy timeline consumption without adding Bevy dependencies to core or retaining DOM-specific render data.
 
 Discovered issues:
 
