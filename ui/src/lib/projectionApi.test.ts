@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
+  getBibleGraphSchemaListProjection,
   getObjectFieldProjection,
 } from './projectionApi.js';
 
@@ -137,6 +138,50 @@ describe('projection api helpers', () => {
     await expect(getBibleGraphNodeListProjection()).resolves.toEqual(response);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/nodes', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+  });
+
+  it('fetches bible graph schema list projections without query params', async () => {
+    const response = {
+      version: 1,
+      payload: {
+        schemas: [
+          {
+            schema_key: 'character',
+            parts: [
+              {
+                part_key: 'profile',
+                name: 'Profile',
+                sort_order: 10,
+                fields: [
+                  {
+                    field_key: 'summary',
+                    sort_order: 10,
+                  },
+                  {
+                    field_key: 'tagline',
+                    sort_order: 20,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getBibleGraphSchemaListProjection()).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/schemas', {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });

@@ -6,6 +6,7 @@ import type {
   ObjectKind,
   ProjectionEnvelope,
 } from './types.js';
+import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
 
 const BASE = '/api';
 
@@ -52,4 +53,10 @@ export function getBibleGraphNodeListProjection(): Promise<
   ProjectionEnvelope<BibleGraphNodeListProjection>
 > {
   return getJson('/projections/bible-graph/nodes');
+}
+
+export function getBibleGraphSchemaListProjection(): Promise<
+  ProjectionEnvelope<BibleGraphSchemaListProjection>
+> {
+  return getJson('/projections/bible-graph/schemas');
 }
