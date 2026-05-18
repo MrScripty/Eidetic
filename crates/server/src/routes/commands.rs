@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
@@ -7,10 +5,12 @@ use eidetic_core::contracts::{CommandEnvelope, ProjectionEnvelope, SetObjectFiel
 use serde::Serialize;
 
 use crate::error::{ApiError, ApiJson};
-use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
+use crate::history_store::{self, RecordChangeOutcome};
 use crate::object_field_command::{self, ObjectFieldCommandError};
 use crate::revision_projection::ObjectFieldProjection;
 use crate::state::{AppState, ServerEvent};
+
+use super::support::{active_project_path, map_history_error};
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/commands/object-field", post(set_object_field))
@@ -35,19 +35,8 @@ async fn set_object_field(
     crate::error::json_value(response)
 }
 
-fn active_project_path(state: &AppState) -> Result<PathBuf, ApiError> {
-    if state.project.lock().is_none() {
-        return Err(ApiError::no_project());
-    }
-    state
-        .project_path
-        .lock()
-        .clone()
-        .ok_or_else(ApiError::no_project)
-}
-
 fn apply_command_at_path(
-    path: PathBuf,
+    path: std::path::PathBuf,
     command: CommandEnvelope<SetObjectFieldCommand>,
 ) -> Result<ObjectFieldCommandResponse, ApiError> {
     let mut conn = crate::sqlite::open_write_connection(&path)
@@ -75,16 +64,6 @@ fn map_object_field_error(error: ObjectFieldCommandError) -> ApiError {
     match error {
         ObjectFieldCommandError::InvalidCommand(message) => ApiError::bad_request(message),
         ObjectFieldCommandError::History(error) => map_history_error(error),
-    }
-}
-
-fn map_history_error(error: HistoryStoreError) -> ApiError {
-    match error {
-        HistoryStoreError::InvalidValue(message) => ApiError::conflict(message),
-        HistoryStoreError::InvalidId(message) => ApiError::bad_request(message),
-        HistoryStoreError::MissingColumn(message) => ApiError::internal(message),
-        HistoryStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
-        HistoryStoreError::Json(error) => ApiError::bad_request(error.to_string()),
     }
 }
 

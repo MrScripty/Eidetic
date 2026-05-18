@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use axum::Router;
 use axum::extract::{Query, State};
 use axum::routing::get;
@@ -8,9 +6,11 @@ use eidetic_core::contracts::ProjectionEnvelope;
 use serde::Deserialize;
 
 use crate::error::{ApiError, ApiJson};
-use crate::history_store::{self, HistoryStoreError};
+use crate::history_store;
 use crate::revision_projection::ObjectFieldProjection;
 use crate::state::AppState;
+
+use super::support::{active_project_path, map_history_error};
 
 pub fn router() -> Router<AppState> {
     Router::new().route(
@@ -43,19 +43,8 @@ async fn get_object_field_projection(
     crate::error::json_value(projection)
 }
 
-fn active_project_path(state: &AppState) -> Result<PathBuf, ApiError> {
-    if state.project.lock().is_none() {
-        return Err(ApiError::no_project());
-    }
-    state
-        .project_path
-        .lock()
-        .clone()
-        .ok_or_else(ApiError::no_project)
-}
-
 fn load_projection_at_path(
-    path: PathBuf,
+    path: std::path::PathBuf,
     object_kind: ObjectKind,
     object_id: String,
 ) -> Result<ProjectionEnvelope<ObjectFieldProjection>, ApiError> {
@@ -68,16 +57,6 @@ fn load_projection_at_path(
         &object_id,
     )
     .map_err(map_history_error)
-}
-
-fn map_history_error(error: HistoryStoreError) -> ApiError {
-    match error {
-        HistoryStoreError::InvalidValue(message) => ApiError::conflict(message),
-        HistoryStoreError::InvalidId(message) => ApiError::bad_request(message),
-        HistoryStoreError::MissingColumn(message) => ApiError::internal(message),
-        HistoryStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
-        HistoryStoreError::Json(error) => ApiError::bad_request(error.to_string()),
-    }
 }
 
 #[cfg(test)]

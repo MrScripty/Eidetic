@@ -8,6 +8,7 @@ mod projections;
 mod reference;
 mod script;
 mod story;
+mod support;
 mod timeline;
 
 use axum::Router;

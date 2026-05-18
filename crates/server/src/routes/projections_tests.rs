@@ -1,4 +1,6 @@
 use super::*;
+use std::path::PathBuf;
+
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;

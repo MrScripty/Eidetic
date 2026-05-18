@@ -16,6 +16,7 @@ This directory defines the host-facing HTTP contract for Eidetic’s browser cli
 | `script.rs` | Script editing and content routes. |
 | `ai.rs` | AI generation, context, and extraction routes. |
 | `reference.rs` | Reference document CRUD routes. |
+| `support.rs` | Shared route helpers for active project path lookup and history error mapping. |
 
 ## Problem
 The frontend needs a stable local API that exposes all editor actions with correct status semantics and shared validation.

@@ -126,6 +126,7 @@ Completed slices:
 - `refactor(server): centralize sqlite write setup` moved write-capable SQLite connection pragmas into one server helper used by structural persistence and command routes.
 - `feat(server): expose object field projection route` added `GET /api/projections/object-field` for focused versioned projection reads from persisted history state.
 - `feat(ui): add object field projection helper` added a read-only frontend helper for focused object-field projection fetches without mutating stores.
+- `refactor(server): share projection route helpers` centralized active project path lookup and history error mapping across command and projection routes.
 
 Discovered issues:
 
