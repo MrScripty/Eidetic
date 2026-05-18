@@ -154,6 +154,8 @@ Discovered issues:
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.
 - The command route currently opens the active SQLite project path per request because `AppState` has no backend-owned database connection owner yet. Before broad route adoption, add an explicit database lifecycle owner with the same concurrency/shutdown discipline as the rest of the backend.
 - Frontend bible editing currently mutates broad `Entity` caches and whole detail objects (`EntityDetail.svelte`, `story.svelte.ts`, `api.ts`, and websocket invalidation handlers). UI command adoption must use focused projection stores and avoid optimistic local patching or treating form state as canonical.
+- `crates/server/src/bible_graph_store.rs` is now over the 500-line decomposition threshold while owning schema setup, node state, part/field state, and projection reads. Split future edge/snapshot/schema work into focused store modules before adding more responsibilities here.
+- `ui/src/lib/components/sidebar/bible/StoryBibleTab.svelte` is now over the 250-line component decomposition threshold after moving list/navigation to graph projections. Extract category/root mapping and graph-node creation orchestration before adding schema editors or filtering complexity.
 
 ## Concurrent Worker Policy
 
