@@ -15,8 +15,6 @@ use pumas_library::ModelLibrary;
 
 /// Server configuration constants.
 pub mod constants {
-    /// Maximum number of undo snapshots to retain.
-    pub const UNDO_STACK_DEPTH: usize = 50;
     /// Default AI model identifier.  "auto" means detect whatever Ollama has loaded.
     pub const DEFAULT_AI_MODEL: &str = "auto";
     /// Default AI temperature.
@@ -85,34 +83,21 @@ pub enum ServerEvent {
     ScriptChanged,
 }
 
-/// Snapshot-based undo/redo stack.
+/// Legacy snapshot-based undo/redo stack.
 ///
-/// Before each mutation, the current `Project` is cloned onto the undo stack.
-/// Undo restores the previous state; redo re-applies undone changes.
-/// Capped at `max_depth` entries (~50 snapshots ≈ 2.5MB for a typical project).
+/// Kept only for the existing undo/redo routes until revision-backed history
+/// replaces them. New mutation paths do not push cloned project snapshots.
 pub struct UndoStack {
     undo: Vec<Project>,
     redo: Vec<Project>,
-    max_depth: usize,
 }
 
 impl UndoStack {
-    pub fn new(max_depth: usize) -> Self {
+    pub fn new() -> Self {
         Self {
             undo: Vec::new(),
             redo: Vec::new(),
-            max_depth,
         }
-    }
-
-    /// Push the current state onto the undo stack before a mutation.
-    /// Clears the redo stack (new branch of history).
-    pub fn push(&mut self, snapshot: Project) {
-        if self.undo.len() >= self.max_depth {
-            self.undo.remove(0);
-        }
-        self.undo.push(snapshot);
-        self.redo.clear();
     }
 
     /// Undo: restore the most recent snapshot. Caller provides current state
@@ -284,7 +269,7 @@ impl AppState {
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
             project_path,
-            undo_stack: Arc::new(Mutex::new(UndoStack::new(constants::UNDO_STACK_DEPTH))),
+            undo_stack: Arc::new(Mutex::new(UndoStack::new())),
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
             diffuse_tx,
@@ -359,26 +344,6 @@ impl AppState {
     /// Signal that the project has been mutated and should be auto-saved.
     pub fn trigger_save(&self) {
         let _ = self.save_tx.try_send(());
-    }
-
-    /// Snapshot the current project state before a mutation for undo support.
-    ///
-    /// Call this at the start of every mutation handler, before acquiring
-    /// the project lock for writing.
-    pub fn snapshot_for_undo(&self) {
-        let project_guard = self.project.lock();
-        if let Some(p) = project_guard.as_ref() {
-            let snapshot = p.clone();
-            drop(project_guard);
-            let mut undo = self.undo_stack.lock();
-            undo.push(snapshot);
-            let can_undo = undo.can_undo();
-            let can_redo = undo.can_redo();
-            drop(undo);
-            let _ = self
-                .events_tx
-                .send(ServerEvent::UndoRedoChanged { can_undo, can_redo });
-        }
     }
 }
 

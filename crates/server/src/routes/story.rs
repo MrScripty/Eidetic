@@ -41,7 +41,6 @@ struct CreateArcRequest {
 
 async fn create_arc(State(state): State<AppState>, Json(body): Json<CreateArcRequest>) -> ApiJson {
     validation::validate_name(&body.name, "arc name")?;
-    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Err(ApiError::no_project());
@@ -72,7 +71,6 @@ async fn update_arc(
     Path(id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiJson {
-    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Err(ApiError::no_project());
@@ -107,7 +105,6 @@ async fn update_arc(
 }
 
 async fn delete_arc(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiJson {
-    state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
         return Err(ApiError::no_project());
