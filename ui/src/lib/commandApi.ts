@@ -1,5 +1,7 @@
 import type {
+  BibleGraphNodeCommandResponse,
   CommandEnvelope,
+  CreateBibleGraphNodeCommand,
   ObjectFieldCommandResponse,
   SetObjectFieldCommand,
 } from './types.js';
@@ -35,6 +37,21 @@ export function setObjectField(
   };
 
   return request('/commands/object-field', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function createBibleGraphNode(
+  payload: CreateBibleGraphNodeCommand,
+  commandId = createCommandId(),
+): Promise<BibleGraphNodeCommandResponse> {
+  const command: CommandEnvelope<CreateBibleGraphNodeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/bible-graph/node', {
     method: 'POST',
     body: JSON.stringify(command),
   });

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getObjectFieldProjection } from './projectionApi.js';
+import { getBibleGraphNodeProjection, getObjectFieldProjection } from './projectionApi.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -62,5 +62,46 @@ describe('projection api helpers', () => {
         object_id: 'field-weather',
       }),
     ).rejects.toThrow('projection unavailable');
+  });
+
+  it('fetches bible graph node projections with encoded query params', async () => {
+    const response = {
+      version: 2,
+      change_event_id: 'event-1',
+      payload: {
+        node: {
+          id: 'node.character/ada one',
+          parent_id: null,
+          schema_key: 'character',
+          name: 'Ada',
+          system_owned: false,
+          sort_order: 3,
+        },
+        parts: [],
+        incoming_edges: [],
+        outgoing_edges: [],
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      getBibleGraphNodeProjection({
+        node_id: 'node.character/ada one',
+      }),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/projections/bible-graph/node?node_id=node.character%2Fada+one',
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      },
+    );
   });
 });

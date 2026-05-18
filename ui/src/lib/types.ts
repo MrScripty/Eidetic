@@ -239,6 +239,22 @@ export interface SetObjectFieldCommand {
   value?: FieldValue | null;
 }
 
+export type BibleGraphNodeId = string;
+export type BibleGraphPartId = string;
+export type BibleGraphFieldId = string;
+export type BibleGraphEdgeId = string;
+export type BibleGraphSchemaKey = string;
+export type BibleGraphPartKey = string;
+export type BibleGraphFieldKey = string;
+
+export interface CreateBibleGraphNodeCommand {
+  node_id: BibleGraphNodeId;
+  parent_id?: BibleGraphNodeId | null;
+  schema_key: BibleGraphSchemaKey;
+  name: string;
+  sort_order?: number;
+}
+
 export interface ObjectFieldProjection {
   object_kind: ObjectKind;
   object_id: string;
@@ -246,11 +262,73 @@ export interface ObjectFieldProjection {
   fields: Record<string, FieldValue>;
 }
 
+export interface BibleGraphNode {
+  id: BibleGraphNodeId;
+  parent_id?: BibleGraphNodeId | null;
+  schema_key: BibleGraphSchemaKey;
+  name: string;
+  system_owned: boolean;
+  sort_order: number;
+}
+
+export interface BibleGraphPart {
+  id: BibleGraphPartId;
+  node_id: BibleGraphNodeId;
+  part_key: BibleGraphPartKey;
+  name: string;
+  system_owned: boolean;
+  sort_order: number;
+}
+
+export interface BibleGraphField {
+  id: BibleGraphFieldId;
+  part_id: BibleGraphPartId;
+  field_key: BibleGraphFieldKey;
+  value?: FieldValue | null;
+  sort_order: number;
+}
+
+export type BibleGraphEdgeKind =
+  | 'references'
+  | 'located_in'
+  | 'owns'
+  | 'member_of'
+  | 'conflicts_with'
+  | 'supports_theme'
+  | { custom: string };
+
+export interface BibleGraphEdge {
+  id: BibleGraphEdgeId;
+  from_node_id: BibleGraphNodeId;
+  to_node_id: BibleGraphNodeId;
+  edge_kind: BibleGraphEdgeKind;
+  label: string;
+  directed: boolean;
+  sort_order: number;
+}
+
+export interface BibleGraphPartProjection {
+  part: BibleGraphPart;
+  fields: BibleGraphField[];
+}
+
+export interface BibleNodeDetailProjection {
+  node: BibleGraphNode;
+  parts: BibleGraphPartProjection[];
+  incoming_edges: BibleGraphEdge[];
+  outgoing_edges: BibleGraphEdge[];
+}
+
 export type CommandOutcome = 'recorded' | 'already_recorded';
 
 export interface ObjectFieldCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<ObjectFieldProjection>;
+}
+
+export interface BibleGraphNodeCommandResponse {
+  outcome: CommandOutcome;
+  projection: ProjectionEnvelope<BibleNodeDetailProjection>;
 }
 
 export interface ExtractionResult {

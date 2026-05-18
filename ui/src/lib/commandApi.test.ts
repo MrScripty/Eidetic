@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { setObjectField } from './commandApi.js';
+import { createBibleGraphNode, setObjectField } from './commandApi.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -84,5 +84,66 @@ describe('command api helpers', () => {
         'command-1',
       ),
     ).rejects.toThrow('command conflict');
+  });
+
+  it('sends bible graph node create commands and returns versioned projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 2,
+        change_event_id: 'event-1',
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: null,
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createBibleGraphNode(
+        {
+          node_id: 'node.character.ada',
+          parent_id: null,
+          schema_key: 'character',
+          name: 'Ada',
+          sort_order: 3,
+        },
+        'command-graph-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/bible-graph/node',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-graph-1',
+          payload: {
+            node_id: 'node.character.ada',
+            parent_id: null,
+            schema_key: 'character',
+            name: 'Ada',
+            sort_order: 3,
+          },
+        }),
+      }),
+    );
   });
 });

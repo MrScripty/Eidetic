@@ -130,6 +130,7 @@ Completed slices:
 - `feat(ui): add object field projection store` added a focused projection cache/action layer that reads and writes through backend projection APIs without mutating broad bible entity state optimistically.
 - `feat(core): add bible graph contracts` added canonical story-bible root nodes, typed graph node/part/field/edge contracts, and a node-detail projection shape for persistence and UI slices to share.
 - `feat(server): add bible graph node commands` added a backend-only create/read vertical slice for canonical bible graph nodes, including typed SQLite rows, transactional history/current-state writes, idempotent command handling, and versioned node-detail projections.
+- `feat(ui): add bible graph node api helpers` added typed frontend command/projection helpers for the backend bible graph node create/read slice without mutating legacy entity stores.
 
 Discovered issues:
 
