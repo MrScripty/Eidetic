@@ -4,9 +4,10 @@ use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
     BibleNodeDetailProjection, ObjectKind, ProjectionEnvelope, ScriptDocumentId,
-    ScriptDocumentProjection, StoryArcListProjection, TimelineRenderProjection,
-    builtin_bible_graph_schema_list_projection,
+    ScriptDocumentProjection, StoryArcListProjection, StoryArcProgressionProjection,
+    TimelineRenderProjection, builtin_bible_graph_schema_list_projection,
 };
+use eidetic_core::story::progression::analyze_all_arcs;
 use serde::Deserialize;
 
 use crate::bible_graph_store;
@@ -43,6 +44,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/story/arcs",
             get(get_story_arc_list_projection),
+        )
+        .route(
+            "/projections/story/arc-progression",
+            get(get_story_arc_progression_projection),
         )
         .route(
             "/projections/timeline/render",
@@ -145,6 +150,17 @@ async fn get_story_arc_list_projection(State(state): State<AppState>) -> ApiJson
 
     crate::error::json_value(ProjectionEnvelope::initial(
         StoryArcListProjection::from_arcs(&project.arcs),
+    ))
+}
+
+async fn get_story_arc_progression_projection(State(state): State<AppState>) -> ApiJson {
+    let guard = state.project.lock();
+    let Some(project) = guard.as_ref() else {
+        return Err(ApiError::no_project());
+    };
+
+    crate::error::json_value(ProjectionEnvelope::initial(
+        StoryArcProgressionProjection::new(analyze_all_arcs(project)),
     ))
 }
 

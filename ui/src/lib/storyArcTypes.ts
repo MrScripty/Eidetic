@@ -3,14 +3,19 @@ import type {
   ArcType,
   Color,
   CommandOutcome,
+  ArcProgression,
   ProjectionEnvelope,
   StoryArc,
 } from './types.js';
 
-export type { ArcId, ArcType, Color, StoryArc } from './types.js';
+export type { ArcId, ArcProgression, ArcType, Color, StoryArc } from './types.js';
 
 export interface StoryArcListProjection {
   arcs: StoryArc[];
+}
+
+export interface StoryArcProgressionProjection {
+  progressions: ArcProgression[];
 }
 
 export interface CreateStoryArcCommand {

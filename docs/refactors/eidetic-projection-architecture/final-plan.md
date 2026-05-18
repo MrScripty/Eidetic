@@ -269,6 +269,7 @@ Completed slices:
 - `feat(ui): add story arc command projection helpers` added focused frontend DTOs plus command/projection API helpers for backend-owned story arc mutations and arc-list reads without switching UI callers yet.
 - `refactor(ui): route story arc UI through projections` added a story arc projection store, routed arc sidebar create/update/delete and websocket refresh through backend command/projection helpers, and removed unused frontend legacy arc mutation helpers.
 - `refactor(server): remove legacy arc mutation routes` deleted the obsolete `/arcs` list/create/update/delete route surface after UI callers moved to story arc command/projection APIs, leaving only the current progression analysis route.
+- `refactor(story): project arc progression analysis` replaced the final legacy `/arcs/progression` read path with a backend story arc progression projection, updated the Svelte analysis panel to consume the projection, and fixed the frontend contract from stale `beat_count` to backend `node_count`.
 
 Discovered issues:
 

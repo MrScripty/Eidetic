@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::story::arc::{ArcId, ArcType, Color, StoryArc};
+use crate::story::progression::ArcProgression;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoryArcListProjection {
@@ -12,6 +13,17 @@ impl StoryArcListProjection {
         Self {
             arcs: arcs.to_vec(),
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoryArcProgressionProjection {
+    pub progressions: Vec<ArcProgression>,
+}
+
+impl StoryArcProgressionProjection {
+    pub fn new(progressions: Vec<ArcProgression>) -> Self {
+        Self { progressions }
     }
 }
 

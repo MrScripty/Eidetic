@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ArcProgression } from '$lib/types.js';
-  import { getArcProgression } from '$lib/api.js';
+  import { getStoryArcProgressionProjection } from '$lib/projectionApi.js';
 
   let progressions = $state<ArcProgression[]>([]);
   let loading = $state(false);
@@ -8,7 +8,8 @@
   async function refresh() {
     loading = true;
     try {
-      progressions = await getArcProgression();
+      const projection = await getStoryArcProgressionProjection();
+      progressions = projection.payload.progressions;
     } catch {
       progressions = [];
     }
@@ -41,7 +42,7 @@
         {/if}
       </div>
       <div class="arc-stats">
-        <span>{prog.beat_count} beats</span>
+        <span>{prog.node_count} nodes</span>
         <span>{prog.coverage_percent.toFixed(0)}% coverage</span>
         <span class:missing={!prog.has_setup}>{prog.has_setup ? 'Setup' : 'No setup'}</span>
         <span class:missing={!prog.has_resolution}

@@ -4,7 +4,6 @@ import type {
   AiConfig,
   TimelineGap,
   ReferenceDocument,
-  ArcProgression,
   Timeline,
   StoryNode,
   NodeContent,
@@ -50,12 +49,6 @@ export function updateProject(updates: { name?: string; premise?: string }): Pro
     method: 'PUT',
     body: JSON.stringify(updates),
   });
-}
-
-// --- Story arcs ---
-
-export function getArcProgression(): Promise<ArcProgression[]> {
-  return request('/arcs/progression');
 }
 
 // --- Timeline ---

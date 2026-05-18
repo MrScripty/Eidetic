@@ -385,6 +385,37 @@ async fn story_arc_list_projection_returns_project_arcs() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn story_arc_progression_projection_returns_arc_analysis() {
+    let path = temp_db_path("story-arc-progression");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(story_arc_progression_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 1);
+    assert_eq!(
+        value["payload"]["progressions"]
+            .as_array()
+            .expect("progressions")
+            .len(),
+        3
+    );
+    assert!(
+        value["payload"]["progressions"]
+            .as_array()
+            .expect("progressions")
+            .iter()
+            .all(|progression| progression.get("node_count").is_some())
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_weather_field(path: &PathBuf, weather: &str) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     history_store::create_schema(&conn).unwrap();
@@ -517,6 +548,14 @@ fn story_arc_list_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/story/arcs")
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn story_arc_progression_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/story/arc-progression")
         .body(Body::empty())
         .unwrap()
 }

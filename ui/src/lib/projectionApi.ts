@@ -10,7 +10,7 @@ import type {
   TimelineRenderProjection,
 } from './types.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
-import type { StoryArcListProjection } from './storyArcTypes.js';
+import type { StoryArcListProjection, StoryArcProgressionProjection } from './storyArcTypes.js';
 
 const BASE = '/api';
 
@@ -78,6 +78,12 @@ export function getScriptDocumentProjection({
 
 export function getStoryArcListProjection(): Promise<ProjectionEnvelope<StoryArcListProjection>> {
   return getJson('/projections/story/arcs');
+}
+
+export function getStoryArcProgressionProjection(): Promise<
+  ProjectionEnvelope<StoryArcProgressionProjection>
+> {
+  return getJson('/projections/story/arc-progression');
 }
 
 export function getTimelineRenderProjection(): Promise<

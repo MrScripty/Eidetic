@@ -33,7 +33,7 @@ pub use script_document::{
 };
 pub use story_arc::{
     CreateStoryArcCommand, DeleteStoryArcCommand, SetStoryArcMetadataCommand,
-    StoryArcListProjection,
+    StoryArcListProjection, StoryArcProgressionProjection,
 };
 pub use timeline_command::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineNodeCommand,

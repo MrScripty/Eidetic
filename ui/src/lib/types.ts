@@ -82,10 +82,7 @@ export interface Relationship {
   relationship_type: RelationshipType;
 }
 
-export type RelationshipType =
-  | 'Causal'
-  | { Convergence: { arc_ids: ArcId[] } }
-  | 'Thematic';
+export type RelationshipType = 'Causal' | { Convergence: { arc_ids: ArcId[] } } | 'Thematic';
 
 // --- Episode structure ---
 
@@ -355,7 +352,7 @@ export interface ProgressionIssue {
 export interface ArcProgression {
   arc_id: string;
   arc_name: string;
-  beat_count: number;
+  node_count: number;
   has_setup: boolean;
   has_resolution: boolean;
   coverage_percent: number;
