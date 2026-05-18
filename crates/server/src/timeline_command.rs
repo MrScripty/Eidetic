@@ -109,6 +109,60 @@ pub(crate) fn record_set_timeline_node_lock_history(
     )?)
 }
 
+pub(crate) fn record_set_timeline_node_notes_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<SetTimelineNodeNotesCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "timeline.node_notes")?
+    {
+        return Ok(outcome);
+    }
+
+    let node = project.timeline.node(command.payload.node_id)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("set timeline node notes {}", node.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let new_status =
+        if !command.payload.notes.is_empty() && node.content.status == ContentStatus::Empty {
+            ContentStatus::NotesOnly
+        } else {
+            node.content.status
+        };
+    let mut revision = ObjectRevision::new(
+        ObjectKind::TimelineNode,
+        command.payload.node_id.0.to_string(),
+        event.id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "notes",
+        Some(FieldValue::Text(node.content.notes.clone())),
+        Some(FieldValue::Text(command.payload.notes.clone())),
+    ));
+
+    if new_status != node.content.status {
+        revision = revision.with_field(FieldDelta::new(
+            "content_status",
+            Some(FieldValue::Text(encode_content_status(node.content.status))),
+            Some(FieldValue::Text(encode_content_status(new_status))),
+        ));
+    }
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "timeline.node_notes",
+        &event,
+        &[revision],
+    )?)
+}
+
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
     command: &CommandEnvelope<SetTimelineNodeRangeCommand>,
@@ -316,6 +370,16 @@ pub(crate) fn apply_delete_timeline_relationship(
     Ok(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
     ))
+}
+
+fn encode_content_status(status: ContentStatus) -> String {
+    match status {
+        ContentStatus::Empty => "Empty",
+        ContentStatus::NotesOnly => "NotesOnly",
+        ContentStatus::Generating => "Generating",
+        ContentStatus::HasContent => "HasContent",
+    }
+    .to_string()
 }
 
 #[derive(Debug, Error)]
