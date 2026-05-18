@@ -225,6 +225,7 @@ Completed slices:
 - `feat(ui): cache timeline relationship projections` routed relationship create/delete command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route relationship creation through commands` moved timeline connection-drag relationship creation onto backend relationship commands instead of the legacy relationship route.
 - `refactor(ui): remove legacy relationship helpers` removed unused frontend helpers for the legacy timeline relationship mutation routes after UI relationship creation moved to commands.
+- `refactor(server): remove legacy relationship routes` removed the legacy timeline relationship mutation routes after replacement command/projection paths landed.
 
 Discovered issues:
 

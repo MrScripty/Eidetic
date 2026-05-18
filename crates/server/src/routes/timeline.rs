@@ -6,10 +6,9 @@ use uuid::Uuid;
 
 use eidetic_core::story::arc::ArcId;
 use eidetic_core::timeline::node::{NodeId, StoryLevel};
-use eidetic_core::timeline::relationship::{Relationship, RelationshipId, RelationshipType};
 use eidetic_core::timeline::track::TrackId;
 
-use crate::error::{json_value, ApiError, ApiJson};
+use crate::error::{ApiError, ApiJson, json_value};
 use crate::state::{AppState, ServerEvent};
 use crate::validation;
 
@@ -24,11 +23,6 @@ pub fn router() -> Router<AppState> {
         .route(
             "/timeline/node-arcs/{node_id}/{arc_id}",
             delete(untag_node_from_arc),
-        )
-        .route("/timeline/relationships", post(create_relationship))
-        .route(
-            "/timeline/relationships/{id}",
-            delete(delete_relationship),
         )
         .route("/timeline/gaps", get(get_gaps))
 }
@@ -45,10 +39,7 @@ async fn get_timeline(State(state): State<AppState>) -> ApiJson {
 
 // ─── Node Queries And Planning ─────────────────────────────────────
 
-async fn get_children(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
+async fn get_children(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiJson {
     let guard = state.project.lock();
     match guard.as_ref() {
         Some(p) => {
@@ -122,8 +113,8 @@ async fn update_track(
             if let Some(collapsed) = body.collapsed {
                 track.collapsed = collapsed;
             }
-            let json = serde_json::to_value(&*track)
-                .map_err(|e| ApiError::internal(e.to_string()))?;
+            let json =
+                serde_json::to_value(&*track).map_err(|e| ApiError::internal(e.to_string()))?;
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             state.trigger_save();
             Ok(Json(json))
@@ -132,10 +123,7 @@ async fn update_track(
     }
 }
 
-async fn delete_track(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
+async fn delete_track(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiJson {
     state.snapshot_for_undo();
     let mut guard = state.project.lock();
     let Some(project) = guard.as_mut() else {
@@ -195,70 +183,10 @@ async fn untag_node_from_arc(
         return Err(ApiError::no_project());
     };
 
-    project
-        .timeline
-        .untag_node(NodeId(node_id), ArcId(arc_id));
+    project.timeline.untag_node(NodeId(node_id), ArcId(arc_id));
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     state.trigger_save();
     Ok(Json(serde_json::json!({ "ok": true })))
-}
-
-// ─── Relationships ─────────────────────────────────────────────────
-
-#[derive(Deserialize)]
-struct CreateRelationshipRequest {
-    from_node: Uuid,
-    to_node: Uuid,
-    relationship_type: String,
-}
-
-async fn create_relationship(
-    State(state): State<AppState>,
-    Json(body): Json<CreateRelationshipRequest>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    let rel_type = match body.relationship_type.as_str() {
-        "convergence" => RelationshipType::Convergence { arc_ids: vec![] },
-        "thematic" => RelationshipType::Thematic,
-        _ => RelationshipType::Causal,
-    };
-
-    let rel = Relationship::new(NodeId(body.from_node), NodeId(body.to_node), rel_type);
-    let json = serde_json::to_value(&rel).map_err(|e| ApiError::internal(e.to_string()))?;
-
-    match project.timeline.add_relationship(rel) {
-        Ok(()) => {
-            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-            state.trigger_save();
-            Ok(Json(json))
-        }
-        Err(e) => Err(ApiError::bad_request(e.to_string())),
-    }
-}
-
-async fn delete_relationship(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    match project.timeline.remove_relationship(RelationshipId(id)) {
-        Ok(rel) => {
-            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-            state.trigger_save();
-            json_value(&rel)
-        }
-        Err(e) => Err(ApiError::bad_request(e.to_string())),
-    }
 }
 
 // ─── Gaps ──────────────────────────────────────────────────────────
@@ -268,10 +196,7 @@ struct GapQuery {
     level: Option<String>,
 }
 
-async fn get_gaps(
-    State(state): State<AppState>,
-    Query(query): Query<GapQuery>,
-) -> ApiJson {
+async fn get_gaps(State(state): State<AppState>, Query(query): Query<GapQuery>) -> ApiJson {
     let guard = state.project.lock();
     match guard.as_ref() {
         Some(p) => {
