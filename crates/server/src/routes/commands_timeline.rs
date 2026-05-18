@@ -424,3 +424,31 @@ fn map_timeline_command_error(error: TimelineCommandError) -> ApiError {
         TimelineCommandError::History(error) => map_history_error(error),
     }
 }
+
+#[cfg(test)]
+#[path = "commands_timeline_range_tests.rs"]
+mod range_tests;
+
+#[cfg(test)]
+#[path = "commands_timeline_create_tests.rs"]
+mod create_tests;
+
+#[cfg(test)]
+#[path = "commands_timeline_children_tests.rs"]
+mod children_tests;
+
+#[cfg(test)]
+#[path = "commands_timeline_relationship_tests.rs"]
+mod relationship_tests;
+
+#[cfg(test)]
+#[path = "commands_timeline_split_tests.rs"]
+mod split_tests;
+
+#[cfg(test)]
+#[path = "commands_timeline_state_tests.rs"]
+mod state_tests;
+
+#[cfg(test)]
+#[path = "commands_timeline_delete_tests.rs"]
+mod delete_tests;
