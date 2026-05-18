@@ -14,7 +14,6 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/nodes/{id}/content", get(get_node_content))
         .route("/nodes/{id}/notes", put(update_notes))
-        .route("/nodes/{id}/script", put(update_script))
         .route("/nodes/{id}/lock", post(lock_node))
         .route("/nodes/{id}/unlock", post(unlock_node))
 }
@@ -68,45 +67,6 @@ async fn update_notes(
         node_id: NodeId(id),
         field: ContentField::Notes,
         text: body.notes,
-        author: "human:rest".into(),
-    });
-    let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
-    state.trigger_save();
-    Ok(Json(json))
-}
-
-#[derive(Deserialize)]
-struct UpdateScriptRequest {
-    script: String,
-}
-
-async fn update_script(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Json(body): Json<UpdateScriptRequest>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let json = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-
-        match project.timeline.node_mut(NodeId(id)) {
-            Ok(node) => {
-                node.content.content = body.script.clone();
-                node.content.status = ContentStatus::HasContent;
-                serde_json::to_value(&node.content)
-                    .map_err(|e| ApiError::internal(e.to_string()))?
-            }
-            Err(e) => return Err(ApiError::bad_request(e.to_string())),
-        }
-    };
-    // Mirror to Y.Doc (fire-and-forget).
-    let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
-        node_id: NodeId(id),
-        field: ContentField::Content,
-        text: body.script,
         author: "human:rest".into(),
     });
     let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });

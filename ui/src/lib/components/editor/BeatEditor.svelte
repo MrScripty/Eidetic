@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { ExtractionResult } from '$lib/types.js';
   import type { YTextEvent } from 'yjs';
   import { colorToHex, childLevel } from '$lib/types.js';
   import {
@@ -7,37 +6,24 @@
     startGeneration,
     startBatchGeneration,
     setBatchTotalCount,
-    removeConsistencySuggestion,
-    clearConsistencySuggestions,
   } from '$lib/stores/editor.svelte.js';
-  import { storyState, entitiesForNode } from '$lib/stores/story.svelte.js';
+  import { entitiesForNode } from '$lib/stores/story.svelte.js';
   import { timelineState, zoomToRange, childrenOf, findNode } from '$lib/stores/timeline.svelte.js';
   import {
     updateNodeNotes,
-    updateNodeScript,
     lockNode,
     unlockNode,
     getNodeContent,
     generateContent,
-    reactToEdit,
-    extractEntities,
     removeNodeRef,
     generateChildren,
     generateBatch,
     applyChildren,
     getAiContext,
   } from '$lib/api.js';
-  import { getNodeNotes, getNodeContent as getYNodeContent } from '$lib/yjs.js';
-  import ScriptView from './ScriptView.svelte';
-  import DiffView from './DiffView.svelte';
-  import EntityExtractPanel from '../sidebar/bible/EntityExtractPanel.svelte';
+  import { getNodeNotes } from '$lib/yjs.js';
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  let scriptDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  let editing = $state(false);
-  let editingText = $state('');
-  let previousScript = $state('');
 
   let isGenerating = $derived(
     (editorState.streamingNodeId != null &&
@@ -147,21 +133,12 @@
       });
   }
 
-  // Exit editing when switching nodes.
-  $effect(() => {
-    editorState.selectedNodeId;
-    if (editing) finishEditing();
-  });
-
-  // Observe Y.Text changes for the selected node (CRDT live sync).
-  // When content arrives via binary WS (AI generation, other clients),
-  // the local Y.Doc updates and this effect reflects it in the UI.
+  // Observe Y.Text changes for node notes while the legacy notes path remains on Y.Doc.
   $effect(() => {
     const nodeId = editorState.selectedNodeId;
     if (!nodeId) return;
 
     const yNotes = getNodeNotes(nodeId);
-    const yContent = getYNodeContent(nodeId);
 
     const onNotesChange = (_event: YTextEvent) => {
       if (editorState.selectedNode && editorState.selectedNodeId === nodeId) {
@@ -169,18 +146,10 @@
       }
     };
 
-    const onContentChange = (_event: YTextEvent) => {
-      if (editorState.selectedNode && editorState.selectedNodeId === nodeId) {
-        editorState.selectedNode.content.content = yContent.toString();
-      }
-    };
-
     yNotes.observe(onNotesChange);
-    yContent.observe(onContentChange);
 
     return () => {
       yNotes.unobserve(onNotesChange);
-      yContent.unobserve(onContentChange);
     };
   });
 
@@ -212,43 +181,8 @@
     }, 500);
   }
 
-  function startEditing() {
-    if (!editorState.selectedNode || editorState.selectedNode.locked || isGenerating) return;
-    const node = editorState.selectedNode;
-    editingText = node.content.content ?? '';
-    previousScript = editingText;
-    editing = true;
-  }
-
-  function handleScriptInput(e: Event) {
-    editingText = (e.target as HTMLTextAreaElement).value;
-    if (scriptDebounceTimer) clearTimeout(scriptDebounceTimer);
-    scriptDebounceTimer = setTimeout(async () => {
-      if (editorState.selectedNodeId) {
-        await updateNodeScript(editorState.selectedNodeId, editingText);
-      }
-    }, 800);
-  }
-
-  async function finishEditing() {
-    if (!editing) return;
-    editing = false;
-    if (scriptDebounceTimer) {
-      clearTimeout(scriptDebounceTimer);
-      scriptDebounceTimer = null;
-    }
-    if (editorState.selectedNodeId && editingText !== previousScript) {
-      await updateNodeScript(editorState.selectedNodeId, editingText);
-      editorState.checkingConsistency = true;
-      clearConsistencySuggestions();
-      editorState.checkingConsistency = true;
-      await reactToEdit(editorState.selectedNodeId);
-    }
-  }
-
   async function handleToggleLock() {
     if (!editorState.selectedNodeId || !editorState.selectedNode) return;
-    if (editing) await finishEditing();
     if (editorState.selectedNode.locked) {
       await unlockNode(editorState.selectedNodeId);
       editorState.selectedNode.locked = false;
@@ -283,33 +217,9 @@
     await generateContent(editorState.selectedNodeId);
   }
 
-  async function handleAcceptSuggestion(targetNodeId: string, suggestedText: string) {
-    await updateNodeScript(targetNodeId, suggestedText);
-    removeConsistencySuggestion(targetNodeId);
-  }
-
-  function handleRejectSuggestion(targetNodeId: string) {
-    removeConsistencySuggestion(targetNodeId);
-  }
-
-  // Entity extraction
-  let extracting = $state(false);
-  let extractionResult: ExtractionResult | null = $state(null);
-
   const linkedEntities = $derived(
     editorState.selectedNodeId ? entitiesForNode(editorState.selectedNodeId) : [],
   );
-
-  async function handleExtract() {
-    if (!editorState.selectedNodeId) return;
-    extracting = true;
-    extractionResult = null;
-    try {
-      extractionResult = await extractEntities(editorState.selectedNodeId);
-    } finally {
-      extracting = false;
-    }
-  }
 
   async function handleUnlinkEntity(entityId: string) {
     if (!editorState.selectedNodeId) return;
@@ -512,16 +422,7 @@
 
       <!-- Linked entities -->
       <div class="entity-chips-section">
-        <div class="section-label section-label-row">
-          Entities
-          <button
-            class="extract-btn"
-            disabled={extracting || !node.content.content}
-            onclick={handleExtract}
-          >
-            {extracting ? 'Extracting...' : 'Extract'}
-          </button>
-        </div>
+        <div class="section-label section-label-row">Entities</div>
         <div class="entity-chips">
           {#each linkedEntities as entity (entity.id)}
             <span class="entity-chip" style="border-color: {colorToHex(entity.color)}">
@@ -537,56 +438,15 @@
         </div>
       </div>
 
-      {#if extractionResult && editorState.selectedNodeId}
-        <EntityExtractPanel
-          result={extractionResult}
-          nodeId={editorState.selectedNodeId}
-          onclose={() => (extractionResult = null)}
-        />
-      {/if}
-
       {#if isGenerating}
         <div class="section-label section-label-row">
           Generating
           <span class="token-count">{editorState.streamingTokenCount} tokens generated</span>
         </div>
-      {:else if editing}
-        <div class="section-label section-label-row">
-          Editing Script
-          <button class="done-edit-btn" onclick={finishEditing}>Done Editing</button>
-        </div>
-        <textarea class="script-edit" value={editingText} oninput={handleScriptInput}></textarea>
-      {:else if node.content.content}
-        <div class="section-label section-label-row">
-          Script
-          {#if !node.locked}
-            <button class="edit-btn" onclick={startEditing}>Edit</button>
-          {/if}
-        </div>
-        <ScriptView text={node.content.content} entities={storyState.entities} />
       {/if}
 
       {#if editorState.generationError}
         <div class="error-banner">{editorState.generationError}</div>
-      {/if}
-
-      {#if editorState.checkingConsistency || editorState.consistencySuggestions.length > 0}
-        <div class="suggestions-panel">
-          <div class="section-label section-label-row">
-            Consistency Suggestions
-            {#if editorState.checkingConsistency}
-              <span class="checking-spinner">checking...</span>
-            {/if}
-          </div>
-          {#each editorState.consistencySuggestions as suggestion (suggestion.target_node_id)}
-            <DiffView
-              {suggestion}
-              onaccept={() =>
-                handleAcceptSuggestion(suggestion.target_node_id, suggestion.suggested_text)}
-              onreject={() => handleRejectSuggestion(suggestion.target_node_id)}
-            />
-          {/each}
-        </div>
       {/if}
 
       <!-- Raw AI prompt preview (debug) -->
@@ -880,63 +740,6 @@
     cursor: not-allowed;
   }
 
-  .script-edit {
-    width: 100%;
-    min-height: 200px;
-    padding: 8px 12px;
-    background: var(--color-bg-surface);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-accent);
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    resize: vertical;
-  }
-
-  .script-edit:focus {
-    outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 1px var(--color-accent);
-  }
-
-  .edit-btn,
-  .done-edit-btn {
-    font-size: 0.65rem;
-    padding: 1px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--color-border-default);
-    background: var(--color-bg-surface);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-  }
-
-  .edit-btn:hover,
-  .done-edit-btn:hover {
-    background: var(--color-bg-hover);
-    color: var(--color-text-primary);
-  }
-
-  .done-edit-btn {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-  }
-
-  .suggestions-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 4px;
-  }
-
-  .checking-spinner {
-    font-size: 0.65rem;
-    color: var(--color-text-muted);
-    text-transform: none;
-    letter-spacing: normal;
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-
   .error-banner {
     padding: 8px 12px;
     background: var(--color-danger-bg);
@@ -988,25 +791,6 @@
   .chip-empty {
     font-size: 0.75rem;
     color: var(--color-text-muted);
-  }
-
-  .extract-btn {
-    font-size: 0.65rem;
-    padding: 1px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--color-bible-development);
-    background: var(--color-bg-surface);
-    color: var(--color-bible-development);
-    cursor: pointer;
-  }
-
-  .extract-btn:hover:not(:disabled) {
-    background: var(--color-bg-hover);
-  }
-
-  .extract-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 
   .sub-beat-context {

@@ -297,13 +297,6 @@ export function updateNodeNotes(id: string, notes: string): Promise<NodeContent>
   });
 }
 
-export function updateNodeScript(id: string, script: string): Promise<NodeContent> {
-  return request(`/nodes/${id}/script`, {
-    method: 'PUT',
-    body: JSON.stringify({ script }),
-  });
-}
-
 export function lockNode(id: string): Promise<NodeContent> {
   return request(`/nodes/${id}/lock`, { method: 'POST' });
 }
