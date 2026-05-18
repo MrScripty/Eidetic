@@ -148,6 +148,7 @@ Completed slices:
 - `refactor(server): split bible graph field storage` extracted graph schema setup and part/field storage from `bible_graph_store.rs`, bringing graph store modules back under the decomposition threshold before edge/snapshot work.
 - `feat(server): persist bible graph edges` added a typed graph edge command route, relational edge current-state storage, endpoint validation, and incoming/outgoing edge loading in node-detail projections.
 - `feat(ui): show bible graph node edges` rendered incoming and outgoing bible graph edges from node-detail projections without reading legacy entity relationship state.
+- `feat(ui): add bible graph edge command helper` added typed frontend command/store helpers for backend-owned edge writes, caching only the returned source-node projection and invalidating stale target-node detail projections.
 
 Discovered issues:
 
@@ -160,6 +161,8 @@ Discovered issues:
 - Frontend bible editing currently mutates broad `Entity` caches and whole detail objects (`EntityDetail.svelte`, `story.svelte.ts`, `api.ts`, and websocket invalidation handlers). UI command adoption must use focused projection stores and avoid optimistic local patching or treating form state as canonical.
 - Resolved: `crates/server/src/bible_graph_store.rs` exceeded the 500-line decomposition threshold while owning schema setup, node state, part/field state, and projection reads. It was split into schema, node/projection, and part/field storage modules before edge/snapshot work.
 - Resolved: `ui/src/lib/components/sidebar/bible/StoryBibleTab.svelte` exceeded the 250-line component decomposition threshold after moving list/navigation to graph projections. Category/root mapping and graph-node creation controls were extracted before schema editor work.
+- `ui/src/lib/types.ts` remains a large shared DTO file and now contains both legacy and projection-era contracts. Split contracts by ownership boundary before adding script, render, semantic proposal, or Bevy bridge DTOs.
+- `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` now exceeds the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Split graph projection store tests by command/read concern before adding schema editors or snapshot behavior.
 
 ## Concurrent Worker Policy
 

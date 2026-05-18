@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createBibleGraphNode,
   ensureCanonicalBibleRoots,
+  setBibleGraphEdge,
   setBibleGraphField,
 } from '$lib/commandApi.js';
 import {
@@ -23,12 +24,14 @@ import {
   isBibleGraphNodeProjectionPending,
   refreshBibleGraphNodeListProjection,
   refreshBibleGraphNodeProjection,
+  setBibleGraphEdgeProjection,
   setBibleGraphFieldProjection,
 } from './bibleGraphNodeProjection.svelte.js';
 
 vi.mock('$lib/commandApi.js', () => ({
   createBibleGraphNode: vi.fn(),
   ensureCanonicalBibleRoots: vi.fn(),
+  setBibleGraphEdge: vi.fn(),
   setBibleGraphField: vi.fn(),
 }));
 
@@ -39,6 +42,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 
 const createBibleGraphNodeMock = vi.mocked(createBibleGraphNode);
 const ensureCanonicalBibleRootsMock = vi.mocked(ensureCanonicalBibleRoots);
+const setBibleGraphEdgeMock = vi.mocked(setBibleGraphEdge);
 const setBibleGraphFieldMock = vi.mocked(setBibleGraphField);
 const getBibleGraphNodeProjectionMock = vi.mocked(getBibleGraphNodeProjection);
 const getBibleGraphNodeListProjectionMock = vi.mocked(getBibleGraphNodeListProjection);
@@ -112,6 +116,47 @@ const fieldProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
   },
 };
 
+const targetKey = {
+  node_id: 'node.place.beach',
+};
+
+const targetProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  version: 2,
+  change_event_id: 'event-target-1',
+  payload: {
+    node: {
+      id: 'node.place.beach',
+      parent_id: null,
+      schema_key: 'place',
+      name: 'Beach',
+      system_owned: false,
+      sort_order: 4,
+    },
+    parts: [],
+    incoming_edges: [],
+    outgoing_edges: [],
+  },
+};
+
+const edgeProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  version: 4,
+  change_event_id: 'event-edge-1',
+  payload: {
+    ...projection.payload,
+    outgoing_edges: [
+      {
+        id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      },
+    ],
+  },
+};
+
 function resetProjectionState(): void {
   for (const keyString of Object.keys(bibleGraphNodeProjectionState.projections)) {
     delete bibleGraphNodeProjectionState.projections[keyString];
@@ -132,6 +177,7 @@ beforeEach(() => {
   storyState.entities = [];
   createBibleGraphNodeMock.mockReset();
   ensureCanonicalBibleRootsMock.mockReset();
+  setBibleGraphEdgeMock.mockReset();
   setBibleGraphFieldMock.mockReset();
   getBibleGraphNodeProjectionMock.mockReset();
   getBibleGraphNodeListProjectionMock.mockReset();
@@ -375,6 +421,75 @@ describe('bible graph node projection store', () => {
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBe('field rejected');
+  });
+
+  it('stores edge command source projections and invalidates cached target projections', async () => {
+    getBibleGraphNodeProjectionMock
+      .mockResolvedValueOnce(projection)
+      .mockResolvedValueOnce(targetProjection);
+    await refreshBibleGraphNodeProjection(key);
+    await refreshBibleGraphNodeProjection(targetKey);
+    setBibleGraphEdgeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: edgeProjection,
+    });
+
+    await expect(
+      setBibleGraphEdgeProjection(
+        {
+          edge_id: 'edge.ada.beach',
+          from_node_id: 'node.character/ada one',
+          to_node_id: 'node.place.beach',
+          edge_kind: 'located_in',
+          label: 'located in',
+          directed: true,
+          sort_order: 1,
+        },
+        'command-edge-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: edgeProjection,
+    });
+
+    expect(setBibleGraphEdgeMock).toHaveBeenCalledWith(
+      {
+        edge_id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      },
+      'command-edge-1',
+    );
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(edgeProjection);
+    expect(getCachedBibleGraphNodeProjection(targetKey)).toBeUndefined();
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('records edge command errors and leaves cached projections unchanged', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
+    await refreshBibleGraphNodeProjection(key);
+    setBibleGraphEdgeMock.mockRejectedValue(new Error('edge rejected'));
+
+    await expect(
+      setBibleGraphEdgeProjection({
+        edge_id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      }),
+    ).rejects.toThrow('edge rejected');
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBe('edge rejected');
   });
 
   it('clears cached graph node projection state for one node', async () => {

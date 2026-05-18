@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createBibleGraphNode,
   ensureCanonicalBibleRoots,
+  setBibleGraphEdge,
   setBibleGraphField,
   setObjectField,
 } from './commandApi.js';
@@ -278,6 +279,81 @@ describe('command api helpers', () => {
             field_key: 'weather',
             value: { type: 'text', value: 'rainy' },
             field_sort_order: 20,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends bible graph edge commands and returns versioned source node projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 5,
+        change_event_id: 'event-edge-1',
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: 'canonical.characters',
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [
+            {
+              id: 'edge.ada.harbor',
+              from_node_id: 'node.character.ada',
+              to_node_id: 'node.location.harbor',
+              edge_kind: 'located_in',
+              label: 'located in',
+              directed: true,
+              sort_order: 1,
+            },
+          ],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setBibleGraphEdge(
+        {
+          edge_id: 'edge.ada.harbor',
+          from_node_id: 'node.character.ada',
+          to_node_id: 'node.location.harbor',
+          edge_kind: 'located_in',
+          label: 'located in',
+          directed: true,
+          sort_order: 1,
+        },
+        'command-edge-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/bible-graph/edge',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-edge-1',
+          payload: {
+            edge_id: 'edge.ada.harbor',
+            from_node_id: 'node.character.ada',
+            to_node_id: 'node.location.harbor',
+            edge_kind: 'located_in',
+            label: 'located in',
+            directed: true,
+            sort_order: 1,
           },
         }),
       }),

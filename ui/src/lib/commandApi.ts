@@ -5,6 +5,7 @@ import type {
   CreateBibleGraphNodeCommand,
   EnsureCanonicalBibleRootsCommand,
   ObjectFieldCommandResponse,
+  SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
   SetObjectFieldCommand,
 } from './types.js';
@@ -70,6 +71,21 @@ export function setBibleGraphField(
   };
 
   return request('/commands/bible-graph/field', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setBibleGraphEdge(
+  payload: SetBibleGraphEdgeCommand,
+  commandId = createCommandId(),
+): Promise<BibleGraphNodeCommandResponse> {
+  const command: CommandEnvelope<SetBibleGraphEdgeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/bible-graph/edge', {
     method: 'POST',
     body: JSON.stringify(command),
   });

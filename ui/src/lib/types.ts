@@ -267,6 +267,16 @@ export interface SetBibleGraphFieldCommand {
   field_sort_order: number;
 }
 
+export interface SetBibleGraphEdgeCommand {
+  edge_id: BibleGraphEdgeId;
+  from_node_id: BibleGraphNodeId;
+  to_node_id: BibleGraphNodeId;
+  edge_kind: BibleGraphEdgeKind;
+  label: string;
+  directed?: boolean;
+  sort_order?: number;
+}
+
 export interface EnsureCanonicalBibleRootsCommand {}
 
 export interface ObjectFieldProjection {

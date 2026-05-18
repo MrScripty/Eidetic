@@ -1,6 +1,7 @@
 import {
   createBibleGraphNode,
   ensureCanonicalBibleRoots,
+  setBibleGraphEdge,
   setBibleGraphField,
 } from '$lib/commandApi.js';
 import {
@@ -16,6 +17,7 @@ import type {
   CommandId,
   CreateBibleGraphNodeCommand,
   ProjectionEnvelope,
+  SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
 } from '../types.js';
 
@@ -177,6 +179,36 @@ export async function setBibleGraphFieldProjection(
     throw error;
   } finally {
     bibleGraphNodeProjectionState.pending[keyString] = false;
+  }
+}
+
+export async function setBibleGraphEdgeProjection(
+  payload: SetBibleGraphEdgeCommand,
+  commandId?: CommandId,
+): Promise<BibleGraphNodeCommandResponse> {
+  const sourceKey = { node_id: payload.from_node_id };
+  const targetKey = { node_id: payload.to_node_id };
+  const sourceKeyString = cacheKey(sourceKey);
+  const targetKeyString = cacheKey(targetKey);
+  bibleGraphNodeProjectionState.pending[sourceKeyString] = true;
+  bibleGraphNodeProjectionState.errors[sourceKeyString] = undefined;
+
+  try {
+    const response = await setBibleGraphEdge(payload, commandId);
+    bibleGraphNodeProjectionState.projections[sourceKeyString] = response.projection;
+    if (targetKeyString !== sourceKeyString) {
+      delete bibleGraphNodeProjectionState.projections[targetKeyString];
+      delete bibleGraphNodeProjectionState.errors[targetKeyString];
+    }
+    return response;
+  } catch (error) {
+    bibleGraphNodeProjectionState.errors[sourceKeyString] = errorMessage(
+      error,
+      'Failed to set bible graph edge',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.pending[sourceKeyString] = false;
   }
 }
 
