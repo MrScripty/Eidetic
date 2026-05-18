@@ -7,7 +7,7 @@ This directory contains the local Axum host for Eidetic: route registration, per
 | File/Folder | Description |
 |-------------|-------------|
 | `main.rs` | Server bootstrap, routing, CORS policy, and static hosting. |
-| `routes/` | HTTP handlers for project, timeline, story, AI, export, and reference workflows. |
+| `routes/` | HTTP handlers for project, command, timeline, story, AI, export, and reference workflows. |
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |

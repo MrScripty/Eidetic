@@ -1,4 +1,5 @@
 mod ai;
+mod commands;
 mod diffusion;
 mod export;
 mod models;
@@ -20,6 +21,7 @@ pub fn api_router() -> Router<AppState> {
         .merge(timeline::router())
         .merge(script::router())
         .merge(ai::router())
+        .merge(commands::router())
         .merge(diffusion::router())
         .merge(export::router())
         .merge(reference::router())

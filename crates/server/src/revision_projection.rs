@@ -2,10 +2,11 @@ use std::collections::BTreeMap;
 
 use eidetic_core::contracts::{FieldValue, ObjectKind, RevisionOperation};
 use rusqlite::Connection;
+use serde::Serialize;
 
 use crate::history_store::{self, HistoryStoreError};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub(crate) struct ObjectFieldProjection {
     pub object_kind: ObjectKind,
     pub object_id: String,
