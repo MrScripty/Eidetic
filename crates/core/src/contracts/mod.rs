@@ -121,6 +121,31 @@ impl FieldDelta {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SetObjectFieldCommand {
+    pub object_kind: ObjectKind,
+    pub object_id: String,
+    pub field_key: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<FieldValue>,
+}
+
+impl SetObjectFieldCommand {
+    pub fn new(
+        object_kind: ObjectKind,
+        object_id: impl Into<String>,
+        field_key: impl Into<String>,
+        value: Option<FieldValue>,
+    ) -> Self {
+        Self {
+            object_kind,
+            object_id: object_id.into(),
+            field_key: field_key.into(),
+            value,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChangeEvent {
     pub id: ChangeEventId,
@@ -301,5 +326,20 @@ mod tests {
         assert_eq!(decoded.version, ProjectionVersion(7));
         assert_eq!(decoded.change_event_id, Some(event_id));
         assert_eq!(decoded.payload, "updated");
+    }
+
+    #[test]
+    fn set_object_field_command_round_trips() {
+        let command = SetObjectFieldCommand::new(
+            ObjectKind::BiblePartField,
+            "field-weather",
+            "weather",
+            Some(FieldValue::Text("rainy".to_string())),
+        );
+
+        let json = serde_json::to_string(&command).unwrap();
+        let decoded: SetObjectFieldCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(decoded, command);
     }
 }

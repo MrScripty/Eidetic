@@ -85,12 +85,17 @@ pub(crate) fn record_change<T>(
 where
     T: Serialize,
 {
+    let payload_json = serde_json::to_string(&command.payload)?;
     let tx = conn.transaction()?;
-    if command_exists(&tx, command.id)? {
-        return Ok(RecordChangeOutcome::AlreadyRecorded);
+    if let Some(existing) = existing_command_signature(&tx, command.id)? {
+        if existing.payload_type == payload_type && existing.payload_json == payload_json {
+            return Ok(RecordChangeOutcome::AlreadyRecorded);
+        }
+        return Err(HistoryStoreError::InvalidValue(
+            "command id already exists with a different payload".to_string(),
+        ));
     }
 
-    let payload_json = serde_json::to_string(&command.payload)?;
     tx.execute(
         "INSERT INTO commands (id, payload_type, payload_json, created_at_ms)
          VALUES (?1, ?2, ?3, ?4)",
@@ -206,14 +211,21 @@ pub(crate) fn load_revisions_for_object(
     Ok(revisions)
 }
 
-fn command_exists(conn: &Connection, command_id: CommandId) -> Result<bool, rusqlite::Error> {
+fn existing_command_signature(
+    conn: &Connection,
+    command_id: CommandId,
+) -> Result<Option<CommandSignature>, rusqlite::Error> {
     conn.query_row(
-        "SELECT 1 FROM commands WHERE id = ?1",
+        "SELECT payload_type, payload_json FROM commands WHERE id = ?1",
         [command_id.0.to_string()],
-        |_| Ok(()),
+        |row| {
+            Ok(CommandSignature {
+                payload_type: row.get(0)?,
+                payload_json: row.get(1)?,
+            })
+        },
     )
     .optional()
-    .map(|row| row.is_some())
 }
 
 fn insert_field_delta(
@@ -352,6 +364,12 @@ struct FieldRow {
     sort_order: u32,
     old_value: SqlFieldValue,
     new_value: SqlFieldValue,
+}
+
+#[derive(Debug)]
+struct CommandSignature {
+    payload_type: String,
+    payload_json: String,
 }
 
 #[derive(Debug)]

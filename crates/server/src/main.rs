@@ -4,6 +4,7 @@ mod embeddings;
 pub mod error;
 mod export;
 mod history_store;
+mod object_field_command;
 mod persistence;
 mod prompt_format;
 mod revision_projection;

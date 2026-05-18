@@ -17,7 +17,7 @@ The new architecture needs stable types for backend-owned commands, event histor
 - Canonical queryable facts must remain typed instead of hidden inside arbitrary JSON.
 
 ## Decision
-Start with a small core contract module that owns IDs, object kinds, field values, change events, object revisions, and projection envelopes. Later slices can add domain-specific command/projection payloads without changing runtime infrastructure first.
+Start with a small core contract module that owns IDs, object kinds, field values, generic field-update commands, change events, object revisions, and projection envelopes. Later slices can add domain-specific command/projection payloads without changing runtime infrastructure first.
 
 ## Alternatives Rejected
 - Defining contracts in server routes: rejected because route-owned contracts would couple persistence, UI, and Bevy to HTTP handlers.

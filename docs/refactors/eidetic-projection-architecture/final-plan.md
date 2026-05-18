@@ -119,6 +119,7 @@ Completed slices:
 - `feat(core): add projection contract primitives` added host-agnostic command, event, revision, typed value, and projection envelope contracts.
 - `feat(server): add transactional history store` added SQLite command/event/revision persistence with typed field-delta columns, command idempotency, and rollback tests.
 - `feat(server): rebuild field projections from revisions` added a read-side projection adapter that rebuilds an object's current field state from persisted revision history.
+- `feat(server): apply object field commands through history` added a validated command handler that writes field updates through history storage and returns rebuilt projections.
 
 Discovered issues:
 

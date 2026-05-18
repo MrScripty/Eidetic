@@ -107,6 +107,36 @@ fn duplicate_command_id_is_idempotent() {
 }
 
 #[test]
+fn duplicate_command_id_rejects_different_payload() {
+    let mut conn = memory_connection();
+    let mut command = command("update weather");
+    let event = event(command.id);
+    let revision = revision(event.id);
+    record_change(
+        &mut conn,
+        &command,
+        "test.update_weather",
+        &event,
+        &[revision.clone()],
+    )
+    .unwrap();
+
+    command.payload.label = "different".to_string();
+    let error = record_change(
+        &mut conn,
+        &command,
+        "test.update_weather",
+        &event,
+        &[revision],
+    )
+    .unwrap_err();
+
+    assert!(matches!(error, HistoryStoreError::InvalidValue(_)));
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 1);
+}
+
+#[test]
 fn failed_revision_rolls_back_command_and_event() {
     let mut conn = memory_connection();
     let command = command("broken update");
