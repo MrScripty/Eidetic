@@ -311,21 +311,14 @@ async fn set_timeline_node_lock(
 ) -> ApiJson {
     let path = active_project_path(&state)?;
     let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
+        let project = timeline_command_project(&state, &path).await?;
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         history_store::create_schema(&conn).map_err(map_history_error)?;
         let outcome = timeline_command::record_set_timeline_node_lock_history(
-            &mut conn, project, &command, 0,
+            &mut conn, &project, &command, 0,
         )
         .map_err(map_timeline_command_error)?;
-        if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_set_timeline_node_lock(project, &command)
-                .map_err(map_timeline_command_error)?;
-        }
         let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
             .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
@@ -352,21 +345,14 @@ async fn set_timeline_node_notes(
     let node_id = command.payload.node_id;
     let notes = command.payload.notes.clone();
     let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
+        let project = timeline_command_project(&state, &path).await?;
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         history_store::create_schema(&conn).map_err(map_history_error)?;
         let outcome = timeline_command::record_set_timeline_node_notes_history(
-            &mut conn, project, &command, 0,
+            &mut conn, &project, &command, 0,
         )
         .map_err(map_timeline_command_error)?;
-        if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_set_timeline_node_notes(project, &command)
-                .map_err(map_timeline_command_error)?;
-        }
         let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
             .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
