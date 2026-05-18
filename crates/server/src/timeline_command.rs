@@ -1,9 +1,10 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, CreateTimelineNodeCommand, DeleteTimelineNodeCommand, ProjectionEnvelope,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
+    ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
+    DeleteTimelineNodeCommand, ProjectionEnvelope, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
-use eidetic_core::timeline::node::StoryNode;
+use eidetic_core::timeline::node::{ContentStatus, StoryNode};
 use eidetic_core::timeline::timing::TimeRange;
 use thiserror::Error;
 
@@ -78,6 +79,70 @@ pub(crate) fn apply_create_timeline_node(
         .timeline
         .add_node(node)
         .map_err(TimelineCommandError::Core)?;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_timeline_children(
+    project: &mut Project,
+    command: &CommandEnvelope<ApplyTimelineChildrenCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    let parent_id = command.payload.parent_id;
+    let (parent_range, child_level) = {
+        let parent = project.timeline.node(parent_id)?;
+        let child_level = parent.level.child_level().ok_or_else(|| {
+            eidetic_core::Error::InvalidHierarchy(format!(
+                "{} nodes cannot have children",
+                parent.level
+            ))
+        })?;
+        (parent.time_range, child_level)
+    };
+
+    project.timeline.clear_children_of(parent_id)?;
+
+    if command.payload.children.is_empty() {
+        return Ok(ProjectionEnvelope::initial(
+            TimelineRenderProjection::from_timeline(&project.timeline),
+        ));
+    }
+
+    let total_weight: f32 = command
+        .payload
+        .children
+        .iter()
+        .map(|child| child.weight.max(0.1))
+        .sum();
+    let parent_duration = parent_range.end_ms - parent_range.start_ms;
+    let parent_arc_ids = project.timeline.arcs_for_node(parent_id);
+    let mut cursor = parent_range.start_ms;
+
+    for (index, child) in command.payload.children.iter().enumerate() {
+        let weight = child.weight.max(0.1);
+        let duration = if index == command.payload.children.len() - 1 {
+            parent_range.end_ms - cursor
+        } else {
+            ((weight / total_weight) * parent_duration as f32) as u64
+        };
+        let end_ms = (cursor + duration).min(parent_range.end_ms);
+        let time_range = TimeRange::new(cursor, end_ms)?;
+        let mut node = StoryNode::new_child(&child.name, child_level, time_range, parent_id);
+        node.id = child.node_id;
+        node.sort_order = index as u32;
+        node.content.notes = child.outline.clone();
+        if !node.content.notes.is_empty() {
+            node.content.status = ContentStatus::NotesOnly;
+        }
+        node.beat_type = child.beat_type.clone();
+
+        project.timeline.add_node(node)?;
+        for arc_id in &parent_arc_ids {
+            project.timeline.tag_node(child.node_id, *arc_id);
+        }
+        cursor = end_ms;
+    }
 
     Ok(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
@@ -230,5 +295,69 @@ mod tests {
             .expect("created clip");
         assert_eq!(clip.parent_id, Some(parent.id));
         assert_eq!(clip.name, "Inserted act");
+    }
+
+    #[test]
+    fn apply_timeline_children_replaces_existing_children() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let parent = project.timeline.nodes[0].clone();
+        let original_child_id = project
+            .timeline
+            .children_of(parent.id)
+            .first()
+            .expect("existing child")
+            .id;
+        let first_child_id = eidetic_core::timeline::node::NodeId::new();
+        let second_child_id = eidetic_core::timeline::node::NodeId::new();
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: ApplyTimelineChildrenCommand {
+                parent_id: parent.id,
+                children: vec![
+                    eidetic_core::contracts::ApplyTimelineChildCommand {
+                        node_id: first_child_id,
+                        name: "First child".to_string(),
+                        outline: "First outline".to_string(),
+                        weight: 1.0,
+                        beat_type: None,
+                    },
+                    eidetic_core::contracts::ApplyTimelineChildCommand {
+                        node_id: second_child_id,
+                        name: "Second child".to_string(),
+                        outline: "Second outline".to_string(),
+                        weight: 1.0,
+                        beat_type: None,
+                    },
+                ],
+            },
+        };
+
+        let projection = apply_timeline_children(&mut project, &command).unwrap();
+
+        assert!(
+            projection
+                .payload
+                .clips
+                .iter()
+                .all(|clip| clip.node_id != original_child_id)
+        );
+        assert!(
+            projection
+                .payload
+                .clips
+                .iter()
+                .any(|clip| clip.node_id == first_child_id
+                    && clip.parent_id == Some(parent.id)
+                    && clip.name == "First child")
+        );
+        assert!(
+            projection
+                .payload
+                .clips
+                .iter()
+                .any(|clip| clip.node_id == second_child_id
+                    && clip.parent_id == Some(parent.id)
+                    && clip.name == "Second child")
+        );
     }
 }

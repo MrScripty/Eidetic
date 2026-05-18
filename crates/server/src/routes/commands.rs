@@ -1,15 +1,15 @@
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
-use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use eidetic_core::contracts::{
-    BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand,
-    CreateTimelineNodeCommand, DeleteTimelineNodeCommand, ProjectionEnvelope,
-    ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
-    SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
-    TimelineRenderProjection,
+    ApplyTimelineChildrenCommand, BibleNodeDetailProjection, CommandEnvelope,
+    CreateBibleGraphNodeCommand, CreateTimelineNodeCommand, DeleteTimelineNodeCommand,
+    ProjectionEnvelope, ScriptDocumentProjection, SetBibleGraphEdgeCommand,
+    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand,
+    SetScriptBlockCommand, SetScriptLockCommand, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, TimelineRenderProjection,
 };
+use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use serde::Serialize;
 
 use crate::bible_graph_command::{self, BibleGraphCommandError};
@@ -46,6 +46,10 @@ pub fn router() -> Router<AppState> {
             post(set_timeline_node_range),
         )
         .route("/commands/timeline/create-node", post(create_timeline_node))
+        .route(
+            "/commands/timeline/apply-children",
+            post(apply_timeline_children),
+        )
         .route("/commands/timeline/split-node", post(split_timeline_node))
         .route("/commands/timeline/delete-node", post(delete_timeline_node))
 }
@@ -232,6 +236,46 @@ async fn create_timeline_node(
     let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
         node_id: created_node_id,
     });
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn apply_timeline_children(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<ApplyTimelineChildrenCommand>>,
+) -> ApiJson {
+    for child in &command.payload.children {
+        validation::validate_name(&child.name, "child node name")?;
+    }
+    let children = command.payload.children.clone();
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = timeline_command::apply_timeline_children(project, &command)
+            .map_err(map_timeline_command_error)?;
+        TimelineCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    for child in children {
+        let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
+            node_id: child.node_id,
+        });
+        if !child.outline.is_empty() {
+            let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+                node_id: child.node_id,
+                field: crate::ydoc::ContentField::Notes,
+                text: child.outline,
+                author: "human:command".into(),
+            });
+        }
+    }
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
     state.trigger_save();

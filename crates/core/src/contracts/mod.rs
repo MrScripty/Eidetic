@@ -31,8 +31,8 @@ pub use script_document::{
     SetScriptLockCommand,
 };
 pub use timeline_command::{
-    CreateTimelineNodeCommand, DeleteTimelineNodeCommand, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand,
+    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineNodeCommand,
+    DeleteTimelineNodeCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
 pub use timeline_render::{
     TimelineRenderClip, TimelineRenderProjection, TimelineRenderRelationship, TimelineRenderTrack,

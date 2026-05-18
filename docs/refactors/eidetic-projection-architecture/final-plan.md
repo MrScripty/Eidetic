@@ -214,6 +214,7 @@ Completed slices:
 - `refactor(ui): route timeline gap fill through commands` moved the existing gap-fill interaction onto the backend timeline create command/projection path instead of the legacy fill-gap route.
 - `refactor(ui): remove legacy structural timeline helpers` removed unused frontend helpers for legacy create, update, delete, split, resize, and fill-gap timeline mutation routes after their UI callers moved to command/projection paths.
 - `refactor(server): remove legacy structural timeline routes` removed legacy create, update, delete, split, resize, and fill-gap timeline mutation routes after replacement command/projection paths landed.
+- `feat(server): add timeline apply children command` added a backend command route for replacing a node's child timeline structure and returning the updated timeline render projection without mutating legacy bible entities.
 
 Discovered issues:
 
@@ -222,6 +223,7 @@ Discovered issues:
 - `rustfmt` on `crates/server/src/main.rs` can recurse through out-of-line modules and reformat unrelated baseline-drift server files. Until the dedicated formatting cleanup lands, format/check only newly added or intentionally touched Rust files and inspect `git status` before staging.
 - Adding Bevy 0.16.1 to an isolated leaf crate pulled 94 packages into `Cargo.lock`. Keep subsequent renderer features behind the leaf crate/package boundary, avoid default Bevy features unless needed, and run dependency reviews before adding window/render/asset/text features.
 - Timeline structural commands currently update backend-owned in-memory project state and trigger the existing save path, but they do not yet write sparse SQLite object revisions or command idempotency records. Migrate timeline structural commands to the same revision/history storage model before claiming durable undo/redo or replay for timeline edits.
+- Child planning proposals still contain character, location, and prop references, but the new timeline apply-children command intentionally does not mutate legacy `StoryBible.entities`. Add a semantic/bible proposal command path that turns those references into reviewed bible graph updates instead of restoring direct side effects.
 - `cargo test -p eidetic-server history_store` passes but reports pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs`. These warnings block a future `-D warnings` gate and need a cleanup or ownership decision before CI can enforce warning-free server builds.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.
 - The command route currently opens the active SQLite project path per request because `AppState` has no backend-owned database connection owner yet. Before broad route adoption, add an explicit database lifecycle owner with the same concurrency/shutdown discipline as the rest of the backend.

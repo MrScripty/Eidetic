@@ -30,3 +30,18 @@ pub struct CreateTimelineNodeCommand {
     pub end_ms: u64,
     pub beat_type: Option<BeatType>,
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ApplyTimelineChildrenCommand {
+    pub parent_id: NodeId,
+    pub children: Vec<ApplyTimelineChildCommand>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ApplyTimelineChildCommand {
+    pub node_id: NodeId,
+    pub name: String,
+    pub outline: String,
+    pub weight: f32,
+    pub beat_type: Option<BeatType>,
+}

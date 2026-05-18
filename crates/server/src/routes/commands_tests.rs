@@ -623,6 +623,78 @@ async fn create_timeline_node_command_rejects_invalid_hierarchy() {
 }
 
 #[tokio::test]
+async fn apply_timeline_children_command_returns_timeline_render_projection() {
+    let path = temp_db_path("applies-timeline-children");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let original_child = project
+        .timeline
+        .children_of(parent.id)
+        .first()
+        .expect("original child")
+        .id;
+    let first_child_id = eidetic_core::timeline::node::NodeId::new();
+    let second_child_id = eidetic_core::timeline::node::NodeId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = apply_timeline_children_command_body(parent.id, first_child_id, second_child_id);
+
+    let response = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != original_child.0.to_string())
+    );
+    assert!(clips.iter().any(|clip| {
+        clip["node_id"] == first_child_id.0.to_string()
+            && clip["parent_id"] == parent.id.0.to_string()
+            && clip["name"] == "First child"
+    }));
+    assert!(clips.iter().any(|clip| {
+        clip["node_id"] == second_child_id.0.to_string()
+            && clip["parent_id"] == parent.id.0.to_string()
+            && clip["name"] == "Second child"
+    }));
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn apply_timeline_children_command_rejects_unknown_parent() {
+    let path = temp_db_path("rejects-unknown-timeline-children-parent");
+    let state = AppState::new().await;
+    *state.project.lock() = Some(Template::MultiCam.build_project("Commands Test"));
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = apply_timeline_children_command_body(
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+    );
+
+    let response = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn split_timeline_node_command_returns_timeline_render_projection() {
     let path = temp_db_path("splits-timeline-node");
     let state = AppState::new().await;
@@ -811,6 +883,15 @@ fn create_timeline_node_command_request(body: serde_json::Value) -> Request<Body
     Request::builder()
         .method("POST")
         .uri("/commands/timeline/create-node")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn apply_timeline_children_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/apply-children")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -1010,6 +1091,35 @@ fn create_timeline_node_command_body(
             "start_ms": start_ms,
             "end_ms": end_ms,
             "beat_type": null,
+        }
+    })
+}
+
+fn apply_timeline_children_command_body(
+    parent_id: eidetic_core::timeline::node::NodeId,
+    first_child_id: eidetic_core::timeline::node::NodeId,
+    second_child_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "parent_id": parent_id,
+            "children": [
+                {
+                    "node_id": first_child_id,
+                    "name": "First child",
+                    "outline": "First outline",
+                    "weight": 1.0,
+                    "beat_type": null,
+                },
+                {
+                    "node_id": second_child_id,
+                    "name": "Second child",
+                    "outline": "Second outline",
+                    "weight": 1.0,
+                    "beat_type": null,
+                }
+            ]
         }
     })
 }
