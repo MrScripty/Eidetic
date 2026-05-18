@@ -1,10 +1,5 @@
-import type {
-  NodeId,
-  StoryNode,
-  StoryLevel,
-  AiStatus,
-  DiffusionStatus,
-} from '../types.js';
+import type { AiStatus, DiffusionStatus } from '../aiTypes.js';
+import type { NodeId, StoryLevel, StoryNode } from '../types.js';
 
 /**
  * Transient UI state for the node editor panel. Frontend-owned.

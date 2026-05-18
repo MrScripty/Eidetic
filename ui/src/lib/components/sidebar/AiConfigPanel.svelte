@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AiConfig, BackendType, ModelEntry } from '$lib/types.js';
+  import type { AiConfig, BackendType, ModelEntry } from '$lib/aiTypes.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { refreshAiStatus } from '$lib/stores/aiStatus.svelte.js';
   import {

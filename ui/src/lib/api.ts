@@ -1,17 +1,14 @@
+import type { AiConfig, AiStatus, DiffusionStatus, ModelListResponse } from './aiTypes.js';
 import type {
-  Project,
-  AiStatus,
-  AiConfig,
-  TimelineGap,
-  ReferenceDocument,
-  Timeline,
-  StoryNode,
-  NodeContent,
   ChildPlan,
+  NodeContent,
+  Project,
+  ReferenceDocument,
   ReferenceType,
   StoryLevel,
-  DiffusionStatus,
-  ModelListResponse,
+  StoryNode,
+  Timeline,
+  TimelineGap,
 } from './types.js';
 
 const BASE = '/api';
