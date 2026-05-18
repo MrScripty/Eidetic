@@ -1,8 +1,12 @@
 import { createBibleGraphNode } from '$lib/commandApi.js';
-import { getBibleGraphNodeProjection } from '$lib/projectionApi.js';
+import {
+  getBibleGraphNodeListProjection,
+  getBibleGraphNodeProjection,
+} from '$lib/projectionApi.js';
 import type {
   BibleGraphNodeCommandResponse,
   BibleGraphNodeId,
+  BibleGraphNodeListProjection,
   BibleNodeDetailProjection,
   CommandId,
   CreateBibleGraphNodeCommand,
@@ -17,10 +21,16 @@ export const bibleGraphNodeProjectionState = $state<{
   projections: Record<string, ProjectionEnvelope<BibleNodeDetailProjection>>;
   pending: Record<string, boolean>;
   errors: Record<string, string | undefined>;
+  nodeList: ProjectionEnvelope<BibleGraphNodeListProjection> | null;
+  nodeListPending: boolean;
+  nodeListError?: string;
 }>({
   projections: {},
   pending: {},
   errors: {},
+  nodeList: null,
+  nodeListPending: false,
+  nodeListError: undefined,
 });
 
 function cacheKey({ node_id }: BibleGraphNodeProjectionKey): string {
@@ -47,6 +57,10 @@ export function getBibleGraphNodeProjectionError(
   return bibleGraphNodeProjectionState.errors[cacheKey(key)];
 }
 
+export function getCachedBibleGraphNodeListProjection(): ProjectionEnvelope<BibleGraphNodeListProjection> | null {
+  return bibleGraphNodeProjectionState.nodeList;
+}
+
 export async function refreshBibleGraphNodeProjection(
   key: BibleGraphNodeProjectionKey,
 ): Promise<ProjectionEnvelope<BibleNodeDetailProjection>> {
@@ -69,6 +83,27 @@ export async function refreshBibleGraphNodeProjection(
   }
 }
 
+export async function refreshBibleGraphNodeListProjection(): Promise<
+  ProjectionEnvelope<BibleGraphNodeListProjection>
+> {
+  bibleGraphNodeProjectionState.nodeListPending = true;
+  bibleGraphNodeProjectionState.nodeListError = undefined;
+
+  try {
+    const projection = await getBibleGraphNodeListProjection();
+    bibleGraphNodeProjectionState.nodeList = projection;
+    return projection;
+  } catch (error) {
+    bibleGraphNodeProjectionState.nodeListError = errorMessage(
+      error,
+      'Failed to load bible graph nodes',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.nodeListPending = false;
+  }
+}
+
 export async function createBibleGraphNodeProjection(
   payload: CreateBibleGraphNodeCommand,
   commandId?: CommandId,
@@ -81,6 +116,7 @@ export async function createBibleGraphNodeProjection(
   try {
     const response = await createBibleGraphNode(payload, commandId);
     bibleGraphNodeProjectionState.projections[keyString] = response.projection;
+    bibleGraphNodeProjectionState.nodeList = null;
     return response;
   } catch (error) {
     bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
@@ -98,4 +134,10 @@ export function clearBibleGraphNodeProjection(key: BibleGraphNodeProjectionKey):
   delete bibleGraphNodeProjectionState.projections[keyString];
   delete bibleGraphNodeProjectionState.pending[keyString];
   delete bibleGraphNodeProjectionState.errors[keyString];
+}
+
+export function clearBibleGraphNodeListProjection(): void {
+  bibleGraphNodeProjectionState.nodeList = null;
+  bibleGraphNodeProjectionState.nodeListPending = false;
+  bibleGraphNodeProjectionState.nodeListError = undefined;
 }

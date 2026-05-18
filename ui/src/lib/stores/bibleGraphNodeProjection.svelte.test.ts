@@ -1,15 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createBibleGraphNode } from '$lib/commandApi.js';
-import { getBibleGraphNodeProjection } from '$lib/projectionApi.js';
+import {
+  getBibleGraphNodeListProjection,
+  getBibleGraphNodeProjection,
+} from '$lib/projectionApi.js';
 import { storyState } from './story.svelte.js';
 import {
   bibleGraphNodeProjectionState,
+  clearBibleGraphNodeListProjection,
   clearBibleGraphNodeProjection,
   createBibleGraphNodeProjection,
+  getCachedBibleGraphNodeListProjection,
   getBibleGraphNodeProjectionError,
   getCachedBibleGraphNodeProjection,
   isBibleGraphNodeProjectionPending,
+  refreshBibleGraphNodeListProjection,
   refreshBibleGraphNodeProjection,
 } from './bibleGraphNodeProjection.svelte.js';
 
@@ -18,11 +24,13 @@ vi.mock('$lib/commandApi.js', () => ({
 }));
 
 vi.mock('$lib/projectionApi.js', () => ({
+  getBibleGraphNodeListProjection: vi.fn(),
   getBibleGraphNodeProjection: vi.fn(),
 }));
 
 const createBibleGraphNodeMock = vi.mocked(createBibleGraphNode);
 const getBibleGraphNodeProjectionMock = vi.mocked(getBibleGraphNodeProjection);
+const getBibleGraphNodeListProjectionMock = vi.mocked(getBibleGraphNodeListProjection);
 
 const key = {
   node_id: 'node.character/ada one',
@@ -46,6 +54,14 @@ const projection = {
   },
 };
 
+const listProjection = {
+  version: 2,
+  change_event_id: 'event-1',
+  payload: {
+    nodes: [projection.payload.node],
+  },
+};
+
 function resetProjectionState(): void {
   for (const keyString of Object.keys(bibleGraphNodeProjectionState.projections)) {
     delete bibleGraphNodeProjectionState.projections[keyString];
@@ -56,6 +72,9 @@ function resetProjectionState(): void {
   for (const keyString of Object.keys(bibleGraphNodeProjectionState.errors)) {
     delete bibleGraphNodeProjectionState.errors[keyString];
   }
+  bibleGraphNodeProjectionState.nodeList = null;
+  bibleGraphNodeProjectionState.nodeListPending = false;
+  bibleGraphNodeProjectionState.nodeListError = undefined;
 }
 
 beforeEach(() => {
@@ -63,6 +82,7 @@ beforeEach(() => {
   storyState.entities = [];
   createBibleGraphNodeMock.mockReset();
   getBibleGraphNodeProjectionMock.mockReset();
+  getBibleGraphNodeListProjectionMock.mockReset();
 });
 
 describe('bible graph node projection store', () => {
@@ -125,6 +145,47 @@ describe('bible graph node projection store', () => {
     expect(storyState.entities).toBe(originalEntities);
   });
 
+  it('stores backend graph node list reads and clears pending state', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+
+    await expect(refreshBibleGraphNodeListProjection()).resolves.toEqual(listProjection);
+
+    expect(getBibleGraphNodeListProjectionMock).toHaveBeenCalledWith();
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(listProjection);
+    expect(bibleGraphNodeProjectionState.nodeListPending).toBe(false);
+    expect(bibleGraphNodeProjectionState.nodeListError).toBeUndefined();
+  });
+
+  it('records node list read errors without caching a projection', async () => {
+    getBibleGraphNodeListProjectionMock.mockRejectedValue(new Error('list unavailable'));
+
+    await expect(refreshBibleGraphNodeListProjection()).rejects.toThrow('list unavailable');
+
+    expect(getCachedBibleGraphNodeListProjection()).toBeNull();
+    expect(bibleGraphNodeProjectionState.nodeListPending).toBe(false);
+    expect(bibleGraphNodeProjectionState.nodeListError).toBe('list unavailable');
+  });
+
+  it('invalidates cached node list projections after create commands', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    await refreshBibleGraphNodeListProjection();
+    createBibleGraphNodeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection,
+    });
+
+    await createBibleGraphNodeProjection({
+      node_id: 'node.character/ada one',
+      parent_id: null,
+      schema_key: 'character',
+      name: 'Ada',
+      sort_order: 3,
+    });
+
+    expect(getCachedBibleGraphNodeListProjection()).toBeNull();
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
+  });
+
   it('records create errors and leaves cached projections unchanged', async () => {
     getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
     await refreshBibleGraphNodeProjection(key);
@@ -154,5 +215,16 @@ describe('bible graph node projection store', () => {
     expect(getCachedBibleGraphNodeProjection(key)).toBeUndefined();
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('clears cached graph node list projection state', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    await refreshBibleGraphNodeListProjection();
+
+    clearBibleGraphNodeListProjection();
+
+    expect(getCachedBibleGraphNodeListProjection()).toBeNull();
+    expect(bibleGraphNodeProjectionState.nodeListPending).toBe(false);
+    expect(bibleGraphNodeProjectionState.nodeListError).toBeUndefined();
   });
 });
