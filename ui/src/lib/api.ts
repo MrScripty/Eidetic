@@ -2,10 +2,6 @@ import type {
   Project,
   StoryArc,
   Entity,
-  EntityCategory,
-  EntityDetails,
-  EntitySnapshot,
-  EntityRelation,
   AiStatus,
   AiConfig,
   TimelineGap,
@@ -17,7 +13,6 @@ import type {
   ChildPlan,
   ArcType,
   ReferenceType,
-  Color,
   StoryLevel,
   DiffusionStatus,
   ModelListResponse,
@@ -98,92 +93,10 @@ export function listEntities(): Promise<Entity[]> {
   return request('/bible/entities');
 }
 
-export function getEntity(id: string): Promise<Entity> {
-  return request(`/bible/entities/${id}`);
-}
-
-export function createEntity(data: {
-  name: string;
-  category: EntityCategory;
-  tagline?: string;
-  description?: string;
-  details?: EntityDetails;
-  color?: Color;
-}): Promise<Entity> {
-  return request('/bible/entities', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-export function updateEntity(id: string, updates: Partial<Omit<Entity, 'id'>>): Promise<Entity> {
-  return request(`/bible/entities/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(updates),
-  });
-}
-
-export function deleteEntity(id: string): Promise<{ deleted: boolean }> {
-  return request(`/bible/entities/${id}`, { method: 'DELETE' });
-}
-
-// --- Entity snapshots ---
-
-export function addSnapshot(
-  entityId: string,
-  snapshot: Omit<EntitySnapshot, 'source_node_id'> & { source_node_id?: string | null },
-): Promise<Entity> {
-  return request(`/bible/entities/${entityId}/snapshots`, {
-    method: 'POST',
-    body: JSON.stringify(snapshot),
-  });
-}
-
-export function updateSnapshot(
-  entityId: string,
-  idx: number,
-  snapshot: Partial<EntitySnapshot>,
-): Promise<Entity> {
-  return request(`/bible/entities/${entityId}/snapshots/${idx}`, {
-    method: 'PUT',
-    body: JSON.stringify(snapshot),
-  });
-}
-
-export function deleteSnapshot(entityId: string, idx: number): Promise<Entity> {
-  return request(`/bible/entities/${entityId}/snapshots/${idx}`, { method: 'DELETE' });
-}
-
-// --- Entity relations ---
-
-export function addRelation(entityId: string, relation: EntityRelation): Promise<Entity> {
-  return request(`/bible/entities/${entityId}/relations`, {
-    method: 'POST',
-    body: JSON.stringify(relation),
-  });
-}
-
-export function deleteRelation(entityId: string, idx: number): Promise<Entity> {
-  return request(`/bible/entities/${entityId}/relations/${idx}`, { method: 'DELETE' });
-}
-
 // --- Entity node refs ---
-
-export function addNodeRef(entityId: string, nodeId: string): Promise<Entity> {
-  return request(`/bible/entities/${entityId}/node-refs`, {
-    method: 'POST',
-    body: JSON.stringify({ node_id: nodeId }),
-  });
-}
 
 export function removeNodeRef(entityId: string, nodeId: string): Promise<Entity> {
   return request(`/bible/entities/${entityId}/node-refs/${nodeId}`, { method: 'DELETE' });
-}
-
-// --- Bible resolve at time ---
-
-export function resolveEntitiesAtTime(timeMs: number): Promise<Entity[]> {
-  return request(`/bible/at?time_ms=${timeMs}`);
 }
 
 // --- Timeline ---
