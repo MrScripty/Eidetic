@@ -1,15 +1,73 @@
 use eidetic_core::contracts::{
-    ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
-    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
-    TimelineRenderProjection,
+    ApplyTimelineChildrenCommand, ChangeEvent, ChangeEventKind, CommandEnvelope,
+    CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
+    DeleteTimelineRelationshipCommand, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
+    ProjectionEnvelope, RevisionOperation, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
 use eidetic_core::timeline::relationship::Relationship;
 use eidetic_core::timeline::timing::TimeRange;
+use rusqlite::Connection;
 use thiserror::Error;
+
+use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
+
+pub(crate) fn record_set_timeline_node_range_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<SetTimelineNodeRangeCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "timeline.node_range")?
+    {
+        return Ok(outcome);
+    }
+
+    let range = TimeRange::new(command.payload.start_ms, command.payload.end_ms)?;
+    if range.end_ms > project.timeline.total_duration_ms {
+        return Err(TimelineCommandError::Core(
+            eidetic_core::Error::NodeExceedsTimeline {
+                node_end_ms: range.end_ms,
+                timeline_ms: project.timeline.total_duration_ms,
+            },
+        ));
+    }
+    let node = project.timeline.node(command.payload.node_id)?;
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("set timeline node range {}", node.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::TimelineNode,
+        command.payload.node_id.0.to_string(),
+        event.id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "start_ms",
+        Some(FieldValue::Integer(node.time_range.start_ms as i64)),
+        Some(FieldValue::Integer(command.payload.start_ms as i64)),
+    ))
+    .with_field(FieldDelta::new(
+        "end_ms",
+        Some(FieldValue::Integer(node.time_range.end_ms as i64)),
+        Some(FieldValue::Integer(command.payload.end_ms as i64)),
+    ));
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "timeline.node_range",
+        &event,
+        &[revision],
+    )?)
+}
 
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
@@ -224,6 +282,8 @@ pub(crate) fn apply_delete_timeline_relationship(
 pub(crate) enum TimelineCommandError {
     #[error("{0}")]
     Core(#[from] eidetic_core::Error),
+    #[error(transparent)]
+    History(#[from] HistoryStoreError),
 }
 
 #[cfg(test)]

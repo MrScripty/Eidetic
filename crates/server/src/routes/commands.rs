@@ -329,21 +329,35 @@ async fn set_timeline_node_range(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<SetTimelineNodeRangeCommand>>,
 ) -> ApiJson {
+    let path = active_project_path(&state)?;
     let response = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
             return Err(ApiError::no_project());
         };
-        let projection = timeline_command::apply_set_timeline_node_range(project, &command)
-            .map_err(map_timeline_command_error)?;
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| ApiError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome = timeline_command::record_set_timeline_node_range_history(
+            &mut conn, project, &command, 0,
+        )
+        .map_err(map_timeline_command_error)?;
+        let projection = if outcome == RecordChangeOutcome::Recorded {
+            timeline_command::apply_set_timeline_node_range(project, &command)
+                .map_err(map_timeline_command_error)?
+        } else {
+            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
+        };
         TimelineCommandResponse {
-            outcome: RecordChangeOutcome::Recorded,
+            outcome,
             projection,
         }
     };
 
-    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-    state.trigger_save();
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        state.trigger_save();
+    }
     crate::error::json_value(response)
 }
 
@@ -736,6 +750,7 @@ fn map_story_arc_command_error(error: StoryArcCommandError) -> ApiError {
 fn map_timeline_command_error(error: TimelineCommandError) -> ApiError {
     match error {
         TimelineCommandError::Core(error) => ApiError::bad_request(error.to_string()),
+        TimelineCommandError::History(error) => map_history_error(error),
     }
 }
 
