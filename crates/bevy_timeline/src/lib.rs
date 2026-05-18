@@ -28,6 +28,10 @@ pub enum TimelineRendererCommand {
         start_ms: u64,
         end_ms: u64,
     },
+    SplitNode {
+        node_id: NodeId,
+        at_ms: u64,
+    },
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -43,6 +47,12 @@ pub enum TimelineRendererError {
         start_ms: u64,
         end_ms: u64,
         duration_ms: u64,
+    },
+    #[error("invalid split at {at_ms}ms for node range {start_ms}ms..{end_ms}ms")]
+    InvalidNodeSplit {
+        at_ms: u64,
+        start_ms: u64,
+        end_ms: u64,
     },
     #[error("invalid viewport range {start_ms}ms..{end_ms}ms for duration {duration_ms}ms")]
     InvalidViewportRange {
@@ -257,6 +267,39 @@ impl TimelineRendererApp {
         Ok(())
     }
 
+    pub fn request_split_node(
+        &mut self,
+        node_id: NodeId,
+        at_ms: u64,
+    ) -> Result<(), TimelineRendererError> {
+        let (start_ms, end_ms) = {
+            let state = self.app.world().resource::<TimelineRenderState>();
+            let projection = state
+                .projection
+                .as_ref()
+                .ok_or(TimelineRendererError::MissingProjection)?;
+            let Some(clip) = projection.clips.iter().find(|clip| clip.node_id == node_id) else {
+                return Err(TimelineRendererError::UnknownNode { node_id });
+            };
+            (clip.start_ms, clip.end_ms)
+        };
+
+        if at_ms <= start_ms || at_ms >= end_ms {
+            return Err(TimelineRendererError::InvalidNodeSplit {
+                at_ms,
+                start_ms,
+                end_ms,
+            });
+        }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineRendererCommandQueue>()
+            .commands
+            .push(TimelineRendererCommand::SplitNode { node_id, at_ms });
+        Ok(())
+    }
+
     pub fn drain_commands(&mut self) -> Vec<TimelineRendererCommand> {
         std::mem::take(
             &mut self
@@ -462,6 +505,39 @@ mod tests {
                 start_ms: 5_000,
                 end_ms: 2_000,
                 duration_ms: 10_000
+            })
+        );
+        assert!(renderer.drain_commands().is_empty());
+    }
+
+    #[test]
+    fn renderer_app_emits_validated_split_node_command() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(renderer.request_split_node(node_id, 2_500), Ok(()));
+        assert_eq!(
+            renderer.drain_commands(),
+            vec![TimelineRendererCommand::SplitNode {
+                node_id,
+                at_ms: 2_500
+            }]
+        );
+    }
+
+    #[test]
+    fn renderer_app_rejects_split_node_command_outside_clip() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(
+            renderer.request_split_node(node_id, 4_000),
+            Err(TimelineRendererError::InvalidNodeSplit {
+                at_ms: 4_000,
+                start_ms: 1_000,
+                end_ms: 4_000
             })
         );
         assert!(renderer.drain_commands().is_empty());
