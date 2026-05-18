@@ -366,26 +366,39 @@ async fn create_timeline_node(
     Json(command): Json<CommandEnvelope<CreateTimelineNodeCommand>>,
 ) -> ApiJson {
     validation::validate_name(&command.payload.name, "node name")?;
+    let path = active_project_path(&state)?;
     let created_node_id = command.payload.node_id;
     let response = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
             return Err(ApiError::no_project());
         };
-        let projection = timeline_command::apply_create_timeline_node(project, &command)
-            .map_err(map_timeline_command_error)?;
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| ApiError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome =
+            timeline_command::record_create_timeline_node_history(&mut conn, project, &command, 0)
+                .map_err(map_timeline_command_error)?;
+        let projection = if outcome == RecordChangeOutcome::Recorded {
+            timeline_command::apply_create_timeline_node(project, &command)
+                .map_err(map_timeline_command_error)?
+        } else {
+            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
+        };
         TimelineCommandResponse {
-            outcome: RecordChangeOutcome::Recorded,
+            outcome,
             projection,
         }
     };
 
-    let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
-        node_id: created_node_id,
-    });
-    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-    let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-    state.trigger_save();
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
+            node_id: created_node_id,
+        });
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+        state.trigger_save();
+    }
     crate::error::json_value(response)
 }
 

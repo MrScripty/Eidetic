@@ -869,6 +869,142 @@ async fn create_timeline_node_command_returns_timeline_render_projection() {
             && clip["name"] == "Inserted act"
     }));
 
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node_id.0.to_string(),
+    )
+    .expect("timeline node revisions");
+    assert_eq!(revisions.len(), 1);
+    assert_eq!(
+        revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Create
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "name"
+                && field.new_value == Some(FieldValue::Text("Inserted act".to_string())))
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "parent_id"
+                && field.new_value == Some(FieldValue::Text(parent.id.0.to_string())))
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "level"
+                && field.new_value == Some(FieldValue::Text("Act".to_string())))
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_node_command_replays_duplicate_command() {
+    let path = temp_db_path("creates-timeline-node-duplicate");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let node_id = eidetic_core::timeline::node::NodeId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_node_command_body_with_id(
+        uuid::Uuid::new_v4(),
+        node_id,
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Inserted act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+
+    let first = app
+        .clone()
+        .oneshot(create_timeline_node_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert_eq!(
+        clips
+            .iter()
+            .filter(|clip| clip["node_id"] == node_id.0.to_string())
+            .count(),
+        1
+    );
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &node_id.0.to_string(),
+    )
+    .expect("timeline node revisions");
+    assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_node_command_rejects_conflicting_duplicate_command() {
+    let path = temp_db_path("creates-timeline-node-conflict");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let command_id = uuid::Uuid::new_v4();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let original = create_timeline_node_command_body_with_id(
+        command_id,
+        eidetic_core::timeline::node::NodeId::new(),
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Inserted act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+    let conflicting = create_timeline_node_command_body_with_id(
+        command_id,
+        eidetic_core::timeline::node::NodeId::new(),
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Different act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+
+    let first = app
+        .clone()
+        .oneshot(create_timeline_node_command_request(original))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(create_timeline_node_command_request(conflicting))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::CONFLICT);
+
     let _ = std::fs::remove_file(path);
 }
 
@@ -2110,8 +2246,28 @@ fn create_timeline_node_command_body(
     start_ms: u64,
     end_ms: u64,
 ) -> serde_json::Value {
+    create_timeline_node_command_body_with_id(
+        uuid::Uuid::new_v4(),
+        node_id,
+        parent_id,
+        level,
+        name,
+        start_ms,
+        end_ms,
+    )
+}
+
+fn create_timeline_node_command_body_with_id(
+    command_id: uuid::Uuid,
+    node_id: eidetic_core::timeline::node::NodeId,
+    parent_id: Option<eidetic_core::timeline::node::NodeId>,
+    level: eidetic_core::timeline::node::StoryLevel,
+    name: &str,
+    start_ms: u64,
+    end_ms: u64,
+) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4(),
+        "id": command_id,
         "payload": {
             "node_id": node_id,
             "parent_id": parent_id,

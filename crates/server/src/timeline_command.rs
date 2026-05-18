@@ -6,7 +6,7 @@ use eidetic_core::contracts::{
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
-use eidetic_core::timeline::node::{ContentStatus, StoryNode};
+use eidetic_core::timeline::node::{BeatType, ContentStatus, StoryLevel, StoryNode};
 use eidetic_core::timeline::relationship::{Relationship, RelationshipType};
 use eidetic_core::timeline::timing::TimeRange;
 use rusqlite::Connection;
@@ -279,6 +279,94 @@ pub(crate) fn record_delete_timeline_relationship_history(
     )?)
 }
 
+pub(crate) fn record_create_timeline_node_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<CreateTimelineNodeCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "timeline.node_create")?
+    {
+        return Ok(outcome);
+    }
+
+    let range = validate_create_timeline_node(project, command)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("create timeline node {}", command.payload.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let mut revision = ObjectRevision::new(
+        ObjectKind::TimelineNode,
+        command.payload.node_id.0.to_string(),
+        event.id,
+        RevisionOperation::Create,
+    )
+    .with_field(FieldDelta::new(
+        "name",
+        None,
+        Some(FieldValue::Text(command.payload.name.clone())),
+    ))
+    .with_field(FieldDelta::new(
+        "parent_id",
+        None,
+        command
+            .payload
+            .parent_id
+            .map(|node_id| FieldValue::Text(node_id.0.to_string())),
+    ))
+    .with_field(FieldDelta::new(
+        "level",
+        None,
+        Some(FieldValue::Text(encode_story_level(command.payload.level))),
+    ))
+    .with_field(FieldDelta::new(
+        "start_ms",
+        None,
+        Some(FieldValue::Integer(range.start_ms as i64)),
+    ))
+    .with_field(FieldDelta::new(
+        "end_ms",
+        None,
+        Some(FieldValue::Integer(range.end_ms as i64)),
+    ))
+    .with_field(FieldDelta::new(
+        "sort_order",
+        None,
+        Some(FieldValue::Integer(0)),
+    ))
+    .with_field(FieldDelta::new(
+        "locked",
+        None,
+        Some(FieldValue::Bool(false)),
+    ))
+    .with_field(FieldDelta::new(
+        "content_status",
+        None,
+        Some(FieldValue::Text(encode_content_status(
+            ContentStatus::Empty,
+        ))),
+    ));
+
+    if let Some(beat_type) = &command.payload.beat_type {
+        revision = revision.with_field(FieldDelta::new(
+            "beat_type",
+            None,
+            Some(FieldValue::Text(encode_beat_type(beat_type)?)),
+        ));
+    }
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "timeline.node_create",
+        &event,
+        &[revision],
+    )?)
+}
+
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
     command: &CommandEnvelope<SetTimelineNodeRangeCommand>,
@@ -498,6 +586,18 @@ fn encode_content_status(status: ContentStatus) -> String {
     .to_string()
 }
 
+fn encode_story_level(level: StoryLevel) -> String {
+    level.label().to_string()
+}
+
+fn encode_beat_type(beat_type: &BeatType) -> Result<String, TimelineCommandError> {
+    serde_json::to_string(beat_type).map_err(|error| {
+        TimelineCommandError::Core(eidetic_core::Error::InvalidOperation(format!(
+            "invalid beat type: {error}"
+        )))
+    })
+}
+
 fn encode_relationship_type(
     relationship_type: &RelationshipType,
 ) -> Result<String, TimelineCommandError> {
@@ -506,6 +606,57 @@ fn encode_relationship_type(
             "invalid relationship type: {error}"
         )))
     })
+}
+
+fn validate_create_timeline_node(
+    project: &Project,
+    command: &CommandEnvelope<CreateTimelineNodeCommand>,
+) -> Result<TimeRange, TimelineCommandError> {
+    let range = TimeRange::new(command.payload.start_ms, command.payload.end_ms)?;
+    if range.end_ms > project.timeline.total_duration_ms {
+        return Err(TimelineCommandError::Core(
+            eidetic_core::Error::NodeExceedsTimeline {
+                node_end_ms: range.end_ms,
+                timeline_ms: project.timeline.total_duration_ms,
+            },
+        ));
+    }
+
+    if let Some(parent_id) = command.payload.parent_id {
+        let parent = project.timeline.node(parent_id)?;
+        let expected_child_level = parent.level.child_level().ok_or_else(|| {
+            eidetic_core::Error::InvalidHierarchy(format!(
+                "{} nodes cannot have children",
+                parent.level
+            ))
+        })?;
+        if command.payload.level != expected_child_level {
+            return Err(TimelineCommandError::Core(
+                eidetic_core::Error::InvalidHierarchy(format!(
+                    "expected {} child for {} parent, got {}",
+                    expected_child_level, parent.level, command.payload.level
+                )),
+            ));
+        }
+    } else if command.payload.level != StoryLevel::Premise {
+        return Err(TimelineCommandError::Core(
+            eidetic_core::Error::InvalidHierarchy(format!(
+                "{} nodes must have a parent",
+                command.payload.level
+            )),
+        ));
+    } else if project
+        .timeline
+        .nodes
+        .iter()
+        .any(|node| node.level == StoryLevel::Premise)
+    {
+        return Err(TimelineCommandError::Core(
+            eidetic_core::Error::InvalidHierarchy("only one Premise node is allowed".to_string()),
+        ));
+    }
+
+    Ok(range)
 }
 
 #[derive(Debug, Error)]
