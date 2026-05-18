@@ -218,6 +218,12 @@ pub struct BibleNodeDetailProjection {
     pub outgoing_edges: Vec<BibleGraphEdge>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphNodeListProjection {
+    #[serde(default)]
+    pub nodes: Vec<BibleGraphNode>,
+}
+
 pub fn canonical_bible_root_nodes() -> Vec<BibleGraphNode> {
     [
         CanonicalBibleRoot::Characters,
@@ -341,5 +347,17 @@ mod tests {
         let round_trip: CreateBibleGraphNodeCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn node_list_projection_round_trips() {
+        let projection = BibleGraphNodeListProjection {
+            nodes: canonical_bible_root_nodes(),
+        };
+
+        let json = serde_json::to_string(&projection).unwrap();
+        let round_trip: BibleGraphNodeListProjection = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, projection);
     }
 }

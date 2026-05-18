@@ -190,6 +190,39 @@ fn failed_current_state_write_rolls_back_history_rows() {
     assert_eq!(table_count(&conn, "object_revisions"), 0);
 }
 
+#[test]
+fn revision_summary_reports_count_and_latest_event_for_kind() {
+    let mut conn = memory_connection();
+    let first_command = command("first update");
+    let first_event = event(first_command.id);
+    let first_revision = revision(first_event.id);
+    record_change(
+        &mut conn,
+        &first_command,
+        "test.update_weather",
+        &first_event,
+        &[first_revision],
+    )
+    .unwrap();
+
+    let second_command = command("second update");
+    let second_event = event(second_command.id);
+    let second_revision = revision(second_event.id);
+    record_change(
+        &mut conn,
+        &second_command,
+        "test.update_weather",
+        &second_event,
+        &[second_revision],
+    )
+    .unwrap();
+
+    let summary = load_revision_summary_for_kind(&conn, ObjectKind::BiblePartField).unwrap();
+
+    assert_eq!(summary.revision_count, 2);
+    assert_eq!(summary.latest_change_event_id, Some(second_event.id));
+}
+
 fn table_count(conn: &Connection, table: &str) -> i64 {
     conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
         row.get(0)

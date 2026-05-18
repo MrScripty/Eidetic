@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
-    BibleGraphNode, BibleGraphNodeId, BibleGraphSchemaKey, BibleNodeDetailProjection,
-    ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion,
+    BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaKey,
+    BibleNodeDetailProjection, ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
@@ -104,6 +104,39 @@ pub(crate) fn load_node_detail_projection_envelope(
             projection,
         ))),
         None => Ok(Some(ProjectionEnvelope::initial(projection))),
+    }
+}
+
+pub(crate) fn load_node_list_projection(
+    conn: &Connection,
+) -> Result<BibleGraphNodeListProjection, HistoryStoreError> {
+    let mut statement = conn.prepare(
+        "SELECT id, parent_id, schema_key, name, system_owned, sort_order
+         FROM bible_graph_nodes
+         WHERE deleted_event_id IS NULL
+         ORDER BY sort_order ASC, name ASC, id ASC",
+    )?;
+    let rows = statement.query_map([], row_to_node)?;
+    let mut nodes = Vec::new();
+    for row in rows {
+        nodes.push(row?);
+    }
+    Ok(BibleGraphNodeListProjection { nodes })
+}
+
+pub(crate) fn load_node_list_projection_envelope(
+    conn: &Connection,
+) -> Result<ProjectionEnvelope<BibleGraphNodeListProjection>, HistoryStoreError> {
+    let projection = load_node_list_projection(conn)?;
+    let summary = history_store::load_revision_summary_for_kind(conn, ObjectKind::BibleNode)?;
+
+    match summary.latest_change_event_id {
+        Some(change_event_id) => Ok(ProjectionEnvelope::from_event(
+            ProjectionVersion(summary.revision_count + 1),
+            change_event_id,
+            projection,
+        )),
+        None => Ok(ProjectionEnvelope::initial(projection)),
     }
 }
 

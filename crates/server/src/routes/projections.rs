@@ -2,7 +2,9 @@ use axum::Router;
 use axum::extract::{Query, State};
 use axum::routing::get;
 use eidetic_core::contracts::ProjectionEnvelope;
-use eidetic_core::contracts::{BibleGraphNodeId, BibleNodeDetailProjection, ObjectKind};
+use eidetic_core::contracts::{
+    BibleGraphNodeId, BibleGraphNodeListProjection, BibleNodeDetailProjection, ObjectKind,
+};
 use serde::Deserialize;
 
 use crate::bible_graph_store;
@@ -22,6 +24,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/bible-graph/node",
             get(get_bible_graph_node_projection),
+        )
+        .route(
+            "/projections/bible-graph/nodes",
+            get(get_bible_graph_node_list_projection),
         )
 }
 
@@ -68,6 +74,15 @@ async fn get_bible_graph_node_projection(
     crate::error::json_value(projection)
 }
 
+async fn get_bible_graph_node_list_projection(State(state): State<AppState>) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let projection = tokio::task::spawn_blocking(move || load_bible_node_list_at_path(path))
+        .await
+        .map_err(|e| ApiError::internal(format!("bible graph node list task failed: {e}")))??;
+
+    crate::error::json_value(projection)
+}
+
 fn load_projection_at_path(
     path: std::path::PathBuf,
     object_kind: ObjectKind,
@@ -94,6 +109,15 @@ fn load_bible_node_projection_at_path(
     bible_graph_store::load_node_detail_projection_envelope(&conn, &node_id)
         .map_err(map_history_error)?
         .ok_or_else(|| ApiError::not_found("bible graph node not found"))
+}
+
+fn load_bible_node_list_at_path(
+    path: std::path::PathBuf,
+) -> Result<ProjectionEnvelope<BibleGraphNodeListProjection>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
+    bible_graph_store::load_node_list_projection_envelope(&conn).map_err(map_history_error)
 }
 
 #[cfg(test)]

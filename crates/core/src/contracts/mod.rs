@@ -5,10 +5,10 @@ use uuid::Uuid;
 
 pub use bible_graph::{
     BibleGraphContractError, BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphField,
-    BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeId, BibleGraphPart,
-    BibleGraphPartId, BibleGraphPartKey, BibleGraphPartProjection, BibleGraphSchemaKey,
-    BibleNodeDetailProjection, CanonicalBibleRoot, CreateBibleGraphNodeCommand,
-    canonical_bible_root_nodes,
+    BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeId,
+    BibleGraphNodeListProjection, BibleGraphPart, BibleGraphPartId, BibleGraphPartKey,
+    BibleGraphPartProjection, BibleGraphSchemaKey, BibleNodeDetailProjection, CanonicalBibleRoot,
+    CreateBibleGraphNodeCommand, canonical_bible_root_nodes,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

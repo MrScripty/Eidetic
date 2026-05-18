@@ -228,6 +228,42 @@ pub(crate) fn load_revisions_for_object(
     Ok(revisions)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct RevisionSummary {
+    pub revision_count: u64,
+    pub latest_change_event_id: Option<ChangeEventId>,
+}
+
+pub(crate) fn load_revision_summary_for_kind(
+    conn: &Connection,
+    object_kind: ObjectKind,
+) -> Result<RevisionSummary, HistoryStoreError> {
+    let encoded_kind = encode_string_enum(&object_kind)?;
+    let revision_count = conn.query_row(
+        "SELECT COUNT(*) FROM object_revisions WHERE object_kind = ?1",
+        [encoded_kind.as_str()],
+        |row| row.get::<_, i64>(0),
+    )?;
+    let latest_change_event_id = conn
+        .query_row(
+            "SELECT change_event_id
+             FROM object_revisions
+             WHERE object_kind = ?1
+             ORDER BY rowid DESC
+             LIMIT 1",
+            [encoded_kind],
+            |row| row.get::<_, String>(0),
+        )
+        .optional()?
+        .map(|id| parse_uuid(&id).map(ChangeEventId))
+        .transpose()?;
+
+    Ok(RevisionSummary {
+        revision_count: u64::try_from(revision_count).unwrap_or_default(),
+        latest_change_event_id,
+    })
+}
+
 fn existing_command_signature(
     conn: &Connection,
     command_id: CommandId,

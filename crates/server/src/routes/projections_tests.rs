@@ -152,6 +152,45 @@ async fn bible_graph_node_projection_returns_persisted_node() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn bible_graph_node_list_projection_returns_empty_list_when_absent() {
+    let path = temp_db_path("bible-node-list-empty");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(bible_node_list_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 1);
+    assert_eq!(value["payload"]["nodes"], serde_json::json!([]));
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn bible_graph_node_list_projection_returns_persisted_nodes() {
+    let path = temp_db_path("bible-node-list-persisted");
+    seed_bible_graph_node(&path, "node.character.ada", "Ada");
+    seed_bible_graph_node(&path, "node.place.beach", "Beach");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(bible_node_list_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 3);
+    assert_eq!(value["payload"]["nodes"][0]["id"], "node.character.ada");
+    assert_eq!(value["payload"]["nodes"][1]["id"], "node.place.beach");
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_weather_field(path: &PathBuf, weather: &str) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     history_store::create_schema(&conn).unwrap();
@@ -190,6 +229,14 @@ fn bible_node_projection_request(node_id: &str) -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri(format!("/projections/bible-graph/node?node_id={node_id}"))
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn bible_node_list_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/bible-graph/nodes")
         .body(Body::empty())
         .unwrap()
 }
