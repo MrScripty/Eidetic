@@ -1,7 +1,8 @@
-import { setTimelineNodeRange, splitTimelineNode } from '$lib/commandApi.js';
+import { deleteTimelineNode, setTimelineNodeRange, splitTimelineNode } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
 import type {
   CommandId,
+  DeleteTimelineNodeCommand,
   ProjectionEnvelope,
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
@@ -85,6 +86,28 @@ export async function applySplitTimelineNodeCommand(
     timelineRenderProjectionState.error = errorMessage(
       error,
       'Failed to apply timeline split node command',
+    );
+    throw error;
+  } finally {
+    timelineRenderProjectionState.pending = false;
+  }
+}
+
+export async function applyDeleteTimelineNodeCommand(
+  payload: DeleteTimelineNodeCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  timelineRenderProjectionState.pending = true;
+  timelineRenderProjectionState.error = undefined;
+
+  try {
+    const response = await deleteTimelineNode(payload, commandId);
+    timelineRenderProjectionState.projection = response.projection;
+    return response;
+  } catch (error) {
+    timelineRenderProjectionState.error = errorMessage(
+      error,
+      'Failed to apply timeline delete node command',
     );
     throw error;
   } finally {

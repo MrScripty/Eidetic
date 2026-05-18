@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setTimelineNodeRange, splitTimelineNode } from '$lib/commandApi.js';
+import { deleteTimelineNode, setTimelineNodeRange, splitTimelineNode } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
 import {
+  applyDeleteTimelineNodeCommand,
   applySplitTimelineNodeCommand,
   applyTimelineNodeRangeCommand,
   clearTimelineRenderProjection,
@@ -12,6 +13,7 @@ import {
 } from './timelineRenderProjection.svelte.js';
 
 vi.mock('$lib/commandApi.js', () => ({
+  deleteTimelineNode: vi.fn(),
   setTimelineNodeRange: vi.fn(),
   splitTimelineNode: vi.fn(),
 }));
@@ -20,6 +22,7 @@ vi.mock('$lib/projectionApi.js', () => ({
   getTimelineRenderProjection: vi.fn(),
 }));
 
+const deleteTimelineNodeMock = vi.mocked(deleteTimelineNode);
 const setTimelineNodeRangeMock = vi.mocked(setTimelineNodeRange);
 const splitTimelineNodeMock = vi.mocked(splitTimelineNode);
 const getTimelineRenderProjectionMock = vi.mocked(getTimelineRenderProjection);
@@ -67,6 +70,7 @@ const projection = {
 
 beforeEach(() => {
   clearTimelineRenderProjection();
+  deleteTimelineNodeMock.mockReset();
   setTimelineNodeRangeMock.mockReset();
   splitTimelineNodeMock.mockReset();
   getTimelineRenderProjectionMock.mockReset();
@@ -206,5 +210,60 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toEqual(projection);
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBe('split invalid');
+  });
+
+  it('stores delete timeline command response projections without local patching', async () => {
+    const emptyProjection = {
+      ...projection,
+      version: 8,
+      payload: {
+        ...projection.payload,
+        clips: [],
+        relationships: [],
+      },
+    };
+    deleteTimelineNodeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: emptyProjection,
+    });
+
+    await expect(
+      applyDeleteTimelineNodeCommand(
+        {
+          node_id: 'node.scene.beach',
+        },
+        'command-timeline-delete-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: emptyProjection,
+    });
+
+    expect(deleteTimelineNodeMock).toHaveBeenCalledWith(
+      {
+        node_id: 'node.scene.beach',
+      },
+      'command-timeline-delete-1',
+    );
+    expect(getTimelineRenderProjectionMock).not.toHaveBeenCalled();
+    expect(getCachedTimelineRenderProjection()).toEqual(emptyProjection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('records delete timeline command errors and leaves cached projections unchanged', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+    deleteTimelineNodeMock.mockRejectedValue(new Error('delete invalid'));
+
+    await expect(
+      applyDeleteTimelineNodeCommand({
+        node_id: 'node.scene.beach',
+      }),
+    ).rejects.toThrow('delete invalid');
+
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBe('delete invalid');
   });
 });
