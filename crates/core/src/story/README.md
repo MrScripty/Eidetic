@@ -1,50 +1,46 @@
 # crates/core/src/story
 
 ## Purpose
-This directory models story arcs, the story bible, character-facing context, and progression analysis over the episode timeline.
+This directory models story arcs, character-facing context, and progression analysis over the episode timeline. Story bible data is owned by the projection graph contracts under `contracts/` rather than this legacy story module.
 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
 | `arc.rs` | Story-arc identities, types, and color metadata. |
-| `bible.rs` | Entities, snapshots, relations, and bible-context assembly. |
 | `progression.rs` | Arc progression analysis over timeline state. |
-| `character.rs` | Character-focused helpers shared by bible and timeline flows. |
+| `character.rs` | Character-focused helper types for generated plans and timeline-adjacent flows. |
 
 ## Problem
-The editor needs a stable narrative model for arcs, entities, and continuity checks that survives persistence and powers AI context.
+The editor needs stable arc and progression models while bible/worldbuilding state moves through backend-owned graph commands and projections.
 
 ## Constraints
-- Story state must stay serializable and queryable by time.
-- Entity and snapshot behavior must line up with timeline references and AI context packing.
-- `bible.rs` already exceeds the decomposition threshold recorded in `ADR-001`.
+- Story-arc state must stay serializable for current project payloads.
+- Bible graph state must not be reintroduced through broad project or timeline DTOs.
 
 ## Decision
-Keep story-specific concepts together and defer splitting `bible.rs` until its mutation, query, and context responsibilities can be separated without changing persisted semantics.
+Keep story-arc and progression analysis here. Put bible/worldbuilding structure in graph contracts and backend projection stores so it has one backend-owned source of truth.
 
 ## Alternatives Rejected
-- Folding bible logic into timeline modules: rejected because narrative entities are broader than timeline placement.
-- Splitting `bible.rs` during the standards pass: rejected because contract stabilization was higher risk than documenting the split boundary first.
+- Folding bible graph logic into timeline modules: rejected because worldbuilding graph state is broader than timeline placement.
 
 ## Invariants
-- Entity resolution by time remains compatible with saved snapshots.
-- Arc and bible types stay serializable for persistence and UI mirroring.
-- Decomposition work must preserve existing entity and relation semantics.
+- Arc types stay serializable for current project payloads.
+- Bible graph state is accessed through graph command/projection contracts, not story module entity structs.
 
 ## Revisit Triggers
-- A future change touches both bible mutation and query behavior in one patch.
-- Another consumer needs bible context without the current full `bible.rs` surface.
+- A future change needs AI context from bible graph state.
+- Story arcs move fully to command/projection storage and no longer belong in the broad project payload.
 
 ## Dependencies
-**Internal:** `timeline/`, `project/`, `ai/`.
+**Internal:** `timeline/`, `project/`, `ai/`, `contracts/`.
 **External:** `serde`, `uuid`.
 
 ## Related ADRs
-- `ADR-001` decomposition baseline for `bible.rs`.
+- `docs/refactors/eidetic-projection-architecture/final-plan.md`.
 
 ## Usage Examples
 ```rust
-use eidetic_core::story::bible::StoryBible;
+use eidetic_core::story::arc::StoryArc;
 ```
 
 ## API Consumer Contract
@@ -53,5 +49,4 @@ use eidetic_core::story::bible::StoryBible;
 - Revisit trigger: story types are exposed through standalone bindings or plugins.
 
 ## Structured Producer Contract
-- Story entities, snapshots, and relations form part of the saved project shape and frontend contract.
-- Field additions or enum changes must preserve persistence compatibility or ship with coordinated migrations.
+- Story arc DTO changes must land with server route, persistence, and frontend type updates until arcs move to command/projection storage.
