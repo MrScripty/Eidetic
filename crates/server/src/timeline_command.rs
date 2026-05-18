@@ -1,9 +1,10 @@
+#[cfg(test)]
+use eidetic_core::contracts::SetTimelineNodeRangeCommand;
 use eidetic_core::contracts::{
     ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
     CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
-    TimelineRenderProjection,
+    SetTimelineNodeNotesCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
@@ -21,6 +22,7 @@ pub(crate) use crate::timeline_command_history::{
 pub(crate) use crate::timeline_node_delete_history::record_delete_timeline_node_history;
 pub(crate) use crate::timeline_node_split_history::record_split_timeline_node_history;
 
+#[cfg(test)]
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
     command: &CommandEnvelope<SetTimelineNodeRangeCommand>,

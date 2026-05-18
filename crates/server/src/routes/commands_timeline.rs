@@ -62,21 +62,14 @@ async fn set_timeline_node_range(
 ) -> ApiJson {
     let path = active_project_path(&state)?;
     let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
+        let project = timeline_command_project(&state, &path).await?;
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         history_store::create_schema(&conn).map_err(map_history_error)?;
         let outcome = timeline_command::record_set_timeline_node_range_history(
-            &mut conn, project, &command, 0,
+            &mut conn, &project, &command, 0,
         )
         .map_err(map_timeline_command_error)?;
-        if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_set_timeline_node_range(project, &command)
-                .map_err(map_timeline_command_error)?;
-        }
         let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
             .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
@@ -90,6 +83,23 @@ async fn set_timeline_node_range(
         state.trigger_save();
     }
     crate::error::json_value(response)
+}
+
+async fn timeline_command_project(
+    state: &AppState,
+    path: &std::path::Path,
+) -> Result<eidetic_core::Project, ApiError> {
+    if state.project.lock().is_none() {
+        return Err(ApiError::no_project());
+    }
+    match crate::persistence::load_project(path).await {
+        Ok((project, _)) => Ok(project),
+        Err(_) => state
+            .project
+            .lock()
+            .clone()
+            .ok_or_else(ApiError::no_project),
+    }
 }
 
 async fn create_timeline_node(
