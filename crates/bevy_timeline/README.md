@@ -15,6 +15,7 @@ Current scope:
 - Own transient pan and zoom viewport state derived from projection duration.
 - Validate selectable clip/node IDs before emitting commands.
 - Hit-test read-only clips by track and timeline time for selection commands.
+- Emit validated node range command requests for backend-confirmed move/resize.
 - Expose a wasm-bindgen bridge for browser hosts.
 
 Future scope:

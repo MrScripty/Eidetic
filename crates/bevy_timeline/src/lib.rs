@@ -20,7 +20,14 @@ pub use wasm::WasmTimelineRenderer;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TimelineRendererCommand {
-    SelectNode { node_id: NodeId },
+    SelectNode {
+        node_id: NodeId,
+    },
+    SetNodeRange {
+        node_id: NodeId,
+        start_ms: u64,
+        end_ms: u64,
+    },
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -31,6 +38,12 @@ pub enum TimelineRendererError {
     UnknownNode { node_id: NodeId },
     #[error("timeline projection has no clip on track {track_id:?} at {time_ms}ms")]
     NoClipAtTime { track_id: TrackId, time_ms: u64 },
+    #[error("invalid node range {start_ms}ms..{end_ms}ms for duration {duration_ms}ms")]
+    InvalidNodeRange {
+        start_ms: u64,
+        end_ms: u64,
+        duration_ms: u64,
+    },
     #[error("invalid viewport range {start_ms}ms..{end_ms}ms for duration {duration_ms}ms")]
     InvalidViewportRange {
         start_ms: u64,
@@ -203,6 +216,44 @@ impl TimelineRendererApp {
             .resource_mut::<TimelineRendererCommandQueue>()
             .commands
             .push(TimelineRendererCommand::SelectNode { node_id });
+        Ok(())
+    }
+
+    pub fn request_node_range(
+        &mut self,
+        node_id: NodeId,
+        start_ms: u64,
+        end_ms: u64,
+    ) -> Result<(), TimelineRendererError> {
+        let duration_ms = {
+            let state = self.app.world().resource::<TimelineRenderState>();
+            let projection = state
+                .projection
+                .as_ref()
+                .ok_or(TimelineRendererError::MissingProjection)?;
+            if !projection.clips.iter().any(|clip| clip.node_id == node_id) {
+                return Err(TimelineRendererError::UnknownNode { node_id });
+            }
+            projection.total_duration_ms
+        };
+
+        if start_ms >= end_ms || end_ms > duration_ms {
+            return Err(TimelineRendererError::InvalidNodeRange {
+                start_ms,
+                end_ms,
+                duration_ms,
+            });
+        }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineRendererCommandQueue>()
+            .commands
+            .push(TimelineRendererCommand::SetNodeRange {
+                node_id,
+                start_ms,
+                end_ms,
+            });
         Ok(())
     }
 
@@ -380,6 +431,40 @@ mod tests {
             renderer.zoom_viewport_around(5_000, 0.0),
             Err(TimelineRendererError::InvalidZoomFactor)
         );
+    }
+
+    #[test]
+    fn renderer_app_emits_validated_node_range_command() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(renderer.request_node_range(node_id, 2_000, 5_000), Ok(()));
+        assert_eq!(
+            renderer.drain_commands(),
+            vec![TimelineRendererCommand::SetNodeRange {
+                node_id,
+                start_ms: 2_000,
+                end_ms: 5_000
+            }]
+        );
+    }
+
+    #[test]
+    fn renderer_app_rejects_invalid_node_range_command() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(
+            renderer.request_node_range(node_id, 5_000, 2_000),
+            Err(TimelineRendererError::InvalidNodeRange {
+                start_ms: 5_000,
+                end_ms: 2_000,
+                duration_ms: 10_000
+            })
+        );
+        assert!(renderer.drain_commands().is_empty());
     }
 
     fn projection_with_node(node_id: NodeId) -> TimelineRenderProjection {

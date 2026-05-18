@@ -46,6 +46,21 @@ impl WasmTimelineRenderer {
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
+    pub fn request_node_range(
+        &mut self,
+        node_id: String,
+        start_ms: u64,
+        end_ms: u64,
+    ) -> Result<(), JsValue> {
+        let node_id = NodeId(
+            uuid::Uuid::parse_str(&node_id)
+                .map_err(|error| JsValue::from_str(&format!("invalid node id: {error}")))?,
+        );
+        self.renderer
+            .request_node_range(node_id, start_ms, end_ms)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+
     pub fn set_viewport(&mut self, start_ms: u64, end_ms: u64) -> Result<(), JsValue> {
         self.renderer
             .set_viewport(start_ms, end_ms)
