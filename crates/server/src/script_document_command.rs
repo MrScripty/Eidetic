@@ -30,7 +30,7 @@ pub(crate) fn apply_set_script_block(
     let document = command_document(&command.payload);
     let segment = command_segment(&command.payload);
     let block = command_block(&command.payload);
-    let span = generated_span_for_block(&block)?;
+    let span = generated_span_for_block(&block, command.payload.span_provenance.clone())?;
     let event = ChangeEvent::new(
         command.id,
         ChangeEventKind::UserEdit,
@@ -196,7 +196,10 @@ fn command_lock(command: &SetScriptLockCommand) -> ScriptLock {
     }
 }
 
-fn generated_span_for_block(block: &ScriptBlock) -> Result<ScriptSpan, ScriptDocumentCommandError> {
+fn generated_span_for_block(
+    block: &ScriptBlock,
+    provenance: ScriptSpanProvenance,
+) -> Result<ScriptSpan, ScriptDocumentCommandError> {
     let end_byte = u32::try_from(block.text.len()).map_err(|_| {
         ScriptDocumentCommandError::InvalidCommand("script block text is too large".to_string())
     })?;
@@ -206,7 +209,7 @@ fn generated_span_for_block(block: &ScriptBlock) -> Result<ScriptSpan, ScriptDoc
         block_id: block.id.clone(),
         start_byte: 0,
         end_byte,
-        provenance: ScriptSpanProvenance::UserEdited,
+        provenance,
     })
 }
 

@@ -675,6 +675,7 @@ fn script_block_command_body(text: &str) -> serde_json::Value {
             "block_id": ScriptBlockId::new("script.block.action-1").unwrap(),
             "block_kind": ScriptBlockKind::Action,
             "text": text,
+            "span_provenance": "user_edited",
             "sort_order": 2,
         }
     })

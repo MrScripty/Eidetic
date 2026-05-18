@@ -168,8 +168,14 @@ pub struct SetScriptBlockCommand {
     pub block_id: ScriptBlockId,
     pub block_kind: ScriptBlockKind,
     pub text: String,
+    #[serde(default = "default_script_span_provenance")]
+    pub span_provenance: ScriptSpanProvenance,
     #[serde(default)]
     pub sort_order: u32,
+}
+
+fn default_script_span_provenance() -> ScriptSpanProvenance {
+    ScriptSpanProvenance::UserEdited
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -262,6 +268,7 @@ mod tests {
             block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
             block_kind: ScriptBlockKind::Action,
             text: "Ada enters with a wet umbrella.".to_string(),
+            span_provenance: ScriptSpanProvenance::UserEdited,
             sort_order: 2,
         };
 

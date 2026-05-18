@@ -7,8 +7,9 @@ use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope,
     CreateBibleGraphNodeCommand, FieldValue, ObjectKind, ScriptBlockId, ScriptBlockKind,
-    ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus, SetBibleGraphEdgeCommand,
-    SetBibleGraphFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
+    ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus, ScriptSpanProvenance,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetObjectFieldCommand,
+    SetScriptBlockCommand,
 };
 use tower::util::ServiceExt;
 
@@ -390,6 +391,7 @@ fn seed_script_block(path: &PathBuf, text: &str) {
         block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
         block_kind: ScriptBlockKind::Action,
         text: text.to_string(),
+        span_provenance: ScriptSpanProvenance::UserEdited,
         sort_order: 2,
     });
     crate::script_document_command::apply_set_script_block(&mut conn, &command, 400).unwrap();

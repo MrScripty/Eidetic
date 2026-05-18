@@ -1,7 +1,7 @@
 use super::*;
 use eidetic_core::contracts::{
     ProjectionVersion, ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptLockId,
-    ScriptSegmentId, ScriptSegmentStatus, ScriptSpanId, SetScriptLockCommand,
+    ScriptSegmentId, ScriptSegmentStatus, ScriptSpanId, ScriptSpanProvenance, SetScriptLockCommand,
 };
 
 fn memory_connection() -> Connection {
@@ -24,6 +24,7 @@ fn block_command(text: &str) -> CommandEnvelope<SetScriptBlockCommand> {
         block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
         block_kind: ScriptBlockKind::Action,
         text: text.to_string(),
+        span_provenance: ScriptSpanProvenance::UserEdited,
         sort_order: 2,
     })
 }
@@ -59,6 +60,20 @@ fn set_script_block_records_history_and_projection() {
     assert_eq!(table_count(&conn, "script_segments"), 1);
     assert_eq!(table_count(&conn, "script_blocks"), 1);
     assert_eq!(table_count(&conn, "script_spans"), 1);
+}
+
+#[test]
+fn set_script_block_records_requested_span_provenance() {
+    let mut conn = memory_connection();
+    let mut command = block_command("Ada enters with a wet umbrella.");
+    command.payload.span_provenance = ScriptSpanProvenance::AiGenerated;
+
+    let (_, projection) = apply_set_script_block(&mut conn, &command, 100).unwrap();
+
+    assert_eq!(
+        projection.payload.segments[0].blocks[0].spans[0].provenance,
+        ScriptSpanProvenance::AiGenerated
+    );
 }
 
 #[test]

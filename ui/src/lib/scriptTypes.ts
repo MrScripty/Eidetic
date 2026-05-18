@@ -94,6 +94,7 @@ export interface SetScriptBlockCommand {
   block_id: ScriptBlockId;
   block_kind: ScriptBlockKind;
   text: string;
+  span_provenance?: ScriptSpanProvenance;
   sort_order?: number;
 }
 
