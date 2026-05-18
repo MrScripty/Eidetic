@@ -5,15 +5,13 @@
   import BeatEditor from '../editor/BeatEditor.svelte';
   import ScriptPanel from '../editor/ScriptPanel.svelte';
   import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
-  import EntityDetail from '../sidebar/bible/EntityDetail.svelte';
   import { PANEL, mainTimelinePanelHeightPx } from '$lib/types.js';
   import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
   import { projectState } from '$lib/stores/project.svelte.js';
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
-  import { storyState } from '$lib/stores/story.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
-  import { bibleState, selectBibleGraphNode, selectEntity } from '$lib/stores/bible.svelte.js';
+  import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
   import { undo, redo, saveProject, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
@@ -118,14 +116,8 @@
   let rightPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
   let windowHeight = $state(0);
 
-  const selectedEntity = $derived(
-    bibleState.selectedEntityId
-      ? (storyState.entities.find((e) => e.id === bibleState.selectedEntityId) ?? null)
-      : null,
-  );
-
   const selectedGraphNodeId = $derived(bibleState.selectedGraphNodeId);
-  const bibleDetailOpen = $derived(selectedEntity !== null || selectedGraphNodeId !== null);
+  const bibleDetailOpen = $derived(selectedGraphNodeId !== null);
   const rightPanelOpen = $derived(bibleDetailOpen);
   const bottomStackExtraHeight = $derived(
     characterTimelineState.visible ? PANEL.CHARACTER_TIMELINE_HEIGHT_PX : 0,
@@ -226,11 +218,6 @@
                 nodeId={selectedGraphNodeId}
                 onclose={() => selectBibleGraphNode(null)}
               />
-            </div>
-          {/if}
-          {#if selectedEntity}
-            <div class="entity-detail-panel">
-              <EntityDetail entity={selectedEntity} onback={() => selectEntity(null)} />
             </div>
           {/if}
         </aside>

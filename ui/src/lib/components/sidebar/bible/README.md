@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This directory contains the story-bible UI: graph-backed bible nodes, entity cards, detail editing, and development timelines.
+This directory contains the story-bible UI backed by backend-owned bible graph projections.
 
 ## Contents
 
@@ -17,9 +17,6 @@ This directory contains the story-bible UI: graph-backed bible nodes, entity car
 | `BibleGraphNodeDetail.svelte`      | Read-only detail panel for backend-owned bible graph node projections.         |
 | `BibleGraphPartFields.svelte`      | Projection-backed bible graph field editor that writes through graph commands. |
 | `bibleGraphCategories.ts`          | Category/root mapping helpers for graph-node list and creation UI.             |
-| `EntityCard.svelte`                | List-card summary for bible entities.                                          |
-| `EntityDetail.svelte`              | Full entity editing surface, including relations and category-specific fields. |
-| `DevelopmentTimeline.svelte`       | Timeline view of entity development points.                                    |
 
 ## Problem
 
@@ -28,12 +25,11 @@ Narrative entities need a dedicated editing experience that is richer than inlin
 ## Constraints
 
 - Bible graph node state must stay aligned with server validation and persistence semantics.
-- Legacy entity detail state remains during migration and must not become a second source of truth for new graph-node list behavior.
-- `EntityDetail.svelte` exceeds the preferred size threshold tracked in `ADR-001`.
+- Legacy entity detail state must not become a second source of truth for graph-node list or detail behavior.
 
 ## Decision
 
-Keep story-bible components together while moving list/navigation reads to backend-owned projections. Defer the `EntityDetail.svelte` split until shared field groups and relation editing can be extracted onto bible graph commands without changing the current UI contract.
+Keep story-bible components together while routing list, detail, field, edge, and snapshot behavior through backend-owned graph projections and commands.
 
 ## Alternatives Rejected
 
@@ -42,12 +38,12 @@ Keep story-bible components together while moving list/navigation reads to backe
 ## Invariants
 
 - Story-bible list/navigation reads come from backend-owned bible graph projections, not broad legacy entity caches.
-- Entity detail edits remain backed by server APIs until they are replaced by bible graph commands, not local-only schema forks.
-- Development points stay ordered by timeline semantics.
+- Entity detail edits use bible graph commands, not broad legacy entity APIs or local-only schema forks.
+- Development points are represented as graph snapshots.
 
 ## Revisit Triggers
 
-- A change touches both generic entity fields and category-specific detail sections in the same component.
+- A change touches both generic graph-node fields and category-specific detail sections in the same component.
 - Another consumer needs relation editing independently of the full detail panel.
 
 ## Dependencies
@@ -57,7 +53,7 @@ Keep story-bible components together while moving list/navigation reads to backe
 
 ## Related ADRs
 
-- `ADR-001` decomposition baseline for `EntityDetail.svelte`.
+- `ADR-001` decomposition baseline for oversized frontend components.
 
 ## Usage Examples
 

@@ -1,22 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { bibleState, selectBibleGraphNode, selectEntity } from './bible.svelte.js';
+import { bibleState, selectBibleGraphNode } from './bible.svelte.js';
 
 beforeEach(() => {
-  bibleState.selectedEntityId = null;
   bibleState.selectedGraphNodeId = null;
 });
 
 describe('bible selection store', () => {
-  it('keeps legacy entity and graph node selection mutually exclusive', () => {
-    selectEntity('entity-1');
-
-    expect(bibleState.selectedEntityId).toBe('entity-1');
-    expect(bibleState.selectedGraphNodeId).toBeNull();
-
+  it('stores selected bible graph node ids', () => {
     selectBibleGraphNode('node.character.ada');
 
-    expect(bibleState.selectedEntityId).toBeNull();
     expect(bibleState.selectedGraphNodeId).toBe('node.character.ada');
+
+    selectBibleGraphNode(null);
+
+    expect(bibleState.selectedGraphNodeId).toBeNull();
   });
 });
