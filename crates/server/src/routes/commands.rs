@@ -19,6 +19,7 @@ use crate::revision_projection::ObjectFieldProjection;
 use crate::script_document_command::{self, ScriptDocumentCommandError};
 use crate::state::{AppState, ServerEvent};
 use crate::story_arc_command::{self, StoryArcCommandError};
+use crate::story_arc_store;
 
 use super::support::{active_project_path, map_history_error};
 
@@ -194,16 +195,16 @@ async fn create_story_arc(
         };
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
+        story_arc_store::create_schema(&conn).map_err(map_history_error)?;
         let outcome =
             story_arc_command::record_create_story_arc_history(&mut conn, project, &command, 0)
                 .map_err(map_story_arc_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
+        if outcome == RecordChangeOutcome::Recorded {
             story_arc_command::apply_create_story_arc(project, &command)
-                .map_err(map_story_arc_command_error)?
-        } else {
-            ProjectionEnvelope::initial(StoryArcListProjection::from_arcs(&project.arcs))
-        };
+                .map_err(map_story_arc_command_error)?;
+        }
+        let projection =
+            story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
         StoryArcCommandResponse {
             outcome,
             projection,
@@ -229,17 +230,17 @@ async fn update_story_arc(
         };
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
+        story_arc_store::create_schema(&conn).map_err(map_history_error)?;
         let outcome = story_arc_command::record_set_story_arc_metadata_history(
             &mut conn, project, &command, 0,
         )
         .map_err(map_story_arc_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
+        if outcome == RecordChangeOutcome::Recorded {
             story_arc_command::apply_set_story_arc_metadata(project, &command)
-                .map_err(map_story_arc_command_error)?
-        } else {
-            ProjectionEnvelope::initial(StoryArcListProjection::from_arcs(&project.arcs))
-        };
+                .map_err(map_story_arc_command_error)?;
+        }
+        let projection =
+            story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
         StoryArcCommandResponse {
             outcome,
             projection,
@@ -265,18 +266,17 @@ async fn delete_story_arc(
         };
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
+        story_arc_store::create_schema(&conn).map_err(map_history_error)?;
         let outcome =
             story_arc_command::record_delete_story_arc_history(&mut conn, project, &command, 0)
                 .map_err(map_story_arc_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            let (_deleted, projection) =
+        if outcome == RecordChangeOutcome::Recorded {
+            let (_deleted, _projection) =
                 story_arc_command::apply_delete_story_arc(project, &command)
                     .map_err(map_story_arc_command_error)?;
-            projection
-        } else {
-            ProjectionEnvelope::initial(StoryArcListProjection::from_arcs(&project.arcs))
-        };
+        }
+        let projection =
+            story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
         StoryArcCommandResponse {
             outcome,
             projection,

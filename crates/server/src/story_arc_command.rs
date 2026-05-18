@@ -9,6 +9,7 @@ use rusqlite::Connection;
 use thiserror::Error;
 
 use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
+use crate::story_arc_store;
 
 pub(crate) fn record_create_story_arc_history(
     conn: &mut Connection,
@@ -85,12 +86,22 @@ pub(crate) fn record_create_story_arc_history(
         Some(FieldValue::Integer(i64::from(command.payload.color.b))),
     ));
 
-    Ok(history_store::record_change(
+    let arc = StoryArc {
+        id: command.payload.arc_id,
+        parent_arc_id: command.payload.parent_arc_id,
+        name: command.payload.name.clone(),
+        description: command.payload.description.clone(),
+        arc_type: command.payload.arc_type.clone(),
+        color: command.payload.color,
+    };
+
+    Ok(history_store::record_change_with(
         conn,
         command,
         "story_arc.create",
         &event,
         &[revision],
+        |tx| story_arc_store::insert_arc_in_transaction(tx, &arc, event.id),
     )?)
 }
 
@@ -168,12 +179,13 @@ pub(crate) fn record_set_story_arc_metadata_history(
             ));
     }
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "story_arc.set_metadata",
         &event,
         &[revision],
+        |tx| story_arc_store::update_arc_metadata_in_transaction(tx, &command.payload, event.id),
     )?)
 }
 
@@ -240,12 +252,13 @@ pub(crate) fn record_delete_story_arc_history(
             ));
     }
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "story_arc.delete",
         &event,
         &[revision],
+        |tx| story_arc_store::delete_arc_in_transaction(tx, &command.payload.arc_id, event.id),
     )?)
 }
 

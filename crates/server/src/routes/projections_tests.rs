@@ -6,10 +6,8 @@ use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope,
-    CreateBibleGraphNodeCommand, FieldValue, ObjectKind, ScriptBlockId, ScriptBlockKind,
-    ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus, ScriptSpanProvenance,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetObjectFieldCommand,
-    SetScriptBlockCommand,
+    CreateBibleGraphNodeCommand, FieldValue, ObjectKind, SetBibleGraphEdgeCommand,
+    SetBibleGraphFieldCommand, SetObjectFieldCommand,
 };
 use tower::util::ServiceExt;
 
@@ -279,143 +277,6 @@ async fn bible_graph_schema_list_projection_returns_builtin_schemas() {
     let _ = std::fs::remove_file(path);
 }
 
-#[tokio::test]
-async fn script_document_projection_returns_not_found_when_absent() {
-    let path = temp_db_path("script-document-absent");
-    let app = app_with_project_path(path.clone()).await;
-
-    let response = app
-        .oneshot(script_document_projection_request("script.document.main"))
-        .await
-        .expect("route response");
-
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
-
-    let _ = std::fs::remove_file(path);
-}
-
-#[tokio::test]
-async fn script_document_projection_returns_persisted_script_blocks() {
-    let path = temp_db_path("script-document-persisted");
-    seed_script_block(&path, "Ada enters with a wet umbrella.");
-    let app = app_with_project_path(path.clone()).await;
-
-    let response = app
-        .oneshot(script_document_projection_request("script.document.main"))
-        .await
-        .expect("route response");
-
-    assert_eq!(response.status(), StatusCode::OK);
-    let value = response_json(response).await;
-    assert_eq!(value["version"], 5);
-    assert_eq!(value["payload"]["document"]["title"], "Pilot");
-    assert_eq!(
-        value["payload"]["segments"][0]["segment"]["source_node_id"],
-        "node.beat.opening"
-    );
-    assert_eq!(
-        value["payload"]["segments"][0]["blocks"][0]["block"]["text"],
-        "Ada enters with a wet umbrella."
-    );
-
-    let _ = std::fs::remove_file(path);
-}
-
-#[tokio::test]
-async fn timeline_render_projection_requires_loaded_project() {
-    let app = router().with_state(AppState::new().await);
-
-    let response = app
-        .oneshot(timeline_render_projection_request())
-        .await
-        .expect("route response");
-
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
-}
-
-#[tokio::test]
-async fn timeline_render_projection_returns_backend_timeline_read_model() {
-    let path = temp_db_path("timeline-render");
-    let state = AppState::new().await;
-    let mut project = Template::MultiCam.build_project("Projection Test");
-    project.timeline.nodes.clear();
-    project.timeline.node_arcs.clear();
-    project.timeline.relationships.clear();
-    let scene = eidetic_core::timeline::node::StoryNode::new(
-        "Beach argument",
-        eidetic_core::timeline::node::StoryLevel::Scene,
-        eidetic_core::timeline::timing::TimeRange::new(1_000, 4_000).unwrap(),
-    );
-    project.timeline.nodes.push(scene);
-    *state.project.lock() = Some(project);
-    *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
-
-    let response = app
-        .oneshot(timeline_render_projection_request())
-        .await
-        .expect("route response");
-
-    assert_eq!(response.status(), StatusCode::OK);
-    let value = response_json(response).await;
-    assert_eq!(value["version"], 1);
-    assert_eq!(value["payload"]["tracks"][0]["level"], "Premise");
-    assert_eq!(value["payload"]["clips"][0]["name"], "Beach argument");
-    assert_eq!(value["payload"]["clips"][0]["start_ms"], 1_000);
-    assert_eq!(value["payload"]["clips"][0]["end_ms"], 4_000);
-
-    let _ = std::fs::remove_file(path);
-}
-
-#[tokio::test]
-async fn story_arc_list_projection_returns_project_arcs() {
-    let path = temp_db_path("story-arc-list");
-    let app = app_with_project_path(path.clone()).await;
-
-    let response = app
-        .oneshot(story_arc_list_projection_request())
-        .await
-        .expect("route response");
-
-    assert_eq!(response.status(), StatusCode::OK);
-    let value = response_json(response).await;
-    assert_eq!(value["version"], 1);
-    assert_eq!(value["payload"]["arcs"].as_array().expect("arcs").len(), 3);
-
-    let _ = std::fs::remove_file(path);
-}
-
-#[tokio::test]
-async fn story_arc_progression_projection_returns_arc_analysis() {
-    let path = temp_db_path("story-arc-progression");
-    let app = app_with_project_path(path.clone()).await;
-
-    let response = app
-        .oneshot(story_arc_progression_projection_request())
-        .await
-        .expect("route response");
-
-    assert_eq!(response.status(), StatusCode::OK);
-    let value = response_json(response).await;
-    assert_eq!(value["version"], 1);
-    assert_eq!(
-        value["payload"]["progressions"]
-            .as_array()
-            .expect("progressions")
-            .len(),
-        3
-    );
-    assert!(
-        value["payload"]["progressions"]
-            .as_array()
-            .expect("progressions")
-            .iter()
-            .all(|progression| progression.get("node_count").is_some())
-    );
-
-    let _ = std::fs::remove_file(path);
-}
-
 fn seed_weather_field(path: &PathBuf, weather: &str) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     history_store::create_schema(&conn).unwrap();
@@ -471,27 +332,6 @@ fn seed_bible_graph_edge(path: &PathBuf) {
     crate::bible_graph_command::apply_set_bible_graph_edge(&mut conn, &command, 300).unwrap();
 }
 
-fn seed_script_block(path: &PathBuf, text: &str) {
-    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
-    let command = CommandEnvelope::new(SetScriptBlockCommand {
-        document_id: ScriptDocumentId::new("script.document.main").unwrap(),
-        document_title: "Pilot".to_string(),
-        document_sort_order: 0,
-        segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
-        source_node_id: Some("node.beat.opening".to_string()),
-        segment_start_ms: 1_000,
-        segment_end_ms: 5_000,
-        segment_status: ScriptSegmentStatus::Current,
-        segment_sort_order: 1,
-        block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
-        block_kind: ScriptBlockKind::Action,
-        text: text.to_string(),
-        span_provenance: ScriptSpanProvenance::UserEdited,
-        sort_order: 2,
-    });
-    crate::script_document_command::apply_set_script_block(&mut conn, &command, 400).unwrap();
-}
-
 fn projection_request(object_kind: &str, object_id: &str) -> Request<Body> {
     Request::builder()
         .method("GET")
@@ -522,40 +362,6 @@ fn bible_schema_list_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/bible-graph/schemas")
-        .body(Body::empty())
-        .unwrap()
-}
-
-fn script_document_projection_request(document_id: &str) -> Request<Body> {
-    Request::builder()
-        .method("GET")
-        .uri(format!(
-            "/projections/script/document?document_id={document_id}"
-        ))
-        .body(Body::empty())
-        .unwrap()
-}
-
-fn timeline_render_projection_request() -> Request<Body> {
-    Request::builder()
-        .method("GET")
-        .uri("/projections/timeline/render")
-        .body(Body::empty())
-        .unwrap()
-}
-
-fn story_arc_list_projection_request() -> Request<Body> {
-    Request::builder()
-        .method("GET")
-        .uri("/projections/story/arcs")
-        .body(Body::empty())
-        .unwrap()
-}
-
-fn story_arc_progression_projection_request() -> Request<Body> {
-    Request::builder()
-        .method("GET")
-        .uri("/projections/story/arc-progression")
         .body(Body::empty())
         .unwrap()
 }

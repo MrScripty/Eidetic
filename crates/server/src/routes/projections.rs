@@ -16,6 +16,7 @@ use crate::history_store;
 use crate::revision_projection::ObjectFieldProjection;
 use crate::script_store;
 use crate::state::AppState;
+use crate::story_arc_store;
 
 use super::support::{active_project_path, map_history_error};
 
@@ -143,24 +144,28 @@ async fn get_timeline_render_projection(State(state): State<AppState>) -> ApiJso
 }
 
 async fn get_story_arc_list_projection(State(state): State<AppState>) -> ApiJson {
-    let guard = state.project.lock();
-    let Some(project) = guard.as_ref() else {
-        return Err(ApiError::no_project());
-    };
+    let path = active_project_path(&state)?;
+    let projection = tokio::task::spawn_blocking(move || load_story_arc_list_at_path(path))
+        .await
+        .map_err(|e| ApiError::internal(format!("story arc list task failed: {e}")))??;
 
-    crate::error::json_value(ProjectionEnvelope::initial(
-        StoryArcListProjection::from_arcs(&project.arcs),
-    ))
+    crate::error::json_value(projection)
 }
 
 async fn get_story_arc_progression_projection(State(state): State<AppState>) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let arcs = tokio::task::spawn_blocking(move || load_story_arcs_at_path(path))
+        .await
+        .map_err(|e| ApiError::internal(format!("story arc progression task failed: {e}")))??;
     let guard = state.project.lock();
     let Some(project) = guard.as_ref() else {
         return Err(ApiError::no_project());
     };
+    let mut projection_project = project.clone();
+    projection_project.arcs = arcs;
 
     crate::error::json_value(ProjectionEnvelope::initial(
-        StoryArcProgressionProjection::new(analyze_all_arcs(project)),
+        StoryArcProgressionProjection::new(analyze_all_arcs(&projection_project)),
     ))
 }
 
@@ -205,6 +210,24 @@ fn load_bible_schema_list_projection() -> ProjectionEnvelope<BibleGraphSchemaLis
     builtin_bible_graph_schema_list_projection()
 }
 
+fn load_story_arc_list_at_path(
+    path: std::path::PathBuf,
+) -> Result<ProjectionEnvelope<StoryArcListProjection>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    story_arc_store::create_schema(&conn).map_err(map_history_error)?;
+    story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)
+}
+
+fn load_story_arcs_at_path(
+    path: std::path::PathBuf,
+) -> Result<Vec<eidetic_core::story::arc::StoryArc>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    story_arc_store::create_schema(&conn).map_err(map_history_error)?;
+    story_arc_store::load_arcs(&conn).map_err(map_history_error)
+}
+
 fn load_script_document_projection_at_path(
     path: std::path::PathBuf,
     document_id: ScriptDocumentId,
@@ -220,3 +243,7 @@ fn load_script_document_projection_at_path(
 #[cfg(test)]
 #[path = "projections_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "projections_story_tests.rs"]
+mod story_tests;

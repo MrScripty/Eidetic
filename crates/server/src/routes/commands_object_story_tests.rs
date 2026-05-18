@@ -12,7 +12,11 @@ use crate::state::AppState;
 
 async fn app_with_project_path(path: PathBuf) -> Router {
     let state = AppState::new().await;
-    *state.project.lock() = Some(Template::MultiCam.build_project("Commands Test"));
+    let project = Template::MultiCam.build_project("Commands Test");
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed project database");
+    *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path);
     router().with_state(state)
 }
@@ -131,7 +135,7 @@ async fn story_arc_create_command_returns_arc_list_projection() {
     assert_eq!(response.status(), StatusCode::OK);
     let value = response_json(response).await;
     assert_eq!(value["outcome"], "recorded");
-    assert_eq!(value["projection"]["version"], 1);
+    assert_eq!(value["projection"]["version"], 2);
     assert!(
         value["projection"]["payload"]["arcs"]
             .as_array()
