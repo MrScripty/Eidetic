@@ -1,5 +1,6 @@
 import type {
   BibleGraphNodeId,
+  BibleGraphNodeListProjection,
   BibleNodeDetailProjection,
   ObjectFieldProjection,
   ObjectKind,
@@ -45,4 +46,10 @@ export function getBibleGraphNodeProjection({
 }: BibleGraphNodeProjectionKey): Promise<ProjectionEnvelope<BibleNodeDetailProjection>> {
   const params = new URLSearchParams({ node_id });
   return getJson(`/projections/bible-graph/node?${params.toString()}`);
+}
+
+export function getBibleGraphNodeListProjection(): Promise<
+  ProjectionEnvelope<BibleGraphNodeListProjection>
+> {
+  return getJson('/projections/bible-graph/nodes');
 }

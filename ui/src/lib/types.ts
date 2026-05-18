@@ -319,6 +319,10 @@ export interface BibleNodeDetailProjection {
   outgoing_edges: BibleGraphEdge[];
 }
 
+export interface BibleGraphNodeListProjection {
+  nodes: BibleGraphNode[];
+}
+
 export type CommandOutcome = 'recorded' | 'already_recorded';
 
 export interface ObjectFieldCommandResponse {

@@ -133,6 +133,7 @@ Completed slices:
 - `feat(ui): add bible graph node api helpers` added typed frontend command/projection helpers for the backend bible graph node create/read slice without mutating legacy entity stores.
 - `feat(ui): add bible graph node projection store` added a focused UI cache/action layer for backend-owned bible graph node projections and create-command responses without mutating legacy entity state.
 - `feat(server): expose bible graph node list projection` added a versioned read projection for persisted bible graph node lists with stable ordering and revision-history versioning.
+- `feat(ui): add bible graph node list helper` added a typed frontend projection helper for the backend-owned bible graph node list read model.
 
 Discovered issues:
 

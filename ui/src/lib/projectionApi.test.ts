@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getBibleGraphNodeProjection, getObjectFieldProjection } from './projectionApi.js';
+import {
+  getBibleGraphNodeListProjection,
+  getBibleGraphNodeProjection,
+  getObjectFieldProjection,
+} from './projectionApi.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -103,5 +107,38 @@ describe('projection api helpers', () => {
         headers: { Accept: 'application/json' },
       },
     );
+  });
+
+  it('fetches bible graph node list projections without query params', async () => {
+    const response = {
+      version: 3,
+      change_event_id: 'event-2',
+      payload: {
+        nodes: [
+          {
+            id: 'node.character.ada',
+            parent_id: null,
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+        ],
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getBibleGraphNodeListProjection()).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/nodes', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
   });
 });
