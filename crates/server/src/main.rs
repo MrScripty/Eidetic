@@ -1,5 +1,7 @@
 mod ai_backends;
 mod bible_graph_command;
+mod bible_graph_field_store;
+mod bible_graph_schema;
 mod bible_graph_store;
 mod diffusion;
 mod embeddings;
@@ -22,7 +24,7 @@ mod ydoc;
 use std::net::SocketAddr;
 
 use axum::Router;
-use axum::http::{header, Method};
+use axum::http::{Method, header};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::EnvFilter;
 
@@ -36,14 +38,15 @@ async fn main() {
 
     let app_state = state::AppState::new().await;
 
-    let cors = CorsLayer::new().allow_origin(AllowOrigin::predicate(|origin, _request_parts| {
-        origin
-            .to_str()
-            .map(validation::is_allowed_local_origin)
-            .unwrap_or(false)
-    }))
-    .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
-    .allow_headers([header::CONTENT_TYPE]);
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::predicate(|origin, _request_parts| {
+            origin
+                .to_str()
+                .map(validation::is_allowed_local_origin)
+                .unwrap_or(false)
+        }))
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_headers([header::CONTENT_TYPE]);
 
     let app = Router::new()
         .nest("/api", routes::api_router())
