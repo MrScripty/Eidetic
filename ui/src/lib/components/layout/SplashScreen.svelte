@@ -2,7 +2,7 @@
   import { fade } from 'svelte/transition';
   import { projectState } from '$lib/stores/project.svelte.js';
   import { timelineState } from '$lib/stores/timeline.svelte.js';
-  import { storyState } from '$lib/stores/story.svelte.js';
+  import { refreshStoryArcListProjection } from '$lib/stores/storyArcProjection.svelte.js';
   import { createProject, loadProject, listProjects } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import type { Project } from '$lib/types.js';
@@ -36,7 +36,6 @@
   function hydrateStores(project: Project) {
     projectState.current = project;
     timelineState.timeline = project.timeline;
-    storyState.arcs = project.arcs;
   }
 
   async function fetchProjects() {
@@ -57,6 +56,7 @@
     try {
       const project = await createProject('Untitled Episode', templateId);
       hydrateStores(project);
+      await refreshStoryArcListProjection();
     } catch (e) {
       notify(
         'error',
@@ -72,6 +72,7 @@
     try {
       const project = await loadProject(path);
       hydrateStores(project);
+      await refreshStoryArcListProjection();
     } catch (e) {
       notify(
         'error',
