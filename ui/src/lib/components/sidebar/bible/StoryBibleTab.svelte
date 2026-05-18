@@ -32,6 +32,14 @@
     Event: 'canonical.events',
   };
 
+  const canonicalRootSchemaKeys: Record<EntityCategory, string> = {
+    Character: 'canonical.root.characters',
+    Location: 'canonical.root.places',
+    Prop: 'canonical.root.objects',
+    Theme: 'canonical.root.themes',
+    Event: 'canonical.root.events',
+  };
+
   const schemaKeys: Record<EntityCategory, string> = {
     Character: 'character',
     Location: 'location',
@@ -66,11 +74,11 @@
   async function handleAdd(category: EntityCategory) {
     try {
       loadError = null;
-      await ensureRootsIfMissing();
+      const parentId = await ensureRootForCategory(category);
       const nodeId = `node.${schemaKeys[category]}.${crypto.randomUUID()}`;
       await createBibleGraphNodeProjection({
         node_id: nodeId,
-        parent_id: canonicalParents[category],
+        parent_id: parentId,
         schema_key: schemaKeys[category],
         name: defaultNames[category],
         sort_order: nextSortOrder(category),
@@ -150,10 +158,17 @@
     return graphNodes.filter((node) => node.parent_id === canonicalParents[category]).length;
   }
 
-  async function ensureRootsIfMissing(): Promise<void> {
-    if (graphNodes.length === 0) {
-      await ensureCanonicalBibleRootProjections();
-    }
+  async function ensureRootForCategory(category: EntityCategory): Promise<BibleGraphNodeId> {
+    const existingRoot = graphNodes.find(
+      (node) => node.schema_key === canonicalRootSchemaKeys[category],
+    );
+    if (existingRoot) return existingRoot.id;
+
+    const response = await ensureCanonicalBibleRootProjections();
+    const ensuredRoot = response.projection.payload.nodes.find(
+      (node) => node.schema_key === canonicalRootSchemaKeys[category],
+    );
+    return ensuredRoot?.id ?? canonicalParents[category];
   }
 
   async function loadBibleGraphNodes(): Promise<void> {
