@@ -6,15 +6,16 @@ This directory contains the shared reactive frontend state used to coordinate th
 
 ## Contents
 
-| File/Folder                           | Description                                                                          |
-| ------------------------------------- | ------------------------------------------------------------------------------------ |
-| `editor.svelte.ts`                    | Editor-local UI state and generation/consistency helpers.                            |
-| `timeline.svelte.ts`                  | Timeline selection, traversal, and view-state coordination.                          |
-| `story.svelte.ts` / `bible.svelte.ts` | Story-entity and bible-facing state.                                                 |
-| `bibleGraphNodeProjection.svelte.ts`  | Focused cache/action layer for backend-owned bible graph node and field projections. |
-| `objectFieldProjection.svelte.ts`     | Focused cache/action layer for backend-owned object-field projections.               |
-| `aiStatus.svelte.ts`                  | Shared AI-status polling ownership.                                                  |
-| `wsHandlers.ts`                       | Websocket event handlers that fan server events into stores.                         |
+| File/Folder                            | Description                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------ |
+| `editor.svelte.ts`                     | Editor-local UI state and generation/consistency helpers.                            |
+| `timeline.svelte.ts`                   | Timeline selection, traversal, and view-state coordination.                          |
+| `story.svelte.ts` / `bible.svelte.ts`  | Story-entity and bible-facing state.                                                 |
+| `bibleGraphNodeProjection.svelte.ts`   | Focused cache/action layer for backend-owned bible graph node and field projections. |
+| `bibleGraphSchemaProjection.svelte.ts` | Focused cache layer for backend-owned bible graph schema projections.                |
+| `objectFieldProjection.svelte.ts`      | Focused cache/action layer for backend-owned object-field projections.               |
+| `aiStatus.svelte.ts`                   | Shared AI-status polling ownership.                                                  |
+| `wsHandlers.ts`                        | Websocket event handlers that fan server events into stores.                         |
 
 ## Problem
 

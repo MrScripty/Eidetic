@@ -153,6 +153,7 @@ Completed slices:
 - `feat(server): project bible graph schema defaults` added core-owned built-in graph schema defaults, projected expected empty parts/fields for known schemas without persisting empty rows, overlaid persisted field values, and validated known-schema field commands.
 - `feat(server): expose bible graph schema projection` added a versioned backend projection route for built-in graph schema defaults so UI/schema-editor work can consume backend-owned schema read models instead of duplicating defaults.
 - `feat(ui): add bible graph schema projection helper` added a focused frontend schema projection contract file and read helper for backend-owned bible graph schema projections without expanding the oversized shared `types.ts`.
+- `feat(ui): cache bible graph schema projections` added a focused Svelte projection cache for backend-owned graph schema read models with pending/error handling and no optimistic persistent state.
 
 Discovered issues:
 
