@@ -14,6 +14,7 @@ use crate::timeline_command::TimelineCommandError;
 use crate::timeline_command_history_codec::{
     encode_beat_type, encode_content_status, encode_relationship_type, encode_story_level,
 };
+use crate::timeline_node_store;
 
 pub(crate) fn record_set_timeline_node_range_history(
     conn: &mut Connection,
@@ -27,16 +28,12 @@ pub(crate) fn record_set_timeline_node_range_history(
         return Ok(outcome);
     }
 
-    let range = TimeRange::new(command.payload.start_ms, command.payload.end_ms)?;
-    if range.end_ms > project.timeline.total_duration_ms {
-        return Err(TimelineCommandError::Core(
-            eidetic_core::Error::NodeExceedsTimeline {
-                node_end_ms: range.end_ms,
-                timeline_ms: project.timeline.total_duration_ms,
-            },
-        ));
-    }
     let node = project.timeline.node(command.payload.node_id)?;
+    let mut next_timeline = project.timeline.clone();
+    next_timeline.resize_node(
+        command.payload.node_id,
+        TimeRange::new(command.payload.start_ms, command.payload.end_ms)?,
+    )?;
 
     let event = ChangeEvent::new(
         command.id,
@@ -61,12 +58,13 @@ pub(crate) fn record_set_timeline_node_range_history(
         Some(FieldValue::Integer(command.payload.end_ms as i64)),
     ));
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.node_range",
         &event,
         &[revision],
+        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes),
     )?)
 }
 

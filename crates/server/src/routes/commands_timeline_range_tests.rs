@@ -41,6 +41,15 @@ async fn timeline_node_range_command_returns_timeline_render_projection() {
     assert_eq!(clip["end_ms"], 2_000);
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_range = conn
+        .query_row(
+            "SELECT start_ms, end_ms FROM nodes WHERE id = ?1",
+            [node_id.0.to_string()],
+            |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
+        )
+        .expect("persisted node range");
+    assert_eq!(persisted_range, (1_000, 2_000));
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineNode,

@@ -29,6 +29,7 @@ mod timeline_children_history;
 mod timeline_command;
 mod timeline_command_history;
 mod timeline_command_history_codec;
+mod timeline_node_store;
 mod timeline_node_delete_history;
 mod timeline_node_split_history;
 mod validation;
