@@ -3,6 +3,7 @@ mod diffusion;
 mod embeddings;
 pub mod error;
 mod export;
+mod history_store;
 mod persistence;
 mod prompt_format;
 mod routes;

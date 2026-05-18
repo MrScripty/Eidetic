@@ -170,7 +170,8 @@ CREATE TABLE IF NOT EXISTS ydoc_state (
 
 fn create_schema(conn: &Connection) -> Result<(), String> {
     conn.execute_batch(SCHEMA_SQL)
-        .map_err(|e| format!("schema error: {e}"))
+        .map_err(|e| format!("schema error: {e}"))?;
+    crate::history_store::create_schema(conn).map_err(|e| format!("history schema error: {e}"))
 }
 
 fn clear_all_tables(conn: &Connection) -> Result<(), String> {
