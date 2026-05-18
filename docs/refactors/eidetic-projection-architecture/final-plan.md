@@ -267,6 +267,7 @@ Completed slices:
 - `feat(story): add arc command projection bridge` added story arc command/projection contracts and a backend applicator that returns arc-list projections while still updating `Project.arcs` for the current UI bridge.
 - `refactor(story): route legacy arc mutations through commands` moved the existing `/arcs` create/update/delete endpoints onto the story arc applicator so the remaining UI bridge no longer owns independent arc mutation logic.
 - `feat(ui): add story arc command projection helpers` added focused frontend DTOs plus command/projection API helpers for backend-owned story arc mutations and arc-list reads without switching UI callers yet.
+- `refactor(ui): route story arc UI through projections` added a story arc projection store, routed arc sidebar create/update/delete and websocket refresh through backend command/projection helpers, and removed unused frontend legacy arc mutation helpers.
 
 Discovered issues:
 

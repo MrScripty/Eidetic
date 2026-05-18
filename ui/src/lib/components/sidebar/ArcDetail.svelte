@@ -1,6 +1,9 @@
 <script lang="ts">
   import type { StoryArc } from '$lib/types.js';
-  import { updateArc, deleteArc } from '$lib/api.js';
+  import {
+    applyDeleteStoryArcCommand,
+    applySetStoryArcMetadataCommand,
+  } from '$lib/stores/storyArcProjection.svelte.js';
 
   let {
     arc,
@@ -26,16 +29,19 @@
   function handleInput(field: 'name' | 'description', value: string) {
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
-      await updateArc(arc.id, { [field]: value });
+      await applySetStoryArcMetadataCommand({ arc_id: arc.id, [field]: value });
     }, 500);
   }
 
   async function handleColorSelect(rgb: readonly [number, number, number]) {
-    await updateArc(arc.id, { color: { r: rgb[0], g: rgb[1], b: rgb[2] } });
+    await applySetStoryArcMetadataCommand({
+      arc_id: arc.id,
+      color: { r: rgb[0], g: rgb[1], b: rgb[2] },
+    });
   }
 
   async function handleDelete() {
-    await deleteArc(arc.id);
+    await applyDeleteStoryArcCommand({ arc_id: arc.id });
     onback();
   }
 </script>

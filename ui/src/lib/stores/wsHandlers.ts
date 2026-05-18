@@ -1,6 +1,5 @@
 import type { WsClient } from '$lib/ws.js';
 import { timelineState } from './timeline.svelte.js';
-import { storyState } from './story.svelte.js';
 import {
   editorState,
   appendStreamingToken,
@@ -8,11 +7,12 @@ import {
   setGenerationContext,
   setGenerationError,
 } from './editor.svelte.js';
-import { getTimeline, listArcs, getNodeContent } from '$lib/api.js';
+import { getTimeline, getNodeContent } from '$lib/api.js';
 import {
   MAIN_SCRIPT_DOCUMENT_ID,
   refreshScriptDocumentProjection,
 } from './scriptDocumentProjection.svelte.js';
+import { refreshStoryArcListProjection } from './storyArcProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleGraphNodeListProjection } from './bibleGraphNodeProjection.svelte.js';
 
@@ -32,8 +32,7 @@ export function setupWsHandlers(ws: WsClient) {
     }),
 
     ws.on('story_changed', async () => {
-      const arcs = await listArcs();
-      storyState.arcs = arcs;
+      await refreshStoryArcListProjection().catch(() => {});
     }),
 
     ws.on('node_updated', async (data) => {
@@ -88,7 +87,6 @@ export function setupWsHandlers(ws: WsClient) {
         () => {},
       );
     }),
-
   ];
 
   return () => {

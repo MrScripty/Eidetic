@@ -1,6 +1,6 @@
 <script lang="ts">
   import { colorToHex } from '$lib/types.js';
-  import { createArc } from '$lib/api.js';
+  import { applyCreateStoryArcCommand } from '$lib/stores/storyArcProjection.svelte.js';
   import { storyState } from '$lib/stores/story.svelte.js';
 
   let {
@@ -10,7 +10,14 @@
   } = $props();
 
   async function handleAdd() {
-    await createArc('New Arc', 'APlot');
+    await applyCreateStoryArcCommand({
+      arc_id: crypto.randomUUID(),
+      parent_arc_id: null,
+      name: 'New Arc',
+      description: '',
+      arc_type: 'APlot',
+      color: { r: 180, g: 180, b: 180 },
+    });
   }
 </script>
 

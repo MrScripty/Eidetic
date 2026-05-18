@@ -1,6 +1,5 @@
 import type {
   Project,
-  StoryArc,
   AiStatus,
   AiConfig,
   TimelineGap,
@@ -10,7 +9,6 @@ import type {
   StoryNode,
   NodeContent,
   ChildPlan,
-  ArcType,
   ReferenceType,
   StoryLevel,
   DiffusionStatus,
@@ -55,32 +53,6 @@ export function updateProject(updates: { name?: string; premise?: string }): Pro
 }
 
 // --- Story arcs ---
-
-export function listArcs(): Promise<StoryArc[]> {
-  return request('/arcs');
-}
-
-export function createArc(
-  name: string,
-  arc_type: ArcType,
-  color?: [number, number, number],
-): Promise<StoryArc> {
-  return request('/arcs', {
-    method: 'POST',
-    body: JSON.stringify({ name, arc_type, color }),
-  });
-}
-
-export function updateArc(id: string, updates: Partial<Omit<StoryArc, 'id'>>): Promise<StoryArc> {
-  return request(`/arcs/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(updates),
-  });
-}
-
-export function deleteArc(id: string): Promise<{ deleted: boolean }> {
-  return request(`/arcs/${id}`, { method: 'DELETE' });
-}
 
 export function getArcProgression(): Promise<ArcProgression[]> {
   return request('/arcs/progression');
