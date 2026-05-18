@@ -21,6 +21,7 @@ pub(crate) fn apply_create_bible_graph_node(
 > {
     validate_command(&command.payload)?;
     bible_graph_store::create_schema(conn)?;
+    validate_parent_exists(conn, &command.payload)?;
 
     let node = command.payload.clone().into_node();
     let event = ChangeEvent::new(
@@ -171,6 +172,23 @@ fn validate_command(command: &CreateBibleGraphNodeCommand) -> Result<(), BibleGr
         ));
     }
     Ok(())
+}
+
+fn validate_parent_exists(
+    conn: &Connection,
+    command: &CreateBibleGraphNodeCommand,
+) -> Result<(), BibleGraphCommandError> {
+    let Some(parent_id) = command.parent_id.as_ref() else {
+        return Ok(());
+    };
+    if bible_graph_store::node_exists(conn, parent_id)? {
+        return Ok(());
+    }
+
+    Err(BibleGraphCommandError::InvalidCommand(format!(
+        "parent bible graph node does not exist: {}",
+        parent_id.as_str()
+    )))
 }
 
 fn validate_field_command(

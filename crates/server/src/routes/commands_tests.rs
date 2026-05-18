@@ -180,6 +180,26 @@ async fn bible_graph_node_command_rejects_empty_name() {
 }
 
 #[tokio::test]
+async fn bible_graph_node_command_rejects_missing_parent() {
+    let path = temp_db_path("rejects-missing-bible-parent");
+    let app = app_with_project_path(path.clone()).await;
+    let body = bible_graph_node_command_body_with_parent(
+        "node.character.ada",
+        Some("node.group.missing"),
+        "Ada",
+    );
+
+    let response = app
+        .oneshot(bible_graph_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_graph_roots_command_returns_node_list_projection() {
     let path = temp_db_path("ensures-bible-roots");
     let app = app_with_project_path(path.clone()).await;
@@ -312,11 +332,19 @@ fn json_text(value: &str) -> serde_json::Value {
 }
 
 fn bible_graph_node_command_body(node_id: &str, name: &str) -> serde_json::Value {
+    bible_graph_node_command_body_with_parent(node_id, None, name)
+}
+
+fn bible_graph_node_command_body_with_parent(
+    node_id: &str,
+    parent_id: Option<&str>,
+    name: &str,
+) -> serde_json::Value {
     json!({
         "id": uuid::Uuid::new_v4(),
         "payload": {
             "node_id": BibleGraphNodeId::new(node_id).unwrap(),
-            "parent_id": null,
+            "parent_id": parent_id.map(|value| BibleGraphNodeId::new(value).unwrap()),
             "schema_key": BibleGraphSchemaKey::new("character").unwrap(),
             "name": name,
             "sort_order": 3,

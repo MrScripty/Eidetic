@@ -222,7 +222,10 @@ pub(crate) fn load_node_list_projection_envelope(
     }
 }
 
-fn node_exists(conn: &Connection, node_id: &BibleGraphNodeId) -> Result<bool, HistoryStoreError> {
+pub(crate) fn node_exists(
+    conn: &Connection,
+    node_id: &BibleGraphNodeId,
+) -> Result<bool, HistoryStoreError> {
     conn.query_row(
         "SELECT 1 FROM bible_graph_nodes WHERE id = ?1 AND deleted_event_id IS NULL",
         [node_id.as_str()],

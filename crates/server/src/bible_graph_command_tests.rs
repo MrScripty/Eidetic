@@ -11,9 +11,17 @@ fn memory_connection() -> Connection {
 }
 
 fn create_command(node_id: &str, name: &str) -> CommandEnvelope<CreateBibleGraphNodeCommand> {
+    create_command_with_parent(node_id, None, name)
+}
+
+fn create_command_with_parent(
+    node_id: &str,
+    parent_id: Option<&str>,
+    name: &str,
+) -> CommandEnvelope<CreateBibleGraphNodeCommand> {
     CommandEnvelope::new(CreateBibleGraphNodeCommand {
         node_id: BibleGraphNodeId::new(node_id).unwrap(),
-        parent_id: None,
+        parent_id: parent_id.map(|value| BibleGraphNodeId::new(value).unwrap()),
         schema_key: BibleGraphSchemaKey::new("character").unwrap(),
         name: name.to_string(),
         sort_order: 7,
@@ -33,6 +41,47 @@ fn field_command(value: Option<FieldValue>) -> CommandEnvelope<SetBibleGraphFiel
         value,
         field_sort_order: 2,
     })
+}
+
+#[test]
+fn create_child_node_requires_existing_parent() {
+    let mut conn = memory_connection();
+    let parent = create_command("node.group.protagonists", "Protagonists");
+    apply_create_bible_graph_node(&mut conn, &parent, 100).unwrap();
+    let child =
+        create_command_with_parent("node.character.ada", Some("node.group.protagonists"), "Ada");
+
+    let (outcome, projection) = apply_create_bible_graph_node(&mut conn, &child, 200).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(
+        projection
+            .payload
+            .node
+            .parent_id
+            .as_ref()
+            .map(BibleGraphNodeId::as_str),
+        Some("node.group.protagonists")
+    );
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "change_events"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 2);
+}
+
+#[test]
+fn create_child_node_rejects_missing_parent_without_writing() {
+    let mut conn = memory_connection();
+    let command =
+        create_command_with_parent("node.character.ada", Some("node.group.missing"), "Ada");
+
+    let error = apply_create_bible_graph_node(&mut conn, &command, 100).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 0);
+    assert_eq!(table_count(&conn, "change_events"), 0);
+    assert_eq!(table_count(&conn, "object_revisions"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 0);
 }
 
 #[test]
