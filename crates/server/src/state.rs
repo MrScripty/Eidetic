@@ -43,7 +43,9 @@ pub mod constants {
 pub enum ServerEvent {
     TimelineChanged,
     HierarchyChanged,
-    NodeUpdated { node_id: uuid::Uuid },
+    NodeUpdated {
+        node_id: uuid::Uuid,
+    },
     StoryChanged,
     ProjectMutated,
     GenerationContext {
@@ -63,17 +65,6 @@ pub enum ServerEvent {
         node_id: uuid::Uuid,
         error: String,
     },
-    ConsistencySuggestion {
-        source_node_id: uuid::Uuid,
-        target_node_id: uuid::Uuid,
-        original_text: String,
-        suggested_text: String,
-        reason: String,
-    },
-    ConsistencyComplete {
-        source_node_id: uuid::Uuid,
-        suggestion_count: usize,
-    },
     DiffusionProgress {
         node_id: uuid::Uuid,
         step: usize,
@@ -92,11 +83,6 @@ pub enum ServerEvent {
     },
     BibleChanged,
     ScriptChanged,
-    EntityExtractionComplete {
-        node_id: uuid::Uuid,
-        new_entity_count: usize,
-        snapshot_count: usize,
-    },
 }
 
 /// Snapshot-based undo/redo stack.
@@ -239,8 +225,6 @@ pub struct AppState {
     pub ai_config: Arc<Mutex<AiConfig>>,
     /// Node IDs currently being generated — prevents duplicate requests.
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
-    /// Node IDs currently undergoing entity extraction — prevents duplicate/concurrent runs.
-    pub extracting: Arc<Mutex<HashSet<uuid::Uuid>>>,
     /// Path where the current project is saved on disk.
     pub project_path: Arc<Mutex<Option<PathBuf>>>,
     /// Snapshot-based undo/redo stack for project mutations.
@@ -277,13 +261,17 @@ impl AppState {
 
         // Start auto-save (needs doc_tx to serialize Y.Doc state).
         let save_doc_tx = doc_tx.clone();
-        tokio::spawn(auto_save_task(save_rx, save_project, save_path, save_doc_tx));
+        tokio::spawn(auto_save_task(
+            save_rx,
+            save_project,
+            save_path,
+            save_doc_tx,
+        ));
 
         // Spawn the diffusion manager on a dedicated OS thread.
         // JoinHandle is intentionally dropped — the manager shuts down via
         // DiffuseCmd::Shutdown sent through diffuse_tx when the server exits.
-        let (diffuse_tx, diffuse_update_tx, _diffuse_handle) =
-            diffusion::spawn_diffusion_manager();
+        let (diffuse_tx, diffuse_update_tx, _diffuse_handle) = diffusion::spawn_diffusion_manager();
 
         // Initialize the Pumas model library (optional — best-effort).
         let model_library = Self::init_model_library().await;
@@ -295,7 +283,6 @@ impl AppState {
             doc_update_tx,
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
-            extracting: Arc::new(Mutex::new(HashSet::new())),
             project_path,
             undo_stack: Arc::new(Mutex::new(UndoStack::new(constants::UNDO_STACK_DEPTH))),
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
@@ -388,10 +375,9 @@ impl AppState {
             let can_undo = undo.can_undo();
             let can_redo = undo.can_redo();
             drop(undo);
-            let _ = self.events_tx.send(ServerEvent::UndoRedoChanged {
-                can_undo,
-                can_redo,
-            });
+            let _ = self
+                .events_tx
+                .send(ServerEvent::UndoRedoChanged { can_undo, can_redo });
         }
     }
 }

@@ -179,6 +179,7 @@ Completed slices:
 - `refactor(script): remove node screenplay write path` deleted the legacy `/nodes/{id}/script` API helper/route and removed BeatEditor controls that edited or displayed node-owned screenplay blobs, leaving script display on backend-owned script document projections.
 - `feat(server): protect locked script spans` made script block commands reject updates that would remove or change locked span text before any history/current-state writes occur, with regression coverage proving failed updates leave projections and revisions unchanged.
 - `refactor(ui): remove legacy extraction and consistency UI` deleted orphaned extraction review/diff components, frontend helpers, websocket handlers, and editor store state that depended on node-owned screenplay text, keeping future semantic review work off stale UI state.
+- `refactor(server): remove legacy AI script mutation routes` deleted `/ai/react`, `/ai/extract`, `/ai/extract/commit`, automatic post-generation bible mutation, and their websocket events/prompt helpers so AI no longer commits legacy graph/script changes directly from node screenplay text.
 
 Discovered issues:
 
@@ -194,7 +195,8 @@ Discovered issues:
 - Resolved: `cargo check -p eidetic-server` reported non-test dead-code warnings in `history_store.rs` (`RevisionOperation` import and `load_command`). The replay helper is now test-only and the production import set is warning-free.
 - Resolved: `ui/src/lib/components/sidebar/bible/StoryBibleTab.svelte` exceeded the 250-line component decomposition threshold after moving list/navigation to graph projections. Category/root mapping and graph-node creation controls were extracted before schema editor work.
 - Partially resolved: bible graph command/projection DTOs were split out of `ui/src/lib/types.ts` into a focused module. `types.ts` remains above the preferred decomposition threshold because it still mixes legacy story, projection primitives, extraction, script, AI, and settings contracts; split those before adding script, render, semantic proposal, or Bevy bridge DTOs.
-- Legacy AI extraction and consistency routes still read `node.content.content`, and `unlock_node` still derives content status from that field. These are no longer valid screenplay sources after script document ownership and should be deleted or rerouted through semantic proposals/script document projections.
+- Resolved: legacy AI extraction and consistency routes read `node.content.content` and committed bible/script side effects directly. Those routes, frontend consumers, automatic generation follow-up mutation, and emitted websocket events were removed; future semantic work must re-enter through proposal contracts.
+- `unlock_node` still derives content status from legacy `node.content.content`. This no longer reflects script document ownership and should be simplified when node lock behavior is separated from script-span locks.
 - Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.
 
 ## Concurrent Worker Policy

@@ -1,7 +1,4 @@
-use uuid::Uuid;
-
-use eidetic_core::ai::backend::{EditContext, GenerateChildrenRequest, GenerateRequest};
-use eidetic_core::story::bible::ResolvedEntity;
+use eidetic_core::ai::backend::{GenerateChildrenRequest, GenerateRequest};
 use eidetic_core::timeline::node::StoryLevel;
 use eidetic_core::timeline::structure::SegmentType;
 use eidetic_core::timeline::timing::TimeRange;
@@ -259,153 +256,6 @@ fn build_user_message(request: &GenerateRequest) -> String {
     user
 }
 
-/// Build a chat prompt for the consistency reaction pipeline.
-///
-/// `downstream_nodes` is a slice of `(node_id, node_name, current_text)` tuples.
-pub(crate) fn build_consistency_prompt(
-    edit_context: &EditContext,
-    downstream_nodes: &[(Uuid, String, String)],
-) -> ChatPrompt {
-    let system = String::from(
-        "You are a script consistency analyst for a 30-minute TV episode. \
-         Given an edit to a story node, identify necessary changes to \
-         downstream nodes to maintain continuity.\n\n\
-         RULES:\n\
-         - Only suggest changes that are strictly necessary for consistency \
-           (character names, plot references, continuity details).\n\
-         - Do not rewrite content for style — only fix factual/continuity breaks.\n\
-         - If no changes are needed, return an empty JSON array.\n\
-         - Return ONLY valid JSON, no commentary.",
-    );
-
-    let mut user =
-        String::from("A story node was edited. Analyze whether downstream nodes need updates.\n\n");
-
-    user.push_str(&format!(
-        "EDITED NODE: {}\n\nBEFORE:\n{}\n\nAFTER:\n{}\n\n",
-        edit_context.node.name, edit_context.previous_script, edit_context.new_script,
-    ));
-
-    if !downstream_nodes.is_empty() {
-        user.push_str("DOWNSTREAM NODES TO CHECK:\n\n");
-        for (id, name, text) in downstream_nodes {
-            user.push_str(&format!(
-                "--- Node: {} (ID: {}) ---\n{}\n\n",
-                name, id, text
-            ));
-        }
-    }
-
-    user.push_str(
-        "Respond with a JSON array of suggested changes:\n\
-         ```json\n\
-         [\n\
-           {\n\
-             \"target_node_id\": \"<uuid of the downstream node>\",\n\
-             \"original_text\": \"<exact snippet from the downstream node to replace>\",\n\
-             \"suggested_text\": \"<replacement text>\",\n\
-             \"reason\": \"<brief explanation of why this change is needed>\"\n\
-           }\n\
-         ]\n\
-         ```\n\
-         Return `[]` if no changes are needed.",
-    );
-
-    ChatPrompt { system, user }
-}
-
-/// Build a chat prompt for entity extraction from generated text.
-pub(crate) fn build_extraction_prompt(
-    script: &str,
-    existing_entities: &[ResolvedEntity],
-    time_ms: u64,
-) -> ChatPrompt {
-    let system = String::from(
-        "You are a story analyst for a 30-minute TV episode. \
-         Given a screenplay beat, identify ALL characters, locations, props, themes, \
-         and events present in the scene, along with any character development points.\n\n\
-         CATEGORY DEFINITIONS:\n\
-         - Character: A person, animal, or personified entity that acts, speaks, or is directly addressed.\n\
-         - Location: The physical setting/environment, including ALL atmospheric and environmental \
-           elements (weather, terrain, ambient features, background furniture, architectural elements, \
-           natural features like snow, trees, fog, rain). If characters do not directly interact with \
-           it, it is part of the Location, NOT a Prop.\n\
-         - Prop: An object a character directly handles, picks up, uses, wears, or that has specific \
-           plot significance. Must involve character agency or narrative function. Environmental/ \
-           atmospheric elements are NEVER props.\n\
-         - Theme: An abstract concept, motif, or recurring idea explored in the scene.\n\
-         - Event: A significant plot occurrence, turning point, or backstory revelation.\n\n\
-         SCREENPLAY PARSING HINTS:\n\
-         - Scene headings (INT./EXT. lines) indicate locations.\n\
-         - Character names in ALLCAPS above dialogue lines indicate speaking characters.\n\
-         - Characters mentioned in action/description lines are also present.\n\
-         - Characters referred to by pronoun or nickname should be identified by their full name when possible.\n\n\
-         RULES:\n\
-         - `entities_present` MUST list the name of EVERY character, location, and notable entity \
-         that appears in or is mentioned in the scene — both existing and new. This is the most \
-         important field. Do not omit anyone.\n\
-         - `new_entities` MUST contain EVERY entity from the scene that is NOT in the KNOWN ENTITIES list. \
-         If a character speaks, appears, or is mentioned and they are not in the known list, add them. \
-         Even minor or unnamed characters (e.g. \"Bartender\", \"Guard #1\") should be included.\n\
-         - Err on the side of including too many new entities rather than too few.\n\
-         - Do NOT tag environmental elements (snow, rain, fog, trees, furniture) as Props. \
-         They belong to the Location.\n\
-         - Snapshots are for meaningful development points (introductions, revelations, transformations).\n\
-         - Keep taglines under 15 words.\n\
-         - Return ONLY valid JSON, no commentary.",
-    );
-
-    let mut user =
-        String::from("Analyze this screenplay beat and extract entities and development points.\n\n");
-
-    user.push_str(&format!("TIMELINE POSITION: {}ms\n\n", time_ms));
-
-    user.push_str("SCRIPT:\n");
-    user.push_str(script);
-    user.push_str("\n\n");
-
-    if !existing_entities.is_empty() {
-        user.push_str(
-            "KNOWN ENTITIES (do NOT re-suggest these as new, but DO include them in entities_present if they appear):\n",
-        );
-        for entity in existing_entities {
-            user.push_str(&format!("- {} [{}]\n", entity.name, entity.category));
-        }
-        user.push('\n');
-    }
-
-    user.push_str(
-        "Respond with JSON in this exact format:\n\
-         ```json\n\
-         {\n\
-           \"entities_present\": [\"<name of every entity appearing in this scene, existing or new>\"],\n\
-           \"new_entities\": [\n\
-             {\n\
-               \"name\": \"<entity name — MUST NOT be in known entities list>\",\n\
-               \"category\": \"<one of: Character, Location, Prop, Theme, Event>\",\n\
-               \"tagline\": \"<brief description, under 15 words>\",\n\
-               \"description\": \"<fuller description>\"\n\
-             }\n\
-           ],\n\
-           \"snapshot_suggestions\": [\n\
-             {\n\
-               \"entity_name\": \"<name of existing or new entity>\",\n\
-               \"description\": \"<what changed or what we learn>\",\n\
-               \"emotional_state\": \"<optional: character's feeling>\",\n\
-               \"audience_knowledge\": \"<optional: what audience now knows>\",\n\
-               \"location\": \"<optional: where this entity is, e.g. INT. CABIN - MORNING>\"\n\
-             }\n\
-           ]\n\
-         }\n\
-         ```\n\
-         IMPORTANT: Every character, location, prop, theme, or event that appears in the script \
-         and is NOT in the KNOWN ENTITIES list MUST appear in new_entities. Do not skip any.\n\
-         Return `{\"entities_present\": [], \"new_entities\": [], \"snapshot_suggestions\": []}` if no entities found.",
-    );
-
-    ChatPrompt { system, user }
-}
-
 /// Build a chat prompt to generate a compact scene recap from a script.
 pub(crate) fn build_recap_prompt(script: &str, preceding_recap: Option<&str>) -> ChatPrompt {
     let system = String::from(
@@ -481,9 +331,11 @@ pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatP
     if parent_level == StoryLevel::Premise {
         if let Some(ref structure) = request.episode_structure {
             system.push_str("EPISODE STRUCTURE:\n");
-            system.push_str("This is a TV episode. You MUST generate one act for each structural \
+            system.push_str(
+                "This is a TV episode. You MUST generate one act for each structural \
                              segment below. Each act's name should match the segment label. \
-                             Use the durations as weight guidance.\n\n");
+                             Use the durations as weight guidance.\n\n",
+            );
             for seg in &structure.segments {
                 let kind = match seg.segment_type {
                     SegmentType::ColdOpen => "Cold Open",
@@ -585,10 +437,7 @@ pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatP
     ));
 
     // Parent notes.
-    user.push_str(&format!(
-        "{} NOTES:\n",
-        parent_level.label().to_uppercase()
-    ));
+    user.push_str(&format!("{} NOTES:\n", parent_level.label().to_uppercase()));
     user.push_str(&request.parent_node.content.notes);
     user.push_str("\n\n");
 
