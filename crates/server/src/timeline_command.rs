@@ -1,8 +1,9 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, DeleteTimelineNodeCommand, ProjectionEnvelope, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand, TimelineRenderProjection,
+    CommandEnvelope, CreateTimelineNodeCommand, DeleteTimelineNodeCommand, ProjectionEnvelope,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
+use eidetic_core::timeline::node::StoryNode;
 use eidetic_core::timeline::timing::TimeRange;
 use thiserror::Error;
 
@@ -43,6 +44,39 @@ pub(crate) fn apply_delete_timeline_node(
     project
         .timeline
         .remove_node(command.payload.node_id)
+        .map_err(TimelineCommandError::Core)?;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_create_timeline_node(
+    project: &mut Project,
+    command: &CommandEnvelope<CreateTimelineNodeCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    let time_range = TimeRange::new(command.payload.start_ms, command.payload.end_ms)
+        .map_err(TimelineCommandError::Core)?;
+    let mut node = if let Some(parent_id) = command.payload.parent_id {
+        StoryNode::new_child(
+            command.payload.name.clone(),
+            command.payload.level,
+            time_range,
+            parent_id,
+        )
+    } else {
+        StoryNode::new(
+            command.payload.name.clone(),
+            command.payload.level,
+            time_range,
+        )
+    };
+    node.id = command.payload.node_id;
+    node.beat_type = command.payload.beat_type.clone();
+
+    project
+        .timeline
+        .add_node(node)
         .map_err(TimelineCommandError::Core)?;
 
     Ok(ProjectionEnvelope::initial(
@@ -166,5 +200,35 @@ mod tests {
                 .iter()
                 .all(|clip| clip.node_id != parent.id && clip.node_id != child_id)
         );
+    }
+
+    #[test]
+    fn create_timeline_node_returns_projection_with_new_node() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let parent = project.timeline.nodes[0].clone();
+        let node_id = eidetic_core::timeline::node::NodeId::new();
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: CreateTimelineNodeCommand {
+                node_id,
+                parent_id: Some(parent.id),
+                level: parent.level.child_level().expect("child level"),
+                name: "Inserted act".to_string(),
+                start_ms: parent.time_range.start_ms,
+                end_ms: parent.time_range.start_ms + 1_000,
+                beat_type: None,
+            },
+        };
+
+        let projection = apply_create_timeline_node(&mut project, &command).unwrap();
+
+        let clip = projection
+            .payload
+            .clips
+            .iter()
+            .find(|clip| clip.node_id == node_id)
+            .expect("created clip");
+        assert_eq!(clip.parent_id, Some(parent.id));
+        assert_eq!(clip.name, "Inserted act");
     }
 }

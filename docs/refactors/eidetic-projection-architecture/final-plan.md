@@ -206,6 +206,7 @@ Completed slices:
 - `feat(ui): cache timeline delete projections` routed delete timeline command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route timeline deletion through commands` moved timeline clip deletion and the delete-key shortcut onto the backend timeline delete command/projection path instead of the legacy delete route.
 - `feat(renderer): emit timeline delete commands` added validated renderer command emission for node deletion requests so future Bevy delete interactions can flow through backend-confirmed timeline commands.
+- `feat(server): add timeline create node command` added a backend command route for validated timeline node creation that returns the updated timeline render projection.
 
 Discovered issues:
 

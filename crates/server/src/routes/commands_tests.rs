@@ -558,6 +558,71 @@ async fn timeline_node_range_command_requires_loaded_project() {
 }
 
 #[tokio::test]
+async fn create_timeline_node_command_returns_timeline_render_projection() {
+    let path = temp_db_path("creates-timeline-node");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let node_id = eidetic_core::timeline::node::NodeId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_node_command_body(
+        node_id,
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Inserted act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+
+    let response = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(clips.iter().any(|clip| {
+        clip["node_id"] == node_id.0.to_string()
+            && clip["parent_id"] == parent.id.0.to_string()
+            && clip["name"] == "Inserted act"
+    }));
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_node_command_rejects_invalid_hierarchy() {
+    let path = temp_db_path("rejects-invalid-timeline-create");
+    let state = AppState::new().await;
+    *state.project.lock() = Some(Template::MultiCam.build_project("Commands Test"));
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_node_command_body(
+        eidetic_core::timeline::node::NodeId::new(),
+        None,
+        eidetic_core::timeline::node::StoryLevel::Scene,
+        "Parentless scene",
+        1_000,
+        2_000,
+    );
+
+    let response = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn split_timeline_node_command_returns_timeline_render_projection() {
     let path = temp_db_path("splits-timeline-node");
     let state = AppState::new().await;
@@ -742,6 +807,15 @@ fn timeline_node_range_command_request(body: serde_json::Value) -> Request<Body>
         .unwrap()
 }
 
+fn create_timeline_node_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/create-node")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
 fn split_timeline_node_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -914,6 +988,28 @@ fn timeline_node_range_command_body(
             "node_id": node_id,
             "start_ms": start_ms,
             "end_ms": end_ms,
+        }
+    })
+}
+
+fn create_timeline_node_command_body(
+    node_id: eidetic_core::timeline::node::NodeId,
+    parent_id: Option<eidetic_core::timeline::node::NodeId>,
+    level: eidetic_core::timeline::node::StoryLevel,
+    name: &str,
+    start_ms: u64,
+    end_ms: u64,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "node_id": node_id,
+            "parent_id": parent_id,
+            "level": level,
+            "name": name,
+            "start_ms": start_ms,
+            "end_ms": end_ms,
+            "beat_type": null,
         }
     })
 }
