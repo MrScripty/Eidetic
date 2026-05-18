@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use eidetic_core::contracts::{FieldValue, ObjectKind, RevisionOperation};
+use eidetic_core::contracts::{
+    FieldValue, ObjectKind, ProjectionEnvelope, ProjectionVersion, RevisionOperation,
+};
 use rusqlite::Connection;
 use serde::Serialize;
 
@@ -20,6 +22,32 @@ pub(crate) fn load_object_field_projection(
     object_id: &str,
 ) -> Result<ObjectFieldProjection, HistoryStoreError> {
     let revisions = history_store::load_revisions_for_object(conn, object_kind.clone(), object_id)?;
+    Ok(build_projection(object_kind, object_id, &revisions))
+}
+
+pub(crate) fn load_object_field_projection_envelope(
+    conn: &Connection,
+    object_kind: ObjectKind,
+    object_id: &str,
+) -> Result<ProjectionEnvelope<ObjectFieldProjection>, HistoryStoreError> {
+    let revisions = history_store::load_revisions_for_object(conn, object_kind.clone(), object_id)?;
+    let projection = build_projection(object_kind, object_id, &revisions);
+
+    match revisions.last() {
+        Some(revision) => Ok(ProjectionEnvelope::from_event(
+            ProjectionVersion(revisions.len() as u64 + 1),
+            revision.change_event_id,
+            projection,
+        )),
+        None => Ok(ProjectionEnvelope::initial(projection)),
+    }
+}
+
+fn build_projection(
+    object_kind: ObjectKind,
+    object_id: &str,
+    revisions: &[eidetic_core::contracts::ObjectRevision],
+) -> ObjectFieldProjection {
     let mut projection = ObjectFieldProjection {
         object_kind,
         object_id: object_id.to_string(),
@@ -27,14 +55,16 @@ pub(crate) fn load_object_field_projection(
         fields: BTreeMap::new(),
     };
 
-    for revision in revisions {
-        match revision.operation {
+    for revision in revisions.iter() {
+        match &revision.operation {
             RevisionOperation::Create | RevisionOperation::Update => {
                 projection.deleted = false;
-                for field in revision.fields {
-                    match field.new_value {
+                for field in &revision.fields {
+                    match &field.new_value {
                         Some(value) => {
-                            projection.fields.insert(field.field_key, value);
+                            projection
+                                .fields
+                                .insert(field.field_key.clone(), value.clone());
                         }
                         None => {
                             projection.fields.remove(&field.field_key);
@@ -49,7 +79,7 @@ pub(crate) fn load_object_field_projection(
         }
     }
 
-    Ok(projection)
+    projection
 }
 
 #[cfg(test)]

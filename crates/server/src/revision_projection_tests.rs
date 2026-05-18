@@ -2,6 +2,7 @@ use super::*;
 use crate::history_store::{create_schema, record_change};
 use eidetic_core::contracts::{
     ChangeEvent, ChangeEventId, ChangeEventKind, CommandEnvelope, FieldDelta, ObjectRevision,
+    ProjectionVersion,
 };
 use serde::{Deserialize, Serialize};
 
@@ -115,4 +116,35 @@ fn projection_marks_object_deleted_after_delete_revision() {
 
     assert!(projection.deleted);
     assert!(projection.fields.is_empty());
+}
+
+#[test]
+fn projection_envelope_carries_version_and_last_event() {
+    let mut conn = memory_connection();
+    let command = command("create");
+    let event = event(&command, "create field");
+    let revision = base_revision(event.id, RevisionOperation::Create).with_field(FieldDelta::new(
+        "weather",
+        None,
+        Some(FieldValue::Text("rainy".to_string())),
+    ));
+    record_change(
+        &mut conn,
+        &command,
+        "test.create_field",
+        &event,
+        &[revision],
+    )
+    .unwrap();
+
+    let envelope =
+        load_object_field_projection_envelope(&conn, ObjectKind::BiblePartField, "field-weather")
+            .unwrap();
+
+    assert_eq!(envelope.version, ProjectionVersion(2));
+    assert_eq!(envelope.change_event_id, Some(event.id));
+    assert_eq!(
+        envelope.payload.fields.get("weather"),
+        Some(&FieldValue::Text("rainy".to_string()))
+    );
 }

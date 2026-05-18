@@ -121,6 +121,7 @@ Completed slices:
 - `feat(server): rebuild field projections from revisions` added a read-side projection adapter that rebuilds an object's current field state from persisted revision history.
 - `feat(server): apply object field commands through history` added a validated command handler that writes field updates through history storage and returns rebuilt projections.
 - `feat(server): expose object field command route` added `POST /api/commands/object-field` as a command-in/projection-out HTTP boundary over the history command path.
+- `feat(server): return versioned object field projections` wrapped object-field command route projections in `ProjectionEnvelope` with projection versions and the latest change event ID.
 
 Discovered issues:
 

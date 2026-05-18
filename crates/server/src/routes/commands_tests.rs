@@ -40,7 +40,11 @@ async fn object_field_command_returns_projection() {
     assert_eq!(response.status(), StatusCode::OK);
     let value = response_json(response).await;
     assert_eq!(value["outcome"], "recorded");
-    assert_eq!(value["projection"]["fields"]["weather"]["value"], "rainy");
+    assert_eq!(value["projection"]["version"], 2);
+    assert_eq!(
+        value["projection"]["payload"]["fields"]["weather"]["value"],
+        "rainy"
+    );
 
     let _ = std::fs::remove_file(path);
 }
@@ -87,6 +91,7 @@ async fn object_field_command_replays_duplicate_command() {
     assert_eq!(second.status(), StatusCode::OK);
     let value = response_json(second).await;
     assert_eq!(value["outcome"], "already_recorded");
+    assert_eq!(value["projection"]["version"], 2);
 
     let _ = std::fs::remove_file(path);
 }
