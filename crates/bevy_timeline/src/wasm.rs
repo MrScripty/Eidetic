@@ -46,6 +46,27 @@ impl WasmTimelineRenderer {
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
+    pub fn set_viewport(&mut self, start_ms: u64, end_ms: u64) -> Result<(), JsValue> {
+        self.renderer
+            .set_viewport(start_ms, end_ms)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+
+    pub fn pan_viewport(&mut self, delta_ms: i64) {
+        self.renderer.pan_viewport(delta_ms);
+    }
+
+    pub fn zoom_viewport_around(&mut self, center_ms: u64, factor: f32) -> Result<(), JsValue> {
+        self.renderer
+            .zoom_viewport_around(center_ms, factor)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+
+    pub fn viewport(&self) -> Result<JsValue, JsValue> {
+        serde_wasm_bindgen::to_value(&self.renderer.viewport())
+            .map_err(|error| JsValue::from_str(&format!("invalid renderer viewport: {error}")))
+    }
+
     pub fn drain_commands(&mut self) -> Result<JsValue, JsValue> {
         serde_wasm_bindgen::to_value(&self.renderer.drain_commands())
             .map_err(|error| JsValue::from_str(&format!("invalid renderer commands: {error}")))

@@ -6,12 +6,14 @@ use serde::Serialize;
 use thiserror::Error;
 
 mod scene;
+mod viewport;
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 
 pub use scene::{
     TimelineClipEntity, TimelineSceneStats, TimelineTrackEntity, rebuild_timeline_scene,
 };
+pub use viewport::TimelineViewport;
 #[cfg(target_arch = "wasm32")]
 pub use wasm::WasmTimelineRenderer;
 
@@ -29,6 +31,14 @@ pub enum TimelineRendererError {
     UnknownNode { node_id: NodeId },
     #[error("timeline projection has no clip on track {track_id:?} at {time_ms}ms")]
     NoClipAtTime { track_id: TrackId, time_ms: u64 },
+    #[error("invalid viewport range {start_ms}ms..{end_ms}ms for duration {duration_ms}ms")]
+    InvalidViewportRange {
+        start_ms: u64,
+        end_ms: u64,
+        duration_ms: u64,
+    },
+    #[error("viewport zoom factor must be finite and greater than zero")]
+    InvalidZoomFactor,
 }
 
 #[derive(Resource, Default)]
@@ -57,10 +67,15 @@ impl TimelineRendererApp {
         app.insert_resource(TimelineRenderState::default());
         app.insert_resource(TimelineRendererCommandQueue::default());
         app.insert_resource(TimelineSceneStats::default());
+        app.insert_resource(TimelineViewport::default());
         Self { app }
     }
 
     pub fn set_projection(&mut self, projection: TimelineRenderProjection) {
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineViewport>()
+            .set_duration(projection.total_duration_ms);
         self.app
             .world_mut()
             .resource_mut::<TimelineRenderState>()
@@ -81,6 +96,54 @@ impl TimelineRendererApp {
     pub fn scene_counts(&self) -> (usize, usize) {
         let stats = self.app.world().resource::<TimelineSceneStats>();
         (stats.track_count, stats.clip_count)
+    }
+
+    pub fn viewport(&self) -> TimelineViewport {
+        *self.app.world().resource::<TimelineViewport>()
+    }
+
+    pub fn set_viewport(
+        &mut self,
+        start_ms: u64,
+        end_ms: u64,
+    ) -> Result<(), TimelineRendererError> {
+        let duration_ms = self.viewport().duration_ms;
+        if start_ms >= end_ms || end_ms > duration_ms {
+            return Err(TimelineRendererError::InvalidViewportRange {
+                start_ms,
+                end_ms,
+                duration_ms,
+            });
+        }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineViewport>()
+            .set_range(start_ms, end_ms);
+        Ok(())
+    }
+
+    pub fn pan_viewport(&mut self, delta_ms: i64) {
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineViewport>()
+            .pan_by(delta_ms);
+    }
+
+    pub fn zoom_viewport_around(
+        &mut self,
+        center_ms: u64,
+        factor: f32,
+    ) -> Result<(), TimelineRendererError> {
+        if !factor.is_finite() || factor <= 0.0 {
+            return Err(TimelineRendererError::InvalidZoomFactor);
+        }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineViewport>()
+            .zoom_around(center_ms, factor);
+        Ok(())
     }
 
     pub fn select_node(&mut self, node_id: NodeId) -> Result<(), TimelineRendererError> {
@@ -258,6 +321,65 @@ mod tests {
             })
         );
         assert!(renderer.drain_commands().is_empty());
+    }
+
+    #[test]
+    fn renderer_app_keeps_transient_viewport_inside_projection_duration() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(
+            renderer.viewport(),
+            TimelineViewport {
+                start_ms: 0,
+                end_ms: 10_000,
+                duration_ms: 10_000
+            }
+        );
+
+        assert_eq!(renderer.set_viewport(2_000, 6_000), Ok(()));
+        renderer.pan_viewport(10_000);
+        assert_eq!(
+            renderer.viewport(),
+            TimelineViewport {
+                start_ms: 6_000,
+                end_ms: 10_000,
+                duration_ms: 10_000
+            }
+        );
+
+        renderer.pan_viewport(-10_000);
+        assert_eq!(
+            renderer.viewport(),
+            TimelineViewport {
+                start_ms: 0,
+                end_ms: 4_000,
+                duration_ms: 10_000
+            }
+        );
+    }
+
+    #[test]
+    fn renderer_app_zooms_viewport_around_time() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(renderer.zoom_viewport_around(5_000, 2.0), Ok(()));
+        assert_eq!(
+            renderer.viewport(),
+            TimelineViewport {
+                start_ms: 2_500,
+                end_ms: 7_500,
+                duration_ms: 10_000
+            }
+        );
+
+        assert_eq!(
+            renderer.zoom_viewport_around(5_000, 0.0),
+            Err(TimelineRendererError::InvalidZoomFactor)
+        );
     }
 
     fn projection_with_node(node_id: NodeId) -> TimelineRenderProjection {
