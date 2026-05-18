@@ -1,5 +1,5 @@
 import * as Y from 'yjs';
-import type { ServerMessage } from './types.js';
+import type { ServerMessage } from './wsTypes.js';
 import { ydoc } from './yjs.js';
 
 type MessageHandler = (data: ServerMessage) => void;
