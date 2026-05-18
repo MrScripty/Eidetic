@@ -4,9 +4,11 @@
 
   let {
     activeFilter,
+    disabledCategories,
     onadd,
   }: {
     activeFilter: BibleGraphFilter;
+    disabledCategories: Set<EntityCategory>;
     onadd: (category: EntityCategory) => void;
   } = $props();
 
@@ -15,12 +17,19 @@
 
 <div class="add-buttons">
   {#if activeFilter !== 'All'}
-    <button class="add-btn" onclick={() => onadd(activeFilter)}>+ Add {activeFilter}</button>
+    <button
+      class="add-btn"
+      disabled={disabledCategories.has(activeFilter)}
+      onclick={() => onadd(activeFilter)}
+    >
+      + Add {activeFilter}
+    </button>
   {:else}
     <div class="add-menu">
       {#each categories as category}
         <button
           class="add-btn-small"
+          disabled={disabledCategories.has(category)}
           style="color: {categoryColor(category)}"
           onclick={() => onadd(category)}>+ {category.slice(0, 3)}</button
         >
@@ -47,6 +56,12 @@
 
   .add-btn:hover {
     background: var(--color-bg-hover);
+  }
+
+  .add-btn:disabled,
+  .add-btn-small:disabled {
+    cursor: default;
+    opacity: 0.45;
   }
 
   .add-menu {

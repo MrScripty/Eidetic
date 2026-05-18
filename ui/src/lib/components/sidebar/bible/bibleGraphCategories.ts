@@ -1,3 +1,4 @@
+import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
 import type { BibleGraphNode, BibleGraphNodeId, EntityCategory } from '$lib/types.js';
 
 export type BibleGraphFilter = EntityCategory | 'All';
@@ -47,6 +48,14 @@ export const defaultNames: Record<EntityCategory, string> = {
 export function filterLabel(filter: BibleGraphFilter): string {
   if (filter === 'All') return 'All';
   return filter.slice(0, 3);
+}
+
+export function categorySchemaAvailable(
+  category: EntityCategory,
+  projection: BibleGraphSchemaListProjection | undefined,
+): boolean {
+  if (!projection) return false;
+  return projection.schemas.some((schema) => schema.schema_key === schemaKeys[category]);
 }
 
 export function categoryColor(category: BibleGraphFilter | BibleGraphCategory): string {

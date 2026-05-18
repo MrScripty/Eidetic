@@ -8,6 +8,10 @@
     getCachedBibleGraphNodeListProjection,
     refreshBibleGraphNodeListProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+  import {
+    getCachedBibleGraphSchemaListProjection,
+    refreshBibleGraphSchemaListProjection,
+  } from '$lib/stores/bibleGraphSchemaProjection.svelte.js';
   import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
   import BibleGraphAddControls from './BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from './BibleGraphCategoryFilters.svelte';
@@ -15,6 +19,7 @@
   import {
     canonicalParents,
     canonicalRootSchemaKeys,
+    categorySchemaAvailable,
     defaultNames,
     nodeCategory,
     schemaKeys,
@@ -26,7 +31,15 @@
   let loadError = $state<string | null>(null);
 
   const nodeListProjection = $derived(getCachedBibleGraphNodeListProjection());
+  const schemaProjection = $derived(getCachedBibleGraphSchemaListProjection());
   const graphNodes = $derived(nodeListProjection?.payload.nodes ?? []);
+  const disabledAddCategories = $derived(
+    new Set(
+      (['Character', 'Location', 'Prop', 'Theme', 'Event'] as EntityCategory[]).filter(
+        (category) => !categorySchemaAvailable(category, schemaProjection?.payload),
+      ),
+    ),
+  );
 
   const filteredEntities = $derived(() => {
     let list = graphNodes;
@@ -43,6 +56,12 @@
   async function handleAdd(category: EntityCategory) {
     try {
       loadError = null;
+      if (!categorySchemaAvailable(category, schemaProjection?.payload)) {
+        await refreshBibleGraphSchemaListProjection();
+      }
+      if (!categorySchemaAvailable(category, getCachedBibleGraphSchemaListProjection()?.payload)) {
+        throw new Error(`Schema unavailable for ${category}`);
+      }
       const parentId = await ensureRootForCategory(category);
       const nodeId = `node.${schemaKeys[category]}.${crypto.randomUUID()}`;
       await createBibleGraphNodeProjection({
@@ -82,6 +101,7 @@
   async function loadBibleGraphNodes(): Promise<void> {
     try {
       loadError = null;
+      await refreshBibleGraphSchemaListProjection();
       const projection = await refreshBibleGraphNodeListProjection();
       if (projection.payload.nodes.length === 0) {
         await ensureCanonicalBibleRootProjections();
@@ -130,7 +150,11 @@
     {/if}
   </ul>
 
-  <BibleGraphAddControls {activeFilter} onadd={handleAdd} />
+  <BibleGraphAddControls
+    {activeFilter}
+    disabledCategories={disabledAddCategories}
+    onadd={handleAdd}
+  />
 </div>
 
 <style>
