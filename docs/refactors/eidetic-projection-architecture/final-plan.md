@@ -184,6 +184,7 @@ Completed slices:
 - `feat(server): add timeline render projection` added a backend-owned, layout-neutral timeline render projection contract and HTTP projection route for future Bevy timeline consumption without adding Bevy dependencies to core or retaining DOM-specific render data.
 - `feat(ui): add timeline render projection helper` added focused TypeScript DTOs and a typed projection API helper for the backend-owned timeline render read model without changing the existing DOM timeline runtime.
 - `feat(ui): cache timeline render projections` added a discardable frontend projection cache for the backend-owned timeline render model and refreshes it from timeline mutation websocket events for future Bevy host consumption.
+- `feat(ui): derive timeline render models` added a pure projection-to-render-model adapter with normalized timing and clip indexes so a future Bevy host can consume deterministic derived data without owning canonical timeline state.
 
 Discovered issues:
 
