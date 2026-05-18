@@ -7,6 +7,7 @@ import type {
   ObjectFieldCommandResponse,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
+  SetBibleGraphSnapshotFieldCommand,
   SetObjectFieldCommand,
 } from './types.js';
 
@@ -86,6 +87,21 @@ export function setBibleGraphEdge(
   };
 
   return request('/commands/bible-graph/edge', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setBibleGraphSnapshotField(
+  payload: SetBibleGraphSnapshotFieldCommand,
+  commandId = createCommandId(),
+): Promise<BibleGraphNodeCommandResponse> {
+  const command: CommandEnvelope<SetBibleGraphSnapshotFieldCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/bible-graph/snapshot-field', {
     method: 'POST',
     body: JSON.stringify(command),
   });

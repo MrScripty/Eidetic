@@ -3,6 +3,7 @@ import {
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
+  setBibleGraphSnapshotField,
 } from '$lib/commandApi.js';
 import {
   getBibleGraphNodeListProjection,
@@ -19,6 +20,7 @@ import type {
   ProjectionEnvelope,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
+  SetBibleGraphSnapshotFieldCommand,
 } from '../types.js';
 
 export interface BibleGraphNodeProjectionKey {
@@ -209,6 +211,30 @@ export async function setBibleGraphEdgeProjection(
     throw error;
   } finally {
     bibleGraphNodeProjectionState.pending[sourceKeyString] = false;
+  }
+}
+
+export async function setBibleGraphSnapshotFieldProjection(
+  payload: SetBibleGraphSnapshotFieldCommand,
+  commandId?: CommandId,
+): Promise<BibleGraphNodeCommandResponse> {
+  const key = { node_id: payload.node_id };
+  const keyString = cacheKey(key);
+  bibleGraphNodeProjectionState.pending[keyString] = true;
+  bibleGraphNodeProjectionState.errors[keyString] = undefined;
+
+  try {
+    const response = await setBibleGraphSnapshotField(payload, commandId);
+    bibleGraphNodeProjectionState.projections[keyString] = response.projection;
+    return response;
+  } catch (error) {
+    bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
+      error,
+      'Failed to set bible graph snapshot field',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.pending[keyString] = false;
   }
 }
 

@@ -5,6 +5,7 @@ import {
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
+  setBibleGraphSnapshotField,
 } from '$lib/commandApi.js';
 import {
   getBibleGraphNodeListProjection,
@@ -24,6 +25,7 @@ import {
   refreshBibleGraphNodeProjection,
   setBibleGraphEdgeProjection,
   setBibleGraphFieldProjection,
+  setBibleGraphSnapshotFieldProjection,
 } from './bibleGraphNodeProjection.svelte.js';
 
 vi.mock('$lib/commandApi.js', () => ({
@@ -31,6 +33,7 @@ vi.mock('$lib/commandApi.js', () => ({
   ensureCanonicalBibleRoots: vi.fn(),
   setBibleGraphEdge: vi.fn(),
   setBibleGraphField: vi.fn(),
+  setBibleGraphSnapshotField: vi.fn(),
 }));
 
 vi.mock('$lib/projectionApi.js', () => ({
@@ -42,6 +45,7 @@ const createBibleGraphNodeMock = vi.mocked(createBibleGraphNode);
 const ensureCanonicalBibleRootsMock = vi.mocked(ensureCanonicalBibleRoots);
 const setBibleGraphEdgeMock = vi.mocked(setBibleGraphEdge);
 const setBibleGraphFieldMock = vi.mocked(setBibleGraphField);
+const setBibleGraphSnapshotFieldMock = vi.mocked(setBibleGraphSnapshotField);
 const getBibleGraphNodeProjectionMock = vi.mocked(getBibleGraphNodeProjection);
 const getBibleGraphNodeListProjectionMock = vi.mocked(getBibleGraphNodeListProjection);
 
@@ -157,6 +161,36 @@ const edgeProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
   },
 };
 
+const snapshotProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  version: 5,
+  change_event_id: 'event-snapshot-1',
+  payload: {
+    ...projection.payload,
+    snapshots: [
+      {
+        snapshot: {
+          id: 'snapshot.character.ada.sequence-1',
+          node_id: 'node.character/ada one',
+          at_ms: 12000,
+          label: 'Sequence 1 state',
+          sort_order: 1,
+        },
+        fields: [
+          {
+            id: 'snapshot-field.character.status',
+            snapshot_id: 'snapshot.character.ada.sequence-1',
+            part_key: 'profile',
+            part_name: 'Profile',
+            field_key: 'tagline',
+            value: { type: 'text', value: 'Rain-soaked' },
+            sort_order: 2,
+          },
+        ],
+      },
+    ],
+  },
+};
+
 function resetProjectionState(): void {
   for (const keyString of Object.keys(bibleGraphNodeProjectionState.projections)) {
     delete bibleGraphNodeProjectionState.projections[keyString];
@@ -179,6 +213,7 @@ beforeEach(() => {
   ensureCanonicalBibleRootsMock.mockReset();
   setBibleGraphEdgeMock.mockReset();
   setBibleGraphFieldMock.mockReset();
+  setBibleGraphSnapshotFieldMock.mockReset();
   getBibleGraphNodeProjectionMock.mockReset();
   getBibleGraphNodeListProjectionMock.mockReset();
 });
@@ -430,5 +465,83 @@ describe('bible graph node projection command cache writes', () => {
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBe('edge rejected');
+  });
+
+  it('stores snapshot field command response projections without invalidating cached node lists', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    await refreshBibleGraphNodeListProjection();
+    setBibleGraphSnapshotFieldMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: snapshotProjection,
+    });
+
+    await expect(
+      setBibleGraphSnapshotFieldProjection(
+        {
+          snapshot_id: 'snapshot.character.ada.sequence-1',
+          node_id: 'node.character/ada one',
+          at_ms: 12000,
+          label: 'Sequence 1 state',
+          snapshot_sort_order: 1,
+          field_id: 'snapshot-field.character.status',
+          part_key: 'profile',
+          part_name: 'Profile',
+          field_key: 'tagline',
+          value: { type: 'text', value: 'Rain-soaked' },
+          field_sort_order: 2,
+        },
+        'command-snapshot-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: snapshotProjection,
+    });
+
+    expect(setBibleGraphSnapshotFieldMock).toHaveBeenCalledWith(
+      {
+        snapshot_id: 'snapshot.character.ada.sequence-1',
+        node_id: 'node.character/ada one',
+        at_ms: 12000,
+        label: 'Sequence 1 state',
+        snapshot_sort_order: 1,
+        field_id: 'snapshot-field.character.status',
+        part_key: 'profile',
+        part_name: 'Profile',
+        field_key: 'tagline',
+        value: { type: 'text', value: 'Rain-soaked' },
+        field_sort_order: 2,
+      },
+      'command-snapshot-1',
+    );
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(snapshotProjection);
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(listProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('records snapshot field command errors and leaves cached projections unchanged', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
+    await refreshBibleGraphNodeProjection(key);
+    setBibleGraphSnapshotFieldMock.mockRejectedValue(new Error('snapshot rejected'));
+
+    await expect(
+      setBibleGraphSnapshotFieldProjection({
+        snapshot_id: 'snapshot.character.ada.sequence-1',
+        node_id: 'node.character/ada one',
+        at_ms: 12000,
+        label: 'Sequence 1 state',
+        snapshot_sort_order: 1,
+        field_id: 'snapshot-field.character.status',
+        part_key: 'profile',
+        part_name: 'Profile',
+        field_key: 'tagline',
+        value: { type: 'text', value: 'Rain-soaked' },
+        field_sort_order: 2,
+      }),
+    ).rejects.toThrow('snapshot rejected');
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBe('snapshot rejected');
   });
 });

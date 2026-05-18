@@ -5,6 +5,7 @@ import {
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
+  setBibleGraphSnapshotField,
   setObjectField,
 } from './commandApi.js';
 
@@ -110,6 +111,7 @@ describe('command api helpers', () => {
           parts: [],
           incoming_edges: [],
           outgoing_edges: [],
+          snapshots: [],
         },
       },
     };
@@ -234,6 +236,7 @@ describe('command api helpers', () => {
           ],
           incoming_edges: [],
           outgoing_edges: [],
+          snapshots: [],
         },
       },
     };
@@ -313,6 +316,7 @@ describe('command api helpers', () => {
               sort_order: 1,
             },
           ],
+          snapshots: [],
         },
       },
     };
@@ -354,6 +358,101 @@ describe('command api helpers', () => {
             label: 'located in',
             directed: true,
             sort_order: 1,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends bible graph snapshot field commands and returns versioned node projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 6,
+        change_event_id: 'event-snapshot-1',
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: 'canonical.characters',
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [
+            {
+              snapshot: {
+                id: 'snapshot.character.ada.sequence-1',
+                node_id: 'node.character.ada',
+                at_ms: 12000,
+                label: 'Sequence 1 state',
+                sort_order: 1,
+              },
+              fields: [
+                {
+                  id: 'snapshot-field.character.status',
+                  snapshot_id: 'snapshot.character.ada.sequence-1',
+                  part_key: 'profile',
+                  part_name: 'Profile',
+                  field_key: 'tagline',
+                  value: { type: 'text', value: 'Rain-soaked' },
+                  sort_order: 2,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setBibleGraphSnapshotField(
+        {
+          snapshot_id: 'snapshot.character.ada.sequence-1',
+          node_id: 'node.character.ada',
+          at_ms: 12000,
+          label: 'Sequence 1 state',
+          snapshot_sort_order: 1,
+          field_id: 'snapshot-field.character.status',
+          part_key: 'profile',
+          part_name: 'Profile',
+          field_key: 'tagline',
+          value: { type: 'text', value: 'Rain-soaked' },
+          field_sort_order: 2,
+        },
+        'command-snapshot-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/bible-graph/snapshot-field',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-snapshot-1',
+          payload: {
+            snapshot_id: 'snapshot.character.ada.sequence-1',
+            node_id: 'node.character.ada',
+            at_ms: 12000,
+            label: 'Sequence 1 state',
+            snapshot_sort_order: 1,
+            field_id: 'snapshot-field.character.status',
+            part_key: 'profile',
+            part_name: 'Profile',
+            field_key: 'tagline',
+            value: { type: 'text', value: 'Rain-soaked' },
+            field_sort_order: 2,
           },
         }),
       }),
