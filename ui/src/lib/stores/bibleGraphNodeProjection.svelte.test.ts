@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createBibleGraphNode } from '$lib/commandApi.js';
+import { createBibleGraphNode, ensureCanonicalBibleRoots } from '$lib/commandApi.js';
 import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
@@ -11,6 +11,7 @@ import {
   clearBibleGraphNodeListProjection,
   clearBibleGraphNodeProjection,
   createBibleGraphNodeProjection,
+  ensureCanonicalBibleRootProjections,
   getCachedBibleGraphNodeListProjection,
   getBibleGraphNodeProjectionError,
   getCachedBibleGraphNodeProjection,
@@ -21,6 +22,7 @@ import {
 
 vi.mock('$lib/commandApi.js', () => ({
   createBibleGraphNode: vi.fn(),
+  ensureCanonicalBibleRoots: vi.fn(),
 }));
 
 vi.mock('$lib/projectionApi.js', () => ({
@@ -29,6 +31,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 }));
 
 const createBibleGraphNodeMock = vi.mocked(createBibleGraphNode);
+const ensureCanonicalBibleRootsMock = vi.mocked(ensureCanonicalBibleRoots);
 const getBibleGraphNodeProjectionMock = vi.mocked(getBibleGraphNodeProjection);
 const getBibleGraphNodeListProjectionMock = vi.mocked(getBibleGraphNodeListProjection);
 
@@ -81,6 +84,7 @@ beforeEach(() => {
   resetProjectionState();
   storyState.entities = [];
   createBibleGraphNodeMock.mockReset();
+  ensureCanonicalBibleRootsMock.mockReset();
   getBibleGraphNodeProjectionMock.mockReset();
   getBibleGraphNodeListProjectionMock.mockReset();
 });
@@ -184,6 +188,35 @@ describe('bible graph node projection store', () => {
 
     expect(getCachedBibleGraphNodeListProjection()).toBeNull();
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
+  });
+
+  it('stores canonical root command response node list projections', async () => {
+    ensureCanonicalBibleRootsMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: listProjection,
+    });
+
+    await expect(ensureCanonicalBibleRootProjections('command-roots-1')).resolves.toEqual({
+      outcome: 'recorded',
+      projection: listProjection,
+    });
+
+    expect(ensureCanonicalBibleRootsMock).toHaveBeenCalledWith('command-roots-1');
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(listProjection);
+    expect(bibleGraphNodeProjectionState.nodeListPending).toBe(false);
+    expect(bibleGraphNodeProjectionState.nodeListError).toBeUndefined();
+  });
+
+  it('records canonical root command errors without replacing cached lists', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    await refreshBibleGraphNodeListProjection();
+    ensureCanonicalBibleRootsMock.mockRejectedValue(new Error('root command failed'));
+
+    await expect(ensureCanonicalBibleRootProjections()).rejects.toThrow('root command failed');
+
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(listProjection);
+    expect(bibleGraphNodeProjectionState.nodeListPending).toBe(false);
+    expect(bibleGraphNodeProjectionState.nodeListError).toBe('root command failed');
   });
 
   it('records create errors and leaves cached projections unchanged', async () => {

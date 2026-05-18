@@ -1,10 +1,11 @@
-import { createBibleGraphNode } from '$lib/commandApi.js';
+import { createBibleGraphNode, ensureCanonicalBibleRoots } from '$lib/commandApi.js';
 import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
 } from '$lib/projectionApi.js';
 import type {
   BibleGraphNodeCommandResponse,
+  BibleGraphRootsCommandResponse,
   BibleGraphNodeId,
   BibleGraphNodeListProjection,
   BibleNodeDetailProjection,
@@ -97,6 +98,27 @@ export async function refreshBibleGraphNodeListProjection(): Promise<
     bibleGraphNodeProjectionState.nodeListError = errorMessage(
       error,
       'Failed to load bible graph nodes',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.nodeListPending = false;
+  }
+}
+
+export async function ensureCanonicalBibleRootProjections(
+  commandId?: CommandId,
+): Promise<BibleGraphRootsCommandResponse> {
+  bibleGraphNodeProjectionState.nodeListPending = true;
+  bibleGraphNodeProjectionState.nodeListError = undefined;
+
+  try {
+    const response = await ensureCanonicalBibleRoots(commandId);
+    bibleGraphNodeProjectionState.nodeList = response.projection;
+    return response;
+  } catch (error) {
+    bibleGraphNodeProjectionState.nodeListError = errorMessage(
+      error,
+      'Failed to ensure canonical bible roots',
     );
     throw error;
   } finally {

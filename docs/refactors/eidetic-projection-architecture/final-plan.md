@@ -137,6 +137,7 @@ Completed slices:
 - `feat(ui): cache bible graph node list projections` extended the bible graph projection store with a backend-owned node-list cache and create-command invalidation.
 - `feat(server): add canonical bible root command` added an explicit command path for persisting missing system-owned canonical bible root nodes through history and typed graph rows.
 - `feat(ui): add canonical bible root command helper` added a typed frontend command helper for initializing backend-owned canonical bible root nodes.
+- `feat(ui): cache canonical bible root command projections` routed canonical-root command responses into the bible graph node-list projection cache.
 
 Discovered issues:
 
