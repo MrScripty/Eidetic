@@ -204,13 +204,6 @@ export function getNodeContent(id: string): Promise<NodeContent> {
   return request(`/nodes/${id}/content`);
 }
 
-export function updateNodeNotes(id: string, notes: string): Promise<NodeContent> {
-  return request(`/nodes/${id}/notes`, {
-    method: 'PUT',
-    body: JSON.stringify({ notes }),
-  });
-}
-
 // --- Gaps ---
 
 export function getGaps(level?: StoryLevel): Promise<TimelineGap[]> {
