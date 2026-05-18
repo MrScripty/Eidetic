@@ -6,7 +6,7 @@ use eidetic_core::contracts::{
     BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, ProjectionEnvelope,
     ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
     SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand,
+    SetScriptLockCommand, SetTimelineNodeRangeCommand, TimelineRenderProjection,
 };
 use serde::Serialize;
 
@@ -17,6 +17,7 @@ use crate::object_field_command::{self, ObjectFieldCommandError};
 use crate::revision_projection::ObjectFieldProjection;
 use crate::script_document_command::{self, ScriptDocumentCommandError};
 use crate::state::{AppState, ServerEvent};
+use crate::timeline_command::{self, TimelineCommandError};
 
 use super::support::{active_project_path, map_history_error};
 
@@ -36,6 +37,10 @@ pub fn router() -> Router<AppState> {
         )
         .route("/commands/script/block", post(set_script_block))
         .route("/commands/script/lock", post(set_script_lock))
+        .route(
+            "/commands/timeline/node-range",
+            post(set_timeline_node_range),
+        )
 }
 
 #[derive(Debug, Serialize)]
@@ -60,6 +65,12 @@ struct BibleGraphRootsCommandResponse {
 struct ScriptDocumentCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<ScriptDocumentProjection>,
+}
+
+#[derive(Debug, Serialize)]
+struct TimelineCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<TimelineRenderProjection>,
 }
 
 async fn set_object_field(
@@ -167,6 +178,28 @@ async fn set_script_lock(
         .map_err(|e| ApiError::internal(format!("script lock command task failed: {e}")))??;
 
     let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+    crate::error::json_value(response)
+}
+
+async fn set_timeline_node_range(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SetTimelineNodeRangeCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = timeline_command::apply_set_timeline_node_range(project, &command)
+            .map_err(map_timeline_command_error)?;
+        TimelineCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    state.trigger_save();
     crate::error::json_value(response)
 }
 
@@ -325,6 +358,12 @@ fn map_script_document_error(error: ScriptDocumentCommandError) -> ApiError {
     match error {
         ScriptDocumentCommandError::InvalidCommand(message) => ApiError::bad_request(message),
         ScriptDocumentCommandError::Store(error) => map_history_error(error),
+    }
+}
+
+fn map_timeline_command_error(error: TimelineCommandError) -> ApiError {
+    match error {
+        TimelineCommandError::Core(error) => ApiError::bad_request(error.to_string()),
     }
 }
 

@@ -1,6 +1,7 @@
 mod bible_graph;
 mod bible_graph_defaults;
 mod script_document;
+mod timeline_command;
 mod timeline_render;
 
 use serde::{Deserialize, Serialize};
@@ -29,6 +30,7 @@ pub use script_document::{
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
     SetScriptLockCommand,
 };
+pub use timeline_command::SetTimelineNodeRangeCommand;
 pub use timeline_render::{
     TimelineRenderClip, TimelineRenderProjection, TimelineRenderRelationship, TimelineRenderTrack,
 };

@@ -486,6 +486,77 @@ async fn script_lock_command_rejects_missing_span() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn timeline_node_range_command_returns_timeline_render_projection() {
+    let path = temp_db_path("sets-timeline-node-range");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node_id = project.timeline.nodes[0].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = timeline_node_range_command_body(node_id, 1_000, 2_000);
+
+    let response = app
+        .oneshot(timeline_node_range_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(value["projection"]["version"], 1);
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    let clip = clips
+        .iter()
+        .find(|clip| clip["node_id"] == node_id.0.to_string())
+        .expect("updated node clip");
+    assert_eq!(clip["start_ms"], 1_000);
+    assert_eq!(clip["end_ms"], 2_000);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn timeline_node_range_command_rejects_invalid_range() {
+    let path = temp_db_path("rejects-invalid-timeline-range");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node_id = project.timeline.nodes[0].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = timeline_node_range_command_body(node_id, 2_000, 1_000);
+
+    let response = app
+        .oneshot(timeline_node_range_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn timeline_node_range_command_requires_loaded_project() {
+    let app = router().with_state(AppState::new().await);
+    let body = timeline_node_range_command_body(
+        eidetic_core::timeline::node::NodeId(uuid::Uuid::new_v4()),
+        1_000,
+        2_000,
+    );
+
+    let response = app
+        .oneshot(timeline_node_range_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
 fn command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -544,6 +615,15 @@ fn script_lock_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
         .uri("/commands/script/lock")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn timeline_node_range_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/node-range")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -688,6 +768,21 @@ fn script_lock_command_body(reason: &str) -> serde_json::Value {
             "lock_id": ScriptLockId::new("script.lock.action-1").unwrap(),
             "span_id": ScriptSpanId::new("script.block.action-1.span.main").unwrap(),
             "reason": reason,
+        }
+    })
+}
+
+fn timeline_node_range_command_body(
+    node_id: eidetic_core::timeline::node::NodeId,
+    start_ms: u64,
+    end_ms: u64,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "node_id": node_id,
+            "start_ms": start_ms,
+            "end_ms": end_ms,
         }
     })
 }

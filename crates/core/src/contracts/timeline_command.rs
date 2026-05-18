@@ -1,0 +1,10 @@
+use serde::{Deserialize, Serialize};
+
+use crate::timeline::node::NodeId;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SetTimelineNodeRangeCommand {
+    pub node_id: NodeId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+}
