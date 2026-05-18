@@ -128,6 +128,7 @@ Completed slices:
 - `feat(ui): add object field projection helper` added a read-only frontend helper for focused object-field projection fetches without mutating stores.
 - `refactor(server): share projection route helpers` centralized active project path lookup and history error mapping across command and projection routes.
 - `feat(ui): add object field projection store` added a focused projection cache/action layer that reads and writes through backend projection APIs without mutating broad bible entity state optimistically.
+- `feat(core): add bible graph contracts` added canonical story-bible root nodes, typed graph node/part/field/edge contracts, and a node-detail projection shape for persistence and UI slices to share.
 
 Discovered issues:
 

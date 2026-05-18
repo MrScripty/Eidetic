@@ -7,6 +7,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | File/Folder | Description |
 |-------------|-------------|
 | `mod.rs` | Public contract types, validated IDs, typed values, change history records, and projection envelopes. |
+| `bible_graph.rs` | Canonical story-bible graph contracts, expected root nodes, typed graph parts/fields/edges, and node-detail projection shapes. |
 
 ## Problem
 The new architecture needs stable types for backend-owned commands, event history, sparse object revisions, and read projections before persistence, routes, Svelte, or Bevy can implement their slices safely.
@@ -17,7 +18,7 @@ The new architecture needs stable types for backend-owned commands, event histor
 - Canonical queryable facts must remain typed instead of hidden inside arbitrary JSON.
 
 ## Decision
-Start with a small core contract module that owns IDs, object kinds, field values, generic field-update commands, change events, object revisions, and projection envelopes. Later slices can add domain-specific command/projection payloads without changing runtime infrastructure first.
+Start with a small core contract module that owns IDs, object kinds, field values, generic field-update commands, change events, object revisions, projection envelopes, and the first story-bible graph read models. Later slices can add domain-specific command/projection payloads without changing runtime infrastructure first.
 
 ## Alternatives Rejected
 - Defining contracts in server routes: rejected because route-owned contracts would couple persistence, UI, and Bevy to HTTP handlers.
@@ -27,11 +28,13 @@ Start with a small core contract module that owns IDs, object kinds, field value
 - Contracts remain deterministic and host-agnostic.
 - Long-lived boundary types have explicit serde shapes.
 - Object revisions describe field-level deltas and do not require whole-object snapshots.
+- Canonical bible roots are system-owned graph nodes, not enum-only branches in application logic.
 
 ## Revisit Triggers
 - Contracts become public SDK or binding surface.
 - A persistence slice needs additional field value types.
 - Projection envelopes need cross-process delivery metadata beyond version and change event.
+- Bible graph schemas require richer typed field constraints than the current field value primitives.
 
 ## Dependencies
 **Internal:** None.

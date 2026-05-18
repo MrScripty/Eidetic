@@ -1,5 +1,14 @@
+mod bible_graph;
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+pub use bible_graph::{
+    BibleGraphContractError, BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphField,
+    BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeId, BibleGraphPart,
+    BibleGraphPartId, BibleGraphPartKey, BibleGraphPartProjection, BibleGraphSchemaKey,
+    BibleNodeDetailProjection, CanonicalBibleRoot, canonical_bible_root_nodes,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct CommandId(pub Uuid);
