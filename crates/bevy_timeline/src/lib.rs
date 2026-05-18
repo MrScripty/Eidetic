@@ -1,6 +1,7 @@
 use bevy::prelude::{App, Resource};
 use eidetic_core::contracts::TimelineRenderProjection;
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::track::TrackId;
 use serde::Serialize;
 use thiserror::Error;
 
@@ -26,6 +27,8 @@ pub enum TimelineRendererError {
     MissingProjection,
     #[error("timeline projection does not contain node {node_id:?}")]
     UnknownNode { node_id: NodeId },
+    #[error("timeline projection has no clip on track {track_id:?} at {time_ms}ms")]
+    NoClipAtTime { track_id: TrackId, time_ms: u64 },
 }
 
 #[derive(Resource, Default)]
@@ -93,6 +96,44 @@ impl TimelineRendererApp {
         if !has_node {
             return Err(TimelineRendererError::UnknownNode { node_id });
         }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineRendererCommandQueue>()
+            .commands
+            .push(TimelineRendererCommand::SelectNode { node_id });
+        Ok(())
+    }
+
+    pub fn hit_test_clip_at_time(
+        &self,
+        track_id: TrackId,
+        time_ms: u64,
+    ) -> Result<Option<NodeId>, TimelineRendererError> {
+        let state = self.app.world().resource::<TimelineRenderState>();
+        let projection = state
+            .projection
+            .as_ref()
+            .ok_or(TimelineRendererError::MissingProjection)?;
+
+        Ok(projection
+            .clips
+            .iter()
+            .filter(|clip| {
+                clip.track_id == track_id && clip.start_ms <= time_ms && time_ms < clip.end_ms
+            })
+            .max_by_key(|clip| (clip.sort_order, clip.start_ms))
+            .map(|clip| clip.node_id))
+    }
+
+    pub fn select_clip_at_time(
+        &mut self,
+        track_id: TrackId,
+        time_ms: u64,
+    ) -> Result<(), TimelineRendererError> {
+        let node_id = self
+            .hit_test_clip_at_time(track_id, time_ms)?
+            .ok_or(TimelineRendererError::NoClipAtTime { track_id, time_ms })?;
 
         self.app
             .world_mut()
@@ -183,8 +224,53 @@ mod tests {
         assert!(renderer.drain_commands().is_empty());
     }
 
+    #[test]
+    fn renderer_app_hit_tests_and_selects_clip_by_track_and_time() {
+        let node_id = NodeId::new();
+        let track_id = TrackId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_clip(node_id, track_id, 1_000, 4_000));
+
+        assert_eq!(
+            renderer.hit_test_clip_at_time(track_id, 2_000),
+            Ok(Some(node_id))
+        );
+        assert_eq!(renderer.select_clip_at_time(track_id, 2_000), Ok(()));
+        assert_eq!(
+            renderer.drain_commands(),
+            vec![TimelineRendererCommand::SelectNode { node_id }]
+        );
+    }
+
+    #[test]
+    fn renderer_app_hit_test_misses_empty_time() {
+        let node_id = NodeId::new();
+        let track_id = TrackId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_clip(node_id, track_id, 1_000, 4_000));
+
+        assert_eq!(renderer.hit_test_clip_at_time(track_id, 4_000), Ok(None));
+        assert_eq!(
+            renderer.select_clip_at_time(track_id, 4_000),
+            Err(TimelineRendererError::NoClipAtTime {
+                track_id,
+                time_ms: 4_000
+            })
+        );
+        assert!(renderer.drain_commands().is_empty());
+    }
+
     fn projection_with_node(node_id: NodeId) -> TimelineRenderProjection {
         let track_id = TrackId::new();
+        projection_with_clip(node_id, track_id, 1_000, 4_000)
+    }
+
+    fn projection_with_clip(
+        node_id: NodeId,
+        track_id: TrackId,
+        start_ms: u64,
+        end_ms: u64,
+    ) -> TimelineRenderProjection {
         TimelineRenderProjection {
             total_duration_ms: 10_000,
             tracks: vec![TimelineRenderTrack {
@@ -200,8 +286,8 @@ mod tests {
                 track_id,
                 level: StoryLevel::Scene,
                 name: "Beach argument".to_string(),
-                start_ms: 1_000,
-                end_ms: 4_000,
+                start_ms,
+                end_ms,
                 sort_order: 10,
                 locked: false,
                 content_status: ContentStatus::NotesOnly,

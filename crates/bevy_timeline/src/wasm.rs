@@ -1,5 +1,6 @@
 use eidetic_core::contracts::TimelineRenderProjection;
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::track::TrackId;
 use wasm_bindgen::prelude::*;
 
 use crate::TimelineRendererApp;
@@ -32,6 +33,16 @@ impl WasmTimelineRenderer {
         );
         self.renderer
             .select_node(node_id)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+
+    pub fn select_clip_at_time(&mut self, track_id: String, time_ms: u64) -> Result<(), JsValue> {
+        let track_id = TrackId(
+            uuid::Uuid::parse_str(&track_id)
+                .map_err(|error| JsValue::from_str(&format!("invalid track id: {error}")))?,
+        );
+        self.renderer
+            .select_clip_at_time(track_id, time_ms)
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
