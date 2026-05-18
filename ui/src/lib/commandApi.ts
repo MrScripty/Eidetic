@@ -4,8 +4,8 @@ import type {
   ApplyTimelineChildrenCommand,
   CommandEnvelope,
   CreateBibleGraphNodeCommand,
-  CreateTimelineNodeCommand,
   CreateTimelineRelationshipCommand,
+  CreateTimelineNodeCommand,
   DeleteTimelineNodeCommand,
   DeleteTimelineRelationshipCommand,
   EnsureCanonicalBibleRootsCommand,
@@ -23,6 +23,12 @@ import type {
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
 } from './types.js';
+import type {
+  CreateStoryArcCommand,
+  DeleteStoryArcCommand,
+  SetStoryArcMetadataCommand,
+  StoryArcCommandResponse,
+} from './storyArcTypes.js';
 
 const BASE = '/api';
 
@@ -159,6 +165,51 @@ export function setScriptLock(
   };
 
   return request('/commands/script/lock', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function createStoryArc(
+  payload: CreateStoryArcCommand,
+  commandId = createCommandId(),
+): Promise<StoryArcCommandResponse> {
+  const command: CommandEnvelope<CreateStoryArcCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/story/create-arc', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setStoryArcMetadata(
+  payload: SetStoryArcMetadataCommand,
+  commandId = createCommandId(),
+): Promise<StoryArcCommandResponse> {
+  const command: CommandEnvelope<SetStoryArcMetadataCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/story/update-arc', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function deleteStoryArc(
+  payload: DeleteStoryArcCommand,
+  commandId = createCommandId(),
+): Promise<StoryArcCommandResponse> {
+  const command: CommandEnvelope<DeleteStoryArcCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/story/delete-arc', {
     method: 'POST',
     body: JSON.stringify(command),
   });

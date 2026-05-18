@@ -3,8 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   applyTimelineChildren,
   createBibleGraphNode,
+  createStoryArc,
   createTimelineNode,
   createTimelineRelationship,
+  deleteStoryArc,
   deleteTimelineNode,
   deleteTimelineRelationship,
   ensureCanonicalBibleRoots,
@@ -12,6 +14,7 @@ import {
   setBibleGraphField,
   setBibleGraphSnapshotField,
   setObjectField,
+  setStoryArcMetadata,
   setTimelineNodeLock,
   setTimelineNodeNotes,
   setTimelineNodeRange,
@@ -168,6 +171,118 @@ describe('command api helpers', () => {
             node_id: 'node.scene.beach',
             start_ms: 1_000,
             end_ms: 4_000,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends story arc commands and returns arc list projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          arcs: [
+            {
+              id: 'arc.mystery',
+              parent_arc_id: null,
+              name: 'Mystery',
+              description: 'Central investigation',
+              arc_type: 'APlot',
+              color: { r: 1, g: 2, b: 3 },
+            },
+          ],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(response), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createStoryArc(
+        {
+          arc_id: 'arc.mystery',
+          parent_arc_id: null,
+          name: 'Mystery',
+          description: 'Central investigation',
+          arc_type: 'APlot',
+          color: { r: 1, g: 2, b: 3 },
+        },
+        'command-story-1',
+      ),
+    ).resolves.toEqual(response);
+
+    await expect(
+      setStoryArcMetadata(
+        {
+          arc_id: 'arc.mystery',
+          name: 'Mystery revised',
+        },
+        'command-story-2',
+      ),
+    ).resolves.toEqual(response);
+
+    await expect(
+      deleteStoryArc(
+        {
+          arc_id: 'arc.mystery',
+        },
+        'command-story-3',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/commands/story/create-arc',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-story-1',
+          payload: {
+            arc_id: 'arc.mystery',
+            parent_arc_id: null,
+            name: 'Mystery',
+            description: 'Central investigation',
+            arc_type: 'APlot',
+            color: { r: 1, g: 2, b: 3 },
+          },
+        }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/commands/story/update-arc',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-story-2',
+          payload: {
+            arc_id: 'arc.mystery',
+            name: 'Mystery revised',
+          },
+        }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      '/api/commands/story/delete-arc',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-story-3',
+          payload: {
+            arc_id: 'arc.mystery',
           },
         }),
       }),

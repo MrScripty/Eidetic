@@ -5,6 +5,7 @@ import {
   getBibleGraphNodeProjection,
   getBibleGraphSchemaListProjection,
   getObjectFieldProjection,
+  getStoryArcListProjection,
   getTimelineRenderProjection,
 } from './projectionApi.js';
 
@@ -240,6 +241,38 @@ describe('projection api helpers', () => {
     await expect(getTimelineRenderProjection()).resolves.toEqual(response);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/projections/timeline/render', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+  });
+
+  it('fetches story arc list projections without query params', async () => {
+    const response = {
+      version: 1,
+      payload: {
+        arcs: [
+          {
+            id: 'arc.mystery',
+            parent_arc_id: null,
+            name: 'Mystery',
+            description: 'Central investigation',
+            arc_type: 'APlot',
+            color: { r: 1, g: 2, b: 3 },
+          },
+        ],
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getStoryArcListProjection()).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/projections/story/arcs', {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });

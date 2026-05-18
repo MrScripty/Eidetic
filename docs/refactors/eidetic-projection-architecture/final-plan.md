@@ -266,6 +266,7 @@ Completed slices:
 - `refactor(server): remove legacy project load migrations` removed server-side JSON project loading, JSON sibling auto-migration, v1 SQLite migration helpers, and JSON project discovery so project loading accepts only the current SQLite schema.
 - `feat(story): add arc command projection bridge` added story arc command/projection contracts and a backend applicator that returns arc-list projections while still updating `Project.arcs` for the current UI bridge.
 - `refactor(story): route legacy arc mutations through commands` moved the existing `/arcs` create/update/delete endpoints onto the story arc applicator so the remaining UI bridge no longer owns independent arc mutation logic.
+- `feat(ui): add story arc command projection helpers` added focused frontend DTOs plus command/projection API helpers for backend-owned story arc mutations and arc-list reads without switching UI callers yet.
 
 Discovered issues:
 
