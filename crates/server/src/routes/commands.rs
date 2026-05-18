@@ -1,17 +1,14 @@
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
-use eidetic_core::contracts::{
-    ApplyTimelineChildrenCommand, BibleNodeDetailProjection, CommandEnvelope,
-    CreateBibleGraphNodeCommand, CreateStoryArcCommand, CreateTimelineNodeCommand,
-    CreateTimelineRelationshipCommand, DeleteStoryArcCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ProjectionEnvelope, ScriptDocumentProjection,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
-    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand, StoryArcListProjection, TimelineRenderProjection,
-};
 use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
+use eidetic_core::contracts::{
+    BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, CreateStoryArcCommand,
+    DeleteStoryArcCommand, ProjectionEnvelope, ScriptDocumentProjection, SetBibleGraphEdgeCommand,
+    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand,
+    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection,
+};
 use serde::Serialize;
 
 use crate::bible_graph_command::{self, BibleGraphCommandError};
@@ -22,9 +19,6 @@ use crate::revision_projection::ObjectFieldProjection;
 use crate::script_document_command::{self, ScriptDocumentCommandError};
 use crate::state::{AppState, ServerEvent};
 use crate::story_arc_command::{self, StoryArcCommandError};
-use crate::timeline_command::{self, TimelineCommandError};
-use crate::validation;
-use crate::ydoc::DocCommand;
 
 use super::support::{active_project_path, map_history_error};
 
@@ -47,30 +41,7 @@ pub fn router() -> Router<AppState> {
         .route("/commands/story/create-arc", post(create_story_arc))
         .route("/commands/story/update-arc", post(update_story_arc))
         .route("/commands/story/delete-arc", post(delete_story_arc))
-        .route(
-            "/commands/timeline/node-range",
-            post(set_timeline_node_range),
-        )
-        .route("/commands/timeline/create-node", post(create_timeline_node))
-        .route(
-            "/commands/timeline/create-relationship",
-            post(create_timeline_relationship),
-        )
-        .route(
-            "/commands/timeline/delete-relationship",
-            post(delete_timeline_relationship),
-        )
-        .route(
-            "/commands/timeline/apply-children",
-            post(apply_timeline_children),
-        )
-        .route("/commands/timeline/split-node", post(split_timeline_node))
-        .route("/commands/timeline/node-lock", post(set_timeline_node_lock))
-        .route(
-            "/commands/timeline/node-notes",
-            post(set_timeline_node_notes),
-        )
-        .route("/commands/timeline/delete-node", post(delete_timeline_node))
+        .merge(super::commands_timeline::router())
 }
 
 #[derive(Debug, Serialize)]
@@ -101,12 +72,6 @@ struct ScriptDocumentCommandResponse {
 struct StoryArcCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<StoryArcListProjection>,
-}
-
-#[derive(Debug, Serialize)]
-struct TimelineCommandResponse {
-    outcome: RecordChangeOutcome,
-    projection: ProjectionEnvelope<TimelineRenderProjection>,
 }
 
 async fn set_object_field(
@@ -325,371 +290,6 @@ async fn delete_story_arc(
     crate::error::json_value(response)
 }
 
-async fn set_timeline_node_range(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<SetTimelineNodeRangeCommand>>,
-) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_set_timeline_node_range_history(
-            &mut conn, project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_set_timeline_node_range(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn create_timeline_node(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<CreateTimelineNodeCommand>>,
-) -> ApiJson {
-    validation::validate_name(&command.payload.name, "node name")?;
-    let path = active_project_path(&state)?;
-    let created_node_id = command.payload.node_id;
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome =
-            timeline_command::record_create_timeline_node_history(&mut conn, project, &command, 0)
-                .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_create_timeline_node(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
-            node_id: created_node_id,
-        });
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn apply_timeline_children(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<ApplyTimelineChildrenCommand>>,
-) -> ApiJson {
-    for child in &command.payload.children {
-        validation::validate_name(&child.name, "child node name")?;
-    }
-    let path = active_project_path(&state)?;
-    let children = command.payload.children.clone();
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_apply_timeline_children_history(
-            &mut conn, project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_timeline_children(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        for child in children {
-            let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
-                node_id: child.node_id,
-            });
-            if !child.outline.is_empty() {
-                let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
-                    node_id: child.node_id,
-                    field: crate::ydoc::ContentField::Notes,
-                    text: child.outline,
-                    author: "human:command".into(),
-                });
-            }
-        }
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn create_timeline_relationship(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<CreateTimelineRelationshipCommand>>,
-) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_create_timeline_relationship_history(
-            &mut conn, project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_create_timeline_relationship(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn delete_timeline_relationship(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<DeleteTimelineRelationshipCommand>>,
-) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_delete_timeline_relationship_history(
-            &mut conn, project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_delete_timeline_relationship(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn split_timeline_node(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<SplitTimelineNodeCommand>>,
-) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome =
-            timeline_command::record_split_timeline_node_history(&mut conn, project, &command, 0)
-                .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_split_timeline_node(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn set_timeline_node_lock(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<SetTimelineNodeLockCommand>>,
-) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_set_timeline_node_lock_history(
-            &mut conn, project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_set_timeline_node_lock(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::NodeUpdated {
-            node_id: command.payload.node_id.0,
-        });
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn set_timeline_node_notes(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<SetTimelineNodeNotesCommand>>,
-) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let node_id = command.payload.node_id;
-    let notes = command.payload.notes.clone();
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_set_timeline_node_notes_history(
-            &mut conn, project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_set_timeline_node_notes(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
-            node_id,
-            field: crate::ydoc::ContentField::Notes,
-            text: notes,
-            author: "human:command".into(),
-        });
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state
-            .events_tx
-            .send(ServerEvent::NodeUpdated { node_id: node_id.0 });
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
-async fn delete_timeline_node(
-    State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<DeleteTimelineNodeCommand>>,
-) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let removed_node_id = command.payload.node_id;
-    let response = {
-        let mut guard = state.project.lock();
-        let Some(project) = guard.as_mut() else {
-            return Err(ApiError::no_project());
-        };
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome =
-            timeline_command::record_delete_timeline_node_history(&mut conn, project, &command, 0)
-                .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
-            timeline_command::apply_delete_timeline_node(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.doc_tx.try_send(DocCommand::RemoveNode {
-            node_id: removed_node_id,
-        });
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
-}
-
 fn apply_command_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<SetObjectFieldCommand>,
@@ -853,13 +453,6 @@ fn map_story_arc_command_error(error: StoryArcCommandError) -> ApiError {
         StoryArcCommandError::InvalidCommand(message) => ApiError::bad_request(message),
         StoryArcCommandError::NotFound(message) => ApiError::not_found(message),
         StoryArcCommandError::History(error) => map_history_error(error),
-    }
-}
-
-fn map_timeline_command_error(error: TimelineCommandError) -> ApiError {
-    match error {
-        TimelineCommandError::Core(error) => ApiError::bad_request(error.to_string()),
-        TimelineCommandError::History(error) => map_history_error(error),
     }
 }
 

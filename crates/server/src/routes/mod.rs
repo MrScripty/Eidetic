@@ -1,5 +1,6 @@
 mod ai;
 mod commands;
+mod commands_timeline;
 mod diffusion;
 mod export;
 mod models;
