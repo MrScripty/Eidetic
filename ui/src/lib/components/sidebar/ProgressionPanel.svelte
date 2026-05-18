@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ArcProgression } from '$lib/types.js';
+  import type { ArcProgression } from '$lib/storyArcTypes.js';
   import { getStoryArcProgressionProjection } from '$lib/projectionApi.js';
 
   let progressions = $state<ArcProgression[]>([]);

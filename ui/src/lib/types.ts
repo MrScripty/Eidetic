@@ -99,24 +99,14 @@ export interface StructureSegment {
 
 export type SegmentType = 'ColdOpen' | 'MainTitles' | 'Act' | 'CommercialBreak' | 'Tag';
 
-// --- Story entities ---
-
-export interface StoryArc {
-  id: ArcId;
-  name: string;
-  description: string;
-  arc_type: ArcType;
-  color: Color;
-  parent_arc_id: ArcId | null;
-}
-
-export type ArcType = 'APlot' | 'BPlot' | 'CRunner' | { Custom: string };
-
-export interface Color {
-  r: number;
-  g: number;
-  b: number;
-}
+export type {
+  ArcProgression,
+  ArcType,
+  Color,
+  ProgressionIssue,
+  Severity,
+  StoryArc,
+} from './storyArcTypes.js';
 
 // --- Projection command contracts ---
 
@@ -339,26 +329,6 @@ export interface AiStatus {
   error?: string;
 }
 
-// --- Arc Progression ---
-
-export type Severity = 'Warning' | 'Error';
-
-export interface ProgressionIssue {
-  severity: Severity;
-  message: string;
-}
-
-export interface ArcProgression {
-  arc_id: string;
-  arc_name: string;
-  node_count: number;
-  has_setup: boolean;
-  has_resolution: boolean;
-  coverage_percent: number;
-  longest_gap_ms: number;
-  issues: ProgressionIssue[];
-}
-
 // --- WebSocket Messages ---
 
 export type ServerMessage =
@@ -408,12 +378,7 @@ export interface ModelListResponse {
 
 // --- Helpers ---
 
-export function colorToHex(c: Color): string {
-  const r = c.r.toString(16).padStart(2, '0');
-  const g = c.g.toString(16).padStart(2, '0');
-  const b = c.b.toString(16).padStart(2, '0');
-  return `#${r}${g}${b}`;
-}
+export { colorToHex } from './storyArcTypes.js';
 
 export function formatTime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { StoryArc } from '$lib/types.js';
+  import type { StoryArc } from '$lib/storyArcTypes.js';
   import {
     applyDeleteStoryArcCommand,
     applySetStoryArcMetadataCommand,

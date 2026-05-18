@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { colorToHex } from '$lib/types.js';
+  import { colorToHex } from '$lib/storyArcTypes.js';
   import {
     applyCreateStoryArcCommand,
     storyArcProjectionState,

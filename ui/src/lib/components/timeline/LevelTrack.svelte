@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Track, StoryNode, TimelineGap } from '$lib/types.js';
-  import { TIMELINE, colorToHex } from '$lib/types.js';
+  import { colorToHex } from '$lib/storyArcTypes.js';
+  import { TIMELINE } from '$lib/types.js';
   import {
     xToTime,
     timeToX,
