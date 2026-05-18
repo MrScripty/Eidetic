@@ -113,6 +113,21 @@ pub(crate) fn load_arcs(conn: &Connection) -> Result<Vec<StoryArc>, HistoryStore
     Ok(arcs)
 }
 
+pub(crate) fn load_arc(
+    conn: &Connection,
+    arc_id: &ArcId,
+) -> Result<Option<StoryArc>, HistoryStoreError> {
+    conn.query_row(
+        "SELECT id, parent_arc_id, name, description, arc_type, color_r, color_g, color_b
+         FROM arcs
+         WHERE id = ?1",
+        [arc_id.0.to_string()],
+        row_to_arc,
+    )
+    .optional()
+    .map_err(Into::into)
+}
+
 pub(crate) fn load_arc_list_projection_envelope(
     conn: &Connection,
 ) -> Result<ProjectionEnvelope<StoryArcListProjection>, HistoryStoreError> {

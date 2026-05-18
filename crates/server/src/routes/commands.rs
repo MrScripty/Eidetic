@@ -196,15 +196,11 @@ async fn create_story_arc(
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         story_arc_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome =
-            story_arc_command::record_create_story_arc_history(&mut conn, project, &command, 0)
-                .map_err(map_story_arc_command_error)?;
-        if outcome == RecordChangeOutcome::Recorded {
-            story_arc_command::apply_create_story_arc(project, &command)
-                .map_err(map_story_arc_command_error)?;
-        }
+        let outcome = story_arc_command::record_create_story_arc_history(&mut conn, &command, 0)
+            .map_err(map_story_arc_command_error)?;
         let projection =
             story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
+        project.arcs = projection.payload.arcs.clone();
         StoryArcCommandResponse {
             outcome,
             projection,
@@ -230,16 +226,12 @@ async fn update_story_arc(
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         story_arc_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = story_arc_command::record_set_story_arc_metadata_history(
-            &mut conn, project, &command, 0,
-        )
-        .map_err(map_story_arc_command_error)?;
-        if outcome == RecordChangeOutcome::Recorded {
-            story_arc_command::apply_set_story_arc_metadata(project, &command)
+        let outcome =
+            story_arc_command::record_set_story_arc_metadata_history(&mut conn, &command, 0)
                 .map_err(map_story_arc_command_error)?;
-        }
         let projection =
             story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
+        project.arcs = projection.payload.arcs.clone();
         StoryArcCommandResponse {
             outcome,
             projection,
@@ -265,16 +257,11 @@ async fn delete_story_arc(
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| ApiError::internal(e.to_string()))?;
         story_arc_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome =
-            story_arc_command::record_delete_story_arc_history(&mut conn, project, &command, 0)
-                .map_err(map_story_arc_command_error)?;
-        if outcome == RecordChangeOutcome::Recorded {
-            let (_deleted, _projection) =
-                story_arc_command::apply_delete_story_arc(project, &command)
-                    .map_err(map_story_arc_command_error)?;
-        }
+        let outcome = story_arc_command::record_delete_story_arc_history(&mut conn, &command, 0)
+            .map_err(map_story_arc_command_error)?;
         let projection =
             story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)?;
+        project.arcs = projection.payload.arcs.clone();
         StoryArcCommandResponse {
             outcome,
             projection,

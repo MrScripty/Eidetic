@@ -153,7 +153,7 @@ impl Default for AiConfig {
 /// Shared application state, wrapped in an Arc for use as axum state.
 #[derive(Clone)]
 pub struct AppState {
-    /// Structural data — single source of truth for hierarchy, timing, arcs.
+    /// Loaded project mirror for structural data that has not moved to SQLite stores yet.
     pub project: Arc<Mutex<Option<Project>>>,
     pub events_tx: broadcast::Sender<ServerEvent>,
     /// Channel to the Y.Doc manager task (single source of truth for text content).

@@ -213,6 +213,42 @@ async fn story_arc_create_command_replays_duplicate_command() {
 }
 
 #[tokio::test]
+async fn story_arc_create_command_rejects_existing_sqlite_arc_when_project_mirror_is_stale() {
+    let path = temp_db_path("story-arc-create-db-conflict");
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("Commands Test");
+    let existing_arc_id = project.arcs[0].id;
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed project database");
+    project.arcs.clear();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = serde_json::to_value(CommandEnvelope {
+        id: CommandId::new(),
+        payload: CreateStoryArcCommand {
+            arc_id: existing_arc_id,
+            parent_arc_id: None,
+            name: "Duplicate".to_string(),
+            description: String::new(),
+            arc_type: ArcType::APlot,
+            color: Color::A_PLOT,
+        },
+    })
+    .unwrap();
+
+    let response = app
+        .oneshot(story_arc_create_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn story_arc_create_command_rejects_conflicting_duplicate_command() {
     let path = temp_db_path("story-arc-create-conflict");
     let app = app_with_project_path(path.clone()).await;
