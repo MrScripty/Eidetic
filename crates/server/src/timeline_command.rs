@@ -2,7 +2,8 @@ use eidetic_core::contracts::{
     ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
     CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
+    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
@@ -63,6 +64,24 @@ pub(crate) fn apply_set_timeline_node_lock(
         .node_mut(command.payload.node_id)
         .map_err(TimelineCommandError::Core)?;
     node.locked = command.payload.locked;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_set_timeline_node_notes(
+    project: &mut Project,
+    command: &CommandEnvelope<SetTimelineNodeNotesCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    let node = project
+        .timeline
+        .node_mut(command.payload.node_id)
+        .map_err(TimelineCommandError::Core)?;
+    node.content.notes = command.payload.notes.clone();
+    if !node.content.notes.is_empty() && node.content.status == ContentStatus::Empty {
+        node.content.status = ContentStatus::NotesOnly;
+    }
 
     Ok(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
@@ -354,6 +373,48 @@ mod tests {
         };
 
         assert!(apply_set_timeline_node_lock(&mut project, &command).is_err());
+    }
+
+    #[test]
+    fn set_timeline_node_notes_updates_projection_status() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let node_id = project.timeline.nodes[0].id;
+        project.timeline.node_mut(node_id).unwrap().content.status = ContentStatus::Empty;
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: SetTimelineNodeNotesCommand {
+                node_id,
+                notes: "New outline".to_string(),
+            },
+        };
+
+        let projection = apply_set_timeline_node_notes(&mut project, &command).unwrap();
+
+        assert_eq!(
+            project.timeline.node(node_id).unwrap().content.notes,
+            "New outline"
+        );
+        let clip = projection
+            .payload
+            .clips
+            .iter()
+            .find(|clip| clip.node_id == node_id)
+            .expect("notes clip");
+        assert_eq!(clip.content_status, ContentStatus::NotesOnly);
+    }
+
+    #[test]
+    fn set_timeline_node_notes_rejects_unknown_node() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: SetTimelineNodeNotesCommand {
+                node_id: eidetic_core::timeline::node::NodeId::new(),
+                notes: "New outline".to_string(),
+            },
+        };
+
+        assert!(apply_set_timeline_node_notes(&mut project, &command).is_err());
     }
 
     #[test]

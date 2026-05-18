@@ -925,6 +925,59 @@ async fn timeline_node_lock_command_rejects_unknown_node() {
 }
 
 #[tokio::test]
+async fn timeline_node_notes_command_returns_timeline_render_projection() {
+    let path = temp_db_path("sets-timeline-node-notes");
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    project.timeline.node_mut(node.id).unwrap().content.status =
+        eidetic_core::timeline::node::ContentStatus::Empty;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = timeline_node_notes_command_body(node.id, "New outline");
+
+    let response = app
+        .oneshot(timeline_node_notes_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    let clip = clips
+        .iter()
+        .find(|clip| clip["node_id"] == node.id.0.to_string())
+        .expect("notes clip");
+    assert_eq!(clip["content_status"], "NotesOnly");
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn timeline_node_notes_command_rejects_unknown_node() {
+    let path = temp_db_path("rejects-unknown-timeline-notes");
+    let state = AppState::new().await;
+    *state.project.lock() = Some(Template::MultiCam.build_project("Commands Test"));
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body =
+        timeline_node_notes_command_body(eidetic_core::timeline::node::NodeId::new(), "Notes");
+
+    let response = app
+        .oneshot(timeline_node_notes_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn delete_timeline_node_command_returns_timeline_render_projection() {
     let path = temp_db_path("deletes-timeline-node");
     let state = AppState::new().await;
@@ -1097,6 +1150,15 @@ fn timeline_node_lock_command_request(body: serde_json::Value) -> Request<Body> 
     Request::builder()
         .method("POST")
         .uri("/commands/timeline/node-lock")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn timeline_node_notes_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/timeline/node-notes")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -1369,6 +1431,19 @@ fn timeline_node_lock_command_body(
         "payload": {
             "node_id": node_id,
             "locked": locked,
+        }
+    })
+}
+
+fn timeline_node_notes_command_body(
+    node_id: eidetic_core::timeline::node::NodeId,
+    notes: &str,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "node_id": node_id,
+            "notes": notes,
         }
     })
 }

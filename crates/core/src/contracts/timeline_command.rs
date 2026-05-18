@@ -28,6 +28,12 @@ pub struct SetTimelineNodeLockCommand {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SetTimelineNodeNotesCommand {
+    pub node_id: NodeId,
+    pub notes: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CreateTimelineNodeCommand {
     pub node_id: NodeId,
     pub parent_id: Option<NodeId>,

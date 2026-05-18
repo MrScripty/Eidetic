@@ -235,6 +235,7 @@ Completed slices:
 - `feat(ui): cache timeline node lock projections` routed node lock command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route node locking through commands` moved BeatEditor lock toggles onto backend timeline node lock commands instead of legacy node lock/unlock routes.
 - `refactor(script): remove legacy node lock routes` removed unused frontend lock/unlock helpers and legacy node lock/unlock routes after lock state moved to timeline commands.
+- `feat(server): add timeline node notes command` added a backend command route for setting timeline node notes, mirroring notes into Y.Doc, and returning updated timeline render projections.
 
 Discovered issues:
 

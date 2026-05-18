@@ -7,8 +7,8 @@ use eidetic_core::contracts::{
     DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ProjectionEnvelope,
     ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
     SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetTimelineNodeLockCommand, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand, TimelineRenderProjection,
+    SetScriptLockCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use serde::Serialize;
@@ -61,6 +61,10 @@ pub fn router() -> Router<AppState> {
         )
         .route("/commands/timeline/split-node", post(split_timeline_node))
         .route("/commands/timeline/node-lock", post(set_timeline_node_lock))
+        .route(
+            "/commands/timeline/node-notes",
+            post(set_timeline_node_notes),
+        )
         .route("/commands/timeline/delete-node", post(delete_timeline_node))
 }
 
@@ -380,6 +384,39 @@ async fn set_timeline_node_lock(
     let _ = state.events_tx.send(ServerEvent::NodeUpdated {
         node_id: command.payload.node_id.0,
     });
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn set_timeline_node_notes(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SetTimelineNodeNotesCommand>>,
+) -> ApiJson {
+    let node_id = command.payload.node_id;
+    let notes = command.payload.notes.clone();
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = timeline_command::apply_set_timeline_node_notes(project, &command)
+            .map_err(map_timeline_command_error)?;
+        TimelineCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+        node_id,
+        field: crate::ydoc::ContentField::Notes,
+        text: notes,
+        author: "human:command".into(),
+    });
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    let _ = state
+        .events_tx
+        .send(ServerEvent::NodeUpdated { node_id: node_id.0 });
     state.trigger_save();
     crate::error::json_value(response)
 }

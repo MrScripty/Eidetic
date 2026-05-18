@@ -33,8 +33,8 @@ pub use script_document::{
 pub use timeline_command::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineNodeCommand,
     CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand,
+    DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
 pub use timeline_render::{
     TimelineRenderClip, TimelineRenderProjection, TimelineRenderRelationship, TimelineRenderTrack,
