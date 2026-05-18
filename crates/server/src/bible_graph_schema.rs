@@ -67,6 +67,40 @@ CREATE INDEX IF NOT EXISTS idx_bible_graph_edges_from
     ON bible_graph_edges(from_node_id, sort_order, id);
 CREATE INDEX IF NOT EXISTS idx_bible_graph_edges_to
     ON bible_graph_edges(to_node_id, sort_order, id);
+
+CREATE TABLE IF NOT EXISTS bible_graph_snapshots (
+    id               TEXT PRIMARY KEY CHECK (id <> ''),
+    node_id          TEXT NOT NULL REFERENCES bible_graph_nodes(id),
+    at_ms            INTEGER NOT NULL,
+    label            TEXT NOT NULL CHECK (label <> ''),
+    sort_order       INTEGER NOT NULL,
+    created_event_id TEXT NOT NULL REFERENCES change_events(id),
+    updated_event_id TEXT NOT NULL REFERENCES change_events(id),
+    deleted_event_id TEXT REFERENCES change_events(id)
+);
+CREATE INDEX IF NOT EXISTS idx_bible_graph_snapshots_node_time
+    ON bible_graph_snapshots(node_id, at_ms, sort_order, id);
+
+CREATE TABLE IF NOT EXISTS bible_graph_snapshot_fields (
+    id               TEXT PRIMARY KEY CHECK (id <> ''),
+    snapshot_id      TEXT NOT NULL REFERENCES bible_graph_snapshots(id),
+    part_key         TEXT NOT NULL CHECK (part_key <> ''),
+    part_name        TEXT NOT NULL CHECK (part_name <> ''),
+    field_key        TEXT NOT NULL CHECK (field_key <> ''),
+    value_type       TEXT,
+    text_value       TEXT,
+    integer_value    INTEGER,
+    number_value     REAL,
+    bool_value       INTEGER CHECK (bool_value IS NULL OR bool_value IN (0, 1)),
+    ref_kind         TEXT,
+    ref_id           TEXT,
+    asset_ref        TEXT,
+    sort_order       INTEGER NOT NULL,
+    updated_event_id TEXT NOT NULL REFERENCES change_events(id),
+    deleted_event_id TEXT REFERENCES change_events(id)
+);
+CREATE INDEX IF NOT EXISTS idx_bible_graph_snapshot_fields_snapshot
+    ON bible_graph_snapshot_fields(snapshot_id, sort_order, part_key, field_key, id);
 "#;
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {

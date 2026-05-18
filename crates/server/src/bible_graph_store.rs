@@ -1,14 +1,15 @@
 use eidetic_core::contracts::{
     BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPartProjection,
     BibleGraphSchemaKey, BibleNodeDetailProjection, ChangeEventId, ObjectKind, ProjectionEnvelope,
-    ProjectionVersion, SetBibleGraphFieldCommand, canonical_bible_root_nodes,
-    default_part_projections_for_node,
+    ProjectionVersion, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    canonical_bible_root_nodes, default_part_projections_for_node,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
 use crate::bible_graph_edge_store;
 use crate::bible_graph_field_store;
 use crate::bible_graph_schema;
+use crate::bible_graph_snapshot_store;
 use crate::history_store::{self, HistoryStoreError};
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {
@@ -74,6 +75,14 @@ pub(crate) fn set_field_in_transaction(
     bible_graph_field_store::set_field_in_transaction(tx, command, event_id)
 }
 
+pub(crate) fn set_snapshot_field_in_transaction(
+    tx: &Transaction<'_>,
+    command: &SetBibleGraphSnapshotFieldCommand,
+    event_id: ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    bible_graph_snapshot_store::set_snapshot_field_in_transaction(tx, command, event_id)
+}
+
 pub(crate) fn missing_canonical_root_nodes(
     conn: &Connection,
 ) -> Result<Vec<BibleGraphNode>, HistoryStoreError> {
@@ -110,13 +119,14 @@ pub(crate) fn load_node_detail_projection(
 
     let incoming_edges = bible_graph_edge_store::load_incoming_edges(conn, node_id)?;
     let outgoing_edges = bible_graph_edge_store::load_outgoing_edges(conn, node_id)?;
+    let snapshots = bible_graph_snapshot_store::load_snapshot_projections(conn, node_id)?;
 
     Ok(Some(BibleNodeDetailProjection {
         node,
         parts,
         incoming_edges,
         outgoing_edges,
-        snapshots: Vec::new(),
+        snapshots,
     }))
 }
 
@@ -258,6 +268,7 @@ fn load_node_detail_revision_summary(
     let bible_node = encode_object_kind(&ObjectKind::BibleNode)?;
     let bible_part_field = encode_object_kind(&ObjectKind::BiblePartField)?;
     let bible_edge = encode_object_kind(&ObjectKind::BibleEdge)?;
+    let bible_snapshot = encode_object_kind(&ObjectKind::BibleSnapshot)?;
     let revision_count = conn.query_row(
         "SELECT COUNT(*)
          FROM object_revisions
@@ -278,12 +289,21 @@ fn load_node_detail_revision_summary(
                     FROM bible_graph_edges
                     WHERE from_node_id = ?2 OR to_node_id = ?2
                 )
+            )
+            OR (
+                object_kind = ?5
+                AND object_id IN (
+                    SELECT id
+                    FROM bible_graph_snapshots
+                    WHERE node_id = ?2
+                )
             )",
         params![
             bible_node.as_str(),
             node_id.as_str(),
             bible_part_field.as_str(),
             bible_edge.as_str(),
+            bible_snapshot.as_str(),
         ],
         |row| row.get::<_, i64>(0),
     )?;
@@ -309,9 +329,23 @@ fn load_node_detail_revision_summary(
                         WHERE from_node_id = ?2 OR to_node_id = ?2
                     )
                 )
+                OR (
+                    object_kind = ?5
+                    AND object_id IN (
+                        SELECT id
+                        FROM bible_graph_snapshots
+                        WHERE node_id = ?2
+                    )
+                )
              ORDER BY rowid DESC
              LIMIT 1",
-            params![bible_node, node_id.as_str(), bible_part_field, bible_edge],
+            params![
+                bible_node,
+                node_id.as_str(),
+                bible_part_field,
+                bible_edge,
+                bible_snapshot,
+            ],
             |row| row.get::<_, String>(0),
         )
         .optional()?

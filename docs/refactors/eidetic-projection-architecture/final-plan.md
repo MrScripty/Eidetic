@@ -160,6 +160,7 @@ Completed slices:
 - `refactor(ui): centralize bible graph category adapter` consolidated bible graph category lists, short labels, node names, and schema projection resolution so UI category presentation stays separate from backend-owned schema availability.
 - `refactor(server): share bible graph field value codec` extracted the SQLite `FieldValue` codec from graph field storage into a reusable backend module for upcoming node-scoped snapshot field persistence without changing existing graph-field behavior.
 - `feat(core): add bible graph snapshot contracts` added typed graph snapshot IDs, snapshot field DTOs, node-detail snapshot projections, and snapshot-field command contracts across Rust and TypeScript projection boundaries before persistence is introduced.
+- `feat(server): store bible graph snapshots` added SQLite current-state tables, typed snapshot field upsert/load storage, node-detail snapshot projection loading, and node-detail versioning from bible snapshot revisions.
 
 Discovered issues:
 

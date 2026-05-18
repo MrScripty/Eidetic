@@ -1,7 +1,9 @@
 use super::*;
 use eidetic_core::contracts::{
-    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphSchemaKey, ChangeEventKind, CommandEnvelope,
-    FieldValue, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphPartKey,
+    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, ChangeEventKind,
+    CommandEnvelope, FieldValue, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand,
 };
 
 #[derive(Debug, serde::Serialize)]
@@ -253,6 +255,61 @@ fn node_detail_projection_includes_incoming_and_outgoing_edges() {
             .from_node_id
             .as_str(),
         "node.character.ada"
+    );
+}
+
+#[test]
+fn node_detail_projection_includes_snapshots_and_fields() {
+    let mut conn = memory_connection();
+    seed_node(&mut conn, "node.place.beach", "Beach", 10);
+    let command = CommandEnvelope::new(SetBibleGraphSnapshotFieldCommand {
+        snapshot_id: BibleGraphSnapshotId::new("snapshot.beach.sequence-1").unwrap(),
+        node_id: BibleGraphNodeId::new("node.place.beach").unwrap(),
+        at_ms: 12_000,
+        label: "Sequence 1 state".to_string(),
+        snapshot_sort_order: 1,
+        field_id: BibleGraphSnapshotFieldId::new("snapshot-field.beach.weather.current").unwrap(),
+        part_key: BibleGraphPartKey::new("weather").unwrap(),
+        part_name: "Weather".to_string(),
+        field_key: BibleGraphFieldKey::new("current").unwrap(),
+        value: Some(FieldValue::Text("rainy".to_string())),
+        field_sort_order: 2,
+    });
+    let event = eidetic_core::contracts::ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        "set snapshot field",
+    );
+    let revision = eidetic_core::contracts::ObjectRevision::new(
+        ObjectKind::BibleSnapshot,
+        command.payload.snapshot_id.as_str(),
+        event.id,
+        eidetic_core::contracts::RevisionOperation::Update,
+    );
+    history_store::record_change_with(
+        &mut conn,
+        &command,
+        "test.set_snapshot_field",
+        &event,
+        &[revision],
+        |tx| set_snapshot_field_in_transaction(tx, &command.payload, event.id),
+    )
+    .unwrap();
+
+    let projection = load_node_detail_projection_envelope(
+        &conn,
+        &BibleGraphNodeId::new("node.place.beach").unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+
+    assert_eq!(projection.version, ProjectionVersion(3));
+    assert_eq!(projection.payload.snapshots.len(), 1);
+    assert_eq!(projection.payload.snapshots[0].snapshot.at_ms, 12_000);
+    assert_eq!(projection.payload.snapshots[0].fields.len(), 1);
+    assert_eq!(
+        projection.payload.snapshots[0].fields[0].value,
+        Some(FieldValue::Text("rainy".to_string()))
     );
 }
 
