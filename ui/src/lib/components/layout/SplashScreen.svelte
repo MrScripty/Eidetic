@@ -6,7 +6,7 @@
   import { refreshTimelineRenderProjection } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { createProject, loadProject, listProjects } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
-  import type { Project } from '$lib/types.js';
+  import type { Project } from '$lib/projectTypes.js';
 
   type View = 'home' | 'new' | 'open';
   let view: View = $state('home');

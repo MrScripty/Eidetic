@@ -206,32 +206,7 @@ export interface TimelineGap {
   following_node_id: NodeId | null;
 }
 
-// --- Reference Documents ---
-
-export type ReferenceId = string;
-
-export type ReferenceType =
-  | 'CharacterBible'
-  | 'StyleGuide'
-  | 'WorldBuilding'
-  | 'PreviousEpisode'
-  | { Custom: string };
-
-export interface ReferenceDocument {
-  id: ReferenceId;
-  name: string;
-  content: string;
-  doc_type: ReferenceType;
-}
-
-// --- Project ---
-
-export interface Project {
-  name: string;
-  premise: string;
-  timeline: Timeline;
-  references?: ReferenceDocument[];
-}
+export type { Project, ReferenceDocument, ReferenceId, ReferenceType } from './projectTypes.js';
 
 // --- UI constants ---
 

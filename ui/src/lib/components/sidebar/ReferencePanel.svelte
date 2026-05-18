@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ReferenceDocument, ReferenceType } from '$lib/types.js';
+  import type { ReferenceDocument, ReferenceType } from '$lib/projectTypes.js';
   import { uploadReference, listReferences, deleteReference } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
 

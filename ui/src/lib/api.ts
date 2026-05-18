@@ -1,10 +1,8 @@
 import type { AiConfig, AiStatus, DiffusionStatus, ModelListResponse } from './aiTypes.js';
+import type { Project, ReferenceDocument, ReferenceType } from './projectTypes.js';
 import type {
   ChildPlan,
   NodeContent,
-  Project,
-  ReferenceDocument,
-  ReferenceType,
   StoryLevel,
   StoryNode,
   Timeline,
