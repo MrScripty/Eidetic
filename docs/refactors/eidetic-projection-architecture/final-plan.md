@@ -122,6 +122,7 @@ Completed slices:
 - `feat(server): apply object field commands through history` added a validated command handler that writes field updates through history storage and returns rebuilt projections.
 - `feat(server): expose object field command route` added `POST /api/commands/object-field` as a command-in/projection-out HTTP boundary over the history command path.
 - `feat(server): return versioned object field projections` wrapped object-field command route projections in `ProjectionEnvelope` with projection versions and the latest change event ID.
+- `feat(ui): add object field command helper` added a typed frontend command helper that submits object-field commands and returns versioned backend projections without mutating UI stores.
 
 Discovered issues:
 

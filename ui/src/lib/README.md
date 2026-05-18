@@ -8,6 +8,8 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 |-------------|-------------|
 | `types.ts` | Shared TypeScript mirrors of core timeline, story, and UI layout contracts. |
 | `api.ts` | Browser-side request helpers for project, timeline, story, and export operations. |
+| `commandApi.ts` | Browser-side command helpers that submit backend-owned commands and receive versioned projections. |
+| `commandApi.test.ts` | Tests for command helper request shape and backend error handling. |
 | `stores/` | Reactive Svelte state used to coordinate the UI around backend-driven data. |
 | `components/` | Feature UI modules for layout, timeline editing, sidebars, and relationship views. |
 
@@ -37,7 +39,7 @@ Keep shared UI contracts, stores, and feature components under `ui/src/lib` and 
 - The app introduces SSR or multiple entrypoints that need different store composition roots.
 
 ## Dependencies
-**Internal:** `ui/src/routes`, `ui/src/app.html`, Rust server APIs exposed through `api.ts`.
+**Internal:** `ui/src/routes`, `ui/src/app.html`, Rust server APIs exposed through `api.ts` and `commandApi.ts`.
 **External:** Svelte 5, SvelteKit, Vite, Yjs client dependencies.
 
 ## Related ADRs
@@ -60,6 +62,7 @@ function loadTimeline(timeline: Timeline) {
 ## API Consumer Contract
 - Internal consumers import typed shapes and helpers from `$lib/*`.
 - Store consumers should treat backend-backed entities as read-through state and mutate them through API/store actions, not local object surgery.
+- Command helpers return backend projections and must not patch persistent stores optimistically.
 - Layout consumers should reuse exported constants/helpers instead of re-declaring pixel budgets in component-local CSS.
 - Compatibility is maintained by updating this directory README or an ADR whenever shared contracts materially change.
 
@@ -67,4 +70,3 @@ function loadTimeline(timeline: Timeline) {
 - `types.ts` exports stable field names that mirror backend timeline/story payloads used throughout the UI.
 - UI layout helper exports define default semantics for fixed panel sizing; consumers should treat them as the canonical budget for the main timeline shell.
 - When a shared shape or layout helper changes, dependent components must be updated in the same change to preserve visual and type consistency.
-
