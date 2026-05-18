@@ -228,6 +228,7 @@ Completed slices:
 - `refactor(server): remove legacy relationship routes` removed the legacy timeline relationship mutation routes after replacement command/projection paths landed.
 - `refactor(ui): remove legacy track mutation UI` removed the track-delete context menu and unused frontend track CRUD helpers because timeline tracks are projection lanes, not user-owned canonical state.
 - `refactor(server): remove legacy track routes` removed legacy timeline track CRUD routes so clients cannot delete or reshape required projected story-level lanes through direct mutation endpoints.
+- `refactor(ui): remove legacy node arc helpers` removed unused frontend helpers for legacy timeline node-arc tagging routes.
 
 Discovered issues:
 

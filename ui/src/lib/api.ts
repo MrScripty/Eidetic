@@ -219,19 +219,6 @@ export function unlockNode(id: string): Promise<NodeContent> {
   return request(`/nodes/${id}/unlock`, { method: 'POST' });
 }
 
-// --- Node-Arc tagging ---
-
-export function tagNodeWithArc(nodeId: string, arcId: string): Promise<{ ok: boolean }> {
-  return request('/timeline/node-arcs', {
-    method: 'POST',
-    body: JSON.stringify({ node_id: nodeId, arc_id: arcId }),
-  });
-}
-
-export function untagNodeFromArc(nodeId: string, arcId: string): Promise<{ ok: boolean }> {
-  return request(`/timeline/node-arcs/${nodeId}/${arcId}`, { method: 'DELETE' });
-}
-
 // --- Gaps ---
 
 export function getGaps(level?: StoryLevel): Promise<TimelineGap[]> {
