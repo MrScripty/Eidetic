@@ -10,7 +10,6 @@
   import { entitiesForNode } from '$lib/stores/story.svelte.js';
   import { timelineState, zoomToRange, childrenOf, findNode } from '$lib/stores/timeline.svelte.js';
   import {
-    updateNodeNotes,
     generateContent,
     removeNodeRef,
     generateChildren,
@@ -20,6 +19,7 @@
   import {
     applyTimelineChildrenCommand,
     applyTimelineNodeLockCommand,
+    applyTimelineNodeNotesCommand,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { getNodeNotes } from '$lib/yjs.js';
 
@@ -176,7 +176,10 @@
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
       if (editorState.selectedNodeId) {
-        await updateNodeNotes(editorState.selectedNodeId, value);
+        await applyTimelineNodeNotesCommand({
+          node_id: editorState.selectedNodeId,
+          notes: value,
+        });
       }
     }, 500);
   }
