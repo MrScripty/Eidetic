@@ -13,10 +13,11 @@ Current scope:
 - Receive `TimelineRenderProjection` snapshots.
 - Rebuild read-only Bevy ECS entities for tracks and clips.
 - Validate selectable clip/node IDs before emitting commands.
+- Expose a wasm-bindgen bridge for browser hosts.
 
 Future scope:
 
-- Browser or desktop host lifecycle.
+- Browser canvas or desktop host lifecycle.
 - Track and clip visual entities.
 - Pointer, keyboard, and accessibility command flows.
 - Backend-confirmed move, resize, split, and relationship commands.

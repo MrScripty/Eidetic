@@ -1,15 +1,21 @@
 use bevy::prelude::{App, Resource};
 use eidetic_core::contracts::TimelineRenderProjection;
 use eidetic_core::timeline::node::NodeId;
+use serde::Serialize;
 use thiserror::Error;
 
 mod scene;
+#[cfg(target_arch = "wasm32")]
+mod wasm;
 
 pub use scene::{
     TimelineClipEntity, TimelineSceneStats, TimelineTrackEntity, rebuild_timeline_scene,
 };
+#[cfg(target_arch = "wasm32")]
+pub use wasm::WasmTimelineRenderer;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum TimelineRendererCommand {
     SelectNode { node_id: NodeId },
 }

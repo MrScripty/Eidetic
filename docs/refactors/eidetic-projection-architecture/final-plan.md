@@ -187,6 +187,7 @@ Completed slices:
 - `feat(ui): derive timeline render models` added a pure projection-to-render-model adapter with normalized timing and clip indexes so a future Bevy host can consume deterministic derived data without owning canonical timeline state.
 - `feat(renderer): add Bevy timeline bridge crate` added an isolated Bevy ECS leaf crate that receives backend timeline render projections and emits validated selection commands without introducing Bevy dependencies into `eidetic-core` or `eidetic-server`.
 - `feat(renderer): build Bevy timeline scene entities` added read-only Bevy ECS track and clip entities rebuilt from backend timeline render projections, keeping scene state derived and disposable.
+- `feat(renderer): expose Bevy timeline wasm bridge` added a wasm-bindgen wrapper for browser hosts to pass backend timeline render projections into the isolated Bevy bridge and drain validated renderer commands as JS values.
 
 Discovered issues:
 
