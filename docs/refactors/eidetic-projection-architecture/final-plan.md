@@ -249,6 +249,7 @@ Completed slices:
 - `refactor(ui): remove legacy node entity links` removed BeatEditor linked-entity chips, timeline clip entity dots, script entity highlighting, frontend entity list/unlink helpers, websocket entity refreshes, and broad `storyState.entities` ownership.
 - `refactor(server): remove legacy entity link routes` removed the final legacy `/bible/entities` read and node-ref unlink routes after frontend node-entity link consumers were deleted.
 - `refactor(ui): decouple graph categories from entities` moved bible graph UI category typing onto the graph category adapter instead of importing the legacy `EntityCategory` contract.
+- `refactor(ui): make project bible payload opaque` removed detailed legacy entity DTOs from the frontend type surface and made `Project.bible` opaque so UI code cannot rebuild against old entity internals.
 
 Discovered issues:
 
@@ -266,7 +267,7 @@ Discovered issues:
 - Resolved: the first script document store implementation exceeded the 500-line decomposition threshold while owning schema setup, value codecs, current-state writes, projection reads, and tests. It was split into schema, codec, store, and test modules before the script command route was committed.
 - Resolved: `cargo check -p eidetic-server` reported non-test dead-code warnings in `history_store.rs` (`RevisionOperation` import and `load_command`). The replay helper is now test-only and the production import set is warning-free.
 - Resolved: `ui/src/lib/components/sidebar/bible/StoryBibleTab.svelte` exceeded the 250-line component decomposition threshold after moving list/navigation to graph projections. Category/root mapping and graph-node creation controls were extracted before schema editor work.
-- Partially resolved: bible graph command/projection DTOs were split out of `ui/src/lib/types.ts` into a focused module. `types.ts` remains above the preferred decomposition threshold because it still mixes legacy story, projection primitives, extraction, script, AI, and settings contracts; split those before adding script, render, semantic proposal, or Bevy bridge DTOs.
+- Partially resolved: bible graph command/projection DTOs were split out of `ui/src/lib/types.ts` into a focused module, and legacy entity DTOs were removed from the frontend type surface. `types.ts` remains above the preferred decomposition threshold because it still mixes legacy story, projection primitives, extraction, script, AI, and settings contracts; split those before adding semantic proposal or additional Bevy bridge DTOs.
 - Resolved: legacy AI extraction and consistency routes read `node.content.content` and committed bible/script side effects directly. Those routes, frontend consumers, automatic generation follow-up mutation, and emitted websocket events were removed; future semantic work must re-enter through proposal contracts.
 - Resolved: `unlock_node` derived content status from legacy `node.content.content`. Unlock now leaves status unchanged because script document projections own durable screenplay text.
 - Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.

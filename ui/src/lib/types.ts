@@ -122,70 +122,9 @@ export interface Color {
   b: number;
 }
 
-// --- Story Bible ---
+// --- Legacy project payloads ---
 
-export type EntityId = string;
-
-export type EntityCategory = 'Character' | 'Location' | 'Prop' | 'Theme' | 'Event';
-
-export interface Entity {
-  id: EntityId;
-  category: EntityCategory;
-  name: string;
-  tagline: string;
-  description: string;
-  details: EntityDetails;
-  snapshots: EntitySnapshot[];
-  node_refs: NodeId[];
-  relations: EntityRelation[];
-  color: Color;
-  locked: boolean;
-}
-
-export type EntityDetails =
-  | {
-      type: 'Character';
-      traits: string[];
-      voice_notes: string;
-      character_relations: [EntityId, string][];
-      audience_knowledge: string;
-    }
-  | { type: 'Location'; int_ext: string; scene_heading_name: string; atmosphere: string }
-  | { type: 'Prop'; owner_entity_id: EntityId | null; significance: string }
-  | { type: 'Theme'; manifestation: string }
-  | {
-      type: 'Event';
-      timeline_ms: number | null;
-      is_backstory: boolean;
-      involved_entity_ids: EntityId[];
-    };
-
-export interface EntitySnapshot {
-  at_ms: number;
-  source_node_id: NodeId | null;
-  description: string;
-  state_overrides?: SnapshotOverrides | null;
-}
-
-export interface SnapshotOverrides {
-  traits?: string[];
-  audience_knowledge?: string;
-  emotional_state?: string;
-  atmosphere?: string;
-  owner_entity_id?: EntityId | null;
-  significance?: string;
-  custom?: [string, string][];
-  location?: string;
-}
-
-export interface EntityRelation {
-  target_entity_id: EntityId;
-  label: string;
-}
-
-export interface StoryBible {
-  entities: Entity[];
-}
+export type LegacyProjectBible = unknown;
 
 // --- Projection command contracts ---
 
@@ -310,7 +249,7 @@ export interface Project {
   premise: string;
   timeline: Timeline;
   arcs: StoryArc[];
-  bible: StoryBible;
+  bible: LegacyProjectBible;
   references?: ReferenceDocument[];
 }
 
