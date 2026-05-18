@@ -3,6 +3,7 @@
   import { projectState } from '$lib/stores/project.svelte.js';
   import { timelineState } from '$lib/stores/timeline.svelte.js';
   import { refreshStoryArcListProjection } from '$lib/stores/storyArcProjection.svelte.js';
+  import { refreshTimelineRenderProjection } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { createProject, loadProject, listProjects } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import type { Project } from '$lib/types.js';
@@ -38,6 +39,10 @@
     timelineState.timeline = project.timeline;
   }
 
+  async function refreshProjectProjections() {
+    await Promise.all([refreshStoryArcListProjection(), refreshTimelineRenderProjection()]);
+  }
+
   async function fetchProjects() {
     loadingProjects = true;
     loadError = null;
@@ -56,7 +61,7 @@
     try {
       const project = await createProject('Untitled Episode', templateId);
       hydrateStores(project);
-      await refreshStoryArcListProjection();
+      await refreshProjectProjections();
     } catch (e) {
       notify(
         'error',
@@ -72,7 +77,7 @@
     try {
       const project = await loadProject(path);
       hydrateStores(project);
-      await refreshStoryArcListProjection();
+      await refreshProjectProjections();
     } catch (e) {
       notify(
         'error',
