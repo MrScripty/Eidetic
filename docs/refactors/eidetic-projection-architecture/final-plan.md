@@ -230,6 +230,7 @@ Completed slices:
 - `refactor(server): remove legacy track routes` removed legacy timeline track CRUD routes so clients cannot delete or reshape required projected story-level lanes through direct mutation endpoints.
 - `refactor(ui): remove legacy node arc helpers` removed unused frontend helpers for legacy timeline node-arc tagging routes.
 - `refactor(server): remove legacy node arc routes` removed legacy timeline node-arc tagging routes, leaving the timeline route module read-only while future arc edits wait for command/projection contracts.
+- `feat(server): add timeline node lock command` added a backend command route for setting timeline node lock state and returning the updated timeline render projection.
 
 Discovered issues:
 

@@ -7,8 +7,8 @@ use eidetic_core::contracts::{
     DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ProjectionEnvelope,
     ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
     SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
-    TimelineRenderProjection,
+    SetScriptLockCommand, SetTimelineNodeLockCommand, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use serde::Serialize;
@@ -60,6 +60,7 @@ pub fn router() -> Router<AppState> {
             post(apply_timeline_children),
         )
         .route("/commands/timeline/split-node", post(split_timeline_node))
+        .route("/commands/timeline/node-lock", post(set_timeline_node_lock))
         .route("/commands/timeline/delete-node", post(delete_timeline_node))
 }
 
@@ -354,6 +355,31 @@ async fn split_timeline_node(
 
     let _ = state.events_tx.send(ServerEvent::TimelineChanged);
     let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn set_timeline_node_lock(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SetTimelineNodeLockCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = timeline_command::apply_set_timeline_node_lock(project, &command)
+            .map_err(map_timeline_command_error)?;
+        TimelineCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+    let _ = state.events_tx.send(ServerEvent::NodeUpdated {
+        node_id: command.payload.node_id.0,
+    });
     state.trigger_save();
     crate::error::json_value(response)
 }

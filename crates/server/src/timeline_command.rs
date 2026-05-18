@@ -1,8 +1,8 @@
 use eidetic_core::contracts::{
     ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
     CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ProjectionEnvelope, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand, TimelineRenderProjection,
+    DeleteTimelineRelationshipCommand, ProjectionEnvelope, SetTimelineNodeLockCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
@@ -48,6 +48,21 @@ pub(crate) fn apply_delete_timeline_node(
         .timeline
         .remove_node(command.payload.node_id)
         .map_err(TimelineCommandError::Core)?;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub(crate) fn apply_set_timeline_node_lock(
+    project: &mut Project,
+    command: &CommandEnvelope<SetTimelineNodeLockCommand>,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    let node = project
+        .timeline
+        .node_mut(command.payload.node_id)
+        .map_err(TimelineCommandError::Core)?;
+    node.locked = command.payload.locked;
 
     Ok(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
@@ -302,6 +317,43 @@ mod tests {
                 .iter()
                 .all(|clip| clip.node_id != parent.id && clip.node_id != child_id)
         );
+    }
+
+    #[test]
+    fn set_timeline_node_lock_updates_projection() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let node_id = project.timeline.nodes[0].id;
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: SetTimelineNodeLockCommand {
+                node_id,
+                locked: true,
+            },
+        };
+
+        let projection = apply_set_timeline_node_lock(&mut project, &command).unwrap();
+
+        let clip = projection
+            .payload
+            .clips
+            .iter()
+            .find(|clip| clip.node_id == node_id)
+            .expect("locked clip");
+        assert!(clip.locked);
+    }
+
+    #[test]
+    fn set_timeline_node_lock_rejects_unknown_node() {
+        let mut project = Template::MultiCam.build_project("Timeline Command Test");
+        let command = CommandEnvelope {
+            id: CommandId::new(),
+            payload: SetTimelineNodeLockCommand {
+                node_id: eidetic_core::timeline::node::NodeId::new(),
+                locked: true,
+            },
+        };
+
+        assert!(apply_set_timeline_node_lock(&mut project, &command).is_err());
     }
 
     #[test]
