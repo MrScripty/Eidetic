@@ -2,10 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::reference::ReferenceDocument;
 use crate::story::arc::StoryArc;
-use crate::story::bible::StoryBible;
 use crate::timeline::Timeline;
 
-/// A complete Eidetic project, aggregating the timeline, arcs, and story bible.
+/// A complete Eidetic project, aggregating project metadata and timeline structure.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
     pub name: String,
@@ -14,8 +13,6 @@ pub struct Project {
     pub premise: String,
     pub timeline: Timeline,
     pub arcs: Vec<StoryArc>,
-    #[serde(default)]
-    pub bible: StoryBible,
     #[serde(default)]
     pub references: Vec<ReferenceDocument>,
 }
@@ -27,7 +24,6 @@ impl Project {
             premise: String::new(),
             timeline,
             arcs: Vec::new(),
-            bible: StoryBible::new(),
             references: Vec::new(),
         }
     }

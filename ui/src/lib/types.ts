@@ -122,10 +122,6 @@ export interface Color {
   b: number;
 }
 
-// --- Legacy project payloads ---
-
-export type LegacyProjectBible = unknown;
-
 // --- Projection command contracts ---
 
 export type CommandId = string;
@@ -249,7 +245,6 @@ export interface Project {
   premise: string;
   timeline: Timeline;
   arcs: StoryArc[];
-  bible: LegacyProjectBible;
   references?: ReferenceDocument[];
 }
 

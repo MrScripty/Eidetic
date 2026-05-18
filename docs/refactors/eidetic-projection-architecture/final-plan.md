@@ -255,6 +255,7 @@ Completed slices:
 - `refactor(core): remove legacy extraction contract` deleted the orphaned AI extraction trait method and legacy extraction DTOs after extraction routes and side effects were removed.
 - `refactor(server): remove legacy json bible migration` removed the old JSON character-to-entity migration path so legacy JSON loading no longer populates `StoryBible.entities`.
 - `refactor(server): stop persisting legacy bible entities` removed legacy entity tables, save/load loops, and v1 entity readers from project SQLite persistence so project persistence no longer owns story bible entity state.
+- `refactor(core): remove project bible field` removed `Project.bible` from shared core/server/frontend project DTOs after project persistence stopped loading or saving legacy bible entities.
 
 Discovered issues:
 

@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 use eidetic_core::reference::{ReferenceDocument, ReferenceType};
 use eidetic_core::story::arc::{ArcId, ArcType, Color, StoryArc};
-use eidetic_core::story::bible::StoryBible;
 use eidetic_core::timeline::node::{
     BeatType, NodeArc, NodeContent, NodeId, StoryLevel, StoryNode,
 };
@@ -509,7 +508,6 @@ fn load_project_v2(conn: &Connection, path: &Path) -> Result<Project, String> {
         premise,
         timeline,
         arcs,
-        bible: StoryBible::new(),
         references,
     };
 
@@ -855,7 +853,6 @@ fn load_and_migrate_v1(path: &Path) -> Result<Project, String> {
         premise: String::new(),
         timeline,
         arcs,
-        bible: StoryBible::new(),
         references,
     };
 

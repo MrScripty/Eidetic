@@ -121,8 +121,6 @@ fn empty_bible_context() -> BibleContext {
 mod tests {
     use super::*;
     use crate::Template;
-    use crate::story::arc::Color;
-    use crate::story::bible::{Entity, EntityCategory};
     use crate::timeline::node::StoryLevel;
 
     #[test]
@@ -150,13 +148,8 @@ mod tests {
     }
 
     #[test]
-    fn build_request_ignores_legacy_bible_entities() {
-        let mut project = Template::MultiCam.build_project("Test");
-        project.bible.add_entity(Entity::new(
-            "Legacy Character",
-            EntityCategory::Character,
-            Color::A_PLOT,
-        ));
+    fn build_request_uses_empty_bible_context_until_graph_projection_exists() {
+        let project = Template::MultiCam.build_project("Test");
         let timeline = &project.timeline;
         let scenes = timeline.nodes_at_level(StoryLevel::Scene);
         let req = build_generate_request(&project, scenes[0].id).unwrap();
@@ -166,13 +159,8 @@ mod tests {
     }
 
     #[test]
-    fn build_children_request_ignores_legacy_bible_entities() {
-        let mut project = Template::MultiCam.build_project("Test");
-        project.bible.add_entity(Entity::new(
-            "Legacy Character",
-            EntityCategory::Character,
-            Color::A_PLOT,
-        ));
+    fn build_children_request_uses_empty_bible_context_until_graph_projection_exists() {
+        let project = Template::MultiCam.build_project("Test");
         let premise = project
             .timeline
             .nodes_at_level(StoryLevel::Premise)
