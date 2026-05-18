@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { EntityCategory } from '$lib/types.js';
   import {
     bibleGraphCategories,
     categoryColor,
     categoryShortLabel,
     type BibleGraphFilter,
+    type BibleGraphRootCategory,
   } from './bibleGraphCategories.js';
 
   let {
@@ -13,8 +13,8 @@
     onadd,
   }: {
     activeFilter: BibleGraphFilter;
-    disabledCategories: Set<EntityCategory>;
-    onadd: (category: EntityCategory) => void;
+    disabledCategories: Set<BibleGraphRootCategory>;
+    onadd: (category: BibleGraphRootCategory) => void;
   } = $props();
 </script>
 

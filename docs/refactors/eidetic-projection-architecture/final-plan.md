@@ -248,6 +248,7 @@ Completed slices:
 - `refactor(ui): remove legacy character timeline` removed the optional character progression lane, toolbar toggle, shortcut, transient store, and layout budget that rendered from broad legacy entity state instead of backend-owned projections.
 - `refactor(ui): remove legacy node entity links` removed BeatEditor linked-entity chips, timeline clip entity dots, script entity highlighting, frontend entity list/unlink helpers, websocket entity refreshes, and broad `storyState.entities` ownership.
 - `refactor(server): remove legacy entity link routes` removed the final legacy `/bible/entities` read and node-ref unlink routes after frontend node-entity link consumers were deleted.
+- `refactor(ui): decouple graph categories from entities` moved bible graph UI category typing onto the graph category adapter instead of importing the legacy `EntityCategory` contract.
 
 Discovered issues:
 

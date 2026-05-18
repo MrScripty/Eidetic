@@ -1,10 +1,11 @@
 import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
-import type { BibleGraphNode, BibleGraphNodeId, EntityCategory } from '$lib/types.js';
+import type { BibleGraphNode, BibleGraphNodeId } from '$lib/types.js';
 
-export type BibleGraphFilter = EntityCategory | 'All';
-export type BibleGraphCategory = EntityCategory | 'Other';
+export type BibleGraphRootCategory = 'Character' | 'Location' | 'Prop' | 'Theme' | 'Event';
+export type BibleGraphFilter = BibleGraphRootCategory | 'All';
+export type BibleGraphCategory = BibleGraphRootCategory | 'Other';
 
-export const bibleGraphCategories: EntityCategory[] = [
+export const bibleGraphCategories: BibleGraphRootCategory[] = [
   'Character',
   'Location',
   'Prop',
@@ -14,7 +15,7 @@ export const bibleGraphCategories: EntityCategory[] = [
 
 export const bibleGraphFilters: BibleGraphFilter[] = ['All', ...bibleGraphCategories];
 
-export const canonicalParents: Record<EntityCategory, BibleGraphNodeId> = {
+export const canonicalParents: Record<BibleGraphRootCategory, BibleGraphNodeId> = {
   Character: 'canonical.characters',
   Location: 'canonical.places',
   Prop: 'canonical.objects',
@@ -22,7 +23,7 @@ export const canonicalParents: Record<EntityCategory, BibleGraphNodeId> = {
   Event: 'canonical.events',
 };
 
-export const canonicalRootSchemaKeys: Record<EntityCategory, string> = {
+export const canonicalRootSchemaKeys: Record<BibleGraphRootCategory, string> = {
   Character: 'canonical.root.characters',
   Location: 'canonical.root.places',
   Prop: 'canonical.root.objects',
@@ -30,7 +31,7 @@ export const canonicalRootSchemaKeys: Record<EntityCategory, string> = {
   Event: 'canonical.root.events',
 };
 
-export const schemaKeys: Record<EntityCategory, string> = {
+export const schemaKeys: Record<BibleGraphRootCategory, string> = {
   Character: 'character',
   Location: 'location',
   Prop: 'prop',
@@ -38,7 +39,7 @@ export const schemaKeys: Record<EntityCategory, string> = {
   Event: 'event',
 };
 
-export const defaultNames: Record<EntityCategory, string> = {
+export const defaultNames: Record<BibleGraphRootCategory, string> = {
   Character: 'New Character',
   Location: 'New Location',
   Prop: 'New Prop',
@@ -52,7 +53,7 @@ export function filterLabel(filter: BibleGraphFilter): string {
 }
 
 export function categorySchemaKey(
-  category: EntityCategory,
+  category: BibleGraphRootCategory,
   projection: BibleGraphSchemaListProjection | undefined,
 ): string | undefined {
   const schemaKey = schemaKeys[category];
@@ -61,13 +62,13 @@ export function categorySchemaKey(
 }
 
 export function categorySchemaAvailable(
-  category: EntityCategory,
+  category: BibleGraphRootCategory,
   projection: BibleGraphSchemaListProjection | undefined,
 ): boolean {
   return categorySchemaKey(category, projection) !== undefined;
 }
 
-export function newNodeName(category: EntityCategory): string {
+export function newNodeName(category: BibleGraphRootCategory): string {
   return defaultNames[category];
 }
 

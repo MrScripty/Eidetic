@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  import type { BibleGraphNodeId, EntityCategory } from '$lib/types.js';
+  import type { BibleGraphNodeId } from '$lib/types.js';
   import {
     createBibleGraphNodeProjection,
     ensureCanonicalBibleRootProjections,
@@ -25,6 +25,7 @@
     newNodeName,
     nodeCategory,
     type BibleGraphFilter,
+    type BibleGraphRootCategory,
   } from './bibleGraphCategories.js';
 
   let searchQuery = $state('');
@@ -54,7 +55,7 @@
     return list;
   });
 
-  async function handleAdd(category: EntityCategory) {
+  async function handleAdd(category: BibleGraphRootCategory) {
     try {
       loadError = null;
       if (!categorySchemaAvailable(category, schemaProjection?.payload)) {
@@ -86,11 +87,11 @@
     selectBibleGraphNode(bibleState.selectedGraphNodeId === id ? null : id);
   }
 
-  function nextSortOrder(category: EntityCategory): number {
+  function nextSortOrder(category: BibleGraphRootCategory): number {
     return graphNodes.filter((node) => node.parent_id === canonicalParents[category]).length;
   }
 
-  async function ensureRootForCategory(category: EntityCategory): Promise<BibleGraphNodeId> {
+  async function ensureRootForCategory(category: BibleGraphRootCategory): Promise<BibleGraphNodeId> {
     const existingRoot = graphNodes.find(
       (node) => node.schema_key === canonicalRootSchemaKeys[category],
     );
