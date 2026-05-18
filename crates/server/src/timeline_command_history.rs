@@ -15,6 +15,7 @@ use crate::timeline_command_history_codec::{
     encode_beat_type, encode_content_status, encode_relationship_type, encode_story_level,
 };
 use crate::timeline_node_store;
+use crate::timeline_relationship_store;
 
 pub(crate) fn record_set_timeline_node_range_history(
     conn: &mut Connection,
@@ -213,13 +214,20 @@ pub(crate) fn record_create_timeline_relationship_history(
             &command.payload.relationship_type,
         )?)),
     ));
+    let mut relationship = eidetic_core::timeline::relationship::Relationship::new(
+        command.payload.from_node_id,
+        command.payload.to_node_id,
+        command.payload.relationship_type.clone(),
+    );
+    relationship.id = command.payload.relationship_id;
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.relationship_create",
         &event,
         &[revision],
+        |tx| timeline_relationship_store::upsert_relationship_in_transaction(tx, &relationship),
     )?)
 }
 
@@ -276,12 +284,18 @@ pub(crate) fn record_delete_timeline_relationship_history(
         None,
     ));
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.relationship_delete",
         &event,
         &[revision],
+        |tx| {
+            timeline_relationship_store::delete_relationship_in_transaction(
+                tx,
+                command.payload.relationship_id,
+            )
+        },
     )?)
 }
 

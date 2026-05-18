@@ -32,6 +32,7 @@ mod timeline_command_history_codec;
 mod timeline_node_store;
 mod timeline_node_delete_history;
 mod timeline_node_split_history;
+mod timeline_relationship_store;
 mod validation;
 mod vector_store;
 mod ws;

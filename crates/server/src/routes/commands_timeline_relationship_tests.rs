@@ -41,6 +41,28 @@ async fn create_timeline_relationship_command_returns_timeline_render_projection
     }));
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_relationship = conn
+        .query_row(
+            "SELECT from_node_id, to_node_id, relationship_type FROM relationships WHERE id = ?1",
+            [relationship_id.0.to_string()],
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            },
+        )
+        .expect("persisted relationship");
+    assert_eq!(
+        persisted_relationship,
+        (
+            from_node.0.to_string(),
+            to_node.0.to_string(),
+            "\"Thematic\"".to_string()
+        )
+    );
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineRelationship,
@@ -114,6 +136,15 @@ async fn create_timeline_relationship_command_replays_duplicate_command() {
     );
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_count = conn
+        .query_row(
+            "SELECT COUNT(*) FROM relationships WHERE id = ?1",
+            [relationship_id.0.to_string()],
+            |row| row.get::<_, i64>(0),
+        )
+        .expect("persisted relationship count");
+    assert_eq!(persisted_count, 1);
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineRelationship,
@@ -205,6 +236,9 @@ async fn delete_timeline_relationship_command_returns_timeline_render_projection
     let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
     relationship.id = relationship_id;
     project.timeline.add_relationship(relationship).unwrap();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed relationship current state");
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
     let app = router().with_state(state);
@@ -228,6 +262,15 @@ async fn delete_timeline_relationship_command_returns_timeline_render_projection
     );
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_count = conn
+        .query_row(
+            "SELECT COUNT(*) FROM relationships WHERE id = ?1",
+            [relationship_id.0.to_string()],
+            |row| row.get::<_, i64>(0),
+        )
+        .expect("persisted relationship count");
+    assert_eq!(persisted_count, 0);
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineRelationship,
