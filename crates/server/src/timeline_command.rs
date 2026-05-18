@@ -217,6 +217,68 @@ pub(crate) fn record_create_timeline_relationship_history(
     )?)
 }
 
+pub(crate) fn record_delete_timeline_relationship_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<DeleteTimelineRelationshipCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "timeline.relationship_delete")?
+    {
+        return Ok(outcome);
+    }
+
+    let relationship = project
+        .timeline
+        .relationships
+        .iter()
+        .find(|relationship| relationship.id == command.payload.relationship_id)
+        .ok_or_else(|| {
+            TimelineCommandError::Core(eidetic_core::Error::RelationshipNotFound(
+                command.payload.relationship_id.0,
+            ))
+        })?;
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        "delete timeline relationship",
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::TimelineRelationship,
+        command.payload.relationship_id.0.to_string(),
+        event.id,
+        RevisionOperation::Delete,
+    )
+    .with_field(FieldDelta::new(
+        "from_node_id",
+        Some(FieldValue::Text(relationship.from_node.0.to_string())),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "to_node_id",
+        Some(FieldValue::Text(relationship.to_node.0.to_string())),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "relationship_type",
+        Some(FieldValue::Text(encode_relationship_type(
+            &relationship.relationship_type,
+        )?)),
+        None,
+    ));
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "timeline.relationship_delete",
+        &event,
+        &[revision],
+    )?)
+}
+
 pub(crate) fn apply_set_timeline_node_range(
     project: &mut Project,
     command: &CommandEnvelope<SetTimelineNodeRangeCommand>,
