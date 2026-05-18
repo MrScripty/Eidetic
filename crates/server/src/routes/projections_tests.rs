@@ -5,8 +5,9 @@ use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
-    BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope, CreateBibleGraphNodeCommand,
-    FieldValue, ObjectKind, SetBibleGraphFieldCommand, SetObjectFieldCommand,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope,
+    CreateBibleGraphNodeCommand, FieldValue, ObjectKind, SetBibleGraphEdgeCommand,
+    SetBibleGraphFieldCommand, SetObjectFieldCommand,
 };
 use tower::util::ServiceExt;
 
@@ -177,6 +178,40 @@ async fn bible_graph_node_projection_returns_persisted_parts_and_fields() {
 }
 
 #[tokio::test]
+async fn bible_graph_node_projection_returns_persisted_edges() {
+    let path = temp_db_path("bible-node-edges-persisted");
+    seed_bible_graph_node(&path, "node.character.ada", "Ada");
+    seed_bible_graph_node(&path, "node.place.beach", "Beach");
+    seed_bible_graph_edge(&path);
+    let app = app_with_project_path(path.clone()).await;
+
+    let source_response = app
+        .clone()
+        .oneshot(bible_node_projection_request("node.character.ada"))
+        .await
+        .expect("source route response");
+    let target_response = app
+        .oneshot(bible_node_projection_request("node.place.beach"))
+        .await
+        .expect("target route response");
+
+    assert_eq!(source_response.status(), StatusCode::OK);
+    assert_eq!(target_response.status(), StatusCode::OK);
+    let source = response_json(source_response).await;
+    let target = response_json(target_response).await;
+    assert_eq!(
+        source["payload"]["outgoing_edges"][0]["id"],
+        "edge.ada.beach"
+    );
+    assert_eq!(
+        target["payload"]["incoming_edges"][0]["id"],
+        "edge.ada.beach"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_graph_node_list_projection_returns_empty_list_when_absent() {
     let path = temp_db_path("bible-node-list-empty");
     let app = app_with_project_path(path.clone()).await;
@@ -254,6 +289,20 @@ fn seed_bible_graph_field(path: &PathBuf, value: &str) {
         field_sort_order: 2,
     });
     crate::bible_graph_command::apply_set_bible_graph_field(&mut conn, &command, 200).unwrap();
+}
+
+fn seed_bible_graph_edge(path: &PathBuf) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    let command = CommandEnvelope::new(SetBibleGraphEdgeCommand {
+        edge_id: BibleGraphEdgeId::new("edge.ada.beach").unwrap(),
+        from_node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        to_node_id: BibleGraphNodeId::new("node.place.beach").unwrap(),
+        edge_kind: BibleGraphEdgeKind::LocatedIn,
+        label: "located in".to_string(),
+        directed: true,
+        sort_order: 1,
+    });
+    crate::bible_graph_command::apply_set_bible_graph_edge(&mut conn, &command, 300).unwrap();
 }
 
 fn projection_request(object_kind: &str, object_id: &str) -> Request<Body> {

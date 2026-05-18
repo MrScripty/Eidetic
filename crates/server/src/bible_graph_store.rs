@@ -5,6 +5,7 @@ use eidetic_core::contracts::{
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
+use crate::bible_graph_edge_store;
 use crate::bible_graph_field_store;
 use crate::bible_graph_schema;
 use crate::history_store::{self, HistoryStoreError};
@@ -103,11 +104,14 @@ pub(crate) fn load_node_detail_projection(
     };
     let parts = bible_graph_field_store::load_part_projections(conn, node_id)?;
 
+    let incoming_edges = bible_graph_edge_store::load_incoming_edges(conn, node_id)?;
+    let outgoing_edges = bible_graph_edge_store::load_outgoing_edges(conn, node_id)?;
+
     Ok(Some(BibleNodeDetailProjection {
         node,
         parts,
-        incoming_edges: Vec::new(),
-        outgoing_edges: Vec::new(),
+        incoming_edges,
+        outgoing_edges,
     }))
 }
 
@@ -197,6 +201,7 @@ fn load_node_detail_revision_summary(
 ) -> Result<history_store::RevisionSummary, HistoryStoreError> {
     let bible_node = encode_object_kind(&ObjectKind::BibleNode)?;
     let bible_part_field = encode_object_kind(&ObjectKind::BiblePartField)?;
+    let bible_edge = encode_object_kind(&ObjectKind::BibleEdge)?;
     let revision_count = conn.query_row(
         "SELECT COUNT(*)
          FROM object_revisions
@@ -209,11 +214,20 @@ fn load_node_detail_revision_summary(
                     INNER JOIN bible_graph_parts parts ON parts.id = fields.part_id
                     WHERE parts.node_id = ?2
                 )
+            )
+            OR (
+                object_kind = ?4
+                AND object_id IN (
+                    SELECT id
+                    FROM bible_graph_edges
+                    WHERE from_node_id = ?2 OR to_node_id = ?2
+                )
             )",
         params![
             bible_node.as_str(),
             node_id.as_str(),
-            bible_part_field.as_str()
+            bible_part_field.as_str(),
+            bible_edge.as_str(),
         ],
         |row| row.get::<_, i64>(0),
     )?;
@@ -231,9 +245,17 @@ fn load_node_detail_revision_summary(
                         WHERE parts.node_id = ?2
                     )
                 )
+                OR (
+                    object_kind = ?4
+                    AND object_id IN (
+                        SELECT id
+                        FROM bible_graph_edges
+                        WHERE from_node_id = ?2 OR to_node_id = ?2
+                    )
+                )
              ORDER BY rowid DESC
              LIMIT 1",
-            params![bible_node, node_id.as_str(), bible_part_field],
+            params![bible_node, node_id.as_str(), bible_part_field, bible_edge],
             |row| row.get::<_, String>(0),
         )
         .optional()?

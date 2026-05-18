@@ -49,6 +49,24 @@ CREATE TABLE IF NOT EXISTS bible_graph_fields (
 );
 CREATE INDEX IF NOT EXISTS idx_bible_graph_fields_part
     ON bible_graph_fields(part_id, sort_order, field_key);
+
+CREATE TABLE IF NOT EXISTS bible_graph_edges (
+    id               TEXT PRIMARY KEY CHECK (id <> ''),
+    from_node_id     TEXT NOT NULL REFERENCES bible_graph_nodes(id),
+    to_node_id       TEXT NOT NULL REFERENCES bible_graph_nodes(id),
+    edge_kind        TEXT NOT NULL CHECK (edge_kind <> ''),
+    custom_kind      TEXT,
+    label            TEXT NOT NULL CHECK (label <> ''),
+    directed         INTEGER NOT NULL CHECK (directed IN (0, 1)),
+    sort_order       INTEGER NOT NULL,
+    created_event_id TEXT NOT NULL REFERENCES change_events(id),
+    updated_event_id TEXT NOT NULL REFERENCES change_events(id),
+    deleted_event_id TEXT REFERENCES change_events(id)
+);
+CREATE INDEX IF NOT EXISTS idx_bible_graph_edges_from
+    ON bible_graph_edges(from_node_id, sort_order, id);
+CREATE INDEX IF NOT EXISTS idx_bible_graph_edges_to
+    ON bible_graph_edges(to_node_id, sort_order, id);
 "#;
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {

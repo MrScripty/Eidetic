@@ -15,8 +15,9 @@ This directory contains the local Axum host for Eidetic: route registration, per
 | `bible_graph_schema.rs` | SQLite schema setup for story-bible graph node, part, and field current-state rows. |
 | `bible_graph_store.rs` | Typed graph-node rows, canonical root initialization helpers, and detail/list projection reads for story-bible graph nodes. |
 | `bible_graph_field_store.rs` | Typed graph part/field current-state writes and part/field projection loading. |
+| `bible_graph_edge_store.rs` | Typed graph edge current-state writes and incoming/outgoing edge projection loading. |
 | `bible_graph_store_tests.rs` | Focused graph persistence and projection-envelope tests. |
-| `bible_graph_command.rs` | Validated story-bible graph node, canonical-root, and field command handlers with transactional history writes. |
+| `bible_graph_command.rs` | Validated story-bible graph node, canonical-root, field, and edge command handlers with transactional history writes. |
 | `bible_graph_command_tests.rs` | Focused graph command tests for create, idempotency, conflicts, and validation behavior. |
 | `object_field_command.rs` | Validated field update command handler over history storage and projection rebuilds. |
 | `object_field_command_tests.rs` | Focused command-path tests for set, clear, duplicate, and validation behavior. |
@@ -51,7 +52,7 @@ Keep transport, persistence, and realtime coordination in the server crate while
 - `persistence.rs` or `ydoc.rs` gains another unrelated concern.
 
 ## Dependencies
-**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `diffusion/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
+**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `diffusion/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_edge_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
 **External:** `axum`, `tower-http`, `tokio`, `rusqlite`, `yrs`, `pyo3`, `reqwest`.
 
 ## Related ADRs

@@ -145,6 +145,19 @@ pub struct SetBibleGraphFieldCommand {
     pub field_sort_order: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SetBibleGraphEdgeCommand {
+    pub edge_id: BibleGraphEdgeId,
+    pub from_node_id: BibleGraphNodeId,
+    pub to_node_id: BibleGraphNodeId,
+    pub edge_kind: BibleGraphEdgeKind,
+    pub label: String,
+    #[serde(default = "default_directed")]
+    pub directed: bool,
+    #[serde(default)]
+    pub sort_order: u32,
+}
+
 impl CreateBibleGraphNodeCommand {
     pub fn into_node(self) -> BibleGraphNode {
         BibleGraphNode {
@@ -153,6 +166,20 @@ impl CreateBibleGraphNodeCommand {
             schema_key: self.schema_key,
             name: self.name,
             system_owned: false,
+            sort_order: self.sort_order,
+        }
+    }
+}
+
+impl SetBibleGraphEdgeCommand {
+    pub fn into_edge(self) -> BibleGraphEdge {
+        BibleGraphEdge {
+            id: self.edge_id,
+            from_node_id: self.from_node_id,
+            to_node_id: self.to_node_id,
+            edge_kind: self.edge_kind,
+            label: self.label,
+            directed: self.directed,
             sort_order: self.sort_order,
         }
     }
@@ -394,6 +421,24 @@ mod tests {
 
         let json = serde_json::to_string(&command).unwrap();
         let round_trip: SetBibleGraphFieldCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn set_edge_command_round_trips() {
+        let command = SetBibleGraphEdgeCommand {
+            edge_id: BibleGraphEdgeId::new("edge.ada.beach").unwrap(),
+            from_node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+            to_node_id: BibleGraphNodeId::new("node.place.beach").unwrap(),
+            edge_kind: BibleGraphEdgeKind::LocatedIn,
+            label: "located in".to_string(),
+            directed: true,
+            sort_order: 4,
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let round_trip: SetBibleGraphEdgeCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
     }

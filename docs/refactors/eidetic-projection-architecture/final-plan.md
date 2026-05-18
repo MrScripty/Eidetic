@@ -146,6 +146,7 @@ Completed slices:
 - `fix(ui): ensure bible graph category roots` tightened graph-node creation so the Bible navigator asks the backend to ensure canonical roots when the specific category root is missing.
 - `refactor(ui): split bible graph tab controls` extracted category/root mapping, filter controls, and add controls from `StoryBibleTab.svelte` to resolve the frontend component decomposition issue before schema editor work.
 - `refactor(server): split bible graph field storage` extracted graph schema setup and part/field storage from `bible_graph_store.rs`, bringing graph store modules back under the decomposition threshold before edge/snapshot work.
+- `feat(server): persist bible graph edges` added a typed graph edge command route, relational edge current-state storage, endpoint validation, and incoming/outgoing edge loading in node-detail projections.
 
 Discovered issues:
 

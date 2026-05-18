@@ -1,7 +1,8 @@
 use super::*;
 use eidetic_core::contracts::{
-    BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
-    FieldValue, SetBibleGraphFieldCommand,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope,
+    EnsureCanonicalBibleRootsCommand, FieldValue, SetBibleGraphEdgeCommand,
+    SetBibleGraphFieldCommand,
 };
 
 fn memory_connection() -> Connection {
@@ -40,6 +41,18 @@ fn field_command(value: Option<FieldValue>) -> CommandEnvelope<SetBibleGraphFiel
         field_key: eidetic_core::contracts::BibleGraphFieldKey::new("tagline").unwrap(),
         value,
         field_sort_order: 2,
+    })
+}
+
+fn edge_command() -> CommandEnvelope<SetBibleGraphEdgeCommand> {
+    CommandEnvelope::new(SetBibleGraphEdgeCommand {
+        edge_id: BibleGraphEdgeId::new("edge.ada.beach").unwrap(),
+        from_node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        to_node_id: BibleGraphNodeId::new("node.place.beach").unwrap(),
+        edge_kind: BibleGraphEdgeKind::LocatedIn,
+        label: "located in".to_string(),
+        directed: true,
+        sort_order: 4,
     })
 }
 
@@ -274,6 +287,72 @@ fn set_field_rejects_missing_node_without_history_rows() {
     assert_eq!(table_count(&conn, "object_revisions"), 0);
     assert_eq!(table_count(&conn, "bible_graph_parts"), 0);
     assert_eq!(table_count(&conn, "bible_graph_fields"), 0);
+}
+
+#[test]
+fn set_bible_graph_edge_creates_edge_and_updates_projection() {
+    let mut conn = memory_connection();
+    let source = create_command("node.character.ada", "Ada");
+    let target = create_command("node.place.beach", "Beach");
+    apply_create_bible_graph_node(&mut conn, &source, 100).unwrap();
+    apply_create_bible_graph_node(&mut conn, &target, 200).unwrap();
+    let edge = edge_command();
+
+    let (outcome, projection) = apply_set_bible_graph_edge(&mut conn, &edge, 300).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(
+        projection.version,
+        eidetic_core::contracts::ProjectionVersion(3)
+    );
+    assert_eq!(projection.payload.outgoing_edges.len(), 1);
+    assert_eq!(
+        projection.payload.outgoing_edges[0].id.as_str(),
+        "edge.ada.beach"
+    );
+    assert_eq!(
+        projection.payload.outgoing_edges[0].to_node_id.as_str(),
+        "node.place.beach"
+    );
+    assert_eq!(table_count(&conn, "commands"), 3);
+    assert_eq!(table_count(&conn, "change_events"), 3);
+    assert_eq!(table_count(&conn, "object_revisions"), 3);
+    assert_eq!(table_count(&conn, "bible_graph_edges"), 1);
+}
+
+#[test]
+fn duplicate_set_edge_command_is_idempotent() {
+    let mut conn = memory_connection();
+    let source = create_command("node.character.ada", "Ada");
+    let target = create_command("node.place.beach", "Beach");
+    apply_create_bible_graph_node(&mut conn, &source, 100).unwrap();
+    apply_create_bible_graph_node(&mut conn, &target, 200).unwrap();
+    let edge = edge_command();
+
+    let (first, _) = apply_set_bible_graph_edge(&mut conn, &edge, 300).unwrap();
+    let (second, projection) = apply_set_bible_graph_edge(&mut conn, &edge, 300).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(projection.payload.outgoing_edges.len(), 1);
+    assert_eq!(table_count(&conn, "commands"), 3);
+    assert_eq!(table_count(&conn, "object_revisions"), 3);
+    assert_eq!(table_count(&conn, "bible_graph_edges"), 1);
+}
+
+#[test]
+fn set_edge_rejects_missing_target_without_history_rows() {
+    let mut conn = memory_connection();
+    let source = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &source, 100).unwrap();
+    let edge = edge_command();
+
+    let error = apply_set_bible_graph_edge(&mut conn, &edge, 300).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_edges"), 0);
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {

@@ -1,5 +1,6 @@
 mod ai_backends;
 mod bible_graph_command;
+mod bible_graph_edge_store;
 mod bible_graph_field_store;
 mod bible_graph_schema;
 mod bible_graph_store;

@@ -1,6 +1,7 @@
 use super::*;
 use eidetic_core::contracts::{
-    BibleGraphSchemaKey, ChangeEventKind, CommandEnvelope, FieldValue, SetBibleGraphFieldCommand,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphSchemaKey, ChangeEventKind, CommandEnvelope,
+    FieldValue, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
 };
 
 #[derive(Debug, serde::Serialize)]
@@ -142,6 +143,67 @@ fn node_detail_projection_includes_parts_and_fields() {
     assert_eq!(
         projection.payload.parts[0].fields[0].value,
         Some(FieldValue::Text("Reluctant detective".to_string()))
+    );
+}
+
+#[test]
+fn node_detail_projection_includes_incoming_and_outgoing_edges() {
+    let mut conn = memory_connection();
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    seed_node(&mut conn, "node.place.beach", "Beach", 20);
+    let command = CommandEnvelope::new(SetBibleGraphEdgeCommand {
+        edge_id: BibleGraphEdgeId::new("edge.ada.beach").unwrap(),
+        from_node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        to_node_id: BibleGraphNodeId::new("node.place.beach").unwrap(),
+        edge_kind: BibleGraphEdgeKind::LocatedIn,
+        label: "located in".to_string(),
+        directed: true,
+        sort_order: 1,
+    });
+    let event = eidetic_core::contracts::ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        "set edge",
+    );
+    let revision = eidetic_core::contracts::ObjectRevision::new(
+        ObjectKind::BibleEdge,
+        command.payload.edge_id.as_str(),
+        event.id,
+        eidetic_core::contracts::RevisionOperation::Create,
+    );
+    history_store::record_change_with(
+        &mut conn,
+        &command,
+        "test.set_edge",
+        &event,
+        &[revision],
+        |tx| crate::bible_graph_edge_store::set_edge_in_transaction(tx, &command.payload, event.id),
+    )
+    .unwrap();
+
+    let source_projection = load_node_detail_projection_envelope(
+        &conn,
+        &BibleGraphNodeId::new("node.character.ada").unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+    let target_projection = load_node_detail_projection_envelope(
+        &conn,
+        &BibleGraphNodeId::new("node.place.beach").unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+
+    assert_eq!(source_projection.version, ProjectionVersion(3));
+    assert_eq!(source_projection.payload.outgoing_edges.len(), 1);
+    assert_eq!(source_projection.payload.incoming_edges.len(), 0);
+    assert_eq!(target_projection.payload.incoming_edges.len(), 1);
+    assert_eq!(target_projection.payload.outgoing_edges.len(), 0);
+    assert_eq!(
+        target_projection.payload.incoming_edges[0]
+            .from_node_id
+            .as_str(),
+        "node.character.ada"
     );
 }
 

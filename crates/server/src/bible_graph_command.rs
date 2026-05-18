@@ -1,10 +1,12 @@
 use eidetic_core::contracts::{
-    BibleGraphNode, BibleNodeDetailProjection, ChangeEvent, ChangeEventKind, CommandEnvelope,
-    CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldDelta, FieldValue,
-    ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation, SetBibleGraphFieldCommand,
+    BibleGraphEdge, BibleGraphNode, BibleNodeDetailProjection, ChangeEvent, ChangeEventKind,
+    CommandEnvelope, CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldDelta,
+    FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
 };
 use rusqlite::Connection;
 
+use crate::bible_graph_edge_store;
 use crate::bible_graph_store;
 use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
 
@@ -165,6 +167,54 @@ pub(crate) fn apply_set_bible_graph_field(
     Ok((outcome, projection))
 }
 
+pub(crate) fn apply_set_bible_graph_edge(
+    conn: &mut Connection,
+    command: &CommandEnvelope<SetBibleGraphEdgeCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<BibleNodeDetailProjection>,
+    ),
+    BibleGraphCommandError,
+> {
+    validate_edge_command(&command.payload)?;
+    bible_graph_store::create_schema(conn)?;
+    validate_edge_endpoint_exists(conn, &command.payload.from_node_id, "from")?;
+    validate_edge_endpoint_exists(conn, &command.payload.to_node_id, "to")?;
+
+    let before = bible_graph_edge_store::load_edge(conn, &command.payload.edge_id)?;
+    let edge = command.payload.clone().into_edge();
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("set bible graph edge {}", edge.label),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = edge_revision(&edge, before.as_ref(), event.id);
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "bible_graph.set_edge",
+        &event,
+        &[revision],
+        |tx| bible_graph_edge_store::set_edge_in_transaction(tx, &command.payload, event.id),
+    )?;
+    let projection = bible_graph_store::load_node_detail_projection_envelope(
+        conn,
+        &command.payload.from_node_id,
+    )?
+    .ok_or_else(|| {
+        BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(format!(
+            "bible graph source node projection missing after edge update: {}",
+            command.payload.from_node_id.as_str()
+        )))
+    })?;
+
+    Ok((outcome, projection))
+}
+
 fn validate_command(command: &CreateBibleGraphNodeCommand) -> Result<(), BibleGraphCommandError> {
     if command.name.trim().is_empty() {
         return Err(BibleGraphCommandError::InvalidCommand(
@@ -191,12 +241,36 @@ fn validate_parent_exists(
     )))
 }
 
+fn validate_edge_endpoint_exists(
+    conn: &Connection,
+    node_id: &eidetic_core::contracts::BibleGraphNodeId,
+    role: &'static str,
+) -> Result<(), BibleGraphCommandError> {
+    if bible_graph_store::node_exists(conn, node_id)? {
+        return Ok(());
+    }
+
+    Err(BibleGraphCommandError::InvalidCommand(format!(
+        "{role} bible graph node does not exist: {}",
+        node_id.as_str()
+    )))
+}
+
 fn validate_field_command(
     command: &SetBibleGraphFieldCommand,
 ) -> Result<(), BibleGraphCommandError> {
     if command.part_name.trim().is_empty() {
         return Err(BibleGraphCommandError::InvalidCommand(
             "part_name is required".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_edge_command(command: &SetBibleGraphEdgeCommand) -> Result<(), BibleGraphCommandError> {
+    if command.label.trim().is_empty() {
+        return Err(BibleGraphCommandError::InvalidCommand(
+            "label is required".to_string(),
         ));
     }
     Ok(())
@@ -240,6 +314,61 @@ fn node_revision(
     }
 
     revision
+}
+
+fn edge_revision(
+    edge: &BibleGraphEdge,
+    before: Option<&BibleGraphEdge>,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> ObjectRevision {
+    let operation = if before.is_some() {
+        RevisionOperation::Update
+    } else {
+        RevisionOperation::Create
+    };
+    ObjectRevision::new(ObjectKind::BibleEdge, edge.id.as_str(), event_id, operation)
+        .with_field(FieldDelta::new(
+            "from_node_id",
+            before.map(|edge| FieldValue::ObjectRef {
+                kind: ObjectKind::BibleNode,
+                id: edge.from_node_id.as_str().to_string(),
+            }),
+            Some(FieldValue::ObjectRef {
+                kind: ObjectKind::BibleNode,
+                id: edge.from_node_id.as_str().to_string(),
+            }),
+        ))
+        .with_field(FieldDelta::new(
+            "to_node_id",
+            before.map(|edge| FieldValue::ObjectRef {
+                kind: ObjectKind::BibleNode,
+                id: edge.to_node_id.as_str().to_string(),
+            }),
+            Some(FieldValue::ObjectRef {
+                kind: ObjectKind::BibleNode,
+                id: edge.to_node_id.as_str().to_string(),
+            }),
+        ))
+        .with_field(FieldDelta::new(
+            "edge_kind",
+            before.map(|edge| FieldValue::Text(format!("{:?}", edge.edge_kind))),
+            Some(FieldValue::Text(format!("{:?}", edge.edge_kind))),
+        ))
+        .with_field(FieldDelta::new(
+            "label",
+            before.map(|edge| FieldValue::Text(edge.label.clone())),
+            Some(FieldValue::Text(edge.label.clone())),
+        ))
+        .with_field(FieldDelta::new(
+            "directed",
+            before.map(|edge| FieldValue::Bool(edge.directed)),
+            Some(FieldValue::Bool(edge.directed)),
+        ))
+        .with_field(FieldDelta::new(
+            "sort_order",
+            before.map(|edge| FieldValue::Integer(i64::from(edge.sort_order))),
+            Some(FieldValue::Integer(i64::from(edge.sort_order))),
+        ))
 }
 
 #[derive(Debug, thiserror::Error)]
