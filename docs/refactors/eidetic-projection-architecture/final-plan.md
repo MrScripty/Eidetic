@@ -152,6 +152,15 @@ If implementation is split across workers later, add a worker-wave plan before d
 - integration order,
 - cleanup requirements.
 
+Current worker wave:
+
+- Local owner: schema, contracts, command handlers, route registration, shared DTOs, plan updates, and final integration commits.
+- Backend explorer owner: inspect server graph persistence and route seams for the smallest canonical bible graph node vertical slice. Primary output is a report only; no file writes.
+- Frontend explorer owner: inspect bible UI/component seams for a projection-driven detail/editor slice that avoids mutating `storyState.entities`. Primary output is a report only; no file writes.
+- Forbidden shared files for workers: `Cargo.lock`, package lockfiles, generated bindings, migration/schema files, `ui/src/lib/types.ts`, and this plan unless explicitly assigned in a later wave.
+- Integration order: local schema/contract slice first, backend command/projection slice second, frontend projection consumer slice third.
+- Cleanup requirement: close or reuse workers after their reports; do not leave parallel implementation branches with overlapping write sets.
+
 ## Concurrency And Race-Risk Review
 
 The refactor touches async state, background work, WebSocket delivery, AI generation, Y.Doc, persistence, and renderer bridges. Each implementation slice must record the owner for:
