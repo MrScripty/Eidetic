@@ -1080,6 +1080,141 @@ async fn apply_timeline_children_command_returns_timeline_render_projection() {
             && clip["name"] == "Second child"
     }));
 
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let deleted_revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &original_child.0.to_string(),
+    )
+    .expect("deleted child revisions");
+    assert_eq!(deleted_revisions.len(), 1);
+    assert_eq!(
+        deleted_revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Delete
+    );
+    let created_revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &first_child_id.0.to_string(),
+    )
+    .expect("created child revisions");
+    assert_eq!(created_revisions.len(), 1);
+    assert_eq!(
+        created_revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Create
+    );
+    assert!(
+        created_revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "notes"
+                && field.old_value.is_none()
+                && field.new_value == Some(FieldValue::Text("First outline".to_string())))
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn apply_timeline_children_command_replays_duplicate_command() {
+    let path = temp_db_path("applies-timeline-children-duplicate");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let original_child = project
+        .timeline
+        .children_of(parent.id)
+        .first()
+        .expect("original child")
+        .id;
+    let first_child_id = eidetic_core::timeline::node::NodeId::new();
+    let second_child_id = eidetic_core::timeline::node::NodeId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = apply_timeline_children_command_body_with_id(
+        uuid::Uuid::new_v4(),
+        parent.id,
+        first_child_id,
+        second_child_id,
+    );
+
+    let first = app
+        .clone()
+        .oneshot(apply_timeline_children_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != original_child.0.to_string())
+    );
+    assert!(
+        clips
+            .iter()
+            .any(|clip| clip["node_id"] == first_child_id.0.to_string())
+    );
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::TimelineNode,
+        &first_child_id.0.to_string(),
+    )
+    .expect("created child revisions");
+    assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn apply_timeline_children_command_rejects_conflicting_duplicate_command() {
+    let path = temp_db_path("applies-timeline-children-conflict");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let command_id = uuid::Uuid::new_v4();
+    let original = apply_timeline_children_command_body_with_id(
+        command_id,
+        parent.id,
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+    );
+    let conflicting = apply_timeline_children_command_body_with_id(
+        command_id,
+        parent.id,
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+    );
+
+    let first = app
+        .clone()
+        .oneshot(apply_timeline_children_command_request(original))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(apply_timeline_children_command_request(conflicting))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::CONFLICT);
+
     let _ = std::fs::remove_file(path);
 }
 
@@ -2526,8 +2661,22 @@ fn apply_timeline_children_command_body(
     first_child_id: eidetic_core::timeline::node::NodeId,
     second_child_id: eidetic_core::timeline::node::NodeId,
 ) -> serde_json::Value {
+    apply_timeline_children_command_body_with_id(
+        uuid::Uuid::new_v4(),
+        parent_id,
+        first_child_id,
+        second_child_id,
+    )
+}
+
+fn apply_timeline_children_command_body_with_id(
+    command_id: uuid::Uuid,
+    parent_id: eidetic_core::timeline::node::NodeId,
+    first_child_id: eidetic_core::timeline::node::NodeId,
+    second_child_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4(),
+        "id": command_id,
         "payload": {
             "parent_id": parent_id,
             "children": [

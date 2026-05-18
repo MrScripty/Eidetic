@@ -12,6 +12,7 @@ use eidetic_core::timeline::timing::TimeRange;
 use thiserror::Error;
 
 use crate::history_store::HistoryStoreError;
+pub(crate) use crate::timeline_children_history::record_apply_timeline_children_history;
 pub(crate) use crate::timeline_command_history::{
     record_create_timeline_node_history, record_create_timeline_relationship_history,
     record_delete_timeline_relationship_history, record_set_timeline_node_lock_history,

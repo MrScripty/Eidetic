@@ -409,36 +409,50 @@ async fn apply_timeline_children(
     for child in &command.payload.children {
         validation::validate_name(&child.name, "child node name")?;
     }
+    let path = active_project_path(&state)?;
     let children = command.payload.children.clone();
     let response = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
             return Err(ApiError::no_project());
         };
-        let projection = timeline_command::apply_timeline_children(project, &command)
-            .map_err(map_timeline_command_error)?;
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| ApiError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome = timeline_command::record_apply_timeline_children_history(
+            &mut conn, project, &command, 0,
+        )
+        .map_err(map_timeline_command_error)?;
+        let projection = if outcome == RecordChangeOutcome::Recorded {
+            timeline_command::apply_timeline_children(project, &command)
+                .map_err(map_timeline_command_error)?
+        } else {
+            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
+        };
         TimelineCommandResponse {
-            outcome: RecordChangeOutcome::Recorded,
+            outcome,
             projection,
         }
     };
 
-    for child in children {
-        let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
-            node_id: child.node_id,
-        });
-        if !child.outline.is_empty() {
-            let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+    if response.outcome == RecordChangeOutcome::Recorded {
+        for child in children {
+            let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
                 node_id: child.node_id,
-                field: crate::ydoc::ContentField::Notes,
-                text: child.outline,
-                author: "human:command".into(),
             });
+            if !child.outline.is_empty() {
+                let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+                    node_id: child.node_id,
+                    field: crate::ydoc::ContentField::Notes,
+                    text: child.outline,
+                    author: "human:command".into(),
+                });
+            }
         }
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+        state.trigger_save();
     }
-    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-    let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-    state.trigger_save();
     crate::error::json_value(response)
 }
 

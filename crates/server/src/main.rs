@@ -24,6 +24,7 @@ mod sqlite;
 mod state;
 mod static_files;
 mod story_arc_command;
+mod timeline_children_history;
 mod timeline_command;
 mod timeline_command_history;
 mod timeline_command_history_codec;
