@@ -254,6 +254,7 @@ export interface ObjectFieldCommandResponse {
 }
 
 export * from './bibleGraphTypes.js';
+export * from './scriptTypes.js';
 
 export interface ExtractionResult {
   new_entities: SuggestedEntity[];

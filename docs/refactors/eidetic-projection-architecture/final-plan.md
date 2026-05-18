@@ -166,6 +166,7 @@ Completed slices:
 - `feat(ui): show bible graph snapshots` added a read-only projection-backed snapshot list in graph node details so persisted node-scoped snapshots are visible without using legacy entity snapshot APIs.
 - `feat(ui): add bible graph snapshot editor` added a local-draft snapshot creation form that submits snapshot field commands and waits for backend node-detail projections instead of inserting snapshots client-side.
 - `refactor(ui): split bible graph dto types` moved bible graph command/projection DTOs out of the oversized shared frontend type file while re-exporting them for existing import compatibility.
+- `feat(core): add script document contracts` added host-agnostic script document, segment, block, span, lock, patch, command, and projection contracts in Rust and TypeScript before script persistence is introduced.
 
 Discovered issues:
 

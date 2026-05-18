@@ -1,5 +1,6 @@
 mod bible_graph;
 mod bible_graph_defaults;
+mod script_document;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -19,6 +20,13 @@ pub use bible_graph_defaults::{
     BibleGraphPartDefault, BibleGraphPartSchemaProjection, BibleGraphSchemaDefault,
     BibleGraphSchemaListProjection, BibleGraphSchemaProjection, builtin_bible_graph_schema,
     builtin_bible_graph_schema_list_projection, default_part_projections_for_node,
+};
+pub use script_document::{
+    ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,
+    ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptLock, ScriptLockId,
+    ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
+    ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
+    SetScriptLockCommand,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

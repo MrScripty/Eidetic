@@ -9,6 +9,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `mod.rs` | Public contract types, validated IDs, typed values, change history records, and projection envelopes. |
 | `bible_graph.rs` | Canonical story-bible graph contracts, expected root nodes, typed graph parts/fields/edges, and node-detail projection shapes. |
 | `bible_graph_defaults.rs` | Built-in story-bible schema defaults used to project expected empty parts and fields for known graph schemas. |
+| `script_document.rs` | Canonical script document, segment, block, span, lock, patch, and script projection contracts. |
 
 ## Problem
 The new architecture needs stable types for backend-owned commands, event history, sparse object revisions, and read projections before persistence, routes, Svelte, or Bevy can implement their slices safely.
@@ -19,7 +20,7 @@ The new architecture needs stable types for backend-owned commands, event histor
 - Canonical queryable facts must remain typed instead of hidden inside arbitrary JSON.
 
 ## Decision
-Start with small core contract modules that own IDs, object kinds, field values, generic field-update commands, graph-node create/root-initialization/field/edge commands, built-in graph schema defaults, change events, object revisions, projection envelopes, and the first story-bible graph detail/list read models. Later slices can add domain-specific command/projection payloads without changing runtime infrastructure first.
+Start with small core contract modules that own IDs, object kinds, field values, generic field-update commands, graph-node create/root-initialization/field/edge/snapshot commands, script document commands, built-in graph schema defaults, change events, object revisions, projection envelopes, and the first story-bible graph and script read models. Later slices can add domain-specific command/projection payloads without changing runtime infrastructure first.
 
 ## Alternatives Rejected
 - Defining contracts in server routes: rejected because route-owned contracts would couple persistence, UI, and Bevy to HTTP handlers.
@@ -31,6 +32,7 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Object revisions describe field-level deltas and do not require whole-object snapshots.
 - Canonical bible roots are system-owned graph nodes, not enum-only branches in application logic.
 - Built-in bible graph defaults are projected read models until a user command persists an actual field value.
+- Script documents own generated screenplay artifacts; timeline nodes are referenced only as source context.
 
 ## Revisit Triggers
 - Contracts become public SDK or binding surface.
