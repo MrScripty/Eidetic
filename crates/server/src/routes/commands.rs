@@ -4,7 +4,8 @@ use axum::{Json, Router};
 use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use eidetic_core::contracts::{
     BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, ProjectionEnvelope,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetObjectFieldCommand,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    SetObjectFieldCommand,
 };
 use serde::Serialize;
 
@@ -23,6 +24,10 @@ pub fn router() -> Router<AppState> {
         .route("/commands/bible-graph/node", post(create_bible_graph_node))
         .route("/commands/bible-graph/field", post(set_bible_graph_field))
         .route("/commands/bible-graph/edge", post(set_bible_graph_edge))
+        .route(
+            "/commands/bible-graph/snapshot-field",
+            post(set_bible_graph_snapshot_field),
+        )
         .route(
             "/commands/bible-graph/canonical-roots",
             post(ensure_canonical_bible_roots),
@@ -95,6 +100,22 @@ async fn set_bible_graph_edge(
     let response = tokio::task::spawn_blocking(move || set_bible_graph_edge_at_path(path, command))
         .await
         .map_err(|e| ApiError::internal(format!("bible graph edge task failed: {e}")))??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    crate::error::json_value(response)
+}
+
+async fn set_bible_graph_snapshot_field(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SetBibleGraphSnapshotFieldCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response =
+        tokio::task::spawn_blocking(move || set_bible_graph_snapshot_field_at_path(path, command))
+            .await
+            .map_err(|e| {
+                ApiError::internal(format!("bible graph snapshot field task failed: {e}"))
+            })??;
 
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
     crate::error::json_value(response)
@@ -178,6 +199,22 @@ fn set_bible_graph_edge_at_path(
         .map_err(|e| ApiError::internal(e.to_string()))?;
     let (outcome, projection) =
         bible_graph_command::apply_set_bible_graph_edge(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+
+    Ok(BibleGraphNodeCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
+fn set_bible_graph_snapshot_field_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<SetBibleGraphSnapshotFieldCommand>,
+) -> Result<BibleGraphNodeCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        bible_graph_command::apply_set_bible_graph_snapshot_field(&mut conn, &command, 0)
             .map_err(map_bible_graph_error)?;
 
     Ok(BibleGraphNodeCommandResponse {

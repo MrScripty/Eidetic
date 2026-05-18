@@ -2,7 +2,8 @@ use eidetic_core::contracts::{
     BibleGraphEdge, BibleGraphNode, BibleNodeDetailProjection, ChangeEvent, ChangeEventKind,
     CommandEnvelope, CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldDelta,
     FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, builtin_bible_graph_schema,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    builtin_bible_graph_schema,
 };
 use rusqlite::Connection;
 
@@ -216,6 +217,73 @@ pub(crate) fn apply_set_bible_graph_edge(
     Ok((outcome, projection))
 }
 
+pub(crate) fn apply_set_bible_graph_snapshot_field(
+    conn: &mut Connection,
+    command: &CommandEnvelope<SetBibleGraphSnapshotFieldCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<BibleNodeDetailProjection>,
+    ),
+    BibleGraphCommandError,
+> {
+    validate_snapshot_field_command(&command.payload)?;
+    bible_graph_store::create_schema(conn)?;
+
+    let before = bible_graph_store::load_node_detail_projection(conn, &command.payload.node_id)?
+        .ok_or_else(|| {
+            BibleGraphCommandError::InvalidCommand(format!(
+                "bible graph node does not exist: {}",
+                command.payload.node_id.as_str()
+            ))
+        })?;
+    validate_snapshot_field_schema(&before, &command.payload)?;
+    let before_snapshot = before
+        .snapshots
+        .iter()
+        .find(|snapshot| snapshot.snapshot.id == command.payload.snapshot_id);
+    let old_value = before_snapshot
+        .iter()
+        .flat_map(|snapshot| snapshot.fields.iter())
+        .find(|field| field.id == command.payload.field_id)
+        .and_then(|field| field.value.clone());
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!(
+            "set bible graph snapshot field {}",
+            command.payload.field_key.as_str()
+        ),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = snapshot_revision(
+        &command.payload,
+        old_value,
+        before_snapshot.is_some(),
+        event.id,
+    );
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "bible_graph.set_snapshot_field",
+        &event,
+        &[revision],
+        |tx| bible_graph_store::set_snapshot_field_in_transaction(tx, &command.payload, event.id),
+    )?;
+    let projection =
+        bible_graph_store::load_node_detail_projection_envelope(conn, &command.payload.node_id)?
+            .ok_or_else(|| {
+                BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(format!(
+                    "bible graph node projection missing after snapshot field update: {}",
+                    command.payload.node_id.as_str()
+                )))
+            })?;
+
+    Ok((outcome, projection))
+}
+
 fn validate_command(command: &CreateBibleGraphNodeCommand) -> Result<(), BibleGraphCommandError> {
     if command.name.trim().is_empty() {
         return Err(BibleGraphCommandError::InvalidCommand(
@@ -308,6 +376,58 @@ fn validate_edge_command(command: &SetBibleGraphEdgeCommand) -> Result<(), Bible
     Ok(())
 }
 
+fn validate_snapshot_field_command(
+    command: &SetBibleGraphSnapshotFieldCommand,
+) -> Result<(), BibleGraphCommandError> {
+    if command.label.trim().is_empty() {
+        return Err(BibleGraphCommandError::InvalidCommand(
+            "label is required".to_string(),
+        ));
+    }
+    if command.part_name.trim().is_empty() {
+        return Err(BibleGraphCommandError::InvalidCommand(
+            "part_name is required".to_string(),
+        ));
+    }
+    if i64::try_from(command.at_ms).is_err() {
+        return Err(BibleGraphCommandError::InvalidCommand(
+            "at_ms is too large".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_snapshot_field_schema(
+    projection: &BibleNodeDetailProjection,
+    command: &SetBibleGraphSnapshotFieldCommand,
+) -> Result<(), BibleGraphCommandError> {
+    let Some(schema) = builtin_bible_graph_schema(&projection.node.schema_key) else {
+        return Ok(());
+    };
+    let Some(part) = schema.part(&command.part_key) else {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "part_key {} is not valid for bible graph schema {}",
+            command.part_key.as_str(),
+            projection.node.schema_key.as_str()
+        )));
+    };
+    if part.name != command.part_name {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "part_name {} does not match schema part {}",
+            command.part_name, part.name
+        )));
+    }
+    if part.field(&command.field_key).is_none() {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "field_key {} is not valid for bible graph schema {} part {}",
+            command.field_key.as_str(),
+            projection.node.schema_key.as_str(),
+            command.part_key.as_str()
+        )));
+    }
+    Ok(())
+}
+
 fn node_revision(
     node: &BibleGraphNode,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -346,6 +466,54 @@ fn node_revision(
     }
 
     revision
+}
+
+fn snapshot_revision(
+    command: &SetBibleGraphSnapshotFieldCommand,
+    old_value: Option<FieldValue>,
+    snapshot_exists: bool,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> ObjectRevision {
+    let operation = if snapshot_exists {
+        RevisionOperation::Update
+    } else {
+        RevisionOperation::Create
+    };
+    ObjectRevision::new(
+        ObjectKind::BibleSnapshot,
+        command.snapshot_id.as_str(),
+        event_id,
+        operation,
+    )
+    .with_field(FieldDelta::new(
+        "node_id",
+        None,
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::BibleNode,
+            id: command.node_id.as_str().to_string(),
+        }),
+    ))
+    .with_field(FieldDelta::new(
+        "at_ms",
+        None,
+        Some(FieldValue::Integer(
+            i64::try_from(command.at_ms).unwrap_or(i64::MAX),
+        )),
+    ))
+    .with_field(FieldDelta::new(
+        "label",
+        None,
+        Some(FieldValue::Text(command.label.clone())),
+    ))
+    .with_field(FieldDelta::new(
+        format!(
+            "field.{}.{}",
+            command.part_key.as_str(),
+            command.field_key.as_str()
+        ),
+        old_value,
+        command.value.clone(),
+    ))
 }
 
 fn edge_revision(

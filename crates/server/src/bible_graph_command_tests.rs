@@ -1,8 +1,9 @@
 use super::*;
 use eidetic_core::contracts::{
-    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
+    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, CommandEnvelope,
     EnsureCanonicalBibleRootsCommand, FieldValue, SetBibleGraphEdgeCommand,
-    SetBibleGraphFieldCommand,
+    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
 };
 
 fn memory_connection() -> Connection {
@@ -53,6 +54,24 @@ fn edge_command() -> CommandEnvelope<SetBibleGraphEdgeCommand> {
         label: "located in".to_string(),
         directed: true,
         sort_order: 4,
+    })
+}
+
+fn snapshot_field_command(
+    value: Option<FieldValue>,
+) -> CommandEnvelope<SetBibleGraphSnapshotFieldCommand> {
+    CommandEnvelope::new(SetBibleGraphSnapshotFieldCommand {
+        snapshot_id: BibleGraphSnapshotId::new("snapshot.character.ada.sequence-1").unwrap(),
+        node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        at_ms: 12_000,
+        label: "Sequence 1 state".to_string(),
+        snapshot_sort_order: 1,
+        field_id: BibleGraphSnapshotFieldId::new("snapshot-field.character.status").unwrap(),
+        part_key: BibleGraphPartKey::new("profile").unwrap(),
+        part_name: "Profile".to_string(),
+        field_key: BibleGraphFieldKey::new("tagline").unwrap(),
+        value,
+        field_sort_order: 2,
     })
 }
 
@@ -402,6 +421,105 @@ fn set_edge_rejects_missing_target_without_history_rows() {
     assert_eq!(table_count(&conn, "commands"), 1);
     assert_eq!(table_count(&conn, "object_revisions"), 1);
     assert_eq!(table_count(&conn, "bible_graph_edges"), 0);
+}
+
+#[test]
+fn set_bible_graph_snapshot_field_creates_snapshot_and_updates_projection() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let snapshot = snapshot_field_command(Some(FieldValue::Text("Rain-soaked".to_string())));
+
+    let (outcome, projection) =
+        apply_set_bible_graph_snapshot_field(&mut conn, &snapshot, 200).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(
+        projection.version,
+        eidetic_core::contracts::ProjectionVersion(3)
+    );
+    assert_eq!(projection.payload.snapshots.len(), 1);
+    assert_eq!(
+        projection.payload.snapshots[0].snapshot.label,
+        "Sequence 1 state"
+    );
+    assert_eq!(
+        projection.payload.snapshots[0].fields[0].value,
+        Some(FieldValue::Text("Rain-soaked".to_string()))
+    );
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "change_events"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+    assert_eq!(table_count(&conn, "bible_graph_snapshots"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_snapshot_fields"), 1);
+}
+
+#[test]
+fn duplicate_set_snapshot_field_command_is_idempotent() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let snapshot = snapshot_field_command(Some(FieldValue::Text("Rain-soaked".to_string())));
+
+    let (first, _) = apply_set_bible_graph_snapshot_field(&mut conn, &snapshot, 200).unwrap();
+    let (second, projection) =
+        apply_set_bible_graph_snapshot_field(&mut conn, &snapshot, 200).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(projection.payload.snapshots.len(), 1);
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+    assert_eq!(table_count(&conn, "bible_graph_snapshots"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_snapshot_fields"), 1);
+}
+
+#[test]
+fn set_snapshot_field_rejects_missing_node_without_history_rows() {
+    let mut conn = memory_connection();
+    let snapshot = snapshot_field_command(Some(FieldValue::Text("Rain-soaked".to_string())));
+
+    let error = apply_set_bible_graph_snapshot_field(&mut conn, &snapshot, 200).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 0);
+    assert_eq!(table_count(&conn, "object_revisions"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_snapshots"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_snapshot_fields"), 0);
+}
+
+#[test]
+fn set_snapshot_field_rejects_blank_label_without_history_rows() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let mut snapshot = snapshot_field_command(Some(FieldValue::Text("Rain-soaked".to_string())));
+    snapshot.payload.label = " ".to_string();
+
+    let error = apply_set_bible_graph_snapshot_field(&mut conn, &snapshot, 200).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_snapshots"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_snapshot_fields"), 0);
+}
+
+#[test]
+fn set_snapshot_field_rejects_unknown_field_for_known_schema_without_history_rows() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let mut snapshot = snapshot_field_command(Some(FieldValue::Text("Rain-soaked".to_string())));
+    snapshot.payload.field_key = BibleGraphFieldKey::new("unknown").unwrap();
+
+    let error = apply_set_bible_graph_snapshot_field(&mut conn, &snapshot, 200).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_snapshots"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_snapshot_fields"), 0);
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
