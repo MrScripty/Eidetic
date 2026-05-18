@@ -83,7 +83,14 @@ export interface ScriptDocumentProjection {
 
 export interface SetScriptBlockCommand {
   document_id: ScriptDocumentId;
+  document_title: string;
+  document_sort_order?: number;
   segment_id: ScriptSegmentId;
+  source_node_id?: string | null;
+  segment_start_ms: number;
+  segment_end_ms: number;
+  segment_status: ScriptSegmentStatus;
+  segment_sort_order?: number;
   block_id: ScriptBlockId;
   block_kind: ScriptBlockKind;
   text: string;

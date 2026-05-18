@@ -4,8 +4,8 @@ use axum::{Json, Router};
 use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use eidetic_core::contracts::{
     BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, ProjectionEnvelope,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    SetObjectFieldCommand,
+    ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
 };
 use serde::Serialize;
 
@@ -14,6 +14,7 @@ use crate::error::{ApiError, ApiJson};
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::object_field_command::{self, ObjectFieldCommandError};
 use crate::revision_projection::ObjectFieldProjection;
+use crate::script_document_command::{self, ScriptDocumentCommandError};
 use crate::state::{AppState, ServerEvent};
 
 use super::support::{active_project_path, map_history_error};
@@ -32,6 +33,7 @@ pub fn router() -> Router<AppState> {
             "/commands/bible-graph/canonical-roots",
             post(ensure_canonical_bible_roots),
         )
+        .route("/commands/script/block", post(set_script_block))
 }
 
 #[derive(Debug, Serialize)]
@@ -50,6 +52,12 @@ struct BibleGraphNodeCommandResponse {
 struct BibleGraphRootsCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<BibleGraphNodeListProjection>,
+}
+
+#[derive(Debug, Serialize)]
+struct ScriptDocumentCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<ScriptDocumentProjection>,
 }
 
 async fn set_object_field(
@@ -131,6 +139,19 @@ async fn ensure_canonical_bible_roots(
         .map_err(|e| ApiError::internal(format!("bible graph roots task failed: {e}")))??;
 
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    crate::error::json_value(response)
+}
+
+async fn set_script_block(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SetScriptBlockCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response = tokio::task::spawn_blocking(move || set_script_block_at_path(path, command))
+        .await
+        .map_err(|e| ApiError::internal(format!("script block command task failed: {e}")))??;
+
+    let _ = state.events_tx.send(ServerEvent::ScriptChanged);
     crate::error::json_value(response)
 }
 
@@ -239,6 +260,22 @@ fn ensure_roots_at_path(
     })
 }
 
+fn set_script_block_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<SetScriptBlockCommand>,
+) -> Result<ScriptDocumentCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        script_document_command::apply_set_script_block(&mut conn, &command, 0)
+            .map_err(map_script_document_error)?;
+
+    Ok(ScriptDocumentCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn map_object_field_error(error: ObjectFieldCommandError) -> ApiError {
     match error {
         ObjectFieldCommandError::InvalidCommand(message) => ApiError::bad_request(message),
@@ -250,6 +287,13 @@ fn map_bible_graph_error(error: BibleGraphCommandError) -> ApiError {
     match error {
         BibleGraphCommandError::InvalidCommand(message) => ApiError::bad_request(message),
         BibleGraphCommandError::Store(error) => map_history_error(error),
+    }
+}
+
+fn map_script_document_error(error: ScriptDocumentCommandError) -> ApiError {
+    match error {
+        ScriptDocumentCommandError::InvalidCommand(message) => ApiError::bad_request(message),
+        ScriptDocumentCommandError::Store(error) => map_history_error(error),
     }
 }
 

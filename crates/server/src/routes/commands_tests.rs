@@ -7,7 +7,8 @@ use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId,
     BibleGraphPartId, BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId,
-    BibleGraphSnapshotId, EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind,
+    BibleGraphSnapshotId, EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind, ScriptBlockId,
+    ScriptBlockKind, ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus,
 };
 use serde_json::json;
 use tower::util::ServiceExt;
@@ -392,6 +393,52 @@ async fn bible_graph_snapshot_field_command_rejects_blank_label() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn script_block_command_returns_script_document_projection() {
+    let path = temp_db_path("sets-script-block");
+    let app = app_with_project_path(path.clone()).await;
+    let body = script_block_command_body("Ada enters with a wet umbrella.");
+
+    let response = app
+        .oneshot(script_block_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(value["projection"]["version"], 5);
+    assert_eq!(value["projection"]["payload"]["document"]["title"], "Pilot");
+    assert_eq!(
+        value["projection"]["payload"]["segments"][0]["blocks"][0]["block"]["text"],
+        "Ada enters with a wet umbrella."
+    );
+    assert_eq!(
+        value["projection"]["payload"]["segments"][0]["blocks"][0]["spans"][0]["end_byte"],
+        31
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn script_block_command_rejects_invalid_segment_range() {
+    let path = temp_db_path("rejects-invalid-script-range");
+    let app = app_with_project_path(path.clone()).await;
+    let mut body = script_block_command_body("Ada enters with a wet umbrella.");
+    body["payload"]["segment_start_ms"] = json!(5_000);
+    body["payload"]["segment_end_ms"] = json!(1_000);
+
+    let response = app
+        .oneshot(script_block_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -432,6 +479,15 @@ fn bible_graph_roots_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
         .uri("/commands/bible-graph/canonical-roots")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn script_block_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/script/block")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -543,6 +599,27 @@ fn bible_graph_snapshot_field_command_body(value: Option<serde_json::Value>) -> 
             "field_key": BibleGraphFieldKey::new("tagline").unwrap(),
             "value": value,
             "field_sort_order": 2,
+        }
+    })
+}
+
+fn script_block_command_body(text: &str) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "document_id": ScriptDocumentId::new("script.document.main").unwrap(),
+            "document_title": "Pilot",
+            "document_sort_order": 0,
+            "segment_id": ScriptSegmentId::new("script.segment.beat-1").unwrap(),
+            "source_node_id": "node.beat.opening",
+            "segment_start_ms": 1_000,
+            "segment_end_ms": 5_000,
+            "segment_status": ScriptSegmentStatus::Current,
+            "segment_sort_order": 1,
+            "block_id": ScriptBlockId::new("script.block.action-1").unwrap(),
+            "block_kind": ScriptBlockKind::Action,
+            "text": text,
+            "sort_order": 2,
         }
     })
 }

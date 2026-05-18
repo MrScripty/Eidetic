@@ -91,6 +91,7 @@ pub enum ServerEvent {
         can_redo: bool,
     },
     BibleChanged,
+    ScriptChanged,
     EntityExtractionComplete {
         node_id: uuid::Uuid,
         new_entity_count: usize,

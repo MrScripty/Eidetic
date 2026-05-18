@@ -154,7 +154,17 @@ pub struct ScriptDocumentProjection {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SetScriptBlockCommand {
     pub document_id: ScriptDocumentId,
+    pub document_title: String,
+    #[serde(default)]
+    pub document_sort_order: u32,
     pub segment_id: ScriptSegmentId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_node_id: Option<String>,
+    pub segment_start_ms: u64,
+    pub segment_end_ms: u64,
+    pub segment_status: ScriptSegmentStatus,
+    #[serde(default)]
+    pub segment_sort_order: u32,
     pub block_id: ScriptBlockId,
     pub block_kind: ScriptBlockKind,
     pub text: String,
@@ -241,7 +251,14 @@ mod tests {
     fn script_block_command_round_trips() {
         let command = SetScriptBlockCommand {
             document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+            document_title: "Pilot".to_string(),
+            document_sort_order: 0,
             segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
+            source_node_id: Some("node.beat.opening".to_string()),
+            segment_start_ms: 1_000,
+            segment_end_ms: 5_000,
+            segment_status: ScriptSegmentStatus::Current,
+            segment_sort_order: 1,
             block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
             block_kind: ScriptBlockKind::Action,
             text: "Ada enters with a wet umbrella.".to_string(),

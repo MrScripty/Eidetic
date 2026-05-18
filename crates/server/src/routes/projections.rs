@@ -3,8 +3,8 @@ use axum::extract::{Query, State};
 use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
-    BibleNodeDetailProjection, ObjectKind, ProjectionEnvelope,
-    builtin_bible_graph_schema_list_projection,
+    BibleNodeDetailProjection, ObjectKind, ProjectionEnvelope, ScriptDocumentId,
+    ScriptDocumentProjection, builtin_bible_graph_schema_list_projection,
 };
 use serde::Deserialize;
 
@@ -12,6 +12,7 @@ use crate::bible_graph_store;
 use crate::error::{ApiError, ApiJson};
 use crate::history_store;
 use crate::revision_projection::ObjectFieldProjection;
+use crate::script_store;
 use crate::state::AppState;
 
 use super::support::{active_project_path, map_history_error};
@@ -34,6 +35,10 @@ pub fn router() -> Router<AppState> {
             "/projections/bible-graph/schemas",
             get(get_bible_graph_schema_list_projection),
         )
+        .route(
+            "/projections/script/document",
+            get(get_script_document_projection),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -45,6 +50,11 @@ struct ObjectFieldProjectionQuery {
 #[derive(Debug, Deserialize)]
 struct BibleGraphNodeProjectionQuery {
     node_id: BibleGraphNodeId,
+}
+
+#[derive(Debug, Deserialize)]
+struct ScriptDocumentProjectionQuery {
+    document_id: ScriptDocumentId,
 }
 
 async fn get_object_field_projection(
@@ -93,6 +103,20 @@ async fn get_bible_graph_schema_list_projection(State(state): State<AppState>) -
     crate::error::json_value(load_bible_schema_list_projection())
 }
 
+async fn get_script_document_projection(
+    State(state): State<AppState>,
+    Query(query): Query<ScriptDocumentProjectionQuery>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let projection = tokio::task::spawn_blocking(move || {
+        load_script_document_projection_at_path(path, query.document_id)
+    })
+    .await
+    .map_err(|e| ApiError::internal(format!("script document projection task failed: {e}")))??;
+
+    crate::error::json_value(projection)
+}
+
 fn load_projection_at_path(
     path: std::path::PathBuf,
     object_kind: ObjectKind,
@@ -132,6 +156,18 @@ fn load_bible_node_list_at_path(
 
 fn load_bible_schema_list_projection() -> ProjectionEnvelope<BibleGraphSchemaListProjection> {
     builtin_bible_graph_schema_list_projection()
+}
+
+fn load_script_document_projection_at_path(
+    path: std::path::PathBuf,
+    document_id: ScriptDocumentId,
+) -> Result<ProjectionEnvelope<ScriptDocumentProjection>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    script_store::create_schema(&conn).map_err(map_history_error)?;
+    script_store::load_document_projection_envelope(&conn, &document_id)
+        .map_err(map_history_error)?
+        .ok_or_else(|| ApiError::not_found("script document not found"))
 }
 
 #[cfg(test)]
