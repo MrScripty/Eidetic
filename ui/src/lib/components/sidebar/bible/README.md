@@ -6,14 +6,15 @@ This directory contains the story-bible UI: entity cards, detail editing, develo
 
 ## Contents
 
-| File/Folder                  | Description                                                                    |
-| ---------------------------- | ------------------------------------------------------------------------------ |
-| `StoryBibleTab.svelte`       | Top-level story-bible panel backed by bible graph node-list projections.       |
-| `BibleGraphNodeCard.svelte`  | List-card summary for backend-owned bible graph nodes.                         |
-| `EntityCard.svelte`          | List-card summary for bible entities.                                          |
-| `EntityDetail.svelte`        | Full entity editing surface, including relations and category-specific fields. |
-| `DevelopmentTimeline.svelte` | Timeline view of entity development points.                                    |
-| `EntityExtractPanel.svelte`  | Review/apply flow for AI-driven extraction results.                            |
+| File/Folder                   | Description                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `StoryBibleTab.svelte`        | Top-level story-bible panel backed by bible graph node-list projections.       |
+| `BibleGraphNodeCard.svelte`   | List-card summary for backend-owned bible graph nodes.                         |
+| `BibleGraphNodeDetail.svelte` | Read-only detail panel for backend-owned bible graph node projections.         |
+| `EntityCard.svelte`           | List-card summary for bible entities.                                          |
+| `EntityDetail.svelte`         | Full entity editing surface, including relations and category-specific fields. |
+| `DevelopmentTimeline.svelte`  | Timeline view of entity development points.                                    |
+| `EntityExtractPanel.svelte`   | Review/apply flow for AI-driven extraction results.                            |
 
 ## Problem
 

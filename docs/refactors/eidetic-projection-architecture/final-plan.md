@@ -142,6 +142,7 @@ Completed slices:
 - `feat(ui): add bible graph field command helper` added typed frontend command and projection-store helpers for backend-owned bible graph field updates without invalidating node-list projections or mutating legacy entity state.
 - `feat(ui): render bible tab from graph projections` moved the story-bible navigator/list surface onto backend-owned bible graph node-list projections, with graph-node selection kept separate from legacy entity detail selection.
 - `feat(server): validate bible graph parent nodes` enforced parent/child graph invariants for node creation before history writes, including command and route coverage for missing-parent rejection.
+- `feat(ui): show bible graph node details` added a read-only projection-backed graph-node detail panel for selected bible graph nodes without routing through legacy entity detail state.
 
 Discovered issues:
 

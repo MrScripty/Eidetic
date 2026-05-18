@@ -5,6 +5,7 @@
   import BeatEditor from '../editor/BeatEditor.svelte';
   import ScriptPanel from '../editor/ScriptPanel.svelte';
   import RelationshipPanel from '../relationship/RelationshipPanel.svelte';
+  import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
   import EntityDetail from '../sidebar/bible/EntityDetail.svelte';
   import { PANEL, mainTimelinePanelHeightPx } from '$lib/types.js';
   import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
@@ -13,7 +14,7 @@
   import { storyState } from '$lib/stores/story.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
-  import { bibleState, selectEntity } from '$lib/stores/bible.svelte.js';
+  import { bibleState, selectBibleGraphNode, selectEntity } from '$lib/stores/bible.svelte.js';
   import { undo, redo, saveProject, deleteNode, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
@@ -124,8 +125,10 @@
       : null,
   );
 
-  /** Right panel is open when graph is toggled OR an entity is selected. */
-  const rightPanelOpen = $derived(relationshipPanelOpen || selectedEntity !== null);
+  const selectedGraphNodeId = $derived(bibleState.selectedGraphNodeId);
+  const bibleDetailOpen = $derived(selectedEntity !== null || selectedGraphNodeId !== null);
+  /** Right panel is open when graph is toggled OR a bible detail is selected. */
+  const rightPanelOpen = $derived(relationshipPanelOpen || bibleDetailOpen);
   const bottomStackExtraHeight = $derived(
     characterTimelineState.visible ? PANEL.CHARACTER_TIMELINE_HEIGHT_PX : 0,
   );
@@ -230,8 +233,19 @@
             <RelationshipPanel
               width={relationshipPanelWidth}
               onclose={() => (relationshipPanelOpen = false)}
-              compact={selectedEntity !== null}
+              compact={bibleDetailOpen}
             />
+          {/if}
+          {#if selectedGraphNodeId}
+            {#if relationshipPanelOpen}
+              <div class="panel-divider"></div>
+            {/if}
+            <div class="entity-detail-panel">
+              <BibleGraphNodeDetail
+                nodeId={selectedGraphNodeId}
+                onclose={() => selectBibleGraphNode(null)}
+              />
+            </div>
           {/if}
           {#if selectedEntity}
             {#if relationshipPanelOpen}
