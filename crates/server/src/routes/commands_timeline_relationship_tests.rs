@@ -20,7 +20,7 @@ async fn create_timeline_relationship_command_returns_timeline_render_projection
     let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = create_timeline_relationship_command_body(relationship_id, from_node, to_node);
 
     let response = app
@@ -102,7 +102,7 @@ async fn create_timeline_relationship_command_replays_duplicate_command() {
     let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = create_timeline_relationship_command_body_with_id(
         uuid::Uuid::new_v4(),
         relationship_id,
@@ -115,6 +115,14 @@ async fn create_timeline_relationship_command_replays_duplicate_command() {
         .oneshot(create_timeline_relationship_command_request(body.clone()))
         .await
         .expect("first route response");
+    state
+        .project
+        .lock()
+        .as_mut()
+        .expect("project")
+        .timeline
+        .remove_relationship(relationship_id)
+        .expect("make mirror stale");
     let second = app
         .oneshot(create_timeline_relationship_command_request(body))
         .await
@@ -315,9 +323,10 @@ async fn delete_timeline_relationship_command_replays_duplicate_command() {
     let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
     relationship.id = relationship_id;
     project.timeline.add_relationship(relationship).unwrap();
+    let stale_project = project.clone();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body =
         delete_timeline_relationship_command_body_with_id(uuid::Uuid::new_v4(), relationship_id);
 
@@ -326,6 +335,7 @@ async fn delete_timeline_relationship_command_replays_duplicate_command() {
         .oneshot(delete_timeline_relationship_command_request(body.clone()))
         .await
         .expect("first route response");
+    *state.project.lock() = Some(stale_project);
     let second = app
         .oneshot(delete_timeline_relationship_command_request(body))
         .await

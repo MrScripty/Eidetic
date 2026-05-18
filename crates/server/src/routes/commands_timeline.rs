@@ -204,12 +204,12 @@ async fn create_timeline_relationship(
             &mut conn, project, &command, 0,
         )
         .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
+        if outcome == RecordChangeOutcome::Recorded {
             timeline_command::apply_create_timeline_relationship(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
+                .map_err(map_timeline_command_error)?;
+        }
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
             outcome,
             projection,
@@ -240,12 +240,12 @@ async fn delete_timeline_relationship(
             &mut conn, project, &command, 0,
         )
         .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
+        if outcome == RecordChangeOutcome::Recorded {
             timeline_command::apply_delete_timeline_relationship(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
+                .map_err(map_timeline_command_error)?;
+        }
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
             outcome,
             projection,
@@ -433,14 +433,15 @@ fn timeline_render_projection_from_current_state(
     fallback: &Timeline,
 ) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
     let mut timeline = fallback.clone();
-    let use_persisted_current_state = timeline_current_state_is_authoritative(conn)?;
+    let use_persisted_nodes = timeline_nodes_are_authoritative(conn)?;
+    let use_persisted_relationships = timeline_relationships_are_authoritative(conn)?;
     let nodes = timeline_node_store::load_nodes(conn)?;
-    if use_persisted_current_state || !nodes.is_empty() {
+    if use_persisted_nodes || !nodes.is_empty() {
         timeline.nodes = nodes;
         timeline.node_arcs = timeline_node_store::load_node_arcs(conn)?;
     }
     let relationships = timeline_relationship_store::load_relationships(conn)?;
-    if use_persisted_current_state || !relationships.is_empty() || fallback.relationships.is_empty()
+    if use_persisted_relationships || !relationships.is_empty() || fallback.relationships.is_empty()
     {
         timeline.relationships = relationships;
     }
@@ -450,16 +451,20 @@ fn timeline_render_projection_from_current_state(
     ))
 }
 
-fn timeline_current_state_is_authoritative(
-    conn: &Connection,
-) -> Result<bool, TimelineCommandError> {
+fn timeline_nodes_are_authoritative(conn: &Connection) -> Result<bool, TimelineCommandError> {
     let node_revisions =
         history_store::load_revision_summary_for_kind(conn, ObjectKind::TimelineNode)?
             .revision_count;
+    Ok(node_revisions > 0)
+}
+
+fn timeline_relationships_are_authoritative(
+    conn: &Connection,
+) -> Result<bool, TimelineCommandError> {
     let relationship_revisions =
         history_store::load_revision_summary_for_kind(conn, ObjectKind::TimelineRelationship)?
             .revision_count;
-    Ok(node_revisions > 0 || relationship_revisions > 0)
+    Ok(relationship_revisions > 0)
 }
 
 #[cfg(test)]
