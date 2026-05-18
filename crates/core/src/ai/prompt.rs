@@ -1,7 +1,6 @@
 use crate::ai::backend::{GenerateChildrenRequest, GenerateRequest};
 use crate::error::{Error, Result};
 use crate::project::Project;
-use crate::story::bible::BibleContext;
 use crate::timeline::node::NodeId;
 
 use super::helpers::{gather_recap_context, gather_surrounding_context};
@@ -45,8 +44,6 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
     surrounding_context.preceding_recaps =
         gather_recap_context(&project.timeline, &project.arcs, node_id);
 
-    let bible_context = empty_bible_context();
-
     let time_budget_ms = target_node.time_range.duration_ms();
 
     Ok(GenerateRequest {
@@ -54,7 +51,6 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
         tagged_arcs,
         ancestor_chain,
         siblings,
-        bible_context,
         surrounding_context,
         time_budget_ms,
         user_written_anchors: vec![],
@@ -91,8 +87,6 @@ pub fn build_generate_children_request(
     surrounding_context.preceding_recaps =
         gather_recap_context(timeline, &project.arcs, parent_node_id);
 
-    let bible_context = empty_bible_context();
-
     // Include episode structure for Premise → Act decomposition.
     let episode_structure = if parent_node.level == crate::timeline::node::StoryLevel::Premise {
         Some(timeline.structure.clone())
@@ -104,17 +98,9 @@ pub fn build_generate_children_request(
         parent_node,
         target_child_level,
         tagged_arcs,
-        bible_context,
         surrounding_context,
         episode_structure,
     })
-}
-
-fn empty_bible_context() -> BibleContext {
-    BibleContext {
-        referenced_entities: Vec::new(),
-        nearby_entities: Vec::new(),
-    }
 }
 
 #[cfg(test)]
@@ -145,31 +131,5 @@ mod tests {
         let bogus_id = NodeId::new();
         let result = build_generate_request(&project, bogus_id);
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn build_request_uses_empty_bible_context_until_graph_projection_exists() {
-        let project = Template::MultiCam.build_project("Test");
-        let timeline = &project.timeline;
-        let scenes = timeline.nodes_at_level(StoryLevel::Scene);
-        let req = build_generate_request(&project, scenes[0].id).unwrap();
-
-        assert!(req.bible_context.referenced_entities.is_empty());
-        assert!(req.bible_context.nearby_entities.is_empty());
-    }
-
-    #[test]
-    fn build_children_request_uses_empty_bible_context_until_graph_projection_exists() {
-        let project = Template::MultiCam.build_project("Test");
-        let premise = project
-            .timeline
-            .nodes_at_level(StoryLevel::Premise)
-            .first()
-            .expect("template should have premise")
-            .id;
-        let req = build_generate_children_request(&project, premise).unwrap();
-
-        assert!(req.bible_context.referenced_entities.is_empty());
-        assert!(req.bible_context.nearby_entities.is_empty());
     }
 }

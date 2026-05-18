@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
 use crate::story::arc::StoryArc;
-use crate::story::bible::BibleContext;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel, StoryNode};
 use crate::timeline::structure::EpisodeStructure;
 
@@ -49,8 +48,6 @@ pub struct GenerateRequest {
     /// Sibling nodes at the same level (for structural context).
     #[serde(default)]
     pub siblings: Vec<StoryNode>,
-    /// Story bible entities resolved at this node's time position.
-    pub bible_context: BibleContext,
     /// Scripts/content from adjacent nodes.
     pub surrounding_context: SurroundingContext,
     /// Target screen time for this node (milliseconds).
@@ -151,8 +148,6 @@ pub struct GenerateChildrenRequest {
     pub target_child_level: StoryLevel,
     /// Arcs tagged on this node.
     pub tagged_arcs: Vec<StoryArc>,
-    /// Story bible entities resolved at this node's time position.
-    pub bible_context: BibleContext,
     /// Content from adjacent nodes.
     pub surrounding_context: SurroundingContext,
     /// Episode structure (act segments, commercial breaks). Included for
@@ -170,6 +165,4 @@ pub struct GenerateUpwardRequest {
     pub target_parent_level: StoryLevel,
     /// Arcs tagged on the children.
     pub tagged_arcs: Vec<StoryArc>,
-    /// Story bible context.
-    pub bible_context: BibleContext,
 }

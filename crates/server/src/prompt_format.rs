@@ -48,27 +48,6 @@ fn build_system_message(request: &GenerateRequest) -> String {
         )
     };
 
-    // Story bible — entities directly referenced by this node (full detail).
-    if !request.bible_context.referenced_entities.is_empty() {
-        system.push_str("\nSTORY BIBLE — Key entities in this section:\n");
-        for entity in &request.bible_context.referenced_entities {
-            if let Some(ref full) = entity.full_text {
-                system.push_str(full);
-                system.push('\n');
-            } else {
-                system.push_str(&format!("- {}\n", entity.compact_text));
-            }
-        }
-    }
-
-    // Other active entities (compact, for awareness).
-    if !request.bible_context.nearby_entities.is_empty() {
-        system.push_str("\nOTHER ACTIVE ENTITIES (for awareness):\n");
-        for entity in &request.bible_context.nearby_entities {
-            system.push_str(&format!("- {}\n", entity.compact_text));
-        }
-    }
-
     // Page budget (only for Beat level).
     if level == StoryLevel::Beat {
         let time_range = TimeRange {
@@ -378,26 +357,6 @@ pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatP
          - Return ONLY valid JSON, no commentary.\n",
         child_label, child_label, child_label,
     ));
-
-    // Story bible context.
-    if !request.bible_context.referenced_entities.is_empty() {
-        system.push_str("\nSTORY BIBLE — Key entities:\n");
-        for entity in &request.bible_context.referenced_entities {
-            if let Some(ref full) = entity.full_text {
-                system.push_str(full);
-                system.push('\n');
-            } else {
-                system.push_str(&format!("- {}\n", entity.compact_text));
-            }
-        }
-    }
-
-    if !request.bible_context.nearby_entities.is_empty() {
-        system.push_str("\nOTHER ACTIVE ENTITIES:\n");
-        for entity in &request.bible_context.nearby_entities {
-            system.push_str(&format!("- {}\n", entity.compact_text));
-        }
-    }
 
     if child_level == StoryLevel::Beat || child_level == StoryLevel::Scene {
         system.push_str(
