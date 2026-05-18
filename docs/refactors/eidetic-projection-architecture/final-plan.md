@@ -127,6 +127,7 @@ Completed slices:
 - `feat(server): expose object field projection route` added `GET /api/projections/object-field` for focused versioned projection reads from persisted history state.
 - `feat(ui): add object field projection helper` added a read-only frontend helper for focused object-field projection fetches without mutating stores.
 - `refactor(server): share projection route helpers` centralized active project path lookup and history error mapping across command and projection routes.
+- `feat(ui): add object field projection store` added a focused projection cache/action layer that reads and writes through backend projection APIs without mutating broad bible entity state optimistically.
 
 Discovered issues:
 
