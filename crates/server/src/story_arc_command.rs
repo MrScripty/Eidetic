@@ -1,10 +1,253 @@
 use eidetic_core::Project;
 use eidetic_core::contracts::{
-    CommandEnvelope, CreateStoryArcCommand, DeleteStoryArcCommand, ProjectionEnvelope,
+    ChangeEvent, ChangeEventKind, CommandEnvelope, CreateStoryArcCommand, DeleteStoryArcCommand,
+    FieldDelta, FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
     SetStoryArcMetadataCommand, StoryArcListProjection,
 };
-use eidetic_core::story::arc::StoryArc;
+use eidetic_core::story::arc::{ArcType, StoryArc};
+use rusqlite::Connection;
 use thiserror::Error;
+
+use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
+
+pub(crate) fn record_create_story_arc_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<CreateStoryArcCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, StoryArcCommandError> {
+    if let Some(outcome) = history_store::check_recorded_command(conn, command, "story_arc.create")?
+    {
+        return Ok(outcome);
+    }
+    validate_arc_name(&command.payload.name)?;
+    if project
+        .arcs
+        .iter()
+        .any(|arc| arc.id == command.payload.arc_id)
+    {
+        return Err(StoryArcCommandError::InvalidCommand(format!(
+            "story arc already exists: {}",
+            command.payload.arc_id.0
+        )));
+    }
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("create story arc {}", command.payload.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::StoryArc,
+        command.payload.arc_id.0.to_string(),
+        event.id,
+        RevisionOperation::Create,
+    )
+    .with_field(FieldDelta::new(
+        "name",
+        None,
+        Some(FieldValue::Text(command.payload.name.clone())),
+    ))
+    .with_field(FieldDelta::new(
+        "description",
+        None,
+        Some(FieldValue::Text(command.payload.description.clone())),
+    ))
+    .with_field(FieldDelta::new(
+        "parent_arc_id",
+        None,
+        command
+            .payload
+            .parent_arc_id
+            .map(|arc_id| FieldValue::Text(arc_id.0.to_string())),
+    ))
+    .with_field(FieldDelta::new(
+        "arc_type",
+        None,
+        Some(FieldValue::Text(encode_arc_type(
+            &command.payload.arc_type,
+        )?)),
+    ))
+    .with_field(FieldDelta::new(
+        "color_r",
+        None,
+        Some(FieldValue::Integer(i64::from(command.payload.color.r))),
+    ))
+    .with_field(FieldDelta::new(
+        "color_g",
+        None,
+        Some(FieldValue::Integer(i64::from(command.payload.color.g))),
+    ))
+    .with_field(FieldDelta::new(
+        "color_b",
+        None,
+        Some(FieldValue::Integer(i64::from(command.payload.color.b))),
+    ));
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "story_arc.create",
+        &event,
+        &[revision],
+    )?)
+}
+
+pub(crate) fn record_set_story_arc_metadata_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<SetStoryArcMetadataCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, StoryArcCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "story_arc.set_metadata")?
+    {
+        return Ok(outcome);
+    }
+    if let Some(name) = &command.payload.name {
+        validate_arc_name(name)?;
+    }
+
+    let arc = project
+        .arcs
+        .iter()
+        .find(|arc| arc.id == command.payload.arc_id)
+        .ok_or_else(|| StoryArcCommandError::NotFound("story arc not found".to_string()))?;
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("update story arc {}", arc.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let mut revision = ObjectRevision::new(
+        ObjectKind::StoryArc,
+        command.payload.arc_id.0.to_string(),
+        event.id,
+        RevisionOperation::Update,
+    );
+
+    if let Some(name) = &command.payload.name {
+        revision = revision.with_field(FieldDelta::new(
+            "name",
+            Some(FieldValue::Text(arc.name.clone())),
+            Some(FieldValue::Text(name.clone())),
+        ));
+    }
+    if let Some(description) = &command.payload.description {
+        revision = revision.with_field(FieldDelta::new(
+            "description",
+            Some(FieldValue::Text(arc.description.clone())),
+            Some(FieldValue::Text(description.clone())),
+        ));
+    }
+    if let Some(arc_type) = &command.payload.arc_type {
+        revision = revision.with_field(FieldDelta::new(
+            "arc_type",
+            Some(FieldValue::Text(encode_arc_type(&arc.arc_type)?)),
+            Some(FieldValue::Text(encode_arc_type(arc_type)?)),
+        ));
+    }
+    if let Some(color) = command.payload.color {
+        revision = revision
+            .with_field(FieldDelta::new(
+                "color_r",
+                Some(FieldValue::Integer(i64::from(arc.color.r))),
+                Some(FieldValue::Integer(i64::from(color.r))),
+            ))
+            .with_field(FieldDelta::new(
+                "color_g",
+                Some(FieldValue::Integer(i64::from(arc.color.g))),
+                Some(FieldValue::Integer(i64::from(color.g))),
+            ))
+            .with_field(FieldDelta::new(
+                "color_b",
+                Some(FieldValue::Integer(i64::from(arc.color.b))),
+                Some(FieldValue::Integer(i64::from(color.b))),
+            ));
+    }
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "story_arc.set_metadata",
+        &event,
+        &[revision],
+    )?)
+}
+
+pub(crate) fn record_delete_story_arc_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<DeleteStoryArcCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, StoryArcCommandError> {
+    if let Some(outcome) = history_store::check_recorded_command(conn, command, "story_arc.delete")?
+    {
+        return Ok(outcome);
+    }
+    let arc = project
+        .arcs
+        .iter()
+        .find(|arc| arc.id == command.payload.arc_id);
+    let event = ChangeEvent::new(command.id, ChangeEventKind::UserEdit, "delete story arc")
+        .with_created_at_ms(created_at_ms);
+    let mut revision = ObjectRevision::new(
+        ObjectKind::StoryArc,
+        command.payload.arc_id.0.to_string(),
+        event.id,
+        RevisionOperation::Delete,
+    );
+
+    if let Some(arc) = arc {
+        revision = revision
+            .with_field(FieldDelta::new(
+                "name",
+                Some(FieldValue::Text(arc.name.clone())),
+                None,
+            ))
+            .with_field(FieldDelta::new(
+                "description",
+                Some(FieldValue::Text(arc.description.clone())),
+                None,
+            ))
+            .with_field(FieldDelta::new(
+                "parent_arc_id",
+                arc.parent_arc_id
+                    .map(|arc_id| FieldValue::Text(arc_id.0.to_string())),
+                None,
+            ))
+            .with_field(FieldDelta::new(
+                "arc_type",
+                Some(FieldValue::Text(encode_arc_type(&arc.arc_type)?)),
+                None,
+            ))
+            .with_field(FieldDelta::new(
+                "color_r",
+                Some(FieldValue::Integer(i64::from(arc.color.r))),
+                None,
+            ))
+            .with_field(FieldDelta::new(
+                "color_g",
+                Some(FieldValue::Integer(i64::from(arc.color.g))),
+                None,
+            ))
+            .with_field(FieldDelta::new(
+                "color_b",
+                Some(FieldValue::Integer(i64::from(arc.color.b))),
+                None,
+            ));
+    }
+
+    Ok(history_store::record_change(
+        conn,
+        command,
+        "story_arc.delete",
+        &event,
+        &[revision],
+    )?)
+}
 
 pub(crate) fn apply_create_story_arc(
     project: &mut Project,
@@ -86,12 +329,19 @@ fn list_projection(project: &Project) -> ProjectionEnvelope<StoryArcListProjecti
     ProjectionEnvelope::initial(StoryArcListProjection::from_arcs(&project.arcs))
 }
 
+fn encode_arc_type(arc_type: &ArcType) -> Result<String, StoryArcCommandError> {
+    serde_json::to_string(arc_type)
+        .map_err(|error| StoryArcCommandError::InvalidCommand(format!("invalid arc type: {error}")))
+}
+
 #[derive(Debug, Error)]
 pub(crate) enum StoryArcCommandError {
     #[error("invalid command: {0}")]
     InvalidCommand(String),
     #[error("{0}")]
     NotFound(String),
+    #[error(transparent)]
+    History(#[from] HistoryStoreError),
 }
 
 #[cfg(test)]

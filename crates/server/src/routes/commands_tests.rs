@@ -140,6 +140,116 @@ async fn story_arc_create_command_returns_arc_list_projection() {
             .any(|arc| arc["id"] == serde_json::json!(arc_id)
                 && arc["name"] == serde_json::json!("Mystery"))
     );
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let revisions = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::StoryArc,
+        &arc_id.0.to_string(),
+    )
+    .expect("story arc revisions");
+    assert_eq!(revisions.len(), 1);
+    assert_eq!(
+        revisions[0].operation,
+        eidetic_core::contracts::RevisionOperation::Create
+    );
+    assert!(
+        revisions[0]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "name"
+                && field.new_value == Some(FieldValue::Text("Mystery".to_string())))
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn story_arc_create_command_replays_duplicate_command() {
+    let path = temp_db_path("story-arc-create-duplicate");
+    let app = app_with_project_path(path.clone()).await;
+    let arc_id = ArcId::new();
+    let body = serde_json::to_value(CommandEnvelope {
+        id: CommandId::new(),
+        payload: CreateStoryArcCommand {
+            arc_id,
+            parent_arc_id: None,
+            name: "Mystery".to_string(),
+            description: "Central investigation".to_string(),
+            arc_type: ArcType::APlot,
+            color: Color::A_PLOT,
+        },
+    })
+    .unwrap();
+
+    let first = app
+        .clone()
+        .oneshot(story_arc_create_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(story_arc_create_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    assert_eq!(
+        value["projection"]["payload"]["arcs"]
+            .as_array()
+            .expect("arcs")
+            .iter()
+            .filter(|arc| arc["id"] == serde_json::json!(arc_id))
+            .count(),
+        1
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn story_arc_create_command_rejects_conflicting_duplicate_command() {
+    let path = temp_db_path("story-arc-create-conflict");
+    let app = app_with_project_path(path.clone()).await;
+    let command_id = CommandId::new();
+    let original = serde_json::to_value(CommandEnvelope {
+        id: command_id,
+        payload: CreateStoryArcCommand {
+            arc_id: ArcId::new(),
+            parent_arc_id: None,
+            name: "Mystery".to_string(),
+            description: "Central investigation".to_string(),
+            arc_type: ArcType::APlot,
+            color: Color::A_PLOT,
+        },
+    })
+    .unwrap();
+    let conflicting = serde_json::to_value(CommandEnvelope {
+        id: command_id,
+        payload: CreateStoryArcCommand {
+            arc_id: ArcId::new(),
+            parent_arc_id: None,
+            name: "B Story".to_string(),
+            description: "Different payload".to_string(),
+            arc_type: ArcType::BPlot,
+            color: Color::B_PLOT,
+        },
+    })
+    .unwrap();
+
+    let first = app
+        .clone()
+        .oneshot(story_arc_create_command_request(original))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(story_arc_create_command_request(conflicting))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::CONFLICT);
 
     let _ = std::fs::remove_file(path);
 }

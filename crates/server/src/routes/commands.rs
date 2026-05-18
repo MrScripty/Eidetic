@@ -221,21 +221,34 @@ async fn create_story_arc(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<CreateStoryArcCommand>>,
 ) -> ApiJson {
+    let path = active_project_path(&state)?;
     let response = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
             return Err(ApiError::no_project());
         };
-        let projection = story_arc_command::apply_create_story_arc(project, &command)
-            .map_err(map_story_arc_command_error)?;
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| ApiError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome =
+            story_arc_command::record_create_story_arc_history(&mut conn, project, &command, 0)
+                .map_err(map_story_arc_command_error)?;
+        let projection = if outcome == RecordChangeOutcome::Recorded {
+            story_arc_command::apply_create_story_arc(project, &command)
+                .map_err(map_story_arc_command_error)?
+        } else {
+            ProjectionEnvelope::initial(StoryArcListProjection::from_arcs(&project.arcs))
+        };
         StoryArcCommandResponse {
-            outcome: RecordChangeOutcome::Recorded,
+            outcome,
             projection,
         }
     };
 
-    let _ = state.events_tx.send(ServerEvent::StoryChanged);
-    state.trigger_save();
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::StoryChanged);
+        state.trigger_save();
+    }
     crate::error::json_value(response)
 }
 
@@ -243,21 +256,35 @@ async fn update_story_arc(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<SetStoryArcMetadataCommand>>,
 ) -> ApiJson {
+    let path = active_project_path(&state)?;
     let response = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
             return Err(ApiError::no_project());
         };
-        let projection = story_arc_command::apply_set_story_arc_metadata(project, &command)
-            .map_err(map_story_arc_command_error)?;
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| ApiError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome = story_arc_command::record_set_story_arc_metadata_history(
+            &mut conn, project, &command, 0,
+        )
+        .map_err(map_story_arc_command_error)?;
+        let projection = if outcome == RecordChangeOutcome::Recorded {
+            story_arc_command::apply_set_story_arc_metadata(project, &command)
+                .map_err(map_story_arc_command_error)?
+        } else {
+            ProjectionEnvelope::initial(StoryArcListProjection::from_arcs(&project.arcs))
+        };
         StoryArcCommandResponse {
-            outcome: RecordChangeOutcome::Recorded,
+            outcome,
             projection,
         }
     };
 
-    let _ = state.events_tx.send(ServerEvent::StoryChanged);
-    state.trigger_save();
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::StoryChanged);
+        state.trigger_save();
+    }
     crate::error::json_value(response)
 }
 
@@ -265,21 +292,36 @@ async fn delete_story_arc(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<DeleteStoryArcCommand>>,
 ) -> ApiJson {
+    let path = active_project_path(&state)?;
     let response = {
         let mut guard = state.project.lock();
         let Some(project) = guard.as_mut() else {
             return Err(ApiError::no_project());
         };
-        let (_deleted, projection) = story_arc_command::apply_delete_story_arc(project, &command)
-            .map_err(map_story_arc_command_error)?;
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| ApiError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome =
+            story_arc_command::record_delete_story_arc_history(&mut conn, project, &command, 0)
+                .map_err(map_story_arc_command_error)?;
+        let projection = if outcome == RecordChangeOutcome::Recorded {
+            let (_deleted, projection) =
+                story_arc_command::apply_delete_story_arc(project, &command)
+                    .map_err(map_story_arc_command_error)?;
+            projection
+        } else {
+            ProjectionEnvelope::initial(StoryArcListProjection::from_arcs(&project.arcs))
+        };
         StoryArcCommandResponse {
-            outcome: RecordChangeOutcome::Recorded,
+            outcome,
             projection,
         }
     };
 
-    let _ = state.events_tx.send(ServerEvent::StoryChanged);
-    state.trigger_save();
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::StoryChanged);
+        state.trigger_save();
+    }
     crate::error::json_value(response)
 }
 
@@ -687,6 +729,7 @@ fn map_story_arc_command_error(error: StoryArcCommandError) -> ApiError {
     match error {
         StoryArcCommandError::InvalidCommand(message) => ApiError::bad_request(message),
         StoryArcCommandError::NotFound(message) => ApiError::not_found(message),
+        StoryArcCommandError::History(error) => map_history_error(error),
     }
 }
 

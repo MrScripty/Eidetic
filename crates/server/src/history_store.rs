@@ -89,6 +89,26 @@ where
     record_change_with(conn, command, payload_type, event, revisions, |_| Ok(()))
 }
 
+pub(crate) fn check_recorded_command<T>(
+    conn: &Connection,
+    command: &CommandEnvelope<T>,
+    payload_type: &str,
+) -> Result<Option<RecordChangeOutcome>, HistoryStoreError>
+where
+    T: Serialize,
+{
+    let Some(existing) = existing_command_signature(conn, command.id)? else {
+        return Ok(None);
+    };
+    let payload_json = serde_json::to_string(&command.payload)?;
+    if existing.payload_type == payload_type && existing.payload_json == payload_json {
+        return Ok(Some(RecordChangeOutcome::AlreadyRecorded));
+    }
+    Err(HistoryStoreError::InvalidValue(
+        "command id already exists with a different payload".to_string(),
+    ))
+}
+
 pub(crate) fn record_change_with<T, F>(
     conn: &mut Connection,
     command: &CommandEnvelope<T>,
