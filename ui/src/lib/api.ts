@@ -16,9 +16,7 @@ import type {
   StoryNode,
   NodeContent,
   ChildPlan,
-  Relationship,
   ArcType,
-  RelationshipType,
   ReferenceType,
   Color,
   StoryLevel,
@@ -220,23 +218,6 @@ export function lockNode(id: string): Promise<NodeContent> {
 
 export function unlockNode(id: string): Promise<NodeContent> {
   return request(`/nodes/${id}/unlock`, { method: 'POST' });
-}
-
-// --- Relationships ---
-
-export function createRelationship(
-  fromNode: string,
-  toNode: string,
-  type_: RelationshipType,
-): Promise<Relationship> {
-  return request('/timeline/relationships', {
-    method: 'POST',
-    body: JSON.stringify({ from_node: fromNode, to_node: toNode, relationship_type: type_ }),
-  });
-}
-
-export function deleteRelationship(id: string): Promise<{ deleted: boolean }> {
-  return request(`/timeline/relationships/${id}`, { method: 'DELETE' });
 }
 
 // --- Tracks ---
