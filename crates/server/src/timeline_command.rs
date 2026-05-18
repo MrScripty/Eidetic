@@ -1,10 +1,9 @@
 use eidetic_core::contracts::{
-    ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand, ProjectionEnvelope,
-    TimelineRenderProjection,
+    ApplyTimelineChildrenCommand, CommandEnvelope, ProjectionEnvelope, TimelineRenderProjection,
 };
 #[cfg(test)]
 use eidetic_core::contracts::{
-    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
+    CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
@@ -112,6 +111,7 @@ pub(crate) fn apply_set_timeline_node_notes(
     ))
 }
 
+#[cfg(test)]
 pub(crate) fn apply_create_timeline_node(
     project: &mut Project,
     command: &CommandEnvelope<CreateTimelineNodeCommand>,

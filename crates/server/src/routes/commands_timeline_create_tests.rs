@@ -136,14 +136,6 @@ async fn create_timeline_node_command_replays_duplicate_command() {
         .oneshot(create_timeline_node_command_request(body.clone()))
         .await
         .expect("first route response");
-    state
-        .project
-        .lock()
-        .as_mut()
-        .expect("project")
-        .timeline
-        .remove_node(node_id)
-        .expect("make mirror stale");
     let second = app
         .oneshot(create_timeline_node_command_request(body))
         .await
@@ -172,6 +164,53 @@ async fn create_timeline_node_command_replays_duplicate_command() {
     )
     .expect("timeline node revisions");
     assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_node_command_validates_against_sqlite_when_project_mirror_is_stale() {
+    let path = temp_db_path("creates-timeline-node-stale-mirror");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let node_id = eidetic_core::timeline::node::NodeId::new();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed node current state");
+    let mut stale_project = project;
+    stale_project
+        .timeline
+        .remove_node(parent.id)
+        .expect("make mirror stale");
+    *state.project.lock() = Some(stale_project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_node_command_body(
+        node_id,
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Inserted act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+
+    let response = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(clips.iter().any(|clip| {
+        clip["node_id"] == node_id.0.to_string()
+            && clip["parent_id"] == parent.id.0.to_string()
+            && clip["name"] == "Inserted act"
+    }));
 
     let _ = std::fs::remove_file(path);
 }
