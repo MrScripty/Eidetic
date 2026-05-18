@@ -5,6 +5,7 @@ import {
   deleteTimelineNode,
   deleteTimelineRelationship,
   setTimelineNodeLock,
+  setTimelineNodeNotes,
   setTimelineNodeRange,
   splitTimelineNode,
 } from '$lib/commandApi.js';
@@ -18,6 +19,7 @@ import type {
   DeleteTimelineRelationshipCommand,
   ProjectionEnvelope,
   SetTimelineNodeLockCommand,
+  SetTimelineNodeNotesCommand,
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
@@ -188,6 +190,28 @@ export async function applyTimelineNodeLockCommand(
     timelineRenderProjectionState.error = errorMessage(
       error,
       'Failed to apply timeline node lock command',
+    );
+    throw error;
+  } finally {
+    timelineRenderProjectionState.pending = false;
+  }
+}
+
+export async function applyTimelineNodeNotesCommand(
+  payload: SetTimelineNodeNotesCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  timelineRenderProjectionState.pending = true;
+  timelineRenderProjectionState.error = undefined;
+
+  try {
+    const response = await setTimelineNodeNotes(payload, commandId);
+    timelineRenderProjectionState.projection = response.projection;
+    return response;
+  } catch (error) {
+    timelineRenderProjectionState.error = errorMessage(
+      error,
+      'Failed to apply timeline node notes command',
     );
     throw error;
   } finally {

@@ -237,6 +237,7 @@ Completed slices:
 - `refactor(script): remove legacy node lock routes` removed unused frontend lock/unlock helpers and legacy node lock/unlock routes after lock state moved to timeline commands.
 - `feat(server): add timeline node notes command` added a backend command route for setting timeline node notes, mirroring notes into Y.Doc, and returning updated timeline render projections.
 - `feat(ui): add timeline node notes command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed node notes commands.
+- `feat(ui): cache timeline node notes projections` routed node notes command responses into the timeline render projection cache without optimistic local patching.
 
 Discovered issues:
 
