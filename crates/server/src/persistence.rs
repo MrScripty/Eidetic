@@ -2,10 +2,7 @@ use std::path::{Path, PathBuf};
 
 use eidetic_core::reference::{ReferenceDocument, ReferenceType};
 use eidetic_core::story::arc::{ArcId, ArcType, Color, StoryArc};
-use eidetic_core::story::bible::{
-    Entity, EntityCategory, EntityDetails, EntityId, EntityRelation, EntitySnapshot,
-    SnapshotOverrides, StoryBible,
-};
+use eidetic_core::story::bible::StoryBible;
 use eidetic_core::timeline::node::{
     BeatType, NodeArc, NodeContent, NodeId, StoryLevel, StoryNode,
 };
@@ -120,41 +117,6 @@ CREATE TABLE IF NOT EXISTS relationships (
     relationship_type TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS entities (
-    id           TEXT PRIMARY KEY,
-    category     TEXT NOT NULL,
-    name         TEXT NOT NULL,
-    tagline      TEXT NOT NULL DEFAULT '',
-    description  TEXT NOT NULL DEFAULT '',
-    details_json TEXT NOT NULL DEFAULT '{}',
-    color_r      INTEGER NOT NULL,
-    color_g      INTEGER NOT NULL,
-    color_b      INTEGER NOT NULL,
-    locked       INTEGER NOT NULL DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS entity_snapshots (
-    entity_id      TEXT NOT NULL REFERENCES entities(id),
-    at_ms          INTEGER NOT NULL,
-    source_node_id TEXT,
-    description    TEXT NOT NULL,
-    overrides_json TEXT,
-    PRIMARY KEY (entity_id, at_ms)
-);
-
-CREATE TABLE IF NOT EXISTS entity_node_refs (
-    entity_id TEXT NOT NULL REFERENCES entities(id),
-    node_id   TEXT NOT NULL,
-    PRIMARY KEY (entity_id, node_id)
-);
-
-CREATE TABLE IF NOT EXISTS entity_relations (
-    entity_id        TEXT NOT NULL REFERENCES entities(id),
-    target_entity_id TEXT NOT NULL,
-    label            TEXT NOT NULL,
-    sort_order       INTEGER NOT NULL DEFAULT 0
-);
-
 CREATE TABLE IF NOT EXISTS reference_documents (
     id       TEXT PRIMARY KEY,
     name     TEXT NOT NULL,
@@ -176,11 +138,7 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
 
 fn clear_all_tables(conn: &Connection) -> Result<(), String> {
     conn.execute_batch(
-        "DELETE FROM entity_relations;
-         DELETE FROM entity_node_refs;
-         DELETE FROM entity_snapshots;
-         DELETE FROM entities;
-         DELETE FROM node_arcs;
+        "DELETE FROM node_arcs;
          DELETE FROM relationships;
          DELETE FROM nodes;
          DELETE FROM tracks;
@@ -275,20 +233,6 @@ fn save_project_sync(
     // Relationships.
     for rel in &project.timeline.relationships {
         insert_relationship(&tx, rel)?;
-    }
-
-    // Entities.
-    for entity in &project.bible.entities {
-        insert_entity(&tx, entity)?;
-        for snapshot in &entity.snapshots {
-            insert_entity_snapshot(&tx, &entity.id, snapshot)?;
-        }
-        for node_id in &entity.node_refs {
-            insert_entity_node_ref(&tx, &entity.id, node_id)?;
-        }
-        for (idx, relation) in entity.relations.iter().enumerate() {
-            insert_entity_relation(&tx, &entity.id, relation, idx)?;
-        }
     }
 
     // Reference documents.
@@ -409,91 +353,6 @@ fn insert_relationship(conn: &Connection, rel: &Relationship) -> Result<(), Stri
         ],
     )
     .map_err(|e| format!("insert relationship: {e}"))?;
-    Ok(())
-}
-
-fn insert_entity(conn: &Connection, entity: &Entity) -> Result<(), String> {
-    let details_json = serde_json::to_string(&entity.details)
-        .map_err(|e| format!("serialize entity details: {e}"))?;
-    conn.execute(
-        "INSERT INTO entities (id, category, name, tagline, description,
-                               details_json, color_r, color_g, color_b, locked)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-        params![
-            entity.id.0.to_string(),
-            entity.category.to_string(),
-            entity.name,
-            entity.tagline,
-            entity.description,
-            details_json,
-            entity.color.r,
-            entity.color.g,
-            entity.color.b,
-            entity.locked as i32,
-        ],
-    )
-    .map_err(|e| format!("insert entity: {e}"))?;
-    Ok(())
-}
-
-fn insert_entity_snapshot(
-    conn: &Connection,
-    entity_id: &EntityId,
-    snapshot: &EntitySnapshot,
-) -> Result<(), String> {
-    let overrides_json = snapshot
-        .state_overrides
-        .as_ref()
-        .map(|o| serde_json::to_string(o))
-        .transpose()
-        .map_err(|e| format!("serialize overrides: {e}"))?;
-    let source_node = snapshot.source_node_id.map(|id| id.0.to_string());
-
-    conn.execute(
-        "INSERT INTO entity_snapshots (entity_id, at_ms, source_node_id, description, overrides_json)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![
-            entity_id.0.to_string(),
-            snapshot.at_ms as i64,
-            source_node,
-            snapshot.description,
-            overrides_json,
-        ],
-    )
-    .map_err(|e| format!("insert entity_snapshot: {e}"))?;
-    Ok(())
-}
-
-fn insert_entity_node_ref(
-    conn: &Connection,
-    entity_id: &EntityId,
-    node_id: &NodeId,
-) -> Result<(), String> {
-    conn.execute(
-        "INSERT INTO entity_node_refs (entity_id, node_id) VALUES (?1, ?2)",
-        params![entity_id.0.to_string(), node_id.0.to_string()],
-    )
-    .map_err(|e| format!("insert entity_node_ref: {e}"))?;
-    Ok(())
-}
-
-fn insert_entity_relation(
-    conn: &Connection,
-    entity_id: &EntityId,
-    relation: &EntityRelation,
-    sort_order: usize,
-) -> Result<(), String> {
-    conn.execute(
-        "INSERT INTO entity_relations (entity_id, target_entity_id, label, sort_order)
-         VALUES (?1, ?2, ?3, ?4)",
-        params![
-            entity_id.0.to_string(),
-            relation.target_entity_id.0.to_string(),
-            relation.label,
-            sort_order as i32,
-        ],
-    )
-    .map_err(|e| format!("insert entity_relation: {e}"))?;
     Ok(())
 }
 
@@ -633,14 +492,6 @@ fn load_project_v2(conn: &Connection, path: &Path) -> Result<Project, String> {
     // Relationships.
     let relationships = read_relationships(conn)?;
 
-    // Entities.
-    let mut entities = read_entities(conn)?;
-    for entity in &mut entities {
-        entity.snapshots = read_entity_snapshots(conn, &entity.id)?;
-        entity.node_refs = read_entity_node_refs(conn, &entity.id)?;
-        entity.relations = read_entity_relations(conn, &entity.id)?;
-    }
-
     // Reference documents.
     let references = read_reference_documents(conn)?;
 
@@ -658,7 +509,7 @@ fn load_project_v2(conn: &Connection, path: &Path) -> Result<Project, String> {
         premise,
         timeline,
         arcs,
-        bible: StoryBible { entities },
+        bible: StoryBible::new(),
         references,
     };
 
@@ -891,151 +742,6 @@ fn read_relationships(conn: &Connection) -> Result<Vec<Relationship>, String> {
     Ok(result)
 }
 
-fn read_entities(conn: &Connection) -> Result<Vec<Entity>, String> {
-    let mut stmt = conn
-        .prepare(
-            "SELECT id, category, name, tagline, description, details_json,
-                    color_r, color_g, color_b, locked
-             FROM entities",
-        )
-        .map_err(|e| format!("prepare entities: {e}"))?;
-
-    let rows = stmt
-        .query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, String>(3)?,
-                row.get::<_, String>(4)?,
-                row.get::<_, String>(5)?,
-                row.get::<_, u8>(6)?,
-                row.get::<_, u8>(7)?,
-                row.get::<_, u8>(8)?,
-                row.get::<_, i32>(9)?,
-            ))
-        })
-        .map_err(|e| format!("query entities: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let (id_str, category_str, name, tagline, description, details_json, r, g, b, locked) =
-            row.map_err(|e| format!("read entity row: {e}"))?;
-
-        let category: EntityCategory = serde_json::from_str(&format!("\"{}\"", category_str))
-            .map_err(|e| format!("parse category '{}': {e}", category_str))?;
-        let details: EntityDetails =
-            serde_json::from_str(&details_json).map_err(|e| format!("parse entity details: {e}"))?;
-
-        result.push(Entity {
-            id: EntityId(parse_uuid(&id_str)?),
-            category,
-            name,
-            tagline,
-            description,
-            details,
-            snapshots: Vec::new(),
-            node_refs: Vec::new(),
-            relations: Vec::new(),
-            color: Color::new(r, g, b),
-            locked: locked != 0,
-        });
-    }
-    Ok(result)
-}
-
-fn read_entity_snapshots(
-    conn: &Connection,
-    entity_id: &EntityId,
-) -> Result<Vec<EntitySnapshot>, String> {
-    let mut stmt = conn
-        .prepare(
-            "SELECT at_ms, source_node_id, description, overrides_json
-             FROM entity_snapshots WHERE entity_id = ?1 ORDER BY at_ms",
-        )
-        .map_err(|e| format!("prepare entity_snapshots: {e}"))?;
-
-    let rows = stmt
-        .query_map(params![entity_id.0.to_string()], |row| {
-            Ok((
-                row.get::<_, i64>(0)?,
-                row.get::<_, Option<String>>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, Option<String>>(3)?,
-            ))
-        })
-        .map_err(|e| format!("query entity_snapshots: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let (at_ms, source_node_str, description, overrides_json) =
-            row.map_err(|e| format!("read snapshot row: {e}"))?;
-
-        let source_node_id = source_node_str
-            .map(|s| parse_uuid(&s).map(NodeId))
-            .transpose()?;
-        let state_overrides: Option<SnapshotOverrides> = overrides_json
-            .map(|j| serde_json::from_str(&j))
-            .transpose()
-            .map_err(|e| format!("parse overrides: {e}"))?;
-
-        result.push(EntitySnapshot {
-            at_ms: at_ms as u64,
-            source_node_id,
-            description,
-            state_overrides,
-        });
-    }
-    Ok(result)
-}
-
-fn read_entity_node_refs(conn: &Connection, entity_id: &EntityId) -> Result<Vec<NodeId>, String> {
-    let mut stmt = conn
-        .prepare("SELECT node_id FROM entity_node_refs WHERE entity_id = ?1")
-        .map_err(|e| format!("prepare entity_node_refs: {e}"))?;
-
-    let rows = stmt
-        .query_map(params![entity_id.0.to_string()], |row| {
-            row.get::<_, String>(0)
-        })
-        .map_err(|e| format!("query entity_node_refs: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let id_str = row.map_err(|e| format!("read node_ref row: {e}"))?;
-        result.push(NodeId(parse_uuid(&id_str)?));
-    }
-    Ok(result)
-}
-
-fn read_entity_relations(
-    conn: &Connection,
-    entity_id: &EntityId,
-) -> Result<Vec<EntityRelation>, String> {
-    let mut stmt = conn
-        .prepare(
-            "SELECT target_entity_id, label FROM entity_relations
-             WHERE entity_id = ?1 ORDER BY sort_order",
-        )
-        .map_err(|e| format!("prepare entity_relations: {e}"))?;
-
-    let rows = stmt
-        .query_map(params![entity_id.0.to_string()], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
-        })
-        .map_err(|e| format!("query entity_relations: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let (target_str, label) = row.map_err(|e| format!("read relation row: {e}"))?;
-        result.push(EntityRelation {
-            target_entity_id: EntityId(parse_uuid(&target_str)?),
-            label,
-        });
-    }
-    Ok(result)
-}
-
 fn read_reference_documents(conn: &Connection) -> Result<Vec<ReferenceDocument>, String> {
     let mut stmt = conn
         .prepare("SELECT id, name, content, doc_type FROM reference_documents")
@@ -1130,14 +836,6 @@ fn load_and_migrate_v1(path: &Path) -> Result<Project, String> {
     // Relationships.
     let relationships = read_v1_relationships(&conn)?;
 
-    // Read entities with v1 column names.
-    let mut entities = read_entities(&conn)?;
-    for entity in &mut entities {
-        entity.snapshots = read_v1_entity_snapshots(&conn, &entity.id)?;
-        entity.node_refs = read_v1_entity_node_refs(&conn, &entity.id)?;
-        entity.relations = read_entity_relations(&conn, &entity.id)?;
-    }
-
     let references = read_reference_documents(&conn)?;
 
     // Create v2 tracks (4 level-based tracks).
@@ -1157,7 +855,7 @@ fn load_and_migrate_v1(path: &Path) -> Result<Project, String> {
         premise: String::new(),
         timeline,
         arcs,
-        bible: StoryBible { entities },
+        bible: StoryBible::new(),
         references,
     };
 
@@ -1370,70 +1068,6 @@ fn read_v1_relationships(conn: &Connection) -> Result<Vec<Relationship>, String>
             to_node: NodeId(parse_uuid(&to_str)?),
             relationship_type: rel_type,
         });
-    }
-    Ok(result)
-}
-
-fn read_v1_entity_snapshots(
-    conn: &Connection,
-    entity_id: &EntityId,
-) -> Result<Vec<EntitySnapshot>, String> {
-    let mut stmt = conn
-        .prepare(
-            "SELECT at_ms, source_clip_id, description, overrides_json
-             FROM entity_snapshots WHERE entity_id = ?1 ORDER BY at_ms",
-        )
-        .map_err(|e| format!("prepare v1 entity_snapshots: {e}"))?;
-
-    let rows = stmt
-        .query_map(params![entity_id.0.to_string()], |row| {
-            Ok((
-                row.get::<_, i64>(0)?,
-                row.get::<_, Option<String>>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, Option<String>>(3)?,
-            ))
-        })
-        .map_err(|e| format!("query v1 entity_snapshots: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let (at_ms, source_clip_str, description, overrides_json) =
-            row.map_err(|e| format!("read v1 snapshot row: {e}"))?;
-
-        let source_node_id = source_clip_str
-            .map(|s| parse_uuid(&s).map(NodeId))
-            .transpose()?;
-        let state_overrides: Option<SnapshotOverrides> = overrides_json
-            .map(|j| serde_json::from_str(&j))
-            .transpose()
-            .map_err(|e| format!("parse overrides: {e}"))?;
-
-        result.push(EntitySnapshot {
-            at_ms: at_ms as u64,
-            source_node_id,
-            description,
-            state_overrides,
-        });
-    }
-    Ok(result)
-}
-
-fn read_v1_entity_node_refs(conn: &Connection, entity_id: &EntityId) -> Result<Vec<NodeId>, String> {
-    let mut stmt = conn
-        .prepare("SELECT clip_id FROM entity_clip_refs WHERE entity_id = ?1")
-        .map_err(|e| format!("prepare v1 entity_clip_refs: {e}"))?;
-
-    let rows = stmt
-        .query_map(params![entity_id.0.to_string()], |row| {
-            row.get::<_, String>(0)
-        })
-        .map_err(|e| format!("query v1 entity_clip_refs: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let id_str = row.map_err(|e| format!("read v1 clip_ref row: {e}"))?;
-        result.push(NodeId(parse_uuid(&id_str)?));
     }
     Ok(result)
 }

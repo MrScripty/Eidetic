@@ -254,6 +254,7 @@ Completed slices:
 - `refactor(core): remove legacy bible prompt helpers` deleted unused legacy bible context gathering and entity prompt-text helpers after AI prompt construction stopped reading `StoryBible.entities`.
 - `refactor(core): remove legacy extraction contract` deleted the orphaned AI extraction trait method and legacy extraction DTOs after extraction routes and side effects were removed.
 - `refactor(server): remove legacy json bible migration` removed the old JSON character-to-entity migration path so legacy JSON loading no longer populates `StoryBible.entities`.
+- `refactor(server): stop persisting legacy bible entities` removed legacy entity tables, save/load loops, and v1 entity readers from project SQLite persistence so project persistence no longer owns story bible entity state.
 
 Discovered issues:
 
