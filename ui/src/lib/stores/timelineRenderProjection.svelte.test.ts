@@ -6,6 +6,7 @@ import {
   createTimelineRelationship,
   deleteTimelineNode,
   deleteTimelineRelationship,
+  setTimelineNodeLock,
   setTimelineNodeRange,
   splitTimelineNode,
 } from '$lib/commandApi.js';
@@ -17,6 +18,7 @@ import {
   applyDeleteTimelineRelationshipCommand,
   applySplitTimelineNodeCommand,
   applyTimelineChildrenCommand,
+  applyTimelineNodeLockCommand,
   applyTimelineNodeRangeCommand,
   clearTimelineRenderProjection,
   getCachedTimelineRenderProjection,
@@ -30,6 +32,7 @@ vi.mock('$lib/commandApi.js', () => ({
   createTimelineRelationship: vi.fn(),
   deleteTimelineNode: vi.fn(),
   deleteTimelineRelationship: vi.fn(),
+  setTimelineNodeLock: vi.fn(),
   setTimelineNodeRange: vi.fn(),
   splitTimelineNode: vi.fn(),
 }));
@@ -43,6 +46,7 @@ const createTimelineNodeMock = vi.mocked(createTimelineNode);
 const createTimelineRelationshipMock = vi.mocked(createTimelineRelationship);
 const deleteTimelineNodeMock = vi.mocked(deleteTimelineNode);
 const deleteTimelineRelationshipMock = vi.mocked(deleteTimelineRelationship);
+const setTimelineNodeLockMock = vi.mocked(setTimelineNodeLock);
 const setTimelineNodeRangeMock = vi.mocked(setTimelineNodeRange);
 const splitTimelineNodeMock = vi.mocked(splitTimelineNode);
 const getTimelineRenderProjectionMock = vi.mocked(getTimelineRenderProjection);
@@ -95,6 +99,7 @@ beforeEach(() => {
   createTimelineRelationshipMock.mockReset();
   deleteTimelineNodeMock.mockReset();
   deleteTimelineRelationshipMock.mockReset();
+  setTimelineNodeLockMock.mockReset();
   setTimelineNodeRangeMock.mockReset();
   splitTimelineNodeMock.mockReset();
   getTimelineRenderProjectionMock.mockReset();
@@ -423,6 +428,63 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toEqual(projection);
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBe('relationship delete invalid');
+  });
+
+  it('stores node lock timeline command response projections without local patching', async () => {
+    const lockedProjection = {
+      ...projection,
+      version: 8,
+      payload: {
+        ...projection.payload,
+        clips: projection.payload.clips.map((clip) => ({ ...clip, locked: true })),
+      },
+    };
+    setTimelineNodeLockMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: lockedProjection,
+    });
+
+    await expect(
+      applyTimelineNodeLockCommand(
+        {
+          node_id: 'node.scene.beach',
+          locked: true,
+        },
+        'command-timeline-lock-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: lockedProjection,
+    });
+
+    expect(setTimelineNodeLockMock).toHaveBeenCalledWith(
+      {
+        node_id: 'node.scene.beach',
+        locked: true,
+      },
+      'command-timeline-lock-1',
+    );
+    expect(getTimelineRenderProjectionMock).not.toHaveBeenCalled();
+    expect(getCachedTimelineRenderProjection()).toEqual(lockedProjection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('records node lock timeline command errors and leaves cached projections unchanged', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+    setTimelineNodeLockMock.mockRejectedValue(new Error('lock invalid'));
+
+    await expect(
+      applyTimelineNodeLockCommand({
+        node_id: 'node.scene.unknown',
+        locked: true,
+      }),
+    ).rejects.toThrow('lock invalid');
+
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBe('lock invalid');
   });
 
   it('stores split timeline command response projections without local patching', async () => {

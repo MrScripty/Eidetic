@@ -232,6 +232,7 @@ Completed slices:
 - `refactor(server): remove legacy node arc routes` removed legacy timeline node-arc tagging routes, leaving the timeline route module read-only while future arc edits wait for command/projection contracts.
 - `feat(server): add timeline node lock command` added a backend command route for setting timeline node lock state and returning the updated timeline render projection.
 - `feat(ui): add timeline node lock command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed node lock commands.
+- `feat(ui): cache timeline node lock projections` routed node lock command responses into the timeline render projection cache without optimistic local patching.
 
 Discovered issues:
 
