@@ -10,8 +10,8 @@
 //! operation runs at a time — the bounded mpsc channel (capacity 16)
 //! provides natural backpressure.
 
-use tokio::sync::{broadcast, mpsc};
 use pyo3::Python;
+use tokio::sync::{broadcast, mpsc};
 
 use super::bridge;
 use super::types::{DiffuseCmd, DiffuseUpdate, DiffusionError, DiffusionStatus};
@@ -19,7 +19,7 @@ use super::types::{DiffuseCmd, DiffuseUpdate, DiffusionError, DiffusionStatus};
 /// Main loop of the diffusion manager thread.
 ///
 /// Called from `std::thread::spawn` — blocks indefinitely until
-/// `DiffuseCmd::Shutdown` is received or the command channel closes.
+/// the command channel closes.
 pub fn run(mut rx: mpsc::Receiver<DiffuseCmd>, update_tx: broadcast::Sender<DiffuseUpdate>) {
     pyo3::prepare_freethreaded_python();
 
@@ -115,14 +115,10 @@ pub fn run(mut rx: mpsc::Receiver<DiffuseCmd>, update_tx: broadcast::Sender<Diff
                         device: device.clone(),
                     });
                 }
-
-                DiffuseCmd::Shutdown => {
-                    let _ = bridge::unload_model(py, &engine);
-                    tracing::info!("Diffusion manager shutting down");
-                    break;
-                }
             }
         }
+        let _ = bridge::unload_model(py, &engine);
+        tracing::info!("Diffusion manager shutting down");
     });
 }
 
@@ -148,7 +144,6 @@ fn drain_commands_with_error(mut rx: mpsc::Receiver<DiffuseCmd>, init_error: &Di
                     device: "none".into(),
                 });
             }
-            DiffuseCmd::Shutdown => break,
         }
     }
 }

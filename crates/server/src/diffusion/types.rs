@@ -18,8 +18,6 @@ pub enum DiffusionError {
     InfillFailed(String),
     #[error("Python error: {0}")]
     PythonError(String),
-    #[error("manager channel closed")]
-    ChannelClosed,
 }
 
 /// Commands sent to the diffusion manager thread via `tokio::sync::mpsc`.
@@ -52,8 +50,6 @@ pub enum DiffuseCmd {
     Status {
         reply: oneshot::Sender<DiffusionStatus>,
     },
-    /// Graceful shutdown — unloads model and exits the manager thread.
-    Shutdown,
 }
 
 /// Progress update streamed between denoising steps.

@@ -192,8 +192,7 @@ impl AppState {
         let save_path = project_path.clone();
 
         // Spawn the Y.Doc manager task (owns the CRDT doc, receives commands via channel).
-        // The change_rx will be consumed by the AI reactor in a later phase.
-        let (doc_tx, doc_update_tx, _change_rx) = ydoc::spawn_doc_manager();
+        let (doc_tx, doc_update_tx) = ydoc::spawn_doc_manager();
 
         // Start auto-save (needs doc_tx to serialize Y.Doc state).
         let save_doc_tx = doc_tx.clone();
@@ -205,8 +204,8 @@ impl AppState {
         ));
 
         // Spawn the diffusion manager on a dedicated OS thread.
-        // JoinHandle is intentionally dropped — the manager shuts down via
-        // DiffuseCmd::Shutdown sent through diffuse_tx when the server exits.
+        // JoinHandle is intentionally dropped — the manager shuts down when
+        // the command channel closes.
         let (diffuse_tx, diffuse_update_tx, _diffuse_handle) = diffusion::spawn_diffusion_manager();
 
         // Initialize the Pumas model library (optional — best-effort).

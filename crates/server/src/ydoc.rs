@@ -18,7 +18,6 @@
 //!     └── "premise": Y.Text
 //! ```
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use tokio::sync::{broadcast, mpsc, oneshot};
@@ -47,19 +46,20 @@ pub enum ContentField {
 /// A snapshot of a node's text content read from Y.Doc.
 #[derive(Debug, Clone)]
 pub struct NodeTextSnapshot {
+    #[cfg(test)]
     pub notes: String,
     pub content: String,
+    #[cfg(test)]
     pub attributed_spans: Vec<AttributedSpan>,
 }
 
 /// A contiguous span of text with a single author.
+#[cfg(test)]
 #[derive(Debug, Clone)]
 pub struct AttributedSpan {
     pub text: String,
     /// e.g. "human:{user_id}" or "ai:{generation_id}"
     pub author: String,
-    pub start: usize,
-    pub end: usize,
 }
 
 /// A binary update to broadcast to WebSocket clients.
@@ -71,14 +71,6 @@ pub struct DocUpdate {
     pub data: Vec<u8>,
 }
 
-/// Notification that a human edited content — fed to the AI reactor.
-#[derive(Debug, Clone)]
-pub struct ContentChange {
-    pub node_id: NodeId,
-    pub field: ContentField,
-    pub changed_by: String,
-}
-
 /// Commands sent to the Y.Doc manager task via channel.
 pub enum DocCommand {
     /// Apply a binary update from a WebSocket client.
@@ -88,9 +80,7 @@ pub enum DocCommand {
         reply: oneshot::Sender<Result<(), String>>,
     },
     /// Get the full state vector for sync handshake.
-    GetStateVector {
-        reply: oneshot::Sender<Vec<u8>>,
-    },
+    GetStateVector { reply: oneshot::Sender<Vec<u8>> },
     /// Get a diff from a given state vector (what the caller is missing).
     GetDiff {
         sv: Vec<u8>,
@@ -108,32 +98,16 @@ pub enum DocCommand {
         node_id: NodeId,
         reply: oneshot::Sender<NodeTextSnapshot>,
     },
-    /// Read text content for all nodes (used during save).
-    ReadAllNodes {
-        reply: oneshot::Sender<HashMap<String, NodeTextSnapshot>>,
-    },
     /// Ensure a node entry exists in Y.Doc (called when node created via REST).
-    EnsureNode {
-        node_id: NodeId,
-    },
+    EnsureNode { node_id: NodeId },
     /// Remove a node entry from Y.Doc (called when node deleted via REST).
-    RemoveNode {
-        node_id: NodeId,
-    },
+    RemoveNode { node_id: NodeId },
     /// Serialize full doc state for persistence.
-    Serialize {
-        reply: oneshot::Sender<Vec<u8>>,
-    },
+    Serialize { reply: oneshot::Sender<Vec<u8>> },
     /// Load doc state from persistence (replaces current doc content).
     Load {
         state: Vec<u8>,
         reply: oneshot::Sender<Result<(), String>>,
-    },
-    /// Flush AI token buffer into Y.Doc (appends to content field).
-    FlushTokens {
-        node_id: NodeId,
-        tokens: String,
-        author: String,
     },
     /// Replace a character range in a Y.Text field (used by diffusion infilling).
     ///
@@ -147,15 +121,10 @@ pub enum DocCommand {
         new_text: String,
         author: String,
     },
-    /// Shutdown the manager task.
-    Shutdown,
 }
 
 /// Channel capacity for the doc command queue.
 pub const DOC_CHANNEL_CAPACITY: usize = 256;
-
-/// Channel capacity for the content change queue (AI reactor feed).
-pub const CHANGE_CHANNEL_CAPACITY: usize = 256;
 
 /// Channel capacity for the doc update broadcast (WebSocket feed).
 pub const UPDATE_BROADCAST_CAPACITY: usize = 256;
@@ -167,21 +136,15 @@ pub const UPDATE_BROADCAST_CAPACITY: usize = 256;
 /// Spawn the doc manager and return the command sender.
 ///
 /// Also returns the broadcast sender for doc updates (WebSocket clients
-/// subscribe to this) and the mpsc sender for content changes (the AI
-/// reactor consumes this).
-pub fn spawn_doc_manager() -> (
-    mpsc::Sender<DocCommand>,
-    broadcast::Sender<DocUpdate>,
-    mpsc::Receiver<ContentChange>,
-) {
+/// subscribe to this).
+pub fn spawn_doc_manager() -> (mpsc::Sender<DocCommand>, broadcast::Sender<DocUpdate>) {
     let (cmd_tx, cmd_rx) = mpsc::channel(DOC_CHANNEL_CAPACITY);
     let (update_tx, _) = broadcast::channel(UPDATE_BROADCAST_CAPACITY);
-    let (change_tx, change_rx) = mpsc::channel(CHANGE_CHANNEL_CAPACITY);
 
     let update_tx_clone = update_tx.clone();
-    tokio::spawn(run_doc_manager(cmd_rx, update_tx_clone, change_tx));
+    tokio::spawn(run_doc_manager(cmd_rx, update_tx_clone));
 
-    (cmd_tx, update_tx, change_rx)
+    (cmd_tx, update_tx)
 }
 
 /// The main loop of the Y.Doc manager task.
@@ -191,7 +154,6 @@ pub fn spawn_doc_manager() -> (
 async fn run_doc_manager(
     mut rx: mpsc::Receiver<DocCommand>,
     update_tx: broadcast::Sender<DocUpdate>,
-    change_tx: mpsc::Sender<ContentChange>,
 ) {
     // Use client_id = 0 for the server's own doc.
     let doc = Doc::with_options(Options {
@@ -236,7 +198,7 @@ async fn run_doc_manager(
                 reply,
             } => {
                 *pending_origin.lock().unwrap() = client_id;
-                let result = apply_client_update(&doc, &update, client_id, &change_tx).await;
+                let result = apply_client_update(&doc, &update).await;
                 *pending_origin.lock().unwrap() = 0;
                 let _ = reply.send(result);
             }
@@ -278,11 +240,6 @@ async fn run_doc_manager(
                 let _ = reply.send(snapshot);
             }
 
-            DocCommand::ReadAllNodes { reply } => {
-                let snapshots = read_all_node_snapshots(&doc);
-                let _ = reply.send(snapshots);
-            }
-
             DocCommand::EnsureNode { node_id } => {
                 ensure_node_exists(&doc, &node_id);
             }
@@ -293,24 +250,13 @@ async fn run_doc_manager(
 
             DocCommand::Serialize { reply } => {
                 let txn = doc.transact();
-                let state =
-                    txn.encode_state_as_update_v1(&yrs::StateVector::default());
+                let state = txn.encode_state_as_update_v1(&yrs::StateVector::default());
                 let _ = reply.send(state);
             }
 
             DocCommand::Load { state, reply } => {
                 let result = load_doc_state(&doc, &state);
                 let _ = reply.send(result);
-            }
-
-            DocCommand::FlushTokens {
-                node_id,
-                tokens,
-                author,
-            } => {
-                // AI token flush: append to content field.
-                *pending_origin.lock().unwrap() = 0;
-                append_to_node_field(&doc, &node_id, ContentField::Content, &tokens, &author);
             }
 
             DocCommand::RewriteRegion {
@@ -324,13 +270,9 @@ async fn run_doc_manager(
                 *pending_origin.lock().unwrap() = 0;
                 rewrite_region(&doc, &node_id, field, start, end, &new_text, &author);
             }
-
-            DocCommand::Shutdown => {
-                tracing::info!("Y.Doc manager shutting down");
-                break;
-            }
         }
     }
+    tracing::info!("Y.Doc manager shutting down");
 }
 
 // ──────────────────────────────────────────────
@@ -407,6 +349,7 @@ fn write_node_field(doc: &Doc, node_id: &NodeId, field: ContentField, text: &str
 }
 
 /// Append text to a node field (used for AI token streaming).
+#[cfg(test)]
 fn append_to_node_field(
     doc: &Doc,
     node_id: &NodeId,
@@ -485,50 +428,33 @@ fn read_node_snapshot(doc: &Doc, node_id: &NodeId) -> NodeTextSnapshot {
     let txn = doc.transact();
     let nodes_map = txn.get_map("nodes");
 
-    let (notes, content, spans) = match nodes_map {
+    let content = match nodes_map.as_ref() {
         Some(nodes) => match nodes.get(&txn, &node_key) {
-            Some(yrs::Out::YMap(node_map)) => {
-                let notes = read_text_field(&node_map, &txn, "notes");
-                let content = read_text_field(&node_map, &txn, "content");
-                let spans = read_attributed_spans(&node_map, &txn, "content");
-                (notes, content, spans)
-            }
-            _ => (String::new(), String::new(), Vec::new()),
+            Some(yrs::Out::YMap(node_map)) => read_text_field(&node_map, &txn, "content"),
+            _ => String::new(),
         },
-        None => (String::new(), String::new(), Vec::new()),
+        None => String::new(),
+    };
+
+    #[cfg(test)]
+    let (notes, attributed_spans) = match nodes_map.as_ref() {
+        Some(nodes) => match nodes.get(&txn, &node_key) {
+            Some(yrs::Out::YMap(node_map)) => (
+                read_text_field(&node_map, &txn, "notes"),
+                read_attributed_spans(&node_map, &txn, "content"),
+            ),
+            _ => (String::new(), Vec::new()),
+        },
+        None => (String::new(), Vec::new()),
     };
 
     NodeTextSnapshot {
+        #[cfg(test)]
         notes,
         content,
-        attributed_spans: spans,
+        #[cfg(test)]
+        attributed_spans,
     }
-}
-
-/// Read all node snapshots from Y.Doc (keyed by node UUID string).
-fn read_all_node_snapshots(doc: &Doc) -> HashMap<String, NodeTextSnapshot> {
-    let txn = doc.transact();
-    let mut result = HashMap::new();
-
-    if let Some(nodes) = txn.get_map("nodes") {
-        for (key, value) in nodes.iter(&txn) {
-            if let yrs::Out::YMap(node_map) = value {
-                let notes = read_text_field(&node_map, &txn, "notes");
-                let content = read_text_field(&node_map, &txn, "content");
-                let spans = read_attributed_spans(&node_map, &txn, "content");
-                result.insert(
-                    key.to_string(),
-                    NodeTextSnapshot {
-                        notes,
-                        content,
-                        attributed_spans: spans,
-                    },
-                );
-            }
-        }
-    }
-
-    result
 }
 
 /// Read plain text from a Y.Text field within a node map.
@@ -540,6 +466,7 @@ fn read_text_field(node_map: &MapRef, txn: &yrs::Transaction<'_>, field_name: &s
 }
 
 /// Read attributed spans from a Y.Text field (content field for author tracking).
+#[cfg(test)]
 fn read_attributed_spans(
     node_map: &MapRef,
     txn: &yrs::Transaction<'_>,
@@ -552,14 +479,12 @@ fn read_attributed_spans(
 
     let diff = text_ref.diff(txn, yrs::types::text::YChange::identity);
     let mut spans = Vec::new();
-    let mut offset = 0usize;
 
     for chunk in diff {
         let chunk_text = match &chunk.insert {
             yrs::Out::Any(Any::String(s)) => s.to_string(),
             _ => continue,
         };
-        let len = chunk_text.len();
         let author = chunk
             .attributes
             .as_ref()
@@ -573,83 +498,19 @@ fn read_attributed_spans(
         spans.push(AttributedSpan {
             text: chunk_text,
             author,
-            start: offset,
-            end: offset + len,
         });
-        offset += len;
     }
 
     spans
 }
 
 /// Apply a binary update from a WebSocket client.
-///
-/// Determines which nodes were affected and sends `ContentChange` messages
-/// to the AI reactor channel.
-async fn apply_client_update(
-    doc: &Doc,
-    update_bytes: &[u8],
-    client_id: u64,
-    change_tx: &mpsc::Sender<ContentChange>,
-) -> Result<(), String> {
-    // Snapshot node text content before applying the update.
-    let before = snapshot_all_text(doc);
-
-    // Apply the update.
+async fn apply_client_update(doc: &Doc, update_bytes: &[u8]) -> Result<(), String> {
     let update = Update::decode_v1(update_bytes).map_err(|e| format!("decode error: {e}"))?;
     doc.transact_mut()
         .apply_update(update)
         .map_err(|e| format!("apply error: {e}"))?;
-
-    // Compare and detect which nodes/fields changed.
-    let after = snapshot_all_text(doc);
-    for (node_key, after_text) in &after {
-        let before_text = before.get(node_key);
-        let notes_changed = before_text.map_or(true, |b| b.0 != after_text.0);
-        let content_changed = before_text.map_or(true, |b| b.1 != after_text.1);
-
-        if let Ok(uuid) = uuid::Uuid::parse_str(node_key) {
-            let node_id = NodeId(uuid);
-            let author = format!("human:{client_id}");
-
-            if notes_changed {
-                let _ = change_tx
-                    .try_send(ContentChange {
-                        node_id,
-                        field: ContentField::Notes,
-                        changed_by: author.clone(),
-                    });
-            }
-            if content_changed {
-                let _ = change_tx
-                    .try_send(ContentChange {
-                        node_id,
-                        field: ContentField::Content,
-                        changed_by: author,
-                    });
-            }
-        }
-    }
-
     Ok(())
-}
-
-/// Snapshot all node text for change detection (notes, content).
-fn snapshot_all_text(doc: &Doc) -> HashMap<String, (String, String)> {
-    let txn = doc.transact();
-    let mut result = HashMap::new();
-
-    if let Some(nodes) = txn.get_map("nodes") {
-        for (key, value) in nodes.iter(&txn) {
-            if let yrs::Out::YMap(node_map) = value {
-                let notes = read_text_field(&node_map, &txn, "notes");
-                let content = read_text_field(&node_map, &txn, "content");
-                result.insert(key.to_string(), (notes, content));
-            }
-        }
-    }
-
-    result
 }
 
 /// Load full doc state from a persistence blob. Replaces current doc content.
@@ -667,24 +528,6 @@ fn load_doc_state(doc: &Doc, state: &[u8]) -> Result<(), String> {
 // ──────────────────────────────────────────────
 // Convenience helpers for callers
 // ──────────────────────────────────────────────
-
-/// Helper: send a WriteNodeContent command (fire-and-forget).
-pub async fn write_content(
-    doc_tx: &mpsc::Sender<DocCommand>,
-    node_id: NodeId,
-    field: ContentField,
-    text: String,
-    author: String,
-) {
-    let _ = doc_tx
-        .send(DocCommand::WriteNodeContent {
-            node_id,
-            field,
-            text,
-            author,
-        })
-        .await;
-}
 
 /// Helper: read a node's text snapshot via the doc manager.
 pub async fn read_content(
@@ -736,10 +579,7 @@ pub async fn get_diff(doc_tx: &mpsc::Sender<DocCommand>, sv: Vec<u8>) -> Option<
 }
 
 /// Helper: load persisted doc state into the manager.
-pub async fn load_doc(
-    doc_tx: &mpsc::Sender<DocCommand>,
-    state: Vec<u8>,
-) -> Result<(), String> {
+pub async fn load_doc(doc_tx: &mpsc::Sender<DocCommand>, state: Vec<u8>) -> Result<(), String> {
     let (reply_tx, reply_rx) = oneshot::channel();
     doc_tx
         .send(DocCommand::Load {
@@ -774,13 +614,7 @@ mod tests {
         ensure_node_exists(&doc, &node_id);
 
         // Write notes.
-        write_node_field(
-            &doc,
-            &node_id,
-            ContentField::Notes,
-            "Test notes",
-            "human:1",
-        );
+        write_node_field(&doc, &node_id, ContentField::Notes, "Test notes", "human:1");
 
         // Write content.
         write_node_field(
@@ -817,20 +651,8 @@ mod tests {
         ensure_node_exists(&doc, &node_id);
 
         // Simulate token streaming.
-        append_to_node_field(
-            &doc,
-            &node_id,
-            ContentField::Content,
-            "Hello ",
-            "ai:gen-1",
-        );
-        append_to_node_field(
-            &doc,
-            &node_id,
-            ContentField::Content,
-            "world!",
-            "ai:gen-1",
-        );
+        append_to_node_field(&doc, &node_id, ContentField::Content, "Hello ", "ai:gen-1");
+        append_to_node_field(&doc, &node_id, ContentField::Content, "world!", "ai:gen-1");
 
         let snapshot = read_node_snapshot(&doc, &node_id);
         assert_eq!(snapshot.content, "Hello world!");
@@ -849,7 +671,13 @@ mod tests {
 
         let node_id = NodeId(Uuid::new_v4());
         ensure_node_exists(&doc, &node_id);
-        write_node_field(&doc, &node_id, ContentField::Content, "Persist me", "human:1");
+        write_node_field(
+            &doc,
+            &node_id,
+            ContentField::Content,
+            "Persist me",
+            "human:1",
+        );
 
         // Serialize.
         let txn = doc.transact();
@@ -880,7 +708,13 @@ mod tests {
 
         let node_id = NodeId(Uuid::new_v4());
         ensure_node_exists(&doc, &node_id);
-        write_node_field(&doc, &node_id, ContentField::Content, "Some text", "human:1");
+        write_node_field(
+            &doc,
+            &node_id,
+            ContentField::Content,
+            "Some text",
+            "human:1",
+        );
 
         // Remove it.
         remove_node(&doc, &node_id);
@@ -932,7 +766,7 @@ mod tests {
 
     #[tokio::test]
     async fn spawn_and_communicate() {
-        let (doc_tx, _update_tx, _change_rx) = spawn_doc_manager();
+        let (doc_tx, _update_tx) = spawn_doc_manager();
 
         let node_id = NodeId(Uuid::new_v4());
 
@@ -957,7 +791,6 @@ mod tests {
         let snapshot = read_content(&doc_tx, node_id).await.unwrap();
         assert_eq!(snapshot.content, "Hello from task");
 
-        // Shutdown.
-        doc_tx.send(DocCommand::Shutdown).await.unwrap();
+        drop(doc_tx);
     }
 }
