@@ -213,7 +213,6 @@ async fn create_story_arc(
 
     if response.outcome == RecordChangeOutcome::Recorded {
         let _ = state.events_tx.send(ServerEvent::StoryChanged);
-        state.trigger_save();
     }
     crate::error::json_value(response)
 }
@@ -249,7 +248,6 @@ async fn update_story_arc(
 
     if response.outcome == RecordChangeOutcome::Recorded {
         let _ = state.events_tx.send(ServerEvent::StoryChanged);
-        state.trigger_save();
     }
     crate::error::json_value(response)
 }
@@ -285,7 +283,6 @@ async fn delete_story_arc(
 
     if response.outcome == RecordChangeOutcome::Recorded {
         let _ = state.events_tx.send(ServerEvent::StoryChanged);
-        state.trigger_save();
     }
     crate::error::json_value(response)
 }
