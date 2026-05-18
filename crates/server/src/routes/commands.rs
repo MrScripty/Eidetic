@@ -1,6 +1,7 @@
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
+use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use eidetic_core::contracts::{
     BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, ProjectionEnvelope,
     SetObjectFieldCommand,
@@ -20,6 +21,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/commands/object-field", post(set_object_field))
         .route("/commands/bible-graph/node", post(create_bible_graph_node))
+        .route(
+            "/commands/bible-graph/canonical-roots",
+            post(ensure_canonical_bible_roots),
+        )
 }
 
 #[derive(Debug, Serialize)]
@@ -32,6 +37,12 @@ struct ObjectFieldCommandResponse {
 struct BibleGraphNodeCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<BibleNodeDetailProjection>,
+}
+
+#[derive(Debug, Serialize)]
+struct BibleGraphRootsCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<BibleGraphNodeListProjection>,
 }
 
 async fn set_object_field(
@@ -55,6 +66,19 @@ async fn create_bible_graph_node(
     let response = tokio::task::spawn_blocking(move || create_bible_node_at_path(path, command))
         .await
         .map_err(|e| ApiError::internal(format!("bible graph command task failed: {e}")))??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    crate::error::json_value(response)
+}
+
+async fn ensure_canonical_bible_roots(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<EnsureCanonicalBibleRootsCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response = tokio::task::spawn_blocking(move || ensure_roots_at_path(path, command))
+        .await
+        .map_err(|e| ApiError::internal(format!("bible graph roots task failed: {e}")))??;
 
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
     crate::error::json_value(response)
@@ -96,6 +120,22 @@ fn create_bible_node_at_path(
             .map_err(map_bible_graph_error)?;
 
     Ok(BibleGraphNodeCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
+fn ensure_roots_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<EnsureCanonicalBibleRootsCommand>,
+) -> Result<BibleGraphRootsCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        bible_graph_command::apply_ensure_canonical_bible_roots(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+
+    Ok(BibleGraphRootsCommandResponse {
         outcome,
         projection,
     })

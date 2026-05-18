@@ -8,7 +8,7 @@ pub use bible_graph::{
     BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeId,
     BibleGraphNodeListProjection, BibleGraphPart, BibleGraphPartId, BibleGraphPartKey,
     BibleGraphPartProjection, BibleGraphSchemaKey, BibleNodeDetailProjection, CanonicalBibleRoot,
-    CreateBibleGraphNodeCommand, canonical_bible_root_nodes,
+    CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, canonical_bible_root_nodes,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

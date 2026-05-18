@@ -21,6 +21,16 @@ fn missing_node_projection_returns_none() {
 }
 
 #[test]
+fn missing_canonical_roots_reports_unpersisted_roots() {
+    let conn = memory_connection();
+
+    let missing = missing_canonical_root_nodes(&conn).unwrap();
+
+    assert_eq!(missing.len(), 8);
+    assert_eq!(missing[0].id.as_str(), "canonical.characters");
+}
+
+#[test]
 fn node_projection_envelope_uses_revision_history_version() {
     let mut conn = memory_connection();
     let command = CommandEnvelope::new(TestCommand);

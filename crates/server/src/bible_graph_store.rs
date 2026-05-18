@@ -1,6 +1,7 @@
 use eidetic_core::contracts::{
     BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaKey,
     BibleNodeDetailProjection, ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion,
+    canonical_bible_root_nodes,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
@@ -63,6 +64,33 @@ pub(crate) fn insert_node_in_transaction(
         ],
     )?;
     Ok(())
+}
+
+pub(crate) fn insert_missing_canonical_roots_in_transaction(
+    tx: &Transaction<'_>,
+    created_event_id: ChangeEventId,
+) -> Result<Vec<BibleGraphNode>, HistoryStoreError> {
+    let mut inserted = Vec::new();
+    for node in canonical_bible_root_nodes() {
+        if node_exists_in_transaction(tx, &node.id)? {
+            continue;
+        }
+        insert_node_in_transaction(tx, &node, created_event_id)?;
+        inserted.push(node);
+    }
+    Ok(inserted)
+}
+
+pub(crate) fn missing_canonical_root_nodes(
+    conn: &Connection,
+) -> Result<Vec<BibleGraphNode>, HistoryStoreError> {
+    let mut missing = Vec::new();
+    for node in canonical_bible_root_nodes() {
+        if !node_exists(conn, &node.id)? {
+            missing.push(node);
+        }
+    }
+    Ok(missing)
 }
 
 pub(crate) fn load_node_detail_projection(
@@ -138,6 +166,31 @@ pub(crate) fn load_node_list_projection_envelope(
         )),
         None => Ok(ProjectionEnvelope::initial(projection)),
     }
+}
+
+fn node_exists(conn: &Connection, node_id: &BibleGraphNodeId) -> Result<bool, HistoryStoreError> {
+    conn.query_row(
+        "SELECT 1 FROM bible_graph_nodes WHERE id = ?1 AND deleted_event_id IS NULL",
+        [node_id.as_str()],
+        |_| Ok(()),
+    )
+    .optional()
+    .map(|value| value.is_some())
+    .map_err(HistoryStoreError::from)
+}
+
+fn node_exists_in_transaction(
+    tx: &Transaction<'_>,
+    node_id: &BibleGraphNodeId,
+) -> Result<bool, HistoryStoreError> {
+    tx.query_row(
+        "SELECT 1 FROM bible_graph_nodes WHERE id = ?1 AND deleted_event_id IS NULL",
+        [node_id.as_str()],
+        |_| Ok(()),
+    )
+    .optional()
+    .map(|value| value.is_some())
+    .map_err(HistoryStoreError::from)
 }
 
 fn row_to_node(row: &Row<'_>) -> Result<BibleGraphNode, rusqlite::Error> {

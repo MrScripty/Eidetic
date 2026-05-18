@@ -1,5 +1,7 @@
 use super::*;
-use eidetic_core::contracts::{BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope};
+use eidetic_core::contracts::{
+    BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
+};
 
 fn memory_connection() -> Connection {
     let conn = Connection::open_in_memory().unwrap();
@@ -81,6 +83,73 @@ fn duplicate_node_id_with_different_command_rolls_back_history() {
     assert_eq!(table_count(&conn, "change_events"), 1);
     assert_eq!(table_count(&conn, "object_revisions"), 1);
     assert_eq!(table_count(&conn, "bible_graph_nodes"), 1);
+}
+
+#[test]
+fn ensure_canonical_roots_persists_system_owned_nodes() {
+    let mut conn = memory_connection();
+    let command = CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {});
+
+    let (outcome, projection) =
+        apply_ensure_canonical_bible_roots(&mut conn, &command, 100).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(
+        projection.version,
+        eidetic_core::contracts::ProjectionVersion(9)
+    );
+    assert_eq!(projection.payload.nodes.len(), 8);
+    assert_eq!(
+        projection.payload.nodes[0].id.as_str(),
+        "canonical.characters"
+    );
+    assert!(
+        projection
+            .payload
+            .nodes
+            .iter()
+            .all(|node| node.system_owned)
+    );
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "change_events"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 8);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 8);
+}
+
+#[test]
+fn ensure_canonical_roots_replays_duplicate_command_without_extra_rows() {
+    let mut conn = memory_connection();
+    let command = CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {});
+
+    let (first, _) = apply_ensure_canonical_bible_roots(&mut conn, &command, 100).unwrap();
+    let (second, projection) =
+        apply_ensure_canonical_bible_roots(&mut conn, &command, 100).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(projection.payload.nodes.len(), 8);
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "change_events"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 8);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 8);
+}
+
+#[test]
+fn ensure_canonical_roots_is_noop_when_roots_already_exist_for_new_command() {
+    let mut conn = memory_connection();
+    let first = CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {});
+    let second = CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {});
+    apply_ensure_canonical_bible_roots(&mut conn, &first, 100).unwrap();
+
+    let (outcome, projection) =
+        apply_ensure_canonical_bible_roots(&mut conn, &second, 200).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(projection.payload.nodes.len(), 8);
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "change_events"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 8);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 8);
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {

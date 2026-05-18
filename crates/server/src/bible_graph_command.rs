@@ -1,7 +1,7 @@
 use eidetic_core::contracts::{
     BibleGraphNode, BibleNodeDetailProjection, ChangeEvent, ChangeEventKind, CommandEnvelope,
-    CreateBibleGraphNodeCommand, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
-    ProjectionEnvelope, RevisionOperation,
+    CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldDelta, FieldValue,
+    ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
 };
 use rusqlite::Connection;
 
@@ -47,6 +47,51 @@ pub(crate) fn apply_create_bible_graph_node(
                 node.id.as_str()
             )))
         })?;
+
+    Ok((outcome, projection))
+}
+
+pub(crate) fn apply_ensure_canonical_bible_roots(
+    conn: &mut Connection,
+    command: &CommandEnvelope<EnsureCanonicalBibleRootsCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<eidetic_core::contracts::BibleGraphNodeListProjection>,
+    ),
+    BibleGraphCommandError,
+> {
+    bible_graph_store::create_schema(conn)?;
+    let missing_roots = bible_graph_store::missing_canonical_root_nodes(conn)?;
+    if missing_roots.is_empty() {
+        let projection = bible_graph_store::load_node_list_projection_envelope(conn)?;
+        return Ok((RecordChangeOutcome::AlreadyRecorded, projection));
+    }
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::SystemRepair,
+        "ensure canonical bible roots",
+    )
+    .with_created_at_ms(created_at_ms);
+    let revisions: Vec<ObjectRevision> = missing_roots
+        .iter()
+        .map(|node| node_revision(node, event.id))
+        .collect();
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "bible_graph.ensure_canonical_roots",
+        &event,
+        &revisions,
+        |tx| {
+            let _ = bible_graph_store::insert_missing_canonical_roots_in_transaction(tx, event.id)?;
+            Ok(())
+        },
+    )?;
+    let projection = bible_graph_store::load_node_list_projection_envelope(conn)?;
 
     Ok((outcome, projection))
 }

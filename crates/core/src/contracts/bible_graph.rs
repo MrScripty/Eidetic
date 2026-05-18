@@ -126,6 +126,9 @@ pub struct CreateBibleGraphNodeCommand {
     pub sort_order: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EnsureCanonicalBibleRootsCommand {}
+
 impl CreateBibleGraphNodeCommand {
     pub fn into_node(self) -> BibleGraphNode {
         BibleGraphNode {
@@ -345,6 +348,16 @@ mod tests {
 
         let json = serde_json::to_string(&command).unwrap();
         let round_trip: CreateBibleGraphNodeCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn ensure_canonical_roots_command_round_trips() {
+        let command = EnsureCanonicalBibleRootsCommand {};
+
+        let json = serde_json::to_string(&command).unwrap();
+        let round_trip: EnsureCanonicalBibleRootsCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
     }

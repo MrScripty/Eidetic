@@ -4,7 +4,9 @@ use std::path::PathBuf;
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
-use eidetic_core::contracts::{BibleGraphNodeId, BibleGraphSchemaKey, FieldValue, ObjectKind};
+use eidetic_core::contracts::{
+    BibleGraphNodeId, BibleGraphSchemaKey, EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind,
+};
 use serde_json::json;
 use tower::util::ServiceExt;
 
@@ -176,10 +178,56 @@ async fn bible_graph_node_command_rejects_empty_name() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn bible_graph_roots_command_returns_node_list_projection() {
+    let path = temp_db_path("ensures-bible-roots");
+    let app = app_with_project_path(path.clone()).await;
+    let body = json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": EnsureCanonicalBibleRootsCommand {},
+    });
+
+    let response = app
+        .oneshot(bible_graph_roots_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(value["projection"]["version"], 9);
+    assert_eq!(
+        value["projection"]["payload"]["nodes"]
+            .as_array()
+            .unwrap()
+            .len(),
+        8
+    );
+    assert_eq!(
+        value["projection"]["payload"]["nodes"][0]["id"],
+        "canonical.characters"
+    );
+    assert_eq!(
+        value["projection"]["payload"]["nodes"][0]["system_owned"],
+        true
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
         .uri("/commands/object-field")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn bible_graph_roots_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/bible-graph/canonical-roots")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()

@@ -12,9 +12,9 @@ This directory contains the local Axum host for Eidetic: route registration, per
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |
-| `bible_graph_store.rs` | Typed SQLite rows and detail/list projection reads for canonical story-bible graph nodes. |
+| `bible_graph_store.rs` | Typed SQLite rows, canonical root initialization helpers, and detail/list projection reads for story-bible graph nodes. |
 | `bible_graph_store_tests.rs` | Focused graph persistence and projection-envelope tests. |
-| `bible_graph_command.rs` | Validated story-bible graph node command handler with transactional history writes. |
+| `bible_graph_command.rs` | Validated story-bible graph node and canonical-root command handlers with transactional history writes. |
 | `bible_graph_command_tests.rs` | Focused graph command tests for create, idempotency, conflicts, and validation behavior. |
 | `object_field_command.rs` | Validated field update command handler over history storage and projection rebuilds. |
 | `object_field_command_tests.rs` | Focused command-path tests for set, clear, duplicate, and validation behavior. |
