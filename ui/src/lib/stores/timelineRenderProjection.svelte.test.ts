@@ -1,17 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { setTimelineNodeRange } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
 import {
+  applyTimelineNodeRangeCommand,
   clearTimelineRenderProjection,
   getCachedTimelineRenderProjection,
   refreshTimelineRenderProjection,
   timelineRenderProjectionState,
 } from './timelineRenderProjection.svelte.js';
 
+vi.mock('$lib/commandApi.js', () => ({
+  setTimelineNodeRange: vi.fn(),
+}));
+
 vi.mock('$lib/projectionApi.js', () => ({
   getTimelineRenderProjection: vi.fn(),
 }));
 
+const setTimelineNodeRangeMock = vi.mocked(setTimelineNodeRange);
 const getTimelineRenderProjectionMock = vi.mocked(getTimelineRenderProjection);
 
 const projection = {
@@ -57,6 +64,7 @@ const projection = {
 
 beforeEach(() => {
   clearTimelineRenderProjection();
+  setTimelineNodeRangeMock.mockReset();
   getTimelineRenderProjectionMock.mockReset();
 });
 
@@ -93,5 +101,57 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toBeNull();
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('stores timeline command response projections without local patching', async () => {
+    setTimelineNodeRangeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection,
+    });
+
+    await expect(
+      applyTimelineNodeRangeCommand(
+        {
+          node_id: 'node.scene.beach',
+          start_ms: 1_000,
+          end_ms: 4_000,
+        },
+        'command-timeline-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection,
+    });
+
+    expect(setTimelineNodeRangeMock).toHaveBeenCalledWith(
+      {
+        node_id: 'node.scene.beach',
+        start_ms: 1_000,
+        end_ms: 4_000,
+      },
+      'command-timeline-1',
+    );
+    expect(getTimelineRenderProjectionMock).not.toHaveBeenCalled();
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('records timeline command errors and leaves cached projections unchanged', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+    setTimelineNodeRangeMock.mockRejectedValue(new Error('range invalid'));
+
+    await expect(
+      applyTimelineNodeRangeCommand({
+        node_id: 'node.scene.beach',
+        start_ms: 5_000,
+        end_ms: 1_000,
+      }),
+    ).rejects.toThrow('range invalid');
+
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBe('range invalid');
   });
 });

@@ -1,5 +1,12 @@
+import { setTimelineNodeRange } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
-import type { ProjectionEnvelope, TimelineRenderProjection } from '../types.js';
+import type {
+  CommandId,
+  ProjectionEnvelope,
+  SetTimelineNodeRangeCommand,
+  TimelineCommandResponse,
+  TimelineRenderProjection,
+} from '../types.js';
 
 export const timelineRenderProjectionState = $state<{
   projection: ProjectionEnvelope<TimelineRenderProjection> | null;
@@ -33,6 +40,28 @@ export async function refreshTimelineRenderProjection(): Promise<
     timelineRenderProjectionState.error = errorMessage(
       error,
       'Failed to load timeline render projection',
+    );
+    throw error;
+  } finally {
+    timelineRenderProjectionState.pending = false;
+  }
+}
+
+export async function applyTimelineNodeRangeCommand(
+  payload: SetTimelineNodeRangeCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  timelineRenderProjectionState.pending = true;
+  timelineRenderProjectionState.error = undefined;
+
+  try {
+    const response = await setTimelineNodeRange(payload, commandId);
+    timelineRenderProjectionState.projection = response.projection;
+    return response;
+  } catch (error) {
+    timelineRenderProjectionState.error = errorMessage(
+      error,
+      'Failed to apply timeline node range command',
     );
     throw error;
   } finally {
