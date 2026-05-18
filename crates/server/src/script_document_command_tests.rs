@@ -131,6 +131,35 @@ fn set_script_lock_records_history_and_projection() {
 }
 
 #[test]
+fn set_script_block_rejects_locked_span_changes_without_writes() {
+    let mut conn = memory_connection();
+    let block = block_command("Ada enters with a wet umbrella.");
+    apply_set_script_block(&mut conn, &block, 100).unwrap();
+    let lock = lock_command("User approved wording.");
+    apply_set_script_lock(&mut conn, &lock, 200).unwrap();
+    let changed = block_command("Ada enters with a dry umbrella.");
+
+    let error = apply_set_script_block(&mut conn, &changed, 300).unwrap_err();
+
+    assert!(matches!(
+        error,
+        ScriptDocumentCommandError::InvalidCommand(_)
+    ));
+    let projection = script_store::load_document_projection(
+        &conn,
+        &ScriptDocumentId::new("script.document.main").unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(
+        projection.segments[0].blocks[0].block.text,
+        "Ada enters with a wet umbrella."
+    );
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 5);
+}
+
+#[test]
 fn duplicate_set_script_lock_command_is_idempotent() {
     let mut conn = memory_connection();
     let block = block_command("Ada enters with a wet umbrella.");

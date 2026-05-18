@@ -24,6 +24,7 @@ pub(crate) fn apply_set_script_block(
     script_store::create_schema(conn)?;
 
     let before = script_store::load_document_projection(conn, &command.payload.document_id)?;
+    validate_locked_spans(before.as_ref(), &command.payload)?;
     let old_text = before
         .as_ref()
         .and_then(|projection| find_block_text(projection, &command.payload.block_id));
@@ -155,6 +156,64 @@ fn validate_lock_command(command: &SetScriptLockCommand) -> Result<(), ScriptDoc
             "reason is required".to_string(),
         ));
     }
+    Ok(())
+}
+
+fn validate_locked_spans(
+    before: Option<&ScriptDocumentProjection>,
+    command: &SetScriptBlockCommand,
+) -> Result<(), ScriptDocumentCommandError> {
+    let Some(projection) = before else {
+        return Ok(());
+    };
+    let Some(block) = projection
+        .segments
+        .iter()
+        .flat_map(|segment| segment.blocks.iter())
+        .find(|block| block.block.id == command.block_id)
+    else {
+        return Ok(());
+    };
+
+    for lock in &block.locks {
+        let span = block
+            .spans
+            .iter()
+            .find(|span| span.id == lock.span_id)
+            .ok_or_else(|| {
+                ScriptDocumentCommandError::Store(HistoryStoreError::InvalidValue(format!(
+                    "script lock {} references missing span {}",
+                    lock.id.as_str(),
+                    lock.span_id.as_str()
+                )))
+            })?;
+        let start = usize::try_from(span.start_byte).map_err(|_| {
+            ScriptDocumentCommandError::Store(HistoryStoreError::InvalidValue(
+                "script span start_byte is too large".to_string(),
+            ))
+        })?;
+        let end = usize::try_from(span.end_byte).map_err(|_| {
+            ScriptDocumentCommandError::Store(HistoryStoreError::InvalidValue(
+                "script span end_byte is too large".to_string(),
+            ))
+        })?;
+        let before_text = block.block.text.get(start..end).ok_or_else(|| {
+            ScriptDocumentCommandError::Store(HistoryStoreError::InvalidValue(
+                "script locked span range is invalid for existing block text".to_string(),
+            ))
+        })?;
+        let after_text = command.text.get(start..end).ok_or_else(|| {
+            ScriptDocumentCommandError::InvalidCommand(
+                "script block update would remove locked span text".to_string(),
+            )
+        })?;
+        if before_text != after_text {
+            return Err(ScriptDocumentCommandError::InvalidCommand(
+                "script block update would modify locked span text".to_string(),
+            ));
+        }
+    }
+
     Ok(())
 }
 
