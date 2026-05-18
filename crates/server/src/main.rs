@@ -6,6 +6,7 @@ mod export;
 mod history_store;
 mod persistence;
 mod prompt_format;
+mod revision_projection;
 mod routes;
 mod state;
 mod static_files;
