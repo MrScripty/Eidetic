@@ -1,7 +1,7 @@
 use crate::ai::backend::{GenerateChildrenRequest, GenerateRequest};
 use crate::error::{Error, Result};
 use crate::project::Project;
-use crate::story::bible::{gather_bible_context, BibleContext, ResolvedEntity};
+use crate::story::bible::BibleContext;
 use crate::timeline::node::NodeId;
 
 use super::helpers::{gather_recap_context, gather_surrounding_context};
@@ -12,7 +12,7 @@ use super::helpers::{gather_recap_context, gather_surrounding_context};
 /// - The target node and its tagged arcs
 /// - Ancestor chain (parent, grandparent, etc.)
 /// - Sibling nodes at the same level
-/// - Story bible entities resolved at this node's time position
+/// - Story bible context from graph-backed AI context projections when available
 /// - Surrounding content from sibling nodes
 pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<GenerateRequest> {
     let timeline = &project.timeline;
@@ -29,7 +29,11 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
         .collect();
 
     // Gather ancestor chain (parent, grandparent, etc.).
-    let ancestor_chain: Vec<_> = timeline.ancestors_of(node_id).into_iter().cloned().collect();
+    let ancestor_chain: Vec<_> = timeline
+        .ancestors_of(node_id)
+        .into_iter()
+        .cloned()
+        .collect();
 
     // Gather siblings at the same level.
     let siblings: Vec<_> = timeline.siblings_of(node_id).into_iter().cloned().collect();
@@ -41,10 +45,7 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
     surrounding_context.preceding_recaps =
         gather_recap_context(&project.timeline, &project.arcs, node_id);
 
-    // Gather bible context resolved at the node's midpoint time.
-    let node_mid_ms = target_node.time_range.start_ms
-        + target_node.time_range.duration_ms() / 2;
-    let bible_context = gather_bible_context(&project.bible, node_id, node_mid_ms);
+    let bible_context = empty_bible_context();
 
     let time_budget_ms = target_node.time_range.duration_ms();
 
@@ -75,10 +76,7 @@ pub fn build_generate_children_request(
     let parent_node = timeline.node(parent_node_id)?.clone();
 
     let target_child_level = parent_node.level.child_level().ok_or_else(|| {
-        Error::InvalidHierarchy(format!(
-            "{} nodes cannot have children",
-            parent_node.level
-        ))
+        Error::InvalidHierarchy(format!("{} nodes cannot have children", parent_node.level))
     })?;
 
     let arc_ids = timeline.arcs_for_node(parent_node_id);
@@ -93,25 +91,7 @@ pub fn build_generate_children_request(
     surrounding_context.preceding_recaps =
         gather_recap_context(timeline, &project.arcs, parent_node_id);
 
-    let node_mid_ms =
-        parent_node.time_range.start_ms + parent_node.time_range.duration_ms() / 2;
-
-    // For child planning, include ALL entities with full detail.
-    let bible_context = BibleContext {
-        referenced_entities: project
-            .bible
-            .entities
-            .iter()
-            .map(|e| ResolvedEntity {
-                entity_id: e.id,
-                name: e.name.clone(),
-                category: e.category.clone(),
-                compact_text: e.to_prompt_text(node_mid_ms),
-                full_text: Some(e.to_full_prompt_text(node_mid_ms)),
-            })
-            .collect(),
-        nearby_entities: Vec::new(),
-    };
+    let bible_context = empty_bible_context();
 
     // Include episode structure for Premise → Act decomposition.
     let episode_structure = if parent_node.level == crate::timeline::node::StoryLevel::Premise {
@@ -130,11 +110,20 @@ pub fn build_generate_children_request(
     })
 }
 
+fn empty_bible_context() -> BibleContext {
+    BibleContext {
+        referenced_entities: Vec::new(),
+        nearby_entities: Vec::new(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::timeline::node::StoryLevel;
     use crate::Template;
+    use crate::story::arc::Color;
+    use crate::story::bible::{Entity, EntityCategory};
+    use crate::timeline::node::StoryLevel;
 
     #[test]
     fn build_request_from_template() {
@@ -158,5 +147,41 @@ mod tests {
         let bogus_id = NodeId::new();
         let result = build_generate_request(&project, bogus_id);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn build_request_ignores_legacy_bible_entities() {
+        let mut project = Template::MultiCam.build_project("Test");
+        project.bible.add_entity(Entity::new(
+            "Legacy Character",
+            EntityCategory::Character,
+            Color::A_PLOT,
+        ));
+        let timeline = &project.timeline;
+        let scenes = timeline.nodes_at_level(StoryLevel::Scene);
+        let req = build_generate_request(&project, scenes[0].id).unwrap();
+
+        assert!(req.bible_context.referenced_entities.is_empty());
+        assert!(req.bible_context.nearby_entities.is_empty());
+    }
+
+    #[test]
+    fn build_children_request_ignores_legacy_bible_entities() {
+        let mut project = Template::MultiCam.build_project("Test");
+        project.bible.add_entity(Entity::new(
+            "Legacy Character",
+            EntityCategory::Character,
+            Color::A_PLOT,
+        ));
+        let premise = project
+            .timeline
+            .nodes_at_level(StoryLevel::Premise)
+            .first()
+            .expect("template should have premise")
+            .id;
+        let req = build_generate_children_request(&project, premise).unwrap();
+
+        assert!(req.bible_context.referenced_entities.is_empty());
+        assert!(req.bible_context.nearby_entities.is_empty());
     }
 }
