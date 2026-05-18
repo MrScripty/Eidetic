@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createBibleGraphNode, setObjectField } from './commandApi.js';
+import { createBibleGraphNode, ensureCanonicalBibleRoots, setObjectField } from './commandApi.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -142,6 +142,49 @@ describe('command api helpers', () => {
             name: 'Ada',
             sort_order: 3,
           },
+        }),
+      }),
+    );
+  });
+
+  it('sends canonical bible root commands and returns node list projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 9,
+        change_event_id: 'event-roots',
+        payload: {
+          nodes: [
+            {
+              id: 'canonical.characters',
+              parent_id: null,
+              schema_key: 'canonical.root.characters',
+              name: 'Characters',
+              system_owned: true,
+              sort_order: 0,
+            },
+          ],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(ensureCanonicalBibleRoots('command-roots-1')).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/bible-graph/canonical-roots',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-roots-1',
+          payload: {},
         }),
       }),
     );

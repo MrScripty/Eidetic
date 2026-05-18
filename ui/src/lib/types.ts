@@ -255,6 +255,8 @@ export interface CreateBibleGraphNodeCommand {
   sort_order?: number;
 }
 
+export interface EnsureCanonicalBibleRootsCommand {}
+
 export interface ObjectFieldProjection {
   object_kind: ObjectKind;
   object_id: string;
@@ -333,6 +335,11 @@ export interface ObjectFieldCommandResponse {
 export interface BibleGraphNodeCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<BibleNodeDetailProjection>;
+}
+
+export interface BibleGraphRootsCommandResponse {
+  outcome: CommandOutcome;
+  projection: ProjectionEnvelope<BibleGraphNodeListProjection>;
 }
 
 export interface ExtractionResult {
