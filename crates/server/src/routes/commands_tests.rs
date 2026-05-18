@@ -7,10 +7,11 @@ use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId,
     BibleGraphPartId, BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId,
-    BibleGraphSnapshotId, EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind, ScriptBlockId,
-    ScriptBlockKind, ScriptDocumentId, ScriptLockId, ScriptSegmentId, ScriptSegmentStatus,
-    ScriptSpanId,
+    BibleGraphSnapshotId, CommandEnvelope, CommandId, CreateStoryArcCommand,
+    EnsureCanonicalBibleRootsCommand, FieldValue, ObjectKind, ScriptBlockId, ScriptBlockKind,
+    ScriptDocumentId, ScriptLockId, ScriptSegmentId, ScriptSegmentStatus, ScriptSpanId,
 };
+use eidetic_core::story::arc::{ArcId, ArcType, Color};
 use serde_json::json;
 use tower::util::ServiceExt;
 
@@ -100,6 +101,45 @@ async fn object_field_command_replays_duplicate_command() {
     let value = response_json(second).await;
     assert_eq!(value["outcome"], "already_recorded");
     assert_eq!(value["projection"]["version"], 2);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn story_arc_create_command_returns_arc_list_projection() {
+    let path = temp_db_path("story-arc-create");
+    let app = app_with_project_path(path.clone()).await;
+    let arc_id = ArcId::new();
+    let body = serde_json::to_value(CommandEnvelope {
+        id: CommandId::new(),
+        payload: CreateStoryArcCommand {
+            arc_id,
+            parent_arc_id: None,
+            name: "Mystery".to_string(),
+            description: "Central investigation".to_string(),
+            arc_type: ArcType::APlot,
+            color: Color::A_PLOT,
+        },
+    })
+    .unwrap();
+
+    let response = app
+        .oneshot(story_arc_create_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(value["projection"]["version"], 1);
+    assert!(
+        value["projection"]["payload"]["arcs"]
+            .as_array()
+            .expect("arcs")
+            .iter()
+            .any(|arc| arc["id"] == serde_json::json!(arc_id)
+                && arc["name"] == serde_json::json!("Mystery"))
+    );
 
     let _ = std::fs::remove_file(path);
 }
@@ -1087,6 +1127,15 @@ fn script_lock_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
         .uri("/commands/script/lock")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn story_arc_create_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/story/create-arc")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()

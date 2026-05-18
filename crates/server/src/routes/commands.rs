@@ -3,12 +3,13 @@ use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
     ApplyTimelineChildrenCommand, BibleNodeDetailProjection, CommandEnvelope,
-    CreateBibleGraphNodeCommand, CreateTimelineNodeCommand, CreateTimelineRelationshipCommand,
-    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ProjectionEnvelope,
-    ScriptDocumentProjection, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
-    SetBibleGraphSnapshotFieldCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
+    CreateBibleGraphNodeCommand, CreateStoryArcCommand, CreateTimelineNodeCommand,
+    CreateTimelineRelationshipCommand, DeleteStoryArcCommand, DeleteTimelineNodeCommand,
+    DeleteTimelineRelationshipCommand, ProjectionEnvelope, ScriptDocumentProjection,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, StoryArcListProjection, TimelineRenderProjection,
 };
 use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
 use serde::Serialize;
@@ -20,6 +21,7 @@ use crate::object_field_command::{self, ObjectFieldCommandError};
 use crate::revision_projection::ObjectFieldProjection;
 use crate::script_document_command::{self, ScriptDocumentCommandError};
 use crate::state::{AppState, ServerEvent};
+use crate::story_arc_command::{self, StoryArcCommandError};
 use crate::timeline_command::{self, TimelineCommandError};
 use crate::validation;
 use crate::ydoc::DocCommand;
@@ -42,6 +44,9 @@ pub fn router() -> Router<AppState> {
         )
         .route("/commands/script/block", post(set_script_block))
         .route("/commands/script/lock", post(set_script_lock))
+        .route("/commands/story/create-arc", post(create_story_arc))
+        .route("/commands/story/update-arc", post(update_story_arc))
+        .route("/commands/story/delete-arc", post(delete_story_arc))
         .route(
             "/commands/timeline/node-range",
             post(set_timeline_node_range),
@@ -90,6 +95,12 @@ struct BibleGraphRootsCommandResponse {
 struct ScriptDocumentCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<ScriptDocumentProjection>,
+}
+
+#[derive(Debug, Serialize)]
+struct StoryArcCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<StoryArcListProjection>,
 }
 
 #[derive(Debug, Serialize)]
@@ -203,6 +214,72 @@ async fn set_script_lock(
         .map_err(|e| ApiError::internal(format!("script lock command task failed: {e}")))??;
 
     let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+    crate::error::json_value(response)
+}
+
+async fn create_story_arc(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<CreateStoryArcCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = story_arc_command::apply_create_story_arc(project, &command)
+            .map_err(map_story_arc_command_error)?;
+        StoryArcCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::StoryChanged);
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn update_story_arc(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<SetStoryArcMetadataCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let projection = story_arc_command::apply_set_story_arc_metadata(project, &command)
+            .map_err(map_story_arc_command_error)?;
+        StoryArcCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::StoryChanged);
+    state.trigger_save();
+    crate::error::json_value(response)
+}
+
+async fn delete_story_arc(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<DeleteStoryArcCommand>>,
+) -> ApiJson {
+    let response = {
+        let mut guard = state.project.lock();
+        let Some(project) = guard.as_mut() else {
+            return Err(ApiError::no_project());
+        };
+        let (_deleted, projection) = story_arc_command::apply_delete_story_arc(project, &command)
+            .map_err(map_story_arc_command_error)?;
+        StoryArcCommandResponse {
+            outcome: RecordChangeOutcome::Recorded,
+            projection,
+        }
+    };
+
+    let _ = state.events_tx.send(ServerEvent::StoryChanged);
+    state.trigger_save();
     crate::error::json_value(response)
 }
 
@@ -603,6 +680,13 @@ fn map_script_document_error(error: ScriptDocumentCommandError) -> ApiError {
     match error {
         ScriptDocumentCommandError::InvalidCommand(message) => ApiError::bad_request(message),
         ScriptDocumentCommandError::Store(error) => map_history_error(error),
+    }
+}
+
+fn map_story_arc_command_error(error: StoryArcCommandError) -> ApiError {
+    match error {
+        StoryArcCommandError::InvalidCommand(message) => ApiError::bad_request(message),
+        StoryArcCommandError::NotFound(message) => ApiError::not_found(message),
     }
 }
 

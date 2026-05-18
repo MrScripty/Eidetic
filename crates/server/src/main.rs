@@ -23,6 +23,7 @@ mod script_store;
 mod sqlite;
 mod state;
 mod static_files;
+mod story_arc_command;
 mod timeline_command;
 mod validation;
 mod vector_store;

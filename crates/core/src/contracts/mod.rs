@@ -1,6 +1,7 @@
 mod bible_graph;
 mod bible_graph_defaults;
 mod script_document;
+mod story_arc;
 mod timeline_command;
 mod timeline_render;
 
@@ -29,6 +30,10 @@ pub use script_document::{
     ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
     SetScriptLockCommand,
+};
+pub use story_arc::{
+    CreateStoryArcCommand, DeleteStoryArcCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection,
 };
 pub use timeline_command::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineNodeCommand,

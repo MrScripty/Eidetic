@@ -367,6 +367,24 @@ async fn timeline_render_projection_returns_backend_timeline_read_model() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn story_arc_list_projection_returns_project_arcs() {
+    let path = temp_db_path("story-arc-list");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(story_arc_list_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 1);
+    assert_eq!(value["payload"]["arcs"].as_array().expect("arcs").len(), 3);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_weather_field(path: &PathBuf, weather: &str) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     history_store::create_schema(&conn).unwrap();
@@ -491,6 +509,14 @@ fn timeline_render_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/timeline/render")
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn story_arc_list_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/story/arcs")
         .body(Body::empty())
         .unwrap()
 }

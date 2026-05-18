@@ -4,7 +4,8 @@ use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
     BibleNodeDetailProjection, ObjectKind, ProjectionEnvelope, ScriptDocumentId,
-    ScriptDocumentProjection, TimelineRenderProjection, builtin_bible_graph_schema_list_projection,
+    ScriptDocumentProjection, StoryArcListProjection, TimelineRenderProjection,
+    builtin_bible_graph_schema_list_projection,
 };
 use serde::Deserialize;
 
@@ -38,6 +39,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/script/document",
             get(get_script_document_projection),
+        )
+        .route(
+            "/projections/story/arcs",
+            get(get_story_arc_list_projection),
         )
         .route(
             "/projections/timeline/render",
@@ -129,6 +134,17 @@ async fn get_timeline_render_projection(State(state): State<AppState>) -> ApiJso
 
     crate::error::json_value(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+async fn get_story_arc_list_projection(State(state): State<AppState>) -> ApiJson {
+    let guard = state.project.lock();
+    let Some(project) = guard.as_ref() else {
+        return Err(ApiError::no_project());
+    };
+
+    crate::error::json_value(ProjectionEnvelope::initial(
+        StoryArcListProjection::from_arcs(&project.arcs),
     ))
 }
 
