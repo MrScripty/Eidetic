@@ -1,5 +1,5 @@
 use super::*;
-use eidetic_core::contracts::ChangeEventKind;
+use eidetic_core::contracts::{ChangeEventKind, RevisionOperation};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

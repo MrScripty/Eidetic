@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
     ChangeEvent, ChangeEventId, CommandEnvelope, CommandId, FieldDelta, FieldValue, ObjectKind,
-    ObjectRevision, ObjectRevisionId, RevisionOperation,
+    ObjectRevision, ObjectRevisionId,
 };
 use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use serde::Serialize;
@@ -161,6 +161,7 @@ where
     Ok(RecordChangeOutcome::Recorded)
 }
 
+#[cfg(test)]
 pub(crate) fn load_command<T>(
     conn: &Connection,
     command_id: CommandId,
