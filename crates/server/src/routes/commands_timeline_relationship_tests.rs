@@ -115,14 +115,6 @@ async fn create_timeline_relationship_command_replays_duplicate_command() {
         .oneshot(create_timeline_relationship_command_request(body.clone()))
         .await
         .expect("first route response");
-    state
-        .project
-        .lock()
-        .as_mut()
-        .expect("project")
-        .timeline
-        .remove_relationship(relationship_id)
-        .expect("make mirror stale");
     let second = app
         .oneshot(create_timeline_relationship_command_request(body))
         .await
@@ -160,6 +152,48 @@ async fn create_timeline_relationship_command_replays_duplicate_command() {
     )
     .expect("timeline relationship revisions");
     assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_relationship_command_validates_against_sqlite_when_project_mirror_is_stale()
+ {
+    let path = temp_db_path("creates-timeline-relationship-stale-mirror");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed timeline database");
+    let mut stale_project = project;
+    stale_project
+        .timeline
+        .remove_node(from_node)
+        .expect("make mirror stale");
+    *state.project.lock() = Some(stale_project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_relationship_command_body(relationship_id, from_node, to_node);
+
+    let response = app
+        .oneshot(create_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let relationships = value["projection"]["payload"]["relationships"]
+        .as_array()
+        .expect("timeline relationships");
+    assert!(relationships.iter().any(|relationship| {
+        relationship["relationship_id"] == relationship_id.0.to_string()
+            && relationship["from_node_id"] == from_node.0.to_string()
+            && relationship["to_node_id"] == to_node.0.to_string()
+    }));
 
     let _ = std::fs::remove_file(path);
 }
@@ -362,6 +396,55 @@ async fn delete_timeline_relationship_command_replays_duplicate_command() {
     )
     .expect("timeline relationship revisions");
     assert_eq!(revisions.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn delete_timeline_relationship_command_validates_against_sqlite_when_project_mirror_is_stale()
+ {
+    let path = temp_db_path("deletes-timeline-relationship-stale-mirror");
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    let mut relationship = eidetic_core::timeline::relationship::Relationship::new(
+        from_node,
+        to_node,
+        eidetic_core::timeline::relationship::RelationshipType::Thematic,
+    );
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    relationship.id = relationship_id;
+    project.timeline.add_relationship(relationship).unwrap();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed relationship current state");
+    let mut stale_project = project;
+    stale_project
+        .timeline
+        .remove_relationship(relationship_id)
+        .expect("make mirror stale");
+    *state.project.lock() = Some(stale_project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = delete_timeline_relationship_command_body(relationship_id);
+
+    let response = app
+        .oneshot(delete_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let relationships = value["projection"]["payload"]["relationships"]
+        .as_array()
+        .expect("timeline relationships");
+    assert!(
+        relationships
+            .iter()
+            .all(|relationship| relationship["relationship_id"] != relationship_id.0.to_string())
+    );
 
     let _ = std::fs::remove_file(path);
 }

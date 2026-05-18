@@ -1,15 +1,16 @@
 use eidetic_core::contracts::{
     ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
-    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ProjectionEnvelope, SplitTimelineNodeCommand,
+    DeleteTimelineNodeCommand, ProjectionEnvelope, SplitTimelineNodeCommand,
     TimelineRenderProjection,
 };
 #[cfg(test)]
 use eidetic_core::contracts::{
+    CreateTimelineRelationshipCommand, DeleteTimelineRelationshipCommand,
     SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
 };
 use eidetic_core::project::Project;
 use eidetic_core::timeline::node::{ContentStatus, StoryNode};
+#[cfg(test)]
 use eidetic_core::timeline::relationship::Relationship;
 use eidetic_core::timeline::timing::TimeRange;
 use thiserror::Error;
@@ -206,6 +207,7 @@ pub(crate) fn apply_timeline_children(
     ))
 }
 
+#[cfg(test)]
 pub(crate) fn apply_create_timeline_relationship(
     project: &mut Project,
     command: &CommandEnvelope<CreateTimelineRelationshipCommand>,
@@ -227,6 +229,7 @@ pub(crate) fn apply_create_timeline_relationship(
     ))
 }
 
+#[cfg(test)]
 pub(crate) fn apply_delete_timeline_relationship(
     project: &mut Project,
     command: &CommandEnvelope<DeleteTimelineRelationshipCommand>,
