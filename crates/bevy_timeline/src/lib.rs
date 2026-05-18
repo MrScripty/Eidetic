@@ -32,6 +32,9 @@ pub enum TimelineRendererCommand {
         node_id: NodeId,
         at_ms: u64,
     },
+    DeleteNode {
+        node_id: NodeId,
+    },
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -300,6 +303,28 @@ impl TimelineRendererApp {
         Ok(())
     }
 
+    pub fn request_delete_node(&mut self, node_id: NodeId) -> Result<(), TimelineRendererError> {
+        let has_node = {
+            let state = self.app.world().resource::<TimelineRenderState>();
+            let projection = state
+                .projection
+                .as_ref()
+                .ok_or(TimelineRendererError::MissingProjection)?;
+            projection.clips.iter().any(|clip| clip.node_id == node_id)
+        };
+
+        if !has_node {
+            return Err(TimelineRendererError::UnknownNode { node_id });
+        }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineRendererCommandQueue>()
+            .commands
+            .push(TimelineRendererCommand::DeleteNode { node_id });
+        Ok(())
+    }
+
     pub fn drain_commands(&mut self) -> Vec<TimelineRendererCommand> {
         std::mem::take(
             &mut self
@@ -538,6 +563,35 @@ mod tests {
                 at_ms: 4_000,
                 start_ms: 1_000,
                 end_ms: 4_000
+            })
+        );
+        assert!(renderer.drain_commands().is_empty());
+    }
+
+    #[test]
+    fn renderer_app_emits_validated_delete_node_command() {
+        let node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(node_id));
+
+        assert_eq!(renderer.request_delete_node(node_id), Ok(()));
+        assert_eq!(
+            renderer.drain_commands(),
+            vec![TimelineRendererCommand::DeleteNode { node_id }]
+        );
+    }
+
+    #[test]
+    fn renderer_app_rejects_delete_node_command_for_unknown_node() {
+        let known_node_id = NodeId::new();
+        let unknown_node_id = NodeId::new();
+        let mut renderer = TimelineRendererApp::new();
+        renderer.set_projection(projection_with_node(known_node_id));
+
+        assert_eq!(
+            renderer.request_delete_node(unknown_node_id),
+            Err(TimelineRendererError::UnknownNode {
+                node_id: unknown_node_id
             })
         );
         assert!(renderer.drain_commands().is_empty());

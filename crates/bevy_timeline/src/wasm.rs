@@ -71,6 +71,16 @@ impl WasmTimelineRenderer {
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
+    pub fn request_delete_node(&mut self, node_id: String) -> Result<(), JsValue> {
+        let node_id = NodeId(
+            uuid::Uuid::parse_str(&node_id)
+                .map_err(|error| JsValue::from_str(&format!("invalid node id: {error}")))?,
+        );
+        self.renderer
+            .request_delete_node(node_id)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+
     pub fn set_viewport(&mut self, start_ms: u64, end_ms: u64) -> Result<(), JsValue> {
         self.renderer
             .set_viewport(start_ms, end_ms)
