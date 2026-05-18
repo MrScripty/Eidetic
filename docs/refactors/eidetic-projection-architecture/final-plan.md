@@ -226,6 +226,7 @@ Completed slices:
 - `refactor(ui): route relationship creation through commands` moved timeline connection-drag relationship creation onto backend relationship commands instead of the legacy relationship route.
 - `refactor(ui): remove legacy relationship helpers` removed unused frontend helpers for the legacy timeline relationship mutation routes after UI relationship creation moved to commands.
 - `refactor(server): remove legacy relationship routes` removed the legacy timeline relationship mutation routes after replacement command/projection paths landed.
+- `refactor(ui): remove legacy track mutation UI` removed the track-delete context menu and unused frontend track CRUD helpers because timeline tracks are projection lanes, not user-owned canonical state.
 
 Discovered issues:
 

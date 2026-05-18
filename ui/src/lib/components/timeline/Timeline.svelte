@@ -17,7 +17,7 @@
   import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
   import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/types.js';
   import type { TimelineGap, StoryLevel } from '$lib/types.js';
-  import { getGaps, removeTrack } from '$lib/api.js';
+  import { getGaps } from '$lib/api.js';
   import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
   import {
     applyCreateTimelineRelationshipCommand,
@@ -233,27 +233,6 @@
     document.addEventListener('pointerup', onPointerUp);
   }
 
-  // Track label context menu state.
-  let trackContextMenu: { x: number; y: number; trackId: string } | null = $state(null);
-
-  function handleTrackContextMenu(e: MouseEvent, trackId: string) {
-    e.preventDefault();
-    e.stopPropagation();
-    trackContextMenu = { x: e.clientX, y: e.clientY, trackId };
-    function dismiss() {
-      trackContextMenu = null;
-      document.removeEventListener('click', dismiss);
-    }
-    setTimeout(() => document.addEventListener('click', dismiss), 0);
-  }
-
-  async function handleDeleteTrack(trackId: string) {
-    try {
-      await removeTrack(trackId);
-    } catch (e) {
-      // Timeline refreshes via WS event on success.
-    }
-  }
 </script>
 
 <div
@@ -290,12 +269,10 @@
           <div class="labels-tracks">
             {#if timelineState.timeline}
               {#each timelineState.timeline.tracks as track}
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
                   class="track-label"
                   style="height: {track.collapsed ? 0 : TIMELINE.TRACK_ROW_HEIGHT_PX}px"
                   class:collapsed={track.collapsed}
-                  oncontextmenu={(e) => handleTrackContextMenu(e, track.id)}
                 >
                   <span class="track-label-text">{track.label}</span>
                 </div>
@@ -354,20 +331,6 @@
     </div>
   </div>
 </div>
-
-<!-- Track context menu (fixed position overlay) -->
-{#if trackContextMenu}
-  <div class="context-menu" style="left: {trackContextMenu.x}px; top: {trackContextMenu.y}px">
-    <button
-      class="delete-track-btn"
-      onclick={() => {
-        const id = trackContextMenu!.trackId;
-        trackContextMenu = null;
-        handleDeleteTrack(id);
-      }}>Delete Track</button
-    >
-  </div>
-{/if}
 
 <style>
   .timeline-container {
@@ -512,36 +475,4 @@
     border-top: 1px solid var(--color-border-subtle);
   }
 
-  /* -- Context menu -- */
-
-  .context-menu {
-    position: fixed;
-    z-index: 100;
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px var(--color-shadow);
-    padding: 4px 0;
-    min-width: 120px;
-  }
-
-  .context-menu button {
-    display: block;
-    width: 100%;
-    padding: 6px 12px;
-    background: none;
-    border: none;
-    color: var(--color-text-primary);
-    font-size: 0.85rem;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .context-menu button:hover {
-    background: var(--color-bg-hover);
-  }
-
-  .delete-track-btn:hover {
-    color: var(--color-danger) !important;
-  }
 </style>

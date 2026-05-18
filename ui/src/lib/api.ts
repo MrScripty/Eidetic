@@ -12,7 +12,6 @@ import type {
   ReferenceDocument,
   ArcProgression,
   Timeline,
-  Track,
   StoryNode,
   NodeContent,
   ChildPlan,
@@ -218,29 +217,6 @@ export function lockNode(id: string): Promise<NodeContent> {
 
 export function unlockNode(id: string): Promise<NodeContent> {
   return request(`/nodes/${id}/unlock`, { method: 'POST' });
-}
-
-// --- Tracks ---
-
-export function createTrack(level: StoryLevel, label: string): Promise<Track> {
-  return request('/timeline/tracks', {
-    method: 'POST',
-    body: JSON.stringify({ level, label }),
-  });
-}
-
-export function updateTrack(
-  trackId: string,
-  updates: { label?: string; collapsed?: boolean },
-): Promise<Track> {
-  return request(`/timeline/tracks/${trackId}`, {
-    method: 'PUT',
-    body: JSON.stringify(updates),
-  });
-}
-
-export function removeTrack(trackId: string): Promise<{ deleted: boolean }> {
-  return request(`/timeline/tracks/${trackId}`, { method: 'DELETE' });
 }
 
 // --- Node-Arc tagging ---
