@@ -9,6 +9,7 @@
   import BibleGraphEdgeEditor from './BibleGraphEdgeEditor.svelte';
   import BibleGraphEdgeList from './BibleGraphEdgeList.svelte';
   import BibleGraphPartFields from './BibleGraphPartFields.svelte';
+  import BibleGraphSnapshotList from './BibleGraphSnapshotList.svelte';
 
   let {
     nodeId,
@@ -59,6 +60,8 @@
       {#if projection.payload.parts.length === 0}
         <p class="muted">No parts</p>
       {/if}
+
+      <BibleGraphSnapshotList snapshots={projection.payload.snapshots} />
 
       <BibleGraphEdgeEditor
         sourceNodeId={projection.payload.node.id}
