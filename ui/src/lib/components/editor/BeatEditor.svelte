@@ -18,9 +18,9 @@
     removeNodeRef,
     generateChildren,
     generateBatch,
-    applyChildren,
     getAiContext,
   } from '$lib/api.js';
+  import { applyTimelineChildrenCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { getNodeNotes } from '$lib/yjs.js';
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -232,7 +232,16 @@
     planning = true;
     try {
       const plan = await generateChildren(editorState.selectedNodeId);
-      await applyChildren(editorState.selectedNodeId, plan.children);
+      await applyTimelineChildrenCommand({
+        parent_id: editorState.selectedNodeId,
+        children: plan.children.map((child) => ({
+          node_id: crypto.randomUUID(),
+          name: child.name,
+          outline: child.outline,
+          weight: child.weight,
+          beat_type: child.beat_type,
+        })),
+      });
       const node = editorState.selectedNode;
       zoomToRange(node.time_range.start_ms, node.time_range.end_ms);
     } finally {
