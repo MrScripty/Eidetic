@@ -10,9 +10,10 @@
   } from '$lib/stores/timeline.svelte.js';
   import { editorState, startGeneration } from '$lib/stores/editor.svelte.js';
   import { storyState } from '$lib/stores/story.svelte.js';
-  import { deleteNode, createNode, fillGap, generateContent } from '$lib/api.js';
+  import { createNode, fillGap, generateContent } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import {
+    applyDeleteTimelineNodeCommand,
     applySplitTimelineNodeCommand,
     applyTimelineNodeRangeCommand,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
@@ -121,7 +122,11 @@
       editorState.selectedNode = null;
       editorState.selectedLevel = null;
     }
-    await deleteNode(nodeId);
+    try {
+      await applyDeleteTimelineNodeCommand({ node_id: nodeId });
+    } catch (e) {
+      notify('error', `Delete failed: ${e instanceof Error ? e.message : 'unknown error'}`);
+    }
   }
 
   async function handleSplit(nodeId: string, atMs: number) {

@@ -15,9 +15,10 @@
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
   import { bibleState, selectBibleGraphNode, selectEntity } from '$lib/stores/bible.svelte.js';
-  import { undo, redo, saveProject, deleteNode, exportPdf } from '$lib/api.js';
+  import { undo, redo, saveProject, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
+  import { applyDeleteTimelineNodeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
 
   $effect(() => {
     return startAiStatusPolling();
@@ -71,7 +72,7 @@
             editorState.selectedNodeId = null;
             editorState.selectedNode = null;
             editorState.selectedLevel = null;
-            deleteNode(id).catch(() => {});
+            applyDeleteTimelineNodeCommand({ node_id: id }).catch(() => {});
           }
         },
       }),
