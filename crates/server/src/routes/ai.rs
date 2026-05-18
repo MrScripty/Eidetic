@@ -579,10 +579,12 @@ async fn generate_scene_recap(state: &AppState, node_uuid: Uuid, script: &str) {
     let node_id = NodeId(node_uuid);
 
     // Find the preceding sibling's recap for rolling summary behavior.
-    let preceding_recap = {
-        let project_guard = state.project.lock();
-        let Some(project) = project_guard.as_ref() else {
-            return;
+    let (project_path, preceding_recap) = {
+        let (project, project_path) = match active_sqlite_project(state).await {
+            Ok(project) => project,
+            Err(_) => {
+                return;
+            }
         };
 
         let siblings = project.timeline.siblings_of(node_id);
@@ -591,11 +593,12 @@ async fn generate_scene_recap(state: &AppState, node_uuid: Uuid, script: &str) {
             Ok(n) => n,
             Err(_) => return,
         };
-        siblings
+        let preceding_recap = siblings
             .iter()
             .filter(|s| s.time_range.end_ms <= node.time_range.start_ms)
             .last()
-            .and_then(|s| s.content.scene_recap.clone())
+            .and_then(|s| s.content.scene_recap.clone());
+        (project_path, preceding_recap)
     };
 
     let config = state.ai_config.lock().clone();
@@ -619,6 +622,9 @@ async fn generate_scene_recap(state: &AppState, node_uuid: Uuid, script: &str) {
         return;
     }
 
+    if let Err(error) = persist_node_scene_recap(project_path, node_id, recap_text.clone()).await {
+        tracing::warn!("Failed to persist scene recap for node {node_uuid}: {error}");
+    }
     {
         let mut project_guard = state.project.lock();
         if let Some(project) = project_guard.as_mut() {
@@ -634,6 +640,21 @@ async fn generate_scene_recap(state: &AppState, node_uuid: Uuid, script: &str) {
     state.trigger_save();
 
     tracing::info!("Scene recap generated for node {node_uuid}");
+}
+
+async fn persist_node_scene_recap(
+    project_path: PathBuf,
+    node_id: NodeId,
+    scene_recap: String,
+) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&project_path)
+            .map_err(|error| error.to_string())?;
+        timeline_node_store::update_node_scene_recap(&conn, node_id, scene_recap)
+            .map_err(|error| error.to_string())
+    })
+    .await
+    .map_err(|error| format!("scene recap persistence task failed: {error}"))?
 }
 
 async fn status(State(state): State<AppState>) -> Json<serde_json::Value> {

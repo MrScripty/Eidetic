@@ -209,6 +209,16 @@ pub(crate) fn update_node_content_status(
     })
 }
 
+pub(crate) fn update_node_scene_recap(
+    conn: &Connection,
+    node_id: NodeId,
+    scene_recap: String,
+) -> Result<(), HistoryStoreError> {
+    update_node_content(conn, node_id, |content| {
+        content.scene_recap = Some(scene_recap);
+    })
+}
+
 fn update_node_content(
     conn: &Connection,
     node_id: NodeId,
@@ -277,5 +287,28 @@ mod tests {
 
         let nodes = load_nodes(&conn).expect("load nodes");
         assert_eq!(nodes[0].content.status, ContentStatus::Generating);
+    }
+
+    #[test]
+    fn updates_node_scene_recap() {
+        let conn = Connection::open_in_memory().expect("open sqlite");
+        let node = StoryNode::new(
+            "Scene",
+            StoryLevel::Scene,
+            TimeRange::new(0, 1_000).expect("range"),
+        );
+        let node_id = node.id;
+        let tx = conn.unchecked_transaction().expect("transaction");
+        upsert_nodes_in_transaction(&tx, &[node]).expect("seed node");
+        tx.commit().expect("commit");
+
+        update_node_scene_recap(&conn, node_id, "Ada leaves in rain.".to_string())
+            .expect("update recap");
+
+        let nodes = load_nodes(&conn).expect("load nodes");
+        assert_eq!(
+            nodes[0].content.scene_recap.as_deref(),
+            Some("Ada leaves in rain.")
+        );
     }
 }
