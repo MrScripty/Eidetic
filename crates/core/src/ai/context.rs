@@ -1,5 +1,5 @@
-use crate::timeline::node::{NodeId, StoryNode};
 use crate::timeline::Timeline;
+use crate::timeline::node::{NodeId, StoryNode};
 
 /// A prioritized context item with estimated token count.
 #[derive(Debug)]
@@ -18,11 +18,11 @@ pub enum ContextPriority {
     Ancestor = 1,
     /// Adjacent sibling nodes at the same level.
     Adjacent = 2,
-    /// Story bible entities directly referenced by this node (full text).
+    /// Graph-backed bible context directly relevant to the target node.
     BibleReferenced = 3,
     /// Arc descriptions.
     EntityDescriptions = 4,
-    /// Story bible entities not directly referenced (compact text).
+    /// Graph-backed bible context that may affect nearby story state.
     BibleNearby = 5,
     /// Content from farther nodes for consistency.
     FartherContext = 6,
@@ -34,10 +34,7 @@ pub fn estimate_tokens(text: &str) -> usize {
 }
 
 /// Find nodes at the same level whose time ranges overlap with the target node.
-pub fn overlapping_nodes<'a>(
-    timeline: &'a Timeline,
-    target_node_id: NodeId,
-) -> Vec<&'a StoryNode> {
+pub fn overlapping_nodes<'a>(timeline: &'a Timeline, target_node_id: NodeId) -> Vec<&'a StoryNode> {
     let Ok(target) = timeline.node(target_node_id) else {
         return vec![];
     };

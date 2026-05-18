@@ -1,7 +1,7 @@
 # crates/core/src
 
 ## Purpose
-This directory contains the pure Rust domain layer for Eidetic: project aggregation, timeline structure, story data, screenplay helpers, and AI prompt/context logic without networking or UI concerns.
+This directory contains the pure Rust domain layer for Eidetic: project aggregation, timeline structure, story arcs, screenplay helpers, projection contracts, and AI prompt/context logic without networking or UI concerns.
 
 ## Contents
 | File/Folder | Description |
@@ -9,7 +9,7 @@ This directory contains the pure Rust domain layer for Eidetic: project aggregat
 | `lib.rs` | Public crate surface and module wiring for the core library. |
 | `contracts/` | Host-agnostic command, event, revision, and projection contracts for backend-owned state. |
 | `timeline/` | Timeline nodes, tracks, relationships, structure, and timing rules. |
-| `story/` | Story arcs, bible entities, and progression analysis. |
+| `story/` | Story arcs and progression analysis. |
 | `script/` | Screenplay parsing, formatting, and merge helpers. |
 | `ai/` | Prompt assembly, context packing, and consistency helpers. |
 
@@ -18,7 +18,7 @@ The application needs a reusable domain layer that can serve both the local serv
 
 ## Constraints
 - No direct HTTP, filesystem, or UI dependencies at this boundary.
-- Timeline and story behavior must remain serializable for persistence and transport.
+- Timeline, story-arc, script, and projection contracts must remain serializable for persistence and transport.
 - The library should remain suitable for future non-server hosts.
 
 ## Decision
@@ -30,7 +30,7 @@ Keep narrative behavior, data structures, and AI-facing domain helpers in one ho
 
 ## Invariants
 - Core modules remain deterministic and host-agnostic.
-- Project, timeline, story, and script types stay serializable across the server boundary.
+- Project, timeline, story-arc, script, and projection types stay serializable across the server boundary.
 - Cross-cutting decomposition decisions reference `ADR-001`.
 
 ## Revisit Triggers
@@ -59,6 +59,6 @@ assert!(!project.timeline.nodes.is_empty());
 - Revisit trigger: the crate is exposed through WASM bindings, an SDK, or another process boundary.
 
 ## Structured Producer Contract
-- Core structs in this directory define the stable contract, project, timeline, story, and script shapes persisted by the server and mirrored by the UI.
+- Core structs in this directory define the stable contract, project, timeline, story-arc, script, and projection shapes persisted by the server and mirrored by the UI.
 - Compatibility-sensitive field changes must land with persistence, route, and frontend updates in the same change.
 - Regeneration rules for saved projects are handled by the server persistence layer, not by ad hoc client migration.
