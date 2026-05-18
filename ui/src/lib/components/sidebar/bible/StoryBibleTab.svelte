@@ -1,12 +1,19 @@
 <script lang="ts">
-  import type { EntityCategory } from '$lib/types.js';
-  import { createEntity } from '$lib/api.js';
-  import { storyState } from '$lib/stores/story.svelte.js';
-  import { bibleState, selectEntity } from '$lib/stores/bible.svelte.js';
-  import EntityCard from './EntityCard.svelte';
+  import { onMount } from 'svelte';
+
+  import type { BibleGraphNode, BibleGraphNodeId, EntityCategory } from '$lib/types.js';
+  import {
+    createBibleGraphNodeProjection,
+    ensureCanonicalBibleRootProjections,
+    getCachedBibleGraphNodeListProjection,
+    refreshBibleGraphNodeListProjection,
+  } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+  import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
+  import BibleGraphNodeCard from './BibleGraphNodeCard.svelte';
 
   let searchQuery = $state('');
   let activeFilter: EntityCategory | 'All' = $state('All');
+  let loadError = $state<string | null>(null);
 
   const categories: (EntityCategory | 'All')[] = [
     'All',
@@ -17,34 +24,65 @@
     'Event',
   ];
 
+  const canonicalParents: Record<EntityCategory, BibleGraphNodeId> = {
+    Character: 'canonical.characters',
+    Location: 'canonical.places',
+    Prop: 'canonical.objects',
+    Theme: 'canonical.themes',
+    Event: 'canonical.events',
+  };
+
+  const schemaKeys: Record<EntityCategory, string> = {
+    Character: 'character',
+    Location: 'location',
+    Prop: 'prop',
+    Theme: 'theme',
+    Event: 'event',
+  };
+
+  const defaultNames: Record<EntityCategory, string> = {
+    Character: 'New Character',
+    Location: 'New Location',
+    Prop: 'New Prop',
+    Theme: 'New Theme',
+    Event: 'New Event',
+  };
+
+  const nodeListProjection = $derived(getCachedBibleGraphNodeListProjection());
+  const graphNodes = $derived(nodeListProjection?.payload.nodes ?? []);
+
   const filteredEntities = $derived(() => {
-    let list = storyState.entities;
+    let list = graphNodes;
     if (activeFilter !== 'All') {
-      list = list.filter((e) => e.category === activeFilter);
+      list = list.filter((node) => nodeCategory(node) === activeFilter);
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (e) => e.name.toLowerCase().includes(q) || e.tagline.toLowerCase().includes(q),
-      );
+      list = list.filter((node) => node.name.toLowerCase().includes(q));
     }
     return list;
   });
 
   async function handleAdd(category: EntityCategory) {
-    const defaults: Record<EntityCategory, string> = {
-      Character: 'New Character',
-      Location: 'New Location',
-      Prop: 'New Prop',
-      Theme: 'New Theme',
-      Event: 'New Event',
-    };
-    const entity = await createEntity({ name: defaults[category], category });
-    selectEntity(entity.id);
+    try {
+      loadError = null;
+      await ensureRootsIfMissing();
+      const nodeId = `node.${schemaKeys[category]}.${crypto.randomUUID()}`;
+      await createBibleGraphNodeProjection({
+        node_id: nodeId,
+        parent_id: canonicalParents[category],
+        schema_key: schemaKeys[category],
+        name: defaultNames[category],
+        sort_order: nextSortOrder(category),
+      });
+      selectBibleGraphNode(nodeId);
+    } catch (error) {
+      loadError = error instanceof Error ? error.message : 'Failed to create bible graph node';
+    }
   }
 
   function handleSelect(id: string) {
-    selectEntity(bibleState.selectedEntityId === id ? null : id);
+    selectBibleGraphNode(bibleState.selectedGraphNodeId === id ? null : id);
   }
 
   function filterLabel(cat: EntityCategory | 'All'): string {
@@ -68,6 +106,71 @@
         return 'var(--color-text-secondary)';
     }
   }
+
+  function nodeCategory(node: BibleGraphNode): EntityCategory | 'Other' {
+    switch (node.schema_key) {
+      case 'canonical.root.characters':
+      case 'character':
+        return 'Character';
+      case 'canonical.root.places':
+      case 'location':
+        return 'Location';
+      case 'canonical.root.objects':
+      case 'prop':
+        return 'Prop';
+      case 'canonical.root.themes':
+      case 'theme':
+        return 'Theme';
+      case 'canonical.root.events':
+      case 'event':
+        return 'Event';
+      default:
+        return parentCategory(node.parent_id);
+    }
+  }
+
+  function parentCategory(parentId: BibleGraphNodeId | null | undefined): EntityCategory | 'Other' {
+    switch (parentId) {
+      case 'canonical.characters':
+        return 'Character';
+      case 'canonical.places':
+        return 'Location';
+      case 'canonical.objects':
+        return 'Prop';
+      case 'canonical.themes':
+        return 'Theme';
+      case 'canonical.events':
+        return 'Event';
+      default:
+        return 'Other';
+    }
+  }
+
+  function nextSortOrder(category: EntityCategory): number {
+    return graphNodes.filter((node) => node.parent_id === canonicalParents[category]).length;
+  }
+
+  async function ensureRootsIfMissing(): Promise<void> {
+    if (graphNodes.length === 0) {
+      await ensureCanonicalBibleRootProjections();
+    }
+  }
+
+  async function loadBibleGraphNodes(): Promise<void> {
+    try {
+      loadError = null;
+      const projection = await refreshBibleGraphNodeListProjection();
+      if (projection.payload.nodes.length === 0) {
+        await ensureCanonicalBibleRootProjections();
+      }
+    } catch (error) {
+      loadError = error instanceof Error ? error.message : 'Failed to load bible graph nodes';
+    }
+  }
+
+  onMount(() => {
+    void loadBibleGraphNodes();
+  });
 </script>
 
 <div class="bible-tab">
@@ -95,12 +198,17 @@
     {/each}
   </div>
 
+  {#if loadError}
+    <div class="load-error">{loadError}</div>
+  {/if}
+
   <ul class="entity-list">
     {#each filteredEntities() as entity (entity.id)}
       <li>
-        <EntityCard
-          {entity}
-          selected={bibleState.selectedEntityId === entity.id}
+        <BibleGraphNodeCard
+          node={entity}
+          category={nodeCategory(entity)}
+          selected={bibleState.selectedGraphNodeId === entity.id}
           onselect={handleSelect}
         />
       </li>
@@ -221,6 +329,15 @@
     color: var(--color-text-muted);
     font-size: 0.85rem;
     text-align: center;
+  }
+
+  .load-error {
+    margin: 8px 12px 0;
+    padding: 6px 8px;
+    border: 1px solid var(--color-danger, #b74c4c);
+    border-radius: 4px;
+    color: var(--color-danger, #b74c4c);
+    font-size: 0.75rem;
   }
 
   .add-buttons {

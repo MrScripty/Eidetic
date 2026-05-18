@@ -140,6 +140,7 @@ Completed slices:
 - `feat(ui): cache canonical bible root command projections` routed canonical-root command responses into the bible graph node-list projection cache.
 - `feat(server): add bible graph field command` added typed part/field current-state rows, a transactional graph-field command, and populated node-detail projections versioned from node and field revision history.
 - `feat(ui): add bible graph field command helper` added typed frontend command and projection-store helpers for backend-owned bible graph field updates without invalidating node-list projections or mutating legacy entity state.
+- `feat(ui): render bible tab from graph projections` moved the story-bible navigator/list surface onto backend-owned bible graph node-list projections, with graph-node selection kept separate from legacy entity detail selection.
 
 Discovered issues:
 
