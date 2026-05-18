@@ -278,6 +278,7 @@ Completed slices:
 - `feat(story): shadow record arc command history` records story arc create/update/delete command IDs, change events, and `StoryArc` object revisions into the existing history tables while preserving `Project.arcs` as the current read model.
 - `feat(timeline): shadow record node range history` records timeline node move/resize command IDs and `TimelineNode` range revisions into the existing history tables while preserving the current in-memory timeline read model.
 - `feat(timeline): shadow record node lock history` records timeline node lock command IDs and `TimelineNode` lock revisions into the existing history tables while preserving the current in-memory timeline read model.
+- `refactor(ui): render relationships from timeline projections` moved the DOM relationship overlay to the cached backend timeline render projection model instead of reading relationships and node geometry from the broad timeline store.
 
 Discovered issues:
 

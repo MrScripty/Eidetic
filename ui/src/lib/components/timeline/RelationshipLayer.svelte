@@ -1,11 +1,16 @@
 <script lang="ts">
   import type { RelationshipType } from '$lib/types.js';
   import { TIMELINE } from '$lib/types.js';
-  import { timelineState, timeToX, totalWidth, findNode } from '$lib/stores/timeline.svelte.js';
-  import { connectionDrag } from '$lib/stores/timeline.svelte.js';
+  import { connectionDrag, timeToX, totalWidth } from '$lib/stores/timeline.svelte.js';
+  import { getCachedTimelineRenderModel } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import {
+    findTimelineRenderClipByNodeId,
+    timelineRenderTrackIndexForClip,
+  } from '$lib/timelineRenderModel.js';
   import RelationshipArc from './RelationshipArc.svelte';
 
   let { offsetX }: { offsetX: number } = $props();
+  let renderModel = $derived(getCachedTimelineRenderModel());
 
   function relationshipColor(type: RelationshipType): string {
     if (type === 'Causal') return 'var(--color-rel-causal)';
@@ -19,12 +24,12 @@
   }
 
   function nodeCenter(nodeId: string): { x: number; y: number } | null {
-    if (!timelineState.timeline) return null;
-    const node = findNode(nodeId);
-    if (!node) return null;
-    const trackIdx = timelineState.timeline.tracks.findIndex((t) => t.level === node.level);
+    if (!renderModel) return null;
+    const clip = findTimelineRenderClipByNodeId(renderModel, nodeId);
+    if (!clip) return null;
+    const trackIdx = timelineRenderTrackIndexForClip(renderModel, clip);
     if (trackIdx === -1) return null;
-    const midMs = (node.time_range.start_ms + node.time_range.end_ms) / 2;
+    const midMs = (clip.start_ms + clip.end_ms) / 2;
     return {
       x: timeToX(midMs),
       y: trackYOffset(trackIdx) + TIMELINE.TRACK_HEIGHT_PX / 2,
@@ -36,10 +41,10 @@
   class="relationship-layer"
   style="width: {totalWidth()}px; transform: translateX(-{offsetX}px)"
 >
-  {#if timelineState.timeline}
-    {#each timelineState.timeline.relationships as rel (rel.id)}
-      {@const from = nodeCenter(rel.from_node)}
-      {@const to = nodeCenter(rel.to_node)}
+  {#if renderModel}
+    {#each renderModel.relationships as rel (rel.relationship_id)}
+      {@const from = nodeCenter(rel.from_node_id)}
+      {@const to = nodeCenter(rel.to_node_id)}
       {#if from && to}
         <RelationshipArc
           fromX={from.x}

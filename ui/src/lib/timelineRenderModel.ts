@@ -88,6 +88,22 @@ export function timelineRenderModelFromProjection(
   };
 }
 
+export function findTimelineRenderClipByNodeId(
+  model: TimelineRenderModel,
+  nodeId: string,
+): TimelineRenderModelClip | null {
+  const clipId = model.clip_ids_by_node_id[nodeId];
+  if (!clipId) return null;
+  return model.clips.find((clip) => clip.clip_id === clipId) ?? null;
+}
+
+export function timelineRenderTrackIndexForClip(
+  model: TimelineRenderModel,
+  clip: TimelineRenderModelClip,
+): number {
+  return model.tracks.findIndex((track) => track.track_id === clip.track_id);
+}
+
 function clampTime(value: number, durationMs: number): number {
   return Math.min(Math.max(value, 0), durationMs);
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { timelineRenderModelFromProjection } from './timelineRenderModel.js';
+import {
+  findTimelineRenderClipByNodeId,
+  timelineRenderModelFromProjection,
+  timelineRenderTrackIndexForClip,
+} from './timelineRenderModel.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
 describe('timeline render model', () => {
@@ -79,6 +83,13 @@ describe('timeline render model', () => {
     ]);
     expect(model.clip_ids_by_node_id['node.beat.two']).toBe('timeline.clip.node.beat.two');
     expect(model.relationships).toEqual(projection.relationships);
+    expect(findTimelineRenderClipByNodeId(model, 'node.beat.one')?.clip_id).toBe(
+      'timeline.clip.node.beat.one',
+    );
+    const firstClip = model.clips[0];
+    expect(firstClip).toBeDefined();
+    expect(timelineRenderTrackIndexForClip(model, firstClip!)).toBe(1);
+    expect(findTimelineRenderClipByNodeId(model, 'node.missing')).toBeNull();
   });
 
   it('clamps malformed timing without mutating the source projection', () => {
