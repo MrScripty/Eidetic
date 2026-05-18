@@ -131,6 +131,45 @@ async fn delete_timeline_node_command_replays_duplicate_command() {
 }
 
 #[tokio::test]
+async fn delete_timeline_node_command_validates_against_sqlite_when_project_mirror_is_stale() {
+    let path = temp_db_path("deletes-timeline-node-stale-mirror");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed node current state");
+    let mut stale_project = project;
+    stale_project
+        .timeline
+        .remove_node(node.id)
+        .expect("make mirror stale");
+    *state.project.lock() = Some(stale_project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = delete_timeline_node_command_body(node.id);
+
+    let response = app
+        .oneshot(delete_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clips = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips");
+    assert!(
+        clips
+            .iter()
+            .all(|clip| clip["node_id"] != node.id.0.to_string())
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn delete_timeline_node_command_rejects_conflicting_duplicate_command() {
     let path = temp_db_path("deletes-timeline-node-conflict");
     let state = AppState::new().await;
