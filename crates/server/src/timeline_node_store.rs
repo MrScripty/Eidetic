@@ -1,7 +1,9 @@
 use eidetic_core::story::arc::ArcId;
-use eidetic_core::timeline::node::{BeatType, NodeArc, NodeContent, NodeId, StoryLevel, StoryNode};
+use eidetic_core::timeline::node::{
+    BeatType, ContentStatus, NodeArc, NodeContent, NodeId, StoryLevel, StoryNode,
+};
 use eidetic_core::timeline::timing::TimeRange;
-use rusqlite::{Connection, Transaction, params};
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use uuid::Uuid;
 
 use crate::history_store::HistoryStoreError;
@@ -197,6 +199,43 @@ pub(crate) fn load_node_arcs(conn: &Connection) -> Result<Vec<NodeArc>, HistoryS
     Ok(node_arcs)
 }
 
+pub(crate) fn update_node_content_status(
+    conn: &Connection,
+    node_id: NodeId,
+    status: ContentStatus,
+) -> Result<(), HistoryStoreError> {
+    update_node_content(conn, node_id, |content| {
+        content.status = status;
+    })
+}
+
+fn update_node_content(
+    conn: &Connection,
+    node_id: NodeId,
+    update: impl FnOnce(&mut NodeContent),
+) -> Result<(), HistoryStoreError> {
+    conn.execute_batch(TIMELINE_NODE_SCHEMA_SQL)?;
+    let content_json = conn
+        .query_row(
+            "SELECT content_json FROM nodes WHERE id = ?1",
+            [node_id.0.to_string()],
+            |row| row.get::<_, String>(0),
+        )
+        .optional()?
+        .ok_or_else(|| {
+            HistoryStoreError::InvalidValue(format!("timeline node not found: {}", node_id.0))
+        })?;
+    let mut content = serde_json::from_str::<NodeContent>(&content_json)?;
+    update(&mut content);
+    let content_json = serde_json::to_string(&content)?;
+    conn.execute(
+        "UPDATE nodes SET content_json = ?1 WHERE id = ?2",
+        params![content_json, node_id.0.to_string()],
+    )?;
+
+    Ok(())
+}
+
 fn parse_uuid(value: &str) -> Result<Uuid, HistoryStoreError> {
     Uuid::parse_str(value).map_err(|error| HistoryStoreError::InvalidId(error.to_string()))
 }
@@ -211,5 +250,32 @@ fn parse_story_level(value: &str) -> Result<StoryLevel, HistoryStoreError> {
         _ => Err(HistoryStoreError::InvalidValue(format!(
             "unknown story level: {value}"
         ))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use eidetic_core::timeline::node::{StoryLevel, StoryNode};
+
+    #[test]
+    fn updates_node_content_status() {
+        let conn = Connection::open_in_memory().expect("open sqlite");
+        let node = StoryNode::new(
+            "Scene",
+            StoryLevel::Scene,
+            TimeRange::new(0, 1_000).expect("range"),
+        );
+        let node_id = node.id;
+        let tx = conn.unchecked_transaction().expect("transaction");
+        upsert_nodes_in_transaction(&tx, &[node]).expect("seed node");
+        tx.commit().expect("commit");
+
+        update_node_content_status(&conn, node_id, ContentStatus::Generating)
+            .expect("update status");
+
+        let nodes = load_nodes(&conn).expect("load nodes");
+        assert_eq!(nodes[0].content.status, ContentStatus::Generating);
     }
 }

@@ -11,6 +11,7 @@ use crate::embeddings::EmbeddingClient;
 use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
 use crate::script_document_command;
 use crate::state::{AppState, BackendType, ServerEvent};
+use crate::timeline_node_store;
 use eidetic_core::ai::backend::{ChildPlan, ChildProposal, RagChunk};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{
@@ -81,6 +82,14 @@ async fn generate(
     state.generating.lock().insert(body.node_id);
 
     // Update node status to Generating.
+    if let Err(error) =
+        persist_node_content_status(project_path.clone(), node_id, ContentStatus::Generating).await
+    {
+        tracing::warn!(
+            "Failed to persist generating status for node {}: {error}",
+            body.node_id
+        );
+    }
     {
         let mut project_guard = state.project.lock();
         if let Some(project) = project_guard.as_mut() {
@@ -281,6 +290,17 @@ async fn generate_batch(
 
             // Mark as generating.
             state_clone.generating.lock().insert(*child_uuid);
+            if let Err(error) = persist_node_content_status(
+                project_path.clone(),
+                child_id,
+                ContentStatus::Generating,
+            )
+            .await
+            {
+                tracing::warn!(
+                    "Failed to persist generating status for node {child_uuid}: {error}"
+                );
+            }
             {
                 let mut project_guard = state_clone.project.lock();
                 if let Some(project) = project_guard.as_mut() {
@@ -349,6 +369,17 @@ async fn run_generation(
         Err(e) => {
             tracing::error!("AI generation failed for node {node_uuid}: {e}");
             {
+                if let Err(error) = persist_node_content_status(
+                    project_path.clone(),
+                    node_id,
+                    ContentStatus::NotesOnly,
+                )
+                .await
+                {
+                    tracing::warn!(
+                        "Failed to persist generation error status for node {node_uuid}: {error}"
+                    );
+                }
                 let mut project_guard = state.project.lock();
                 if let Some(project) = project_guard.as_mut() {
                     if let Ok(node) = project.timeline.node_mut(node_id) {
@@ -388,6 +419,14 @@ async fn run_generation(
 
     // Store the result.
     if full_text.is_empty() {
+        if let Err(error) =
+            persist_node_content_status(project_path.clone(), node_id, ContentStatus::NotesOnly)
+                .await
+        {
+            tracing::warn!(
+                "Failed to persist empty-generation status for node {node_uuid}: {error}"
+            );
+        }
         {
             let mut project_guard = state.project.lock();
             if let Some(project) = project_guard.as_mut() {
@@ -401,6 +440,14 @@ async fn run_generation(
             error: "AI produced no output".into(),
         });
     } else {
+        if let Err(error) =
+            persist_node_content_status(project_path.clone(), node_id, ContentStatus::HasContent)
+                .await
+        {
+            tracing::warn!(
+                "Failed to persist generated-content status for node {node_uuid}: {error}"
+            );
+        }
         let metadata = {
             let mut project_guard = state.project.lock();
             let Some(project) = project_guard.as_mut() else {
@@ -478,6 +525,21 @@ async fn persist_generated_script_block(
     })
     .await
     .map_err(|error| format!("script persistence task failed: {error}"))?
+}
+
+async fn persist_node_content_status(
+    project_path: PathBuf,
+    node_id: NodeId,
+    status: ContentStatus,
+) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&project_path)
+            .map_err(|error| error.to_string())?;
+        timeline_node_store::update_node_content_status(&conn, node_id, status)
+            .map_err(|error| error.to_string())
+    })
+    .await
+    .map_err(|error| format!("node status persistence task failed: {error}"))?
 }
 
 fn generated_script_block_command(
