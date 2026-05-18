@@ -390,6 +390,8 @@ pub(crate) fn record_create_timeline_node_history(
     };
     node.id = command.payload.node_id;
     node.beat_type = command.payload.beat_type.clone();
+    let mut next_timeline = project.timeline.clone();
+    next_timeline.add_node(node)?;
 
     Ok(history_store::record_change_with(
         conn,
@@ -397,7 +399,10 @@ pub(crate) fn record_create_timeline_node_history(
         "timeline.node_create",
         &event,
         &[revision],
-        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &[node]),
+        |tx| {
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
+            timeline_node_store::replace_node_arcs_in_transaction(tx, &next_timeline.node_arcs)
+        },
     )?)
 }
 

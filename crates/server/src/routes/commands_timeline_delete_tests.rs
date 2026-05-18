@@ -87,10 +87,11 @@ async fn delete_timeline_node_command_replays_duplicate_command() {
     let path = temp_db_path("deletes-timeline-node-duplicate");
     let state = AppState::new().await;
     let project = Template::MultiCam.build_project("Commands Test");
+    let stale_project = project.clone();
     let node = project.timeline.nodes[0].clone();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = delete_timeline_node_command_body_with_id(uuid::Uuid::new_v4(), node.id);
 
     let first = app
@@ -98,6 +99,7 @@ async fn delete_timeline_node_command_replays_duplicate_command() {
         .oneshot(delete_timeline_node_command_request(body.clone()))
         .await
         .expect("first route response");
+    *state.project.lock() = Some(stale_project);
     let second = app
         .oneshot(delete_timeline_node_command_request(body))
         .await

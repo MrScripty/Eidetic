@@ -19,7 +19,7 @@ async fn create_timeline_node_command_returns_timeline_render_projection() {
     let node_id = eidetic_core::timeline::node::NodeId::new();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = create_timeline_node_command_body(
         node_id,
         Some(parent.id),
@@ -120,7 +120,7 @@ async fn create_timeline_node_command_replays_duplicate_command() {
     let node_id = eidetic_core::timeline::node::NodeId::new();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = create_timeline_node_command_body_with_id(
         uuid::Uuid::new_v4(),
         node_id,
@@ -136,6 +136,14 @@ async fn create_timeline_node_command_replays_duplicate_command() {
         .oneshot(create_timeline_node_command_request(body.clone()))
         .await
         .expect("first route response");
+    state
+        .project
+        .lock()
+        .as_mut()
+        .expect("project")
+        .timeline
+        .remove_node(node_id)
+        .expect("make mirror stale");
     let second = app
         .oneshot(create_timeline_node_command_request(body))
         .await

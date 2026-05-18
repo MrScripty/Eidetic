@@ -46,6 +46,8 @@ pub(crate) fn record_delete_timeline_node_history(
         .iter()
         .map(|relationship| relationship.id)
         .collect();
+    let mut next_timeline = project.timeline.clone();
+    next_timeline.remove_node(command.payload.node_id)?;
 
     let event = ChangeEvent::new(
         command.id,
@@ -76,7 +78,13 @@ pub(crate) fn record_delete_timeline_node_history(
                 tx,
                 &removed_relationship_ids,
             )?;
-            timeline_node_store::delete_nodes_in_transaction(tx, &removed_node_ids)
+            timeline_node_store::delete_nodes_in_transaction(tx, &removed_node_ids)?;
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
+            timeline_node_store::replace_node_arcs_in_transaction(tx, &next_timeline.node_arcs)?;
+            timeline_relationship_store::upsert_relationships_in_transaction(
+                tx,
+                &next_timeline.relationships,
+            )
         },
     )?)
 }
