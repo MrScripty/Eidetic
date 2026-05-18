@@ -1,4 +1,4 @@
-import type { CommandOutcome, ProjectionEnvelope, TimelineRenderProjection } from './types.js';
+import type { BeatType, CommandOutcome, ProjectionEnvelope, StoryLevel, TimelineRenderProjection } from './types.js';
 
 export interface SetTimelineNodeRangeCommand {
   node_id: string;
@@ -13,6 +13,16 @@ export interface SplitTimelineNodeCommand {
 
 export interface DeleteTimelineNodeCommand {
   node_id: string;
+}
+
+export interface CreateTimelineNodeCommand {
+  node_id: string;
+  parent_id: string | null;
+  level: StoryLevel;
+  name: string;
+  start_ms: number;
+  end_ms: number;
+  beat_type: BeatType | null;
 }
 
 export interface TimelineCommandResponse {

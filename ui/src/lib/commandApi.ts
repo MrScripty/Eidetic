@@ -3,6 +3,7 @@ import type {
   BibleGraphRootsCommandResponse,
   CommandEnvelope,
   CreateBibleGraphNodeCommand,
+  CreateTimelineNodeCommand,
   DeleteTimelineNodeCommand,
   EnsureCanonicalBibleRootsCommand,
   ObjectFieldCommandResponse,
@@ -168,6 +169,21 @@ export function setTimelineNodeRange(
   };
 
   return request('/commands/timeline/node-range', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function createTimelineNode(
+  payload: CreateTimelineNodeCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<CreateTimelineNodeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/create-node', {
     method: 'POST',
     body: JSON.stringify(command),
   });

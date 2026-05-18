@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createBibleGraphNode,
+  createTimelineNode,
   deleteTimelineNode,
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
@@ -291,6 +292,86 @@ describe('command api helpers', () => {
           id: 'command-timeline-delete-1',
           payload: {
             node_id: 'node.scene.beach',
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends timeline create node commands and returns timeline render projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [
+            {
+              track_id: 'track.scene',
+              level: 'Scene',
+              label: 'Scenes',
+              sort_order: 30,
+              collapsed: false,
+            },
+          ],
+          clips: [
+            {
+              node_id: 'node.scene.new',
+              parent_id: 'node.sequence.opening',
+              track_id: 'track.scene',
+              level: 'Scene',
+              name: 'New Scene',
+              start_ms: 1_000,
+              end_ms: 4_000,
+              sort_order: 10,
+              locked: false,
+              content_status: 'Empty',
+              beat_type: null,
+              arc_ids: [],
+            },
+          ],
+          relationships: [],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createTimelineNode(
+        {
+          node_id: 'node.scene.new',
+          parent_id: 'node.sequence.opening',
+          level: 'Scene',
+          name: 'New Scene',
+          start_ms: 1_000,
+          end_ms: 4_000,
+          beat_type: null,
+        },
+        'command-timeline-create-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/timeline/create-node',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-timeline-create-1',
+          payload: {
+            node_id: 'node.scene.new',
+            parent_id: 'node.sequence.opening',
+            level: 'Scene',
+            name: 'New Scene',
+            start_ms: 1_000,
+            end_ms: 4_000,
+            beat_type: null,
           },
         }),
       }),
