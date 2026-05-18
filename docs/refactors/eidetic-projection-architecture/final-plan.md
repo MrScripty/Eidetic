@@ -219,6 +219,7 @@ Completed slices:
 - `feat(ui): cache timeline apply children projections` routed child timeline replacement command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route child planning through timeline commands` moved BeatEditor child-plan application onto the backend timeline apply-children command/projection path instead of the legacy apply-children route.
 - `refactor(ui): remove legacy apply children helper` removed the unused frontend helper for the legacy child-plan application route after BeatEditor moved to command/projection APIs.
+- `refactor(server): remove legacy apply children route` removed the legacy child-plan application route and its direct story-bible entity mutation side effects after the command/projection replacement landed.
 
 Discovered issues:
 
