@@ -9,6 +9,8 @@ This directory defines the host-facing HTTP contract for Eidetic’s browser cli
 | `project.rs` | Project lifecycle, save/load, undo/redo, and listing routes. |
 | `commands.rs` | Projection-owned command endpoints that write through backend history storage. |
 | `commands_tests.rs` | Route-level command tests for loaded-project, projection, and validation behavior. |
+| `projections.rs` | Projection read endpoints backed by persisted history state. |
+| `projections_tests.rs` | Route-level projection read tests for loaded-project, initial, and persisted projections. |
 | `timeline.rs` | Timeline node, track, and hierarchy routes. |
 | `story.rs` | Arc, bible-entity, and relation routes. |
 | `script.rs` | Script editing and content routes. |

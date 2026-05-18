@@ -4,6 +4,7 @@ mod diffusion;
 mod export;
 mod models;
 mod project;
+mod projections;
 mod reference;
 mod script;
 mod story;
@@ -22,6 +23,7 @@ pub fn api_router() -> Router<AppState> {
         .merge(script::router())
         .merge(ai::router())
         .merge(commands::router())
+        .merge(projections::router())
         .merge(diffusion::router())
         .merge(export::router())
         .merge(reference::router())
