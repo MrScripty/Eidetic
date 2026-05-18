@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use eidetic_core::Project;
+use eidetic_core::contracts::ObjectKind;
 use eidetic_core::reference::{ReferenceDocument, ReferenceType};
 use eidetic_core::story::arc::{ArcId, ArcType, Color, StoryArc};
 use eidetic_core::timeline::Timeline;
@@ -180,6 +181,7 @@ fn save_project_sync(
         .map_err(|e| format!("sqlite open error: {e}"))?;
 
     create_schema(&conn)?;
+    let arcs = arcs_for_project_save(&conn, project)?;
 
     let tx = conn
         .unchecked_transaction()
@@ -208,7 +210,7 @@ fn save_project_sync(
     .map_err(|e| format!("insert episode_structure: {e}"))?;
 
     // Arcs.
-    for arc in &project.arcs {
+    for arc in &arcs {
         insert_arc(&tx, arc)?;
     }
 
@@ -250,6 +252,21 @@ fn save_project_sync(
 
     tracing::debug!("saved project to {}", path.display());
     Ok(())
+}
+
+fn arcs_for_project_save(conn: &Connection, project: &Project) -> Result<Vec<StoryArc>, String> {
+    let persisted_arcs =
+        crate::story_arc_store::load_arcs(conn).map_err(|e| format!("load persisted arcs: {e}"))?;
+    let story_arc_revisions =
+        crate::history_store::load_revision_summary_for_kind(conn, ObjectKind::StoryArc)
+            .map_err(|e| format!("load story arc revision summary: {e}"))?
+            .revision_count;
+
+    if !persisted_arcs.is_empty() || story_arc_revisions > 0 {
+        return Ok(persisted_arcs);
+    }
+
+    Ok(project.arcs.clone())
 }
 
 fn insert_arc(conn: &Connection, arc: &StoryArc) -> Result<(), String> {
@@ -778,4 +795,81 @@ pub async fn list_projects(base_dir: &Path) -> Vec<ProjectEntry> {
     }
 
     entries
+}
+
+#[cfg(test)]
+mod tests {
+    use eidetic_core::contracts::{CommandEnvelope, DeleteStoryArcCommand};
+    use eidetic_core::story::arc::{ArcType, Color, StoryArc};
+    use eidetic_core::timeline::Timeline;
+    use eidetic_core::timeline::structure::EpisodeStructure;
+    use uuid::Uuid;
+
+    use super::{load_project_sync, save_project_sync};
+
+    fn temp_project_path(label: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("eidetic-persistence-{label}-{}.db", Uuid::new_v4()))
+    }
+
+    fn project_with_arc(name: &str) -> eidetic_core::Project {
+        let mut project = eidetic_core::Project::new(
+            "Persistence Test",
+            Timeline::new(1_320_000, EpisodeStructure::standard_30_min()),
+        );
+        project
+            .arcs
+            .push(StoryArc::new(name, ArcType::APlot, Color::new(10, 20, 30)));
+        project
+    }
+
+    #[test]
+    fn broad_save_preserves_existing_sqlite_story_arcs_when_project_mirror_is_stale() {
+        let path = temp_project_path("preserve-arcs");
+        let mut project = project_with_arc("Project Mirror");
+        let arc_id = project.arcs[0].id;
+
+        save_project_sync(&project, &path, None).expect("initial save");
+        {
+            let conn = crate::sqlite::open_write_connection(&path).expect("open sqlite");
+            conn.execute(
+                "UPDATE arcs SET name = ?1 WHERE id = ?2",
+                rusqlite::params!["SQLite Canonical", arc_id.0.to_string()],
+            )
+            .expect("rename sqlite arc");
+        }
+
+        project.arcs.clear();
+        save_project_sync(&project, &path, None).expect("second save");
+
+        let (loaded, _) = load_project_sync(&path).expect("load project");
+        assert_eq!(loaded.arcs.len(), 1);
+        assert_eq!(loaded.arcs[0].name, "SQLite Canonical");
+
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn broad_save_does_not_resurrect_deleted_story_arcs_after_history_exists() {
+        let path = temp_project_path("deleted-arcs");
+        let project = project_with_arc("Deleted Arc");
+        let arc_id = project.arcs[0].id;
+
+        save_project_sync(&project, &path, None).expect("initial save");
+        {
+            let mut conn = crate::sqlite::open_write_connection(&path).expect("open sqlite");
+            crate::story_arc_command::record_delete_story_arc_history(
+                &mut conn,
+                &CommandEnvelope::new(DeleteStoryArcCommand { arc_id }),
+                1,
+            )
+            .expect("delete story arc");
+        }
+
+        save_project_sync(&project, &path, None).expect("second save");
+
+        let (loaded, _) = load_project_sync(&path).expect("load project");
+        assert!(loaded.arcs.is_empty());
+
+        let _ = std::fs::remove_file(path);
+    }
 }
