@@ -98,13 +98,16 @@ pub(crate) fn record_set_timeline_node_lock_history(
         Some(FieldValue::Bool(node.locked)),
         Some(FieldValue::Bool(command.payload.locked)),
     ));
+    let mut updated_node = node.clone();
+    updated_node.locked = command.payload.locked;
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.node_lock",
         &event,
         &[revision],
+        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &[updated_node]),
     )?)
 }
 

@@ -39,6 +39,15 @@ async fn timeline_node_lock_command_returns_timeline_render_projection() {
     assert_eq!(clip["locked"], true);
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_locked = conn
+        .query_row(
+            "SELECT locked FROM nodes WHERE id = ?1",
+            [node.id.0.to_string()],
+            |row| row.get::<_, i64>(0),
+        )
+        .expect("persisted node lock");
+    assert_eq!(persisted_locked, 1);
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineNode,
