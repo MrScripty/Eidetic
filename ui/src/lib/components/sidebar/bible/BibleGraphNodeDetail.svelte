@@ -6,6 +6,7 @@
     isBibleGraphNodeProjectionPending,
     refreshBibleGraphNodeProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+  import BibleGraphEdgeEditor from './BibleGraphEdgeEditor.svelte';
   import BibleGraphEdgeList from './BibleGraphEdgeList.svelte';
   import BibleGraphPartFields from './BibleGraphPartFields.svelte';
 
@@ -59,6 +60,10 @@
         <p class="muted">No parts</p>
       {/if}
 
+      <BibleGraphEdgeEditor
+        sourceNodeId={projection.payload.node.id}
+        nextSortOrder={projection.payload.outgoing_edges.length + 1}
+      />
       <BibleGraphEdgeList
         title="Outgoing Edges"
         edges={projection.payload.outgoing_edges}

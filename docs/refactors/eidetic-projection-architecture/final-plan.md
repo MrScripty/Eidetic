@@ -155,6 +155,7 @@ Completed slices:
 - `feat(ui): add bible graph schema projection helper` added a focused frontend schema projection contract file and read helper for backend-owned bible graph schema projections without expanding the oversized shared `types.ts`.
 - `feat(ui): cache bible graph schema projections` added a focused Svelte projection cache for backend-owned graph schema read models with pending/error handling and no optimistic persistent state.
 - `feat(ui): edit bible graph projection fields` extracted graph field rendering into a focused component and routed field saves through backend-owned graph field commands with local draft state only.
+- `feat(ui): add bible graph edge creation form` added a projection-backed edge creation form in graph node detail that submits backend edge commands and waits for returned projections instead of inserting local edges.
 
 Discovered issues:
 
