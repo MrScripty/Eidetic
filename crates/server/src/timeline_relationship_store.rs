@@ -1,6 +1,9 @@
+use eidetic_core::timeline::node::NodeId;
 use eidetic_core::timeline::relationship::Relationship;
 use eidetic_core::timeline::relationship::RelationshipId;
-use rusqlite::{Transaction, params};
+use eidetic_core::timeline::relationship::RelationshipType;
+use rusqlite::{Connection, Transaction, params};
+use uuid::Uuid;
 
 use crate::history_store::HistoryStoreError;
 
@@ -83,4 +86,37 @@ pub(crate) fn delete_relationships_in_transaction(
     }
 
     Ok(())
+}
+
+pub(crate) fn load_relationships(
+    conn: &Connection,
+) -> Result<Vec<Relationship>, HistoryStoreError> {
+    conn.execute_batch(TIMELINE_RELATIONSHIP_SCHEMA_SQL)?;
+    let mut stmt =
+        conn.prepare("SELECT id, from_node_id, to_node_id, relationship_type FROM relationships")?;
+    let rows = stmt.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, String>(2)?,
+            row.get::<_, String>(3)?,
+        ))
+    })?;
+
+    let mut relationships = Vec::new();
+    for row in rows {
+        let (id, from_node, to_node, relationship_type_json) = row?;
+        relationships.push(Relationship {
+            id: RelationshipId(parse_uuid(&id)?),
+            from_node: NodeId(parse_uuid(&from_node)?),
+            to_node: NodeId(parse_uuid(&to_node)?),
+            relationship_type: serde_json::from_str::<RelationshipType>(&relationship_type_json)?,
+        });
+    }
+
+    Ok(relationships)
+}
+
+fn parse_uuid(value: &str) -> Result<Uuid, HistoryStoreError> {
+    Uuid::parse_str(value).map_err(|error| HistoryStoreError::InvalidId(error.to_string()))
 }

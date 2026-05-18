@@ -1,5 +1,8 @@
-use eidetic_core::timeline::node::{NodeArc, NodeId, StoryNode};
-use rusqlite::{Transaction, params};
+use eidetic_core::story::arc::ArcId;
+use eidetic_core::timeline::node::{BeatType, NodeArc, NodeContent, NodeId, StoryLevel, StoryNode};
+use eidetic_core::timeline::timing::TimeRange;
+use rusqlite::{Connection, Transaction, params};
+use uuid::Uuid;
 
 use crate::history_store::HistoryStoreError;
 
@@ -114,4 +117,99 @@ pub(crate) fn replace_node_arcs_in_transaction(
     }
 
     Ok(())
+}
+
+pub(crate) fn load_nodes(conn: &Connection) -> Result<Vec<StoryNode>, HistoryStoreError> {
+    conn.execute_batch(TIMELINE_NODE_SCHEMA_SQL)?;
+    let mut stmt = conn.prepare(
+        "SELECT id, parent_id, level, sort_order, start_ms, end_ms,
+                name, content_json, beat_type, locked
+         FROM nodes ORDER BY level, start_ms",
+    )?;
+    let rows = stmt.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, Option<String>>(1)?,
+            row.get::<_, String>(2)?,
+            row.get::<_, i32>(3)?,
+            row.get::<_, i64>(4)?,
+            row.get::<_, i64>(5)?,
+            row.get::<_, String>(6)?,
+            row.get::<_, String>(7)?,
+            row.get::<_, Option<String>>(8)?,
+            row.get::<_, i32>(9)?,
+        ))
+    })?;
+
+    let mut nodes = Vec::new();
+    for row in rows {
+        let (
+            id,
+            parent_id,
+            level,
+            sort_order,
+            start_ms,
+            end_ms,
+            name,
+            content_json,
+            beat_type_json,
+            locked,
+        ) = row?;
+        nodes.push(StoryNode {
+            id: NodeId(parse_uuid(&id)?),
+            parent_id: parent_id
+                .map(|id| parse_uuid(&id).map(NodeId))
+                .transpose()?,
+            level: parse_story_level(&level)?,
+            sort_order: sort_order as u32,
+            time_range: TimeRange {
+                start_ms: start_ms as u64,
+                end_ms: end_ms as u64,
+            },
+            name,
+            content: serde_json::from_str::<NodeContent>(&content_json)?,
+            beat_type: beat_type_json
+                .map(|beat_type| serde_json::from_str::<BeatType>(&beat_type))
+                .transpose()?,
+            locked: locked != 0,
+        });
+    }
+
+    Ok(nodes)
+}
+
+pub(crate) fn load_node_arcs(conn: &Connection) -> Result<Vec<NodeArc>, HistoryStoreError> {
+    conn.execute_batch(TIMELINE_NODE_SCHEMA_SQL)?;
+    let mut stmt = conn.prepare("SELECT node_id, arc_id FROM node_arcs")?;
+    let rows = stmt.query_map([], |row| {
+        Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+    })?;
+
+    let mut node_arcs = Vec::new();
+    for row in rows {
+        let (node_id, arc_id) = row?;
+        node_arcs.push(NodeArc {
+            node_id: NodeId(parse_uuid(&node_id)?),
+            arc_id: ArcId(parse_uuid(&arc_id)?),
+        });
+    }
+
+    Ok(node_arcs)
+}
+
+fn parse_uuid(value: &str) -> Result<Uuid, HistoryStoreError> {
+    Uuid::parse_str(value).map_err(|error| HistoryStoreError::InvalidId(error.to_string()))
+}
+
+fn parse_story_level(value: &str) -> Result<StoryLevel, HistoryStoreError> {
+    match value {
+        "Premise" => Ok(StoryLevel::Premise),
+        "Act" => Ok(StoryLevel::Act),
+        "Sequence" => Ok(StoryLevel::Sequence),
+        "Scene" => Ok(StoryLevel::Scene),
+        "Beat" => Ok(StoryLevel::Beat),
+        _ => Err(HistoryStoreError::InvalidValue(format!(
+            "unknown story level: {value}"
+        ))),
+    }
 }

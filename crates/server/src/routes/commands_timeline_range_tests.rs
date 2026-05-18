@@ -18,7 +18,7 @@ async fn timeline_node_range_command_returns_timeline_render_projection() {
     let node_id = project.timeline.nodes[0].id;
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = timeline_node_range_command_body(node_id, 1_000, 2_000);
 
     let response = app
@@ -88,7 +88,7 @@ async fn timeline_node_range_command_replays_duplicate_command() {
     let node_id = project.timeline.nodes[0].id;
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let command_id = uuid::Uuid::new_v4();
     let body = json!({
         "id": command_id,
@@ -104,6 +104,17 @@ async fn timeline_node_range_command_replays_duplicate_command() {
         .oneshot(timeline_node_range_command_request(body.clone()))
         .await
         .expect("first route response");
+    state
+        .project
+        .lock()
+        .as_mut()
+        .expect("project")
+        .timeline
+        .resize_node(
+            node_id,
+            eidetic_core::timeline::timing::TimeRange::new(3_000, 4_000).unwrap(),
+        )
+        .expect("make mirror stale");
     let second = app
         .oneshot(timeline_node_range_command_request(body))
         .await

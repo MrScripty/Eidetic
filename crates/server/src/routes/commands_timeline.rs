@@ -8,6 +8,8 @@ use eidetic_core::contracts::{
     SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
     TimelineRenderProjection,
 };
+use eidetic_core::timeline::Timeline;
+use rusqlite::Connection;
 use serde::Serialize;
 
 use crate::error::{ApiError, ApiJson};
@@ -16,6 +18,7 @@ use crate::state::{AppState, ServerEvent};
 use crate::timeline_command::{self, TimelineCommandError};
 use crate::validation;
 use crate::ydoc::DocCommand;
+use crate::{timeline_node_store, timeline_relationship_store};
 
 use super::support::{active_project_path, map_history_error};
 
@@ -70,12 +73,12 @@ async fn set_timeline_node_range(
             &mut conn, project, &command, 0,
         )
         .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
+        if outcome == RecordChangeOutcome::Recorded {
             timeline_command::apply_set_timeline_node_range(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
+                .map_err(map_timeline_command_error)?;
+        }
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
             outcome,
             projection,
@@ -423,6 +426,26 @@ fn map_timeline_command_error(error: TimelineCommandError) -> ApiError {
         TimelineCommandError::Core(error) => ApiError::bad_request(error.to_string()),
         TimelineCommandError::History(error) => map_history_error(error),
     }
+}
+
+fn timeline_render_projection_from_current_state(
+    conn: &Connection,
+    fallback: &Timeline,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
+    let mut timeline = fallback.clone();
+    let nodes = timeline_node_store::load_nodes(conn)?;
+    if !nodes.is_empty() {
+        timeline.nodes = nodes;
+        timeline.node_arcs = timeline_node_store::load_node_arcs(conn)?;
+    }
+    let relationships = timeline_relationship_store::load_relationships(conn)?;
+    if !relationships.is_empty() || fallback.relationships.is_empty() {
+        timeline.relationships = relationships;
+    }
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&timeline),
+    ))
 }
 
 #[cfg(test)]
