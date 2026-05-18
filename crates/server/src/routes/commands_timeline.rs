@@ -275,12 +275,12 @@ async fn split_timeline_node(
         let outcome =
             timeline_command::record_split_timeline_node_history(&mut conn, project, &command, 0)
                 .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
+        if outcome == RecordChangeOutcome::Recorded {
             timeline_command::apply_split_timeline_node(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
+                .map_err(map_timeline_command_error)?;
+        }
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
             outcome,
             projection,

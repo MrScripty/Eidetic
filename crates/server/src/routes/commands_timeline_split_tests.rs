@@ -131,13 +131,14 @@ async fn split_timeline_node_command_replays_duplicate_command() {
     let path = temp_db_path("splits-timeline-node-duplicate");
     let state = AppState::new().await;
     let project = Template::MultiCam.build_project("Commands Test");
+    let stale_project = project.clone();
     let node = project.timeline.nodes[0].clone();
     let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
     let left_node_id = eidetic_core::timeline::node::NodeId::new();
     let right_node_id = eidetic_core::timeline::node::NodeId::new();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = split_timeline_node_command_body_with_result_ids(
         uuid::Uuid::new_v4(),
         node.id,
@@ -151,6 +152,7 @@ async fn split_timeline_node_command_replays_duplicate_command() {
         .oneshot(split_timeline_node_command_request(body.clone()))
         .await
         .expect("first route response");
+    *state.project.lock() = Some(stale_project);
     let second = app
         .oneshot(split_timeline_node_command_request(body))
         .await
