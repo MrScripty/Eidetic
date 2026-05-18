@@ -12,6 +12,7 @@ import {
   setBibleGraphField,
   setBibleGraphSnapshotField,
   setObjectField,
+  setTimelineNodeLock,
   setTimelineNodeRange,
   splitTimelineNode,
 } from './commandApi.js';
@@ -269,6 +270,68 @@ describe('command api helpers', () => {
           id: 'command-timeline-relationship-delete-1',
           payload: {
             relationship_id: 'relationship.theme',
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends timeline node lock commands and returns timeline render projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [],
+          clips: [
+            {
+              node_id: 'node.scene.beach',
+              parent_id: null,
+              track_id: 'track.scene',
+              level: 'Scene',
+              name: 'Beach argument',
+              start_ms: 1_000,
+              end_ms: 4_000,
+              sort_order: 10,
+              locked: true,
+              content_status: 'NotesOnly',
+              beat_type: null,
+              arc_ids: [],
+            },
+          ],
+          relationships: [],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setTimelineNodeLock(
+        {
+          node_id: 'node.scene.beach',
+          locked: true,
+        },
+        'command-timeline-lock-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/timeline/node-lock',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-timeline-lock-1',
+          payload: {
+            node_id: 'node.scene.beach',
+            locked: true,
           },
         }),
       }),

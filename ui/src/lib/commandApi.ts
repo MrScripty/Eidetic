@@ -17,6 +17,7 @@ import type {
   SetObjectFieldCommand,
   SetScriptBlockCommand,
   SetScriptLockCommand,
+  SetTimelineNodeLockCommand,
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
@@ -232,6 +233,21 @@ export function deleteTimelineRelationship(
   };
 
   return request('/commands/timeline/delete-relationship', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setTimelineNodeLock(
+  payload: SetTimelineNodeLockCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<SetTimelineNodeLockCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/node-lock', {
     method: 'POST',
     body: JSON.stringify(command),
   });

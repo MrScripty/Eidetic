@@ -23,6 +23,11 @@ export interface DeleteTimelineNodeCommand {
   node_id: string;
 }
 
+export interface SetTimelineNodeLockCommand {
+  node_id: string;
+  locked: boolean;
+}
+
 export interface CreateTimelineNodeCommand {
   node_id: string;
   parent_id: string | null;
