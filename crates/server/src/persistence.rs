@@ -1,17 +1,15 @@
 use std::path::{Path, PathBuf};
 
+use eidetic_core::Project;
 use eidetic_core::reference::{ReferenceDocument, ReferenceType};
 use eidetic_core::story::arc::{ArcId, ArcType, Color, StoryArc};
-use eidetic_core::timeline::node::{
-    BeatType, NodeArc, NodeContent, NodeId, StoryLevel, StoryNode,
-};
+use eidetic_core::timeline::Timeline;
+use eidetic_core::timeline::node::{BeatType, NodeArc, NodeContent, NodeId, StoryLevel, StoryNode};
 use eidetic_core::timeline::relationship::{Relationship, RelationshipId, RelationshipType};
 use eidetic_core::timeline::structure::EpisodeStructure;
 use eidetic_core::timeline::timing::TimeRange;
 use eidetic_core::timeline::track::{Track, TrackId};
-use eidetic_core::timeline::Timeline;
-use eidetic_core::Project;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use serde::Serialize;
 use tokio::fs;
 use uuid::Uuid;
@@ -360,12 +358,7 @@ fn insert_reference_document(conn: &Connection, doc: &ReferenceDocument) -> Resu
         serde_json::to_string(&doc.doc_type).map_err(|e| format!("serialize doc_type: {e}"))?;
     conn.execute(
         "INSERT INTO reference_documents (id, name, content, doc_type) VALUES (?1, ?2, ?3, ?4)",
-        params![
-            doc.id.0.to_string(),
-            doc.name,
-            doc.content,
-            doc_type_json,
-        ],
+        params![doc.id.0.to_string(), doc.name, doc.content, doc_type_json,],
     )
     .map_err(|e| format!("insert reference_document: {e}"))?;
     Ok(())
@@ -373,36 +366,13 @@ fn insert_reference_document(conn: &Connection, doc: &ReferenceDocument) -> Resu
 
 // ─── Load ──────────────────────────────────────────────────────────
 
-/// Load a project from disk. Handles both SQLite (.db) and legacy JSON (.json) files.
-/// If only a .json sibling exists for a .db path, auto-migrates to SQLite.
+/// Load a project from the current SQLite project database format.
 ///
 /// Returns `(project, ydoc_state)` where `ydoc_state` is the persisted CRDT
 /// blob (if any). When `None`, the caller should populate Y.Doc from the
 /// project's cached text fields.
 pub async fn load_project(path: &Path) -> Result<(Project, Option<Vec<u8>>), String> {
     let path = path.to_path_buf();
-
-    // Legacy JSON path — no ydoc_state.
-    if path.extension().map_or(false, |ext| ext == "json") {
-        let project = load_project_json(&path).await?;
-        return Ok((project, None));
-    }
-
-    // If .db doesn't exist, check for a .json sibling and auto-migrate.
-    if !path.exists() {
-        let json_sibling = path.with_file_name("project.json");
-        if json_sibling.exists() {
-            tracing::info!(
-                "SQLite file not found, loading from JSON sibling: {}",
-                json_sibling.display()
-            );
-            let project = load_project_json(&json_sibling).await?;
-            save_project(&project, &path, None).await?;
-            tracing::info!("migrated project from JSON to SQLite: {}", path.display());
-            return Ok((project, None));
-        }
-    }
-
     tokio::task::spawn_blocking(move || load_project_sync(&path))
         .await
         .map_err(|e| format!("spawn_blocking error: {e}"))?
@@ -412,30 +382,15 @@ fn load_project_sync(path: &Path) -> Result<(Project, Option<Vec<u8>>), String> 
     let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("sqlite open error: {e}"))?;
 
-    // Check schema version to handle migration from v1.
     let version = read_schema_version(&conn);
-
-    if version == 1 {
-        drop(conn);
-        let project = load_and_migrate_v1(path)?;
-        return Ok((project, None));
+    if version != 3 {
+        return Err(format!(
+            "unsupported project schema version {version}; expected 3"
+        ));
     }
 
-    // v2 or v3 schema — load directly.
     let project = load_project_v2(&conn, path)?;
-
-    // Read ydoc_state if present (v3+).
-    let ydoc_state = if version >= 3 {
-        read_ydoc_state(&conn)?
-    } else {
-        None
-    };
-
-    // If v2, migrate the schema to v3 on next save. No immediate rewrite needed
-    // since the schema is forward-compatible (CREATE TABLE IF NOT EXISTS).
-    if version == 2 {
-        tracing::info!("project at {} is schema v2, will migrate to v3 on next save", path.display());
-    }
+    let ydoc_state = read_ydoc_state(&conn)?;
 
     Ok((project, ydoc_state))
 }
@@ -452,11 +407,9 @@ fn read_schema_version(conn: &Connection) -> u32 {
 }
 
 fn read_ydoc_state(conn: &Connection) -> Result<Option<Vec<u8>>, String> {
-    match conn.query_row(
-        "SELECT state FROM ydoc_state WHERE id = 1",
-        [],
-        |row| row.get::<_, Vec<u8>>(0),
-    ) {
+    match conn.query_row("SELECT state FROM ydoc_state WHERE id = 1", [], |row| {
+        row.get::<_, Vec<u8>>(0)
+    }) {
         Ok(state) => Ok(Some(state)),
         Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
         Err(e) => Err(format!("read ydoc_state: {e}")),
@@ -539,8 +492,8 @@ fn read_episode_structure(conn: &Connection) -> Result<EpisodeStructure, String>
         )
         .map_err(|e| format!("read episode_structure: {e}"))?;
 
-    let segments = serde_json::from_str(&segments_json)
-        .map_err(|e| format!("parse segments: {e}"))?;
+    let segments =
+        serde_json::from_str(&segments_json).map_err(|e| format!("parse segments: {e}"))?;
 
     Ok(EpisodeStructure {
         template_name,
@@ -653,8 +606,18 @@ fn read_nodes(conn: &Connection) -> Result<Vec<StoryNode>, String> {
 
     let mut result = Vec::new();
     for row in rows {
-        let (id_str, parent_id_str, level_str, sort_order, start_ms, end_ms, name, content_json, beat_type_json, locked) =
-            row.map_err(|e| format!("read node row: {e}"))?;
+        let (
+            id_str,
+            parent_id_str,
+            level_str,
+            sort_order,
+            start_ms,
+            end_ms,
+            name,
+            content_json,
+            beat_type_json,
+            locked,
+        ) = row.map_err(|e| format!("read node row: {e}"))?;
 
         let parent_id = parent_id_str
             .map(|s| parse_uuid(&s).map(NodeId))
@@ -698,8 +661,7 @@ fn read_node_arcs(conn: &Connection) -> Result<Vec<NodeArc>, String> {
 
     let mut result = Vec::new();
     for row in rows {
-        let (node_id_str, arc_id_str) =
-            row.map_err(|e| format!("read node_arc row: {e}"))?;
+        let (node_id_str, arc_id_str) = row.map_err(|e| format!("read node_arc row: {e}"))?;
         result.push(NodeArc {
             node_id: NodeId(parse_uuid(&node_id_str)?),
             arc_id: ArcId(parse_uuid(&arc_id_str)?),
@@ -760,8 +722,8 @@ fn read_reference_documents(conn: &Connection) -> Result<Vec<ReferenceDocument>,
     for row in rows {
         let (id_str, name, content, doc_type_json) =
             row.map_err(|e| format!("read reference_document row: {e}"))?;
-        let doc_type: ReferenceType = serde_json::from_str(&doc_type_json)
-            .map_err(|e| format!("parse doc_type: {e}"))?;
+        let doc_type: ReferenceType =
+            serde_json::from_str(&doc_type_json).map_err(|e| format!("parse doc_type: {e}"))?;
         result.push(ReferenceDocument {
             id: eidetic_core::reference::ReferenceId(parse_uuid(&id_str)?),
             name,
@@ -770,318 +732,6 @@ fn read_reference_documents(conn: &Connection) -> Result<Vec<ReferenceDocument>,
         });
     }
     Ok(result)
-}
-
-// ─── V1 → V2 Migration ────────────────────────────────────────────
-
-/// Load a v1 database, migrate the data structures, and save as v2.
-fn load_and_migrate_v1(path: &Path) -> Result<Project, String> {
-    let conn = Connection::open(path).map_err(|e| format!("sqlite open error: {e}"))?;
-
-    // Read v1 project metadata.
-    let (name, total_duration_ms): (String, i64) = conn
-        .query_row(
-            "SELECT name, total_duration_ms FROM project WHERE id = 1",
-            [],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )
-        .map_err(|e| format!("read v1 project: {e}"))?;
-
-    let structure = read_episode_structure(&conn)?;
-
-    // Read v1 arcs (no parent_arc_id in v1).
-    let arcs = read_v1_arcs(&conn)?;
-
-    // Build the arc_id-to-arc map for tagging.
-    let arc_map: std::collections::HashMap<Uuid, ArcId> = arcs
-        .iter()
-        .map(|a| (a.id.0, a.id))
-        .collect();
-
-    // Read v1 tracks and clips.
-    let mut nodes = Vec::new();
-    let mut node_arcs = Vec::new();
-
-    let v1_tracks = read_v1_tracks(&conn)?;
-    for (track_id_uuid, arc_id_uuid) in &v1_tracks {
-        let arc_id = arc_map.get(arc_id_uuid).copied();
-
-        // Read main clips (is_sub_beat = 0) → Scene level.
-        let v1_clips = read_v1_clips(&conn, track_id_uuid, false)?;
-        for clip in v1_clips {
-            if let Some(aid) = arc_id {
-                node_arcs.push(NodeArc {
-                    node_id: clip.id,
-                    arc_id: aid,
-                });
-            }
-            nodes.push(clip);
-        }
-
-        // Read sub-beats (is_sub_beat = 1) → Beat level.
-        let v1_sub_beats = read_v1_clips(&conn, track_id_uuid, true)?;
-        for beat in v1_sub_beats {
-            if let Some(aid) = arc_id {
-                node_arcs.push(NodeArc {
-                    node_id: beat.id,
-                    arc_id: aid,
-                });
-            }
-            nodes.push(beat);
-        }
-    }
-
-    // Relationships.
-    let relationships = read_v1_relationships(&conn)?;
-
-    let references = read_reference_documents(&conn)?;
-
-    // Create v2 tracks (4 level-based tracks).
-    let tracks = Track::default_set();
-
-    let timeline = Timeline {
-        total_duration_ms: total_duration_ms as u64,
-        tracks,
-        nodes,
-        node_arcs,
-        relationships,
-        structure,
-    };
-
-    let project = Project {
-        name,
-        premise: String::new(),
-        timeline,
-        arcs,
-        references,
-    };
-
-    drop(conn);
-
-    // Rewrite the database as v3.
-    save_project_sync(&project, path, None)?;
-
-    tracing::info!("migrated project from v1 to v2: {}", path.display());
-    Ok(project)
-}
-
-fn read_v1_arcs(conn: &Connection) -> Result<Vec<StoryArc>, String> {
-    let mut stmt = conn
-        .prepare("SELECT id, name, description, arc_type, color_r, color_g, color_b FROM arcs")
-        .map_err(|e| format!("prepare v1 arcs: {e}"))?;
-
-    let rows = stmt
-        .query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, String>(3)?,
-                row.get::<_, u8>(4)?,
-                row.get::<_, u8>(5)?,
-                row.get::<_, u8>(6)?,
-            ))
-        })
-        .map_err(|e| format!("query v1 arcs: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let (id_str, name, description, arc_type_json, r, g, b) =
-            row.map_err(|e| format!("read v1 arc row: {e}"))?;
-        let id = ArcId(parse_uuid(&id_str)?);
-        let arc_type: ArcType =
-            serde_json::from_str(&arc_type_json).map_err(|e| format!("parse arc_type: {e}"))?;
-        result.push(StoryArc {
-            id,
-            parent_arc_id: None,
-            name,
-            description,
-            arc_type,
-            color: Color::new(r, g, b),
-        });
-    }
-    Ok(result)
-}
-
-fn read_v1_tracks(conn: &Connection) -> Result<Vec<(Uuid, Uuid)>, String> {
-    let mut stmt = conn
-        .prepare("SELECT id, arc_id FROM tracks ORDER BY sort_order")
-        .map_err(|e| format!("prepare v1 tracks: {e}"))?;
-
-    let rows = stmt
-        .query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
-        })
-        .map_err(|e| format!("query v1 tracks: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let (id_str, arc_id_str) = row.map_err(|e| format!("read v1 track row: {e}"))?;
-        result.push((parse_uuid(&id_str)?, parse_uuid(&arc_id_str)?));
-    }
-    Ok(result)
-}
-
-fn read_v1_clips(conn: &Connection, track_id: &Uuid, is_sub_beat: bool) -> Result<Vec<StoryNode>, String> {
-    let mut stmt = conn
-        .prepare(
-            "SELECT id, parent_clip_id, start_ms, end_ms, beat_type, name, content_json, locked
-             FROM clips WHERE track_id = ?1 AND is_sub_beat = ?2
-             ORDER BY start_ms",
-        )
-        .map_err(|e| format!("prepare v1 clips: {e}"))?;
-
-    let level = if is_sub_beat {
-        StoryLevel::Beat
-    } else {
-        StoryLevel::Scene
-    };
-
-    let rows = stmt
-        .query_map(params![track_id.to_string(), is_sub_beat as i32], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, Option<String>>(1)?,
-                row.get::<_, i64>(2)?,
-                row.get::<_, i64>(3)?,
-                row.get::<_, String>(4)?,
-                row.get::<_, String>(5)?,
-                row.get::<_, String>(6)?,
-                row.get::<_, i32>(7)?,
-            ))
-        })
-        .map_err(|e| format!("query v1 clips: {e}"))?;
-
-    let mut result = Vec::new();
-    for (i, row) in rows.enumerate() {
-        let (id_str, parent_id_str, start_ms, end_ms, beat_type_json, name, content_json, locked) =
-            row.map_err(|e| format!("read v1 clip row: {e}"))?;
-
-        let parent_id = parent_id_str
-            .map(|s| parse_uuid(&s).map(NodeId))
-            .transpose()?;
-
-        // Parse v1 BeatContent into NodeContent.
-        let content = parse_v1_content(&content_json)?;
-
-        let beat_type: Option<BeatType> = serde_json::from_str(&beat_type_json).ok();
-
-        result.push(StoryNode {
-            id: NodeId(parse_uuid(&id_str)?),
-            parent_id,
-            level,
-            sort_order: i as u32,
-            time_range: TimeRange {
-                start_ms: start_ms as u64,
-                end_ms: end_ms as u64,
-            },
-            name,
-            content,
-            beat_type,
-            locked: locked != 0,
-        });
-    }
-    Ok(result)
-}
-
-/// Parse v1 BeatContent JSON into NodeContent.
-///
-/// NodeContent's custom Deserialize handles legacy v2 fields (`generated_text`,
-/// `user_refined_text`) and old ContentStatus variants via serde aliases. We
-/// try that first, then fall back to v1 field names (`beat_notes`, etc.).
-fn parse_v1_content(json: &str) -> Result<NodeContent, String> {
-    // Try parsing as current or v2 NodeContent first (custom Deserialize
-    // handles legacy fields and status variants automatically).
-    if let Ok(content) = serde_json::from_str::<NodeContent>(json) {
-        return Ok(content);
-    }
-
-    // Fall back to v1 BeatContent (different field names entirely).
-    #[derive(serde::Deserialize)]
-    struct V1Content {
-        #[serde(default)]
-        beat_notes: String,
-        #[serde(default)]
-        generated_script: Option<String>,
-        #[serde(default)]
-        user_refined_script: Option<String>,
-        #[serde(default)]
-        status: Option<String>,
-        #[serde(default)]
-        scene_recap: Option<String>,
-    }
-
-    let v1: V1Content =
-        serde_json::from_str(json).map_err(|e| format!("parse v1 content: {e}"))?;
-
-    use eidetic_core::timeline::node::ContentStatus;
-    let status = match v1.status.as_deref() {
-        Some("\"NotesOnly\"") | Some("NotesOnly") => ContentStatus::NotesOnly,
-        Some("\"Generating\"") | Some("Generating") => ContentStatus::Generating,
-        Some("\"Generated\"") | Some("Generated")
-        | Some("\"UserRefined\"") | Some("UserRefined")
-        | Some("\"UserWritten\"") | Some("UserWritten") => ContentStatus::HasContent,
-        _ => ContentStatus::Empty,
-    };
-
-    // Collapse: user_refined > generated > empty.
-    let content = v1.user_refined_script
-        .or(v1.generated_script)
-        .unwrap_or_default();
-
-    Ok(NodeContent {
-        notes: v1.beat_notes,
-        content,
-        status,
-        scene_recap: v1.scene_recap,
-    })
-}
-
-fn read_v1_relationships(conn: &Connection) -> Result<Vec<Relationship>, String> {
-    let mut stmt = conn
-        .prepare("SELECT id, from_clip_id, to_clip_id, relationship_type FROM relationships")
-        .map_err(|e| format!("prepare v1 relationships: {e}"))?;
-
-    let rows = stmt
-        .query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, String>(3)?,
-            ))
-        })
-        .map_err(|e| format!("query v1 relationships: {e}"))?;
-
-    let mut result = Vec::new();
-    for row in rows {
-        let (id_str, from_str, to_str, rel_type_json) =
-            row.map_err(|e| format!("read v1 relationship row: {e}"))?;
-        let rel_type: RelationshipType = serde_json::from_str(&rel_type_json)
-            .map_err(|e| format!("parse relationship_type: {e}"))?;
-        result.push(Relationship {
-            id: RelationshipId(parse_uuid(&id_str)?),
-            from_node: NodeId(parse_uuid(&from_str)?),
-            to_node: NodeId(parse_uuid(&to_str)?),
-            relationship_type: rel_type,
-        });
-    }
-    Ok(result)
-}
-
-// ─── Legacy JSON Support ───────────────────────────────────────────
-
-/// Load a project from a JSON file (legacy format).
-async fn load_project_json(path: &Path) -> Result<Project, String> {
-    let data = fs::read_to_string(path)
-        .await
-        .map_err(|e| format!("read error: {e}"))?;
-
-    let project: Project =
-        serde_json::from_str(&data).map_err(|e| format!("deserialize error: {e}"))?;
-
-    tracing::debug!("loaded project from JSON: {}", path.display());
-    Ok(project)
 }
 
 // ─── List Projects ─────────────────────────────────────────────────
@@ -1097,13 +747,10 @@ pub async fn list_projects(base_dir: &Path) -> Vec<ProjectEntry> {
     while let Ok(Some(entry)) = read_dir.next_entry().await {
         let path = entry.path();
 
-        let project_file = if path.join("project.db").exists() {
-            path.join("project.db")
-        } else if path.join("project.json").exists() {
-            path.join("project.json")
-        } else {
+        let project_file = path.join("project.db");
+        if !project_file.exists() {
             continue;
-        };
+        }
 
         let modified = entry
             .metadata()

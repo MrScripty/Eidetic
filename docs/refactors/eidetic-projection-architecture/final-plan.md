@@ -263,6 +263,7 @@ Completed slices:
 - `refactor(server): stop snapshotting arc mutations` removed the final route-level cloned-project snapshot writes and now-unused snapshot push helper from legacy story arc create/update/delete handlers while leaving the current arc mutation behavior intact until arc command/projection contracts replace it.
 - `refactor(project): remove empty snapshot undo routes` deleted the cloned-project undo/redo routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags after snapshot producers were removed.
 - `refactor(core): remove legacy node content aliases` removed legacy `generated_text` / `user_refined_text` node-content deserialization and old content-status aliases from core because compatibility with old project data is outside this refactor.
+- `refactor(server): remove legacy project load migrations` removed server-side JSON project loading, JSON sibling auto-migration, v1 SQLite migration helpers, and JSON project discovery so project loading accepts only the current SQLite schema.
 
 Discovered issues:
 
