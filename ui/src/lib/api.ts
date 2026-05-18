@@ -6,7 +6,6 @@ import type {
   EntityDetails,
   EntitySnapshot,
   EntityRelation,
-  ExtractionResult,
   AiStatus,
   AiConfig,
   TimelineGap,
@@ -183,32 +182,6 @@ export function addNodeRef(entityId: string, nodeId: string): Promise<Entity> {
 
 export function removeNodeRef(entityId: string, nodeId: string): Promise<Entity> {
   return request(`/bible/entities/${entityId}/node-refs/${nodeId}`, { method: 'DELETE' });
-}
-
-// --- Entity extraction ---
-
-export function extractEntities(nodeId: string): Promise<ExtractionResult> {
-  return request('/ai/extract', {
-    method: 'POST',
-    body: JSON.stringify({ node_id: nodeId }),
-  });
-}
-
-export function commitExtraction(
-  nodeId: string,
-  result: ExtractionResult,
-  acceptedEntities: boolean[],
-  acceptedSnapshots: boolean[],
-): Promise<{ new_entity_count: number; snapshot_count: number }> {
-  return request('/ai/extract/commit', {
-    method: 'POST',
-    body: JSON.stringify({
-      node_id: nodeId,
-      result,
-      accepted_entities: acceptedEntities,
-      accepted_snapshots: acceptedSnapshots,
-    }),
-  });
 }
 
 // --- Bible resolve at time ---
@@ -410,13 +383,6 @@ export function updateAiConfig(updates: Partial<AiConfig>): Promise<AiConfig> {
   return request('/ai/config', {
     method: 'PUT',
     body: JSON.stringify(updates),
-  });
-}
-
-export function reactToEdit(nodeId: string): Promise<{ status: string }> {
-  return request('/ai/react', {
-    method: 'POST',
-    body: JSON.stringify({ node_id: nodeId }),
   });
 }
 

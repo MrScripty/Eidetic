@@ -7,7 +7,6 @@ import {
   completeGeneration,
   setGenerationContext,
   setGenerationError,
-  addConsistencySuggestion,
 } from './editor.svelte.js';
 import { getTimeline, listArcs, listEntities, getNodeContent } from '$lib/api.js';
 import {
@@ -76,20 +75,6 @@ export function setupWsHandlers(ws: WsClient) {
 
     ws.on('generation_error', (data) => {
       setGenerationError(data.node_id, data.error);
-    }),
-
-    ws.on('consistency_suggestion', (data) => {
-      addConsistencySuggestion({
-        source_node_id: data.source_node_id,
-        target_node_id: data.target_node_id,
-        original_text: data.original_text,
-        suggested_text: data.suggested_text,
-        reason: data.reason,
-      });
-    }),
-
-    ws.on('consistency_complete', () => {
-      editorState.checkingConsistency = false;
     }),
 
     ws.on('undo_redo_changed', (data) => {

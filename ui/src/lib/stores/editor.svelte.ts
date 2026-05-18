@@ -3,7 +3,6 @@ import type {
   StoryNode,
   StoryLevel,
   AiStatus,
-  ConsistencySuggestion,
   DiffusionStatus,
 } from '../types.js';
 
@@ -31,10 +30,6 @@ export const editorState = $state<{
   aiStatus: AiStatus | null;
   /** Last-known diffusion LLM status. */
   diffusionStatus: DiffusionStatus | null;
-  /** Pending consistency suggestions from the AI. */
-  consistencySuggestions: ConsistencySuggestion[];
-  /** Whether a consistency check is in progress. */
-  checkingConsistency: boolean;
   /** Whether undo is available. */
   canUndo: boolean;
   /** Whether redo is available. */
@@ -57,8 +52,6 @@ export const editorState = $state<{
   generationError: null,
   aiStatus: null,
   diffusionStatus: null,
-  consistencySuggestions: [],
-  checkingConsistency: false,
   canUndo: false,
   canRedo: false,
   batchParentNodeId: null,
@@ -155,22 +148,4 @@ export function setGenerationError(nodeId: string, error: string) {
       editorState.batchParentNodeId = null;
     }
   }
-}
-
-/** Add a consistency suggestion from the AI. */
-export function addConsistencySuggestion(suggestion: ConsistencySuggestion) {
-  editorState.consistencySuggestions = [...editorState.consistencySuggestions, suggestion];
-}
-
-/** Remove a consistency suggestion by target node ID. */
-export function removeConsistencySuggestion(targetNodeId: string) {
-  editorState.consistencySuggestions = editorState.consistencySuggestions.filter(
-    (s) => s.target_node_id !== targetNodeId,
-  );
-}
-
-/** Clear all consistency suggestions. */
-export function clearConsistencySuggestions() {
-  editorState.consistencySuggestions = [];
-  editorState.checkingConsistency = false;
 }

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This directory contains the story-bible UI: entity cards, detail editing, development timelines, and extraction review.
+This directory contains the story-bible UI: graph-backed bible nodes, entity cards, detail editing, and development timelines.
 
 ## Contents
 
@@ -20,7 +20,6 @@ This directory contains the story-bible UI: entity cards, detail editing, develo
 | `EntityCard.svelte`                | List-card summary for bible entities.                                          |
 | `EntityDetail.svelte`              | Full entity editing surface, including relations and category-specific fields. |
 | `DevelopmentTimeline.svelte`       | Timeline view of entity development points.                                    |
-| `EntityExtractPanel.svelte`        | Review/apply flow for AI-driven extraction results.                            |
 
 ## Problem
 
@@ -31,7 +30,6 @@ Narrative entities need a dedicated editing experience that is richer than inlin
 - Bible graph node state must stay aligned with server validation and persistence semantics.
 - Legacy entity detail state remains during migration and must not become a second source of truth for new graph-node list behavior.
 - `EntityDetail.svelte` exceeds the preferred size threshold tracked in `ADR-001`.
-- Extraction review must preserve acceptance state without breaking Svelte ownership rules.
 
 ## Decision
 
@@ -46,7 +44,6 @@ Keep story-bible components together while moving list/navigation reads to backe
 - Story-bible list/navigation reads come from backend-owned bible graph projections, not broad legacy entity caches.
 - Entity detail edits remain backed by server APIs until they are replaced by bible graph commands, not local-only schema forks.
 - Development points stay ordered by timeline semantics.
-- Extraction review preserves explicit accept/reject state per suggestion.
 
 ## Revisit Triggers
 

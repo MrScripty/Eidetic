@@ -178,6 +178,7 @@ Completed slices:
 - `feat(server): persist generated script blocks` routed successful AI screenplay generation through backend-owned script document block commands with AI provenance, emits `script_changed`, and stops mirroring generated screenplay text into timeline node content/Y.Doc.
 - `refactor(script): remove node screenplay write path` deleted the legacy `/nodes/{id}/script` API helper/route and removed BeatEditor controls that edited or displayed node-owned screenplay blobs, leaving script display on backend-owned script document projections.
 - `feat(server): protect locked script spans` made script block commands reject updates that would remove or change locked span text before any history/current-state writes occur, with regression coverage proving failed updates leave projections and revisions unchanged.
+- `refactor(ui): remove legacy extraction and consistency UI` deleted orphaned extraction review/diff components, frontend helpers, websocket handlers, and editor store state that depended on node-owned screenplay text, keeping future semantic review work off stale UI state.
 
 Discovered issues:
 

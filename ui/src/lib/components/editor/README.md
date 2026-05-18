@@ -1,19 +1,18 @@
 # ui/src/lib/components/editor
 
 ## Purpose
-This directory contains the main beat and script editing workflow, including AI generation context, consistency suggestions, and extraction-related UI.
+This directory contains the main beat and script viewing workflow, including AI generation context and projection-backed script display.
 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
-| `BeatEditor.svelte` | Primary node editing surface for notes, script, generation, and context panels. |
+| `BeatEditor.svelte` | Primary node editing surface for notes, generation, and context panels. |
 | `BeatPlanEditor.svelte` | Child-beat planning editor. |
 | `ScriptPanel.svelte` | Container for script-editing surfaces. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
-| `DiffView.svelte` | Suggestion diff/acceptance rendering. |
 
 ## Problem
-The app needs one editing surface where timeline selection, AI generation, script refinement, and consistency review all converge.
+The app needs focused editing surfaces where timeline selection, AI generation, and projection-backed script review stay coordinated.
 
 ## Constraints
 - Editor interactions depend on shared stores and websocket events.
@@ -21,14 +20,14 @@ The app needs one editing surface where timeline selection, AI generation, scrip
 - Keyboard and accessibility behavior must remain intact across split points.
 
 ## Decision
-Keep the current editor entrypoints stable and track `BeatEditor.svelte` for a follow-up split into context, extraction, and script/generation subpanels.
+Keep the current editor entrypoints stable and track `BeatEditor.svelte` for a follow-up split into context and generation subpanels.
 
 ## Alternatives Rejected
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
 - Timeline selection remains the single source of truth for the active editor node.
-- Script editing and AI generation keep sharing the same editor state store.
+- AI generation state remains transient frontend state; durable script text is read from script document projections.
 - Future decomposition preserves current user-facing editor workflows.
 
 ## Revisit Triggers

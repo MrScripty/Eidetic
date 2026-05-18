@@ -256,27 +256,6 @@ export interface ObjectFieldCommandResponse {
 export * from './bibleGraphTypes.js';
 export * from './scriptTypes.js';
 
-export interface ExtractionResult {
-  new_entities: SuggestedEntity[];
-  snapshot_suggestions: SuggestedSnapshot[];
-  entities_present: string[];
-}
-
-export interface SuggestedEntity {
-  name: string;
-  category: EntityCategory;
-  tagline: string;
-  description: string;
-}
-
-export interface SuggestedSnapshot {
-  entity_name: string;
-  description: string;
-  emotional_state?: string;
-  audience_knowledge?: string;
-  location?: string;
-}
-
 // --- Child Planning (replaces Beat Planning) ---
 
 export interface ChildProposal {
@@ -433,16 +412,6 @@ export interface AiStatus {
   error?: string;
 }
 
-// --- Consistency ---
-
-export interface ConsistencySuggestion {
-  source_node_id: NodeId;
-  target_node_id: NodeId;
-  original_text: string;
-  suggested_text: string;
-  reason: string;
-}
-
 // --- Arc Progression ---
 
 export type Severity = 'Warning' | 'Error';
@@ -474,15 +443,6 @@ export type ServerMessage =
   | { type: 'generation_progress'; node_id: string; token: string; tokens_generated: number }
   | { type: 'generation_complete'; node_id: string }
   | { type: 'generation_error'; node_id: string; error: string }
-  | {
-      type: 'consistency_suggestion';
-      source_node_id: string;
-      target_node_id: string;
-      original_text: string;
-      suggested_text: string;
-      reason: string;
-    }
-  | { type: 'consistency_complete'; source_node_id: string; suggestion_count: number }
   | { type: 'undo_redo_changed'; can_undo: boolean; can_redo: boolean }
   | { type: 'project_mutated' }
   | { type: 'bible_changed' }
