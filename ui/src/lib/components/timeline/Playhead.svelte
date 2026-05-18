@@ -1,6 +1,6 @@
 <script lang="ts">
   import { timelineState, timeToX, xToTime } from '$lib/stores/timeline.svelte.js';
-  import { TIMELINE } from '$lib/types.js';
+  import { TIMELINE } from '$lib/timelineTypes.js';
 
   let containerEl: HTMLDivElement | undefined = $state();
   let dragging = $state(false);

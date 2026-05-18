@@ -1,6 +1,6 @@
 <script lang="ts">
   import { setBibleGraphEdgeProjection } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
-  import type { BibleGraphEdgeKind, BibleGraphNodeId } from '$lib/types.js';
+  import type { BibleGraphEdgeKind, BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
 
   let {
     sourceNodeId,

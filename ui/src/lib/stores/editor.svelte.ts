@@ -1,5 +1,5 @@
 import type { AiStatus, DiffusionStatus } from '../aiTypes.js';
-import type { NodeId, StoryLevel, StoryNode } from '../types.js';
+import type { NodeId, StoryLevel, StoryNode } from '../timelineTypes.js';
 
 /**
  * Transient UI state for the node editor panel. Frontend-owned.

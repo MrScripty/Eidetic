@@ -1,6 +1,6 @@
 <script lang="ts">
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
-  import { TIMELINE, formatTime } from '$lib/types.js';
+  import { TIMELINE, formatTime } from '$lib/timelineTypes.js';
 </script>
 
 <div class="tl-toolbar" style="height: {TIMELINE.TOOLBAR_HEIGHT_PX}px">

@@ -1,7 +1,6 @@
-import type { ArcId } from './types.js';
 import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
 
-export type { ArcId } from './types.js';
+export type ArcId = string;
 
 export interface StoryArc {
   id: ArcId;

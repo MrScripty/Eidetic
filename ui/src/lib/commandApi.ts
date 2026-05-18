@@ -1,36 +1,40 @@
 import type {
   BibleGraphNodeCommandResponse,
   BibleGraphRootsCommandResponse,
-  ApplyTimelineChildrenCommand,
   CreateBibleGraphNodeCommand,
-  CreateTimelineRelationshipCommand,
-  CreateTimelineNodeCommand,
-  DeleteTimelineNodeCommand,
-  DeleteTimelineRelationshipCommand,
   EnsureCanonicalBibleRootsCommand,
-  ScriptDocumentCommandResponse,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
   SetBibleGraphSnapshotFieldCommand,
-  SetScriptBlockCommand,
-  SetScriptLockCommand,
-  SetTimelineNodeLockCommand,
-  SetTimelineNodeNotesCommand,
-  SetTimelineNodeRangeCommand,
-  SplitTimelineNodeCommand,
-  TimelineCommandResponse,
-} from './types.js';
+} from './bibleGraphTypes.js';
 import type {
   CommandEnvelope,
   ObjectFieldCommandResponse,
   SetObjectFieldCommand,
 } from './projectionTypes.js';
 import type {
+  ScriptDocumentCommandResponse,
+  SetScriptBlockCommand,
+  SetScriptLockCommand,
+} from './scriptTypes.js';
+import type {
   CreateStoryArcCommand,
   DeleteStoryArcCommand,
   SetStoryArcMetadataCommand,
   StoryArcCommandResponse,
 } from './storyArcTypes.js';
+import type {
+  ApplyTimelineChildrenCommand,
+  CreateTimelineRelationshipCommand,
+  CreateTimelineNodeCommand,
+  DeleteTimelineNodeCommand,
+  DeleteTimelineRelationshipCommand,
+  SetTimelineNodeLockCommand,
+  SetTimelineNodeNotesCommand,
+  SetTimelineNodeRangeCommand,
+  SplitTimelineNodeCommand,
+  TimelineCommandResponse,
+} from './timelineCommandTypes.js';
 
 const BASE = '/api';
 

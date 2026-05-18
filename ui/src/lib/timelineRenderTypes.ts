@@ -1,5 +1,4 @@
 import type {
-  ArcId,
   BeatType,
   ContentStatus,
   NodeId,
@@ -7,7 +6,8 @@ import type {
   RelationshipType,
   StoryLevel,
   TrackId,
-} from './types.js';
+} from './timelineTypes.js';
+import type { ArcId } from './storyArcTypes.js';
 
 export interface TimelineRenderProjection {
   total_duration_ms: number;

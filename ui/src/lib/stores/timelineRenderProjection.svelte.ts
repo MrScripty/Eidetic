@@ -25,8 +25,8 @@ import type {
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
-  TimelineRenderProjection,
-} from '../types.js';
+} from '../timelineCommandTypes.js';
+import type { TimelineRenderProjection } from '../timelineRenderTypes.js';
 import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 
 export const timelineRenderProjectionState = $state<{

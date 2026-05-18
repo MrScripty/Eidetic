@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ChildProposal } from '$lib/childPlanningTypes.js';
-  import type { BeatType } from '$lib/types.js';
+  import type { BeatType } from '$lib/timelineTypes.js';
 
   let {
     beats,

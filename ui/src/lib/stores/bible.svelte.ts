@@ -1,4 +1,4 @@
-import type { BibleGraphNodeId } from '../types.js';
+import type { BibleGraphNodeId } from '../bibleGraphTypes.js';
 
 /** Shared bible selection state — connects sidebar list to the detail panel. */
 export const bibleState = $state<{

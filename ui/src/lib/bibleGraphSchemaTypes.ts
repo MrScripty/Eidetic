@@ -1,4 +1,4 @@
-import type { BibleGraphFieldKey, BibleGraphPartKey, BibleGraphSchemaKey } from './types.js';
+import type { BibleGraphFieldKey, BibleGraphPartKey, BibleGraphSchemaKey } from './bibleGraphTypes.js';
 
 export interface BibleGraphSchemaListProjection {
   schemas: BibleGraphSchemaProjection[];

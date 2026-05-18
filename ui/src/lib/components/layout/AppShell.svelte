@@ -5,7 +5,7 @@
   import BeatEditor from '../editor/BeatEditor.svelte';
   import ScriptPanel from '../editor/ScriptPanel.svelte';
   import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
-  import { PANEL, mainTimelinePanelHeightPx } from '$lib/types.js';
+  import { PANEL, mainTimelinePanelHeightPx } from '$lib/timelineTypes.js';
   import { projectState } from '$lib/stores/project.svelte.js';
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';

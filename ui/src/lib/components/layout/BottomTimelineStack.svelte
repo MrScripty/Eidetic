@@ -1,6 +1,6 @@
 <script lang="ts">
   import Timeline from '../timeline/Timeline.svelte';
-  import { mainTimelinePanelHeightPx } from '$lib/types.js';
+  import { mainTimelinePanelHeightPx } from '$lib/timelineTypes.js';
 
   let { timelineHeight = mainTimelinePanelHeightPx() } = $props();
 </script>

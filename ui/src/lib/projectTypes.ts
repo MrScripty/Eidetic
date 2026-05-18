@@ -1,4 +1,4 @@
-import type { Timeline } from './types.js';
+import type { Timeline } from './timelineTypes.js';
 
 export type ReferenceId = string;
 

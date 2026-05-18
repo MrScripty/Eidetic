@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { RelationshipType } from '$lib/types.js';
-  import { TIMELINE } from '$lib/types.js';
+  import type { RelationshipType } from '$lib/timelineTypes.js';
+  import { TIMELINE } from '$lib/timelineTypes.js';
   import { connectionDrag, timeToX, totalWidth } from '$lib/stores/timeline.svelte.js';
   import { getCachedTimelineRenderModel } from '$lib/stores/timelineRenderProjection.svelte.js';
   import {

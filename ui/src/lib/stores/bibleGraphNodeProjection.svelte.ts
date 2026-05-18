@@ -19,7 +19,7 @@ import type {
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
   SetBibleGraphSnapshotFieldCommand,
-} from '../types.js';
+} from '../bibleGraphTypes.js';
 import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 
 export interface BibleGraphNodeProjectionKey {

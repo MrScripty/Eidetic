@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { YTextEvent } from 'yjs';
-  import { childLevel } from '$lib/types.js';
+  import { childLevel } from '$lib/timelineTypes.js';
   import {
     editorState,
     startGeneration,

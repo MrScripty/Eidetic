@@ -1,0 +1,210 @@
+import type { ArcId } from './storyArcTypes.js';
+
+export type TrackId = string;
+export type NodeId = string;
+export type CharacterId = string;
+export type RelationshipId = string;
+
+export type StoryLevel = 'Premise' | 'Act' | 'Sequence' | 'Scene' | 'Beat';
+
+export interface Timeline {
+  total_duration_ms: number;
+  tracks: Track[];
+  nodes: StoryNode[];
+  node_arcs: NodeArc[];
+  relationships: Relationship[];
+  structure: EpisodeStructure;
+}
+
+export interface Track {
+  id: TrackId;
+  level: StoryLevel;
+  label: string;
+  sort_order: number;
+  collapsed: boolean;
+}
+
+export interface StoryNode {
+  id: NodeId;
+  parent_id: NodeId | null;
+  level: StoryLevel;
+  sort_order: number;
+  time_range: TimeRange;
+  name: string;
+  content: NodeContent;
+  beat_type: BeatType | null;
+  locked: boolean;
+}
+
+export interface NodeArc {
+  node_id: NodeId;
+  arc_id: ArcId;
+}
+
+export interface TimeRange {
+  start_ms: number;
+  end_ms: number;
+}
+
+export type BeatType =
+  | 'Setup'
+  | 'Complication'
+  | 'Escalation'
+  | 'Climax'
+  | 'Resolution'
+  | 'Payoff'
+  | 'Callback'
+  | { Custom: string };
+
+export interface NodeContent {
+  notes: string;
+  /** Script/outline text. Replaces the old generated_text + user_refined_text split. */
+  content: string;
+  status: ContentStatus;
+  scene_recap?: string | null;
+}
+
+export type ContentStatus = 'Empty' | 'NotesOnly' | 'Generating' | 'HasContent';
+
+export interface Relationship {
+  id: RelationshipId;
+  from_node: NodeId;
+  to_node: NodeId;
+  relationship_type: RelationshipType;
+}
+
+export type RelationshipType = 'Causal' | { Convergence: { arc_ids: ArcId[] } } | 'Thematic';
+
+export interface EpisodeStructure {
+  template_name: string;
+  segments: StructureSegment[];
+}
+
+export interface StructureSegment {
+  segment_type: SegmentType;
+  time_range: TimeRange;
+  label: string;
+}
+
+export type SegmentType = 'ColdOpen' | 'MainTitles' | 'Act' | 'CommercialBreak' | 'Tag';
+
+export interface TimelineGap {
+  level: StoryLevel;
+  time_range: TimeRange;
+  preceding_node_id: NodeId | null;
+  following_node_id: NodeId | null;
+}
+
+export const TIMELINE = {
+  /** Total episode duration in ms (22 min). */
+  DURATION_MS: 1_320_000,
+  /** Minimum clip width in pixels. */
+  MIN_CLIP_WIDTH_PX: 20,
+  /** Pixels per millisecond at default zoom (1x). */
+  DEFAULT_PX_PER_MS: 0.08,
+  /** Track lane height in pixels. */
+  TRACK_HEIGHT_PX: 48,
+  /** Total track row height including the row divider. */
+  TRACK_ROW_HEIGHT_PX: 49,
+  /** Gap between tracks. */
+  TRACK_GAP_PX: 4,
+  /** Height of the structure bar. */
+  STRUCTURE_BAR_HEIGHT_PX: 32,
+  /** Total structure bar height including its top border. */
+  STRUCTURE_BAR_TOTAL_HEIGHT_PX: 33,
+  /** Height of the time ruler. */
+  TIME_RULER_HEIGHT_PX: 28,
+  /** Total time ruler height including its bottom border. */
+  TIME_RULER_TOTAL_HEIGHT_PX: 29,
+  /** Timeline toolbar height including its bottom border. */
+  TOOLBAR_HEIGHT_PX: 29,
+  /** Relationship lane height including its bottom border. */
+  RELATIONSHIP_HEIGHT_PX: 41,
+  /** Horizontal scrollbar height including its top border. */
+  SCROLLBAR_HEIGHT_PX: 13,
+  /** Visible track count for the default episode template. */
+  DEFAULT_VISIBLE_TRACKS: 5,
+  /** Width of track label column. */
+  LABEL_WIDTH_PX: 80,
+} as const;
+
+export const PANEL = {
+  /** Minimum height of the beat editor panel (px). */
+  MIN_EDITOR_HEIGHT_PX: 150,
+  /** Minimum height of the upper workspace above the timeline stack (px). */
+  MIN_UPPER_WORKSPACE_HEIGHT_PX: 300,
+  /** Minimum height of the timeline panel (px). */
+  MIN_TIMELINE_HEIGHT_PX: 200,
+  /** Height of the horizontal panel resizer row (px). */
+  RESIZER_HEIGHT_PX: 6,
+  /** Minimum height of the script panel (px). */
+  MIN_SCRIPT_HEIGHT_PX: 120,
+  /** Sidebar width (px). */
+  SIDEBAR_WIDTH_PX: 280,
+  /** Sidebar expanded width when viewing entity detail (px). */
+  SIDEBAR_EXPANDED_WIDTH_PX: 420,
+  /** Minimum width of the relationship panel (px). */
+  MIN_RELATIONSHIP_WIDTH_PX: 240,
+  /** Default width of the relationship panel (px). */
+  DEFAULT_RELATIONSHIP_WIDTH_PX: 320,
+  /** Maximum width of the relationship panel (px). */
+  MAX_RELATIONSHIP_WIDTH_PX: 600,
+} as const;
+
+export function timelineTrackRowsHeightPx(trackCount: number): number {
+  return trackCount * TIMELINE.TRACK_ROW_HEIGHT_PX;
+}
+
+export function mainTimelinePanelHeightPx(
+  visibleTrackCount = TIMELINE.DEFAULT_VISIBLE_TRACKS,
+): number {
+  return (
+    TIMELINE.TOOLBAR_HEIGHT_PX +
+    TIMELINE.TIME_RULER_TOTAL_HEIGHT_PX +
+    TIMELINE.RELATIONSHIP_HEIGHT_PX +
+    timelineTrackRowsHeightPx(visibleTrackCount) +
+    TIMELINE.STRUCTURE_BAR_TOTAL_HEIGHT_PX +
+    TIMELINE.SCROLLBAR_HEIGHT_PX
+  );
+}
+
+export function formatTime(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+export function childLevel(level: StoryLevel): StoryLevel | null {
+  switch (level) {
+    case 'Premise':
+      return 'Act';
+    case 'Act':
+      return 'Sequence';
+    case 'Sequence':
+      return 'Scene';
+    case 'Scene':
+      return 'Beat';
+    case 'Beat':
+      return null;
+  }
+}
+
+export function parentLevel(level: StoryLevel): StoryLevel | null {
+  switch (level) {
+    case 'Premise':
+      return null;
+    case 'Act':
+      return 'Premise';
+    case 'Sequence':
+      return 'Act';
+    case 'Scene':
+      return 'Sequence';
+    case 'Beat':
+      return 'Scene';
+  }
+}
+
+export function bestText(node: StoryNode): string {
+  return node.content.content || node.content.notes;
+}

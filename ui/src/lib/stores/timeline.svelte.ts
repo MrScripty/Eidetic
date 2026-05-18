@@ -1,5 +1,6 @@
-import type { Timeline, StoryNode, StoryLevel, NodeId, ArcId, TimeRange } from '../types.js';
-import { TIMELINE } from '../types.js';
+import type { ArcId } from '../storyArcTypes.js';
+import type { Timeline, StoryNode, StoryLevel, NodeId, TimeRange } from '../timelineTypes.js';
+import { TIMELINE } from '../timelineTypes.js';
 
 export type TimelineTool = 'select' | 'blade';
 

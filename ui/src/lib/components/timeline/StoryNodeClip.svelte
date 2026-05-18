@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { StoryNode, ContentStatus } from '$lib/types.js';
-  import { TIMELINE } from '$lib/types.js';
+  import type { StoryNode, ContentStatus } from '$lib/timelineTypes.js';
+  import { TIMELINE } from '$lib/timelineTypes.js';
   import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
 
   let {

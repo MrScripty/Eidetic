@@ -3,9 +3,9 @@ import type {
   RelationshipId,
   RelationshipType,
   StoryLevel,
-  TimelineRenderProjection,
-} from './types.js';
+} from './timelineTypes.js';
 import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
+import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
 export interface SetTimelineNodeRangeCommand {
   node_id: string;

@@ -1,4 +1,4 @@
-import type { BeatType, NodeId, StoryLevel } from './types.js';
+import type { BeatType, NodeId, StoryLevel } from './timelineTypes.js';
 
 export interface ChildProposal {
   name: string;

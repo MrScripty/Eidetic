@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BibleGraphNode } from '$lib/types.js';
+  import type { BibleGraphNode } from '$lib/bibleGraphTypes.js';
   import {
     categoryColor,
     categoryShortLabel,

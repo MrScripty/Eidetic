@@ -15,8 +15,8 @@
   } from '$lib/stores/timeline.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
-  import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/types.js';
-  import type { TimelineGap, StoryLevel } from '$lib/types.js';
+  import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/timelineTypes.js';
+  import type { TimelineGap, StoryLevel } from '$lib/timelineTypes.js';
   import { getGaps } from '$lib/api.js';
   import {
     applyCreateTimelineRelationshipCommand,

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { setBibleGraphSnapshotFieldProjection } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
-  import type { BibleGraphNodeId, BibleGraphPartProjection } from '$lib/types.js';
+  import type { BibleGraphNodeId, BibleGraphPartProjection } from '$lib/bibleGraphTypes.js';
 
   let {
     nodeId,

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { storyArcProjectionState } from '$lib/stores/storyArcProjection.svelte.js';
-  import { PANEL } from '$lib/types.js';
+  import { PANEL } from '$lib/timelineTypes.js';
   import ArcList from '../sidebar/ArcList.svelte';
   import ArcDetail from '../sidebar/ArcDetail.svelte';
   import StoryBibleTab from '../sidebar/bible/StoryBibleTab.svelte';

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { EpisodeStructure } from '$lib/types.js';
-  import { TIMELINE } from '$lib/types.js';
+  import type { EpisodeStructure } from '$lib/timelineTypes.js';
+  import { TIMELINE } from '$lib/timelineTypes.js';
   import { timeToX, rangeWidth } from '$lib/stores/timeline.svelte.js';
 
   let {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BibleGraphEdge, BibleGraphEdgeKind } from '$lib/types.js';
+  import type { BibleGraphEdge, BibleGraphEdgeKind } from '$lib/bibleGraphTypes.js';
 
   let {
     title,

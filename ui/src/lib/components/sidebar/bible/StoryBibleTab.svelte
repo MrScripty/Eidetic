@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  import type { BibleGraphNodeId } from '$lib/types.js';
+  import type { BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
   import {
     createBibleGraphNodeProjection,
     ensureCanonicalBibleRootProjections,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TIMELINE, formatTime } from '$lib/types.js';
+  import { TIMELINE, formatTime } from '$lib/timelineTypes.js';
   import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
 
   let {

@@ -2,13 +2,12 @@ import type {
   BibleGraphNodeId,
   BibleGraphNodeListProjection,
   BibleNodeDetailProjection,
-  ScriptDocumentId,
-  ScriptDocumentProjection,
-  TimelineRenderProjection,
-} from './types.js';
+} from './bibleGraphTypes.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
 import type { ObjectFieldProjection, ObjectKind, ProjectionEnvelope } from './projectionTypes.js';
+import type { ScriptDocumentId, ScriptDocumentProjection } from './scriptTypes.js';
 import type { StoryArcListProjection, StoryArcProgressionProjection } from './storyArcTypes.js';
+import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
 const BASE = '/api';
 

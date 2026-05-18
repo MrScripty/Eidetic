@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BibleGraphNodeId } from '$lib/types.js';
+  import type { BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
   import {
     getBibleGraphNodeProjectionError,
     getCachedBibleGraphNodeProjection,

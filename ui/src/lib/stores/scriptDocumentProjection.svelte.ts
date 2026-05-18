@@ -7,7 +7,7 @@ import type {
   ScriptDocumentCommandResponse,
   SetScriptBlockCommand,
   SetScriptLockCommand,
-} from '../types.js';
+} from '../scriptTypes.js';
 
 export interface ScriptDocumentProjectionKey {
   document_id: ScriptDocumentId;

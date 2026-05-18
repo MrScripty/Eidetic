@@ -7,7 +7,7 @@ import type {
   StoryNode,
   Timeline,
   TimelineGap,
-} from './types.js';
+} from './timelineTypes.js';
 
 const BASE = '/api';
 

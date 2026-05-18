@@ -1,5 +1,5 @@
 import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
-import type { BibleGraphNode, BibleGraphNodeId } from '$lib/types.js';
+import type { BibleGraphNode, BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
 
 export type BibleGraphRootCategory = 'Character' | 'Location' | 'Prop' | 'Theme' | 'Event';
 export type BibleGraphFilter = BibleGraphRootCategory | 'All';
