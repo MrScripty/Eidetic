@@ -12,6 +12,8 @@ import type {
   SetObjectFieldCommand,
   SetScriptBlockCommand,
   SetScriptLockCommand,
+  SetTimelineNodeRangeCommand,
+  TimelineCommandResponse,
 } from './types.js';
 
 const BASE = '/api';
@@ -149,6 +151,21 @@ export function setScriptLock(
   };
 
   return request('/commands/script/lock', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function setTimelineNodeRange(
+  payload: SetTimelineNodeRangeCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<SetTimelineNodeRangeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/node-range', {
     method: 'POST',
     body: JSON.stringify(command),
   });

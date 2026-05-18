@@ -191,6 +191,7 @@ Completed slices:
 - `feat(renderer): add Bevy timeline hit testing` added renderer-owned clip hit testing by track and timeline time, including a wasm bridge method that emits validated selection commands without mutating backend-owned state.
 - `feat(renderer): add Bevy timeline viewport state` added transient pan and zoom viewport state derived from projection duration, exposed through the wasm bridge without persisting renderer camera state.
 - `feat(server): add timeline node range command` added a backend command route for validated timeline node move/resize operations that returns the updated timeline render projection for Bevy and Svelte command consumers.
+- `feat(ui): add timeline node range command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed timeline node move/resize commands.
 
 Discovered issues:
 
