@@ -211,14 +211,6 @@ export function updateNodeNotes(id: string, notes: string): Promise<NodeContent>
   });
 }
 
-export function lockNode(id: string): Promise<NodeContent> {
-  return request(`/nodes/${id}/lock`, { method: 'POST' });
-}
-
-export function unlockNode(id: string): Promise<NodeContent> {
-  return request(`/nodes/${id}/unlock`, { method: 'POST' });
-}
-
 // --- Gaps ---
 
 export function getGaps(level?: StoryLevel): Promise<TimelineGap[]> {

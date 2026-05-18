@@ -1,12 +1,12 @@
 use axum::extract::{Path, State};
-use axum::routing::{get, post, put};
+use axum::routing::{get, put};
 use axum::{Json, Router};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
 
-use crate::error::{json_value, ApiError, ApiJson};
+use crate::error::{ApiError, ApiJson, json_value};
 use crate::state::{AppState, ServerEvent};
 use crate::ydoc::{ContentField, DocCommand};
 
@@ -14,14 +14,9 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/nodes/{id}/content", get(get_node_content))
         .route("/nodes/{id}/notes", put(update_notes))
-        .route("/nodes/{id}/lock", post(lock_node))
-        .route("/nodes/{id}/unlock", post(unlock_node))
 }
 
-async fn get_node_content(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
+async fn get_node_content(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiJson {
     let guard = state.project.lock();
     let Some(project) = guard.as_ref() else {
         return Err(ApiError::no_project());
@@ -69,51 +64,9 @@ async fn update_notes(
         text: body.notes,
         author: "human:rest".into(),
     });
-    let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
+    let _ = state
+        .events_tx
+        .send(ServerEvent::NodeUpdated { node_id: id });
     state.trigger_save();
     Ok(Json(json))
-}
-
-async fn lock_node(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    match project.timeline.node_mut(NodeId(id)) {
-        Ok(node) => {
-            node.locked = true;
-            // Status unchanged — locking doesn't alter content state.
-            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
-            state.trigger_save();
-            Ok(Json(serde_json::json!({ "locked": true })))
-        }
-        Err(e) => Err(ApiError::bad_request(e.to_string())),
-    }
-}
-
-async fn unlock_node(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    match project.timeline.node_mut(NodeId(id)) {
-        Ok(node) => {
-            node.locked = false;
-            // Status unchanged; script text is owned by script document projections.
-            let _ = state.events_tx.send(ServerEvent::NodeUpdated { node_id: id });
-            state.trigger_save();
-            Ok(Json(serde_json::json!({ "locked": false })))
-        }
-        Err(e) => Err(ApiError::bad_request(e.to_string())),
-    }
 }

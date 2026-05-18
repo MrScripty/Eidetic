@@ -234,6 +234,7 @@ Completed slices:
 - `feat(ui): add timeline node lock command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed node lock commands.
 - `feat(ui): cache timeline node lock projections` routed node lock command responses into the timeline render projection cache without optimistic local patching.
 - `refactor(ui): route node locking through commands` moved BeatEditor lock toggles onto backend timeline node lock commands instead of legacy node lock/unlock routes.
+- `refactor(script): remove legacy node lock routes` removed unused frontend lock/unlock helpers and legacy node lock/unlock routes after lock state moved to timeline commands.
 
 Discovered issues:
 
