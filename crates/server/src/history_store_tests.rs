@@ -163,6 +163,33 @@ fn failed_revision_rolls_back_command_and_event() {
     assert_eq!(table_count(&conn, "object_revisions"), 0);
 }
 
+#[test]
+fn failed_current_state_write_rolls_back_history_rows() {
+    let mut conn = memory_connection();
+    let command = command("broken current state update");
+    let event = event(command.id);
+    let revision = revision(event.id);
+
+    let error = record_change_with(
+        &mut conn,
+        &command,
+        "test.update_weather",
+        &event,
+        &[revision],
+        |_| {
+            Err(HistoryStoreError::InvalidValue(
+                "current state update failed".to_string(),
+            ))
+        },
+    )
+    .unwrap_err();
+
+    assert!(matches!(error, HistoryStoreError::InvalidValue(_)));
+    assert_eq!(table_count(&conn, "commands"), 0);
+    assert_eq!(table_count(&conn, "change_events"), 0);
+    assert_eq!(table_count(&conn, "object_revisions"), 0);
+}
+
 fn table_count(conn: &Connection, table: &str) -> i64 {
     conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
         row.get(0)

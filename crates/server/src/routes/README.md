@@ -7,10 +7,10 @@ This directory defines the host-facing HTTP contract for Eidetic’s browser cli
 | File/Folder | Description |
 |-------------|-------------|
 | `project.rs` | Project lifecycle, save/load, undo/redo, and listing routes. |
-| `commands.rs` | Projection-owned command endpoints that write through backend history storage. |
-| `commands_tests.rs` | Route-level command tests for loaded-project, projection, and validation behavior. |
-| `projections.rs` | Projection read endpoints backed by persisted history state. |
-| `projections_tests.rs` | Route-level projection read tests for loaded-project, initial, and persisted projections. |
+| `commands.rs` | Projection-owned command endpoints that write through backend history storage, including object-field and bible-graph node commands. |
+| `commands_tests.rs` | Route-level command tests for loaded-project, projection, idempotency, and validation behavior. |
+| `projections.rs` | Projection read endpoints backed by persisted history and typed graph state. |
+| `projections_tests.rs` | Route-level projection read tests for loaded-project, missing, initial, and persisted projections. |
 | `timeline.rs` | Timeline node, track, and hierarchy routes. |
 | `story.rs` | Arc, bible-entity, and relation routes. |
 | `script.rs` | Script editing and content routes. |
@@ -35,7 +35,7 @@ Group routes by feature area, keep shared validation/error logic outside the han
 
 ## Invariants
 - Non-success outcomes use explicit HTTP status codes rather than `200` error bodies.
-- Route payload field names stay aligned with the frontend request helpers.
+- Route payload field names stay aligned with frontend command/projection helpers.
 - Load/save flows continue to validate paths and preserve project compatibility.
 
 ## Revisit Triggers
@@ -61,4 +61,4 @@ let app = crate::routes::project::router();
 
 ## Structured Producer Contract
 - Route responses produce stable JSON field names mirrored by `ui/src/lib/types.ts` and `ui/src/lib/api.ts`.
-- Persisted-project or websocket event compatibility changes must ship with synchronized frontend updates.
+- Projection route additions must return backend-owned read models and must not imply that frontend stores own durable state.

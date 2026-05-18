@@ -2,7 +2,7 @@ use eidetic_core::contracts::{
     ChangeEvent, ChangeEventId, CommandEnvelope, CommandId, FieldDelta, FieldValue, ObjectKind,
     ObjectRevision, ObjectRevisionId, RevisionOperation,
 };
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 
@@ -86,6 +86,21 @@ pub(crate) fn record_change<T>(
 where
     T: Serialize,
 {
+    record_change_with(conn, command, payload_type, event, revisions, |_| Ok(()))
+}
+
+pub(crate) fn record_change_with<T, F>(
+    conn: &mut Connection,
+    command: &CommandEnvelope<T>,
+    payload_type: &str,
+    event: &ChangeEvent,
+    revisions: &[ObjectRevision],
+    apply_current_state: F,
+) -> Result<RecordChangeOutcome, HistoryStoreError>
+where
+    T: Serialize,
+    F: FnOnce(&Transaction<'_>) -> Result<(), HistoryStoreError>,
+{
     let payload_json = serde_json::to_string(&command.payload)?;
     let tx = conn.transaction()?;
     if let Some(existing) = existing_command_signature(&tx, command.id)? {
@@ -141,6 +156,7 @@ where
         }
     }
 
+    apply_current_state(&tx)?;
     tx.commit()?;
     Ok(RecordChangeOutcome::Recorded)
 }

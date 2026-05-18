@@ -5,7 +5,7 @@ use super::FieldValue;
 macro_rules! non_empty_string_id {
     ($name:ident) => {
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-        #[serde(transparent)]
+        #[serde(try_from = "String", into = "String")]
         pub struct $name(String);
 
         impl $name {
@@ -27,6 +27,12 @@ macro_rules! non_empty_string_id {
 
             fn try_from(value: String) -> Result<Self, Self::Error> {
                 Self::new(value)
+            }
+        }
+
+        impl From<$name> for String {
+            fn from(value: $name) -> Self {
+                value.0
             }
         }
     };
@@ -107,6 +113,30 @@ pub struct BibleGraphNode {
     pub system_owned: bool,
     #[serde(default)]
     pub sort_order: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CreateBibleGraphNodeCommand {
+    pub node_id: BibleGraphNodeId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_id: Option<BibleGraphNodeId>,
+    pub schema_key: BibleGraphSchemaKey,
+    pub name: String,
+    #[serde(default)]
+    pub sort_order: u32,
+}
+
+impl CreateBibleGraphNodeCommand {
+    pub fn into_node(self) -> BibleGraphNode {
+        BibleGraphNode {
+            id: self.node_id,
+            parent_id: self.parent_id,
+            schema_key: self.schema_key,
+            name: self.name,
+            system_owned: false,
+            sort_order: self.sort_order,
+        }
+    }
 }
 
 impl BibleGraphNode {
@@ -241,6 +271,17 @@ mod tests {
     }
 
     #[test]
+    fn identifiers_reject_empty_deserialized_values() {
+        let error = serde_json::from_str::<BibleGraphNodeId>(r#""  ""#).unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("BibleGraphNodeId must not be empty")
+        );
+    }
+
+    #[test]
     fn detail_projection_round_trips_without_json_canonical_fields() {
         let projection = BibleNodeDetailProjection {
             node: BibleGraphNode {
@@ -284,5 +325,21 @@ mod tests {
         let round_trip: BibleNodeDetailProjection = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, projection);
+    }
+
+    #[test]
+    fn create_node_command_round_trips_with_validated_ids() {
+        let command = CreateBibleGraphNodeCommand {
+            node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+            parent_id: Some(CanonicalBibleRoot::Characters.node_id()),
+            schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+            name: "Ada".to_string(),
+            sort_order: 5,
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let round_trip: CreateBibleGraphNodeCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, command);
     }
 }

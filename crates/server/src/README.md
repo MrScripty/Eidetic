@@ -12,6 +12,10 @@ This directory contains the local Axum host for Eidetic: route registration, per
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |
+| `bible_graph_store.rs` | Typed SQLite rows and projection reads for canonical story-bible graph nodes. |
+| `bible_graph_store_tests.rs` | Focused graph persistence and projection-envelope tests. |
+| `bible_graph_command.rs` | Validated story-bible graph node command handler with transactional history writes. |
+| `bible_graph_command_tests.rs` | Focused graph command tests for create, idempotency, conflicts, and validation behavior. |
 | `object_field_command.rs` | Validated field update command handler over history storage and projection rebuilds. |
 | `object_field_command_tests.rs` | Focused command-path tests for set, clear, duplicate, and validation behavior. |
 | `revision_projection.rs` | Read-side field projection rebuilds from object revision history. |
@@ -45,7 +49,7 @@ Keep transport, persistence, and realtime coordination in the server crate while
 - `persistence.rs` or `ydoc.rs` gains another unrelated concern.
 
 ## Dependencies
-**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `diffusion/`, `sqlite.rs`, `history_store.rs`, `object_field_command.rs`, `revision_projection.rs`.
+**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `diffusion/`, `sqlite.rs`, `history_store.rs`, `bible_graph_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
 **External:** `axum`, `tower-http`, `tokio`, `rusqlite`, `yrs`, `pyo3`, `reqwest`.
 
 ## Related ADRs
@@ -63,4 +67,4 @@ use crate::routes;
 
 ## Structured Producer Contract
 - This directory produces persisted SQLite project data, Y.Doc blobs, and JSON payloads consumed by the UI.
-- Schema or payload changes must preserve compatibility with saved projects or ship with synchronized migrations and client updates.
+- Refactor-era schema and payload changes are allowed to break old project data only when the projection architecture plan explicitly owns that deletion.

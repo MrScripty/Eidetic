@@ -1,4 +1,6 @@
 mod ai_backends;
+mod bible_graph_command;
+mod bible_graph_store;
 mod diffusion;
 mod embeddings;
 pub mod error;
