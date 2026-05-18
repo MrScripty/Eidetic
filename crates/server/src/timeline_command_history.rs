@@ -5,7 +5,7 @@ use eidetic_core::contracts::{
     ObjectKind, ObjectRevision, RevisionOperation, SetTimelineNodeLockCommand,
     SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
 };
-use eidetic_core::timeline::node::{ContentStatus, StoryLevel};
+use eidetic_core::timeline::node::{ContentStatus, StoryLevel, StoryNode};
 use eidetic_core::timeline::timing::TimeRange;
 use rusqlite::Connection;
 
@@ -377,13 +377,26 @@ pub(crate) fn record_create_timeline_node_history(
             Some(FieldValue::Text(encode_beat_type(beat_type)?)),
         ));
     }
+    let mut node = if let Some(parent_id) = command.payload.parent_id {
+        StoryNode::new_child(
+            command.payload.name.clone(),
+            command.payload.level,
+            range,
+            parent_id,
+        )
+    } else {
+        StoryNode::new(command.payload.name.clone(), command.payload.level, range)
+    };
+    node.id = command.payload.node_id;
+    node.beat_type = command.payload.beat_type.clone();
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.node_create",
         &event,
         &[revision],
+        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &[node]),
     )?)
 }
 

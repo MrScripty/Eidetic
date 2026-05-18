@@ -47,6 +47,34 @@ async fn create_timeline_node_command_returns_timeline_render_projection() {
     }));
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_node = conn
+        .query_row(
+            "SELECT parent_id, level, start_ms, end_ms, name, locked FROM nodes WHERE id = ?1",
+            [node_id.0.to_string()],
+            |row| {
+                Ok((
+                    row.get::<_, Option<String>>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, i64>(3)?,
+                    row.get::<_, String>(4)?,
+                    row.get::<_, i64>(5)?,
+                ))
+            },
+        )
+        .expect("persisted node");
+    assert_eq!(
+        persisted_node,
+        (
+            Some(parent.id.0.to_string()),
+            "Act".to_string(),
+            parent.time_range.start_ms as i64,
+            (parent.time_range.start_ms + 1_000) as i64,
+            "Inserted act".to_string(),
+            0
+        )
+    );
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineNode,
