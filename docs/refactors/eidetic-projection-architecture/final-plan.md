@@ -185,12 +185,14 @@ Completed slices:
 - `feat(ui): add timeline render projection helper` added focused TypeScript DTOs and a typed projection API helper for the backend-owned timeline render read model without changing the existing DOM timeline runtime.
 - `feat(ui): cache timeline render projections` added a discardable frontend projection cache for the backend-owned timeline render model and refreshes it from timeline mutation websocket events for future Bevy host consumption.
 - `feat(ui): derive timeline render models` added a pure projection-to-render-model adapter with normalized timing and clip indexes so a future Bevy host can consume deterministic derived data without owning canonical timeline state.
+- `feat(renderer): add Bevy timeline bridge crate` added an isolated Bevy ECS leaf crate that receives backend timeline render projections and emits validated selection commands without introducing Bevy dependencies into `eidetic-core` or `eidetic-server`.
 
 Discovered issues:
 
 - Commit hooks report `Can't find lefthook in PATH`. Commits succeed, but tooling setup is incomplete and should be fixed before treating hook execution as a verified gate.
 - Baseline `cargo fmt --all -- --check` reports pre-existing formatting drift in server files. Do not mix that repo-wide cleanup into feature slices; either add a dedicated formatting cleanup slice or intentionally defer it with CI expectations updated.
 - `rustfmt` on `crates/server/src/main.rs` can recurse through out-of-line modules and reformat unrelated baseline-drift server files. Until the dedicated formatting cleanup lands, format/check only newly added or intentionally touched Rust files and inspect `git status` before staging.
+- Adding Bevy 0.16.1 to an isolated leaf crate pulled 94 packages into `Cargo.lock`. Keep subsequent renderer features behind the leaf crate/package boundary, avoid default Bevy features unless needed, and run dependency reviews before adding window/render/asset/text features.
 - `cargo test -p eidetic-server history_store` passes but reports pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs`. These warnings block a future `-D warnings` gate and need a cleanup or ownership decision before CI can enforce warning-free server builds.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.
 - The command route currently opens the active SQLite project path per request because `AppState` has no backend-owned database connection owner yet. Before broad route adoption, add an explicit database lifecycle owner with the same concurrency/shutdown discipline as the rest of the backend.

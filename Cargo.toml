@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/core", "crates/server"]
+members = ["crates/core", "crates/server", "crates/bevy_timeline"]
 resolver = "2"
 
 [workspace.package]
