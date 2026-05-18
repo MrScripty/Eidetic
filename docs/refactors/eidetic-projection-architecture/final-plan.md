@@ -137,6 +137,7 @@ Discovered issues:
 
 - Commit hooks report `Can't find lefthook in PATH`. Commits succeed, but tooling setup is incomplete and should be fixed before treating hook execution as a verified gate.
 - Baseline `cargo fmt --all -- --check` reports pre-existing formatting drift in server files. Do not mix that repo-wide cleanup into feature slices; either add a dedicated formatting cleanup slice or intentionally defer it with CI expectations updated.
+- `rustfmt` on `crates/server/src/main.rs` can recurse through out-of-line modules and reformat unrelated baseline-drift server files. Until the dedicated formatting cleanup lands, format/check only newly added or intentionally touched Rust files and inspect `git status` before staging.
 - `cargo test -p eidetic-server history_store` passes but reports pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs`. These warnings block a future `-D warnings` gate and need a cleanup or ownership decision before CI can enforce warning-free server builds.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.
 - The command route currently opens the active SQLite project path per request because `AppState` has no backend-owned database connection owner yet. Before broad route adoption, add an explicit database lifecycle owner with the same concurrency/shutdown discipline as the rest of the backend.
