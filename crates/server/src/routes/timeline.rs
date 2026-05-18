@@ -1,24 +1,18 @@
+use axum::Router;
 use axum::extract::{Path, Query, State};
-use axum::routing::{delete, get, post};
-use axum::{Json, Router};
+use axum::routing::get;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use eidetic_core::story::arc::ArcId;
 use eidetic_core::timeline::node::{NodeId, StoryLevel};
 
 use crate::error::{ApiError, ApiJson, json_value};
-use crate::state::{AppState, ServerEvent};
+use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/timeline", get(get_timeline))
         .route("/timeline/nodes/{id}/children", get(get_children))
-        .route("/timeline/node-arcs", post(tag_node_with_arc))
-        .route(
-            "/timeline/node-arcs/{node_id}/{arc_id}",
-            delete(untag_node_from_arc),
-        )
         .route("/timeline/gaps", get(get_gaps))
 }
 
@@ -43,48 +37,6 @@ async fn get_children(State(state): State<AppState>, Path(id): Path<Uuid>) -> Ap
         }
         None => Err(ApiError::no_project()),
     }
-}
-
-// ─── Node-Arc Tagging ──────────────────────────────────────────────
-
-#[derive(Deserialize)]
-struct TagNodeArcRequest {
-    node_id: Uuid,
-    arc_id: Uuid,
-}
-
-async fn tag_node_with_arc(
-    State(state): State<AppState>,
-    Json(body): Json<TagNodeArcRequest>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    project
-        .timeline
-        .tag_node(NodeId(body.node_id), ArcId(body.arc_id));
-    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-    state.trigger_save();
-    Ok(Json(serde_json::json!({ "ok": true })))
-}
-
-async fn untag_node_from_arc(
-    State(state): State<AppState>,
-    Path((node_id, arc_id)): Path<(Uuid, Uuid)>,
-) -> ApiJson {
-    state.snapshot_for_undo();
-    let mut guard = state.project.lock();
-    let Some(project) = guard.as_mut() else {
-        return Err(ApiError::no_project());
-    };
-
-    project.timeline.untag_node(NodeId(node_id), ArcId(arc_id));
-    let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-    state.trigger_save();
-    Ok(Json(serde_json::json!({ "ok": true })))
 }
 
 // ─── Gaps ──────────────────────────────────────────────────────────
