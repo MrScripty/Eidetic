@@ -273,6 +273,7 @@ Completed slices:
 - `refactor(ui): hydrate arcs from projections` stopped seeding sidebar arc state from the broad project payload during project creation/load and refreshes the backend story arc projection instead.
 - `refactor(ui): remove story arc bridge store` deleted the separate frontend `storyState` arc cache and moved arc sidebar/timeline consumers to the backend story arc projection cache directly.
 - `refactor(ui): remove project arc dto field` removed `Project.arcs` from the frontend project DTO so arc UI cannot accidentally rebuild broad project-payload ownership instead of consuming story arc projections.
+- `feat(ui): expose cached timeline render model` added a projection-store helper that derives the deterministic timeline render model from the cached backend timeline projection for future DOM/Bevy timeline consumers.
 
 Discovered issues:
 

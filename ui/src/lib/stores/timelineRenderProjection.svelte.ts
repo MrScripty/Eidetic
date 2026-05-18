@@ -10,6 +10,10 @@ import {
   splitTimelineNode,
 } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
+import {
+  timelineRenderModelFromProjection,
+  type TimelineRenderModel,
+} from '$lib/timelineRenderModel.js';
 import type {
   ApplyTimelineChildrenCommand,
   CommandId,
@@ -42,6 +46,11 @@ function errorMessage(error: unknown, fallback: string): string {
 
 export function getCachedTimelineRenderProjection(): ProjectionEnvelope<TimelineRenderProjection> | null {
   return timelineRenderProjectionState.projection;
+}
+
+export function getCachedTimelineRenderModel(): TimelineRenderModel | null {
+  const projection = timelineRenderProjectionState.projection;
+  return projection ? timelineRenderModelFromProjection(projection.payload) : null;
 }
 
 export async function refreshTimelineRenderProjection(): Promise<

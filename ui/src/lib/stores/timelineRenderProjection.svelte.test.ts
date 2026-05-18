@@ -23,6 +23,7 @@ import {
   applyTimelineNodeNotesCommand,
   applyTimelineNodeRangeCommand,
   clearTimelineRenderProjection,
+  getCachedTimelineRenderModel,
   getCachedTimelineRenderProjection,
   refreshTimelineRenderProjection,
   timelineRenderProjectionState,
@@ -122,6 +123,24 @@ describe('timeline render projection store', () => {
     expect(timelineRenderProjectionState.error).toBeUndefined();
   });
 
+  it('derives a render model from the cached backend projection', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+
+    const model = getCachedTimelineRenderModel();
+
+    expect(model?.duration_ms).toBe(120_000);
+    expect(model?.tracks[0]?.clip_ids).toEqual(['timeline.clip.node.scene.beach']);
+    expect(model?.clips[0]).toMatchObject({
+      clip_id: 'timeline.clip.node.scene.beach',
+      node_id: 'node.scene.beach',
+      start_ratio: 1_000 / 120_000,
+      end_ratio: 4_000 / 120_000,
+      duration_ms: 3_000,
+    });
+    expect(model?.clip_ids_by_node_id['node.scene.beach']).toBe('timeline.clip.node.scene.beach');
+  });
+
   it('records read errors without replacing an existing projection', async () => {
     getTimelineRenderProjectionMock.mockResolvedValue(projection);
     await refreshTimelineRenderProjection();
@@ -141,6 +160,7 @@ describe('timeline render projection store', () => {
     clearTimelineRenderProjection();
 
     expect(getCachedTimelineRenderProjection()).toBeNull();
+    expect(getCachedTimelineRenderModel()).toBeNull();
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBeUndefined();
   });
