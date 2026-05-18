@@ -1,14 +1,13 @@
 # ui/src/lib/components
 
 ## Purpose
-This directory groups Eidetic’s reusable frontend feature components by UI concern: editor, layout, relationship views, sidebar panels, and timeline rendering.
+This directory groups Eidetic’s reusable frontend feature components by UI concern: editor, layout, sidebar panels, and timeline rendering.
 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
 | `editor/` | Beat editing, script editing, and AI-generation UI. |
 | `layout/` | Application shell, panel layout, and splash/toast chrome. |
-| `relationship/` | Relationship graph and relationship-focused controls. |
 | `sidebar/` | Sidebar panels for arcs, AI config, references, and bible data. |
 | `timeline/` | Timeline rendering and clip-level interaction components. |
 
@@ -30,7 +29,7 @@ Organize components by UI concern and document oversized sub-areas so future spl
 - Oversized components should be split within their feature directories rather than moving responsibilities across unrelated areas.
 
 ## Revisit Triggers
-- A new feature area appears that does not fit the current editor/layout/relationship/sidebar/timeline split.
+- A new feature area appears that does not fit the current editor/layout/sidebar/timeline split.
 
 ## Dependencies
 **Internal:** `ui/src/lib/stores`, `ui/src/lib/types.ts`, `ui/src/routes`.

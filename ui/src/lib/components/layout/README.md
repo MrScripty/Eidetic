@@ -39,7 +39,7 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 - Shell layout responsibilities outgrow a single `AppShell` composition root.
 
 ## Dependencies
-**Internal:** `../editor/*`, `../timeline/*`, `../relationship/*`, `../sidebar/*`, `$lib/types.js`, `$lib/stores/*`.
+**Internal:** `../editor/*`, `../timeline/*`, `../sidebar/*`, `$lib/types.js`, `$lib/stores/*`.
 **External:** Svelte runtime only.
 
 ## Related ADRs

@@ -4,7 +4,6 @@
   import BottomTimelineStack from './BottomTimelineStack.svelte';
   import BeatEditor from '../editor/BeatEditor.svelte';
   import ScriptPanel from '../editor/ScriptPanel.svelte';
-  import RelationshipPanel from '../relationship/RelationshipPanel.svelte';
   import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
   import EntityDetail from '../sidebar/bible/EntityDetail.svelte';
   import { PANEL, mainTimelinePanelHeightPx } from '$lib/types.js';
@@ -116,8 +115,7 @@
   let sidebarOpen = $state(true);
   let editorHeight = $state(300);
   let timelinePreferredHeight = $state(mainTimelinePanelHeightPx());
-  let relationshipPanelOpen = $state(false);
-  let relationshipPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
+  let rightPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
   let windowHeight = $state(0);
 
   const selectedEntity = $derived(
@@ -128,8 +126,7 @@
 
   const selectedGraphNodeId = $derived(bibleState.selectedGraphNodeId);
   const bibleDetailOpen = $derived(selectedEntity !== null || selectedGraphNodeId !== null);
-  /** Right panel is open when graph is toggled OR a bible detail is selected. */
-  const rightPanelOpen = $derived(relationshipPanelOpen || bibleDetailOpen);
+  const rightPanelOpen = $derived(bibleDetailOpen);
   const bottomStackExtraHeight = $derived(
     characterTimelineState.visible ? PANEL.CHARACTER_TIMELINE_HEIGHT_PX : 0,
   );
@@ -202,13 +199,6 @@
           <button class="toolbar-btn" title="Export PDF (Ctrl+Shift+E)" onclick={handleExportPdf}
             >PDF</button
           >
-          <div class="toolbar-sep"></div>
-          <button
-            class="toolbar-btn"
-            class:active={relationshipPanelOpen}
-            title="Toggle relationship graph"
-            onclick={() => (relationshipPanelOpen = !relationshipPanelOpen)}>Graph</button
-          >
         </div>
 
         <div class="editor-panel" style="height: {editorHeight}px">
@@ -227,20 +217,10 @@
           orientation="vertical"
           min={PANEL.MIN_RELATIONSHIP_WIDTH_PX}
           max={PANEL.MAX_RELATIONSHIP_WIDTH_PX}
-          bind:position={relationshipPanelWidth}
+          bind:position={rightPanelWidth}
         />
-        <aside class="right-panel" style="width: {relationshipPanelWidth}px">
-          {#if relationshipPanelOpen}
-            <RelationshipPanel
-              width={relationshipPanelWidth}
-              onclose={() => (relationshipPanelOpen = false)}
-              compact={bibleDetailOpen}
-            />
-          {/if}
+        <aside class="right-panel" style="width: {rightPanelWidth}px">
           {#if selectedGraphNodeId}
-            {#if relationshipPanelOpen}
-              <div class="panel-divider"></div>
-            {/if}
             <div class="entity-detail-panel">
               <BibleGraphNodeDetail
                 nodeId={selectedGraphNodeId}
@@ -249,9 +229,6 @@
             </div>
           {/if}
           {#if selectedEntity}
-            {#if relationshipPanelOpen}
-              <div class="panel-divider"></div>
-            {/if}
             <div class="entity-detail-panel">
               <EntityDetail entity={selectedEntity} onback={() => selectEntity(null)} />
             </div>
@@ -277,7 +254,7 @@
   {#if projectState.current}
     <div
       class="ai-indicator"
-      style="right: {rightPanelOpen ? relationshipPanelWidth + 16 : 12}px"
+      style="right: {rightPanelOpen ? rightPanelWidth + 16 : 12}px"
       title={editorState.aiStatus?.connected
         ? `AI: ${editorState.aiStatus.model ?? 'connected'}`
         : 'AI: disconnected'}
@@ -353,12 +330,6 @@
     cursor: default;
   }
 
-  .toolbar-btn.active {
-    background: var(--color-bg-hover);
-    color: var(--color-accent);
-    border-color: var(--color-border-default);
-  }
-
   .toolbar-sep {
     width: 1px;
     height: 16px;
@@ -399,12 +370,6 @@
     border-left: 1px solid var(--color-border-default);
     flex-shrink: 0;
     overflow: hidden;
-  }
-
-  .panel-divider {
-    height: 1px;
-    background: var(--color-border-default);
-    flex-shrink: 0;
   }
 
   .entity-detail-panel {
