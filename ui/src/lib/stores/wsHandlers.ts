@@ -106,9 +106,6 @@ export function setupWsHandlers(ws: WsClient) {
       );
     }),
 
-    ws.on('entity_extraction_complete', (_data) => {
-      listEntities().then((entities) => (storyState.entities = entities));
-    }),
   ];
 
   return () => {

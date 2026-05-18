@@ -449,12 +449,6 @@ export type ServerMessage =
   | { type: 'project_mutated' }
   | { type: 'bible_changed' }
   | { type: 'script_changed' }
-  | {
-      type: 'entity_extraction_complete';
-      node_id: string;
-      new_entity_count: number;
-      snapshot_count: number;
-    }
   | { type: 'diffusion_progress'; node_id: string; step: number; total_steps: number }
   | { type: 'diffusion_complete'; node_id: string }
   | { type: 'diffusion_error'; node_id: string; error: string };

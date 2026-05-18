@@ -241,6 +241,7 @@ Completed slices:
 - `refactor(ui): route node notes through commands` moved BeatEditor debounced note saves onto backend timeline node notes commands instead of the legacy node notes route.
 - `refactor(script): remove legacy node notes route` removed the unused frontend notes helper and legacy node notes mutation route after notes moved to timeline commands.
 - `refactor(ui): remove legacy relationship graph panel` removed the old 2D SVG relationship graph panel and toolbar toggle that rendered directly from broad legacy entity state.
+- `refactor(ui): remove legacy extraction websocket event` removed the stale `entity_extraction_complete` websocket contract and handler from the deleted extraction workflow.
 
 Discovered issues:
 
