@@ -5,7 +5,9 @@ import type {
   CommandEnvelope,
   CreateBibleGraphNodeCommand,
   CreateTimelineNodeCommand,
+  CreateTimelineRelationshipCommand,
   DeleteTimelineNodeCommand,
+  DeleteTimelineRelationshipCommand,
   EnsureCanonicalBibleRootsCommand,
   ObjectFieldCommandResponse,
   ScriptDocumentCommandResponse,
@@ -200,6 +202,36 @@ export function applyTimelineChildren(
   };
 
   return request('/commands/timeline/apply-children', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function createTimelineRelationship(
+  payload: CreateTimelineRelationshipCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<CreateTimelineRelationshipCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/create-relationship', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function deleteTimelineRelationship(
+  payload: DeleteTimelineRelationshipCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<DeleteTimelineRelationshipCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/delete-relationship', {
     method: 'POST',
     body: JSON.stringify(command),
   });

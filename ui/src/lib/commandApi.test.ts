@@ -4,7 +4,9 @@ import {
   applyTimelineChildren,
   createBibleGraphNode,
   createTimelineNode,
+  createTimelineRelationship,
   deleteTimelineNode,
+  deleteTimelineRelationship,
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
@@ -164,6 +166,109 @@ describe('command api helpers', () => {
             node_id: 'node.scene.beach',
             start_ms: 1_000,
             end_ms: 4_000,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends timeline create relationship commands and returns timeline render projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [],
+          clips: [],
+          relationships: [
+            {
+              relationship_id: 'relationship.theme',
+              from_node_id: 'node.scene.beach',
+              to_node_id: 'node.scene.arrival',
+              relationship_type: 'Thematic',
+            },
+          ],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createTimelineRelationship(
+        {
+          relationship_id: 'relationship.theme',
+          from_node_id: 'node.scene.beach',
+          to_node_id: 'node.scene.arrival',
+          relationship_type: 'Thematic',
+        },
+        'command-timeline-relationship-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/timeline/create-relationship',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-timeline-relationship-1',
+          payload: {
+            relationship_id: 'relationship.theme',
+            from_node_id: 'node.scene.beach',
+            to_node_id: 'node.scene.arrival',
+            relationship_type: 'Thematic',
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends timeline delete relationship commands and returns timeline render projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [],
+          clips: [],
+          relationships: [],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      deleteTimelineRelationship(
+        {
+          relationship_id: 'relationship.theme',
+        },
+        'command-timeline-relationship-delete-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/timeline/delete-relationship',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-timeline-relationship-delete-1',
+          payload: {
+            relationship_id: 'relationship.theme',
           },
         }),
       }),

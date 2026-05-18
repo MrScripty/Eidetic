@@ -2,6 +2,8 @@ import type {
   BeatType,
   CommandOutcome,
   ProjectionEnvelope,
+  RelationshipId,
+  RelationshipType,
   StoryLevel,
   TimelineRenderProjection,
 } from './types.js';
@@ -42,6 +44,17 @@ export interface ApplyTimelineChildCommand {
   outline: string;
   weight: number;
   beat_type: BeatType | null;
+}
+
+export interface CreateTimelineRelationshipCommand {
+  relationship_id: RelationshipId;
+  from_node_id: string;
+  to_node_id: string;
+  relationship_type: RelationshipType;
+}
+
+export interface DeleteTimelineRelationshipCommand {
+  relationship_id: RelationshipId;
 }
 
 export interface TimelineCommandResponse {
