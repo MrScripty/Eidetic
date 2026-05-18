@@ -1,4 +1,4 @@
-import type { CommandOutcome, ProjectionEnvelope } from './types.js';
+import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
 
 export type ScriptDocumentId = string;
 export type ScriptSegmentId = string;

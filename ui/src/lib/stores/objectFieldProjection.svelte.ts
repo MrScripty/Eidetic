@@ -7,7 +7,7 @@ import type {
   ObjectKind,
   ProjectionEnvelope,
   SetObjectFieldCommand,
-} from '../types.js';
+} from '../projectionTypes.js';
 
 export interface ObjectFieldProjectionKey {
   object_kind: ObjectKind;

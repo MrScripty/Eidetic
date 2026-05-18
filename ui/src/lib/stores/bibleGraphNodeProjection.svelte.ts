@@ -15,13 +15,12 @@ import type {
   BibleGraphNodeId,
   BibleGraphNodeListProjection,
   BibleNodeDetailProjection,
-  CommandId,
   CreateBibleGraphNodeCommand,
-  ProjectionEnvelope,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
   SetBibleGraphSnapshotFieldCommand,
 } from '../types.js';
+import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 
 export interface BibleGraphNodeProjectionKey {
   node_id: BibleGraphNodeId;

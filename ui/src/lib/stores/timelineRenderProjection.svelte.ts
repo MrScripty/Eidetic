@@ -16,12 +16,10 @@ import {
 } from '$lib/timelineRenderModel.js';
 import type {
   ApplyTimelineChildrenCommand,
-  CommandId,
   CreateTimelineNodeCommand,
   CreateTimelineRelationshipCommand,
   DeleteTimelineNodeCommand,
   DeleteTimelineRelationshipCommand,
-  ProjectionEnvelope,
   SetTimelineNodeLockCommand,
   SetTimelineNodeNotesCommand,
   SetTimelineNodeRangeCommand,
@@ -29,6 +27,7 @@ import type {
   TimelineCommandResponse,
   TimelineRenderProjection,
 } from '../types.js';
+import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 
 export const timelineRenderProjectionState = $state<{
   projection: ProjectionEnvelope<TimelineRenderProjection> | null;

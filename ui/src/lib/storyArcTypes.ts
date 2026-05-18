@@ -1,8 +1,5 @@
-import type {
-  ArcId,
-  CommandOutcome,
-  ProjectionEnvelope,
-} from './types.js';
+import type { ArcId } from './types.js';
+import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
 
 export type { ArcId } from './types.js';
 

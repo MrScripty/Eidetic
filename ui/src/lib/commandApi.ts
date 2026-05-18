@@ -2,19 +2,16 @@ import type {
   BibleGraphNodeCommandResponse,
   BibleGraphRootsCommandResponse,
   ApplyTimelineChildrenCommand,
-  CommandEnvelope,
   CreateBibleGraphNodeCommand,
   CreateTimelineRelationshipCommand,
   CreateTimelineNodeCommand,
   DeleteTimelineNodeCommand,
   DeleteTimelineRelationshipCommand,
   EnsureCanonicalBibleRootsCommand,
-  ObjectFieldCommandResponse,
   ScriptDocumentCommandResponse,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
   SetBibleGraphSnapshotFieldCommand,
-  SetObjectFieldCommand,
   SetScriptBlockCommand,
   SetScriptLockCommand,
   SetTimelineNodeLockCommand,
@@ -23,6 +20,11 @@ import type {
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
 } from './types.js';
+import type {
+  CommandEnvelope,
+  ObjectFieldCommandResponse,
+  SetObjectFieldCommand,
+} from './projectionTypes.js';
 import type {
   CreateStoryArcCommand,
   DeleteStoryArcCommand,

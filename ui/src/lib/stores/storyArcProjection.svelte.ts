@@ -1,6 +1,6 @@
 import { createStoryArc, deleteStoryArc, setStoryArcMetadata } from '$lib/commandApi.js';
 import { getStoryArcListProjection } from '$lib/projectionApi.js';
-import type { CommandId, ProjectionEnvelope } from '$lib/types.js';
+import type { CommandId, ProjectionEnvelope } from '$lib/projectionTypes.js';
 import type {
   CreateStoryArcCommand,
   DeleteStoryArcCommand,

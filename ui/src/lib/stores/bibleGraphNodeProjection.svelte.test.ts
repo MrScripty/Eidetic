@@ -4,7 +4,8 @@ import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
 } from '$lib/projectionApi.js';
-import type { BibleNodeDetailProjection, ProjectionEnvelope } from '../types.js';
+import type { ProjectionEnvelope } from '../projectionTypes.js';
+import type { BibleNodeDetailProjection } from '../types.js';
 import {
   bibleGraphNodeProjectionState,
   clearBibleGraphNodeListProjection,

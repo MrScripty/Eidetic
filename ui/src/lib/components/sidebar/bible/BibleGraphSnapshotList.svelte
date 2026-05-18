@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { BibleGraphSnapshotProjection, FieldValue } from '$lib/types.js';
+  import type { FieldValue } from '$lib/projectionTypes.js';
+  import type { BibleGraphSnapshotProjection } from '$lib/types.js';
 
   let {
     snapshots,

@@ -4,8 +4,8 @@
     BibleGraphField,
     BibleGraphNodeId,
     BibleGraphPartProjection,
-    FieldValue,
   } from '$lib/types.js';
+  import type { FieldValue } from '$lib/projectionTypes.js';
 
   let {
     nodeId,

@@ -1,4 +1,4 @@
-import type { CommandOutcome, FieldValue, ProjectionEnvelope } from './types.js';
+import type { CommandOutcome, FieldValue, ProjectionEnvelope } from './projectionTypes.js';
 
 export type BibleGraphNodeId = string;
 export type BibleGraphPartId = string;

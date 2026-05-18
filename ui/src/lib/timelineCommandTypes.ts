@@ -1,12 +1,11 @@
 import type {
   BeatType,
-  CommandOutcome,
-  ProjectionEnvelope,
   RelationshipId,
   RelationshipType,
   StoryLevel,
   TimelineRenderProjection,
 } from './types.js';
+import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
 
 export interface SetTimelineNodeRangeCommand {
   node_id: string;

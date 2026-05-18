@@ -1,6 +1,6 @@
 import { getBibleGraphSchemaListProjection } from '$lib/projectionApi.js';
 import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
-import type { ProjectionEnvelope } from '../types.js';
+import type { ProjectionEnvelope } from '../projectionTypes.js';
 
 export const bibleGraphSchemaProjectionState = $state<{
   projection: ProjectionEnvelope<BibleGraphSchemaListProjection> | null;

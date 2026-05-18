@@ -1,8 +1,7 @@
 import { setScriptBlock, setScriptLock } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
+import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 import type {
-  CommandId,
-  ProjectionEnvelope,
   ScriptDocumentId,
   ScriptDocumentProjection,
   ScriptDocumentCommandResponse,
