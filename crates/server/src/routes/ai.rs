@@ -3,7 +3,7 @@ use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use futures::StreamExt;
 use serde::Deserialize;
-use std::path::{Path as FsPath, PathBuf};
+use std::path::PathBuf;
 use uuid::Uuid;
 
 use crate::ai_backends::Backend;
@@ -11,8 +11,6 @@ use crate::embeddings::EmbeddingClient;
 use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
 use crate::script_document_command;
 use crate::state::{AppState, BackendType, ServerEvent};
-use crate::story_arc_store;
-use eidetic_core::Project;
 use eidetic_core::ai::backend::{ChildPlan, ChildProposal, RagChunk};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{
@@ -44,14 +42,7 @@ async fn generate(
 
     // Validate and build the request while holding the project lock briefly.
     let (request, project_path) = {
-        let Some(project_path) = state.project_path.lock().clone() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
-        };
-        let project_guard = state.project.lock();
-        let Some(project) = project_guard.as_ref() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
-        };
-        let project = match project_with_sqlite_arcs(project, &project_path) {
+        let (project, project_path) = match active_sqlite_project(&state).await {
             Ok(project) => project,
             Err(error) => return Json(serde_json::json!({ "error": error })),
         };
@@ -133,14 +124,7 @@ async fn generate_children(
     let node_id = NodeId(body.node_id);
 
     let request = {
-        let Some(project_path) = state.project_path.lock().clone() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
-        };
-        let project_guard = state.project.lock();
-        let Some(project) = project_guard.as_ref() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
-        };
-        let project = match project_with_sqlite_arcs(project, &project_path) {
+        let (project, _) = match active_sqlite_project(&state).await {
             Ok(project) => project,
             Err(error) => return Json(serde_json::json!({ "error": error })),
         };
@@ -241,9 +225,9 @@ async fn generate_batch(
 
     // Collect child node IDs in order.
     let child_ids: Vec<Uuid> = {
-        let project_guard = state.project.lock();
-        let Some(project) = project_guard.as_ref() else {
-            return Json(serde_json::json!({ "error": "no project loaded" }));
+        let (project, _) = match active_sqlite_project(&state).await {
+            Ok(project) => project,
+            Err(error) => return Json(serde_json::json!({ "error": error })),
         };
 
         project
@@ -265,23 +249,13 @@ async fn generate_batch(
             let child_id = NodeId(*child_uuid);
 
             let (request, project_path) = {
-                let Some(project_path) = state_clone.project_path.lock().clone() else {
-                    let _ = state_clone.events_tx.send(ServerEvent::GenerationError {
-                        node_id: *child_uuid,
-                        error: "no project loaded".to_string(),
-                    });
-                    continue;
-                };
-                let project_guard = state_clone.project.lock();
-                let Some(project) = project_guard.as_ref() else {
-                    break;
-                };
-                let project = match project_with_sqlite_arcs(project, &project_path) {
+                let (project, project_path) = match active_sqlite_project(&state_clone).await {
                     Ok(project) => project,
                     Err(error) => {
-                        tracing::error!(
-                            "Failed to hydrate story arcs for child node {child_uuid}: {error}"
-                        );
+                        let _ = state_clone.events_tx.send(ServerEvent::GenerationError {
+                            node_id: *child_uuid,
+                            error,
+                        });
                         continue;
                     }
                 };
@@ -675,14 +649,8 @@ async fn preview_context(
 ) -> Json<serde_json::Value> {
     let node_id = NodeId(id);
 
-    let Some(project_path) = state.project_path.lock().clone() else {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
-    };
-    if state.project.lock().is_none() {
-        return Json(serde_json::json!({ "error": "no project loaded" }));
-    }
-    let project = match crate::persistence::load_project(&project_path).await {
-        Ok((project, _)) => project,
+    let (project, _) = match active_sqlite_project(&state).await {
+        Ok(project) => project,
         Err(error) => return Json(serde_json::json!({ "error": error })),
     };
 
@@ -699,16 +667,17 @@ async fn preview_context(
     }))
 }
 
-fn project_with_sqlite_arcs(project: &Project, path: &FsPath) -> Result<Project, String> {
-    let conn = crate::sqlite::open_write_connection(path)
-        .map_err(|error| format!("open project database: {error}"))?;
-    story_arc_store::create_schema(&conn)
-        .map_err(|error| format!("create story arc schema: {error}"))?;
-    let arcs =
-        story_arc_store::load_arcs(&conn).map_err(|error| format!("load story arcs: {error}"))?;
-    let mut project = project.clone();
-    project.arcs = arcs;
-    Ok(project)
+async fn active_sqlite_project(
+    state: &AppState,
+) -> Result<(eidetic_core::Project, PathBuf), String> {
+    let Some(project_path) = state.project_path.lock().clone() else {
+        return Err("no project loaded".to_string());
+    };
+    if state.project.lock().is_none() {
+        return Err("no project loaded".to_string());
+    }
+    let (project, _) = crate::persistence::load_project(&project_path).await?;
+    Ok((project, project_path))
 }
 
 #[cfg(test)]
