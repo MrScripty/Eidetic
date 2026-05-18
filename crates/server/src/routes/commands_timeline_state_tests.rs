@@ -215,6 +215,18 @@ async fn timeline_node_notes_command_returns_timeline_render_projection() {
     assert_eq!(clip["content_status"], "NotesOnly");
 
     let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_content = conn
+        .query_row(
+            "SELECT content_json FROM nodes WHERE id = ?1",
+            [node.id.0.to_string()],
+            |row| row.get::<_, String>(0),
+        )
+        .expect("persisted node content");
+    let persisted_content: serde_json::Value =
+        serde_json::from_str(&persisted_content).expect("content json");
+    assert_eq!(persisted_content["notes"], "New outline");
+    assert_eq!(persisted_content["status"], "NotesOnly");
+
     let revisions = crate::history_store::load_revisions_for_object(
         &conn,
         ObjectKind::TimelineNode,

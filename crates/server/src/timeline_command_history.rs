@@ -155,13 +155,17 @@ pub(crate) fn record_set_timeline_node_notes_history(
             Some(FieldValue::Text(encode_content_status(new_status))),
         ));
     }
+    let mut updated_node = node.clone();
+    updated_node.content.notes = command.payload.notes.clone();
+    updated_node.content.status = new_status;
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.node_notes",
         &event,
         &[revision],
+        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &[updated_node]),
     )?)
 }
 
