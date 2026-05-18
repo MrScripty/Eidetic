@@ -18,7 +18,26 @@ pub(crate) fn upsert_relationship_in_transaction(
     relationship: &Relationship,
 ) -> Result<(), HistoryStoreError> {
     tx.execute_batch(TIMELINE_RELATIONSHIP_SCHEMA_SQL)?;
+    upsert_relationship(tx, relationship)
+}
 
+pub(crate) fn upsert_relationships_in_transaction(
+    tx: &Transaction<'_>,
+    relationships: &[Relationship],
+) -> Result<(), HistoryStoreError> {
+    tx.execute_batch(TIMELINE_RELATIONSHIP_SCHEMA_SQL)?;
+
+    for relationship in relationships {
+        upsert_relationship(tx, relationship)?;
+    }
+
+    Ok(())
+}
+
+fn upsert_relationship(
+    tx: &Transaction<'_>,
+    relationship: &Relationship,
+) -> Result<(), HistoryStoreError> {
     let relationship_type = serde_json::to_string(&relationship.relationship_type)?;
     tx.execute(
         "INSERT INTO relationships (id, from_node_id, to_node_id, relationship_type)

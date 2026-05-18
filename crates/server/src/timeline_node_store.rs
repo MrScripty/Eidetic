@@ -1,5 +1,4 @@
-use eidetic_core::timeline::node::NodeId;
-use eidetic_core::timeline::node::StoryNode;
+use eidetic_core::timeline::node::{NodeArc, NodeId, StoryNode};
 use rusqlite::{Transaction, params};
 
 use crate::history_store::HistoryStoreError;
@@ -92,6 +91,26 @@ pub(crate) fn delete_nodes_in_transaction(
             [node_id.0.to_string()],
         )?;
         tx.execute("DELETE FROM nodes WHERE id = ?1", [node_id.0.to_string()])?;
+    }
+
+    Ok(())
+}
+
+pub(crate) fn replace_node_arcs_in_transaction(
+    tx: &Transaction<'_>,
+    node_arcs: &[NodeArc],
+) -> Result<(), HistoryStoreError> {
+    tx.execute_batch(TIMELINE_NODE_SCHEMA_SQL)?;
+    tx.execute("DELETE FROM node_arcs", [])?;
+
+    for node_arc in node_arcs {
+        tx.execute(
+            "INSERT INTO node_arcs (node_id, arc_id) VALUES (?1, ?2)",
+            params![
+                node_arc.node_id.0.to_string(),
+                node_arc.arc_id.0.to_string()
+            ],
+        )?;
     }
 
     Ok(())

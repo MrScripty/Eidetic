@@ -13,6 +13,8 @@ use crate::timeline_command::TimelineCommandError;
 use crate::timeline_command_history_codec::{
     encode_arc_ids, encode_beat_type, encode_content_status, encode_story_level,
 };
+use crate::timeline_node_store;
+use crate::timeline_relationship_store;
 
 pub(crate) fn record_split_timeline_node_history(
     conn: &mut Connection,
@@ -82,13 +84,29 @@ pub(crate) fn record_split_timeline_node_history(
             )?);
         }
     }
+    let mut next_timeline = project.timeline.clone();
+    next_timeline.split_node(
+        command.payload.node_id,
+        command.payload.at_ms,
+        command.payload.left_node_id,
+        command.payload.right_node_id,
+    )?;
 
-    Ok(history_store::record_change(
+    Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.node_split",
         &event,
         &revisions,
+        |tx| {
+            timeline_node_store::delete_nodes_in_transaction(tx, &[command.payload.node_id])?;
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
+            timeline_node_store::replace_node_arcs_in_transaction(tx, &next_timeline.node_arcs)?;
+            timeline_relationship_store::upsert_relationships_in_transaction(
+                tx,
+                &next_timeline.relationships,
+            )
+        },
     )?)
 }
 
