@@ -17,9 +17,12 @@
   import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
   import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/types.js';
   import type { TimelineGap, StoryLevel } from '$lib/types.js';
-  import { createRelationship, getGaps, removeTrack } from '$lib/api.js';
+  import { getGaps, removeTrack } from '$lib/api.js';
   import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
-  import { applyTimelineNodeRangeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import {
+    applyCreateTimelineRelationshipCommand,
+    applyTimelineNodeRangeCommand,
+  } from '$lib/stores/timelineRenderProjection.svelte.js';
 
   let gaps = $state<TimelineGap[]>([]);
   let scrollbarEl: HTMLDivElement | undefined = $state();
@@ -212,7 +215,12 @@
           const nodeRight = timeToX(node.time_range.end_ms) - timelineState.scrollX;
           const bounds = clipEl.getBoundingClientRect();
           if (Math.abs(bounds.width - (nodeRight - nodeLeft)) < 10) {
-            await createRelationship(connectionDrag.fromNodeId, node.id, 'Causal');
+            await applyCreateTimelineRelationshipCommand({
+              relationship_id: crypto.randomUUID(),
+              from_node_id: connectionDrag.fromNodeId,
+              to_node_id: node.id,
+              relationship_type: 'Causal',
+            });
             connectionDrag.fromNodeId = null;
             return;
           }

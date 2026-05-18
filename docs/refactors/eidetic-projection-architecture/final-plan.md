@@ -223,6 +223,7 @@ Completed slices:
 - `feat(server): add timeline relationship commands` added backend command routes for creating and deleting timeline relationships, returning updated timeline render projections and covering invalid endpoints/unknown relationship IDs.
 - `feat(ui): add timeline relationship command helpers` added focused TypeScript command DTOs and frontend API helpers for backend-confirmed relationship create/delete commands.
 - `feat(ui): cache timeline relationship projections` routed relationship create/delete command responses into the timeline render projection cache without optimistic local patching.
+- `refactor(ui): route relationship creation through commands` moved timeline connection-drag relationship creation onto backend relationship commands instead of the legacy relationship route.
 
 Discovered issues:
 
