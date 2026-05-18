@@ -16,7 +16,6 @@ import type {
   StoryNode,
   NodeContent,
   ChildPlan,
-  ChildProposal,
   Relationship,
   ArcType,
   RelationshipType,
@@ -200,16 +199,6 @@ export function getTimeline(): Promise<Timeline> {
 
 export function getNodeChildren(id: string): Promise<StoryNode[]> {
   return request(`/timeline/nodes/${id}/children`);
-}
-
-export function applyChildren(
-  nodeId: string,
-  children: ChildProposal[],
-): Promise<{ ok: boolean; children: StoryNode[] }> {
-  return request(`/timeline/nodes/${nodeId}/apply-children`, {
-    method: 'POST',
-    body: JSON.stringify({ children }),
-  });
 }
 
 // --- Node content ---
