@@ -18,7 +18,6 @@
   import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/types.js';
   import type { TimelineGap, StoryLevel } from '$lib/types.js';
   import { getGaps } from '$lib/api.js';
-  import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
   import {
     applyCreateTimelineRelationshipCommand,
     applyTimelineNodeRangeCommand,
@@ -116,14 +115,6 @@
         skipInInput: true,
         action: () => {
           timelineState.snapping = !timelineState.snapping;
-        },
-      }),
-      registerShortcut({
-        key: 'c',
-        description: 'Toggle character timeline',
-        skipInInput: true,
-        action: () => {
-          characterTimelineState.visible = !characterTimelineState.visible;
         },
       }),
       registerShortcut({

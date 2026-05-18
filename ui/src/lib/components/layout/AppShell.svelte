@@ -6,7 +6,6 @@
   import ScriptPanel from '../editor/ScriptPanel.svelte';
   import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
   import { PANEL, mainTimelinePanelHeightPx } from '$lib/types.js';
-  import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
   import { projectState } from '$lib/stores/project.svelte.js';
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
@@ -119,17 +118,11 @@
   const selectedGraphNodeId = $derived(bibleState.selectedGraphNodeId);
   const bibleDetailOpen = $derived(selectedGraphNodeId !== null);
   const rightPanelOpen = $derived(bibleDetailOpen);
-  const bottomStackExtraHeight = $derived(
-    characterTimelineState.visible ? PANEL.CHARACTER_TIMELINE_HEIGHT_PX : 0,
-  );
   const maxTimelineHeight = $derived.by(() => {
     if (windowHeight <= 0) return Infinity;
     return Math.max(
       PANEL.MIN_TIMELINE_HEIGHT_PX,
-      windowHeight -
-        PANEL.MIN_UPPER_WORKSPACE_HEIGHT_PX -
-        PANEL.RESIZER_HEIGHT_PX -
-        bottomStackExtraHeight,
+      windowHeight - PANEL.MIN_UPPER_WORKSPACE_HEIGHT_PX - PANEL.RESIZER_HEIGHT_PX,
     );
   });
   const timelineHeight = $derived(

@@ -245,6 +245,7 @@ Completed slices:
 - `refactor(ui): remove legacy entity detail panel` removed stale legacy entity selection state and unused entity detail/development timeline components after bible details moved to graph projections.
 - `refactor(ui): remove unused legacy entity helpers` removed unused frontend helpers for legacy entity CRUD, snapshots, relations, node-ref add, and resolve-at-time APIs after graph projection UI replacement.
 - `refactor(server): remove unused legacy entity routes` removed unused legacy entity CRUD, snapshot, relation, node-ref add, and resolve-at-time routes after graph projection replacement, leaving only active legacy entity read/unlink paths.
+- `refactor(ui): remove legacy character timeline` removed the optional character progression lane, toolbar toggle, shortcut, transient store, and layout budget that rendered from broad legacy entity state instead of backend-owned projections.
 
 Discovered issues:
 

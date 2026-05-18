@@ -345,8 +345,6 @@ export const TIMELINE = {
   SCROLLBAR_HEIGHT_PX: 13,
   /** Visible track count for the default episode template. */
   DEFAULT_VISIBLE_TRACKS: 5,
-  /** Height of the character progression track. */
-  CHARACTER_TRACK_HEIGHT_PX: 40,
   /** Width of track label column. */
   LABEL_WIDTH_PX: 80,
 } as const;
@@ -358,8 +356,6 @@ export const PANEL = {
   MIN_UPPER_WORKSPACE_HEIGHT_PX: 300,
   /** Minimum height of the timeline panel (px). */
   MIN_TIMELINE_HEIGHT_PX: 200,
-  /** Fixed height of the optional character timeline panel (px). */
-  CHARACTER_TIMELINE_HEIGHT_PX: 120,
   /** Height of the horizontal panel resizer row (px). */
   RESIZER_HEIGHT_PX: 6,
   /** Minimum height of the script panel (px). */

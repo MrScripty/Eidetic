@@ -1,16 +1,15 @@
 # ui/src/lib/components/timeline
 
 ## Purpose
-This directory contains the interactive timeline workspace: the main fixed-height timeline, per-level track rows, supporting rulers and structure chrome, relationship overlays, and the optional character timeline.
+This directory contains the interactive timeline workspace: the main fixed-height timeline, per-level track rows, supporting rulers and structure chrome, and relationship overlays.
 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
 | `Timeline.svelte` | Main timeline viewport that coordinates the ruler, relationship lane, track rows, structure bar, horizontal scrollbar, and context menu. |
 | `LevelTrack.svelte` | A single story-level row that renders clips, gaps, and track-local interactions. |
-| `TimelineToolbar.svelte` | Tool, snapping, zoom, and character timeline controls for the main timeline. |
+| `TimelineToolbar.svelte` | Tool, snapping, and zoom controls for the main timeline. |
 | `RelationshipLayer.svelte` | Edge overlays drawn above track rows. |
-| `CharacterTimeline.svelte` | Optional secondary bottom panel for character progression markers. |
 | `TimeRuler.svelte` | Shared top ruler for playhead movement and time labels. |
 
 ## Problem
@@ -37,11 +36,11 @@ Use shared exported layout constants for row and chrome budgets, keep the main t
 
 ## Revisit Triggers
 - Track virtualization becomes necessary for very large projects.
-- The character timeline needs to share the same scrolling surface as the main timeline.
+- Character/world progression returns as a backend-owned projection rather than a legacy entity-derived lane.
 - Track groups, nested lanes, or new chrome layers change the fixed-height budget model.
 
 ## Dependencies
-**Internal:** `$lib/stores/timeline.svelte.js`, `$lib/stores/characterTimeline.svelte.js`, `$lib/api.js`, `$lib/types.js`.
+**Internal:** `$lib/stores/timeline.svelte.js`, `$lib/api.js`, `$lib/types.js`.
 **External:** Svelte runtime and browser SVG/CSS features.
 
 ## Related ADRs
@@ -61,7 +60,6 @@ Use shared exported layout constants for row and chrome budgets, keep the main t
 - `LevelTrack.svelte` expects a `track`, optional `gaps`, and an `onconnectstart` callback from its parent viewport.
 - Consumers should not override row/chrome heights locally; use shared constants/helpers from `$lib/types.js`.
 - Shell/layout consumers are responsible for preserving preferred timeline height across viewport resize and passing only the rendered height budget down to this directory.
-- The optional character timeline is a sibling panel, not part of the main timeline’s scroll surface.
 
 ## Structured Producer Contract
 - Shared timeline layout helpers in `$lib/types.js` are the canonical producer for row and chrome sizing used by this directory.
