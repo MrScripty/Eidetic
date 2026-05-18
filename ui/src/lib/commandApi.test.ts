@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  applyTimelineChildren,
   createBibleGraphNode,
   createTimelineNode,
   deleteTimelineNode,
@@ -372,6 +373,120 @@ describe('command api helpers', () => {
             start_ms: 1_000,
             end_ms: 4_000,
             beat_type: null,
+          },
+        }),
+      }),
+    );
+  });
+
+  it('sends timeline apply children commands and returns timeline render projections', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [
+            {
+              track_id: 'track.scene',
+              level: 'Scene',
+              label: 'Scenes',
+              sort_order: 30,
+              collapsed: false,
+            },
+          ],
+          clips: [
+            {
+              node_id: 'node.scene.first',
+              parent_id: 'node.sequence.opening',
+              track_id: 'track.scene',
+              level: 'Scene',
+              name: 'First child',
+              start_ms: 1_000,
+              end_ms: 2_500,
+              sort_order: 0,
+              locked: false,
+              content_status: 'NotesOnly',
+              beat_type: null,
+              arc_ids: [],
+            },
+            {
+              node_id: 'node.scene.second',
+              parent_id: 'node.sequence.opening',
+              track_id: 'track.scene',
+              level: 'Scene',
+              name: 'Second child',
+              start_ms: 2_500,
+              end_ms: 4_000,
+              sort_order: 1,
+              locked: false,
+              content_status: 'NotesOnly',
+              beat_type: null,
+              arc_ids: [],
+            },
+          ],
+          relationships: [],
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      applyTimelineChildren(
+        {
+          parent_id: 'node.sequence.opening',
+          children: [
+            {
+              node_id: 'node.scene.first',
+              name: 'First child',
+              outline: 'First outline',
+              weight: 1,
+              beat_type: null,
+            },
+            {
+              node_id: 'node.scene.second',
+              name: 'Second child',
+              outline: 'Second outline',
+              weight: 1,
+              beat_type: null,
+            },
+          ],
+        },
+        'command-timeline-children-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/commands/timeline/apply-children',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-timeline-children-1',
+          payload: {
+            parent_id: 'node.sequence.opening',
+            children: [
+              {
+                node_id: 'node.scene.first',
+                name: 'First child',
+                outline: 'First outline',
+                weight: 1,
+                beat_type: null,
+              },
+              {
+                node_id: 'node.scene.second',
+                name: 'Second child',
+                outline: 'Second outline',
+                weight: 1,
+                beat_type: null,
+              },
+            ],
           },
         }),
       }),

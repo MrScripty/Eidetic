@@ -1,6 +1,7 @@
 import type {
   BibleGraphNodeCommandResponse,
   BibleGraphRootsCommandResponse,
+  ApplyTimelineChildrenCommand,
   CommandEnvelope,
   CreateBibleGraphNodeCommand,
   CreateTimelineNodeCommand,
@@ -184,6 +185,21 @@ export function createTimelineNode(
   };
 
   return request('/commands/timeline/create-node', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function applyTimelineChildren(
+  payload: ApplyTimelineChildrenCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<ApplyTimelineChildrenCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/timeline/apply-children', {
     method: 'POST',
     body: JSON.stringify(command),
   });
