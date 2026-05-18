@@ -1,9 +1,10 @@
 use axum::Router;
 use axum::extract::{Query, State};
 use axum::routing::get;
-use eidetic_core::contracts::ProjectionEnvelope;
 use eidetic_core::contracts::{
-    BibleGraphNodeId, BibleGraphNodeListProjection, BibleNodeDetailProjection, ObjectKind,
+    BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
+    BibleNodeDetailProjection, ObjectKind, ProjectionEnvelope,
+    builtin_bible_graph_schema_list_projection,
 };
 use serde::Deserialize;
 
@@ -28,6 +29,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/bible-graph/nodes",
             get(get_bible_graph_node_list_projection),
+        )
+        .route(
+            "/projections/bible-graph/schemas",
+            get(get_bible_graph_schema_list_projection),
         )
 }
 
@@ -83,6 +88,11 @@ async fn get_bible_graph_node_list_projection(State(state): State<AppState>) -> 
     crate::error::json_value(projection)
 }
 
+async fn get_bible_graph_schema_list_projection(State(state): State<AppState>) -> ApiJson {
+    let _ = active_project_path(&state)?;
+    crate::error::json_value(load_bible_schema_list_projection())
+}
+
 fn load_projection_at_path(
     path: std::path::PathBuf,
     object_kind: ObjectKind,
@@ -118,6 +128,10 @@ fn load_bible_node_list_at_path(
         .map_err(|e| ApiError::internal(e.to_string()))?;
     bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
     bible_graph_store::load_node_list_projection_envelope(&conn).map_err(map_history_error)
+}
+
+fn load_bible_schema_list_projection() -> ProjectionEnvelope<BibleGraphSchemaListProjection> {
+    builtin_bible_graph_schema_list_projection()
 }
 
 #[cfg(test)]

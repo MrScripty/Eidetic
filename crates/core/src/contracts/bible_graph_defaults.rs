@@ -1,7 +1,9 @@
 use super::{
     BibleGraphField, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphPart,
     BibleGraphPartId, BibleGraphPartKey, BibleGraphPartProjection, BibleGraphSchemaKey,
+    ProjectionEnvelope,
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BibleGraphSchemaDefault {
@@ -20,6 +22,31 @@ pub struct BibleGraphPartDefault {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BibleGraphFieldDefault {
     pub field_key: &'static str,
+    pub sort_order: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphSchemaListProjection {
+    pub schemas: Vec<BibleGraphSchemaProjection>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphSchemaProjection {
+    pub schema_key: BibleGraphSchemaKey,
+    pub parts: Vec<BibleGraphPartSchemaProjection>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphPartSchemaProjection {
+    pub part_key: BibleGraphPartKey,
+    pub name: String,
+    pub sort_order: u32,
+    pub fields: Vec<BibleGraphFieldSchemaProjection>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphFieldSchemaProjection {
+    pub field_key: BibleGraphFieldKey,
     pub sort_order: u32,
 }
 
@@ -82,6 +109,38 @@ pub fn default_part_projections_for_node(node: &BibleGraphNode) -> Vec<BibleGrap
                 .collect(),
         })
         .collect()
+}
+
+pub fn builtin_bible_graph_schema_list_projection()
+-> ProjectionEnvelope<BibleGraphSchemaListProjection> {
+    ProjectionEnvelope::initial(BibleGraphSchemaListProjection {
+        schemas: BUILTIN_BIBLE_GRAPH_SCHEMAS
+            .iter()
+            .map(|schema| BibleGraphSchemaProjection {
+                schema_key: BibleGraphSchemaKey::new(schema.schema_key)
+                    .expect("default schema keys are non-empty"),
+                parts: schema
+                    .parts
+                    .iter()
+                    .map(|part| BibleGraphPartSchemaProjection {
+                        part_key: BibleGraphPartKey::new(part.part_key)
+                            .expect("default part keys are non-empty"),
+                        name: part.name.to_string(),
+                        sort_order: part.sort_order,
+                        fields: part
+                            .fields
+                            .iter()
+                            .map(|field| BibleGraphFieldSchemaProjection {
+                                field_key: BibleGraphFieldKey::new(field.field_key)
+                                    .expect("default field keys are non-empty"),
+                                sort_order: field.sort_order,
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+            })
+            .collect(),
+    })
 }
 
 fn default_part_id(node: &BibleGraphNode, part: &BibleGraphPartDefault) -> String {
@@ -270,5 +329,22 @@ mod tests {
         assert!(parts[0].part.system_owned);
         assert_eq!(parts[0].fields[1].field_key.as_str(), "tagline");
         assert!(parts[0].fields.iter().all(|field| field.value.is_none()));
+    }
+
+    #[test]
+    fn schema_list_projection_round_trips() {
+        let projection = builtin_bible_graph_schema_list_projection();
+
+        let json = serde_json::to_string(&projection).unwrap();
+        let round_trip: ProjectionEnvelope<BibleGraphSchemaListProjection> =
+            serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, projection);
+        assert_eq!(
+            round_trip.payload.schemas[0].parts[0].fields[1]
+                .field_key
+                .as_str(),
+            "tagline"
+        );
     }
 }

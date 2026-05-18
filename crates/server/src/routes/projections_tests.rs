@@ -254,6 +254,29 @@ async fn bible_graph_node_list_projection_returns_persisted_nodes() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn bible_graph_schema_list_projection_returns_builtin_schemas() {
+    let path = temp_db_path("bible-schema-list");
+    seed_bible_graph_node(&path, "node.character.ada", "Ada");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(bible_schema_list_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 1);
+    assert_eq!(value["payload"]["schemas"][0]["schema_key"], "character");
+    assert_eq!(
+        value["payload"]["schemas"][0]["parts"][0]["fields"][1]["field_key"],
+        "tagline"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_weather_field(path: &PathBuf, weather: &str) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     history_store::create_schema(&conn).unwrap();
@@ -331,6 +354,14 @@ fn bible_node_list_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/bible-graph/nodes")
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn bible_schema_list_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/bible-graph/schemas")
         .body(Body::empty())
         .unwrap()
 }
