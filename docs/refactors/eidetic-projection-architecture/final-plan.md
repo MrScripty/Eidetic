@@ -253,6 +253,7 @@ Completed slices:
 - `refactor(core): stop prompting from legacy bible entities` removed production AI prompt dependence on `Project.bible.entities` so generation waits for a graph-backed AI context projection instead of reading stale legacy bible state.
 - `refactor(core): remove legacy bible prompt helpers` deleted unused legacy bible context gathering and entity prompt-text helpers after AI prompt construction stopped reading `StoryBible.entities`.
 - `refactor(core): remove legacy extraction contract` deleted the orphaned AI extraction trait method and legacy extraction DTOs after extraction routes and side effects were removed.
+- `refactor(server): remove legacy json bible migration` removed the old JSON character-to-entity migration path so legacy JSON loading no longer populates `StoryBible.entities`.
 
 Discovered issues:
 
