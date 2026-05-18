@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BibleGraphNodeId, FieldValue } from '$lib/types.js';
+  import type { BibleGraphNodeId } from '$lib/types.js';
   import {
     getBibleGraphNodeProjectionError,
     getCachedBibleGraphNodeProjection,
@@ -7,6 +7,7 @@
     refreshBibleGraphNodeProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import BibleGraphEdgeList from './BibleGraphEdgeList.svelte';
+  import BibleGraphPartFields from './BibleGraphPartFields.svelte';
 
   let {
     nodeId,
@@ -24,23 +25,6 @@
   $effect(() => {
     void refreshBibleGraphNodeProjection({ node_id: nodeId }).catch(() => {});
   });
-
-  function formatFieldValue(value: FieldValue | null | undefined): string {
-    if (!value) return 'Unset';
-    switch (value.type) {
-      case 'text':
-        return value.value;
-      case 'integer':
-      case 'number':
-        return value.value.toString();
-      case 'bool':
-        return value.value ? 'True' : 'False';
-      case 'object_ref':
-        return `${value.value.kind}: ${value.value.id}`;
-      case 'asset_ref':
-        return value.value;
-    }
-  }
 </script>
 
 <div class="graph-node-detail">
@@ -68,21 +52,7 @@
       </dl>
 
       {#each projection.payload.parts as partProjection (partProjection.part.id)}
-        <section class="part-section">
-          <h3>{partProjection.part.name}</h3>
-          {#if partProjection.fields.length > 0}
-            <dl class="field-list">
-              {#each partProjection.fields as field (field.id)}
-                <div>
-                  <dt>{field.field_key}</dt>
-                  <dd>{formatFieldValue(field.value)}</dd>
-                </div>
-              {/each}
-            </dl>
-          {:else}
-            <p class="muted">No fields</p>
-          {/if}
-        </section>
+        <BibleGraphPartFields nodeId={projection.payload.node.id} {partProjection} />
       {/each}
 
       {#if projection.payload.parts.length === 0}
@@ -152,7 +122,6 @@
   }
 
   h2,
-  h3,
   p {
     margin: 0;
   }
@@ -163,21 +132,13 @@
     font-weight: 600;
   }
 
-  h3 {
-    color: var(--color-text-primary);
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-
-  .metadata,
-  .field-list {
+  .metadata {
     display: grid;
     gap: 8px;
     margin: 12px 0 0;
   }
 
-  .metadata div,
-  .field-list div {
+  .metadata div {
     display: grid;
     gap: 2px;
   }
@@ -194,12 +155,6 @@
     color: var(--color-text-secondary);
     font-size: 0.8rem;
     overflow-wrap: anywhere;
-  }
-
-  .part-section {
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid var(--color-border-subtle);
   }
 
   .muted,
