@@ -11,7 +11,6 @@ import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
 } from '$lib/projectionApi.js';
-import { storyState } from './story.svelte.js';
 import type { BibleNodeDetailProjection, ProjectionEnvelope } from '../types.js';
 import {
   bibleGraphNodeProjectionState,
@@ -208,7 +207,6 @@ function resetProjectionState(): void {
 
 beforeEach(() => {
   resetProjectionState();
-  storyState.entities = [];
   createBibleGraphNodeMock.mockReset();
   ensureCanonicalBibleRootsMock.mockReset();
   setBibleGraphEdgeMock.mockReset();
@@ -219,8 +217,7 @@ beforeEach(() => {
 });
 
 describe('bible graph node projection command cache writes', () => {
-  it('stores create command response projections without mutating legacy entity state', async () => {
-    const originalEntities = storyState.entities;
+  it('stores create command response projections', async () => {
     createBibleGraphNodeMock.mockResolvedValue({
       outcome: 'recorded',
       projection,
@@ -254,7 +251,6 @@ describe('bible graph node projection command cache writes', () => {
     );
     expect(getBibleGraphNodeProjectionMock).not.toHaveBeenCalled();
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
-    expect(storyState.entities).toBe(originalEntities);
   });
 
   it('invalidates cached node list projections after create commands', async () => {

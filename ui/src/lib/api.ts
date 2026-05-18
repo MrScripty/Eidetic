@@ -1,7 +1,6 @@
 import type {
   Project,
   StoryArc,
-  Entity,
   AiStatus,
   AiConfig,
   TimelineGap,
@@ -85,18 +84,6 @@ export function deleteArc(id: string): Promise<{ deleted: boolean }> {
 
 export function getArcProgression(): Promise<ArcProgression[]> {
   return request('/arcs/progression');
-}
-
-// --- Bible entities ---
-
-export function listEntities(): Promise<Entity[]> {
-  return request('/bible/entities');
-}
-
-// --- Entity node refs ---
-
-export function removeNodeRef(entityId: string, nodeId: string): Promise<Entity> {
-  return request(`/bible/entities/${entityId}/node-refs/${nodeId}`, { method: 'DELETE' });
 }
 
 // --- Timeline ---

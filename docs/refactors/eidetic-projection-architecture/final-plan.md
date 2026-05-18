@@ -246,6 +246,7 @@ Completed slices:
 - `refactor(ui): remove unused legacy entity helpers` removed unused frontend helpers for legacy entity CRUD, snapshots, relations, node-ref add, and resolve-at-time APIs after graph projection UI replacement.
 - `refactor(server): remove unused legacy entity routes` removed unused legacy entity CRUD, snapshot, relation, node-ref add, and resolve-at-time routes after graph projection replacement, leaving only active legacy entity read/unlink paths.
 - `refactor(ui): remove legacy character timeline` removed the optional character progression lane, toolbar toggle, shortcut, transient store, and layout budget that rendered from broad legacy entity state instead of backend-owned projections.
+- `refactor(ui): remove legacy node entity links` removed BeatEditor linked-entity chips, timeline clip entity dots, script entity highlighting, frontend entity list/unlink helpers, websocket entity refreshes, and broad `storyState.entities` ownership.
 
 Discovered issues:
 
@@ -258,7 +259,7 @@ Discovered issues:
 - `cargo test -p eidetic-server history_store` passes but reports pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs`. These warnings block a future `-D warnings` gate and need a cleanup or ownership decision before CI can enforce warning-free server builds.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.
 - The command route currently opens the active SQLite project path per request because `AppState` has no backend-owned database connection owner yet. Before broad route adoption, add an explicit database lifecycle owner with the same concurrency/shutdown discipline as the rest of the backend.
-- Frontend bible editing currently mutates broad `Entity` caches and whole detail objects (`EntityDetail.svelte`, `story.svelte.ts`, `api.ts`, and websocket invalidation handlers). UI command adoption must use focused projection stores and avoid optimistic local patching or treating form state as canonical.
+- Resolved: frontend bible editing mutated broad `Entity` caches and whole detail objects. Legacy entity detail, node-link display/unlinking, websocket entity refreshes, and `storyState.entities` were removed; UI bible edits now use focused graph projection stores instead of broad entity cache patching.
 - Resolved: `crates/server/src/bible_graph_store.rs` exceeded the 500-line decomposition threshold while owning schema setup, node state, part/field state, and projection reads. It was split into schema, node/projection, and part/field storage modules before edge/snapshot work.
 - Resolved: the first script document store implementation exceeded the 500-line decomposition threshold while owning schema setup, value codecs, current-state writes, projection reads, and tests. It was split into schema, codec, store, and test modules before the script command route was committed.
 - Resolved: `cargo check -p eidetic-server` reported non-test dead-code warnings in `history_store.rs` (`RevisionOperation` import and `load_command`). The replay helper is now test-only and the production import set is warning-free.

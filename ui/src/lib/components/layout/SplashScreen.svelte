@@ -37,7 +37,6 @@
     projectState.current = project;
     timelineState.timeline = project.timeline;
     storyState.arcs = project.arcs;
-    storyState.entities = project.bible.entities;
   }
 
   async function fetchProjects() {

@@ -1,21 +1,14 @@
 <script lang="ts">
   import type { YTextEvent } from 'yjs';
-  import { colorToHex, childLevel } from '$lib/types.js';
+  import { childLevel } from '$lib/types.js';
   import {
     editorState,
     startGeneration,
     startBatchGeneration,
     setBatchTotalCount,
   } from '$lib/stores/editor.svelte.js';
-  import { entitiesForNode } from '$lib/stores/story.svelte.js';
   import { timelineState, zoomToRange, childrenOf, findNode } from '$lib/stores/timeline.svelte.js';
-  import {
-    generateContent,
-    removeNodeRef,
-    generateChildren,
-    generateBatch,
-    getAiContext,
-  } from '$lib/api.js';
+  import { generateContent, generateChildren, generateBatch, getAiContext } from '$lib/api.js';
   import {
     applyTimelineChildrenCommand,
     applyTimelineNodeLockCommand,
@@ -213,15 +206,6 @@
     await generateContent(editorState.selectedNodeId);
   }
 
-  const linkedEntities = $derived(
-    editorState.selectedNodeId ? entitiesForNode(editorState.selectedNodeId) : [],
-  );
-
-  async function handleUnlinkEntity(entityId: string) {
-    if (!editorState.selectedNodeId) return;
-    await removeNodeRef(entityId, editorState.selectedNodeId);
-  }
-
   // Child planning — generates children and applies to timeline
   async function handleGenerateChildren() {
     if (!editorState.selectedNodeId || !editorState.selectedNode) return;
@@ -286,7 +270,7 @@
       </button>
     </div>
 
-    <!-- Child node: context panel with parent, sibling structure, and bible entries -->
+    <!-- Child node: context panel with parent and sibling structure -->
     {#if isChildNode && parentNode}
       <div class="sub-beat-context">
         <div class="sub-beat-nav">
@@ -367,33 +351,6 @@
             </div>
           </details>
         {/if}
-
-        <!-- Relevant bible entities -->
-        {#if linkedEntities.length > 0}
-          <details class="context-card" open>
-            <summary class="context-card-header clickable"
-              >Bible Entries ({linkedEntities.length})</summary
-            >
-            <div class="bible-entries">
-              {#each linkedEntities as entity (entity.id)}
-                <div class="bible-entry">
-                  <div class="bible-entry-header">
-                    <span class="bible-entry-dot" style="background: {colorToHex(entity.color)}"
-                    ></span>
-                    <span class="bible-entry-name">{entity.name}</span>
-                    <span class="bible-entry-category">{entity.category}</span>
-                  </div>
-                  {#if entity.tagline}
-                    <p class="bible-entry-tagline">{entity.tagline}</p>
-                  {/if}
-                  {#if entity.description}
-                    <p class="bible-entry-description">{entity.description}</p>
-                  {/if}
-                </div>
-              {/each}
-            </div>
-          </details>
-        {/if}
       </div>
     {/if}
 
@@ -424,25 +381,6 @@
         oninput={handleNotesInput}
         disabled={node.locked}
       ></textarea>
-
-      <!-- Linked entities -->
-      <div class="entity-chips-section">
-        <div class="section-label section-label-row">Entities</div>
-        <div class="entity-chips">
-          {#each linkedEntities as entity (entity.id)}
-            <span class="entity-chip" style="border-color: {colorToHex(entity.color)}">
-              {entity.name}
-              <button class="chip-remove" onclick={() => handleUnlinkEntity(entity.id)}
-                >&times;</button
-              >
-            </span>
-          {/each}
-          {#if linkedEntities.length === 0}
-            <span class="chip-empty">No linked entities</span>
-          {/if}
-        </div>
-      </div>
-
       {#if isGenerating}
         <div class="section-label section-label-row">
           Generating
@@ -754,50 +692,6 @@
     font-size: 0.85rem;
   }
 
-  .entity-chips-section {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .entity-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .entity-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    color: var(--color-text-primary);
-    background: var(--color-bg-surface);
-    border: 1px solid;
-    border-radius: 12px;
-    cursor: default;
-  }
-
-  .chip-remove {
-    background: none;
-    border: none;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    font-size: 0.8rem;
-    padding: 0;
-    line-height: 1;
-  }
-
-  .chip-remove:hover {
-    color: var(--color-danger);
-  }
-
-  .chip-empty {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-  }
-
   .sub-beat-context {
     display: flex;
     flex-direction: column;
@@ -977,62 +871,6 @@
     display: -webkit-box;
     -webkit-line-clamp: 3;
     line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .bible-entries {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 4px;
-  }
-
-  .bible-entry {
-    padding: 3px 0;
-  }
-
-  .bible-entry-header {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .bible-entry-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .bible-entry-name {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-  }
-
-  .bible-entry-category {
-    font-size: 0.55rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .bible-entry-tagline {
-    font-size: 0.65rem;
-    color: var(--color-text-secondary);
-    margin: 1px 0 0 10px;
-    font-style: italic;
-  }
-
-  .bible-entry-description {
-    font-size: 0.65rem;
-    color: var(--color-text-muted);
-    margin: 1px 0 0 10px;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

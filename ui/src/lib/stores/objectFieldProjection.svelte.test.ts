@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setObjectField } from '$lib/commandApi.js';
 import { getObjectFieldProjection } from '$lib/projectionApi.js';
-import { storyState } from './story.svelte.js';
 import {
   applyObjectFieldCommand,
   clearObjectFieldProjection,
@@ -56,7 +55,6 @@ function resetProjectionState(): void {
 
 beforeEach(() => {
   resetProjectionState();
-  storyState.entities = [];
   setObjectFieldMock.mockReset();
   getObjectFieldProjectionMock.mockReset();
 });
@@ -83,28 +81,7 @@ describe('object field projection store', () => {
     expect(getObjectFieldProjectionError(key)).toBe('projection unavailable');
   });
 
-  it('stores command response projections without mutating broad story entity state', async () => {
-    const originalEntities = [
-      {
-        id: 'location-1',
-        category: 'Location',
-        name: 'Beach',
-        tagline: '',
-        description: '',
-        details: {
-          type: 'Location',
-          int_ext: 'EXT',
-          scene_heading_name: 'BEACH',
-          atmosphere: 'sunny',
-        },
-        snapshots: [],
-        node_refs: [],
-        relations: [],
-        color: { r: 20, g: 40, b: 60 },
-        locked: false,
-      },
-    ] as typeof storyState.entities;
-    storyState.entities = originalEntities;
+  it('stores command response projections', async () => {
     setObjectFieldMock.mockResolvedValue({
       outcome: 'recorded',
       projection,
@@ -136,7 +113,6 @@ describe('object field projection store', () => {
     );
     expect(getObjectFieldProjectionMock).not.toHaveBeenCalled();
     expect(getCachedObjectFieldProjection(key)).toEqual(projection);
-    expect(storyState.entities).toBe(originalEntities);
   });
 
   it('records command errors and leaves cached projections unchanged', async () => {

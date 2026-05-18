@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { StoryNode, ContentStatus } from '$lib/types.js';
-  import { TIMELINE, colorToHex } from '$lib/types.js';
+  import { TIMELINE } from '$lib/types.js';
   import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
-  import { entitiesForNode } from '$lib/stores/story.svelte.js';
 
   let {
     node,
@@ -243,10 +242,6 @@
   function handleBladeLeave() {
     bladeHovering = false;
   }
-
-  const nodeEntities = $derived(entitiesForNode(node.id));
-  const entityDots = $derived(nodeEntities.slice(0, 4));
-  const entityOverflow = $derived(Math.max(0, nodeEntities.length - 4));
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -285,20 +280,6 @@
   <!-- Right resize handle -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="resize-handle right" onpointerdown={(e) => handleResizeStart(e, 'right')}></div>
-
-  <!-- Entity indicator dots -->
-  {#if !compact && entityDots.length > 0}
-    <div class="entity-dots">
-      {#each entityDots as entity (entity.id)}
-        <span class="entity-dot" style="background: {colorToHex(entity.color)}" title={entity.name}
-        ></span>
-      {/each}
-      {#if entityOverflow > 0}
-        <span class="entity-dot-overflow">+{entityOverflow}</span>
-      {/if}
-    </div>
-  {/if}
-
   <!-- Blade cut preview line -->
   {#if bladeHovering && timelineState.activeTool === 'blade'}
     <div class="blade-preview" style="left: {bladeRatio * 100}%"></div>
@@ -417,29 +398,6 @@
 
   .connect-handle:hover {
     background: var(--color-overlay-intense);
-  }
-
-  .entity-dots {
-    position: absolute;
-    bottom: 2px;
-    left: 8px;
-    display: flex;
-    gap: 2px;
-    align-items: center;
-    pointer-events: none;
-  }
-
-  .entity-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .entity-dot-overflow {
-    font-size: 0.5rem;
-    color: var(--color-overlay-bright);
-    line-height: 1;
   }
 
   .blade-preview {

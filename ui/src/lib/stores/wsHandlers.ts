@@ -8,12 +8,13 @@ import {
   setGenerationContext,
   setGenerationError,
 } from './editor.svelte.js';
-import { getTimeline, listArcs, listEntities, getNodeContent } from '$lib/api.js';
+import { getTimeline, listArcs, getNodeContent } from '$lib/api.js';
 import {
   MAIN_SCRIPT_DOCUMENT_ID,
   refreshScriptDocumentProjection,
 } from './scriptDocumentProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
+import { refreshBibleGraphNodeListProjection } from './bibleGraphNodeProjection.svelte.js';
 
 /** Register WebSocket event handlers that update Svelte stores. */
 export function setupWsHandlers(ws: WsClient) {
@@ -32,9 +33,7 @@ export function setupWsHandlers(ws: WsClient) {
 
     ws.on('story_changed', async () => {
       const arcs = await listArcs();
-      const entities = await listEntities();
       storyState.arcs = arcs;
-      storyState.entities = entities;
     }),
 
     ws.on('node_updated', async (data) => {
@@ -90,14 +89,11 @@ export function setupWsHandlers(ws: WsClient) {
       timelineState.timeline = timeline;
       await refreshTimelineRenderProjection().catch(() => {});
       const arcs = await listArcs();
-      const entities = await listEntities();
       storyState.arcs = arcs;
-      storyState.entities = entities;
     }),
 
     ws.on('bible_changed', async () => {
-      const entities = await listEntities();
-      storyState.entities = entities;
+      await refreshBibleGraphNodeListProjection().catch(() => {});
     }),
 
     ws.on('script_changed', async () => {
