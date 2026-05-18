@@ -678,12 +678,11 @@ async fn preview_context(
     let Some(project_path) = state.project_path.lock().clone() else {
         return Json(serde_json::json!({ "error": "no project loaded" }));
     };
-    let project_guard = state.project.lock();
-    let Some(project) = project_guard.as_ref() else {
+    if state.project.lock().is_none() {
         return Json(serde_json::json!({ "error": "no project loaded" }));
-    };
-    let project = match project_with_sqlite_arcs(project, &project_path) {
-        Ok(project) => project,
+    }
+    let project = match crate::persistence::load_project(&project_path).await {
+        Ok((project, _)) => project,
         Err(error) => return Json(serde_json::json!({ "error": error })),
     };
 
@@ -763,6 +762,12 @@ mod tests {
         let state = AppState::new().await;
         let mut project = Template::MultiCam.build_project("AI Context Test");
         let node_arc = project.timeline.node_arcs[0].clone();
+        let node = project
+            .timeline
+            .node_mut(node_arc.node_id)
+            .expect("tagged node");
+        node.content.notes = "SQLite-only rain argument".to_string();
+        node.content.status = ContentStatus::NotesOnly;
         let arc_name = project
             .arcs
             .iter()
@@ -774,6 +779,12 @@ mod tests {
             .await
             .expect("seed project database");
         project.arcs.clear();
+        let node = project
+            .timeline
+            .node_mut(node_arc.node_id)
+            .expect("tagged node");
+        node.content.notes.clear();
+        node.content.status = ContentStatus::Empty;
         *state.project.lock() = Some(project);
         *state.project_path.lock() = Some(path.clone());
         let app = router().with_state(state);
@@ -797,6 +808,13 @@ mod tests {
                 .expect("user prompt")
                 .contains(&arc_name),
             "prompt should include arc name loaded from sqlite"
+        );
+        assert!(
+            value["user"]
+                .as_str()
+                .expect("user prompt")
+                .contains("SQLite-only rain argument"),
+            "prompt should include node notes loaded from sqlite"
         );
 
         let _ = std::fs::remove_file(path);
