@@ -486,6 +486,7 @@ export type ServerMessage =
   | { type: 'undo_redo_changed'; can_undo: boolean; can_redo: boolean }
   | { type: 'project_mutated' }
   | { type: 'bible_changed' }
+  | { type: 'script_changed' }
   | {
       type: 'entity_extraction_complete';
       node_id: string;

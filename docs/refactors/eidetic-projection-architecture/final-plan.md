@@ -170,6 +170,7 @@ Completed slices:
 - `feat(server): add script document block command` added backend-owned script document current-state tables, history-backed block command application, a script document projection route, and route coverage for command/projection behavior before replacing legacy node-owned screenplay writes.
 - `feat(ui): add script document api helpers` added typed frontend helpers and focused tests for script block commands and script document projection reads without introducing local canonical script state.
 - `feat(ui): cache script document projections` added a focused script document projection store that caches backend reads and command responses by document ID while preserving backend ownership of script state.
+- `feat(ui): render script panel from projections` moved the script panel read path from Beat node content to the backend-owned main script document projection and refreshes that projection on `script_changed` websocket events.
 
 Discovered issues:
 

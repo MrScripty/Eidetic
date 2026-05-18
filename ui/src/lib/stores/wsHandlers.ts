@@ -10,6 +10,10 @@ import {
   addConsistencySuggestion,
 } from './editor.svelte.js';
 import { getTimeline, listArcs, listEntities, getNodeContent } from '$lib/api.js';
+import {
+  MAIN_SCRIPT_DOCUMENT_ID,
+  refreshScriptDocumentProjection,
+} from './scriptDocumentProjection.svelte.js';
 
 /** Register WebSocket event handlers that update Svelte stores. */
 export function setupWsHandlers(ws: WsClient) {
@@ -105,6 +109,12 @@ export function setupWsHandlers(ws: WsClient) {
     ws.on('bible_changed', async () => {
       const entities = await listEntities();
       storyState.entities = entities;
+    }),
+
+    ws.on('script_changed', async () => {
+      await refreshScriptDocumentProjection({ document_id: MAIN_SCRIPT_DOCUMENT_ID }).catch(
+        () => {},
+      );
     }),
 
     ws.on('entity_extraction_complete', (_data) => {

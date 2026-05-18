@@ -13,6 +13,8 @@ export interface ScriptDocumentProjectionKey {
   document_id: ScriptDocumentId;
 }
 
+export const MAIN_SCRIPT_DOCUMENT_ID = 'script.document.main';
+
 export const scriptDocumentProjectionState = $state<{
   projections: Record<string, ProjectionEnvelope<ScriptDocumentProjection>>;
   pending: Record<string, boolean>;
