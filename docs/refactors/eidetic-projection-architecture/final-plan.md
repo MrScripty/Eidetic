@@ -158,6 +158,7 @@ Completed slices:
 - `feat(ui): add bible graph edge creation form` added a projection-backed edge creation form in graph node detail that submits backend edge commands and waits for returned projections instead of inserting local edges.
 - `feat(ui): gate graph creation by schema projections` loaded backend-owned graph schema projections in the bible tab and disabled node creation for categories whose schema is not present in the backend projection.
 - `refactor(ui): centralize bible graph category adapter` consolidated bible graph category lists, short labels, node names, and schema projection resolution so UI category presentation stays separate from backend-owned schema availability.
+- `refactor(server): share bible graph field value codec` extracted the SQLite `FieldValue` codec from graph field storage into a reusable backend module for upcoming node-scoped snapshot field persistence without changing existing graph-field behavior.
 
 Discovered issues:
 
