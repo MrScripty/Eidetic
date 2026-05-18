@@ -13,11 +13,13 @@
     zoomToFit,
     zoomTo,
   } from '$lib/stores/timeline.svelte.js';
+  import { editorState } from '$lib/stores/editor.svelte.js';
   import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
   import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/types.js';
   import type { TimelineGap, StoryLevel } from '$lib/types.js';
   import { createRelationship, getGaps, removeTrack } from '$lib/api.js';
   import { characterTimelineState } from '$lib/stores/characterTimeline.svelte.js';
+  import { applyTimelineNodeRangeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
 
   let gaps = $state<TimelineGap[]>([]);
   let scrollbarEl: HTMLDivElement | undefined = $state();
@@ -121,9 +123,66 @@
           characterTimelineState.visible = !characterTimelineState.visible;
         },
       }),
+      registerShortcut({
+        key: 'ArrowLeft',
+        alt: true,
+        description: 'Nudge selected timeline node left',
+        skipInInput: true,
+        action: () => {
+          void nudgeSelectedNode(-1_000);
+        },
+      }),
+      registerShortcut({
+        key: 'ArrowRight',
+        alt: true,
+        description: 'Nudge selected timeline node right',
+        skipInInput: true,
+        action: () => {
+          void nudgeSelectedNode(1_000);
+        },
+      }),
+      registerShortcut({
+        key: 'ArrowLeft',
+        alt: true,
+        shift: true,
+        description: 'Nudge selected timeline node left by five seconds',
+        skipInInput: true,
+        action: () => {
+          void nudgeSelectedNode(-5_000);
+        },
+      }),
+      registerShortcut({
+        key: 'ArrowRight',
+        alt: true,
+        shift: true,
+        description: 'Nudge selected timeline node right by five seconds',
+        skipInInput: true,
+        action: () => {
+          void nudgeSelectedNode(5_000);
+        },
+      }),
     ];
     return () => unsubs.forEach((fn) => fn());
   });
+
+  async function nudgeSelectedNode(deltaMs: number) {
+    const node = editorState.selectedNode;
+    if (!node) return;
+
+    const duration = node.time_range.end_ms - node.time_range.start_ms;
+    const startMs = Math.max(
+      0,
+      Math.min(TIMELINE.DURATION_MS - duration, node.time_range.start_ms + deltaMs),
+    );
+    const endMs = startMs + duration;
+    if (startMs === node.time_range.start_ms && endMs === node.time_range.end_ms) return;
+
+    await applyTimelineNodeRangeCommand({
+      node_id: node.id,
+      start_ms: startMs,
+      end_ms: endMs,
+    }).catch(() => {});
+  }
 
   function handleConnectStart(nodeId: string, x: number, y: number) {
     connectionDrag.active = true;

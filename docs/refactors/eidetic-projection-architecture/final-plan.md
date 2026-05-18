@@ -195,6 +195,7 @@ Completed slices:
 - `feat(ui): cache timeline command projections` routed timeline node range command responses into the timeline render projection cache without optimistic local patching.
 - `feat(renderer): emit timeline node range commands` added validated renderer command emission for node move/resize requests so future Bevy drag/resize interactions can flow through backend-confirmed timeline commands.
 - `refactor(ui): route timeline drag resize through commands` moved the existing DOM timeline move/resize handlers onto the backend timeline node range command/projection path without optimistic local timeline mutation.
+- `feat(ui): add timeline nudge shortcuts` added keyboard-accessible selected-node nudge commands that submit backend timeline node range commands instead of mutating local timeline state.
 
 Discovered issues:
 
