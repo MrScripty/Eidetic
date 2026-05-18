@@ -84,11 +84,17 @@ async fn timeline_render_projection_returns_backend_timeline_read_model() {
     project.timeline.node_arcs.clear();
     project.timeline.relationships.clear();
     let scene = eidetic_core::timeline::node::StoryNode::new(
-        "Beach argument",
+        "SQLite beach argument",
         eidetic_core::timeline::node::StoryLevel::Scene,
         eidetic_core::timeline::timing::TimeRange::new(1_000, 4_000).unwrap(),
     );
     project.timeline.nodes.push(scene);
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed timeline projection");
+    project.timeline.nodes[0].name = "Stale mirror argument".to_string();
+    project.timeline.nodes[0].time_range =
+        eidetic_core::timeline::timing::TimeRange::new(5_000, 6_000).unwrap();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
     let app = router().with_state(state);
@@ -102,7 +108,10 @@ async fn timeline_render_projection_returns_backend_timeline_read_model() {
     let value = response_json(response).await;
     assert_eq!(value["version"], 1);
     assert_eq!(value["payload"]["tracks"][0]["level"], "Premise");
-    assert_eq!(value["payload"]["clips"][0]["name"], "Beach argument");
+    assert_eq!(
+        value["payload"]["clips"][0]["name"],
+        "SQLite beach argument"
+    );
     assert_eq!(value["payload"]["clips"][0]["start_ms"], 1_000);
     assert_eq!(value["payload"]["clips"][0]["end_ms"], 4_000);
 

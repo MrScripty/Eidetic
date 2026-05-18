@@ -133,10 +133,10 @@ async fn get_script_document_projection(
 }
 
 async fn get_timeline_render_projection(State(state): State<AppState>) -> ApiJson {
-    let guard = state.project.lock();
-    let Some(project) = guard.as_ref() else {
-        return Err(ApiError::no_project());
-    };
+    let path = active_project_path(&state)?;
+    let (project, _) = crate::persistence::load_project(&path)
+        .await
+        .map_err(ApiError::internal)?;
 
     crate::error::json_value(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
