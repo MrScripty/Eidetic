@@ -1,13 +1,17 @@
 <script lang="ts">
   import { colorToHex } from '$lib/types.js';
-  import { applyCreateStoryArcCommand } from '$lib/stores/storyArcProjection.svelte.js';
-  import { storyState } from '$lib/stores/story.svelte.js';
+  import {
+    applyCreateStoryArcCommand,
+    storyArcProjectionState,
+  } from '$lib/stores/storyArcProjection.svelte.js';
 
   let {
     onselect,
   }: {
     onselect: (id: string) => void;
   } = $props();
+
+  let arcs = $derived(storyArcProjectionState.projection?.payload.arcs ?? []);
 
   async function handleAdd() {
     await applyCreateStoryArcCommand({
@@ -23,7 +27,7 @@
 
 <div class="arc-list">
   <ul class="entity-list">
-    {#each storyState.arcs as arc (arc.id)}
+    {#each arcs as arc (arc.id)}
       <li class="entity-item">
         <button class="entity-btn" onclick={() => onselect(arc.id)}>
           <span class="color-dot" style="background: {colorToHex(arc.color)}"></span>
@@ -34,7 +38,7 @@
         </button>
       </li>
     {/each}
-    {#if storyState.arcs.length === 0}
+    {#if arcs.length === 0}
       <li class="empty-state">No arcs yet</li>
     {/if}
   </ul>

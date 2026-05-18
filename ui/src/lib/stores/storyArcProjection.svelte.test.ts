@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createStoryArc, deleteStoryArc, setStoryArcMetadata } from '$lib/commandApi.js';
 import { getStoryArcListProjection } from '$lib/projectionApi.js';
-import { storyState } from './story.svelte.js';
 import {
   applyCreateStoryArcCommand,
   applyDeleteStoryArcCommand,
@@ -60,7 +59,6 @@ describe('story arc projection store', () => {
 
     expect(getStoryArcListProjectionMock).toHaveBeenCalledWith();
     expect(getCachedStoryArcListProjection()).toEqual(projection);
-    expect(storyState.arcs).toEqual(projection.payload.arcs);
     expect(storyArcProjectionState.pending).toBe(false);
     expect(storyArcProjectionState.error).toBeUndefined();
   });
@@ -100,7 +98,7 @@ describe('story arc projection store', () => {
       'command-story-1',
     );
     expect(getStoryArcListProjectionMock).not.toHaveBeenCalled();
-    expect(storyState.arcs).toEqual(projection.payload.arcs);
+    expect(getCachedStoryArcListProjection()).toEqual(projection);
   });
 
   it('stores update and delete command projections', async () => {
@@ -140,7 +138,7 @@ describe('story arc projection store', () => {
       },
       'command-story-3',
     );
-    expect(storyState.arcs).toEqual(projection.payload.arcs);
+    expect(getCachedStoryArcListProjection()).toEqual(projection);
   });
 
   it('records errors without replacing cached projections', async () => {
@@ -151,7 +149,6 @@ describe('story arc projection store', () => {
     await expect(refreshStoryArcListProjection()).rejects.toThrow('arcs unavailable');
 
     expect(getCachedStoryArcListProjection()).toEqual(projection);
-    expect(storyState.arcs).toEqual(projection.payload.arcs);
     expect(storyArcProjectionState.pending).toBe(false);
     expect(storyArcProjectionState.error).toBe('arcs unavailable');
   });

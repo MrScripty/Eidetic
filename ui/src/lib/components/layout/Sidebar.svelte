@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { storyState } from '$lib/stores/story.svelte.js';
+  import { storyArcProjectionState } from '$lib/stores/storyArcProjection.svelte.js';
   import { PANEL } from '$lib/types.js';
   import ArcList from '../sidebar/ArcList.svelte';
   import ArcDetail from '../sidebar/ArcDetail.svelte';
@@ -12,6 +12,7 @@
   let activeTab: 'arcs' | 'bible' | 'ai' | 'refs' = $state('arcs');
   let selectedArcId: string | null = $state(null);
   let showProgression = $state(false);
+  let arcs = $derived(storyArcProjectionState.projection?.payload.arcs ?? []);
 
   function switchTab(tab: 'arcs' | 'bible' | 'ai' | 'refs') {
     activeTab = tab;
@@ -44,7 +45,7 @@
         <ProgressionPanel />
         <button class="toggle-view" onclick={() => (showProgression = false)}>Back to Arcs</button>
       {:else if selectedArcId}
-        {@const arc = storyState.arcs.find((a) => a.id === selectedArcId)}
+        {@const arc = arcs.find((a) => a.id === selectedArcId)}
         {#if arc}
           <ArcDetail {arc} onback={() => (selectedArcId = null)} />
         {:else}

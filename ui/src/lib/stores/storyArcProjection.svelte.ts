@@ -8,7 +8,6 @@ import type {
   StoryArcCommandResponse,
   StoryArcListProjection,
 } from '$lib/storyArcTypes.js';
-import { storyState } from './story.svelte.js';
 
 export const storyArcProjectionState = $state<{
   projection: ProjectionEnvelope<StoryArcListProjection> | null;
@@ -26,7 +25,6 @@ function errorMessage(error: unknown, fallback: string): string {
 
 function cacheProjection(projection: ProjectionEnvelope<StoryArcListProjection>): void {
   storyArcProjectionState.projection = projection;
-  storyState.arcs = projection.payload.arcs;
 }
 
 export function getCachedStoryArcListProjection(): ProjectionEnvelope<StoryArcListProjection> | null {
@@ -112,5 +110,4 @@ export function clearStoryArcListProjection(): void {
   storyArcProjectionState.projection = null;
   storyArcProjectionState.pending = false;
   storyArcProjectionState.error = undefined;
-  storyState.arcs = [];
 }

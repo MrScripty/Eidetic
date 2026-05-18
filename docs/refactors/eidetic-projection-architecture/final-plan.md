@@ -271,6 +271,7 @@ Completed slices:
 - `refactor(server): remove legacy arc mutation routes` deleted the obsolete `/arcs` list/create/update/delete route surface after UI callers moved to story arc command/projection APIs, leaving only the current progression analysis route.
 - `refactor(story): project arc progression analysis` replaced the final legacy `/arcs/progression` read path with a backend story arc progression projection, updated the Svelte analysis panel to consume the projection, and fixed the frontend contract from stale `beat_count` to backend `node_count`.
 - `refactor(ui): hydrate arcs from projections` stopped seeding sidebar arc state from the broad project payload during project creation/load and refreshes the backend story arc projection instead.
+- `refactor(ui): remove story arc bridge store` deleted the separate frontend `storyState` arc cache and moved arc sidebar/timeline consumers to the backend story arc projection cache directly.
 
 Discovered issues:
 

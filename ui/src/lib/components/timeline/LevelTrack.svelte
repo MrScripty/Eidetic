@@ -9,7 +9,7 @@
     arcsForNode,
   } from '$lib/stores/timeline.svelte.js';
   import { editorState, startGeneration } from '$lib/stores/editor.svelte.js';
-  import { storyState } from '$lib/stores/story.svelte.js';
+  import { storyArcProjectionState } from '$lib/stores/storyArcProjection.svelte.js';
   import { generateContent } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import {
@@ -32,6 +32,7 @@
 
   // Get nodes at this track's level.
   let levelNodes = $derived(nodesAtLevel(track.level));
+  let storyArcs = $derived(storyArcProjectionState.projection?.payload.arcs ?? []);
 
   // Viewport-aware node filtering.
   let visibleNodes = $derived.by(() => {
@@ -73,7 +74,7 @@
   function arcColorForNode(nodeId: string): string {
     const arcIds = arcsForNode(nodeId);
     if (arcIds.length === 0) return 'var(--color-rel-default)';
-    const arc = storyState.arcs.find((a) => a.id === arcIds[0]);
+    const arc = storyArcs.find((a) => a.id === arcIds[0]);
     return arc ? colorToHex(arc.color) : 'var(--color-rel-default)';
   }
 
@@ -158,7 +159,10 @@
         beat_type: null,
       });
     } catch (error) {
-      notify('error', `Fill gap failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+      notify(
+        'error',
+        `Fill gap failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
     }
   }
 
