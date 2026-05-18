@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
 use crate::story::arc::StoryArc;
-use crate::story::bible::{BibleContext, ExtractionResult, ResolvedEntity};
+use crate::story::bible::BibleContext;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel, StoryNode};
 use crate::timeline::structure::EpisodeStructure;
 
@@ -34,14 +34,6 @@ pub trait AiBackend: Send + Sync {
         &self,
         text: &str,
     ) -> impl std::future::Future<Output = Result<String, Error>> + Send;
-
-    /// Extract entities and development points from a generated script.
-    fn extract_entities(
-        &self,
-        script: &str,
-        existing_entities: &[ResolvedEntity],
-        time_ms: u64,
-    ) -> impl std::future::Future<Output = Result<ExtractionResult, Error>> + Send;
 }
 
 /// Everything the AI needs to generate content for a single story node.

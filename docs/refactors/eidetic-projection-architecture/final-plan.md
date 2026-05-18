@@ -252,6 +252,7 @@ Completed slices:
 - `refactor(ui): make project bible payload opaque` removed detailed legacy entity DTOs from the frontend type surface and made `Project.bible` opaque so UI code cannot rebuild against old entity internals.
 - `refactor(core): stop prompting from legacy bible entities` removed production AI prompt dependence on `Project.bible.entities` so generation waits for a graph-backed AI context projection instead of reading stale legacy bible state.
 - `refactor(core): remove legacy bible prompt helpers` deleted unused legacy bible context gathering and entity prompt-text helpers after AI prompt construction stopped reading `StoryBible.entities`.
+- `refactor(core): remove legacy extraction contract` deleted the orphaned AI extraction trait method and legacy extraction DTOs after extraction routes and side effects were removed.
 
 Discovered issues:
 

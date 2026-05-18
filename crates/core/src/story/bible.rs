@@ -302,40 +302,6 @@ pub struct ResolvedEntity {
 }
 
 // ──────────────────────────────────────────────
-// AI Extraction Types
-// ──────────────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExtractionResult {
-    #[serde(default)]
-    pub new_entities: Vec<SuggestedEntity>,
-    #[serde(default)]
-    pub snapshot_suggestions: Vec<SuggestedSnapshot>,
-    #[serde(default)]
-    pub entities_present: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SuggestedEntity {
-    pub name: String,
-    pub category: EntityCategory,
-    pub tagline: String,
-    pub description: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SuggestedSnapshot {
-    pub entity_name: String,
-    pub description: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub emotional_state: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub audience_knowledge: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub location: Option<String>,
-}
-
-// ──────────────────────────────────────────────
 // Tests
 // ──────────────────────────────────────────────
 
