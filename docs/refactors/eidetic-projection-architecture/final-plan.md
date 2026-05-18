@@ -216,6 +216,7 @@ Completed slices:
 - `refactor(server): remove legacy structural timeline routes` removed legacy create, update, delete, split, resize, and fill-gap timeline mutation routes after replacement command/projection paths landed.
 - `feat(server): add timeline apply children command` added a backend command route for replacing a node's child timeline structure and returning the updated timeline render projection without mutating legacy bible entities.
 - `feat(ui): add timeline apply children command helper` added focused TypeScript command DTOs and a frontend API helper for backend-confirmed child timeline replacement commands.
+- `feat(ui): cache timeline apply children projections` routed child timeline replacement command responses into the timeline render projection cache without optimistic local patching.
 
 Discovered issues:
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  applyTimelineChildren,
   createTimelineNode,
   deleteTimelineNode,
   setTimelineNodeRange,
@@ -11,6 +12,7 @@ import {
   applyCreateTimelineNodeCommand,
   applyDeleteTimelineNodeCommand,
   applySplitTimelineNodeCommand,
+  applyTimelineChildrenCommand,
   applyTimelineNodeRangeCommand,
   clearTimelineRenderProjection,
   getCachedTimelineRenderProjection,
@@ -19,6 +21,7 @@ import {
 } from './timelineRenderProjection.svelte.js';
 
 vi.mock('$lib/commandApi.js', () => ({
+  applyTimelineChildren: vi.fn(),
   createTimelineNode: vi.fn(),
   deleteTimelineNode: vi.fn(),
   setTimelineNodeRange: vi.fn(),
@@ -29,6 +32,7 @@ vi.mock('$lib/projectionApi.js', () => ({
   getTimelineRenderProjection: vi.fn(),
 }));
 
+const applyTimelineChildrenMock = vi.mocked(applyTimelineChildren);
 const createTimelineNodeMock = vi.mocked(createTimelineNode);
 const deleteTimelineNodeMock = vi.mocked(deleteTimelineNode);
 const setTimelineNodeRangeMock = vi.mocked(setTimelineNodeRange);
@@ -78,6 +82,7 @@ const projection = {
 
 beforeEach(() => {
   clearTimelineRenderProjection();
+  applyTimelineChildrenMock.mockReset();
   createTimelineNodeMock.mockReset();
   deleteTimelineNodeMock.mockReset();
   setTimelineNodeRangeMock.mockReset();
@@ -234,6 +239,71 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toEqual(projection);
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBe('create invalid');
+  });
+
+  it('stores apply children timeline command response projections without local patching', async () => {
+    applyTimelineChildrenMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection,
+    });
+
+    await expect(
+      applyTimelineChildrenCommand(
+        {
+          parent_id: 'node.sequence.opening',
+          children: [
+            {
+              node_id: 'node.scene.beach',
+              name: 'Beach argument',
+              outline: 'Argue on the beach.',
+              weight: 1,
+              beat_type: null,
+            },
+          ],
+        },
+        'command-timeline-children-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection,
+    });
+
+    expect(applyTimelineChildrenMock).toHaveBeenCalledWith(
+      {
+        parent_id: 'node.sequence.opening',
+        children: [
+          {
+            node_id: 'node.scene.beach',
+            name: 'Beach argument',
+            outline: 'Argue on the beach.',
+            weight: 1,
+            beat_type: null,
+          },
+        ],
+      },
+      'command-timeline-children-1',
+    );
+    expect(getTimelineRenderProjectionMock).not.toHaveBeenCalled();
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('records apply children timeline command errors and leaves cached projections unchanged', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+    applyTimelineChildrenMock.mockRejectedValue(new Error('children invalid'));
+
+    await expect(
+      applyTimelineChildrenCommand({
+        parent_id: 'node.sequence.opening',
+        children: [],
+      }),
+    ).rejects.toThrow('children invalid');
+
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBe('children invalid');
   });
 
   it('stores split timeline command response projections without local patching', async () => {
