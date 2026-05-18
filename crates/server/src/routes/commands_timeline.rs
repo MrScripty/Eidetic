@@ -154,12 +154,12 @@ async fn apply_timeline_children(
             &mut conn, project, &command, 0,
         )
         .map_err(map_timeline_command_error)?;
-        let projection = if outcome == RecordChangeOutcome::Recorded {
+        if outcome == RecordChangeOutcome::Recorded {
             timeline_command::apply_timeline_children(project, &command)
-                .map_err(map_timeline_command_error)?
-        } else {
-            ProjectionEnvelope::initial(TimelineRenderProjection::from_timeline(&project.timeline))
-        };
+                .map_err(map_timeline_command_error)?;
+        }
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
         TimelineCommandResponse {
             outcome,
             projection,

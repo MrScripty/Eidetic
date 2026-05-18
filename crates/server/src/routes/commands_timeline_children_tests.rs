@@ -127,6 +127,7 @@ async fn apply_timeline_children_command_replays_duplicate_command() {
     let path = temp_db_path("applies-timeline-children-duplicate");
     let state = AppState::new().await;
     let project = Template::MultiCam.build_project("Commands Test");
+    let stale_project = project.clone();
     let parent = project.timeline.nodes[0].clone();
     let original_child = project
         .timeline
@@ -138,7 +139,7 @@ async fn apply_timeline_children_command_replays_duplicate_command() {
     let second_child_id = eidetic_core::timeline::node::NodeId::new();
     *state.project.lock() = Some(project);
     *state.project_path.lock() = Some(path.clone());
-    let app = router().with_state(state);
+    let app = router().with_state(state.clone());
     let body = apply_timeline_children_command_body_with_id(
         uuid::Uuid::new_v4(),
         parent.id,
@@ -151,6 +152,7 @@ async fn apply_timeline_children_command_replays_duplicate_command() {
         .oneshot(apply_timeline_children_command_request(body.clone()))
         .await
         .expect("first route response");
+    *state.project.lock() = Some(stale_project);
     let second = app
         .oneshot(apply_timeline_children_command_request(body))
         .await
