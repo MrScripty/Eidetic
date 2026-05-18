@@ -47,7 +47,7 @@ const key = {
   node_id: 'node.character/ada one',
 };
 
-const projection = {
+const projection: ProjectionEnvelope<BibleNodeDetailProjection> = {
   version: 2,
   change_event_id: 'event-1',
   payload: {
@@ -61,7 +61,17 @@ const projection = {
     },
     parts: [],
     incoming_edges: [],
-    outgoing_edges: [],
+    outgoing_edges: [
+      {
+        id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      },
+    ],
   },
 };
 
@@ -137,6 +147,24 @@ describe('bible graph node projection store', () => {
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('preserves edge payloads from backend graph node projection reads', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
+
+    await refreshBibleGraphNodeProjection(key);
+
+    expect(getCachedBibleGraphNodeProjection(key)?.payload.outgoing_edges).toEqual([
+      {
+        id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      },
+    ]);
   });
 
   it('records read errors without caching a projection', async () => {

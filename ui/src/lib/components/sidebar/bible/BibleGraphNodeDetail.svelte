@@ -6,6 +6,7 @@
     isBibleGraphNodeProjectionPending,
     refreshBibleGraphNodeProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+  import BibleGraphEdgeList from './BibleGraphEdgeList.svelte';
 
   let {
     nodeId,
@@ -87,6 +88,17 @@
       {#if projection.payload.parts.length === 0}
         <p class="muted">No parts</p>
       {/if}
+
+      <BibleGraphEdgeList
+        title="Outgoing Edges"
+        edges={projection.payload.outgoing_edges}
+        direction="outgoing"
+      />
+      <BibleGraphEdgeList
+        title="Incoming Edges"
+        edges={projection.payload.incoming_edges}
+        direction="incoming"
+      />
     </div>
   {:else if pending}
     <p class="status">Loading</p>

@@ -11,6 +11,7 @@ This directory contains the story-bible UI: entity cards, detail editing, develo
 | `StoryBibleTab.svelte`             | Top-level story-bible panel backed by bible graph node-list projections.       |
 | `BibleGraphAddControls.svelte`     | Category-aware graph-node creation controls.                                   |
 | `BibleGraphCategoryFilters.svelte` | Category filter controls for the graph-node list.                              |
+| `BibleGraphEdgeList.svelte`        | Read-only incoming/outgoing edge list for graph node detail projections.       |
 | `BibleGraphNodeCard.svelte`        | List-card summary for backend-owned bible graph nodes.                         |
 | `BibleGraphNodeDetail.svelte`      | Read-only detail panel for backend-owned bible graph node projections.         |
 | `bibleGraphCategories.ts`          | Category/root mapping helpers for graph-node list and creation UI.             |
