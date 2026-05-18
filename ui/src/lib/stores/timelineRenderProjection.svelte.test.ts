@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setTimelineNodeRange } from '$lib/commandApi.js';
+import { setTimelineNodeRange, splitTimelineNode } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
 import {
+  applySplitTimelineNodeCommand,
   applyTimelineNodeRangeCommand,
   clearTimelineRenderProjection,
   getCachedTimelineRenderProjection,
@@ -12,6 +13,7 @@ import {
 
 vi.mock('$lib/commandApi.js', () => ({
   setTimelineNodeRange: vi.fn(),
+  splitTimelineNode: vi.fn(),
 }));
 
 vi.mock('$lib/projectionApi.js', () => ({
@@ -19,6 +21,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 }));
 
 const setTimelineNodeRangeMock = vi.mocked(setTimelineNodeRange);
+const splitTimelineNodeMock = vi.mocked(splitTimelineNode);
 const getTimelineRenderProjectionMock = vi.mocked(getTimelineRenderProjection);
 
 const projection = {
@@ -65,6 +68,7 @@ const projection = {
 beforeEach(() => {
   clearTimelineRenderProjection();
   setTimelineNodeRangeMock.mockReset();
+  splitTimelineNodeMock.mockReset();
   getTimelineRenderProjectionMock.mockReset();
 });
 
@@ -153,5 +157,54 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toEqual(projection);
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBe('range invalid');
+  });
+
+  it('stores split timeline command response projections without local patching', async () => {
+    splitTimelineNodeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection,
+    });
+
+    await expect(
+      applySplitTimelineNodeCommand(
+        {
+          node_id: 'node.scene.beach',
+          at_ms: 2_500,
+        },
+        'command-timeline-split-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection,
+    });
+
+    expect(splitTimelineNodeMock).toHaveBeenCalledWith(
+      {
+        node_id: 'node.scene.beach',
+        at_ms: 2_500,
+      },
+      'command-timeline-split-1',
+    );
+    expect(getTimelineRenderProjectionMock).not.toHaveBeenCalled();
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBeUndefined();
+  });
+
+  it('records split timeline command errors and leaves cached projections unchanged', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValue(projection);
+    await refreshTimelineRenderProjection();
+    splitTimelineNodeMock.mockRejectedValue(new Error('split invalid'));
+
+    await expect(
+      applySplitTimelineNodeCommand({
+        node_id: 'node.scene.beach',
+        at_ms: 1_000,
+      }),
+    ).rejects.toThrow('split invalid');
+
+    expect(getCachedTimelineRenderProjection()).toEqual(projection);
+    expect(timelineRenderProjectionState.pending).toBe(false);
+    expect(timelineRenderProjectionState.error).toBe('split invalid');
   });
 });

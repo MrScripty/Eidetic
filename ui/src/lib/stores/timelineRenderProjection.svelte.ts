@@ -1,9 +1,10 @@
-import { setTimelineNodeRange } from '$lib/commandApi.js';
+import { setTimelineNodeRange, splitTimelineNode } from '$lib/commandApi.js';
 import { getTimelineRenderProjection } from '$lib/projectionApi.js';
 import type {
   CommandId,
   ProjectionEnvelope,
   SetTimelineNodeRangeCommand,
+  SplitTimelineNodeCommand,
   TimelineCommandResponse,
   TimelineRenderProjection,
 } from '../types.js';
@@ -62,6 +63,28 @@ export async function applyTimelineNodeRangeCommand(
     timelineRenderProjectionState.error = errorMessage(
       error,
       'Failed to apply timeline node range command',
+    );
+    throw error;
+  } finally {
+    timelineRenderProjectionState.pending = false;
+  }
+}
+
+export async function applySplitTimelineNodeCommand(
+  payload: SplitTimelineNodeCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  timelineRenderProjectionState.pending = true;
+  timelineRenderProjectionState.error = undefined;
+
+  try {
+    const response = await splitTimelineNode(payload, commandId);
+    timelineRenderProjectionState.projection = response.projection;
+    return response;
+  } catch (error) {
+    timelineRenderProjectionState.error = errorMessage(
+      error,
+      'Failed to apply timeline split node command',
     );
     throw error;
   } finally {
