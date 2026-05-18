@@ -10,9 +10,10 @@
   } from '$lib/stores/timeline.svelte.js';
   import { editorState, startGeneration } from '$lib/stores/editor.svelte.js';
   import { storyState } from '$lib/stores/story.svelte.js';
-  import { createNode, fillGap, generateContent } from '$lib/api.js';
+  import { fillGap, generateContent } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import {
+    applyCreateTimelineNodeCommand,
     applyDeleteTimelineNodeCommand,
     applySplitTimelineNodeCommand,
     applyTimelineNodeRangeCommand,
@@ -157,13 +158,19 @@
     const defaultDuration = 60_000;
     const startMs = Math.max(0, Math.round(timeMs - defaultDuration / 2));
     const endMs = Math.min(startMs + defaultDuration, TIMELINE.DURATION_MS);
-    await createNode({
-      level: track.level,
-      name: `New ${track.level}`,
-      beat_type: track.level === 'Beat' ? 'setup' : undefined,
-      start_ms: startMs,
-      end_ms: endMs,
-    });
+    try {
+      await applyCreateTimelineNodeCommand({
+        node_id: crypto.randomUUID(),
+        parent_id: null,
+        level: track.level,
+        name: `New ${track.level}`,
+        start_ms: startMs,
+        end_ms: endMs,
+        beat_type: track.level === 'Beat' ? 'Setup' : null,
+      });
+    } catch (error) {
+      notify('error', `Create failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
   }
 </script>
 
