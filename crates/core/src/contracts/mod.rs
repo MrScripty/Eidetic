@@ -35,9 +35,9 @@ pub use bible_graph_defaults::{
 };
 pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
 pub use propagation_proposal::{
-    CreatePropagationProposalCommand, PropagationProposal, PropagationProposalAction,
-    PropagationProposalContractError, PropagationProposalId, PropagationProposalListProjection,
-    PropagationProposalTarget, RejectPropagationProposalCommand,
+    AcceptPropagationProposalCommand, CreatePropagationProposalCommand, PropagationProposal,
+    PropagationProposalAction, PropagationProposalContractError, PropagationProposalId,
+    PropagationProposalListProjection, PropagationProposalTarget, RejectPropagationProposalCommand,
 };
 pub use script_document::{
     ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,

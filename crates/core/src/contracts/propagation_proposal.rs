@@ -117,6 +117,11 @@ pub struct RejectPropagationProposalCommand {
     pub reason: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AcceptPropagationProposalCommand {
+    pub proposal_id: PropagationProposalId,
+}
+
 impl CreatePropagationProposalCommand {
     pub fn into_proposal(self, created_at_ms: u64) -> PropagationProposal {
         PropagationProposal {
@@ -193,6 +198,18 @@ mod tests {
 
         let encoded = serde_json::to_string(&command).unwrap();
         let decoded: RejectPropagationProposalCommand = serde_json::from_str(&encoded).unwrap();
+
+        assert_eq!(decoded, command);
+    }
+
+    #[test]
+    fn accept_command_round_trips() {
+        let command = AcceptPropagationProposalCommand {
+            proposal_id: PropagationProposalId::new("proposal.propagation.weather").unwrap(),
+        };
+
+        let encoded = serde_json::to_string(&command).unwrap();
+        let decoded: AcceptPropagationProposalCommand = serde_json::from_str(&encoded).unwrap();
 
         assert_eq!(decoded, command);
     }

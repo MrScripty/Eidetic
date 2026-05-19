@@ -347,6 +347,7 @@ Completed slices:
 - `feat(server): store semantic dependencies` added typed semantic dependency contracts, relational SQLite dependency rows, command/event/revision history, command and projection routes, and source/target field-level lookup tests for future propagation impact analysis.
 - `feat(server): stage propagation proposals` added typed propagation proposal contracts and SQLite-backed pending proposal rows for bible field, bible snapshot field, script block patch, and script segment regeneration review without mutating graph or script state.
 - `feat(server): reject propagation proposals` added a focused rejection command that records proposal review history, transitions pending propagation proposals to rejected, and returns the updated backend-owned proposal projection.
+- `feat(server): accept bible field propagation proposals` added a focused acceptance command for pending bible-field propagation proposals, applying the staged field value and proposal status transition in one event-history transaction while leaving script and regeneration acceptance for later slices.
 
 Discovered issues:
 
@@ -366,7 +367,8 @@ Discovered issues:
 - Resolved: proposal review can now reject pending bible reference proposals with command/event/revision history and SQLite current-state status updates.
 - Resolved: proposal review can now accept pending bible reference proposals by composing the proposal status update and bible graph node creation in one command/event/revision transaction.
 - Resolved: the AI context preview prompt now consumes a graph-backed bible context projection from SQLite, including persisted graph nodes, fields, snapshots, and edges.
-- Remaining: generate-children previews stay non-durable until the user applies the edited plan, and propagation proposal acceptance/edit commands still need to apply staged downstream script/bible updates through the event history path.
+- Remaining: generate-children previews stay non-durable until the user applies the edited plan, and propagation proposal script-block acceptance/edit commands still need to apply staged downstream script updates through the event history path.
+- Discovered: segment-level regeneration proposals are underspecified for safe acceptance because the current proposal contract has no structured block list, block kinds, ordering, span provenance, lock handling, or regeneration metadata. Keep `RegenerateScriptSegment` proposals review-only until a structured segment patch contract exists.
 - Resolved: pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs` blocked a future `-D warnings` gate. Unused diffusion/Y.Doc command variants, the unconsumed content-change feed, the unused write helper, and production-only unused snapshot fields were removed or narrowed to tests; `cargo check -p eidetic-server` is now warning-free.
 - Resolved: the cloned-project undo/redo routes still existed after cloned snapshot producers were removed. The routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags were deleted; future undo/redo must enter through revision-backed command/event history.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.

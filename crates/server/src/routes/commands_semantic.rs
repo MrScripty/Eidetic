@@ -2,11 +2,11 @@ use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
-    AcceptBibleReferenceProposalCommand, BibleReferenceProposalListProjection, CommandEnvelope,
-    CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand, ProjectionEnvelope,
-    PropagationProposalListProjection, RecordSemanticDependencyCommand,
-    RejectBibleReferenceProposalCommand, RejectPropagationProposalCommand,
-    SemanticDependencyProjection,
+    AcceptBibleReferenceProposalCommand, AcceptPropagationProposalCommand,
+    BibleReferenceProposalListProjection, CommandEnvelope, CreateBibleReferenceProposalCommand,
+    CreatePropagationProposalCommand, ProjectionEnvelope, PropagationProposalListProjection,
+    RecordSemanticDependencyCommand, RejectBibleReferenceProposalCommand,
+    RejectPropagationProposalCommand, SemanticDependencyProjection,
 };
 use serde::Serialize;
 
@@ -49,6 +49,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/commands/semantic/propagation-proposal/reject",
             post(reject_propagation_proposal),
+        )
+        .route(
+            "/commands/semantic/propagation-proposal/accept",
+            post(accept_propagation_proposal),
         )
 }
 
@@ -170,6 +174,24 @@ async fn reject_propagation_proposal(
     crate::error::json_value(response)
 }
 
+async fn accept_propagation_proposal(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<AcceptPropagationProposalCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response =
+        tokio::task::spawn_blocking(move || accept_propagation_proposal_at_path(path, command))
+            .await
+            .map_err(|e| {
+                ApiError::internal(format!("propagation proposal accept task failed: {e}"))
+            })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    }
+    crate::error::json_value(response)
+}
+
 fn create_bible_reference_proposal_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<CreateBibleReferenceProposalCommand>,
@@ -281,6 +303,24 @@ fn reject_propagation_proposal_at_path(
     })
 }
 
+fn accept_propagation_proposal_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<AcceptPropagationProposalCommand>,
+) -> Result<PropagationProposalCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let outcome =
+        propagation_proposal_review::record_accept_propagation_proposal(&mut conn, &command, 0)
+            .map_err(map_propagation_proposal_error)?;
+    let projection = propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
+        .map_err(map_propagation_proposal_error)?;
+
+    Ok(PropagationProposalCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn map_semantic_proposal_error(error: SemanticProposalStoreError) -> ApiError {
     match error {
         SemanticProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
@@ -330,3 +370,7 @@ fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiEr
 #[cfg(test)]
 #[path = "commands_semantic_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "commands_semantic_propagation_tests.rs"]
+mod propagation_tests;
