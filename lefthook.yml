@@ -12,7 +12,7 @@ pre-commit:
 
     rustfmt:
       glob: "*.rs"
-      run: rustfmt --check {staged_files}
+      run: cargo fmt --all -- --check
 
 pre-push:
   commands:

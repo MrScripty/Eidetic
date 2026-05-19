@@ -55,9 +55,9 @@ pub fn analyze_all_arcs(project: &Project) -> Vec<ArcProgression> {
             nodes.sort_by_key(|n| n.time_range.start_ms);
 
             let node_count = nodes.len();
-            let has_setup = nodes.iter().any(|n| {
-                n.beat_type.as_ref() == Some(&BeatType::Setup)
-            });
+            let has_setup = nodes
+                .iter()
+                .any(|n| n.beat_type.as_ref() == Some(&BeatType::Setup));
             let has_resolution = nodes.iter().any(|n| {
                 matches!(
                     n.beat_type.as_ref(),
@@ -134,7 +134,9 @@ pub fn analyze_all_arcs(project: &Project) -> Vec<ArcProgression> {
             if coverage_percent < 5.0 && node_count > 0 {
                 issues.push(ProgressionIssue {
                     severity: Severity::Warning,
-                    message: format!("Very low coverage ({coverage_percent:.0}%) of episode runtime"),
+                    message: format!(
+                        "Very low coverage ({coverage_percent:.0}%) of episode runtime"
+                    ),
                 });
             }
 
@@ -156,25 +158,53 @@ pub fn analyze_all_arcs(project: &Project) -> Vec<ArcProgression> {
 mod tests {
     use super::*;
     use crate::story::arc::{ArcType, Color, StoryArc};
+    use crate::timeline::Timeline;
     use crate::timeline::node::{BeatType, StoryLevel, StoryNode};
     use crate::timeline::structure::EpisodeStructure;
     use crate::timeline::timing::TimeRange;
-    use crate::timeline::Timeline;
 
     fn make_test_project() -> Project {
         let arc = StoryArc::new("Test Arc", ArcType::APlot, Color::A_PLOT);
         let mut timeline = Timeline::new(1_320_000, EpisodeStructure::standard_30_min());
 
-        let mut scene1 = StoryNode::new("Setup", StoryLevel::Scene, TimeRange { start_ms: 0, end_ms: 120_000 });
+        let mut scene1 = StoryNode::new(
+            "Setup",
+            StoryLevel::Scene,
+            TimeRange {
+                start_ms: 0,
+                end_ms: 120_000,
+            },
+        );
         scene1.beat_type = Some(BeatType::Setup);
-        let mut scene2 = StoryNode::new("Complication", StoryLevel::Scene, TimeRange { start_ms: 200_000, end_ms: 400_000 });
+        let mut scene2 = StoryNode::new(
+            "Complication",
+            StoryLevel::Scene,
+            TimeRange {
+                start_ms: 200_000,
+                end_ms: 400_000,
+            },
+        );
         scene2.beat_type = Some(BeatType::Complication);
-        let mut scene3 = StoryNode::new("Resolution", StoryLevel::Scene, TimeRange { start_ms: 900_000, end_ms: 1_100_000 });
+        let mut scene3 = StoryNode::new(
+            "Resolution",
+            StoryLevel::Scene,
+            TimeRange {
+                start_ms: 900_000,
+                end_ms: 1_100_000,
+            },
+        );
         scene3.beat_type = Some(BeatType::Resolution);
 
         // Need to add as Act-level for hierarchy, but for this test we'll add scenes directly.
         // In the new model, Scene nodes need parent Acts. For the test, we create a parent act first.
-        let act = StoryNode::new("Act 1", StoryLevel::Act, TimeRange { start_ms: 0, end_ms: 1_320_000 });
+        let act = StoryNode::new(
+            "Act 1",
+            StoryLevel::Act,
+            TimeRange {
+                start_ms: 0,
+                end_ms: 1_320_000,
+            },
+        );
         let act_id = act.id;
 
         timeline.nodes.push(act);
@@ -190,7 +220,15 @@ mod tests {
         let scene3_id = scene3.id;
 
         // Create a sequence to hold the scenes.
-        let seq = StoryNode::new_child("Seq 1", StoryLevel::Sequence, TimeRange { start_ms: 0, end_ms: 1_320_000 }, act_id);
+        let seq = StoryNode::new_child(
+            "Seq 1",
+            StoryLevel::Sequence,
+            TimeRange {
+                start_ms: 0,
+                end_ms: 1_320_000,
+            },
+            act_id,
+        );
         let seq_id = seq.id;
         timeline.nodes.push(seq);
 

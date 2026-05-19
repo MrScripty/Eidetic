@@ -18,9 +18,9 @@
 //! `POST /ai/diffusion/load`.  Infill requests when no model is loaded
 //! return [`DiffusionError::ModelNotLoaded`].
 
-pub mod types;
 mod bridge;
 mod manager;
+pub mod types;
 
 #[cfg(test)]
 mod tests;

@@ -1,9 +1,9 @@
 use crate::project::Project;
 use crate::story::arc::{ArcType, Color, StoryArc};
+use crate::timeline::Timeline;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel, StoryNode};
 use crate::timeline::structure::EpisodeStructure;
 use crate::timeline::timing::TimeRange;
-use crate::timeline::Timeline;
 
 /// Pre-configured project templates for different TV subgenres.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -51,7 +51,10 @@ impl Template {
         let mut premise = StoryNode::new(
             "Episode Premise",
             StoryLevel::Premise,
-            TimeRange { start_ms: 0, end_ms: EPISODE_DURATION_MS },
+            TimeRange {
+                start_ms: 0,
+                end_ms: EPISODE_DURATION_MS,
+            },
         );
         premise.sort_order = 0;
         let premise_id = premise.id;
@@ -77,7 +80,10 @@ impl Template {
             let mut node = StoryNode::new(
                 &spec.name,
                 StoryLevel::Scene,
-                TimeRange { start_ms: spec.start_ms, end_ms: spec.end_ms },
+                TimeRange {
+                    start_ms: spec.start_ms,
+                    end_ms: spec.end_ms,
+                },
             );
             node.beat_type = Some(spec.beat_type.clone());
             node.parent_id = parent_id;
@@ -100,7 +106,14 @@ impl Template {
             .zip(names.iter())
             .enumerate()
             .map(|(i, ((start, end), name))| {
-                let mut node = StoryNode::new(*name, StoryLevel::Act, TimeRange { start_ms: *start, end_ms: *end });
+                let mut node = StoryNode::new(
+                    *name,
+                    StoryLevel::Act,
+                    TimeRange {
+                        start_ms: *start,
+                        end_ms: *end,
+                    },
+                );
                 node.parent_id = Some(premise_id);
                 node.sort_order = i as u32;
                 node
@@ -139,62 +152,284 @@ impl Template {
             // Tag         [1290k ── 1320k]
             Self::MultiCam => vec![
                 // Cold Open
-                SceneSpec { name: "A: Setup".into(),         beat_type: BeatType::Setup,        arc_prefix: "A", start_ms: 0,         end_ms: 60_000 },
-                SceneSpec { name: "C: Beat".into(),          beat_type: BeatType::Setup,        arc_prefix: "C", start_ms: 60_000,    end_ms: 120_000 },
+                SceneSpec {
+                    name: "A: Setup".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "A",
+                    start_ms: 0,
+                    end_ms: 60_000,
+                },
+                SceneSpec {
+                    name: "C: Beat".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "C",
+                    start_ms: 60_000,
+                    end_ms: 120_000,
+                },
                 // Act One
-                SceneSpec { name: "B: Setup".into(),         beat_type: BeatType::Setup,        arc_prefix: "B", start_ms: 150_000,   end_ms: 270_000 },
-                SceneSpec { name: "A: Complication".into(),   beat_type: BeatType::Complication, arc_prefix: "A", start_ms: 270_000,   end_ms: 450_000 },
-                SceneSpec { name: "C: Beat".into(),          beat_type: BeatType::Callback,     arc_prefix: "C", start_ms: 450_000,   end_ms: 510_000 },
-                SceneSpec { name: "B: Complication".into(),   beat_type: BeatType::Complication, arc_prefix: "B", start_ms: 510_000,   end_ms: 570_000 },
+                SceneSpec {
+                    name: "B: Setup".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "B",
+                    start_ms: 150_000,
+                    end_ms: 270_000,
+                },
+                SceneSpec {
+                    name: "A: Complication".into(),
+                    beat_type: BeatType::Complication,
+                    arc_prefix: "A",
+                    start_ms: 270_000,
+                    end_ms: 450_000,
+                },
+                SceneSpec {
+                    name: "C: Beat".into(),
+                    beat_type: BeatType::Callback,
+                    arc_prefix: "C",
+                    start_ms: 450_000,
+                    end_ms: 510_000,
+                },
+                SceneSpec {
+                    name: "B: Complication".into(),
+                    beat_type: BeatType::Complication,
+                    arc_prefix: "B",
+                    start_ms: 510_000,
+                    end_ms: 570_000,
+                },
                 // Act Two
-                SceneSpec { name: "A: Escalation".into(),    beat_type: BeatType::Escalation,   arc_prefix: "A", start_ms: 570_000,   end_ms: 750_000 },
-                SceneSpec { name: "B: Payoff".into(),        beat_type: BeatType::Payoff,       arc_prefix: "B", start_ms: 750_000,   end_ms: 900_000 },
-                SceneSpec { name: "A: Escalation 2".into(),  beat_type: BeatType::Escalation,   arc_prefix: "A", start_ms: 900_000,   end_ms: 990_000 },
+                SceneSpec {
+                    name: "A: Escalation".into(),
+                    beat_type: BeatType::Escalation,
+                    arc_prefix: "A",
+                    start_ms: 570_000,
+                    end_ms: 750_000,
+                },
+                SceneSpec {
+                    name: "B: Payoff".into(),
+                    beat_type: BeatType::Payoff,
+                    arc_prefix: "B",
+                    start_ms: 750_000,
+                    end_ms: 900_000,
+                },
+                SceneSpec {
+                    name: "A: Escalation 2".into(),
+                    beat_type: BeatType::Escalation,
+                    arc_prefix: "A",
+                    start_ms: 900_000,
+                    end_ms: 990_000,
+                },
                 // Act Three
-                SceneSpec { name: "A: Climax".into(),        beat_type: BeatType::Climax,       arc_prefix: "A", start_ms: 990_000,   end_ms: 1_140_000 },
-                SceneSpec { name: "C: Callback".into(),      beat_type: BeatType::Payoff,       arc_prefix: "C", start_ms: 1_140_000, end_ms: 1_200_000 },
-                SceneSpec { name: "A: Resolution".into(),    beat_type: BeatType::Resolution,   arc_prefix: "A", start_ms: 1_200_000, end_ms: 1_290_000 },
+                SceneSpec {
+                    name: "A: Climax".into(),
+                    beat_type: BeatType::Climax,
+                    arc_prefix: "A",
+                    start_ms: 990_000,
+                    end_ms: 1_140_000,
+                },
+                SceneSpec {
+                    name: "C: Callback".into(),
+                    beat_type: BeatType::Payoff,
+                    arc_prefix: "C",
+                    start_ms: 1_140_000,
+                    end_ms: 1_200_000,
+                },
+                SceneSpec {
+                    name: "A: Resolution".into(),
+                    beat_type: BeatType::Resolution,
+                    arc_prefix: "A",
+                    start_ms: 1_200_000,
+                    end_ms: 1_290_000,
+                },
             ],
 
             // Single-cam: longer flowing scenes with more gradual transitions.
             Self::SingleCam => vec![
                 // Cold Open
-                SceneSpec { name: "A: Setup".into(),         beat_type: BeatType::Setup,        arc_prefix: "A", start_ms: 0,         end_ms: 120_000 },
+                SceneSpec {
+                    name: "A: Setup".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "A",
+                    start_ms: 0,
+                    end_ms: 120_000,
+                },
                 // Act One
-                SceneSpec { name: "B: Setup".into(),         beat_type: BeatType::Setup,        arc_prefix: "B", start_ms: 150_000,   end_ms: 300_000 },
-                SceneSpec { name: "A: Complication".into(),   beat_type: BeatType::Complication, arc_prefix: "A", start_ms: 300_000,   end_ms: 480_000 },
-                SceneSpec { name: "C: Beat".into(),          beat_type: BeatType::Setup,        arc_prefix: "C", start_ms: 480_000,   end_ms: 540_000 },
-                SceneSpec { name: "B: Complication".into(),   beat_type: BeatType::Complication, arc_prefix: "B", start_ms: 540_000,   end_ms: 570_000 },
+                SceneSpec {
+                    name: "B: Setup".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "B",
+                    start_ms: 150_000,
+                    end_ms: 300_000,
+                },
+                SceneSpec {
+                    name: "A: Complication".into(),
+                    beat_type: BeatType::Complication,
+                    arc_prefix: "A",
+                    start_ms: 300_000,
+                    end_ms: 480_000,
+                },
+                SceneSpec {
+                    name: "C: Beat".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "C",
+                    start_ms: 480_000,
+                    end_ms: 540_000,
+                },
+                SceneSpec {
+                    name: "B: Complication".into(),
+                    beat_type: BeatType::Complication,
+                    arc_prefix: "B",
+                    start_ms: 540_000,
+                    end_ms: 570_000,
+                },
                 // Act Two
-                SceneSpec { name: "A: Escalation".into(),    beat_type: BeatType::Escalation,   arc_prefix: "A", start_ms: 570_000,   end_ms: 750_000 },
-                SceneSpec { name: "B: Payoff".into(),        beat_type: BeatType::Payoff,       arc_prefix: "B", start_ms: 750_000,   end_ms: 880_000 },
-                SceneSpec { name: "C: Beat".into(),          beat_type: BeatType::Callback,     arc_prefix: "C", start_ms: 880_000,   end_ms: 940_000 },
-                SceneSpec { name: "A: Escalation 2".into(),  beat_type: BeatType::Escalation,   arc_prefix: "A", start_ms: 940_000,   end_ms: 990_000 },
+                SceneSpec {
+                    name: "A: Escalation".into(),
+                    beat_type: BeatType::Escalation,
+                    arc_prefix: "A",
+                    start_ms: 570_000,
+                    end_ms: 750_000,
+                },
+                SceneSpec {
+                    name: "B: Payoff".into(),
+                    beat_type: BeatType::Payoff,
+                    arc_prefix: "B",
+                    start_ms: 750_000,
+                    end_ms: 880_000,
+                },
+                SceneSpec {
+                    name: "C: Beat".into(),
+                    beat_type: BeatType::Callback,
+                    arc_prefix: "C",
+                    start_ms: 880_000,
+                    end_ms: 940_000,
+                },
+                SceneSpec {
+                    name: "A: Escalation 2".into(),
+                    beat_type: BeatType::Escalation,
+                    arc_prefix: "A",
+                    start_ms: 940_000,
+                    end_ms: 990_000,
+                },
                 // Act Three
-                SceneSpec { name: "A: Climax".into(),        beat_type: BeatType::Climax,       arc_prefix: "A", start_ms: 990_000,   end_ms: 1_150_000 },
-                SceneSpec { name: "C: Callback".into(),      beat_type: BeatType::Payoff,       arc_prefix: "C", start_ms: 1_150_000, end_ms: 1_210_000 },
-                SceneSpec { name: "A: Resolution".into(),    beat_type: BeatType::Resolution,   arc_prefix: "A", start_ms: 1_210_000, end_ms: 1_290_000 },
+                SceneSpec {
+                    name: "A: Climax".into(),
+                    beat_type: BeatType::Climax,
+                    arc_prefix: "A",
+                    start_ms: 990_000,
+                    end_ms: 1_150_000,
+                },
+                SceneSpec {
+                    name: "C: Callback".into(),
+                    beat_type: BeatType::Payoff,
+                    arc_prefix: "C",
+                    start_ms: 1_150_000,
+                    end_ms: 1_210_000,
+                },
+                SceneSpec {
+                    name: "A: Resolution".into(),
+                    beat_type: BeatType::Resolution,
+                    arc_prefix: "A",
+                    start_ms: 1_210_000,
+                    end_ms: 1_290_000,
+                },
             ],
 
             // Animated: more C-runner beats, playful cross-cutting.
             Self::Animated => vec![
                 // Cold Open
-                SceneSpec { name: "A: Setup".into(),         beat_type: BeatType::Setup,        arc_prefix: "A", start_ms: 0,         end_ms: 80_000 },
-                SceneSpec { name: "C: Beat".into(),          beat_type: BeatType::Setup,        arc_prefix: "C", start_ms: 80_000,    end_ms: 120_000 },
+                SceneSpec {
+                    name: "A: Setup".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "A",
+                    start_ms: 0,
+                    end_ms: 80_000,
+                },
+                SceneSpec {
+                    name: "C: Beat".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "C",
+                    start_ms: 80_000,
+                    end_ms: 120_000,
+                },
                 // Act One
-                SceneSpec { name: "B: Setup".into(),         beat_type: BeatType::Setup,        arc_prefix: "B", start_ms: 150_000,   end_ms: 280_000 },
-                SceneSpec { name: "A: Complication".into(),   beat_type: BeatType::Complication, arc_prefix: "A", start_ms: 280_000,   end_ms: 430_000 },
-                SceneSpec { name: "C: Beat".into(),          beat_type: BeatType::Callback,     arc_prefix: "C", start_ms: 430_000,   end_ms: 490_000 },
-                SceneSpec { name: "B: Complication".into(),   beat_type: BeatType::Complication, arc_prefix: "B", start_ms: 490_000,   end_ms: 570_000 },
+                SceneSpec {
+                    name: "B: Setup".into(),
+                    beat_type: BeatType::Setup,
+                    arc_prefix: "B",
+                    start_ms: 150_000,
+                    end_ms: 280_000,
+                },
+                SceneSpec {
+                    name: "A: Complication".into(),
+                    beat_type: BeatType::Complication,
+                    arc_prefix: "A",
+                    start_ms: 280_000,
+                    end_ms: 430_000,
+                },
+                SceneSpec {
+                    name: "C: Beat".into(),
+                    beat_type: BeatType::Callback,
+                    arc_prefix: "C",
+                    start_ms: 430_000,
+                    end_ms: 490_000,
+                },
+                SceneSpec {
+                    name: "B: Complication".into(),
+                    beat_type: BeatType::Complication,
+                    arc_prefix: "B",
+                    start_ms: 490_000,
+                    end_ms: 570_000,
+                },
                 // Act Two
-                SceneSpec { name: "A: Escalation".into(),    beat_type: BeatType::Escalation,   arc_prefix: "A", start_ms: 570_000,   end_ms: 720_000 },
-                SceneSpec { name: "C: Beat".into(),          beat_type: BeatType::Callback,     arc_prefix: "C", start_ms: 720_000,   end_ms: 780_000 },
-                SceneSpec { name: "B: Payoff".into(),        beat_type: BeatType::Payoff,       arc_prefix: "B", start_ms: 780_000,   end_ms: 910_000 },
-                SceneSpec { name: "A: Escalation 2".into(),  beat_type: BeatType::Escalation,   arc_prefix: "A", start_ms: 910_000,   end_ms: 990_000 },
+                SceneSpec {
+                    name: "A: Escalation".into(),
+                    beat_type: BeatType::Escalation,
+                    arc_prefix: "A",
+                    start_ms: 570_000,
+                    end_ms: 720_000,
+                },
+                SceneSpec {
+                    name: "C: Beat".into(),
+                    beat_type: BeatType::Callback,
+                    arc_prefix: "C",
+                    start_ms: 720_000,
+                    end_ms: 780_000,
+                },
+                SceneSpec {
+                    name: "B: Payoff".into(),
+                    beat_type: BeatType::Payoff,
+                    arc_prefix: "B",
+                    start_ms: 780_000,
+                    end_ms: 910_000,
+                },
+                SceneSpec {
+                    name: "A: Escalation 2".into(),
+                    beat_type: BeatType::Escalation,
+                    arc_prefix: "A",
+                    start_ms: 910_000,
+                    end_ms: 990_000,
+                },
                 // Act Three
-                SceneSpec { name: "A: Climax".into(),        beat_type: BeatType::Climax,       arc_prefix: "A", start_ms: 990_000,   end_ms: 1_130_000 },
-                SceneSpec { name: "C: Callback".into(),      beat_type: BeatType::Payoff,       arc_prefix: "C", start_ms: 1_130_000, end_ms: 1_190_000 },
-                SceneSpec { name: "A: Resolution".into(),    beat_type: BeatType::Resolution,   arc_prefix: "A", start_ms: 1_190_000, end_ms: 1_290_000 },
+                SceneSpec {
+                    name: "A: Climax".into(),
+                    beat_type: BeatType::Climax,
+                    arc_prefix: "A",
+                    start_ms: 990_000,
+                    end_ms: 1_130_000,
+                },
+                SceneSpec {
+                    name: "C: Callback".into(),
+                    beat_type: BeatType::Payoff,
+                    arc_prefix: "C",
+                    start_ms: 1_130_000,
+                    end_ms: 1_190_000,
+                },
+                SceneSpec {
+                    name: "A: Resolution".into(),
+                    beat_type: BeatType::Resolution,
+                    arc_prefix: "A",
+                    start_ms: 1_190_000,
+                    end_ms: 1_290_000,
+                },
             ],
         }
     }

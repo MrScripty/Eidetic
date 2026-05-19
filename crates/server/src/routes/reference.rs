@@ -4,10 +4,10 @@ use axum::{Json, Router};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use eidetic_core::reference::{chunk_document, ReferenceDocument, ReferenceId, ReferenceType};
+use eidetic_core::reference::{ReferenceDocument, ReferenceId, ReferenceType, chunk_document};
 
-use crate::error::{json_value, ApiError, ApiJson};
 use crate::embeddings::EmbeddingClient;
+use crate::error::{ApiError, ApiJson, json_value};
 use crate::state::AppState;
 use crate::validation;
 
@@ -74,7 +74,8 @@ async fn upload_reference(
     let state_clone = state.clone();
     tokio::spawn(async move {
         let config = state_clone.ai_config.lock().clone();
-        let client = EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
+        let client =
+            EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
 
         for chunk in chunks {
             match client.embed(&chunk.content).await {
@@ -92,10 +93,7 @@ async fn upload_reference(
     Ok(Json(json))
 }
 
-async fn delete_reference(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> ApiJson {
+async fn delete_reference(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiJson {
     let ref_id = ReferenceId(id);
 
     {

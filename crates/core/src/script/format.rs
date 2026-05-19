@@ -135,14 +135,10 @@ pub fn estimate_page_count(elements: &[ScriptElement], rules: &FormatRules) -> f
     for element in elements {
         total_lines += match element {
             ScriptElement::SceneHeading(_) => 2, // heading + blank line after
-            ScriptElement::Action(s) => {
-                wrapped_line_count(s, rules.chars_per_line_action) + 1
-            }
+            ScriptElement::Action(s) => wrapped_line_count(s, rules.chars_per_line_action) + 1,
             ScriptElement::Character(_) => 1,
             ScriptElement::Parenthetical(_) => 1,
-            ScriptElement::Dialogue(s) => {
-                wrapped_line_count(s, rules.chars_per_line_dialogue)
-            }
+            ScriptElement::Dialogue(s) => wrapped_line_count(s, rules.chars_per_line_dialogue),
             ScriptElement::Transition(_) => 2, // transition + blank line after
         };
     }
@@ -245,11 +241,15 @@ Elaine is sitting outside.";
         assert!(matches!(&elements[3], ScriptElement::Dialogue(s) if s.contains("can't believe")));
         assert!(matches!(&elements[4], ScriptElement::Character(s) if s == "GEORGE"));
         assert!(matches!(&elements[5], ScriptElement::Parenthetical(s) if s == "defensive"));
-        assert!(matches!(&elements[6], ScriptElement::Dialogue(s) if s.contains("perfectly reasonable")));
+        assert!(
+            matches!(&elements[6], ScriptElement::Dialogue(s) if s.contains("perfectly reasonable"))
+        );
         assert!(matches!(&elements[7], ScriptElement::Character(s) if s == "JERRY"));
         assert!(matches!(&elements[8], ScriptElement::Dialogue(s) if s.contains("last muffin")));
         assert!(matches!(&elements[9], ScriptElement::Transition(s) if s.contains("CUT TO")));
-        assert!(matches!(&elements[10], ScriptElement::SceneHeading(s) if s.contains("COFFEE SHOP")));
+        assert!(
+            matches!(&elements[10], ScriptElement::SceneHeading(s) if s.contains("COFFEE SHOP"))
+        );
         assert!(matches!(&elements[11], ScriptElement::Action(s) if s.contains("Elaine")));
     }
 
@@ -284,7 +284,9 @@ Elaine is sitting outside.";
         assert!(is_character_cue("JERRY"));
         assert!(is_character_cue("JAKE (V.O.)"));
         assert!(is_character_cue("MR. SMITH (CONT'D)"));
-        assert!(!is_character_cue("This is a regular sentence that happens to be somewhat long."));
+        assert!(!is_character_cue(
+            "This is a regular sentence that happens to be somewhat long."
+        ));
         assert!(!is_character_cue("hello"));
     }
 
@@ -293,6 +295,8 @@ Elaine is sitting outside.";
         assert!(is_transition("CUT TO:"));
         assert!(is_transition("SMASH CUT TO:"));
         assert!(is_transition("FADE TO:"));
-        assert!(!is_transition("Going to the store to buy things and more things TO:"));
+        assert!(!is_transition(
+            "Going to the store to buy things and more things TO:"
+        ));
     }
 }

@@ -56,10 +56,7 @@ impl OpenRouterBackend {
 
         if !response.status().is_success() {
             let status = response.status();
-            let body = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "unknown".into());
+            let body = response.text().await.unwrap_or_else(|_| "unknown".into());
             return Err(Error::AiBackend(format!(
                 "OpenRouter returned {status}: {body}"
             )));
@@ -109,7 +106,11 @@ impl OpenRouterBackend {
 
     /// Non-streaming generation with JSON mode enabled.
     /// Uses OpenAI-compatible `response_format` parameter.
-    pub async fn generate_json(&self, prompt: &ChatPrompt, config: &AiConfig) -> Result<String, Error> {
+    pub async fn generate_json(
+        &self,
+        prompt: &ChatPrompt,
+        config: &AiConfig,
+    ) -> Result<String, Error> {
         let api_key = config
             .api_key
             .as_deref()
@@ -142,7 +143,9 @@ impl OpenRouterBackend {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_else(|_| "unknown".into());
-            return Err(Error::AiBackend(format!("OpenRouter returned {status}: {text}")));
+            return Err(Error::AiBackend(format!(
+                "OpenRouter returned {status}: {text}"
+            )));
         }
 
         let value: serde_json::Value = response
@@ -164,7 +167,12 @@ impl OpenRouterBackend {
 
     pub async fn health_check(&self) -> Result<BackendStatus, Error> {
         // A lightweight check — just verify we can reach OpenRouter.
-        match self.client.get("https://openrouter.ai/api/v1/models").send().await {
+        match self
+            .client
+            .get("https://openrouter.ai/api/v1/models")
+            .send()
+            .await
+        {
             Ok(resp) if resp.status().is_success() => Ok(BackendStatus {
                 connected: true,
                 model: String::new(),

@@ -103,10 +103,7 @@ impl OllamaBackend {
 
         if !response.status().is_success() {
             let status = response.status();
-            let body = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "unknown".into());
+            let body = response.text().await.unwrap_or_else(|_| "unknown".into());
             return Err(Error::AiBackend(format!(
                 "Ollama returned {status}: {body}"
             )));
@@ -156,7 +153,11 @@ impl OllamaBackend {
 
     /// Non-streaming generation with JSON mode enabled.
     /// Ollama will constrain output to valid JSON.
-    pub async fn generate_json(&self, prompt: &ChatPrompt, config: &AiConfig) -> Result<String, Error> {
+    pub async fn generate_json(
+        &self,
+        prompt: &ChatPrompt,
+        config: &AiConfig,
+    ) -> Result<String, Error> {
         let model = self.effective_model(config).await?;
         let url = format!("{}/api/chat", self.base_url);
         let body = serde_json::json!({
@@ -184,7 +185,9 @@ impl OllamaBackend {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_else(|_| "unknown".into());
-            return Err(Error::AiBackend(format!("Ollama returned {status}: {text}")));
+            return Err(Error::AiBackend(format!(
+                "Ollama returned {status}: {text}"
+            )));
         }
 
         let value: serde_json::Value = response
@@ -206,10 +209,7 @@ impl OllamaBackend {
         let url = format!("{}/api/tags", self.base_url);
         match self.client.get(&url).send().await {
             Ok(resp) if resp.status().is_success() => {
-                let body: serde_json::Value = resp
-                    .json()
-                    .await
-                    .unwrap_or(serde_json::Value::Null);
+                let body: serde_json::Value = resp.json().await.unwrap_or(serde_json::Value::Null);
                 let models: Vec<String> = body
                     .get("models")
                     .and_then(|m| m.as_array())
@@ -227,14 +227,16 @@ impl OllamaBackend {
                 let message = match &running_model {
                     Some(m) => format!("Connected, running {m}"),
                     None if models.is_empty() => "Connected, no models available".into(),
-                    None => format!("Connected, {} models available (none running)", models.len()),
+                    None => format!(
+                        "Connected, {} models available (none running)",
+                        models.len()
+                    ),
                 };
 
                 Ok(BackendStatus {
                     connected: true,
-                    model: running_model.unwrap_or_else(|| {
-                        models.first().cloned().unwrap_or_default()
-                    }),
+                    model: running_model
+                        .unwrap_or_else(|| models.first().cloned().unwrap_or_default()),
                     backend_type: BackendType::Ollama,
                     message,
                 })

@@ -297,12 +297,12 @@ async fn run_diffusion(
                 })
                 .await;
 
-            let _ = state.events_tx.send(ServerEvent::DiffusionComplete {
-                node_id: node_uuid,
-            });
-            let _ = state.events_tx.send(ServerEvent::NodeUpdated {
-                node_id: node_uuid,
-            });
+            let _ = state
+                .events_tx
+                .send(ServerEvent::DiffusionComplete { node_id: node_uuid });
+            let _ = state
+                .events_tx
+                .send(ServerEvent::NodeUpdated { node_id: node_uuid });
             state.trigger_save();
         }
         Ok(Err(DiffusionError::ModelNotLoaded)) => {

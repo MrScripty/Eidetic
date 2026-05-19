@@ -85,7 +85,7 @@ impl Color {
     }
 
     // Palette defaults for the three standard arcs.
-    pub const A_PLOT: Self = Self::new(100, 149, 237);  // cornflower blue
-    pub const B_PLOT: Self = Self::new(119, 221, 119);  // pastel green
+    pub const A_PLOT: Self = Self::new(100, 149, 237); // cornflower blue
+    pub const B_PLOT: Self = Self::new(119, 221, 119); // pastel green
     pub const C_RUNNER: Self = Self::new(255, 179, 71); // pastel orange
 }

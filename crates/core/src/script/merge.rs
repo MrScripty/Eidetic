@@ -47,7 +47,9 @@ pub fn merge_with_anchors(generated: &str, anchors: &[Anchor]) -> String {
 
     insertions.sort_by_key(|(pos, _)| *pos);
 
-    let mut result = String::with_capacity(generated.len() + anchors.iter().map(|a| a.text.len() + 2).sum::<usize>());
+    let mut result = String::with_capacity(
+        generated.len() + anchors.iter().map(|a| a.text.len() + 2).sum::<usize>(),
+    );
     let mut last = 0;
 
     for (pos, text) in &insertions {

@@ -39,7 +39,9 @@ pub fn validate_project_path(input: &str, root: &Path) -> Result<PathBuf, ApiErr
     });
 
     if !candidate.starts_with(&root) {
-        return Err(ApiError::bad_request("path must stay within the project storage root"));
+        return Err(ApiError::bad_request(
+            "path must stay within the project storage root",
+        ));
     }
 
     if !root.exists() {
@@ -77,7 +79,10 @@ pub fn is_allowed_local_origin(origin: &str) -> bool {
         return false;
     }
 
-    matches!(uri.host(), Some("127.0.0.1" | "localhost" | "[::1]" | "::1"))
+    matches!(
+        uri.host(),
+        Some("127.0.0.1" | "localhost" | "[::1]" | "::1")
+    )
 }
 
 fn canonical_or_lexical(path: &Path) -> std::io::Result<PathBuf> {
@@ -165,8 +170,8 @@ mod tests {
         let linked = root.join("linked");
         std::os::unix::fs::symlink(&outside, &linked).unwrap();
 
-        let err = validate_project_path(linked.join("project.db").to_str().unwrap(), &root)
-            .unwrap_err();
+        let err =
+            validate_project_path(linked.join("project.db").to_str().unwrap(), &root).unwrap_err();
         assert_eq!(err.1, "path resolves outside the project storage root");
         fs::remove_dir_all(root).unwrap();
         fs::remove_dir_all(outside).unwrap();

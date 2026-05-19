@@ -22,7 +22,8 @@ impl VectorStore {
 
     /// Remove all chunks belonging to a document.
     pub fn remove_document(&mut self, doc_id: ReferenceId) {
-        self.entries.retain(|_, (chunk, _)| chunk.document_id != doc_id);
+        self.entries
+            .retain(|_, (chunk, _)| chunk.document_id != doc_id);
     }
 
     /// Search for the top-k most similar chunks to a query embedding.
@@ -60,11 +61,7 @@ fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     }
 
     let denom = mag_a.sqrt() * mag_b.sqrt();
-    if denom == 0.0 {
-        0.0
-    } else {
-        dot / denom
-    }
+    if denom == 0.0 { 0.0 } else { dot / denom }
 }
 
 #[cfg(test)]

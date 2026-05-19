@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::State;
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use futures::StreamExt;
 use tokio::sync::{broadcast, oneshot};

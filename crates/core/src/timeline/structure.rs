@@ -48,42 +48,66 @@ impl EpisodeStructure {
             segments: vec![
                 StructureSegment {
                     segment_type: SegmentType::ColdOpen,
-                    time_range: TimeRange { start_ms: 0, end_ms: 120_000 },
+                    time_range: TimeRange {
+                        start_ms: 0,
+                        end_ms: 120_000,
+                    },
                     label: "Cold Open".into(),
                 },
                 StructureSegment {
                     segment_type: SegmentType::MainTitles,
-                    time_range: TimeRange { start_ms: 120_000, end_ms: 150_000 },
+                    time_range: TimeRange {
+                        start_ms: 120_000,
+                        end_ms: 150_000,
+                    },
                     label: "Main Titles".into(),
                 },
                 StructureSegment {
                     segment_type: SegmentType::Act,
-                    time_range: TimeRange { start_ms: 150_000, end_ms: 570_000 },
+                    time_range: TimeRange {
+                        start_ms: 150_000,
+                        end_ms: 570_000,
+                    },
                     label: "Act One".into(),
                 },
                 StructureSegment {
                     segment_type: SegmentType::CommercialBreak,
-                    time_range: TimeRange { start_ms: 570_000, end_ms: 570_000 },
+                    time_range: TimeRange {
+                        start_ms: 570_000,
+                        end_ms: 570_000,
+                    },
                     label: "Commercial Break".into(),
                 },
                 StructureSegment {
                     segment_type: SegmentType::Act,
-                    time_range: TimeRange { start_ms: 570_000, end_ms: 990_000 },
+                    time_range: TimeRange {
+                        start_ms: 570_000,
+                        end_ms: 990_000,
+                    },
                     label: "Act Two".into(),
                 },
                 StructureSegment {
                     segment_type: SegmentType::CommercialBreak,
-                    time_range: TimeRange { start_ms: 990_000, end_ms: 990_000 },
+                    time_range: TimeRange {
+                        start_ms: 990_000,
+                        end_ms: 990_000,
+                    },
                     label: "Commercial Break".into(),
                 },
                 StructureSegment {
                     segment_type: SegmentType::Act,
-                    time_range: TimeRange { start_ms: 990_000, end_ms: 1_290_000 },
+                    time_range: TimeRange {
+                        start_ms: 990_000,
+                        end_ms: 1_290_000,
+                    },
                     label: "Act Three".into(),
                 },
                 StructureSegment {
                     segment_type: SegmentType::Tag,
-                    time_range: TimeRange { start_ms: 1_290_000, end_ms: 1_320_000 },
+                    time_range: TimeRange {
+                        start_ms: 1_290_000,
+                        end_ms: 1_320_000,
+                    },
                     label: "Tag".into(),
                 },
             ],

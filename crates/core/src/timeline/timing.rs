@@ -54,9 +54,7 @@ impl TimeRange {
         let total_seconds = self.duration_ms() / 1000;
         let minutes = total_seconds / 60;
         let seconds = total_seconds % 60;
-        format!(
-            "approximately {pages:.1} pages ({minutes}:{seconds:02} of screen time)"
-        )
+        format!("approximately {pages:.1} pages ({minutes}:{seconds:02} of screen time)")
     }
 }
 

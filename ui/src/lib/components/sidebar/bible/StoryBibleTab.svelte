@@ -91,7 +91,9 @@
     return graphNodes.filter((node) => node.parent_id === canonicalParents[category]).length;
   }
 
-  async function ensureRootForCategory(category: BibleGraphRootCategory): Promise<BibleGraphNodeId> {
+  async function ensureRootForCategory(
+    category: BibleGraphRootCategory,
+  ): Promise<BibleGraphNodeId> {
     const existingRoot = graphNodes.find(
       (node) => node.schema_key === canonicalRootSchemaKeys[category],
     );

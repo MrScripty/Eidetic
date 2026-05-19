@@ -40,17 +40,13 @@ pub fn create_engine(py: Python<'_>) -> Result<Py<PyAny>, DiffusionError> {
     )
     .map_err(|e| DiffusionError::PythonError(format!("failed to load Python module: {e}")))?;
 
-    let engine_class = module
-        .getattr("DiffusionEngine")
-        .map_err(|e| {
-            DiffusionError::PythonError(format!("DiffusionEngine class not found: {e}"))
-        })?;
+    let engine_class = module.getattr("DiffusionEngine").map_err(|e| {
+        DiffusionError::PythonError(format!("DiffusionEngine class not found: {e}"))
+    })?;
 
     let engine = engine_class
         .call0()
-        .map_err(|e| {
-            DiffusionError::PythonError(format!("failed to instantiate engine: {e}"))
-        })?;
+        .map_err(|e| DiffusionError::PythonError(format!("failed to instantiate engine: {e}")))?;
 
     Ok(engine.unbind())
 }
@@ -154,8 +150,7 @@ pub fn run_infill(
         .map_err(|e| DiffusionError::InfillFailed(format!("generator not iterable: {e}")))?;
 
     for item in iter {
-        let item =
-            item.map_err(|e| DiffusionError::InfillFailed(format!("step error: {e}")))?;
+        let item = item.map_err(|e| DiffusionError::InfillFailed(format!("step error: {e}")))?;
         let (step, total_steps, text): (usize, usize, String) = item
             .extract()
             .map_err(|e| DiffusionError::InfillFailed(format!("bad yield shape: {e}")))?;

@@ -31,7 +31,11 @@ pub struct ReferenceDocument {
 }
 
 impl ReferenceDocument {
-    pub fn new(name: impl Into<String>, content: impl Into<String>, doc_type: ReferenceType) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        content: impl Into<String>,
+        doc_type: ReferenceType,
+    ) -> Self {
         Self {
             id: ReferenceId::new(),
             name: name.into(),
@@ -52,7 +56,11 @@ pub struct ReferenceChunk {
 }
 
 /// Split a document into overlapping chunks at paragraph boundaries.
-pub fn chunk_document(doc: &ReferenceDocument, max_chunk_chars: usize, overlap_chars: usize) -> Vec<ReferenceChunk> {
+pub fn chunk_document(
+    doc: &ReferenceDocument,
+    max_chunk_chars: usize,
+    overlap_chars: usize,
+) -> Vec<ReferenceChunk> {
     let text = &doc.content;
     if text.is_empty() {
         return Vec::new();
@@ -129,6 +137,10 @@ mod tests {
         let content = format!("{}\n\n{}\n\n{}", para, para, para);
         let doc = ReferenceDocument::new("test", content, ReferenceType::WorldBuilding);
         let chunks = chunk_document(&doc, 300, 50);
-        assert!(chunks.len() >= 2, "expected >= 2 chunks, got {}", chunks.len());
+        assert!(
+            chunks.len() >= 2,
+            "expected >= 2 chunks, got {}",
+            chunks.len()
+        );
     }
 }

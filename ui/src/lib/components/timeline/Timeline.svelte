@@ -223,7 +223,6 @@
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
   }
-
 </script>
 
 <div
@@ -465,5 +464,4 @@
     box-sizing: border-box;
     border-top: 1px solid var(--color-border-subtle);
   }
-
 </style>
