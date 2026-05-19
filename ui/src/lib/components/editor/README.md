@@ -7,7 +7,11 @@ This directory contains the main beat and script viewing workflow, including AI 
 | File/Folder | Description |
 |-------------|-------------|
 | `BeatEditor.svelte` | Primary node editing surface for notes, generation, and context panels. |
-| `BeatPlanEditor.svelte` | Child-beat planning editor. |
+| `BeatChildContext.svelte` | Context panel for child nodes, including parent, siblings, and adjacent parent-level nodes. |
+| `BeatEditorHeader.svelte` | Header controls for lock state and AI generation. |
+| `BeatNotesPanel.svelte` | Notes editor, generation status, and prompt preview container. |
+| `BeatPlanningActions.svelte` | Parent-node child-planning action controls. |
+| `AiPromptPreview.svelte` | Raw AI prompt context preview. |
 | `ScriptPanel.svelte` | Container for script-editing surfaces. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
 
@@ -16,11 +20,11 @@ The app needs focused editing surfaces where timeline selection, AI generation, 
 
 ## Constraints
 - Editor interactions depend on shared stores and websocket events.
-- `BeatEditor.svelte` exceeds the preferred size threshold documented in `ADR-001`.
+- Editor Svelte components stay below the preferred size threshold documented in `ADR-001`.
 - Keyboard and accessibility behavior must remain intact across split points.
 
 ## Decision
-Keep the current editor entrypoints stable and track `BeatEditor.svelte` for a follow-up split into context and generation subpanels.
+Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, context, planning actions, notes, and prompt preview into focused components. Remove unused legacy planning components once durable backend child plans own planning state.
 
 ## Alternatives Rejected
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
