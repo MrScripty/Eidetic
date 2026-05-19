@@ -47,6 +47,14 @@ pub enum ChildPlanContractError {
     EmptyIdentifier(&'static str),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ChildPlanStatus {
+    Pending,
+    Applied,
+    Rejected,
+}
+
 /// Token-by-token stream of generated text.
 pub type GenerateStream = Pin<Box<dyn Stream<Item = Result<String, Error>> + Send>>;
 
@@ -180,6 +188,18 @@ pub struct ChildPlan {
     pub parent_node_id: NodeId,
     pub target_child_level: StoryLevel,
     pub children: Vec<ChildProposal>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChildPlanRecord {
+    pub plan: ChildPlan,
+    pub status: ChildPlanStatus,
+    pub created_at_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChildPlanListProjection {
+    pub plans: Vec<ChildPlanRecord>,
 }
 
 /// Everything the AI needs to plan children for a parent node.

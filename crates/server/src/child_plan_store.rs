@@ -1,4 +1,4 @@
-use eidetic_core::ai::backend::{ChildPlan, ChildPlanId, ChildProposal};
+use eidetic_core::ai::backend::{ChildPlan, ChildPlanId, ChildPlanStatus, ChildProposal};
 use eidetic_core::contracts::{
     ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectKind,
     ObjectRevision, RevisionOperation,
@@ -44,13 +44,6 @@ CREATE TABLE IF NOT EXISTS child_plan_child_references (
         ON DELETE CASCADE
 );
 "#;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ChildPlanStatus {
-    Pending,
-    Applied,
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct CreateChildPlanCommand {

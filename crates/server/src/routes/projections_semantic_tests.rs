@@ -5,6 +5,7 @@ use axum::Router;
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
+use eidetic_core::ai::backend::{ChildPlan, ChildPlanId, ChildProposal};
 use eidetic_core::contracts::{
     BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey, BibleReferenceKind, CommandEnvelope,
     CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand, FieldValue,
@@ -12,7 +13,7 @@ use eidetic_core::contracts::{
     RecordSemanticDependencyCommand, ScriptSegmentId, SemanticDependency,
     SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyKind, SemanticProposalId,
 };
-use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::node::{NodeId, StoryLevel};
 use tower::util::ServiceExt;
 
 use crate::state::AppState;
@@ -138,6 +139,33 @@ async fn propagation_proposal_projection_returns_persisted_proposals() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn child_plan_projection_returns_persisted_plans() {
+    let path = temp_db_path("child-plans-populated");
+    seed_child_plan(&path);
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(child_plan_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 2);
+    assert_eq!(
+        value["payload"]["plans"][0]["plan"]["id"],
+        "child_plan.projection"
+    );
+    assert_eq!(value["payload"]["plans"][0]["status"], "pending");
+    assert_eq!(
+        value["payload"]["plans"][0]["plan"]["children"][0]["characters"][0],
+        "Ada"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_bible_reference_proposal(path: &PathBuf) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     let command = CommandEnvelope::new(CreateBibleReferenceProposalCommand {
@@ -200,6 +228,26 @@ fn seed_propagation_proposal(path: &PathBuf) {
         .unwrap();
 }
 
+fn seed_child_plan(path: &PathBuf) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    let plan = ChildPlan {
+        id: ChildPlanId::new("child_plan.projection").unwrap(),
+        parent_node_id: NodeId::new(),
+        target_child_level: StoryLevel::Scene,
+        children: vec![ChildProposal {
+            name: "Arrival".to_string(),
+            level: None,
+            beat_type: None,
+            outline: "Ada arrives at the harbor.".to_string(),
+            weight: 1.0,
+            characters: vec!["Ada".to_string()],
+            location: Some("Harbor".to_string()),
+            props: vec!["Signal ring".to_string()],
+        }],
+    };
+    crate::child_plan_store::record_child_plan(&mut conn, &plan, 100).unwrap();
+}
+
 fn bible_reference_proposal_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
@@ -220,6 +268,14 @@ fn propagation_proposal_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/semantic/propagation-proposals")
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn child_plan_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/semantic/child-plans")
         .body(Body::empty())
         .unwrap()
 }

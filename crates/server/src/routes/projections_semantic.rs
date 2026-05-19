@@ -2,12 +2,15 @@ use axum::Router;
 use axum::extract::Query;
 use axum::extract::State;
 use axum::routing::get;
+use eidetic_core::ai::backend::ChildPlanListProjection;
 use eidetic_core::contracts::{
     BibleReferenceProposalListProjection, ProjectionEnvelope, PropagationProposalListProjection,
     SemanticDependencyProjection,
 };
 use serde::Deserialize;
 
+use crate::child_plan_projection_store;
+use crate::child_plan_store::ChildPlanStoreError;
 use crate::error::{ApiError, ApiJson};
 use crate::propagation_proposal_store::{self, PropagationProposalStoreError};
 use crate::semantic_dependency_store::{
@@ -32,6 +35,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/semantic/propagation-proposals",
             get(get_propagation_proposal_list),
+        )
+        .route(
+            "/projections/semantic/child-plans",
+            get(get_child_plan_list),
         )
 }
 
@@ -88,6 +95,15 @@ async fn get_propagation_proposal_list(State(state): State<AppState>) -> ApiJson
     crate::error::json_value(projection)
 }
 
+async fn get_child_plan_list(State(state): State<AppState>) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let projection = tokio::task::spawn_blocking(move || load_child_plan_list_at_path(path))
+        .await
+        .map_err(|e| ApiError::internal(format!("child plan projection task failed: {e}")))??;
+
+    crate::error::json_value(projection)
+}
+
 fn load_bible_reference_proposal_list_at_path(
     path: std::path::PathBuf,
 ) -> Result<ProjectionEnvelope<BibleReferenceProposalListProjection>, ApiError> {
@@ -114,6 +130,15 @@ fn load_propagation_proposal_list_at_path(
         .map_err(|e| ApiError::internal(e.to_string()))?;
     propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
         .map_err(map_propagation_proposal_error)
+}
+
+fn load_child_plan_list_at_path(
+    path: std::path::PathBuf,
+) -> Result<ProjectionEnvelope<ChildPlanListProjection>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    child_plan_projection_store::load_child_plan_list_projection(&conn)
+        .map_err(map_child_plan_error)
 }
 
 fn semantic_dependency_filter_from_query(
@@ -243,6 +268,15 @@ fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiEr
         PropagationProposalStoreError::ScriptDocumentCommand(error) => {
             ApiError::bad_request(error.to_string())
         }
+    }
+}
+
+fn map_child_plan_error(error: ChildPlanStoreError) -> ApiError {
+    match error {
+        ChildPlanStoreError::InvalidCommand(message) => ApiError::bad_request(message),
+        ChildPlanStoreError::NotFound(message) => ApiError::not_found(message),
+        ChildPlanStoreError::History(error) => map_history_error(error),
+        ChildPlanStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
     }
 }
 

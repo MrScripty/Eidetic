@@ -9,6 +9,7 @@ mod bible_graph_snapshot_store;
 mod bible_graph_store;
 mod bible_graph_value_store;
 mod change_review_projection;
+mod child_plan_projection_store;
 mod child_plan_store;
 mod diffusion;
 mod embeddings;
