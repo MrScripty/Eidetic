@@ -13,9 +13,8 @@ use super::{
     load_propagation_proposals, record_create_propagation_proposal,
 };
 use crate::history_store::{self, RecordChangeOutcome};
-use crate::propagation_proposal_review::{
-    record_accept_propagation_proposal, record_reject_propagation_proposal,
-};
+use crate::propagation_proposal_accept::record_accept_propagation_proposal;
+use crate::propagation_proposal_review::record_reject_propagation_proposal;
 
 #[test]
 fn records_and_projects_propagation_proposal() {

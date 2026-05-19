@@ -17,6 +17,7 @@ mod history_store;
 mod history_read_store;
 mod object_field_command;
 mod persistence;
+mod propagation_proposal_accept;
 mod propagation_proposal_review;
 mod propagation_proposal_store;
 mod propagation_proposal_target;

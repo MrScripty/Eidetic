@@ -12,6 +12,7 @@ use serde::Serialize;
 
 use crate::error::{ApiError, ApiJson};
 use crate::history_store::RecordChangeOutcome;
+use crate::propagation_proposal_accept;
 use crate::propagation_proposal_review;
 use crate::propagation_proposal_store::{self, PropagationProposalStoreError};
 use crate::semantic_dependency_store::{
@@ -311,7 +312,7 @@ fn accept_propagation_proposal_at_path(
     let mut conn = crate::sqlite::open_write_connection(&path)
         .map_err(|e| ApiError::internal(e.to_string()))?;
     let outcome =
-        propagation_proposal_review::record_accept_propagation_proposal(&mut conn, &command, 0)
+        propagation_proposal_accept::record_accept_propagation_proposal(&mut conn, &command, 0)
             .map_err(map_propagation_proposal_error)?;
     let projection = propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
         .map_err(map_propagation_proposal_error)?;
