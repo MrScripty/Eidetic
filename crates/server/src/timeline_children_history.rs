@@ -15,6 +15,7 @@ use rusqlite::Connection;
 
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::semantic_proposal_store;
+use crate::timeline_child_plan_apply;
 use crate::timeline_command::TimelineCommandError;
 use crate::timeline_command_history_codec::{
     encode_arc_ids, encode_beat_type, encode_content_status, encode_relationship_type,
@@ -89,6 +90,11 @@ pub(crate) fn record_apply_timeline_children_history(
             proposal, event.id,
         )?);
     }
+    if let Some(revision) =
+        timeline_child_plan_apply::child_plan_apply_revision(conn, project, command, event.id)?
+    {
+        revisions.push(revision);
+    }
     let mut next_timeline = project.timeline.clone();
     next_timeline.clear_children_of(command.payload.parent_id)?;
     for planned_child in &child_plan {
@@ -133,6 +139,7 @@ pub(crate) fn record_apply_timeline_children_history(
             for proposal in &bible_reference_proposals {
                 semantic_proposal_store::insert_proposal_in_transaction(tx, proposal)?;
             }
+            timeline_child_plan_apply::mark_child_plan_applied_in_transaction(tx, command)?;
             Ok(())
         },
     )?)

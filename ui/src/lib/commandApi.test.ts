@@ -791,6 +791,7 @@ describe('command api helpers', () => {
       applyTimelineChildren(
         {
           parent_id: 'node.sequence.opening',
+          child_plan_id: 'child_plan.generated',
           children: [
             {
               node_id: 'node.scene.first',
@@ -821,6 +822,7 @@ describe('command api helpers', () => {
           id: 'command-timeline-children-1',
           payload: {
             parent_id: 'node.sequence.opening',
+            child_plan_id: 'child_plan.generated',
             children: [
               {
                 node_id: 'node.scene.first',

@@ -41,6 +41,7 @@ mod static_files;
 mod story_arc_command;
 mod story_arc_store;
 mod timeline_children_history;
+mod timeline_child_plan_apply;
 mod timeline_command;
 mod timeline_command_history;
 mod timeline_command_history_codec;

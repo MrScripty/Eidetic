@@ -4,7 +4,9 @@ use std::path::PathBuf;
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
+use eidetic_core::ai::backend::{ChildPlan, ChildPlanId, ChildProposal};
 use eidetic_core::contracts::{BibleReferenceKind, FieldValue, ObjectKind, SemanticProposalStatus};
+use eidetic_core::timeline::node::StoryLevel;
 use serde_json::json;
 use tower::util::ServiceExt;
 
@@ -118,6 +120,66 @@ async fn apply_timeline_children_command_returns_timeline_render_projection() {
                 && field.old_value.is_none()
                 && field.new_value == Some(FieldValue::Text("First outline".to_string())))
     );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn apply_timeline_children_command_marks_child_plan_applied() {
+    let path = temp_db_path("applies-durable-child-plan");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let first_child_id = eidetic_core::timeline::node::NodeId::new();
+    let second_child_id = eidetic_core::timeline::node::NodeId::new();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed child current state");
+    let plan_id = ChildPlanId::new("child_plan.route.apply").unwrap();
+    {
+        let mut conn = crate::sqlite::open_write_connection(&path).unwrap();
+        crate::child_plan_store::record_child_plan(
+            &mut conn,
+            &ChildPlan {
+                id: plan_id.clone(),
+                parent_node_id: parent.id,
+                target_child_level: StoryLevel::Act,
+                children: vec![ChildProposal {
+                    name: "First child".to_string(),
+                    level: None,
+                    beat_type: None,
+                    outline: "First outline".to_string(),
+                    weight: 1.0,
+                    characters: Vec::new(),
+                    location: None,
+                    props: Vec::new(),
+                }],
+            },
+            0,
+        )
+        .expect("record child plan");
+    }
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let mut body = apply_timeline_children_command_body(parent.id, first_child_id, second_child_id);
+    body["payload"]["child_plan_id"] = json!(plan_id.as_str());
+
+    let response = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let conn = crate::sqlite::open_write_connection(&path).unwrap();
+    let status: String = conn
+        .query_row(
+            "SELECT status FROM child_plans WHERE id = ?1",
+            [plan_id.as_str()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(status, "applied");
 
     let _ = std::fs::remove_file(path);
 }

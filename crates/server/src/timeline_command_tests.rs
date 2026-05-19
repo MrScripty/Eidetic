@@ -254,6 +254,7 @@ fn apply_timeline_children_replaces_existing_children() {
         id: CommandId::new(),
         payload: ApplyTimelineChildrenCommand {
             parent_id: parent.id,
+            child_plan_id: None,
             children: vec![
                 ApplyTimelineChildCommand {
                     node_id: first_child_id,

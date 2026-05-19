@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::ai::backend::ChildPlanId;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel};
 use crate::timeline::relationship::{RelationshipId, RelationshipType};
 
@@ -49,6 +50,8 @@ pub struct CreateTimelineNodeCommand {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ApplyTimelineChildrenCommand {
     pub parent_id: NodeId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub child_plan_id: Option<ChildPlanId>,
     pub children: Vec<ApplyTimelineChildCommand>,
 }
 

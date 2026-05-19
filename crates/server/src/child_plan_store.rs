@@ -3,14 +3,8 @@ use eidetic_core::contracts::{
     ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectKind,
     ObjectRevision, RevisionOperation,
 };
-#[cfg(test)]
-use eidetic_core::timeline::node::BeatType;
 use eidetic_core::timeline::node::{NodeId, StoryLevel};
-#[cfg(test)]
-use rusqlite::Row;
 use rusqlite::{Connection, OptionalExtension, Transaction, params};
-#[cfg(test)]
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
@@ -55,6 +49,7 @@ CREATE TABLE IF NOT EXISTS child_plan_child_references (
 #[serde(rename_all = "snake_case")]
 enum ChildPlanStatus {
     Pending,
+    Applied,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -107,85 +102,101 @@ pub(crate) fn record_child_plan(
     )?)
 }
 
-#[cfg(test)]
-pub(crate) fn load_child_plan(
+pub(crate) fn validate_child_plan_for_apply(
     conn: &Connection,
     plan_id: &ChildPlanId,
-) -> Result<Option<ChildPlan>, ChildPlanStoreError> {
+    parent_node_id: NodeId,
+    target_child_level: StoryLevel,
+) -> Result<(), ChildPlanStoreError> {
     create_schema(conn)?;
-    let Some((parent_node_id, target_child_level)) = conn
+    let Some((stored_parent_id, stored_target_level, stored_status)) = conn
         .query_row(
-            "SELECT parent_node_id, target_child_level FROM child_plans WHERE id = ?1",
+            "SELECT parent_node_id, target_child_level, status FROM child_plans WHERE id = ?1",
             [plan_id.as_str()],
             |row| {
-                let parent_node_id: String = row.get(0)?;
-                let target_child_level: String = row.get(1)?;
                 Ok((
-                    NodeId(
-                        uuid::Uuid::parse_str(&parent_node_id)
-                            .map_err(|e| conversion_failure(row, 0, e))?,
-                    ),
-                    decode_string_enum(&target_child_level)
-                        .map_err(|e| conversion_failure(row, 1, e))?,
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
                 ))
             },
         )
         .optional()?
     else {
-        return Ok(None);
+        return Err(ChildPlanStoreError::NotFound(format!(
+            "child plan not found: {}",
+            plan_id.as_str()
+        )));
     };
-    Ok(Some(ChildPlan {
-        id: plan_id.clone(),
-        parent_node_id,
-        target_child_level,
-        children: load_child_plan_children(conn, plan_id)?,
-    }))
+    if stored_parent_id != parent_node_id.0.to_string() {
+        return Err(ChildPlanStoreError::InvalidCommand(format!(
+            "child plan {} belongs to parent {}, not {}",
+            plan_id.as_str(),
+            stored_parent_id,
+            parent_node_id.0
+        )));
+    }
+    let expected_target_level = encode_string_enum(&target_child_level)?;
+    if stored_target_level != expected_target_level {
+        return Err(ChildPlanStoreError::InvalidCommand(format!(
+            "child plan {} targets {}, not {}",
+            plan_id.as_str(),
+            stored_target_level,
+            expected_target_level
+        )));
+    }
+    let expected_status = encode_string_enum(&ChildPlanStatus::Pending)?;
+    if stored_status != expected_status {
+        return Err(ChildPlanStoreError::InvalidCommand(format!(
+            "child plan {} is not pending",
+            plan_id.as_str()
+        )));
+    }
+    Ok(())
 }
 
-#[cfg(test)]
-fn load_child_plan_children(
-    conn: &Connection,
+pub(crate) fn applied_child_plan_revision(
     plan_id: &ChildPlanId,
-) -> Result<Vec<ChildProposal>, ChildPlanStoreError> {
-    let mut statement = conn.prepare(
-        "SELECT child_index, name, beat_type, outline, weight, location
-         FROM child_plan_children
-         WHERE plan_id = ?1
-         ORDER BY child_index ASC",
-    )?;
-    let rows = statement.query_map([plan_id.as_str()], row_to_child)?;
-    let mut children = Vec::new();
-    for row in rows {
-        let (index, mut child) = row?;
-        child.characters = load_child_references(conn, plan_id, index, "character")?;
-        child.props = load_child_references(conn, plan_id, index, "prop")?;
-        children.push(child);
-    }
-    Ok(children)
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> Result<ObjectRevision, HistoryStoreError> {
+    Ok(ObjectRevision::new(
+        ObjectKind::ChildPlan,
+        plan_id.as_str().to_string(),
+        event_id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "status",
+        Some(FieldValue::Text(encode_string_enum(
+            &ChildPlanStatus::Pending,
+        )?)),
+        Some(FieldValue::Text(encode_string_enum(
+            &ChildPlanStatus::Applied,
+        )?)),
+    )))
 }
 
-#[cfg(test)]
-fn load_child_references(
-    conn: &Connection,
+pub(crate) fn mark_child_plan_applied_in_transaction(
+    tx: &Transaction<'_>,
     plan_id: &ChildPlanId,
-    child_index: u32,
-    reference_kind: &str,
-) -> Result<Vec<String>, ChildPlanStoreError> {
-    let mut statement = conn.prepare(
-        "SELECT reference_text
-         FROM child_plan_child_references
-         WHERE plan_id = ?1 AND child_index = ?2 AND reference_kind = ?3
-         ORDER BY sort_order ASC",
+) -> Result<(), HistoryStoreError> {
+    let updated = tx.execute(
+        "UPDATE child_plans
+         SET status = ?1
+         WHERE id = ?2 AND status = ?3",
+        params![
+            encode_string_enum(&ChildPlanStatus::Applied)?,
+            plan_id.as_str(),
+            encode_string_enum(&ChildPlanStatus::Pending)?
+        ],
     )?;
-    let rows = statement.query_map(
-        params![plan_id.as_str(), child_index as i64, reference_kind],
-        |row| row.get::<_, String>(0),
-    )?;
-    let mut references = Vec::new();
-    for row in rows {
-        references.push(row?);
+    if updated != 1 {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "child plan status changed before apply: {}",
+            plan_id.as_str()
+        )));
     }
-    Ok(references)
+    Ok(())
 }
 
 fn validate_child_plan(plan: &ChildPlan) -> Result<(), ChildPlanStoreError> {
@@ -347,30 +358,6 @@ fn insert_references_in_transaction(
     Ok(())
 }
 
-#[cfg(test)]
-fn row_to_child(row: &Row<'_>) -> Result<(u32, ChildProposal), rusqlite::Error> {
-    let child_index: i64 = row.get(0)?;
-    let beat_type: Option<String> = row.get(2)?;
-    let weight: f64 = row.get(4)?;
-    Ok((
-        u32::try_from(child_index).map_err(|e| conversion_failure(row, 0, e))?,
-        ChildProposal {
-            name: row.get(1)?,
-            level: None,
-            beat_type: beat_type
-                .as_deref()
-                .map(decode_string_enum::<BeatType>)
-                .transpose()
-                .map_err(|e| conversion_failure(row, 2, e))?,
-            outline: row.get(3)?,
-            weight: weight as f32,
-            characters: Vec::new(),
-            location: row.get(5)?,
-            props: Vec::new(),
-        },
-    ))
-}
-
 fn optional_string_enum<T>(value: Option<&T>) -> Result<Option<String>, HistoryStoreError>
 where
     T: Serialize,
@@ -390,30 +377,12 @@ where
     }
 }
 
-#[cfg(test)]
-fn decode_string_enum<T>(value: &str) -> Result<T, serde_json::Error>
-where
-    T: DeserializeOwned,
-{
-    serde_json::from_value(serde_json::Value::String(value.to_string()))
-}
-
-#[cfg(test)]
-fn conversion_failure<E>(row: &Row<'_>, index: usize, error: E) -> rusqlite::Error
-where
-    E: std::error::Error + Send + Sync + 'static,
-{
-    rusqlite::Error::FromSqlConversionFailure(
-        index,
-        row.get_ref_unwrap(index).data_type(),
-        Box::new(error),
-    )
-}
-
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ChildPlanStoreError {
     #[error("{0}")]
     InvalidCommand(String),
+    #[error("{0}")]
+    NotFound(String),
     #[error(transparent)]
     History(#[from] HistoryStoreError),
     #[error(transparent)]

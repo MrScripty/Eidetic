@@ -3,7 +3,7 @@ use eidetic_core::contracts::ObjectKind;
 use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
 use uuid::Uuid;
 
-use super::{load_child_plan, record_child_plan};
+use super::record_child_plan;
 use crate::history_store;
 
 #[test]
@@ -13,18 +13,39 @@ fn records_and_loads_child_plan_rows() {
 
     record_child_plan(&mut conn, &plan, 42).expect("record child plan");
 
-    let loaded = load_child_plan(&conn, &plan.id)
-        .expect("load child plan")
-        .expect("persisted child plan");
-    assert_eq!(loaded.id, plan.id);
-    assert_eq!(loaded.parent_node_id, plan.parent_node_id);
-    assert_eq!(loaded.target_child_level, StoryLevel::Scene);
-    assert_eq!(loaded.children.len(), 2);
-    assert_eq!(loaded.children[0].name, "Arrival");
-    assert_eq!(loaded.children[0].beat_type, Some(BeatType::Setup));
-    assert_eq!(loaded.children[0].characters, vec!["Ada", "Byron"]);
-    assert_eq!(loaded.children[0].location.as_deref(), Some("Harbor"));
-    assert_eq!(loaded.children[0].props, vec!["Signal ring"]);
+    let parent_node_id: String = conn
+        .query_row(
+            "SELECT parent_node_id FROM child_plans WHERE id = ?1",
+            [plan.id.as_str()],
+            |row| row.get(0),
+        )
+        .expect("stored child plan");
+    let child_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM child_plan_children WHERE plan_id = ?1",
+            [plan.id.as_str()],
+            |row| row.get(0),
+        )
+        .expect("stored child rows");
+    let first_child_name: String = conn
+        .query_row(
+            "SELECT name FROM child_plan_children WHERE plan_id = ?1 AND child_index = 0",
+            [plan.id.as_str()],
+            |row| row.get(0),
+        )
+        .expect("stored first child");
+    let first_child_refs: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM child_plan_child_references WHERE plan_id = ?1 AND child_index = 0",
+            [plan.id.as_str()],
+            |row| row.get(0),
+        )
+        .expect("stored first child references");
+
+    assert_eq!(parent_node_id, plan.parent_node_id.0.to_string());
+    assert_eq!(child_count, 2);
+    assert_eq!(first_child_name, "Arrival");
+    assert_eq!(first_child_refs, 3);
 }
 
 #[test]
@@ -56,11 +77,10 @@ fn rejects_empty_child_plans_without_writes() {
     let error = record_child_plan(&mut conn, &plan, 42).expect_err("invalid plan");
 
     assert!(error.to_string().contains("at least one child"));
-    assert!(
-        load_child_plan(&conn, &plan.id)
-            .expect("load absent plan")
-            .is_none()
-    );
+    let row_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM child_plans", [], |row| row.get(0))
+        .expect("child plan count");
+    assert_eq!(row_count, 0);
 }
 
 fn sample_plan() -> ChildPlan {

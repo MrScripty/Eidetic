@@ -41,6 +41,7 @@ export interface CreateTimelineNodeCommand {
 
 export interface ApplyTimelineChildrenCommand {
   parent_id: string;
+  child_plan_id?: string;
   children: ApplyTimelineChildCommand[];
 }
 

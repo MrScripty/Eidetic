@@ -209,11 +209,17 @@
   // Child planning — generates children and applies to timeline
   async function handleGenerateChildren() {
     if (!editorState.selectedNodeId || !editorState.selectedNode) return;
+    const parentNodeId = editorState.selectedNodeId;
+    const parentNode = editorState.selectedNode;
     planning = true;
     try {
-      const plan = await generateChildren(editorState.selectedNodeId);
+      const plan = await generateChildren(parentNodeId);
+      if (plan.parent_node_id !== parentNodeId) {
+        throw new Error('Generated child plan parent did not match the selected node');
+      }
       await applyTimelineChildrenCommand({
-        parent_id: editorState.selectedNodeId,
+        parent_id: parentNodeId,
+        child_plan_id: plan.id,
         children: plan.children.map((child) => ({
           node_id: crypto.randomUUID(),
           name: child.name,
@@ -225,8 +231,7 @@
           props: child.props ?? [],
         })),
       });
-      const node = editorState.selectedNode;
-      zoomToRange(node.time_range.start_ms, node.time_range.end_ms);
+      zoomToRange(parentNode.time_range.start_ms, parentNode.time_range.end_ms);
     } finally {
       planning = false;
     }
