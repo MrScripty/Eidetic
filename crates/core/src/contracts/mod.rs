@@ -2,6 +2,7 @@ mod ai_context;
 mod bible_graph;
 mod bible_graph_defaults;
 mod change_review;
+mod propagation_proposal;
 mod script_document;
 mod semantic_dependency;
 mod semantic_proposal;
@@ -33,6 +34,11 @@ pub use bible_graph_defaults::{
     builtin_bible_graph_schema_list_projection, default_part_projections_for_node,
 };
 pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
+pub use propagation_proposal::{
+    CreatePropagationProposalCommand, PropagationProposal, PropagationProposalAction,
+    PropagationProposalContractError, PropagationProposalId, PropagationProposalListProjection,
+    PropagationProposalTarget,
+};
 pub use script_document::{
     ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,
     ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptLock, ScriptLockId,

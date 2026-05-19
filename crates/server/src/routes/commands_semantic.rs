@@ -3,13 +3,15 @@ use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
     AcceptBibleReferenceProposalCommand, BibleReferenceProposalListProjection, CommandEnvelope,
-    CreateBibleReferenceProposalCommand, ProjectionEnvelope, RecordSemanticDependencyCommand,
+    CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand, ProjectionEnvelope,
+    PropagationProposalListProjection, RecordSemanticDependencyCommand,
     RejectBibleReferenceProposalCommand, SemanticDependencyProjection,
 };
 use serde::Serialize;
 
 use crate::error::{ApiError, ApiJson};
 use crate::history_store::RecordChangeOutcome;
+use crate::propagation_proposal_store::{self, PropagationProposalStoreError};
 use crate::semantic_dependency_store::{
     self, DependencyDirection, DependencyEndpointFilter, SemanticDependencyFilter,
     SemanticDependencyStoreError,
@@ -38,6 +40,10 @@ pub fn router() -> Router<AppState> {
             "/commands/semantic/dependency",
             post(record_semantic_dependency),
         )
+        .route(
+            "/commands/semantic/propagation-proposal",
+            post(create_propagation_proposal),
+        )
 }
 
 #[derive(Debug, Serialize)]
@@ -50,6 +56,12 @@ struct BibleReferenceProposalCommandResponse {
 struct SemanticDependencyCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<SemanticDependencyProjection>,
+}
+
+#[derive(Debug, Serialize)]
+struct PropagationProposalCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<PropagationProposalListProjection>,
 }
 
 async fn create_bible_reference_proposal(
@@ -117,6 +129,21 @@ async fn record_semantic_dependency(
             .await
             .map_err(|e| {
                 ApiError::internal(format!("semantic dependency command task failed: {e}"))
+            })??;
+
+    crate::error::json_value(response)
+}
+
+async fn create_propagation_proposal(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<CreatePropagationProposalCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response =
+        tokio::task::spawn_blocking(move || create_propagation_proposal_at_path(path, command))
+            .await
+            .map_err(|e| {
+                ApiError::internal(format!("propagation proposal command task failed: {e}"))
             })??;
 
     crate::error::json_value(response)
@@ -197,6 +224,24 @@ fn record_semantic_dependency_at_path(
     })
 }
 
+fn create_propagation_proposal_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<CreatePropagationProposalCommand>,
+) -> Result<PropagationProposalCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let outcome =
+        propagation_proposal_store::record_create_propagation_proposal(&mut conn, &command, 0)
+            .map_err(map_propagation_proposal_error)?;
+    let projection = propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
+        .map_err(map_propagation_proposal_error)?;
+
+    Ok(PropagationProposalCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn map_semantic_proposal_error(error: SemanticProposalStoreError) -> ApiError {
     match error {
         SemanticProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
@@ -219,6 +264,26 @@ fn map_semantic_dependency_error(error: SemanticDependencyStoreError) -> ApiErro
         SemanticDependencyStoreError::ScriptContract(error) => {
             ApiError::bad_request(error.to_string())
         }
+    }
+}
+
+fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiError {
+    match error {
+        PropagationProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
+        PropagationProposalStoreError::History(error) => map_history_error(error),
+        PropagationProposalStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
+        PropagationProposalStoreError::Json(error) => ApiError::bad_request(error.to_string()),
+        PropagationProposalStoreError::Contract(error) => ApiError::bad_request(error.to_string()),
+        PropagationProposalStoreError::BibleGraphContract(error) => {
+            ApiError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::ScriptContract(error) => {
+            ApiError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::SemanticDependencyContract(error) => {
+            ApiError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::Target(error) => ApiError::bad_request(error.to_string()),
     }
 }
 

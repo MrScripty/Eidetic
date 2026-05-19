@@ -7,9 +7,10 @@ use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey, BibleReferenceKind, CommandEnvelope,
-    CreateBibleReferenceProposalCommand, RecordSemanticDependencyCommand, ScriptSegmentId,
-    SemanticDependency, SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyKind,
-    SemanticProposalId,
+    CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand, FieldValue,
+    PropagationProposalAction, PropagationProposalId, PropagationProposalTarget,
+    RecordSemanticDependencyCommand, ScriptSegmentId, SemanticDependency,
+    SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyKind, SemanticProposalId,
 };
 use eidetic_core::timeline::node::NodeId;
 use tower::util::ServiceExt;
@@ -110,6 +111,33 @@ async fn semantic_dependency_projection_rejects_missing_filter() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn propagation_proposal_projection_returns_persisted_proposals() {
+    let path = temp_db_path("propagation-proposals-populated");
+    seed_propagation_proposal(&path);
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(propagation_proposal_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 2);
+    assert_eq!(
+        value["payload"]["proposals"][0]["id"],
+        "proposal.propagation.weather"
+    );
+    assert_eq!(value["payload"]["proposals"][0]["status"], "pending");
+    assert_eq!(
+        value["payload"]["proposals"][0]["target"]["kind"],
+        "bible_field"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_bible_reference_proposal(path: &PathBuf) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     let command = CommandEnvelope::new(CreateBibleReferenceProposalCommand {
@@ -149,6 +177,28 @@ fn seed_semantic_dependency(path: &PathBuf) {
     crate::semantic_dependency_store::record_semantic_dependency(&mut conn, &command, 100).unwrap();
 }
 
+fn seed_propagation_proposal(path: &PathBuf) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    let command = CommandEnvelope::new(CreatePropagationProposalCommand {
+        proposal_id: PropagationProposalId::new("proposal.propagation.weather").unwrap(),
+        action: PropagationProposalAction::SetBibleField,
+        target: PropagationProposalTarget::BibleField {
+            node_id: BibleGraphNodeId::new("node.location.harbor").unwrap(),
+            part_key: BibleGraphPartKey::new("weather").unwrap(),
+            field_key: BibleGraphFieldKey::new("current").unwrap(),
+            field_id: None,
+        },
+        summary: "Set harbor weather to rainy".to_string(),
+        proposed_value: Some(FieldValue::Text("rainy".to_string())),
+        proposed_text: None,
+        source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
+        source_event_id: None,
+        rationale: Some("Manual script edit introduced rainy weather.".to_string()),
+    });
+    crate::propagation_proposal_store::record_create_propagation_proposal(&mut conn, &command, 100)
+        .unwrap();
+}
+
 fn bible_reference_proposal_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
@@ -161,6 +211,14 @@ fn semantic_dependency_projection_request(uri: &str) -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri(uri)
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn propagation_proposal_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/semantic/propagation-proposals")
         .body(Body::empty())
         .unwrap()
 }

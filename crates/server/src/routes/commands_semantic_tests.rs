@@ -7,7 +7,8 @@ use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleReferenceKind, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
-    ScriptSegmentId, SemanticDependencyId, SemanticDependencyKind, SemanticProposalId,
+    FieldValue, PropagationProposalAction, PropagationProposalId, ScriptSegmentId,
+    SemanticDependencyId, SemanticDependencyKind, SemanticProposalId,
 };
 use eidetic_core::timeline::node::NodeId;
 use serde_json::json;
@@ -284,6 +285,33 @@ async fn semantic_dependency_command_returns_source_projection() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn propagation_proposal_command_returns_projection() {
+    let path = temp_db_path("creates-propagation-proposal");
+    let app = app_with_project_path(path.clone()).await;
+    let body = propagation_proposal_command_body("proposal.propagation.weather");
+
+    let response = app
+        .oneshot(propagation_proposal_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(value["projection"]["version"], 2);
+    assert_eq!(
+        value["projection"]["payload"]["proposals"][0]["id"],
+        "proposal.propagation.weather"
+    );
+    assert_eq!(
+        value["projection"]["payload"]["proposals"][0]["status"],
+        "pending"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn bible_reference_proposal_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -315,6 +343,15 @@ fn semantic_dependency_command_request(body: serde_json::Value) -> Request<Body>
     Request::builder()
         .method("POST")
         .uri("/commands/semantic/dependency")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn propagation_proposal_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/semantic/propagation-proposal")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -361,6 +398,26 @@ fn semantic_dependency_command_body(dependency_id: &str) -> serde_json::Value {
                 "confidence": 0.84,
                 "created_at_ms": 100,
             }
+        }
+    })
+}
+
+fn propagation_proposal_command_body(proposal_id: &str) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "proposal_id": PropagationProposalId::new(proposal_id).unwrap(),
+            "action": PropagationProposalAction::SetBibleField,
+            "target": {
+                "kind": "bible_field",
+                "node_id": BibleGraphNodeId::new("node.location.harbor").unwrap(),
+                "part_key": "weather",
+                "field_key": "current",
+            },
+            "summary": "Set harbor weather to rainy",
+            "proposed_value": FieldValue::Text("rainy".to_string()),
+            "source_dependency_id": SemanticDependencyId::new("dependency.weather.scene").unwrap(),
+            "rationale": "Manual script edit introduced rainy weather.",
         }
     })
 }
