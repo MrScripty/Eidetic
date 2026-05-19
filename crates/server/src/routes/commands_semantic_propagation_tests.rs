@@ -8,7 +8,9 @@ use eidetic_core::Template;
 use eidetic_core::contracts::{
     AcceptPropagationProposalCommand, BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope,
     CreateBibleGraphNodeCommand, FieldValue, PropagationProposalAction, PropagationProposalId,
-    RejectPropagationProposalCommand, SemanticDependencyId,
+    RejectPropagationProposalCommand, ScriptBlockId, ScriptBlockKind, ScriptDocumentId,
+    ScriptSegmentId, ScriptSegmentStatus, ScriptSpanProvenance, SemanticDependencyId,
+    SetScriptBlockCommand,
 };
 use serde_json::json;
 use tower::util::ServiceExt;
@@ -126,6 +128,50 @@ async fn propagation_proposal_accept_command_updates_bible_field() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn propagation_proposal_accept_command_updates_script_block() {
+    let path = temp_db_path("accepts-script-block-propagation-proposal");
+    seed_script_block(&path, "Ada enters with a wet umbrella.");
+    let app = app_with_project_path(path.clone()).await;
+    let create = script_block_proposal_command_body(
+        "proposal.propagation.script-block",
+        "Ada enters with a rain-black umbrella.",
+    );
+    let accept = accept_propagation_proposal_command_body("proposal.propagation.script-block");
+
+    let create_response = app
+        .clone()
+        .oneshot(propagation_proposal_command_request(create))
+        .await
+        .expect("create route response");
+    let accept_response = app
+        .oneshot(accept_propagation_proposal_command_request(accept))
+        .await
+        .expect("accept route response");
+
+    assert_eq!(create_response.status(), StatusCode::OK);
+    assert_eq!(accept_response.status(), StatusCode::OK);
+    let value = response_json(accept_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(
+        value["projection"]["payload"]["proposals"][0]["status"],
+        "accepted"
+    );
+    let conn = crate::sqlite::open_write_connection(&path).unwrap();
+    let projection = crate::script_store::load_document_projection(
+        &conn,
+        &ScriptDocumentId::new("script.document.main").unwrap(),
+    )
+    .unwrap()
+    .expect("script projection");
+    assert_eq!(
+        projection.segments[0].blocks[0].block.text,
+        "Ada enters with a rain-black umbrella."
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn propagation_proposal_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -173,6 +219,24 @@ fn propagation_proposal_command_body(proposal_id: &str) -> serde_json::Value {
     })
 }
 
+fn script_block_proposal_command_body(proposal_id: &str, proposed_text: &str) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "proposal_id": PropagationProposalId::new(proposal_id).unwrap(),
+            "action": PropagationProposalAction::PatchScriptBlock,
+            "target": {
+                "kind": "script_block",
+                "block_id": ScriptBlockId::new("script.block.action-1").unwrap(),
+            },
+            "summary": "Patch generated script block",
+            "proposed_text": proposed_text,
+            "source_dependency_id": SemanticDependencyId::new("dependency.weather.scene").unwrap(),
+            "rationale": "Manual script edit requires propagation.",
+        }
+    })
+}
+
 fn accept_propagation_proposal_command_body(proposal_id: &str) -> serde_json::Value {
     let command = AcceptPropagationProposalCommand {
         proposal_id: PropagationProposalId::new(proposal_id).unwrap(),
@@ -207,6 +271,31 @@ fn seed_location_node(path: &PathBuf) {
             schema_key: BibleGraphSchemaKey::new("location").unwrap(),
             name: "Storm Harbor".to_string(),
             sort_order: 1,
+        }),
+        1,
+    )
+    .unwrap();
+}
+
+fn seed_script_block(path: &PathBuf, text: &str) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    crate::script_document_command::apply_set_script_block(
+        &mut conn,
+        &CommandEnvelope::new(SetScriptBlockCommand {
+            document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+            document_title: "Pilot".to_string(),
+            document_sort_order: 0,
+            segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
+            source_node_id: Some("node.beat.opening".to_string()),
+            segment_start_ms: 1_000,
+            segment_end_ms: 5_000,
+            segment_status: ScriptSegmentStatus::Current,
+            segment_sort_order: 1,
+            block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
+            block_kind: ScriptBlockKind::Action,
+            text: text.to_string(),
+            span_provenance: ScriptSpanProvenance::AiGenerated,
+            sort_order: 2,
         }),
         1,
     )

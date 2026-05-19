@@ -237,6 +237,9 @@ fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiEr
             ApiError::bad_request(error.to_string())
         }
         PropagationProposalStoreError::Target(error) => ApiError::bad_request(error.to_string()),
+        PropagationProposalStoreError::ScriptDocumentCommand(error) => {
+            ApiError::bad_request(error.to_string())
+        }
     }
 }
 

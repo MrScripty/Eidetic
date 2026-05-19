@@ -421,6 +421,8 @@ pub(crate) enum PropagationProposalStoreError {
     SemanticDependencyContract(#[from] eidetic_core::contracts::SemanticDependencyContractError),
     #[error(transparent)]
     Target(#[from] PropagationProposalTargetError),
+    #[error(transparent)]
+    ScriptDocumentCommand(#[from] crate::script_document_command::ScriptDocumentCommandError),
 }
 
 #[cfg(test)]

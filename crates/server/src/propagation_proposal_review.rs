@@ -2,8 +2,9 @@ use eidetic_core::contracts::{
     AcceptPropagationProposalCommand, BibleGraphField, BibleGraphPart, ChangeEvent,
     ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
     PropagationProposal, PropagationProposalAction, PropagationProposalId,
-    PropagationProposalTarget, RejectPropagationProposalCommand, RevisionOperation,
-    SemanticProposalStatus, SetBibleGraphFieldCommand,
+    PropagationProposalTarget, RejectPropagationProposalCommand, RevisionOperation, ScriptBlockId,
+    ScriptBlockProjection, ScriptDocumentProjection, ScriptSegmentProjection, ScriptSpan,
+    ScriptSpanProvenance, SemanticProposalStatus, SetBibleGraphFieldCommand, SetScriptBlockCommand,
 };
 use rusqlite::{Transaction, params};
 use serde::Serialize;
@@ -13,6 +14,8 @@ use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
 use crate::propagation_proposal_store::{
     self, PropagationProposalStoreError, load_propagation_proposal,
 };
+use crate::script_document_command;
+use crate::script_store;
 
 pub(crate) fn record_accept_propagation_proposal(
     conn: &mut rusqlite::Connection,
@@ -27,8 +30,7 @@ pub(crate) fn record_accept_propagation_proposal(
         return Ok(outcome);
     }
     let proposal = load_pending_proposal(conn, &command.payload.proposal_id)?;
-    let field_command = bible_field_command_for_proposal(conn, &proposal)?;
-    let old_value = field_old_value(conn, &field_command)?;
+    let accepted_target = accepted_target(conn, &proposal)?;
 
     let event = ChangeEvent::new(
         command.id,
@@ -38,31 +40,22 @@ pub(crate) fn record_accept_propagation_proposal(
     .with_created_at_ms(created_at_ms);
     let proposal_revision =
         proposal_status_revision(&proposal, event.id, SemanticProposalStatus::Accepted, None)?;
-    let field_revision = ObjectRevision::new(
-        ObjectKind::BiblePartField,
-        field_command.field_id.as_str(),
-        event.id,
-        RevisionOperation::Update,
-    )
-    .with_field(FieldDelta::new(
-        "value",
-        old_value,
-        field_command.value.clone(),
-    ));
+    let mut revisions = vec![proposal_revision];
+    revisions.extend(accepted_target.revisions(event.id)?);
 
     Ok(history_store::record_change_with(
         conn,
         command,
         "semantic.propagation_accept",
         &event,
-        &[proposal_revision, field_revision],
+        &revisions,
         |tx| {
             update_proposal_status_in_transaction(
                 tx,
                 &proposal.id,
                 SemanticProposalStatus::Accepted,
             )?;
-            bible_graph_store::set_field_in_transaction(tx, &field_command, event.id)
+            accepted_target.apply(tx, event.id)
         },
     )?)
 }
@@ -128,6 +121,110 @@ fn load_pending_proposal(
     Ok(proposal)
 }
 
+enum AcceptedPropagationTarget {
+    BibleField {
+        command: SetBibleGraphFieldCommand,
+        old_value: Option<FieldValue>,
+    },
+    ScriptBlock {
+        document_exists: bool,
+        command: SetScriptBlockCommand,
+        old_text: Option<FieldValue>,
+        span: ScriptSpan,
+        before: ScriptDocumentProjection,
+    },
+}
+
+impl AcceptedPropagationTarget {
+    fn revisions(
+        &self,
+        event_id: eidetic_core::contracts::ChangeEventId,
+    ) -> Result<Vec<ObjectRevision>, PropagationProposalStoreError> {
+        match self {
+            Self::BibleField { command, old_value } => Ok(vec![
+                ObjectRevision::new(
+                    ObjectKind::BiblePartField,
+                    command.field_id.as_str(),
+                    event_id,
+                    RevisionOperation::Update,
+                )
+                .with_field(FieldDelta::new(
+                    "value",
+                    old_value.clone(),
+                    command.value.clone(),
+                )),
+            ]),
+            Self::ScriptBlock {
+                document_exists,
+                command,
+                old_text,
+                span,
+                before,
+            } => {
+                let document = script_document_command::command_document(command);
+                let segment = script_document_command::command_segment(command);
+                let block = script_document_command::command_block(command);
+                Ok(vec![
+                    script_document_command::document_revision(
+                        &document,
+                        *document_exists,
+                        event_id,
+                    ),
+                    script_document_command::segment_revision(&segment, Some(before), event_id),
+                    script_document_command::block_revision(&block, old_text.clone(), event_id),
+                    script_document_command::span_revision(span, event_id),
+                ])
+            }
+        }
+    }
+
+    fn apply(
+        &self,
+        tx: &Transaction<'_>,
+        event_id: eidetic_core::contracts::ChangeEventId,
+    ) -> Result<(), HistoryStoreError> {
+        match self {
+            Self::BibleField { command, .. } => {
+                bible_graph_store::set_field_in_transaction(tx, command, event_id)
+            }
+            Self::ScriptBlock { command, span, .. } => {
+                let document = script_document_command::command_document(command);
+                let segment = script_document_command::command_segment(command);
+                let block = script_document_command::command_block(command);
+                script_store::upsert_document_in_transaction(tx, &document, event_id)?;
+                script_store::upsert_segment_in_transaction(tx, &segment, event_id)?;
+                script_store::upsert_block_in_transaction(tx, &block, event_id)?;
+                script_store::upsert_span_in_transaction(tx, span, event_id)?;
+                Ok(())
+            }
+        }
+    }
+}
+
+fn accepted_target(
+    conn: &rusqlite::Connection,
+    proposal: &PropagationProposal,
+) -> Result<AcceptedPropagationTarget, PropagationProposalStoreError> {
+    match (&proposal.action, &proposal.target) {
+        (
+            PropagationProposalAction::SetBibleField,
+            PropagationProposalTarget::BibleField { .. },
+        ) => {
+            let command = bible_field_command_for_proposal(conn, proposal)?;
+            let old_value = field_old_value(conn, &command)?;
+            Ok(AcceptedPropagationTarget::BibleField { command, old_value })
+        }
+        (
+            PropagationProposalAction::PatchScriptBlock,
+            PropagationProposalTarget::ScriptBlock { .. },
+        ) => script_block_target_for_proposal(conn, proposal),
+        _ => Err(PropagationProposalStoreError::InvalidCommand(format!(
+            "propagation proposal action cannot be accepted yet: {}",
+            proposal.id.as_str()
+        ))),
+    }
+}
+
 fn bible_field_command_for_proposal(
     conn: &rusqlite::Connection,
     proposal: &PropagationProposal,
@@ -186,6 +283,109 @@ fn bible_field_command_for_proposal(
     };
 
     Ok(set_bible_field_command(node_id.clone(), part, field, value))
+}
+
+fn script_block_target_for_proposal(
+    conn: &rusqlite::Connection,
+    proposal: &PropagationProposal,
+) -> Result<AcceptedPropagationTarget, PropagationProposalStoreError> {
+    let PropagationProposalTarget::ScriptBlock { block_id } = &proposal.target else {
+        return Err(PropagationProposalStoreError::InvalidCommand(format!(
+            "propagation proposal target is not a script block: {}",
+            proposal.id.as_str()
+        )));
+    };
+    let proposed_text = proposal.proposed_text.as_ref().ok_or_else(|| {
+        PropagationProposalStoreError::InvalidCommand(
+            "accepted script block propagation proposal requires proposed_text".to_string(),
+        )
+    })?;
+    if proposed_text.trim().is_empty() {
+        return Err(PropagationProposalStoreError::InvalidCommand(
+            "accepted script block propagation proposal requires proposed_text".to_string(),
+        ));
+    }
+    let document_id = script_store::document_id_for_block(conn, block_id)?.ok_or_else(|| {
+        PropagationProposalStoreError::InvalidCommand(format!(
+            "script block does not exist: {}",
+            block_id.as_str()
+        ))
+    })?;
+    let before = script_store::load_document_projection(conn, &document_id)?.ok_or_else(|| {
+        PropagationProposalStoreError::InvalidCommand(format!(
+            "script document does not exist for block: {}",
+            block_id.as_str()
+        ))
+    })?;
+    let (segment_projection, block_projection) = script_block_context(&before, block_id)?;
+    let command = set_script_block_command(
+        &before,
+        segment_projection,
+        block_projection,
+        proposed_text.clone(),
+    );
+    script_document_command::validate_block_command(&command)?;
+    script_document_command::validate_locked_spans(Some(&before), &command)?;
+    let block = script_document_command::command_block(&command);
+    let span = script_document_command::generated_span_for_block(
+        &block,
+        ScriptSpanProvenance::AiGenerated,
+    )?;
+    let old_text = script_document_command::find_block_text(&before, &command.block_id);
+    Ok(AcceptedPropagationTarget::ScriptBlock {
+        document_exists: true,
+        command,
+        old_text,
+        span,
+        before,
+    })
+}
+
+fn script_block_context<'a>(
+    projection: &'a ScriptDocumentProjection,
+    block_id: &ScriptBlockId,
+) -> Result<(&'a ScriptSegmentProjection, &'a ScriptBlockProjection), PropagationProposalStoreError>
+{
+    projection
+        .segments
+        .iter()
+        .find_map(|segment| {
+            segment
+                .blocks
+                .iter()
+                .find(|block| block.block.id == *block_id)
+                .map(|block| (segment, block))
+        })
+        .ok_or_else(|| {
+            PropagationProposalStoreError::InvalidCommand(format!(
+                "script block does not exist in document projection: {}",
+                block_id.as_str()
+            ))
+        })
+}
+
+fn set_script_block_command(
+    projection: &ScriptDocumentProjection,
+    segment: &ScriptSegmentProjection,
+    block: &ScriptBlockProjection,
+    text: String,
+) -> SetScriptBlockCommand {
+    SetScriptBlockCommand {
+        document_id: projection.document.id.clone(),
+        document_title: projection.document.title.clone(),
+        document_sort_order: projection.document.sort_order,
+        segment_id: segment.segment.id.clone(),
+        source_node_id: segment.segment.source_node_id.clone(),
+        segment_start_ms: segment.segment.start_ms,
+        segment_end_ms: segment.segment.end_ms,
+        segment_status: segment.segment.status.clone(),
+        segment_sort_order: segment.segment.sort_order,
+        block_id: block.block.id.clone(),
+        block_kind: block.block.block_kind.clone(),
+        text,
+        sort_order: block.block.sort_order,
+        span_provenance: ScriptSpanProvenance::AiGenerated,
+    }
 }
 
 fn set_bible_field_command(

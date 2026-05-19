@@ -188,6 +188,7 @@ async fn accept_propagation_proposal(
 
     if response.outcome == RecordChangeOutcome::Recorded {
         let _ = state.events_tx.send(ServerEvent::BibleChanged);
+        let _ = state.events_tx.send(ServerEvent::ScriptChanged);
     }
     crate::error::json_value(response)
 }
@@ -364,6 +365,9 @@ fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiEr
             ApiError::bad_request(error.to_string())
         }
         PropagationProposalStoreError::Target(error) => ApiError::bad_request(error.to_string()),
+        PropagationProposalStoreError::ScriptDocumentCommand(error) => {
+            ApiError::bad_request(error.to_string())
+        }
     }
 }
 

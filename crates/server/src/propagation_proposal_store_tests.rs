@@ -3,7 +3,9 @@ use eidetic_core::contracts::{
     BibleGraphSchemaKey, CommandEnvelope, CreateBibleGraphNodeCommand,
     CreatePropagationProposalCommand, FieldValue, ObjectKind, PropagationProposalAction,
     PropagationProposalId, PropagationProposalTarget, RejectPropagationProposalCommand,
-    SemanticDependencyId, SemanticProposalStatus,
+    ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptLockId, ScriptSegmentId,
+    ScriptSegmentStatus, ScriptSpanId, ScriptSpanProvenance, SemanticDependencyId,
+    SemanticProposalStatus, SetScriptBlockCommand, SetScriptLockCommand,
 };
 
 use super::{
@@ -215,6 +217,86 @@ fn accept_replays_without_second_field_update() {
 }
 
 #[test]
+fn accepts_pending_script_block_propagation_proposal() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    seed_script_block(&mut conn, "Ada enters with a wet umbrella.");
+    let create = create_script_block_proposal_command(
+        "proposal.propagation.script-block",
+        "Ada enters with a rain-black umbrella.",
+    );
+    record_create_propagation_proposal(&mut conn, &create, 100).unwrap();
+    let accept = CommandEnvelope::new(AcceptPropagationProposalCommand {
+        proposal_id: PropagationProposalId::new("proposal.propagation.script-block").unwrap(),
+    });
+
+    let outcome = record_accept_propagation_proposal(&mut conn, &accept, 101).unwrap();
+    let proposals = load_propagation_proposals(&conn).unwrap();
+    let projection = crate::script_store::load_document_projection(
+        &conn,
+        &ScriptDocumentId::new("script.document.main").unwrap(),
+    )
+    .unwrap()
+    .expect("script projection");
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(proposals[0].status, SemanticProposalStatus::Accepted);
+    assert_eq!(
+        projection.segments[0].blocks[0].block.text,
+        "Ada enters with a rain-black umbrella."
+    );
+    assert_eq!(
+        projection.segments[0].blocks[0].spans[0].provenance,
+        ScriptSpanProvenance::AiGenerated
+    );
+    let proposal_revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::SemanticProposal,
+        "proposal.propagation.script-block",
+    )
+    .unwrap();
+    let block_revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::ScriptBlock,
+        "script.block.action-1",
+    )
+    .unwrap();
+    assert_eq!(proposal_revisions.len(), 2);
+    assert_eq!(block_revisions.len(), 2);
+}
+
+#[test]
+fn accept_rejects_script_block_proposal_that_modifies_locked_text() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    seed_script_block(&mut conn, "Ada enters with a wet umbrella.");
+    seed_script_lock(&mut conn);
+    let create = create_script_block_proposal_command(
+        "proposal.propagation.locked-script-block",
+        "Ada enters with a dry umbrella.",
+    );
+    record_create_propagation_proposal(&mut conn, &create, 100).unwrap();
+    let accept = CommandEnvelope::new(AcceptPropagationProposalCommand {
+        proposal_id: PropagationProposalId::new("proposal.propagation.locked-script-block")
+            .unwrap(),
+    });
+
+    let error = record_accept_propagation_proposal(&mut conn, &accept, 101).unwrap_err();
+    let projection = crate::script_store::load_document_projection(
+        &conn,
+        &ScriptDocumentId::new("script.document.main").unwrap(),
+    )
+    .unwrap()
+    .expect("script projection");
+
+    assert!(
+        matches!(error, PropagationProposalStoreError::ScriptDocumentCommand(error) if error.to_string().contains("locked span"))
+    );
+    assert_eq!(
+        projection.segments[0].blocks[0].block.text,
+        "Ada enters with a wet umbrella."
+    );
+}
+
+#[test]
 fn accept_rejects_unsupported_propagation_action() {
     let mut conn = rusqlite::Connection::open_in_memory().unwrap();
     let create = CommandEnvelope::new(CreatePropagationProposalCommand {
@@ -239,7 +321,7 @@ fn accept_rejects_unsupported_propagation_action() {
     let error = record_accept_propagation_proposal(&mut conn, &accept, 101).unwrap_err();
 
     assert!(
-        matches!(error, PropagationProposalStoreError::InvalidCommand(message) if message.contains("bible field"))
+        matches!(error, PropagationProposalStoreError::InvalidCommand(message) if message.contains("cannot be accepted yet"))
     );
 }
 
@@ -264,6 +346,25 @@ fn create_field_proposal_command(
     })
 }
 
+fn create_script_block_proposal_command(
+    proposal_id: &str,
+    proposed_text: &str,
+) -> CommandEnvelope<CreatePropagationProposalCommand> {
+    CommandEnvelope::new(CreatePropagationProposalCommand {
+        proposal_id: PropagationProposalId::new(proposal_id).unwrap(),
+        action: PropagationProposalAction::PatchScriptBlock,
+        target: PropagationProposalTarget::ScriptBlock {
+            block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
+        },
+        summary: "Patch generated script block".to_string(),
+        proposed_value: None,
+        proposed_text: Some(proposed_text.to_string()),
+        source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
+        source_event_id: None,
+        rationale: Some("Manual edit requires script wording propagation.".to_string()),
+    })
+}
+
 fn seed_location_node(conn: &mut rusqlite::Connection) {
     crate::bible_graph_command::apply_create_bible_graph_node(
         conn,
@@ -275,6 +376,43 @@ fn seed_location_node(conn: &mut rusqlite::Connection) {
             sort_order: 1,
         }),
         1,
+    )
+    .unwrap();
+}
+
+fn seed_script_block(conn: &mut rusqlite::Connection, text: &str) {
+    crate::script_document_command::apply_set_script_block(
+        conn,
+        &CommandEnvelope::new(SetScriptBlockCommand {
+            document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+            document_title: "Pilot".to_string(),
+            document_sort_order: 0,
+            segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
+            source_node_id: Some("node.beat.opening".to_string()),
+            segment_start_ms: 1_000,
+            segment_end_ms: 5_000,
+            segment_status: ScriptSegmentStatus::Current,
+            segment_sort_order: 1,
+            block_id: ScriptBlockId::new("script.block.action-1").unwrap(),
+            block_kind: ScriptBlockKind::Action,
+            text: text.to_string(),
+            span_provenance: ScriptSpanProvenance::AiGenerated,
+            sort_order: 2,
+        }),
+        1,
+    )
+    .unwrap();
+}
+
+fn seed_script_lock(conn: &mut rusqlite::Connection) {
+    crate::script_document_command::apply_set_script_lock(
+        conn,
+        &CommandEnvelope::new(SetScriptLockCommand {
+            lock_id: ScriptLockId::new("script.lock.action-1").unwrap(),
+            span_id: ScriptSpanId::new("script.block.action-1.span.main").unwrap(),
+            reason: "User approved wording.".to_string(),
+        }),
+        2,
     )
     .unwrap();
 }

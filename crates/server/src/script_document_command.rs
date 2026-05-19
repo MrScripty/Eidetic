@@ -127,7 +127,7 @@ pub(crate) fn apply_set_script_lock(
     Ok((outcome, projection))
 }
 
-fn validate_block_command(
+pub(crate) fn validate_block_command(
     command: &SetScriptBlockCommand,
 ) -> Result<(), ScriptDocumentCommandError> {
     if command.document_title.trim().is_empty() {
@@ -159,7 +159,7 @@ fn validate_lock_command(command: &SetScriptLockCommand) -> Result<(), ScriptDoc
     Ok(())
 }
 
-fn validate_locked_spans(
+pub(crate) fn validate_locked_spans(
     before: Option<&ScriptDocumentProjection>,
     command: &SetScriptBlockCommand,
 ) -> Result<(), ScriptDocumentCommandError> {
@@ -217,7 +217,7 @@ fn validate_locked_spans(
     Ok(())
 }
 
-fn command_document(command: &SetScriptBlockCommand) -> ScriptDocument {
+pub(crate) fn command_document(command: &SetScriptBlockCommand) -> ScriptDocument {
     ScriptDocument {
         id: command.document_id.clone(),
         title: command.document_title.clone(),
@@ -225,7 +225,7 @@ fn command_document(command: &SetScriptBlockCommand) -> ScriptDocument {
     }
 }
 
-fn command_segment(command: &SetScriptBlockCommand) -> ScriptSegment {
+pub(crate) fn command_segment(command: &SetScriptBlockCommand) -> ScriptSegment {
     ScriptSegment {
         id: command.segment_id.clone(),
         document_id: command.document_id.clone(),
@@ -237,7 +237,7 @@ fn command_segment(command: &SetScriptBlockCommand) -> ScriptSegment {
     }
 }
 
-fn command_block(command: &SetScriptBlockCommand) -> ScriptBlock {
+pub(crate) fn command_block(command: &SetScriptBlockCommand) -> ScriptBlock {
     ScriptBlock {
         id: command.block_id.clone(),
         segment_id: command.segment_id.clone(),
@@ -255,7 +255,7 @@ fn command_lock(command: &SetScriptLockCommand) -> ScriptLock {
     }
 }
 
-fn generated_span_for_block(
+pub(crate) fn generated_span_for_block(
     block: &ScriptBlock,
     provenance: ScriptSpanProvenance,
 ) -> Result<ScriptSpan, ScriptDocumentCommandError> {
@@ -272,7 +272,7 @@ fn generated_span_for_block(
     })
 }
 
-fn find_block_text(
+pub(crate) fn find_block_text(
     projection: &ScriptDocumentProjection,
     block_id: &eidetic_core::contracts::ScriptBlockId,
 ) -> Option<FieldValue> {
@@ -284,7 +284,7 @@ fn find_block_text(
         .map(|block| FieldValue::Text(block.block.text.clone()))
 }
 
-fn document_revision(
+pub(crate) fn document_revision(
     document: &ScriptDocument,
     exists: bool,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -312,7 +312,7 @@ fn document_revision(
     ))
 }
 
-fn segment_revision(
+pub(crate) fn segment_revision(
     segment: &ScriptSegment,
     before: Option<&ScriptDocumentProjection>,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -374,7 +374,7 @@ fn segment_revision(
     ))
 }
 
-fn block_revision(
+pub(crate) fn block_revision(
     block: &ScriptBlock,
     old_text: Option<FieldValue>,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -405,7 +405,7 @@ fn block_revision(
     ))
 }
 
-fn span_revision(
+pub(crate) fn span_revision(
     span: &ScriptSpan,
     event_id: eidetic_core::contracts::ChangeEventId,
 ) -> ObjectRevision {

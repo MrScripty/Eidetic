@@ -212,6 +212,26 @@ pub(crate) fn document_id_for_span(
     .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))
 }
 
+pub(crate) fn document_id_for_block(
+    conn: &Connection,
+    block_id: &ScriptBlockId,
+) -> Result<Option<ScriptDocumentId>, HistoryStoreError> {
+    conn.query_row(
+        "SELECT segments.document_id
+         FROM script_blocks blocks
+         INNER JOIN script_segments segments ON segments.id = blocks.segment_id
+         WHERE blocks.id = ?1
+            AND blocks.deleted_event_id IS NULL
+            AND segments.deleted_event_id IS NULL",
+        [block_id.as_str()],
+        |row| row.get::<_, String>(0),
+    )
+    .optional()?
+    .map(ScriptDocumentId::new)
+    .transpose()
+    .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))
+}
+
 pub(crate) fn load_document_projection(
     conn: &Connection,
     document_id: &ScriptDocumentId,
