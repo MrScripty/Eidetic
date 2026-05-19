@@ -13,6 +13,12 @@ import type {
   SetObjectFieldCommand,
 } from './projectionTypes.js';
 import type {
+  AcceptPropagationProposalCommand,
+  CreatePropagationProposalCommand,
+  PropagationProposalCommandResponse,
+  RejectPropagationProposalCommand,
+} from './propagationProposalTypes.js';
+import type {
   ScriptDocumentCommandResponse,
   SetScriptBlockCommand,
   SetScriptLockCommand,
@@ -192,6 +198,51 @@ export function acceptBibleReferenceProposal(
   };
 
   return request('/commands/semantic/bible-reference-proposal/accept', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function createPropagationProposal(
+  payload: CreatePropagationProposalCommand,
+  commandId = createCommandId(),
+): Promise<PropagationProposalCommandResponse> {
+  const command: CommandEnvelope<CreatePropagationProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/semantic/propagation-proposal', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function rejectPropagationProposal(
+  payload: RejectPropagationProposalCommand,
+  commandId = createCommandId(),
+): Promise<PropagationProposalCommandResponse> {
+  const command: CommandEnvelope<RejectPropagationProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/semantic/propagation-proposal/reject', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function acceptPropagationProposal(
+  payload: AcceptPropagationProposalCommand,
+  commandId = createCommandId(),
+): Promise<PropagationProposalCommandResponse> {
+  const command: CommandEnvelope<AcceptPropagationProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/semantic/propagation-proposal/accept', {
     method: 'POST',
     body: JSON.stringify(command),
   });

@@ -157,6 +157,9 @@ async fn create_propagation_proposal(
                 ApiError::internal(format!("propagation proposal command task failed: {e}"))
             })??;
 
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
+    }
     crate::error::json_value(response)
 }
 
@@ -172,6 +175,9 @@ async fn reject_propagation_proposal(
                 ApiError::internal(format!("propagation proposal reject task failed: {e}"))
             })??;
 
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
+    }
     crate::error::json_value(response)
 }
 
@@ -188,6 +194,7 @@ async fn accept_propagation_proposal(
             })??;
 
     if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
         let _ = state.events_tx.send(ServerEvent::BibleChanged);
         let _ = state.events_tx.send(ServerEvent::ScriptChanged);
     }

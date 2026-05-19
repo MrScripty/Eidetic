@@ -6,6 +6,7 @@ import type {
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
 import type { ChangeReviewProjection } from './changeReviewTypes.js';
 import type { ObjectFieldProjection, ObjectKind, ProjectionEnvelope } from './projectionTypes.js';
+import type { PropagationProposalListProjection } from './propagationProposalTypes.js';
 import type { ScriptDocumentId, ScriptDocumentProjection } from './scriptTypes.js';
 import type { BibleReferenceProposalListProjection } from './semanticProposalTypes.js';
 import type { StoryArcListProjection, StoryArcProgressionProjection } from './storyArcTypes.js';
@@ -79,6 +80,12 @@ export function getBibleReferenceProposalListProjection(): Promise<
   ProjectionEnvelope<BibleReferenceProposalListProjection>
 > {
   return getJson('/projections/semantic/bible-reference-proposals');
+}
+
+export function getPropagationProposalListProjection(): Promise<
+  ProjectionEnvelope<PropagationProposalListProjection>
+> {
+  return getJson('/projections/semantic/propagation-proposals');
 }
 
 export function getStoryArcListProjection(): Promise<ProjectionEnvelope<StoryArcListProjection>> {
