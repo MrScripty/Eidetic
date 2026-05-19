@@ -372,6 +372,7 @@ Completed slices:
 - `feat(renderer): add Bevy bible graph bridge` added an isolated Bevy ECS leaf crate that receives backend bible render graph projections, rebuilds disposable node/edge entities, exposes wasm interop, and emits validated selection/inspect commands without adding Bevy dependencies to core or server.
 - `feat(ui): cache bible render graph projections` added a discardable frontend projection cache for backend-owned bible render graph projections and refreshes it from bible websocket events for future Bevy graph host consumption.
 - `feat(renderer): project timeline relationships into Bevy` extended the isolated Bevy timeline scene rebuild to preserve backend-projected arc tags and relationship entities for future curve and overlay rendering without giving the renderer canonical state.
+- `feat(renderer): derive timeline relationship curves` added projection-derived Bevy timeline relationship curve control data with endpoint validation, keeping curve geometry disposable and rebuilt from backend timeline render projections.
 
 Discovered issues:
 

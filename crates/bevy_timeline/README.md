@@ -16,6 +16,7 @@ Current scope:
 - Validate selectable clip/node IDs before emitting commands.
 - Hit-test read-only clips by track and timeline time for selection commands.
 - Preserve backend-projected timeline relationships as disposable ECS entities for future curve rendering.
+- Derive disposable relationship curve control points from timeline render projections.
 - Emit validated node range command requests for backend-confirmed move/resize.
 - Expose a wasm-bindgen bridge for browser hosts.
 

@@ -5,11 +5,13 @@ use eidetic_core::timeline::track::TrackId;
 use serde::Serialize;
 use thiserror::Error;
 
+mod relationship_curve;
 mod scene;
 mod viewport;
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 
+pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};
 pub use scene::{
     TimelineClipEntity, TimelineRelationshipEntity, TimelineSceneStats, TimelineTrackEntity,
     rebuild_timeline_scene,
@@ -53,6 +55,8 @@ pub enum TimelineRendererError {
     MissingProjection,
     #[error("timeline projection does not contain node {node_id:?}")]
     UnknownNode { node_id: NodeId },
+    #[error("timeline relationship endpoint does not contain node {node_id:?}")]
+    UnknownRelationshipEndpoint { node_id: NodeId },
     #[error("timeline projection has no clip on track {track_id:?} at {time_ms}ms")]
     NoClipAtTime { track_id: TrackId, time_ms: u64 },
     #[error("invalid node range {start_ms}ms..{end_ms}ms for duration {duration_ms}ms")]
@@ -139,6 +143,17 @@ impl TimelineRendererApp {
             .world()
             .resource::<TimelineSceneStats>()
             .relationship_count
+    }
+
+    pub fn relationship_curves(
+        &self,
+    ) -> Result<Vec<TimelineRelationshipCurve>, TimelineRendererError> {
+        let state = self.app.world().resource::<TimelineRenderState>();
+        let projection = state
+            .projection
+            .as_ref()
+            .ok_or(TimelineRendererError::MissingProjection)?;
+        relationship_curves(projection)
     }
 
     pub fn viewport(&self) -> TimelineViewport {

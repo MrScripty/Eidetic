@@ -60,6 +60,53 @@ fn renderer_app_rebuilds_relationship_entities_from_projection() {
 }
 
 #[test]
+fn renderer_app_derives_relationship_curves_from_projection() {
+    let node_id = NodeId::new();
+    let track_id = TrackId::new();
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    let mut projection = projection_with_clip(node_id, track_id, 1_000, 5_000);
+    projection.relationships = vec![eidetic_core::contracts::TimelineRenderRelationship {
+        relationship_id,
+        from_node_id: node_id,
+        to_node_id: node_id,
+        relationship_type: eidetic_core::timeline::relationship::RelationshipType::Thematic,
+    }];
+    let mut renderer = TimelineRendererApp::new();
+
+    renderer.set_projection(projection);
+    let curves = renderer.relationship_curves().expect("relationship curves");
+
+    assert_eq!(curves.len(), 1);
+    assert_eq!(curves[0].relationship_id, relationship_id);
+    assert_eq!(curves[0].start.x_ms, 3_000.0);
+    assert_eq!(curves[0].end.x_ms, 3_000.0);
+}
+
+#[test]
+fn renderer_app_rejects_relationship_curve_with_unknown_endpoint() {
+    let node_id = NodeId::new();
+    let missing_node_id = NodeId::new();
+    let track_id = TrackId::new();
+    let mut projection = projection_with_clip(node_id, track_id, 1_000, 5_000);
+    projection.relationships = vec![eidetic_core::contracts::TimelineRenderRelationship {
+        relationship_id: eidetic_core::timeline::relationship::RelationshipId::new(),
+        from_node_id: node_id,
+        to_node_id: missing_node_id,
+        relationship_type: eidetic_core::timeline::relationship::RelationshipType::Thematic,
+    }];
+    let mut renderer = TimelineRendererApp::new();
+
+    renderer.set_projection(projection);
+
+    assert_eq!(
+        renderer.relationship_curves(),
+        Err(TimelineRendererError::UnknownRelationshipEndpoint {
+            node_id: missing_node_id
+        })
+    );
+}
+
+#[test]
 fn renderer_app_rejects_selection_before_projection_load() {
     let mut renderer = TimelineRendererApp::new();
     let node_id = NodeId::new();
