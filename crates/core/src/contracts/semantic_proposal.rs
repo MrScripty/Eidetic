@@ -90,6 +90,13 @@ pub struct CreateBibleReferenceProposalCommand {
     pub rationale: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RejectBibleReferenceProposalCommand {
+    pub proposal_id: SemanticProposalId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
 impl CreateBibleReferenceProposalCommand {
     pub fn into_proposal(self, created_at_ms: u64) -> BibleReferenceProposal {
         let proposed_schema_key = self.reference_kind.proposed_schema_key();
@@ -152,5 +159,18 @@ mod tests {
         assert_eq!(proposal.proposed_schema_key.as_str(), "location");
         assert_eq!(proposal.status, SemanticProposalStatus::Pending);
         assert_eq!(proposal.created_at_ms, 42);
+    }
+
+    #[test]
+    fn reject_command_round_trips() {
+        let command = RejectBibleReferenceProposalCommand {
+            proposal_id: SemanticProposalId::new("proposal.scene.location").unwrap(),
+            reason: Some("Not a durable location".to_string()),
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let decoded: RejectBibleReferenceProposalCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(decoded, command);
     }
 }

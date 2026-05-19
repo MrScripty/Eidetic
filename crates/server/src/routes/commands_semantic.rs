@@ -3,7 +3,7 @@ use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
     BibleReferenceProposalListProjection, CommandEnvelope, CreateBibleReferenceProposalCommand,
-    ProjectionEnvelope,
+    ProjectionEnvelope, RejectBibleReferenceProposalCommand,
 };
 use serde::Serialize;
 
@@ -15,10 +15,15 @@ use crate::state::{AppState, ServerEvent};
 use super::support::{active_project_path, map_history_error};
 
 pub fn router() -> Router<AppState> {
-    Router::new().route(
-        "/commands/semantic/bible-reference-proposal",
-        post(create_bible_reference_proposal),
-    )
+    Router::new()
+        .route(
+            "/commands/semantic/bible-reference-proposal",
+            post(create_bible_reference_proposal),
+        )
+        .route(
+            "/commands/semantic/bible-reference-proposal/reject",
+            post(reject_bible_reference_proposal),
+        )
 }
 
 #[derive(Debug, Serialize)]
@@ -45,6 +50,24 @@ async fn create_bible_reference_proposal(
     crate::error::json_value(response)
 }
 
+async fn reject_bible_reference_proposal(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<RejectBibleReferenceProposalCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response =
+        tokio::task::spawn_blocking(move || reject_bible_reference_proposal_at_path(path, command))
+            .await
+            .map_err(|e| {
+                ApiError::internal(format!("semantic proposal reject task failed: {e}"))
+            })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
+    }
+    crate::error::json_value(response)
+}
+
 fn create_bible_reference_proposal_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<CreateBibleReferenceProposalCommand>,
@@ -63,9 +86,28 @@ fn create_bible_reference_proposal_at_path(
     })
 }
 
+fn reject_bible_reference_proposal_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<RejectBibleReferenceProposalCommand>,
+) -> Result<BibleReferenceProposalCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let outcome =
+        semantic_proposal_store::record_reject_bible_reference_proposal(&mut conn, &command, 0)
+            .map_err(map_semantic_proposal_error)?;
+    let projection = semantic_proposal_store::load_bible_reference_proposal_list_projection(&conn)
+        .map_err(map_semantic_proposal_error)?;
+
+    Ok(BibleReferenceProposalCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn map_semantic_proposal_error(error: SemanticProposalStoreError) -> ApiError {
     match error {
         SemanticProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
+        SemanticProposalStoreError::NotFound(message) => ApiError::not_found(message),
         SemanticProposalStoreError::History(error) => map_history_error(error),
         SemanticProposalStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
     }

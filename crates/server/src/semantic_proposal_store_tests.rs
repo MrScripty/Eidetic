@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
     BibleReferenceKind, CommandEnvelope, CreateBibleReferenceProposalCommand, ObjectKind,
-    SemanticProposalId, SemanticProposalStatus,
+    RejectBibleReferenceProposalCommand, SemanticProposalId, SemanticProposalStatus,
 };
 use eidetic_core::timeline::node::NodeId;
 use rusqlite::Connection;
@@ -57,6 +57,73 @@ fn duplicate_command_replay_does_not_insert_again() {
 }
 
 #[test]
+fn rejects_pending_bible_reference_proposal() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let create = create_command(
+        "proposal.child.ring",
+        "Signal ring",
+        BibleReferenceKind::Prop,
+    );
+    record_create_bible_reference_proposal(&mut conn, &create, 42).unwrap();
+    let reject = reject_command("proposal.child.ring", Some("Not relevant"));
+
+    let outcome = record_reject_bible_reference_proposal(&mut conn, &reject, 43).unwrap();
+    let proposals = load_bible_reference_proposals(&conn).unwrap();
+    let revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::SemanticProposal,
+        "proposal.child.ring",
+    )
+    .unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(proposals[0].status, SemanticProposalStatus::Rejected);
+    assert_eq!(revisions.len(), 2);
+    assert!(revisions[1].fields.iter().any(|field| {
+        field.field_key == "rejection_reason"
+            && field.new_value
+                == Some(eidetic_core::contracts::FieldValue::Text(
+                    "Not relevant".to_string(),
+                ))
+    }));
+}
+
+#[test]
+fn reject_command_replays_without_second_update() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let create = create_command(
+        "proposal.child.ring",
+        "Signal ring",
+        BibleReferenceKind::Prop,
+    );
+    record_create_bible_reference_proposal(&mut conn, &create, 42).unwrap();
+    let reject = reject_command("proposal.child.ring", None);
+
+    let first = record_reject_bible_reference_proposal(&mut conn, &reject, 43).unwrap();
+    let second = record_reject_bible_reference_proposal(&mut conn, &reject, 43).unwrap();
+    let revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::SemanticProposal,
+        "proposal.child.ring",
+    )
+    .unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(revisions.len(), 2);
+}
+
+#[test]
+fn reject_command_requires_existing_pending_proposal() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let reject = reject_command("proposal.child.missing", None);
+
+    let error = record_reject_bible_reference_proposal(&mut conn, &reject, 43).unwrap_err();
+
+    assert!(matches!(error, SemanticProposalStoreError::NotFound(_)));
+}
+
+#[test]
 fn different_command_cannot_reuse_existing_proposal_id() {
     let mut conn = Connection::open_in_memory().unwrap();
     let first = create_command(
@@ -78,6 +145,16 @@ fn different_command_cannot_reuse_existing_proposal_id() {
         SemanticProposalStoreError::InvalidCommand(message)
             if message.contains("semantic proposal already exists")
     ));
+}
+
+fn reject_command(
+    proposal_id: &str,
+    reason: Option<&str>,
+) -> CommandEnvelope<RejectBibleReferenceProposalCommand> {
+    CommandEnvelope::new(RejectBibleReferenceProposalCommand {
+        proposal_id: SemanticProposalId::new(proposal_id).unwrap(),
+        reason: reason.map(str::to_string),
+    })
 }
 
 fn create_command(

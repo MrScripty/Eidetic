@@ -1,8 +1,9 @@
 use eidetic_core::contracts::{
     BibleGraphSchemaKey, BibleReferenceProposal, BibleReferenceProposalListProjection, ChangeEvent,
     ChangeEventKind, CommandEnvelope, CreateBibleReferenceProposalCommand, FieldDelta, FieldValue,
-    ObjectKind, ObjectRevision, ProjectionEnvelope, ProjectionVersion, RevisionOperation,
-    SemanticProposalId,
+    ObjectKind, ObjectRevision, ProjectionEnvelope, ProjectionVersion,
+    RejectBibleReferenceProposalCommand, RevisionOperation, SemanticProposalId,
+    SemanticProposalStatus,
 };
 use eidetic_core::timeline::node::NodeId;
 use rusqlite::{Connection, OptionalExtension, Transaction, params};
@@ -73,6 +74,75 @@ pub(crate) fn record_create_bible_reference_proposal(
     )?)
 }
 
+pub(crate) fn record_reject_bible_reference_proposal(
+    conn: &mut Connection,
+    command: &CommandEnvelope<RejectBibleReferenceProposalCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, SemanticProposalStoreError> {
+    create_schema(conn)?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "semantic.bible_reference_reject")?
+    {
+        return Ok(outcome);
+    }
+    let proposal =
+        load_bible_reference_proposal(conn, &command.payload.proposal_id)?.ok_or_else(|| {
+            SemanticProposalStoreError::NotFound(format!(
+                "semantic proposal not found: {}",
+                command.payload.proposal_id.as_str()
+            ))
+        })?;
+    if proposal.status != SemanticProposalStatus::Pending {
+        return Err(SemanticProposalStoreError::InvalidCommand(format!(
+            "semantic proposal is not pending: {}",
+            proposal.id.as_str()
+        )));
+    }
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::AiProposalRejected,
+        format!("reject bible reference {}", proposal.reference_text),
+    )
+    .with_created_at_ms(created_at_ms);
+    let mut revision = ObjectRevision::new(
+        ObjectKind::SemanticProposal,
+        proposal.id.as_str().to_string(),
+        event.id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "status",
+        Some(FieldValue::Text(encode_string_enum(&proposal.status)?)),
+        Some(FieldValue::Text(encode_string_enum(
+            &SemanticProposalStatus::Rejected,
+        )?)),
+    ));
+    if let Some(reason) = command.payload.reason.as_ref() {
+        revision = revision.with_field(FieldDelta::new(
+            "rejection_reason",
+            None,
+            Some(FieldValue::Text(reason.clone())),
+        ));
+    }
+
+    Ok(history_store::record_change_with(
+        conn,
+        command,
+        "semantic.bible_reference_reject",
+        &event,
+        &[revision],
+        |tx| {
+            update_proposal_status_in_transaction(
+                tx,
+                &proposal.id,
+                SemanticProposalStatus::Pending,
+                SemanticProposalStatus::Rejected,
+            )
+        },
+    )?)
+}
+
 pub(crate) fn load_bible_reference_proposals(
     conn: &Connection,
 ) -> Result<Vec<BibleReferenceProposal>, SemanticProposalStoreError> {
@@ -89,6 +159,23 @@ pub(crate) fn load_bible_reference_proposals(
         proposals.push(row?);
     }
     Ok(proposals)
+}
+
+fn load_bible_reference_proposal(
+    conn: &Connection,
+    proposal_id: &SemanticProposalId,
+) -> Result<Option<BibleReferenceProposal>, SemanticProposalStoreError> {
+    create_schema(conn)?;
+    conn.query_row(
+        "SELECT id, source_node_id, child_name, reference_kind, reference_text,
+                proposed_schema_key, status, rationale, created_at_ms
+         FROM bible_reference_proposals
+         WHERE id = ?1",
+        [proposal_id.as_str()],
+        row_to_proposal,
+    )
+    .optional()
+    .map_err(SemanticProposalStoreError::from)
 }
 
 pub(crate) fn load_bible_reference_proposal_list_projection(
@@ -219,6 +306,31 @@ pub(crate) fn insert_proposal_in_transaction(
     Ok(())
 }
 
+fn update_proposal_status_in_transaction(
+    tx: &Transaction<'_>,
+    proposal_id: &SemanticProposalId,
+    old_status: SemanticProposalStatus,
+    new_status: SemanticProposalStatus,
+) -> Result<(), HistoryStoreError> {
+    let updated = tx.execute(
+        "UPDATE bible_reference_proposals
+         SET status = ?1
+         WHERE id = ?2 AND status = ?3",
+        params![
+            encode_string_enum(&new_status)?,
+            proposal_id.as_str(),
+            encode_string_enum(&old_status)?
+        ],
+    )?;
+    if updated != 1 {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "semantic proposal status changed before update: {}",
+            proposal_id.as_str()
+        )));
+    }
+    Ok(())
+}
+
 fn row_to_proposal(row: &rusqlite::Row<'_>) -> Result<BibleReferenceProposal, rusqlite::Error> {
     let id: String = row.get(0)?;
     let source_node_id: String = row.get(1)?;
@@ -277,6 +389,8 @@ where
 pub(crate) enum SemanticProposalStoreError {
     #[error("{0}")]
     InvalidCommand(String),
+    #[error("{0}")]
+    NotFound(String),
     #[error(transparent)]
     History(#[from] HistoryStoreError),
     #[error(transparent)]

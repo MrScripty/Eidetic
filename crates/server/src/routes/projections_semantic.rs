@@ -40,6 +40,7 @@ fn load_bible_reference_proposal_list_at_path(
 fn map_semantic_proposal_error(error: SemanticProposalStoreError) -> ApiError {
     match error {
         SemanticProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
+        SemanticProposalStoreError::NotFound(message) => ApiError::not_found(message),
         SemanticProposalStoreError::History(error) => map_history_error(error),
         SemanticProposalStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
     }
