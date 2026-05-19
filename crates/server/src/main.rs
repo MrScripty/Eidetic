@@ -20,6 +20,7 @@ mod history_read_store;
 mod history_store;
 mod object_field_command;
 mod persistence;
+mod project_database;
 mod prompt_format;
 mod propagation_proposal_accept;
 mod propagation_proposal_review;

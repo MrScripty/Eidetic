@@ -9,9 +9,8 @@ pub(super) fn active_project_path(state: &AppState) -> Result<PathBuf, ApiError>
         return Err(ApiError::no_project());
     }
     state
-        .project_path
-        .lock()
-        .clone()
+        .project_database
+        .active_path()
         .ok_or_else(ApiError::no_project)
 }
 

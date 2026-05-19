@@ -82,7 +82,7 @@ pub(super) async fn generate_children(
         target_child_level: request.target_child_level,
         children,
     };
-    let mut conn = match crate::sqlite::open_write_connection(&project_path) {
+    let mut conn = match state.project_database.open_active_write_connection() {
         Ok(conn) => conn,
         Err(error) => return Json(serde_json::json!({ "error": error.to_string() })),
     };

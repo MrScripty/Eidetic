@@ -9,7 +9,7 @@ use crate::state::AppState;
 pub(crate) async fn active_sqlite_project(
     state: &AppState,
 ) -> Result<(eidetic_core::Project, PathBuf), String> {
-    let Some(project_path) = state.project_path.lock().clone() else {
+    let Some(project_path) = state.project_database.active_path() else {
         return Err("no project loaded".to_string());
     };
     if state.project.lock().is_none() {

@@ -52,7 +52,7 @@ async fn create_project(
     // Populate Y.Doc with all node text from the new project.
     populate_ydoc_from_project(&state, &project).await;
     *state.project.lock() = Some(project);
-    *state.project_path.lock() = Some(save_path);
+    state.project_database.set_active_path(save_path);
     state.trigger_save();
     Ok(Json(json))
 }
@@ -116,9 +116,8 @@ async fn save_project(
     let project_root = persistence::default_project_dir();
     let requested_path = body.path.unwrap_or_else(|| {
         state
-            .project_path
-            .lock()
-            .clone()
+            .project_database
+            .active_path()
             .unwrap_or_else(|| persistence::project_save_path(&project.name))
             .display()
             .to_string()
@@ -130,7 +129,7 @@ async fn save_project(
 
     match persistence::save_project(&project, &path, ydoc_state).await {
         Ok(()) => {
-            *state.project_path.lock() = Some(path.clone());
+            state.project_database.set_active_path(path.clone());
             Ok(Json(
                 serde_json::json!({ "saved": path.display().to_string() }),
             ))
@@ -174,7 +173,7 @@ async fn load_project(
             } else {
                 path
             };
-            *state.project_path.lock() = Some(save_path);
+            state.project_database.set_active_path(save_path);
             state.trigger_save();
             Ok(Json(json))
         }

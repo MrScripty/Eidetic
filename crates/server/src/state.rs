@@ -9,6 +9,7 @@ use tokio::sync::broadcast;
 
 use crate::diffusion::{self, DiffuseCmd, DiffuseUpdate};
 use crate::persistence;
+use crate::project_database::ProjectDatabase;
 use crate::vector_store::VectorStore;
 use crate::ydoc::{self, DocCommand, DocUpdate};
 use pumas_library::ModelLibrary;
@@ -164,8 +165,12 @@ pub struct AppState {
     pub ai_config: Arc<Mutex<AiConfig>>,
     /// Node IDs currently being generated — prevents duplicate requests.
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
-    /// Path where the current project is saved on disk.
+    /// Transitional test access to the active project path while older route
+    /// fixtures are moved onto `ProjectDatabase`.
+    #[cfg(test)]
     pub project_path: Arc<Mutex<Option<PathBuf>>>,
+    /// Active SQLite database owner for command and projection routes.
+    pub project_database: ProjectDatabase,
     /// In-memory vector store for RAG reference material.
     pub vector_store: Arc<Mutex<VectorStore>>,
     /// Channel to signal the auto-save background task.
@@ -187,6 +192,7 @@ impl AppState {
 
         let project = Arc::new(Mutex::new(None));
         let project_path = Arc::new(Mutex::new(None::<PathBuf>));
+        let project_database = ProjectDatabase::new(project_path.clone());
 
         // Spawn the debounced auto-save background task.
         let save_project = project.clone();
@@ -219,7 +225,9 @@ impl AppState {
             doc_update_tx,
             ai_config: Arc::new(Mutex::new(AiConfig::default())),
             generating: Arc::new(Mutex::new(HashSet::new())),
+            #[cfg(test)]
             project_path,
+            project_database,
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
             diffuse_tx,
