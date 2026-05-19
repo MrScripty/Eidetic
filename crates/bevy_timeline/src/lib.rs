@@ -36,6 +36,8 @@ pub enum TimelineRendererCommand {
     SplitNode {
         node_id: NodeId,
         at_ms: u64,
+        left_node_id: NodeId,
+        right_node_id: NodeId,
     },
     DeleteNode {
         node_id: NodeId,
@@ -72,6 +74,11 @@ pub enum TimelineRendererError {
         at_ms: u64,
         start_ms: u64,
         end_ms: u64,
+    },
+    #[error("split output node ids must be distinct new node ids")]
+    InvalidSplitOutputNodeIds {
+        left_node_id: NodeId,
+        right_node_id: NodeId,
     },
     #[error("invalid viewport range {start_ms}ms..{end_ms}ms for duration {duration_ms}ms")]
     InvalidViewportRange {
@@ -385,8 +392,10 @@ impl TimelineRendererApp {
         &mut self,
         node_id: NodeId,
         at_ms: u64,
+        left_node_id: NodeId,
+        right_node_id: NodeId,
     ) -> Result<(), TimelineRendererError> {
-        let (start_ms, end_ms) = {
+        let (start_ms, end_ms, output_ids_are_available) = {
             let state = self.app.world().resource::<TimelineRenderState>();
             let projection = state
                 .projection
@@ -395,7 +404,12 @@ impl TimelineRendererApp {
             let Some(clip) = projection.clips.iter().find(|clip| clip.node_id == node_id) else {
                 return Err(TimelineRendererError::UnknownNode { node_id });
             };
-            (clip.start_ms, clip.end_ms)
+            let output_ids_are_available = left_node_id != right_node_id
+                && !projection
+                    .clips
+                    .iter()
+                    .any(|clip| clip.node_id == left_node_id || clip.node_id == right_node_id);
+            (clip.start_ms, clip.end_ms, output_ids_are_available)
         };
 
         if at_ms <= start_ms || at_ms >= end_ms {
@@ -405,12 +419,23 @@ impl TimelineRendererApp {
                 end_ms,
             });
         }
+        if !output_ids_are_available {
+            return Err(TimelineRendererError::InvalidSplitOutputNodeIds {
+                left_node_id,
+                right_node_id,
+            });
+        }
 
         self.app
             .world_mut()
             .resource_mut::<TimelineRendererCommandQueue>()
             .commands
-            .push(TimelineRendererCommand::SplitNode { node_id, at_ms });
+            .push(TimelineRendererCommand::SplitNode {
+                node_id,
+                at_ms,
+                left_node_id,
+                right_node_id,
+            });
         Ok(())
     }
 

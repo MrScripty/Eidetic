@@ -81,10 +81,18 @@ impl WasmTimelineRenderer {
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
-    pub fn request_split_node(&mut self, node_id: String, at_ms: u64) -> Result<(), JsValue> {
+    pub fn request_split_node(
+        &mut self,
+        node_id: String,
+        at_ms: u64,
+        left_node_id: String,
+        right_node_id: String,
+    ) -> Result<(), JsValue> {
         let node_id = parse_node_id(&node_id)?;
+        let left_node_id = parse_node_id(&left_node_id)?;
+        let right_node_id = parse_node_id(&right_node_id)?;
         self.renderer
-            .request_split_node(node_id, at_ms)
+            .request_split_node(node_id, at_ms, left_node_id, right_node_id)
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 

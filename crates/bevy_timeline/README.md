@@ -19,6 +19,7 @@ Current scope:
 - Preserve backend-projected timeline relationships as disposable ECS entities for future curve rendering.
 - Derive and expose disposable relationship curve control points from timeline render projections.
 - Emit validated node range command requests for backend-confirmed move/resize.
+- Emit validated split command requests with backend-required replacement node IDs.
 - Expose a wasm-bindgen bridge for browser hosts.
 
 Dependency review:

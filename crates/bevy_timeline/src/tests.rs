@@ -3,6 +3,8 @@ use eidetic_core::contracts::{TimelineRenderClip, TimelineRenderTrack};
 use eidetic_core::timeline::node::{ContentStatus, StoryLevel};
 use eidetic_core::timeline::track::TrackId;
 
+mod split;
+
 #[test]
 fn renderer_app_receives_projection_and_emits_validated_selection_command() {
     let node_id = NodeId::new();
@@ -380,39 +382,6 @@ fn renderer_app_rejects_create_node_command_with_unknown_parent() {
 }
 
 #[test]
-fn renderer_app_emits_validated_split_node_command() {
-    let node_id = NodeId::new();
-    let mut renderer = TimelineRendererApp::new();
-    renderer.set_projection(projection_with_node(node_id));
-
-    assert_eq!(renderer.request_split_node(node_id, 2_500), Ok(()));
-    assert_eq!(
-        renderer.drain_commands(),
-        vec![TimelineRendererCommand::SplitNode {
-            node_id,
-            at_ms: 2_500
-        }]
-    );
-}
-
-#[test]
-fn renderer_app_rejects_split_node_command_outside_clip() {
-    let node_id = NodeId::new();
-    let mut renderer = TimelineRendererApp::new();
-    renderer.set_projection(projection_with_node(node_id));
-
-    assert_eq!(
-        renderer.request_split_node(node_id, 4_000),
-        Err(TimelineRendererError::InvalidNodeSplit {
-            at_ms: 4_000,
-            start_ms: 1_000,
-            end_ms: 4_000
-        })
-    );
-    assert!(renderer.drain_commands().is_empty());
-}
-
-#[test]
 fn renderer_app_emits_validated_delete_node_command() {
     let node_id = NodeId::new();
     let mut renderer = TimelineRendererApp::new();
@@ -441,7 +410,7 @@ fn renderer_app_rejects_delete_node_command_for_unknown_node() {
     assert!(renderer.drain_commands().is_empty());
 }
 
-fn projection_with_node(node_id: NodeId) -> TimelineRenderProjection {
+pub(super) fn projection_with_node(node_id: NodeId) -> TimelineRenderProjection {
     let track_id = TrackId::new();
     projection_with_clip(node_id, track_id, 1_000, 4_000)
 }
