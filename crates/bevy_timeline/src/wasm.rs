@@ -101,6 +101,17 @@ impl WasmTimelineRenderer {
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
+    pub fn set_playhead(&mut self, position_ms: u64) -> Result<(), JsValue> {
+        self.renderer
+            .set_playhead(position_ms)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
+    }
+
+    pub fn playhead(&self) -> Result<JsValue, JsValue> {
+        serde_wasm_bindgen::to_value(&self.renderer.playhead())
+            .map_err(|error| JsValue::from_str(&format!("invalid renderer playhead: {error}")))
+    }
+
     pub fn pan_viewport(&mut self, delta_ms: i64) {
         self.renderer.pan_viewport(delta_ms);
     }

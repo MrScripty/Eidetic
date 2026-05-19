@@ -208,6 +208,38 @@ fn renderer_app_keeps_transient_viewport_inside_projection_duration() {
 }
 
 #[test]
+fn renderer_app_keeps_transient_playhead_inside_projection_duration() {
+    let node_id = NodeId::new();
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection_with_node(node_id));
+
+    assert_eq!(
+        renderer.playhead(),
+        TimelinePlayhead {
+            position_ms: 0,
+            duration_ms: 10_000
+        }
+    );
+
+    assert_eq!(renderer.set_playhead(4_000), Ok(()));
+    assert_eq!(
+        renderer.playhead(),
+        TimelinePlayhead {
+            position_ms: 4_000,
+            duration_ms: 10_000
+        }
+    );
+
+    assert_eq!(
+        renderer.set_playhead(12_000),
+        Err(TimelineRendererError::InvalidPlayheadPosition {
+            position_ms: 12_000,
+            duration_ms: 10_000
+        })
+    );
+}
+
+#[test]
 fn renderer_app_zooms_viewport_around_time() {
     let node_id = NodeId::new();
     let mut renderer = TimelineRendererApp::new();

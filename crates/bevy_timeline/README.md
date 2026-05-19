@@ -13,6 +13,7 @@ Current scope:
 - Receive `TimelineRenderProjection` snapshots.
 - Rebuild read-only Bevy ECS entities for tracks, clips, arc tags, and relationships.
 - Own transient pan and zoom viewport state derived from projection duration.
+- Own transient playhead state bounded by projection duration.
 - Validate selectable clip/node IDs before emitting commands.
 - Hit-test read-only clips by track and timeline time for selection commands.
 - Preserve backend-projected timeline relationships as disposable ECS entities for future curve rendering.

@@ -373,6 +373,7 @@ Completed slices:
 - `feat(ui): cache bible render graph projections` added a discardable frontend projection cache for backend-owned bible render graph projections and refreshes it from bible websocket events for future Bevy graph host consumption.
 - `feat(renderer): project timeline relationships into Bevy` extended the isolated Bevy timeline scene rebuild to preserve backend-projected arc tags and relationship entities for future curve and overlay rendering without giving the renderer canonical state.
 - `feat(renderer): derive timeline relationship curves` added projection-derived Bevy timeline relationship curve control data with endpoint validation, keeping curve geometry disposable and rebuilt from backend timeline render projections.
+- `feat(renderer): add Bevy timeline playhead state` added transient renderer-owned playhead state bounded by backend timeline render projection duration and exposed it through the wasm bridge without persisting playhead position.
 
 Discovered issues:
 

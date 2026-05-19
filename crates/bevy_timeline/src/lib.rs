@@ -5,12 +5,14 @@ use eidetic_core::timeline::track::TrackId;
 use serde::Serialize;
 use thiserror::Error;
 
+mod playhead;
 mod relationship_curve;
 mod scene;
 mod viewport;
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 
+pub use playhead::TimelinePlayhead;
 pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};
 pub use scene::{
     TimelineClipEntity, TimelineRelationshipEntity, TimelineSceneStats, TimelineTrackEntity,
@@ -77,6 +79,8 @@ pub enum TimelineRendererError {
         end_ms: u64,
         duration_ms: u64,
     },
+    #[error("invalid playhead position {position_ms}ms for duration {duration_ms}ms")]
+    InvalidPlayheadPosition { position_ms: u64, duration_ms: u64 },
     #[error("viewport zoom factor must be finite and greater than zero")]
     InvalidZoomFactor,
 }
@@ -108,6 +112,7 @@ impl TimelineRendererApp {
         app.insert_resource(TimelineRendererCommandQueue::default());
         app.insert_resource(TimelineSceneStats::default());
         app.insert_resource(TimelineViewport::default());
+        app.insert_resource(TimelinePlayhead::default());
         Self { app }
     }
 
@@ -115,6 +120,10 @@ impl TimelineRendererApp {
         self.app
             .world_mut()
             .resource_mut::<TimelineViewport>()
+            .set_duration(projection.total_duration_ms);
+        self.app
+            .world_mut()
+            .resource_mut::<TimelinePlayhead>()
             .set_duration(projection.total_duration_ms);
         self.app
             .world_mut()
@@ -158,6 +167,25 @@ impl TimelineRendererApp {
 
     pub fn viewport(&self) -> TimelineViewport {
         *self.app.world().resource::<TimelineViewport>()
+    }
+
+    pub fn playhead(&self) -> TimelinePlayhead {
+        *self.app.world().resource::<TimelinePlayhead>()
+    }
+
+    pub fn set_playhead(&mut self, position_ms: u64) -> Result<(), TimelineRendererError> {
+        let duration_ms = self.playhead().duration_ms;
+        if position_ms > duration_ms {
+            return Err(TimelineRendererError::InvalidPlayheadPosition {
+                position_ms,
+                duration_ms,
+            });
+        }
+        self.app
+            .world_mut()
+            .resource_mut::<TimelinePlayhead>()
+            .set_position(position_ms);
+        Ok(())
     }
 
     pub fn set_viewport(
