@@ -61,57 +61,7 @@ pub(crate) fn record_create_bible_reference_proposal(
         format!("propose bible reference {}", proposal.reference_text),
     )
     .with_created_at_ms(created_at_ms);
-    let revision = ObjectRevision::new(
-        ObjectKind::SemanticProposal,
-        proposal.id.as_str().to_string(),
-        event.id,
-        RevisionOperation::Create,
-    )
-    .with_field(FieldDelta::new(
-        "source_node_id",
-        None,
-        Some(FieldValue::ObjectRef {
-            kind: ObjectKind::TimelineNode,
-            id: proposal.source_node_id.0.to_string(),
-        }),
-    ))
-    .with_field(FieldDelta::new(
-        "child_name",
-        None,
-        Some(FieldValue::Text(proposal.child_name.clone())),
-    ))
-    .with_field(FieldDelta::new(
-        "reference_kind",
-        None,
-        Some(FieldValue::Text(encode_string_enum(
-            &proposal.reference_kind,
-        )?)),
-    ))
-    .with_field(FieldDelta::new(
-        "reference_text",
-        None,
-        Some(FieldValue::Text(proposal.reference_text.clone())),
-    ))
-    .with_field(FieldDelta::new(
-        "proposed_schema_key",
-        None,
-        Some(FieldValue::Text(
-            proposal.proposed_schema_key.as_str().to_string(),
-        )),
-    ))
-    .with_field(FieldDelta::new(
-        "status",
-        None,
-        Some(FieldValue::Text(encode_string_enum(&proposal.status)?)),
-    ));
-    let revision = match proposal.rationale.as_ref() {
-        Some(rationale) => revision.with_field(FieldDelta::new(
-            "rationale",
-            None,
-            Some(FieldValue::Text(rationale.clone())),
-        )),
-        None => revision,
-    };
+    let revision = bible_reference_proposal_revision(&proposal, event.id)?;
 
     Ok(history_store::record_change_with(
         conn,
@@ -188,7 +138,64 @@ fn proposal_exists(
         .is_some())
 }
 
-fn insert_proposal_in_transaction(
+pub(crate) fn bible_reference_proposal_revision(
+    proposal: &BibleReferenceProposal,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> Result<ObjectRevision, HistoryStoreError> {
+    let revision = ObjectRevision::new(
+        ObjectKind::SemanticProposal,
+        proposal.id.as_str().to_string(),
+        event_id,
+        RevisionOperation::Create,
+    )
+    .with_field(FieldDelta::new(
+        "source_node_id",
+        None,
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::TimelineNode,
+            id: proposal.source_node_id.0.to_string(),
+        }),
+    ))
+    .with_field(FieldDelta::new(
+        "child_name",
+        None,
+        Some(FieldValue::Text(proposal.child_name.clone())),
+    ))
+    .with_field(FieldDelta::new(
+        "reference_kind",
+        None,
+        Some(FieldValue::Text(encode_string_enum(
+            &proposal.reference_kind,
+        )?)),
+    ))
+    .with_field(FieldDelta::new(
+        "reference_text",
+        None,
+        Some(FieldValue::Text(proposal.reference_text.clone())),
+    ))
+    .with_field(FieldDelta::new(
+        "proposed_schema_key",
+        None,
+        Some(FieldValue::Text(
+            proposal.proposed_schema_key.as_str().to_string(),
+        )),
+    ))
+    .with_field(FieldDelta::new(
+        "status",
+        None,
+        Some(FieldValue::Text(encode_string_enum(&proposal.status)?)),
+    ));
+    Ok(match proposal.rationale.as_ref() {
+        Some(rationale) => revision.with_field(FieldDelta::new(
+            "rationale",
+            None,
+            Some(FieldValue::Text(rationale.clone())),
+        )),
+        None => revision,
+    })
+}
+
+pub(crate) fn insert_proposal_in_transaction(
     tx: &Transaction<'_>,
     proposal: &BibleReferenceProposal,
 ) -> Result<(), HistoryStoreError> {

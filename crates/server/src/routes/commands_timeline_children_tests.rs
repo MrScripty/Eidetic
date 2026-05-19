@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
-use eidetic_core::contracts::{FieldValue, ObjectKind};
+use eidetic_core::contracts::{BibleReferenceKind, FieldValue, ObjectKind, SemanticProposalStatus};
 use serde_json::json;
 use tower::util::ServiceExt;
 
@@ -118,6 +118,60 @@ async fn apply_timeline_children_command_returns_timeline_render_projection() {
                 && field.old_value.is_none()
                 && field.new_value == Some(FieldValue::Text("First outline".to_string())))
     );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn apply_timeline_children_command_records_bible_reference_proposals() {
+    let path = temp_db_path("applies-children-with-bible-references");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let first_child_id = eidetic_core::timeline::node::NodeId::new();
+    let second_child_id = eidetic_core::timeline::node::NodeId::new();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed child current state");
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let mut body = apply_timeline_children_command_body(parent.id, first_child_id, second_child_id);
+    body["payload"]["children"][0]["characters"] = json!(["Ada", "Bob", "Ada", " "]);
+    body["payload"]["children"][0]["location"] = json!("Storm Harbor");
+    body["payload"]["children"][0]["props"] = json!(["Signal ring"]);
+
+    let response = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let conn = crate::sqlite::open_write_connection(&path).unwrap();
+    let proposals = crate::semantic_proposal_store::load_bible_reference_proposals(&conn).unwrap();
+
+    assert_eq!(proposals.len(), 4);
+    assert!(
+        proposals
+            .iter()
+            .all(|proposal| proposal.status == SemanticProposalStatus::Pending)
+    );
+    assert!(
+        proposals
+            .iter()
+            .all(|proposal| proposal.source_node_id == first_child_id)
+    );
+    assert!(proposals.iter().any(|proposal| {
+        proposal.reference_kind == BibleReferenceKind::Character && proposal.reference_text == "Ada"
+    }));
+    assert!(proposals.iter().any(|proposal| {
+        proposal.reference_kind == BibleReferenceKind::Location
+            && proposal.reference_text == "Storm Harbor"
+    }));
+    assert!(proposals.iter().any(|proposal| {
+        proposal.reference_kind == BibleReferenceKind::Prop
+            && proposal.reference_text == "Signal ring"
+    }));
 
     let _ = std::fs::remove_file(path);
 }

@@ -2,8 +2,8 @@ use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
-    ApplyTimelineChildrenCommand, CommandEnvelope, CreateTimelineNodeCommand,
-    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
+    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CommandEnvelope,
+    CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
     SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
     TimelineRenderProjection,
@@ -163,6 +163,7 @@ async fn apply_timeline_children(
     };
 
     if response.outcome == RecordChangeOutcome::Recorded {
+        let has_bible_references = children_have_bible_references(&children);
         for child in children {
             let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
                 node_id: child.node_id,
@@ -178,9 +179,29 @@ async fn apply_timeline_children(
         }
         let _ = state.events_tx.send(ServerEvent::TimelineChanged);
         let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+        if has_bible_references {
+            let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
+        }
         state.trigger_save();
     }
     crate::error::json_value(response)
+}
+
+fn children_have_bible_references(children: &[ApplyTimelineChildCommand]) -> bool {
+    children.iter().any(|child| {
+        child
+            .characters
+            .iter()
+            .any(|value| !value.as_str().trim().is_empty())
+            || child
+                .location
+                .as_deref()
+                .is_some_and(|value| !value.trim().is_empty())
+            || child
+                .props
+                .iter()
+                .any(|value| !value.as_str().trim().is_empty())
+    })
 }
 
 async fn create_timeline_relationship(

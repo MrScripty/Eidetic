@@ -2,9 +2,10 @@ use std::collections::HashSet;
 
 use eidetic_core::Project;
 use eidetic_core::contracts::{
-    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, ChangeEvent, ChangeEventId,
-    ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
-    RevisionOperation,
+    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, BibleReferenceKind,
+    BibleReferenceProposal, ChangeEvent, ChangeEventId, ChangeEventKind, CommandEnvelope,
+    CreateBibleReferenceProposalCommand, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
+    RevisionOperation, SemanticProposalId,
 };
 use eidetic_core::story::arc::ArcId;
 use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel, StoryNode};
@@ -13,6 +14,7 @@ use eidetic_core::timeline::timing::TimeRange;
 use rusqlite::Connection;
 
 use crate::history_store::{self, RecordChangeOutcome};
+use crate::semantic_proposal_store;
 use crate::timeline_command::TimelineCommandError;
 use crate::timeline_command_history_codec::{
     encode_arc_ids, encode_beat_type, encode_content_status, encode_relationship_type,
@@ -27,6 +29,7 @@ pub(crate) fn record_apply_timeline_children_history(
     command: &CommandEnvelope<ApplyTimelineChildrenCommand>,
     created_at_ms: u64,
 ) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    semantic_proposal_store::create_schema(conn)?;
     if let Some(outcome) =
         history_store::check_recorded_command(conn, command, "timeline.children_apply")?
     {
@@ -80,6 +83,12 @@ pub(crate) fn record_apply_timeline_children_history(
             event.id,
         )?);
     }
+    let bible_reference_proposals = bible_reference_proposals_for_children(command, created_at_ms);
+    for proposal in &bible_reference_proposals {
+        revisions.push(semantic_proposal_store::bible_reference_proposal_revision(
+            proposal, event.id,
+        )?);
+    }
     let mut next_timeline = project.timeline.clone();
     next_timeline.clear_children_of(command.payload.parent_id)?;
     for planned_child in &child_plan {
@@ -120,9 +129,90 @@ pub(crate) fn record_apply_timeline_children_history(
             timeline_relationship_store::upsert_relationships_in_transaction(
                 tx,
                 &next_timeline.relationships,
-            )
+            )?;
+            for proposal in &bible_reference_proposals {
+                semantic_proposal_store::insert_proposal_in_transaction(tx, proposal)?;
+            }
+            Ok(())
         },
     )?)
+}
+
+fn bible_reference_proposals_for_children(
+    command: &CommandEnvelope<ApplyTimelineChildrenCommand>,
+    created_at_ms: u64,
+) -> Vec<BibleReferenceProposal> {
+    let mut proposals = Vec::new();
+    for child in &command.payload.children {
+        append_reference_proposals(
+            &mut proposals,
+            command.id.0,
+            child,
+            BibleReferenceKind::Character,
+            child.characters.iter().map(String::as_str),
+            created_at_ms,
+        );
+        append_reference_proposals(
+            &mut proposals,
+            command.id.0,
+            child,
+            BibleReferenceKind::Location,
+            child.location.as_deref().into_iter(),
+            created_at_ms,
+        );
+        append_reference_proposals(
+            &mut proposals,
+            command.id.0,
+            child,
+            BibleReferenceKind::Prop,
+            child.props.iter().map(String::as_str),
+            created_at_ms,
+        );
+    }
+    proposals
+}
+
+fn append_reference_proposals<'a>(
+    proposals: &mut Vec<BibleReferenceProposal>,
+    command_id: uuid::Uuid,
+    child: &ApplyTimelineChildCommand,
+    reference_kind: BibleReferenceKind,
+    values: impl Iterator<Item = &'a str>,
+    created_at_ms: u64,
+) {
+    let mut seen = HashSet::new();
+    for value in values {
+        let reference_text = value.trim();
+        if reference_text.is_empty() || !seen.insert(reference_text.to_string()) {
+            continue;
+        }
+        let index = proposals.len();
+        let proposal_id = SemanticProposalId::new(format!(
+            "timeline.children_apply.{command_id}.{}.{}.{index}",
+            child.node_id.0,
+            reference_kind_label(&reference_kind),
+        ))
+        .expect("generated semantic proposal ids are non-empty");
+        proposals.push(
+            CreateBibleReferenceProposalCommand {
+                proposal_id,
+                source_node_id: child.node_id,
+                child_name: child.name.clone(),
+                reference_kind: reference_kind.clone(),
+                reference_text: reference_text.to_string(),
+                rationale: Some("Referenced by applied timeline child plan".to_string()),
+            }
+            .into_proposal(created_at_ms),
+        );
+    }
+}
+
+fn reference_kind_label(reference_kind: &BibleReferenceKind) -> &'static str {
+    match reference_kind {
+        BibleReferenceKind::Character => "character",
+        BibleReferenceKind::Location => "location",
+        BibleReferenceKind::Prop => "prop",
+    }
 }
 
 struct PlannedChild<'a> {

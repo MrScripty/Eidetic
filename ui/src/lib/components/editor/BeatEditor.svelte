@@ -220,6 +220,9 @@
           outline: child.outline,
           weight: child.weight,
           beat_type: child.beat_type,
+          characters: child.characters ?? [],
+          location: child.location ?? null,
+          props: child.props ?? [],
         })),
       });
       const node = editorState.selectedNode;

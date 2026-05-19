@@ -1,9 +1,4 @@
-import type {
-  BeatType,
-  RelationshipId,
-  RelationshipType,
-  StoryLevel,
-} from './timelineTypes.js';
+import type { BeatType, RelationshipId, RelationshipType, StoryLevel } from './timelineTypes.js';
 import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
@@ -55,6 +50,9 @@ export interface ApplyTimelineChildCommand {
   outline: string;
   weight: number;
   beat_type: BeatType | null;
+  characters?: string[];
+  location?: string | null;
+  props?: string[];
 }
 
 export interface CreateTimelineRelationshipCommand {
