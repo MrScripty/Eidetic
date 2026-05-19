@@ -16,6 +16,7 @@ This directory contains the story-bible UI backed by backend-owned bible graph p
 | `BibleGraphNodeCard.svelte`        | List-card summary for backend-owned bible graph nodes.                         |
 | `BibleGraphNodeDetail.svelte`      | Read-only detail panel for backend-owned bible graph node projections.         |
 | `BibleGraphPartFields.svelte`      | Projection-backed bible graph field editor that writes through graph commands. |
+| `BibleRenderGraphOutline.svelte`   | Keyboard-accessible graph-node outline from bible render graph projections.    |
 | `bibleGraphCategories.ts`          | Category/root mapping helpers for graph-node list and creation UI.             |
 
 ## Problem
@@ -40,6 +41,7 @@ Keep story-bible components together while routing list, detail, field, edge, an
 - Story-bible list/navigation reads come from backend-owned bible graph projections, not broad legacy entity caches.
 - Entity detail edits use bible graph commands, not broad legacy entity APIs or local-only schema forks.
 - Development points are represented as graph snapshots.
+- Canvas graph selection keeps semantic Svelte controls backed by the same backend render graph projection.
 
 ## Revisit Triggers
 

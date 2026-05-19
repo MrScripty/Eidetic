@@ -12,10 +12,15 @@
     getCachedBibleGraphSchemaListProjection,
     refreshBibleGraphSchemaListProjection,
   } from '$lib/stores/bibleGraphSchemaProjection.svelte.js';
+  import {
+    getCachedBibleRenderGraphProjection,
+    refreshBibleRenderGraphProjection,
+  } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
   import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
   import BibleGraphAddControls from './BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from './BibleGraphCategoryFilters.svelte';
   import BibleGraphNodeCard from './BibleGraphNodeCard.svelte';
+  import BibleRenderGraphOutline from './BibleRenderGraphOutline.svelte';
   import {
     canonicalParents,
     canonicalRootSchemaKeys,
@@ -34,6 +39,7 @@
 
   const nodeListProjection = $derived(getCachedBibleGraphNodeListProjection());
   const schemaProjection = $derived(getCachedBibleGraphSchemaListProjection());
+  const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graphNodes = $derived(nodeListProjection?.payload.nodes ?? []);
   const disabledAddCategories = $derived(
     new Set(
@@ -77,6 +83,7 @@
         name: newNodeName(category),
         sort_order: nextSortOrder(category),
       });
+      await refreshBibleRenderGraphProjection();
       selectBibleGraphNode(nodeId);
     } catch (error) {
       loadError = error instanceof Error ? error.message : 'Failed to create bible graph node';
@@ -114,6 +121,7 @@
       if (projection.payload.nodes.length === 0) {
         await ensureCanonicalBibleRootProjections();
       }
+      await refreshBibleRenderGraphProjection();
     } catch (error) {
       loadError = error instanceof Error ? error.message : 'Failed to load bible graph nodes';
     }
@@ -135,6 +143,13 @@
   </div>
 
   <BibleGraphCategoryFilters {activeFilter} onselect={(filter) => (activeFilter = filter)} />
+
+  <BibleRenderGraphOutline
+    projection={renderGraphProjection?.payload ?? null}
+    selectedNodeId={bibleState.selectedGraphNodeId}
+    query={searchQuery}
+    onselect={handleSelect}
+  />
 
   {#if loadError}
     <div class="load-error">{loadError}</div>
