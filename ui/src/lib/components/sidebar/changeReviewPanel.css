@@ -1,0 +1,165 @@
+.change-review-panel {
+  padding: 8px;
+  overflow: auto;
+}
+
+.change-review-panel .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.change-review-panel h3 {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.change-review-panel .refresh-btn {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.change-review-panel .refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.change-review-panel .status {
+  margin: 0;
+  padding: 14px 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.change-review-panel .status-error {
+  color: var(--color-danger);
+}
+
+.change-review-panel .change-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.change-review-panel .change-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.change-review-panel .change-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.change-review-panel .change-title {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.change-review-panel .change-kind {
+  color: var(--color-accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.change-review-panel .change-summary {
+  color: var(--color-text-primary);
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+.change-review-panel time {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: 0.62rem;
+}
+
+.change-review-panel .revision-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.change-review-panel .revision-item {
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 5px;
+}
+
+.change-review-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+
+.change-review-panel code {
+  max-width: 140px;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change-review-panel .field-empty {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.66rem;
+}
+
+.change-review-panel .field-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 0;
+}
+
+.change-review-panel .field-row {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.4fr) minmax(0, 1fr);
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 0.66rem;
+}
+
+.change-review-panel .field-row.unchanged {
+  opacity: 0.65;
+}
+
+.change-review-panel dt {
+  overflow-wrap: anywhere;
+}
+
+.change-review-panel dd {
+  display: flex;
+  min-width: 0;
+  gap: 5px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.change-review-panel .arrow {
+  color: var(--color-text-muted);
+}

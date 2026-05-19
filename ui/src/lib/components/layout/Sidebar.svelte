@@ -7,14 +7,15 @@
   import AiConfigPanel from '../sidebar/AiConfigPanel.svelte';
   import ReferencePanel from '../sidebar/ReferencePanel.svelte';
   import ProgressionPanel from '../sidebar/ProgressionPanel.svelte';
+  import ChangeReviewPanel from '../sidebar/ChangeReviewPanel.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
-  let activeTab: 'arcs' | 'bible' | 'ai' | 'refs' = $state('arcs');
+  let activeTab: 'arcs' | 'bible' | 'review' | 'ai' | 'refs' = $state('arcs');
   let selectedArcId: string | null = $state(null);
   let showProgression = $state(false);
   let arcs = $derived(storyArcProjectionState.projection?.payload.arcs ?? []);
 
-  function switchTab(tab: 'arcs' | 'bible' | 'ai' | 'refs') {
+  function switchTab(tab: 'arcs' | 'bible' | 'review' | 'ai' | 'refs') {
     activeTab = tab;
     selectedArcId = null;
   }
@@ -28,6 +29,9 @@
       </button>
       <button class="tab" class:active={activeTab === 'bible'} onclick={() => switchTab('bible')}>
         Bible
+      </button>
+      <button class="tab" class:active={activeTab === 'review'} onclick={() => switchTab('review')}>
+        Review
       </button>
       <button class="tab" class:active={activeTab === 'ai'} onclick={() => switchTab('ai')}>
         AI
@@ -57,6 +61,8 @@
       {/if}
     {:else if activeTab === 'bible'}
       <StoryBibleTab />
+    {:else if activeTab === 'review'}
+      <ChangeReviewPanel />
     {:else if activeTab === 'ai'}
       <AiConfigPanel />
     {:else}

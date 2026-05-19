@@ -1,13 +1,14 @@
 # ui/src/lib/components/sidebar
 
 ## Purpose
-This directory contains the right-hand control surfaces for arcs, AI configuration, references, progression, and the nested story-bible panels.
+This directory contains the right-hand control surfaces for arcs, change review, AI configuration, references, progression, and the nested story-bible panels.
 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
 | `AiConfigPanel.svelte` | AI backend and diffusion configuration controls. |
 | `ArcList.svelte` / `ArcDetail.svelte` | Story-arc browsing and editing. |
+| `ChangeReviewPanel.svelte` / `changeReviewPanel.css` | Projection-backed change history review surface for accepted backend events and revision deltas. |
 | `ReferencePanel.svelte` | Reference document management. |
 | `ProgressionPanel.svelte` | Arc progression analysis display. |
 | `bible/` | Story-bible and entity-detail panels. |

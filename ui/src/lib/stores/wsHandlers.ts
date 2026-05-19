@@ -17,6 +17,7 @@ import { refreshTimelineRenderProjection } from './timelineRenderProjection.svel
 import { refreshBibleGraphNodeListProjection } from './bibleGraphNodeProjection.svelte.js';
 import { refreshBibleReferenceProposalListProjection } from './semanticProposalProjection.svelte.js';
 import { refreshPropagationProposalListProjection } from './propagationProposalProjection.svelte.js';
+import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
 
 /** Register WebSocket event handlers that update Svelte stores. */
 export function setupWsHandlers(ws: WsClient) {
@@ -82,17 +83,20 @@ export function setupWsHandlers(ws: WsClient) {
 
     ws.on('bible_changed', async () => {
       await refreshBibleGraphNodeListProjection().catch(() => {});
+      await refreshChangeReviewProjection().catch(() => {});
     }),
 
     ws.on('semantic_proposals_changed', async () => {
       await refreshBibleReferenceProposalListProjection().catch(() => {});
       await refreshPropagationProposalListProjection().catch(() => {});
+      await refreshChangeReviewProjection().catch(() => {});
     }),
 
     ws.on('script_changed', async () => {
       await refreshScriptDocumentProjection({ document_id: MAIN_SCRIPT_DOCUMENT_ID }).catch(
         () => {},
       );
+      await refreshChangeReviewProjection().catch(() => {});
     }),
   ];
 

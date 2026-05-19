@@ -368,6 +368,7 @@ Completed slices:
 - `refactor(server): add project database owner` added a backend-owned project database lifecycle handle shared with transitional project-path state, and routed command/projection/AI active database lookups through that owner instead of direct route access to `AppState.project_path`.
 - `docs(renderer): document Bevy dependency boundary` recorded the Bevy leaf-crate dependency review, including disabled default features, current `std`-only usage, wasm-only browser interop dependencies, and the rule that new Bevy feature families require a fresh dependency review.
 - `feat(bible): add render graph projection` added a backend-owned bible render graph DTO, deterministic layout helper, neighborhood indexes, SQLite-backed projection route, and frontend projection helper for the future Bevy bible graph host without adding renderer dependencies to core/server.
+- `feat(ui): add change review panel` added a sidebar review surface over the backend-owned change review projection, showing accepted events, object revisions, and field deltas while refreshing from websocket events without local canonical history state.
 
 Discovered issues:
 
