@@ -4,6 +4,7 @@ import type {
   BibleNodeDetailProjection,
 } from './bibleGraphTypes.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
+import type { ChangeReviewProjection } from './changeReviewTypes.js';
 import type { ObjectFieldProjection, ObjectKind, ProjectionEnvelope } from './projectionTypes.js';
 import type { ScriptDocumentId, ScriptDocumentProjection } from './scriptTypes.js';
 import type { BibleReferenceProposalListProjection } from './semanticProposalTypes.js';
@@ -94,4 +95,8 @@ export function getTimelineRenderProjection(): Promise<
   ProjectionEnvelope<TimelineRenderProjection>
 > {
   return getJson('/projections/timeline/render');
+}
+
+export function getChangeReviewProjection(): Promise<ProjectionEnvelope<ChangeReviewProjection>> {
+  return getJson('/projections/history/changes');
 }

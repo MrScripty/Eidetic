@@ -17,6 +17,7 @@ export type ObjectKind =
   | 'script_block'
   | 'script_span'
   | 'script_lock'
+  | 'semantic_proposal'
   | 'semantic_claim'
   | 'semantic_dependency'
   | 'reference_asset'

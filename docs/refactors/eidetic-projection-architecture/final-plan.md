@@ -342,6 +342,7 @@ Completed slices:
 - `feat(ai): decompose with graph-backed bible context` reused the AI bible context projection for child-decomposition requests so AI child plans can propose characters, locations, and props from persisted graph facts.
 - `feat(server): link accepted bible proposals` allowed proposal acceptance to target an existing schema-compatible bible graph node without mutating it, while preserving new-node creation for unknown target node IDs.
 - `feat(server): project change review history` added a backend-owned change review projection over recorded change events, object revisions, and before/after field deltas for proposal and propagation review surfaces.
+- `feat(ui): cache change review history` added typed frontend change review DTOs, a projection helper, and a discardable projection cache for backend-owned change review history without local mutation.
 
 Discovered issues:
 
