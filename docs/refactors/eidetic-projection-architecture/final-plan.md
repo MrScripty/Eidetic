@@ -371,6 +371,7 @@ Completed slices:
 - `feat(ui): add change review panel` added a sidebar review surface over the backend-owned change review projection, showing accepted events, object revisions, and field deltas while refreshing from websocket events without local canonical history state.
 - `feat(renderer): add Bevy bible graph bridge` added an isolated Bevy ECS leaf crate that receives backend bible render graph projections, rebuilds disposable node/edge entities, exposes wasm interop, and emits validated selection/inspect commands without adding Bevy dependencies to core or server.
 - `feat(ui): cache bible render graph projections` added a discardable frontend projection cache for backend-owned bible render graph projections and refreshes it from bible websocket events for future Bevy graph host consumption.
+- `feat(renderer): project timeline relationships into Bevy` extended the isolated Bevy timeline scene rebuild to preserve backend-projected arc tags and relationship entities for future curve and overlay rendering without giving the renderer canonical state.
 
 Discovered issues:
 

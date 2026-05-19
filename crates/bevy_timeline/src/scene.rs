@@ -1,6 +1,8 @@
 use bevy::prelude::{Component, Entity, Resource, With, World};
 use eidetic_core::contracts::TimelineRenderProjection;
+use eidetic_core::story::arc::ArcId;
 use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use eidetic_core::timeline::track::TrackId;
 
 #[derive(Component)]
@@ -27,12 +29,22 @@ pub struct TimelineClipEntity {
     pub sort_order: u32,
     pub locked: bool,
     pub content_status: ContentStatus,
+    pub arc_ids: Vec<ArcId>,
+}
+
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
+pub struct TimelineRelationshipEntity {
+    pub relationship_id: RelationshipId,
+    pub from_node_id: NodeId,
+    pub to_node_id: NodeId,
+    pub relationship_type: RelationshipType,
 }
 
 #[derive(Resource, Default)]
 pub struct TimelineSceneStats {
     pub track_count: usize,
     pub clip_count: usize,
+    pub relationship_count: usize,
 }
 
 pub fn rebuild_timeline_scene(world: &mut World, projection: &TimelineRenderProjection) {
@@ -65,12 +77,28 @@ pub fn rebuild_timeline_scene(world: &mut World, projection: &TimelineRenderProj
                 sort_order: clip.sort_order,
                 locked: clip.locked,
                 content_status: clip.content_status,
+                arc_ids: clip.arc_ids.clone(),
+            },
+        ));
+    }
+
+    for relationship in &projection.relationships {
+        world.spawn((
+            TimelineSceneEntity,
+            TimelineRelationshipEntity {
+                relationship_id: relationship.relationship_id,
+                from_node_id: relationship.from_node_id,
+                to_node_id: relationship.to_node_id,
+                relationship_type: relationship.relationship_type.clone(),
             },
         ));
     }
 
     world.resource_mut::<TimelineSceneStats>().track_count = projection.tracks.len();
     world.resource_mut::<TimelineSceneStats>().clip_count = projection.clips.len();
+    world
+        .resource_mut::<TimelineSceneStats>()
+        .relationship_count = projection.relationships.len();
 }
 
 fn despawn_existing_scene(world: &mut World) {

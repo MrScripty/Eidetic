@@ -11,10 +11,11 @@ Current scope:
 
 - Keep Bevy dependencies isolated from domain and server crates.
 - Receive `TimelineRenderProjection` snapshots.
-- Rebuild read-only Bevy ECS entities for tracks and clips.
+- Rebuild read-only Bevy ECS entities for tracks, clips, arc tags, and relationships.
 - Own transient pan and zoom viewport state derived from projection duration.
 - Validate selectable clip/node IDs before emitting commands.
 - Hit-test read-only clips by track and timeline time for selection commands.
+- Preserve backend-projected timeline relationships as disposable ECS entities for future curve rendering.
 - Emit validated node range command requests for backend-confirmed move/resize.
 - Expose a wasm-bindgen bridge for browser hosts.
 
