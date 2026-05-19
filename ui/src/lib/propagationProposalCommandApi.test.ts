@@ -4,6 +4,7 @@ import {
   acceptPropagationProposal,
   createPropagationProposal,
   rejectPropagationProposal,
+  updatePropagationProposal,
 } from './commandApi.js';
 
 afterEach(() => {
@@ -81,6 +82,26 @@ describe('propagation proposal command api helpers', () => {
     ).resolves.toEqual(response);
 
     await expect(
+      updatePropagationProposal(
+        {
+          proposal_id: 'proposal.propagation.weather',
+          action: 'set_bible_field',
+          target: {
+            kind: 'bible_field',
+            node_id: 'node.location.harbor',
+            part_key: 'environment',
+            field_key: 'weather',
+          },
+          summary: 'Set harbor weather to foggy',
+          proposed_value: { type: 'text', value: 'foggy' },
+          source_dependency_id: 'dependency.weather.scene',
+          rationale: 'Reviewer corrected propagation',
+        },
+        'command-propagation-update',
+      ),
+    ).resolves.toEqual(response);
+
+    await expect(
       acceptPropagationProposal(
         {
           proposal_id: 'proposal.propagation.weather',
@@ -131,6 +152,31 @@ describe('propagation proposal command api helpers', () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
+      '/api/commands/semantic/propagation-proposal/update',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'command-propagation-update',
+          payload: {
+            proposal_id: 'proposal.propagation.weather',
+            action: 'set_bible_field',
+            target: {
+              kind: 'bible_field',
+              node_id: 'node.location.harbor',
+              part_key: 'environment',
+              field_key: 'weather',
+            },
+            summary: 'Set harbor weather to foggy',
+            proposed_value: { type: 'text', value: 'foggy' },
+            source_dependency_id: 'dependency.weather.scene',
+            rationale: 'Reviewer corrected propagation',
+          },
+        }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
       '/api/commands/semantic/propagation-proposal/accept',
       expect.objectContaining({
         method: 'POST',

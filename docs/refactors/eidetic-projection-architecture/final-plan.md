@@ -354,6 +354,7 @@ Completed slices:
 - `feat(server): accept bible snapshot propagation proposals` tightened snapshot-field propagation targets to include part and field identity, then added acceptance for existing projected snapshot fields through the same validation, storage, and event-history path as direct snapshot field commands.
 - `feat(server): update propagation proposals` added a pending-only full replacement update command for staged propagation proposals, including command replay protection, update event/revision history, route projection refresh, and accept-after-update coverage.
 - `refactor(server): split script propagation acceptance` moved script-block propagation acceptance target preparation into a focused module, reducing the main acceptance coordinator below decomposition limits before adding structured segment-regeneration acceptance.
+- `feat(ui): update propagation proposals` added frontend DTO, command API helper, and projection-store action support for backend-owned propagation proposal updates.
 
 Discovered issues:
 
@@ -380,6 +381,7 @@ Discovered issues:
 - Resolved: bible snapshot field propagation proposals now target existing snapshot fields unambiguously by node, snapshot, part, field key, and field ID; acceptance updates only existing projected fields and does not create snapshots implicitly.
 - Resolved: pending propagation proposals can now be updated before accept/reject through a backend-owned command that records `AiProposalUpdated` history and replaces the proposal payload atomically without mutating bible/script targets.
 - Resolved: script-block propagation acceptance target preparation no longer lives in the main acceptance coordinator, leaving room for future target handlers without exceeding module decomposition limits.
+- Resolved: frontend propagation proposal caches now expose the backend update command path and refresh from the returned projection instead of mutating proposal state locally.
 - Discovered: segment-level regeneration proposals are underspecified for safe acceptance because the current proposal contract has no structured block list, block kinds, ordering, span provenance, lock handling, or regeneration metadata. Keep `RegenerateScriptSegment` proposals review-only until a structured segment patch contract exists.
 - Resolved: pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs` blocked a future `-D warnings` gate. Unused diffusion/Y.Doc command variants, the unconsumed content-change feed, the unused write helper, and production-only unused snapshot fields were removed or narrowed to tests; `cargo check -p eidetic-server` is now warning-free.
 - Resolved: the cloned-project undo/redo routes still existed after cloned snapshot producers were removed. The routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags were deleted; future undo/redo must enter through revision-backed command/event history.

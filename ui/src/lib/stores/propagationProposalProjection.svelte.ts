@@ -2,6 +2,7 @@ import {
   acceptPropagationProposal,
   createPropagationProposal,
   rejectPropagationProposal,
+  updatePropagationProposal,
 } from '$lib/commandApi.js';
 import { getPropagationProposalListProjection } from '$lib/projectionApi.js';
 import type { CommandId, ProjectionEnvelope } from '$lib/projectionTypes.js';
@@ -11,6 +12,7 @@ import type {
   PropagationProposalCommandResponse,
   PropagationProposalListProjection,
   RejectPropagationProposalCommand,
+  UpdatePropagationProposalCommand,
 } from '$lib/propagationProposalTypes.js';
 
 export const propagationProposalProjectionState = $state<{
@@ -93,6 +95,28 @@ export async function applyRejectPropagationProposalCommand(
     propagationProposalProjectionState.error = errorMessage(
       error,
       'Failed to reject propagation proposal',
+    );
+    throw error;
+  } finally {
+    propagationProposalProjectionState.pending = false;
+  }
+}
+
+export async function applyUpdatePropagationProposalCommand(
+  payload: UpdatePropagationProposalCommand,
+  commandId?: CommandId,
+): Promise<PropagationProposalCommandResponse> {
+  propagationProposalProjectionState.pending = true;
+  propagationProposalProjectionState.error = undefined;
+
+  try {
+    const response = await updatePropagationProposal(payload, commandId);
+    cacheProjection(response.projection);
+    return response;
+  } catch (error) {
+    propagationProposalProjectionState.error = errorMessage(
+      error,
+      'Failed to update propagation proposal',
     );
     throw error;
   } finally {

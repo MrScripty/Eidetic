@@ -17,6 +17,7 @@ import type {
   CreatePropagationProposalCommand,
   PropagationProposalCommandResponse,
   RejectPropagationProposalCommand,
+  UpdatePropagationProposalCommand,
 } from './propagationProposalTypes.js';
 import type {
   ScriptDocumentCommandResponse,
@@ -228,6 +229,21 @@ export function rejectPropagationProposal(
   };
 
   return request('/commands/semantic/propagation-proposal/reject', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function updatePropagationProposal(
+  payload: UpdatePropagationProposalCommand,
+  commandId = createCommandId(),
+): Promise<PropagationProposalCommandResponse> {
+  const command: CommandEnvelope<UpdatePropagationProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/semantic/propagation-proposal/update', {
     method: 'POST',
     body: JSON.stringify(command),
   });

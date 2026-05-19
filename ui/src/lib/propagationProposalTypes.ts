@@ -71,6 +71,18 @@ export interface CreatePropagationProposalCommand {
   rationale?: string | null;
 }
 
+export interface UpdatePropagationProposalCommand {
+  proposal_id: PropagationProposalId;
+  action: PropagationProposalAction;
+  target: PropagationProposalTarget;
+  summary: string;
+  proposed_value?: FieldValue | null;
+  proposed_text?: string | null;
+  source_dependency_id?: SemanticDependencyId | null;
+  source_event_id?: ChangeEventId | null;
+  rationale?: string | null;
+}
+
 export interface RejectPropagationProposalCommand {
   proposal_id: PropagationProposalId;
   reason?: string | null;

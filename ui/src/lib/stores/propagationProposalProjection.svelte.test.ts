@@ -4,12 +4,14 @@ import {
   acceptPropagationProposal,
   createPropagationProposal,
   rejectPropagationProposal,
+  updatePropagationProposal,
 } from '$lib/commandApi.js';
 import { getPropagationProposalListProjection } from '$lib/projectionApi.js';
 import {
   applyAcceptPropagationProposalCommand,
   applyCreatePropagationProposalCommand,
   applyRejectPropagationProposalCommand,
+  applyUpdatePropagationProposalCommand,
   clearPropagationProposalListProjection,
   getCachedPropagationProposalListProjection,
   propagationProposalProjectionState,
@@ -20,6 +22,7 @@ vi.mock('$lib/commandApi.js', () => ({
   acceptPropagationProposal: vi.fn(),
   createPropagationProposal: vi.fn(),
   rejectPropagationProposal: vi.fn(),
+  updatePropagationProposal: vi.fn(),
 }));
 
 vi.mock('$lib/projectionApi.js', () => ({
@@ -29,6 +32,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 const acceptPropagationProposalMock = vi.mocked(acceptPropagationProposal);
 const createPropagationProposalMock = vi.mocked(createPropagationProposal);
 const rejectPropagationProposalMock = vi.mocked(rejectPropagationProposal);
+const updatePropagationProposalMock = vi.mocked(updatePropagationProposal);
 const getPropagationProposalListProjectionMock = vi.mocked(getPropagationProposalListProjection);
 
 const projection = {
@@ -61,6 +65,7 @@ beforeEach(() => {
   acceptPropagationProposalMock.mockReset();
   createPropagationProposalMock.mockReset();
   rejectPropagationProposalMock.mockReset();
+  updatePropagationProposalMock.mockReset();
   getPropagationProposalListProjectionMock.mockReset();
 });
 
@@ -76,12 +81,16 @@ describe('propagation proposal projection store', () => {
     expect(propagationProposalProjectionState.error).toBeUndefined();
   });
 
-  it('stores create, reject, and accept command response projections', async () => {
+  it('stores create, reject, update, and accept command response projections', async () => {
     createPropagationProposalMock.mockResolvedValue({
       outcome: 'recorded',
       projection,
     });
     rejectPropagationProposalMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection,
+    });
+    updatePropagationProposalMock.mockResolvedValue({
       outcome: 'recorded',
       projection,
     });
@@ -114,6 +123,23 @@ describe('propagation proposal projection store', () => {
       },
       'command-reject',
     );
+    await applyUpdatePropagationProposalCommand(
+      {
+        proposal_id: 'proposal.propagation.weather',
+        action: 'set_bible_field',
+        target: {
+          kind: 'bible_field',
+          node_id: 'node.location.harbor',
+          part_key: 'environment',
+          field_key: 'weather',
+        },
+        summary: 'Set harbor weather to foggy',
+        proposed_value: { type: 'text', value: 'foggy' },
+        source_dependency_id: 'dependency.weather.scene',
+        rationale: 'Reviewer corrected propagation',
+      },
+      'command-update',
+    );
     await applyAcceptPropagationProposalCommand(
       {
         proposal_id: 'proposal.propagation.weather',
@@ -144,6 +170,23 @@ describe('propagation proposal projection store', () => {
         reason: 'Wrong scope',
       },
       'command-reject',
+    );
+    expect(updatePropagationProposalMock).toHaveBeenCalledWith(
+      {
+        proposal_id: 'proposal.propagation.weather',
+        action: 'set_bible_field',
+        target: {
+          kind: 'bible_field',
+          node_id: 'node.location.harbor',
+          part_key: 'environment',
+          field_key: 'weather',
+        },
+        summary: 'Set harbor weather to foggy',
+        proposed_value: { type: 'text', value: 'foggy' },
+        source_dependency_id: 'dependency.weather.scene',
+        rationale: 'Reviewer corrected propagation',
+      },
+      'command-update',
     );
     expect(acceptPropagationProposalMock).toHaveBeenCalledWith(
       {
