@@ -11,6 +11,7 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `editor.svelte.ts`                     | Editor-local UI state and generation/consistency helpers.                            |
 | `timeline.svelte.ts`                   | Timeline selection, traversal, and view-state coordination.                          |
 | `bibleGraphNodeProjection.svelte.ts`   | Focused cache/action layer for backend-owned bible graph node and field projections. |
+| `bibleRenderGraphProjection.svelte.ts` | Focused cache layer for backend-owned bible render graph projections.                |
 | `bibleGraphSchemaProjection.svelte.ts` | Focused cache layer for backend-owned bible graph schema projections.                |
 | `objectFieldProjection.svelte.ts`      | Focused cache/action layer for backend-owned object-field projections.               |
 | `storyArcProjection.svelte.ts`         | Focused cache/action layer for backend-owned story arc projections.                  |

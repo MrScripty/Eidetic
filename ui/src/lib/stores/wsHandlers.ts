@@ -15,6 +15,7 @@ import {
 import { refreshStoryArcListProjection } from './storyArcProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleGraphNodeListProjection } from './bibleGraphNodeProjection.svelte.js';
+import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
 import { refreshBibleReferenceProposalListProjection } from './semanticProposalProjection.svelte.js';
 import { refreshPropagationProposalListProjection } from './propagationProposalProjection.svelte.js';
 import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
@@ -83,6 +84,7 @@ export function setupWsHandlers(ws: WsClient) {
 
     ws.on('bible_changed', async () => {
       await refreshBibleGraphNodeListProjection().catch(() => {});
+      await refreshBibleRenderGraphProjection().catch(() => {});
       await refreshChangeReviewProjection().catch(() => {});
     }),
 
