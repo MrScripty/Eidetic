@@ -1,8 +1,9 @@
 use eidetic_core::contracts::{
     BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPartProjection,
-    BibleGraphSchemaKey, BibleNodeDetailProjection, ChangeEventId, ObjectKind, ProjectionEnvelope,
-    ProjectionVersion, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    canonical_bible_root_nodes, default_part_projections_for_node,
+    BibleGraphSchemaKey, BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeEventId,
+    ObjectKind, ProjectionEnvelope, ProjectionVersion, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
+    default_part_projections_for_node,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
@@ -222,6 +223,33 @@ pub(crate) fn load_node_list_projection_envelope(
 ) -> Result<ProjectionEnvelope<BibleGraphNodeListProjection>, HistoryStoreError> {
     let projection = load_node_list_projection(conn)?;
     let summary = history_store::load_revision_summary_for_kind(conn, ObjectKind::BibleNode)?;
+
+    match summary.latest_change_event_id {
+        Some(change_event_id) => Ok(ProjectionEnvelope::from_event(
+            ProjectionVersion(summary.revision_count + 1),
+            change_event_id,
+            projection,
+        )),
+        None => Ok(ProjectionEnvelope::initial(projection)),
+    }
+}
+
+pub(crate) fn load_render_graph_projection(
+    conn: &Connection,
+) -> Result<BibleRenderGraphProjection, HistoryStoreError> {
+    let nodes = load_node_list_projection(conn)?.nodes;
+    let edges = bible_graph_edge_store::load_all_edges(conn)?;
+    Ok(BibleRenderGraphProjection::from_graph(nodes, edges))
+}
+
+pub(crate) fn load_render_graph_projection_envelope(
+    conn: &Connection,
+) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, HistoryStoreError> {
+    let projection = load_render_graph_projection(conn)?;
+    let summary = history_store::load_revision_summary_for_kinds(
+        conn,
+        &[ObjectKind::BibleNode, ObjectKind::BibleEdge],
+    )?;
 
     match summary.latest_change_event_id {
         Some(change_event_id) => Ok(ProjectionEnvelope::from_event(

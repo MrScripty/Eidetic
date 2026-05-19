@@ -1,6 +1,7 @@
 import type {
   BibleGraphNodeId,
   BibleGraphNodeListProjection,
+  BibleRenderGraphProjection,
   BibleNodeDetailProjection,
 } from './bibleGraphTypes.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
@@ -67,6 +68,12 @@ export function getBibleGraphSchemaListProjection(): Promise<
   ProjectionEnvelope<BibleGraphSchemaListProjection>
 > {
   return getJson('/projections/bible-graph/schemas');
+}
+
+export function getBibleRenderGraphProjection(): Promise<
+  ProjectionEnvelope<BibleRenderGraphProjection>
+> {
+  return getJson('/projections/bible-graph/render');
 }
 
 export function getScriptDocumentProjection({

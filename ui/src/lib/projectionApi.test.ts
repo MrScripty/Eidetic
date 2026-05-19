@@ -4,6 +4,7 @@ import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
   getBibleGraphSchemaListProjection,
+  getBibleRenderGraphProjection,
   getObjectFieldProjection,
   getStoryArcListProjection,
   getStoryArcProgressionProjection,
@@ -185,6 +186,59 @@ describe('projection api helpers', () => {
     await expect(getBibleGraphSchemaListProjection()).resolves.toEqual(response);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/schemas', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+  });
+
+  it('fetches bible render graph projections without query params', async () => {
+    const response = {
+      version: 4,
+      change_event_id: 'event-3',
+      payload: {
+        nodes: [
+          {
+            node_id: 'node.character.ada',
+            parent_id: null,
+            schema_key: 'character',
+            label: 'Ada',
+            system_owned: false,
+            sort_order: 1,
+            depth: 0,
+            position: { x: 0, y: 0, z: 0 },
+          },
+        ],
+        edges: [
+          {
+            edge_id: 'edge.ada.beach',
+            from_node_id: 'node.character.ada',
+            to_node_id: 'node.place.beach',
+            edge_kind: 'located_in',
+            label: 'located in',
+            directed: true,
+            sort_order: 0,
+          },
+        ],
+        neighborhoods: [
+          {
+            node_id: 'node.character.ada',
+            connected_node_ids: ['node.place.beach'],
+            edge_ids: ['edge.ada.beach'],
+          },
+        ],
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getBibleRenderGraphProjection()).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/render', {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });

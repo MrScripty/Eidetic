@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 
 pub(crate) use crate::history_read_store::{
     RevisionSummary, load_change_review_changes, load_revision_summary_for_kind,
-    load_revisions_for_object,
+    load_revision_summary_for_kinds, load_revisions_for_object,
 };
 
 const HISTORY_SCHEMA_SQL: &str = r#"

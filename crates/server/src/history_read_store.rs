@@ -92,20 +92,43 @@ pub(crate) fn load_revision_summary_for_kind(
     conn: &Connection,
     object_kind: ObjectKind,
 ) -> Result<RevisionSummary, HistoryStoreError> {
-    let encoded_kind = encode_string_enum(&object_kind)?;
+    load_revision_summary_for_kinds(conn, &[object_kind])
+}
+
+pub(crate) fn load_revision_summary_for_kinds(
+    conn: &Connection,
+    object_kinds: &[ObjectKind],
+) -> Result<RevisionSummary, HistoryStoreError> {
+    if object_kinds.is_empty() {
+        return Ok(RevisionSummary {
+            revision_count: 0,
+            latest_change_event_id: None,
+        });
+    }
+
+    let encoded_kinds = object_kinds
+        .iter()
+        .map(encode_string_enum)
+        .collect::<Result<Vec<_>, _>>()?;
+    let placeholders = vec!["?"; encoded_kinds.len()].join(", ");
+    let count_sql =
+        format!("SELECT COUNT(*) FROM object_revisions WHERE object_kind IN ({placeholders})");
     let revision_count = conn.query_row(
-        "SELECT COUNT(*) FROM object_revisions WHERE object_kind = ?1",
-        [encoded_kind.as_str()],
+        &count_sql,
+        rusqlite::params_from_iter(encoded_kinds.iter().map(String::as_str)),
         |row| row.get::<_, i64>(0),
     )?;
+    let latest_sql = format!(
+        "SELECT change_event_id
+         FROM object_revisions
+         WHERE object_kind IN ({placeholders})
+         ORDER BY rowid DESC
+         LIMIT 1"
+    );
     let latest_change_event_id = conn
         .query_row(
-            "SELECT change_event_id
-             FROM object_revisions
-             WHERE object_kind = ?1
-             ORDER BY rowid DESC
-             LIMIT 1",
-            [encoded_kind],
+            &latest_sql,
+            rusqlite::params_from_iter(encoded_kinds.iter().map(String::as_str)),
             |row| row.get::<_, String>(0),
         )
         .optional()?

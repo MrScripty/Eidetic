@@ -1,6 +1,7 @@
 mod ai_context;
 mod bible_graph;
 mod bible_graph_defaults;
+mod bible_render_graph;
 mod change_review;
 mod propagation_proposal;
 mod script_document;
@@ -32,6 +33,10 @@ pub use bible_graph_defaults::{
     BibleGraphPartDefault, BibleGraphPartSchemaProjection, BibleGraphSchemaDefault,
     BibleGraphSchemaListProjection, BibleGraphSchemaProjection, builtin_bible_graph_schema,
     builtin_bible_graph_schema_list_projection, default_part_projections_for_node,
+};
+pub use bible_render_graph::{
+    BibleRenderGraphEdge, BibleRenderGraphNeighborhood, BibleRenderGraphNode,
+    BibleRenderGraphPosition, BibleRenderGraphProjection,
 };
 pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
 pub use propagation_proposal::{

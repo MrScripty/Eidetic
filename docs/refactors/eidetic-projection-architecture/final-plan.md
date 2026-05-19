@@ -367,6 +367,7 @@ Completed slices:
 - `style: normalize workspace formatting` repaired the local Lefthook path, made the Rust hook use Cargo's edition-aware formatter, and applied the dedicated Rust/Prettier formatting cleanup so workspace formatting checks can be treated as normal validation gates again.
 - `refactor(server): add project database owner` added a backend-owned project database lifecycle handle shared with transitional project-path state, and routed command/projection/AI active database lookups through that owner instead of direct route access to `AppState.project_path`.
 - `docs(renderer): document Bevy dependency boundary` recorded the Bevy leaf-crate dependency review, including disabled default features, current `std`-only usage, wasm-only browser interop dependencies, and the rule that new Bevy feature families require a fresh dependency review.
+- `feat(bible): add render graph projection` added a backend-owned bible render graph DTO, deterministic layout helper, neighborhood indexes, SQLite-backed projection route, and frontend projection helper for the future Bevy bible graph host without adding renderer dependencies to core/server.
 
 Discovered issues:
 

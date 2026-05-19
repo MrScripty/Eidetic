@@ -3,8 +3,8 @@ use axum::extract::{Query, State};
 use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
-    BibleNodeDetailProjection, ChangeReviewProjection, ObjectKind, ProjectionEnvelope,
-    ScriptDocumentId, ScriptDocumentProjection, StoryArcListProjection,
+    BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeReviewProjection, ObjectKind,
+    ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection, StoryArcListProjection,
     StoryArcProgressionProjection, TimelineRenderProjection,
     builtin_bible_graph_schema_list_projection,
 };
@@ -38,6 +38,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/bible-graph/schemas",
             get(get_bible_graph_schema_list_projection),
+        )
+        .route(
+            "/projections/bible-graph/render",
+            get(get_bible_render_graph_projection),
         )
         .route(
             "/projections/script/document",
@@ -121,6 +125,15 @@ async fn get_bible_graph_node_list_projection(State(state): State<AppState>) -> 
 async fn get_bible_graph_schema_list_projection(State(state): State<AppState>) -> ApiJson {
     let _ = active_project_path(&state)?;
     crate::error::json_value(load_bible_schema_list_projection())
+}
+
+async fn get_bible_render_graph_projection(State(state): State<AppState>) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let projection = tokio::task::spawn_blocking(move || load_bible_render_graph_at_path(path))
+        .await
+        .map_err(|e| ApiError::internal(format!("bible render graph task failed: {e}")))??;
+
+    crate::error::json_value(projection)
 }
 
 async fn get_change_review_projection(State(state): State<AppState>) -> ApiJson {
@@ -222,6 +235,15 @@ fn load_bible_node_list_at_path(
 
 fn load_bible_schema_list_projection() -> ProjectionEnvelope<BibleGraphSchemaListProjection> {
     builtin_bible_graph_schema_list_projection()
+}
+
+fn load_bible_render_graph_at_path(
+    path: std::path::PathBuf,
+) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
+    bible_graph_store::load_render_graph_projection_envelope(&conn).map_err(map_history_error)
 }
 
 fn load_change_review_at_path(

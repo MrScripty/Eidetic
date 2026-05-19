@@ -141,6 +141,45 @@ export interface BibleGraphNodeListProjection {
   nodes: BibleGraphNode[];
 }
 
+export interface BibleRenderGraphProjection {
+  nodes: BibleRenderGraphNode[];
+  edges: BibleRenderGraphEdge[];
+  neighborhoods: BibleRenderGraphNeighborhood[];
+}
+
+export interface BibleRenderGraphNode {
+  node_id: BibleGraphNodeId;
+  parent_id?: BibleGraphNodeId | null;
+  schema_key: BibleGraphSchemaKey;
+  label: string;
+  system_owned: boolean;
+  sort_order: number;
+  depth: number;
+  position: BibleRenderGraphPosition;
+}
+
+export interface BibleRenderGraphPosition {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface BibleRenderGraphEdge {
+  edge_id: BibleGraphEdgeId;
+  from_node_id: BibleGraphNodeId;
+  to_node_id: BibleGraphNodeId;
+  edge_kind: BibleGraphEdgeKind;
+  label: string;
+  directed: boolean;
+  sort_order: number;
+}
+
+export interface BibleRenderGraphNeighborhood {
+  node_id: BibleGraphNodeId;
+  connected_node_ids: BibleGraphNodeId[];
+  edge_ids: BibleGraphEdgeId[];
+}
+
 export interface BibleGraphNodeCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<BibleNodeDetailProjection>;

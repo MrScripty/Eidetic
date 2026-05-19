@@ -255,6 +255,36 @@ async fn bible_graph_node_list_projection_returns_persisted_nodes() {
 }
 
 #[tokio::test]
+async fn bible_render_graph_projection_returns_nodes_edges_and_neighborhoods() {
+    let path = temp_db_path("bible-render-graph-persisted");
+    seed_bible_graph_node(&path, "node.character.ada", "Ada");
+    seed_bible_graph_node(&path, "node.place.beach", "Beach");
+    seed_bible_graph_edge(&path);
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(bible_render_graph_projection_request())
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 4);
+    assert_eq!(
+        value["payload"]["nodes"][0]["node_id"],
+        "node.character.ada"
+    );
+    assert_eq!(value["payload"]["nodes"][0]["label"], "Ada");
+    assert_eq!(value["payload"]["edges"][0]["edge_id"], "edge.ada.beach");
+    assert_eq!(
+        value["payload"]["neighborhoods"][0]["connected_node_ids"][0],
+        "node.place.beach"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_graph_schema_list_projection_returns_builtin_schemas() {
     let path = temp_db_path("bible-schema-list");
     seed_bible_graph_node(&path, "node.character.ada", "Ada");
@@ -362,6 +392,14 @@ fn bible_schema_list_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/bible-graph/schemas")
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn bible_render_graph_projection_request() -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri("/projections/bible-graph/render")
         .body(Body::empty())
         .unwrap()
 }
