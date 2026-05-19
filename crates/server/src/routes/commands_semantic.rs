@@ -5,12 +5,14 @@ use eidetic_core::contracts::{
     AcceptBibleReferenceProposalCommand, BibleReferenceProposalListProjection, CommandEnvelope,
     CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand, ProjectionEnvelope,
     PropagationProposalListProjection, RecordSemanticDependencyCommand,
-    RejectBibleReferenceProposalCommand, SemanticDependencyProjection,
+    RejectBibleReferenceProposalCommand, RejectPropagationProposalCommand,
+    SemanticDependencyProjection,
 };
 use serde::Serialize;
 
 use crate::error::{ApiError, ApiJson};
 use crate::history_store::RecordChangeOutcome;
+use crate::propagation_proposal_review;
 use crate::propagation_proposal_store::{self, PropagationProposalStoreError};
 use crate::semantic_dependency_store::{
     self, DependencyDirection, DependencyEndpointFilter, SemanticDependencyFilter,
@@ -43,6 +45,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/commands/semantic/propagation-proposal",
             post(create_propagation_proposal),
+        )
+        .route(
+            "/commands/semantic/propagation-proposal/reject",
+            post(reject_propagation_proposal),
         )
 }
 
@@ -149,6 +155,21 @@ async fn create_propagation_proposal(
     crate::error::json_value(response)
 }
 
+async fn reject_propagation_proposal(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<RejectPropagationProposalCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response =
+        tokio::task::spawn_blocking(move || reject_propagation_proposal_at_path(path, command))
+            .await
+            .map_err(|e| {
+                ApiError::internal(format!("propagation proposal reject task failed: {e}"))
+            })??;
+
+    crate::error::json_value(response)
+}
+
 fn create_bible_reference_proposal_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<CreateBibleReferenceProposalCommand>,
@@ -242,6 +263,24 @@ fn create_propagation_proposal_at_path(
     })
 }
 
+fn reject_propagation_proposal_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<RejectPropagationProposalCommand>,
+) -> Result<PropagationProposalCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let outcome =
+        propagation_proposal_review::record_reject_propagation_proposal(&mut conn, &command, 0)
+            .map_err(map_propagation_proposal_error)?;
+    let projection = propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
+        .map_err(map_propagation_proposal_error)?;
+
+    Ok(PropagationProposalCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn map_semantic_proposal_error(error: SemanticProposalStoreError) -> ApiError {
     match error {
         SemanticProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
@@ -270,6 +309,7 @@ fn map_semantic_dependency_error(error: SemanticDependencyStoreError) -> ApiErro
 fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiError {
     match error {
         PropagationProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
+        PropagationProposalStoreError::NotFound(message) => ApiError::not_found(message),
         PropagationProposalStoreError::History(error) => map_history_error(error),
         PropagationProposalStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
         PropagationProposalStoreError::Json(error) => ApiError::bad_request(error.to_string()),

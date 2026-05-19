@@ -222,6 +222,7 @@ fn map_semantic_dependency_error(error: SemanticDependencyStoreError) -> ApiErro
 fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiError {
     match error {
         PropagationProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
+        PropagationProposalStoreError::NotFound(message) => ApiError::not_found(message),
         PropagationProposalStoreError::History(error) => map_history_error(error),
         PropagationProposalStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
         PropagationProposalStoreError::Json(error) => ApiError::bad_request(error.to_string()),

@@ -110,6 +110,13 @@ pub struct CreatePropagationProposalCommand {
     pub rationale: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RejectPropagationProposalCommand {
+    pub proposal_id: PropagationProposalId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
 impl CreatePropagationProposalCommand {
     pub fn into_proposal(self, created_at_ms: u64) -> PropagationProposal {
         PropagationProposal {
@@ -175,5 +182,18 @@ mod tests {
         assert_eq!(proposal.id.as_str(), "proposal.propagation.weather");
         assert_eq!(proposal.status, SemanticProposalStatus::Pending);
         assert_eq!(proposal.created_at_ms, 42);
+    }
+
+    #[test]
+    fn reject_command_round_trips() {
+        let command = RejectPropagationProposalCommand {
+            proposal_id: PropagationProposalId::new("proposal.propagation.weather").unwrap(),
+            reason: Some("Wrong scope".to_string()),
+        };
+
+        let encoded = serde_json::to_string(&command).unwrap();
+        let decoded: RejectPropagationProposalCommand = serde_json::from_str(&encoded).unwrap();
+
+        assert_eq!(decoded, command);
     }
 }

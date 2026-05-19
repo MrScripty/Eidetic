@@ -37,7 +37,7 @@ pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
 pub use propagation_proposal::{
     CreatePropagationProposalCommand, PropagationProposal, PropagationProposalAction,
     PropagationProposalContractError, PropagationProposalId, PropagationProposalListProjection,
-    PropagationProposalTarget,
+    PropagationProposalTarget, RejectPropagationProposalCommand,
 };
 pub use script_document::{
     ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,

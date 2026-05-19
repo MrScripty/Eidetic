@@ -7,8 +7,8 @@ use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleReferenceKind, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
-    FieldValue, PropagationProposalAction, PropagationProposalId, ScriptSegmentId,
-    SemanticDependencyId, SemanticDependencyKind, SemanticProposalId,
+    FieldValue, PropagationProposalAction, PropagationProposalId, RejectPropagationProposalCommand,
+    ScriptSegmentId, SemanticDependencyId, SemanticDependencyKind, SemanticProposalId,
 };
 use eidetic_core::timeline::node::NodeId;
 use serde_json::json;
@@ -312,6 +312,38 @@ async fn propagation_proposal_command_returns_projection() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn propagation_proposal_reject_command_returns_projection() {
+    let path = temp_db_path("rejects-propagation-proposal");
+    let app = app_with_project_path(path.clone()).await;
+    let create = propagation_proposal_command_body("proposal.propagation.reject");
+    let reject = reject_propagation_proposal_command_body(
+        "proposal.propagation.reject",
+        Some("Wrong scope"),
+    );
+
+    let create_response = app
+        .clone()
+        .oneshot(propagation_proposal_command_request(create))
+        .await
+        .expect("create route response");
+    let reject_response = app
+        .oneshot(reject_propagation_proposal_command_request(reject))
+        .await
+        .expect("reject route response");
+
+    assert_eq!(create_response.status(), StatusCode::OK);
+    assert_eq!(reject_response.status(), StatusCode::OK);
+    let value = response_json(reject_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(
+        value["projection"]["payload"]["proposals"][0]["status"],
+        "rejected"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn bible_reference_proposal_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -352,6 +384,15 @@ fn propagation_proposal_command_request(body: serde_json::Value) -> Request<Body
     Request::builder()
         .method("POST")
         .uri("/commands/semantic/propagation-proposal")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+fn reject_propagation_proposal_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/semantic/propagation-proposal/reject")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -419,6 +460,20 @@ fn propagation_proposal_command_body(proposal_id: &str) -> serde_json::Value {
             "source_dependency_id": SemanticDependencyId::new("dependency.weather.scene").unwrap(),
             "rationale": "Manual script edit introduced rainy weather.",
         }
+    })
+}
+
+fn reject_propagation_proposal_command_body(
+    proposal_id: &str,
+    reason: Option<&str>,
+) -> serde_json::Value {
+    let command = RejectPropagationProposalCommand {
+        proposal_id: PropagationProposalId::new(proposal_id).unwrap(),
+        reason: reason.map(ToString::to_string),
+    };
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": command,
     })
 }
 

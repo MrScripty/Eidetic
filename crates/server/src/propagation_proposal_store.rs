@@ -116,6 +116,28 @@ pub(crate) fn load_propagation_proposals(
     Ok(proposals)
 }
 
+pub(crate) fn load_propagation_proposal(
+    conn: &Connection,
+    proposal_id: &PropagationProposalId,
+) -> Result<Option<PropagationProposal>, PropagationProposalStoreError> {
+    create_schema(conn)?;
+    conn.query_row(
+        "SELECT
+            id, action, target_kind, target_id, target_part_key, target_field_key,
+            target_field_id, target_snapshot_id, status, summary,
+            proposed_value_type, proposed_value_text, proposed_value_integer,
+            proposed_value_number, proposed_value_bool, proposed_value_ref_kind,
+            proposed_value_ref_id, proposed_value_asset_ref, proposed_text,
+            source_dependency_id, source_event_id, rationale, created_at_ms
+         FROM propagation_proposals
+         WHERE id = ?1",
+        [proposal_id.as_str()],
+        row_to_proposal,
+    )
+    .optional()
+    .map_err(PropagationProposalStoreError::from)
+}
+
 pub(crate) fn load_propagation_proposal_list_projection(
     conn: &Connection,
 ) -> Result<ProjectionEnvelope<PropagationProposalListProjection>, PropagationProposalStoreError> {
@@ -381,6 +403,8 @@ where
 pub(crate) enum PropagationProposalStoreError {
     #[error("{0}")]
     InvalidCommand(String),
+    #[error("{0}")]
+    NotFound(String),
     #[error(transparent)]
     History(#[from] HistoryStoreError),
     #[error(transparent)]
