@@ -6,7 +6,10 @@ use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
-    BibleReferenceKind, CommandEnvelope, CreateBibleReferenceProposalCommand, SemanticProposalId,
+    BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey, BibleReferenceKind, CommandEnvelope,
+    CreateBibleReferenceProposalCommand, RecordSemanticDependencyCommand, ScriptSegmentId,
+    SemanticDependency, SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyKind,
+    SemanticProposalId,
 };
 use eidetic_core::timeline::node::NodeId;
 use tower::util::ServiceExt;
@@ -62,6 +65,51 @@ async fn bible_reference_proposal_projection_returns_persisted_proposals() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn semantic_dependency_projection_filters_by_target_field() {
+    let path = temp_db_path("semantic-dependencies-target-field");
+    seed_semantic_dependency(&path);
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(semantic_dependency_projection_request(
+            "/projections/semantic/dependencies?target_kind=bible_field&target_id=node.location.harbor&target_part_key=weather&target_field_key=current",
+        ))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 2);
+    assert_eq!(
+        value["payload"]["dependencies"][0]["id"],
+        "dependency.weather.scene"
+    );
+    assert_eq!(
+        value["payload"]["dependencies"][0]["source"]["kind"],
+        "script_segment"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn semantic_dependency_projection_rejects_missing_filter() {
+    let path = temp_db_path("semantic-dependencies-missing-filter");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(semantic_dependency_projection_request(
+            "/projections/semantic/dependencies",
+        ))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn seed_bible_reference_proposal(path: &PathBuf) {
     let mut conn = crate::sqlite::open_write_connection(path).unwrap();
     let command = CommandEnvelope::new(CreateBibleReferenceProposalCommand {
@@ -78,10 +126,41 @@ fn seed_bible_reference_proposal(path: &PathBuf) {
     .unwrap();
 }
 
+fn seed_semantic_dependency(path: &PathBuf) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    let command = CommandEnvelope::new(RecordSemanticDependencyCommand {
+        dependency: SemanticDependency {
+            id: SemanticDependencyId::new("dependency.weather.scene").unwrap(),
+            source: SemanticDependencyEndpoint::ScriptSegment {
+                segment_id: ScriptSegmentId::new("script.segment.scene-1").unwrap(),
+            },
+            target: SemanticDependencyEndpoint::BibleField {
+                node_id: BibleGraphNodeId::new("node.location.harbor").unwrap(),
+                part_key: BibleGraphPartKey::new("weather").unwrap(),
+                field_key: BibleGraphFieldKey::new("current").unwrap(),
+                field_id: None,
+            },
+            kind: SemanticDependencyKind::UsesFact,
+            rationale: Some("Scene uses this bible field.".to_string()),
+            confidence: Some(0.9),
+            created_at_ms: 100,
+        },
+    });
+    crate::semantic_dependency_store::record_semantic_dependency(&mut conn, &command, 100).unwrap();
+}
+
 fn bible_reference_proposal_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/semantic/bible-reference-proposals")
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn semantic_dependency_projection_request(uri: &str) -> Request<Body> {
+    Request::builder()
+        .method("GET")
+        .uri(uri)
         .body(Body::empty())
         .unwrap()
 }

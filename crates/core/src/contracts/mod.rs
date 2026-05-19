@@ -3,6 +3,7 @@ mod bible_graph;
 mod bible_graph_defaults;
 mod change_review;
 mod script_document;
+mod semantic_dependency;
 mod semantic_proposal;
 mod story_arc;
 mod timeline_command;
@@ -38,6 +39,11 @@ pub use script_document::{
     ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
     SetScriptLockCommand,
+};
+pub use semantic_dependency::{
+    RecordSemanticDependencyCommand, SemanticDependency, SemanticDependencyContractError,
+    SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyKind,
+    SemanticDependencyProjection,
 };
 pub use semantic_proposal::{
     AcceptBibleReferenceProposalCommand, BibleReferenceKind, BibleReferenceProposal,

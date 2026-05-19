@@ -344,6 +344,7 @@ Completed slices:
 - `feat(server): project change review history` added a backend-owned change review projection over recorded change events, object revisions, and before/after field deltas for proposal and propagation review surfaces.
 - `feat(ui): cache change review history` added typed frontend change review DTOs, a projection helper, and a discardable projection cache for backend-owned change review history without local mutation.
 - `refactor(server): split history read store` moved revision summaries, object revision reads, and change review history queries out of the write-side history store so future undo/redo and dependency traversal can grow without overloading command/event recording.
+- `feat(server): store semantic dependencies` added typed semantic dependency contracts, relational SQLite dependency rows, command/event/revision history, command and projection routes, and source/target field-level lookup tests for future propagation impact analysis.
 
 Discovered issues:
 
@@ -363,7 +364,7 @@ Discovered issues:
 - Resolved: proposal review can now reject pending bible reference proposals with command/event/revision history and SQLite current-state status updates.
 - Resolved: proposal review can now accept pending bible reference proposals by composing the proposal status update and bible graph node creation in one command/event/revision transaction.
 - Resolved: the AI context preview prompt now consumes a graph-backed bible context projection from SQLite, including persisted graph nodes, fields, snapshots, and edges.
-- Remaining: generate-children previews stay non-durable until the user applies the edited plan, and proposal-driven propagation review still needs semantic dependency projections plus proposal objects for downstream script/bible updates.
+- Remaining: generate-children previews stay non-durable until the user applies the edited plan, and proposal-driven propagation review still needs proposal objects for downstream script/bible updates on top of the new semantic dependency index/projection.
 - Resolved: pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs` blocked a future `-D warnings` gate. Unused diffusion/Y.Doc command variants, the unconsumed content-change feed, the unused write helper, and production-only unused snapshot fields were removed or narrowed to tests; `cargo check -p eidetic-server` is now warning-free.
 - Resolved: the cloned-project undo/redo routes still existed after cloned snapshot producers were removed. The routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags were deleted; future undo/redo must enter through revision-backed command/event history.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.

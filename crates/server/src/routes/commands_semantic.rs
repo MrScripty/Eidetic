@@ -3,12 +3,17 @@ use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
     AcceptBibleReferenceProposalCommand, BibleReferenceProposalListProjection, CommandEnvelope,
-    CreateBibleReferenceProposalCommand, ProjectionEnvelope, RejectBibleReferenceProposalCommand,
+    CreateBibleReferenceProposalCommand, ProjectionEnvelope, RecordSemanticDependencyCommand,
+    RejectBibleReferenceProposalCommand, SemanticDependencyProjection,
 };
 use serde::Serialize;
 
 use crate::error::{ApiError, ApiJson};
 use crate::history_store::RecordChangeOutcome;
+use crate::semantic_dependency_store::{
+    self, DependencyDirection, DependencyEndpointFilter, SemanticDependencyFilter,
+    SemanticDependencyStoreError,
+};
 use crate::semantic_proposal_accept;
 use crate::semantic_proposal_store::{self, SemanticProposalStoreError};
 use crate::state::{AppState, ServerEvent};
@@ -29,12 +34,22 @@ pub fn router() -> Router<AppState> {
             "/commands/semantic/bible-reference-proposal/accept",
             post(accept_bible_reference_proposal),
         )
+        .route(
+            "/commands/semantic/dependency",
+            post(record_semantic_dependency),
+        )
 }
 
 #[derive(Debug, Serialize)]
 struct BibleReferenceProposalCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<BibleReferenceProposalListProjection>,
+}
+
+#[derive(Debug, Serialize)]
+struct SemanticDependencyCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<SemanticDependencyProjection>,
 }
 
 async fn create_bible_reference_proposal(
@@ -92,6 +107,21 @@ async fn accept_bible_reference_proposal(
     crate::error::json_value(response)
 }
 
+async fn record_semantic_dependency(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<RecordSemanticDependencyCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response =
+        tokio::task::spawn_blocking(move || record_semantic_dependency_at_path(path, command))
+            .await
+            .map_err(|e| {
+                ApiError::internal(format!("semantic dependency command task failed: {e}"))
+            })??;
+
+    crate::error::json_value(response)
+}
+
 fn create_bible_reference_proposal_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<CreateBibleReferenceProposalCommand>,
@@ -146,12 +176,49 @@ fn accept_bible_reference_proposal_at_path(
     })
 }
 
+fn record_semantic_dependency_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<RecordSemanticDependencyCommand>,
+) -> Result<SemanticDependencyCommandResponse, ApiError> {
+    let filter = SemanticDependencyFilter {
+        endpoint: DependencyEndpointFilter::from_endpoint(&command.payload.dependency.source),
+        direction: DependencyDirection::Source,
+    };
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let outcome = semantic_dependency_store::record_semantic_dependency(&mut conn, &command, 0)
+        .map_err(map_semantic_dependency_error)?;
+    let projection = semantic_dependency_store::load_semantic_dependency_projection(&conn, &filter)
+        .map_err(map_semantic_dependency_error)?;
+
+    Ok(SemanticDependencyCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn map_semantic_proposal_error(error: SemanticProposalStoreError) -> ApiError {
     match error {
         SemanticProposalStoreError::InvalidCommand(message) => ApiError::bad_request(message),
         SemanticProposalStoreError::NotFound(message) => ApiError::not_found(message),
         SemanticProposalStoreError::History(error) => map_history_error(error),
         SemanticProposalStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
+    }
+}
+
+fn map_semantic_dependency_error(error: SemanticDependencyStoreError) -> ApiError {
+    match error {
+        SemanticDependencyStoreError::InvalidCommand(message) => ApiError::bad_request(message),
+        SemanticDependencyStoreError::History(error) => map_history_error(error),
+        SemanticDependencyStoreError::Sqlite(error) => ApiError::internal(error.to_string()),
+        SemanticDependencyStoreError::Json(error) => ApiError::bad_request(error.to_string()),
+        SemanticDependencyStoreError::Contract(error) => ApiError::bad_request(error.to_string()),
+        SemanticDependencyStoreError::BibleGraphContract(error) => {
+            ApiError::bad_request(error.to_string())
+        }
+        SemanticDependencyStoreError::ScriptContract(error) => {
+            ApiError::bad_request(error.to_string())
+        }
     }
 }
 
