@@ -202,6 +202,13 @@ pub struct ChildPlanListProjection {
     pub plans: Vec<ChildPlanRecord>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RejectChildPlanCommand {
+    pub plan_id: ChildPlanId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
 /// Everything the AI needs to plan children for a parent node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerateChildrenRequest {

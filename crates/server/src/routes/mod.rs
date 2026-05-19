@@ -1,6 +1,7 @@
 mod ai;
 mod commands;
 mod commands_semantic;
+mod commands_semantic_child_plan;
 mod commands_timeline;
 mod diffusion;
 mod export;
@@ -26,6 +27,7 @@ pub fn api_router() -> Router<AppState> {
         .merge(ai::router())
         .merge(commands::router())
         .merge(commands_semantic::router())
+        .merge(commands_semantic_child_plan::router())
         .merge(projections::router())
         .merge(projections_semantic::router())
         .merge(diffusion::router())

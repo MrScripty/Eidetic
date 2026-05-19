@@ -361,6 +361,7 @@ Completed slices:
 - `feat(ai): persist generated child plans` added durable child-plan IDs, relational SQLite child-plan/current-state rows for generated child previews and their references, command/event/revision history for AI-created plans, and returns the persisted plan ID from `/ai/generate-children`.
 - `feat(timeline): apply durable child plans` threaded durable child-plan IDs through apply-children commands, validates the stored plan is pending and belongs to the captured parent, and marks the plan applied in the same event-history transaction as the timeline child replacement.
 - `feat(server): project durable child plans` added a backend-owned child-plan list projection route over persisted generated plans, child rows, references, status, created timestamps, and revision-derived projection versions.
+- `feat(server): reject durable child plans` added a focused child-plan rejection command route that records review history, transitions pending generated plans to rejected, returns the backend-owned child-plan projection, and keeps the new command surface split out of the already dense semantic command router.
 
 Discovered issues:
 
@@ -384,7 +385,7 @@ Discovered issues:
 - Resolved: generate-children previews now receive durable backend-owned child-plan IDs and relational SQLite storage with event-history revisions as soon as AI returns the editable plan.
 - Resolved: apply-children now consumes the durable child-plan ID, validates parent identity, captures the selected parent before async generation in `BeatEditor`, and marks the plan applied through backend-owned history instead of treating the preview identity as disposable metadata.
 - Resolved: durable child plans now expose a backend-owned projection route so generated plans can be inspected across sessions before or after application.
-- Remaining: durable child plans do not yet expose an explicit rejection/abandon command for generated plans the user chooses not to apply.
+- Resolved: durable child plans now expose an explicit backend-owned rejection command for generated plans the user chooses not to apply.
 - Resolved: propagation proposal script-block acceptance now applies staged downstream script block text through the event history path and preserves existing locked-span protection.
 - Resolved: propagation proposal review no longer owns target acceptance implementation details; future propagation targets should extend the focused acceptance module or split by target before adding enough behavior to exceed decomposition thresholds.
 - Resolved: propagation proposal create/reject/accept routes now emit the semantic proposal refresh event, and the frontend keeps propagation proposal projections in a separate discardable cache from bible-reference proposals.
