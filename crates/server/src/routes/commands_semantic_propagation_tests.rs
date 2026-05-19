@@ -6,11 +6,12 @@ use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
 use eidetic_core::contracts::{
-    AcceptPropagationProposalCommand, BibleGraphNodeId, BibleGraphSchemaKey, CommandEnvelope,
+    AcceptPropagationProposalCommand, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
+    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, CommandEnvelope,
     CreateBibleGraphNodeCommand, FieldValue, PropagationProposalAction, PropagationProposalId,
     RejectPropagationProposalCommand, ScriptBlockId, ScriptBlockKind, ScriptDocumentId,
     ScriptSegmentId, ScriptSegmentStatus, ScriptSpanProvenance, SemanticDependencyId,
-    SetScriptBlockCommand,
+    SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand,
 };
 use serde_json::json;
 use tower::util::ServiceExt;
@@ -172,6 +173,50 @@ async fn propagation_proposal_accept_command_updates_script_block() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn propagation_proposal_accept_command_updates_snapshot_field() {
+    let path = temp_db_path("accepts-snapshot-field-propagation-proposal");
+    seed_character_snapshot_field(&path, "Rain-soaked");
+    let app = app_with_project_path(path.clone()).await;
+    let create = snapshot_field_proposal_command_body(
+        "proposal.propagation.snapshot",
+        FieldValue::Text("Dry and wary".to_string()),
+    );
+    let accept = accept_propagation_proposal_command_body("proposal.propagation.snapshot");
+
+    let create_response = app
+        .clone()
+        .oneshot(propagation_proposal_command_request(create))
+        .await
+        .expect("create route response");
+    let accept_response = app
+        .oneshot(accept_propagation_proposal_command_request(accept))
+        .await
+        .expect("accept route response");
+
+    assert_eq!(create_response.status(), StatusCode::OK);
+    assert_eq!(accept_response.status(), StatusCode::OK);
+    let value = response_json(accept_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(
+        value["projection"]["payload"]["proposals"][0]["status"],
+        "accepted"
+    );
+    let conn = crate::sqlite::open_write_connection(&path).unwrap();
+    let detail = crate::bible_graph_store::load_node_detail_projection(
+        &conn,
+        &BibleGraphNodeId::new("node.character.ada").unwrap(),
+    )
+    .unwrap()
+    .expect("node detail");
+    assert_eq!(
+        detail.snapshots[0].fields[0].value,
+        Some(FieldValue::Text("Dry and wary".to_string()))
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn propagation_proposal_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -237,6 +282,31 @@ fn script_block_proposal_command_body(proposal_id: &str, proposed_text: &str) ->
     })
 }
 
+fn snapshot_field_proposal_command_body(
+    proposal_id: &str,
+    proposed_value: FieldValue,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "proposal_id": PropagationProposalId::new(proposal_id).unwrap(),
+            "action": PropagationProposalAction::SetBibleSnapshotField,
+            "target": {
+                "kind": "bible_snapshot_field",
+                "node_id": BibleGraphNodeId::new("node.character.ada").unwrap(),
+                "snapshot_id": BibleGraphSnapshotId::new("snapshot.character.ada.sequence-1").unwrap(),
+                "part_key": BibleGraphPartKey::new("profile").unwrap(),
+                "field_key": BibleGraphFieldKey::new("tagline").unwrap(),
+                "field_id": BibleGraphSnapshotFieldId::new("snapshot-field.character.status").unwrap(),
+            },
+            "summary": "Set character snapshot status",
+            "proposed_value": proposed_value,
+            "source_dependency_id": SemanticDependencyId::new("dependency.weather.scene").unwrap(),
+            "rationale": "Manual script edit requires snapshot propagation.",
+        }
+    })
+}
+
 fn accept_propagation_proposal_command_body(proposal_id: &str) -> serde_json::Value {
     let command = AcceptPropagationProposalCommand {
         proposal_id: PropagationProposalId::new(proposal_id).unwrap(),
@@ -298,6 +368,40 @@ fn seed_script_block(path: &PathBuf, text: &str) {
             sort_order: 2,
         }),
         1,
+    )
+    .unwrap();
+}
+
+fn seed_character_snapshot_field(path: &PathBuf, value: &str) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    crate::bible_graph_command::apply_create_bible_graph_node(
+        &mut conn,
+        &CommandEnvelope::new(CreateBibleGraphNodeCommand {
+            node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+            parent_id: None,
+            schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+            name: "Ada".to_string(),
+            sort_order: 1,
+        }),
+        1,
+    )
+    .unwrap();
+    crate::bible_graph_command::apply_set_bible_graph_snapshot_field(
+        &mut conn,
+        &CommandEnvelope::new(SetBibleGraphSnapshotFieldCommand {
+            snapshot_id: BibleGraphSnapshotId::new("snapshot.character.ada.sequence-1").unwrap(),
+            node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+            at_ms: 12_000,
+            label: "Sequence 1 state".to_string(),
+            snapshot_sort_order: 1,
+            field_id: BibleGraphSnapshotFieldId::new("snapshot-field.character.status").unwrap(),
+            part_key: BibleGraphPartKey::new("profile").unwrap(),
+            part_name: "Profile".to_string(),
+            field_key: BibleGraphFieldKey::new("tagline").unwrap(),
+            value: Some(FieldValue::Text(value.to_string())),
+            field_sort_order: 2,
+        }),
+        2,
     )
     .unwrap();
 }

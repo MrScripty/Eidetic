@@ -366,6 +366,9 @@ fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> ApiEr
         PropagationProposalStoreError::BibleGraphContract(error) => {
             ApiError::bad_request(error.to_string())
         }
+        PropagationProposalStoreError::BibleGraphCommand(error) => {
+            ApiError::bad_request(error.to_string())
+        }
         PropagationProposalStoreError::ScriptContract(error) => {
             ApiError::bad_request(error.to_string())
         }

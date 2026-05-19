@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
-    BibleGraphSnapshotId, ChangeEventId, FieldValue, ScriptBlockId, ScriptSegmentId,
-    SemanticDependencyId, SemanticProposalStatus,
+    BibleGraphSnapshotFieldId, BibleGraphSnapshotId, ChangeEventId, FieldValue, ScriptBlockId,
+    ScriptSegmentId, SemanticDependencyId, SemanticProposalStatus,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -53,7 +53,9 @@ pub enum PropagationProposalTarget {
     BibleSnapshotField {
         node_id: BibleGraphNodeId,
         snapshot_id: BibleGraphSnapshotId,
+        part_key: BibleGraphPartKey,
         field_key: BibleGraphFieldKey,
+        field_id: BibleGraphSnapshotFieldId,
     },
     ScriptBlock {
         block_id: ScriptBlockId,

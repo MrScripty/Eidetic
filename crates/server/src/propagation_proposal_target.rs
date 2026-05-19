@@ -31,13 +31,15 @@ impl SqlPropagationTarget {
             PropagationProposalTarget::BibleSnapshotField {
                 node_id,
                 snapshot_id,
+                part_key,
                 field_key,
+                field_id,
             } => Self {
                 kind: "bible_snapshot_field".to_string(),
                 id: node_id.as_str().to_string(),
-                part_key: None,
+                part_key: Some(part_key.as_str().to_string()),
                 field_key: Some(field_key.as_str().to_string()),
-                field_id: None,
+                field_id: Some(field_id.as_str().to_string()),
                 snapshot_id: Some(snapshot_id.as_str().to_string()),
             },
             PropagationProposalTarget::ScriptBlock { block_id } => Self {
@@ -84,9 +86,17 @@ impl SqlPropagationTarget {
                     self.snapshot_id,
                     "snapshot_id",
                 )?)?,
+                part_key: eidetic_core::contracts::BibleGraphPartKey::new(required(
+                    self.part_key,
+                    "part_key",
+                )?)?,
                 field_key: eidetic_core::contracts::BibleGraphFieldKey::new(required(
                     self.field_key,
                     "field_key",
+                )?)?,
+                field_id: eidetic_core::contracts::BibleGraphSnapshotFieldId::new(required(
+                    self.field_id,
+                    "field_id",
                 )?)?,
             }),
             "script_block" => Ok(PropagationProposalTarget::ScriptBlock {

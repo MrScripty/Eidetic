@@ -1,13 +1,15 @@
 use eidetic_core::contracts::{
-    AcceptPropagationProposalCommand, BibleGraphField, BibleGraphPart, ChangeEvent,
-    ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
-    PropagationProposal, PropagationProposalAction, PropagationProposalTarget, RevisionOperation,
-    ScriptBlockId, ScriptBlockProjection, ScriptDocumentProjection, ScriptSegmentProjection,
-    ScriptSpan, ScriptSpanProvenance, SemanticProposalStatus, SetBibleGraphFieldCommand,
+    AcceptPropagationProposalCommand, BibleGraphField, BibleGraphPart, BibleGraphSnapshotField,
+    BibleGraphSnapshotProjection, ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta,
+    FieldValue, ObjectKind, ObjectRevision, PropagationProposal, PropagationProposalAction,
+    PropagationProposalTarget, RevisionOperation, ScriptBlockId, ScriptBlockProjection,
+    ScriptDocumentProjection, ScriptSegmentProjection, ScriptSpan, ScriptSpanProvenance,
+    SemanticProposalStatus, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
     SetScriptBlockCommand,
 };
 use rusqlite::Transaction;
 
+use crate::bible_graph_command;
 use crate::bible_graph_store;
 use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
 use crate::propagation_proposal_review::{
@@ -65,6 +67,10 @@ enum AcceptedPropagationTarget {
         command: SetBibleGraphFieldCommand,
         old_value: Option<FieldValue>,
     },
+    BibleSnapshotField {
+        command: SetBibleGraphSnapshotFieldCommand,
+        old_value: Option<FieldValue>,
+    },
     ScriptBlock {
         document_exists: bool,
         command: SetScriptBlockCommand,
@@ -93,6 +99,14 @@ impl AcceptedPropagationTarget {
                     command.value.clone(),
                 )),
             ]),
+            Self::BibleSnapshotField { command, old_value } => {
+                Ok(vec![bible_graph_command::snapshot_revision(
+                    command,
+                    old_value.clone(),
+                    true,
+                    event_id,
+                )])
+            }
             Self::ScriptBlock {
                 document_exists,
                 command,
@@ -126,6 +140,9 @@ impl AcceptedPropagationTarget {
             Self::BibleField { command, .. } => {
                 bible_graph_store::set_field_in_transaction(tx, command, event_id)
             }
+            Self::BibleSnapshotField { command, .. } => {
+                bible_graph_store::set_snapshot_field_in_transaction(tx, command, event_id)
+            }
             Self::ScriptBlock { command, span, .. } => {
                 let document = script_document_command::command_document(command);
                 let segment = script_document_command::command_segment(command);
@@ -153,6 +170,10 @@ fn accepted_target(
             let old_value = field_old_value(conn, &command)?;
             Ok(AcceptedPropagationTarget::BibleField { command, old_value })
         }
+        (
+            PropagationProposalAction::SetBibleSnapshotField,
+            PropagationProposalTarget::BibleSnapshotField { .. },
+        ) => bible_snapshot_field_target_for_proposal(conn, proposal),
         (
             PropagationProposalAction::PatchScriptBlock,
             PropagationProposalTarget::ScriptBlock { .. },
@@ -224,6 +245,50 @@ fn bible_field_command_for_proposal(
     Ok(set_bible_field_command(node_id.clone(), part, field, value))
 }
 
+fn bible_snapshot_field_target_for_proposal(
+    conn: &rusqlite::Connection,
+    proposal: &PropagationProposal,
+) -> Result<AcceptedPropagationTarget, PropagationProposalStoreError> {
+    let PropagationProposalTarget::BibleSnapshotField {
+        node_id,
+        snapshot_id,
+        part_key,
+        field_key,
+        field_id,
+    } = &proposal.target
+    else {
+        return Err(PropagationProposalStoreError::InvalidCommand(format!(
+            "propagation proposal target is not a bible snapshot field: {}",
+            proposal.id.as_str()
+        )));
+    };
+    let value = proposal.proposed_value.clone().ok_or_else(|| {
+        PropagationProposalStoreError::InvalidCommand(
+            "accepted bible snapshot field propagation proposal requires proposed_value"
+                .to_string(),
+        )
+    })?;
+    let projection =
+        bible_graph_store::load_node_detail_projection(conn, node_id)?.ok_or_else(|| {
+            PropagationProposalStoreError::InvalidCommand(format!(
+                "bible graph node does not exist: {}",
+                node_id.as_str()
+            ))
+        })?;
+    let (snapshot, field) = snapshot_field_context(
+        &projection.snapshots,
+        snapshot_id,
+        part_key,
+        field_key,
+        field_id,
+    )?;
+    let old_value = field.value.clone();
+    let command = set_snapshot_field_command(node_id.clone(), snapshot, field, value);
+    bible_graph_command::validate_snapshot_field_command(&command)?;
+    bible_graph_command::validate_snapshot_field_schema(&projection, &command)?;
+    Ok(AcceptedPropagationTarget::BibleSnapshotField { command, old_value })
+}
+
 fn script_block_target_for_proposal(
     conn: &rusqlite::Connection,
     proposal: &PropagationProposal,
@@ -280,6 +345,44 @@ fn script_block_target_for_proposal(
     })
 }
 
+fn snapshot_field_context<'a>(
+    snapshots: &'a [BibleGraphSnapshotProjection],
+    snapshot_id: &eidetic_core::contracts::BibleGraphSnapshotId,
+    part_key: &eidetic_core::contracts::BibleGraphPartKey,
+    field_key: &eidetic_core::contracts::BibleGraphFieldKey,
+    field_id: &eidetic_core::contracts::BibleGraphSnapshotFieldId,
+) -> Result<
+    (
+        &'a BibleGraphSnapshotProjection,
+        &'a BibleGraphSnapshotField,
+    ),
+    PropagationProposalStoreError,
+> {
+    let snapshot = snapshots
+        .iter()
+        .find(|snapshot| snapshot.snapshot.id == *snapshot_id)
+        .ok_or_else(|| {
+            PropagationProposalStoreError::InvalidCommand(format!(
+                "bible graph snapshot does not exist: {}",
+                snapshot_id.as_str()
+            ))
+        })?;
+    let field = snapshot
+        .fields
+        .iter()
+        .find(|field| {
+            field.id == *field_id && field.part_key == *part_key && field.field_key == *field_key
+        })
+        .ok_or_else(|| {
+            PropagationProposalStoreError::InvalidCommand(format!(
+                "bible graph snapshot field does not exist in projection: {}.{}",
+                part_key.as_str(),
+                field_key.as_str()
+            ))
+        })?;
+    Ok((snapshot, field))
+}
+
 fn script_block_context<'a>(
     projection: &'a ScriptDocumentProjection,
     block_id: &ScriptBlockId,
@@ -301,6 +404,27 @@ fn script_block_context<'a>(
                 block_id.as_str()
             ))
         })
+}
+
+fn set_snapshot_field_command(
+    node_id: eidetic_core::contracts::BibleGraphNodeId,
+    snapshot: &BibleGraphSnapshotProjection,
+    field: &BibleGraphSnapshotField,
+    value: FieldValue,
+) -> SetBibleGraphSnapshotFieldCommand {
+    SetBibleGraphSnapshotFieldCommand {
+        snapshot_id: snapshot.snapshot.id.clone(),
+        node_id,
+        at_ms: snapshot.snapshot.at_ms,
+        label: snapshot.snapshot.label.clone(),
+        snapshot_sort_order: snapshot.snapshot.sort_order,
+        field_id: field.id.clone(),
+        part_key: field.part_key.clone(),
+        part_name: field.part_name.clone(),
+        field_key: field.field_key.clone(),
+        value: Some(value),
+        field_sort_order: field.sort_order,
+    }
 }
 
 fn set_script_block_command(
@@ -364,3 +488,7 @@ fn field_old_value(
         .find(|field| field.id == command.field_id)
         .and_then(|field| field.value.clone()))
 }
+
+#[cfg(test)]
+#[path = "propagation_proposal_accept_tests.rs"]
+mod tests;

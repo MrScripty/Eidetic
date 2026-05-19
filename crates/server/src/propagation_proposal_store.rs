@@ -416,6 +416,8 @@ pub(crate) enum PropagationProposalStoreError {
     #[error(transparent)]
     BibleGraphContract(#[from] eidetic_core::contracts::BibleGraphContractError),
     #[error(transparent)]
+    BibleGraphCommand(#[from] crate::bible_graph_command::BibleGraphCommandError),
+    #[error(transparent)]
     ScriptContract(#[from] eidetic_core::contracts::ScriptContractError),
     #[error(transparent)]
     SemanticDependencyContract(#[from] eidetic_core::contracts::SemanticDependencyContractError),

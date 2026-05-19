@@ -376,7 +376,7 @@ fn validate_edge_command(command: &SetBibleGraphEdgeCommand) -> Result<(), Bible
     Ok(())
 }
 
-fn validate_snapshot_field_command(
+pub(crate) fn validate_snapshot_field_command(
     command: &SetBibleGraphSnapshotFieldCommand,
 ) -> Result<(), BibleGraphCommandError> {
     if command.label.trim().is_empty() {
@@ -397,7 +397,7 @@ fn validate_snapshot_field_command(
     Ok(())
 }
 
-fn validate_snapshot_field_schema(
+pub(crate) fn validate_snapshot_field_schema(
     projection: &BibleNodeDetailProjection,
     command: &SetBibleGraphSnapshotFieldCommand,
 ) -> Result<(), BibleGraphCommandError> {
@@ -468,7 +468,7 @@ fn node_revision(
     revision
 }
 
-fn snapshot_revision(
+pub(crate) fn snapshot_revision(
     command: &SetBibleGraphSnapshotFieldCommand,
     old_value: Option<FieldValue>,
     snapshot_exists: bool,

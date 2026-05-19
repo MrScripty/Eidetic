@@ -2,6 +2,7 @@ import type {
   BibleGraphFieldKey,
   BibleGraphNodeId,
   BibleGraphPartKey,
+  BibleGraphSnapshotFieldId,
   BibleGraphSnapshotId,
 } from './bibleGraphTypes.js';
 import type { CommandOutcome, FieldValue, ProjectionEnvelope } from './projectionTypes.js';
@@ -31,7 +32,9 @@ export type PropagationProposalTarget =
       kind: 'bible_snapshot_field';
       node_id: BibleGraphNodeId;
       snapshot_id: BibleGraphSnapshotId;
+      part_key: BibleGraphPartKey;
       field_key: BibleGraphFieldKey;
+      field_id: BibleGraphSnapshotFieldId;
     }
   | {
       kind: 'script_block';
