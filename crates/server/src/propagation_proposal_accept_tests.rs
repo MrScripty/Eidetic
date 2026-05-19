@@ -5,7 +5,7 @@ use eidetic_core::contracts::{
     PropagationProposalAction, PropagationProposalId, PropagationProposalTarget, ScriptBlock,
     ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptDocumentId, ScriptLockId,
     ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
-    ScriptSegmentStatus, ScriptSpanId, ScriptSpanProvenance, SemanticDependencyId,
+    ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SemanticDependencyId,
     SemanticProposalStatus, SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand,
     SetScriptLockCommand,
 };
@@ -245,6 +245,10 @@ fn accepts_pending_script_segment_regeneration_proposal() {
         projection.segments[0].blocks[0].block.text,
         "Ada steps into rain-black light."
     );
+    assert_eq!(
+        projection.segments[0].blocks[0].spans[0].provenance,
+        ScriptSpanProvenance::System
+    );
 }
 
 fn create_field_proposal_command(
@@ -335,7 +339,13 @@ fn regenerated_segment_patch() -> ScriptPatch {
                     text: "Ada steps into rain-black light.".to_string(),
                     sort_order: 1,
                 },
-                spans: Vec::new(),
+                spans: vec![ScriptSpan {
+                    id: ScriptSpanId::new("script.span.regenerated-action").unwrap(),
+                    block_id: ScriptBlockId::new("script.block.regenerated-action").unwrap(),
+                    start_byte: 0,
+                    end_byte: 32,
+                    provenance: ScriptSpanProvenance::System,
+                }],
                 locks: Vec::new(),
             }],
         }],

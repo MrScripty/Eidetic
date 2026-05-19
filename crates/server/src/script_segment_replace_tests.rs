@@ -4,7 +4,9 @@ use eidetic_core::contracts::{
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance,
 };
 
-use super::delete_omitted_segment_blocks_in_transaction;
+use super::{
+    delete_omitted_block_spans_in_transaction, delete_omitted_segment_blocks_in_transaction,
+};
 use crate::history_store;
 use crate::script_store;
 
@@ -96,6 +98,47 @@ fn deletes_all_segment_blocks_when_none_are_retained() {
     assert_eq!(active_row_count(&conn, "script_blocks"), 0);
     assert_eq!(active_row_count(&conn, "script_spans"), 0);
     assert_eq!(active_row_count(&conn, "script_locks"), 0);
+}
+
+#[test]
+fn deletes_omitted_block_spans_and_locks() {
+    let mut conn = memory_connection();
+    seed_segment_with_two_blocks(&mut conn);
+    let command = CommandEnvelope::new(TestCommand);
+    let replacement_event =
+        ChangeEvent::new(command.id, ChangeEventKind::UserEdit, "replace block spans");
+
+    history_store::record_change_with(
+        &mut conn,
+        &command,
+        "test.replace_block_spans",
+        &replacement_event,
+        &[],
+        |tx| {
+            delete_omitted_block_spans_in_transaction(
+                tx,
+                &ScriptBlockId::new("script.block.keep").unwrap(),
+                &[],
+                replacement_event.id,
+            )
+        },
+    )
+    .unwrap();
+
+    let projection = script_store::load_document_projection(
+        &conn,
+        &ScriptDocumentId::new("script.document.main").unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+
+    let keep_block = projection.segments[0]
+        .blocks
+        .iter()
+        .find(|block| block.block.id.as_str() == "script.block.keep")
+        .expect("kept block");
+    assert!(keep_block.spans.is_empty());
+    assert_eq!(active_row_count(&conn, "script_spans"), 1);
 }
 
 fn memory_connection() -> rusqlite::Connection {

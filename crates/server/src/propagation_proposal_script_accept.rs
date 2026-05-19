@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
     FieldValue, ObjectKind, ObjectRevision, PropagationProposal, PropagationProposalTarget,
     RevisionOperation, ScriptBlockId, ScriptBlockProjection, ScriptDocumentProjection, ScriptPatch,
-    ScriptSegmentId, ScriptSegmentProjection, ScriptSpanProvenance, SetScriptBlockCommand,
+    ScriptSegmentId, ScriptSegmentProjection, ScriptSpan, ScriptSpanId, ScriptSpanProvenance,
+    SetScriptBlockCommand,
 };
 
 use crate::propagation_proposal_accept::AcceptedPropagationTarget;
@@ -111,7 +112,14 @@ pub(crate) fn script_segment_target_for_proposal(
     let mut commands = Vec::new();
     let mut spans = Vec::new();
     let mut retained_block_ids = Vec::new();
+    let mut retained_span_ids_by_block = Vec::new();
     for block in &patched_segment.blocks {
+        if !block.locks.is_empty() {
+            return Err(PropagationProposalStoreError::InvalidCommand(format!(
+                "script segment regeneration patch must not create locks: {}",
+                block.block.id.as_str()
+            )));
+        }
         if block.block.segment_id != *segment_id {
             return Err(PropagationProposalStoreError::InvalidCommand(format!(
                 "script block patch segment_id does not match target segment: {}",
@@ -122,16 +130,23 @@ pub(crate) fn script_segment_target_for_proposal(
             set_script_block_command(&before, patched_segment, block, block.block.text.clone());
         script_document_command::validate_block_command(&command)?;
         script_document_command::validate_locked_spans(Some(&before), &command)?;
-        let span = script_document_command::generated_span_for_block(
-            &script_document_command::command_block(&command),
-            ScriptSpanProvenance::AiGenerated,
-        )?;
+        let block_spans = patch_spans_for_block(block, &command)?;
+        let retained_span_ids = block_spans.iter().map(|span| span.id.clone()).collect();
         retained_block_ids.push(block.block.id.clone());
+        retained_span_ids_by_block.push((block.block.id.clone(), retained_span_ids));
         commands.push(command);
-        spans.push(span);
+        spans.push(block_spans);
     }
-    reject_omitted_locked_blocks(existing_segment, &retained_block_ids)?;
-    let omitted_object_revisions = omitted_object_revisions(existing_segment, &retained_block_ids);
+    reject_omitted_locked_objects(
+        existing_segment,
+        &retained_block_ids,
+        &retained_span_ids_by_block,
+    )?;
+    let omitted_object_revisions = omitted_object_revisions(
+        existing_segment,
+        &retained_block_ids,
+        &retained_span_ids_by_block,
+    );
 
     Ok(AcceptedPropagationTarget::ScriptSegment {
         document,
@@ -139,9 +154,31 @@ pub(crate) fn script_segment_target_for_proposal(
         commands,
         spans,
         retained_block_ids,
+        retained_span_ids_by_block,
         omitted_object_revisions,
         before,
     })
+}
+
+fn patch_spans_for_block(
+    block: &ScriptBlockProjection,
+    command: &SetScriptBlockCommand,
+) -> Result<Vec<ScriptSpan>, PropagationProposalStoreError> {
+    if block.spans.is_empty() {
+        return Ok(vec![script_document_command::generated_span_for_block(
+            &script_document_command::command_block(command),
+            ScriptSpanProvenance::AiGenerated,
+        )?]);
+    }
+    for span in &block.spans {
+        if span.block_id != block.block.id {
+            return Err(PropagationProposalStoreError::InvalidCommand(format!(
+                "script span patch block_id does not match block: {}",
+                span.id.as_str()
+            )));
+        }
+    }
+    Ok(block.spans.clone())
 }
 
 fn single_patch_segment<'a>(
@@ -162,16 +199,35 @@ fn single_patch_segment<'a>(
     Ok(segment)
 }
 
-fn reject_omitted_locked_blocks(
+fn reject_omitted_locked_objects(
     existing_segment: &ScriptSegmentProjection,
     retained_block_ids: &[ScriptBlockId],
+    retained_span_ids_by_block: &[(ScriptBlockId, Vec<ScriptSpanId>)],
 ) -> Result<(), PropagationProposalStoreError> {
     for block in &existing_segment.blocks {
-        if retained_block_ids.contains(&block.block.id) || block.locks.is_empty() {
+        if !retained_block_ids.contains(&block.block.id) {
+            if block.locks.is_empty() {
+                continue;
+            }
+            return Err(PropagationProposalStoreError::InvalidCommand(format!(
+                "script segment regeneration would remove locked block: {}",
+                block.block.id.as_str()
+            )));
+        }
+        let retained_span_ids = retained_span_ids_by_block
+            .iter()
+            .find(|(block_id, _)| block_id == &block.block.id)
+            .map(|(_, span_ids)| span_ids.as_slice())
+            .unwrap_or(&[]);
+        if block.locks.iter().all(|lock| {
+            retained_span_ids
+                .iter()
+                .any(|span_id| span_id == &lock.span_id)
+        }) {
             continue;
         }
         return Err(PropagationProposalStoreError::InvalidCommand(format!(
-            "script segment regeneration would remove locked block: {}",
+            "script segment regeneration would remove locked span from block: {}",
             block.block.id.as_str()
         )));
     }
@@ -181,10 +237,22 @@ fn reject_omitted_locked_blocks(
 fn omitted_object_revisions(
     existing_segment: &ScriptSegmentProjection,
     retained_block_ids: &[ScriptBlockId],
+    retained_span_ids_by_block: &[(ScriptBlockId, Vec<ScriptSpanId>)],
 ) -> Vec<ObjectRevision> {
     let mut revisions = Vec::new();
     for block in &existing_segment.blocks {
         if retained_block_ids.contains(&block.block.id) {
+            let retained_span_ids = retained_span_ids_by_block
+                .iter()
+                .find(|(block_id, _)| block_id == &block.block.id)
+                .map(|(_, span_ids)| span_ids.as_slice())
+                .unwrap_or(&[]);
+            for span in &block.spans {
+                if retained_span_ids.contains(&span.id) {
+                    continue;
+                }
+                revisions.push(delete_revision(ObjectKind::ScriptSpan, span.id.as_str()));
+            }
             continue;
         }
         for lock in &block.locks {

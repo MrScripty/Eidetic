@@ -83,8 +83,10 @@ pub(crate) enum AcceptedPropagationTarget {
         document: ScriptDocument,
         segment: ScriptSegment,
         commands: Vec<SetScriptBlockCommand>,
-        spans: Vec<ScriptSpan>,
+        spans: Vec<Vec<ScriptSpan>>,
         retained_block_ids: Vec<ScriptBlockId>,
+        retained_span_ids_by_block:
+            Vec<(ScriptBlockId, Vec<eidetic_core::contracts::ScriptSpanId>)>,
         omitted_object_revisions: Vec<ObjectRevision>,
         before: ScriptDocumentProjection,
     },
@@ -151,13 +153,17 @@ impl AcceptedPropagationTarget {
                     script_document_command::document_revision(document, true, event_id),
                     script_document_command::segment_revision(segment, Some(before), event_id),
                 ];
-                for (command, span) in commands.iter().zip(spans.iter()) {
+                for (command, block_spans) in commands.iter().zip(spans.iter()) {
                     let block = script_document_command::command_block(command);
                     let old_text = script_document_command::find_block_text(before, &block.id);
                     revisions.push(script_document_command::block_revision(
                         &block, old_text, event_id,
                     ));
-                    revisions.push(script_document_command::span_revision(span, event_id));
+                    revisions.extend(
+                        block_spans
+                            .iter()
+                            .map(|span| script_document_command::span_revision(span, event_id)),
+                    );
                 }
                 revisions.extend(
                     omitted_object_revisions
@@ -201,14 +207,25 @@ impl AcceptedPropagationTarget {
                 commands,
                 spans,
                 retained_block_ids,
+                retained_span_ids_by_block,
                 ..
             } => {
                 script_store::upsert_document_in_transaction(tx, document, event_id)?;
                 script_store::upsert_segment_in_transaction(tx, segment, event_id)?;
-                for (command, span) in commands.iter().zip(spans.iter()) {
+                for (command, block_spans) in commands.iter().zip(spans.iter()) {
                     let block = script_document_command::command_block(command);
                     script_store::upsert_block_in_transaction(tx, &block, event_id)?;
-                    script_store::upsert_span_in_transaction(tx, span, event_id)?;
+                    for span in block_spans {
+                        script_store::upsert_span_in_transaction(tx, span, event_id)?;
+                    }
+                }
+                for (block_id, retained_span_ids) in retained_span_ids_by_block {
+                    script_segment_replace::delete_omitted_block_spans_in_transaction(
+                        tx,
+                        block_id,
+                        retained_span_ids,
+                        event_id,
+                    )?;
                 }
                 script_segment_replace::delete_omitted_segment_blocks_in_transaction(
                     tx,
