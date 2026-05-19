@@ -1,6 +1,7 @@
 mod bible_graph;
 mod bible_graph_defaults;
 mod script_document;
+mod semantic_proposal;
 mod story_arc;
 mod timeline_command;
 mod timeline_render;
@@ -30,6 +31,11 @@ pub use script_document::{
     ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
     SetScriptLockCommand,
+};
+pub use semantic_proposal::{
+    BibleReferenceKind, BibleReferenceProposal, BibleReferenceProposalListProjection,
+    CreateBibleReferenceProposalCommand, SemanticProposalContractError, SemanticProposalId,
+    SemanticProposalStatus,
 };
 pub use story_arc::{
     CreateStoryArcCommand, DeleteStoryArcCommand, SetStoryArcMetadataCommand,
@@ -101,6 +107,7 @@ pub enum ObjectKind {
     ScriptBlock,
     ScriptSpan,
     ScriptLock,
+    SemanticProposal,
     SemanticClaim,
     SemanticDependency,
     ReferenceAsset,
@@ -111,6 +118,7 @@ pub enum ObjectKind {
 #[serde(rename_all = "snake_case")]
 pub enum ChangeEventKind {
     UserEdit,
+    AiProposalCreated,
     AiProposalAccepted,
     AiProposalRejected,
     Propagation,

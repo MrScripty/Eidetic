@@ -76,6 +76,7 @@ pub enum ServerEvent {
     },
     BibleChanged,
     ScriptChanged,
+    SemanticProposalsChanged,
 }
 
 /// Which AI backend to use.

@@ -1,11 +1,13 @@
 mod ai;
 mod commands;
+mod commands_semantic;
 mod commands_timeline;
 mod diffusion;
 mod export;
 mod models;
 mod project;
 mod projections;
+mod projections_semantic;
 mod reference;
 mod script;
 mod support;
@@ -23,7 +25,9 @@ pub fn api_router() -> Router<AppState> {
         .merge(script::router())
         .merge(ai::router())
         .merge(commands::router())
+        .merge(commands_semantic::router())
         .merge(projections::router())
+        .merge(projections_semantic::router())
         .merge(diffusion::router())
         .merge(export::router())
         .merge(reference::router())

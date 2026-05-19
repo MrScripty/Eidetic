@@ -20,6 +20,7 @@ mod script_document_command;
 mod script_store;
 mod script_store_codec;
 mod script_store_schema;
+mod semantic_proposal_store;
 mod sqlite;
 mod state;
 mod static_files;
