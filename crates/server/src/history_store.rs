@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
-    ChangeEvent, ChangeEventId, CommandEnvelope, CommandId, FieldDelta, FieldValue, ObjectKind,
-    ObjectRevision, ObjectRevisionId,
+    ChangeEvent, ChangeEventId, ChangeReviewChange, CommandEnvelope, CommandId, FieldDelta,
+    FieldValue, ObjectKind, ObjectRevision, ObjectRevisionId,
 };
 use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use serde::Serialize;
@@ -249,6 +249,82 @@ pub(crate) fn load_revisions_for_object(
     Ok(revisions)
 }
 
+pub(crate) fn load_change_review_changes(
+    conn: &Connection,
+    limit: u32,
+) -> Result<Vec<ChangeReviewChange>, HistoryStoreError> {
+    let mut statement = conn.prepare(
+        "SELECT id, command_id, kind, summary, created_at_ms
+         FROM change_events
+         ORDER BY created_at_ms DESC, rowid DESC
+         LIMIT ?1",
+    )?;
+    let rows = statement.query_map([i64::from(limit)], |row| {
+        Ok(ChangeEventRow {
+            id: row.get(0)?,
+            command_id: row.get(1)?,
+            kind: row.get(2)?,
+            summary: row.get(3)?,
+            created_at_ms: row.get(4)?,
+        })
+    })?;
+
+    let mut changes = Vec::new();
+    for row in rows {
+        let row = row?;
+        let event = ChangeEvent {
+            id: ChangeEventId(parse_uuid(&row.id)?),
+            command_id: CommandId(parse_uuid(&row.command_id)?),
+            kind: decode_string_enum(&row.kind)?,
+            summary: row.summary,
+            created_at_ms: u64::try_from(row.created_at_ms).unwrap_or_default(),
+        };
+        let revisions = load_revisions_for_event(conn, event.id)?;
+        changes.push(ChangeReviewChange { event, revisions });
+    }
+    Ok(changes)
+}
+
+fn load_revisions_for_event(
+    conn: &Connection,
+    change_event_id: ChangeEventId,
+) -> Result<Vec<ObjectRevision>, HistoryStoreError> {
+    let mut statement = conn.prepare(
+        "SELECT id, object_kind, object_id, base_revision_id, operation
+         FROM object_revisions
+         WHERE change_event_id = ?1
+         ORDER BY sort_order ASC",
+    )?;
+    let rows = statement.query_map([change_event_id.0.to_string()], |row| {
+        Ok(EventRevisionRow {
+            id: row.get(0)?,
+            object_kind: row.get(1)?,
+            object_id: row.get(2)?,
+            base_revision_id: row.get(3)?,
+            operation: row.get(4)?,
+        })
+    })?;
+
+    let mut revisions = Vec::new();
+    for row in rows {
+        let row = row?;
+        let revision_id = ObjectRevisionId(parse_uuid(&row.id)?);
+        revisions.push(ObjectRevision {
+            id: revision_id,
+            object_kind: decode_string_enum(&row.object_kind)?,
+            object_id: row.object_id,
+            change_event_id,
+            base_revision_id: row
+                .base_revision_id
+                .map(|id| parse_uuid(&id).map(ObjectRevisionId))
+                .transpose()?,
+            operation: decode_string_enum(&row.operation)?,
+            fields: load_fields_for_revision(conn, revision_id)?,
+        });
+    }
+    Ok(revisions)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct RevisionSummary {
     pub revision_count: u64,
@@ -428,6 +504,24 @@ fn parse_uuid(value: &str) -> Result<uuid::Uuid, HistoryStoreError> {
 struct RevisionRow {
     id: String,
     change_event_id: String,
+    base_revision_id: Option<String>,
+    operation: String,
+}
+
+#[derive(Debug)]
+struct ChangeEventRow {
+    id: String,
+    command_id: String,
+    kind: String,
+    summary: String,
+    created_at_ms: i64,
+}
+
+#[derive(Debug)]
+struct EventRevisionRow {
+    id: String,
+    object_kind: String,
+    object_id: String,
     base_revision_id: Option<String>,
     operation: String,
 }

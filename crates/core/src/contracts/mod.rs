@@ -1,6 +1,7 @@
 mod ai_context;
 mod bible_graph;
 mod bible_graph_defaults;
+mod change_review;
 mod script_document;
 mod semantic_proposal;
 mod story_arc;
@@ -30,6 +31,7 @@ pub use bible_graph_defaults::{
     BibleGraphSchemaListProjection, BibleGraphSchemaProjection, builtin_bible_graph_schema,
     builtin_bible_graph_schema_list_projection, default_part_projections_for_node,
 };
+pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
 pub use script_document::{
     ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,
     ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptLock, ScriptLockId,

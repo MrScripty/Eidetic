@@ -3,9 +3,10 @@ use axum::extract::{Query, State};
 use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
-    BibleNodeDetailProjection, ObjectKind, ProjectionEnvelope, ScriptDocumentId,
-    ScriptDocumentProjection, StoryArcListProjection, StoryArcProgressionProjection,
-    TimelineRenderProjection, builtin_bible_graph_schema_list_projection,
+    BibleNodeDetailProjection, ChangeReviewProjection, ObjectKind, ProjectionEnvelope,
+    ScriptDocumentId, ScriptDocumentProjection, StoryArcListProjection,
+    StoryArcProgressionProjection, TimelineRenderProjection,
+    builtin_bible_graph_schema_list_projection,
 };
 use eidetic_core::story::progression::analyze_all_arcs;
 use serde::Deserialize;
@@ -53,6 +54,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/projections/timeline/render",
             get(get_timeline_render_projection),
+        )
+        .route(
+            "/projections/history/changes",
+            get(get_change_review_projection),
         )
 }
 
@@ -116,6 +121,15 @@ async fn get_bible_graph_node_list_projection(State(state): State<AppState>) -> 
 async fn get_bible_graph_schema_list_projection(State(state): State<AppState>) -> ApiJson {
     let _ = active_project_path(&state)?;
     crate::error::json_value(load_bible_schema_list_projection())
+}
+
+async fn get_change_review_projection(State(state): State<AppState>) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let projection = tokio::task::spawn_blocking(move || load_change_review_at_path(path))
+        .await
+        .map_err(|e| ApiError::internal(format!("change review projection task failed: {e}")))??;
+
+    crate::error::json_value(projection)
 }
 
 async fn get_script_document_projection(
@@ -210,6 +224,15 @@ fn load_bible_schema_list_projection() -> ProjectionEnvelope<BibleGraphSchemaLis
     builtin_bible_graph_schema_list_projection()
 }
 
+fn load_change_review_at_path(
+    path: std::path::PathBuf,
+) -> Result<ProjectionEnvelope<ChangeReviewProjection>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    crate::change_review_projection::load_change_review_projection_envelope(&conn)
+        .map_err(map_history_error)
+}
+
 fn load_story_arc_list_at_path(
     path: std::path::PathBuf,
 ) -> Result<ProjectionEnvelope<StoryArcListProjection>, ApiError> {
@@ -247,3 +270,7 @@ mod tests;
 #[cfg(test)]
 #[path = "projections_story_tests.rs"]
 mod story_tests;
+
+#[cfg(test)]
+#[path = "projections_history_tests.rs"]
+mod history_tests;
