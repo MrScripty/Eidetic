@@ -2,9 +2,9 @@ use eidetic_core::contracts::{
     AcceptPropagationProposalCommand, BibleGraphField, BibleGraphPart, BibleGraphSnapshotField,
     BibleGraphSnapshotProjection, ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta,
     FieldValue, ObjectKind, ObjectRevision, PropagationProposal, PropagationProposalAction,
-    PropagationProposalTarget, RevisionOperation, ScriptDocumentProjection, ScriptSpan,
-    SemanticProposalStatus, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    SetScriptBlockCommand,
+    PropagationProposalTarget, RevisionOperation, ScriptBlockId, ScriptDocument,
+    ScriptDocumentProjection, ScriptSegment, ScriptSpan, SemanticProposalStatus,
+    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand,
 };
 use rusqlite::Transaction;
 
@@ -17,6 +17,7 @@ use crate::propagation_proposal_review::{
 use crate::propagation_proposal_script_accept::script_block_target_for_proposal;
 use crate::propagation_proposal_store::{self, PropagationProposalStoreError};
 use crate::script_document_command;
+use crate::script_segment_replace;
 use crate::script_store;
 
 pub(crate) fn record_accept_propagation_proposal(
@@ -78,6 +79,15 @@ pub(crate) enum AcceptedPropagationTarget {
         span: ScriptSpan,
         before: ScriptDocumentProjection,
     },
+    ScriptSegment {
+        document: ScriptDocument,
+        segment: ScriptSegment,
+        commands: Vec<SetScriptBlockCommand>,
+        spans: Vec<ScriptSpan>,
+        retained_block_ids: Vec<ScriptBlockId>,
+        omitted_object_revisions: Vec<ObjectRevision>,
+        before: ScriptDocumentProjection,
+    },
 }
 
 impl AcceptedPropagationTarget {
@@ -128,6 +138,38 @@ impl AcceptedPropagationTarget {
                     script_document_command::span_revision(span, event_id),
                 ])
             }
+            Self::ScriptSegment {
+                document,
+                segment,
+                commands,
+                spans,
+                omitted_object_revisions,
+                before,
+                ..
+            } => {
+                let mut revisions = vec![
+                    script_document_command::document_revision(document, true, event_id),
+                    script_document_command::segment_revision(segment, Some(before), event_id),
+                ];
+                for (command, span) in commands.iter().zip(spans.iter()) {
+                    let block = script_document_command::command_block(command);
+                    let old_text = script_document_command::find_block_text(before, &block.id);
+                    revisions.push(script_document_command::block_revision(
+                        &block, old_text, event_id,
+                    ));
+                    revisions.push(script_document_command::span_revision(span, event_id));
+                }
+                revisions.extend(
+                    omitted_object_revisions
+                        .iter()
+                        .cloned()
+                        .map(|mut revision| {
+                            revision.change_event_id = event_id;
+                            revision
+                        }),
+                );
+                Ok(revisions)
+            }
         }
     }
 
@@ -152,6 +194,28 @@ impl AcceptedPropagationTarget {
                 script_store::upsert_block_in_transaction(tx, &block, event_id)?;
                 script_store::upsert_span_in_transaction(tx, span, event_id)?;
                 Ok(())
+            }
+            Self::ScriptSegment {
+                document,
+                segment,
+                commands,
+                spans,
+                retained_block_ids,
+                ..
+            } => {
+                script_store::upsert_document_in_transaction(tx, document, event_id)?;
+                script_store::upsert_segment_in_transaction(tx, segment, event_id)?;
+                for (command, span) in commands.iter().zip(spans.iter()) {
+                    let block = script_document_command::command_block(command);
+                    script_store::upsert_block_in_transaction(tx, &block, event_id)?;
+                    script_store::upsert_span_in_transaction(tx, span, event_id)?;
+                }
+                script_segment_replace::delete_omitted_segment_blocks_in_transaction(
+                    tx,
+                    &segment.id,
+                    retained_block_ids,
+                    event_id,
+                )
             }
         }
     }
@@ -178,6 +242,12 @@ fn accepted_target(
             PropagationProposalAction::PatchScriptBlock,
             PropagationProposalTarget::ScriptBlock { .. },
         ) => script_block_target_for_proposal(conn, proposal),
+        (
+            PropagationProposalAction::RegenerateScriptSegment,
+            PropagationProposalTarget::ScriptSegment { .. },
+        ) => crate::propagation_proposal_script_accept::script_segment_target_for_proposal(
+            conn, proposal,
+        ),
         _ => Err(PropagationProposalStoreError::InvalidCommand(format!(
             "propagation proposal action cannot be accepted yet: {}",
             proposal.id.as_str()

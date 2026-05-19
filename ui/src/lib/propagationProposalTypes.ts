@@ -6,7 +6,7 @@ import type {
   BibleGraphSnapshotId,
 } from './bibleGraphTypes.js';
 import type { CommandOutcome, FieldValue, ProjectionEnvelope } from './projectionTypes.js';
-import type { ScriptBlockId, ScriptSegmentId } from './scriptTypes.js';
+import type { ScriptBlockId, ScriptPatch, ScriptSegmentId } from './scriptTypes.js';
 import type { SemanticProposalStatus } from './semanticProposalTypes.js';
 
 export type PropagationProposalId = string;
@@ -53,6 +53,7 @@ export interface PropagationProposal {
   summary: string;
   proposed_value?: FieldValue | null;
   proposed_text?: string | null;
+  proposed_script_patch?: ScriptPatch | null;
   source_dependency_id?: SemanticDependencyId | null;
   source_event_id?: ChangeEventId | null;
   rationale?: string | null;
@@ -66,6 +67,7 @@ export interface CreatePropagationProposalCommand {
   summary: string;
   proposed_value?: FieldValue | null;
   proposed_text?: string | null;
+  proposed_script_patch?: ScriptPatch | null;
   source_dependency_id?: SemanticDependencyId | null;
   source_event_id?: ChangeEventId | null;
   rationale?: string | null;
@@ -78,6 +80,7 @@ export interface UpdatePropagationProposalCommand {
   summary: string;
   proposed_value?: FieldValue | null;
   proposed_text?: string | null;
+  proposed_script_patch?: ScriptPatch | null;
   source_dependency_id?: SemanticDependencyId | null;
   source_event_id?: ChangeEventId | null;
   rationale?: string | null;

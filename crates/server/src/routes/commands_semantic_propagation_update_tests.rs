@@ -174,6 +174,7 @@ fn update_propagation_proposal_command_body(
         summary: summary.to_string(),
         proposed_value: Some(proposed_value),
         proposed_text: None,
+        proposed_script_patch: None,
         source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
         source_event_id: None,
         rationale: Some("Reviewer corrected proposed propagation.".to_string()),

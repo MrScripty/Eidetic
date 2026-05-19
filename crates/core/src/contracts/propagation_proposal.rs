@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::{
     BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
     BibleGraphSnapshotFieldId, BibleGraphSnapshotId, ChangeEventId, FieldValue, ScriptBlockId,
-    ScriptSegmentId, SemanticDependencyId, SemanticProposalStatus,
+    ScriptPatch, ScriptSegmentId, SemanticDependencyId, SemanticProposalStatus,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -86,6 +86,8 @@ pub struct PropagationProposal {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposed_text: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposed_script_patch: Option<ScriptPatch>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_dependency_id: Option<SemanticDependencyId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_event_id: Option<ChangeEventId>,
@@ -105,6 +107,8 @@ pub struct CreatePropagationProposalCommand {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposed_text: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposed_script_patch: Option<ScriptPatch>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_dependency_id: Option<SemanticDependencyId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_event_id: Option<ChangeEventId>,
@@ -122,6 +126,8 @@ pub struct UpdatePropagationProposalCommand {
     pub proposed_value: Option<FieldValue>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposed_text: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposed_script_patch: Option<ScriptPatch>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_dependency_id: Option<SemanticDependencyId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -152,6 +158,7 @@ impl CreatePropagationProposalCommand {
             summary: self.summary,
             proposed_value: self.proposed_value,
             proposed_text: self.proposed_text,
+            proposed_script_patch: self.proposed_script_patch,
             source_dependency_id: self.source_dependency_id,
             source_event_id: self.source_event_id,
             rationale: self.rationale,
@@ -195,6 +202,7 @@ mod tests {
             summary: "Set harbor weather to rainy".to_string(),
             proposed_value: Some(FieldValue::Text("rainy".to_string())),
             proposed_text: None,
+            proposed_script_patch: None,
             source_dependency_id: Some(
                 SemanticDependencyId::new("dependency.weather.scene").unwrap(),
             ),
@@ -223,6 +231,7 @@ mod tests {
             summary: "Set harbor weather to foggy".to_string(),
             proposed_value: Some(FieldValue::Text("foggy".to_string())),
             proposed_text: None,
+            proposed_script_patch: None,
             source_dependency_id: None,
             source_event_id: None,
             rationale: Some("Reviewer narrowed the propagation scope".to_string()),

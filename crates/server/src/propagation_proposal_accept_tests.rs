@@ -2,10 +2,12 @@ use eidetic_core::contracts::{
     AcceptPropagationProposalCommand, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
     BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, CommandEnvelope,
     CreateBibleGraphNodeCommand, CreatePropagationProposalCommand, FieldValue, ObjectKind,
-    PropagationProposalAction, PropagationProposalId, PropagationProposalTarget, ScriptBlockId,
-    ScriptBlockKind, ScriptDocumentId, ScriptLockId, ScriptSegmentId, ScriptSegmentStatus,
-    ScriptSpanId, ScriptSpanProvenance, SemanticDependencyId, SemanticProposalStatus,
-    SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand, SetScriptLockCommand,
+    PropagationProposalAction, PropagationProposalId, PropagationProposalTarget, ScriptBlock,
+    ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptDocumentId, ScriptLockId,
+    ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
+    ScriptSegmentStatus, ScriptSpanId, ScriptSpanProvenance, SemanticDependencyId,
+    SemanticProposalStatus, SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand,
+    SetScriptLockCommand,
 };
 
 use super::record_accept_propagation_proposal;
@@ -200,18 +202,20 @@ fn accept_rejects_script_block_proposal_that_modifies_locked_text() {
 }
 
 #[test]
-fn accept_rejects_unsupported_propagation_action() {
+fn accepts_pending_script_segment_regeneration_proposal() {
     let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    seed_script_block(&mut conn, "Ada enters with a wet umbrella.");
+    seed_second_script_block(&mut conn);
     let create = CommandEnvelope::new(CreatePropagationProposalCommand {
         proposal_id: PropagationProposalId::new("proposal.propagation.script").unwrap(),
         action: PropagationProposalAction::RegenerateScriptSegment,
         target: PropagationProposalTarget::ScriptSegment {
-            segment_id: eidetic_core::contracts::ScriptSegmentId::new("script.segment.scene-1")
-                .unwrap(),
+            segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
         },
         summary: "Regenerate scene".to_string(),
         proposed_value: None,
         proposed_text: None,
+        proposed_script_patch: Some(regenerated_segment_patch()),
         source_dependency_id: None,
         source_event_id: None,
         rationale: None,
@@ -221,10 +225,25 @@ fn accept_rejects_unsupported_propagation_action() {
         proposal_id: PropagationProposalId::new("proposal.propagation.script").unwrap(),
     });
 
-    let error = record_accept_propagation_proposal(&mut conn, &accept, 101).unwrap_err();
+    let outcome = record_accept_propagation_proposal(&mut conn, &accept, 101).unwrap();
+    let proposals = load_propagation_proposals(&conn).unwrap();
+    let projection = crate::script_store::load_document_projection(
+        &conn,
+        &ScriptDocumentId::new("script.document.main").unwrap(),
+    )
+    .unwrap()
+    .expect("script projection");
 
-    assert!(
-        matches!(error, PropagationProposalStoreError::InvalidCommand(message) if message.contains("cannot be accepted yet"))
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(proposals[0].status, SemanticProposalStatus::Accepted);
+    assert_eq!(projection.segments[0].blocks.len(), 1);
+    assert_eq!(
+        projection.segments[0].blocks[0].block.id.as_str(),
+        "script.block.regenerated-action"
+    );
+    assert_eq!(
+        projection.segments[0].blocks[0].block.text,
+        "Ada steps into rain-black light."
     );
 }
 
@@ -243,6 +262,7 @@ fn create_field_proposal_command(
         summary: "Set harbor weather to rainy".to_string(),
         proposed_value: Some(FieldValue::Text("rainy".to_string())),
         proposed_text: None,
+        proposed_script_patch: None,
         source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
         source_event_id: None,
         rationale: Some("Manual script edit changed weather.".to_string()),
@@ -262,6 +282,7 @@ fn create_script_block_proposal_command(
         summary: "Patch generated script block".to_string(),
         proposed_value: None,
         proposed_text: Some(proposed_text.to_string()),
+        proposed_script_patch: None,
         source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
         source_event_id: None,
         rationale: Some("Manual edit requires script wording propagation.".to_string()),
@@ -285,10 +306,40 @@ fn create_snapshot_field_proposal_command(
         summary: "Set character snapshot status".to_string(),
         proposed_value: Some(proposed_value),
         proposed_text: None,
+        proposed_script_patch: None,
         source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
         source_event_id: None,
         rationale: Some("Manual edit changed the character state.".to_string()),
     })
+}
+
+fn regenerated_segment_patch() -> ScriptPatch {
+    ScriptPatch {
+        id: ScriptPatchId::new("script.patch.regenerate-beat-1").unwrap(),
+        document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+        segments: vec![ScriptSegmentProjection {
+            segment: ScriptSegment {
+                id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
+                document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+                source_node_id: Some("node.beat.opening".to_string()),
+                start_ms: 1_000,
+                end_ms: 5_000,
+                status: ScriptSegmentStatus::Current,
+                sort_order: 1,
+            },
+            blocks: vec![ScriptBlockProjection {
+                block: ScriptBlock {
+                    id: ScriptBlockId::new("script.block.regenerated-action").unwrap(),
+                    segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
+                    block_kind: ScriptBlockKind::Action,
+                    text: "Ada steps into rain-black light.".to_string(),
+                    sort_order: 1,
+                },
+                spans: Vec::new(),
+                locks: Vec::new(),
+            }],
+        }],
+    }
 }
 
 fn seed_location_node(conn: &mut rusqlite::Connection) {
@@ -359,6 +410,30 @@ fn seed_script_block(conn: &mut rusqlite::Connection, text: &str) {
             sort_order: 2,
         }),
         1,
+    )
+    .unwrap();
+}
+
+fn seed_second_script_block(conn: &mut rusqlite::Connection) {
+    crate::script_document_command::apply_set_script_block(
+        conn,
+        &CommandEnvelope::new(SetScriptBlockCommand {
+            document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+            document_title: "Pilot".to_string(),
+            document_sort_order: 0,
+            segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
+            source_node_id: Some("node.beat.opening".to_string()),
+            segment_start_ms: 1_000,
+            segment_end_ms: 5_000,
+            segment_status: ScriptSegmentStatus::Current,
+            segment_sort_order: 1,
+            block_id: ScriptBlockId::new("script.block.dialogue-1").unwrap(),
+            block_kind: ScriptBlockKind::Dialogue,
+            text: "It followed me home.".to_string(),
+            span_provenance: ScriptSpanProvenance::AiGenerated,
+            sort_order: 3,
+        }),
+        2,
     )
     .unwrap();
 }

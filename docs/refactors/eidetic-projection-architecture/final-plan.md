@@ -355,6 +355,8 @@ Completed slices:
 - `feat(server): update propagation proposals` added a pending-only full replacement update command for staged propagation proposals, including command replay protection, update event/revision history, route projection refresh, and accept-after-update coverage.
 - `refactor(server): split script propagation acceptance` moved script-block propagation acceptance target preparation into a focused module, reducing the main acceptance coordinator below decomposition limits before adding structured segment-regeneration acceptance.
 - `feat(ui): update propagation proposals` added frontend DTO, command API helper, and projection-store action support for backend-owned propagation proposal updates.
+- `feat(server): replace script segment blocks` added a transaction-scoped script segment replacement storage primitive that soft-deletes omitted blocks, spans, and locks using existing `deleted_event_id` columns while projections continue to read only active rows.
+- `feat(server): accept script segment regeneration proposals` added structured `ScriptPatch` payload support to propagation proposals and accepts pending segment-regeneration proposals by upserting regenerated segment blocks and soft-deleting omitted blocks in one proposal acceptance transaction.
 
 Discovered issues:
 
@@ -374,7 +376,7 @@ Discovered issues:
 - Resolved: proposal review can now reject pending bible reference proposals with command/event/revision history and SQLite current-state status updates.
 - Resolved: proposal review can now accept pending bible reference proposals by composing the proposal status update and bible graph node creation in one command/event/revision transaction.
 - Resolved: the AI context preview prompt now consumes a graph-backed bible context projection from SQLite, including persisted graph nodes, fields, snapshots, and edges.
-- Remaining: generate-children previews stay non-durable until the user applies the edited plan, and structured segment-regeneration acceptance still needs a dedicated command contract.
+- Remaining: generate-children previews stay non-durable until the user applies the edited plan, and segment-regeneration patch spans/locks still need full fidelity instead of normalizing accepted regenerated blocks to a generated main span.
 - Resolved: propagation proposal script-block acceptance now applies staged downstream script block text through the event history path and preserves existing locked-span protection.
 - Resolved: propagation proposal review no longer owns target acceptance implementation details; future propagation targets should extend the focused acceptance module or split by target before adding enough behavior to exceed decomposition thresholds.
 - Resolved: propagation proposal create/reject/accept routes now emit the semantic proposal refresh event, and the frontend keeps propagation proposal projections in a separate discardable cache from bible-reference proposals.
@@ -382,7 +384,9 @@ Discovered issues:
 - Resolved: pending propagation proposals can now be updated before accept/reject through a backend-owned command that records `AiProposalUpdated` history and replaces the proposal payload atomically without mutating bible/script targets.
 - Resolved: script-block propagation acceptance target preparation no longer lives in the main acceptance coordinator, leaving room for future target handlers without exceeding module decomposition limits.
 - Resolved: frontend propagation proposal caches now expose the backend update command path and refresh from the returned projection instead of mutating proposal state locally.
-- Discovered: segment-level regeneration proposals are underspecified for safe acceptance because the current proposal contract has no structured block list, block kinds, ordering, span provenance, lock handling, or regeneration metadata. Keep `RegenerateScriptSegment` proposals review-only until a structured segment patch contract exists.
+- Resolved: script storage now has a focused soft-delete primitive for blocks/spans/locks omitted from a segment replacement, removing the stale-row blocker before structured segment-regeneration acceptance is wired.
+- Resolved: segment-level regeneration proposals are no longer review-only; the proposal contract can carry a structured `ScriptPatch`, and acceptance applies the target segment's regenerated block list through the existing command/event/revision transaction path.
+- Discovered: segment regeneration acceptance currently uses the patch block list and block metadata but normalizes accepted spans to generated full-block spans and does not apply patch-provided spans or locks. Add full patch span/lock fidelity before relying on rich provenance inside regenerated segments.
 - Resolved: pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs` blocked a future `-D warnings` gate. Unused diffusion/Y.Doc command variants, the unconsumed content-change feed, the unused write helper, and production-only unused snapshot fields were removed or narrowed to tests; `cargo check -p eidetic-server` is now warning-free.
 - Resolved: the cloned-project undo/redo routes still existed after cloned snapshot producers were removed. The routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags were deleted; future undo/redo must enter through revision-backed command/event history.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.

@@ -27,6 +27,7 @@ mod prompt_format;
 mod revision_projection;
 mod routes;
 mod script_document_command;
+mod script_segment_replace;
 mod script_store;
 mod script_store_codec;
 mod script_store_schema;

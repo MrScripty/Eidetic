@@ -32,6 +32,7 @@ pub(crate) fn record_update_propagation_proposal(
         &updated.summary,
         updated.proposed_value.as_ref(),
         updated.proposed_text.as_deref(),
+        updated.proposed_script_patch.as_ref(),
     )?;
     let event = ChangeEvent::new(
         command.id,
@@ -69,6 +70,7 @@ fn updated_proposal(
         summary: command.summary.clone(),
         proposed_value: command.proposed_value.clone(),
         proposed_text: command.proposed_text.clone(),
+        proposed_script_patch: command.proposed_script_patch.clone(),
         source_dependency_id: command.source_dependency_id.clone(),
         source_event_id: command.source_event_id,
         rationale: command.rationale.clone(),
@@ -123,6 +125,13 @@ fn update_revision(
             optional_text(updated.proposed_text.as_ref()),
         ));
     }
+    if existing.proposed_script_patch != updated.proposed_script_patch {
+        revision = revision.with_field(FieldDelta::new(
+            "proposed_script_patch",
+            optional_json(existing.proposed_script_patch.as_ref())?,
+            optional_json(updated.proposed_script_patch.as_ref())?,
+        ));
+    }
     if existing.source_dependency_id != updated.source_dependency_id {
         revision = revision.with_field(FieldDelta::new(
             "source_dependency_id",
@@ -154,6 +163,11 @@ fn update_proposal_in_transaction(
 ) -> Result<(), HistoryStoreError> {
     let target = SqlPropagationTarget::from_target(&proposal.target);
     let proposed_value = SqlGraphFieldValue::from_field_value(proposal.proposed_value.as_ref())?;
+    let proposed_script_patch = proposal
+        .proposed_script_patch
+        .as_ref()
+        .map(serde_json::to_string)
+        .transpose()?;
     let updated = tx.execute(
         "UPDATE propagation_proposals
          SET action = ?1,
@@ -173,10 +187,11 @@ fn update_proposal_in_transaction(
              proposed_value_ref_id = ?15,
              proposed_value_asset_ref = ?16,
              proposed_text = ?17,
-             source_dependency_id = ?18,
-             source_event_id = ?19,
-             rationale = ?20
-         WHERE id = ?21 AND status = ?22",
+             proposed_script_patch_json = ?18,
+             source_dependency_id = ?19,
+             source_event_id = ?20,
+             rationale = ?21
+         WHERE id = ?22 AND status = ?23",
         params![
             encode_string_enum(&proposal.action)?,
             target.kind,
@@ -195,6 +210,7 @@ fn update_proposal_in_transaction(
             proposed_value.ref_id,
             proposed_value.asset_ref,
             proposal.proposed_text,
+            proposed_script_patch,
             proposal.source_dependency_id.as_ref().map(|id| id.as_str()),
             proposal.source_event_id.map(|id| id.0.to_string()),
             proposal.rationale,
@@ -213,6 +229,16 @@ fn update_proposal_in_transaction(
 
 fn optional_text(value: Option<&String>) -> Option<FieldValue> {
     value.cloned().map(FieldValue::Text)
+}
+
+fn optional_json<T>(value: Option<&T>) -> Result<Option<FieldValue>, HistoryStoreError>
+where
+    T: serde::Serialize,
+{
+    Ok(value
+        .map(serde_json::to_string)
+        .transpose()
+        .map(|value| value.map(FieldValue::Text))?)
 }
 
 fn optional_dependency(value: Option<&SemanticDependencyId>) -> Option<FieldValue> {

@@ -191,6 +191,7 @@ fn seed_propagation_proposal(path: &PathBuf) {
         summary: "Set harbor weather to rainy".to_string(),
         proposed_value: Some(FieldValue::Text("rainy".to_string())),
         proposed_text: None,
+        proposed_script_patch: None,
         source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
         source_event_id: None,
         rationale: Some("Manual script edit introduced rainy weather.".to_string()),

@@ -2,7 +2,7 @@ use eidetic_core::contracts::{
     ChangeEvent, ChangeEventKind, CommandEnvelope, CreatePropagationProposalCommand, FieldDelta,
     FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, ProjectionVersion,
     PropagationProposal, PropagationProposalAction, PropagationProposalId,
-    PropagationProposalListProjection, PropagationProposalTarget, RevisionOperation,
+    PropagationProposalListProjection, PropagationProposalTarget, RevisionOperation, ScriptPatch,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 use serde::Serialize;
@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS propagation_proposals (
     proposed_value_ref_id TEXT,
     proposed_value_asset_ref TEXT,
     proposed_text TEXT,
+    proposed_script_patch_json TEXT,
     source_dependency_id TEXT,
     source_event_id TEXT,
     rationale TEXT,
@@ -104,6 +105,7 @@ pub(crate) fn load_propagation_proposals(
             proposed_value_type, proposed_value_text, proposed_value_integer,
             proposed_value_number, proposed_value_bool, proposed_value_ref_kind,
             proposed_value_ref_id, proposed_value_asset_ref, proposed_text,
+            proposed_script_patch_json,
             source_dependency_id, source_event_id, rationale, created_at_ms
          FROM propagation_proposals
          ORDER BY created_at_ms ASC, id ASC",
@@ -128,6 +130,7 @@ pub(crate) fn load_propagation_proposal(
             proposed_value_type, proposed_value_text, proposed_value_integer,
             proposed_value_number, proposed_value_bool, proposed_value_ref_kind,
             proposed_value_ref_id, proposed_value_asset_ref, proposed_text,
+            proposed_script_patch_json,
             source_dependency_id, source_event_id, rationale, created_at_ms
          FROM propagation_proposals
          WHERE id = ?1",
@@ -164,6 +167,7 @@ fn validate_create_command(
         &command.summary,
         command.proposed_value.as_ref(),
         command.proposed_text.as_deref(),
+        command.proposed_script_patch.as_ref(),
     )
 }
 
@@ -173,6 +177,7 @@ pub(crate) fn validate_proposal_shape(
     summary: &str,
     proposed_value: Option<&FieldValue>,
     proposed_text: Option<&str>,
+    proposed_script_patch: Option<&ScriptPatch>,
 ) -> Result<(), PropagationProposalStoreError> {
     if summary.trim().is_empty() {
         return Err(PropagationProposalStoreError::InvalidCommand(
@@ -207,7 +212,14 @@ pub(crate) fn validate_proposal_shape(
         (
             PropagationProposalAction::RegenerateScriptSegment,
             PropagationProposalTarget::ScriptSegment { .. },
-        ) => {}
+        ) => {
+            if proposed_script_patch.is_none() {
+                return Err(PropagationProposalStoreError::InvalidCommand(
+                    "proposed_script_patch is required for script segment regeneration proposals"
+                        .to_string(),
+                ));
+            }
+        }
         _ => {
             return Err(PropagationProposalStoreError::InvalidCommand(
                 "propagation proposal action does not match target kind".to_string(),
@@ -238,6 +250,11 @@ fn insert_proposal_in_transaction(
 ) -> Result<(), HistoryStoreError> {
     let target = SqlPropagationTarget::from_target(&proposal.target);
     let proposed_value = SqlGraphFieldValue::from_field_value(proposal.proposed_value.as_ref())?;
+    let proposed_script_patch = proposal
+        .proposed_script_patch
+        .as_ref()
+        .map(serde_json::to_string)
+        .transpose()?;
     tx.execute(
         "INSERT INTO propagation_proposals (
             id, action,
@@ -245,11 +262,11 @@ fn insert_proposal_in_transaction(
             status, summary,
             proposed_value_type, proposed_value_text, proposed_value_integer,
             proposed_value_number, proposed_value_bool, proposed_value_ref_kind,
-            proposed_value_ref_id, proposed_value_asset_ref, proposed_text,
+            proposed_value_ref_id, proposed_value_asset_ref, proposed_text, proposed_script_patch_json,
             source_dependency_id, source_event_id, rationale, created_at_ms, created_event_id
          ) VALUES (
             ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12,
-            ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24
+            ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25
          )",
         params![
             proposal.id.as_str(),
@@ -271,6 +288,7 @@ fn insert_proposal_in_transaction(
             proposed_value.ref_id,
             proposed_value.asset_ref,
             proposal.proposed_text,
+            proposed_script_patch,
             proposal.source_dependency_id.as_ref().map(|id| id.as_str()),
             proposal.source_event_id.map(|id| id.0.to_string()),
             proposal.rationale,
@@ -295,9 +313,10 @@ fn row_to_proposal(row: &Row<'_>) -> Result<PropagationProposal, rusqlite::Error
         ref_id: row.get(16)?,
         asset_ref: row.get(17)?,
     };
-    let source_dependency_id: Option<String> = row.get(19)?;
-    let source_event_id: Option<String> = row.get(20)?;
-    let created_at_ms: i64 = row.get(22)?;
+    let proposed_script_patch: Option<String> = row.get(19)?;
+    let source_dependency_id: Option<String> = row.get(20)?;
+    let source_event_id: Option<String> = row.get(21)?;
+    let created_at_ms: i64 = row.get(23)?;
     Ok(PropagationProposal {
         id: PropagationProposalId::new(id).map_err(|e| conversion_failure(row, 0, e))?,
         action: decode_string_enum(&action).map_err(|e| conversion_failure(row, 1, e))?,
@@ -317,16 +336,20 @@ fn row_to_proposal(row: &Row<'_>) -> Result<PropagationProposal, rusqlite::Error
             .into_field_value()
             .map_err(|e| conversion_failure(row, 10, e))?,
         proposed_text: row.get(18)?,
+        proposed_script_patch: proposed_script_patch
+            .map(|patch| serde_json::from_str(&patch))
+            .transpose()
+            .map_err(|e| conversion_failure(row, 19, e))?,
         source_dependency_id: source_dependency_id
             .map(eidetic_core::contracts::SemanticDependencyId::new)
             .transpose()
-            .map_err(|e| conversion_failure(row, 19, e))?,
+            .map_err(|e| conversion_failure(row, 20, e))?,
         source_event_id: source_event_id
             .map(|id| uuid::Uuid::parse_str(&id).map(eidetic_core::contracts::ChangeEventId))
             .transpose()
-            .map_err(|e| conversion_failure(row, 20, e))?,
-        rationale: row.get(21)?,
-        created_at_ms: u64::try_from(created_at_ms).map_err(|e| conversion_failure(row, 22, e))?,
+            .map_err(|e| conversion_failure(row, 21, e))?,
+        rationale: row.get(22)?,
+        created_at_ms: u64::try_from(created_at_ms).map_err(|e| conversion_failure(row, 23, e))?,
     })
 }
 
@@ -371,11 +394,19 @@ fn propagation_proposal_revision(
         }
         None => revision,
     };
-    Ok(match proposal.proposed_text.as_ref() {
+    let revision = match proposal.proposed_text.as_ref() {
         Some(text) => revision.with_field(FieldDelta::new(
             "proposed_text",
             None,
             Some(FieldValue::Text(text.clone())),
+        )),
+        None => revision,
+    };
+    Ok(match proposal.proposed_script_patch.as_ref() {
+        Some(patch) => revision.with_field(FieldDelta::new(
+            "proposed_script_patch",
+            None,
+            Some(FieldValue::Text(serde_json::to_string(patch)?)),
         )),
         None => revision,
     })
