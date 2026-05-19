@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
-    AcceptBibleReferenceProposalCommand, BibleGraphNodeId, BibleReferenceKind, CommandEnvelope,
-    CreateBibleReferenceProposalCommand, EnsureCanonicalBibleRootsCommand, ObjectKind,
-    RejectBibleReferenceProposalCommand, SemanticProposalId, SemanticProposalStatus,
+    AcceptBibleReferenceProposalCommand, BibleGraphNodeId, BibleGraphSchemaKey, BibleReferenceKind,
+    CommandEnvelope, CreateBibleGraphNodeCommand, CreateBibleReferenceProposalCommand,
+    EnsureCanonicalBibleRootsCommand, ObjectKind, RejectBibleReferenceProposalCommand,
+    SemanticProposalId, SemanticProposalStatus,
 };
 use eidetic_core::timeline::node::NodeId;
 use rusqlite::Connection;
@@ -202,6 +203,52 @@ fn accept_command_replays_without_second_node_insert() {
             .filter(|node| node.id.as_str() == "node.character.ada")
             .count(),
         1
+    );
+}
+
+#[test]
+fn accept_command_can_link_existing_bible_node() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let existing_node = CommandEnvelope::new(CreateBibleGraphNodeCommand {
+        node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        parent_id: None,
+        schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+        name: "Ada".to_string(),
+        sort_order: 10,
+    });
+    crate::bible_graph_command::apply_create_bible_graph_node(&mut conn, &existing_node, 40)
+        .unwrap();
+    let create = create_command("proposal.child.ada", "Ada", BibleReferenceKind::Character);
+    record_create_bible_reference_proposal(&mut conn, &create, 42).unwrap();
+    let accept = accept_command("proposal.child.ada", "node.character.ada", None);
+
+    let outcome = crate::semantic_proposal_accept::record_accept_bible_reference_proposal(
+        &mut conn, &accept, 43,
+    )
+    .unwrap();
+    let proposals = load_bible_reference_proposals(&conn).unwrap();
+    let nodes = crate::bible_graph_store::load_node_list_projection(&conn).unwrap();
+    let node_revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::BibleNode,
+        "node.character.ada",
+    )
+    .unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(proposals[0].status, SemanticProposalStatus::Accepted);
+    assert_eq!(
+        nodes
+            .nodes
+            .iter()
+            .filter(|node| node.id.as_str() == "node.character.ada")
+            .count(),
+        1
+    );
+    assert_eq!(
+        node_revisions.len(),
+        1,
+        "linking should not mutate the existing bible node"
     );
 }
 

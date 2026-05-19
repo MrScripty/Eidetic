@@ -37,8 +37,7 @@ pub(crate) fn record_accept_bible_reference_proposal(
         )));
     }
 
-    let node = accepted_bible_node(&proposal, &command.payload)?;
-    validate_accept_target(conn, &node)?;
+    let target = accept_target(conn, &proposal, &command.payload)?;
 
     let event = ChangeEvent::new(
         command.id,
@@ -46,15 +45,21 @@ pub(crate) fn record_accept_bible_reference_proposal(
         format!("accept bible reference {}", proposal.reference_text),
     )
     .with_created_at_ms(created_at_ms);
-    let proposal_revision = proposal_accept_revision(&proposal, &node, event.id)?;
-    let node_revision = accepted_bible_node_revision(&node, event.id);
+    let proposal_revision = proposal_accept_revision(&proposal, target.node_id(), event.id)?;
+    let revisions = match &target {
+        AcceptTarget::Create(node) => vec![
+            proposal_revision,
+            accepted_bible_node_revision(node, event.id),
+        ],
+        AcceptTarget::LinkExisting(_) => vec![proposal_revision],
+    };
 
     Ok(history_store::record_change_with(
         conn,
         command,
         "semantic.bible_reference_accept",
         &event,
-        &[proposal_revision, node_revision],
+        &revisions,
         |tx| {
             semantic_proposal_store::update_proposal_status_in_transaction(
                 tx,
@@ -62,15 +67,48 @@ pub(crate) fn record_accept_bible_reference_proposal(
                 SemanticProposalStatus::Pending,
                 SemanticProposalStatus::Accepted,
             )?;
-            bible_graph_store::insert_node_in_transaction(tx, &node, event.id)
+            match &target {
+                AcceptTarget::Create(node) => {
+                    bible_graph_store::insert_node_in_transaction(tx, node, event.id)
+                }
+                AcceptTarget::LinkExisting(_) => Ok(()),
+            }
         },
     )?)
 }
 
-fn validate_accept_target(
+enum AcceptTarget {
+    Create(BibleGraphNode),
+    LinkExisting(BibleGraphNodeId),
+}
+
+impl AcceptTarget {
+    fn node_id(&self) -> &BibleGraphNodeId {
+        match self {
+            Self::Create(node) => &node.id,
+            Self::LinkExisting(node_id) => node_id,
+        }
+    }
+}
+
+fn accept_target(
     conn: &Connection,
-    node: &BibleGraphNode,
-) -> Result<(), SemanticProposalStoreError> {
+    proposal: &BibleReferenceProposal,
+    command: &AcceptBibleReferenceProposalCommand,
+) -> Result<AcceptTarget, SemanticProposalStoreError> {
+    if let Some(existing) = bible_graph_store::load_node_detail_projection(conn, &command.node_id)?
+    {
+        if existing.node.schema_key != proposal.proposed_schema_key {
+            return Err(SemanticProposalStoreError::InvalidCommand(format!(
+                "existing bible graph node schema {} does not match proposal schema {}",
+                existing.node.schema_key.as_str(),
+                proposal.proposed_schema_key.as_str()
+            )));
+        }
+        return Ok(AcceptTarget::LinkExisting(existing.node.id));
+    }
+
+    let node = accepted_bible_node(proposal, command)?;
     if let Some(parent_id) = node.parent_id.as_ref() {
         if !bible_graph_store::node_exists(conn, parent_id)? {
             return Err(SemanticProposalStoreError::InvalidCommand(format!(
@@ -79,13 +117,7 @@ fn validate_accept_target(
             )));
         }
     }
-    if bible_graph_store::node_exists(conn, &node.id)? {
-        return Err(SemanticProposalStoreError::InvalidCommand(format!(
-            "bible graph node already exists: {}",
-            node.id.as_str()
-        )));
-    }
-    Ok(())
+    Ok(AcceptTarget::Create(node))
 }
 
 fn accepted_bible_node(
@@ -127,7 +159,7 @@ fn default_parent_id(reference_kind: &BibleReferenceKind) -> BibleGraphNodeId {
 
 fn proposal_accept_revision(
     proposal: &BibleReferenceProposal,
-    node: &BibleGraphNode,
+    node_id: &BibleGraphNodeId,
     event_id: eidetic_core::contracts::ChangeEventId,
 ) -> Result<ObjectRevision, HistoryStoreError> {
     Ok(ObjectRevision::new(
@@ -148,7 +180,7 @@ fn proposal_accept_revision(
         None,
         Some(FieldValue::ObjectRef {
             kind: ObjectKind::BibleNode,
-            id: node.id.as_str().to_string(),
+            id: node_id.as_str().to_string(),
         }),
     )))
 }
