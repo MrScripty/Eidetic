@@ -428,6 +428,10 @@ pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatP
         user.push('\n');
     }
 
+    if let Some(bible_context) = &request.bible_context {
+        ai_bible_context_prompt::append_bible_context(&mut user, bible_context);
+    }
+
     // JSON format for response.
     let beat_type_field = if child_level == StoryLevel::Beat {
         "\"beat_type\": \"<one of: Setup, Complication, Escalation, Climax, Resolution, Payoff, Callback>\",\n             "

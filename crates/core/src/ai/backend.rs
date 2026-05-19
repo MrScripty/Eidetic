@@ -158,6 +158,9 @@ pub struct GenerateChildrenRequest {
     /// Premise → Act decomposition so the AI knows the expected act layout.
     #[serde(default)]
     pub episode_structure: Option<EpisodeStructure>,
+    /// Backend-owned bible graph facts relevant to this decomposition, when available.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_context: Option<ProjectionEnvelope<AiBibleContextProjection>>,
 }
 
 /// Everything the AI needs to infer a parent from children.

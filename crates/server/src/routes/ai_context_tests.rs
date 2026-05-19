@@ -1,7 +1,7 @@
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
-use eidetic_core::ai::prompt::build_generate_request;
+use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{
     BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartId, BibleGraphPartKey,
     BibleGraphSchemaKey, CommandEnvelope, CreateBibleGraphNodeCommand, FieldValue,
@@ -11,7 +11,8 @@ use eidetic_core::timeline::node::ContentStatus;
 use tower::util::ServiceExt;
 use uuid::Uuid;
 
-use super::{attach_ai_bible_context, router};
+use super::{attach_ai_bible_context, attach_ai_bible_context_to_children, router};
+use crate::prompt_format::build_decompose_prompt;
 use crate::state::AppState;
 
 #[tokio::test]
@@ -79,6 +80,34 @@ async fn attach_ai_bible_context_loads_projection_for_generation_requests() {
         bible_context.payload.nodes[0].fields[0].value,
         FieldValue::Text("Reluctant detective".to_string())
     );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn child_decomposition_prompt_includes_graph_backed_bible_context() {
+    let path =
+        std::env::temp_dir().join(format!("eidetic-child-bible-context-{}.db", Uuid::new_v4()));
+    let mut project = Template::MultiCam.build_project("Child Bible Context Test");
+    let node_id = project.timeline.nodes[0].id;
+    let node = project.timeline.node_mut(node_id).expect("target node");
+    node.content.notes = "Break this story using backend-owned bible context".to_string();
+    node.content.status = ContentStatus::NotesOnly;
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed project database");
+    seed_bible_context(&path);
+    let mut request =
+        build_generate_children_request(&project, node_id).expect("generate children request");
+
+    attach_ai_bible_context_to_children(&mut request, path.clone(), node_id)
+        .await
+        .expect("attach bible context");
+    let prompt = build_decompose_prompt(&request);
+
+    assert!(prompt.user.contains("STORY BIBLE CONTEXT"));
+    assert!(prompt.user.contains("Ada"));
+    assert!(prompt.user.contains("Reluctant detective"));
 
     let _ = std::fs::remove_file(path);
 }

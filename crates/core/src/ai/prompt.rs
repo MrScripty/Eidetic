@@ -101,6 +101,7 @@ pub fn build_generate_children_request(
         tagged_arcs,
         surrounding_context,
         episode_structure,
+        bible_context: None,
     })
 }
 

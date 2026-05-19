@@ -12,7 +12,9 @@ use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
 use crate::script_document_command;
 use crate::state::{AppState, BackendType, ServerEvent};
 use crate::timeline_node_store;
-use eidetic_core::ai::backend::{ChildPlan, ChildProposal, GenerateRequest, RagChunk};
+use eidetic_core::ai::backend::{
+    ChildPlan, ChildProposal, GenerateChildrenRequest, GenerateRequest, RagChunk,
+};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{
     AiBibleContextProjection, CommandEnvelope, CommandId, ProjectionEnvelope, ScriptBlockId,
@@ -136,8 +138,8 @@ async fn generate_children(
 ) -> Json<serde_json::Value> {
     let node_id = NodeId(body.node_id);
 
-    let request = {
-        let (project, _) = match active_sqlite_project(&state).await {
+    let (mut request, project_path) = {
+        let (project, project_path) = match active_sqlite_project(&state).await {
             Ok(project) => project,
             Err(error) => return Json(serde_json::json!({ "error": error })),
         };
@@ -155,13 +157,19 @@ async fn generate_children(
             return Json(serde_json::json!({ "error": "node has no notes" }));
         }
 
-        match build_generate_children_request(&project, node_id) {
+        let request = match build_generate_children_request(&project, node_id) {
             Ok(req) => req,
             Err(e) => {
                 return Json(serde_json::json!({ "error": e.to_string() }));
             }
-        }
+        };
+        (request, project_path)
     };
+    if let Err(error) =
+        attach_ai_bible_context_to_children(&mut request, project_path, node_id).await
+    {
+        return Json(serde_json::json!({ "error": error }));
+    }
 
     let config = state.ai_config.lock().clone();
     let backend = Backend::from_config(&config);
@@ -795,6 +803,15 @@ async fn load_ai_bible_context_projection(
 
 async fn attach_ai_bible_context(
     request: &mut GenerateRequest,
+    path: PathBuf,
+    node_id: NodeId,
+) -> Result<(), String> {
+    request.bible_context = Some(load_ai_bible_context_projection(path, node_id).await?);
+    Ok(())
+}
+
+async fn attach_ai_bible_context_to_children(
+    request: &mut GenerateChildrenRequest,
     path: PathBuf,
     node_id: NodeId,
 ) -> Result<(), String> {
