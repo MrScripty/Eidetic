@@ -14,6 +14,7 @@ mod embeddings;
 pub mod error;
 mod export;
 mod history_store;
+mod history_read_store;
 mod object_field_command;
 mod persistence;
 mod prompt_format;
