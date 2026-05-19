@@ -18,6 +18,12 @@ import type {
   SetScriptLockCommand,
 } from './scriptTypes.js';
 import type {
+  AcceptBibleReferenceProposalCommand,
+  BibleReferenceProposalCommandResponse,
+  CreateBibleReferenceProposalCommand,
+  RejectBibleReferenceProposalCommand,
+} from './semanticProposalTypes.js';
+import type {
   CreateStoryArcCommand,
   DeleteStoryArcCommand,
   SetStoryArcMetadataCommand,
@@ -141,6 +147,51 @@ export function ensureCanonicalBibleRoots(
   };
 
   return request('/commands/bible-graph/canonical-roots', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function createBibleReferenceProposal(
+  payload: CreateBibleReferenceProposalCommand,
+  commandId = createCommandId(),
+): Promise<BibleReferenceProposalCommandResponse> {
+  const command: CommandEnvelope<CreateBibleReferenceProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/semantic/bible-reference-proposal', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function rejectBibleReferenceProposal(
+  payload: RejectBibleReferenceProposalCommand,
+  commandId = createCommandId(),
+): Promise<BibleReferenceProposalCommandResponse> {
+  const command: CommandEnvelope<RejectBibleReferenceProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/semantic/bible-reference-proposal/reject', {
+    method: 'POST',
+    body: JSON.stringify(command),
+  });
+}
+
+export function acceptBibleReferenceProposal(
+  payload: AcceptBibleReferenceProposalCommand,
+  commandId = createCommandId(),
+): Promise<BibleReferenceProposalCommandResponse> {
+  const command: CommandEnvelope<AcceptBibleReferenceProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return request('/commands/semantic/bible-reference-proposal/accept', {
     method: 'POST',
     body: JSON.stringify(command),
   });

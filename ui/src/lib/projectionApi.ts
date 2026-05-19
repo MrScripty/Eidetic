@@ -6,6 +6,7 @@ import type {
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
 import type { ObjectFieldProjection, ObjectKind, ProjectionEnvelope } from './projectionTypes.js';
 import type { ScriptDocumentId, ScriptDocumentProjection } from './scriptTypes.js';
+import type { BibleReferenceProposalListProjection } from './semanticProposalTypes.js';
 import type { StoryArcListProjection, StoryArcProgressionProjection } from './storyArcTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
@@ -71,6 +72,12 @@ export function getScriptDocumentProjection({
 }: ScriptDocumentProjectionKey): Promise<ProjectionEnvelope<ScriptDocumentProjection>> {
   const params = new URLSearchParams({ document_id });
   return getJson(`/projections/script/document?${params.toString()}`);
+}
+
+export function getBibleReferenceProposalListProjection(): Promise<
+  ProjectionEnvelope<BibleReferenceProposalListProjection>
+> {
+  return getJson('/projections/semantic/bible-reference-proposals');
 }
 
 export function getStoryArcListProjection(): Promise<ProjectionEnvelope<StoryArcListProjection>> {

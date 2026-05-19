@@ -336,6 +336,7 @@ Completed slices:
 - `feat(timeline): propose bible references from child plans` preserved child-plan character, location, and prop references through apply-children commands and writes pending bible reference proposals in the same SQLite transaction as the timeline child replacement.
 - `feat(server): reject bible reference proposals` added a focused proposal rejection command that records review history, updates pending proposal status transactionally, returns the proposal list projection, and avoids status-only acceptance until acceptance can apply bible graph mutations atomically.
 - `feat(server): accept bible reference proposals` added an atomic proposal acceptance command that updates pending proposal status and creates the accepted bible graph node in one SQLite history transaction, returning the proposal list projection and broadcasting bible/proposal changes.
+- `feat(ui): cache bible reference proposals` added typed frontend proposal DTOs, semantic proposal command/projection helpers, a backend-owned proposal projection cache, focused tests, and websocket refresh handling without optimistic local proposal mutation.
 
 Discovered issues:
 
