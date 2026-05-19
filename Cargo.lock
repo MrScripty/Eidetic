@@ -1469,6 +1469,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 
 [[package]]
+name = "eidetic-bevy-bible-graph"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "eidetic-core",
+ "serde",
+ "serde-wasm-bindgen",
+ "thiserror 2.0.18",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "eidetic-bevy-timeline"
 version = "0.1.0"
 dependencies = [

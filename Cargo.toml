@@ -1,5 +1,10 @@
 [workspace]
-members = ["crates/core", "crates/server", "crates/bevy_timeline"]
+members = [
+    "crates/core",
+    "crates/server",
+    "crates/bevy_timeline",
+    "crates/bevy_bible_graph",
+]
 resolver = "2"
 
 [workspace.package]
