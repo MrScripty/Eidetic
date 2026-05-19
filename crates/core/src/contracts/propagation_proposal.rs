@@ -112,6 +112,24 @@ pub struct CreatePropagationProposalCommand {
     pub rationale: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UpdatePropagationProposalCommand {
+    pub proposal_id: PropagationProposalId,
+    pub action: PropagationProposalAction,
+    pub target: PropagationProposalTarget,
+    pub summary: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposed_value: Option<FieldValue>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposed_text: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_dependency_id: Option<SemanticDependencyId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_event_id: Option<ChangeEventId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rationale: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RejectPropagationProposalCommand {
     pub proposal_id: PropagationProposalId,
@@ -189,6 +207,31 @@ mod tests {
         assert_eq!(proposal.id.as_str(), "proposal.propagation.weather");
         assert_eq!(proposal.status, SemanticProposalStatus::Pending);
         assert_eq!(proposal.created_at_ms, 42);
+    }
+
+    #[test]
+    fn update_command_round_trips() {
+        let command = UpdatePropagationProposalCommand {
+            proposal_id: PropagationProposalId::new("proposal.propagation.weather").unwrap(),
+            action: PropagationProposalAction::SetBibleField,
+            target: PropagationProposalTarget::BibleField {
+                node_id: BibleGraphNodeId::new("node.location.harbor").unwrap(),
+                part_key: BibleGraphPartKey::new("weather").unwrap(),
+                field_key: BibleGraphFieldKey::new("current").unwrap(),
+                field_id: None,
+            },
+            summary: "Set harbor weather to foggy".to_string(),
+            proposed_value: Some(FieldValue::Text("foggy".to_string())),
+            proposed_text: None,
+            source_dependency_id: None,
+            source_event_id: None,
+            rationale: Some("Reviewer narrowed the propagation scope".to_string()),
+        };
+
+        let encoded = serde_json::to_string(&command).unwrap();
+        let decoded: UpdatePropagationProposalCommand = serde_json::from_str(&encoded).unwrap();
+
+        assert_eq!(decoded, command);
     }
 
     #[test]

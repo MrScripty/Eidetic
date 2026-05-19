@@ -158,12 +158,28 @@ pub(crate) fn load_propagation_proposal_list_projection(
 fn validate_create_command(
     command: &CreatePropagationProposalCommand,
 ) -> Result<(), PropagationProposalStoreError> {
-    if command.summary.trim().is_empty() {
+    validate_proposal_shape(
+        &command.action,
+        &command.target,
+        &command.summary,
+        command.proposed_value.as_ref(),
+        command.proposed_text.as_deref(),
+    )
+}
+
+pub(crate) fn validate_proposal_shape(
+    action: &PropagationProposalAction,
+    target: &PropagationProposalTarget,
+    summary: &str,
+    proposed_value: Option<&FieldValue>,
+    proposed_text: Option<&str>,
+) -> Result<(), PropagationProposalStoreError> {
+    if summary.trim().is_empty() {
         return Err(PropagationProposalStoreError::InvalidCommand(
             "summary is required".to_string(),
         ));
     }
-    match (&command.action, &command.target) {
+    match (action, target) {
         (
             PropagationProposalAction::SetBibleField,
             PropagationProposalTarget::BibleField { .. },
@@ -172,7 +188,7 @@ fn validate_create_command(
             PropagationProposalAction::SetBibleSnapshotField,
             PropagationProposalTarget::BibleSnapshotField { .. },
         ) => {
-            if command.proposed_value.is_none() {
+            if proposed_value.is_none() {
                 return Err(PropagationProposalStoreError::InvalidCommand(
                     "proposed_value is required for bible propagation proposals".to_string(),
                 ));
@@ -182,11 +198,7 @@ fn validate_create_command(
             PropagationProposalAction::PatchScriptBlock,
             PropagationProposalTarget::ScriptBlock { .. },
         ) => {
-            if command
-                .proposed_text
-                .as_ref()
-                .is_none_or(|value| value.trim().is_empty())
-            {
+            if proposed_text.is_none_or(|value| value.trim().is_empty()) {
                 return Err(PropagationProposalStoreError::InvalidCommand(
                     "proposed_text is required for script block patch proposals".to_string(),
                 ));

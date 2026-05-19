@@ -21,6 +21,7 @@ mod propagation_proposal_accept;
 mod propagation_proposal_review;
 mod propagation_proposal_store;
 mod propagation_proposal_target;
+mod propagation_proposal_update;
 mod prompt_format;
 mod revision_projection;
 mod routes;

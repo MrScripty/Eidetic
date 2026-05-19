@@ -38,6 +38,7 @@ pub use propagation_proposal::{
     AcceptPropagationProposalCommand, CreatePropagationProposalCommand, PropagationProposal,
     PropagationProposalAction, PropagationProposalContractError, PropagationProposalId,
     PropagationProposalListProjection, PropagationProposalTarget, RejectPropagationProposalCommand,
+    UpdatePropagationProposalCommand,
 };
 pub use script_document::{
     ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,
@@ -139,6 +140,7 @@ pub enum ObjectKind {
 pub enum ChangeEventKind {
     UserEdit,
     AiProposalCreated,
+    AiProposalUpdated,
     AiProposalAccepted,
     AiProposalRejected,
     Propagation,

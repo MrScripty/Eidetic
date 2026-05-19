@@ -7,6 +7,7 @@ use eidetic_core::contracts::{
     CreatePropagationProposalCommand, ProjectionEnvelope, PropagationProposalListProjection,
     RecordSemanticDependencyCommand, RejectBibleReferenceProposalCommand,
     RejectPropagationProposalCommand, SemanticDependencyProjection,
+    UpdatePropagationProposalCommand,
 };
 use serde::Serialize;
 
@@ -15,6 +16,7 @@ use crate::history_store::RecordChangeOutcome;
 use crate::propagation_proposal_accept;
 use crate::propagation_proposal_review;
 use crate::propagation_proposal_store::{self, PropagationProposalStoreError};
+use crate::propagation_proposal_update;
 use crate::semantic_dependency_store::{
     self, DependencyDirection, DependencyEndpointFilter, SemanticDependencyFilter,
     SemanticDependencyStoreError,
@@ -50,6 +52,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/commands/semantic/propagation-proposal/reject",
             post(reject_propagation_proposal),
+        )
+        .route(
+            "/commands/semantic/propagation-proposal/update",
+            post(update_propagation_proposal),
         )
         .route(
             "/commands/semantic/propagation-proposal/accept",
@@ -173,6 +179,24 @@ async fn reject_propagation_proposal(
             .await
             .map_err(|e| {
                 ApiError::internal(format!("propagation proposal reject task failed: {e}"))
+            })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
+    }
+    crate::error::json_value(response)
+}
+
+async fn update_propagation_proposal(
+    State(state): State<AppState>,
+    Json(command): Json<CommandEnvelope<UpdatePropagationProposalCommand>>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let response =
+        tokio::task::spawn_blocking(move || update_propagation_proposal_at_path(path, command))
+            .await
+            .map_err(|e| {
+                ApiError::internal(format!("propagation proposal update task failed: {e}"))
             })??;
 
     if response.outcome == RecordChangeOutcome::Recorded {
@@ -312,6 +336,24 @@ fn reject_propagation_proposal_at_path(
     })
 }
 
+fn update_propagation_proposal_at_path(
+    path: std::path::PathBuf,
+    command: CommandEnvelope<UpdatePropagationProposalCommand>,
+) -> Result<PropagationProposalCommandResponse, ApiError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    let outcome =
+        propagation_proposal_update::record_update_propagation_proposal(&mut conn, &command, 0)
+            .map_err(map_propagation_proposal_error)?;
+    let projection = propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
+        .map_err(map_propagation_proposal_error)?;
+
+    Ok(PropagationProposalCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn accept_propagation_proposal_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<AcceptPropagationProposalCommand>,
@@ -389,3 +431,7 @@ mod tests;
 #[cfg(test)]
 #[path = "commands_semantic_propagation_tests.rs"]
 mod propagation_tests;
+
+#[cfg(test)]
+#[path = "commands_semantic_propagation_update_tests.rs"]
+mod propagation_update_tests;

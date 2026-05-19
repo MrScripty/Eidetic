@@ -2,7 +2,7 @@ use eidetic_core::contracts::{
     BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey, CommandEnvelope,
     CreatePropagationProposalCommand, FieldValue, ObjectKind, PropagationProposalAction,
     PropagationProposalId, PropagationProposalTarget, RejectPropagationProposalCommand,
-    SemanticDependencyId, SemanticProposalStatus,
+    SemanticDependencyId, SemanticProposalStatus, UpdatePropagationProposalCommand,
 };
 
 use super::{
@@ -11,6 +11,7 @@ use super::{
 };
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::propagation_proposal_review::record_reject_propagation_proposal;
+use crate::propagation_proposal_update::record_update_propagation_proposal;
 
 #[test]
 fn records_and_projects_propagation_proposal() {
@@ -150,6 +151,106 @@ fn reject_requires_existing_pending_proposal() {
     assert!(matches!(error, PropagationProposalStoreError::NotFound(_)));
 }
 
+#[test]
+fn updates_pending_propagation_proposal() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    let create = create_field_proposal_command("proposal.propagation.update");
+    record_create_propagation_proposal(&mut conn, &create, 100).unwrap();
+    let update = update_field_proposal_command(
+        "proposal.propagation.update",
+        "Set harbor weather to foggy",
+        FieldValue::Text("foggy".to_string()),
+    );
+
+    let outcome = record_update_propagation_proposal(&mut conn, &update, 101).unwrap();
+    let proposals = load_propagation_proposals(&conn).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(proposals[0].summary, "Set harbor weather to foggy");
+    assert_eq!(
+        proposals[0].proposed_value,
+        Some(FieldValue::Text("foggy".to_string()))
+    );
+    let revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::SemanticProposal,
+        "proposal.propagation.update",
+    )
+    .unwrap();
+    assert_eq!(revisions.len(), 2);
+    assert!(
+        revisions[1]
+            .fields
+            .iter()
+            .any(|field| field.field_key == "proposed_value")
+    );
+}
+
+#[test]
+fn update_replays_without_second_update() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    let create = create_field_proposal_command("proposal.propagation.update-replay");
+    record_create_propagation_proposal(&mut conn, &create, 100).unwrap();
+    let update = update_field_proposal_command(
+        "proposal.propagation.update-replay",
+        "Set harbor weather to foggy",
+        FieldValue::Text("foggy".to_string()),
+    );
+
+    let first = record_update_propagation_proposal(&mut conn, &update, 101).unwrap();
+    let second = record_update_propagation_proposal(&mut conn, &update, 101).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+}
+
+#[test]
+fn update_requires_pending_proposal() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    let create = create_field_proposal_command("proposal.propagation.update-rejected");
+    record_create_propagation_proposal(&mut conn, &create, 100).unwrap();
+    record_reject_propagation_proposal(
+        &mut conn,
+        &CommandEnvelope::new(RejectPropagationProposalCommand {
+            proposal_id: PropagationProposalId::new("proposal.propagation.update-rejected")
+                .unwrap(),
+            reason: None,
+        }),
+        101,
+    )
+    .unwrap();
+    let update = update_field_proposal_command(
+        "proposal.propagation.update-rejected",
+        "Set harbor weather to foggy",
+        FieldValue::Text("foggy".to_string()),
+    );
+
+    let error = record_update_propagation_proposal(&mut conn, &update, 102).unwrap_err();
+
+    assert!(
+        matches!(error, PropagationProposalStoreError::InvalidCommand(message) if message.contains("not pending"))
+    );
+}
+
+#[test]
+fn update_rejects_missing_bible_value() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    let create = create_field_proposal_command("proposal.propagation.update-missing-value");
+    record_create_propagation_proposal(&mut conn, &create, 100).unwrap();
+    let mut update = update_field_proposal_command(
+        "proposal.propagation.update-missing-value",
+        "Set harbor weather to foggy",
+        FieldValue::Text("foggy".to_string()),
+    );
+    update.payload.proposed_value = None;
+
+    let error = record_update_propagation_proposal(&mut conn, &update, 101).unwrap_err();
+
+    assert!(
+        matches!(error, PropagationProposalStoreError::InvalidCommand(message) if message.contains("proposed_value"))
+    );
+}
+
 fn create_field_proposal_command(
     proposal_id: &str,
 ) -> CommandEnvelope<CreatePropagationProposalCommand> {
@@ -168,5 +269,28 @@ fn create_field_proposal_command(
         source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
         source_event_id: None,
         rationale: Some("Manual script edit changed weather.".to_string()),
+    })
+}
+
+fn update_field_proposal_command(
+    proposal_id: &str,
+    summary: &str,
+    proposed_value: FieldValue,
+) -> CommandEnvelope<UpdatePropagationProposalCommand> {
+    CommandEnvelope::new(UpdatePropagationProposalCommand {
+        proposal_id: PropagationProposalId::new(proposal_id).unwrap(),
+        action: PropagationProposalAction::SetBibleField,
+        target: PropagationProposalTarget::BibleField {
+            node_id: BibleGraphNodeId::new("node.location.harbor").unwrap(),
+            part_key: BibleGraphPartKey::new("environment").unwrap(),
+            field_key: BibleGraphFieldKey::new("weather").unwrap(),
+            field_id: None,
+        },
+        summary: summary.to_string(),
+        proposed_value: Some(proposed_value),
+        proposed_text: None,
+        source_dependency_id: Some(SemanticDependencyId::new("dependency.weather.scene").unwrap()),
+        source_event_id: None,
+        rationale: Some("Reviewer corrected proposed propagation.".to_string()),
     })
 }
