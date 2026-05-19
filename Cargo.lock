@@ -1488,6 +1488,7 @@ dependencies = [
  "eidetic-core",
  "serde",
  "serde-wasm-bindgen",
+ "serde_json",
  "thiserror 2.0.18",
  "uuid",
  "wasm-bindgen",

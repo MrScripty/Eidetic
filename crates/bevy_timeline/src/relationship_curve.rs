@@ -1,10 +1,11 @@
 use eidetic_core::contracts::TimelineRenderProjection;
 use eidetic_core::timeline::node::NodeId;
 use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
+use serde::Serialize;
 
 use crate::TimelineRendererError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct TimelineRelationshipCurve {
     pub relationship_id: RelationshipId,
     pub from_node_id: NodeId,
@@ -16,7 +17,7 @@ pub struct TimelineRelationshipCurve {
     pub end: TimelineCurvePoint,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub struct TimelineCurvePoint {
     pub x_ms: f32,
     pub y_track: f32,

@@ -83,6 +83,34 @@ fn renderer_app_derives_relationship_curves_from_projection() {
 }
 
 #[test]
+fn relationship_curves_serialize_for_wasm_bridge() {
+    let node_id = NodeId::new();
+    let track_id = TrackId::new();
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    let mut projection = projection_with_clip(node_id, track_id, 1_000, 5_000);
+    projection.relationships = vec![eidetic_core::contracts::TimelineRenderRelationship {
+        relationship_id,
+        from_node_id: node_id,
+        to_node_id: node_id,
+        relationship_type: eidetic_core::timeline::relationship::RelationshipType::Thematic,
+    }];
+
+    let serialized =
+        serde_json::to_value(relationship_curves(&projection).expect("relationship curves"))
+            .expect("relationship curves serialize");
+
+    assert_eq!(
+        serialized[0]["relationship_id"],
+        relationship_id.0.to_string()
+    );
+    assert_eq!(serialized[0]["from_node_id"], node_id.0.to_string());
+    assert_eq!(serialized[0]["to_node_id"], node_id.0.to_string());
+    assert_eq!(serialized[0]["relationship_type"], "Thematic");
+    assert_eq!(serialized[0]["start"]["x_ms"], 3_000.0);
+    assert_eq!(serialized[0]["end"]["y_track"], 0.0);
+}
+
+#[test]
 fn renderer_app_rejects_relationship_curve_with_unknown_endpoint() {
     let node_id = NodeId::new();
     let missing_node_id = NodeId::new();

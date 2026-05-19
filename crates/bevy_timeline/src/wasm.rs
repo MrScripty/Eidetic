@@ -112,6 +112,16 @@ impl WasmTimelineRenderer {
             .map_err(|error| JsValue::from_str(&format!("invalid renderer playhead: {error}")))
     }
 
+    pub fn relationship_curves(&self) -> Result<JsValue, JsValue> {
+        let curves = self
+            .renderer
+            .relationship_curves()
+            .map_err(|error| JsValue::from_str(&error.to_string()))?;
+        serde_wasm_bindgen::to_value(&curves).map_err(|error| {
+            JsValue::from_str(&format!("invalid relationship curve projection: {error}"))
+        })
+    }
+
     pub fn pan_viewport(&mut self, delta_ms: i64) {
         self.renderer.pan_viewport(delta_ms);
     }

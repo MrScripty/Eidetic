@@ -17,4 +17,5 @@ uuid.workspace = true
 wasm-bindgen = "0.2.108"
 
 [dev-dependencies]
+serde_json.workspace = true
 uuid.workspace = true
