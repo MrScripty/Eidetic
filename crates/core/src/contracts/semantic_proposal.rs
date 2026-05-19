@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::timeline::node::NodeId;
 
-use super::BibleGraphSchemaKey;
+use super::{BibleGraphNodeId, BibleGraphSchemaKey};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
@@ -97,6 +97,18 @@ pub struct RejectBibleReferenceProposalCommand {
     pub reason: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AcceptBibleReferenceProposalCommand {
+    pub proposal_id: SemanticProposalId,
+    pub node_id: BibleGraphNodeId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_id: Option<BibleGraphNodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub sort_order: u32,
+}
+
 impl CreateBibleReferenceProposalCommand {
     pub fn into_proposal(self, created_at_ms: u64) -> BibleReferenceProposal {
         let proposed_schema_key = self.reference_kind.proposed_schema_key();
@@ -170,6 +182,22 @@ mod tests {
 
         let json = serde_json::to_string(&command).unwrap();
         let decoded: RejectBibleReferenceProposalCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(decoded, command);
+    }
+
+    #[test]
+    fn accept_command_round_trips() {
+        let command = AcceptBibleReferenceProposalCommand {
+            proposal_id: SemanticProposalId::new("proposal.scene.location").unwrap(),
+            node_id: BibleGraphNodeId::new("node.location.harbor").unwrap(),
+            parent_id: Some(BibleGraphNodeId::new("canonical.places").unwrap()),
+            name: Some("Storm Harbor".to_string()),
+            sort_order: 7,
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let decoded: AcceptBibleReferenceProposalCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(decoded, command);
     }

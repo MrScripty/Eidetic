@@ -5,7 +5,10 @@ use axum::Router;
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
-use eidetic_core::contracts::{BibleReferenceKind, SemanticProposalId};
+use eidetic_core::contracts::{
+    BibleGraphNodeId, BibleReferenceKind, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
+    SemanticProposalId,
+};
 use eidetic_core::timeline::node::NodeId;
 use serde_json::json;
 use tower::util::ServiceExt;
@@ -152,6 +155,87 @@ async fn bible_reference_proposal_reject_command_rejects_missing_proposal() {
 }
 
 #[tokio::test]
+async fn bible_reference_proposal_accept_command_returns_projection() {
+    let path = temp_db_path("accepts-bible-reference-proposal");
+    seed_roots(&path);
+    let app = app_with_project_path(path.clone()).await;
+    let create = bible_reference_proposal_command_body(
+        "proposal.child.harbor",
+        NodeId::new(),
+        "Second Beat",
+        BibleReferenceKind::Location,
+        "Storm Harbor",
+    );
+    let accept = accept_bible_reference_proposal_command_body(
+        "proposal.child.harbor",
+        "node.location.storm-harbor",
+        None,
+    );
+
+    let create_response = app
+        .clone()
+        .oneshot(bible_reference_proposal_command_request(create))
+        .await
+        .expect("create route response");
+    let accept_response = app
+        .oneshot(accept_bible_reference_proposal_command_request(accept))
+        .await
+        .expect("accept route response");
+
+    assert_eq!(create_response.status(), StatusCode::OK);
+    assert_eq!(accept_response.status(), StatusCode::OK);
+    let value = response_json(accept_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    assert_eq!(
+        value["projection"]["payload"]["proposals"][0]["status"],
+        "accepted"
+    );
+    let conn = crate::sqlite::open_write_connection(&path).unwrap();
+    let node = crate::bible_graph_store::load_node_detail_projection(
+        &conn,
+        &BibleGraphNodeId::new("node.location.storm-harbor").unwrap(),
+    )
+    .unwrap()
+    .expect("accepted node");
+    assert_eq!(node.node.name, "Storm Harbor");
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn bible_reference_proposal_accept_command_rejects_missing_parent() {
+    let path = temp_db_path("accept-rejects-missing-parent");
+    let app = app_with_project_path(path.clone()).await;
+    let create = bible_reference_proposal_command_body(
+        "proposal.child.ada",
+        NodeId::new(),
+        "Second Beat",
+        BibleReferenceKind::Character,
+        "Ada",
+    );
+    let accept = accept_bible_reference_proposal_command_body(
+        "proposal.child.ada",
+        "node.character.ada",
+        None,
+    );
+
+    let create_response = app
+        .clone()
+        .oneshot(bible_reference_proposal_command_request(create))
+        .await
+        .expect("create route response");
+    let accept_response = app
+        .oneshot(accept_bible_reference_proposal_command_request(accept))
+        .await
+        .expect("accept route response");
+
+    assert_eq!(create_response.status(), StatusCode::OK);
+    assert_eq!(accept_response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_reference_proposal_command_rejects_blank_reference_text() {
     let path = temp_db_path("rejects-blank-bible-reference");
     let app = app_with_project_path(path.clone()).await;
@@ -191,6 +275,15 @@ fn reject_bible_reference_proposal_command_request(body: serde_json::Value) -> R
         .unwrap()
 }
 
+fn accept_bible_reference_proposal_command_request(body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method("POST")
+        .uri("/commands/semantic/bible-reference-proposal/accept")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
 fn bible_reference_proposal_command_body(
     proposal_id: &str,
     source_node_id: NodeId,
@@ -222,6 +315,32 @@ fn reject_bible_reference_proposal_command_body(
             "reason": reason,
         }
     })
+}
+
+fn accept_bible_reference_proposal_command_body(
+    proposal_id: &str,
+    node_id: &str,
+    name: Option<&str>,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "proposal_id": SemanticProposalId::new(proposal_id).unwrap(),
+            "node_id": BibleGraphNodeId::new(node_id).unwrap(),
+            "name": name,
+            "sort_order": 11,
+        }
+    })
+}
+
+fn seed_roots(path: &PathBuf) {
+    let mut conn = crate::sqlite::open_write_connection(path).unwrap();
+    crate::bible_graph_command::apply_ensure_canonical_bible_roots(
+        &mut conn,
+        &CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+        1,
+    )
+    .unwrap();
 }
 
 async fn response_json(response: axum::response::Response) -> serde_json::Value {

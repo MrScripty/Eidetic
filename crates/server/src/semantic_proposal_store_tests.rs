@@ -1,5 +1,6 @@
 use eidetic_core::contracts::{
-    BibleReferenceKind, CommandEnvelope, CreateBibleReferenceProposalCommand, ObjectKind,
+    AcceptBibleReferenceProposalCommand, BibleGraphNodeId, BibleReferenceKind, CommandEnvelope,
+    CreateBibleReferenceProposalCommand, EnsureCanonicalBibleRootsCommand, ObjectKind,
     RejectBibleReferenceProposalCommand, SemanticProposalId, SemanticProposalStatus,
 };
 use eidetic_core::timeline::node::NodeId;
@@ -124,6 +125,132 @@ fn reject_command_requires_existing_pending_proposal() {
 }
 
 #[test]
+fn accepts_pending_bible_reference_proposal_by_creating_bible_node() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    ensure_roots(&mut conn);
+    let create = create_command(
+        "proposal.child.harbor",
+        "Storm Harbor",
+        BibleReferenceKind::Location,
+    );
+    record_create_bible_reference_proposal(&mut conn, &create, 42).unwrap();
+    let accept = accept_command("proposal.child.harbor", "node.location.storm-harbor", None);
+
+    let outcome = crate::semantic_proposal_accept::record_accept_bible_reference_proposal(
+        &mut conn, &accept, 43,
+    )
+    .unwrap();
+    let proposals = load_bible_reference_proposals(&conn).unwrap();
+    let node = crate::bible_graph_store::load_node_detail_projection(
+        &conn,
+        &BibleGraphNodeId::new("node.location.storm-harbor").unwrap(),
+    )
+    .unwrap()
+    .expect("accepted bible node");
+    let proposal_revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::SemanticProposal,
+        "proposal.child.harbor",
+    )
+    .unwrap();
+    let node_revisions = history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::BibleNode,
+        "node.location.storm-harbor",
+    )
+    .unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(proposals[0].status, SemanticProposalStatus::Accepted);
+    assert_eq!(node.node.name, "Storm Harbor");
+    assert_eq!(node.node.parent_id.unwrap().as_str(), "canonical.places");
+    assert_eq!(node.node.schema_key.as_str(), "location");
+    assert_eq!(proposal_revisions.len(), 2);
+    assert_eq!(node_revisions.len(), 1);
+}
+
+#[test]
+fn accept_command_replays_without_second_node_insert() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    ensure_roots(&mut conn);
+    let create = create_command("proposal.child.ada", "Ada", BibleReferenceKind::Character);
+    record_create_bible_reference_proposal(&mut conn, &create, 42).unwrap();
+    let accept = accept_command(
+        "proposal.child.ada",
+        "node.character.ada",
+        Some("Ada Prime"),
+    );
+
+    let first = crate::semantic_proposal_accept::record_accept_bible_reference_proposal(
+        &mut conn, &accept, 43,
+    )
+    .unwrap();
+    let second = crate::semantic_proposal_accept::record_accept_bible_reference_proposal(
+        &mut conn, &accept, 43,
+    )
+    .unwrap();
+    let proposals = load_bible_reference_proposals(&conn).unwrap();
+    let nodes = crate::bible_graph_store::load_node_list_projection(&conn).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(proposals[0].status, SemanticProposalStatus::Accepted);
+    assert_eq!(
+        nodes
+            .nodes
+            .iter()
+            .filter(|node| node.id.as_str() == "node.character.ada")
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn accept_command_requires_existing_canonical_parent() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let create = create_command("proposal.child.ada", "Ada", BibleReferenceKind::Character);
+    record_create_bible_reference_proposal(&mut conn, &create, 42).unwrap();
+    let accept = accept_command("proposal.child.ada", "node.character.ada", None);
+
+    let error = crate::semantic_proposal_accept::record_accept_bible_reference_proposal(
+        &mut conn, &accept, 43,
+    )
+    .unwrap_err();
+
+    assert!(matches!(
+        error,
+        SemanticProposalStoreError::InvalidCommand(message)
+            if message.contains("parent bible graph node does not exist")
+    ));
+}
+
+#[test]
+fn accept_command_requires_pending_proposal() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    ensure_roots(&mut conn);
+    let create = create_command(
+        "proposal.child.ring",
+        "Signal ring",
+        BibleReferenceKind::Prop,
+    );
+    record_create_bible_reference_proposal(&mut conn, &create, 42).unwrap();
+    let reject = reject_command("proposal.child.ring", None);
+    record_reject_bible_reference_proposal(&mut conn, &reject, 43).unwrap();
+    let accept = accept_command("proposal.child.ring", "node.prop.signal-ring", None);
+
+    let error = crate::semantic_proposal_accept::record_accept_bible_reference_proposal(
+        &mut conn, &accept, 44,
+    )
+    .unwrap_err();
+
+    assert!(matches!(
+        error,
+        SemanticProposalStoreError::InvalidCommand(message)
+            if message.contains("semantic proposal is not pending")
+    ));
+}
+
+#[test]
 fn different_command_cannot_reuse_existing_proposal_id() {
     let mut conn = Connection::open_in_memory().unwrap();
     let first = create_command(
@@ -155,6 +282,29 @@ fn reject_command(
         proposal_id: SemanticProposalId::new(proposal_id).unwrap(),
         reason: reason.map(str::to_string),
     })
+}
+
+fn accept_command(
+    proposal_id: &str,
+    node_id: &str,
+    name: Option<&str>,
+) -> CommandEnvelope<AcceptBibleReferenceProposalCommand> {
+    CommandEnvelope::new(AcceptBibleReferenceProposalCommand {
+        proposal_id: SemanticProposalId::new(proposal_id).unwrap(),
+        node_id: BibleGraphNodeId::new(node_id).unwrap(),
+        parent_id: None,
+        name: name.map(str::to_string),
+        sort_order: 9,
+    })
+}
+
+fn ensure_roots(conn: &mut Connection) {
+    crate::bible_graph_command::apply_ensure_canonical_bible_roots(
+        conn,
+        &CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+        1,
+    )
+    .unwrap();
 }
 
 fn create_command(

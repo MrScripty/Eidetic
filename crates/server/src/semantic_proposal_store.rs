@@ -161,7 +161,7 @@ pub(crate) fn load_bible_reference_proposals(
     Ok(proposals)
 }
 
-fn load_bible_reference_proposal(
+pub(crate) fn load_bible_reference_proposal(
     conn: &Connection,
     proposal_id: &SemanticProposalId,
 ) -> Result<Option<BibleReferenceProposal>, SemanticProposalStoreError> {
@@ -306,7 +306,7 @@ pub(crate) fn insert_proposal_in_transaction(
     Ok(())
 }
 
-fn update_proposal_status_in_transaction(
+pub(crate) fn update_proposal_status_in_transaction(
     tx: &Transaction<'_>,
     proposal_id: &SemanticProposalId,
     old_status: SemanticProposalStatus,

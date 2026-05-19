@@ -33,9 +33,10 @@ pub use script_document::{
     SetScriptLockCommand,
 };
 pub use semantic_proposal::{
-    BibleReferenceKind, BibleReferenceProposal, BibleReferenceProposalListProjection,
-    CreateBibleReferenceProposalCommand, RejectBibleReferenceProposalCommand,
-    SemanticProposalContractError, SemanticProposalId, SemanticProposalStatus,
+    AcceptBibleReferenceProposalCommand, BibleReferenceKind, BibleReferenceProposal,
+    BibleReferenceProposalListProjection, CreateBibleReferenceProposalCommand,
+    RejectBibleReferenceProposalCommand, SemanticProposalContractError, SemanticProposalId,
+    SemanticProposalStatus,
 };
 pub use story_arc::{
     CreateStoryArcCommand, DeleteStoryArcCommand, SetStoryArcMetadataCommand,
