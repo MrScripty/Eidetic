@@ -18,6 +18,17 @@ Current scope:
 - Emit validated node range command requests for backend-confirmed move/resize.
 - Expose a wasm-bindgen bridge for browser hosts.
 
+Dependency review:
+
+- Bevy is isolated to this leaf crate and is not a dependency of `eidetic-core`
+  or `eidetic-server`.
+- `bevy` is declared with `default-features = false` and only the `std`
+  feature because this crate currently uses ECS/resource types and does not
+  render windows, assets, text, audio, or UI.
+- Browser interop dependencies are target-scoped to `wasm32`.
+- Adding Bevy render/window/asset/text/input features requires a new dependency
+  review and a commit that explains the transitive dependency cost.
+
 Future scope:
 
 - Browser canvas or desktop host lifecycle.
