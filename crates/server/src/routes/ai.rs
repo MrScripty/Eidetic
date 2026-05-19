@@ -13,7 +13,7 @@ use crate::script_document_command;
 use crate::state::{AppState, BackendType, ServerEvent};
 use crate::timeline_node_store;
 use eidetic_core::ai::backend::{
-    ChildPlan, ChildProposal, GenerateChildrenRequest, GenerateRequest, RagChunk,
+    ChildPlan, ChildPlanId, ChildProposal, GenerateChildrenRequest, GenerateRequest, RagChunk,
 };
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{
@@ -166,7 +166,7 @@ async fn generate_children(
         (request, project_path)
     };
     if let Err(error) =
-        attach_ai_bible_context_to_children(&mut request, project_path, node_id).await
+        attach_ai_bible_context_to_children(&mut request, project_path.clone(), node_id).await
     {
         return Json(serde_json::json!({ "error": error }));
     }
@@ -220,10 +220,19 @@ async fn generate_children(
     };
 
     let plan = ChildPlan {
+        id: ChildPlanId::new(format!("child_plan.{}", uuid::Uuid::new_v4()))
+            .expect("generated child plan ids are non-empty"),
         parent_node_id: node_id,
         target_child_level: request.target_child_level,
         children,
     };
+    let mut conn = match crate::sqlite::open_write_connection(&project_path) {
+        Ok(conn) => conn,
+        Err(error) => return Json(serde_json::json!({ "error": error.to_string() })),
+    };
+    if let Err(error) = crate::child_plan_store::record_child_plan(&mut conn, &plan, 0) {
+        return Json(serde_json::json!({ "error": error.to_string() }));
+    }
 
     Json(serde_json::to_value(&plan).unwrap())
 }

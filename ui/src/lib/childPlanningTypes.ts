@@ -11,6 +11,7 @@ export interface ChildProposal {
 }
 
 export interface ChildPlan {
+  id: string;
   parent_node_id: NodeId;
   target_child_level: StoryLevel;
   children: ChildProposal[];

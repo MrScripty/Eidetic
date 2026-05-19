@@ -9,6 +9,44 @@ use crate::story::arc::StoryArc;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel, StoryNode};
 use crate::timeline::structure::EpisodeStructure;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct ChildPlanId(String);
+
+impl ChildPlanId {
+    pub fn new(value: impl Into<String>) -> Result<Self, ChildPlanContractError> {
+        let value = value.into();
+        if value.trim().is_empty() {
+            return Err(ChildPlanContractError::EmptyIdentifier("ChildPlanId"));
+        }
+        Ok(Self(value))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for ChildPlanId {
+    type Error = ChildPlanContractError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
+impl From<ChildPlanId> for String {
+    fn from(value: ChildPlanId) -> Self {
+        value.0
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum ChildPlanContractError {
+    #[error("empty identifier for {0}")]
+    EmptyIdentifier(&'static str),
+}
+
 /// Token-by-token stream of generated text.
 pub type GenerateStream = Pin<Box<dyn Stream<Item = Result<String, Error>> + Send>>;
 
@@ -138,6 +176,7 @@ pub struct ChildProposal {
 /// AI-generated plan for decomposing a parent node into children.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChildPlan {
+    pub id: ChildPlanId,
     pub parent_node_id: NodeId,
     pub target_child_level: StoryLevel,
     pub children: Vec<ChildProposal>,

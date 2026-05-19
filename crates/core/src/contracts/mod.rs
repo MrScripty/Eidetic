@@ -118,6 +118,7 @@ pub enum ObjectKind {
     TimelineTrack,
     TimelineRelationship,
     StoryArc,
+    ChildPlan,
     BibleNode,
     BiblePart,
     BiblePartField,
