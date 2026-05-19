@@ -12,7 +12,7 @@ use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
 use crate::script_document_command;
 use crate::state::{AppState, BackendType, ServerEvent};
 use crate::timeline_node_store;
-use eidetic_core::ai::backend::{ChildPlan, ChildProposal, RagChunk};
+use eidetic_core::ai::backend::{ChildPlan, ChildProposal, GenerateRequest, RagChunk};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{
     AiBibleContextProjection, CommandEnvelope, CommandId, ProjectionEnvelope, ScriptBlockId,
@@ -43,7 +43,7 @@ async fn generate(
     let node_id = NodeId(body.node_id);
 
     // Validate and build the request while holding the project lock briefly.
-    let (request, project_path) = {
+    let (mut request, project_path) = {
         let (project, project_path) = match active_sqlite_project(&state).await {
             Ok(project) => project,
             Err(error) => return Json(serde_json::json!({ "error": error })),
@@ -78,6 +78,9 @@ async fn generate(
         };
         (request, project_path)
     };
+    if let Err(error) = attach_ai_bible_context(&mut request, project_path.clone(), node_id).await {
+        return Json(serde_json::json!({ "error": error }));
+    }
 
     // Mark as generating.
     state.generating.lock().insert(body.node_id);
@@ -258,7 +261,7 @@ async fn generate_batch(
         for child_uuid in &child_ids {
             let child_id = NodeId(*child_uuid);
 
-            let (request, project_path) = {
+            let (mut request, project_path) = {
                 let (project, project_path) = match active_sqlite_project(&state_clone).await {
                     Ok(project) => project,
                     Err(error) => {
@@ -288,6 +291,15 @@ async fn generate_batch(
                 };
                 (request, project_path)
             };
+            if let Err(error) =
+                attach_ai_bible_context(&mut request, project_path.clone(), child_id).await
+            {
+                let _ = state_clone.events_tx.send(ServerEvent::GenerationError {
+                    node_id: *child_uuid,
+                    error,
+                });
+                continue;
+            }
 
             // Mark as generating.
             state_clone.generating.lock().insert(*child_uuid);
@@ -742,10 +754,9 @@ async fn preview_context(
         Ok(req) => req,
         Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
     };
-    request.bible_context = match load_ai_bible_context_projection(project_path, node_id).await {
-        Ok(projection) => Some(projection),
-        Err(error) => return Json(serde_json::json!({ "error": error })),
-    };
+    if let Err(error) = attach_ai_bible_context(&mut request, project_path, node_id).await {
+        return Json(serde_json::json!({ "error": error }));
+    }
 
     let prompt = build_chat_prompt(&request);
 
@@ -780,6 +791,15 @@ async fn load_ai_bible_context_projection(
     })
     .await
     .map_err(|e| format!("AI bible context projection task failed: {e}"))?
+}
+
+async fn attach_ai_bible_context(
+    request: &mut GenerateRequest,
+    path: PathBuf,
+    node_id: NodeId,
+) -> Result<(), String> {
+    request.bible_context = Some(load_ai_bible_context_projection(path, node_id).await?);
+    Ok(())
 }
 
 #[cfg(test)]

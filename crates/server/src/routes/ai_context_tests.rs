@@ -1,6 +1,7 @@
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use eidetic_core::Template;
+use eidetic_core::ai::prompt::build_generate_request;
 use eidetic_core::contracts::{
     BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartId, BibleGraphPartKey,
     BibleGraphSchemaKey, CommandEnvelope, CreateBibleGraphNodeCommand, FieldValue,
@@ -10,7 +11,7 @@ use eidetic_core::timeline::node::ContentStatus;
 use tower::util::ServiceExt;
 use uuid::Uuid;
 
-use super::router;
+use super::{attach_ai_bible_context, router};
 use crate::state::AppState;
 
 #[tokio::test]
@@ -47,6 +48,37 @@ async fn preview_context_includes_graph_backed_bible_context() {
     assert!(user_prompt.contains("STORY BIBLE CONTEXT"));
     assert!(user_prompt.contains("Ada"));
     assert!(user_prompt.contains("Reluctant detective"));
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn attach_ai_bible_context_loads_projection_for_generation_requests() {
+    let path = std::env::temp_dir().join(format!(
+        "eidetic-generate-bible-context-{}.db",
+        Uuid::new_v4()
+    ));
+    let mut project = Template::MultiCam.build_project("Generate Bible Context Test");
+    let node_id = project.timeline.nodes[0].id;
+    let node = project.timeline.node_mut(node_id).expect("target node");
+    node.content.notes = "Use backend-owned bible context".to_string();
+    node.content.status = ContentStatus::NotesOnly;
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed project database");
+    seed_bible_context(&path);
+    let mut request = build_generate_request(&project, node_id).expect("generate request");
+
+    attach_ai_bible_context(&mut request, path.clone(), node_id)
+        .await
+        .expect("attach bible context");
+
+    let bible_context = request.bible_context.expect("bible context projection");
+    assert_eq!(bible_context.payload.nodes[0].name, "Ada");
+    assert_eq!(
+        bible_context.payload.nodes[0].fields[0].value,
+        FieldValue::Text("Reluctant detective".to_string())
+    );
 
     let _ = std::fs::remove_file(path);
 }
