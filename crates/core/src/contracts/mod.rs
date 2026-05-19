@@ -1,3 +1,4 @@
+mod ai_context;
 mod bible_graph;
 mod bible_graph_defaults;
 mod script_document;
@@ -9,6 +10,10 @@ mod timeline_render;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub use ai_context::{
+    AiBibleContextEdge, AiBibleContextField, AiBibleContextNode, AiBibleContextProjection,
+    AiBibleContextSnapshot,
+};
 pub use bible_graph::{
     BibleGraphContractError, BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphField,
     BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeId,

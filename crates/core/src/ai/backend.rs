@@ -3,6 +3,7 @@ use std::pin::Pin;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
 
+use crate::contracts::{AiBibleContextProjection, ProjectionEnvelope};
 use crate::error::Error;
 use crate::story::arc::StoryArc;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel, StoryNode};
@@ -56,6 +57,9 @@ pub struct GenerateRequest {
     pub user_written_anchors: Vec<String>,
     pub style_notes: Option<String>,
     pub rag_context: Vec<RagChunk>,
+    /// Backend-owned bible graph facts relevant to this request, when available.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_context: Option<ProjectionEnvelope<AiBibleContextProjection>>,
 }
 
 /// Adjacent node content for context.

@@ -3,6 +3,8 @@ use eidetic_core::timeline::node::StoryLevel;
 use eidetic_core::timeline::structure::SegmentType;
 use eidetic_core::timeline::timing::TimeRange;
 
+use crate::ai_bible_context_prompt;
+
 /// A structured chat prompt ready for serialization to any backend API.
 pub(crate) struct ChatPrompt {
     pub system: String,
@@ -167,6 +169,10 @@ fn build_user_message(request: &GenerateRequest) -> String {
                 entry.arc_name, entry.node_name, entry.recap,
             ));
         }
+    }
+
+    if let Some(bible_context) = &request.bible_context {
+        ai_bible_context_prompt::append_bible_context(&mut user, bible_context);
     }
 
     // Surrounding scripts for continuity.

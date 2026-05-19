@@ -1,0 +1,91 @@
+use axum::body::{Body, to_bytes};
+use axum::http::{Request, StatusCode};
+use eidetic_core::Template;
+use eidetic_core::contracts::{
+    BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartId, BibleGraphPartKey,
+    BibleGraphSchemaKey, CommandEnvelope, CreateBibleGraphNodeCommand, FieldValue,
+    SetBibleGraphFieldCommand,
+};
+use eidetic_core::timeline::node::ContentStatus;
+use tower::util::ServiceExt;
+use uuid::Uuid;
+
+use super::router;
+use crate::state::AppState;
+
+#[tokio::test]
+async fn preview_context_includes_graph_backed_bible_context() {
+    let path = std::env::temp_dir().join(format!("eidetic-ai-context-bible-{}.db", Uuid::new_v4()));
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("AI Bible Context Test");
+    let node_id = project.timeline.nodes[0].id;
+    let node = project.timeline.node_mut(node_id).expect("target node");
+    node.content.notes = "Use backend-owned bible context".to_string();
+    node.content.status = ContentStatus::NotesOnly;
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed project database");
+    seed_bible_context(&path);
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!("/ai/context/{}", node_id.0))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    let user_prompt = value["user"].as_str().expect("user prompt");
+    assert!(user_prompt.contains("STORY BIBLE CONTEXT"));
+    assert!(user_prompt.contains("Ada"));
+    assert!(user_prompt.contains("Reluctant detective"));
+
+    let _ = std::fs::remove_file(path);
+}
+
+async fn response_json(response: axum::response::Response) -> serde_json::Value {
+    let body = to_bytes(response.into_body(), 1024 * 1024)
+        .await
+        .expect("body bytes");
+    serde_json::from_slice(&body).expect("json response")
+}
+
+fn seed_bible_context(path: &std::path::Path) {
+    let mut conn = crate::sqlite::open_write_connection(path).expect("open sqlite");
+    crate::bible_graph_command::apply_create_bible_graph_node(
+        &mut conn,
+        &CommandEnvelope::new(CreateBibleGraphNodeCommand {
+            node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+            parent_id: None,
+            schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+            name: "Ada".to_string(),
+            sort_order: 10,
+        }),
+        100,
+    )
+    .unwrap();
+    crate::bible_graph_command::apply_set_bible_graph_field(
+        &mut conn,
+        &CommandEnvelope::new(SetBibleGraphFieldCommand {
+            node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+            part_id: BibleGraphPartId::new("part.character.profile").unwrap(),
+            part_key: BibleGraphPartKey::new("profile").unwrap(),
+            part_name: "Profile".to_string(),
+            part_sort_order: 10,
+            field_id: BibleGraphFieldId::new("field.character.tagline").unwrap(),
+            field_key: BibleGraphFieldKey::new("tagline").unwrap(),
+            value: Some(FieldValue::Text("Reluctant detective".to_string())),
+            field_sort_order: 20,
+        }),
+        200,
+    )
+    .unwrap();
+}

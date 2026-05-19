@@ -1,4 +1,6 @@
 mod ai_backends;
+mod ai_bible_context_prompt;
+mod ai_context_projection;
 mod bible_graph_command;
 mod bible_graph_edge_store;
 mod bible_graph_field_store;

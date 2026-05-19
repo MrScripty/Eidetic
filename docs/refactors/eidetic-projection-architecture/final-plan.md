@@ -337,6 +337,7 @@ Completed slices:
 - `feat(server): reject bible reference proposals` added a focused proposal rejection command that records review history, updates pending proposal status transactionally, returns the proposal list projection, and avoids status-only acceptance until acceptance can apply bible graph mutations atomically.
 - `feat(server): accept bible reference proposals` added an atomic proposal acceptance command that updates pending proposal status and creates the accepted bible graph node in one SQLite history transaction, returning the proposal list projection and broadcasting bible/proposal changes.
 - `feat(ui): cache bible reference proposals` added typed frontend proposal DTOs, semantic proposal command/projection helpers, a backend-owned proposal projection cache, focused tests, and websocket refresh handling without optimistic local proposal mutation.
+- `feat(ai): preview graph-backed bible context` added a backend-owned AI bible context projection over persisted bible graph nodes, fields, snapshots, and edges, then wired the context preview prompt to consume that projection without reading legacy bible state.
 
 Discovered issues:
 
@@ -354,7 +355,8 @@ Discovered issues:
 - Resolved: applied AI child plans now preserve edited character, location, and prop references in the apply-children command payload and create pending bible reference proposals transactionally with the timeline child replacement.
 - Resolved: proposal review can now reject pending bible reference proposals with command/event/revision history and SQLite current-state status updates.
 - Resolved: proposal review can now accept pending bible reference proposals by composing the proposal status update and bible graph node creation in one command/event/revision transaction.
-- Remaining: generate-children previews stay non-durable until the user applies the edited plan, proposal acceptance currently creates new bible graph nodes only and still needs merge/link behavior for existing bible nodes, and graph-backed AI context projections are still needed before proposal review can drive propagation.
+- Resolved: the AI context preview prompt now consumes a graph-backed bible context projection from SQLite, including persisted graph nodes, fields, snapshots, and edges.
+- Remaining: generate-children previews stay non-durable until the user applies the edited plan, proposal acceptance currently creates new bible graph nodes only and still needs merge/link behavior for existing bible nodes, full generation/child-generation should consume graph-backed bible context, and proposal-driven propagation review still needs semantic dependency/history projections.
 - Resolved: pre-existing dead-code warnings in `diffusion/types.rs` and `ydoc.rs` blocked a future `-D warnings` gate. Unused diffusion/Y.Doc command variants, the unconsumed content-change feed, the unused write helper, and production-only unused snapshot fields were removed or narrowed to tests; `cargo check -p eidetic-server` is now warning-free.
 - Resolved: the cloned-project undo/redo routes still existed after cloned snapshot producers were removed. The routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags were deleted; future undo/redo must enter through revision-backed command/event history.
 - The first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile are now fixed, and future slices should use Cargo verification instead of relying on stale metadata.

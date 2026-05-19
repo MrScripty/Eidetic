@@ -15,8 +15,9 @@ use crate::timeline_node_store;
 use eidetic_core::ai::backend::{ChildPlan, ChildProposal, RagChunk};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptSegmentId,
-    ScriptSegmentStatus, ScriptSpanProvenance, SetScriptBlockCommand,
+    AiBibleContextProjection, CommandEnvelope, CommandId, ProjectionEnvelope, ScriptBlockId,
+    ScriptBlockKind, ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus, ScriptSpanProvenance,
+    SetScriptBlockCommand,
 };
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
 
@@ -732,14 +733,18 @@ async fn preview_context(
 ) -> Json<serde_json::Value> {
     let node_id = NodeId(id);
 
-    let (project, _) = match active_sqlite_project(&state).await {
+    let (project, project_path) = match active_sqlite_project(&state).await {
         Ok(project) => project,
         Err(error) => return Json(serde_json::json!({ "error": error })),
     };
 
-    let request = match build_generate_request(&project, node_id) {
+    let mut request = match build_generate_request(&project, node_id) {
         Ok(req) => req,
         Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
+    };
+    request.bible_context = match load_ai_bible_context_projection(project_path, node_id).await {
+        Ok(projection) => Some(projection),
+        Err(error) => return Json(serde_json::json!({ "error": error })),
     };
 
     let prompt = build_chat_prompt(&request);
@@ -761,6 +766,20 @@ async fn active_sqlite_project(
     }
     let (project, _) = crate::persistence::load_project(&project_path).await?;
     Ok((project, project_path))
+}
+
+async fn load_ai_bible_context_projection(
+    path: PathBuf,
+    node_id: NodeId,
+) -> Result<ProjectionEnvelope<AiBibleContextProjection>, String> {
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| format!("open AI bible context database failed: {e}"))?;
+        crate::ai_context_projection::load_ai_bible_context_projection(&conn, node_id)
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("AI bible context projection task failed: {e}"))?
 }
 
 #[cfg(test)]
@@ -879,3 +898,7 @@ mod tests {
         serde_json::from_slice(&body).expect("json response")
     }
 }
+
+#[cfg(test)]
+#[path = "ai_context_tests.rs"]
+mod ai_context_tests;
