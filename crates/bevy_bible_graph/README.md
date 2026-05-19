@@ -12,6 +12,7 @@ Current scope:
 - Keep Bevy dependencies isolated from domain and server crates.
 - Receive `BibleRenderGraphProjection` snapshots.
 - Rebuild read-only Bevy ECS entities for graph nodes and edges.
+- Expose projection-provided neighborhood indexes for host-side graph highlighting.
 - Validate selectable/inspectable graph node IDs before emitting commands.
 - Expose a wasm-bindgen bridge for browser hosts.
 

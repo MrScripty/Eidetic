@@ -50,6 +50,17 @@ impl WasmBibleGraphRenderer {
             .map_err(|error| JsValue::from_str(&format!("invalid bible graph edges: {error}")))
     }
 
+    pub fn neighborhood(&self, node_id: String) -> Result<JsValue, JsValue> {
+        let node_id = parse_node_id(node_id)?;
+        let neighborhood = self
+            .renderer
+            .neighborhood(&node_id)
+            .map_err(|error| JsValue::from_str(&error.to_string()))?;
+        serde_wasm_bindgen::to_value(&neighborhood).map_err(|error| {
+            JsValue::from_str(&format!("invalid bible graph neighborhood: {error}"))
+        })
+    }
+
     pub fn drain_commands(&mut self) -> Result<JsValue, JsValue> {
         serde_wasm_bindgen::to_value(&self.renderer.drain_commands())
             .map_err(|error| JsValue::from_str(&format!("invalid renderer commands: {error}")))
