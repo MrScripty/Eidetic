@@ -25,6 +25,15 @@ pub fn validate_name(name: &str, field_name: &str) -> Result<(), ApiError> {
     Ok(())
 }
 
+pub fn validate_positive_finite_f32(value: f32, field_name: &str) -> Result<(), ApiError> {
+    if !value.is_finite() || value <= 0.0 {
+        return Err(ApiError::bad_request(format!(
+            "{field_name} must be a positive finite number"
+        )));
+    }
+    Ok(())
+}
+
 pub fn validate_project_path(input: &str, root: &Path) -> Result<PathBuf, ApiError> {
     if input.trim().is_empty() {
         return Err(ApiError::bad_request("path is required"));

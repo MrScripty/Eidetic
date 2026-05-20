@@ -797,6 +797,10 @@ Discovered implementation gaps:
   state, project-scoped projection caches, stores lightweight active project
   metadata, and refreshes focused timeline, story arc, script, bible, proposal,
   and change-review projections.
+- Resolved: timeline apply-children route validation now rejects non-positive
+  or non-finite child weights at the backend/API boundary before command
+  conversion, persistence, or projection updates, matching the child-plan
+  storage invariant instead of silently clamping renderer-originated values.
 
 Simplification opportunities:
 
@@ -820,6 +824,9 @@ Verification:
 - No UI component writes to backend-owned fields except through command helpers.
 - Svelte timeline still renders during the transition, but only from projection-backed/cache-backed inputs and backend-confirmed commands.
 - Cross-layer acceptance test covers one user-visible command path from Svelte command emission through backend validation/command handling to returned or refreshed projection display.
+- Backend route tests cover invalid timeline child weights so renderer-originated
+  apply-children payloads cannot bypass backend validation before projection
+  replacement.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter

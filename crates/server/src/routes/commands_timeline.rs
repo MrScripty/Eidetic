@@ -335,6 +335,7 @@ async fn apply_timeline_children(
 ) -> ApiJson {
     for child in &command.payload.children {
         validation::validate_name(&child.name, "child node name")?;
+        validation::validate_positive_finite_f32(child.weight, "child weight")?;
     }
     let command = command.into_core_command();
     let path = active_project_path(&state)?;

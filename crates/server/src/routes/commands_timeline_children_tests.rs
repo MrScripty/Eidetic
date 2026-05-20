@@ -502,6 +502,38 @@ async fn apply_timeline_children_command_rejects_unknown_parent() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn apply_timeline_children_command_rejects_invalid_child_weight() {
+    let path = temp_db_path("rejects-invalid-timeline-child-weight");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let mut body = apply_timeline_children_command_body(
+        parent.id,
+        eidetic_core::timeline::node::NodeId::new(),
+        eidetic_core::timeline::node::NodeId::new(),
+    );
+    body["payload"]["children"][0]["weight"] = json!(-1.0);
+
+    let response = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let value = response_json(response).await;
+    assert_eq!(
+        value["error"],
+        "child weight must be a positive finite number"
+    );
+    assert!(!path.exists());
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn apply_timeline_children_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
