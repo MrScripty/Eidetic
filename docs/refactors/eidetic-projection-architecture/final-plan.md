@@ -623,6 +623,17 @@ Verification:
 
 This is the next section to complete before further renderer replacement work. The goal is not a separate frontend. The goal is one Svelte shell whose durable reads come from backend projections and whose durable writes go through backend commands.
 
+Standards reviewed for this milestone:
+
+- `Coding-Standards/ARCHITECTURE-PATTERNS.md`: backend-owned data, dependency direction, executable boundary contracts, single owner for stateful flows.
+- `Coding-Standards/CODING-STANDARDS.md`: backend-owned data, no optimistic updates, file/component decomposition review, single responsibility.
+- `Coding-Standards/FRONTEND-STANDARDS.md`: declarative rendering, event-driven synchronization, timer/request cleanup, selector strategy, embedded gesture-control checks.
+- `Coding-Standards/CONCURRENCY-STANDARDS.md`: message passing over shared mutable state and stale async response guards.
+- `Coding-Standards/TESTING-STANDARDS.md`: vertical slice verification, replay/recovery/idempotency checks, async lifecycle regression checks.
+- `Coding-Standards/DOCUMENTATION-STANDARDS.md`: README traceability, API consumer contract, structured producer contract.
+- `Coding-Standards/SECURITY-STANDARDS.md`: runtime validation at process/API boundaries and no trusted renderer payloads.
+- `Coding-Standards/TOOLING-STANDARDS.md`: lint/typecheck/test/static gate enforcement.
+
 Allowed frontend-owned state:
 
 - current selection, hover, focus, panel state, menus, draft form fields, drag previews, scroll, zoom, active tool, and renderer viewport/camera/playhead state;
@@ -644,6 +655,55 @@ Tasks:
 - Keep Svelte timeline components temporarily only as projection consumers and command emitters; do not add new durable timeline behavior to the DOM renderer.
 - Add static/lint/test enforcement for banned legacy APIs, broad durable mutations, and direct writes to projection cache payloads outside cache replacement functions.
 - Update frontend READMEs to document each touched store/component as projection cache or transient UI state.
+- Validate renderer-originated command payloads at the backend/API boundary. Frontend TypeScript types are not a trust boundary; command IDs, node IDs, ranges, relationship endpoints, notes, locks, and project/session identifiers must be checked by shared backend validators before state changes.
+- Add decomposition reviews for any touched store/module over roughly seven public functions and any touched Svelte component over 250 lines. Split by responsibility when the milestone adds code to an already large component.
+
+Implementation order:
+
+- Create the store audit table first so every follow-on edit has an explicit owner classification.
+- Split `ui/src/lib/stores/timeline.svelte.ts` into transient timeline viewport/tool state and projection-derived selectors. Remove `timelineState.timeline`; keep zoom, scroll, playhead, viewport width, active tool, snapping, and connection drag as frontend-owned transient state.
+- Convert the temporary Svelte timeline renderer to `TimelineRenderProjection`/`TimelineRenderModel` inputs only. `Timeline.svelte`, `LevelTrack.svelte`, `StoryNodeClip.svelte`, `StructureBar.svelte`, `RelationshipLayer.svelte`, and timeline gaps must read from projection-backed/cache-backed models instead of broad `Timeline` DTOs.
+- Replace `editorState.selectedNode` with selected identifiers and transient editor state. The selected node's durable fields must come from a focused projection or the timeline render model, not a stored `StoryNode` object.
+- Remove broad project/timeline hydration from project create/load. `Project` responses may open a backend session and provide lightweight project metadata, but visible durable state must be refreshed through projections.
+- Rewrite websocket handling so timeline, hierarchy, script, bible, generation, and proposal events refresh or invalidate affected projection caches. Do not call broad read APIs and patch frontend durable objects in event handlers.
+- Move AI status/config out of the editor store into a dedicated projection/status cache so the editor store remains transient editor interaction and generation-progress state.
+- Replace legacy editor mutations for notes, locks, and generation status with command helpers plus projection cache replacement/refresh. Draft text fields may be local while editing, but persisted note content, lock state, and generated status are backend-owned.
+- Coalesce websocket-triggered projection refreshes per projection identity when event bursts arrive, so removing broad mirrors does not introduce redundant projection fetches.
+
+Concurrency and lifecycle requirements:
+
+- Projection refresh coalescing must have one explicit owner module. Components and websocket handlers may request a refresh/invalidation, but they must not independently start overlapping refresh state machines for the same projection identity.
+- Every async projection refresh must guard against stale responses overwriting newer projection versions. Use request IDs, projection version checks, abort/cancellation, or an equivalent explicit stale-response guard.
+- Websocket subscriptions, timers, debounced note saves, and refresh coalescers must have deterministic teardown tests for unmount/project close/reconnect.
+- Event bursts must be handled by queued or coalesced projection refreshes, not by shared mutable broad DTO mirrors.
+- Failed refreshes must preserve the last confirmed projection cache and surface bounded diagnostic context through the existing error/pending state; failed requests must not clear durable visible data unless the backend confirms the project/session is gone.
+
+Accessibility and frontend interaction requirements:
+
+- Timeline and editor command controls remain keyboard-accessible while the DOM timeline is temporary. Pointer-only timeline interactions need semantic or keyboard command alternatives before the DOM path is considered compliant.
+- New or modified buttons must use semantic `<button type="button">` elements or an explicitly justified accessible generic element with role, focus, keyboard handling, and accessible name.
+- Embedded controls inside draggable, pannable, zoomable, or timeline gesture areas require smoke checks for pointer capture/release, focus/blur, keyboard access, Escape/cancel behavior, and parent gesture conflicts.
+- Tests should prefer accessible selectors such as role plus name. Geometry-dependent timeline tests must isolate pure geometry helpers or mock `getBoundingClientRect()` explicitly.
+
+Known legacy ownership paths to remove:
+
+- `ui/src/lib/stores/timeline.svelte.ts`: `timelineState.timeline`, `nodesAtLevel`, `childrenOf`, `ancestorsOf`, `arcsForNode`, and `findNode` as broad `Timeline` readers.
+- `ui/src/lib/stores/editor.svelte.ts`: `selectedNode: StoryNode | null` and `aiStatus` in the editor store.
+- `ui/src/lib/stores/wsHandlers.ts`: `getTimeline()` hydration, `getNodeContent()` patching, and direct mutation of selected node or timeline node content.
+- `ui/src/lib/components/layout/SplashScreen.svelte`: broad `Project`/`Timeline` hydration into frontend stores after create/load.
+- `ui/src/lib/components/timeline/Timeline.svelte`: rendering tracks, labels, structure, relationship targets, and gaps from `timelineState.timeline` or `getGaps()`.
+- `ui/src/lib/components/timeline/LevelTrack.svelte`: level node queries, arc queries, selection of whole `StoryNode` objects, and regeneration prompts based on stale local node content.
+- `ui/src/lib/components/editor/BeatEditor.svelte`: parent/child/sibling queries from broad timeline state and direct mutation of selected node notes, lock state, and generation status.
+- `ui/src/lib/README.md`: examples that assign broad timeline/project data into frontend stores.
+
+Simplification opportunities:
+
+- Add a small projection command helper/factory for repeated `pending/error/replace projection` store logic after the ownership cleanup lands.
+- Move timeline adjacency, parent/child, gap, arc, relationship, and visible-track lookup into projection models or memoized projection-derived indexes instead of repeated component-local array scans.
+- Treat Y.Doc note text as an editing transport/cache only; backend commands and projections remain the durable source for saved note content.
+- Keep old broad DTO modules only for compatibility while endpoints remain; new UI code imports focused DTO owner modules directly.
+- Prefer pure projection model adapters and selectors over component-local orchestration so timeline/editor behavior is unit-testable without DOM or server mocks.
+- Keep API/projection contracts append-only during the milestone when practical. If removing legacy broad DTO use requires an API-breaking rewrite, record the compatibility impact and delete obsolete consumers in the same verified slice because this repo does not require backwards compatibility.
 
 Verification:
 
@@ -654,11 +714,26 @@ Verification:
 - `types.ts` remains a compatibility barrel only; new code imports focused DTO owner modules directly.
 - No UI component writes to backend-owned fields except through command helpers.
 - Svelte timeline still renders during the transition, but only from projection-backed/cache-backed inputs and backend-confirmed commands.
+- Cross-layer acceptance test covers one user-visible command path from Svelte command emission through backend validation/command handling to returned or refreshed projection display.
+- Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
+- Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
+- Accessibility checks cover keyboard alternatives and embedded timeline/editor control conflicts for any touched gesture-heavy controls.
+- Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
+- Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.
+
+Re-plan triggers:
+
+- A focused projection required by the UI does not exist and would require new backend projection contracts beyond the milestone's intended frontend cleanup.
+- Removing broad `Timeline` or `StoryNode` mirrors exposes missing backend command validation or missing projection fields.
+- Refresh coalescing introduces ordering ambiguity that cannot be proven with request IDs/version checks.
+- A touched component crosses the decomposition threshold and cannot be split safely inside the current slice.
+- Accessibility parity for a temporary DOM interaction would require building the Bevy renderer first.
 
 Exit criteria:
 
 - The frontend can be described as `projection caches + transient interaction state` with no durable local ownership exceptions.
 - Remaining DOM timeline replacement work can proceed without untangling durable frontend state at the same time.
+- The milestone satisfies the reviewed coding standards: backend-owned durable data, no optimistic updates, validated API boundaries, single-owner async refresh lifecycle, documented ownership, accessibility-preserving controls, and verified cross-layer projection flow.
 
 ## Milestone 7: Bevy Timeline Renderer
 
