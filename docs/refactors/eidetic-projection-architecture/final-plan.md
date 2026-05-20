@@ -771,6 +771,10 @@ Discovered implementation gaps:
 - Resolved: `ui/src/lib/stores/README.md` now classifies `wsHandlers.ts` as
   projection refresh orchestration instead of mixed legacy ownership, matching
   the current websocket handler implementation.
+- Resolved: `projectionOnlyGuards.test.ts` now fails if deleted broad timeline
+  ownership, selected-node durable object ownership, legacy timeline/content
+  helpers, legacy node mutation helpers, or direct projection payload patching
+  patterns are reintroduced into UI source.
 
 Simplification opportunities:
 
@@ -787,6 +791,9 @@ Verification:
 - Unit tests prove command responses replace projection caches without optimistic durable mutation.
 - WebSocket handler tests prove events refresh/invalidate projection caches instead of patching durable objects.
 - Static checks or focused tests fail if banned legacy helpers, broad project mutation paths, or old timeline mutation APIs are reintroduced.
+  `projectionOnlyGuards.test.ts` covers the deleted broad timeline ownership,
+  selected-node durable ownership, legacy timeline/content helper, legacy node
+  mutation helper, and direct projection payload patching patterns.
 - `types.ts` remains a compatibility barrel only; new code imports focused DTO owner modules directly.
 - No UI component writes to backend-owned fields except through command helpers.
 - Svelte timeline still renders during the transition, but only from projection-backed/cache-backed inputs and backend-confirmed commands.
