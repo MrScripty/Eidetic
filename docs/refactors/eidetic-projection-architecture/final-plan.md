@@ -399,6 +399,10 @@ Completed slices:
   backend-neutral `BackendError`, maps it into `ApiError` only at the legacy Axum
   boundary, and moved local CORS origin validation into `axum_runtime.rs` so
   reusable backend validators compile without HTTP response ownership.
+- `refactor(server): extract project service from axum routes` moved project
+  create, get, update, save, load, list, and Y.Doc load seeding behavior into
+  `project_service.rs`, leaving the legacy Axum project routes as transport
+  adapters while adding service-level coverage for the non-HTTP path.
 
 Discovered issues:
 
@@ -453,7 +457,8 @@ Discovered issues:
 - Resolved: `crates/server/src/timeline_command.rs` exceeded the 500-line decomposition threshold after adding timeline command history recording. History-recording helpers were split into `timeline_command_history.rs` so the mutation applicator remains easier to reason about before the larger node-delete and child-replacement slices.
 - Open: Milestone 7 route/service extraction still has Axum-shaped route
   handlers and route tests. Reusable validators now return backend-neutral
-  errors, but command/projection/AI/project route handlers and many route tests
+  errors, and project route behavior now has a host-neutral service boundary,
+  but command/projection/AI/export/reference route handlers and many route tests
   still use HTTP status codes as the behavior boundary; extract service
   functions and service-level tests before adding Tauri command adapters.
 - Open: Milestone 7 lifecycle compliance is blocked by detached backend tasks.

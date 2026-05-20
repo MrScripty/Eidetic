@@ -14,6 +14,7 @@ legacy Axum host over the domain model in `eidetic-core`.
 | `routes/` | HTTP handlers for project, command, timeline, story, AI, export, and reference workflows. |
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
+| `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by legacy routes and future Tauri commands. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |
 | `bible_graph_schema.rs` | SQLite schema setup for story-bible graph node, part, and field current-state rows. |
@@ -70,7 +71,7 @@ depend on backend services without depending on the binary entrypoint.
 - `persistence.rs` or `ydoc.rs` gains another unrelated concern.
 
 ## Dependencies
-**Internal:** `eidetic-core`, `axum_runtime.rs`, `routes/`, `ai_backends/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_edge_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
+**Internal:** `eidetic-core`, `axum_runtime.rs`, `routes/`, `project_service.rs`, `ai_backends/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_edge_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
 **External:** `axum`, `tower-http`, `tokio`, `rusqlite`, `yrs`, `reqwest`.
 
 ## Related ADRs
