@@ -74,7 +74,8 @@ pub use timeline_command::{
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
 pub use timeline_render::{
-    TimelineRenderClip, TimelineRenderProjection, TimelineRenderRelationship, TimelineRenderTrack,
+    TimelineRenderClip, TimelineRenderGap, TimelineRenderProjection, TimelineRenderRelationship,
+    TimelineRenderStructureSegment, TimelineRenderTrack,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

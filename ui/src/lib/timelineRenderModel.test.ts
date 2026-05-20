@@ -15,6 +15,13 @@ describe('timeline render model', () => {
   it('derives sorted clip indexes and normalized timing from backend projections', () => {
     const projection: TimelineRenderProjection = {
       total_duration_ms: 10_000,
+      structure_segments: [
+        {
+          segment_type: 'Act',
+          time_range: { start_ms: 0, end_ms: 10_000 },
+          label: 'Act One',
+        },
+      ],
       tracks: [
         {
           track_id: 'track.beat',
@@ -69,6 +76,14 @@ describe('timeline render model', () => {
           relationship_type: 'Causal',
         },
       ],
+      gaps: [
+        {
+          level: 'Beat',
+          time_range: { start_ms: 3_000, end_ms: 5_000 },
+          preceding_node_id: 'node.beat.one',
+          following_node_id: 'node.beat.two',
+        },
+      ],
     };
 
     const model = timelineRenderModelFromProjection(projection);
@@ -86,7 +101,9 @@ describe('timeline render model', () => {
       'timeline.clip.node.beat.two',
     ]);
     expect(model.clip_ids_by_node_id['node.beat.two']).toBe('timeline.clip.node.beat.two');
+    expect(model.structure_segments).toEqual(projection.structure_segments);
     expect(model.relationships).toEqual(projection.relationships);
+    expect(model.gaps).toEqual(projection.gaps);
     expect(visibleTimelineRenderTracks(model).map((track) => track.track_id)).toEqual([
       'track.scene',
       'track.beat',

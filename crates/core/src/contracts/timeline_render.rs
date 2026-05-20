@@ -4,17 +4,32 @@ use crate::story::arc::ArcId;
 use crate::timeline::Timeline;
 use crate::timeline::node::{BeatType, ContentStatus, NodeId, StoryLevel};
 use crate::timeline::relationship::{RelationshipId, RelationshipType};
+use crate::timeline::structure::SegmentType;
+use crate::timeline::timing::TimeRange;
 use crate::timeline::track::TrackId;
+
+const TIMELINE_RENDER_GAP_THRESHOLD_MS: u64 = 30_000;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TimelineRenderProjection {
     pub total_duration_ms: u64,
+    #[serde(default)]
+    pub structure_segments: Vec<TimelineRenderStructureSegment>,
     #[serde(default)]
     pub tracks: Vec<TimelineRenderTrack>,
     #[serde(default)]
     pub clips: Vec<TimelineRenderClip>,
     #[serde(default)]
     pub relationships: Vec<TimelineRenderRelationship>,
+    #[serde(default)]
+    pub gaps: Vec<TimelineRenderGap>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineRenderStructureSegment {
+    pub segment_type: SegmentType,
+    pub time_range: TimeRange,
+    pub label: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -55,8 +70,29 @@ pub struct TimelineRenderRelationship {
     pub relationship_type: RelationshipType,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineRenderGap {
+    pub level: StoryLevel,
+    pub time_range: TimeRange,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preceding_node_id: Option<NodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub following_node_id: Option<NodeId>,
+}
+
 impl TimelineRenderProjection {
     pub fn from_timeline(timeline: &Timeline) -> Self {
+        let structure_segments = timeline
+            .structure
+            .segments
+            .iter()
+            .map(|segment| TimelineRenderStructureSegment {
+                segment_type: segment.segment_type,
+                time_range: segment.time_range,
+                label: segment.label.clone(),
+            })
+            .collect();
+
         let mut tracks: Vec<TimelineRenderTrack> = timeline
             .tracks
             .iter()
@@ -110,11 +146,28 @@ impl TimelineRenderProjection {
             .collect();
         relationships.sort_by_key(|relationship| relationship.relationship_id.0);
 
+        let mut gaps = Vec::new();
+        for track in &tracks {
+            gaps.extend(
+                timeline
+                    .find_gaps(track.level, TIMELINE_RENDER_GAP_THRESHOLD_MS)
+                    .into_iter()
+                    .map(|gap| TimelineRenderGap {
+                        level: gap.level,
+                        time_range: gap.time_range,
+                        preceding_node_id: gap.preceding_node_id,
+                        following_node_id: gap.following_node_id,
+                    }),
+            );
+        }
+
         Self {
             total_duration_ms: timeline.total_duration_ms,
+            structure_segments,
             tracks,
             clips,
             relationships,
+            gaps,
         }
     }
 }
@@ -130,7 +183,7 @@ mod tests {
 
     #[test]
     fn timeline_render_projection_maps_tracks_clips_arcs_and_relationships() {
-        let mut timeline = Timeline::new(10_000, EpisodeStructure::standard_30_min());
+        let mut timeline = Timeline::new(100_000, EpisodeStructure::standard_30_min());
         let mut scene = StoryNode::new(
             "Beach argument",
             StoryLevel::Scene,
@@ -152,7 +205,8 @@ mod tests {
 
         let projection = TimelineRenderProjection::from_timeline(&timeline);
 
-        assert_eq!(projection.total_duration_ms, 10_000);
+        assert_eq!(projection.total_duration_ms, 100_000);
+        assert_eq!(projection.structure_segments[0].label, "Cold Open");
         assert_eq!(projection.tracks[0].level, StoryLevel::Premise);
         assert_eq!(projection.clips.len(), 1);
         assert_eq!(projection.clips[0].node_id, scene_id);
@@ -160,5 +214,11 @@ mod tests {
         assert_eq!(projection.clips[0].arc_ids, vec![arc_id]);
         assert_eq!(projection.relationships.len(), 1);
         assert_eq!(projection.relationships[0].from_node_id, scene_id);
+        assert!(
+            projection
+                .gaps
+                .iter()
+                .any(|gap| gap.level == StoryLevel::Scene)
+        );
     }
 }

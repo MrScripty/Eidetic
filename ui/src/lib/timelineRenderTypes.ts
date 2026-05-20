@@ -4,16 +4,26 @@ import type {
   NodeId,
   RelationshipId,
   RelationshipType,
+  SegmentType,
   StoryLevel,
   TrackId,
+  TimeRange,
 } from './timelineTypes.js';
 import type { ArcId } from './storyArcTypes.js';
 
 export interface TimelineRenderProjection {
   total_duration_ms: number;
+  structure_segments?: TimelineRenderStructureSegment[];
   tracks: TimelineRenderTrack[];
   clips: TimelineRenderClip[];
   relationships: TimelineRenderRelationship[];
+  gaps?: TimelineRenderGap[];
+}
+
+export interface TimelineRenderStructureSegment {
+  segment_type: SegmentType;
+  time_range: TimeRange;
+  label: string;
 }
 
 export interface TimelineRenderTrack {
@@ -44,4 +54,11 @@ export interface TimelineRenderRelationship {
   from_node_id: NodeId;
   to_node_id: NodeId;
   relationship_type: RelationshipType;
+}
+
+export interface TimelineRenderGap {
+  level: StoryLevel;
+  time_range: TimeRange;
+  preceding_node_id?: NodeId | null;
+  following_node_id?: NodeId | null;
 }

@@ -1,16 +1,20 @@
 import type {
   TimelineRenderClip,
+  TimelineRenderGap,
   TimelineRenderProjection,
   TimelineRenderRelationship,
+  TimelineRenderStructureSegment,
   TimelineRenderTrack,
 } from './timelineRenderTypes.js';
 import type { StoryLevel, TrackId } from './timelineTypes.js';
 
 export interface TimelineRenderModel {
   duration_ms: number;
+  structure_segments: TimelineRenderStructureSegment[];
   tracks: TimelineRenderModelTrack[];
   clips: TimelineRenderModelClip[];
   relationships: TimelineRenderRelationship[];
+  gaps: TimelineRenderGap[];
   clip_ids_by_track_id: Record<string, string[]>;
   clip_ids_by_node_id: Record<string, string>;
 }
@@ -86,9 +90,11 @@ export function timelineRenderModelFromProjection(
 
   return {
     duration_ms: projection.total_duration_ms,
+    structure_segments: projection.structure_segments?.slice() ?? [],
     tracks,
     clips,
     relationships: projection.relationships.slice(),
+    gaps: projection.gaps?.slice() ?? [],
     clip_ids_by_track_id: clipIdsByTrackId,
     clip_ids_by_node_id: clipIdsByNodeId,
   };

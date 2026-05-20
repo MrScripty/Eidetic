@@ -33,9 +33,11 @@ fn renderer_app_rebuilds_scene_entities_from_projection() {
 
     renderer.set_projection(TimelineRenderProjection {
         total_duration_ms: 10_000,
+        structure_segments: Vec::new(),
         tracks: Vec::new(),
         clips: Vec::new(),
         relationships: Vec::new(),
+        gaps: Vec::new(),
     });
 
     assert_eq!(renderer.scene_counts(), (0, 0));
@@ -423,6 +425,7 @@ fn projection_with_clip(
 ) -> TimelineRenderProjection {
     TimelineRenderProjection {
         total_duration_ms: 10_000,
+        structure_segments: Vec::new(),
         tracks: vec![TimelineRenderTrack {
             track_id,
             level: StoryLevel::Scene,
@@ -445,5 +448,6 @@ fn projection_with_clip(
             arc_ids: Vec::new(),
         }],
         relationships: Vec::new(),
+        gaps: Vec::new(),
     }
 }
