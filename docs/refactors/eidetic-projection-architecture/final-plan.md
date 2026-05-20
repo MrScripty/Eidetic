@@ -833,6 +833,10 @@ Discovered implementation gaps:
 - Resolved: touched editor and temporary timeline command controls now use
   explicit `type="button"` semantics, and `projectionOnlyGuards.test.ts` fails
   if editor/timeline Svelte command buttons omit an explicit type.
+- Resolved: `timelineCommandFlow.test.ts` now covers a user-visible timeline
+  lock command path through the real frontend command helper and projection
+  store, proving backend-returned projections replace the cache while backend
+  validation errors preserve the last confirmed projection.
 
 Simplification opportunities:
 
@@ -859,6 +863,9 @@ Verification:
 - No UI component writes to backend-owned fields except through command helpers.
 - Svelte timeline still renders during the transition, but only from projection-backed/cache-backed inputs and backend-confirmed commands.
 - Cross-layer acceptance test covers one user-visible command path from Svelte command emission through backend validation/command handling to returned or refreshed projection display.
+  `timelineCommandFlow.test.ts` covers the timeline lock command path through
+  frontend command emission, backend response handling, projection cache
+  replacement, and backend validation error preservation.
 - Backend route tests cover invalid timeline child weights so renderer-originated
   apply-children payloads cannot bypass backend validation before projection
   replacement.
