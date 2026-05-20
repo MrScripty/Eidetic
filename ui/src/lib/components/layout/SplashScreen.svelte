@@ -34,7 +34,7 @@
   ];
 
   function hydrateStores(project: Project) {
-    projectState.current = project;
+    projectState.current = { name: project.name };
   }
 
   async function refreshProjectProjections() {

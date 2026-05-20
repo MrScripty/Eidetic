@@ -1,4 +1,6 @@
-import type { Project } from '../projectTypes.js';
+export interface ActiveProjectMetadata {
+  name: string;
+}
 
-/** Reactive project state. Backend-owned; frontend displays only. */
-export const projectState = $state<{ current: Project | null }>({ current: null });
+/** Frontend-owned active project session metadata. Durable project data is projection-backed. */
+export const projectState = $state<{ current: ActiveProjectMetadata | null }>({ current: null });
