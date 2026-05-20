@@ -135,12 +135,24 @@ export function getScriptDocumentProjection({
 export function getBibleReferenceProposalListProjection(): Promise<
   ProjectionEnvelope<BibleReferenceProposalListProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<BibleReferenceProposalListProjection>>(
+      'projection_bible_reference_proposals',
+    );
+  }
+
   return getJson('/projections/semantic/bible-reference-proposals');
 }
 
 export function getPropagationProposalListProjection(): Promise<
   ProjectionEnvelope<PropagationProposalListProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<PropagationProposalListProjection>>(
+      'projection_propagation_proposals',
+    );
+  }
+
   return getJson('/projections/semantic/propagation-proposals');
 }
 

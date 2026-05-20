@@ -1,8 +1,9 @@
 use eidetic_core::contracts::{
     BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
-    BibleRenderGraphProjection, ChangeReviewProjection, CommandEnvelope, DeleteStoryArcCommand,
-    ProjectionEnvelope, ScriptDocumentProjection, SelectedNodeEditorProjection,
-    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    BibleReferenceProposalListProjection, BibleRenderGraphProjection, ChangeReviewProjection,
+    CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope, PropagationProposalListProjection,
+    ScriptDocumentProjection, SelectedNodeEditorProjection, SetObjectFieldCommand,
+    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
     StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
 };
 use eidetic_server::backend_error::BackendError;
@@ -238,6 +239,26 @@ async fn projection_bible_render_graph(
 }
 
 #[tauri::command]
+async fn projection_bible_reference_proposals(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<BibleReferenceProposalListProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::bible_reference_proposal_list_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn projection_propagation_proposals(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<PropagationProposalListProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::propagation_proposal_list_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_story_arcs(
     app: tauri::AppHandle,
 ) -> Result<ProjectionEnvelope<StoryArcListProjection>, CommandError> {
@@ -315,6 +336,8 @@ pub fn run() {
             projection_bible_graph_nodes,
             projection_bible_graph_schemas,
             projection_bible_render_graph,
+            projection_bible_reference_proposals,
+            projection_propagation_proposals,
             projection_story_arcs,
             projection_story_arc_progression,
             projection_change_review,

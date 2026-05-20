@@ -455,6 +455,12 @@ Completed slices:
   `projection_story_arc_progression` and `projection_change_review` through
   Tauri, and made the matching frontend projection helpers prefer desktop IPC
   when available.
+- `feat(desktop): route semantic proposal projections through tauri` moved
+  bible-reference proposal and propagation-proposal list projection reads into
+  `projection_service.rs`, kept the legacy Axum routes as service adapters,
+  exposed `projection_bible_reference_proposals` and
+  `projection_propagation_proposals` through Tauri, and made the matching
+  frontend projection helpers prefer desktop IPC when available.
 
 Discovered issues:
 

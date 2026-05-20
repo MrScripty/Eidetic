@@ -2,8 +2,9 @@ use std::path::PathBuf;
 
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
-    BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeReviewProjection, ObjectKind,
-    ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    BibleNodeDetailProjection, BibleReferenceProposalListProjection, BibleRenderGraphProjection,
+    ChangeReviewProjection, ObjectKind, ProjectionEnvelope, PropagationProposalListProjection,
+    ScriptDocumentId, ScriptDocumentProjection, SelectedNodeEditorProjection,
     StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
     builtin_bible_graph_schema_list_projection,
 };
@@ -15,7 +16,9 @@ use serde::Deserialize;
 use crate::backend_error::BackendError;
 use crate::bible_graph_store;
 use crate::history_store::{self, HistoryStoreError};
+use crate::propagation_proposal_store::{self, PropagationProposalStoreError};
 use crate::script_store;
+use crate::semantic_proposal_store::{self, SemanticProposalStoreError};
 use crate::state::AppState;
 use crate::story_arc_store;
 use crate::timeline_node_store;
@@ -115,6 +118,30 @@ pub async fn bible_render_graph_projection(
         .await
         .map_err(|error| {
             BackendError::internal(format!("bible render graph task failed: {error}"))
+        })?
+}
+
+pub async fn bible_reference_proposal_list_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<BibleReferenceProposalListProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || load_bible_reference_proposal_list_at_path(path))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("semantic proposal projection task failed: {error}"))
+        })?
+}
+
+pub async fn propagation_proposal_list_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<PropagationProposalListProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || load_propagation_proposal_list_at_path(path))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!(
+                "propagation proposal projection task failed: {error}"
+            ))
         })?
 }
 
@@ -249,6 +276,24 @@ fn load_bible_render_graph_projection_at_path(
     bible_graph_store::load_render_graph_projection_envelope(&conn).map_err(map_history_error)
 }
 
+fn load_bible_reference_proposal_list_at_path(
+    path: PathBuf,
+) -> Result<ProjectionEnvelope<BibleReferenceProposalListProjection>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    semantic_proposal_store::load_bible_reference_proposal_list_projection(&conn)
+        .map_err(map_semantic_proposal_error)
+}
+
+fn load_propagation_proposal_list_at_path(
+    path: PathBuf,
+) -> Result<ProjectionEnvelope<PropagationProposalListProjection>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
+        .map_err(map_propagation_proposal_error)
+}
+
 fn load_script_document_projection_at_path(
     path: PathBuf,
     document_id: ScriptDocumentId,
@@ -320,5 +365,47 @@ fn map_history_error(error: HistoryStoreError) -> BackendError {
         HistoryStoreError::MissingColumn(message) => BackendError::internal(message),
         HistoryStoreError::Sqlite(error) => BackendError::internal(error.to_string()),
         HistoryStoreError::Json(error) => BackendError::bad_request(error.to_string()),
+    }
+}
+
+fn map_semantic_proposal_error(error: SemanticProposalStoreError) -> BackendError {
+    match error {
+        SemanticProposalStoreError::InvalidCommand(message) => BackendError::bad_request(message),
+        SemanticProposalStoreError::NotFound(message) => BackendError::not_found(message),
+        SemanticProposalStoreError::History(error) => map_history_error(error),
+        SemanticProposalStoreError::Sqlite(error) => BackendError::internal(error.to_string()),
+    }
+}
+
+fn map_propagation_proposal_error(error: PropagationProposalStoreError) -> BackendError {
+    match error {
+        PropagationProposalStoreError::InvalidCommand(message) => {
+            BackendError::bad_request(message)
+        }
+        PropagationProposalStoreError::NotFound(message) => BackendError::not_found(message),
+        PropagationProposalStoreError::History(error) => map_history_error(error),
+        PropagationProposalStoreError::Sqlite(error) => BackendError::internal(error.to_string()),
+        PropagationProposalStoreError::Json(error) => BackendError::bad_request(error.to_string()),
+        PropagationProposalStoreError::Contract(error) => {
+            BackendError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::BibleGraphContract(error) => {
+            BackendError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::BibleGraphCommand(error) => {
+            BackendError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::ScriptContract(error) => {
+            BackendError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::SemanticDependencyContract(error) => {
+            BackendError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::Target(error) => {
+            BackendError::bad_request(error.to_string())
+        }
+        PropagationProposalStoreError::ScriptDocumentCommand(error) => {
+            BackendError::bad_request(error.to_string())
+        }
     }
 }

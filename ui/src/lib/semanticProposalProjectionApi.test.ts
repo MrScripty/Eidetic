@@ -43,4 +43,27 @@ describe('semantic proposal projection api helpers', () => {
       headers: { Accept: 'application/json' },
     });
   });
+
+  it('uses desktop bible reference proposal projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 4,
+      change_event_id: 'event-4',
+      payload: {
+        proposals: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getBibleReferenceProposalListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_bible_reference_proposals', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
