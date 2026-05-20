@@ -6,6 +6,7 @@ import {
 } from '$lib/commandApi.js';
 import { getPropagationProposalListProjection } from '$lib/projectionApi.js';
 import type { CommandId, ProjectionEnvelope } from '$lib/projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 import type {
   AcceptPropagationProposalCommand,
   CreatePropagationProposalCommand,
@@ -30,7 +31,9 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 function cacheProjection(projection: ProjectionEnvelope<PropagationProposalListProjection>): void {
-  propagationProposalProjectionState.projection = projection;
+  if (shouldReplaceProjection(propagationProposalProjectionState.projection, projection)) {
+    propagationProposalProjectionState.projection = projection;
+  }
 }
 
 export function getCachedPropagationProposalListProjection(): ProjectionEnvelope<PropagationProposalListProjection> | null {

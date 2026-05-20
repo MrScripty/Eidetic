@@ -60,6 +60,58 @@ const projection = {
   },
 };
 
+const newerProjection = {
+  ...projection,
+  version: 6,
+  change_event_id: 'event-6',
+  payload: {
+    proposals: [
+      {
+        id: 'proposal.propagation.fog',
+        action: 'set_bible_field' as const,
+        target: {
+          kind: 'bible_field' as const,
+          node_id: 'node.location.harbor',
+          part_key: 'environment',
+          field_key: 'weather',
+        },
+        status: 'pending' as const,
+        summary: 'Set harbor weather to foggy',
+        proposed_value: { type: 'text' as const, value: 'foggy' },
+        source_dependency_id: 'dependency.weather.scene',
+        rationale: 'Newer proposal',
+        created_at_ms: 67_890,
+      },
+    ],
+  },
+};
+
+const olderProjection = {
+  ...projection,
+  version: 5,
+  change_event_id: 'event-5',
+  payload: {
+    proposals: [
+      {
+        id: 'proposal.propagation.sun',
+        action: 'set_bible_field' as const,
+        target: {
+          kind: 'bible_field' as const,
+          node_id: 'node.location.harbor',
+          part_key: 'environment',
+          field_key: 'weather',
+        },
+        status: 'pending' as const,
+        summary: 'Set harbor weather to sunny',
+        proposed_value: { type: 'text' as const, value: 'sunny' },
+        source_dependency_id: 'dependency.weather.scene',
+        rationale: 'Older proposal',
+        created_at_ms: 56_789,
+      },
+    ],
+  },
+};
+
 beforeEach(() => {
   clearPropagationProposalListProjection();
   acceptPropagationProposalMock.mockReset();
@@ -211,5 +263,53 @@ describe('propagation proposal projection store', () => {
     expect(getCachedPropagationProposalListProjection()).toEqual(projection);
     expect(propagationProposalProjectionState.pending).toBe(false);
     expect(propagationProposalProjectionState.error).toBe('propagation proposals unavailable');
+  });
+
+  it('does not replace cached propagation projections with stale refresh results', async () => {
+    getPropagationProposalListProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshPropagationProposalListProjection();
+    getPropagationProposalListProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshPropagationProposalListProjection()).resolves.toEqual(olderProjection);
+
+    expect(getCachedPropagationProposalListProjection()).toEqual(newerProjection);
+    expect(propagationProposalProjectionState.pending).toBe(false);
+    expect(propagationProposalProjectionState.error).toBeUndefined();
+  });
+
+  it('does not replace cached propagation projections with stale command responses', async () => {
+    getPropagationProposalListProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshPropagationProposalListProjection();
+    createPropagationProposalMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      applyCreatePropagationProposalCommand(
+        {
+          proposal_id: 'proposal.propagation.sun',
+          action: 'set_bible_field',
+          target: {
+            kind: 'bible_field',
+            node_id: 'node.location.harbor',
+            part_key: 'environment',
+            field_key: 'weather',
+          },
+          summary: 'Set harbor weather to sunny',
+          proposed_value: { type: 'text', value: 'sunny' },
+          source_dependency_id: 'dependency.weather.scene',
+          rationale: 'Older command response',
+        },
+        'command-create-stale',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedPropagationProposalListProjection()).toEqual(newerProjection);
+    expect(propagationProposalProjectionState.pending).toBe(false);
+    expect(propagationProposalProjectionState.error).toBeUndefined();
   });
 });

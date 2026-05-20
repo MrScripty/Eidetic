@@ -43,6 +43,40 @@ const projection = {
   },
 };
 
+const newerProjection = {
+  ...projection,
+  version: 3,
+  payload: {
+    arcs: [
+      {
+        id: 'arc.romance',
+        parent_arc_id: null,
+        name: 'Romance',
+        description: 'Relationship thread',
+        arc_type: 'APlot' as const,
+        color: { r: 7, g: 8, b: 9 },
+      },
+    ],
+  },
+};
+
+const olderProjection = {
+  ...projection,
+  version: 2,
+  payload: {
+    arcs: [
+      {
+        id: 'arc.comedy',
+        parent_arc_id: null,
+        name: 'Comedy',
+        description: 'Older comic thread',
+        arc_type: 'APlot' as const,
+        color: { r: 4, g: 5, b: 6 },
+      },
+    ],
+  },
+};
+
 beforeEach(() => {
   clearStoryArcListProjection();
   createStoryArcMock.mockReset();
@@ -151,5 +185,45 @@ describe('story arc projection store', () => {
     expect(getCachedStoryArcListProjection()).toEqual(projection);
     expect(storyArcProjectionState.pending).toBe(false);
     expect(storyArcProjectionState.error).toBe('arcs unavailable');
+  });
+
+  it('does not replace cached arc projections with stale refresh results', async () => {
+    getStoryArcListProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshStoryArcListProjection();
+    getStoryArcListProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshStoryArcListProjection()).resolves.toEqual(olderProjection);
+
+    expect(getCachedStoryArcListProjection()).toEqual(newerProjection);
+    expect(storyArcProjectionState.pending).toBe(false);
+    expect(storyArcProjectionState.error).toBeUndefined();
+  });
+
+  it('does not replace cached arc projections with stale command responses', async () => {
+    getStoryArcListProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshStoryArcListProjection();
+    createStoryArcMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      applyCreateStoryArcCommand(
+        {
+          name: 'Comedy',
+          description: 'Older command response',
+          arc_type: 'APlot',
+          color: { r: 4, g: 5, b: 6 },
+        },
+        'command-story-stale',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedStoryArcListProjection()).toEqual(newerProjection);
+    expect(storyArcProjectionState.pending).toBe(false);
+    expect(storyArcProjectionState.error).toBeUndefined();
   });
 });

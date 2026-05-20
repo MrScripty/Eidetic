@@ -758,8 +758,11 @@ Discovered implementation gaps:
   cached timeline render projection. `bibleGraphSchemaProjection.svelte.ts`,
   `bibleRenderGraphProjection.svelte.ts`, and
   `changeReviewProjection.svelte.ts` now use the same guard for read-only
-  projection refreshes. Apply the same guard pattern to remaining command and
-  keyed projection stores that refresh asynchronously.
+  projection refreshes. `storyArcProjection.svelte.ts`,
+  `semanticProposalProjection.svelte.ts`, and
+  `propagationProposalProjection.svelte.ts` now guard both refresh and command
+  response envelopes. Apply the same guard pattern to remaining keyed
+  projection stores that refresh asynchronously.
 - Resolved: `ui/src/lib/stores/README.md` now classifies `wsHandlers.ts` as
   projection refresh orchestration instead of mixed legacy ownership, matching
   the current websocket handler implementation.

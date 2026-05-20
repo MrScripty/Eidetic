@@ -53,6 +53,48 @@ const projection = {
   },
 };
 
+const newerProjection = {
+  ...projection,
+  version: 6,
+  change_event_id: 'event-6',
+  payload: {
+    proposals: [
+      {
+        id: 'proposal-bea',
+        source_node_id: 'node.scene.two',
+        child_name: 'Second encounter',
+        reference_kind: 'character' as const,
+        reference_text: 'Bea',
+        proposed_schema_key: 'character',
+        status: 'pending' as const,
+        rationale: 'Newer proposal',
+        created_at_ms: 67_890,
+      },
+    ],
+  },
+};
+
+const olderProjection = {
+  ...projection,
+  version: 5,
+  change_event_id: 'event-5',
+  payload: {
+    proposals: [
+      {
+        id: 'proposal-cal',
+        source_node_id: 'node.scene.three',
+        child_name: 'Third encounter',
+        reference_kind: 'character' as const,
+        reference_text: 'Cal',
+        proposed_schema_key: 'character',
+        status: 'pending' as const,
+        rationale: 'Older proposal',
+        created_at_ms: 56_789,
+      },
+    ],
+  },
+};
+
 beforeEach(() => {
   clearBibleReferenceProposalListProjection();
   acceptBibleReferenceProposalMock.mockReset();
@@ -161,5 +203,47 @@ describe('semantic proposal projection store', () => {
     expect(getCachedBibleReferenceProposalListProjection()).toEqual(projection);
     expect(semanticProposalProjectionState.pending).toBe(false);
     expect(semanticProposalProjectionState.error).toBe('proposals unavailable');
+  });
+
+  it('does not replace cached proposal projections with stale refresh results', async () => {
+    getBibleReferenceProposalListProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshBibleReferenceProposalListProjection();
+    getBibleReferenceProposalListProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshBibleReferenceProposalListProjection()).resolves.toEqual(olderProjection);
+
+    expect(getCachedBibleReferenceProposalListProjection()).toEqual(newerProjection);
+    expect(semanticProposalProjectionState.pending).toBe(false);
+    expect(semanticProposalProjectionState.error).toBeUndefined();
+  });
+
+  it('does not replace cached proposal projections with stale command responses', async () => {
+    getBibleReferenceProposalListProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshBibleReferenceProposalListProjection();
+    createBibleReferenceProposalMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      applyCreateBibleReferenceProposalCommand(
+        {
+          proposal_id: 'proposal-cal',
+          source_node_id: 'node.scene.one',
+          child_name: 'First encounter',
+          reference_kind: 'character',
+          reference_text: 'Cal',
+          rationale: 'Older command response',
+        },
+        'command-create-stale',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedBibleReferenceProposalListProjection()).toEqual(newerProjection);
+    expect(semanticProposalProjectionState.pending).toBe(false);
+    expect(semanticProposalProjectionState.error).toBeUndefined();
   });
 });

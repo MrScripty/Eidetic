@@ -1,6 +1,7 @@
 import { createStoryArc, deleteStoryArc, setStoryArcMetadata } from '$lib/commandApi.js';
 import { getStoryArcListProjection } from '$lib/projectionApi.js';
 import type { CommandId, ProjectionEnvelope } from '$lib/projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 import type {
   CreateStoryArcCommand,
   DeleteStoryArcCommand,
@@ -24,7 +25,9 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 function cacheProjection(projection: ProjectionEnvelope<StoryArcListProjection>): void {
-  storyArcProjectionState.projection = projection;
+  if (shouldReplaceProjection(storyArcProjectionState.projection, projection)) {
+    storyArcProjectionState.projection = projection;
+  }
 }
 
 export function getCachedStoryArcListProjection(): ProjectionEnvelope<StoryArcListProjection> | null {

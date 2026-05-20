@@ -5,6 +5,7 @@ import {
 } from '$lib/commandApi.js';
 import { getBibleReferenceProposalListProjection } from '$lib/projectionApi.js';
 import type { CommandId, ProjectionEnvelope } from '$lib/projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 import type {
   AcceptBibleReferenceProposalCommand,
   BibleReferenceProposalCommandResponse,
@@ -30,7 +31,9 @@ function errorMessage(error: unknown, fallback: string): string {
 function cacheProjection(
   projection: ProjectionEnvelope<BibleReferenceProposalListProjection>,
 ): void {
-  semanticProposalProjectionState.projection = projection;
+  if (shouldReplaceProjection(semanticProposalProjectionState.projection, projection)) {
+    semanticProposalProjectionState.projection = projection;
+  }
 }
 
 export function getCachedBibleReferenceProposalListProjection(): ProjectionEnvelope<BibleReferenceProposalListProjection> | null {
