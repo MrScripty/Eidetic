@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { editorState } from './editor.svelte.js';
-import { refreshAiStatus, startAiStatusPolling } from './aiStatus.svelte.js';
+import { aiStatusState, refreshAiStatus, startAiStatusPolling } from './aiStatus.svelte.js';
 import { getAiStatus } from '$lib/api.js';
 
 vi.mock('$lib/api.js', () => ({
@@ -11,7 +10,7 @@ vi.mock('$lib/api.js', () => ({
 const getAiStatusMock = vi.mocked(getAiStatus);
 
 beforeEach(() => {
-  editorState.aiStatus = null;
+  aiStatusState.status = null;
   vi.useFakeTimers();
   getAiStatusMock.mockReset();
 });
@@ -21,7 +20,7 @@ afterEach(() => {
 });
 
 describe('ai status polling', () => {
-  it('updates editor state when refresh succeeds', async () => {
+  it('updates the ai status cache when refresh succeeds', async () => {
     getAiStatusMock.mockResolvedValue({
       backend: 'ollama',
       connected: true,
@@ -31,7 +30,7 @@ describe('ai status polling', () => {
 
     await refreshAiStatus();
 
-    expect(editorState.aiStatus).toMatchObject({
+    expect(aiStatusState.status).toMatchObject({
       backend: 'ollama',
       connected: true,
       model: 'llama3',
@@ -39,7 +38,7 @@ describe('ai status polling', () => {
   });
 
   it('marks the current backend disconnected when refresh fails', async () => {
-    editorState.aiStatus = {
+    aiStatusState.status = {
       backend: 'open_router',
       connected: true,
       error: undefined,
@@ -49,7 +48,7 @@ describe('ai status polling', () => {
 
     await refreshAiStatus();
 
-    expect(editorState.aiStatus).toMatchObject({
+    expect(aiStatusState.status).toMatchObject({
       backend: 'open_router',
       connected: false,
       error: 'Failed to reach server',

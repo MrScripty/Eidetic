@@ -1,4 +1,3 @@
-import type { AiStatus } from '../aiTypes.js';
 import type { NodeId, StoryLevel, StoryNode } from '../timelineTypes.js';
 
 /**
@@ -21,8 +20,6 @@ export const editorState = $state<{
   lastGenerationNodeId: NodeId | null;
   /** Error from a failed generation. */
   generationError: string | null;
-  /** Last-known AI backend status. */
-  aiStatus: AiStatus | null;
   /** Parent node ID during batch child generation. */
   batchParentNodeId: NodeId | null;
   /** Total number of children in batch generation. */
@@ -39,7 +36,6 @@ export const editorState = $state<{
   generationContext: null,
   lastGenerationNodeId: null,
   generationError: null,
-  aiStatus: null,
   batchParentNodeId: null,
   batchTotalCount: 0,
   batchCompletedCount: 0,

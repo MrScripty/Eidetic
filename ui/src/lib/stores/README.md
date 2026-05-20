@@ -50,13 +50,13 @@ continues.
 
 | Store | Classification | Current status | Milestone 6 action |
 | ----- | -------------- | -------------- | ------------------ |
-| `aiStatus.svelte.ts` | Projection/status cache | Uses a single polling owner, but writes status into `editorState.aiStatus`. | Move status into this store's own cache and leave `editorState` as transient editor state. |
+| `aiStatus.svelte.ts` | Projection/status cache | Owns the last-known AI backend status and the single polling lifecycle. | Keep; add stale-response guards if config-driven overlapping refreshes become possible. |
 | `bible.svelte.ts` | Transient UI state | Stores selected bible graph node ID only. | Keep; document as frontend-owned selection. |
 | `bibleGraphNodeProjection.svelte.ts` | Projection cache and command bridge | Caches backend projection envelopes and replaces cache from command responses. | Keep; later share common projection command helpers if useful. |
 | `bibleGraphSchemaProjection.svelte.ts` | Projection cache | Caches backend schema projection. | Keep; add stale-response guards when projection refresh coalescing lands. |
 | `bibleRenderGraphProjection.svelte.ts` | Projection cache | Caches backend render graph projection. | Keep; add stale-response guards when projection refresh coalescing lands. |
 | `changeReviewProjection.svelte.ts` | Projection cache | Caches backend change review projection. | Keep; add stale-response guards when projection refresh coalescing lands. |
-| `editor.svelte.ts` | Mixed: transient UI state plus legacy ownership | Generation progress is transient, but `selectedNode` stores a full durable `StoryNode`, and `aiStatus` belongs in the AI status store. | Remove `selectedNode`; keep selected IDs and generation-progress state only. |
+| `editor.svelte.ts` | Mixed: transient UI state plus legacy ownership | Generation progress is transient, but `selectedNode` stores a full durable `StoryNode`. | Remove `selectedNode`; keep selected IDs and generation-progress state only. |
 | `notifications.svelte.ts` | Transient UI state | Owns discardable toast messages. | Keep. |
 | `objectFieldProjection.svelte.ts` | Projection cache and command bridge | Caches backend object-field projections and replaces cache from command responses. | Keep; add stale-response guards when projection refresh coalescing lands. |
 | `project.svelte.ts` | Legacy ownership | Stores a broad `Project` including durable timeline data. | Replace with lightweight project/session metadata or open-state only. |

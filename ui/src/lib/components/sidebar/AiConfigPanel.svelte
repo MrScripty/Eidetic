@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { AiConfig, BackendType } from '$lib/aiTypes.js';
   import { updateAiConfig } from '$lib/api.js';
-  import { editorState } from '$lib/stores/editor.svelte.js';
-  import { refreshAiStatus } from '$lib/stores/aiStatus.svelte.js';
+  import { aiStatusState, refreshAiStatus } from '$lib/stores/aiStatus.svelte.js';
 
   const BACKEND_BASE_URLS: Record<BackendType, string> = {
     llama_cpp: 'http://localhost:8080/v1',
@@ -36,7 +35,7 @@
     try {
       await updateAiConfig(config);
       await checkStatus();
-      statusMessage = editorState.aiStatus?.connected ? 'Connected' : 'Connection failed';
+      statusMessage = aiStatusState.status?.connected ? 'Connected' : 'Connection failed';
     } catch {
       statusMessage = 'Failed to save config';
     }
@@ -70,14 +69,14 @@
   <div class="status-row">
     <span
       class="status-dot"
-      class:connected={editorState.aiStatus?.connected}
-      class:disconnected={editorState.aiStatus && !editorState.aiStatus.connected}
+      class:connected={aiStatusState.status?.connected}
+      class:disconnected={aiStatusState.status && !aiStatusState.status.connected}
     ></span>
     <span class="status-text">
-      {#if editorState.aiStatus?.connected}
-        Connected - {editorState.aiStatus.model || config.model}
-      {:else if editorState.aiStatus?.error}
-        {editorState.aiStatus.error}
+      {#if aiStatusState.status?.connected}
+        Connected - {aiStatusState.status.model || config.model}
+      {:else if aiStatusState.status?.error}
+        {aiStatusState.status.error}
       {:else}
         Checking...
       {/if}
@@ -130,7 +129,7 @@
     <input type="number" bind:value={config.max_tokens} min="256" max="32768" step="256" />
   </label>
 
-  <button class="save-btn" onclick={handleSave} disabled={saving}>
+  <button class="save-btn" type="button" onclick={handleSave} disabled={saving}>
     {saving ? 'Saving...' : 'Save & Connect'}
   </button>
 

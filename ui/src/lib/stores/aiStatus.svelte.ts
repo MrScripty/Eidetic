@@ -1,23 +1,29 @@
 import { getAiStatus } from '$lib/api.js';
-import { editorState } from './editor.svelte.js';
+import type { AiStatus } from '$lib/aiTypes.js';
 
 const POLL_INTERVAL_MS = 30_000;
+
+export const aiStatusState = $state<{
+  status: AiStatus | null;
+}>({
+  status: null,
+});
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let pollOwners = 0;
 
 export async function refreshAiStatus(): Promise<void> {
   try {
-    editorState.aiStatus = await getAiStatus();
+    aiStatusState.status = await getAiStatus();
   } catch {
-    if (editorState.aiStatus) {
-      editorState.aiStatus = {
-        ...editorState.aiStatus,
+    if (aiStatusState.status) {
+      aiStatusState.status = {
+        ...aiStatusState.status,
         connected: false,
         error: 'Failed to reach server',
       };
     } else {
-      editorState.aiStatus = {
+      aiStatusState.status = {
         backend: 'llama_cpp',
         connected: false,
         error: 'Failed to reach server',

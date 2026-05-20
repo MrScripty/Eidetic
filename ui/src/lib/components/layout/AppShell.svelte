@@ -9,7 +9,7 @@
   import { projectState } from '$lib/stores/project.svelte.js';
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
-  import { startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
+  import { aiStatusState, startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
   import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
   import { saveProject, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
@@ -197,14 +197,14 @@
     <div
       class="ai-indicator"
       style="right: {rightPanelOpen ? rightPanelWidth + 16 : 12}px"
-      title={editorState.aiStatus?.connected
-        ? `AI: ${editorState.aiStatus.model ?? 'connected'}`
+      title={aiStatusState.status?.connected
+        ? `AI: ${aiStatusState.status.model ?? 'connected'}`
         : 'AI: disconnected'}
     >
       <span
         class="ai-dot"
-        class:connected={editorState.aiStatus?.connected}
-        class:disconnected={editorState.aiStatus && !editorState.aiStatus.connected}
+        class:connected={aiStatusState.status?.connected}
+        class:disconnected={aiStatusState.status && !aiStatusState.status.connected}
       ></span>
     </div>
   {/if}
