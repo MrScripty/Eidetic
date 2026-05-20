@@ -68,6 +68,76 @@ const projection = {
   },
 };
 
+const newerProjection = {
+  ...projection,
+  version: 7,
+  change_event_id: 'event-script-7',
+  payload: {
+    ...projection.payload,
+    segments: [
+      {
+        segment: {
+          id: 'script.segment.beat-1',
+          document_id: 'script.document/main one',
+          source_node_id: 'node.beat.opening',
+          start_ms: 1000,
+          end_ms: 5000,
+          status: 'current' as const,
+          sort_order: 1,
+        },
+        blocks: [
+          {
+            block: {
+              id: 'script.block.action-2',
+              segment_id: 'script.segment.beat-1',
+              block_kind: 'action' as const,
+              text: 'Ada enters through fog.',
+              sort_order: 2,
+            },
+            spans: [],
+            locks: [],
+          },
+        ],
+      },
+    ],
+  },
+};
+
+const olderProjection = {
+  ...projection,
+  version: 6,
+  change_event_id: 'event-script-6',
+  payload: {
+    ...projection.payload,
+    segments: [
+      {
+        segment: {
+          id: 'script.segment.beat-1',
+          document_id: 'script.document/main one',
+          source_node_id: 'node.beat.opening',
+          start_ms: 1000,
+          end_ms: 5000,
+          status: 'current' as const,
+          sort_order: 1,
+        },
+        blocks: [
+          {
+            block: {
+              id: 'script.block.action-3',
+              segment_id: 'script.segment.beat-1',
+              block_kind: 'action' as const,
+              text: 'Ada enters in sunlight.',
+              sort_order: 2,
+            },
+            spans: [],
+            locks: [],
+          },
+        ],
+      },
+    ],
+  },
+};
+
 function resetProjectionState(): void {
   for (const cacheKey of Object.keys(scriptDocumentProjectionState.projections)) {
     delete scriptDocumentProjectionState.projections[cacheKey];
@@ -183,6 +253,48 @@ describe('script document projection store', () => {
     expect(getCachedScriptDocumentProjection(key)).toEqual(projection);
     expect(isScriptDocumentProjectionPending(key)).toBe(false);
     expect(getScriptDocumentProjectionError(key)).toBe('command conflict');
+  });
+
+  it('does not replace cached script projections with stale refresh results', async () => {
+    getScriptDocumentProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshScriptDocumentProjection(key);
+    getScriptDocumentProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshScriptDocumentProjection(key)).resolves.toEqual(olderProjection);
+
+    expect(getCachedScriptDocumentProjection(key)).toEqual(newerProjection);
+    expect(isScriptDocumentProjectionPending(key)).toBe(false);
+    expect(getScriptDocumentProjectionError(key)).toBeUndefined();
+  });
+
+  it('does not replace cached script projections with stale command responses', async () => {
+    getScriptDocumentProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshScriptDocumentProjection(key);
+    setScriptBlockMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      applyScriptBlockCommand({
+        document_id: 'script.document/main one',
+        document_title: 'Pilot',
+        segment_id: 'script.segment.beat-1',
+        segment_start_ms: 1000,
+        segment_end_ms: 5000,
+        segment_status: 'current',
+        block_id: 'script.block.action-3',
+        block_kind: 'action',
+        text: 'Ada enters in sunlight.',
+      }),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedScriptDocumentProjection(key)).toEqual(newerProjection);
+    expect(isScriptDocumentProjectionPending(key)).toBe(false);
+    expect(getScriptDocumentProjectionError(key)).toBeUndefined();
   });
 
   it('stores lock command response projections by explicit document id', async () => {

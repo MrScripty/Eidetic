@@ -761,8 +761,10 @@ Discovered implementation gaps:
   projection refreshes. `storyArcProjection.svelte.ts`,
   `semanticProposalProjection.svelte.ts`, and
   `propagationProposalProjection.svelte.ts` now guard both refresh and command
-  response envelopes. Apply the same guard pattern to remaining keyed
-  projection stores that refresh asynchronously.
+  response envelopes. `objectFieldProjection.svelte.ts` and
+  `scriptDocumentProjection.svelte.ts` now guard keyed refresh and command
+  response envelopes. Apply the same guard pattern to the remaining keyed
+  bible graph detail and selected-node editor projection caches.
 - Resolved: `ui/src/lib/stores/README.md` now classifies `wsHandlers.ts` as
   projection refresh orchestration instead of mixed legacy ownership, matching
   the current websocket handler implementation.

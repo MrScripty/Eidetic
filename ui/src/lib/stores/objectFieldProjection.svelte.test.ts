@@ -41,6 +41,30 @@ const projection = {
   },
 };
 
+const newerProjection = {
+  ...projection,
+  version: 4,
+  change_event_id: 'event-4',
+  payload: {
+    ...projection.payload,
+    fields: {
+      weather: { type: 'text' as const, value: 'foggy' },
+    },
+  },
+};
+
+const olderProjection = {
+  ...projection,
+  version: 3,
+  change_event_id: 'event-3',
+  payload: {
+    ...projection.payload,
+    fields: {
+      weather: { type: 'text' as const, value: 'sunny' },
+    },
+  },
+};
+
 function resetProjectionState(): void {
   for (const cacheKey of Object.keys(objectFieldProjectionState.projections)) {
     delete objectFieldProjectionState.projections[cacheKey];
@@ -132,6 +156,43 @@ describe('object field projection store', () => {
     expect(getCachedObjectFieldProjection(key)).toEqual(projection);
     expect(isObjectFieldProjectionPending(key)).toBe(false);
     expect(getObjectFieldProjectionError(key)).toBe('command conflict');
+  });
+
+  it('does not replace cached object projections with stale refresh results', async () => {
+    getObjectFieldProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshObjectFieldProjection(key);
+    getObjectFieldProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshObjectFieldProjection(key)).resolves.toEqual(olderProjection);
+
+    expect(getCachedObjectFieldProjection(key)).toEqual(newerProjection);
+    expect(isObjectFieldProjectionPending(key)).toBe(false);
+    expect(getObjectFieldProjectionError(key)).toBeUndefined();
+  });
+
+  it('does not replace cached object projections with stale command responses', async () => {
+    getObjectFieldProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshObjectFieldProjection(key);
+    setObjectFieldMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      applyObjectFieldCommand({
+        object_kind: 'bible_part_field',
+        object_id: 'field/weather one',
+        field_key: 'weather',
+        value: { type: 'text', value: 'sunny' },
+      }),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedObjectFieldProjection(key)).toEqual(newerProjection);
+    expect(isObjectFieldProjectionPending(key)).toBe(false);
+    expect(getObjectFieldProjectionError(key)).toBeUndefined();
   });
 
   it('clears cached projection state for one object', async () => {

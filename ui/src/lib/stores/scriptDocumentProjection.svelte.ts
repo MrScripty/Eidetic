@@ -1,6 +1,7 @@
 import { setScriptBlock, setScriptLock } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
 import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 import type {
   ScriptDocumentId,
   ScriptDocumentProjection,
@@ -33,6 +34,17 @@ function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
+function cacheProjection(
+  cacheKey: string,
+  projection: ProjectionEnvelope<ScriptDocumentProjection>,
+): void {
+  if (
+    shouldReplaceProjection(scriptDocumentProjectionState.projections[cacheKey] ?? null, projection)
+  ) {
+    scriptDocumentProjectionState.projections[cacheKey] = projection;
+  }
+}
+
 export function getCachedScriptDocumentProjection(
   key: ScriptDocumentProjectionKey,
 ): ProjectionEnvelope<ScriptDocumentProjection> | undefined {
@@ -58,7 +70,7 @@ export async function refreshScriptDocumentProjection(
 
   try {
     const projection = await getScriptDocumentProjection(key);
-    scriptDocumentProjectionState.projections[cacheKey] = projection;
+    cacheProjection(cacheKey, projection);
     return projection;
   } catch (error) {
     scriptDocumentProjectionState.errors[cacheKey] = errorMessage(
@@ -83,7 +95,7 @@ export async function applyScriptBlockCommand(
 
   try {
     const response = await setScriptBlock(payload, commandId);
-    scriptDocumentProjectionState.projections[cacheKey] = response.projection;
+    cacheProjection(cacheKey, response.projection);
     return response;
   } catch (error) {
     scriptDocumentProjectionState.errors[cacheKey] = errorMessage(
@@ -109,7 +121,7 @@ export async function applyScriptLockCommand(
 
   try {
     const response = await setScriptLock(payload, commandId);
-    scriptDocumentProjectionState.projections[cacheKey] = response.projection;
+    cacheProjection(cacheKey, response.projection);
     return response;
   } catch (error) {
     scriptDocumentProjectionState.errors[cacheKey] = errorMessage(

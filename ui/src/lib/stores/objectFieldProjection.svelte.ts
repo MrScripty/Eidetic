@@ -8,6 +8,7 @@ import type {
   ProjectionEnvelope,
   SetObjectFieldCommand,
 } from '../projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
 export interface ObjectFieldProjectionKey {
   object_kind: ObjectKind;
@@ -30,6 +31,17 @@ function projectionKey({ object_kind, object_id }: ObjectFieldProjectionKey): st
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
+}
+
+function cacheProjection(
+  cacheKey: string,
+  projection: ProjectionEnvelope<ObjectFieldProjection>,
+): void {
+  if (
+    shouldReplaceProjection(objectFieldProjectionState.projections[cacheKey] ?? null, projection)
+  ) {
+    objectFieldProjectionState.projections[cacheKey] = projection;
+  }
 }
 
 export function getCachedObjectFieldProjection(
@@ -55,7 +67,7 @@ export async function refreshObjectFieldProjection(
 
   try {
     const projection = await getObjectFieldProjection(key);
-    objectFieldProjectionState.projections[cacheKey] = projection;
+    cacheProjection(cacheKey, projection);
     return projection;
   } catch (error) {
     objectFieldProjectionState.errors[cacheKey] = errorMessage(error, 'Failed to load projection');
@@ -78,7 +90,7 @@ export async function applyObjectFieldCommand(
 
   try {
     const response = await setObjectField(payload, commandId);
-    objectFieldProjectionState.projections[cacheKey] = response.projection;
+    cacheProjection(cacheKey, response.projection);
     return response;
   } catch (error) {
     objectFieldProjectionState.errors[cacheKey] = errorMessage(error, 'Failed to apply command');
