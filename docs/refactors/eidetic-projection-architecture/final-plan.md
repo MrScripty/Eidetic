@@ -16,6 +16,7 @@ This execution plan consolidates the discovery notes in:
 - `plans/timeline-rendering-bevy.md`
 - `plans/story-bible-3d-graph-view.md`
 - `plans/architecture-blast-radius.md`
+- Current product direction: finish making Svelte a projection consumer before replacing the timeline renderer with Bevy.
 
 ## Standards Reviewed
 
@@ -49,6 +50,7 @@ Implementation must comply with:
 - Backend remains the only source of truth for persistent data and business decisions.
 - No optimistic UI updates for backend-owned state.
 - Frontend and Bevy may cache projections only as versioned read models that can be discarded and rebuilt.
+- Frontend stores may own only transient interaction state or discardable projection caches; any store that owns durable project/story/script/bible state is a deletion target.
 - Bevy replaces the DOM/SVG timeline renderer; the DOM/SVG timeline must not remain as a runtime fallback.
 - Bevy and Svelte can own transient UI/render state only.
 - AI changes must be proposals until accepted through the same command/event path as user actions.
@@ -379,6 +381,7 @@ Completed slices:
 - `feat(renderer): add Bevy timeline playhead state` added transient renderer-owned playhead state bounded by backend timeline render projection duration and exposed it through the wasm bridge without persisting playhead position.
 - `feat(renderer): expose timeline relationship curves to wasm` made projection-derived timeline relationship curve DTOs serializable and exposed them through the wasm bridge so browser hosts can consume Bevy curve data without owning canonical timeline state.
 - `feat(renderer): align timeline split commands with backend` updated Bevy timeline split command emission to include backend-required replacement node IDs and validate those IDs against the loaded projection before commands leave the renderer boundary.
+- `docs(plan): make frontend projection completion next` reorders the next implementation focus so Svelte ownership cleanup, projection cache enforcement, and legacy read/write deletion happen before Bevy timeline replacement resumes.
 
 Discovered issues:
 
@@ -473,6 +476,7 @@ The first persistence and event-history slice must prove durable command idempot
 
 In scope:
 
+- Completing the frontend projection-only boundary before more renderer integration.
 - Timeline nodes as timed context chunks.
 - Composable story bible graph, schemas, parts, edges, snapshots, assets, and references.
 - Script document, script segments, blocks, spans, locks, provenance, and patch proposals.
@@ -485,6 +489,7 @@ In scope:
 
 Out of scope:
 
+- Building a second/parallel frontend for the projection UI.
 - Compatibility migrations for old project files unless a later product decision explicitly adds them.
 - Keeping the DOM/SVG timeline as a supported renderer.
 - Keeping Beat node content as final screenplay storage.
@@ -614,7 +619,48 @@ Verification:
 - Proposal acceptance/rejection/edit tests.
 - Restart/recovery tests for accepted and pending proposals.
 
-## Milestone 6: Bevy Timeline Renderer
+## Milestone 6: Frontend Projection-Only Completion
+
+This is the next section to complete before further renderer replacement work. The goal is not a separate frontend. The goal is one Svelte shell whose durable reads come from backend projections and whose durable writes go through backend commands.
+
+Allowed frontend-owned state:
+
+- current selection, hover, focus, panel state, menus, draft form fields, drag previews, scroll, zoom, active tool, and renderer viewport/camera/playhead state;
+- pending/loading/error state for requests;
+- discardable projection caches keyed by backend projection identity and version.
+
+Forbidden frontend-owned state:
+
+- timeline structure, node ranges, track/lane definitions, relationships, story arcs, bible facts, script blocks, script locks, semantic dependencies, accepted/pending proposals, AI outputs, undo/redo history, or broad project mirrors treated as editable state.
+
+Tasks:
+
+- Audit every frontend store and classify it as `projection cache`, `transient UI state`, or `legacy ownership`.
+- Delete or rewrite every `legacy ownership` store/path so durable changes enter through backend command helpers and projection responses.
+- Make focused projection stores the only durable read source for timeline render data, script documents, bible graph details/schema/render graph, story arcs, semantic proposals, propagation proposals, change review, AI status/config, child plans, and project/reference metadata.
+- Remove remaining UI code that hydrates durable state from broad `Project` or `Timeline` DTOs when a focused projection exists.
+- Remove local patch/update helpers that mutate durable frontend objects after saves; command responses must replace projection caches or trigger projection refresh.
+- Ensure websocket handlers refresh projections or invalidate caches; they must not patch durable entities locally.
+- Keep Svelte timeline components temporarily only as projection consumers and command emitters; do not add new durable timeline behavior to the DOM renderer.
+- Add static/lint/test enforcement for banned legacy APIs, broad durable mutations, and direct writes to projection cache payloads outside cache replacement functions.
+- Update frontend READMEs to document each touched store/component as projection cache or transient UI state.
+
+Verification:
+
+- Store audit document or table exists and lists every `ui/src/lib/stores/*` owner classification.
+- Unit tests prove command responses replace projection caches without optimistic durable mutation.
+- WebSocket handler tests prove events refresh/invalidate projection caches instead of patching durable objects.
+- Static checks or focused tests fail if banned legacy helpers, broad project mutation paths, or old timeline mutation APIs are reintroduced.
+- `types.ts` remains a compatibility barrel only; new code imports focused DTO owner modules directly.
+- No UI component writes to backend-owned fields except through command helpers.
+- Svelte timeline still renders during the transition, but only from projection-backed/cache-backed inputs and backend-confirmed commands.
+
+Exit criteria:
+
+- The frontend can be described as `projection caches + transient interaction state` with no durable local ownership exceptions.
+- Remaining DOM timeline replacement work can proceed without untangling durable frontend state at the same time.
+
+## Milestone 7: Bevy Timeline Renderer
 
 Tasks:
 
@@ -632,7 +678,7 @@ Verification:
 - Renderer lifecycle tests for mount/unmount subscription cleanup.
 - Dependency review proving Bevy is not in `eidetic-core` and is justified/feature-gated if it adds 100+ transitive dependencies.
 
-## Milestone 7: Bevy Bible Graph View
+## Milestone 8: Bevy Bible Graph View
 
 Tasks:
 
@@ -725,6 +771,7 @@ Performance-sensitive graph queries, projection rebuilds, and renderer projectio
 
 - Dual truth between old and new canonical models: delete old ownership paths in the same milestone where replacements become active.
 - Bevy becoming a second state owner: Bevy receives projections and emits commands only.
+- Svelte remaining a hidden state owner: finish Milestone 6 before adding more renderer work; durable UI data must be projection cache replacement only.
 - AI committing state silently: AI outputs proposals; accepted proposals go through command handlers.
 - JSON reappearing as canonical storage: enforce relational rows for indexed facts, claims, dependencies, locks, and revisions.
 - Standards deferred until late: every milestone includes verification and documentation gates.
@@ -741,6 +788,8 @@ Re-plan before continuing if:
 - A milestone cannot delete the old ownership path after its replacement lands.
 - Y.Doc must remain canonical for any durable script state.
 - Bevy integration requires dependencies in `eidetic-core`.
+- A frontend store cannot be classified cleanly as transient UI state or projection cache.
+- A UI workflow requires broad durable project/timeline mutation after focused commands/projections exist.
 - A vertical slice cannot be tested through real layer boundaries.
 - Persistence requires JSON for queryable canonical data.
 - Runtime bridge design cannot provide deterministic shutdown and subscription cleanup.
@@ -758,6 +807,7 @@ The refactor is complete when:
 - Undo/redo works through event revisions after restart.
 - AI graph/script changes are reviewable proposals before acceptance.
 - Svelte and Bevy consume versioned projections and submit commands only.
+- Frontend stores contain only transient UI state or discardable projection caches.
 - The DOM/SVG timeline renderer is removed.
 - The 2D SVG relationship graph is replaced by the Bevy bible graph or removed as a supported graph view.
 - Standards-required tests, docs, lifecycle owners, validators, and dependency reviews are present for all touched areas.
