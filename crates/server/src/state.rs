@@ -23,8 +23,6 @@ pub mod constants {
     pub const DEFAULT_MAX_TOKENS: usize = 4096;
     /// Default llama.cpp OpenAI-compatible base URL.
     pub const DEFAULT_LLAMACPP_URL: &str = "http://localhost:8080/v1";
-    /// Minimum gap duration in ms for gap detection.
-    pub const GAP_THRESHOLD_MS: u64 = 30_000;
     /// Reference document chunk size in characters.
     pub const REFERENCE_CHUNK_SIZE: usize = 500;
     /// Reference document chunk overlap in characters.
