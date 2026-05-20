@@ -696,6 +696,13 @@ Known legacy ownership paths to remove:
 - `ui/src/lib/components/editor/BeatEditor.svelte`: parent/child/sibling queries from broad timeline state and direct mutation of selected node notes, lock state, and generation status.
 - `ui/src/lib/README.md`: examples that assign broad timeline/project data into frontend stores.
 
+Discovered implementation gaps:
+
+- `TimelineRenderProjection` does not yet expose structure bar data or timeline gaps. The DOM timeline still needs those to remove `timelineState.timeline.structure` and `getGaps()` without losing current UI behavior.
+- `TimelineRenderModel` now has pure selectors for visible tracks, clips by track/level, and adjacent clip bounds. Continue moving timeline components onto those selectors before deleting broad timeline helpers.
+- `BeatEditor.svelte` cannot become projection-only from `TimelineRenderProjection` alone because the render projection intentionally omits notes and full editor context. Add a focused selected-node/editor projection with node identity, hierarchy context, notes, lock state, content status, children, parent, siblings, adjacent parents, and child-level metadata.
+- The current UI still sends renderer-generated IDs for timeline create/split/relationship commands. Backend validation now rejects duplicate node IDs, duplicate relationship IDs, and self-linked relationships, but later slices should move ID generation backend-side per command family once idempotency semantics are designed.
+
 Simplification opportunities:
 
 - Add a small projection command helper/factory for repeated `pending/error/replace projection` store logic after the ownership cleanup lands.
