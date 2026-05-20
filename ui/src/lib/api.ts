@@ -1,5 +1,6 @@
 import type { AiConfig, AiStatus, ModelListResponse } from './aiTypes.js';
 import type { ChildPlan } from './childPlanningTypes.js';
+import { hasDesktopTransport, invokeDesktop } from './desktopTransport.js';
 import type { Project, ReferenceDocument, ReferenceType } from './projectTypes.js';
 
 const BASE = '/api';
@@ -29,6 +30,9 @@ export function createProject(name: string, template: string): Promise<Project> 
 }
 
 export function getProject(): Promise<Project> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<Project>('project_get');
+  }
   return request('/project');
 }
 

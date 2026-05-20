@@ -10,7 +10,8 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | -------------------------- | -------------------------------------------------------------------------------------------------- |
 | `types.ts`                 | Shared TypeScript mirrors of core timeline, story, and UI layout contracts.                        |
 | `bibleGraphSchemaTypes.ts` | Focused TypeScript mirrors for backend-owned bible graph schema projection shapes.                 |
-| `api.ts`                   | Browser-side request helpers for project, timeline, story, and export operations.                  |
+| `api.ts`                   | Frontend request helpers for project, timeline, story, and export operations.                      |
+| `desktopTransport.ts`      | Tauri IPC detection and command invocation helpers for desktop-hosted frontend code.                |
 | `commandApi.ts`            | Browser-side command helpers that submit backend-owned commands and receive versioned projections. |
 | `commandApi.test.ts`       | Tests for command helper request shape and backend error handling.                                 |
 | `projectionApi.ts`         | Browser-side read helpers for focused backend projections.                                         |
@@ -39,7 +40,7 @@ Keep shared UI contracts, stores, and feature components under `ui/src/lib` and 
 
 ## Invariants
 
-- Backend-owned project data enters the UI through typed contracts instead of free-form objects.
+- Backend-owned project data enters the UI through typed HTTP or Tauri IPC contracts instead of free-form objects.
 - Shared timeline geometry values are defined once and reused by all dependent components.
 - Stores own transient UI coordination; components render from store state rather than manual DOM mutation.
 
@@ -51,7 +52,7 @@ Keep shared UI contracts, stores, and feature components under `ui/src/lib` and 
 
 ## Dependencies
 
-**Internal:** `ui/src/routes`, `ui/src/app.html`, Rust server APIs exposed through `api.ts`, `commandApi.ts`, and `projectionApi.ts`.
+**Internal:** `ui/src/routes`, `ui/src/app.html`, Rust backend APIs exposed through `api.ts`, `commandApi.ts`, `projectionApi.ts`, and Tauri commands in `desktopTransport.ts`.
 **External:** Svelte 5, SvelteKit, Vite, Yjs client dependencies.
 
 ## Related ADRs
@@ -80,6 +81,7 @@ async function openTimeline() {
 - Internal consumers import typed shapes and helpers from `$lib/*`.
 - Store consumers should treat backend-backed entities as read-through state and mutate them through API/store actions, not local object surgery.
 - Command helpers return backend projections and must not patch persistent stores optimistically.
+- Desktop command helpers return backend projections through Tauri IPC and must fall back only while Milestone 7 keeps legacy HTTP parity paths.
 - Projection helpers are read-only and return backend-owned versioned read models.
 - Layout consumers should reuse exported constants/helpers instead of re-declaring pixel budgets in component-local CSS.
 - Compatibility is maintained by updating this directory README or an ADR whenever shared contracts materially change.

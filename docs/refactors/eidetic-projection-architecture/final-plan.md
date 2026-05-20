@@ -408,6 +408,10 @@ Completed slices:
   backend runtime composition, a desktop health command, and a read-only
   `project_get` command backed by `project_service` without adding Tauri
   dependencies to core, server, or renderer crates.
+- `feat(ui): prefer tauri project read transport` added a focused
+  `desktopTransport.ts` IPC helper, enabled Tauri's global API for the desktop
+  shell, and moved `getProject()` onto the `project_get` desktop command when
+  available while retaining the legacy HTTP fallback during migration.
 
 Discovered issues:
 

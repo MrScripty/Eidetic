@@ -22,6 +22,35 @@ describe('api request handling', () => {
     await expect(getProject()).rejects.toThrow('missing project');
   });
 
+  it('uses the desktop project command when Tauri transport is available', async () => {
+    const invoke = vi.fn().mockResolvedValue({ name: 'Desktop Project', premise: '' });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getProject()).resolves.toMatchObject({
+      name: 'Desktop Project',
+    });
+    expect(invoke).toHaveBeenCalledWith('project_get', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('normalizes desktop command errors', async () => {
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: {
+          invoke: vi.fn().mockRejectedValue({ kind: 'not_found', message: 'no project loaded' }),
+        },
+      },
+    });
+
+    await expect(getProject()).rejects.toThrow('no project loaded');
+  });
+
   it('rejects ok responses that still carry an error payload', async () => {
     vi.stubGlobal(
       'fetch',
