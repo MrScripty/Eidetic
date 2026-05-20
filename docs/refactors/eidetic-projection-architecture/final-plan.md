@@ -492,6 +492,11 @@ Completed slices:
   the focused semantic command service, kept the legacy Axum routes as service
   adapters, exposed matching Tauri commands, and made the frontend command
   helpers prefer desktop IPC when available.
+- `feat(desktop): route timeline node lock command through tauri` moved timeline
+  node lock command handling into a focused backend timeline command service,
+  kept the legacy Axum route as a service adapter, exposed
+  `command_timeline_node_lock` through Tauri, and made the frontend helper
+  prefer desktop IPC when available.
 
 Discovered issues:
 

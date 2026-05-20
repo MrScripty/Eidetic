@@ -31,6 +31,7 @@ pub use crate::command_service_semantic::{
     create_propagation_proposal, reject_bible_reference_proposal, reject_propagation_proposal,
     update_propagation_proposal,
 };
+pub use crate::command_service_timeline::{TimelineCommandResponse, set_timeline_node_lock};
 
 #[derive(Debug, Serialize)]
 pub struct ObjectFieldCommandResponse {

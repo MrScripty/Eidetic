@@ -18,6 +18,7 @@ pub mod command_service;
 pub(crate) mod command_service_bible;
 pub(crate) mod command_service_semantic;
 pub(crate) mod command_service_support;
+pub(crate) mod command_service_timeline;
 pub(crate) mod embeddings;
 pub mod error;
 pub(crate) mod export;

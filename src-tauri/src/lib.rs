@@ -9,8 +9,8 @@ use eidetic_core::contracts::{
     RejectPropagationProposalCommand, ScriptDocumentProjection, SelectedNodeEditorProjection,
     SemanticDependencyProjection, SetBibleGraphFieldCommand, SetObjectFieldCommand,
     SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
-    StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
-    UpdatePropagationProposalCommand,
+    SetTimelineNodeLockCommand, StoryArcListProjection, StoryArcProgressionProjection,
+    TimelineRenderProjection, UpdatePropagationProposalCommand,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
@@ -317,6 +317,17 @@ async fn command_propagation_proposal_accept(
 }
 
 #[tauri::command]
+async fn command_timeline_node_lock(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetTimelineNodeLockCommand>,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_timeline_node_lock(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_object_field(
     app: tauri::AppHandle,
     query: ObjectFieldProjectionRequest,
@@ -502,6 +513,7 @@ pub fn run() {
             command_propagation_proposal_reject,
             command_propagation_proposal_update,
             command_propagation_proposal_accept,
+            command_timeline_node_lock,
             projection_object_field,
             projection_script_document,
             projection_bible_graph_node,

@@ -501,32 +501,10 @@ async fn set_timeline_node_lock(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<SetTimelineNodeLockCommand>>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = {
-        let project = timeline_command_project(&state, &path).await?;
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_set_timeline_node_lock_history(
-            &mut conn, &project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
-            .map_err(map_timeline_command_error)?;
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::NodeUpdated {
-            node_id: command.payload.node_id.0,
-        });
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
+    crate::command_service::set_timeline_node_lock(&state, command)
+        .await
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn set_timeline_node_notes(

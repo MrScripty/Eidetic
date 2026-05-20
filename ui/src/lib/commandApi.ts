@@ -521,6 +521,10 @@ export function setTimelineNodeLock(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_lock', { command });
+  }
+
   return request('/commands/timeline/node-lock', {
     method: 'POST',
     body: JSON.stringify(command),
