@@ -740,6 +740,9 @@ Discovered implementation gaps:
   derive stable backend-owned child IDs per command ID and child index for
   idempotent replay, and the editor no longer generates child node IDs when
   applying AI child plans.
+- Resolved: story arc creation now accepts omitted arc IDs, derives a stable
+  backend-owned arc ID from the command ID for idempotent replay, and the arc
+  list UI no longer generates durable arc IDs.
 
 Simplification opportunities:
 

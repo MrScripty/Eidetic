@@ -46,7 +46,7 @@ export interface StoryArcProgressionProjection {
 }
 
 export interface CreateStoryArcCommand {
-  arc_id: ArcId;
+  arc_id?: ArcId;
   parent_arc_id?: ArcId | null;
   name: string;
   description?: string;

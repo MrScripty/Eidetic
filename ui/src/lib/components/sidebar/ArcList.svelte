@@ -15,7 +15,6 @@
 
   async function handleAdd() {
     await applyCreateStoryArcCommand({
-      arc_id: crypto.randomUUID(),
       parent_arc_id: null,
       name: 'New Arc',
       description: '',

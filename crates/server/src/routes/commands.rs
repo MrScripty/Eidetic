@@ -1,7 +1,9 @@
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
-use eidetic_core::contracts::{BibleGraphNodeListProjection, EnsureCanonicalBibleRootsCommand};
+use eidetic_core::contracts::{
+    BibleGraphNodeListProjection, CommandId, EnsureCanonicalBibleRootsCommand,
+};
 use eidetic_core::contracts::{
     BibleNodeDetailProjection, CommandEnvelope, CreateBibleGraphNodeCommand, CreateStoryArcCommand,
     DeleteStoryArcCommand, ProjectionEnvelope, ScriptDocumentProjection, SetBibleGraphEdgeCommand,
@@ -9,7 +11,9 @@ use eidetic_core::contracts::{
     SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
     StoryArcListProjection,
 };
-use serde::Serialize;
+use eidetic_core::story::arc::ArcId;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::bible_graph_command::{self, BibleGraphCommandError};
 use crate::error::{ApiError, ApiJson};
@@ -73,6 +77,55 @@ struct ScriptDocumentCommandResponse {
 struct StoryArcCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<StoryArcListProjection>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateStoryArcRouteCommand {
+    id: CommandId,
+    payload: CreateStoryArcRoutePayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateStoryArcRoutePayload {
+    #[serde(default)]
+    arc_id: Option<ArcId>,
+    #[serde(default)]
+    parent_arc_id: Option<ArcId>,
+    name: String,
+    #[serde(default)]
+    description: String,
+    arc_type: eidetic_core::story::arc::ArcType,
+    color: eidetic_core::story::arc::Color,
+}
+
+impl CreateStoryArcRouteCommand {
+    fn into_core_command(self) -> CommandEnvelope<CreateStoryArcCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: CreateStoryArcCommand {
+                arc_id: self
+                    .payload
+                    .arc_id
+                    .unwrap_or_else(|| ArcId(derived_command_uuid(self.id, b"story.arc"))),
+                parent_arc_id: self.payload.parent_arc_id,
+                name: self.payload.name,
+                description: self.payload.description,
+                arc_type: self.payload.arc_type,
+                color: self.payload.color,
+            },
+        }
+    }
+}
+
+fn derived_command_uuid(command_id: CommandId, role: &[u8]) -> Uuid {
+    let mut bytes = *command_id.0.as_bytes();
+    for (index, byte) in role.iter().enumerate() {
+        let slot = index % bytes.len();
+        bytes[slot] = bytes[slot].wrapping_add(*byte).rotate_left(1);
+    }
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Uuid::from_bytes(bytes)
 }
 
 async fn set_object_field(
@@ -185,8 +238,9 @@ async fn set_script_lock(
 
 async fn create_story_arc(
     State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<CreateStoryArcCommand>>,
+    Json(command): Json<CreateStoryArcRouteCommand>,
 ) -> ApiJson {
+    let command = command.into_core_command();
     let path = active_project_path(&state)?;
     if state.project.lock().is_none() {
         return Err(ApiError::no_project());

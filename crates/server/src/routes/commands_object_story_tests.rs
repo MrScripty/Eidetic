@@ -168,6 +168,92 @@ async fn story_arc_create_command_returns_arc_list_projection() {
 }
 
 #[tokio::test]
+async fn story_arc_create_command_generates_arc_id_when_omitted() {
+    let path = temp_db_path("story-arc-create-generated-id");
+    let app = app_with_project_path(path.clone()).await;
+    let body = json!({
+        "id": CommandId::new(),
+        "payload": {
+            "parent_arc_id": null,
+            "name": "Mystery",
+            "description": "Central investigation",
+            "arc_type": ArcType::APlot,
+            "color": Color::A_PLOT,
+        }
+    });
+
+    let response = app
+        .oneshot(story_arc_create_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let arc = value["projection"]["payload"]["arcs"]
+        .as_array()
+        .expect("arcs")
+        .iter()
+        .find(|arc| arc["name"] == "Mystery")
+        .expect("generated arc");
+    let generated_arc_id = arc["id"].as_str().expect("generated arc id");
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_count = conn
+        .query_row(
+            "SELECT COUNT(*) FROM arcs WHERE id = ?1",
+            [generated_arc_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .expect("persisted generated arc count");
+    assert_eq!(persisted_count, 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn story_arc_create_command_replays_omitted_arc_id() {
+    let path = temp_db_path("story-arc-create-generated-id-replay");
+    let app = app_with_project_path(path.clone()).await;
+    let body = json!({
+        "id": CommandId::new(),
+        "payload": {
+            "parent_arc_id": null,
+            "name": "Mystery",
+            "description": "Central investigation",
+            "arc_type": ArcType::APlot,
+            "color": Color::A_PLOT,
+        }
+    });
+
+    let first = app
+        .clone()
+        .oneshot(story_arc_create_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(story_arc_create_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    assert_eq!(
+        value["projection"]["payload"]["arcs"]
+            .as_array()
+            .expect("arcs")
+            .iter()
+            .filter(|arc| arc["name"] == "Mystery")
+            .count(),
+        1
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn story_arc_create_command_replays_duplicate_command() {
     let path = temp_db_path("story-arc-create-duplicate");
     let app = app_with_project_path(path.clone()).await;
