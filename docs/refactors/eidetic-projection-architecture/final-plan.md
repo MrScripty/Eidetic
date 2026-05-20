@@ -444,6 +444,11 @@ Completed slices:
   `projection_timeline_render` and `projection_selected_node` through Tauri,
   and made the matching frontend projection helpers prefer desktop IPC when
   available.
+- `feat(desktop): route bible graph projections through tauri` moved bible graph
+  node detail, node list, schema list, and render graph projection reads into
+  `projection_service.rs`, kept the legacy Axum routes as service adapters,
+  exposed matching Tauri commands, and made the frontend bible graph projection
+  helpers prefer desktop IPC when available.
 
 Discovered issues:
 

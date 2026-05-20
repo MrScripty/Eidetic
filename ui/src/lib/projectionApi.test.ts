@@ -150,6 +150,44 @@ describe('projection api helpers', () => {
     );
   });
 
+  it('uses desktop bible graph node projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 2,
+      payload: {
+        node: {
+          id: 'node.character/ada one',
+          parent_id: null,
+          schema_key: 'character',
+          name: 'Ada',
+          system_owned: false,
+          sort_order: 3,
+        },
+        parts: [],
+        incoming_edges: [],
+        outgoing_edges: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      getBibleGraphNodeProjection({
+        node_id: 'node.character/ada one',
+      }),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_bible_graph_node', {
+      query: { node_id: 'node.character/ada one' },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('fetches bible graph node list projections without query params', async () => {
     const response = {
       version: 3,
@@ -181,6 +219,26 @@ describe('projection api helpers', () => {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });
+  });
+
+  it('uses desktop bible graph node list projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 3,
+      payload: { nodes: [] },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getBibleGraphNodeListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_bible_graph_nodes', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('fetches bible graph schema list projections without query params', async () => {
@@ -225,6 +283,26 @@ describe('projection api helpers', () => {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });
+  });
+
+  it('uses desktop bible graph schema projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 1,
+      payload: { schemas: [] },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getBibleGraphSchemaListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_bible_graph_schemas', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('fetches bible render graph projections without query params', async () => {
@@ -278,6 +356,30 @@ describe('projection api helpers', () => {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });
+  });
+
+  it('uses desktop bible render graph projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 4,
+      payload: {
+        nodes: [],
+        edges: [],
+        neighborhoods: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getBibleRenderGraphProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_bible_render_graph', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('fetches timeline render projections without query params', async () => {

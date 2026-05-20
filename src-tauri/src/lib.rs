@@ -1,8 +1,9 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope, ScriptDocumentProjection,
-    SelectedNodeEditorProjection, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetStoryArcMetadataCommand, StoryArcListProjection,
-    TimelineRenderProjection,
+    BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
+    BibleRenderGraphProjection, CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope,
+    ScriptDocumentProjection, SelectedNodeEditorProjection, SetObjectFieldCommand,
+    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection, TimelineRenderProjection,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
@@ -10,8 +11,8 @@ use eidetic_server::project_service::{
     self, CreateProjectRequest, LoadProjectRequest, SaveProjectRequest, UpdateProjectRequest,
 };
 use eidetic_server::projection_service::{
-    self, ObjectFieldProjectionRequest, ScriptDocumentProjectionRequest,
-    SelectedNodeEditorProjectionRequest,
+    self, BibleGraphNodeProjectionRequest, ObjectFieldProjectionRequest,
+    ScriptDocumentProjectionRequest, SelectedNodeEditorProjectionRequest,
 };
 use eidetic_server::state::AppState;
 use serde::Serialize;
@@ -198,6 +199,45 @@ async fn projection_script_document(
 }
 
 #[tauri::command]
+async fn projection_bible_graph_node(
+    app: tauri::AppHandle,
+    query: BibleGraphNodeProjectionRequest,
+) -> Result<ProjectionEnvelope<BibleNodeDetailProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::bible_graph_node_projection(&state, query)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn projection_bible_graph_nodes(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<BibleGraphNodeListProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::bible_graph_node_list_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+fn projection_bible_graph_schemas(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<BibleGraphSchemaListProjection>, CommandError> {
+    let state = app.state::<AppState>();
+    projection_service::bible_graph_schema_list_projection(&state).map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn projection_bible_render_graph(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::bible_render_graph_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_story_arcs(
     app: tauri::AppHandle,
 ) -> Result<ProjectionEnvelope<StoryArcListProjection>, CommandError> {
@@ -251,6 +291,10 @@ pub fn run() {
             command_story_delete,
             projection_object_field,
             projection_script_document,
+            projection_bible_graph_node,
+            projection_bible_graph_nodes,
+            projection_bible_graph_schemas,
+            projection_bible_render_graph,
             projection_story_arcs,
             projection_timeline_render,
             projection_selected_node

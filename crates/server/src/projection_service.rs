@@ -1,14 +1,17 @@
 use std::path::PathBuf;
 
 use eidetic_core::contracts::{
-    ObjectKind, ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection,
-    SelectedNodeEditorProjection, StoryArcListProjection, TimelineRenderProjection,
+    BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
+    BibleNodeDetailProjection, BibleRenderGraphProjection, ObjectKind, ProjectionEnvelope,
+    ScriptDocumentId, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    StoryArcListProjection, TimelineRenderProjection, builtin_bible_graph_schema_list_projection,
 };
 use eidetic_core::timeline::Timeline;
 use eidetic_core::timeline::node::NodeId;
 use serde::Deserialize;
 
 use crate::backend_error::BackendError;
+use crate::bible_graph_store;
 use crate::history_store::{self, HistoryStoreError};
 use crate::script_store;
 use crate::state::AppState;
@@ -26,6 +29,12 @@ pub struct ObjectFieldProjectionRequest {
 #[serde(deny_unknown_fields)]
 pub struct ScriptDocumentProjectionRequest {
     pub document_id: ScriptDocumentId,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BibleGraphNodeProjectionRequest {
+    pub node_id: BibleGraphNodeId,
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,6 +73,47 @@ pub async fn script_document_projection(
     .map_err(|error| {
         BackendError::internal(format!("script document projection task failed: {error}"))
     })?
+}
+
+pub async fn bible_graph_node_projection(
+    state: &AppState,
+    request: BibleGraphNodeProjectionRequest,
+) -> Result<ProjectionEnvelope<BibleNodeDetailProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || load_bible_node_projection_at_path(path, request.node_id))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("bible graph projection task failed: {error}"))
+        })?
+}
+
+pub async fn bible_graph_node_list_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<BibleGraphNodeListProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || load_bible_node_list_projection_at_path(path))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("bible graph node list task failed: {error}"))
+        })?
+}
+
+pub fn bible_graph_schema_list_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<BibleGraphSchemaListProjection>, BackendError> {
+    let _ = active_project_path(state)?;
+    Ok(builtin_bible_graph_schema_list_projection())
+}
+
+pub async fn bible_render_graph_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || load_bible_render_graph_projection_at_path(path))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("bible render graph task failed: {error}"))
+        })?
 }
 
 pub async fn story_arc_list_projection(
@@ -133,6 +183,36 @@ fn load_object_field_projection_value_at_path(
     )
     .map_err(map_history_error)?;
     serde_json::to_value(projection).map_err(|e| BackendError::internal(e.to_string()))
+}
+
+fn load_bible_node_projection_at_path(
+    path: PathBuf,
+    node_id: BibleGraphNodeId,
+) -> Result<ProjectionEnvelope<BibleNodeDetailProjection>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
+    bible_graph_store::load_node_detail_projection_envelope(&conn, &node_id)
+        .map_err(map_history_error)?
+        .ok_or_else(|| BackendError::not_found("bible graph node not found"))
+}
+
+fn load_bible_node_list_projection_at_path(
+    path: PathBuf,
+) -> Result<ProjectionEnvelope<BibleGraphNodeListProjection>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
+    bible_graph_store::load_node_list_projection_envelope(&conn).map_err(map_history_error)
+}
+
+fn load_bible_render_graph_projection_at_path(
+    path: PathBuf,
+) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
+    bible_graph_store::load_render_graph_projection_envelope(&conn).map_err(map_history_error)
 }
 
 fn load_script_document_projection_at_path(

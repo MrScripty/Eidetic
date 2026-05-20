@@ -67,6 +67,15 @@ export function getObjectFieldProjection({
 export function getBibleGraphNodeProjection({
   node_id,
 }: BibleGraphNodeProjectionKey): Promise<ProjectionEnvelope<BibleNodeDetailProjection>> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<BibleNodeDetailProjection>>(
+      'projection_bible_graph_node',
+      {
+        query: { node_id },
+      },
+    );
+  }
+
   const params = new URLSearchParams({ node_id });
   return getJson(`/projections/bible-graph/node?${params.toString()}`);
 }
@@ -74,18 +83,36 @@ export function getBibleGraphNodeProjection({
 export function getBibleGraphNodeListProjection(): Promise<
   ProjectionEnvelope<BibleGraphNodeListProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<BibleGraphNodeListProjection>>(
+      'projection_bible_graph_nodes',
+    );
+  }
+
   return getJson('/projections/bible-graph/nodes');
 }
 
 export function getBibleGraphSchemaListProjection(): Promise<
   ProjectionEnvelope<BibleGraphSchemaListProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<BibleGraphSchemaListProjection>>(
+      'projection_bible_graph_schemas',
+    );
+  }
+
   return getJson('/projections/bible-graph/schemas');
 }
 
 export function getBibleRenderGraphProjection(): Promise<
   ProjectionEnvelope<BibleRenderGraphProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<BibleRenderGraphProjection>>(
+      'projection_bible_render_graph',
+    );
+  }
+
   return getJson('/projections/bible-graph/render');
 }
 

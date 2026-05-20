@@ -1,20 +1,15 @@
-use axum::Router;
-use axum::extract::{Query, State};
-use axum::routing::get;
-use eidetic_core::contracts::{
-    BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
-    BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeReviewProjection,
-    ProjectionEnvelope, StoryArcProgressionProjection, builtin_bible_graph_schema_list_projection,
-};
-use eidetic_core::story::progression::analyze_all_arcs;
-use serde::Deserialize;
-
-use crate::bible_graph_store;
 use crate::error::{ApiError, ApiJson};
 #[cfg(test)]
 use crate::history_store;
 use crate::state::AppState;
 use crate::story_arc_store;
+use axum::Router;
+use axum::extract::{Query, State};
+use axum::routing::get;
+use eidetic_core::contracts::{
+    ChangeReviewProjection, ProjectionEnvelope, StoryArcProgressionProjection,
+};
+use eidetic_core::story::progression::analyze_all_arcs;
 
 use super::support::{active_project_path, map_history_error};
 
@@ -66,11 +61,6 @@ pub fn router() -> Router<AppState> {
         )
 }
 
-#[derive(Debug, Deserialize)]
-struct BibleGraphNodeProjectionQuery {
-    node_id: BibleGraphNodeId,
-}
-
 async fn get_object_field_projection(
     State(state): State<AppState>,
     Query(query): Query<crate::projection_service::ObjectFieldProjectionRequest>,
@@ -83,39 +73,32 @@ async fn get_object_field_projection(
 
 async fn get_bible_graph_node_projection(
     State(state): State<AppState>,
-    Query(query): Query<BibleGraphNodeProjectionQuery>,
+    Query(query): Query<crate::projection_service::BibleGraphNodeProjectionRequest>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let projection = tokio::task::spawn_blocking(move || {
-        load_bible_node_projection_at_path(path, query.node_id)
-    })
-    .await
-    .map_err(|e| ApiError::internal(format!("bible graph projection task failed: {e}")))??;
-
-    crate::error::json_value(projection)
+    crate::projection_service::bible_graph_node_projection(&state, query)
+        .await
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn get_bible_graph_node_list_projection(State(state): State<AppState>) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let projection = tokio::task::spawn_blocking(move || load_bible_node_list_at_path(path))
+    crate::projection_service::bible_graph_node_list_projection(&state)
         .await
-        .map_err(|e| ApiError::internal(format!("bible graph node list task failed: {e}")))??;
-
-    crate::error::json_value(projection)
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn get_bible_graph_schema_list_projection(State(state): State<AppState>) -> ApiJson {
-    let _ = active_project_path(&state)?;
-    crate::error::json_value(load_bible_schema_list_projection())
+    crate::projection_service::bible_graph_schema_list_projection(&state)
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn get_bible_render_graph_projection(State(state): State<AppState>) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let projection = tokio::task::spawn_blocking(move || load_bible_render_graph_at_path(path))
+    crate::projection_service::bible_render_graph_projection(&state)
         .await
-        .map_err(|e| ApiError::internal(format!("bible render graph task failed: {e}")))??;
-
-    crate::error::json_value(projection)
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn get_change_review_projection(State(state): State<AppState>) -> ApiJson {
@@ -176,40 +159,6 @@ async fn get_story_arc_progression_projection(State(state): State<AppState>) -> 
     crate::error::json_value(ProjectionEnvelope::initial(
         StoryArcProgressionProjection::new(analyze_all_arcs(&projection_project)),
     ))
-}
-
-fn load_bible_node_projection_at_path(
-    path: std::path::PathBuf,
-    node_id: BibleGraphNodeId,
-) -> Result<ProjectionEnvelope<BibleNodeDetailProjection>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
-    bible_graph_store::load_node_detail_projection_envelope(&conn, &node_id)
-        .map_err(map_history_error)?
-        .ok_or_else(|| ApiError::not_found("bible graph node not found"))
-}
-
-fn load_bible_node_list_at_path(
-    path: std::path::PathBuf,
-) -> Result<ProjectionEnvelope<BibleGraphNodeListProjection>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
-    bible_graph_store::load_node_list_projection_envelope(&conn).map_err(map_history_error)
-}
-
-fn load_bible_schema_list_projection() -> ProjectionEnvelope<BibleGraphSchemaListProjection> {
-    builtin_bible_graph_schema_list_projection()
-}
-
-fn load_bible_render_graph_at_path(
-    path: std::path::PathBuf,
-) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    bible_graph_store::create_schema(&conn).map_err(map_history_error)?;
-    bible_graph_store::load_render_graph_projection_envelope(&conn).map_err(map_history_error)
 }
 
 fn load_change_review_at_path(
