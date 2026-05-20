@@ -461,6 +461,11 @@ Completed slices:
   exposed `projection_bible_reference_proposals` and
   `projection_propagation_proposals` through Tauri, and made the matching
   frontend projection helpers prefer desktop IPC when available.
+- `feat(desktop): route semantic support projections through tauri` moved
+  semantic dependency and durable child-plan projection reads into
+  `projection_service.rs`, kept the legacy Axum routes as service adapters, and
+  exposed `projection_semantic_dependencies` and `projection_child_plans`
+  through Tauri.
 
 Discovered issues:
 

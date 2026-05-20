@@ -1,9 +1,10 @@
+use eidetic_core::ai::backend::ChildPlanListProjection;
 use eidetic_core::contracts::{
     BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
     BibleReferenceProposalListProjection, BibleRenderGraphProjection, ChangeReviewProjection,
     CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope, PropagationProposalListProjection,
-    ScriptDocumentProjection, SelectedNodeEditorProjection, SetObjectFieldCommand,
-    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    ScriptDocumentProjection, SelectedNodeEditorProjection, SemanticDependencyProjection,
+    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
     StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
 };
 use eidetic_server::backend_error::BackendError;
@@ -14,6 +15,7 @@ use eidetic_server::project_service::{
 use eidetic_server::projection_service::{
     self, BibleGraphNodeProjectionRequest, ObjectFieldProjectionRequest,
     ScriptDocumentProjectionRequest, SelectedNodeEditorProjectionRequest,
+    SemanticDependencyProjectionRequest,
 };
 use eidetic_server::state::AppState;
 use serde::Serialize;
@@ -259,6 +261,27 @@ async fn projection_propagation_proposals(
 }
 
 #[tauri::command]
+async fn projection_semantic_dependencies(
+    app: tauri::AppHandle,
+    query: SemanticDependencyProjectionRequest,
+) -> Result<ProjectionEnvelope<SemanticDependencyProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::semantic_dependency_projection(&state, query)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn projection_child_plans(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<ChildPlanListProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::child_plan_list_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_story_arcs(
     app: tauri::AppHandle,
 ) -> Result<ProjectionEnvelope<StoryArcListProjection>, CommandError> {
@@ -338,6 +361,8 @@ pub fn run() {
             projection_bible_render_graph,
             projection_bible_reference_proposals,
             projection_propagation_proposals,
+            projection_semantic_dependencies,
+            projection_child_plans,
             projection_story_arcs,
             projection_story_arc_progression,
             projection_change_review,
