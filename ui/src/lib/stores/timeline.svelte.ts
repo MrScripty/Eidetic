@@ -1,12 +1,10 @@
-import type { ArcId } from '../storyArcTypes.js';
-import type { Timeline, StoryNode, StoryLevel, NodeId, TimeRange } from '../timelineTypes.js';
+import type { TimeRange } from '../timelineTypes.js';
 import { TIMELINE } from '../timelineTypes.js';
 
 export type TimelineTool = 'select' | 'blade';
 
-/** Reactive timeline state. Populated from the server after project creation. */
+/** Frontend-owned transient timeline interaction state. */
 export const timelineState = $state<{
-  timeline: Timeline | null;
   zoom: number;
   scrollX: number;
   /** Measured width of the timeline viewport container. */
@@ -18,7 +16,6 @@ export const timelineState = $state<{
   /** Whether node snapping is enabled. */
   snapping: boolean;
 }>({
-  timeline: null,
   zoom: 1.0,
   scrollX: 0,
   viewportWidth: 0,
@@ -26,51 +23,6 @@ export const timelineState = $state<{
   activeTool: 'select',
   snapping: true,
 });
-
-// --- Helper functions for querying the timeline ---
-
-/** Get all nodes at a specific hierarchy level, sorted by start time. */
-export function nodesAtLevel(level: StoryLevel): StoryNode[] {
-  if (!timelineState.timeline) return [];
-  return timelineState.timeline.nodes
-    .filter((n) => n.level === level)
-    .sort((a, b) => a.time_range.start_ms - b.time_range.start_ms);
-}
-
-/** Get direct children of a node, sorted by sort_order. */
-export function childrenOf(parentId: NodeId): StoryNode[] {
-  if (!timelineState.timeline) return [];
-  return timelineState.timeline.nodes
-    .filter((n) => n.parent_id === parentId)
-    .sort((a, b) => a.sort_order - b.sort_order);
-}
-
-/** Walk up the ancestor chain from a node. */
-export function ancestorsOf(nodeId: NodeId): StoryNode[] {
-  if (!timelineState.timeline) return [];
-  const result: StoryNode[] = [];
-  let current = timelineState.timeline.nodes.find((n) => n.id === nodeId);
-  while (current?.parent_id) {
-    const parent = timelineState.timeline.nodes.find((n) => n.id === current!.parent_id);
-    if (!parent) break;
-    result.push(parent);
-    current = parent;
-  }
-  return result;
-}
-
-/** Get arc IDs tagged to a node. */
-export function arcsForNode(nodeId: NodeId): ArcId[] {
-  if (!timelineState.timeline) return [];
-  return timelineState.timeline.node_arcs
-    .filter((na) => na.node_id === nodeId)
-    .map((na) => na.arc_id);
-}
-
-/** Find a node by ID. */
-export function findNode(nodeId: NodeId): StoryNode | undefined {
-  return timelineState.timeline?.nodes.find((n) => n.id === nodeId);
-}
 
 // --- Coordinate conversions ---
 

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
   import { projectState } from '$lib/stores/project.svelte.js';
-  import { timelineState } from '$lib/stores/timeline.svelte.js';
   import { refreshStoryArcListProjection } from '$lib/stores/storyArcProjection.svelte.js';
   import { refreshTimelineRenderProjection } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { createProject, loadProject, listProjects } from '$lib/api.js';
@@ -36,7 +35,6 @@
 
   function hydrateStores(project: Project) {
     projectState.current = project;
-    timelineState.timeline = project.timeline;
   }
 
   async function refreshProjectProjections() {

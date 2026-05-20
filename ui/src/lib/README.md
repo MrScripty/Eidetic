@@ -63,13 +63,15 @@ Keep shared UI contracts, stores, and feature components under `ui/src/lib` and 
 ## Usage Examples
 
 ```ts
-import { mainTimelinePanelHeightPx, type Timeline } from '$lib/types.js';
+import { mainTimelinePanelHeightPx } from '$lib/types.js';
 import { timelineState } from '$lib/stores/timeline.svelte.js';
+import { refreshTimelineRenderProjection } from '$lib/stores/timelineRenderProjection.svelte.js';
 
 const fixedTimelineHeight = mainTimelinePanelHeightPx();
 
-function loadTimeline(timeline: Timeline) {
-  timelineState.timeline = timeline;
+async function openTimeline() {
+  timelineState.scrollX = 0;
+  await refreshTimelineRenderProjection();
 }
 ```
 
