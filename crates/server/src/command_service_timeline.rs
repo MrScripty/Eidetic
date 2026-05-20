@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
     CommandEnvelope, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    TimelineRenderProjection,
+    SetTimelineNodeNotesCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use rusqlite::Connection;
@@ -11,6 +11,7 @@ use crate::command_service_support::{active_project_path, map_history_error};
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::state::{AppState, ServerEvent};
 use crate::timeline_command::{self, TimelineCommandError};
+use crate::ydoc::DocCommand;
 use crate::{timeline_node_store, timeline_relationship_store};
 
 #[derive(Debug, Serialize)]
@@ -47,6 +48,50 @@ pub async fn set_timeline_node_lock(
     })??;
 
     if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        let _ = state
+            .events_tx
+            .send(ServerEvent::NodeUpdated { node_id: node_id.0 });
+        state.trigger_save();
+    }
+    Ok(response)
+}
+
+pub async fn set_timeline_node_notes(
+    state: &AppState,
+    command: CommandEnvelope<SetTimelineNodeNotesCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let node_id = command.payload.node_id;
+    let notes = command.payload.notes.clone();
+    let project = timeline_command_project(state, &path).await?;
+    let response = tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome = timeline_command::record_set_timeline_node_notes_history(
+            &mut conn, &project, &command, 0,
+        )
+        .map_err(map_timeline_command_error)?;
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
+        Ok::<_, BackendError>(TimelineCommandResponse {
+            outcome,
+            projection,
+        })
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("timeline node notes command task failed: {error}"))
+    })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+            node_id,
+            field: crate::ydoc::ContentField::Notes,
+            text: notes,
+            author: "human:command".into(),
+        });
         let _ = state.events_tx.send(ServerEvent::TimelineChanged);
         let _ = state
             .events_tx

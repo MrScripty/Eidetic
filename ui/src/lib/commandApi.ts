@@ -540,6 +540,10 @@ export function setTimelineNodeNotes(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_notes', { command });
+  }
+
   return request('/commands/timeline/node-notes', {
     method: 'POST',
     body: JSON.stringify(command),

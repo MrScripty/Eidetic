@@ -497,6 +497,11 @@ Completed slices:
   kept the legacy Axum route as a service adapter, exposed
   `command_timeline_node_lock` through Tauri, and made the frontend helper
   prefer desktop IPC when available.
+- `feat(desktop): route timeline node notes command through tauri` moved
+  timeline node notes command handling and its Y.Doc note-write side effect into
+  the focused backend timeline command service, kept the legacy Axum route as a
+  service adapter, exposed `command_timeline_node_notes` through Tauri, and made
+  the frontend helper prefer desktop IPC when available.
 
 Discovered issues:
 

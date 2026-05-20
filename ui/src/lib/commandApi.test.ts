@@ -668,6 +668,50 @@ describe('command api helpers', () => {
     );
   });
 
+  it('uses desktop timeline node notes commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [],
+          clips: [],
+          relationships: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setTimelineNodeNotes(
+        {
+          node_id: 'node.scene.beach',
+          notes: 'New outline',
+        },
+        'command-timeline-notes-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_timeline_node_notes', {
+      command: {
+        id: 'command-timeline-notes-1',
+        payload: {
+          node_id: 'node.scene.beach',
+          notes: 'New outline',
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('sends timeline split node commands and returns timeline render projections', async () => {
     const response = {
       outcome: 'recorded',
