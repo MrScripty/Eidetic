@@ -1,13 +1,16 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, DeleteStoryArcCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetStoryArcMetadataCommand,
+    CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope, ScriptDocumentProjection,
+    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
 use eidetic_server::project_service::{
     self, CreateProjectRequest, LoadProjectRequest, SaveProjectRequest, UpdateProjectRequest,
 };
-use eidetic_server::projection_service::{self, ObjectFieldProjectionRequest};
+use eidetic_server::projection_service::{
+    self, ObjectFieldProjectionRequest, ScriptDocumentProjectionRequest,
+};
 use eidetic_server::state::AppState;
 use serde::Serialize;
 use tauri::Manager;
@@ -181,6 +184,27 @@ async fn projection_object_field(
         .map_err(CommandError::from)
 }
 
+#[tauri::command]
+async fn projection_script_document(
+    app: tauri::AppHandle,
+    query: ScriptDocumentProjectionRequest,
+) -> Result<ProjectionEnvelope<ScriptDocumentProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::script_document_projection(&state, query)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn projection_story_arcs(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<StoryArcListProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::story_arc_list_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -202,7 +226,9 @@ pub fn run() {
             command_story_create,
             command_story_update,
             command_story_delete,
-            projection_object_field
+            projection_object_field,
+            projection_script_document,
+            projection_story_arcs
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Eidetic desktop application");

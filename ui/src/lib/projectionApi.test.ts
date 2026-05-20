@@ -443,6 +443,37 @@ describe('projection api helpers', () => {
     });
   });
 
+  it('uses desktop story arc list projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 1,
+      payload: {
+        arcs: [
+          {
+            id: 'arc.mystery',
+            parent_arc_id: null,
+            name: 'Mystery',
+            description: 'Central investigation',
+            arc_type: 'APlot',
+            color: { r: 1, g: 2, b: 3 },
+          },
+        ],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getStoryArcListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_story_arcs', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('fetches story arc progression projections without query params', async () => {
     const response = {
       version: 1,

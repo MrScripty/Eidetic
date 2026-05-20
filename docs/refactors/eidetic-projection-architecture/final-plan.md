@@ -432,6 +432,12 @@ Completed slices:
   `projection_service.rs`, kept the legacy object-field projection route as a
   service adapter, exposed `projection_object_field` through Tauri, and made the
   frontend projection helper prefer desktop IPC when available.
+- `feat(desktop): route story projection reads through tauri` moved script
+  document and story arc list projection reads into `projection_service.rs`,
+  kept the legacy Axum projection routes as service adapters, exposed
+  `projection_script_document` and `projection_story_arcs` through Tauri, and
+  made the matching frontend projection helpers prefer desktop IPC when
+  available.
 
 Discovered issues:
 

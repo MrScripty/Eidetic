@@ -92,6 +92,15 @@ export function getBibleRenderGraphProjection(): Promise<
 export function getScriptDocumentProjection({
   document_id,
 }: ScriptDocumentProjectionKey): Promise<ProjectionEnvelope<ScriptDocumentProjection>> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<ScriptDocumentProjection>>(
+      'projection_script_document',
+      {
+        query: { document_id },
+      },
+    );
+  }
+
   const params = new URLSearchParams({ document_id });
   return getJson(`/projections/script/document?${params.toString()}`);
 }
@@ -109,6 +118,10 @@ export function getPropagationProposalListProjection(): Promise<
 }
 
 export function getStoryArcListProjection(): Promise<ProjectionEnvelope<StoryArcListProjection>> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<StoryArcListProjection>>('projection_story_arcs');
+  }
+
   return getJson('/projections/story/arcs');
 }
 

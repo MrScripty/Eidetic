@@ -4,9 +4,8 @@ use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
     BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeReviewProjection, ObjectKind,
-    ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection, SelectedNodeEditorProjection,
-    StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
-    builtin_bible_graph_schema_list_projection,
+    ProjectionEnvelope, SelectedNodeEditorProjection, StoryArcProgressionProjection,
+    TimelineRenderProjection, builtin_bible_graph_schema_list_projection,
 };
 use eidetic_core::story::progression::analyze_all_arcs;
 use eidetic_core::timeline::Timeline;
@@ -16,7 +15,6 @@ use serde::Deserialize;
 use crate::bible_graph_store;
 use crate::error::{ApiError, ApiJson};
 use crate::history_store;
-use crate::script_store;
 use crate::state::AppState;
 use crate::story_arc_store;
 use crate::timeline_node_store;
@@ -74,11 +72,6 @@ pub fn router() -> Router<AppState> {
 #[derive(Debug, Deserialize)]
 struct BibleGraphNodeProjectionQuery {
     node_id: BibleGraphNodeId,
-}
-
-#[derive(Debug, Deserialize)]
-struct ScriptDocumentProjectionQuery {
-    document_id: ScriptDocumentId,
 }
 
 #[derive(Debug, Deserialize)]
@@ -144,16 +137,12 @@ async fn get_change_review_projection(State(state): State<AppState>) -> ApiJson 
 
 async fn get_script_document_projection(
     State(state): State<AppState>,
-    Query(query): Query<ScriptDocumentProjectionQuery>,
+    Query(query): Query<crate::projection_service::ScriptDocumentProjectionRequest>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let projection = tokio::task::spawn_blocking(move || {
-        load_script_document_projection_at_path(path, query.document_id)
-    })
-    .await
-    .map_err(|e| ApiError::internal(format!("script document projection task failed: {e}")))??;
-
-    crate::error::json_value(projection)
+    crate::projection_service::script_document_projection(&state, query)
+        .await
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn get_timeline_render_projection(State(state): State<AppState>) -> ApiJson {
@@ -186,12 +175,10 @@ async fn get_selected_node_editor_projection(
 }
 
 async fn get_story_arc_list_projection(State(state): State<AppState>) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let projection = tokio::task::spawn_blocking(move || load_story_arc_list_at_path(path))
+    crate::projection_service::story_arc_list_projection(&state)
         .await
-        .map_err(|e| ApiError::internal(format!("story arc list task failed: {e}")))??;
-
-    crate::error::json_value(projection)
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn get_story_arc_progression_projection(State(state): State<AppState>) -> ApiJson {
@@ -254,15 +241,6 @@ fn load_change_review_at_path(
         .map_err(map_history_error)
 }
 
-fn load_story_arc_list_at_path(
-    path: std::path::PathBuf,
-) -> Result<ProjectionEnvelope<StoryArcListProjection>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    story_arc_store::create_schema(&conn).map_err(map_history_error)?;
-    story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)
-}
-
 fn load_story_arcs_at_path(
     path: std::path::PathBuf,
 ) -> Result<Vec<eidetic_core::story::arc::StoryArc>, ApiError> {
@@ -270,18 +248,6 @@ fn load_story_arcs_at_path(
         .map_err(|e| ApiError::internal(e.to_string()))?;
     story_arc_store::create_schema(&conn).map_err(map_history_error)?;
     story_arc_store::load_arcs(&conn).map_err(map_history_error)
-}
-
-fn load_script_document_projection_at_path(
-    path: std::path::PathBuf,
-    document_id: ScriptDocumentId,
-) -> Result<ProjectionEnvelope<ScriptDocumentProjection>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    script_store::create_schema(&conn).map_err(map_history_error)?;
-    script_store::load_document_projection_envelope(&conn, &document_id)
-        .map_err(map_history_error)?
-        .ok_or_else(|| ApiError::not_found("script document not found"))
 }
 
 fn load_selected_node_editor_at_path(
