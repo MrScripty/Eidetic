@@ -64,7 +64,7 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
@@ -91,8 +91,15 @@ async fn main() {
         .with_state(app_state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::info!("listening on {addr}");
+    let listener = match tokio::net::TcpListener::bind(addr).await {
+        Ok(listener) => listener,
+        Err(error) => {
+            tracing::error!("failed to bind {addr}: {error}");
+            return Err(error.into());
+        }
+    };
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    tracing::info!("listening on {addr}");
+    axum::serve(listener, app).await?;
+    Ok(())
 }

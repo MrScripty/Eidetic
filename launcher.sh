@@ -9,6 +9,7 @@ UI_DIR="$PROJECT_ROOT/ui"
 UI_BUILD_DIR="$PROJECT_ROOT/dist/ui"
 RELEASE_BIN_PATH="$PROJECT_ROOT/target/release/${APP_BIN}"
 LAUNCHER_STATE_ROOT="${EIDETIC_LAUNCHER_STATE_ROOT:-$PROJECT_ROOT/.launcher-state}"
+APP_URL="http://127.0.0.1:3000"
 DEPENDENCIES=(node npm cargo ui_deps git_hooks)
 
 usage() {
@@ -168,6 +169,39 @@ prepare_temp_state() {
   printf '%s\n' "$temp_dir"
 }
 
+open_app_when_ready() {
+  local url="$1"
+  local attempts=60
+
+  if [[ "${EIDETIC_OPEN_BROWSER:-1}" == "0" ]]; then
+    log "[ui] browser auto-open disabled; open $url"
+    return
+  fi
+
+  if ! command -v xdg-open >/dev/null 2>&1; then
+    log "[ui] xdg-open not found; open $url"
+    return
+  fi
+
+  (
+    if ! command -v curl >/dev/null 2>&1; then
+      sleep 2
+      xdg-open "$url" >/dev/null 2>&1 || true
+      exit 0
+    fi
+
+    while ((attempts > 0)); do
+      if curl -fsS "$url" >/dev/null 2>&1; then
+        xdg-open "$url" >/dev/null 2>&1 || true
+        exit 0
+      fi
+      attempts=$((attempts - 1))
+      sleep 0.25
+    done
+    log "[ui] server did not become ready; open $url"
+  ) &
+}
+
 ensure_ui_assets() {
   [[ -f "$UI_BUILD_DIR/index.html" ]] || die "UI assets are missing. Run ./${SCRIPT_NAME} --build or --build-release first."
 }
@@ -204,6 +238,7 @@ run_dev() {
   ensure_dependencies cargo
   ensure_ui_assets
   prepare_persistent_state "dev"
+  open_app_when_ready "$APP_URL"
 
   exec cargo run -p "$APP_BIN" -- "${run_args[@]}"
 }
@@ -213,6 +248,7 @@ run_release() {
 
   ensure_ui_assets
   prepare_persistent_state "release"
+  open_app_when_ready "$APP_URL"
 
   if [[ ! -x "$RELEASE_BIN_PATH" ]]; then
     log "missing release binary: $RELEASE_BIN_PATH"
