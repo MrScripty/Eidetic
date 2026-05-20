@@ -23,6 +23,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 // --- Project ---
 
 export function createProject(name: string, template: string): Promise<Project> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<Project>('project_create', { name, template });
+  }
   return request('/project', {
     method: 'POST',
     body: JSON.stringify({ name, template }),
@@ -37,6 +40,9 @@ export function getProject(): Promise<Project> {
 }
 
 export function updateProject(updates: { name?: string; premise?: string }): Promise<Project> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<Project>('project_update', updates);
+  }
   return request('/project', {
     method: 'PUT',
     body: JSON.stringify(updates),
@@ -135,6 +141,9 @@ export async function exportPdf(): Promise<Blob> {
 // --- Persistence ---
 
 export function saveProject(path?: string): Promise<{ saved?: string; error?: string }> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<{ saved?: string; error?: string }>('project_save', { path });
+  }
   return request('/project/save', {
     method: 'POST',
     body: JSON.stringify({ path }),
@@ -142,6 +151,9 @@ export function saveProject(path?: string): Promise<{ saved?: string; error?: st
 }
 
 export function loadProject(path: string): Promise<Project> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<Project>('project_load', { path });
+  }
   return request('/project/load', {
     method: 'POST',
     body: JSON.stringify({ path }),
@@ -149,5 +161,8 @@ export function loadProject(path: string): Promise<Project> {
 }
 
 export function listProjects(): Promise<{ name: string; path: string; modified: string }[]> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<{ name: string; path: string; modified: string }[]>('project_list');
+  }
   return request('/project/list');
 }

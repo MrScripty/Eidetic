@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createProject, getProject } from './api.js';
+import { createProject, getProject, listProjects, saveProject, updateProject } from './api.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -36,6 +36,41 @@ describe('api request handling', () => {
       name: 'Desktop Project',
     });
     expect(invoke).toHaveBeenCalledWith('project_get', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop project mutation commands when Tauri transport is available', async () => {
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce({ name: 'Created', premise: '' })
+      .mockResolvedValueOnce({ name: 'Renamed', premise: 'New premise' })
+      .mockResolvedValueOnce({ saved: '/tmp/project.db' })
+      .mockResolvedValueOnce([]);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await createProject('Created', 'multi_cam');
+    await updateProject({ name: 'Renamed', premise: 'New premise' });
+    await saveProject('/tmp/project.db');
+    await listProjects();
+
+    expect(invoke).toHaveBeenNthCalledWith(1, 'project_create', {
+      name: 'Created',
+      template: 'multi_cam',
+    });
+    expect(invoke).toHaveBeenNthCalledWith(2, 'project_update', {
+      name: 'Renamed',
+      premise: 'New premise',
+    });
+    expect(invoke).toHaveBeenNthCalledWith(3, 'project_save', {
+      path: '/tmp/project.db',
+    });
+    expect(invoke).toHaveBeenNthCalledWith(4, 'project_list', undefined);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

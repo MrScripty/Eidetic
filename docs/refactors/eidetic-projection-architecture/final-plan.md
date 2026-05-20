@@ -412,6 +412,10 @@ Completed slices:
   `desktopTransport.ts` IPC helper, enabled Tauri's global API for the desktop
   shell, and moved `getProject()` onto the `project_get` desktop command when
   available while retaining the legacy HTTP fallback during migration.
+- `feat(desktop): expose project service commands` added Tauri commands for
+  project create, update, save, load, and list operations over `project_service`
+  and routed the matching frontend project helpers through desktop IPC when the
+  Tauri transport is present.
 
 Discovered issues:
 
