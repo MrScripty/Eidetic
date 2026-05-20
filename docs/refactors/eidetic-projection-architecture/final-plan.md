@@ -786,6 +786,9 @@ Discovered implementation gaps:
   small lifecycle-owned helper that captures the selected node ID at schedule
   time and cancels pending work on destroy, preventing stale notes from saving
   into a later selection or after unmount.
+- Resolved: `ArcDetail.svelte` now routes debounced story arc metadata saves
+  through a lifecycle-owned helper that captures the arc ID and field at
+  schedule time and cancels pending work on destroy.
 
 Simplification opportunities:
 
@@ -816,6 +819,8 @@ Verification:
   subscription cleanup plus queued refresh cleanup.
   `debouncedNodeNotesSave.test.ts` covers selected-node capture, newer-edit
   cancellation, and destroy cleanup for debounced note saves.
+  `debouncedStoryArcMetadataSave.test.ts` covers equivalent capture,
+  cancellation, and destroy cleanup for story arc metadata saves.
 - Accessibility checks cover keyboard alternatives and embedded timeline/editor control conflicts for any touched gesture-heavy controls.
 - Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
 - Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.

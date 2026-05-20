@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import type { StoryArc } from '$lib/storyArcTypes.js';
   import {
     applyDeleteStoryArcCommand,
     applySetStoryArcMetadataCommand,
   } from '$lib/stores/storyArcProjection.svelte.js';
+  import { createDebouncedStoryArcMetadataSave } from './debouncedStoryArcMetadataSave.js';
 
   let {
     arc,
@@ -13,7 +15,10 @@
     onback: () => void;
   } = $props();
 
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const debouncedMetadataSave = createDebouncedStoryArcMetadataSave({
+    delayMs: 500,
+    save: applySetStoryArcMetadataCommand,
+  });
 
   const COLOR_PRESETS = [
     [100, 149, 237], // cornflower blue
@@ -27,11 +32,12 @@
   ] as const;
 
   function handleInput(field: 'name' | 'description', value: string) {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(async () => {
-      await applySetStoryArcMetadataCommand({ arc_id: arc.id, [field]: value });
-    }, 500);
+    debouncedMetadataSave.schedule(arc.id, field, value);
   }
+
+  onDestroy(() => {
+    debouncedMetadataSave.dispose();
+  });
 
   async function handleColorSelect(rgb: readonly [number, number, number]) {
     await applySetStoryArcMetadataCommand({
