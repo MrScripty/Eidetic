@@ -15,6 +15,7 @@
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import { applyDeleteTimelineNodeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import { refreshSelectedNodeEditorProjection } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
 
   $effect(() => {
     return startAiStatusPolling();
@@ -43,6 +44,7 @@
             editorState.selectedNodeId = null;
             editorState.selectedNode = null;
             editorState.selectedLevel = null;
+            void refreshSelectedNodeEditorProjection(null).catch(() => {});
             applyDeleteTimelineNodeCommand({ node_id: id }).catch(() => {});
           }
         },

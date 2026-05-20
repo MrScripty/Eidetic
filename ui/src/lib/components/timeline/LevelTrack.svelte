@@ -21,6 +21,7 @@
     applySplitTimelineNodeCommand,
     applyTimelineNodeRangeCommand,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import { refreshSelectedNodeEditorProjection } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import StoryNodeClip from './StoryNodeClip.svelte';
 
   let {
@@ -85,6 +86,7 @@
     editorState.selectedNodeId = node.id;
     editorState.selectedNode = node;
     editorState.selectedLevel = node.level;
+    void refreshSelectedNodeEditorProjection(node.id).catch(() => {});
   }
 
   async function handleMove(nodeId: string, startMs: number, endMs: number) {
@@ -126,6 +128,7 @@
       editorState.selectedNodeId = null;
       editorState.selectedNode = null;
       editorState.selectedLevel = null;
+      void refreshSelectedNodeEditorProjection(null).catch(() => {});
     }
     try {
       await applyDeleteTimelineNodeCommand({ node_id: nodeId });
@@ -139,6 +142,7 @@
       editorState.selectedNodeId = null;
       editorState.selectedNode = null;
       editorState.selectedLevel = null;
+      void refreshSelectedNodeEditorProjection(null).catch(() => {});
     }
     try {
       await applySplitTimelineNodeCommand({
