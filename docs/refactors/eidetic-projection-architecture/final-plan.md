@@ -748,6 +748,11 @@ Discovered implementation gaps:
   graph prefixes from the command ID, and the bible UI no longer generates those
   durable IDs locally. The remaining frontend `crypto.randomUUID()` call is the
   command-envelope idempotency key in `commandApi.ts`.
+- Open: `crates/server/src/routes/commands.rs` and
+  `crates/server/src/routes/commands_bible_tests.rs` exceed decomposition
+  thresholds after adding route-boundary bible graph ID materializers and
+  generated-ID route tests. Split bible/story command route adapters and tests
+  into focused modules before adding more command families to this route file.
 
 Simplification opportunities:
 
