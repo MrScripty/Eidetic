@@ -390,6 +390,11 @@ Completed slices:
   HTTP route, WebSocket/Y.Doc event, frontend helper, route-test, lifecycle, and
   renderer-WASM surfaces that must move from Axum/browser transport to
   backend-owned services and Tauri command/event adapters.
+- `refactor(server): expose backend runtime library` moved the server crate's
+  module root into `lib.rs`, isolated current Axum router/listener composition in
+  `axum_runtime.rs`, and reduced `main.rs` to tracing plus legacy server startup
+  so future Tauri bindings can depend on backend runtime modules instead of the
+  binary entrypoint.
 
 Discovered issues:
 
