@@ -823,6 +823,9 @@ Discovered implementation gaps:
   fields during JSON deserialization, so command routes that deserialize
   directly into shared envelopes also reject renderer-sent `project_id`,
   `session_id`, or other non-contract envelope fields before command handling.
+- Resolved: script block and script lock command payload contracts now reject
+  unknown payload fields during JSON deserialization, so renderer-only script
+  edit or lock metadata cannot enter backend command handling silently.
 
 Simplification opportunities:
 
@@ -865,6 +868,9 @@ Verification:
 - Backend script block route tests cover unexpected `project_id`/`session_id`
   fields on direct shared-envelope command routes, and the full command route
   suite passes with strict envelope rejection enabled.
+- Backend script block route tests cover unexpected payload fields, and the
+  full command route suite passes with strict script block/lock payload
+  rejection enabled.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter

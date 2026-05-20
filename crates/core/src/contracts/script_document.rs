@@ -152,6 +152,7 @@ pub struct ScriptDocumentProjection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SetScriptBlockCommand {
     pub document_id: ScriptDocumentId,
     pub document_title: String,
@@ -179,6 +180,7 @@ fn default_script_span_provenance() -> ScriptSpanProvenance {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SetScriptLockCommand {
     pub lock_id: ScriptLockId,
     pub span_id: ScriptSpanId,
