@@ -191,6 +191,32 @@ const snapshotProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
   },
 };
 
+const newerProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  ...projection,
+  version: 7,
+  change_event_id: 'event-newer',
+  payload: {
+    ...projection.payload,
+    node: {
+      ...projection.payload.node,
+      name: 'Ada newer',
+    },
+  },
+};
+
+const olderProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  ...projection,
+  version: 6,
+  change_event_id: 'event-older',
+  payload: {
+    ...projection.payload,
+    node: {
+      ...projection.payload.node,
+      name: 'Ada older',
+    },
+  },
+};
+
 function resetProjectionState(): void {
   for (const keyString of Object.keys(bibleGraphNodeProjectionState.projections)) {
     delete bibleGraphNodeProjectionState.projections[keyString];
@@ -395,6 +421,36 @@ describe('bible graph node projection command cache writes', () => {
     expect(getBibleGraphNodeProjectionError(key)).toBe('field rejected');
   });
 
+  it('does not replace cached graph node projections with stale field command responses', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshBibleGraphNodeProjection(key);
+    setBibleGraphFieldMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      setBibleGraphFieldProjection({
+        node_id: 'node.character/ada one',
+        part_id: 'part.character.profile',
+        part_key: 'profile',
+        part_name: 'Profile',
+        part_sort_order: 1,
+        field_id: 'field.character.profile.summary',
+        field_key: 'summary',
+        value: { type: 'text', value: 'Older detail' },
+        field_sort_order: 2,
+      }),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
   it('stores edge command source projections and invalidates cached target projections', async () => {
     getBibleGraphNodeProjectionMock
       .mockResolvedValueOnce(projection)
@@ -438,6 +494,38 @@ describe('bible graph node projection command cache writes', () => {
     );
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(edgeProjection);
     expect(getCachedBibleGraphNodeProjection(targetKey)).toBeUndefined();
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('does not invalidate cached edge targets for stale edge command responses', async () => {
+    getBibleGraphNodeProjectionMock
+      .mockResolvedValueOnce(newerProjection)
+      .mockResolvedValueOnce(targetProjection);
+    await refreshBibleGraphNodeProjection(key);
+    await refreshBibleGraphNodeProjection(targetKey);
+    setBibleGraphEdgeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      setBibleGraphEdgeProjection({
+        edge_id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      }),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    expect(getCachedBibleGraphNodeProjection(targetKey)).toEqual(targetProjection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
   });

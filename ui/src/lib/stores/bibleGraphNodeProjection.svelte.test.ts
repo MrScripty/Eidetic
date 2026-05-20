@@ -67,6 +67,50 @@ const listProjection = {
   },
 };
 
+const newerProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  ...projection,
+  version: 4,
+  change_event_id: 'event-newer',
+  payload: {
+    ...projection.payload,
+    node: {
+      ...projection.payload.node,
+      name: 'Ada newer',
+    },
+  },
+};
+
+const olderProjection: ProjectionEnvelope<BibleNodeDetailProjection> = {
+  ...projection,
+  version: 3,
+  change_event_id: 'event-older',
+  payload: {
+    ...projection.payload,
+    node: {
+      ...projection.payload.node,
+      name: 'Ada older',
+    },
+  },
+};
+
+const newerListProjection = {
+  ...listProjection,
+  version: 4,
+  change_event_id: 'event-list-newer',
+  payload: {
+    nodes: [newerProjection.payload.node],
+  },
+};
+
+const olderListProjection = {
+  ...listProjection,
+  version: 3,
+  change_event_id: 'event-list-older',
+  payload: {
+    nodes: [olderProjection.payload.node],
+  },
+};
+
 function resetProjectionState(): void {
   for (const keyString of Object.keys(bibleGraphNodeProjectionState.projections)) {
     delete bibleGraphNodeProjectionState.projections[keyString];
@@ -147,6 +191,30 @@ describe('bible graph node projection store', () => {
     expect(getCachedBibleGraphNodeListProjection()).toBeNull();
     expect(bibleGraphNodeProjectionState.nodeListPending).toBe(false);
     expect(bibleGraphNodeProjectionState.nodeListError).toBe('list unavailable');
+  });
+
+  it('does not replace cached graph node projections with stale refresh results', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshBibleGraphNodeProjection(key);
+    getBibleGraphNodeProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshBibleGraphNodeProjection(key)).resolves.toEqual(olderProjection);
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('does not replace cached graph node lists with stale refresh results', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValueOnce(newerListProjection);
+    await refreshBibleGraphNodeListProjection();
+    getBibleGraphNodeListProjectionMock.mockResolvedValueOnce(olderListProjection);
+
+    await expect(refreshBibleGraphNodeListProjection()).resolves.toEqual(olderListProjection);
+
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(newerListProjection);
+    expect(bibleGraphNodeProjectionState.nodeListPending).toBe(false);
+    expect(bibleGraphNodeProjectionState.nodeListError).toBeUndefined();
   });
 
   it('clears cached graph node projection state for one node', async () => {

@@ -752,7 +752,7 @@ Discovered implementation gaps:
   out of the shared command route/test modules. `commands.rs`,
   `commands_bible.rs`, `commands_bible_tests.rs`, and
   `commands_bible_snapshot_tests.rs` are all under decomposition thresholds.
-- In progress: `projectionCacheGuards.ts` now provides shared version-based
+- Resolved: `projectionCacheGuards.ts` now provides shared version-based
   projection replacement guards, and `timelineRenderProjection.svelte.ts` uses
   it so older refresh or command-response envelopes cannot overwrite a newer
   cached timeline render projection. `bibleGraphSchemaProjection.svelte.ts`,
@@ -764,8 +764,10 @@ Discovered implementation gaps:
   response envelopes. `objectFieldProjection.svelte.ts` and
   `scriptDocumentProjection.svelte.ts` now guard keyed refresh and command
   response envelopes. `selectedNodeEditorProjection.svelte.ts` now combines
-  request-id suppression with backend projection version guards. Apply the same
-  guard pattern to the remaining keyed bible graph detail projection cache.
+  request-id suppression with backend projection version guards.
+  `bibleGraphNodeProjection.svelte.ts` now guards keyed node detail refreshes,
+  node list refreshes, command response cache writes, and edge target
+  invalidation against stale backend envelopes.
 - Resolved: `ui/src/lib/stores/README.md` now classifies `wsHandlers.ts` as
   projection refresh orchestration instead of mixed legacy ownership, matching
   the current websocket handler implementation.
