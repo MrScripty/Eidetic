@@ -138,14 +138,15 @@ export async function createBibleGraphNodeProjection(
   payload: CreateBibleGraphNodeCommand,
   commandId?: CommandId,
 ): Promise<BibleGraphNodeCommandResponse> {
-  const key = { node_id: payload.node_id };
+  const key = { node_id: payload.node_id ?? `pending-create:${commandId ?? 'new'}` };
   const keyString = cacheKey(key);
   bibleGraphNodeProjectionState.pending[keyString] = true;
   bibleGraphNodeProjectionState.errors[keyString] = undefined;
 
   try {
     const response = await createBibleGraphNode(payload, commandId);
-    bibleGraphNodeProjectionState.projections[keyString] = response.projection;
+    const confirmedKeyString = cacheKey({ node_id: response.projection.payload.node.id });
+    bibleGraphNodeProjectionState.projections[confirmedKeyString] = response.projection;
     bibleGraphNodeProjectionState.nodeList = null;
     return response;
   } catch (error) {

@@ -743,6 +743,11 @@ Discovered implementation gaps:
 - Resolved: story arc creation now accepts omitted arc IDs, derives a stable
   backend-owned arc ID from the command ID for idempotent replay, and the arc
   list UI no longer generates durable arc IDs.
+- Resolved: bible graph node, edge, snapshot, and snapshot-field commands now
+  accept omitted durable IDs, derive stable backend-owned IDs with existing
+  graph prefixes from the command ID, and the bible UI no longer generates those
+  durable IDs locally. The remaining frontend `crypto.randomUUID()` call is the
+  command-envelope idempotency key in `commandApi.ts`.
 
 Simplification opportunities:
 

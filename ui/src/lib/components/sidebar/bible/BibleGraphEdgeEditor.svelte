@@ -34,7 +34,6 @@
     error = undefined;
     try {
       await setBibleGraphEdgeProjection({
-        edge_id: `edge.${crypto.randomUUID()}`,
         from_node_id: sourceNodeId,
         to_node_id: target,
         edge_kind: edgeKind,

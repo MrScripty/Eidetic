@@ -11,7 +11,7 @@ export type BibleGraphPartKey = string;
 export type BibleGraphFieldKey = string;
 
 export interface CreateBibleGraphNodeCommand {
-  node_id: BibleGraphNodeId;
+  node_id?: BibleGraphNodeId;
   parent_id?: BibleGraphNodeId | null;
   schema_key: BibleGraphSchemaKey;
   name: string;
@@ -31,7 +31,7 @@ export interface SetBibleGraphFieldCommand {
 }
 
 export interface SetBibleGraphEdgeCommand {
-  edge_id: BibleGraphEdgeId;
+  edge_id?: BibleGraphEdgeId;
   from_node_id: BibleGraphNodeId;
   to_node_id: BibleGraphNodeId;
   edge_kind: BibleGraphEdgeKind;
@@ -41,12 +41,12 @@ export interface SetBibleGraphEdgeCommand {
 }
 
 export interface SetBibleGraphSnapshotFieldCommand {
-  snapshot_id: BibleGraphSnapshotId;
+  snapshot_id?: BibleGraphSnapshotId;
   node_id: BibleGraphNodeId;
   at_ms: number;
   label: string;
   snapshot_sort_order?: number;
-  field_id: BibleGraphSnapshotFieldId;
+  field_id?: BibleGraphSnapshotFieldId;
   part_key: BibleGraphPartKey;
   part_name: string;
   field_key: BibleGraphFieldKey;

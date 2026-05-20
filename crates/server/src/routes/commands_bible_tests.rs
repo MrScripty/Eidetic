@@ -56,6 +56,62 @@ async fn bible_graph_node_command_returns_projection() {
 }
 
 #[tokio::test]
+async fn bible_graph_node_command_generates_node_id_when_omitted() {
+    let path = temp_db_path("creates-bible-graph-node-generated-id");
+    let app = app_with_project_path(path.clone()).await;
+    let mut body = bible_graph_node_command_body("node.character.ada", "Ada");
+    body["payload"]
+        .as_object_mut()
+        .expect("payload object")
+        .remove("node_id");
+
+    let response = app
+        .oneshot(bible_graph_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let node_id = value["projection"]["payload"]["node"]["id"]
+        .as_str()
+        .expect("generated node id");
+    assert!(node_id.starts_with("node.character."));
+    assert_eq!(value["projection"]["payload"]["node"]["name"], "Ada");
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn bible_graph_node_command_replays_omitted_node_id() {
+    let path = temp_db_path("creates-bible-graph-node-generated-id-replay");
+    let app = app_with_project_path(path.clone()).await;
+    let mut body = bible_graph_node_command_body("node.character.ada", "Ada");
+    body["payload"]
+        .as_object_mut()
+        .expect("payload object")
+        .remove("node_id");
+
+    let first = app
+        .clone()
+        .oneshot(bible_graph_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(bible_graph_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    assert_eq!(value["projection"]["payload"]["node"]["name"], "Ada");
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_graph_node_command_rejects_empty_name() {
     let path = temp_db_path("rejects-empty-bible-node-name");
     let app = app_with_project_path(path.clone()).await;
@@ -199,6 +255,46 @@ async fn bible_graph_edge_command_returns_edge_projection() {
 }
 
 #[tokio::test]
+async fn bible_graph_edge_command_generates_edge_id_when_omitted() {
+    let path = temp_db_path("sets-bible-graph-edge-generated-id");
+    let app = app_with_project_path(path.clone()).await;
+    let source = bible_graph_node_command_body("node.character.ada", "Ada");
+    let target = bible_graph_node_command_body("node.place.beach", "Beach");
+    let mut edge = bible_graph_edge_command_body();
+    edge["payload"]
+        .as_object_mut()
+        .expect("payload object")
+        .remove("edge_id");
+
+    let source_response = app
+        .clone()
+        .oneshot(bible_graph_command_request(source))
+        .await
+        .expect("source route response");
+    let target_response = app
+        .clone()
+        .oneshot(bible_graph_command_request(target))
+        .await
+        .expect("target route response");
+    let edge_response = app
+        .oneshot(bible_graph_edge_command_request(edge))
+        .await
+        .expect("edge route response");
+
+    assert_eq!(source_response.status(), StatusCode::OK);
+    assert_eq!(target_response.status(), StatusCode::OK);
+    assert_eq!(edge_response.status(), StatusCode::OK);
+    let value = response_json(edge_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let edge_id = value["projection"]["payload"]["outgoing_edges"][0]["id"]
+        .as_str()
+        .expect("generated edge id");
+    assert!(edge_id.starts_with("edge."));
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_graph_edge_command_rejects_missing_target() {
     let path = temp_db_path("rejects-missing-edge-target");
     let app = app_with_project_path(path.clone()).await;
@@ -251,6 +347,42 @@ async fn bible_graph_snapshot_field_command_returns_snapshot_projection() {
         value["projection"]["payload"]["snapshots"][0]["fields"][0]["value"]["value"],
         "Rain-soaked"
     );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn bible_graph_snapshot_field_command_generates_ids_when_omitted() {
+    let path = temp_db_path("sets-bible-graph-snapshot-field-generated-ids");
+    let app = app_with_project_path(path.clone()).await;
+    let node = bible_graph_node_command_body("node.character.ada", "Ada");
+    let mut snapshot = bible_graph_snapshot_field_command_body(Some(json_text("Rain-soaked")));
+    let payload = snapshot["payload"].as_object_mut().expect("payload object");
+    payload.remove("snapshot_id");
+    payload.remove("field_id");
+
+    let create_response = app
+        .clone()
+        .oneshot(bible_graph_command_request(node))
+        .await
+        .expect("create route response");
+    let snapshot_response = app
+        .oneshot(bible_graph_snapshot_field_command_request(snapshot))
+        .await
+        .expect("snapshot route response");
+
+    assert_eq!(create_response.status(), StatusCode::OK);
+    assert_eq!(snapshot_response.status(), StatusCode::OK);
+    let value = response_json(snapshot_response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let snapshot_id = value["projection"]["payload"]["snapshots"][0]["snapshot"]["id"]
+        .as_str()
+        .expect("generated snapshot id");
+    let field_id = value["projection"]["payload"]["snapshots"][0]["fields"][0]["id"]
+        .as_str()
+        .expect("generated snapshot field id");
+    assert!(snapshot_id.starts_with("snapshot."));
+    assert!(field_id.starts_with("snapshot-field."));
 
     let _ = std::fs::remove_file(path);
 }

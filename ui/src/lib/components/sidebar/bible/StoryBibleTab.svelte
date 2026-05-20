@@ -75,16 +75,14 @@
         throw new Error(`Schema unavailable for ${category}`);
       }
       const parentId = await ensureRootForCategory(category);
-      const nodeId = `node.${schemaKey}.${crypto.randomUUID()}`;
-      await createBibleGraphNodeProjection({
-        node_id: nodeId,
+      const projection = await createBibleGraphNodeProjection({
         parent_id: parentId,
         schema_key: schemaKey,
         name: newNodeName(category),
         sort_order: nextSortOrder(category),
       });
       await refreshBibleRenderGraphProjection();
-      selectBibleGraphNode(nodeId);
+      selectBibleGraphNode(projection.projection.payload.node.id);
     } catch (error) {
       loadError = error instanceof Error ? error.message : 'Failed to create bible graph node';
     }

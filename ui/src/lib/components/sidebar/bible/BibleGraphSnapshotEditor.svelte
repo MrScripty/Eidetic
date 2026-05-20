@@ -41,14 +41,11 @@
     saving = true;
     error = undefined;
     try {
-      const snapshotId = `snapshot.${crypto.randomUUID()}`;
       await setBibleGraphSnapshotFieldProjection({
-        snapshot_id: snapshotId,
         node_id: nodeId,
         at_ms: Math.max(0, Math.trunc(atMs)),
         label: snapshotLabel,
         snapshot_sort_order: nextSortOrder,
-        field_id: `snapshot-field.${crypto.randomUUID()}`,
         part_key: selectedOption.part.part_key,
         part_name: selectedOption.part.name,
         field_key: selectedOption.field.field_key,
