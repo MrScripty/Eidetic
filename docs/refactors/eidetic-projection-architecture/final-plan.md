@@ -695,6 +695,13 @@ Known legacy ownership paths to remove:
 - Resolved: `ui/src/lib/stores/wsHandlers.ts` refreshes projection caches on
   timeline, hierarchy, script, bible, generation, and proposal events instead
   of calling broad timeline/content reads or patching selected node objects.
+- Resolved: websocket-triggered projection refreshes now go through
+  `projectionRefreshQueue.ts`, which coalesces event bursts per projection
+  identity and schedules one follow-up refresh if another request arrives while
+  a refresh is in flight.
+- Resolved: `aiStatus.svelte.ts` owns the AI status polling lifecycle and now
+  guards overlapping refreshes with request IDs so stale status responses cannot
+  overwrite newer backend status.
 - Resolved: `ui/src/lib/components/layout/SplashScreen.svelte` no longer
   hydrates broad `Project`/`Timeline` DTOs into durable frontend stores; the
   project store keeps active-session metadata only.
