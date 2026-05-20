@@ -1,14 +1,16 @@
 use eidetic_core::ai::backend::ChildPlanListProjection;
 use eidetic_core::contracts::{
-    AcceptBibleReferenceProposalCommand, BibleGraphNodeListProjection,
-    BibleGraphSchemaListProjection, BibleNodeDetailProjection,
+    AcceptBibleReferenceProposalCommand, AcceptPropagationProposalCommand,
+    BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
     BibleReferenceProposalListProjection, BibleRenderGraphProjection, ChangeReviewProjection,
-    CommandEnvelope, CreateBibleReferenceProposalCommand, DeleteStoryArcCommand,
-    EnsureCanonicalBibleRootsCommand, ProjectionEnvelope, PropagationProposalListProjection,
-    RejectBibleReferenceProposalCommand, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    CommandEnvelope, CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand,
+    DeleteStoryArcCommand, EnsureCanonicalBibleRootsCommand, ProjectionEnvelope,
+    PropagationProposalListProjection, RejectBibleReferenceProposalCommand,
+    RejectPropagationProposalCommand, ScriptDocumentProjection, SelectedNodeEditorProjection,
     SemanticDependencyProjection, SetBibleGraphFieldCommand, SetObjectFieldCommand,
     SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
     StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
+    UpdatePropagationProposalCommand,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
@@ -271,6 +273,50 @@ async fn command_bible_reference_proposal_accept(
 }
 
 #[tauri::command]
+async fn command_propagation_proposal_create(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<CreatePropagationProposalCommand>,
+) -> Result<command_service::PropagationProposalCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::create_propagation_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_propagation_proposal_reject(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<RejectPropagationProposalCommand>,
+) -> Result<command_service::PropagationProposalCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::reject_propagation_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_propagation_proposal_update(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<UpdatePropagationProposalCommand>,
+) -> Result<command_service::PropagationProposalCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::update_propagation_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_propagation_proposal_accept(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<AcceptPropagationProposalCommand>,
+) -> Result<command_service::PropagationProposalCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::accept_propagation_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_object_field(
     app: tauri::AppHandle,
     query: ObjectFieldProjectionRequest,
@@ -452,6 +498,10 @@ pub fn run() {
             command_bible_reference_proposal_create,
             command_bible_reference_proposal_reject,
             command_bible_reference_proposal_accept,
+            command_propagation_proposal_create,
+            command_propagation_proposal_reject,
+            command_propagation_proposal_update,
+            command_propagation_proposal_accept,
             projection_object_field,
             projection_script_document,
             projection_bible_graph_node,

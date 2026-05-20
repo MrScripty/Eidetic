@@ -487,6 +487,11 @@ Completed slices:
   focused backend command service, kept the legacy Axum routes as service
   adapters, exposed matching Tauri commands, and made the frontend command
   helpers prefer desktop IPC when available.
+- `feat(desktop): route propagation proposal commands through tauri` moved
+  propagation proposal create, reject, update, and accept command handling into
+  the focused semantic command service, kept the legacy Axum routes as service
+  adapters, exposed matching Tauri commands, and made the frontend command
+  helpers prefer desktop IPC when available.
 
 Discovered issues:
 

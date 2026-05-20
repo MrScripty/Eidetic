@@ -26,8 +26,10 @@ pub use crate::command_service_bible::{
     set_bible_graph_snapshot_field,
 };
 pub use crate::command_service_semantic::{
-    BibleReferenceProposalCommandResponse, accept_bible_reference_proposal,
-    create_bible_reference_proposal, reject_bible_reference_proposal,
+    BibleReferenceProposalCommandResponse, PropagationProposalCommandResponse,
+    accept_bible_reference_proposal, accept_propagation_proposal, create_bible_reference_proposal,
+    create_propagation_proposal, reject_bible_reference_proposal, reject_propagation_proposal,
+    update_propagation_proposal,
 };
 
 #[derive(Debug, Serialize)]

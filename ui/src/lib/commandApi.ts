@@ -263,6 +263,13 @@ export function createPropagationProposal(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<PropagationProposalCommandResponse>(
+      'command_propagation_proposal_create',
+      { command },
+    );
+  }
+
   return request('/commands/semantic/propagation-proposal', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -277,6 +284,13 @@ export function rejectPropagationProposal(
     id: commandId,
     payload,
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<PropagationProposalCommandResponse>(
+      'command_propagation_proposal_reject',
+      { command },
+    );
+  }
 
   return request('/commands/semantic/propagation-proposal/reject', {
     method: 'POST',
@@ -293,6 +307,13 @@ export function updatePropagationProposal(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<PropagationProposalCommandResponse>(
+      'command_propagation_proposal_update',
+      { command },
+    );
+  }
+
   return request('/commands/semantic/propagation-proposal/update', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -307,6 +328,13 @@ export function acceptPropagationProposal(
     id: commandId,
     payload,
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<PropagationProposalCommandResponse>(
+      'command_propagation_proposal_accept',
+      { command },
+    );
+  }
 
   return request('/commands/semantic/propagation-proposal/accept', {
     method: 'POST',
