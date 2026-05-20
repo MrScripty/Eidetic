@@ -826,6 +826,10 @@ Discovered implementation gaps:
 - Resolved: script block and script lock command payload contracts now reject
   unknown payload fields during JSON deserialization, so renderer-only script
   edit or lock metadata cannot enter backend command handling silently.
+- Resolved: `projectionOnlyGuards.test.ts` now verifies the store ownership
+  audit in `ui/src/lib/stores/README.md` stays aligned with every non-test
+  store module, and the audit now includes project-session activation,
+  projection cache guard, and projection refresh queue infrastructure.
 
 Simplification opportunities:
 
@@ -839,6 +843,9 @@ Simplification opportunities:
 Verification:
 
 - Store audit document or table exists and lists every `ui/src/lib/stores/*` owner classification.
+  `projectionOnlyGuards.test.ts` now fails if any non-test store module is
+  missing from `ui/src/lib/stores/README.md` or if the audit references a stale
+  store file.
 - Unit tests prove command responses replace projection caches without optimistic durable mutation.
 - WebSocket handler tests prove events refresh/invalidate projection caches instead of patching durable objects.
 - Static checks or focused tests fail if banned legacy helpers, broad project mutation paths, or old timeline mutation APIs are reintroduced.

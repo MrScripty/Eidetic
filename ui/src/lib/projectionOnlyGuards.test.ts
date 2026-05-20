@@ -73,4 +73,23 @@ describe('projection-only frontend guardrails', () => {
 
     expect(violations).toEqual([]);
   });
+
+  it('keeps the store ownership audit aligned with store modules', () => {
+    const storesRoot = join(sourceRoot, 'lib', 'stores');
+    const readme = readFileSync(join(storesRoot, 'README.md'), 'utf8');
+    const auditedStores = new Set(
+      Array.from(readme.matchAll(/\| `([^`]+)`\s+\|/g), (match) => match[1] ?? ''),
+    );
+    const storeModules = readdirSync(storesRoot)
+      .filter((entry) => entry.endsWith('.ts') && !entry.endsWith('.test.ts'))
+      .sort();
+
+    const missingAuditRows = storeModules.filter((store) => !auditedStores.has(store));
+    const staleAuditRows = Array.from(auditedStores)
+      .filter((store) => store.endsWith('.ts') && !storeModules.includes(store))
+      .sort();
+
+    expect(missingAuditRows).toEqual([]);
+    expect(staleAuditRows).toEqual([]);
+  });
 });
