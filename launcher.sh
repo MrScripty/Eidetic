@@ -184,15 +184,23 @@ open_app_when_ready() {
   fi
 
   (
+    log "[ui] waiting for $url"
+
     if ! command -v curl >/dev/null 2>&1; then
       sleep 2
-      xdg-open "$url" >/dev/null 2>&1 || true
+      log "[ui] opening $url"
+      if ! xdg-open "$url" >/dev/null 2>&1; then
+        log "[ui] browser open failed; open $url"
+      fi
       exit 0
     fi
 
     while ((attempts > 0)); do
       if curl -fsS "$url" >/dev/null 2>&1; then
-        xdg-open "$url" >/dev/null 2>&1 || true
+        log "[ui] opening $url"
+        if ! xdg-open "$url" >/dev/null 2>&1; then
+          log "[ui] browser open failed; open $url"
+        fi
         exit 0
       fi
       attempts=$((attempts - 1))
