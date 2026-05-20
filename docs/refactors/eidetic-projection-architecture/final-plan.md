@@ -792,6 +792,11 @@ Discovered implementation gaps:
 - Resolved: `ws.test.ts` now covers `WsClient` lifecycle behavior for reconnect
   timer cancellation, manual disconnect without reconnect, event handler
   unsubscribe, and detaching outgoing Yjs updates on disconnect.
+- Resolved: `projectSession.ts` now owns project activation for create/load:
+  it clears queued projection refreshes, transient editor and bible selection
+  state, project-scoped projection caches, stores lightweight active project
+  metadata, and refreshes focused timeline, story arc, script, bible, proposal,
+  and change-review projections.
 
 Simplification opportunities:
 
@@ -826,6 +831,9 @@ Verification:
   cancellation, and destroy cleanup for story arc metadata saves.
   `ws.test.ts` covers websocket reconnect timer cleanup and Yjs listener
   teardown on disconnect.
+  `projectSession.test.ts` covers project activation ordering so project
+  close/reopen paths clear lifecycle and transient state before projection
+  refreshes repopulate backend-owned data.
 - Accessibility checks cover keyboard alternatives and embedded timeline/editor control conflicts for any touched gesture-heavy controls.
 - Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
 - Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.

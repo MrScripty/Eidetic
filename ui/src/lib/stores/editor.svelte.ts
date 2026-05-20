@@ -39,6 +39,20 @@ export const editorState = $state<{
   batchCompletedCount: 0,
 });
 
+export function resetEditorState(): void {
+  editorState.selectedNodeId = null;
+  editorState.selectedLevel = null;
+  editorState.streamingNodeId = null;
+  editorState.streamingText = '';
+  editorState.streamingTokenCount = 0;
+  editorState.generationContext = null;
+  editorState.lastGenerationNodeId = null;
+  editorState.generationError = null;
+  editorState.batchParentNodeId = null;
+  editorState.batchTotalCount = 0;
+  editorState.batchCompletedCount = 0;
+}
+
 /** Reset streaming state and begin a new generation for a single node. */
 export function startGeneration(nodeId: string) {
   editorState.streamingNodeId = nodeId;

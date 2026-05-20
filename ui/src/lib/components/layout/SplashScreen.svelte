@@ -1,11 +1,9 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
   import { projectState } from '$lib/stores/project.svelte.js';
-  import { refreshStoryArcListProjection } from '$lib/stores/storyArcProjection.svelte.js';
-  import { refreshTimelineRenderProjection } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import { activateProjectSession } from '$lib/stores/projectSession.js';
   import { createProject, loadProject, listProjects } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
-  import type { Project } from '$lib/projectTypes.js';
 
   type View = 'home' | 'new' | 'open';
   let view: View = $state('home');
@@ -33,14 +31,6 @@
     },
   ];
 
-  function hydrateStores(project: Project) {
-    projectState.current = { name: project.name };
-  }
-
-  async function refreshProjectProjections() {
-    await Promise.all([refreshStoryArcListProjection(), refreshTimelineRenderProjection()]);
-  }
-
   async function fetchProjects() {
     loadingProjects = true;
     loadError = null;
@@ -58,8 +48,7 @@
     busy = true;
     try {
       const project = await createProject('Untitled Episode', templateId);
-      hydrateStores(project);
-      await refreshProjectProjections();
+      await activateProjectSession(project);
     } catch (e) {
       notify(
         'error',
@@ -74,8 +63,7 @@
     busy = true;
     try {
       const project = await loadProject(path);
-      hydrateStores(project);
-      await refreshProjectProjections();
+      await activateProjectSession(project);
     } catch (e) {
       notify(
         'error',
