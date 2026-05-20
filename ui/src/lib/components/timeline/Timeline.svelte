@@ -16,42 +16,34 @@
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { registerShortcut } from '$lib/stores/shortcuts.svelte.js';
   import { TIMELINE, timelineTrackRowsHeightPx } from '$lib/timelineTypes.js';
-  import type { TimelineGap, StoryLevel } from '$lib/timelineTypes.js';
-  import { getGaps } from '$lib/api.js';
+  import type { StoryLevel } from '$lib/timelineTypes.js';
+  import type { TimelineRenderGap } from '$lib/timelineRenderTypes.js';
   import {
     applyCreateTimelineRelationshipCommand,
     applyTimelineNodeRangeCommand,
+    getCachedTimelineRenderModel,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import { visibleTimelineRenderTracks } from '$lib/timelineRenderModel.js';
 
-  let gaps = $state<TimelineGap[]>([]);
   let scrollbarEl: HTMLDivElement | undefined = $state();
   let contentScrollEl: HTMLDivElement | undefined = $state();
   let scrollbarSyncing = false;
   let hasAutoFit = false;
-  let visibleTrackCount = $derived(
-    timelineState.timeline?.tracks.filter((track) => !track.collapsed).length ?? 0,
-  );
+  let renderModel = $derived(getCachedTimelineRenderModel());
+  let renderTracks = $derived(renderModel ? visibleTimelineRenderTracks(renderModel) : []);
+  let visibleTrackCount = $derived(renderTracks.length);
   let trackRowsHeight = $derived(timelineTrackRowsHeightPx(visibleTrackCount));
 
-  // Auto zoom-to-fit when timeline first loads and viewport is measured.
+  // Auto zoom-to-fit when timeline projection first loads and viewport is measured.
   $effect(() => {
-    if (!hasAutoFit && timelineState.timeline && timelineState.viewportWidth > 0) {
+    if (!hasAutoFit && renderModel && timelineState.viewportWidth > 0) {
       hasAutoFit = true;
       zoomToFit();
     }
   });
 
-  // Refetch gaps when timeline changes.
-  $effect(() => {
-    if (timelineState.timeline) {
-      getGaps()
-        .then((g) => (gaps = g))
-        .catch(() => {});
-    }
-  });
-
-  function gapsForLevel(level: StoryLevel): TimelineGap[] {
-    return gaps.filter((g) => g.level === level);
+  function gapsForLevel(level: StoryLevel): TimelineRenderGap[] {
+    return renderModel?.gaps.filter((g) => g.level === level) ?? [];
   }
 
   function onwheel(e: WheelEvent) {
@@ -257,17 +249,15 @@
           <div class="label-spacer rel-spacer"></div>
 
           <div class="labels-tracks">
-            {#if timelineState.timeline}
-              {#each timelineState.timeline.tracks as track}
-                <div
-                  class="track-label"
-                  style="height: {track.collapsed ? 0 : TIMELINE.TRACK_ROW_HEIGHT_PX}px"
-                  class:collapsed={track.collapsed}
-                >
-                  <span class="track-label-text">{track.label}</span>
-                </div>
-              {/each}
-            {/if}
+            {#each renderTracks as track}
+              <div
+                class="track-label"
+                style="height: {TIMELINE.TRACK_ROW_HEIGHT_PX}px"
+                class:collapsed={track.collapsed}
+              >
+                <span class="track-label-text">{track.label}</span>
+              </div>
+            {/each}
           </div>
 
           <div class="label-spacer structure-spacer"></div>
@@ -286,8 +276,8 @@
                 class="tracks-content"
                 style="width: {totalWidth()}px; transform: translateX(-{timelineState.scrollX}px)"
               >
-                {#if timelineState.timeline}
-                  {#each timelineState.timeline.tracks as track}
+                {#if renderModel}
+                  {#each renderTracks as track}
                     <LevelTrack
                       {track}
                       gaps={gapsForLevel(track.level)}
@@ -298,9 +288,9 @@
               </div>
             </div>
 
-            {#if timelineState.timeline}
+            {#if renderModel}
               <StructureBar
-                structure={timelineState.timeline.structure}
+                segments={renderModel.structure_segments}
                 width={totalWidth()}
                 offsetX={timelineState.scrollX}
               />

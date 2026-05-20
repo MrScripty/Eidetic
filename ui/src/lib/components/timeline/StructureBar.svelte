@@ -1,14 +1,14 @@
 <script lang="ts">
-  import type { EpisodeStructure } from '$lib/timelineTypes.js';
   import { TIMELINE } from '$lib/timelineTypes.js';
   import { timeToX, rangeWidth } from '$lib/stores/timeline.svelte.js';
+  import type { TimelineRenderStructureSegment } from '$lib/timelineRenderTypes.js';
 
   let {
-    structure,
+    segments,
     width,
     offsetX,
   }: {
-    structure: EpisodeStructure;
+    segments: TimelineRenderStructureSegment[];
     width: number;
     offsetX: number;
   } = $props();
@@ -24,7 +24,7 @@
 
 <div class="structure-bar" style="height: {TIMELINE.STRUCTURE_BAR_TOTAL_HEIGHT_PX}px">
   <div class="structure-track" style="width: {width}px; transform: translateX(-{offsetX}px)">
-    {#each structure.segments as segment}
+    {#each segments as segment}
       {@const segWidth = rangeWidth(segment.time_range)}
       {#if segWidth > 0}
         <div

@@ -1,5 +1,7 @@
 <script lang="ts">
-  import type { Track, StoryNode, TimelineGap } from '$lib/timelineTypes.js';
+  import type { Track, StoryNode } from '$lib/timelineTypes.js';
+  import type { TimelineRenderModelTrack } from '$lib/timelineRenderModel.js';
+  import type { TimelineRenderGap } from '$lib/timelineRenderTypes.js';
   import { colorToHex } from '$lib/storyArcTypes.js';
   import { TIMELINE } from '$lib/timelineTypes.js';
   import {
@@ -26,8 +28,8 @@
     gaps = [],
     onconnectstart,
   }: {
-    track: Track;
-    gaps?: TimelineGap[];
+    track: Track | TimelineRenderModelTrack;
+    gaps?: TimelineRenderGap[];
     onconnectstart: (nodeId: string, x: number, y: number) => void;
   } = $props();
 
@@ -150,7 +152,7 @@
     }
   }
 
-  async function handleFillGap(gap: TimelineGap) {
+  async function handleFillGap(gap: TimelineRenderGap) {
     try {
       await applyCreateTimelineNodeCommand({
         node_id: crypto.randomUUID(),
