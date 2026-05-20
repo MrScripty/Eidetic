@@ -837,6 +837,9 @@ Discovered implementation gaps:
   lock command path through the real frontend command helper and projection
   store, proving backend-returned projections replace the cache while backend
   validation errors preserve the last confirmed projection.
+- Resolved: Milestone 6 final validation passed with the full UI Vitest suite,
+  full backend command route suite, UI typecheck/lint, and server check after
+  the projection-only guard, accessibility, and command-flow slices landed.
 
 Simplification opportunities:
 
@@ -908,6 +911,10 @@ Verification:
   surfaces.
 - Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
 - Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.
+  Final Milestone 6 closeout validation passed:
+  `npm run test`, `npm run typecheck`, `npm run lint`,
+  `cargo test -p eidetic-server routes::commands -- --nocapture`, and
+  `cargo check -p eidetic-server`.
 
 Re-plan triggers:
 
