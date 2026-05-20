@@ -4,6 +4,7 @@ members = [
     "crates/server",
     "crates/bevy_timeline",
     "crates/bevy_bible_graph",
+    "src-tauri",
 ]
 resolver = "2"
 

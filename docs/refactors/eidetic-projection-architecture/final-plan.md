@@ -403,6 +403,11 @@ Completed slices:
   create, get, update, save, load, list, and Y.Doc load seeding behavior into
   `project_service.rs`, leaving the legacy Axum project routes as transport
   adapters while adding service-level coverage for the non-HTTP path.
+- `feat(desktop): add initial tauri shell` added `src-tauri` as an isolated
+  workspace member with Tauri 2.11 desktop configuration, minimal capabilities,
+  backend runtime composition, a desktop health command, and a read-only
+  `project_get` command backed by `project_service` without adding Tauri
+  dependencies to core, server, or renderer crates.
 
 Discovered issues:
 
@@ -461,6 +466,9 @@ Discovered issues:
   but command/projection/AI/export/reference route handlers and many route tests
   still use HTTP status codes as the behavior boundary; extract service
   functions and service-level tests before adding Tauri command adapters.
+- Resolved: the first Tauri dependency resolution selected `tauri` 2.10.3 with
+  newer 2.11 runtime crates, which failed inside `tauri-runtime-wry`. The desktop
+  crate now pins `tauri` to 2.11.2 so the runtime stack resolves consistently.
 - Open: Milestone 7 lifecycle compliance is blocked by detached backend tasks.
   Autosave, Y.Doc, AI generation, batch generation, and reference embedding use
   `tokio::spawn` without a runtime owner; move them behind a Tauri-owned

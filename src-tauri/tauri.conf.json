@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Eidetic",
+  "version": "0.1.0",
+  "identifier": "dev.eidetic.app",
+  "build": {
+    "beforeDevCommand": "npm --prefix ../ui run dev",
+    "beforeBuildCommand": "npm --prefix ../ui run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist/ui"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Eidetic",
+        "width": 1440,
+        "height": 960,
+        "minWidth": 1024,
+        "minHeight": 720,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": []
+  }
+}
