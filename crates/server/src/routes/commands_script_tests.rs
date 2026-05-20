@@ -69,6 +69,25 @@ async fn script_block_command_rejects_invalid_segment_range() {
 }
 
 #[tokio::test]
+async fn script_block_command_rejects_unexpected_project_session_fields() {
+    let path = temp_db_path("rejects-unexpected-script-block-fields");
+    let app = app_with_project_path(path.clone()).await;
+    let mut body = script_block_command_body("Ada enters with a wet umbrella.");
+    body["project_id"] = json!("renderer-project");
+    body["session_id"] = json!("renderer-session");
+
+    let response = app
+        .oneshot(script_block_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(!path.exists());
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn script_lock_command_returns_script_document_projection() {
     let path = temp_db_path("sets-script-lock");
     let app = app_with_project_path(path.clone()).await;

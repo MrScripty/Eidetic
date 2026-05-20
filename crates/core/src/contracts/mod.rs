@@ -300,6 +300,7 @@ impl ObjectRevision {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CommandEnvelope<T> {
     pub id: CommandId,
     pub payload: T,

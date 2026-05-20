@@ -819,6 +819,10 @@ Discovered implementation gaps:
   fields during JSON deserialization, so renderer-sent `project_id`,
   `session_id`, or non-contract arc fields fail before backend story command
   handling.
+- Resolved: the shared `CommandEnvelope<T>` now rejects unknown top-level
+  fields during JSON deserialization, so command routes that deserialize
+  directly into shared envelopes also reject renderer-sent `project_id`,
+  `session_id`, or other non-contract envelope fields before command handling.
 
 Simplification opportunities:
 
@@ -858,6 +862,9 @@ Verification:
 - Backend story arc create route tests cover unexpected `project_id`/
   `session_id` fields, and the object/story command route suite passes with
   strict unknown-field rejection enabled for create-arc commands.
+- Backend script block route tests cover unexpected `project_id`/`session_id`
+  fields on direct shared-envelope command routes, and the full command route
+  suite passes with strict envelope rejection enabled.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter
