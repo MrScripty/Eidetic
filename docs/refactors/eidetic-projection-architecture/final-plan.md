@@ -687,20 +687,40 @@ Accessibility and frontend interaction requirements:
 
 Known legacy ownership paths to remove:
 
-- `ui/src/lib/stores/timeline.svelte.ts`: `timelineState.timeline`, `nodesAtLevel`, `childrenOf`, `ancestorsOf`, `arcsForNode`, and `findNode` as broad `Timeline` readers.
-- `ui/src/lib/stores/editor.svelte.ts`: `selectedNode: StoryNode | null` and `aiStatus` in the editor store.
+- Resolved: `ui/src/lib/stores/timeline.svelte.ts` no longer stores
+  `timelineState.timeline` and no longer exports broad timeline query helpers.
+- Resolved: `ui/src/lib/stores/editor.svelte.ts` no longer stores
+  `selectedNode: StoryNode | null`; selected-node durable fields now come from
+  `selectedNodeEditorProjection.svelte.ts`.
 - `ui/src/lib/stores/wsHandlers.ts`: `getTimeline()` hydration, `getNodeContent()` patching, and direct mutation of selected node or timeline node content.
-- `ui/src/lib/components/layout/SplashScreen.svelte`: broad `Project`/`Timeline` hydration into frontend stores after create/load.
-- `ui/src/lib/components/timeline/Timeline.svelte`: rendering tracks, labels, structure, relationship targets, and gaps from `timelineState.timeline` or `getGaps()`.
-- `ui/src/lib/components/timeline/LevelTrack.svelte`: level node queries, arc queries, selection of whole `StoryNode` objects, and regeneration prompts based on stale local node content.
-- `ui/src/lib/components/editor/BeatEditor.svelte`: parent/child/sibling queries from broad timeline state and direct mutation of selected node notes, lock state, and generation status.
+- Resolved: `ui/src/lib/components/layout/SplashScreen.svelte` no longer
+  hydrates broad `Project`/`Timeline` DTOs into durable frontend stores; the
+  project store keeps active-session metadata only.
+- Resolved: `ui/src/lib/components/timeline/Timeline.svelte` renders the
+  temporary DOM timeline shell from `TimelineRenderProjection` /
+  `TimelineRenderModel`, including structure, gaps, tracks, and command hit
+  targets.
+- Resolved: `ui/src/lib/components/timeline/LevelTrack.svelte` renders clips
+  and arc colors from `TimelineRenderModel` instead of broad timeline node/arc
+  helpers.
+- Resolved: `ui/src/lib/components/editor/BeatEditor.svelte` reads selected
+  node, parent, children, siblings, adjacent parents, notes, lock, and content
+  status from `SelectedNodeEditorProjection` and refreshes that projection
+  after editor commands.
 - `ui/src/lib/README.md`: examples that assign broad timeline/project data into frontend stores.
 
 Discovered implementation gaps:
 
-- `TimelineRenderProjection` does not yet expose structure bar data or timeline gaps. The DOM timeline still needs those to remove `timelineState.timeline.structure` and `getGaps()` without losing current UI behavior.
-- `TimelineRenderModel` now has pure selectors for visible tracks, clips by track/level, and adjacent clip bounds. Continue moving timeline components onto those selectors before deleting broad timeline helpers.
-- `BeatEditor.svelte` cannot become projection-only from `TimelineRenderProjection` alone because the render projection intentionally omits notes and full editor context. Add a focused selected-node/editor projection with node identity, hierarchy context, notes, lock state, content status, children, parent, siblings, adjacent parents, and child-level metadata.
+- Resolved: `TimelineRenderProjection` now exposes structure bar segments and
+  gaps, and `TimelineRenderModel` has selectors for visible tracks, clips by
+  track/level, node lookup, and adjacent clip bounds.
+- Resolved: `BeatEditor.svelte` now uses a focused selected-node/editor
+  projection with node identity, hierarchy context, notes, lock state, content
+  status, children, parent, siblings, adjacent parents, and child-level metadata.
+- Remaining: `ui/src/lib/api.ts` still exports legacy broad read helpers
+  `getTimeline()` and HTTP `getNodeContent()`, but current projection-migrated UI
+  paths no longer call them. Delete these helpers and any server routes once a
+  final route-level grep confirms no non-UI consumers remain.
 - The current UI still sends renderer-generated IDs for timeline create/split/relationship commands. Backend validation now rejects duplicate node IDs, duplicate relationship IDs, and self-linked relationships, but later slices should move ID generation backend-side per command family once idempotency semantics are designed.
 
 Simplification opportunities:
