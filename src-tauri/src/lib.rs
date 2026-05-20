@@ -4,9 +4,9 @@ use eidetic_core::contracts::{
     BibleReferenceProposalListProjection, BibleRenderGraphProjection, ChangeReviewProjection,
     CommandEnvelope, DeleteStoryArcCommand, EnsureCanonicalBibleRootsCommand, ProjectionEnvelope,
     PropagationProposalListProjection, ScriptDocumentProjection, SelectedNodeEditorProjection,
-    SemanticDependencyProjection, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetStoryArcMetadataCommand, StoryArcListProjection,
-    StoryArcProgressionProjection, TimelineRenderProjection,
+    SemanticDependencyProjection, SetBibleGraphFieldCommand, SetObjectFieldCommand,
+    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
@@ -187,6 +187,39 @@ async fn command_bible_graph_node(
 ) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     command_service::create_bible_graph_node(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_bible_graph_field(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetBibleGraphFieldCommand>,
+) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_bible_graph_field(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_bible_graph_edge(
+    app: tauri::AppHandle,
+    command: command_service::SetBibleGraphEdgeRequestCommand,
+) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_bible_graph_edge(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_bible_graph_snapshot_field(
+    app: tauri::AppHandle,
+    command: command_service::SetBibleGraphSnapshotFieldRequestCommand,
+) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_bible_graph_snapshot_field(&state, command)
         .await
         .map_err(CommandError::from)
 }
@@ -377,6 +410,9 @@ pub fn run() {
             command_story_update,
             command_story_delete,
             command_bible_graph_node,
+            command_bible_graph_field,
+            command_bible_graph_edge,
+            command_bible_graph_snapshot_field,
             command_bible_graph_roots,
             projection_object_field,
             projection_script_document,

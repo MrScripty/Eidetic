@@ -1236,6 +1236,72 @@ describe('command api helpers', () => {
     );
   });
 
+  it('uses desktop bible graph field commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 4,
+        payload: {
+          node: {
+            id: 'node.location.harbor',
+            parent_id: 'canonical.locations',
+            schema_key: 'location',
+            name: 'Harbor',
+            system_owned: false,
+            sort_order: 2,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setBibleGraphField(
+        {
+          node_id: 'node.location.harbor',
+          part_id: 'part.location.environment',
+          part_key: 'environment',
+          part_name: 'Environment',
+          part_sort_order: 10,
+          field_id: 'field.location.weather',
+          field_key: 'weather',
+          value: { type: 'text', value: 'rainy' },
+          field_sort_order: 20,
+        },
+        'command-field-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_field', {
+      command: {
+        id: 'command-field-1',
+        payload: {
+          node_id: 'node.location.harbor',
+          part_id: 'part.location.environment',
+          part_key: 'environment',
+          part_name: 'Environment',
+          part_sort_order: 10,
+          field_id: 'field.location.weather',
+          field_key: 'weather',
+          value: { type: 'text', value: 'rainy' },
+          field_sort_order: 20,
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('sends bible graph edge commands and returns versioned source node projections', async () => {
     const response = {
       outcome: 'recorded',
@@ -1310,6 +1376,68 @@ describe('command api helpers', () => {
         }),
       }),
     );
+  });
+
+  it('uses desktop bible graph edge commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 5,
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: 'canonical.characters',
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setBibleGraphEdge(
+        {
+          edge_id: 'edge.ada.harbor',
+          from_node_id: 'node.character.ada',
+          to_node_id: 'node.location.harbor',
+          edge_kind: 'located_in',
+          label: 'located in',
+          directed: true,
+          sort_order: 1,
+        },
+        'command-edge-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_edge', {
+      command: {
+        id: 'command-edge-1',
+        payload: {
+          edge_id: 'edge.ada.harbor',
+          from_node_id: 'node.character.ada',
+          to_node_id: 'node.location.harbor',
+          edge_kind: 'located_in',
+          label: 'located in',
+          directed: true,
+          sort_order: 1,
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('sends bible graph snapshot field commands and returns versioned node projections', async () => {
@@ -1405,5 +1533,75 @@ describe('command api helpers', () => {
         }),
       }),
     );
+  });
+
+  it('uses desktop bible graph snapshot field commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 6,
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: 'canonical.characters',
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setBibleGraphSnapshotField(
+        {
+          snapshot_id: 'snapshot.character.ada.sequence-1',
+          node_id: 'node.character.ada',
+          at_ms: 12000,
+          label: 'Sequence 1 state',
+          snapshot_sort_order: 1,
+          field_id: 'snapshot-field.character.status',
+          part_key: 'profile',
+          part_name: 'Profile',
+          field_key: 'tagline',
+          value: { type: 'text', value: 'Rain-soaked' },
+          field_sort_order: 2,
+        },
+        'command-snapshot-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_snapshot_field', {
+      command: {
+        id: 'command-snapshot-1',
+        payload: {
+          snapshot_id: 'snapshot.character.ada.sequence-1',
+          node_id: 'node.character.ada',
+          at_ms: 12000,
+          label: 'Sequence 1 state',
+          snapshot_sort_order: 1,
+          field_id: 'snapshot-field.character.status',
+          part_key: 'profile',
+          part_name: 'Profile',
+          field_key: 'tagline',
+          value: { type: 'text', value: 'Rain-soaked' },
+          field_sort_order: 2,
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

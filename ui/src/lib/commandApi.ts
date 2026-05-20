@@ -118,6 +118,10 @@ export function setBibleGraphField(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_field', { command });
+  }
+
   return request('/commands/bible-graph/field', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -133,6 +137,10 @@ export function setBibleGraphEdge(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_edge', { command });
+  }
+
   return request('/commands/bible-graph/edge', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -147,6 +155,12 @@ export function setBibleGraphSnapshotField(
     id: commandId,
     payload,
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_snapshot_field', {
+      command,
+    });
+  }
 
   return request('/commands/bible-graph/snapshot-field', {
     method: 'POST',
