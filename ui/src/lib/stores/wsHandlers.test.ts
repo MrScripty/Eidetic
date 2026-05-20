@@ -4,6 +4,7 @@ import { setupWsHandlers } from './wsHandlers.js';
 import type { ServerMessage } from '$lib/wsTypes.js';
 import { refreshScriptDocumentProjection } from './scriptDocumentProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
+import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import { completeGeneration } from './editor.svelte.js';
 
 vi.mock('./timelineRenderProjection.svelte.js', () => ({
@@ -67,6 +68,7 @@ class MockWsClient {
 }
 
 beforeEach(() => {
+  clearProjectionRefreshQueue();
   refreshTimelineRenderProjectionMock.mockReset();
   refreshTimelineRenderProjectionMock.mockResolvedValue({
     version: 1,
@@ -89,6 +91,18 @@ describe('websocket projection handlers', () => {
     setupWsHandlers(ws as never);
 
     ws.emit({ type: 'timeline_changed' });
+
+    await vi.waitFor(() => {
+      expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('coalesces bursty timeline projection events', async () => {
+    const ws = new MockWsClient();
+    setupWsHandlers(ws as never);
+
+    ws.emit({ type: 'timeline_changed' });
+    ws.emit({ type: 'hierarchy_changed' });
 
     await vi.waitFor(() => {
       expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
