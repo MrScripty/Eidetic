@@ -782,6 +782,10 @@ Discovered implementation gaps:
   handlers and clears queued projection refreshes, with tests proving events
   after teardown and queued pre-teardown refreshes do not mutate projection
   stores.
+- Resolved: `BeatEditor.svelte` now routes debounced note saves through a
+  small lifecycle-owned helper that captures the selected node ID at schedule
+  time and cancels pending work on destroy, preventing stale notes from saving
+  into a later selection or after unmount.
 
 Simplification opportunities:
 
@@ -809,8 +813,9 @@ Verification:
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter
   resolution during teardown, and `wsHandlers.test.ts` covers websocket
-  subscription cleanup plus queued refresh cleanup. Remaining lifecycle
-  coverage should focus on debounced note-save cleanup.
+  subscription cleanup plus queued refresh cleanup.
+  `debouncedNodeNotesSave.test.ts` covers selected-node capture, newer-edit
+  cancellation, and destroy cleanup for debounced note saves.
 - Accessibility checks cover keyboard alternatives and embedded timeline/editor control conflicts for any touched gesture-heavy controls.
 - Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
 - Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.

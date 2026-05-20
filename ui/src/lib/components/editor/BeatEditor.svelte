@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import type { YTextEvent } from 'yjs';
   import type { NodeId, StoryNode } from '$lib/timelineTypes.js';
   import type {
@@ -28,9 +29,21 @@
   import BeatNotesPanel from './BeatNotesPanel.svelte';
   import BeatPlanningActions from './BeatPlanningActions.svelte';
   import { beatContentStatusLabel } from './beatEditorStatus.js';
+  import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
   import './beatEditor.css';
 
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const debouncedNotesSave = createDebouncedNodeNotesSave({
+    delayMs: 500,
+    async save(nodeId, notes) {
+      await applyTimelineNodeNotesCommand({
+        node_id: nodeId,
+        notes,
+      });
+      if (editorState.selectedNodeId === nodeId) {
+        await refreshSelectedProjection();
+      }
+    },
+  });
   let planning = $state(false);
   let nodeContext: { system: string; user: string } | null = $state(null);
   let contextLoading = $state(false);
@@ -246,18 +259,15 @@
   }
 
   function handleNotesInput(event: Event) {
+    const nodeId = editorState.selectedNodeId;
+    if (!nodeId) return;
     const value = (event.target as HTMLTextAreaElement).value;
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(async () => {
-      if (editorState.selectedNodeId) {
-        await applyTimelineNodeNotesCommand({
-          node_id: editorState.selectedNodeId,
-          notes: value,
-        });
-        await refreshSelectedProjection();
-      }
-    }, 500);
+    debouncedNotesSave.schedule(nodeId, value);
   }
+
+  onDestroy(() => {
+    debouncedNotesSave.dispose();
+  });
 
   async function handleToggleLock() {
     if (!editorState.selectedNodeId || !selectedNodeIsReady()) return;
