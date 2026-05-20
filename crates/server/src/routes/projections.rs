@@ -4,11 +4,13 @@ use axum::routing::get;
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
     BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeReviewProjection, ObjectKind,
-    ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection, StoryArcListProjection,
-    StoryArcProgressionProjection, TimelineRenderProjection,
+    ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
     builtin_bible_graph_schema_list_projection,
 };
 use eidetic_core::story::progression::analyze_all_arcs;
+use eidetic_core::timeline::Timeline;
+use eidetic_core::timeline::node::NodeId;
 use serde::Deserialize;
 
 use crate::bible_graph_store;
@@ -18,6 +20,7 @@ use crate::revision_projection::ObjectFieldProjection;
 use crate::script_store;
 use crate::state::AppState;
 use crate::story_arc_store;
+use crate::timeline_node_store;
 
 use super::support::{active_project_path, map_history_error};
 
@@ -60,6 +63,10 @@ pub fn router() -> Router<AppState> {
             get(get_timeline_render_projection),
         )
         .route(
+            "/projections/timeline/selected-node",
+            get(get_selected_node_editor_projection),
+        )
+        .route(
             "/projections/history/changes",
             get(get_change_review_projection),
         )
@@ -79,6 +86,11 @@ struct BibleGraphNodeProjectionQuery {
 #[derive(Debug, Deserialize)]
 struct ScriptDocumentProjectionQuery {
     document_id: ScriptDocumentId,
+}
+
+#[derive(Debug, Deserialize)]
+struct SelectedNodeEditorProjectionQuery {
+    node_id: Option<NodeId>,
 }
 
 async fn get_object_field_projection(
@@ -168,6 +180,24 @@ async fn get_timeline_render_projection(State(state): State<AppState>) -> ApiJso
     crate::error::json_value(ProjectionEnvelope::initial(
         TimelineRenderProjection::from_timeline(&project.timeline),
     ))
+}
+
+async fn get_selected_node_editor_projection(
+    State(state): State<AppState>,
+    Query(query): Query<SelectedNodeEditorProjectionQuery>,
+) -> ApiJson {
+    let path = active_project_path(&state)?;
+    let (project, _) = crate::persistence::load_project(&path)
+        .await
+        .map_err(ApiError::internal)?;
+    let fallback_timeline = project.timeline;
+    let projection = tokio::task::spawn_blocking(move || {
+        load_selected_node_editor_at_path(path, fallback_timeline, query.node_id)
+    })
+    .await
+    .map_err(|e| ApiError::internal(format!("selected node projection task failed: {e}")))??;
+
+    crate::error::json_value(projection)
 }
 
 async fn get_story_arc_list_projection(State(state): State<AppState>) -> ApiJson {
@@ -283,6 +313,31 @@ fn load_script_document_projection_at_path(
     script_store::load_document_projection_envelope(&conn, &document_id)
         .map_err(map_history_error)?
         .ok_or_else(|| ApiError::not_found("script document not found"))
+}
+
+fn load_selected_node_editor_at_path(
+    path: std::path::PathBuf,
+    fallback_timeline: Timeline,
+    node_id: Option<NodeId>,
+) -> Result<ProjectionEnvelope<SelectedNodeEditorProjection>, ApiError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+    history_store::create_schema(&conn).map_err(map_history_error)?;
+    let mut timeline = fallback_timeline;
+    let nodes = timeline_node_store::load_nodes(&conn).map_err(map_history_error)?;
+    let node_summary =
+        history_store::load_revision_summary_for_kind(&conn, ObjectKind::TimelineNode)
+            .map_err(map_history_error)?;
+    if node_summary.revision_count > 0 || !nodes.is_empty() {
+        timeline.nodes = nodes;
+        timeline.node_arcs =
+            timeline_node_store::load_node_arcs(&conn).map_err(map_history_error)?;
+    }
+
+    let projection = SelectedNodeEditorProjection::from_timeline(&timeline, node_id)
+        .ok_or_else(|| ApiError::not_found("timeline node not found"))?;
+
+    Ok(ProjectionEnvelope::initial(projection))
 }
 
 #[cfg(test)]

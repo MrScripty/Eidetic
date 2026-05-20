@@ -119,6 +119,116 @@ async fn timeline_render_projection_returns_backend_timeline_read_model() {
 }
 
 #[tokio::test]
+async fn selected_node_editor_projection_returns_empty_when_unselected() {
+    let path = temp_db_path("selected-node-empty");
+    let app = app_with_project_path(path.clone()).await;
+
+    let response = app
+        .oneshot(selected_node_editor_projection_request(None))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["version"], 1);
+    assert!(value["payload"]["node"].is_null());
+    assert_eq!(value["payload"]["has_children"], false);
+    assert_eq!(value["payload"]["children"].as_array().unwrap().len(), 0);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn selected_node_editor_projection_returns_backend_owned_context() {
+    let path = temp_db_path("selected-node-context");
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("Projection Test");
+    project.timeline.nodes.clear();
+    project.timeline.node_arcs.clear();
+    project.timeline.relationships.clear();
+
+    let mut act_one = eidetic_core::timeline::node::StoryNode::new(
+        "Act one",
+        eidetic_core::timeline::node::StoryLevel::Act,
+        eidetic_core::timeline::timing::TimeRange::new(0, 20_000).unwrap(),
+    );
+    act_one.sort_order = 1;
+    let act_one_id = act_one.id;
+    let mut act_two = eidetic_core::timeline::node::StoryNode::new(
+        "Act two",
+        eidetic_core::timeline::node::StoryLevel::Act,
+        eidetic_core::timeline::timing::TimeRange::new(20_000, 40_000).unwrap(),
+    );
+    act_two.sort_order = 2;
+    let mut sequence = eidetic_core::timeline::node::StoryNode::new(
+        "SQLite selected sequence",
+        eidetic_core::timeline::node::StoryLevel::Sequence,
+        eidetic_core::timeline::timing::TimeRange::new(1_000, 10_000).unwrap(),
+    );
+    sequence.parent_id = Some(act_one_id);
+    sequence.content.notes = "Persistent notes".to_string();
+    sequence.content.status = eidetic_core::timeline::node::ContentStatus::NotesOnly;
+    let sequence_id = sequence.id;
+    let mut scene = eidetic_core::timeline::node::StoryNode::new(
+        "Child scene",
+        eidetic_core::timeline::node::StoryLevel::Scene,
+        eidetic_core::timeline::timing::TimeRange::new(2_000, 4_000).unwrap(),
+    );
+    scene.parent_id = Some(sequence_id);
+    project
+        .timeline
+        .nodes
+        .extend([act_one, act_two, sequence, scene]);
+
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed selected node projection");
+    project.timeline.nodes[2].name = "Stale selected sequence".to_string();
+    project.timeline.nodes[2].content.notes = "Stale notes".to_string();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+
+    let response = app
+        .oneshot(selected_node_editor_projection_request(Some(sequence_id)))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["payload"]["node"]["name"], "SQLite selected sequence");
+    assert_eq!(value["payload"]["node"]["notes"], "Persistent notes");
+    assert_eq!(value["payload"]["node"]["content_status"], "NotesOnly");
+    assert_eq!(value["payload"]["child_level"], "Scene");
+    assert_eq!(value["payload"]["has_children"], true);
+    assert_eq!(value["payload"]["parent"]["name"], "Act one");
+    assert_eq!(value["payload"]["current_sibling_index"], 0);
+    assert_eq!(value["payload"]["children"][0]["name"], "Child scene");
+    assert_eq!(
+        value["payload"]["adjacent_parents"]["after"]["name"],
+        "Act two"
+    );
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn selected_node_editor_projection_returns_not_found_for_unknown_node() {
+    let path = temp_db_path("selected-node-unknown");
+    let app = app_with_project_path(path.clone()).await;
+    let unknown_id = eidetic_core::timeline::node::NodeId(uuid::Uuid::new_v4());
+
+    let response = app
+        .oneshot(selected_node_editor_projection_request(Some(unknown_id)))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn story_arc_list_projection_returns_project_arcs() {
     let path = temp_db_path("story-arc-list");
     let app = app_with_project_path(path.clone()).await;
@@ -202,6 +312,19 @@ fn timeline_render_projection_request() -> Request<Body> {
     Request::builder()
         .method("GET")
         .uri("/projections/timeline/render")
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn selected_node_editor_projection_request(
+    node_id: Option<eidetic_core::timeline::node::NodeId>,
+) -> Request<Body> {
+    let uri = node_id
+        .map(|node_id| format!("/projections/timeline/selected-node?node_id={}", node_id.0))
+        .unwrap_or_else(|| "/projections/timeline/selected-node".to_string());
+    Request::builder()
+        .method("GET")
+        .uri(uri)
         .body(Body::empty())
         .unwrap()
 }

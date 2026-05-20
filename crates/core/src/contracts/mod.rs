@@ -5,6 +5,7 @@ mod bible_render_graph;
 mod change_review;
 mod propagation_proposal;
 mod script_document;
+mod selected_node_editor;
 mod semantic_dependency;
 mod semantic_proposal;
 mod story_arc;
@@ -51,6 +52,10 @@ pub use script_document::{
     ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
     ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
     SetScriptLockCommand,
+};
+pub use selected_node_editor::{
+    SelectedNodeEditorAdjacentParents, SelectedNodeEditorNode, SelectedNodeEditorProjection,
+    SelectedNodeEditorSummary,
 };
 pub use semantic_dependency::{
     RecordSemanticDependencyCommand, SemanticDependency, SemanticDependencyContractError,
