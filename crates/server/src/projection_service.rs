@@ -2,8 +2,10 @@ use std::path::PathBuf;
 
 use eidetic_core::contracts::{
     ObjectKind, ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection,
-    StoryArcListProjection,
+    SelectedNodeEditorProjection, StoryArcListProjection, TimelineRenderProjection,
 };
+use eidetic_core::timeline::Timeline;
+use eidetic_core::timeline::node::NodeId;
 use serde::Deserialize;
 
 use crate::backend_error::BackendError;
@@ -11,6 +13,7 @@ use crate::history_store::{self, HistoryStoreError};
 use crate::script_store;
 use crate::state::AppState;
 use crate::story_arc_store;
+use crate::timeline_node_store;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -23,6 +26,12 @@ pub struct ObjectFieldProjectionRequest {
 #[serde(deny_unknown_fields)]
 pub struct ScriptDocumentProjectionRequest {
     pub document_id: ScriptDocumentId,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SelectedNodeEditorProjectionRequest {
+    pub node_id: Option<NodeId>,
 }
 
 pub async fn object_field_projection(
@@ -66,6 +75,37 @@ pub async fn story_arc_list_projection(
         .map_err(|error| {
             BackendError::internal(format!("story arc list projection task failed: {error}"))
         })?
+}
+
+pub async fn timeline_render_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    let (project, _) = crate::persistence::load_project(&path)
+        .await
+        .map_err(BackendError::internal)?;
+
+    Ok(ProjectionEnvelope::initial(
+        TimelineRenderProjection::from_timeline(&project.timeline),
+    ))
+}
+
+pub async fn selected_node_editor_projection(
+    state: &AppState,
+    request: SelectedNodeEditorProjectionRequest,
+) -> Result<ProjectionEnvelope<SelectedNodeEditorProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    let (project, _) = crate::persistence::load_project(&path)
+        .await
+        .map_err(BackendError::internal)?;
+    let fallback_timeline = project.timeline;
+    tokio::task::spawn_blocking(move || {
+        load_selected_node_editor_at_path(path, fallback_timeline, request.node_id)
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("selected node projection task failed: {error}"))
+    })?
 }
 
 fn active_project_path(state: &AppState) -> Result<PathBuf, BackendError> {
@@ -114,6 +154,31 @@ fn load_story_arc_list_projection_at_path(
         .map_err(|e| BackendError::internal(e.to_string()))?;
     story_arc_store::create_schema(&conn).map_err(map_history_error)?;
     story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)
+}
+
+fn load_selected_node_editor_at_path(
+    path: PathBuf,
+    fallback_timeline: Timeline,
+    node_id: Option<NodeId>,
+) -> Result<ProjectionEnvelope<SelectedNodeEditorProjection>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    history_store::create_schema(&conn).map_err(map_history_error)?;
+    let mut timeline = fallback_timeline;
+    let nodes = timeline_node_store::load_nodes(&conn).map_err(map_history_error)?;
+    let node_summary =
+        history_store::load_revision_summary_for_kind(&conn, ObjectKind::TimelineNode)
+            .map_err(map_history_error)?;
+    if node_summary.revision_count > 0 || !nodes.is_empty() {
+        timeline.nodes = nodes;
+        timeline.node_arcs =
+            timeline_node_store::load_node_arcs(&conn).map_err(map_history_error)?;
+    }
+
+    let projection = SelectedNodeEditorProjection::from_timeline(&timeline, node_id)
+        .ok_or_else(|| BackendError::not_found("timeline node not found"))?;
+
+    Ok(ProjectionEnvelope::initial(projection))
 }
 
 fn map_history_error(error: HistoryStoreError) -> BackendError {

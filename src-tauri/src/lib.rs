@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
     CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope, ScriptDocumentProjection,
-    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
-    StoryArcListProjection,
+    SelectedNodeEditorProjection, SetObjectFieldCommand, SetScriptBlockCommand,
+    SetScriptLockCommand, SetStoryArcMetadataCommand, StoryArcListProjection,
+    TimelineRenderProjection,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
@@ -10,6 +11,7 @@ use eidetic_server::project_service::{
 };
 use eidetic_server::projection_service::{
     self, ObjectFieldProjectionRequest, ScriptDocumentProjectionRequest,
+    SelectedNodeEditorProjectionRequest,
 };
 use eidetic_server::state::AppState;
 use serde::Serialize;
@@ -205,6 +207,27 @@ async fn projection_story_arcs(
         .map_err(CommandError::from)
 }
 
+#[tauri::command]
+async fn projection_timeline_render(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<TimelineRenderProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::timeline_render_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn projection_selected_node(
+    app: tauri::AppHandle,
+    query: SelectedNodeEditorProjectionRequest,
+) -> Result<ProjectionEnvelope<SelectedNodeEditorProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::selected_node_editor_projection(&state, query)
+        .await
+        .map_err(CommandError::from)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -228,7 +251,9 @@ pub fn run() {
             command_story_delete,
             projection_object_field,
             projection_script_document,
-            projection_story_arcs
+            projection_story_arcs,
+            projection_timeline_render,
+            projection_selected_node
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Eidetic desktop application");

@@ -438,6 +438,12 @@ Completed slices:
   `projection_script_document` and `projection_story_arcs` through Tauri, and
   made the matching frontend projection helpers prefer desktop IPC when
   available.
+- `feat(desktop): route timeline projection reads through tauri` moved timeline
+  render and selected-node editor projection reads into `projection_service.rs`,
+  kept the legacy Axum routes as service adapters, exposed
+  `projection_timeline_render` and `projection_selected_node` through Tauri,
+  and made the matching frontend projection helpers prefer desktop IPC when
+  available.
 
 Discovered issues:
 

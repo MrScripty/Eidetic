@@ -337,6 +337,32 @@ describe('projection api helpers', () => {
     });
   });
 
+  it('uses desktop timeline render projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 4,
+      change_event_id: 'event-3',
+      payload: {
+        total_duration_ms: 120_000,
+        tracks: [],
+        clips: [],
+        relationships: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getTimelineRenderProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_timeline_render', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('fetches selected node editor projections with encoded query params', async () => {
     const response = {
       version: 5,
@@ -382,6 +408,36 @@ describe('projection api helpers', () => {
         headers: { Accept: 'application/json' },
       },
     );
+  });
+
+  it('uses desktop selected node projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 5,
+      payload: {
+        node: null,
+        has_children: false,
+        siblings: [],
+        children: [],
+        adjacent_parents: {},
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      getSelectedNodeEditorProjection({ node_id: 'node.scene/beach one' }),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_selected_node', {
+      query: { node_id: 'node.scene/beach one' },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('fetches empty selected node editor projections without query params', async () => {

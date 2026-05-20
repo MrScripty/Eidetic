@@ -134,6 +134,12 @@ export function getStoryArcProgressionProjection(): Promise<
 export function getTimelineRenderProjection(): Promise<
   ProjectionEnvelope<TimelineRenderProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<TimelineRenderProjection>>(
+      'projection_timeline_render',
+    );
+  }
+
   return getJson('/projections/timeline/render');
 }
 
@@ -142,6 +148,15 @@ export function getSelectedNodeEditorProjection({
 }: SelectedNodeEditorProjectionKey = {}): Promise<
   ProjectionEnvelope<SelectedNodeEditorProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<SelectedNodeEditorProjection>>(
+      'projection_selected_node',
+      {
+        query: { node_id: node_id ?? null },
+      },
+    );
+  }
+
   if (!node_id) {
     return getJson('/projections/timeline/selected-node');
   }
