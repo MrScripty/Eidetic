@@ -19,8 +19,8 @@ async fn app_with_project_path(path: PathBuf) -> Router {
 
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId,
-    BibleGraphPartId, BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId,
-    BibleGraphSnapshotId, EnsureCanonicalBibleRootsCommand, FieldValue,
+    BibleGraphPartId, BibleGraphPartKey, BibleGraphSchemaKey, EnsureCanonicalBibleRootsCommand,
+    FieldValue,
 };
 
 #[tokio::test]
@@ -317,100 +317,6 @@ async fn bible_graph_edge_command_rejects_missing_target() {
     let _ = std::fs::remove_file(path);
 }
 
-#[tokio::test]
-async fn bible_graph_snapshot_field_command_returns_snapshot_projection() {
-    let path = temp_db_path("sets-bible-graph-snapshot-field");
-    let app = app_with_project_path(path.clone()).await;
-    let node = bible_graph_node_command_body("node.character.ada", "Ada");
-    let snapshot = bible_graph_snapshot_field_command_body(Some(json_text("Rain-soaked")));
-
-    let create_response = app
-        .clone()
-        .oneshot(bible_graph_command_request(node))
-        .await
-        .expect("create route response");
-    let snapshot_response = app
-        .oneshot(bible_graph_snapshot_field_command_request(snapshot))
-        .await
-        .expect("snapshot route response");
-
-    assert_eq!(create_response.status(), StatusCode::OK);
-    assert_eq!(snapshot_response.status(), StatusCode::OK);
-    let value = response_json(snapshot_response).await;
-    assert_eq!(value["outcome"], "recorded");
-    assert_eq!(value["projection"]["version"], 3);
-    assert_eq!(
-        value["projection"]["payload"]["snapshots"][0]["snapshot"]["label"],
-        "Sequence 1 state"
-    );
-    assert_eq!(
-        value["projection"]["payload"]["snapshots"][0]["fields"][0]["value"]["value"],
-        "Rain-soaked"
-    );
-
-    let _ = std::fs::remove_file(path);
-}
-
-#[tokio::test]
-async fn bible_graph_snapshot_field_command_generates_ids_when_omitted() {
-    let path = temp_db_path("sets-bible-graph-snapshot-field-generated-ids");
-    let app = app_with_project_path(path.clone()).await;
-    let node = bible_graph_node_command_body("node.character.ada", "Ada");
-    let mut snapshot = bible_graph_snapshot_field_command_body(Some(json_text("Rain-soaked")));
-    let payload = snapshot["payload"].as_object_mut().expect("payload object");
-    payload.remove("snapshot_id");
-    payload.remove("field_id");
-
-    let create_response = app
-        .clone()
-        .oneshot(bible_graph_command_request(node))
-        .await
-        .expect("create route response");
-    let snapshot_response = app
-        .oneshot(bible_graph_snapshot_field_command_request(snapshot))
-        .await
-        .expect("snapshot route response");
-
-    assert_eq!(create_response.status(), StatusCode::OK);
-    assert_eq!(snapshot_response.status(), StatusCode::OK);
-    let value = response_json(snapshot_response).await;
-    assert_eq!(value["outcome"], "recorded");
-    let snapshot_id = value["projection"]["payload"]["snapshots"][0]["snapshot"]["id"]
-        .as_str()
-        .expect("generated snapshot id");
-    let field_id = value["projection"]["payload"]["snapshots"][0]["fields"][0]["id"]
-        .as_str()
-        .expect("generated snapshot field id");
-    assert!(snapshot_id.starts_with("snapshot."));
-    assert!(field_id.starts_with("snapshot-field."));
-
-    let _ = std::fs::remove_file(path);
-}
-
-#[tokio::test]
-async fn bible_graph_snapshot_field_command_rejects_blank_label() {
-    let path = temp_db_path("rejects-blank-snapshot-label");
-    let app = app_with_project_path(path.clone()).await;
-    let node = bible_graph_node_command_body("node.character.ada", "Ada");
-    let mut snapshot = bible_graph_snapshot_field_command_body(Some(json_text("Rain-soaked")));
-    snapshot["payload"]["label"] = json!(" ");
-
-    let create_response = app
-        .clone()
-        .oneshot(bible_graph_command_request(node))
-        .await
-        .expect("create route response");
-    let snapshot_response = app
-        .oneshot(bible_graph_snapshot_field_command_request(snapshot))
-        .await
-        .expect("snapshot route response");
-
-    assert_eq!(create_response.status(), StatusCode::OK);
-    assert_eq!(snapshot_response.status(), StatusCode::BAD_REQUEST);
-
-    let _ = std::fs::remove_file(path);
-}
-
 fn bible_graph_field_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -424,15 +330,6 @@ fn bible_graph_edge_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
         .uri("/commands/bible-graph/edge")
-        .header("content-type", "application/json")
-        .body(Body::from(body.to_string()))
-        .unwrap()
-}
-
-fn bible_graph_snapshot_field_command_request(body: serde_json::Value) -> Request<Body> {
-    Request::builder()
-        .method("POST")
-        .uri("/commands/bible-graph/snapshot-field")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -509,25 +406,6 @@ fn bible_graph_edge_command_body() -> serde_json::Value {
             "label": "located in",
             "directed": true,
             "sort_order": 1,
-        }
-    })
-}
-
-fn bible_graph_snapshot_field_command_body(value: Option<serde_json::Value>) -> serde_json::Value {
-    json!({
-        "id": uuid::Uuid::new_v4(),
-        "payload": {
-            "snapshot_id": BibleGraphSnapshotId::new("snapshot.character.ada.sequence-1").unwrap(),
-            "node_id": BibleGraphNodeId::new("node.character.ada").unwrap(),
-            "at_ms": 12_000,
-            "label": "Sequence 1 state",
-            "snapshot_sort_order": 1,
-            "field_id": BibleGraphSnapshotFieldId::new("snapshot-field.character.status").unwrap(),
-            "part_key": BibleGraphPartKey::new("profile").unwrap(),
-            "part_name": "Profile",
-            "field_key": BibleGraphFieldKey::new("tagline").unwrap(),
-            "value": value,
-            "field_sort_order": 2,
         }
     })
 }

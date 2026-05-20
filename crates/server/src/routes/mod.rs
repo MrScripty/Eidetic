@@ -1,5 +1,6 @@
 mod ai;
 mod commands;
+mod commands_bible;
 mod commands_semantic;
 mod commands_semantic_child_plan;
 mod commands_timeline;
