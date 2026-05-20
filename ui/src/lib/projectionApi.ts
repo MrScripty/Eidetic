@@ -155,6 +155,12 @@ export function getStoryArcListProjection(): Promise<ProjectionEnvelope<StoryArc
 export function getStoryArcProgressionProjection(): Promise<
   ProjectionEnvelope<StoryArcProgressionProjection>
 > {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<StoryArcProgressionProjection>>(
+      'projection_story_arc_progression',
+    );
+  }
+
   return getJson('/projections/story/arc-progression');
 }
 
@@ -192,5 +198,9 @@ export function getSelectedNodeEditorProjection({
 }
 
 export function getChangeReviewProjection(): Promise<ProjectionEnvelope<ChangeReviewProjection>> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<ChangeReviewProjection>>('projection_change_review');
+  }
+
   return getJson('/projections/history/changes');
 }

@@ -2,10 +2,12 @@ use std::path::PathBuf;
 
 use eidetic_core::contracts::{
     BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaListProjection,
-    BibleNodeDetailProjection, BibleRenderGraphProjection, ObjectKind, ProjectionEnvelope,
-    ScriptDocumentId, ScriptDocumentProjection, SelectedNodeEditorProjection,
-    StoryArcListProjection, TimelineRenderProjection, builtin_bible_graph_schema_list_projection,
+    BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeReviewProjection, ObjectKind,
+    ProjectionEnvelope, ScriptDocumentId, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
+    builtin_bible_graph_schema_list_projection,
 };
+use eidetic_core::story::progression::analyze_all_arcs;
 use eidetic_core::timeline::Timeline;
 use eidetic_core::timeline::node::NodeId;
 use serde::Deserialize;
@@ -127,6 +129,38 @@ pub async fn story_arc_list_projection(
         })?
 }
 
+pub async fn story_arc_progression_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<StoryArcProgressionProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    let arcs = tokio::task::spawn_blocking(move || load_story_arcs_at_path(path))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("story arc progression task failed: {error}"))
+        })??;
+    let guard = state.project.lock();
+    let Some(project) = guard.as_ref() else {
+        return Err(BackendError::no_project());
+    };
+    let mut projection_project = project.clone();
+    projection_project.arcs = arcs;
+
+    Ok(ProjectionEnvelope::initial(
+        StoryArcProgressionProjection::new(analyze_all_arcs(&projection_project)),
+    ))
+}
+
+pub async fn change_review_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<ChangeReviewProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || load_change_review_projection_at_path(path))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("change review projection task failed: {error}"))
+        })?
+}
+
 pub async fn timeline_render_projection(
     state: &AppState,
 ) -> Result<ProjectionEnvelope<TimelineRenderProjection>, BackendError> {
@@ -234,6 +268,24 @@ fn load_story_arc_list_projection_at_path(
         .map_err(|e| BackendError::internal(e.to_string()))?;
     story_arc_store::create_schema(&conn).map_err(map_history_error)?;
     story_arc_store::load_arc_list_projection_envelope(&conn).map_err(map_history_error)
+}
+
+fn load_story_arcs_at_path(
+    path: PathBuf,
+) -> Result<Vec<eidetic_core::story::arc::StoryArc>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    story_arc_store::create_schema(&conn).map_err(map_history_error)?;
+    story_arc_store::load_arcs(&conn).map_err(map_history_error)
+}
+
+fn load_change_review_projection_at_path(
+    path: PathBuf,
+) -> Result<ProjectionEnvelope<ChangeReviewProjection>, BackendError> {
+    let conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    crate::change_review_projection::load_change_review_projection_envelope(&conn)
+        .map_err(map_history_error)
 }
 
 fn load_selected_node_editor_at_path(

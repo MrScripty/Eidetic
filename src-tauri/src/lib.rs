@@ -1,9 +1,9 @@
 use eidetic_core::contracts::{
     BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
-    BibleRenderGraphProjection, CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope,
-    ScriptDocumentProjection, SelectedNodeEditorProjection, SetObjectFieldCommand,
-    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
-    StoryArcListProjection, TimelineRenderProjection,
+    BibleRenderGraphProjection, ChangeReviewProjection, CommandEnvelope, DeleteStoryArcCommand,
+    ProjectionEnvelope, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
@@ -248,6 +248,26 @@ async fn projection_story_arcs(
 }
 
 #[tauri::command]
+async fn projection_story_arc_progression(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<StoryArcProgressionProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::story_arc_progression_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn projection_change_review(
+    app: tauri::AppHandle,
+) -> Result<ProjectionEnvelope<ChangeReviewProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::change_review_projection(&state)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_timeline_render(
     app: tauri::AppHandle,
 ) -> Result<ProjectionEnvelope<TimelineRenderProjection>, CommandError> {
@@ -296,6 +316,8 @@ pub fn run() {
             projection_bible_graph_schemas,
             projection_bible_render_graph,
             projection_story_arcs,
+            projection_story_arc_progression,
+            projection_change_review,
             projection_timeline_render,
             projection_selected_node
         ])

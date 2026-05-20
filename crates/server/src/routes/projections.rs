@@ -2,16 +2,9 @@ use crate::error::{ApiError, ApiJson};
 #[cfg(test)]
 use crate::history_store;
 use crate::state::AppState;
-use crate::story_arc_store;
 use axum::Router;
 use axum::extract::{Query, State};
 use axum::routing::get;
-use eidetic_core::contracts::{
-    ChangeReviewProjection, ProjectionEnvelope, StoryArcProgressionProjection,
-};
-use eidetic_core::story::progression::analyze_all_arcs;
-
-use super::support::{active_project_path, map_history_error};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -102,12 +95,10 @@ async fn get_bible_render_graph_projection(State(state): State<AppState>) -> Api
 }
 
 async fn get_change_review_projection(State(state): State<AppState>) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let projection = tokio::task::spawn_blocking(move || load_change_review_at_path(path))
+    crate::projection_service::change_review_projection(&state)
         .await
-        .map_err(|e| ApiError::internal(format!("change review projection task failed: {e}")))??;
-
-    crate::error::json_value(projection)
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn get_script_document_projection(
@@ -145,38 +136,10 @@ async fn get_story_arc_list_projection(State(state): State<AppState>) -> ApiJson
 }
 
 async fn get_story_arc_progression_projection(State(state): State<AppState>) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let arcs = tokio::task::spawn_blocking(move || load_story_arcs_at_path(path))
+    crate::projection_service::story_arc_progression_projection(&state)
         .await
-        .map_err(|e| ApiError::internal(format!("story arc progression task failed: {e}")))??;
-    let guard = state.project.lock();
-    let Some(project) = guard.as_ref() else {
-        return Err(ApiError::no_project());
-    };
-    let mut projection_project = project.clone();
-    projection_project.arcs = arcs;
-
-    crate::error::json_value(ProjectionEnvelope::initial(
-        StoryArcProgressionProjection::new(analyze_all_arcs(&projection_project)),
-    ))
-}
-
-fn load_change_review_at_path(
-    path: std::path::PathBuf,
-) -> Result<ProjectionEnvelope<ChangeReviewProjection>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    crate::change_review_projection::load_change_review_projection_envelope(&conn)
-        .map_err(map_history_error)
-}
-
-fn load_story_arcs_at_path(
-    path: std::path::PathBuf,
-) -> Result<Vec<eidetic_core::story::arc::StoryArc>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    story_arc_store::create_schema(&conn).map_err(map_history_error)?;
-    story_arc_store::load_arcs(&conn).map_err(map_history_error)
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 #[cfg(test)]

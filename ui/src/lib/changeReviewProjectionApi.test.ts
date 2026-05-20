@@ -59,4 +59,27 @@ describe('change review projection api helpers', () => {
       headers: { Accept: 'application/json' },
     });
   });
+
+  it('uses desktop change review projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 2,
+      change_event_id: 'event-1',
+      payload: {
+        changes: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getChangeReviewProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_change_review', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

@@ -665,4 +665,26 @@ describe('projection api helpers', () => {
       headers: { Accept: 'application/json' },
     });
   });
+
+  it('uses desktop story arc progression projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 1,
+      payload: {
+        progressions: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getStoryArcProgressionProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_story_arc_progression', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

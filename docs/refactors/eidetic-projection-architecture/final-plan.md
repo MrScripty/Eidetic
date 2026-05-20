@@ -449,6 +449,12 @@ Completed slices:
   `projection_service.rs`, kept the legacy Axum routes as service adapters,
   exposed matching Tauri commands, and made the frontend bible graph projection
   helpers prefer desktop IPC when available.
+- `feat(desktop): route review projections through tauri` moved story arc
+  progression and change review projection reads into `projection_service.rs`,
+  kept the legacy Axum routes as service adapters, exposed
+  `projection_story_arc_progression` and `projection_change_review` through
+  Tauri, and made the matching frontend projection helpers prefer desktop IPC
+  when available.
 
 Discovered issues:
 
