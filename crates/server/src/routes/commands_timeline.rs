@@ -60,12 +60,14 @@ struct TimelineCommandResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateTimelineNodeRouteCommand {
     id: CommandId,
     payload: CreateTimelineNodeRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateTimelineNodeRoutePayload {
     #[serde(default)]
     node_id: Option<NodeId>,
@@ -78,12 +80,14 @@ struct CreateTimelineNodeRoutePayload {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ApplyTimelineChildrenRouteCommand {
     id: CommandId,
     payload: ApplyTimelineChildrenRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ApplyTimelineChildrenRoutePayload {
     parent_id: NodeId,
     #[serde(default)]
@@ -92,6 +96,7 @@ struct ApplyTimelineChildrenRoutePayload {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ApplyTimelineChildRoutePayload {
     #[serde(default)]
     node_id: Option<NodeId>,
@@ -108,12 +113,14 @@ struct ApplyTimelineChildRoutePayload {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SplitTimelineNodeRouteCommand {
     id: CommandId,
     payload: SplitTimelineNodeRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SplitTimelineNodeRoutePayload {
     node_id: NodeId,
     at_ms: u64,
@@ -124,12 +131,14 @@ struct SplitTimelineNodeRoutePayload {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateTimelineRelationshipRouteCommand {
     id: CommandId,
     payload: CreateTimelineRelationshipRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateTimelineRelationshipRoutePayload {
     #[serde(default)]
     relationship_id: Option<RelationshipId>,

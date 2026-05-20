@@ -419,6 +419,37 @@ async fn create_timeline_node_command_rejects_existing_node_id() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn create_timeline_node_command_rejects_unexpected_project_session_fields() {
+    let path = temp_db_path("rejects-unexpected-timeline-create-fields");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let mut body = create_timeline_node_command_body(
+        eidetic_core::timeline::node::NodeId::new(),
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Unexpected fields act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+    body["project_id"] = json!("renderer-project");
+    body["session_id"] = json!("renderer-session");
+
+    let response = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(!path.exists());
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn create_timeline_node_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
