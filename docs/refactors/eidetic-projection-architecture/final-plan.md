@@ -71,7 +71,8 @@ Internal dependencies:
 
 - Current Rust workspace crates under `crates/`.
 - Svelte frontend under `ui/`.
-- Existing per-project persistence, AI routes, Y.Doc integration, export, and timeline/story/script modules.
+- Existing per-project persistence, AI runtime modules, Y.Doc integration, export,
+  and timeline/story/script modules.
 - Existing documentation and ADR structure under `docs/`.
 
 External dependencies:
@@ -85,8 +86,11 @@ External dependencies:
 
 Structured contracts affected:
 
-- HTTP command payloads and projection responses.
-- WebSocket event envelopes.
+- Current HTTP command payloads and projection responses, until replaced by
+  Tauri command contracts.
+- Current WebSocket event envelopes, until replaced by Tauri event contracts or
+  bounded event-drain contracts.
+- Tauri command/event payloads and generated or mirrored TypeScript bindings.
 - Bevy bridge payloads.
 - Y.Doc bridge payloads, if retained.
 - AI request/response/proposal DTOs.
@@ -382,6 +386,10 @@ Completed slices:
 - `feat(renderer): expose timeline relationship curves to wasm` made projection-derived timeline relationship curve DTOs serializable and exposed them through the wasm bridge so browser hosts can consume Bevy curve data without owning canonical timeline state.
 - `feat(renderer): align timeline split commands with backend` updated Bevy timeline split command emission to include backend-required replacement node IDs and validate those IDs against the loaded projection before commands leave the renderer boundary.
 - `docs(plan): make frontend projection completion next` reorders the next implementation focus so Svelte ownership cleanup, projection cache enforcement, and legacy read/write deletion happen before Bevy timeline replacement resumes.
+- `docs(plan): inventory tauri migration contracts` recorded the Milestone 7
+  HTTP route, WebSocket/Y.Doc event, frontend helper, route-test, lifecycle, and
+  renderer-WASM surfaces that must move from Axum/browser transport to
+  backend-owned services and Tauri command/event adapters.
 
 Discovered issues:
 
@@ -434,6 +442,14 @@ Discovered issues:
 - Resolved: `unlock_node` derived content status from legacy `node.content.content`. Unlock now leaves status unchanged because script document projections own durable screenplay text.
 - Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.
 - Resolved: `crates/server/src/timeline_command.rs` exceeded the 500-line decomposition threshold after adding timeline command history recording. History-recording helpers were split into `timeline_command_history.rs` so the mutation applicator remains easier to reason about before the larger node-delete and child-replacement slices.
+- Open: Milestone 7 route/service extraction is blocked by Axum-shaped backend
+  errors and tests. `ApiError`, route handlers, and many route tests use HTTP
+  status codes as the behavior boundary; introduce backend-neutral service
+  errors and service-level tests before adding Tauri command adapters.
+- Open: Milestone 7 lifecycle compliance is blocked by detached backend tasks.
+  Autosave, Y.Doc, AI generation, batch generation, and reference embedding use
+  `tokio::spawn` without a runtime owner; move them behind a Tauri-owned
+  backend lifecycle supervisor before deleting Axum startup.
 
 ## Concurrent Worker Policy
 
@@ -935,7 +951,8 @@ Exit criteria:
 This milestone is a prerequisite for native Bevy renderer work. Eidetic is a
 standalone desktop application, not a browser-first app, so the runtime should
 move to a Tauri shell before the Bevy timeline renderer becomes the primary
-timeline surface.
+timeline surface. The desktop migration also removes the Axum HTTP/WebSocket
+boundary instead of embedding a loopback server inside the desktop app.
 
 Decisions:
 
@@ -944,19 +961,29 @@ Decisions:
   review, script editing, accessibility controls, and command alternatives.
 - Keep durable state backend-owned. Tauri, Svelte, and Bevy must consume
   projections and emit commands; they must not own canonical project data.
+- Replace Axum routes and WebSocket delivery with Tauri command and event
+  contracts. The backend runtime remains Rust-owned, but it is invoked through
+  the desktop shell rather than through local HTTP.
 - Do not use WASM as the Bevy renderer integration path.
 - Remove existing wasm-bindgen renderer bridges once native desktop host
   contracts replace them.
 - Keep Bevy as an isolated renderer dependency. Bevy must not become a
-  dependency of `eidetic-core` or `eidetic-server`.
+  dependency of `eidetic-core` or the backend runtime.
 
 Tasks:
 
 - Add a Tauri application scaffold that packages the Svelte frontend and starts
-  the Rust backend/runtime in a desktop-controlled lifecycle.
-- Decide and document the backend boundary for the desktop app: embedded Axum
-  loopback server, Tauri command bridge, or a transitional hybrid. The boundary
-  must preserve backend-owned projections and validated command handling.
+  the Rust backend runtime in a desktop-controlled lifecycle.
+- Extract backend application services from the Axum server entrypoint into
+  reusable Rust modules owned by the backend runtime: project database
+  lifecycle, command validation, projection reads, AI gateway access, event
+  publication, and shutdown.
+- Replace active frontend HTTP API and WebSocket callers with Tauri command and
+  event adapters. Commands must remain command-in/projection-out, versioned, and
+  validated at the Rust boundary.
+- Remove the Axum server route surface, local listener startup, HTTP CORS
+  policy, and browser-open launcher flow once equivalent Tauri command/event
+  coverage exists.
 - Add launcher/build commands for desktop development, release build, and smoke
   validation.
 - Define the native Bevy host boundary for future renderer milestones:
@@ -970,19 +997,117 @@ Tasks:
 - Verify Svelte still behaves as a projection-only shell inside Tauri and does
   not reintroduce durable local project state.
 
+Standards compliance constraints:
+
+- Treat Tauri IPC as the only production desktop frontend/backend boundary.
+  Raw frontend payloads are untrusted until parsed into validated Rust command
+  and projection request types; internal services must not accept unchecked
+  `String`, `PathBuf`, numeric range, or mode values when a validated type would
+  encode the invariant.
+- Keep Tauri as a thin binding/composition layer. Backend application services
+  own command handling, projection reads, persistence, AI gateway use, event
+  production, and history transactions; those services must compile and test
+  without Tauri, Axum, or frontend code.
+- Keep package dependency direction explicit: Tauri app crate depends on backend
+  runtime/services and shared contracts; backend runtime/services do not depend
+  on Tauri; `eidetic-core` does not depend on Tauri, Bevy, Axum, or UI crates.
+- Replace HTTP route tests with service-level command/projection tests plus
+  Tauri command adapter tests. The adapter tests must prove error mapping,
+  payload validation, projection envelope preservation, and no optimistic UI
+  state changes.
+- Replace WebSocket delivery with Tauri event delivery or a bounded event-drain
+  adapter. Event subscriptions must have explicit unsubscribe/teardown behavior,
+  bounded buffering or documented overflow policy, and stale-response guards in
+  frontend stores.
+- Move every spawned backend task behind a lifecycle owner used by the Tauri
+  composition root. Startup, shutdown, cancellation, panic logging, and task
+  draining must be explicit and idempotent.
+- Keep durable state in SQLite and transactional history paths. Tauri, Svelte,
+  and Bevy can cache only discardable, versioned projections and transient
+  interaction/render state.
+- Centralize path, URL, project, asset, import, export, and reference validation
+  in backend-owned validators before Tauri commands perform filesystem, shell,
+  or external URL work. Tauri permissions/capabilities must be minimal and
+  documented.
+- Keep the root `launcher.sh` as the canonical entrypoint. Tauri development,
+  release, test, and release-smoke paths must satisfy launcher argument
+  forwarding, explicit target selection, state isolation, and GUI smoke
+  requirements.
+- Run a dependency review before adding Tauri or changing Bevy integration.
+  Tauri dependencies belong only in the desktop app crate/package, and removed
+  Axum, tower-http, wasm-bindgen, serde-wasm-bindgen, and wasm32-only
+  dependencies must be deleted when no longer used.
+- Update READMEs and contract documentation in every touched `src/` directory:
+  backend runtime/services, Tauri command/event adapters, frontend API adapter,
+  renderer crates, and launcher behavior.
+
+Blast radius to review during implementation:
+
+- `crates/server/src/main.rs`, `routes/`, `ws.rs`, `static_files.rs`,
+  `validation.rs`, `state.rs`, `ydoc.rs`, AI route/runtime modules, export,
+  project/reference modules, and route tests.
+- `ui/src/lib/api.ts`, `commandApi.ts`, projection and proposal API helpers,
+  `ws.ts`, `wsTypes.ts`, websocket-driven stores, route setup, and their tests.
+- Workspace manifests, `ui/package.json`, Tauri config, launcher commands,
+  release smoke tooling, lockfiles, and generated or shared DTO artifacts.
+- `crates/bevy_timeline` and `crates/bevy_bible_graph` wasm exports,
+  wasm-only dependencies, bridge tests, and renderer READMEs.
+
+Implementation slices:
+
+1. Inventory active HTTP routes, WebSocket messages, frontend API helpers, and
+   route tests; define the Tauri command/event contract map before moving code.
+2. Extract backend services behind validated command/projection/event APIs while
+   preserving existing route behavior long enough to compare service outputs.
+3. Add the Tauri scaffold and prove a minimal vertical slice: health command,
+   one read projection, one command-in/projection-out mutation, and one backend
+   event refresh without starting an Axum listener.
+4. Replace frontend `fetch` and WebSocket consumers with a single Tauri adapter
+   layer and update frontend tests around adapter mocks rather than HTTP URLs.
+5. Delete Axum routes, WebSocket server, static-file server, CORS/local-origin
+   policy, browser-open runtime path, and now-obsolete route tests after Tauri
+   command/event coverage is equivalent.
+6. Update launcher, release smoke, dependency manifests, README contract docs,
+   and dependency audit notes.
+7. Remove WASM renderer bridges and wasm-only dependencies after the native
+   desktop host boundary exists.
+
+Re-plan triggers:
+
+- Any backend service starts depending on Tauri, Svelte, Bevy, Axum, or UI test
+  utilities.
+- A Tauri command directly mutates SQLite, project state, Y.Doc state, or
+  proposal state instead of calling the backend service command path.
+- Frontend stores begin patching durable state locally or showing backend-owned
+  changes before a returned projection/event confirms them.
+- Event delivery needs polling that is not isolated to a boundary adapter with
+  bounded buffers, deterministic cleanup, and a documented overflow policy.
+- Tauri lifecycle cannot shut down spawned tasks deterministically or cannot
+  report startup failures without panics.
+- Removing Axum exposes a missing service contract that cannot be covered by a
+  focused command/projection API without broad redesign.
+
 Verification:
 
-- Desktop dev command opens the Tauri app and reaches the backend status route
-  or equivalent backend-owned health command.
-- Release/smoke command proves the packaged desktop runtime starts and serves
-  the Svelte shell.
-- Backend command/projection tests still pass after moving runtime ownership
-  into the desktop shell.
+- Desktop dev command opens the Tauri app and reaches a backend-owned health
+  command without starting an Axum listener.
+- Release/smoke command proves the packaged desktop runtime starts, loads the
+  Svelte shell, and invokes backend commands through Tauri.
+- Backend command/projection tests still pass after moving runtime invocation
+  from Axum routes to Tauri commands/events.
+- Tauri command/event adapter tests cover payload validation, serde round trips,
+  error mapping, event subscription teardown, stale-response handling, and
+  projection envelope preservation.
 - Frontend typecheck, lint, and projection-only guard tests pass.
 - Renderer crates compile without wasm target dependencies after bridge
   removal.
 - Lifecycle tests or smoke checks cover app startup, backend shutdown, and
-  failure reporting when the backend cannot bind/start.
+  failure reporting when backend runtime initialization fails.
+- Dependency review confirms Tauri is leaf-only, removed Axum/WASM dependencies
+  are not retained unused, and new heavy dependencies are justified or
+  feature-gated.
+- No production desktop path depends on Axum, local HTTP, browser-open startup,
+  wasm-bindgen, or wasm32 renderer bridge modules.
 
 ## Milestone 8: Bevy Timeline Renderer
 
@@ -1043,11 +1168,13 @@ Concurrency:
 
 Interop:
 
-- HTTP, WebSocket, Y.Doc bridge, and Bevy bridge payloads are trust boundaries.
+- Tauri IPC, legacy HTTP while it remains, legacy WebSocket while it remains,
+  Y.Doc bridge, and Bevy bridge payloads are trust boundaries.
 - Validate every boundary payload before dispatch.
 - Use explicit serde wire shapes and round-trip tests.
 - Unsubscribe all event/bridge subscriptions on teardown.
-- Document thread requirements for Bevy bridge calls and callbacks.
+- Document thread requirements for Tauri command/event adapters, Bevy bridge
+  calls, and callbacks.
 
 Frontend and accessibility:
 
@@ -1062,7 +1189,9 @@ Security:
 - Validate project, asset, import, export, and reference paths through one backend validator.
 - Validate URLs by parsing and scheme allowlisting.
 - Use checked arithmetic for external dimensions, lengths, and ranges.
-- Bind local listeners to loopback and enforce connection limits.
+- If any temporary local listener exists before Milestone 7 completes, bind it
+  to loopback and enforce connection limits; no production desktop path may keep
+  a local HTTP/WebSocket listener after Milestone 7.
 
 Dependencies:
 
