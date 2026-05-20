@@ -805,6 +805,9 @@ Discovered implementation gaps:
   and child payload fields during JSON deserialization, so renderer-sent
   `project_id`, `session_id`, or other non-contract fields fail before backend
   command handling instead of being silently ignored.
+- Resolved: split-node route coverage now proves duplicate result IDs and
+  result IDs that collide with existing timeline nodes are rejected through the
+  backend command API without recording a command.
 
 Simplification opportunities:
 
@@ -834,6 +837,8 @@ Verification:
 - Backend route tests cover unexpected `project_id`/`session_id` fields on
   timeline commands, and the full timeline command route suite passes with
   strict unknown-field rejection enabled.
+- Backend split-node route tests cover invalid generated-result ID payloads,
+  including equal left/right IDs and collisions with existing timeline node IDs.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter

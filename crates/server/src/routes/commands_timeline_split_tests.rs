@@ -354,6 +354,76 @@ async fn split_timeline_node_command_rejects_out_of_range_split() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn split_timeline_node_command_rejects_equal_result_ids() {
+    let path = temp_db_path("rejects-equal-timeline-split-result-ids");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    let result_node_id = eidetic_core::timeline::node::NodeId::new();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = split_timeline_node_command_body_with_result_ids(
+        uuid::Uuid::new_v4(),
+        node.id,
+        split_ms,
+        result_node_id,
+        result_node_id,
+    );
+
+    let response = app
+        .oneshot(split_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let value = response_json(response).await;
+    assert_eq!(
+        value["error"],
+        "invalid operation: split node ids must be distinct"
+    );
+    assert_no_recorded_commands(&path);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn split_timeline_node_command_rejects_existing_result_id() {
+    let path = temp_db_path("rejects-existing-timeline-split-result-id");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    let existing_node_id = project.timeline.nodes[1].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = split_timeline_node_command_body_with_result_ids(
+        uuid::Uuid::new_v4(),
+        node.id,
+        split_ms,
+        existing_node_id,
+        eidetic_core::timeline::node::NodeId::new(),
+    );
+
+    let response = app
+        .oneshot(split_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let value = response_json(response).await;
+    assert_eq!(
+        value["error"],
+        "invalid operation: split node ids already exist"
+    );
+    assert_no_recorded_commands(&path);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn split_timeline_node_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")
@@ -399,6 +469,16 @@ async fn response_json(response: axum::response::Response) -> serde_json::Value 
         .await
         .expect("body bytes");
     serde_json::from_slice(&body).expect("json response")
+}
+
+fn assert_no_recorded_commands(path: &std::path::Path) {
+    let conn = crate::sqlite::open_write_connection(path).expect("open db");
+    let command_count = conn
+        .query_row("SELECT COUNT(*) FROM commands", [], |row| {
+            row.get::<_, i64>(0)
+        })
+        .expect("command count");
+    assert_eq!(command_count, 0);
 }
 
 fn temp_db_path(label: &str) -> PathBuf {
