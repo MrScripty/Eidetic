@@ -46,7 +46,7 @@ export interface ApplyTimelineChildrenCommand {
 }
 
 export interface ApplyTimelineChildCommand {
-  node_id: string;
+  node_id?: string;
   name: string;
   outline: string;
   weight: number;

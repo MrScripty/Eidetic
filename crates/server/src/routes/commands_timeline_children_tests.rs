@@ -125,6 +125,85 @@ async fn apply_timeline_children_command_returns_timeline_render_projection() {
 }
 
 #[tokio::test]
+async fn apply_timeline_children_command_generates_child_ids_when_omitted() {
+    let path = temp_db_path("applies-timeline-children-generated-ids");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed child current state");
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = apply_timeline_children_command_body_without_child_ids(parent.id);
+
+    let response = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let generated_clips: Vec<_> = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips")
+        .iter()
+        .filter(|clip| {
+            clip["parent_id"] == parent.id.0.to_string()
+                && (clip["name"] == "First child" || clip["name"] == "Second child")
+        })
+        .collect();
+    assert_eq!(generated_clips.len(), 2);
+    assert_ne!(generated_clips[0]["node_id"], generated_clips[1]["node_id"]);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn apply_timeline_children_command_replays_omitted_child_ids() {
+    let path = temp_db_path("applies-timeline-children-generated-ids-replay");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed child current state");
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = apply_timeline_children_command_body_without_child_ids(parent.id);
+
+    let first = app
+        .clone()
+        .oneshot(apply_timeline_children_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(apply_timeline_children_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let generated_clips: Vec<_> = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips")
+        .iter()
+        .filter(|clip| {
+            clip["parent_id"] == parent.id.0.to_string()
+                && (clip["name"] == "First child" || clip["name"] == "Second child")
+        })
+        .collect();
+    assert_eq!(generated_clips.len(), 2);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn apply_timeline_children_command_marks_child_plan_applied() {
     let path = temp_db_path("applies-durable-child-plan");
     let state = AppState::new().await;
@@ -465,6 +544,31 @@ fn apply_timeline_children_command_body_with_id(
                 },
                 {
                     "node_id": second_child_id,
+                    "name": "Second child",
+                    "outline": "Second outline",
+                    "weight": 1.0,
+                    "beat_type": null,
+                }
+            ]
+        }
+    })
+}
+
+fn apply_timeline_children_command_body_without_child_ids(
+    parent_id: eidetic_core::timeline::node::NodeId,
+) -> serde_json::Value {
+    json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "parent_id": parent_id,
+            "children": [
+                {
+                    "name": "First child",
+                    "outline": "First outline",
+                    "weight": 1.0,
+                    "beat_type": null,
+                },
+                {
                     "name": "Second child",
                     "outline": "Second outline",
                     "weight": 1.0,

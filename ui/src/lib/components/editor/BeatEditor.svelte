@@ -298,7 +298,6 @@
         parent_id: parentNodeId,
         child_plan_id: plan.id,
         children: plan.children.map((child) => ({
-          node_id: crypto.randomUUID(),
           name: child.name,
           outline: child.outline,
           weight: child.weight,

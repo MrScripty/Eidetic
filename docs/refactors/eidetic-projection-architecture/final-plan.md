@@ -736,6 +736,10 @@ Discovered implementation gaps:
   result role for idempotent replay, and return the confirmed timeline render
   projection. The temporary Svelte timeline no longer generates node or
   relationship IDs for those commands.
+- Resolved: timeline apply-children routes now accept omitted child node IDs,
+  derive stable backend-owned child IDs per command ID and child index for
+  idempotent replay, and the editor no longer generates child node IDs when
+  applying AI child plans.
 
 Simplification opportunities:
 

@@ -78,6 +78,36 @@ struct CreateTimelineNodeRoutePayload {
 }
 
 #[derive(Debug, Deserialize)]
+struct ApplyTimelineChildrenRouteCommand {
+    id: CommandId,
+    payload: ApplyTimelineChildrenRoutePayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApplyTimelineChildrenRoutePayload {
+    parent_id: NodeId,
+    #[serde(default)]
+    child_plan_id: Option<eidetic_core::ai::backend::ChildPlanId>,
+    children: Vec<ApplyTimelineChildRoutePayload>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApplyTimelineChildRoutePayload {
+    #[serde(default)]
+    node_id: Option<NodeId>,
+    name: String,
+    outline: String,
+    weight: f32,
+    beat_type: Option<eidetic_core::timeline::node::BeatType>,
+    #[serde(default)]
+    characters: Vec<String>,
+    #[serde(default)]
+    location: Option<String>,
+    #[serde(default)]
+    props: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
 struct SplitTimelineNodeRouteCommand {
     id: CommandId,
     payload: SplitTimelineNodeRoutePayload,
@@ -128,6 +158,40 @@ impl CreateTimelineNodeRouteCommand {
     }
 }
 
+impl ApplyTimelineChildrenRouteCommand {
+    fn into_core_command(self) -> CommandEnvelope<ApplyTimelineChildrenCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: ApplyTimelineChildrenCommand {
+                parent_id: self.payload.parent_id,
+                child_plan_id: self.payload.child_plan_id,
+                children: self
+                    .payload
+                    .children
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, child)| ApplyTimelineChildCommand {
+                        node_id: child.node_id.unwrap_or_else(|| {
+                            NodeId(derived_indexed_command_uuid(
+                                self.id,
+                                b"timeline.child",
+                                index,
+                            ))
+                        }),
+                        name: child.name,
+                        outline: child.outline,
+                        weight: child.weight,
+                        beat_type: child.beat_type,
+                        characters: child.characters,
+                        location: child.location,
+                        props: child.props,
+                    })
+                    .collect(),
+            },
+        }
+    }
+}
+
 impl SplitTimelineNodeRouteCommand {
     fn into_core_command(self) -> CommandEnvelope<SplitTimelineNodeCommand> {
         CommandEnvelope {
@@ -167,6 +231,17 @@ fn derived_command_uuid(command_id: CommandId, role: &[u8]) -> Uuid {
     for (index, byte) in role.iter().enumerate() {
         let slot = index % bytes.len();
         bytes[slot] = bytes[slot].wrapping_add(*byte).rotate_left(1);
+    }
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Uuid::from_bytes(bytes)
+}
+
+fn derived_indexed_command_uuid(command_id: CommandId, role: &[u8], index: usize) -> Uuid {
+    let mut bytes = *derived_command_uuid(command_id, role).as_bytes();
+    for (offset, byte) in index.to_le_bytes().iter().enumerate() {
+        let slot = bytes.len() - 1 - (offset % bytes.len());
+        bytes[slot] ^= *byte;
     }
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
@@ -256,11 +331,12 @@ async fn create_timeline_node(
 
 async fn apply_timeline_children(
     State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<ApplyTimelineChildrenCommand>>,
+    Json(command): Json<ApplyTimelineChildrenRouteCommand>,
 ) -> ApiJson {
     for child in &command.payload.children {
         validation::validate_name(&child.name, "child node name")?;
     }
+    let command = command.into_core_command();
     let path = active_project_path(&state)?;
     let children = command.payload.children.clone();
     let response = {
