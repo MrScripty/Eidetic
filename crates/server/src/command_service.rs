@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, CreateStoryArcCommand, DeleteStoryArcCommand, ProjectionEnvelope,
+    BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphSchemaKey, BibleNodeDetailProjection,
+    CommandEnvelope, CommandId, CreateBibleGraphNodeCommand, CreateStoryArcCommand,
+    DeleteStoryArcCommand, EnsureCanonicalBibleRootsCommand, ProjectionEnvelope,
     ScriptDocumentProjection, SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand,
     SetStoryArcMetadataCommand, StoryArcListProjection,
 };
@@ -10,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::backend_error::BackendError;
+use crate::bible_graph_command::{self, BibleGraphCommandError};
 use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
 use crate::object_field_command::{self, ObjectFieldCommandError};
 use crate::revision_projection::ObjectFieldProjection;
@@ -34,6 +37,38 @@ pub struct ScriptDocumentCommandResponse {
 pub struct StoryArcCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<StoryArcListProjection>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BibleGraphNodeCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<BibleNodeDetailProjection>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BibleGraphRootsCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<BibleGraphNodeListProjection>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CreateBibleGraphNodeRequestCommand {
+    id: CommandId,
+    payload: CreateBibleGraphNodeRequestPayload,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CreateBibleGraphNodeRequestPayload {
+    #[serde(default)]
+    node_id: Option<BibleGraphNodeId>,
+    #[serde(default)]
+    parent_id: Option<BibleGraphNodeId>,
+    schema_key: BibleGraphSchemaKey,
+    name: String,
+    #[serde(default)]
+    sort_order: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -76,6 +111,32 @@ impl CreateStoryArcRequestCommand {
     }
 }
 
+impl CreateBibleGraphNodeRequestCommand {
+    fn into_core_command(
+        self,
+    ) -> Result<CommandEnvelope<CreateBibleGraphNodeCommand>, BackendError> {
+        let node_id = match self.payload.node_id {
+            Some(node_id) => node_id,
+            None => BibleGraphNodeId::new(format!(
+                "node.{}.{}",
+                self.payload.schema_key.as_str(),
+                derived_command_uuid(self.id, b"bible.node")
+            ))
+            .map_err(|error| BackendError::bad_request(error.to_string()))?,
+        };
+        Ok(CommandEnvelope {
+            id: self.id,
+            payload: CreateBibleGraphNodeCommand {
+                node_id,
+                parent_id: self.payload.parent_id,
+                schema_key: self.payload.schema_key,
+                name: self.payload.name,
+                sort_order: self.payload.sort_order,
+            },
+        })
+    }
+}
+
 pub async fn set_object_field(
     state: &AppState,
     command: CommandEnvelope<SetObjectFieldCommand>,
@@ -85,6 +146,37 @@ pub async fn set_object_field(
         .await
         .map_err(|error| {
             BackendError::internal(format!("object field command task failed: {error}"))
+        })??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    Ok(response)
+}
+
+pub async fn create_bible_graph_node(
+    state: &AppState,
+    command: CreateBibleGraphNodeRequestCommand,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let command = command.into_core_command()?;
+    let path = active_project_path(state)?;
+    let response = tokio::task::spawn_blocking(move || create_bible_node_at_path(path, command))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("bible graph command task failed: {error}"))
+        })??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    Ok(response)
+}
+
+pub async fn ensure_canonical_bible_roots(
+    state: &AppState,
+    command: CommandEnvelope<EnsureCanonicalBibleRootsCommand>,
+) -> Result<BibleGraphRootsCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let response = tokio::task::spawn_blocking(move || ensure_roots_at_path(path, command))
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("bible graph roots task failed: {error}"))
         })??;
 
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
@@ -187,6 +279,38 @@ fn create_story_arc_at_path(
     let outcome = story_arc_command::record_create_story_arc_history(&mut conn, &command, 0)
         .map_err(map_story_arc_command_error)?;
     story_arc_response(conn, outcome)
+}
+
+fn create_bible_node_at_path(
+    path: PathBuf,
+    command: CommandEnvelope<CreateBibleGraphNodeCommand>,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        bible_graph_command::apply_create_bible_graph_node(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+
+    Ok(BibleGraphNodeCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
+fn ensure_roots_at_path(
+    path: PathBuf,
+    command: CommandEnvelope<EnsureCanonicalBibleRootsCommand>,
+) -> Result<BibleGraphRootsCommandResponse, BackendError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        bible_graph_command::apply_ensure_canonical_bible_roots(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+
+    Ok(BibleGraphRootsCommandResponse {
+        outcome,
+        projection,
+    })
 }
 
 fn update_story_arc_at_path(
@@ -328,5 +452,12 @@ fn map_history_error(error: HistoryStoreError) -> BackendError {
         HistoryStoreError::MissingColumn(message) => BackendError::internal(message),
         HistoryStoreError::Sqlite(error) => BackendError::internal(error.to_string()),
         HistoryStoreError::Json(error) => BackendError::bad_request(error.to_string()),
+    }
+}
+
+fn map_bible_graph_error(error: BibleGraphCommandError) -> BackendError {
+    match error {
+        BibleGraphCommandError::InvalidCommand(message) => BackendError::bad_request(message),
+        BibleGraphCommandError::Store(error) => map_history_error(error),
     }
 }

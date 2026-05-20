@@ -1015,6 +1015,64 @@ describe('command api helpers', () => {
     );
   });
 
+  it('uses desktop bible graph node create command when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 2,
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: null,
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createBibleGraphNode(
+        {
+          node_id: 'node.character.ada',
+          parent_id: null,
+          schema_key: 'character',
+          name: 'Ada',
+          sort_order: 3,
+        },
+        'command-graph-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_node', {
+      command: {
+        id: 'command-graph-1',
+        payload: {
+          node_id: 'node.character.ada',
+          parent_id: null,
+          schema_key: 'character',
+          name: 'Ada',
+          sort_order: 3,
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('sends canonical bible root commands and returns node list projections', async () => {
     const response = {
       outcome: 'recorded',
@@ -1056,6 +1114,36 @@ describe('command api helpers', () => {
         }),
       }),
     );
+  });
+
+  it('uses desktop canonical bible roots command when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 9,
+        payload: {
+          nodes: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(ensureCanonicalBibleRoots('command-roots-1')).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_roots', {
+      command: {
+        id: 'command-roots-1',
+        payload: {},
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('sends bible graph field commands and returns versioned node projections', async () => {

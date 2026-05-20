@@ -2,10 +2,11 @@ use eidetic_core::ai::backend::ChildPlanListProjection;
 use eidetic_core::contracts::{
     BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
     BibleReferenceProposalListProjection, BibleRenderGraphProjection, ChangeReviewProjection,
-    CommandEnvelope, DeleteStoryArcCommand, ProjectionEnvelope, PropagationProposalListProjection,
-    ScriptDocumentProjection, SelectedNodeEditorProjection, SemanticDependencyProjection,
-    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
-    StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
+    CommandEnvelope, DeleteStoryArcCommand, EnsureCanonicalBibleRootsCommand, ProjectionEnvelope,
+    PropagationProposalListProjection, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    SemanticDependencyProjection, SetObjectFieldCommand, SetScriptBlockCommand,
+    SetScriptLockCommand, SetStoryArcMetadataCommand, StoryArcListProjection,
+    StoryArcProgressionProjection, TimelineRenderProjection,
 };
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
@@ -175,6 +176,28 @@ async fn command_story_delete(
 ) -> Result<command_service::StoryArcCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     command_service::delete_story_arc(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_bible_graph_node(
+    app: tauri::AppHandle,
+    command: command_service::CreateBibleGraphNodeRequestCommand,
+) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::create_bible_graph_node(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_bible_graph_roots(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<EnsureCanonicalBibleRootsCommand>,
+) -> Result<command_service::BibleGraphRootsCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::ensure_canonical_bible_roots(&state, command)
         .await
         .map_err(CommandError::from)
 }
@@ -353,6 +376,8 @@ pub fn run() {
             command_story_create,
             command_story_update,
             command_story_delete,
+            command_bible_graph_node,
+            command_bible_graph_roots,
             projection_object_field,
             projection_script_document,
             projection_bible_graph_node,

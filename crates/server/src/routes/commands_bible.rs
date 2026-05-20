@@ -2,11 +2,10 @@ use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
-    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphNodeListProjection,
-    BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
-    BibleNodeDetailProjection, CommandEnvelope, CommandId, CreateBibleGraphNodeCommand,
-    EnsureCanonicalBibleRootsCommand, FieldValue, ProjectionEnvelope, SetBibleGraphEdgeCommand,
-    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphPartKey,
+    BibleGraphSnapshotFieldId, BibleGraphSnapshotId, BibleNodeDetailProjection, CommandEnvelope,
+    CommandId, EnsureCanonicalBibleRootsCommand, FieldValue, ProjectionEnvelope,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -37,32 +36,6 @@ pub fn router() -> Router<AppState> {
 struct BibleGraphNodeCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<BibleNodeDetailProjection>,
-}
-
-#[derive(Debug, Serialize)]
-struct BibleGraphRootsCommandResponse {
-    outcome: RecordChangeOutcome,
-    projection: ProjectionEnvelope<BibleGraphNodeListProjection>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CreateBibleGraphNodeRouteCommand {
-    id: CommandId,
-    payload: CreateBibleGraphNodeRoutePayload,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CreateBibleGraphNodeRoutePayload {
-    #[serde(default)]
-    node_id: Option<BibleGraphNodeId>,
-    #[serde(default)]
-    parent_id: Option<BibleGraphNodeId>,
-    schema_key: BibleGraphSchemaKey,
-    name: String,
-    #[serde(default)]
-    sort_order: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -113,30 +86,6 @@ struct SetBibleGraphSnapshotFieldRoutePayload {
     value: Option<FieldValue>,
     #[serde(default)]
     field_sort_order: u32,
-}
-
-impl CreateBibleGraphNodeRouteCommand {
-    fn into_core_command(self) -> Result<CommandEnvelope<CreateBibleGraphNodeCommand>, ApiError> {
-        let node_id = match self.payload.node_id {
-            Some(node_id) => node_id,
-            None => BibleGraphNodeId::new(format!(
-                "node.{}.{}",
-                self.payload.schema_key.as_str(),
-                derived_command_uuid(self.id, b"bible.node")
-            ))
-            .map_err(|error| ApiError::bad_request(error.to_string()))?,
-        };
-        Ok(CommandEnvelope {
-            id: self.id,
-            payload: CreateBibleGraphNodeCommand {
-                node_id,
-                parent_id: self.payload.parent_id,
-                schema_key: self.payload.schema_key,
-                name: self.payload.name,
-                sort_order: self.payload.sort_order,
-            },
-        })
-    }
 }
 
 impl SetBibleGraphEdgeRouteCommand {
@@ -220,16 +169,12 @@ fn derived_command_uuid(command_id: CommandId, role: &[u8]) -> Uuid {
 
 async fn create_bible_graph_node(
     State(state): State<AppState>,
-    Json(command): Json<CreateBibleGraphNodeRouteCommand>,
+    Json(command): Json<crate::command_service::CreateBibleGraphNodeRequestCommand>,
 ) -> ApiJson {
-    let command = command.into_core_command()?;
-    let path = active_project_path(&state)?;
-    let response = tokio::task::spawn_blocking(move || create_bible_node_at_path(path, command))
+    crate::command_service::create_bible_graph_node(&state, command)
         .await
-        .map_err(|e| ApiError::internal(format!("bible graph command task failed: {e}")))??;
-
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    crate::error::json_value(response)
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn set_bible_graph_field(
@@ -281,29 +226,10 @@ async fn ensure_canonical_bible_roots(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<EnsureCanonicalBibleRootsCommand>>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = tokio::task::spawn_blocking(move || ensure_roots_at_path(path, command))
+    crate::command_service::ensure_canonical_bible_roots(&state, command)
         .await
-        .map_err(|e| ApiError::internal(format!("bible graph roots task failed: {e}")))??;
-
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
-    crate::error::json_value(response)
-}
-
-fn create_bible_node_at_path(
-    path: std::path::PathBuf,
-    command: CommandEnvelope<CreateBibleGraphNodeCommand>,
-) -> Result<BibleGraphNodeCommandResponse, ApiError> {
-    let mut conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let (outcome, projection) =
-        bible_graph_command::apply_create_bible_graph_node(&mut conn, &command, 0)
-            .map_err(map_bible_graph_error)?;
-
-    Ok(BibleGraphNodeCommandResponse {
-        outcome,
-        projection,
-    })
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 fn set_bible_graph_field_at_path(
@@ -349,22 +275,6 @@ fn set_bible_graph_snapshot_field_at_path(
             .map_err(map_bible_graph_error)?;
 
     Ok(BibleGraphNodeCommandResponse {
-        outcome,
-        projection,
-    })
-}
-
-fn ensure_roots_at_path(
-    path: std::path::PathBuf,
-    command: CommandEnvelope<EnsureCanonicalBibleRootsCommand>,
-) -> Result<BibleGraphRootsCommandResponse, ApiError> {
-    let mut conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let (outcome, projection) =
-        bible_graph_command::apply_ensure_canonical_bible_roots(&mut conn, &command, 0)
-            .map_err(map_bible_graph_error)?;
-
-    Ok(BibleGraphRootsCommandResponse {
         outcome,
         projection,
     })

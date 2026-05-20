@@ -99,6 +99,10 @@ export function createBibleGraphNode(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_node', { command });
+  }
+
   return request('/commands/bible-graph/node', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -157,6 +161,12 @@ export function ensureCanonicalBibleRoots(
     id: commandId,
     payload: {},
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleGraphRootsCommandResponse>('command_bible_graph_roots', {
+      command,
+    });
+  }
 
   return request('/commands/bible-graph/canonical-roots', {
     method: 'POST',

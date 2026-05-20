@@ -466,6 +466,12 @@ Completed slices:
   `projection_service.rs`, kept the legacy Axum routes as service adapters, and
   exposed `projection_semantic_dependencies` and `projection_child_plans`
   through Tauri.
+- `feat(desktop): route bible graph bootstrap commands through tauri` moved
+  bible graph node creation and canonical-root ensure commands into
+  `command_service.rs`, kept the legacy Axum routes as service adapters,
+  exposed `command_bible_graph_node` and `command_bible_graph_roots` through
+  Tauri, and made the matching frontend command helpers prefer desktop IPC when
+  available.
 
 Discovered issues:
 
