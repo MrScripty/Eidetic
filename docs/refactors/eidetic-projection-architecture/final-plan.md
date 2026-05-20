@@ -778,6 +778,10 @@ Discovered implementation gaps:
 - Resolved: `projectionRefreshQueue.ts` now resolves queued waiters when the
   queue is cleared during teardown/project close, so refresh coalescing cannot
   leave callers hanging after lifecycle cleanup.
+- Resolved: `wsHandlers.ts` teardown now unsubscribes registered websocket
+  handlers and clears queued projection refreshes, with tests proving events
+  after teardown and queued pre-teardown refreshes do not mutate projection
+  stores.
 
 Simplification opportunities:
 
@@ -804,8 +808,9 @@ Verification:
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter
-  resolution during teardown; remaining lifecycle coverage should focus on
-  websocket subscription cleanup and debounced note-save cleanup.
+  resolution during teardown, and `wsHandlers.test.ts` covers websocket
+  subscription cleanup plus queued refresh cleanup. Remaining lifecycle
+  coverage should focus on debounced note-save cleanup.
 - Accessibility checks cover keyboard alternatives and embedded timeline/editor control conflicts for any touched gesture-heavy controls.
 - Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
 - Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.

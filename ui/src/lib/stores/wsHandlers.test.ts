@@ -137,4 +137,28 @@ describe('websocket projection handlers', () => {
       expect(completeGenerationMock).toHaveBeenCalledWith('node.beat.one');
     });
   });
+
+  it('unsubscribes handlers during websocket teardown', async () => {
+    const ws = new MockWsClient();
+    const teardown = setupWsHandlers(ws as never);
+
+    teardown();
+    ws.emit({ type: 'timeline_changed' });
+
+    await Promise.resolve();
+
+    expect(refreshTimelineRenderProjectionMock).not.toHaveBeenCalled();
+  });
+
+  it('clears queued projection refreshes during websocket teardown', async () => {
+    const ws = new MockWsClient();
+    const teardown = setupWsHandlers(ws as never);
+
+    ws.emit({ type: 'timeline_changed' });
+    teardown();
+
+    await Promise.resolve();
+
+    expect(refreshTimelineRenderProjectionMock).not.toHaveBeenCalled();
+  });
 });

@@ -16,7 +16,7 @@ import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.
 import { refreshBibleReferenceProposalListProjection } from './semanticProposalProjection.svelte.js';
 import { refreshPropagationProposalListProjection } from './propagationProposalProjection.svelte.js';
 import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
-import { requestProjectionRefresh } from './projectionRefreshQueue.js';
+import { clearProjectionRefreshQueue, requestProjectionRefresh } from './projectionRefreshQueue.js';
 
 const SCRIPT_DOCUMENT_KEY = `script-document:${MAIN_SCRIPT_DOCUMENT_ID}`;
 
@@ -117,5 +117,6 @@ export function setupWsHandlers(ws: WsClient) {
     for (const unsubscribe of unsubscribers) {
       unsubscribe();
     }
+    clearProjectionRefreshQueue();
   };
 }
