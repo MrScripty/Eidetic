@@ -46,12 +46,14 @@ struct BibleGraphRootsCommandResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateBibleGraphNodeRouteCommand {
     id: CommandId,
     payload: CreateBibleGraphNodeRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateBibleGraphNodeRoutePayload {
     #[serde(default)]
     node_id: Option<BibleGraphNodeId>,
@@ -64,12 +66,14 @@ struct CreateBibleGraphNodeRoutePayload {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SetBibleGraphEdgeRouteCommand {
     id: CommandId,
     payload: SetBibleGraphEdgeRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SetBibleGraphEdgeRoutePayload {
     #[serde(default)]
     edge_id: Option<BibleGraphEdgeId>,
@@ -84,12 +88,14 @@ struct SetBibleGraphEdgeRoutePayload {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SetBibleGraphSnapshotFieldRouteCommand {
     id: CommandId,
     payload: SetBibleGraphSnapshotFieldRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SetBibleGraphSnapshotFieldRoutePayload {
     #[serde(default)]
     snapshot_id: Option<BibleGraphSnapshotId>,

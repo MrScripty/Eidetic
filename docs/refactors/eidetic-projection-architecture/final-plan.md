@@ -811,6 +811,10 @@ Discovered implementation gaps:
 - Resolved: create-node route coverage now proves blank, overlong, and
   unsupported-character names are rejected at the backend/API boundary before
   command handling or persistence.
+- Resolved: bible graph node, edge, and snapshot-field route DTOs now reject
+  unknown top-level and payload fields during JSON deserialization, so
+  renderer-sent `project_id`, `session_id`, or non-contract graph fields fail
+  before command handling instead of being silently ignored.
 
 Simplification opportunities:
 
@@ -844,6 +848,9 @@ Verification:
   including equal left/right IDs and collisions with existing timeline node IDs.
 - Backend create-node route tests cover invalid name payloads for required,
   length, and character-set validation branches.
+- Backend bible graph route tests cover unexpected `project_id`/`session_id`
+  fields, and the bible graph command route suite passes with strict
+  unknown-field rejection enabled for node, edge, and snapshot-field commands.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter

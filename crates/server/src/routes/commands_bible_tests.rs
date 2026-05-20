@@ -148,6 +148,25 @@ async fn bible_graph_node_command_rejects_missing_parent() {
 }
 
 #[tokio::test]
+async fn bible_graph_node_command_rejects_unexpected_project_session_fields() {
+    let path = temp_db_path("rejects-unexpected-bible-node-fields");
+    let app = app_with_project_path(path.clone()).await;
+    let mut body = bible_graph_node_command_body("node.character.ada", "Ada");
+    body["project_id"] = json!("renderer-project");
+    body["session_id"] = json!("renderer-session");
+
+    let response = app
+        .oneshot(bible_graph_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(!path.exists());
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn bible_graph_roots_command_returns_node_list_projection() {
     let path = temp_db_path("ensures-bible-roots");
     let app = app_with_project_path(path.clone()).await;
