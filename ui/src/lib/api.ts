@@ -1,7 +1,6 @@
 import type { AiConfig, AiStatus, ModelListResponse } from './aiTypes.js';
 import type { ChildPlan } from './childPlanningTypes.js';
 import type { Project, ReferenceDocument, ReferenceType } from './projectTypes.js';
-import type { NodeContent, StoryLevel, StoryNode, Timeline, TimelineGap } from './timelineTypes.js';
 
 const BASE = '/api';
 
@@ -38,31 +37,6 @@ export function updateProject(updates: { name?: string; premise?: string }): Pro
     method: 'PUT',
     body: JSON.stringify(updates),
   });
-}
-
-// --- Timeline ---
-
-export function getTimeline(): Promise<Timeline> {
-  return request('/timeline');
-}
-
-// --- Nodes ---
-
-export function getNodeChildren(id: string): Promise<StoryNode[]> {
-  return request(`/timeline/nodes/${id}/children`);
-}
-
-// --- Node content ---
-
-export function getNodeContent(id: string): Promise<NodeContent> {
-  return request(`/nodes/${id}/content`);
-}
-
-// --- Gaps ---
-
-export function getGaps(level?: StoryLevel): Promise<TimelineGap[]> {
-  const query = level ? `?level=${level}` : '';
-  return request(`/timeline/gaps${query}`);
 }
 
 // --- References ---
