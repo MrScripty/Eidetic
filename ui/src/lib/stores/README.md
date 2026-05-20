@@ -6,25 +6,25 @@ This directory contains the shared reactive frontend state used to coordinate th
 
 ## Contents
 
-| File/Folder                            | Description                                                                          |
-| -------------------------------------- | ------------------------------------------------------------------------------------ |
-| `editor.svelte.ts`                     | Editor-local UI state and generation-progress helpers.                               |
-| `timeline.svelte.ts`                   | Timeline viewport, playhead, tool, and drag interaction state.                       |
-| `project.svelte.ts`                    | Legacy broad project mirror pending replacement with project/session metadata.        |
-| `bibleGraphNodeProjection.svelte.ts`   | Focused cache/action layer for backend-owned bible graph node and field projections. |
-| `bible.svelte.ts`                      | Bible panel selection state.                                                         |
-| `bibleRenderGraphProjection.svelte.ts` | Focused cache layer for backend-owned bible render graph projections.                |
-| `bibleGraphSchemaProjection.svelte.ts` | Focused cache layer for backend-owned bible graph schema projections.                |
-| `objectFieldProjection.svelte.ts`      | Focused cache/action layer for backend-owned object-field projections.               |
-| `scriptDocumentProjection.svelte.ts`   | Focused cache/action layer for backend-owned script document projections.            |
-| `semanticProposalProjection.svelte.ts` | Focused cache/action layer for semantic bible reference proposals.                   |
-| `propagationProposalProjection.svelte.ts` | Focused cache/action layer for semantic propagation proposals.                    |
-| `changeReviewProjection.svelte.ts`     | Focused cache layer for backend-owned change history review projections.             |
-| `storyArcProjection.svelte.ts`         | Focused cache/action layer for backend-owned story arc projections.                  |
-| `aiStatus.svelte.ts`                   | Shared AI-status polling ownership.                                                  |
-| `shortcuts.svelte.ts`                  | Keyboard shortcut registry and dispatch helpers.                                     |
-| `notifications.svelte.ts`              | Toast notification queue state.                                                      |
-| `wsHandlers.ts`                        | Websocket event handlers that fan server events into stores.                         |
+| File/Folder                               | Description                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `editor.svelte.ts`                        | Editor-local UI state and generation-progress helpers.                               |
+| `timeline.svelte.ts`                      | Timeline viewport, playhead, tool, and drag interaction state.                       |
+| `project.svelte.ts`                       | Legacy broad project mirror pending replacement with project/session metadata.       |
+| `bibleGraphNodeProjection.svelte.ts`      | Focused cache/action layer for backend-owned bible graph node and field projections. |
+| `bible.svelte.ts`                         | Bible panel selection state.                                                         |
+| `bibleRenderGraphProjection.svelte.ts`    | Focused cache layer for backend-owned bible render graph projections.                |
+| `bibleGraphSchemaProjection.svelte.ts`    | Focused cache layer for backend-owned bible graph schema projections.                |
+| `objectFieldProjection.svelte.ts`         | Focused cache/action layer for backend-owned object-field projections.               |
+| `scriptDocumentProjection.svelte.ts`      | Focused cache/action layer for backend-owned script document projections.            |
+| `semanticProposalProjection.svelte.ts`    | Focused cache/action layer for semantic bible reference proposals.                   |
+| `propagationProposalProjection.svelte.ts` | Focused cache/action layer for semantic propagation proposals.                       |
+| `changeReviewProjection.svelte.ts`        | Focused cache layer for backend-owned change history review projections.             |
+| `storyArcProjection.svelte.ts`            | Focused cache/action layer for backend-owned story arc projections.                  |
+| `aiStatus.svelte.ts`                      | Shared AI-status polling ownership.                                                  |
+| `shortcuts.svelte.ts`                     | Keyboard shortcut registry and dispatch helpers.                                     |
+| `notifications.svelte.ts`                 | Toast notification queue state.                                                      |
+| `wsHandlers.ts`                           | Websocket event handlers that fan server events into stores.                         |
 
 ## Problem
 
@@ -48,26 +48,27 @@ continues.
 
 ## Store Ownership Audit
 
-| Store | Classification | Current status | Milestone 6 action |
-| ----- | -------------- | -------------- | ------------------ |
-| `aiStatus.svelte.ts` | Projection/status cache | Owns the last-known AI backend status and the single polling lifecycle. | Keep; add stale-response guards if config-driven overlapping refreshes become possible. |
-| `bible.svelte.ts` | Transient UI state | Stores selected bible graph node ID only. | Keep; document as frontend-owned selection. |
-| `bibleGraphNodeProjection.svelte.ts` | Projection cache and command bridge | Caches backend projection envelopes and replaces cache from command responses. | Keep; later share common projection command helpers if useful. |
-| `bibleGraphSchemaProjection.svelte.ts` | Projection cache | Caches backend schema projection. | Keep; add stale-response guards when projection refresh coalescing lands. |
-| `bibleRenderGraphProjection.svelte.ts` | Projection cache | Caches backend render graph projection. | Keep; add stale-response guards when projection refresh coalescing lands. |
-| `changeReviewProjection.svelte.ts` | Projection cache | Caches backend change review projection. | Keep; add stale-response guards when projection refresh coalescing lands. |
-| `editor.svelte.ts` | Mixed: transient UI state plus legacy ownership | Generation progress is transient, but `selectedNode` stores a full durable `StoryNode`. | Remove `selectedNode`; keep selected IDs and generation-progress state only. |
-| `notifications.svelte.ts` | Transient UI state | Owns discardable toast messages. | Keep. |
-| `objectFieldProjection.svelte.ts` | Projection cache and command bridge | Caches backend object-field projections and replaces cache from command responses. | Keep; add stale-response guards when projection refresh coalescing lands. |
-| `project.svelte.ts` | Legacy ownership | Stores a broad `Project` including durable timeline data. | Replace with lightweight project/session metadata or open-state only. |
-| `propagationProposalProjection.svelte.ts` | Projection cache and command bridge | Caches backend proposal list and replaces cache from command responses. | Keep; add stale-response guards when projection refresh coalescing lands. |
-| `scriptDocumentProjection.svelte.ts` | Projection cache and command bridge | Caches backend script document projections and replaces cache from command responses. | Keep. |
-| `semanticProposalProjection.svelte.ts` | Projection cache and command bridge | Caches backend semantic proposal list and replaces cache from command responses. | Keep; add stale-response guards when projection refresh coalescing lands. |
-| `shortcuts.svelte.ts` | Transient UI infrastructure | Owns in-memory shortcut registrations. | Keep; ensure cleanup on component unmount remains deterministic. |
-| `storyArcProjection.svelte.ts` | Projection cache and command bridge | Caches backend story arc projection and replaces cache from command responses. | Keep. |
-| `timeline.svelte.ts` | Mixed: transient UI state plus legacy ownership | Viewport/tool/drag state is valid, but `timelineState.timeline` and broad timeline query helpers own backend durable state. | Remove broad timeline storage and replace readers with `TimelineRenderProjection`/`TimelineRenderModel` selectors. |
-| `timelineRenderProjection.svelte.ts` | Projection cache and command bridge | Desired pattern for timeline commands: command responses replace the projection cache. | Keep; add stale-response guards/coalescing and shared command helper only after ownership cleanup. |
-| `wsHandlers.ts` | Mixed orchestration plus legacy ownership | Correctly refreshes several projections, but timeline and generation events still hydrate/patch broad timeline and selected node objects. | Rewrite as projection refresh/invalidation orchestration only. |
+| Store                                     | Classification                                  | Current status                                                                                                                            | Milestone 6 action                                                                                                 |
+| ----------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `aiStatus.svelte.ts`                      | Projection/status cache                         | Owns the last-known AI backend status and the single polling lifecycle.                                                                   | Keep; add stale-response guards if config-driven overlapping refreshes become possible.                            |
+| `bible.svelte.ts`                         | Transient UI state                              | Stores selected bible graph node ID only.                                                                                                 | Keep; document as frontend-owned selection.                                                                        |
+| `bibleGraphNodeProjection.svelte.ts`      | Projection cache and command bridge             | Caches backend projection envelopes and replaces cache from command responses.                                                            | Keep; later share common projection command helpers if useful.                                                     |
+| `bibleGraphSchemaProjection.svelte.ts`    | Projection cache                                | Caches backend schema projection.                                                                                                         | Keep; add stale-response guards when projection refresh coalescing lands.                                          |
+| `bibleRenderGraphProjection.svelte.ts`    | Projection cache                                | Caches backend render graph projection.                                                                                                   | Keep; add stale-response guards when projection refresh coalescing lands.                                          |
+| `changeReviewProjection.svelte.ts`        | Projection cache                                | Caches backend change review projection.                                                                                                  | Keep; add stale-response guards when projection refresh coalescing lands.                                          |
+| `editor.svelte.ts`                        | Transient UI state                              | Stores selected timeline node IDs, selected level, and generation-progress state only.                                                    | Keep durable selected-node data in `selectedNodeEditorProjection.svelte.ts`.                                       |
+| `selectedNodeEditorProjection.svelte.ts`  | Backend projection cache                        | Caches the focused backend editor projection keyed by selected timeline node ID.                                                          | Keep as the editor read model; do not patch durable node fields locally.                                           |
+| `notifications.svelte.ts`                 | Transient UI state                              | Owns discardable toast messages.                                                                                                          | Keep.                                                                                                              |
+| `objectFieldProjection.svelte.ts`         | Projection cache and command bridge             | Caches backend object-field projections and replaces cache from command responses.                                                        | Keep; add stale-response guards when projection refresh coalescing lands.                                          |
+| `project.svelte.ts`                       | Legacy ownership                                | Stores a broad `Project` including durable timeline data.                                                                                 | Replace with lightweight project/session metadata or open-state only.                                              |
+| `propagationProposalProjection.svelte.ts` | Projection cache and command bridge             | Caches backend proposal list and replaces cache from command responses.                                                                   | Keep; add stale-response guards when projection refresh coalescing lands.                                          |
+| `scriptDocumentProjection.svelte.ts`      | Projection cache and command bridge             | Caches backend script document projections and replaces cache from command responses.                                                     | Keep.                                                                                                              |
+| `semanticProposalProjection.svelte.ts`    | Projection cache and command bridge             | Caches backend semantic proposal list and replaces cache from command responses.                                                          | Keep; add stale-response guards when projection refresh coalescing lands.                                          |
+| `shortcuts.svelte.ts`                     | Transient UI infrastructure                     | Owns in-memory shortcut registrations.                                                                                                    | Keep; ensure cleanup on component unmount remains deterministic.                                                   |
+| `storyArcProjection.svelte.ts`            | Projection cache and command bridge             | Caches backend story arc projection and replaces cache from command responses.                                                            | Keep.                                                                                                              |
+| `timeline.svelte.ts`                      | Mixed: transient UI state plus legacy ownership | Viewport/tool/drag state is valid, but `timelineState.timeline` and broad timeline query helpers own backend durable state.               | Remove broad timeline storage and replace readers with `TimelineRenderProjection`/`TimelineRenderModel` selectors. |
+| `timelineRenderProjection.svelte.ts`      | Projection cache and command bridge             | Desired pattern for timeline commands: command responses replace the projection cache.                                                    | Keep; add stale-response guards/coalescing and shared command helper only after ownership cleanup.                 |
+| `wsHandlers.ts`                           | Mixed orchestration plus legacy ownership       | Correctly refreshes several projections, but timeline and generation events still hydrate/patch broad timeline and selected node objects. | Rewrite as projection refresh/invalidation orchestration only.                                                     |
 
 ## Alternatives Rejected
 

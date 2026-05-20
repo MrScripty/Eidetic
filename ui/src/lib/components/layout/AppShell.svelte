@@ -42,7 +42,6 @@
           if (editorState.selectedNodeId) {
             const id = editorState.selectedNodeId;
             editorState.selectedNodeId = null;
-            editorState.selectedNode = null;
             editorState.selectedLevel = null;
             void refreshSelectedNodeEditorProjection(null).catch(() => {});
             applyDeleteTimelineNodeCommand({ node_id: id }).catch(() => {});

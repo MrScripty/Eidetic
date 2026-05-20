@@ -1,11 +1,10 @@
-import type { NodeId, StoryLevel, StoryNode } from '../timelineTypes.js';
+import type { NodeId, StoryLevel } from '../timelineTypes.js';
 
 /**
  * Transient UI state for the node editor panel. Frontend-owned.
  */
 export const editorState = $state<{
   selectedNodeId: NodeId | null;
-  selectedNode: StoryNode | null;
   /** Selected hierarchy level for the editor panel. */
   selectedLevel: StoryLevel | null;
   /** Node ID currently streaming generation. */
@@ -28,7 +27,6 @@ export const editorState = $state<{
   batchCompletedCount: number;
 }>({
   selectedNodeId: null,
-  selectedNode: null,
   selectedLevel: null,
   streamingNodeId: null,
   streamingText: '',

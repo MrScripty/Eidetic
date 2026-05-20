@@ -84,7 +84,6 @@
 
   function selectNode(node: StoryNode) {
     editorState.selectedNodeId = node.id;
-    editorState.selectedNode = node;
     editorState.selectedLevel = node.level;
     void refreshSelectedNodeEditorProjection(node.id).catch(() => {});
   }
@@ -126,7 +125,6 @@
   async function handleDelete(nodeId: string) {
     if (editorState.selectedNodeId === nodeId) {
       editorState.selectedNodeId = null;
-      editorState.selectedNode = null;
       editorState.selectedLevel = null;
       void refreshSelectedNodeEditorProjection(null).catch(() => {});
     }
@@ -140,7 +138,6 @@
   async function handleSplit(nodeId: string, atMs: number) {
     if (editorState.selectedNodeId === nodeId) {
       editorState.selectedNodeId = null;
-      editorState.selectedNode = null;
       editorState.selectedLevel = null;
       void refreshSelectedNodeEditorProjection(null).catch(() => {});
     }

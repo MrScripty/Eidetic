@@ -140,7 +140,6 @@
 
   function selectNodeById(nodeId: NodeId) {
     editorState.selectedNodeId = nodeId;
-    editorState.selectedNode = null;
     void refreshSelectedNodeEditorProjection(nodeId).catch(() => {});
   }
 
@@ -262,9 +261,9 @@
 
   async function handleToggleLock() {
     if (!editorState.selectedNodeId || !selectedNodeIsReady()) return;
-    const selectedNode = selectedProjectionNode;
-    if (!selectedNode) return;
-    const locked = !selectedNode.locked;
+    const selectedEditorNode = selectedProjectionNode;
+    if (!selectedEditorNode) return;
+    const locked = !selectedEditorNode.locked;
     await applyTimelineNodeLockCommand({ node_id: editorState.selectedNodeId, locked });
     await refreshSelectedProjection();
   }
