@@ -55,6 +55,41 @@ describe('projection api helpers', () => {
     );
   });
 
+  it('uses desktop object field projection command when Tauri transport is available', async () => {
+    const response = {
+      version: 2,
+      payload: {
+        object_kind: 'bible_part_field',
+        object_id: 'field/weather one',
+        deleted: false,
+        fields: {},
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      getObjectFieldProjection({
+        object_kind: 'bible_part_field',
+        object_id: 'field/weather one',
+      }),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_object_field', {
+      query: {
+        object_kind: 'bible_part_field',
+        object_id: 'field/weather one',
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('throws backend errors without patching local state', async () => {
     vi.stubGlobal(
       'fetch',

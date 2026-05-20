@@ -428,6 +428,10 @@ Completed slices:
   create, update, and delete command handling into `command_service.rs`, exposed
   matching Tauri commands, and made the frontend story arc command helpers
   prefer desktop IPC when available.
+- `feat(desktop): route object field projection through tauri` introduced
+  `projection_service.rs`, kept the legacy object-field projection route as a
+  service adapter, exposed `projection_object_field` through Tauri, and made the
+  frontend projection helper prefer desktop IPC when available.
 
 Discovered issues:
 

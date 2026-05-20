@@ -7,6 +7,7 @@ use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
 use eidetic_server::project_service::{
     self, CreateProjectRequest, LoadProjectRequest, SaveProjectRequest, UpdateProjectRequest,
 };
+use eidetic_server::projection_service::{self, ObjectFieldProjectionRequest};
 use eidetic_server::state::AppState;
 use serde::Serialize;
 use tauri::Manager;
@@ -169,6 +170,17 @@ async fn command_story_delete(
         .map_err(CommandError::from)
 }
 
+#[tauri::command]
+async fn projection_object_field(
+    app: tauri::AppHandle,
+    query: ObjectFieldProjectionRequest,
+) -> Result<serde_json::Value, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    projection_service::object_field_projection(&state, query)
+        .await
+        .map_err(CommandError::from)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -189,7 +201,8 @@ pub fn run() {
             command_script_lock,
             command_story_create,
             command_story_update,
-            command_story_delete
+            command_story_delete,
+            projection_object_field
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Eidetic desktop application");

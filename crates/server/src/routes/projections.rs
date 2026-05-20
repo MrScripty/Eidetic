@@ -16,7 +16,6 @@ use serde::Deserialize;
 use crate::bible_graph_store;
 use crate::error::{ApiError, ApiJson};
 use crate::history_store;
-use crate::revision_projection::ObjectFieldProjection;
 use crate::script_store;
 use crate::state::AppState;
 use crate::story_arc_store;
@@ -73,12 +72,6 @@ pub fn router() -> Router<AppState> {
 }
 
 #[derive(Debug, Deserialize)]
-struct ObjectFieldProjectionQuery {
-    object_kind: ObjectKind,
-    object_id: String,
-}
-
-#[derive(Debug, Deserialize)]
 struct BibleGraphNodeProjectionQuery {
     node_id: BibleGraphNodeId,
 }
@@ -95,20 +88,12 @@ struct SelectedNodeEditorProjectionQuery {
 
 async fn get_object_field_projection(
     State(state): State<AppState>,
-    Query(query): Query<ObjectFieldProjectionQuery>,
+    Query(query): Query<crate::projection_service::ObjectFieldProjectionRequest>,
 ) -> ApiJson {
-    if query.object_id.trim().is_empty() {
-        return Err(ApiError::bad_request("object_id is required"));
-    }
-
-    let path = active_project_path(&state)?;
-    let projection = tokio::task::spawn_blocking(move || {
-        load_projection_at_path(path, query.object_kind, query.object_id)
-    })
-    .await
-    .map_err(|e| ApiError::internal(format!("object field projection task failed: {e}")))??;
-
-    crate::error::json_value(projection)
+    crate::projection_service::object_field_projection(&state, query)
+        .await
+        .map_err(ApiError::from)
+        .map(axum::Json)
 }
 
 async fn get_bible_graph_node_projection(
@@ -224,22 +209,6 @@ async fn get_story_arc_progression_projection(State(state): State<AppState>) -> 
     crate::error::json_value(ProjectionEnvelope::initial(
         StoryArcProgressionProjection::new(analyze_all_arcs(&projection_project)),
     ))
-}
-
-fn load_projection_at_path(
-    path: std::path::PathBuf,
-    object_kind: ObjectKind,
-    object_id: String,
-) -> Result<ProjectionEnvelope<ObjectFieldProjection>, ApiError> {
-    let conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    history_store::create_schema(&conn).map_err(map_history_error)?;
-    crate::revision_projection::load_object_field_projection_envelope(
-        &conn,
-        object_kind,
-        &object_id,
-    )
-    .map_err(map_history_error)
 }
 
 fn load_bible_node_projection_at_path(

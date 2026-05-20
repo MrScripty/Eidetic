@@ -14,6 +14,7 @@ import type { BibleReferenceProposalListProjection } from './semanticProposalTyp
 import type { StoryArcListProjection, StoryArcProgressionProjection } from './storyArcTypes.js';
 import type { NodeId } from './timelineTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
+import { hasDesktopTransport, invokeDesktop } from './desktopTransport.js';
 
 const BASE = '/api';
 
@@ -53,6 +54,12 @@ export function getObjectFieldProjection({
   object_kind,
   object_id,
 }: ObjectFieldProjectionKey): Promise<ProjectionEnvelope<ObjectFieldProjection>> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ProjectionEnvelope<ObjectFieldProjection>>('projection_object_field', {
+      query: { object_kind, object_id },
+    });
+  }
+
   const params = new URLSearchParams({ object_kind, object_id });
   return getJson(`/projections/object-field?${params.toString()}`);
 }
