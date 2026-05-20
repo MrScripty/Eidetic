@@ -168,13 +168,24 @@ This should be model-backed, not purely visual. Likely data sources:
 
 ## Integration Options
 
-Options to evaluate:
+Production target:
 
-1. Native desktop Bevy viewport embedded beside Svelte/Electron UI.
-2. Bevy compiled to WASM and rendered into a canvas inside the Svelte app.
-3. Split-process renderer communicating over local IPC.
+- Tauri owns the standalone desktop application shell.
+- Svelte remains the WebView UI shell for non-renderer panels and accessible
+  command alternatives.
+- Bevy runs as a native desktop renderer, not as a browser/WASM canvas.
 
-The best choice depends on the final app host. For a browser-first Svelte app, Bevy WASM in a canvas is the most direct conceptual fit. For a desktop-first app, native Bevy integration may provide better rendering and input behavior.
+Native integration choices may still vary by implementation slice:
+
+1. Native Bevy viewport embedded/inset beside the Tauri WebView.
+2. Split-process native Bevy renderer communicating over bounded local IPC.
+3. Temporary separate Bevy window for early smoke validation only, not a final
+   product UX.
+
+Rejected production path:
+
+- Bevy compiled to WASM and rendered into a Svelte canvas. Eidetic is a
+  desktop application, and the renderer should use the native Bevy path.
 
 ## Interaction Contract
 
@@ -202,7 +213,8 @@ Specific renderer requirements:
 - Bevy must not own canonical timeline, script, bible, propagation, selection, or history state.
 - Selection that affects business logic must be backend-confirmed or submitted as command input.
 - No optimistic updates for backend-owned state. Bevy can show transient previews while dragging, but committed state changes only after backend confirmation.
-- Bevy, WASM, native renderer, or IPC dependencies must stay in a leaf crate/package and out of `eidetic-core`.
+- Bevy, native renderer, Tauri, or IPC dependencies must stay in a leaf
+  crate/package and out of `eidetic-core`.
 - Renderer bridge payloads are trust boundaries and must be validated on receipt.
 - Renderer lifecycle must define initialization, teardown, event unsubscribe, cancellation, panic/error handling, and queue overflow behavior.
 - Queues/events between backend, Svelte, and Bevy must be bounded.
@@ -212,7 +224,8 @@ Specific renderer requirements:
 
 ## Open Questions
 
-- Should Bevy run in-browser through WASM, as a native embedded renderer, or as a split-process renderer while still remaining a projection consumer only?
+- Should the production native Bevy host be embedded/inset in the Tauri window
+  or run as a split-process native renderer?
 - How should text rendering be handled for dense clip labels?
 - Should timeline hit-testing live entirely in Bevy?
 - How should Bevy receive state updates: full snapshots, diffs, or command/event streams?
@@ -225,13 +238,23 @@ No backwards compatibility with the current DOM timeline is required. The existi
 
 Recommended path:
 
-1. Define a renderer-facing timeline projection DTO around context chunks, overlays, and script-generation coverage.
-2. Prototype a Bevy timeline viewport with read-only tracks/context chunks.
-3. Add pan/zoom/playhead behavior.
-4. Add selection and hit-testing.
-5. Add move/resize/split command dispatch for context chunks.
-6. Add relationship curves and arc overlays.
-7. Add script coverage/staleness overlays.
-8. Add advanced overlays such as valence/arousal.
-9. Add keyboard-accessible Svelte command alternatives for timeline operations that cannot be directly represented in the Bevy viewport.
-10. Remove the DOM/SVG timeline renderer once the Bevy renderer is active.
+1. Add the Tauri desktop shell and move runtime startup/shutdown under the
+   desktop lifecycle.
+2. Remove the existing wasm-bindgen renderer bridges after native host
+   contracts exist.
+3. Upgrade renderer planning and crates to Bevy 0.18.1 with a fresh dependency
+   review.
+4. Define any missing renderer-facing timeline projection DTOs around context
+   chunks, overlays, and script-generation coverage.
+5. Prototype a native Bevy timeline viewport with read-only tracks/context
+   chunks.
+6. Add pan/zoom/playhead behavior.
+7. Add selection and hit-testing.
+8. Add move/resize/split command dispatch for context chunks.
+9. Add relationship curves and arc overlays.
+10. Add script coverage/staleness overlays.
+11. Add advanced overlays such as valence/arousal after backend-owned affect
+    contracts exist.
+12. Add keyboard-accessible Svelte command alternatives for timeline operations
+    that cannot be directly represented in the Bevy viewport.
+13. Remove the DOM/SVG timeline renderer once the Bevy renderer is active.

@@ -930,12 +930,70 @@ Exit criteria:
 - Remaining DOM timeline replacement work can proceed without untangling durable frontend state at the same time.
 - The milestone satisfies the reviewed coding standards: backend-owned durable data, no optimistic updates, validated API boundaries, single-owner async refresh lifecycle, documented ownership, accessibility-preserving controls, and verified cross-layer projection flow.
 
-## Milestone 7: Bevy Timeline Renderer
+## Milestone 7: Tauri Desktop Shell And WASM Removal
+
+This milestone is a prerequisite for native Bevy renderer work. Eidetic is a
+standalone desktop application, not a browser-first app, so the runtime should
+move to a Tauri shell before the Bevy timeline renderer becomes the primary
+timeline surface.
+
+Decisions:
+
+- Use Tauri as the desktop application shell.
+- Keep Svelte as the desktop UI shell for panels, forms, inspectors, proposal
+  review, script editing, accessibility controls, and command alternatives.
+- Keep durable state backend-owned. Tauri, Svelte, and Bevy must consume
+  projections and emit commands; they must not own canonical project data.
+- Do not use WASM as the Bevy renderer integration path.
+- Remove existing wasm-bindgen renderer bridges once native desktop host
+  contracts replace them.
+- Keep Bevy as an isolated renderer dependency. Bevy must not become a
+  dependency of `eidetic-core` or `eidetic-server`.
 
 Tasks:
 
-- Add renderer-facing timeline projection DTOs.
-- Add Bevy timeline host as an isolated leaf renderer or frontend-owned package.
+- Add a Tauri application scaffold that packages the Svelte frontend and starts
+  the Rust backend/runtime in a desktop-controlled lifecycle.
+- Decide and document the backend boundary for the desktop app: embedded Axum
+  loopback server, Tauri command bridge, or a transitional hybrid. The boundary
+  must preserve backend-owned projections and validated command handling.
+- Add launcher/build commands for desktop development, release build, and smoke
+  validation.
+- Define the native Bevy host boundary for future renderer milestones:
+  projection input, command output, lifecycle ownership, queue bounds, error
+  handling, and shutdown behavior.
+- Remove `wasm-bindgen`, `serde-wasm-bindgen`, and `wasm32` renderer bridge
+  modules from `eidetic-bevy-timeline` and `eidetic-bevy-bible-graph` after the
+  desktop host boundary exists.
+- Update renderer READMEs and planning notes so WASM/browser canvas is recorded
+  as rejected for Eidetic's production renderer path.
+- Verify Svelte still behaves as a projection-only shell inside Tauri and does
+  not reintroduce durable local project state.
+
+Verification:
+
+- Desktop dev command opens the Tauri app and reaches the backend status route
+  or equivalent backend-owned health command.
+- Release/smoke command proves the packaged desktop runtime starts and serves
+  the Svelte shell.
+- Backend command/projection tests still pass after moving runtime ownership
+  into the desktop shell.
+- Frontend typecheck, lint, and projection-only guard tests pass.
+- Renderer crates compile without wasm target dependencies after bridge
+  removal.
+- Lifecycle tests or smoke checks cover app startup, backend shutdown, and
+  failure reporting when the backend cannot bind/start.
+
+## Milestone 8: Bevy Timeline Renderer
+
+Tasks:
+
+- Upgrade renderer planning and crates to Bevy 0.18.1 with a fresh dependency
+  review before enabling render/window/input/text features.
+- Add renderer-facing timeline projection DTOs only where the existing
+  backend-owned `TimelineRenderProjection` is insufficient.
+- Add native Bevy timeline host as an isolated leaf renderer owned by the Tauri
+  desktop runtime.
 - Add pan, zoom, playhead, selection, hit testing, move, resize, split, arcs, relationship curves, and valence/arousal overlays through backend-confirmed commands/projections.
 - Add keyboard-accessible Svelte command alternatives for critical timeline operations.
 - Remove the DOM/SVG timeline renderer after Bevy covers target interactions.
@@ -948,7 +1006,7 @@ Verification:
 - Renderer lifecycle tests for mount/unmount subscription cleanup.
 - Dependency review proving Bevy is not in `eidetic-core` and is justified/feature-gated if it adds 100+ transitive dependencies.
 
-## Milestone 8: Bevy Bible Graph View
+## Milestone 9: Bevy Bible Graph View
 
 Tasks:
 
