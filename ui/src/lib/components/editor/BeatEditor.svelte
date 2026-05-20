@@ -1,20 +1,27 @@
 <script lang="ts">
   import type { YTextEvent } from 'yjs';
-  import { childLevel } from '$lib/timelineTypes.js';
-  import type { StoryNode } from '$lib/timelineTypes.js';
+  import type { NodeId, StoryNode } from '$lib/timelineTypes.js';
+  import type {
+    SelectedNodeEditorNode,
+    SelectedNodeEditorSummary,
+  } from '$lib/selectedNodeEditorTypes.js';
   import {
     editorState,
     startBatchGeneration,
     startGeneration,
     setBatchTotalCount,
   } from '$lib/stores/editor.svelte.js';
-  import { childrenOf, findNode, timelineState, zoomToRange } from '$lib/stores/timeline.svelte.js';
+  import { zoomToRange } from '$lib/stores/timeline.svelte.js';
   import { generateBatch, generateChildren, generateContent, getAiContext } from '$lib/api.js';
   import {
     applyTimelineChildrenCommand,
     applyTimelineNodeLockCommand,
     applyTimelineNodeNotesCommand,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
+  import {
+    refreshSelectedNodeEditorProjection,
+    selectedNodeEditorProjectionState,
+  } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import { getNodeNotes } from '$lib/yjs.js';
   import BeatChildContext from './BeatChildContext.svelte';
   import BeatEditorHeader from './BeatEditorHeader.svelte';
@@ -35,42 +42,167 @@
       (editorState.batchParentNodeId != null &&
         editorState.batchParentNodeId === editorState.selectedNodeId),
   );
-  let isChildNode = $derived(editorState.selectedNode?.parent_id != null);
-  let childNodes = $derived.by(() =>
-    editorState.selectedNodeId ? childrenOf(editorState.selectedNodeId) : [],
+  let selectedProjection = $derived(selectedNodeEditorProjectionState.projection?.payload ?? null);
+  let selectedProjectionNode = $derived(selectedProjection?.node ?? null);
+  let node = $derived(
+    selectedProjectionNode ? editorProjectionNodeToStoryNode(selectedProjectionNode) : null,
   );
-  let hasChildren = $derived(childNodes.length > 0);
-  let parentNode = $derived.by(() => {
-    if (!isChildNode || !editorState.selectedNode) return null;
-    return findNode(editorState.selectedNode.parent_id!) ?? null;
-  });
-  let siblingNodes = $derived.by(() => {
-    if (!isChildNode || !editorState.selectedNode?.parent_id) return [];
-    return childrenOf(editorState.selectedNode.parent_id);
-  });
-  let currentNodeIndex = $derived(
-    siblingNodes.findIndex((node) => node.id === editorState.selectedNodeId),
+  let isChildNode = $derived(node?.parent_id != null);
+  let hasChildren = $derived(selectedProjection?.has_children ?? false);
+  let parentNode = $derived(
+    selectedProjection?.parent ? editorSummaryToStoryNode(selectedProjection.parent) : null,
   );
-  let adjacentParents = $derived.by(() => {
-    if (!isChildNode || !parentNode) return { before: null, after: null };
-    const allAtLevel =
-      timelineState.timeline?.nodes
-        .filter((node) => node.level === parentNode.level)
-        .sort((a, b) => a.time_range.start_ms - b.time_range.start_ms) ?? [];
-    const index = allAtLevel.findIndex((node) => node.id === parentNode.id);
-    if (index < 0) return { before: null, after: null };
+  let siblingNodes = $derived(selectedProjection?.siblings.map(editorSummaryToStoryNode) ?? []);
+  let currentNodeIndex = $derived(selectedProjection?.current_sibling_index ?? -1);
+  let adjacentParents = $derived({
+    before: selectedProjection?.adjacent_parents.before
+      ? editorSummaryToStoryNode(selectedProjection.adjacent_parents.before)
+      : null,
+    after: selectedProjection?.adjacent_parents.after
+      ? editorSummaryToStoryNode(selectedProjection.adjacent_parents.after)
+      : null,
+  });
+  let childLevelName = $derived(selectedProjection?.child_level ?? null);
+  let selectedNotes = $derived(selectedProjectionNode?.notes ?? '');
+
+  $effect(() => {
+    if (
+      editorState.selectedNodeId !== selectedNodeEditorProjectionState.selectedNodeId &&
+      !selectedNodeEditorProjectionState.pending
+    ) {
+      void refreshSelectedNodeEditorProjection(editorState.selectedNodeId).catch(() => {});
+    }
+  });
+
+  $effect(() => {
+    if (
+      selectedProjectionNode &&
+      editorState.selectedNodeId &&
+      selectedProjectionNode.node_id !== editorState.selectedNodeId
+    ) {
+      void refreshSelectedNodeEditorProjection(editorState.selectedNodeId).catch(() => {});
+    }
+  });
+
+  $effect(() => {
+    if (!editorState.selectedNodeId) {
+      void refreshSelectedNodeEditorProjection(null).catch(() => {});
+    }
+  });
+
+  $effect(() => {
+    if (selectedProjectionNode && selectedProjectionNode.node_id === editorState.selectedNodeId) {
+      editorState.selectedLevel = selectedProjectionNode.level;
+    }
+  });
+
+  function editorProjectionNodeToStoryNode(editorNode: SelectedNodeEditorNode): StoryNode {
     return {
-      before: index > 0 ? (allAtLevel[index - 1] ?? null) : null,
-      after: index < allAtLevel.length - 1 ? (allAtLevel[index + 1] ?? null) : null,
+      id: editorNode.node_id,
+      parent_id: editorNode.parent_id ?? null,
+      level: editorNode.level,
+      sort_order: editorNode.sort_order,
+      time_range: {
+        start_ms: editorNode.start_ms,
+        end_ms: editorNode.end_ms,
+      },
+      name: editorNode.name,
+      content: {
+        notes: editorNode.notes,
+        content: '',
+        status: editorNode.content_status,
+      },
+      beat_type: editorNode.beat_type ?? null,
+      locked: editorNode.locked,
     };
-  });
-  let childLevelName = $derived(
-    editorState.selectedNode ? childLevel(editorState.selectedNode.level) : null,
+  }
+
+  function editorSummaryToStoryNode(summary: SelectedNodeEditorSummary): StoryNode {
+    return {
+      id: summary.node_id,
+      parent_id: summary.parent_id ?? null,
+      level: summary.level,
+      sort_order: summary.sort_order,
+      time_range: {
+        start_ms: summary.start_ms,
+        end_ms: summary.end_ms,
+      },
+      name: summary.name,
+      content: {
+        notes: summary.notes,
+        content: '',
+        status: 'NotesOnly',
+      },
+      beat_type: summary.beat_type ?? null,
+      locked: false,
+    };
+  }
+
+  function selectNodeById(nodeId: NodeId) {
+    editorState.selectedNodeId = nodeId;
+    editorState.selectedNode = null;
+    void refreshSelectedNodeEditorProjection(nodeId).catch(() => {});
+  }
+
+  function selectNode(node: StoryNode) {
+    editorState.selectedLevel = node.level;
+    selectNodeById(node.id);
+  }
+
+  async function refreshSelectedProjection() {
+    await refreshSelectedNodeEditorProjection(editorState.selectedNodeId);
+  }
+
+  function selectedNodeIsReady(): boolean {
+    return (
+      selectedProjectionNode != null &&
+      selectedProjectionNode.node_id === editorState.selectedNodeId
+    );
+  }
+
+  function selectedStoryNodeIsReady(): boolean {
+    return node != null && node.id === editorState.selectedNodeId;
+  }
+
+  function selectedNodeHasNotes(): boolean {
+    return selectedNotes.trim().length > 0;
+  }
+
+  function selectedNodeIsLocked(): boolean {
+    return selectedProjectionNode?.locked ?? false;
+  }
+
+  function selectedNodeRange() {
+    return selectedProjectionNode
+      ? { start_ms: selectedProjectionNode.start_ms, end_ms: selectedProjectionNode.end_ms }
+      : null;
+  }
+
+  function selectedNodeContentStatus() {
+    if (editorState.streamingNodeId === editorState.selectedNodeId) return 'Generating';
+    return selectedProjectionNode?.content_status ?? 'Empty';
+  }
+
+  function selectedNodeForRender(): StoryNode | null {
+    if (!node) return null;
+    return {
+      ...node,
+      content: {
+        ...node.content,
+        status: selectedNodeContentStatus(),
+      },
+    };
+  }
+
+  let renderNode = $derived(selectedNodeForRender());
+
+  let selectedNodeStatusLabel = $derived(
+    beatContentStatusLabel(renderNode?.content.status ?? 'Empty'),
   );
 
   $effect(() => {
     const nodeId = editorState.selectedNodeId;
-    const notes = editorState.selectedNode?.content.notes;
+    const notes = selectedProjectionNode?.notes;
     if (!nodeId || !notes?.trim()) {
       nodeContext = null;
       contextNodeId = null;
@@ -86,8 +218,8 @@
 
     const yNotes = getNodeNotes(nodeId);
     const onNotesChange = (_event: YTextEvent) => {
-      if (editorState.selectedNode && editorState.selectedNodeId === nodeId) {
-        editorState.selectedNode.content.notes = yNotes.toString();
+      if (editorState.selectedNodeId === nodeId) {
+        void refreshSelectedNodeEditorProjection(nodeId).catch(() => {});
       }
     };
 
@@ -114,14 +246,8 @@
     if (editorState.selectedNodeId) loadContext(editorState.selectedNodeId);
   }
 
-  function selectNode(node: StoryNode) {
-    editorState.selectedNodeId = node.id;
-    editorState.selectedNode = node;
-  }
-
   function handleNotesInput(event: Event) {
     const value = (event.target as HTMLTextAreaElement).value;
-    if (editorState.selectedNode) editorState.selectedNode.content.notes = value;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
       if (editorState.selectedNodeId) {
@@ -129,20 +255,23 @@
           node_id: editorState.selectedNodeId,
           notes: value,
         });
+        await refreshSelectedProjection();
       }
     }, 500);
   }
 
   async function handleToggleLock() {
-    if (!editorState.selectedNodeId || !editorState.selectedNode) return;
-    const locked = !editorState.selectedNode.locked;
+    if (!editorState.selectedNodeId || !selectedNodeIsReady()) return;
+    const selectedNode = selectedProjectionNode;
+    if (!selectedNode) return;
+    const locked = !selectedNode.locked;
     await applyTimelineNodeLockCommand({ node_id: editorState.selectedNodeId, locked });
-    if (editorState.selectedNode) editorState.selectedNode.locked = locked;
+    await refreshSelectedProjection();
   }
 
   async function handleGenerate() {
-    if (!editorState.selectedNodeId || !editorState.selectedNode) return;
-    if (editorState.selectedNode.locked || !editorState.selectedNode.content.notes.trim()) return;
+    if (!editorState.selectedNodeId || !selectedNodeIsReady()) return;
+    if (selectedNodeIsLocked() || !selectedNodeHasNotes()) return;
     if (isGenerating) return;
 
     if (hasChildren) {
@@ -153,14 +282,13 @@
     }
 
     startGeneration(editorState.selectedNodeId);
-    editorState.selectedNode.content.status = 'Generating';
     await generateContent(editorState.selectedNodeId);
   }
 
   async function handleGenerateChildren() {
-    if (!editorState.selectedNodeId || !editorState.selectedNode) return;
+    if (!editorState.selectedNodeId || !selectedStoryNodeIsReady()) return;
     const parentNodeId = editorState.selectedNodeId;
-    const selectedParent = editorState.selectedNode;
+    const selectedRange = selectedNodeRange();
     planning = true;
     try {
       const plan = await generateChildren(parentNodeId);
@@ -181,7 +309,10 @@
           props: child.props ?? [],
         })),
       });
-      zoomToRange(selectedParent.time_range.start_ms, selectedParent.time_range.end_ms);
+      await refreshSelectedProjection();
+      if (selectedRange) {
+        zoomToRange(selectedRange.start_ms, selectedRange.end_ms);
+      }
     } finally {
       planning = false;
     }
@@ -195,11 +326,11 @@
 </script>
 
 <div class="beat-editor">
-  {#if editorState.selectedNode}
-    {@const node = editorState.selectedNode}
+  {#if renderNode}
+    {@const node = renderNode}
     <BeatEditorHeader
       {node}
-      statusLabel={beatContentStatusLabel(node.content.status)}
+      statusLabel={selectedNodeStatusLabel}
       {isGenerating}
       {hasChildren}
       {childLevelName}
