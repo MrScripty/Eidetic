@@ -20,7 +20,7 @@ struct ListParams {
     /// Full-text search query. Empty string returns all models.
     #[serde(default)]
     q: String,
-    /// Filter by model type (e.g. "llm", "diffusion", "embedding").
+    /// Filter by model type (e.g. "llm", "embedding", "reference").
     #[serde(default)]
     model_type: Option<String>,
     /// Maximum results to return (default 100).

@@ -1,4 +1,4 @@
-import type { AiStatus, DiffusionStatus } from '../aiTypes.js';
+import type { AiStatus } from '../aiTypes.js';
 import type { NodeId, StoryLevel, StoryNode } from '../timelineTypes.js';
 
 /**
@@ -23,8 +23,6 @@ export const editorState = $state<{
   generationError: string | null;
   /** Last-known AI backend status. */
   aiStatus: AiStatus | null;
-  /** Last-known diffusion LLM status. */
-  diffusionStatus: DiffusionStatus | null;
   /** Parent node ID during batch child generation. */
   batchParentNodeId: NodeId | null;
   /** Total number of children in batch generation. */
@@ -42,7 +40,6 @@ export const editorState = $state<{
   lastGenerationNodeId: null,
   generationError: null,
   aiStatus: null,
-  diffusionStatus: null,
   batchParentNodeId: null,
   batchTotalCount: 0,
   batchCompletedCount: 0,

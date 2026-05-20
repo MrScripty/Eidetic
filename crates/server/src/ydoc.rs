@@ -22,12 +22,14 @@ use std::sync::Arc;
 
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tracing;
+#[cfg(test)]
+use yrs::GetString;
 use yrs::types::Attrs;
 use yrs::updates::decoder::Decode;
 use yrs::updates::encoder::Encode;
 use yrs::{
-    Any, Doc, GetString, Map, MapPrelim, MapRef, Options, ReadTxn, Text, TextPrelim, TextRef,
-    Transact, Update, WriteTxn,
+    Any, Doc, Map, MapPrelim, MapRef, Options, ReadTxn, Text, TextPrelim, TextRef, Transact,
+    Update, WriteTxn,
 };
 
 use eidetic_core::timeline::node::NodeId;
@@ -44,12 +46,11 @@ pub enum ContentField {
 }
 
 /// A snapshot of a node's text content read from Y.Doc.
+#[cfg(test)]
 #[derive(Debug, Clone)]
 pub struct NodeTextSnapshot {
-    #[cfg(test)]
     pub notes: String,
     pub content: String,
-    #[cfg(test)]
     pub attributed_spans: Vec<AttributedSpan>,
 }
 
@@ -94,6 +95,7 @@ pub enum DocCommand {
         author: String,
     },
     /// Read text content for a node.
+    #[cfg(test)]
     ReadNodeContent {
         node_id: NodeId,
         reply: oneshot::Sender<NodeTextSnapshot>,
@@ -108,18 +110,6 @@ pub enum DocCommand {
     Load {
         state: Vec<u8>,
         reply: oneshot::Sender<Result<(), String>>,
-    },
-    /// Replace a character range in a Y.Text field (used by diffusion infilling).
-    ///
-    /// Removes `[start..end)` and inserts `new_text` at `start` with author
-    /// attribution. Clamps indices to the current Y.Text length.
-    RewriteRegion {
-        node_id: NodeId,
-        field: ContentField,
-        start: usize,
-        end: usize,
-        new_text: String,
-        author: String,
     },
 }
 
@@ -235,6 +225,7 @@ async fn run_doc_manager(
                 write_node_field(&doc, &node_id, field, &text, &author);
             }
 
+            #[cfg(test)]
             DocCommand::ReadNodeContent { node_id, reply } => {
                 let snapshot = read_node_snapshot(&doc, &node_id);
                 let _ = reply.send(snapshot);
@@ -257,18 +248,6 @@ async fn run_doc_manager(
             DocCommand::Load { state, reply } => {
                 let result = load_doc_state(&doc, &state);
                 let _ = reply.send(result);
-            }
-
-            DocCommand::RewriteRegion {
-                node_id,
-                field,
-                start,
-                end,
-                new_text,
-                author,
-            } => {
-                *pending_origin.lock().unwrap() = 0;
-                rewrite_region(&doc, &node_id, field, start, end, &new_text, &author);
             }
         }
     }
@@ -377,52 +356,8 @@ fn append_to_node_field(
     ytext.insert_with_attributes(&mut txn, len, text, attrs);
 }
 
-/// Replace a character range in a Y.Text field with new text.
-///
-/// Clamps `start` and `end` to the current Y.Text length.
-/// If `start >= end` after clamping, logs a warning and does nothing.
-fn rewrite_region(
-    doc: &Doc,
-    node_id: &NodeId,
-    field: ContentField,
-    start: usize,
-    end: usize,
-    new_text: &str,
-    author: &str,
-) {
-    let node_key = node_id.0.to_string();
-    let field_name = match field {
-        ContentField::Notes => "notes",
-        ContentField::Content => "content",
-    };
-
-    let mut txn = doc.transact_mut();
-    let nodes = txn.get_or_insert_map("nodes");
-    let node_map = get_or_create_node_map(&nodes, &mut txn, &node_key);
-    let ytext = get_or_create_text_field(&node_map, &mut txn, field_name);
-
-    let len = ytext.len(&txn) as usize;
-    let clamped_start = start.min(len);
-    let clamped_end = end.min(len);
-
-    if clamped_start >= clamped_end {
-        tracing::warn!(
-            "rewrite_region: start ({start}) >= end ({end}) after clamping to len {len} — no-op"
-        );
-        return;
-    }
-
-    // Remove the old range, then insert the replacement.
-    let remove_len = (clamped_end - clamped_start) as u32;
-    ytext.remove_range(&mut txn, clamped_start as u32, remove_len);
-
-    if !new_text.is_empty() {
-        let attrs = Attrs::from([("author".into(), Any::String(author.into()))]);
-        ytext.insert_with_attributes(&mut txn, clamped_start as u32, new_text, attrs);
-    }
-}
-
 /// Read a snapshot of a node's text content from Y.Doc.
+#[cfg(test)]
 fn read_node_snapshot(doc: &Doc, node_id: &NodeId) -> NodeTextSnapshot {
     let node_key = node_id.0.to_string();
     let txn = doc.transact();
@@ -458,6 +393,7 @@ fn read_node_snapshot(doc: &Doc, node_id: &NodeId) -> NodeTextSnapshot {
 }
 
 /// Read plain text from a Y.Text field within a node map.
+#[cfg(test)]
 fn read_text_field(node_map: &MapRef, txn: &yrs::Transaction<'_>, field_name: &str) -> String {
     match node_map.get(txn, field_name) {
         Some(yrs::Out::YText(text)) => text.get_string(txn),
@@ -530,6 +466,7 @@ fn load_doc_state(doc: &Doc, state: &[u8]) -> Result<(), String> {
 // ──────────────────────────────────────────────
 
 /// Helper: read a node's text snapshot via the doc manager.
+#[cfg(test)]
 pub async fn read_content(
     doc_tx: &mpsc::Sender<DocCommand>,
     node_id: NodeId,

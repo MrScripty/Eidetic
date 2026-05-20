@@ -7,6 +7,7 @@ This directory implements server-side adapters that translate core AI requests i
 | File/Folder | Description |
 |-------------|-------------|
 | `mod.rs` | Shared backend trait and adapter selection. |
+| `llamacpp.rs` | Local llama.cpp OpenAI-compatible adapter. |
 | `ollama.rs` | Local Ollama adapter. |
 | `openrouter.rs` | OpenRouter HTTP adapter. |
 
@@ -28,7 +29,7 @@ Keep provider adapters behind a shared module boundary so routes can depend on o
 - Provider-specific configuration stays behind this boundary.
 
 ## Revisit Triggers
-- A third provider introduces streaming or capability semantics that no longer fit the current adapter shape.
+- Another provider introduces streaming or capability semantics that no longer fit the current adapter shape.
 
 ## Dependencies
 **Internal:** `crates/core/src/ai`, `crates/server/src/routes`, `crates/server/src/error.rs`.

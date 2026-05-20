@@ -64,14 +64,6 @@ export * from './timelineRenderTypes.js';
 export type { ChildPlan, ChildProposal } from './childPlanningTypes.js';
 export type { Project, ReferenceDocument, ReferenceId, ReferenceType } from './projectTypes.js';
 
-export type {
-  AiConfig,
-  AiStatus,
-  BackendType,
-  DiffuseRequest,
-  DiffusionStatus,
-  ModelEntry,
-  ModelListResponse,
-} from './aiTypes.js';
+export type { AiConfig, AiStatus, BackendType, ModelEntry, ModelListResponse } from './aiTypes.js';
 
 export type { ServerMessage } from './wsTypes.js';

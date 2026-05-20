@@ -25,7 +25,6 @@ This directory contains the local Axum host for Eidetic: route registration, per
 | `revision_projection_tests.rs` | Focused projection rebuild tests over persisted history rows. |
 | `ydoc.rs` | Yjs/Yrs document coordination and persistence serialization. |
 | `ai_backends/` | Provider adapters for local and remote text generation backends. |
-| `diffusion/` | Diffusion-model process management and Python bridge types. |
 
 ## Problem
 The application needs a local host that exposes core behavior through a browser-friendly API while remaining compatible with local persistence and streaming updates.
@@ -52,8 +51,8 @@ Keep transport, persistence, and realtime coordination in the server crate while
 - `persistence.rs` or `ydoc.rs` gains another unrelated concern.
 
 ## Dependencies
-**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `diffusion/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_edge_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
-**External:** `axum`, `tower-http`, `tokio`, `rusqlite`, `yrs`, `pyo3`, `reqwest`.
+**Internal:** `eidetic-core`, `routes/`, `ai_backends/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_edge_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
+**External:** `axum`, `tower-http`, `tokio`, `rusqlite`, `yrs`, `reqwest`.
 
 ## Related ADRs
 - `ADR-001` decomposition baseline for oversized server modules.

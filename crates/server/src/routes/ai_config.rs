@@ -44,7 +44,7 @@ pub(super) struct ConfigUpdate {
     temperature: Option<f32>,
     max_tokens: Option<usize>,
     base_url: Option<String>,
-    api_key: Option<String>,
+    api_key: Option<Option<String>>,
 }
 
 pub(super) async fn config(
@@ -68,7 +68,7 @@ pub(super) async fn config(
         config.base_url = url;
     }
     if let Some(key) = body.api_key {
-        config.api_key = Some(key);
+        config.api_key = key.filter(|value| !value.is_empty());
     }
     Json(serde_json::to_value(&*config).expect("AI config serializes to JSON"))
 }

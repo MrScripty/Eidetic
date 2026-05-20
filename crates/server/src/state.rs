@@ -7,7 +7,6 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
-use crate::diffusion::{self, DiffuseCmd, DiffuseUpdate};
 use crate::persistence;
 use crate::project_database::ProjectDatabase;
 use crate::vector_store::VectorStore;
@@ -16,14 +15,14 @@ use pumas_library::ModelLibrary;
 
 /// Server configuration constants.
 pub mod constants {
-    /// Default AI model identifier.  "auto" means detect whatever Ollama has loaded.
+    /// Default AI model identifier. "auto" means detect the external server's available model.
     pub const DEFAULT_AI_MODEL: &str = "auto";
     /// Default AI temperature.
     pub const DEFAULT_TEMPERATURE: f32 = 0.7;
     /// Default max tokens for generation.
     pub const DEFAULT_MAX_TOKENS: usize = 4096;
-    /// Default Ollama base URL.
-    pub const DEFAULT_OLLAMA_URL: &str = "http://localhost:11434";
+    /// Default llama.cpp OpenAI-compatible base URL.
+    pub const DEFAULT_LLAMACPP_URL: &str = "http://localhost:8080/v1";
     /// Minimum gap duration in ms for gap detection.
     pub const GAP_THRESHOLD_MS: u64 = 30_000;
     /// Reference document chunk size in characters.
@@ -63,18 +62,6 @@ pub enum ServerEvent {
         node_id: uuid::Uuid,
         error: String,
     },
-    DiffusionProgress {
-        node_id: uuid::Uuid,
-        step: usize,
-        total_steps: usize,
-    },
-    DiffusionComplete {
-        node_id: uuid::Uuid,
-    },
-    DiffusionError {
-        node_id: uuid::Uuid,
-        error: String,
-    },
     BibleChanged,
     ScriptChanged,
     SemanticProposalsChanged,
@@ -85,6 +72,7 @@ pub enum ServerEvent {
 #[serde(rename_all = "snake_case")]
 pub enum BackendType {
     Ollama,
+    LlamaCpp,
     OpenRouter,
 }
 
@@ -97,57 +85,17 @@ pub struct AiConfig {
     pub max_tokens: usize,
     pub base_url: String,
     pub api_key: Option<String>,
-    /// Path to the diffusion model (safetensors or HuggingFace model ID).
-    #[serde(default)]
-    pub diffusion_model_path: Option<String>,
-    /// Device for diffusion inference ("cuda" or "cpu").
-    #[serde(default = "default_diffusion_device")]
-    pub diffusion_device: String,
-    /// Denoising steps per block for diffusion infilling.
-    #[serde(default = "default_diffusion_steps")]
-    pub diffusion_steps_per_block: usize,
-    /// Block length for semi-autoregressive decoding.
-    #[serde(default = "default_diffusion_block_length")]
-    pub diffusion_block_length: usize,
-    /// Sampling temperature for diffusion inference.
-    #[serde(default = "default_diffusion_temperature")]
-    pub diffusion_temperature: f32,
-    /// Confidence threshold for unmasking tokens.
-    #[serde(default = "default_diffusion_threshold")]
-    pub diffusion_dynamic_threshold: f32,
-}
-
-fn default_diffusion_device() -> String {
-    "cuda".into()
-}
-fn default_diffusion_steps() -> usize {
-    4
-}
-fn default_diffusion_block_length() -> usize {
-    4
-}
-fn default_diffusion_temperature() -> f32 {
-    1.0
-}
-fn default_diffusion_threshold() -> f32 {
-    0.9
 }
 
 impl Default for AiConfig {
     fn default() -> Self {
         Self {
-            backend_type: BackendType::Ollama,
+            backend_type: BackendType::LlamaCpp,
             model: constants::DEFAULT_AI_MODEL.into(),
             temperature: constants::DEFAULT_TEMPERATURE,
             max_tokens: constants::DEFAULT_MAX_TOKENS,
-            base_url: constants::DEFAULT_OLLAMA_URL.into(),
+            base_url: constants::DEFAULT_LLAMACPP_URL.into(),
             api_key: None,
-            diffusion_model_path: None,
-            diffusion_device: default_diffusion_device(),
-            diffusion_steps_per_block: default_diffusion_steps(),
-            diffusion_block_length: default_diffusion_block_length(),
-            diffusion_temperature: default_diffusion_temperature(),
-            diffusion_dynamic_threshold: default_diffusion_threshold(),
         }
     }
 }
@@ -175,12 +123,6 @@ pub struct AppState {
     pub vector_store: Arc<Mutex<VectorStore>>,
     /// Channel to signal the auto-save background task.
     save_tx: tokio::sync::mpsc::Sender<()>,
-    /// Channel to the diffusion manager thread (optional AI infrastructure).
-    pub diffuse_tx: tokio::sync::mpsc::Sender<DiffuseCmd>,
-    /// Broadcasts diffusion denoising progress to WebSocket clients.
-    pub diffuse_update_tx: tokio::sync::broadcast::Sender<DiffuseUpdate>,
-    /// Node IDs currently undergoing diffusion — prevents duplicate/concurrent runs.
-    pub diffusing: Arc<Mutex<HashSet<uuid::Uuid>>>,
     /// Model library from Pumas for listing available local models.
     pub model_library: Option<Arc<ModelLibrary>>,
 }
@@ -210,11 +152,6 @@ impl AppState {
             save_doc_tx,
         ));
 
-        // Spawn the diffusion manager on a dedicated OS thread.
-        // JoinHandle is intentionally dropped — the manager shuts down when
-        // the command channel closes.
-        let (diffuse_tx, diffuse_update_tx, _diffuse_handle) = diffusion::spawn_diffusion_manager();
-
         // Initialize the Pumas model library (optional — best-effort).
         let model_library = Self::init_model_library().await;
 
@@ -230,9 +167,6 @@ impl AppState {
             project_database,
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
-            diffuse_tx,
-            diffuse_update_tx,
-            diffusing: Arc::new(Mutex::new(HashSet::new())),
             model_library,
         }
     }

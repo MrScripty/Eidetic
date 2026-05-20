@@ -1,4 +1,4 @@
-import type { AiConfig, AiStatus, DiffusionStatus, ModelListResponse } from './aiTypes.js';
+import type { AiConfig, AiStatus, ModelListResponse } from './aiTypes.js';
 import type { ChildPlan } from './childPlanningTypes.js';
 import type { Project, ReferenceDocument, ReferenceType } from './projectTypes.js';
 import type { NodeContent, StoryLevel, StoryNode, Timeline, TimelineGap } from './timelineTypes.js';
@@ -124,26 +124,6 @@ export function generateBatch(
     method: 'POST',
     body: JSON.stringify({ parent_node_id: parentNodeId }),
   });
-}
-
-// --- Diffusion LLM ---
-
-export function getDiffusionStatus(): Promise<DiffusionStatus> {
-  return request('/ai/diffusion/status');
-}
-
-export function loadDiffusionModel(
-  model_path: string,
-  device: string = 'cuda',
-): Promise<{ status: string; model_path: string; device: string }> {
-  return request('/ai/diffusion/load', {
-    method: 'POST',
-    body: JSON.stringify({ model_path, device }),
-  });
-}
-
-export function unloadDiffusionModel(): Promise<{ status: string }> {
-  return request('/ai/diffusion/unload', { method: 'POST' });
 }
 
 // --- Model Library ---

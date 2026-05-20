@@ -7,11 +7,9 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_BIN="eidetic-server"
 UI_DIR="$PROJECT_ROOT/ui"
 UI_BUILD_DIR="$PROJECT_ROOT/dist/ui"
-VENV_DIR="$PROJECT_ROOT/.venv"
 RELEASE_BIN_PATH="$PROJECT_ROOT/target/release/${APP_BIN}"
 LAUNCHER_STATE_ROOT="${EIDETIC_LAUNCHER_STATE_ROOT:-$PROJECT_ROOT/.launcher-state}"
-PYTHON_PACKAGES=(torch transformers safetensors accelerate protobuf sentencepiece)
-DEPENDENCIES=(node npm cargo python3 python_venv ui_deps git_hooks)
+DEPENDENCIES=(node npm cargo ui_deps git_hooks)
 
 usage() {
   cat <<EOF
@@ -71,56 +69,6 @@ install_npm() { die "npm is required. Install Node.js/npm and rerun --install.";
 
 check_cargo() { command -v cargo >/dev/null 2>&1; }
 install_cargo() { die "cargo is required. Install Rust via rustup and rerun --install."; }
-
-check_python3() { command -v python3 >/dev/null 2>&1; }
-install_python3() { die "python3 is required. Install Python 3 and rerun --install."; }
-
-python_package_available() {
-  local python_bin="$1"
-  local package="$2"
-  local module_name="$package"
-
-  case "$package" in
-    protobuf)
-      module_name="google.protobuf"
-      ;;
-  esac
-
-  "$python_bin" -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('$module_name') else 1)" >/dev/null 2>&1
-}
-
-check_python_venv() {
-  local package
-
-  [[ -x "$VENV_DIR/bin/python3" ]] || return 1
-  for package in "${PYTHON_PACKAGES[@]}"; do
-    python_package_available "$VENV_DIR/bin/python3" "$package" || return 1
-  done
-}
-
-install_python_venv() {
-  local missing_packages=()
-  local package
-
-  check_python3 || install_python3
-
-  if [[ ! -x "$VENV_DIR/bin/python3" ]]; then
-    log "[install] python_venv missing; creating $VENV_DIR"
-    python3 -m venv "$VENV_DIR"
-  fi
-
-  "$VENV_DIR/bin/python3" -m pip install --quiet --upgrade pip
-
-  for package in "${PYTHON_PACKAGES[@]}"; do
-    if ! python_package_available "$VENV_DIR/bin/python3" "$package"; then
-      missing_packages+=("$package")
-    fi
-  done
-
-  if ((${#missing_packages[@]} > 0)); then
-    "$VENV_DIR/bin/python3" -m pip install --quiet "${missing_packages[@]}"
-  fi
-}
 
 check_ui_deps() {
   [[ -d "$UI_DIR/node_modules" ]]
@@ -182,12 +130,6 @@ ensure_dependencies() {
   done
 }
 
-activate_python_env() {
-  if [[ -x "$VENV_DIR/bin/python3" ]]; then
-    export PYO3_PYTHON="$VENV_DIR/bin/python3"
-  fi
-}
-
 use_isolated_state() {
   [[ "${EIDETIC_LAUNCHER_ISOLATE_STATE:-1}" != "0" ]]
 }
@@ -240,7 +182,6 @@ build_server() {
   local mode="$1"
 
   ensure_dependencies cargo
-  activate_python_env
 
   case "$mode" in
     dev)
@@ -262,7 +203,6 @@ run_dev() {
 
   ensure_dependencies cargo
   ensure_ui_assets
-  activate_python_env
   prepare_persistent_state "dev"
 
   exec cargo run -p "$APP_BIN" -- "${run_args[@]}"
@@ -272,7 +212,6 @@ run_release() {
   local run_args=("$@")
 
   ensure_ui_assets
-  activate_python_env
   prepare_persistent_state "release"
 
   if [[ ! -x "$RELEASE_BIN_PATH" ]]; then
@@ -288,7 +227,6 @@ run_tests() {
   local state_dir
 
   ensure_dependencies cargo node npm ui_deps
-  activate_python_env
   state_dir="$(prepare_temp_state "test")"
   trap "rm -rf '$state_dir'" EXIT
 

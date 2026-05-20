@@ -18,7 +18,7 @@ export async function refreshAiStatus(): Promise<void> {
       };
     } else {
       editorState.aiStatus = {
-        backend: 'ollama',
+        backend: 'llama_cpp',
         connected: false,
         error: 'Failed to reach server',
       };

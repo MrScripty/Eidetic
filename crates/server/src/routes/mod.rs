@@ -3,7 +3,6 @@ mod commands;
 mod commands_semantic;
 mod commands_semantic_child_plan;
 mod commands_timeline;
-mod diffusion;
 mod export;
 mod models;
 mod project;
@@ -30,7 +29,6 @@ pub fn api_router() -> Router<AppState> {
         .merge(commands_semantic_child_plan::router())
         .merge(projections::router())
         .merge(projections_semantic::router())
-        .merge(diffusion::router())
         .merge(export::router())
         .merge(reference::router())
         .merge(models::router())

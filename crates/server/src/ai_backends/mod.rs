@@ -1,3 +1,4 @@
+pub(crate) mod llamacpp;
 pub(crate) mod ollama;
 pub(crate) mod openrouter;
 
@@ -10,6 +11,7 @@ use eidetic_core::error::Error;
 
 /// Unified backend that dispatches to the configured implementation.
 pub(crate) enum Backend {
+    LlamaCpp(llamacpp::LlamaCppBackend),
     Ollama(ollama::OllamaBackend),
     OpenRouter(openrouter::OpenRouterBackend),
 }
@@ -17,6 +19,7 @@ pub(crate) enum Backend {
 impl Backend {
     pub fn from_config(config: &AiConfig) -> Self {
         match config.backend_type {
+            BackendType::LlamaCpp => Backend::LlamaCpp(llamacpp::LlamaCppBackend::new(config)),
             BackendType::Ollama => Backend::Ollama(ollama::OllamaBackend::new(config)),
             BackendType::OpenRouter => {
                 Backend::OpenRouter(openrouter::OpenRouterBackend::new(config))
@@ -30,6 +33,7 @@ impl Backend {
         config: &AiConfig,
     ) -> Result<GenerateStream, Error> {
         match self {
+            Backend::LlamaCpp(b) => b.generate(prompt, config).await,
             Backend::Ollama(b) => b.generate(prompt, config).await,
             Backend::OpenRouter(b) => b.generate(prompt, config).await,
         }
@@ -64,6 +68,7 @@ impl Backend {
         config: &AiConfig,
     ) -> Result<String, Error> {
         match self {
+            Backend::LlamaCpp(b) => b.generate_json(prompt, config).await,
             Backend::Ollama(b) => b.generate_json(prompt, config).await,
             Backend::OpenRouter(b) => b.generate_json(prompt, config).await,
         }
@@ -71,6 +76,7 @@ impl Backend {
 
     pub async fn health_check(&self) -> Result<BackendStatus, Error> {
         match self {
+            Backend::LlamaCpp(b) => b.health_check().await,
             Backend::Ollama(b) => b.health_check().await,
             Backend::OpenRouter(b) => b.health_check().await,
         }

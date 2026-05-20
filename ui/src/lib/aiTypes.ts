@@ -1,4 +1,4 @@
-export type BackendType = 'ollama' | 'open_router';
+export type BackendType = 'llama_cpp' | 'ollama' | 'open_router';
 
 export interface AiConfig {
   backend_type: BackendType;
@@ -15,18 +15,6 @@ export interface AiStatus {
   connected: boolean;
   message?: string;
   error?: string;
-}
-
-export interface DiffuseRequest {
-  node_id: string;
-  anchor_ranges: { start: number; end: number }[];
-  mask_budget: number;
-}
-
-export interface DiffusionStatus {
-  model_loaded: boolean;
-  model_path: string | null;
-  device: string;
 }
 
 export interface ModelEntry {

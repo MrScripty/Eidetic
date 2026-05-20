@@ -6,7 +6,7 @@ This directory contains the right-hand control surfaces for arcs, change review,
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
-| `AiConfigPanel.svelte` | AI backend and diffusion configuration controls. |
+| `AiConfigPanel.svelte` | AI backend configuration controls. |
 | `ArcList.svelte` / `ArcDetail.svelte` | Story-arc browsing and editing. |
 | `ChangeReviewPanel.svelte` / `changeReviewPanel.css` | Projection-backed change history review surface for accepted backend events and revision deltas. |
 | `ReferencePanel.svelte` | Reference document management. |
@@ -18,7 +18,7 @@ The editor needs secondary control surfaces that expose story metadata and backe
 
 ## Constraints
 - Sidebar panels share stores with the main editor shell.
-- `AiConfigPanel.svelte` is large enough to remain on the decomposition watchlist in `ADR-001`.
+- Large sidebar panels remain on the decomposition watchlist in `ADR-001`.
 
 ## Decision
 Group all sidebar-facing panels here and track the larger configuration/detail panels for future focused splits instead of moving them across unrelated feature areas.
@@ -31,7 +31,7 @@ Group all sidebar-facing panels here and track the larger configuration/detail p
 - Story metadata editing and backend configuration stay distinct subareas.
 
 ## Revisit Triggers
-- Another sidebar panel adds a second configuration workflow to `AiConfigPanel.svelte`.
+- A sidebar panel adds a second configuration workflow to `AiConfigPanel.svelte`.
 - Sidebar tabs become numerous enough to justify another nesting layer.
 
 ## Dependencies
