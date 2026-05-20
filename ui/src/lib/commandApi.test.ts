@@ -337,6 +337,66 @@ describe('command api helpers', () => {
     );
   });
 
+  it('uses desktop story arc commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 3,
+        payload: {
+          arcs: [],
+        },
+      },
+    };
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce(response)
+      .mockResolvedValueOnce(response)
+      .mockResolvedValueOnce(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await createStoryArc(
+      {
+        arc_id: 'arc.mystery',
+        parent_arc_id: null,
+        name: 'Mystery',
+        description: 'Central investigation',
+        arc_type: 'APlot',
+        color: { r: 1, g: 2, b: 3 },
+      },
+      'command-story-1',
+    );
+    await setStoryArcMetadata(
+      {
+        arc_id: 'arc.mystery',
+        name: 'Mystery revised',
+      },
+      'command-story-2',
+    );
+    await deleteStoryArc(
+      {
+        arc_id: 'arc.mystery',
+      },
+      'command-story-3',
+    );
+
+    expect(invoke).toHaveBeenNthCalledWith(1, 'command_story_create', {
+      command: expect.objectContaining({ id: 'command-story-1' }),
+    });
+    expect(invoke).toHaveBeenNthCalledWith(2, 'command_story_update', {
+      command: expect.objectContaining({ id: 'command-story-2' }),
+    });
+    expect(invoke).toHaveBeenNthCalledWith(3, 'command_story_delete', {
+      command: expect.objectContaining({ id: 'command-story-3' }),
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('sends timeline create relationship commands and returns timeline render projections', async () => {
     const response = {
       outcome: 'recorded',

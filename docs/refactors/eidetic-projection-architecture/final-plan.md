@@ -424,6 +424,10 @@ Completed slices:
   script lock command handling into `command_service.rs`, exposed
   `command_script_block` and `command_script_lock` through Tauri, and made the
   frontend script command helpers prefer desktop IPC when available.
+- `feat(desktop): route story arc commands through tauri` moved story arc
+  create, update, and delete command handling into `command_service.rs`, exposed
+  matching Tauri commands, and made the frontend story arc command helpers
+  prefer desktop IPC when available.
 
 Discovered issues:
 

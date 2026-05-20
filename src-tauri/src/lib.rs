@@ -1,8 +1,9 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand,
+    CommandEnvelope, DeleteStoryArcCommand, SetObjectFieldCommand, SetScriptBlockCommand,
+    SetScriptLockCommand, SetStoryArcMetadataCommand,
 };
 use eidetic_server::backend_error::BackendError;
-use eidetic_server::command_service;
+use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
 use eidetic_server::project_service::{
     self, CreateProjectRequest, LoadProjectRequest, SaveProjectRequest, UpdateProjectRequest,
 };
@@ -135,6 +136,39 @@ async fn command_script_lock(
         .map_err(CommandError::from)
 }
 
+#[tauri::command]
+async fn command_story_create(
+    app: tauri::AppHandle,
+    command: CreateStoryArcRequestCommand,
+) -> Result<command_service::StoryArcCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::create_story_arc(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_story_update(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetStoryArcMetadataCommand>,
+) -> Result<command_service::StoryArcCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::update_story_arc(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_story_delete(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<DeleteStoryArcCommand>,
+) -> Result<command_service::StoryArcCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::delete_story_arc(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -152,7 +186,10 @@ pub fn run() {
             project_list,
             command_object_field,
             command_script_block,
-            command_script_lock
+            command_script_lock,
+            command_story_create,
+            command_story_update,
+            command_story_delete
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Eidetic desktop application");

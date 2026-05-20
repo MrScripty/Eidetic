@@ -316,6 +316,10 @@ export function createStoryArc(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<StoryArcCommandResponse>('command_story_create', { command });
+  }
+
   return request('/commands/story/create-arc', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -331,6 +335,10 @@ export function setStoryArcMetadata(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<StoryArcCommandResponse>('command_story_update', { command });
+  }
+
   return request('/commands/story/update-arc', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -345,6 +353,10 @@ export function deleteStoryArc(
     id: commandId,
     payload,
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<StoryArcCommandResponse>('command_story_delete', { command });
+  }
 
   return request('/commands/story/delete-arc', {
     method: 'POST',
