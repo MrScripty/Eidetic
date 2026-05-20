@@ -692,7 +692,9 @@ Known legacy ownership paths to remove:
 - Resolved: `ui/src/lib/stores/editor.svelte.ts` no longer stores
   `selectedNode: StoryNode | null`; selected-node durable fields now come from
   `selectedNodeEditorProjection.svelte.ts`.
-- `ui/src/lib/stores/wsHandlers.ts`: `getTimeline()` hydration, `getNodeContent()` patching, and direct mutation of selected node or timeline node content.
+- Resolved: `ui/src/lib/stores/wsHandlers.ts` refreshes projection caches on
+  timeline, hierarchy, script, bible, generation, and proposal events instead
+  of calling broad timeline/content reads or patching selected node objects.
 - Resolved: `ui/src/lib/components/layout/SplashScreen.svelte` no longer
   hydrates broad `Project`/`Timeline` DTOs into durable frontend stores; the
   project store keeps active-session metadata only.
@@ -707,7 +709,8 @@ Known legacy ownership paths to remove:
   node, parent, children, siblings, adjacent parents, notes, lock, and content
   status from `SelectedNodeEditorProjection` and refreshes that projection
   after editor commands.
-- `ui/src/lib/README.md`: examples that assign broad timeline/project data into frontend stores.
+- Resolved: `ui/src/lib/README.md` now documents projection refresh usage
+  instead of assigning broad timeline/project data into frontend stores.
 
 Discovered implementation gaps:
 
@@ -717,10 +720,10 @@ Discovered implementation gaps:
 - Resolved: `BeatEditor.svelte` now uses a focused selected-node/editor
   projection with node identity, hierarchy context, notes, lock state, content
   status, children, parent, siblings, adjacent parents, and child-level metadata.
-- Remaining: `ui/src/lib/api.ts` still exports legacy broad read helpers
-  `getTimeline()` and HTTP `getNodeContent()`, but current projection-migrated UI
-  paths no longer call them. Delete these helpers and any server routes once a
-  final route-level grep confirms no non-UI consumers remain.
+- Resolved: legacy broad HTTP read helpers and server routes for `/timeline`,
+  `/timeline/nodes/{id}/children`, `/timeline/gaps`, and
+  `/nodes/{id}/content` were deleted after grep confirmed projection-migrated UI
+  paths no longer call them.
 - The current UI still sends renderer-generated IDs for timeline create/split/relationship commands. Backend validation now rejects duplicate node IDs, duplicate relationship IDs, and self-linked relationships, but later slices should move ID generation backend-side per command family once idempotency semantics are designed.
 
 Simplification opportunities:
