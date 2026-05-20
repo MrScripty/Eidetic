@@ -25,6 +25,10 @@ pub use crate::command_service_bible::{
     ensure_canonical_bible_roots, set_bible_graph_edge, set_bible_graph_field,
     set_bible_graph_snapshot_field,
 };
+pub use crate::command_service_semantic::{
+    BibleReferenceProposalCommandResponse, accept_bible_reference_proposal,
+    create_bible_reference_proposal, reject_bible_reference_proposal,
+};
 
 #[derive(Debug, Serialize)]
 pub struct ObjectFieldCommandResponse {

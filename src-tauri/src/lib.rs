@@ -1,9 +1,11 @@
 use eidetic_core::ai::backend::ChildPlanListProjection;
 use eidetic_core::contracts::{
-    BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
+    AcceptBibleReferenceProposalCommand, BibleGraphNodeListProjection,
+    BibleGraphSchemaListProjection, BibleNodeDetailProjection,
     BibleReferenceProposalListProjection, BibleRenderGraphProjection, ChangeReviewProjection,
-    CommandEnvelope, DeleteStoryArcCommand, EnsureCanonicalBibleRootsCommand, ProjectionEnvelope,
-    PropagationProposalListProjection, ScriptDocumentProjection, SelectedNodeEditorProjection,
+    CommandEnvelope, CreateBibleReferenceProposalCommand, DeleteStoryArcCommand,
+    EnsureCanonicalBibleRootsCommand, ProjectionEnvelope, PropagationProposalListProjection,
+    RejectBibleReferenceProposalCommand, ScriptDocumentProjection, SelectedNodeEditorProjection,
     SemanticDependencyProjection, SetBibleGraphFieldCommand, SetObjectFieldCommand,
     SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
     StoryArcListProjection, StoryArcProgressionProjection, TimelineRenderProjection,
@@ -236,6 +238,39 @@ async fn command_bible_graph_roots(
 }
 
 #[tauri::command]
+async fn command_bible_reference_proposal_create(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<CreateBibleReferenceProposalCommand>,
+) -> Result<command_service::BibleReferenceProposalCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::create_bible_reference_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_bible_reference_proposal_reject(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<RejectBibleReferenceProposalCommand>,
+) -> Result<command_service::BibleReferenceProposalCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::reject_bible_reference_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_bible_reference_proposal_accept(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<AcceptBibleReferenceProposalCommand>,
+) -> Result<command_service::BibleReferenceProposalCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::accept_bible_reference_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_object_field(
     app: tauri::AppHandle,
     query: ObjectFieldProjectionRequest,
@@ -414,6 +449,9 @@ pub fn run() {
             command_bible_graph_edge,
             command_bible_graph_snapshot_field,
             command_bible_graph_roots,
+            command_bible_reference_proposal_create,
+            command_bible_reference_proposal_reject,
+            command_bible_reference_proposal_accept,
             projection_object_field,
             projection_script_document,
             projection_bible_graph_node,

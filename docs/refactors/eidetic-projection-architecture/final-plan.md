@@ -482,6 +482,11 @@ Completed slices:
   desktop command handling into a focused backend service module and moved shared
   command-service helpers into a support module, reducing `command_service.rs`
   below the decomposition threshold before more Milestone 7 command migration.
+- `feat(desktop): route bible reference proposal commands through tauri` moved
+  bible-reference proposal create, reject, and accept command handling into a
+  focused backend command service, kept the legacy Axum routes as service
+  adapters, exposed matching Tauri commands, and made the frontend command
+  helpers prefer desktop IPC when available.
 
 Discovered issues:
 

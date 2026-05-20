@@ -197,6 +197,13 @@ export function createBibleReferenceProposal(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleReferenceProposalCommandResponse>(
+      'command_bible_reference_proposal_create',
+      { command },
+    );
+  }
+
   return request('/commands/semantic/bible-reference-proposal', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -212,6 +219,13 @@ export function rejectBibleReferenceProposal(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleReferenceProposalCommandResponse>(
+      'command_bible_reference_proposal_reject',
+      { command },
+    );
+  }
+
   return request('/commands/semantic/bible-reference-proposal/reject', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -226,6 +240,13 @@ export function acceptBibleReferenceProposal(
     id: commandId,
     payload,
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<BibleReferenceProposalCommandResponse>(
+      'command_bible_reference_proposal_accept',
+      { command },
+    );
+  }
 
   return request('/commands/semantic/bible-reference-proposal/accept', {
     method: 'POST',
