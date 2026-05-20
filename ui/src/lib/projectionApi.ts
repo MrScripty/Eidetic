@@ -9,8 +9,10 @@ import type { ChangeReviewProjection } from './changeReviewTypes.js';
 import type { ObjectFieldProjection, ObjectKind, ProjectionEnvelope } from './projectionTypes.js';
 import type { PropagationProposalListProjection } from './propagationProposalTypes.js';
 import type { ScriptDocumentId, ScriptDocumentProjection } from './scriptTypes.js';
+import type { SelectedNodeEditorProjection } from './selectedNodeEditorTypes.js';
 import type { BibleReferenceProposalListProjection } from './semanticProposalTypes.js';
 import type { StoryArcListProjection, StoryArcProgressionProjection } from './storyArcTypes.js';
+import type { NodeId } from './timelineTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
 const BASE = '/api';
@@ -26,6 +28,10 @@ export interface BibleGraphNodeProjectionKey {
 
 export interface ScriptDocumentProjectionKey {
   document_id: ScriptDocumentId;
+}
+
+export interface SelectedNodeEditorProjectionKey {
+  node_id?: NodeId | null;
 }
 
 async function getJson<T>(path: string): Promise<T> {
@@ -109,6 +115,18 @@ export function getTimelineRenderProjection(): Promise<
   ProjectionEnvelope<TimelineRenderProjection>
 > {
   return getJson('/projections/timeline/render');
+}
+
+export function getSelectedNodeEditorProjection({
+  node_id,
+}: SelectedNodeEditorProjectionKey = {}): Promise<
+  ProjectionEnvelope<SelectedNodeEditorProjection>
+> {
+  if (!node_id) {
+    return getJson('/projections/timeline/selected-node');
+  }
+  const params = new URLSearchParams({ node_id });
+  return getJson(`/projections/timeline/selected-node?${params.toString()}`);
 }
 
 export function getChangeReviewProjection(): Promise<ProjectionEnvelope<ChangeReviewProjection>> {

@@ -6,6 +6,7 @@ import {
   getBibleGraphSchemaListProjection,
   getBibleRenderGraphProjection,
   getObjectFieldProjection,
+  getSelectedNodeEditorProjection,
   getStoryArcListProjection,
   getStoryArcProgressionProjection,
   getTimelineRenderProjection,
@@ -296,6 +297,80 @@ describe('projection api helpers', () => {
     await expect(getTimelineRenderProjection()).resolves.toEqual(response);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/projections/timeline/render', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+  });
+
+  it('fetches selected node editor projections with encoded query params', async () => {
+    const response = {
+      version: 5,
+      payload: {
+        node: {
+          node_id: 'node.scene/beach one',
+          parent_id: 'node.sequence.opening',
+          level: 'Scene',
+          sort_order: 10,
+          start_ms: 1_000,
+          end_ms: 4_000,
+          name: 'Beach argument',
+          notes: 'Rainy',
+          content_status: 'NotesOnly',
+          beat_type: null,
+          locked: false,
+        },
+        child_level: 'Beat',
+        has_children: false,
+        parent: null,
+        siblings: [],
+        current_sibling_index: 0,
+        children: [],
+        adjacent_parents: {},
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      getSelectedNodeEditorProjection({ node_id: 'node.scene/beach one' }),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/projections/timeline/selected-node?node_id=node.scene%2Fbeach+one',
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      },
+    );
+  });
+
+  it('fetches empty selected node editor projections without query params', async () => {
+    const response = {
+      version: 1,
+      payload: {
+        node: null,
+        has_children: false,
+        siblings: [],
+        children: [],
+        adjacent_parents: {},
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getSelectedNodeEditorProjection()).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/projections/timeline/selected-node', {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });
