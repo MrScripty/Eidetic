@@ -4,6 +4,8 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use serde_json::json;
 
+use crate::backend_error::BackendError;
+
 /// Unified API error type that returns proper HTTP status codes.
 #[derive(Debug)]
 pub struct ApiError(pub StatusCode, pub String);
@@ -29,6 +31,17 @@ impl ApiError {
 
     pub fn no_project() -> Self {
         Self(StatusCode::NOT_FOUND, "no project loaded".into())
+    }
+}
+
+impl From<BackendError> for ApiError {
+    fn from(error: BackendError) -> Self {
+        match error {
+            BackendError::NotFound(message) => Self(StatusCode::NOT_FOUND, message),
+            BackendError::BadRequest(message) => Self(StatusCode::BAD_REQUEST, message),
+            BackendError::Conflict(message) => Self(StatusCode::CONFLICT, message),
+            BackendError::Internal(message) => Self(StatusCode::INTERNAL_SERVER_ERROR, message),
+        }
     }
 }
 

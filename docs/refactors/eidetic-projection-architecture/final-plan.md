@@ -395,6 +395,10 @@ Completed slices:
   `axum_runtime.rs`, and reduced `main.rs` to tracing plus legacy server startup
   so future Tauri bindings can depend on backend runtime modules instead of the
   binary entrypoint.
+- `refactor(server): decouple validation from axum errors` introduced a
+  backend-neutral `BackendError`, maps it into `ApiError` only at the legacy Axum
+  boundary, and moved local CORS origin validation into `axum_runtime.rs` so
+  reusable backend validators compile without HTTP response ownership.
 
 Discovered issues:
 
@@ -447,10 +451,11 @@ Discovered issues:
 - Resolved: `unlock_node` derived content status from legacy `node.content.content`. Unlock now leaves status unchanged because script document projections own durable screenplay text.
 - Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.
 - Resolved: `crates/server/src/timeline_command.rs` exceeded the 500-line decomposition threshold after adding timeline command history recording. History-recording helpers were split into `timeline_command_history.rs` so the mutation applicator remains easier to reason about before the larger node-delete and child-replacement slices.
-- Open: Milestone 7 route/service extraction is blocked by Axum-shaped backend
-  errors and tests. `ApiError`, route handlers, and many route tests use HTTP
-  status codes as the behavior boundary; introduce backend-neutral service
-  errors and service-level tests before adding Tauri command adapters.
+- Open: Milestone 7 route/service extraction still has Axum-shaped route
+  handlers and route tests. Reusable validators now return backend-neutral
+  errors, but command/projection/AI/project route handlers and many route tests
+  still use HTTP status codes as the behavior boundary; extract service
+  functions and service-level tests before adding Tauri command adapters.
 - Open: Milestone 7 lifecycle compliance is blocked by detached backend tasks.
   Autosave, Y.Doc, AI generation, batch generation, and reference embedding use
   `tokio::spawn` without a runtime owner; move them behind a Tauri-owned
