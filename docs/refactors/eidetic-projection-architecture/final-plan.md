@@ -757,6 +757,9 @@ Discovered implementation gaps:
   it so older refresh or command-response envelopes cannot overwrite a newer
   cached timeline render projection. Apply the same guard pattern to remaining
   projection stores that refresh asynchronously.
+- Resolved: `ui/src/lib/stores/README.md` now classifies `wsHandlers.ts` as
+  projection refresh orchestration instead of mixed legacy ownership, matching
+  the current websocket handler implementation.
 
 Simplification opportunities:
 
