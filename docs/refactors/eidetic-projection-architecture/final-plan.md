@@ -830,6 +830,9 @@ Discovered implementation gaps:
   audit in `ui/src/lib/stores/README.md` stays aligned with every non-test
   store module, and the audit now includes project-session activation,
   projection cache guard, and projection refresh queue infrastructure.
+- Resolved: touched editor and temporary timeline command controls now use
+  explicit `type="button"` semantics, and `projectionOnlyGuards.test.ts` fails
+  if editor/timeline Svelte command buttons omit an explicit type.
 
 Simplification opportunities:
 
@@ -893,6 +896,9 @@ Verification:
   close/reopen paths clear lifecycle and transient state before projection
   refreshes repopulate backend-owned data.
 - Accessibility checks cover keyboard alternatives and embedded timeline/editor control conflicts for any touched gesture-heavy controls.
+  Editor and temporary timeline command buttons now have explicit button type
+  semantics, with a static guard covering touched editor/timeline Svelte
+  surfaces.
 - Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
 - Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.
 

@@ -17,6 +17,7 @@
     <summary class="context-panel-summary">
       Raw AI Prompt
       <button
+        type="button"
         class="context-refresh-btn"
         onclick={(event) => {
           event.stopPropagation();

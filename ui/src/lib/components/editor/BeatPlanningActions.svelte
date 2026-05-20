@@ -15,7 +15,7 @@
 </script>
 
 <div class="beat-actions">
-  <button class="plan-btn" onclick={onplan} disabled={planning || !notes.trim()}>
+  <button type="button" class="plan-btn" onclick={onplan} disabled={planning || !notes.trim()}>
     {planning
       ? 'Planning...'
       : hasChildren

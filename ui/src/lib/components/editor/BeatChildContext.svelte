@@ -24,11 +24,15 @@
 
 <div class="sub-beat-context">
   <div class="sub-beat-nav">
-    <button class="nav-btn" disabled={currentNodeIndex <= 0} onclick={() => onnavigate(-1)}
-      >&lsaquo; Prev</button
+    <button
+      type="button"
+      class="nav-btn"
+      disabled={currentNodeIndex <= 0}
+      onclick={() => onnavigate(-1)}>&lsaquo; Prev</button
     >
     <span class="nav-position">{node.level} {currentNodeIndex + 1} of {siblingNodes.length}</span>
     <button
+      type="button"
       class="nav-btn"
       disabled={currentNodeIndex >= siblingNodes.length - 1}
       onclick={() => onnavigate(1)}>Next &rsaquo;</button
@@ -46,6 +50,7 @@
       <div class="beat-structure">
         {#each siblingNodes as sibling, i}
           <button
+            type="button"
             class="beat-outline-item"
             class:current={sibling.id === selectedNodeId}
             onclick={() => onselectnode(sibling)}

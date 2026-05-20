@@ -248,8 +248,8 @@
     {#if regenPromptNodeId}
       <div class="regen-prompt">
         <span>Duration changed. Regenerate?</span>
-        <button class="regen-btn" onclick={handleRegenerate}>Regenerate</button>
-        <button class="keep-btn" onclick={dismissRegenPrompt}>Keep</button>
+        <button type="button" class="regen-btn" onclick={handleRegenerate}>Regenerate</button>
+        <button type="button" class="keep-btn" onclick={dismissRegenPrompt}>Keep</button>
       </div>
     {/if}
   </div>

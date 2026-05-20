@@ -92,4 +92,23 @@ describe('projection-only frontend guardrails', () => {
     expect(missingAuditRows).toEqual([]);
     expect(staleAuditRows).toEqual([]);
   });
+
+  it('keeps editor and timeline command buttons explicit about button type', () => {
+    const componentRoots = [
+      join(sourceRoot, 'lib', 'components', 'editor'),
+      join(sourceRoot, 'lib', 'components', 'timeline'),
+    ];
+    const missingTypes = componentRoots.flatMap((root) =>
+      sourceFiles(root)
+        .filter((path) => path.endsWith('.svelte'))
+        .flatMap((path) => {
+          const content = readFileSync(path, 'utf8');
+          return Array.from(content.matchAll(/<button\b(?![^>]*\btype=)[^>]*>/gs), () =>
+            relative(process.cwd(), path),
+          );
+        }),
+    );
+
+    expect(missingTypes).toEqual([]);
+  });
 });

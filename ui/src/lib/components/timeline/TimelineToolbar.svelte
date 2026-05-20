@@ -6,6 +6,7 @@
 <div class="tl-toolbar" style="height: {TIMELINE.TOOLBAR_HEIGHT_PX}px">
   <!-- Tool modes -->
   <button
+    type="button"
     class="tl-btn"
     class:active={timelineState.activeTool === 'select'}
     title="Selection Tool (A)"
@@ -16,6 +17,7 @@
     </svg>
   </button>
   <button
+    type="button"
     class="tl-btn"
     class:active={timelineState.activeTool === 'blade'}
     title="Blade Tool (B)"
@@ -30,6 +32,7 @@
 
   <!-- Snapping -->
   <button
+    type="button"
     class="tl-btn"
     class:active={timelineState.snapping}
     title="Snapping (N)"
@@ -45,11 +48,14 @@
   <div class="tl-sep"></div>
 
   <!-- Zoom controls -->
-  <button class="tl-btn" title="Zoom Out (Ctrl+-)" onclick={() => zoomTo(timelineState.zoom / 1.25)}
-    >&#8722;</button
+  <button
+    type="button"
+    class="tl-btn"
+    title="Zoom Out (Ctrl+-)"
+    onclick={() => zoomTo(timelineState.zoom / 1.25)}>&#8722;</button
   >
 
-  <button class="tl-btn" title="Zoom to Fit (Ctrl+0)" onclick={zoomToFit}>
+  <button type="button" class="tl-btn" title="Zoom to Fit (Ctrl+0)" onclick={zoomToFit}>
     <svg
       width="14"
       height="14"
@@ -63,8 +69,11 @@
     </svg>
   </button>
 
-  <button class="tl-btn" title="Zoom In (Ctrl+=)" onclick={() => zoomTo(timelineState.zoom * 1.25)}
-    >+</button
+  <button
+    type="button"
+    class="tl-btn"
+    title="Zoom In (Ctrl+=)"
+    onclick={() => zoomTo(timelineState.zoom * 1.25)}>+</button
   >
 
   <div class="tl-sep"></div>

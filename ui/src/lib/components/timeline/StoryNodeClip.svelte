@@ -289,8 +289,8 @@
 
 {#if contextMenu}
   <div class="context-menu" style="left: {contextMenu.x}px; top: {contextMenu.y}px">
-    <button onclick={handleSplit}>Split</button>
-    <button class="danger" onclick={handleDelete}>Delete</button>
+    <button type="button" onclick={handleSplit}>Split</button>
+    <button type="button" class="danger" onclick={handleDelete}>Delete</button>
   </div>
 {/if}
 

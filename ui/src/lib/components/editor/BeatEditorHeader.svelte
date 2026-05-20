@@ -26,10 +26,11 @@
   <span class="status-badge" data-status={node.content.status}>
     {statusLabel}
   </span>
-  <button class="lock-toggle" class:locked={node.locked} onclick={ontogglelock}>
+  <button type="button" class="lock-toggle" class:locked={node.locked} onclick={ontogglelock}>
     {node.locked ? 'Unlock' : 'Lock'}
   </button>
   <button
+    type="button"
     class="generate-btn"
     class:generating={isGenerating}
     onclick={ongenerate}
