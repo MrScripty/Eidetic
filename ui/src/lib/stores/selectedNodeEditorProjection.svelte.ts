@@ -2,6 +2,7 @@ import { getSelectedNodeEditorProjection } from '$lib/projectionApi.js';
 import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import type { SelectedNodeEditorProjection } from '$lib/selectedNodeEditorTypes.js';
 import type { NodeId } from '$lib/timelineTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
 export const selectedNodeEditorProjectionState = $state<{
   selectedNodeId: NodeId | null;
@@ -25,6 +26,12 @@ export function getCachedSelectedNodeEditorProjection(): ProjectionEnvelope<Sele
   return selectedNodeEditorProjectionState.projection;
 }
 
+function cacheProjection(projection: ProjectionEnvelope<SelectedNodeEditorProjection>): void {
+  if (shouldReplaceProjection(selectedNodeEditorProjectionState.projection, projection)) {
+    selectedNodeEditorProjectionState.projection = projection;
+  }
+}
+
 export async function refreshSelectedNodeEditorProjection(
   nodeId: NodeId | null = selectedNodeEditorProjectionState.selectedNodeId,
 ): Promise<ProjectionEnvelope<SelectedNodeEditorProjection>> {
@@ -37,7 +44,7 @@ export async function refreshSelectedNodeEditorProjection(
   try {
     const projection = await getSelectedNodeEditorProjection({ node_id: nodeId });
     if (requestId === latestRequestId) {
-      selectedNodeEditorProjectionState.projection = projection;
+      cacheProjection(projection);
     }
     return projection;
   } catch (error) {

@@ -64,6 +64,32 @@ const emptyProjection = {
   },
 };
 
+const newerProjection = {
+  ...selectedProjection,
+  version: 5,
+  change_event_id: 'event-selected-5',
+  payload: {
+    ...selectedProjection.payload,
+    node: {
+      ...selectedProjection.payload.node,
+      name: 'Newer beach argument',
+    },
+  },
+};
+
+const olderProjection = {
+  ...selectedProjection,
+  version: 4,
+  change_event_id: 'event-selected-4',
+  payload: {
+    ...selectedProjection.payload,
+    node: {
+      ...selectedProjection.payload.node,
+      name: 'Older beach argument',
+    },
+  },
+};
+
 beforeEach(() => {
   clearSelectedNodeEditorProjection();
   getSelectedNodeEditorProjectionMock.mockReset();
@@ -138,5 +164,20 @@ describe('selected node editor projection store', () => {
     expect(getCachedSelectedNodeEditorProjection()).toEqual(secondProjection);
     expect(selectedNodeEditorProjectionState.selectedNodeId).toBe('node.scene.second');
     expect(selectedNodeEditorProjectionState.pending).toBe(false);
+  });
+
+  it('does not replace cached selected-node projections with stale latest requests', async () => {
+    getSelectedNodeEditorProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshSelectedNodeEditorProjection('node.scene.beach');
+    getSelectedNodeEditorProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshSelectedNodeEditorProjection('node.scene.beach')).resolves.toEqual(
+      olderProjection,
+    );
+
+    expect(getCachedSelectedNodeEditorProjection()).toEqual(newerProjection);
+    expect(selectedNodeEditorProjectionState.selectedNodeId).toBe('node.scene.beach');
+    expect(selectedNodeEditorProjectionState.pending).toBe(false);
+    expect(selectedNodeEditorProjectionState.error).toBeUndefined();
   });
 });

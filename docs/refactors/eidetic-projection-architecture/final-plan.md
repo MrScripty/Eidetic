@@ -763,8 +763,9 @@ Discovered implementation gaps:
   `propagationProposalProjection.svelte.ts` now guard both refresh and command
   response envelopes. `objectFieldProjection.svelte.ts` and
   `scriptDocumentProjection.svelte.ts` now guard keyed refresh and command
-  response envelopes. Apply the same guard pattern to the remaining keyed
-  bible graph detail and selected-node editor projection caches.
+  response envelopes. `selectedNodeEditorProjection.svelte.ts` now combines
+  request-id suppression with backend projection version guards. Apply the same
+  guard pattern to the remaining keyed bible graph detail projection cache.
 - Resolved: `ui/src/lib/stores/README.md` now classifies `wsHandlers.ts` as
   projection refresh orchestration instead of mixed legacy ownership, matching
   the current websocket handler implementation.
