@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  adjacentTimelineRenderClipBounds,
   findTimelineRenderClipByNodeId,
   timelineRenderModelFromProjection,
+  timelineRenderClipsByLevel,
+  timelineRenderClipsByTrackId,
   timelineRenderTrackIndexForClip,
+  visibleTimelineRenderTracks,
 } from './timelineRenderModel.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
@@ -83,13 +87,59 @@ describe('timeline render model', () => {
     ]);
     expect(model.clip_ids_by_node_id['node.beat.two']).toBe('timeline.clip.node.beat.two');
     expect(model.relationships).toEqual(projection.relationships);
+    expect(visibleTimelineRenderTracks(model).map((track) => track.track_id)).toEqual([
+      'track.scene',
+      'track.beat',
+    ]);
+    expect(timelineRenderClipsByTrackId(model, 'track.beat').map((clip) => clip.node_id)).toEqual([
+      'node.beat.one',
+      'node.beat.two',
+    ]);
+    expect(timelineRenderClipsByLevel(model, 'Beat').map((clip) => clip.node_id)).toEqual([
+      'node.beat.one',
+      'node.beat.two',
+    ]);
     expect(findTimelineRenderClipByNodeId(model, 'node.beat.one')?.clip_id).toBe(
       'timeline.clip.node.beat.one',
     );
     const firstClip = model.clips[0];
     expect(firstClip).toBeDefined();
     expect(timelineRenderTrackIndexForClip(model, firstClip!)).toBe(1);
+    expect(adjacentTimelineRenderClipBounds(model, firstClip!)).toEqual({
+      left_ms: 0,
+      right_ms: 5_000,
+    });
     expect(findTimelineRenderClipByNodeId(model, 'node.missing')).toBeNull();
+  });
+
+  it('excludes collapsed tracks from visible track selectors', () => {
+    const projection: TimelineRenderProjection = {
+      total_duration_ms: 10_000,
+      tracks: [
+        {
+          track_id: 'track.scene',
+          level: 'Scene',
+          label: 'Scenes',
+          sort_order: 10,
+          collapsed: true,
+        },
+        {
+          track_id: 'track.beat',
+          level: 'Beat',
+          label: 'Beats',
+          sort_order: 20,
+          collapsed: false,
+        },
+      ],
+      clips: [],
+      relationships: [],
+    };
+
+    const model = timelineRenderModelFromProjection(projection);
+
+    expect(visibleTimelineRenderTracks(model).map((track) => track.track_id)).toEqual([
+      'track.beat',
+    ]);
   });
 
   it('clamps malformed timing without mutating the source projection', () => {

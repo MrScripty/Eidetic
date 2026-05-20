@@ -4,6 +4,7 @@ import type {
   TimelineRenderRelationship,
   TimelineRenderTrack,
 } from './timelineRenderTypes.js';
+import type { StoryLevel, TrackId } from './timelineTypes.js';
 
 export interface TimelineRenderModel {
   duration_ms: number;
@@ -12,6 +13,11 @@ export interface TimelineRenderModel {
   relationships: TimelineRenderRelationship[];
   clip_ids_by_track_id: Record<string, string[]>;
   clip_ids_by_node_id: Record<string, string>;
+}
+
+export interface TimelineRenderClipBounds {
+  left_ms: number;
+  right_ms: number;
 }
 
 export interface TimelineRenderModelTrack extends TimelineRenderTrack {
@@ -95,6 +101,44 @@ export function findTimelineRenderClipByNodeId(
   const clipId = model.clip_ids_by_node_id[nodeId];
   if (!clipId) return null;
   return model.clips.find((clip) => clip.clip_id === clipId) ?? null;
+}
+
+export function visibleTimelineRenderTracks(
+  model: TimelineRenderModel,
+): TimelineRenderModelTrack[] {
+  return model.tracks.filter((track) => !track.collapsed);
+}
+
+export function timelineRenderClipsByTrackId(
+  model: TimelineRenderModel,
+  trackId: TrackId,
+): TimelineRenderModelClip[] {
+  const clipIds = model.clip_ids_by_track_id[trackId] ?? [];
+  return clipIds
+    .map((clipId) => model.clips.find((clip) => clip.clip_id === clipId) ?? null)
+    .filter((clip): clip is TimelineRenderModelClip => clip !== null);
+}
+
+export function timelineRenderClipsByLevel(
+  model: TimelineRenderModel,
+  level: StoryLevel,
+): TimelineRenderModelClip[] {
+  return model.clips.filter((clip) => clip.level === level);
+}
+
+export function adjacentTimelineRenderClipBounds(
+  model: TimelineRenderModel,
+  clip: TimelineRenderModelClip,
+): TimelineRenderClipBounds {
+  const trackClips = timelineRenderClipsByTrackId(model, clip.track_id);
+  const index = trackClips.findIndex((candidate) => candidate.clip_id === clip.clip_id);
+  const previous = index > 0 ? trackClips[index - 1] : null;
+  const next = index >= 0 && index < trackClips.length - 1 ? trackClips[index + 1] : null;
+
+  return {
+    left_ms: previous?.end_ms ?? 0,
+    right_ms: next?.start_ms ?? model.duration_ms,
+  };
 }
 
 export function timelineRenderTrackIndexForClip(
