@@ -15,6 +15,8 @@ pub(crate) mod child_plan_projection_store;
 pub(crate) mod child_plan_review;
 pub(crate) mod child_plan_store;
 pub mod command_service;
+pub(crate) mod command_service_bible;
+pub(crate) mod command_service_support;
 pub(crate) mod embeddings;
 pub mod error;
 pub(crate) mod export;

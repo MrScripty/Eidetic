@@ -478,6 +478,10 @@ Completed slices:
   exposed `command_bible_graph_field`, `command_bible_graph_edge`, and
   `command_bible_graph_snapshot_field` through Tauri, and made the matching
   frontend command helpers prefer desktop IPC when available.
+- `refactor(desktop): split bible graph command service` extracted bible graph
+  desktop command handling into a focused backend service module and moved shared
+  command-service helpers into a support module, reducing `command_service.rs`
+  below the decomposition threshold before more Milestone 7 command migration.
 
 Discovered issues:
 
@@ -543,11 +547,11 @@ Discovered issues:
   Autosave, Y.Doc, AI generation, batch generation, and reference embedding use
   `tokio::spawn` without a runtime owner; move them behind a Tauri-owned
   backend lifecycle supervisor before deleting Axum startup.
-- Open: `crates/server/src/command_service.rs` reached 681 lines after bible
-  graph command extraction. Before adding more command families, split the
-  service into focused command modules such as object, script, story arc, bible
-  graph, semantic proposal, and timeline adapters so the Tauri migration remains
-  under the decomposition thresholds.
+- Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
+  graph command extraction. Bible graph command handling now lives in the
+  focused `command_service_bible.rs` module and shared helpers live in
+  `command_service_support.rs`, reducing the main service file below the
+  decomposition threshold before further command migration.
 
 ## Concurrent Worker Policy
 
