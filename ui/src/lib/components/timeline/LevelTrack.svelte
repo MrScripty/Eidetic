@@ -1,16 +1,15 @@
 <script lang="ts">
   import type { Track, StoryNode } from '$lib/timelineTypes.js';
-  import type { TimelineRenderModelTrack } from '$lib/timelineRenderModel.js';
-  import type { TimelineRenderGap } from '$lib/timelineRenderTypes.js';
+  import type { TimelineRenderClip, TimelineRenderGap } from '$lib/timelineRenderTypes.js';
+  import {
+    adjacentTimelineRenderClipBounds,
+    timelineRenderClipsByTrackId,
+    type TimelineRenderModelClip,
+    type TimelineRenderModelTrack,
+  } from '$lib/timelineRenderModel.js';
   import { colorToHex } from '$lib/storyArcTypes.js';
   import { TIMELINE } from '$lib/timelineTypes.js';
-  import {
-    xToTime,
-    timeToX,
-    timelineState,
-    nodesAtLevel,
-    arcsForNode,
-  } from '$lib/stores/timeline.svelte.js';
+  import { xToTime, timeToX, timelineState } from '$lib/stores/timeline.svelte.js';
   import { editorState, startGeneration } from '$lib/stores/editor.svelte.js';
   import { storyArcProjectionState } from '$lib/stores/storyArcProjection.svelte.js';
   import { generateContent } from '$lib/api.js';
@@ -20,6 +19,7 @@
     applyDeleteTimelineNodeCommand,
     applySplitTimelineNodeCommand,
     applyTimelineNodeRangeCommand,
+    getCachedTimelineRenderModel,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { refreshSelectedNodeEditorProjection } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import StoryNodeClip from './StoryNodeClip.svelte';
@@ -34,18 +34,19 @@
     onconnectstart: (nodeId: string, x: number, y: number) => void;
   } = $props();
 
-  // Get nodes at this track's level.
-  let levelNodes = $derived(nodesAtLevel(track.level));
+  let renderModel = $derived(getCachedTimelineRenderModel());
+  let trackId = $derived('track_id' in track ? track.track_id : track.id);
+  let levelClips = $derived(renderModel ? timelineRenderClipsByTrackId(renderModel, trackId) : []);
   let storyArcs = $derived(storyArcProjectionState.projection?.payload.arcs ?? []);
 
   // Viewport-aware node filtering.
-  let visibleNodes = $derived.by(() => {
+  let visibleClips = $derived.by(() => {
     const vw = timelineState.viewportWidth;
-    if (vw <= 0) return levelNodes;
+    if (vw <= 0) return levelClips;
     const sx = timelineState.scrollX;
-    return levelNodes.filter((n: StoryNode) => {
-      const left = timeToX(n.time_range.start_ms);
-      const right = timeToX(n.time_range.end_ms);
+    return levelClips.filter((clip) => {
+      const left = timeToX(clip.start_ms);
+      const right = timeToX(clip.end_ms);
       return right >= sx && left <= sx + vw;
     });
   });
@@ -61,31 +62,43 @@
     });
   });
 
-  let sortedNodes = $derived(
-    [...levelNodes].sort((a, b) => a.time_range.start_ms - b.time_range.start_ms),
-  );
-
-  function nodeBounds(nodeId: string): { left: number; right: number } {
-    const idx = sortedNodes.findIndex((n) => n.id === nodeId);
-    const left = idx > 0 ? sortedNodes[idx - 1]!.time_range.end_ms : 0;
-    const right =
-      idx < sortedNodes.length - 1
-        ? sortedNodes[idx + 1]!.time_range.start_ms
-        : TIMELINE.DURATION_MS;
-    return { left, right };
+  function nodeBounds(clip: TimelineRenderModelClip): { left: number; right: number } {
+    if (!renderModel) return { left: 0, right: TIMELINE.DURATION_MS };
+    const bounds = adjacentTimelineRenderClipBounds(renderModel, clip);
+    return { left: bounds.left_ms, right: bounds.right_ms };
   }
 
-  function arcColorForNode(nodeId: string): string {
-    const arcIds = arcsForNode(nodeId);
-    if (arcIds.length === 0) return 'var(--color-rel-default)';
-    const arc = storyArcs.find((a) => a.id === arcIds[0]);
+  function arcColorForClip(clip: TimelineRenderClip): string {
+    if (clip.arc_ids.length === 0) return 'var(--color-rel-default)';
+    const arc = storyArcs.find((a) => a.id === clip.arc_ids[0]);
     return arc ? colorToHex(arc.color) : 'var(--color-rel-default)';
   }
 
-  function selectNode(node: StoryNode) {
-    editorState.selectedNodeId = node.id;
-    editorState.selectedLevel = node.level;
-    void refreshSelectedNodeEditorProjection(node.id).catch(() => {});
+  function storyNodeFromClip(clip: TimelineRenderClip): StoryNode {
+    return {
+      id: clip.node_id,
+      parent_id: clip.parent_id ?? null,
+      level: clip.level,
+      sort_order: clip.sort_order,
+      time_range: {
+        start_ms: clip.start_ms,
+        end_ms: clip.end_ms,
+      },
+      name: clip.name,
+      content: {
+        notes: '',
+        content: '',
+        status: clip.content_status,
+      },
+      beat_type: clip.beat_type ?? null,
+      locked: clip.locked,
+    };
+  }
+
+  function selectNode(clip: TimelineRenderClip) {
+    editorState.selectedNodeId = clip.node_id;
+    editorState.selectedLevel = clip.level;
+    void refreshSelectedNodeEditorProjection(clip.node_id).catch(() => {});
   }
 
   async function handleMove(nodeId: string, startMs: number, endMs: number) {
@@ -104,8 +117,8 @@
       start_ms: startMs,
       end_ms: endMs,
     });
-    const node = levelNodes.find((n) => n.id === nodeId);
-    if (node && node.content.content) {
+    const clip = levelClips.find((clip) => clip.node_id === nodeId);
+    if (clip?.content_status === 'HasContent') {
       regenPromptNodeId = nodeId;
     }
   }
@@ -204,19 +217,20 @@
       class:blade-mode={timelineState.activeTool === 'blade'}
       ondblclick={handleDblClick}
     >
-      {#each visibleNodes as node (node.id)}
-        {@const bounds = nodeBounds(node.id)}
+      {#each visibleClips as clip (clip.clip_id)}
+        {@const node = storyNodeFromClip(clip)}
+        {@const bounds = nodeBounds(clip)}
         <StoryNodeClip
           {node}
-          color={arcColorForNode(node.id)}
-          selected={editorState.selectedNodeId === node.id}
+          color={arcColorForClip(clip)}
+          selected={editorState.selectedNodeId === clip.node_id}
           leftBoundMs={bounds.left}
           rightBoundMs={bounds.right}
-          onselect={() => selectNode(node)}
-          onmove={(s, e) => handleMove(node.id, s, e)}
-          onresize={(s, e) => handleResize(node.id, s, e)}
-          ondelete={() => handleDelete(node.id)}
-          onsplit={(atMs) => handleSplit(node.id, atMs)}
+          onselect={() => selectNode(clip)}
+          onmove={(s, e) => handleMove(clip.node_id, s, e)}
+          onresize={(s, e) => handleResize(clip.node_id, s, e)}
+          ondelete={() => handleDelete(clip.node_id)}
+          onsplit={(atMs) => handleSplit(clip.node_id, atMs)}
           {onconnectstart}
         />
       {/each}
