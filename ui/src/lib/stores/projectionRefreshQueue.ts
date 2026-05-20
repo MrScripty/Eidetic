@@ -40,6 +40,11 @@ export function requestProjectionRefresh(key: string, task: RefreshTask): Promis
 }
 
 export function clearProjectionRefreshQueue(): void {
+  for (const entry of refreshQueue.values()) {
+    for (const resolve of entry.waiters.splice(0)) {
+      resolve();
+    }
+  }
   refreshQueue.clear();
 }
 

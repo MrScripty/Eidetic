@@ -775,6 +775,9 @@ Discovered implementation gaps:
   ownership, selected-node durable object ownership, legacy timeline/content
   helpers, legacy node mutation helpers, or direct projection payload patching
   patterns are reintroduced into UI source.
+- Resolved: `projectionRefreshQueue.ts` now resolves queued waiters when the
+  queue is cleared during teardown/project close, so refresh coalescing cannot
+  leave callers hanging after lifecycle cleanup.
 
 Simplification opportunities:
 
@@ -800,6 +803,9 @@ Verification:
 - Cross-layer acceptance test covers one user-visible command path from Svelte command emission through backend validation/command handling to returned or refreshed projection display.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
+  `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter
+  resolution during teardown; remaining lifecycle coverage should focus on
+  websocket subscription cleanup and debounced note-save cleanup.
 - Accessibility checks cover keyboard alternatives and embedded timeline/editor control conflicts for any touched gesture-heavy controls.
 - Documentation checks confirm touched `ui/src/lib/**` directories have README ownership/lifecycle updates and that projection stores document API consumer and structured producer contract expectations where applicable.
 - Typecheck, lint/static guard checks, and the affected frontend/backend test suites pass before committing each logical slice.

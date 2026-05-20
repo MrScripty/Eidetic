@@ -43,4 +43,14 @@ describe('projection refresh queue', () => {
 
     expect(task).toHaveBeenCalledTimes(1);
   });
+
+  it('resolves queued callers when the queue is cleared during teardown', async () => {
+    const task = vi.fn().mockResolvedValue(undefined);
+    const queued = requestProjectionRefresh('timeline-render', task);
+
+    clearProjectionRefreshQueue();
+
+    await expect(queued).resolves.toBeUndefined();
+    expect(task).not.toHaveBeenCalled();
+  });
 });
