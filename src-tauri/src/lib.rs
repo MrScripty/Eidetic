@@ -1,4 +1,6 @@
+use eidetic_core::contracts::{CommandEnvelope, SetObjectFieldCommand};
 use eidetic_server::backend_error::BackendError;
+use eidetic_server::command_service;
 use eidetic_server::project_service::{
     self, CreateProjectRequest, LoadProjectRequest, SaveProjectRequest, UpdateProjectRequest,
 };
@@ -98,6 +100,17 @@ async fn project_list() -> serde_json::Value {
     project_service::list_projects().await
 }
 
+#[tauri::command]
+async fn command_object_field(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetObjectFieldCommand>,
+) -> Result<command_service::ObjectFieldCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_object_field(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -112,7 +125,8 @@ pub fn run() {
             project_update,
             project_save,
             project_load,
-            project_list
+            project_list,
+            command_object_field
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Eidetic desktop application");

@@ -11,9 +11,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::error::{ApiError, ApiJson};
-use crate::history_store::{self, RecordChangeOutcome};
-use crate::object_field_command::{self, ObjectFieldCommandError};
-use crate::revision_projection::ObjectFieldProjection;
+use crate::history_store::RecordChangeOutcome;
 use crate::script_document_command::{self, ScriptDocumentCommandError};
 use crate::state::{AppState, ServerEvent};
 use crate::story_arc_command::{self, StoryArcCommandError};
@@ -31,12 +29,6 @@ pub fn router() -> Router<AppState> {
         .route("/commands/story/delete-arc", post(delete_story_arc))
         .merge(super::commands_bible::router())
         .merge(super::commands_timeline::router())
-}
-
-#[derive(Debug, Serialize)]
-struct ObjectFieldCommandResponse {
-    outcome: RecordChangeOutcome,
-    projection: ProjectionEnvelope<ObjectFieldProjection>,
 }
 
 #[derive(Debug, Serialize)]
@@ -106,12 +98,9 @@ async fn set_object_field(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<SetObjectFieldCommand>>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = tokio::task::spawn_blocking(move || apply_command_at_path(path, command))
+    let response = crate::command_service::set_object_field(&state, command)
         .await
-        .map_err(|e| ApiError::internal(format!("object field command task failed: {e}")))??;
-
-    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+        .map_err(ApiError::from)?;
     crate::error::json_value(response)
 }
 
@@ -227,31 +216,6 @@ async fn delete_story_arc(
     crate::error::json_value(response)
 }
 
-fn apply_command_at_path(
-    path: std::path::PathBuf,
-    command: CommandEnvelope<SetObjectFieldCommand>,
-) -> Result<ObjectFieldCommandResponse, ApiError> {
-    let mut conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    history_store::create_schema(&conn).map_err(map_history_error)?;
-    let (outcome, projection) =
-        object_field_command::apply_set_object_field(&mut conn, &command, 0)
-            .map_err(map_object_field_error)?;
-    let object_kind = projection.object_kind.clone();
-    let object_id = projection.object_id.clone();
-    let projection = crate::revision_projection::load_object_field_projection_envelope(
-        &conn,
-        object_kind,
-        &object_id,
-    )
-    .map_err(map_history_error)?;
-
-    Ok(ObjectFieldCommandResponse {
-        outcome,
-        projection,
-    })
-}
-
 fn set_script_block_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<SetScriptBlockCommand>,
@@ -282,13 +246,6 @@ fn set_script_lock_at_path(
         outcome,
         projection,
     })
-}
-
-fn map_object_field_error(error: ObjectFieldCommandError) -> ApiError {
-    match error {
-        ObjectFieldCommandError::InvalidCommand(message) => ApiError::bad_request(message),
-        ObjectFieldCommandError::History(error) => map_history_error(error),
-    }
 }
 
 fn map_script_document_error(error: ScriptDocumentCommandError) -> ApiError {

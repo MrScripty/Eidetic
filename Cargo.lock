@@ -1907,6 +1907,7 @@ dependencies = [
 name = "eidetic-desktop"
 version = "0.1.0"
 dependencies = [
+ "eidetic-core",
  "eidetic-server",
  "serde",
  "serde_json",

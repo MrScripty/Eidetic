@@ -81,6 +81,54 @@ describe('command api helpers', () => {
     );
   });
 
+  it('uses desktop object field command when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 2,
+        payload: {
+          object_kind: 'bible_part_field',
+          object_id: 'field-weather',
+          deleted: false,
+          fields: {},
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setObjectField(
+        {
+          object_kind: 'bible_part_field',
+          object_id: 'field-weather',
+          field_key: 'weather',
+          value: { type: 'text', value: 'rainy' },
+        },
+        'command-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_object_field', {
+      command: {
+        id: 'command-1',
+        payload: {
+          object_kind: 'bible_part_field',
+          object_id: 'field-weather',
+          field_key: 'weather',
+          value: { type: 'text', value: 'rainy' },
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('throws backend errors without updating local state', async () => {
     vi.stubGlobal(
       'fetch',

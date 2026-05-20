@@ -416,6 +416,10 @@ Completed slices:
   project create, update, save, load, and list operations over `project_service`
   and routed the matching frontend project helpers through desktop IPC when the
   Tauri transport is present.
+- `feat(desktop): route object field command through tauri` extracted the
+  object-field command path into `command_service.rs`, kept the legacy Axum
+  route as a service adapter, exposed `command_object_field` in Tauri, and made
+  the frontend command helper prefer desktop IPC when available.
 
 Discovered issues:
 

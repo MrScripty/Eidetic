@@ -48,6 +48,7 @@ import type {
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
 } from './timelineCommandTypes.js';
+import { hasDesktopTransport, invokeDesktop } from './desktopTransport.js';
 
 const BASE = '/api';
 
@@ -78,6 +79,10 @@ export function setObjectField(
     id: commandId,
     payload,
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ObjectFieldCommandResponse>('command_object_field', { command });
+  }
 
   return request('/commands/object-field', {
     method: 'POST',
