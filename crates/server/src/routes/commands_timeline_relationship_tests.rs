@@ -93,6 +93,59 @@ async fn create_timeline_relationship_command_returns_timeline_render_projection
 }
 
 #[tokio::test]
+async fn create_timeline_relationship_command_generates_relationship_id_when_omitted() {
+    let path = temp_db_path("creates-timeline-relationship-generated-id");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "from_node_id": from_node,
+            "to_node_id": to_node,
+            "relationship_type": eidetic_core::timeline::relationship::RelationshipType::Thematic,
+        }
+    });
+
+    let response = app
+        .oneshot(create_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let relationship = value["projection"]["payload"]["relationships"]
+        .as_array()
+        .expect("timeline relationships")
+        .iter()
+        .find(|relationship| {
+            relationship["from_node_id"] == from_node.0.to_string()
+                && relationship["to_node_id"] == to_node.0.to_string()
+        })
+        .expect("generated relationship");
+    let generated_relationship_id = relationship["relationship_id"]
+        .as_str()
+        .expect("generated relationship id");
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_count = conn
+        .query_row(
+            "SELECT COUNT(*) FROM relationships WHERE id = ?1",
+            [generated_relationship_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .expect("persisted generated relationship count");
+    assert_eq!(persisted_count, 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn create_timeline_relationship_command_replays_duplicate_command() {
     let path = temp_db_path("creates-timeline-relationship-duplicate");
     let state = AppState::new().await;

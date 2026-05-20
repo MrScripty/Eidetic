@@ -112,6 +112,110 @@ async fn create_timeline_node_command_returns_timeline_render_projection() {
 }
 
 #[tokio::test]
+async fn create_timeline_node_command_generates_node_id_when_omitted() {
+    let path = temp_db_path("creates-timeline-node-generated-id");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let existing_node_ids: Vec<_> = project
+        .timeline
+        .nodes
+        .iter()
+        .map(|node| node.id.0.to_string())
+        .collect();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let mut body = create_timeline_node_command_body(
+        eidetic_core::timeline::node::NodeId::new(),
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Backend id act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+    body["payload"]
+        .as_object_mut()
+        .expect("payload object")
+        .remove("node_id");
+
+    let response = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let clip = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips")
+        .iter()
+        .find(|clip| clip["name"] == "Backend id act")
+        .expect("generated node clip");
+    let generated_node_id = clip["node_id"].as_str().expect("generated node id");
+    assert!(!existing_node_ids.iter().any(|id| id == generated_node_id));
+
+    let conn = crate::sqlite::open_write_connection(&path).expect("open db");
+    let persisted_count = conn
+        .query_row(
+            "SELECT COUNT(*) FROM nodes WHERE id = ?1",
+            [generated_node_id],
+            |row| row.get::<_, i64>(0),
+        )
+        .expect("persisted generated node count");
+    assert_eq!(persisted_count, 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_node_command_replays_omitted_node_id() {
+    let path = temp_db_path("creates-timeline-node-generated-id-replay");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "parent_id": parent.id,
+            "level": parent.level.child_level().expect("child level"),
+            "name": "Backend id replay act",
+            "start_ms": parent.time_range.start_ms,
+            "end_ms": parent.time_range.start_ms + 1_000,
+            "beat_type": null,
+        }
+    });
+
+    let first = app
+        .clone()
+        .oneshot(create_timeline_node_command_request(body.clone()))
+        .await
+        .expect("first route response");
+    let second = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("second route response");
+
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    let value = response_json(second).await;
+    assert_eq!(value["outcome"], "already_recorded");
+    let clips: Vec<_> = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips")
+        .iter()
+        .filter(|clip| clip["name"] == "Backend id replay act")
+        .collect();
+    assert_eq!(clips.len(), 1);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn create_timeline_node_command_replays_duplicate_command() {
     let path = temp_db_path("creates-timeline-node-duplicate");
     let state = AppState::new().await;

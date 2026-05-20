@@ -2,15 +2,18 @@ use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
-    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CommandEnvelope,
+    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CommandEnvelope, CommandId,
     CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
     SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
     TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
+use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::relationship::RelationshipId;
 use rusqlite::Connection;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::error::{ApiError, ApiJson};
 use crate::history_store::{self, RecordChangeOutcome};
@@ -54,6 +57,120 @@ pub fn router() -> Router<AppState> {
 struct TimelineCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<TimelineRenderProjection>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateTimelineNodeRouteCommand {
+    id: CommandId,
+    payload: CreateTimelineNodeRoutePayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateTimelineNodeRoutePayload {
+    #[serde(default)]
+    node_id: Option<NodeId>,
+    parent_id: Option<NodeId>,
+    level: eidetic_core::timeline::node::StoryLevel,
+    name: String,
+    start_ms: u64,
+    end_ms: u64,
+    beat_type: Option<eidetic_core::timeline::node::BeatType>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SplitTimelineNodeRouteCommand {
+    id: CommandId,
+    payload: SplitTimelineNodeRoutePayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct SplitTimelineNodeRoutePayload {
+    node_id: NodeId,
+    at_ms: u64,
+    #[serde(default)]
+    left_node_id: Option<NodeId>,
+    #[serde(default)]
+    right_node_id: Option<NodeId>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateTimelineRelationshipRouteCommand {
+    id: CommandId,
+    payload: CreateTimelineRelationshipRoutePayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateTimelineRelationshipRoutePayload {
+    #[serde(default)]
+    relationship_id: Option<RelationshipId>,
+    from_node_id: NodeId,
+    to_node_id: NodeId,
+    relationship_type: eidetic_core::timeline::relationship::RelationshipType,
+}
+
+impl CreateTimelineNodeRouteCommand {
+    fn into_core_command(self) -> CommandEnvelope<CreateTimelineNodeCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: CreateTimelineNodeCommand {
+                node_id: self
+                    .payload
+                    .node_id
+                    .unwrap_or_else(|| NodeId(derived_command_uuid(self.id, b"timeline.node"))),
+                parent_id: self.payload.parent_id,
+                level: self.payload.level,
+                name: self.payload.name,
+                start_ms: self.payload.start_ms,
+                end_ms: self.payload.end_ms,
+                beat_type: self.payload.beat_type,
+            },
+        }
+    }
+}
+
+impl SplitTimelineNodeRouteCommand {
+    fn into_core_command(self) -> CommandEnvelope<SplitTimelineNodeCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: SplitTimelineNodeCommand {
+                node_id: self.payload.node_id,
+                at_ms: self.payload.at_ms,
+                left_node_id: self.payload.left_node_id.unwrap_or_else(|| {
+                    NodeId(derived_command_uuid(self.id, b"timeline.split.left"))
+                }),
+                right_node_id: self.payload.right_node_id.unwrap_or_else(|| {
+                    NodeId(derived_command_uuid(self.id, b"timeline.split.right"))
+                }),
+            },
+        }
+    }
+}
+
+impl CreateTimelineRelationshipRouteCommand {
+    fn into_core_command(self) -> CommandEnvelope<CreateTimelineRelationshipCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: CreateTimelineRelationshipCommand {
+                relationship_id: self.payload.relationship_id.unwrap_or_else(|| {
+                    RelationshipId(derived_command_uuid(self.id, b"timeline.relationship"))
+                }),
+                from_node_id: self.payload.from_node_id,
+                to_node_id: self.payload.to_node_id,
+                relationship_type: self.payload.relationship_type,
+            },
+        }
+    }
+}
+
+fn derived_command_uuid(command_id: CommandId, role: &[u8]) -> Uuid {
+    let mut bytes = *command_id.0.as_bytes();
+    for (index, byte) in role.iter().enumerate() {
+        let slot = index % bytes.len();
+        bytes[slot] = bytes[slot].wrapping_add(*byte).rotate_left(1);
+    }
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Uuid::from_bytes(bytes)
 }
 
 async fn set_timeline_node_range(
@@ -104,9 +221,10 @@ async fn timeline_command_project(
 
 async fn create_timeline_node(
     State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<CreateTimelineNodeCommand>>,
+    Json(command): Json<CreateTimelineNodeRouteCommand>,
 ) -> ApiJson {
     validation::validate_name(&command.payload.name, "node name")?;
+    let command = command.into_core_command();
     let path = active_project_path(&state)?;
     let created_node_id = command.payload.node_id;
     let response = {
@@ -206,8 +324,9 @@ fn children_have_bible_references(children: &[ApplyTimelineChildCommand]) -> boo
 
 async fn create_timeline_relationship(
     State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<CreateTimelineRelationshipCommand>>,
+    Json(command): Json<CreateTimelineRelationshipRouteCommand>,
 ) -> ApiJson {
+    let command = command.into_core_command();
     let path = active_project_path(&state)?;
     let response = {
         let project = timeline_command_project(&state, &path).await?;
@@ -264,8 +383,9 @@ async fn delete_timeline_relationship(
 
 async fn split_timeline_node(
     State(state): State<AppState>,
-    Json(command): Json<CommandEnvelope<SplitTimelineNodeCommand>>,
+    Json(command): Json<SplitTimelineNodeRouteCommand>,
 ) -> ApiJson {
+    let command = command.into_core_command();
     let path = active_project_path(&state)?;
     let response = {
         let project = timeline_command_project(&state, &path).await?;

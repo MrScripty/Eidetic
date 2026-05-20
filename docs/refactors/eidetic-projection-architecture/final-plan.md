@@ -731,7 +731,11 @@ Discovered implementation gaps:
   `/timeline/nodes/{id}/children`, `/timeline/gaps`, and
   `/nodes/{id}/content` were deleted after grep confirmed projection-migrated UI
   paths no longer call them.
-- The current UI still sends renderer-generated IDs for timeline create/split/relationship commands. Backend validation now rejects duplicate node IDs, duplicate relationship IDs, and self-linked relationships, but later slices should move ID generation backend-side per command family once idempotency semantics are designed.
+- Resolved: timeline create-node, split-node, and create-relationship routes now
+  accept omitted result IDs, derive stable backend-owned IDs from command ID and
+  result role for idempotent replay, and return the confirmed timeline render
+  projection. The temporary Svelte timeline no longer generates node or
+  relationship IDs for those commands.
 
 Simplification opportunities:
 

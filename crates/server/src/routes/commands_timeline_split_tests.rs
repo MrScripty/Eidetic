@@ -127,6 +127,51 @@ async fn split_timeline_node_command_returns_timeline_render_projection() {
 }
 
 #[tokio::test]
+async fn split_timeline_node_command_generates_result_ids_when_omitted() {
+    let path = temp_db_path("splits-timeline-node-generated-ids");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].clone();
+    let split_ms = node.time_range.start_ms + node.time_range.duration_ms() / 2;
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .expect("seed split current state");
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = json!({
+        "id": uuid::Uuid::new_v4(),
+        "payload": {
+            "node_id": node.id,
+            "at_ms": split_ms,
+        }
+    });
+
+    let response = app
+        .oneshot(split_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let value = response_json(response).await;
+    assert_eq!(value["outcome"], "recorded");
+    let split_clips: Vec<_> = value["projection"]["payload"]["clips"]
+        .as_array()
+        .expect("timeline clips")
+        .iter()
+        .filter(|clip| {
+            clip["name"].as_str().is_some_and(|name| {
+                name == format!("{} (L)", node.name) || name == format!("{} (R)", node.name)
+            })
+        })
+        .collect();
+    assert_eq!(split_clips.len(), 2);
+    assert_ne!(split_clips[0]["node_id"], split_clips[1]["node_id"]);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn split_timeline_node_command_replays_duplicate_command() {
     let path = temp_db_path("splits-timeline-node-duplicate");
     let state = AppState::new().await;

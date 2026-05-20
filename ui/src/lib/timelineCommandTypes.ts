@@ -11,8 +11,8 @@ export interface SetTimelineNodeRangeCommand {
 export interface SplitTimelineNodeCommand {
   node_id: string;
   at_ms: number;
-  left_node_id: string;
-  right_node_id: string;
+  left_node_id?: string;
+  right_node_id?: string;
 }
 
 export interface DeleteTimelineNodeCommand {
@@ -30,7 +30,7 @@ export interface SetTimelineNodeNotesCommand {
 }
 
 export interface CreateTimelineNodeCommand {
-  node_id: string;
+  node_id?: string;
   parent_id: string | null;
   level: StoryLevel;
   name: string;
@@ -57,7 +57,7 @@ export interface ApplyTimelineChildCommand {
 }
 
 export interface CreateTimelineRelationshipCommand {
-  relationship_id: RelationshipId;
+  relationship_id?: RelationshipId;
   from_node_id: string;
   to_node_id: string;
   relationship_type: RelationshipType;

@@ -193,7 +193,6 @@
       const targetNodeId = clipEl?.getAttribute('data-node-id');
       if (targetNodeId && targetNodeId !== connectionDrag.fromNodeId && connectionDrag.fromNodeId) {
         await applyCreateTimelineRelationshipCommand({
-          relationship_id: crypto.randomUUID(),
           from_node_id: connectionDrag.fromNodeId,
           to_node_id: targetNodeId,
           relationship_type: 'Causal',
