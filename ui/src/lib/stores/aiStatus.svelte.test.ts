@@ -29,18 +29,18 @@ afterEach(() => {
 describe('ai status polling', () => {
   it('updates the ai status cache when refresh succeeds', async () => {
     getAiStatusMock.mockResolvedValue({
-      backend: 'ollama',
+      backend: 'llama_cpp',
       connected: true,
       error: undefined,
-      model: 'llama3',
+      model: 'served-model',
     });
 
     await refreshAiStatus();
 
     expect(aiStatusState.status).toMatchObject({
-      backend: 'ollama',
+      backend: 'llama_cpp',
       connected: true,
-      model: 'llama3',
+      model: 'served-model',
     });
   });
 
@@ -64,10 +64,10 @@ describe('ai status polling', () => {
 
   it('shares a single polling interval across multiple owners', async () => {
     getAiStatusMock.mockResolvedValue({
-      backend: 'ollama',
+      backend: 'llama_cpp',
       connected: true,
       error: undefined,
-      model: 'llama3',
+      model: 'served-model',
     });
 
     const stopFirst = startAiStatusPolling();
@@ -103,7 +103,7 @@ describe('ai status polling', () => {
     const first = refreshAiStatus();
     await refreshAiStatus();
     resolveFirst({
-      backend: 'ollama',
+      backend: 'llama_cpp',
       connected: true,
       error: undefined,
       model: 'stale-model',

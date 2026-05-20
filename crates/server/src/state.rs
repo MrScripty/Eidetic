@@ -21,8 +21,8 @@ pub mod constants {
     pub const DEFAULT_TEMPERATURE: f32 = 0.7;
     /// Default max tokens for generation.
     pub const DEFAULT_MAX_TOKENS: usize = 4096;
-    /// Default llama.cpp OpenAI-compatible base URL.
-    pub const DEFAULT_LLAMACPP_URL: &str = "http://localhost:8080/v1";
+    /// Default Pumas llama.cpp OpenAI-compatible base URL.
+    pub const DEFAULT_LLAMACPP_URL: &str = "http://127.0.0.1:18080/v1";
     /// Reference document chunk size in characters.
     pub const REFERENCE_CHUNK_SIZE: usize = 500;
     /// Reference document chunk overlap in characters.
@@ -69,7 +69,6 @@ pub enum ServerEvent {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BackendType {
-    Ollama,
     LlamaCpp,
     OpenRouter,
 }

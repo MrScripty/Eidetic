@@ -4,8 +4,7 @@
   import { aiStatusState, refreshAiStatus } from '$lib/stores/aiStatus.svelte.js';
 
   const BACKEND_BASE_URLS: Record<BackendType, string> = {
-    llama_cpp: 'http://localhost:8080/v1',
-    ollama: 'http://localhost:11434',
+    llama_cpp: 'http://127.0.0.1:18080/v1',
     open_router: 'https://openrouter.ai/api/v1',
   };
 
@@ -20,9 +19,7 @@
 
   let saving = $state(false);
   let statusMessage = $state('');
-  let isLocalBackend = $derived(
-    config.backend_type === 'llama_cpp' || config.backend_type === 'ollama',
-  );
+  let isLocalBackend = $derived(config.backend_type === 'llama_cpp');
 
   async function checkStatus() {
     await refreshAiStatus();
@@ -87,7 +84,6 @@
     <span class="field-label">Backend</span>
     <select value={config.backend_type} onchange={handleBackendChange}>
       <option value="llama_cpp">llama.cpp (Local)</option>
-      <option value="ollama">Ollama (Local)</option>
       <option value="open_router">OpenRouter (Cloud)</option>
     </select>
   </label>

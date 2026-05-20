@@ -1,4 +1,4 @@
-export type BackendType = 'llama_cpp' | 'ollama' | 'open_router';
+export type BackendType = 'llama_cpp' | 'open_router';
 
 export interface AiConfig {
   backend_type: BackendType;

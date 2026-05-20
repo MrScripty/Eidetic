@@ -1,7 +1,7 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-/// Client for generating text embeddings via Ollama's `/api/embeddings` endpoint.
+/// Client for generating text embeddings via an OpenAI-compatible `/embeddings` endpoint.
 pub struct EmbeddingClient {
     client: Client,
     base_url: String,
@@ -11,11 +11,16 @@ pub struct EmbeddingClient {
 #[derive(Serialize)]
 struct EmbedRequest<'a> {
     model: &'a str,
-    prompt: &'a str,
+    input: &'a str,
 }
 
 #[derive(Deserialize)]
 struct EmbedResponse {
+    data: Vec<EmbedResponseData>,
+}
+
+#[derive(Deserialize)]
+struct EmbedResponseData {
     embedding: Vec<f32>,
 }
 
@@ -30,10 +35,10 @@ impl EmbeddingClient {
 
     /// Generate an embedding vector for the given text.
     pub async fn embed(&self, text: &str) -> Result<Vec<f32>, String> {
-        let url = format!("{}/api/embeddings", self.base_url);
+        let url = format!("{}/embeddings", self.base_url.trim_end_matches('/'));
         let body = EmbedRequest {
             model: &self.model,
-            prompt: text,
+            input: text,
         };
 
         let resp = self
@@ -55,6 +60,11 @@ impl EmbeddingClient {
             .await
             .map_err(|e| format!("failed to parse embedding response: {e}"))?;
 
-        Ok(parsed.embedding)
+        parsed
+            .data
+            .into_iter()
+            .next()
+            .map(|item| item.embedding)
+            .ok_or_else(|| "embedding response did not contain an embedding".to_string())
     }
 }

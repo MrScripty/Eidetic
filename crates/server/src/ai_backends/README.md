@@ -7,8 +7,7 @@ This directory implements server-side adapters that translate core AI requests i
 | File/Folder | Description |
 |-------------|-------------|
 | `mod.rs` | Shared backend trait and adapter selection. |
-| `llamacpp.rs` | Local llama.cpp OpenAI-compatible adapter. |
-| `ollama.rs` | Local Ollama adapter. |
+| `llamacpp.rs` | Local Pumas llama.cpp OpenAI-compatible adapter. |
 | `openrouter.rs` | OpenRouter HTTP adapter. |
 
 ## Problem
