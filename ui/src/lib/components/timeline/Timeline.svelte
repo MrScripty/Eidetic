@@ -9,7 +9,6 @@
     timelineState,
     totalWidth,
     connectionDrag,
-    timeToX,
     zoomToFit,
     zoomTo,
   } from '$lib/stores/timeline.svelte.js';
@@ -23,7 +22,10 @@
     applyTimelineNodeRangeCommand,
     getCachedTimelineRenderModel,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
-  import { visibleTimelineRenderTracks } from '$lib/timelineRenderModel.js';
+  import {
+    findTimelineRenderClipByNodeId,
+    visibleTimelineRenderTracks,
+  } from '$lib/timelineRenderModel.js';
 
   let scrollbarEl: HTMLDivElement | undefined = $state();
   let contentScrollEl: HTMLDivElement | undefined = $state();
@@ -152,19 +154,17 @@
   });
 
   async function nudgeSelectedNode(deltaMs: number) {
-    const node = editorState.selectedNode;
-    if (!node) return;
+    if (!renderModel || !editorState.selectedNodeId) return;
+    const clip = findTimelineRenderClipByNodeId(renderModel, editorState.selectedNodeId);
+    if (!clip) return;
 
-    const duration = node.time_range.end_ms - node.time_range.start_ms;
-    const startMs = Math.max(
-      0,
-      Math.min(TIMELINE.DURATION_MS - duration, node.time_range.start_ms + deltaMs),
-    );
+    const duration = clip.end_ms - clip.start_ms;
+    const startMs = Math.max(0, Math.min(TIMELINE.DURATION_MS - duration, clip.start_ms + deltaMs));
     const endMs = startMs + duration;
-    if (startMs === node.time_range.start_ms && endMs === node.time_range.end_ms) return;
+    if (startMs === clip.start_ms && endMs === clip.end_ms) return;
 
     await applyTimelineNodeRangeCommand({
-      node_id: node.id,
+      node_id: clip.node_id,
       start_ms: startMs,
       end_ms: endMs,
     }).catch(() => {});
@@ -190,24 +190,16 @@
 
       const target = document.elementFromPoint(e.clientX, e.clientY);
       const clipEl = target?.closest('.node-clip');
-      if (clipEl && timelineState.timeline && connectionDrag.fromNodeId) {
-        // Find which node was dropped on by checking bounds
-        for (const node of timelineState.timeline.nodes) {
-          if (node.id === connectionDrag.fromNodeId) continue;
-          const nodeLeft = timeToX(node.time_range.start_ms) - timelineState.scrollX;
-          const nodeRight = timeToX(node.time_range.end_ms) - timelineState.scrollX;
-          const bounds = clipEl.getBoundingClientRect();
-          if (Math.abs(bounds.width - (nodeRight - nodeLeft)) < 10) {
-            await applyCreateTimelineRelationshipCommand({
-              relationship_id: crypto.randomUUID(),
-              from_node_id: connectionDrag.fromNodeId,
-              to_node_id: node.id,
-              relationship_type: 'Causal',
-            });
-            connectionDrag.fromNodeId = null;
-            return;
-          }
-        }
+      const targetNodeId = clipEl?.getAttribute('data-node-id');
+      if (targetNodeId && targetNodeId !== connectionDrag.fromNodeId && connectionDrag.fromNodeId) {
+        await applyCreateTimelineRelationshipCommand({
+          relationship_id: crypto.randomUUID(),
+          from_node_id: connectionDrag.fromNodeId,
+          to_node_id: targetNodeId,
+          relationship_type: 'Causal',
+        });
+        connectionDrag.fromNodeId = null;
+        return;
       }
       connectionDrag.fromNodeId = null;
     }

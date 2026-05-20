@@ -247,6 +247,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="node-clip"
+  data-node-id={node.id}
   class:selected
   class:locked={node.locked}
   class:dragging
