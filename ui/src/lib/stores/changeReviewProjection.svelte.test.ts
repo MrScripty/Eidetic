@@ -33,6 +33,46 @@ const projection = {
   },
 };
 
+const newerProjection = {
+  ...projection,
+  version: 5,
+  change_event_id: 'event-5',
+  payload: {
+    changes: [
+      {
+        event: {
+          id: 'event-5',
+          command_id: 'command-5',
+          kind: 'user_edit' as const,
+          summary: 'manual rain change',
+          created_at_ms: 500,
+        },
+        revisions: [],
+      },
+    ],
+  },
+};
+
+const olderProjection = {
+  ...projection,
+  version: 4,
+  change_event_id: 'event-4',
+  payload: {
+    changes: [
+      {
+        event: {
+          id: 'event-4',
+          command_id: 'command-4',
+          kind: 'ai_proposal_rejected' as const,
+          summary: 'reject stale proposal',
+          created_at_ms: 400,
+        },
+        revisions: [],
+      },
+    ],
+  },
+};
+
 beforeEach(() => {
   clearChangeReviewProjection();
   getChangeReviewProjectionMock.mockReset();
@@ -60,5 +100,17 @@ describe('change review projection store', () => {
     expect(getCachedChangeReviewProjection()).toEqual(projection);
     expect(changeReviewProjectionState.pending).toBe(false);
     expect(changeReviewProjectionState.error).toBe('history unavailable');
+  });
+
+  it('does not replace cached change review projections with stale refresh results', async () => {
+    getChangeReviewProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshChangeReviewProjection();
+    getChangeReviewProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshChangeReviewProjection()).resolves.toEqual(olderProjection);
+
+    expect(getCachedChangeReviewProjection()).toEqual(newerProjection);
+    expect(changeReviewProjectionState.pending).toBe(false);
+    expect(changeReviewProjectionState.error).toBeUndefined();
   });
 });

@@ -1,6 +1,7 @@
 import { getBibleGraphSchemaListProjection } from '$lib/projectionApi.js';
 import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
 import type { ProjectionEnvelope } from '../projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
 export const bibleGraphSchemaProjectionState = $state<{
   projection: ProjectionEnvelope<BibleGraphSchemaListProjection> | null;
@@ -20,6 +21,14 @@ export function getCachedBibleGraphSchemaListProjection(): ProjectionEnvelope<Bi
   return bibleGraphSchemaProjectionState.projection;
 }
 
+function replaceBibleGraphSchemaListProjectionIfFresh(
+  projection: ProjectionEnvelope<BibleGraphSchemaListProjection>,
+): void {
+  if (shouldReplaceProjection(bibleGraphSchemaProjectionState.projection, projection)) {
+    bibleGraphSchemaProjectionState.projection = projection;
+  }
+}
+
 export async function refreshBibleGraphSchemaListProjection(): Promise<
   ProjectionEnvelope<BibleGraphSchemaListProjection>
 > {
@@ -28,7 +37,7 @@ export async function refreshBibleGraphSchemaListProjection(): Promise<
 
   try {
     const projection = await getBibleGraphSchemaListProjection();
-    bibleGraphSchemaProjectionState.projection = projection;
+    replaceBibleGraphSchemaListProjectionIfFresh(projection);
     return projection;
   } catch (error) {
     bibleGraphSchemaProjectionState.error = errorMessage(

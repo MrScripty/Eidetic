@@ -42,6 +42,44 @@ const projection = {
   },
 };
 
+const newerProjection = {
+  ...projection,
+  version: 3,
+  payload: {
+    schemas: [
+      {
+        schema_key: 'location',
+        parts: [
+          {
+            part_key: 'environment',
+            name: 'Environment',
+            sort_order: 10,
+            fields: [
+              {
+                field_key: 'weather',
+                sort_order: 10,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+};
+
+const olderProjection = {
+  ...projection,
+  version: 2,
+  payload: {
+    schemas: [
+      {
+        schema_key: 'object',
+        parts: [],
+      },
+    ],
+  },
+};
+
 function resetProjectionState(): void {
   bibleGraphSchemaProjectionState.projection = null;
   bibleGraphSchemaProjectionState.pending = false;
@@ -75,6 +113,18 @@ describe('bible graph schema projection store', () => {
     expect(getCachedBibleGraphSchemaListProjection()).toEqual(projection);
     expect(bibleGraphSchemaProjectionState.pending).toBe(false);
     expect(bibleGraphSchemaProjectionState.error).toBe('schemas unavailable');
+  });
+
+  it('does not replace cached schema projections with stale refresh results', async () => {
+    getBibleGraphSchemaListProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshBibleGraphSchemaListProjection();
+    getBibleGraphSchemaListProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshBibleGraphSchemaListProjection()).resolves.toEqual(olderProjection);
+
+    expect(getCachedBibleGraphSchemaListProjection()).toEqual(newerProjection);
+    expect(bibleGraphSchemaProjectionState.pending).toBe(false);
+    expect(bibleGraphSchemaProjectionState.error).toBeUndefined();
   });
 
   it('clears cached schema projection state', async () => {

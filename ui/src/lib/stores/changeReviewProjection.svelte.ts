@@ -4,6 +4,7 @@ import type {
   ChangeReviewProjectionEnvelope,
 } from '$lib/changeReviewTypes.js';
 import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
 export const changeReviewProjectionState = $state<{
   projection: ProjectionEnvelope<ChangeReviewProjection> | null;
@@ -23,13 +24,19 @@ export function getCachedChangeReviewProjection(): ChangeReviewProjectionEnvelop
   return changeReviewProjectionState.projection;
 }
 
+function replaceChangeReviewProjectionIfFresh(projection: ChangeReviewProjectionEnvelope): void {
+  if (shouldReplaceProjection(changeReviewProjectionState.projection, projection)) {
+    changeReviewProjectionState.projection = projection;
+  }
+}
+
 export async function refreshChangeReviewProjection(): Promise<ChangeReviewProjectionEnvelope> {
   changeReviewProjectionState.pending = true;
   changeReviewProjectionState.error = undefined;
 
   try {
     const projection = await getChangeReviewProjection();
-    changeReviewProjectionState.projection = projection;
+    replaceChangeReviewProjectionIfFresh(projection);
     return projection;
   } catch (error) {
     changeReviewProjectionState.error = errorMessage(
