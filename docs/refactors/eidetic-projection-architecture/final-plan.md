@@ -808,6 +808,9 @@ Discovered implementation gaps:
 - Resolved: split-node route coverage now proves duplicate result IDs and
   result IDs that collide with existing timeline nodes are rejected through the
   backend command API without recording a command.
+- Resolved: create-node route coverage now proves blank, overlong, and
+  unsupported-character names are rejected at the backend/API boundary before
+  command handling or persistence.
 
 Simplification opportunities:
 
@@ -839,6 +842,8 @@ Verification:
   strict unknown-field rejection enabled.
 - Backend split-node route tests cover invalid generated-result ID payloads,
   including equal left/right IDs and collisions with existing timeline node IDs.
+- Backend create-node route tests cover invalid name payloads for required,
+  length, and character-set validation branches.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter

@@ -420,6 +420,51 @@ async fn create_timeline_node_command_rejects_existing_node_id() {
 }
 
 #[tokio::test]
+async fn create_timeline_node_command_rejects_invalid_names() {
+    let invalid_names = [
+        ("   ", "node name is required"),
+        (
+            "A name that is intentionally longer than sixty four characters for validation",
+            "node name must be at most 64 characters",
+        ),
+        (
+            "Invalid: punctuation",
+            "node name contains unsupported characters",
+        ),
+    ];
+
+    for (name, expected_error) in invalid_names {
+        let path = temp_db_path("rejects-invalid-timeline-create-name");
+        let state = AppState::new().await;
+        let project = Template::MultiCam.build_project("Commands Test");
+        let parent = project.timeline.nodes[0].clone();
+        *state.project.lock() = Some(project);
+        *state.project_path.lock() = Some(path.clone());
+        let app = router().with_state(state);
+        let body = create_timeline_node_command_body(
+            eidetic_core::timeline::node::NodeId::new(),
+            Some(parent.id),
+            parent.level.child_level().expect("child level"),
+            name,
+            parent.time_range.start_ms,
+            parent.time_range.start_ms + 1_000,
+        );
+
+        let response = app
+            .oneshot(create_timeline_node_command_request(body))
+            .await
+            .expect("route response");
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let value = response_json(response).await;
+        assert_eq!(value["error"], expected_error);
+        assert!(!path.exists());
+
+        let _ = std::fs::remove_file(path);
+    }
+}
+
+#[tokio::test]
 async fn create_timeline_node_command_rejects_unexpected_project_session_fields() {
     let path = temp_db_path("rejects-unexpected-timeline-create-fields");
     let state = AppState::new().await;
