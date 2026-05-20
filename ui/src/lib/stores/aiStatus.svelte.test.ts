@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { aiStatusState, refreshAiStatus, startAiStatusPolling } from './aiStatus.svelte.js';
+import {
+  aiStatusState,
+  refreshAiStatus,
+  resetAiStatusPollingForTests,
+  startAiStatusPolling,
+} from './aiStatus.svelte.js';
 import { getAiStatus } from '$lib/api.js';
 
 vi.mock('$lib/api.js', () => ({
@@ -10,12 +15,14 @@ vi.mock('$lib/api.js', () => ({
 const getAiStatusMock = vi.mocked(getAiStatus);
 
 beforeEach(() => {
+  resetAiStatusPollingForTests();
   aiStatusState.status = null;
   vi.useFakeTimers();
   getAiStatusMock.mockReset();
 });
 
 afterEach(() => {
+  resetAiStatusPollingForTests();
   vi.useRealTimers();
 });
 
@@ -79,5 +86,34 @@ describe('ai status polling', () => {
     stopSecond();
     await vi.advanceTimersByTimeAsync(30_000);
     expect(getAiStatusMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('ignores stale status responses from older overlapping refreshes', async () => {
+    let resolveFirst: (status: Awaited<ReturnType<typeof getAiStatus>>) => void = () => {};
+    const firstRefresh = new Promise<Awaited<ReturnType<typeof getAiStatus>>>((resolve) => {
+      resolveFirst = resolve;
+    });
+    getAiStatusMock.mockReturnValueOnce(firstRefresh).mockResolvedValueOnce({
+      backend: 'llama_cpp',
+      connected: true,
+      error: undefined,
+      model: 'newer-model',
+    });
+
+    const first = refreshAiStatus();
+    await refreshAiStatus();
+    resolveFirst({
+      backend: 'ollama',
+      connected: true,
+      error: undefined,
+      model: 'stale-model',
+    });
+    await first;
+
+    expect(aiStatusState.status).toMatchObject({
+      backend: 'llama_cpp',
+      connected: true,
+      model: 'newer-model',
+    });
   });
 });
