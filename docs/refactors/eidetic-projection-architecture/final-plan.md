@@ -752,6 +752,11 @@ Discovered implementation gaps:
   out of the shared command route/test modules. `commands.rs`,
   `commands_bible.rs`, `commands_bible_tests.rs`, and
   `commands_bible_snapshot_tests.rs` are all under decomposition thresholds.
+- In progress: `projectionCacheGuards.ts` now provides shared version-based
+  projection replacement guards, and `timelineRenderProjection.svelte.ts` uses
+  it so older refresh or command-response envelopes cannot overwrite a newer
+  cached timeline render projection. Apply the same guard pattern to remaining
+  projection stores that refresh asynchronously.
 
 Simplification opportunities:
 

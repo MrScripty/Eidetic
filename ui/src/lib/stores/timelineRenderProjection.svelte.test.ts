@@ -28,6 +28,8 @@ import {
   refreshTimelineRenderProjection,
   timelineRenderProjectionState,
 } from './timelineRenderProjection.svelte.js';
+import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
+import type { TimelineRenderProjection } from '$lib/timelineRenderTypes.js';
 
 vi.mock('$lib/commandApi.js', () => ({
   applyTimelineChildren: vi.fn(),
@@ -56,7 +58,7 @@ const setTimelineNodeRangeMock = vi.mocked(setTimelineNodeRange);
 const splitTimelineNodeMock = vi.mocked(splitTimelineNode);
 const getTimelineRenderProjectionMock = vi.mocked(getTimelineRenderProjection);
 
-const projection = {
+const projection: ProjectionEnvelope<TimelineRenderProjection> = {
   version: 7,
   change_event_id: 'event-timeline-1',
   payload: {
@@ -92,6 +94,36 @@ const projection = {
         from_node_id: 'node.scene.beach',
         to_node_id: 'node.scene.beach',
         relationship_type: 'Thematic' as const,
+      },
+    ],
+  },
+};
+
+const olderProjection: ProjectionEnvelope<TimelineRenderProjection> = {
+  ...projection,
+  version: 6,
+  change_event_id: 'event-timeline-older',
+  payload: {
+    ...projection.payload,
+    clips: [
+      {
+        ...projection.payload.clips[0]!,
+        name: 'Stale beach argument',
+      },
+    ],
+  },
+};
+
+const newerProjection: ProjectionEnvelope<TimelineRenderProjection> = {
+  ...projection,
+  version: 8,
+  change_event_id: 'event-timeline-newer',
+  payload: {
+    ...projection.payload,
+    clips: [
+      {
+        ...projection.payload.clips[0]!,
+        name: 'Newer beach argument',
       },
     ],
   },
@@ -151,6 +183,17 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toEqual(projection);
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBe('timeline unavailable');
+  });
+
+  it('does not replace a newer cached projection with an older refresh result', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshTimelineRenderProjection();
+    getTimelineRenderProjectionMock.mockResolvedValueOnce(olderProjection);
+
+    await expect(refreshTimelineRenderProjection()).resolves.toEqual(olderProjection);
+
+    expect(getCachedTimelineRenderProjection()).toEqual(newerProjection);
+    expect(getCachedTimelineRenderModel()?.clips[0]?.name).toBe('Newer beach argument');
   });
 
   it('clears cached projection state', async () => {
@@ -215,6 +258,28 @@ describe('timeline render projection store', () => {
     expect(getCachedTimelineRenderProjection()).toEqual(projection);
     expect(timelineRenderProjectionState.pending).toBe(false);
     expect(timelineRenderProjectionState.error).toBe('range invalid');
+  });
+
+  it('does not replace a newer cached projection with an older command response', async () => {
+    getTimelineRenderProjectionMock.mockResolvedValueOnce(newerProjection);
+    await refreshTimelineRenderProjection();
+    setTimelineNodeRangeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      applyTimelineNodeRangeCommand({
+        node_id: 'node.scene.beach',
+        start_ms: 1_000,
+        end_ms: 4_000,
+      }),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedTimelineRenderProjection()).toEqual(newerProjection);
   });
 
   it('stores create timeline command response projections without local patching', async () => {

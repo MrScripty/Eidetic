@@ -28,6 +28,7 @@ import type {
 } from '../timelineCommandTypes.js';
 import type { TimelineRenderProjection } from '../timelineRenderTypes.js';
 import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
+import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
 export const timelineRenderProjectionState = $state<{
   projection: ProjectionEnvelope<TimelineRenderProjection> | null;
@@ -41,6 +42,14 @@ export const timelineRenderProjectionState = $state<{
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
+}
+
+function replaceTimelineRenderProjectionIfFresh(
+  projection: ProjectionEnvelope<TimelineRenderProjection>,
+): void {
+  if (shouldReplaceProjection(timelineRenderProjectionState.projection, projection)) {
+    timelineRenderProjectionState.projection = projection;
+  }
 }
 
 export function getCachedTimelineRenderProjection(): ProjectionEnvelope<TimelineRenderProjection> | null {
@@ -60,7 +69,7 @@ export async function refreshTimelineRenderProjection(): Promise<
 
   try {
     const projection = await getTimelineRenderProjection();
-    timelineRenderProjectionState.projection = projection;
+    replaceTimelineRenderProjectionIfFresh(projection);
     return projection;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -82,7 +91,7 @@ export async function applyTimelineNodeRangeCommand(
 
   try {
     const response = await setTimelineNodeRange(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -104,7 +113,7 @@ export async function applyCreateTimelineNodeCommand(
 
   try {
     const response = await createTimelineNode(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -126,7 +135,7 @@ export async function applyTimelineChildrenCommand(
 
   try {
     const response = await applyTimelineChildren(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -148,7 +157,7 @@ export async function applyCreateTimelineRelationshipCommand(
 
   try {
     const response = await createTimelineRelationship(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -170,7 +179,7 @@ export async function applyDeleteTimelineRelationshipCommand(
 
   try {
     const response = await deleteTimelineRelationship(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -192,7 +201,7 @@ export async function applyTimelineNodeLockCommand(
 
   try {
     const response = await setTimelineNodeLock(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -214,7 +223,7 @@ export async function applyTimelineNodeNotesCommand(
 
   try {
     const response = await setTimelineNodeNotes(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -236,7 +245,7 @@ export async function applySplitTimelineNodeCommand(
 
   try {
     const response = await splitTimelineNode(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
@@ -258,7 +267,7 @@ export async function applyDeleteTimelineNodeCommand(
 
   try {
     const response = await deleteTimelineNode(payload, commandId);
-    timelineRenderProjectionState.projection = response.projection;
+    replaceTimelineRenderProjectionIfFresh(response.projection);
     return response;
   } catch (error) {
     timelineRenderProjectionState.error = errorMessage(
