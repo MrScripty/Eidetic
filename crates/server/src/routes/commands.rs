@@ -52,12 +52,14 @@ struct StoryArcCommandResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateStoryArcRouteCommand {
     id: CommandId,
     payload: CreateStoryArcRoutePayload,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateStoryArcRoutePayload {
     #[serde(default)]
     arc_id: Option<ArcId>,

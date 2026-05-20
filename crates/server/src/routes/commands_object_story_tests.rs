@@ -254,6 +254,33 @@ async fn story_arc_create_command_replays_omitted_arc_id() {
 }
 
 #[tokio::test]
+async fn story_arc_create_command_rejects_unexpected_project_session_fields() {
+    let path = temp_db_path("story-arc-create-unexpected-fields");
+    let app = app_with_project_path(path.clone()).await;
+    let mut body = json!({
+        "id": CommandId::new(),
+        "payload": {
+            "parent_arc_id": null,
+            "name": "Mystery",
+            "description": "Central investigation",
+            "arc_type": ArcType::APlot,
+            "color": Color::A_PLOT,
+        }
+    });
+    body["project_id"] = json!("renderer-project");
+    body["session_id"] = json!("renderer-session");
+
+    let response = app
+        .oneshot(story_arc_create_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn story_arc_create_command_replays_duplicate_command() {
     let path = temp_db_path("story-arc-create-duplicate");
     let app = app_with_project_path(path.clone()).await;

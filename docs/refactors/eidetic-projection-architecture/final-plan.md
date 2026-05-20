@@ -815,6 +815,10 @@ Discovered implementation gaps:
   unknown top-level and payload fields during JSON deserialization, so
   renderer-sent `project_id`, `session_id`, or non-contract graph fields fail
   before command handling instead of being silently ignored.
+- Resolved: story arc create route DTOs now reject unknown top-level and payload
+  fields during JSON deserialization, so renderer-sent `project_id`,
+  `session_id`, or non-contract arc fields fail before backend story command
+  handling.
 
 Simplification opportunities:
 
@@ -851,6 +855,9 @@ Verification:
 - Backend bible graph route tests cover unexpected `project_id`/`session_id`
   fields, and the bible graph command route suite passes with strict
   unknown-field rejection enabled for node, edge, and snapshot-field commands.
+- Backend story arc create route tests cover unexpected `project_id`/
+  `session_id` fields, and the object/story command route suite passes with
+  strict unknown-field rejection enabled for create-arc commands.
 - Replay/recovery/idempotency tests prove duplicate command IDs, websocket reconnects, and projection refresh after project reload do not create duplicate edits or stale UI state.
 - Async lifecycle tests cover stale response suppression, refresh coalescing, debounced note save cleanup, websocket subscription cleanup, and project close/reopen.
   `projectionRefreshQueue.test.ts` covers refresh coalescing and queued-waiter
