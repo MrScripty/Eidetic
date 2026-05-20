@@ -286,6 +286,35 @@ async fn create_timeline_node_command_rejects_invalid_hierarchy() {
     let _ = std::fs::remove_file(path);
 }
 
+#[tokio::test]
+async fn create_timeline_node_command_rejects_existing_node_id() {
+    let path = temp_db_path("rejects-existing-timeline-node-id");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let parent = project.timeline.nodes[0].clone();
+    let existing_node_id = project.timeline.nodes[1].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_node_command_body(
+        existing_node_id,
+        Some(parent.id),
+        parent.level.child_level().expect("child level"),
+        "Duplicate id act",
+        parent.time_range.start_ms,
+        parent.time_range.start_ms + 1_000,
+    );
+
+    let response = app
+        .oneshot(create_timeline_node_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
 fn create_timeline_node_command_request(body: serde_json::Value) -> Request<Body> {
     Request::builder()
         .method("POST")

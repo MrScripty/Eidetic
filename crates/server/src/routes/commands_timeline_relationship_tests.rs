@@ -264,6 +264,61 @@ async fn create_timeline_relationship_command_rejects_unknown_endpoint() {
 }
 
 #[tokio::test]
+async fn create_timeline_relationship_command_rejects_self_link() {
+    let path = temp_db_path("rejects-self-timeline-relationship");
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Commands Test");
+    let node = project.timeline.nodes[0].id;
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_relationship_command_body(
+        eidetic_core::timeline::relationship::RelationshipId::new(),
+        node,
+        node,
+    );
+
+    let response = app
+        .oneshot(create_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
+async fn create_timeline_relationship_command_rejects_existing_relationship_id() {
+    let path = temp_db_path("rejects-existing-timeline-relationship-id");
+    let state = AppState::new().await;
+    let mut project = Template::MultiCam.build_project("Commands Test");
+    let from_node = project.timeline.nodes[0].id;
+    let to_node = project.timeline.nodes[1].id;
+    let mut relationship = eidetic_core::timeline::relationship::Relationship::new(
+        from_node,
+        to_node,
+        eidetic_core::timeline::relationship::RelationshipType::Thematic,
+    );
+    let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
+    relationship.id = relationship_id;
+    project.timeline.add_relationship(relationship).unwrap();
+    *state.project.lock() = Some(project);
+    *state.project_path.lock() = Some(path.clone());
+    let app = router().with_state(state);
+    let body = create_timeline_relationship_command_body(relationship_id, to_node, from_node);
+
+    let response = app
+        .oneshot(create_timeline_relationship_command_request(body))
+        .await
+        .expect("route response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let _ = std::fs::remove_file(path);
+}
+
+#[tokio::test]
 async fn delete_timeline_relationship_command_returns_timeline_render_projection() {
     let path = temp_db_path("deletes-timeline-relationship");
     let state = AppState::new().await;

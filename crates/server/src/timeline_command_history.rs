@@ -185,6 +185,25 @@ pub(crate) fn record_create_timeline_relationship_history(
 
     project.timeline.node(command.payload.from_node_id)?;
     project.timeline.node(command.payload.to_node_id)?;
+    if command.payload.from_node_id == command.payload.to_node_id {
+        return Err(TimelineCommandError::Core(
+            eidetic_core::Error::InvalidOperation(
+                "timeline relationship endpoints must be distinct".to_string(),
+            ),
+        ));
+    }
+    if project
+        .timeline
+        .relationships
+        .iter()
+        .any(|relationship| relationship.id == command.payload.relationship_id)
+    {
+        return Err(TimelineCommandError::Core(
+            eidetic_core::Error::InvalidOperation(
+                "timeline relationship id already exists".to_string(),
+            ),
+        ));
+    }
 
     let event = ChangeEvent::new(
         command.id,
@@ -411,6 +430,16 @@ fn validate_create_timeline_node(
     command: &CommandEnvelope<CreateTimelineNodeCommand>,
 ) -> Result<TimeRange, TimelineCommandError> {
     let range = TimeRange::new(command.payload.start_ms, command.payload.end_ms)?;
+    if project
+        .timeline
+        .nodes
+        .iter()
+        .any(|node| node.id == command.payload.node_id)
+    {
+        return Err(TimelineCommandError::Core(
+            eidetic_core::Error::InvalidOperation("timeline node id already exists".to_string()),
+        ));
+    }
     if range.end_ms > project.timeline.total_duration_ms {
         return Err(TimelineCommandError::Core(
             eidetic_core::Error::NodeExceedsTimeline {
