@@ -1,4 +1,6 @@
-use eidetic_core::contracts::{CommandEnvelope, SetObjectFieldCommand};
+use eidetic_core::contracts::{
+    CommandEnvelope, SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand,
+};
 use eidetic_server::backend_error::BackendError;
 use eidetic_server::command_service;
 use eidetic_server::project_service::{
@@ -111,6 +113,28 @@ async fn command_object_field(
         .map_err(CommandError::from)
 }
 
+#[tauri::command]
+async fn command_script_block(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetScriptBlockCommand>,
+) -> Result<command_service::ScriptDocumentCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_script_block(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+async fn command_script_lock(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetScriptLockCommand>,
+) -> Result<command_service::ScriptDocumentCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_script_lock(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -126,7 +150,9 @@ pub fn run() {
             project_save,
             project_load,
             project_list,
-            command_object_field
+            command_object_field,
+            command_script_block,
+            command_script_lock
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Eidetic desktop application");

@@ -420,6 +420,10 @@ Completed slices:
   object-field command path into `command_service.rs`, kept the legacy Axum
   route as a service adapter, exposed `command_object_field` in Tauri, and made
   the frontend command helper prefer desktop IPC when available.
+- `feat(desktop): route script commands through tauri` moved script block and
+  script lock command handling into `command_service.rs`, exposed
+  `command_script_block` and `command_script_lock` through Tauri, and made the
+  frontend script command helpers prefer desktop IPC when available.
 
 Discovered issues:
 

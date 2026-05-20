@@ -3,8 +3,8 @@ use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
     CommandEnvelope, CommandId, CreateStoryArcCommand, DeleteStoryArcCommand, ProjectionEnvelope,
-    ScriptDocumentProjection, SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand,
-    SetStoryArcMetadataCommand, StoryArcListProjection,
+    SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection,
 };
 use eidetic_core::story::arc::ArcId;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,6 @@ use uuid::Uuid;
 
 use crate::error::{ApiError, ApiJson};
 use crate::history_store::RecordChangeOutcome;
-use crate::script_document_command::{self, ScriptDocumentCommandError};
 use crate::state::{AppState, ServerEvent};
 use crate::story_arc_command::{self, StoryArcCommandError};
 use crate::story_arc_store;
@@ -29,12 +28,6 @@ pub fn router() -> Router<AppState> {
         .route("/commands/story/delete-arc", post(delete_story_arc))
         .merge(super::commands_bible::router())
         .merge(super::commands_timeline::router())
-}
-
-#[derive(Debug, Serialize)]
-struct ScriptDocumentCommandResponse {
-    outcome: RecordChangeOutcome,
-    projection: ProjectionEnvelope<ScriptDocumentProjection>,
 }
 
 #[derive(Debug, Serialize)]
@@ -108,12 +101,9 @@ async fn set_script_block(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<SetScriptBlockCommand>>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = tokio::task::spawn_blocking(move || set_script_block_at_path(path, command))
+    let response = crate::command_service::set_script_block(&state, command)
         .await
-        .map_err(|e| ApiError::internal(format!("script block command task failed: {e}")))??;
-
-    let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+        .map_err(ApiError::from)?;
     crate::error::json_value(response)
 }
 
@@ -121,12 +111,9 @@ async fn set_script_lock(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<SetScriptLockCommand>>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = tokio::task::spawn_blocking(move || set_script_lock_at_path(path, command))
+    let response = crate::command_service::set_script_lock(&state, command)
         .await
-        .map_err(|e| ApiError::internal(format!("script lock command task failed: {e}")))??;
-
-    let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+        .map_err(ApiError::from)?;
     crate::error::json_value(response)
 }
 
@@ -214,45 +201,6 @@ async fn delete_story_arc(
         let _ = state.events_tx.send(ServerEvent::StoryChanged);
     }
     crate::error::json_value(response)
-}
-
-fn set_script_block_at_path(
-    path: std::path::PathBuf,
-    command: CommandEnvelope<SetScriptBlockCommand>,
-) -> Result<ScriptDocumentCommandResponse, ApiError> {
-    let mut conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let (outcome, projection) =
-        script_document_command::apply_set_script_block(&mut conn, &command, 0)
-            .map_err(map_script_document_error)?;
-
-    Ok(ScriptDocumentCommandResponse {
-        outcome,
-        projection,
-    })
-}
-
-fn set_script_lock_at_path(
-    path: std::path::PathBuf,
-    command: CommandEnvelope<SetScriptLockCommand>,
-) -> Result<ScriptDocumentCommandResponse, ApiError> {
-    let mut conn = crate::sqlite::open_write_connection(&path)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
-    let (outcome, projection) =
-        script_document_command::apply_set_script_lock(&mut conn, &command, 0)
-            .map_err(map_script_document_error)?;
-
-    Ok(ScriptDocumentCommandResponse {
-        outcome,
-        projection,
-    })
-}
-
-fn map_script_document_error(error: ScriptDocumentCommandError) -> ApiError {
-    match error {
-        ScriptDocumentCommandError::InvalidCommand(message) => ApiError::bad_request(message),
-        ScriptDocumentCommandError::Store(error) => map_history_error(error),
-    }
 }
 
 fn map_story_arc_command_error(error: StoryArcCommandError) -> ApiError {

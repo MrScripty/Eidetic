@@ -278,6 +278,10 @@ export function setScriptBlock(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block', { command });
+  }
+
   return request('/commands/script/block', {
     method: 'POST',
     body: JSON.stringify(command),
@@ -292,6 +296,10 @@ export function setScriptLock(
     id: commandId,
     payload,
   };
+
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ScriptDocumentCommandResponse>('command_script_lock', { command });
+  }
 
   return request('/commands/script/lock', {
     method: 'POST',
