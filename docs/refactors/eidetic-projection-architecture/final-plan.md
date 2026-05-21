@@ -637,6 +637,9 @@ Completed slices:
   `/ws` proxy targets plus the unused desktop-transport availability helper so
   the frontend development server no longer advertises a loopback HTTP or
   WebSocket backend path.
+- `refactor(core): remove wasm target dependencies` removed the core crate's
+  `wasm32` dependency block and updated the domain-layer README so core remains
+  host-agnostic without carrying browser/WASM-specific support.
 
 Discovered issues:
 
@@ -647,6 +650,10 @@ Discovered issues:
   removed loopback server after active frontend helpers became Tauri-only. The
   proxy and unused fallback detection helper were removed so missing desktop
   transport now fails at the Tauri adapter boundary.
+- Resolved: `eidetic-core` still declared `wasm32`-only `uuid` and `getrandom`
+  dependencies from the earlier browser-host plan. Those direct target
+  dependencies were removed; any remaining WASM-related lockfile entries are
+  transitive dependency metadata from third-party desktop dependencies.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

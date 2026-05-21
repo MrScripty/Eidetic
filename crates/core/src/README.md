@@ -14,12 +14,12 @@ This directory contains the pure Rust domain layer for Eidetic: project aggregat
 | `ai/` | Prompt assembly, context packing, and consistency helpers. |
 
 ## Problem
-The application needs a reusable domain layer that can serve both the local server and any future WASM or alternate frontend host without duplicating narrative logic.
+The application needs a reusable domain layer that can serve the desktop backend runtime and future backend-owned hosts without duplicating narrative logic.
 
 ## Constraints
 - No direct HTTP, filesystem, or UI dependencies at this boundary.
 - Timeline, story-arc, script, and projection contracts must remain serializable for persistence and transport.
-- The library should remain suitable for future non-server hosts.
+- The library should remain suitable for future backend-owned hosts without adding browser or WASM-specific dependencies.
 
 ## Decision
 Keep narrative behavior, data structures, and AI-facing domain helpers in one host-agnostic crate and push transport/persistence concerns into the server crate.
@@ -40,7 +40,7 @@ Keep narrative behavior, data structures, and AI-facing domain helpers in one ho
 
 ## Dependencies
 **Internal:** `contracts/`, `timeline/`, `story/`, `script/`, `project/`, `ai/`.
-**External:** `serde`, `uuid`, `thiserror`, `futures`.
+**External:** `serde`, `serde_json`, `uuid`, `thiserror`, `futures`.
 
 ## Related ADRs
 - `ADR-001` decomposition baseline for oversized core and UI modules.
@@ -56,7 +56,7 @@ assert!(!project.timeline.nodes.is_empty());
 ## API Consumer Contract
 - None identified as of 2026-03-08.
 - Reason: this directory is an internal library boundary, not an out-of-process API surface.
-- Revisit trigger: the crate is exposed through WASM bindings, an SDK, or another process boundary.
+- Revisit trigger: the crate is exposed through an SDK or another process boundary.
 
 ## Structured Producer Contract
 - Core structs in this directory define the stable contract, project, timeline, story-arc, script, and projection shapes persisted by the server and mirrored by the UI.
