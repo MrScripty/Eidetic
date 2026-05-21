@@ -559,6 +559,10 @@ export function splitTimelineNode(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<TimelineCommandResponse>('command_timeline_split_node', { command });
+  }
+
   return request('/commands/timeline/split-node', {
     method: 'POST',
     body: JSON.stringify(command),

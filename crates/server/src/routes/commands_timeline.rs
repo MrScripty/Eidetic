@@ -5,8 +5,7 @@ use eidetic_core::contracts::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CommandEnvelope, CommandId,
     CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
-    TimelineRenderProjection,
+    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use eidetic_core::timeline::node::NodeId;
@@ -114,24 +113,6 @@ struct ApplyTimelineChildRoutePayload {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct SplitTimelineNodeRouteCommand {
-    id: CommandId,
-    payload: SplitTimelineNodeRoutePayload,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct SplitTimelineNodeRoutePayload {
-    node_id: NodeId,
-    at_ms: u64,
-    #[serde(default)]
-    left_node_id: Option<NodeId>,
-    #[serde(default)]
-    right_node_id: Option<NodeId>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct CreateTimelineRelationshipRouteCommand {
     id: CommandId,
     payload: CreateTimelineRelationshipRoutePayload,
@@ -196,24 +177,6 @@ impl ApplyTimelineChildrenRouteCommand {
                         props: child.props,
                     })
                     .collect(),
-            },
-        }
-    }
-}
-
-impl SplitTimelineNodeRouteCommand {
-    fn into_core_command(self) -> CommandEnvelope<SplitTimelineNodeCommand> {
-        CommandEnvelope {
-            id: self.id,
-            payload: SplitTimelineNodeCommand {
-                node_id: self.payload.node_id,
-                at_ms: self.payload.at_ms,
-                left_node_id: self.payload.left_node_id.unwrap_or_else(|| {
-                    NodeId(derived_command_uuid(self.id, b"timeline.split.left"))
-                }),
-                right_node_id: self.payload.right_node_id.unwrap_or_else(|| {
-                    NodeId(derived_command_uuid(self.id, b"timeline.split.right"))
-                }),
             },
         }
     }
@@ -469,32 +432,12 @@ async fn delete_timeline_relationship(
 
 async fn split_timeline_node(
     State(state): State<AppState>,
-    Json(command): Json<SplitTimelineNodeRouteCommand>,
+    Json(command): Json<crate::command_service::SplitTimelineNodeRequestCommand>,
 ) -> ApiJson {
-    let command = command.into_core_command();
-    let path = active_project_path(&state)?;
-    let response = {
-        let project = timeline_command_project(&state, &path).await?;
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome =
-            timeline_command::record_split_timeline_node_history(&mut conn, &project, &command, 0)
-                .map_err(map_timeline_command_error)?;
-        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
-            .map_err(map_timeline_command_error)?;
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
+    crate::command_service::split_timeline_node(&state, command)
+        .await
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 async fn set_timeline_node_lock(

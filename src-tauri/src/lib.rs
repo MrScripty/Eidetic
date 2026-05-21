@@ -350,6 +350,17 @@ async fn command_timeline_delete_node(
 }
 
 #[tauri::command]
+async fn command_timeline_split_node(
+    app: tauri::AppHandle,
+    command: command_service::SplitTimelineNodeRequestCommand,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::split_timeline_node(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_object_field(
     app: tauri::AppHandle,
     query: ObjectFieldProjectionRequest,
@@ -538,6 +549,7 @@ pub fn run() {
             command_timeline_node_lock,
             command_timeline_node_notes,
             command_timeline_delete_node,
+            command_timeline_split_node,
             projection_object_field,
             projection_script_document,
             projection_bible_graph_node,

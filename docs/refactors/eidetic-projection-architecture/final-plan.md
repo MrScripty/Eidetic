@@ -507,6 +507,11 @@ Completed slices:
   effects into the focused backend timeline command service, kept the legacy
   Axum route as a service adapter, exposed `command_timeline_delete_node`
   through Tauri, and made the frontend helper prefer desktop IPC when available.
+- `feat(desktop): route timeline split node command through tauri` moved
+  timeline split-node command handling into the focused backend timeline command
+  service, kept the legacy Axum route as a service adapter, exposed
+  `command_timeline_split_node` through Tauri, and made the frontend helper
+  prefer desktop IPC when available.
 
 Discovered issues:
 
