@@ -574,6 +574,10 @@ export function deleteTimelineNode(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_node', { command });
+  }
+
   return request('/commands/timeline/delete-node', {
     method: 'POST',
     body: JSON.stringify(command),

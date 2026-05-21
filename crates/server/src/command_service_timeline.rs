@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, TimelineRenderProjection,
+    CommandEnvelope, DeleteTimelineNodeCommand, ObjectKind, ProjectionEnvelope,
+    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use rusqlite::Connection;
@@ -96,6 +96,43 @@ pub async fn set_timeline_node_notes(
         let _ = state
             .events_tx
             .send(ServerEvent::NodeUpdated { node_id: node_id.0 });
+        state.trigger_save();
+    }
+    Ok(response)
+}
+
+pub async fn delete_timeline_node(
+    state: &AppState,
+    command: CommandEnvelope<DeleteTimelineNodeCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let removed_node_id = command.payload.node_id;
+    let project = timeline_command_project(state, &path).await?;
+    let response = tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome =
+            timeline_command::record_delete_timeline_node_history(&mut conn, &project, &command, 0)
+                .map_err(map_timeline_command_error)?;
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
+        Ok::<_, BackendError>(TimelineCommandResponse {
+            outcome,
+            projection,
+        })
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("timeline node delete command task failed: {error}"))
+    })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.doc_tx.try_send(DocCommand::RemoveNode {
+            node_id: removed_node_id,
+        });
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
         state.trigger_save();
     }
     Ok(response)

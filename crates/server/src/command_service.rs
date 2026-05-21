@@ -32,7 +32,7 @@ pub use crate::command_service_semantic::{
     update_propagation_proposal,
 };
 pub use crate::command_service_timeline::{
-    TimelineCommandResponse, set_timeline_node_lock, set_timeline_node_notes,
+    TimelineCommandResponse, delete_timeline_node, set_timeline_node_lock, set_timeline_node_notes,
 };
 
 #[derive(Debug, Serialize)]

@@ -4,8 +4,8 @@ use eidetic_core::contracts::{
     BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
     BibleReferenceProposalListProjection, BibleRenderGraphProjection, ChangeReviewProjection,
     CommandEnvelope, CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand,
-    DeleteStoryArcCommand, EnsureCanonicalBibleRootsCommand, ProjectionEnvelope,
-    PropagationProposalListProjection, RejectBibleReferenceProposalCommand,
+    DeleteStoryArcCommand, DeleteTimelineNodeCommand, EnsureCanonicalBibleRootsCommand,
+    ProjectionEnvelope, PropagationProposalListProjection, RejectBibleReferenceProposalCommand,
     RejectPropagationProposalCommand, ScriptDocumentProjection, SelectedNodeEditorProjection,
     SemanticDependencyProjection, SetBibleGraphFieldCommand, SetObjectFieldCommand,
     SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
@@ -339,6 +339,17 @@ async fn command_timeline_node_notes(
 }
 
 #[tauri::command]
+async fn command_timeline_delete_node(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<DeleteTimelineNodeCommand>,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::delete_timeline_node(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn projection_object_field(
     app: tauri::AppHandle,
     query: ObjectFieldProjectionRequest,
@@ -526,6 +537,7 @@ pub fn run() {
             command_propagation_proposal_accept,
             command_timeline_node_lock,
             command_timeline_node_notes,
+            command_timeline_delete_node,
             projection_object_field,
             projection_script_document,
             projection_bible_graph_node,

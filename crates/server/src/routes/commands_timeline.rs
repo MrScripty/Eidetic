@@ -521,33 +521,10 @@ async fn delete_timeline_node(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<DeleteTimelineNodeCommand>>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let removed_node_id = command.payload.node_id;
-    let response = {
-        let project = timeline_command_project(&state, &path).await?;
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome =
-            timeline_command::record_delete_timeline_node_history(&mut conn, &project, &command, 0)
-                .map_err(map_timeline_command_error)?;
-        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
-            .map_err(map_timeline_command_error)?;
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.doc_tx.try_send(DocCommand::RemoveNode {
-            node_id: removed_node_id,
-        });
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-        state.trigger_save();
-    }
-    crate::error::json_value(response)
+    crate::command_service::delete_timeline_node(&state, command)
+        .await
+        .map_err(ApiError::from)
+        .and_then(crate::error::json_value)
 }
 
 fn map_timeline_command_error(error: TimelineCommandError) -> ApiError {
