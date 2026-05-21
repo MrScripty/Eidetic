@@ -67,13 +67,12 @@ describe('timeline command projection flow', () => {
       outcome: 'recorded',
       projection: lockedProjection,
     };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
 
     await expect(
       applyTimelineNodeLockCommand(
@@ -85,39 +84,28 @@ describe('timeline command projection flow', () => {
       ),
     ).resolves.toEqual(response);
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/commands/timeline/node-lock',
-      expect.objectContaining({
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: 'command-lock-visible-path',
-          payload: {
-            node_id: 'node.scene.beach',
-            locked: true,
-          },
-        }),
-      }),
-    );
+    expect(invoke).toHaveBeenCalledWith('command_timeline_node_lock', {
+      command: {
+        id: 'command-lock-visible-path',
+        payload: {
+          node_id: 'node.scene.beach',
+          locked: true,
+        },
+      },
+    });
     expect(getCachedTimelineRenderProjection()).toEqual(lockedProjection);
   });
 
   it('preserves the last confirmed projection when backend validation rejects the command', async () => {
-    const fetchMock = vi
+    const invoke = vi
       .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(unlockedProjection), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ error: 'timeline node not found' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      );
-    vi.stubGlobal('fetch', fetchMock);
+      .mockResolvedValueOnce(unlockedProjection)
+      .mockRejectedValueOnce({ message: 'timeline node not found' });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
     await refreshTimelineRenderProjection();
 
     await expect(
@@ -130,6 +118,32 @@ describe('timeline command projection flow', () => {
       ),
     ).rejects.toThrow('timeline node not found');
 
+    expect(invoke).toHaveBeenNthCalledWith(1, 'projection_timeline_render', undefined);
+    expect(invoke).toHaveBeenNthCalledWith(2, 'command_timeline_node_lock', {
+      command: {
+        id: 'command-lock-invalid-path',
+        payload: {
+          node_id: 'node.scene.missing',
+          locked: true,
+        },
+      },
+    });
     expect(getCachedTimelineRenderProjection()).toEqual(unlockedProjection);
+  });
+
+  it('requires desktop transport instead of falling back to HTTP', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+
+    await expect(
+      applyTimelineNodeLockCommand(
+        {
+          node_id: 'node.scene.beach',
+          locked: true,
+        },
+        'command-lock-visible-path',
+      ),
+    ).rejects.toThrow('desktop transport is unavailable');
+
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

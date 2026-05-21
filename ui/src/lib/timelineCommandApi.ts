@@ -11,8 +11,8 @@ import type {
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
 } from './timelineCommandTypes.js';
-import { hasDesktopTransport, invokeDesktop } from './desktopTransport.js';
-import { createCommandId, request } from './commandTransport.js';
+import { invokeDesktop } from './desktopTransport.js';
+import { createCommandId } from './commandTransport.js';
 
 export function setTimelineNodeRange(
   payload: SetTimelineNodeRangeCommand,
@@ -23,14 +23,7 @@ export function setTimelineNodeRange(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_range', { command });
-  }
-
-  return request('/commands/timeline/node-range', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_node_range', { command });
 }
 
 export function createTimelineNode(
@@ -42,14 +35,7 @@ export function createTimelineNode(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_create_node', { command });
-  }
-
-  return request('/commands/timeline/create-node', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_create_node', { command });
 }
 
 export function applyTimelineChildren(
@@ -61,14 +47,7 @@ export function applyTimelineChildren(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_apply_children', { command });
-  }
-
-  return request('/commands/timeline/apply-children', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_apply_children', { command });
 }
 
 export function createTimelineRelationship(
@@ -80,15 +59,8 @@ export function createTimelineRelationship(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_create_relationship', {
-      command,
-    });
-  }
-
-  return request('/commands/timeline/create-relationship', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_create_relationship', {
+    command,
   });
 }
 
@@ -101,15 +73,8 @@ export function deleteTimelineRelationship(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_relationship', {
-      command,
-    });
-  }
-
-  return request('/commands/timeline/delete-relationship', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_relationship', {
+    command,
   });
 }
 
@@ -122,14 +87,7 @@ export function setTimelineNodeLock(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_lock', { command });
-  }
-
-  return request('/commands/timeline/node-lock', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_node_lock', { command });
 }
 
 export function setTimelineNodeNotes(
@@ -141,14 +99,7 @@ export function setTimelineNodeNotes(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_notes', { command });
-  }
-
-  return request('/commands/timeline/node-notes', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_node_notes', { command });
 }
 
 export function splitTimelineNode(
@@ -160,14 +111,7 @@ export function splitTimelineNode(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_split_node', { command });
-  }
-
-  return request('/commands/timeline/split-node', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_split_node', { command });
 }
 
 export function deleteTimelineNode(
@@ -179,12 +123,5 @@ export function deleteTimelineNode(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_node', { command });
-  }
-
-  return request('/commands/timeline/delete-node', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_node', { command });
 }

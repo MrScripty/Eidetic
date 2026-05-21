@@ -619,6 +619,9 @@ Completed slices:
 - `refactor(ui): remove projection http fallback` removed legacy fetch fallback
   paths from focused frontend projection helpers so all active projection reads
   now require Tauri IPC and fail fast when the desktop transport is missing.
+- `refactor(ui): remove timeline command http fallback` removed legacy fetch
+  fallback paths from timeline-specific command helpers so timeline mutations
+  now enter the backend only through Tauri IPC from the desktop frontend.
 
 Discovered issues:
 
@@ -710,6 +713,10 @@ Discovered issues:
   behavior after equivalent Tauri commands existed for active projection reads.
   Projection helpers now use desktop IPC directly and report missing Tauri
   transport as a configuration error.
+- Resolved: `ui/src/lib/timelineCommandApi.ts` still carried browser HTTP
+  fallback behavior after equivalent Tauri commands existed for timeline
+  mutations. Timeline command helpers now use desktop IPC directly and report
+  missing Tauri transport as a configuration error.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in
