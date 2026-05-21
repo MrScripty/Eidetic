@@ -554,6 +554,11 @@ Completed slices:
   transport into `commandTransport.ts` while preserving the existing
   `commandApi.ts` re-export surface, keeping touched frontend modules below
   decomposition thresholds.
+- `feat(desktop): emit backend server events through tauri` added a desktop
+  event bridge that subscribes to backend-owned `ServerEvent`s and emits
+  stable `eidetic://server-event` Tauri payloads for the future WebSocket
+  replacement path, with serialization tests covering event type and field
+  preservation.
 
 Discovered issues:
 

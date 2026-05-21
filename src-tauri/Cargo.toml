@@ -14,7 +14,12 @@ eidetic-server = { path = "../crates/server" }
 serde.workspace = true
 serde_json.workspace = true
 tauri = { version = "2.11.2", features = [] }
+tokio.workspace = true
+tracing.workspace = true
 tracing-subscriber.workspace = true
+
+[dev-dependencies]
+uuid.workspace = true
 
 [[bin]]
 name = "eidetic-desktop"

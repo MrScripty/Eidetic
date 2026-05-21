@@ -1,4 +1,5 @@
 mod commands;
+mod desktop_events;
 mod error;
 mod health;
 mod project_commands;
@@ -11,6 +12,7 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let app_state = tauri::async_runtime::block_on(AppState::new());
+            desktop_events::spawn_server_event_bridge(app.handle().clone(), &app_state);
             app.manage(app_state);
             Ok(())
         })
