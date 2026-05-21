@@ -4,6 +4,7 @@ import {
   createProject,
   getAiStatus,
   getProject,
+  listModels,
   listProjects,
   saveProject,
   updateAiConfig,
@@ -113,6 +114,32 @@ describe('api request handling', () => {
     expect(invoke).toHaveBeenNthCalledWith(1, 'ai_status', undefined);
     expect(invoke).toHaveBeenNthCalledWith(2, 'ai_config_update', {
       updates: { model: 'served-model', temperature: 0.4 },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the desktop model list command when Tauri transport is available', async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      models: [],
+      total_count: 0,
+    });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await listModels({ q: 'llama', model_type: 'llm', limit: 25, offset: 5 });
+
+    expect(invoke).toHaveBeenCalledWith('model_list', {
+      params: {
+        q: 'llama',
+        model_type: 'llm',
+        limit: 25,
+        offset: 5,
+      },
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

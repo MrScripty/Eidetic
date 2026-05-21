@@ -568,6 +568,10 @@ Completed slices:
   status/config behavior into a host-neutral backend service, exposed Tauri
   commands for desktop status/config reads and writes, and made the frontend AI
   helpers prefer desktop IPC while retaining the legacy HTTP fallback.
+- `feat(desktop): route model list through tauri` extracted Pumas model-library
+  list/search behavior into a host-neutral backend service, exposed a Tauri
+  projection command for desktop model picker reads, and made the frontend model
+  helper prefer desktop IPC while preserving legacy route behavior.
 
 Discovered issues:
 

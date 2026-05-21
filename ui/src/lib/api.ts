@@ -124,6 +124,16 @@ export function listModels(params?: {
   limit?: number;
   offset?: number;
 }): Promise<ModelListResponse> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ModelListResponse>('model_list', {
+      params: {
+        q: params?.q ?? '',
+        model_type: params?.model_type ?? null,
+        limit: params?.limit ?? 100,
+        offset: params?.offset ?? 0,
+      },
+    });
+  }
   const query = new URLSearchParams();
   if (params?.q) query.set('q', params.q);
   if (params?.model_type) query.set('model_type', params.model_type);

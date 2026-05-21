@@ -26,6 +26,7 @@ pub mod error;
 pub(crate) mod export;
 pub(crate) mod history_read_store;
 pub(crate) mod history_store;
+pub mod model_service;
 pub(crate) mod object_field_command;
 pub(crate) mod persistence;
 pub(crate) mod project_database;

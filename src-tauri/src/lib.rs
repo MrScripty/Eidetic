@@ -3,6 +3,7 @@ mod commands;
 mod desktop_events;
 mod error;
 mod health;
+mod model_commands;
 mod project_commands;
 mod projections;
 
@@ -27,6 +28,7 @@ pub fn run() {
             project_commands::project_list,
             ai_commands::ai_status,
             ai_commands::ai_config_update,
+            model_commands::model_list,
             commands::object_script_story::command_object_field,
             commands::object_script_story::command_script_block,
             commands::object_script_story::command_script_lock,
