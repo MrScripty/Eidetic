@@ -625,6 +625,10 @@ Completed slices:
 - `refactor(ui): remove command http fallback` removed legacy fetch fallback
   paths from the remaining frontend command helpers and reduced the shared
   command transport helper to command ID generation.
+- `refactor(server): remove axum listener runtime` deleted the standalone
+  server binary, Axum listener/router composition, static file host, WebSocket
+  host, and the now-unused `tower-http` dependency while retaining route
+  adapters for the remaining service-test migration.
 
 Discovered issues:
 
@@ -725,6 +729,11 @@ Discovered issues:
   surfaces. Command helpers now use desktop IPC directly, wrapper tests no
   longer preserve route URLs as frontend behavior, and `commandTransport.ts`
   no longer owns fetch behavior.
+- Resolved: `eidetic-server` still exposed a standalone Axum listener, static
+  web host, and WebSocket host after the launcher moved to Tauri. The server
+  crate no longer builds a listener binary or static/WebSocket runtime; route
+  adapters remain temporarily for service-test migration before Axum itself can
+  be removed.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

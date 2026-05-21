@@ -2,17 +2,15 @@
 
 ## Purpose
 This directory contains Eidetic's backend runtime: persistence, command and
-projection services, AI backend integration, realtime synchronization, and the
-legacy Axum host over the domain model in `eidetic-core`.
+projection services, AI backend integration, realtime coordination, and legacy
+Axum route adapters over the domain model in `eidetic-core`.
 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
 | `lib.rs` | Backend runtime module root consumed by binaries, tests, and future desktop bindings. |
-| `main.rs` | Thin binary entrypoint that initializes tracing and starts the legacy Axum runtime. |
-| `axum_runtime.rs` | Legacy Axum router composition, CORS policy, static hosting, and listener startup while Milestone 7 migrates production desktop transport to Tauri. |
 | `backend_task.rs` | Backend task supervisor for explicit desktop lifecycle ownership. |
-| `routes/` | HTTP handlers for project, command, timeline, story, AI, export, and reference workflows. |
+| `routes/` | Legacy Axum route adapters for project, command, timeline, story, AI, export, and reference workflows while route tests migrate to service coverage. |
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by legacy routes and future Tauri commands. |
@@ -43,31 +41,31 @@ legacy Axum host over the domain model in `eidetic-core`.
 ## Problem
 The application needs backend-owned services that expose core behavior to the
 desktop shell while remaining compatible with local persistence, streaming
-updates, and the existing browser-oriented Axum boundary during migration.
+updates, and temporary route-adapter tests during migration.
 
 ## Constraints
 - Backend services are the durable source of truth for command and projection
   behavior.
-- Axum routes are a legacy host-facing contract until Milestone 7 replaces the
-  production desktop boundary with Tauri commands and events.
+- Axum routes are legacy test adapters only; production desktop transport uses
+  Tauri commands and events instead of a local listener.
 - Persistence and Yjs state must remain compatible with saved projects.
 - `persistence.rs` and `ydoc.rs` are above decomposition thresholds tracked in `ADR-001`.
 
 ## Decision
 Keep backend services, persistence, and realtime coordination in the server
-crate. Isolate Axum in `axum_runtime.rs` so the upcoming Tauri desktop shell can
-depend on backend services without depending on the binary entrypoint.
+crate. Route modules remain temporarily for behavior coverage while Milestone 7
+replaces route tests with service and Tauri adapter tests; the standalone
+listener, static host, and WebSocket host have been removed.
 
 ## Alternatives Rejected
 - Embedding persistence and host logic in `eidetic-core`: rejected because it would make the core crate host-specific.
 - Splitting persistence and Yjs modules during the standards pass: rejected because contract correctness took priority over structural churn.
-- Embedding Axum in the Tauri desktop runtime long term: rejected by Milestone 7
-  because production desktop transport should use Tauri command/event contracts,
-  not a loopback HTTP/WebSocket server.
+- Embedding Axum in the Tauri desktop runtime: rejected by Milestone 7 because
+  production desktop transport uses Tauri command/event contracts, not a
+  loopback HTTP/WebSocket server.
 
 ## Invariants
-- Legacy host-facing route semantics are centralized under `routes/` and
-  `axum_runtime.rs`.
+- Legacy route-adapter semantics are centralized under `routes/`.
 - New backend behavior must be added behind service APIs before being exposed
   through Axum or Tauri adapters.
 - Saved project compatibility is preserved across persistence changes.
@@ -80,24 +78,19 @@ depend on backend services without depending on the binary entrypoint.
 - `persistence.rs` or `ydoc.rs` gains another unrelated concern.
 
 ## Dependencies
-**Internal:** `eidetic-core`, `axum_runtime.rs`, `routes/`, `project_service.rs`, `command_service.rs`, `projection_service.rs`, `ai_backends/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_edge_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
-**External:** `axum`, `tower-http`, `tokio`, `rusqlite`, `yrs`, `reqwest`.
+**Internal:** `eidetic-core`, `routes/`, `project_service.rs`, `command_service.rs`, `projection_service.rs`, `ai_backends/`, `sqlite.rs`, `history_store.rs`, `bible_graph_schema.rs`, `bible_graph_store.rs`, `bible_graph_field_store.rs`, `bible_graph_edge_store.rs`, `bible_graph_command.rs`, `object_field_command.rs`, `revision_projection.rs`.
+**External:** `axum`, `tower`, `tokio`, `rusqlite`, `yrs`, `reqwest`.
 
 ## Related ADRs
 - `ADR-001` decomposition baseline for oversized server modules.
 
-## Usage Examples
-```rust
-use eidetic_server::axum_runtime;
-```
-
 ## API Consumer Contract
-- The frontend is currently the primary consumer of the HTTP and WebSocket
-  surfaces rooted here.
-- Tauri command/event adapters must consume backend services directly instead of
+- Tauri command/event adapters consume backend services directly instead of
   calling Axum handlers.
-- Route handlers must return explicit HTTP status semantics and preserve the JSON field names consumed by `ui/src/lib/api.ts`.
-- Realtime event ordering must remain compatible with the websocket client’s single-owner lifecycle.
+- Remaining route handlers are temporary test adapters and must delegate to
+  service APIs rather than owning behavior.
+- Realtime event ordering must remain compatible with the desktop event
+  client's single-owner lifecycle.
 
 ## Structured Producer Contract
 - This directory produces persisted SQLite project data, Y.Doc blobs, and JSON payloads consumed by the UI.
