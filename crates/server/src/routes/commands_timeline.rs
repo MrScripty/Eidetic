@@ -2,26 +2,12 @@ use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
-    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CommandEnvelope, CommandId,
-    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope,
+    CommandEnvelope, DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand,
     SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
-    TimelineRenderProjection,
 };
-use eidetic_core::timeline::Timeline;
-use eidetic_core::timeline::node::NodeId;
-use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::error::{ApiError, ApiJson};
-use crate::history_store::{self, RecordChangeOutcome};
-use crate::state::{AppState, ServerEvent};
-use crate::timeline_command::{self, TimelineCommandError};
-use crate::validation;
-use crate::ydoc::DocCommand;
-use crate::{timeline_node_store, timeline_relationship_store};
-
-use super::support::{active_project_path, map_history_error};
+use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -51,101 +37,6 @@ pub fn router() -> Router<AppState> {
         .route("/commands/timeline/delete-node", post(delete_timeline_node))
 }
 
-#[derive(Debug, Serialize)]
-struct TimelineCommandResponse {
-    outcome: RecordChangeOutcome,
-    projection: ProjectionEnvelope<TimelineRenderProjection>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ApplyTimelineChildrenRouteCommand {
-    id: CommandId,
-    payload: ApplyTimelineChildrenRoutePayload,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ApplyTimelineChildrenRoutePayload {
-    parent_id: NodeId,
-    #[serde(default)]
-    child_plan_id: Option<eidetic_core::ai::backend::ChildPlanId>,
-    children: Vec<ApplyTimelineChildRoutePayload>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ApplyTimelineChildRoutePayload {
-    #[serde(default)]
-    node_id: Option<NodeId>,
-    name: String,
-    outline: String,
-    weight: f32,
-    beat_type: Option<eidetic_core::timeline::node::BeatType>,
-    #[serde(default)]
-    characters: Vec<String>,
-    #[serde(default)]
-    location: Option<String>,
-    #[serde(default)]
-    props: Vec<String>,
-}
-
-impl ApplyTimelineChildrenRouteCommand {
-    fn into_core_command(self) -> CommandEnvelope<ApplyTimelineChildrenCommand> {
-        CommandEnvelope {
-            id: self.id,
-            payload: ApplyTimelineChildrenCommand {
-                parent_id: self.payload.parent_id,
-                child_plan_id: self.payload.child_plan_id,
-                children: self
-                    .payload
-                    .children
-                    .into_iter()
-                    .enumerate()
-                    .map(|(index, child)| ApplyTimelineChildCommand {
-                        node_id: child.node_id.unwrap_or_else(|| {
-                            NodeId(derived_indexed_command_uuid(
-                                self.id,
-                                b"timeline.child",
-                                index,
-                            ))
-                        }),
-                        name: child.name,
-                        outline: child.outline,
-                        weight: child.weight,
-                        beat_type: child.beat_type,
-                        characters: child.characters,
-                        location: child.location,
-                        props: child.props,
-                    })
-                    .collect(),
-            },
-        }
-    }
-}
-
-fn derived_command_uuid(command_id: CommandId, role: &[u8]) -> Uuid {
-    let mut bytes = *command_id.0.as_bytes();
-    for (index, byte) in role.iter().enumerate() {
-        let slot = index % bytes.len();
-        bytes[slot] = bytes[slot].wrapping_add(*byte).rotate_left(1);
-    }
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    Uuid::from_bytes(bytes)
-}
-
-fn derived_indexed_command_uuid(command_id: CommandId, role: &[u8], index: usize) -> Uuid {
-    let mut bytes = *derived_command_uuid(command_id, role).as_bytes();
-    for (offset, byte) in index.to_le_bytes().iter().enumerate() {
-        let slot = bytes.len() - 1 - (offset % bytes.len());
-        bytes[slot] ^= *byte;
-    }
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    Uuid::from_bytes(bytes)
-}
-
 async fn set_timeline_node_range(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<SetTimelineNodeRangeCommand>>,
@@ -154,23 +45,6 @@ async fn set_timeline_node_range(
         .await
         .map_err(ApiError::from)?;
     crate::error::json_value(response)
-}
-
-async fn timeline_command_project(
-    state: &AppState,
-    path: &std::path::Path,
-) -> Result<eidetic_core::Project, ApiError> {
-    if state.project.lock().is_none() {
-        return Err(ApiError::no_project());
-    }
-    match crate::persistence::load_project(path).await {
-        Ok((project, _)) => Ok(project),
-        Err(_) => state
-            .project
-            .lock()
-            .clone()
-            .ok_or_else(ApiError::no_project),
-    }
 }
 
 async fn create_timeline_node(
@@ -185,72 +59,12 @@ async fn create_timeline_node(
 
 async fn apply_timeline_children(
     State(state): State<AppState>,
-    Json(command): Json<ApplyTimelineChildrenRouteCommand>,
+    Json(command): Json<crate::command_service::ApplyTimelineChildrenRequestCommand>,
 ) -> ApiJson {
-    for child in &command.payload.children {
-        validation::validate_name(&child.name, "child node name")?;
-        validation::validate_positive_finite_f32(child.weight, "child weight")?;
-    }
-    let command = command.into_core_command();
-    let path = active_project_path(&state)?;
-    let children = command.payload.children.clone();
-    let response = {
-        let project = timeline_command_project(&state, &path).await?;
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_apply_timeline_children_history(
-            &mut conn, &project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
-            .map_err(map_timeline_command_error)?;
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let has_bible_references = children_have_bible_references(&children);
-        for child in children {
-            let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
-                node_id: child.node_id,
-            });
-            if !child.outline.is_empty() {
-                let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
-                    node_id: child.node_id,
-                    field: crate::ydoc::ContentField::Notes,
-                    text: child.outline,
-                    author: "human:command".into(),
-                });
-            }
-        }
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
-        if has_bible_references {
-            let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
-        }
-        state.trigger_save();
-    }
+    let response = crate::command_service::apply_timeline_children(&state, command)
+        .await
+        .map_err(ApiError::from)?;
     crate::error::json_value(response)
-}
-
-fn children_have_bible_references(children: &[ApplyTimelineChildCommand]) -> bool {
-    children.iter().any(|child| {
-        child
-            .characters
-            .iter()
-            .any(|value| !value.as_str().trim().is_empty())
-            || child
-                .location
-                .as_deref()
-                .is_some_and(|value| !value.trim().is_empty())
-            || child
-                .props
-                .iter()
-                .any(|value| !value.as_str().trim().is_empty())
-    })
 }
 
 async fn create_timeline_relationship(
@@ -311,52 +125,6 @@ async fn delete_timeline_node(
         .await
         .map_err(ApiError::from)
         .and_then(crate::error::json_value)
-}
-
-fn map_timeline_command_error(error: TimelineCommandError) -> ApiError {
-    match error {
-        TimelineCommandError::Core(error) => ApiError::bad_request(error.to_string()),
-        TimelineCommandError::History(error) => map_history_error(error),
-    }
-}
-
-fn timeline_render_projection_from_current_state(
-    conn: &Connection,
-    fallback: &Timeline,
-) -> Result<ProjectionEnvelope<TimelineRenderProjection>, TimelineCommandError> {
-    let mut timeline = fallback.clone();
-    let use_persisted_nodes = timeline_nodes_are_authoritative(conn)?;
-    let use_persisted_relationships = timeline_relationships_are_authoritative(conn)?;
-    let nodes = timeline_node_store::load_nodes(conn)?;
-    if use_persisted_nodes || !nodes.is_empty() {
-        timeline.nodes = nodes;
-        timeline.node_arcs = timeline_node_store::load_node_arcs(conn)?;
-    }
-    let relationships = timeline_relationship_store::load_relationships(conn)?;
-    if use_persisted_relationships || !relationships.is_empty() || fallback.relationships.is_empty()
-    {
-        timeline.relationships = relationships;
-    }
-
-    Ok(ProjectionEnvelope::initial(
-        TimelineRenderProjection::from_timeline(&timeline),
-    ))
-}
-
-fn timeline_nodes_are_authoritative(conn: &Connection) -> Result<bool, TimelineCommandError> {
-    let node_revisions =
-        history_store::load_revision_summary_for_kind(conn, ObjectKind::TimelineNode)?
-            .revision_count;
-    Ok(node_revisions > 0)
-}
-
-fn timeline_relationships_are_authoritative(
-    conn: &Connection,
-) -> Result<bool, TimelineCommandError> {
-    let relationship_revisions =
-        history_store::load_revision_summary_for_kind(conn, ObjectKind::TimelineRelationship)?
-            .revision_count;
-    Ok(relationship_revisions > 0)
 }
 
 #[cfg(test)]

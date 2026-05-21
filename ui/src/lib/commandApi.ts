@@ -36,40 +36,21 @@ import type {
   SetStoryArcMetadataCommand,
   StoryArcCommandResponse,
 } from './storyArcTypes.js';
-import type {
-  ApplyTimelineChildrenCommand,
-  CreateTimelineRelationshipCommand,
-  CreateTimelineNodeCommand,
-  DeleteTimelineNodeCommand,
-  DeleteTimelineRelationshipCommand,
-  SetTimelineNodeLockCommand,
-  SetTimelineNodeNotesCommand,
-  SetTimelineNodeRangeCommand,
-  SplitTimelineNodeCommand,
-  TimelineCommandResponse,
-} from './timelineCommandTypes.js';
 import { hasDesktopTransport, invokeDesktop } from './desktopTransport.js';
+import { createCommandId, request } from './commandTransport.js';
 
-const BASE = '/api';
-
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  const body = await res.json().catch(() => null);
-  if (!res.ok) {
-    throw new Error((body as Record<string, string> | null)?.error || `HTTP ${res.status}`);
-  }
-  if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
-    throw new Error(body.error);
-  }
-  return body as T;
-}
-
-export function createCommandId(): string {
-  return crypto.randomUUID();
-}
+export { createCommandId } from './commandTransport.js';
+export {
+  applyTimelineChildren,
+  createTimelineNode,
+  createTimelineRelationship,
+  deleteTimelineNode,
+  deleteTimelineRelationship,
+  setTimelineNodeLock,
+  setTimelineNodeNotes,
+  setTimelineNodeRange,
+  splitTimelineNode,
+} from './timelineCommandApi.js';
 
 export function setObjectField(
   payload: SetObjectFieldCommand,
@@ -432,177 +413,6 @@ export function deleteStoryArc(
   }
 
   return request('/commands/story/delete-arc', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function setTimelineNodeRange(
-  payload: SetTimelineNodeRangeCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<SetTimelineNodeRangeCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_range', { command });
-  }
-
-  return request('/commands/timeline/node-range', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function createTimelineNode(
-  payload: CreateTimelineNodeCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<CreateTimelineNodeCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_create_node', { command });
-  }
-
-  return request('/commands/timeline/create-node', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function applyTimelineChildren(
-  payload: ApplyTimelineChildrenCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<ApplyTimelineChildrenCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  return request('/commands/timeline/apply-children', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function createTimelineRelationship(
-  payload: CreateTimelineRelationshipCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<CreateTimelineRelationshipCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_create_relationship', {
-      command,
-    });
-  }
-
-  return request('/commands/timeline/create-relationship', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function deleteTimelineRelationship(
-  payload: DeleteTimelineRelationshipCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<DeleteTimelineRelationshipCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_relationship', {
-      command,
-    });
-  }
-
-  return request('/commands/timeline/delete-relationship', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function setTimelineNodeLock(
-  payload: SetTimelineNodeLockCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<SetTimelineNodeLockCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_lock', { command });
-  }
-
-  return request('/commands/timeline/node-lock', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function setTimelineNodeNotes(
-  payload: SetTimelineNodeNotesCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<SetTimelineNodeNotesCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_node_notes', { command });
-  }
-
-  return request('/commands/timeline/node-notes', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function splitTimelineNode(
-  payload: SplitTimelineNodeCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<SplitTimelineNodeCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_split_node', { command });
-  }
-
-  return request('/commands/timeline/split-node', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
-}
-
-export function deleteTimelineNode(
-  payload: DeleteTimelineNodeCommand,
-  commandId = createCommandId(),
-): Promise<TimelineCommandResponse> {
-  const command: CommandEnvelope<DeleteTimelineNodeCommand> = {
-    id: commandId,
-    payload,
-  };
-
-  if (hasDesktopTransport()) {
-    return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_node', { command });
-  }
-
-  return request('/commands/timeline/delete-node', {
     method: 'POST',
     body: JSON.stringify(command),
   });

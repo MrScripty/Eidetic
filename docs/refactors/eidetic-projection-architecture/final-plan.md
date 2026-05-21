@@ -538,6 +538,22 @@ Completed slices:
   Axum route as a service adapter, exposed
   `command_timeline_create_relationship` through Tauri, and made the frontend
   helper prefer desktop IPC when available.
+- `feat(desktop): route timeline apply children command through tauri` moved
+  apply-children validation, backend-owned child ID derivation, timeline
+  persistence, Y.Doc child/notes side effects, and semantic invalidation into
+  the focused backend timeline command service, kept the legacy Axum route as a
+  service adapter, exposed `command_timeline_apply_children` through Tauri, and
+  made the frontend helper prefer desktop IPC when available.
+- `refactor(server): split timeline command request DTOs` extracted
+  backend-owned timeline command request DTOs, validation entrypoints, and
+  derived result-ID conversion into a focused server module so the timeline
+  command service and legacy route adapter remain under decomposition
+  thresholds after the apply-children migration.
+- `refactor(ui): split timeline command api helpers` extracted timeline command
+  helper functions into `timelineCommandApi.ts` and shared HTTP command
+  transport into `commandTransport.ts` while preserving the existing
+  `commandApi.ts` re-export surface, keeping touched frontend modules below
+  decomposition thresholds.
 
 Discovered issues:
 

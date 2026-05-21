@@ -86,6 +86,17 @@ pub async fn command_timeline_create_relationship(
 }
 
 #[tauri::command]
+pub async fn command_timeline_apply_children(
+    app: tauri::AppHandle,
+    command: command_service::ApplyTimelineChildrenRequestCommand,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::apply_timeline_children(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 pub async fn command_timeline_split_node(
     app: tauri::AppHandle,
     command: command_service::SplitTimelineNodeRequestCommand,

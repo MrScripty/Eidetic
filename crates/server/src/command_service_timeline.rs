@@ -1,25 +1,24 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, CreateTimelineNodeCommand, CreateTimelineRelationshipCommand,
-    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope,
-    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
-    TimelineRenderProjection,
+    ApplyTimelineChildCommand, CommandEnvelope, DeleteTimelineNodeCommand,
+    DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
+    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
-use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
-use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::backend_error::BackendError;
-use crate::command_service_support::{
-    active_project_path, derived_command_uuid, map_history_error,
-};
+use crate::command_service_support::{active_project_path, map_history_error};
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::state::{AppState, ServerEvent};
 use crate::timeline_command::{self, TimelineCommandError};
-use crate::validation;
 use crate::ydoc::DocCommand;
 use crate::{timeline_node_store, timeline_relationship_store};
+
+pub use crate::command_service_timeline_requests::{
+    ApplyTimelineChildrenRequestCommand, CreateTimelineNodeRequestCommand,
+    CreateTimelineRelationshipRequestCommand, SplitTimelineNodeRequestCommand,
+};
 
 #[derive(Debug, Serialize)]
 pub struct TimelineCommandResponse {
@@ -27,122 +26,11 @@ pub struct TimelineCommandResponse {
     projection: ProjectionEnvelope<TimelineRenderProjection>,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct CreateTimelineNodeRequestCommand {
-    id: CommandId,
-    payload: CreateTimelineNodeRequestPayload,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CreateTimelineNodeRequestPayload {
-    #[serde(default)]
-    node_id: Option<NodeId>,
-    parent_id: Option<NodeId>,
-    level: StoryLevel,
-    name: String,
-    start_ms: u64,
-    end_ms: u64,
-    beat_type: Option<BeatType>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct SplitTimelineNodeRequestCommand {
-    id: CommandId,
-    payload: SplitTimelineNodeRequestPayload,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct CreateTimelineRelationshipRequestCommand {
-    id: CommandId,
-    payload: CreateTimelineRelationshipRequestPayload,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CreateTimelineRelationshipRequestPayload {
-    #[serde(default)]
-    relationship_id: Option<RelationshipId>,
-    from_node_id: NodeId,
-    to_node_id: NodeId,
-    relationship_type: RelationshipType,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct SplitTimelineNodeRequestPayload {
-    node_id: NodeId,
-    at_ms: u64,
-    #[serde(default)]
-    left_node_id: Option<NodeId>,
-    #[serde(default)]
-    right_node_id: Option<NodeId>,
-}
-
-impl CreateTimelineNodeRequestCommand {
-    fn into_core_command(self) -> CommandEnvelope<CreateTimelineNodeCommand> {
-        CommandEnvelope {
-            id: self.id,
-            payload: CreateTimelineNodeCommand {
-                node_id: self
-                    .payload
-                    .node_id
-                    .unwrap_or_else(|| NodeId(derived_command_uuid(self.id, b"timeline.node"))),
-                parent_id: self.payload.parent_id,
-                level: self.payload.level,
-                name: self.payload.name,
-                start_ms: self.payload.start_ms,
-                end_ms: self.payload.end_ms,
-                beat_type: self.payload.beat_type,
-            },
-        }
-    }
-}
-
-impl SplitTimelineNodeRequestCommand {
-    fn into_core_command(
-        self,
-    ) -> CommandEnvelope<eidetic_core::contracts::SplitTimelineNodeCommand> {
-        CommandEnvelope {
-            id: self.id,
-            payload: eidetic_core::contracts::SplitTimelineNodeCommand {
-                node_id: self.payload.node_id,
-                at_ms: self.payload.at_ms,
-                left_node_id: self.payload.left_node_id.unwrap_or_else(|| {
-                    NodeId(derived_command_uuid(self.id, b"timeline.split.left"))
-                }),
-                right_node_id: self.payload.right_node_id.unwrap_or_else(|| {
-                    NodeId(derived_command_uuid(self.id, b"timeline.split.right"))
-                }),
-            },
-        }
-    }
-}
-
-impl CreateTimelineRelationshipRequestCommand {
-    fn into_core_command(self) -> CommandEnvelope<CreateTimelineRelationshipCommand> {
-        CommandEnvelope {
-            id: self.id,
-            payload: CreateTimelineRelationshipCommand {
-                relationship_id: self.payload.relationship_id.unwrap_or_else(|| {
-                    RelationshipId(derived_command_uuid(self.id, b"timeline.relationship"))
-                }),
-                from_node_id: self.payload.from_node_id,
-                to_node_id: self.payload.to_node_id,
-                relationship_type: self.payload.relationship_type,
-            },
-        }
-    }
-}
-
 pub async fn create_timeline_node(
     state: &AppState,
     command: CreateTimelineNodeRequestCommand,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    validation::validate_name(&command.payload.name, "node name")?;
+    command.validate()?;
     let command = command.into_core_command();
     let path = active_project_path(state)?;
     let created_node_id = command.payload.node_id;
@@ -397,6 +285,79 @@ pub async fn create_timeline_relationship(
         state.trigger_save();
     }
     Ok(response)
+}
+
+pub async fn apply_timeline_children(
+    state: &AppState,
+    command: ApplyTimelineChildrenRequestCommand,
+) -> Result<TimelineCommandResponse, BackendError> {
+    command.validate()?;
+    let command = command.into_core_command();
+    let path = active_project_path(state)?;
+    let children = command.payload.children.clone();
+    let project = timeline_command_project(state, &path).await?;
+    let response = tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome = timeline_command::record_apply_timeline_children_history(
+            &mut conn, &project, &command, 0,
+        )
+        .map_err(map_timeline_command_error)?;
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
+        Ok::<_, BackendError>(TimelineCommandResponse {
+            outcome,
+            projection,
+        })
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!(
+            "timeline apply children command task failed: {error}"
+        ))
+    })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let has_bible_references = children_have_bible_references(&children);
+        for child in children {
+            let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
+                node_id: child.node_id,
+            });
+            if !child.outline.is_empty() {
+                let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+                    node_id: child.node_id,
+                    field: crate::ydoc::ContentField::Notes,
+                    text: child.outline,
+                    author: "human:command".into(),
+                });
+            }
+        }
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+        if has_bible_references {
+            let _ = state.events_tx.send(ServerEvent::SemanticProposalsChanged);
+        }
+        state.trigger_save();
+    }
+    Ok(response)
+}
+
+fn children_have_bible_references(children: &[ApplyTimelineChildCommand]) -> bool {
+    children.iter().any(|child| {
+        child
+            .characters
+            .iter()
+            .any(|value| !value.as_str().trim().is_empty())
+            || child
+                .location
+                .as_deref()
+                .is_some_and(|value| !value.trim().is_empty())
+            || child
+                .props
+                .iter()
+                .any(|value| !value.as_str().trim().is_empty())
+    })
 }
 
 pub async fn split_timeline_node(
