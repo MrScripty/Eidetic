@@ -42,10 +42,6 @@ function tauriEventApi(): TauriEventApi | null {
   return window.__TAURI__?.event ?? null;
 }
 
-export function hasDesktopTransport(): boolean {
-  return tauriCore() !== null;
-}
-
 export function hasDesktopEventTransport(): boolean {
   return tauriEventApi() !== null;
 }

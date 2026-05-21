@@ -633,12 +633,20 @@ Completed slices:
   Axum route adapter tree, Axum-only error adapter, and now-unused `axum` and
   `tower` dependencies after Tauri commands/projections became the active
   frontend/backend boundary.
+- `refactor(ui): remove legacy dev server proxy` deleted the Vite `/api` and
+  `/ws` proxy targets plus the unused desktop-transport availability helper so
+  the frontend development server no longer advertises a loopback HTTP or
+  WebSocket backend path.
 
 Discovered issues:
 
 - Resolved: reference upload still spawned unmanaged embedding work from the
   legacy route path. Reference embedding now enters through the backend task
   supervisor so desktop shutdown can abort it with the rest of the runtime.
+- Resolved: the Vite development server still proxied `/api` and `/ws` to the
+  removed loopback server after active frontend helpers became Tauri-only. The
+  proxy and unused fallback detection helper were removed so missing desktop
+  transport now fails at the Tauri adapter boundary.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
