@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createProject, getProject, listProjects, saveProject, updateProject } from './api.js';
+import {
+  createProject,
+  getAiStatus,
+  getProject,
+  listProjects,
+  saveProject,
+  updateAiConfig,
+  updateProject,
+} from './api.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -71,6 +79,41 @@ describe('api request handling', () => {
       path: '/tmp/project.db',
     });
     expect(invoke).toHaveBeenNthCalledWith(4, 'project_list', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop AI status and config commands when Tauri transport is available', async () => {
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce({
+        backend: 'llama_cpp',
+        model: 'served-model',
+        connected: true,
+        message: 'ok',
+      })
+      .mockResolvedValueOnce({
+        backend_type: 'llama_cpp',
+        model: 'served-model',
+        temperature: 0.4,
+        max_tokens: 2048,
+        base_url: 'http://127.0.0.1:18080/v1',
+        api_key: null,
+      });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getAiStatus();
+    await updateAiConfig({ model: 'served-model', temperature: 0.4 });
+
+    expect(invoke).toHaveBeenNthCalledWith(1, 'ai_status', undefined);
+    expect(invoke).toHaveBeenNthCalledWith(2, 'ai_config_update', {
+      updates: { model: 'served-model', temperature: 0.4 },
+    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

@@ -1,6 +1,7 @@
 pub(crate) mod ai_backends;
 pub(crate) mod ai_bible_context_prompt;
 pub(crate) mod ai_context_projection;
+pub mod ai_service;
 pub mod axum_runtime;
 pub mod backend_error;
 pub(crate) mod bible_graph_command;

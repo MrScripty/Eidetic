@@ -15,6 +15,7 @@ legacy Axum host over the domain model in `eidetic-core`.
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by legacy routes and future Tauri commands. |
+| `ai_service.rs` | Host-neutral AI status/config behavior consumed by legacy routes and Tauri commands. |
 | `command_service.rs` | Host-neutral command handlers shared by legacy routes and Tauri command adapters during transport migration. |
 | `projection_service.rs` | Host-neutral projection readers shared by legacy routes and Tauri command adapters during transport migration. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |

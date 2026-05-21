@@ -1,3 +1,4 @@
+mod ai_commands;
 mod commands;
 mod desktop_events;
 mod error;
@@ -24,6 +25,8 @@ pub fn run() {
             project_commands::project_save,
             project_commands::project_load,
             project_commands::project_list,
+            ai_commands::ai_status,
+            ai_commands::ai_config_update,
             commands::object_script_story::command_object_field,
             commands::object_script_story::command_script_block,
             commands::object_script_story::command_script_lock,

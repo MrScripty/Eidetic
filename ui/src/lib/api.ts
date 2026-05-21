@@ -80,10 +80,16 @@ export function generateContent(nodeId: string): Promise<{ status: string; node_
 }
 
 export function getAiStatus(): Promise<AiStatus> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<AiStatus>('ai_status');
+  }
   return request('/ai/status');
 }
 
 export function updateAiConfig(updates: Partial<AiConfig>): Promise<AiConfig> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<AiConfig>('ai_config_update', { updates });
+  }
   return request('/ai/config', {
     method: 'PUT',
     body: JSON.stringify(updates),

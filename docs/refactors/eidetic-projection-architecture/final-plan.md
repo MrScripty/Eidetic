@@ -564,6 +564,10 @@ Completed slices:
   through Tauri when desktop event transport is available and falls back to the
   legacy WebSocket client otherwise, preserving the existing projection refresh
   orchestration handlers while covering event dispatch and teardown.
+- `feat(desktop): route AI status config through tauri` extracted AI
+  status/config behavior into a host-neutral backend service, exposed Tauri
+  commands for desktop status/config reads and writes, and made the frontend AI
+  helpers prefer desktop IPC while retaining the legacy HTTP fallback.
 
 Discovered issues:
 
