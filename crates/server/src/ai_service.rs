@@ -158,7 +158,9 @@ pub fn update_ai_config(state: &AppState, update: AiConfigUpdate) -> AiConfig {
     config.clone()
 }
 
-async fn active_sqlite_project(state: &AppState) -> Result<(Project, PathBuf), BackendError> {
+pub(crate) async fn active_sqlite_project(
+    state: &AppState,
+) -> Result<(Project, PathBuf), BackendError> {
     let Some(project_path) = state.project_database.active_path() else {
         return Err(BackendError::NotFound("no project loaded".to_string()));
     };
@@ -171,7 +173,7 @@ async fn active_sqlite_project(state: &AppState) -> Result<(Project, PathBuf), B
     Ok((project, project_path))
 }
 
-async fn attach_ai_bible_context(
+pub(crate) async fn attach_ai_bible_context(
     request: &mut eidetic_core::ai::backend::GenerateRequest,
     path: PathBuf,
     node_id: NodeId,

@@ -4,10 +4,12 @@ import {
   createProject,
   deleteReference,
   exportPdf,
+  generateBatch,
+  generateContent,
+  generateChildren,
   getAiContext,
   getAiStatus,
   getProject,
-  generateChildren,
   listModels,
   listProjects,
   listReferences,
@@ -164,6 +166,38 @@ describe('api request handling', () => {
 
     expect(invoke).toHaveBeenCalledWith('ai_generate_children', {
       request: { node_id: '00000000-0000-0000-0000-000000000001' },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop script generation commands when Tauri transport is available', async () => {
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: 'started',
+        node_id: '00000000-0000-0000-0000-000000000001',
+      })
+      .mockResolvedValueOnce({
+        status: 'started',
+        parent_node_id: '00000000-0000-0000-0000-000000000002',
+        child_count: 3,
+      });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await generateContent('00000000-0000-0000-0000-000000000001');
+    await generateBatch('00000000-0000-0000-0000-000000000002');
+
+    expect(invoke).toHaveBeenNthCalledWith(1, 'ai_generate_content', {
+      request: { node_id: '00000000-0000-0000-0000-000000000001' },
+    });
+    expect(invoke).toHaveBeenNthCalledWith(2, 'ai_generate_batch', {
+      request: { parent_node_id: '00000000-0000-0000-0000-000000000002' },
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

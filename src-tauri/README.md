@@ -13,7 +13,7 @@ commands and events.
 | `capabilities/` | Tauri permission configuration for desktop IPC access. |
 | `src/lib.rs` | Tauri command/event registration and backend runtime composition. |
 | `src/main.rs` | Native desktop binary entrypoint. |
-| `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, and child-plan generation service access. |
+| `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
 | `src/export_commands.rs` | Tauri commands for export service access. |
 | `src/model_commands.rs` | Tauri commands for Pumas model-library projection reads. |

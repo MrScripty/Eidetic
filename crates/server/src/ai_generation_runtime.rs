@@ -16,9 +16,9 @@ use crate::script_document_command;
 use crate::state::{AppState, ServerEvent};
 use crate::timeline_node_store;
 
-use super::active_sqlite_project;
+use crate::ai_service::active_sqlite_project;
 
-pub(super) async fn mark_node_generating(
+pub(crate) async fn mark_node_generating(
     state: &AppState,
     project_path: PathBuf,
     node_id: NodeId,
@@ -42,7 +42,7 @@ pub(super) async fn mark_node_generating(
         .send(ServerEvent::NodeUpdated { node_id: node_uuid });
 }
 
-pub(super) async fn run_generation(
+pub(crate) async fn run_generation(
     state: AppState,
     project_path: PathBuf,
     node_uuid: Uuid,

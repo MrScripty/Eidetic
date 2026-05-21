@@ -17,6 +17,8 @@ legacy Axum host over the domain model in `eidetic-core`.
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by legacy routes and future Tauri commands. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by legacy routes and Tauri commands. |
+| `ai_generation_service.rs` | Host-neutral streaming script generation and batch generation orchestration consumed by legacy routes and Tauri commands. |
+| `ai_generation_runtime.rs` | Supervised AI generation runtime for streaming, status persistence, script block writes, and recap generation. |
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by legacy routes and Tauri commands. |
 | `export_service.rs` | Host-neutral PDF export behavior consumed by legacy routes and Tauri commands. |
 | `reference_service.rs` | Host-neutral reference document list/upload/delete behavior consumed by legacy routes and Tauri commands. |

@@ -1,4 +1,7 @@
 use eidetic_core::ai::backend::ChildPlan;
+use eidetic_server::ai_generation_service::{
+    self, AiGenerateBatchRequest, AiGenerateBatchResponse, AiGenerateRequest, AiGenerateResponse,
+};
 use eidetic_server::ai_service::{
     self, AiConfigUpdate, AiContextPreview, AiGenerateChildrenRequest, AiStatus,
 };
@@ -32,12 +35,34 @@ pub async fn ai_context_preview(
 }
 
 #[tauri::command]
+pub async fn ai_generate_content(
+    app: tauri::AppHandle,
+    request: AiGenerateRequest,
+) -> Result<AiGenerateResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    ai_generation_service::start_generation(&state, request)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 pub async fn ai_generate_children(
     app: tauri::AppHandle,
     request: AiGenerateChildrenRequest,
 ) -> Result<ChildPlan, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     ai_service::generate_children(&state, request)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn ai_generate_batch(
+    app: tauri::AppHandle,
+    request: AiGenerateBatchRequest,
+) -> Result<AiGenerateBatchResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    ai_generation_service::start_generation_batch(&state, request)
         .await
         .map_err(CommandError::from)
 }

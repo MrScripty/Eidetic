@@ -89,6 +89,11 @@ export function deleteReference(id: string): Promise<{ deleted: boolean }> {
 // --- AI ---
 
 export function generateContent(nodeId: string): Promise<{ status: string; node_id: string }> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<{ status: string; node_id: string }>('ai_generate_content', {
+      request: { node_id: nodeId },
+    });
+  }
   return request('/ai/generate', {
     method: 'POST',
     body: JSON.stringify({ node_id: nodeId }),
@@ -136,6 +141,14 @@ export function generateChildren(nodeId: string): Promise<ChildPlan> {
 export function generateBatch(
   parentNodeId: string,
 ): Promise<{ status: string; parent_node_id: string; child_count: number }> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<{ status: string; parent_node_id: string; child_count: number }>(
+      'ai_generate_batch',
+      {
+        request: { parent_node_id: parentNodeId },
+      },
+    );
+  }
   return request('/ai/generate-batch', {
     method: 'POST',
     body: JSON.stringify({ parent_node_id: parentNodeId }),
