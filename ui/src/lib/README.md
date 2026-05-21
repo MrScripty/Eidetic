@@ -14,7 +14,7 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | `desktopTransport.ts`      | Tauri IPC detection and command invocation helpers for desktop-hosted frontend code.             |
 | `commandApi.ts`            | Browser-side command helper barrel for backend-owned commands and versioned command projections. |
 | `timelineCommandApi.ts`    | Timeline-specific command helpers that send backend-owned commands through Tauri IPC.            |
-| `commandTransport.ts`      | Shared command IDs and legacy HTTP command transport used while Tauri migration is in progress.  |
+| `commandTransport.ts`      | Shared command ID generation for backend-owned command envelopes.                                |
 | `serverEventClient.ts`     | Backend event client for Tauri desktop event transport.                                         |
 | `commandApi.test.ts`       | Tests for command helper request shape and backend error handling.                               |
 | `projectionApi.ts`         | Tauri command helpers for focused backend projections.                                           |

@@ -622,6 +622,9 @@ Completed slices:
 - `refactor(ui): remove timeline command http fallback` removed legacy fetch
   fallback paths from timeline-specific command helpers so timeline mutations
   now enter the backend only through Tauri IPC from the desktop frontend.
+- `refactor(ui): remove command http fallback` removed legacy fetch fallback
+  paths from the remaining frontend command helpers and reduced the shared
+  command transport helper to command ID generation.
 
 Discovered issues:
 
@@ -717,6 +720,11 @@ Discovered issues:
   fallback behavior after equivalent Tauri commands existed for timeline
   mutations. Timeline command helpers now use desktop IPC directly and report
   missing Tauri transport as a configuration error.
+- Resolved: `ui/src/lib/commandApi.ts` still carried browser HTTP fallback
+  behavior after equivalent Tauri commands existed for non-timeline command
+  surfaces. Command helpers now use desktop IPC directly, wrapper tests no
+  longer preserve route URLs as frontend behavior, and `commandTransport.ts`
+  no longer owns fetch behavior.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

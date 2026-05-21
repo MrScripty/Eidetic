@@ -36,8 +36,8 @@ import type {
   SetStoryArcMetadataCommand,
   StoryArcCommandResponse,
 } from './storyArcTypes.js';
-import { hasDesktopTransport, invokeDesktop } from './desktopTransport.js';
-import { createCommandId, request } from './commandTransport.js';
+import { invokeDesktop } from './desktopTransport.js';
+import { createCommandId } from './commandTransport.js';
 
 export { createCommandId } from './commandTransport.js';
 export {
@@ -61,14 +61,7 @@ export function setObjectField(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ObjectFieldCommandResponse>('command_object_field', { command });
-  }
-
-  return request('/commands/object-field', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<ObjectFieldCommandResponse>('command_object_field', { command });
 }
 
 export function createBibleGraphNode(
@@ -80,14 +73,7 @@ export function createBibleGraphNode(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_node', { command });
-  }
-
-  return request('/commands/bible-graph/node', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_node', { command });
 }
 
 export function setBibleGraphField(
@@ -99,14 +85,7 @@ export function setBibleGraphField(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_field', { command });
-  }
-
-  return request('/commands/bible-graph/field', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_field', { command });
 }
 
 export function setBibleGraphEdge(
@@ -118,14 +97,7 @@ export function setBibleGraphEdge(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_edge', { command });
-  }
-
-  return request('/commands/bible-graph/edge', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_edge', { command });
 }
 
 export function setBibleGraphSnapshotField(
@@ -137,15 +109,8 @@ export function setBibleGraphSnapshotField(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_snapshot_field', {
-      command,
-    });
-  }
-
-  return request('/commands/bible-graph/snapshot-field', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_snapshot_field', {
+    command,
   });
 }
 
@@ -157,15 +122,8 @@ export function ensureCanonicalBibleRoots(
     payload: {},
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleGraphRootsCommandResponse>('command_bible_graph_roots', {
-      command,
-    });
-  }
-
-  return request('/commands/bible-graph/canonical-roots', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<BibleGraphRootsCommandResponse>('command_bible_graph_roots', {
+    command,
   });
 }
 
@@ -178,17 +136,10 @@ export function createBibleReferenceProposal(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleReferenceProposalCommandResponse>(
-      'command_bible_reference_proposal_create',
-      { command },
-    );
-  }
-
-  return request('/commands/semantic/bible-reference-proposal', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<BibleReferenceProposalCommandResponse>(
+    'command_bible_reference_proposal_create',
+    { command },
+  );
 }
 
 export function rejectBibleReferenceProposal(
@@ -200,17 +151,10 @@ export function rejectBibleReferenceProposal(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleReferenceProposalCommandResponse>(
-      'command_bible_reference_proposal_reject',
-      { command },
-    );
-  }
-
-  return request('/commands/semantic/bible-reference-proposal/reject', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<BibleReferenceProposalCommandResponse>(
+    'command_bible_reference_proposal_reject',
+    { command },
+  );
 }
 
 export function acceptBibleReferenceProposal(
@@ -222,17 +166,10 @@ export function acceptBibleReferenceProposal(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<BibleReferenceProposalCommandResponse>(
-      'command_bible_reference_proposal_accept',
-      { command },
-    );
-  }
-
-  return request('/commands/semantic/bible-reference-proposal/accept', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<BibleReferenceProposalCommandResponse>(
+    'command_bible_reference_proposal_accept',
+    { command },
+  );
 }
 
 export function createPropagationProposal(
@@ -244,16 +181,8 @@ export function createPropagationProposal(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<PropagationProposalCommandResponse>(
-      'command_propagation_proposal_create',
-      { command },
-    );
-  }
-
-  return request('/commands/semantic/propagation-proposal', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<PropagationProposalCommandResponse>('command_propagation_proposal_create', {
+    command,
   });
 }
 
@@ -266,16 +195,8 @@ export function rejectPropagationProposal(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<PropagationProposalCommandResponse>(
-      'command_propagation_proposal_reject',
-      { command },
-    );
-  }
-
-  return request('/commands/semantic/propagation-proposal/reject', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<PropagationProposalCommandResponse>('command_propagation_proposal_reject', {
+    command,
   });
 }
 
@@ -288,16 +209,8 @@ export function updatePropagationProposal(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<PropagationProposalCommandResponse>(
-      'command_propagation_proposal_update',
-      { command },
-    );
-  }
-
-  return request('/commands/semantic/propagation-proposal/update', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<PropagationProposalCommandResponse>('command_propagation_proposal_update', {
+    command,
   });
 }
 
@@ -310,16 +223,8 @@ export function acceptPropagationProposal(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<PropagationProposalCommandResponse>(
-      'command_propagation_proposal_accept',
-      { command },
-    );
-  }
-
-  return request('/commands/semantic/propagation-proposal/accept', {
-    method: 'POST',
-    body: JSON.stringify(command),
+  return invokeDesktop<PropagationProposalCommandResponse>('command_propagation_proposal_accept', {
+    command,
   });
 }
 
@@ -332,14 +237,7 @@ export function setScriptBlock(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block', { command });
-  }
-
-  return request('/commands/script/block', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block', { command });
 }
 
 export function setScriptLock(
@@ -351,14 +249,7 @@ export function setScriptLock(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ScriptDocumentCommandResponse>('command_script_lock', { command });
-  }
-
-  return request('/commands/script/lock', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<ScriptDocumentCommandResponse>('command_script_lock', { command });
 }
 
 export function createStoryArc(
@@ -370,14 +261,7 @@ export function createStoryArc(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<StoryArcCommandResponse>('command_story_create', { command });
-  }
-
-  return request('/commands/story/create-arc', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<StoryArcCommandResponse>('command_story_create', { command });
 }
 
 export function setStoryArcMetadata(
@@ -389,14 +273,7 @@ export function setStoryArcMetadata(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<StoryArcCommandResponse>('command_story_update', { command });
-  }
-
-  return request('/commands/story/update-arc', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<StoryArcCommandResponse>('command_story_update', { command });
 }
 
 export function deleteStoryArc(
@@ -408,12 +285,5 @@ export function deleteStoryArc(
     payload,
   };
 
-  if (hasDesktopTransport()) {
-    return invokeDesktop<StoryArcCommandResponse>('command_story_delete', { command });
-  }
-
-  return request('/commands/story/delete-arc', {
-    method: 'POST',
-    body: JSON.stringify(command),
-  });
+  return invokeDesktop<StoryArcCommandResponse>('command_story_delete', { command });
 }
