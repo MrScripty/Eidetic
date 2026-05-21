@@ -572,6 +572,10 @@ Completed slices:
   list/search behavior into a host-neutral backend service, exposed a Tauri
   projection command for desktop model picker reads, and made the frontend model
   helper prefer desktop IPC while preserving legacy route behavior.
+- `feat(desktop): route AI context preview through tauri` moved AI prompt
+  preview construction into the backend AI service, exposed a Tauri read command
+  for desktop context preview, and made the frontend context helper prefer
+  desktop IPC while retaining the legacy route fallback.
 
 Discovered issues:
 

@@ -1,40 +1,19 @@
 use axum::Json;
 use axum::extract::{Path, State};
-use eidetic_core::ai::prompt::build_generate_request;
-use eidetic_core::timeline::node::NodeId;
 use uuid::Uuid;
 
-use crate::prompt_format::build_chat_prompt;
+use crate::ai_service;
 use crate::state::AppState;
-
-use super::{active_sqlite_project, attach_ai_bible_context};
 
 /// Preview the formatted AI context/prompt for a node without generating.
 pub(super) async fn preview_context(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let node_id = NodeId(id);
-
-    let (project, project_path) = match active_sqlite_project(&state).await {
-        Ok(project) => project,
-        Err(error) => return Json(serde_json::json!({ "error": error })),
-    };
-
-    let mut request = match build_generate_request(&project, node_id) {
-        Ok(req) => req,
-        Err(e) => return Json(serde_json::json!({ "error": e.to_string() })),
-    };
-    if let Err(error) = attach_ai_bible_context(&mut request, project_path, node_id).await {
-        return Json(serde_json::json!({ "error": error }));
+    match ai_service::preview_ai_context(&state, id).await {
+        Ok(preview) => Json(serde_json::to_value(preview).expect("AI context serializes")),
+        Err(error) => Json(serde_json::json!({ "error": error.message() })),
     }
-
-    let prompt = build_chat_prompt(&request);
-
-    Json(serde_json::json!({
-        "system": prompt.system,
-        "user": prompt.user,
-    }))
 }
 
 #[cfg(test)]

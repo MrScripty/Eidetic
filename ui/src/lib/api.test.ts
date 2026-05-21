@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createProject,
+  getAiContext,
   getAiStatus,
   getProject,
   listModels,
@@ -114,6 +115,27 @@ describe('api request handling', () => {
     expect(invoke).toHaveBeenNthCalledWith(1, 'ai_status', undefined);
     expect(invoke).toHaveBeenNthCalledWith(2, 'ai_config_update', {
       updates: { model: 'served-model', temperature: 0.4 },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the desktop AI context command when Tauri transport is available', async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      system: 'system prompt',
+      user: 'user prompt',
+    });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getAiContext('00000000-0000-0000-0000-000000000001');
+
+    expect(invoke).toHaveBeenCalledWith('ai_context_preview', {
+      nodeId: '00000000-0000-0000-0000-000000000001',
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

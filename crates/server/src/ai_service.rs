@@ -1,6 +1,15 @@
+use std::path::PathBuf;
+
+use eidetic_core::Project;
+use eidetic_core::ai::prompt::build_generate_request;
+use eidetic_core::contracts::{AiBibleContextProjection, ProjectionEnvelope};
+use eidetic_core::timeline::node::NodeId;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::ai_backends::Backend;
+use crate::backend_error::BackendError;
+use crate::prompt_format::build_chat_prompt;
 use crate::state::{AiConfig, AppState, BackendType};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -20,6 +29,12 @@ pub struct AiConfigUpdate {
     pub max_tokens: Option<usize>,
     pub base_url: Option<String>,
     pub api_key: Option<Option<String>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AiContextPreview {
+    pub system: String,
+    pub user: String,
 }
 
 pub async fn get_ai_status(state: &AppState) -> AiStatus {
@@ -42,6 +57,23 @@ pub async fn get_ai_status(state: &AppState) -> AiStatus {
             error: Some(error.to_string()),
         },
     }
+}
+
+pub async fn preview_ai_context(
+    state: &AppState,
+    node_uuid: Uuid,
+) -> Result<AiContextPreview, BackendError> {
+    let node_id = NodeId(node_uuid);
+    let (project, project_path) = active_sqlite_project(state).await?;
+    let mut request = build_generate_request(&project, node_id)
+        .map_err(|error| BackendError::BadRequest(error.to_string()))?;
+    attach_ai_bible_context(&mut request, project_path, node_id).await?;
+    let prompt = build_chat_prompt(&request);
+
+    Ok(AiContextPreview {
+        system: prompt.system,
+        user: prompt.user,
+    })
 }
 
 pub fn update_ai_config(state: &AppState, update: AiConfigUpdate) -> AiConfig {
@@ -67,6 +99,45 @@ pub fn update_ai_config(state: &AppState, update: AiConfigUpdate) -> AiConfig {
     config.clone()
 }
 
+async fn active_sqlite_project(state: &AppState) -> Result<(Project, PathBuf), BackendError> {
+    let Some(project_path) = state.project_database.active_path() else {
+        return Err(BackendError::NotFound("no project loaded".to_string()));
+    };
+    if state.project.lock().is_none() {
+        return Err(BackendError::NotFound("no project loaded".to_string()));
+    }
+    let (project, _) = crate::persistence::load_project(&project_path)
+        .await
+        .map_err(BackendError::Internal)?;
+    Ok((project, project_path))
+}
+
+async fn attach_ai_bible_context(
+    request: &mut eidetic_core::ai::backend::GenerateRequest,
+    path: PathBuf,
+    node_id: NodeId,
+) -> Result<(), BackendError> {
+    request.bible_context = Some(load_ai_bible_context_projection(path, node_id).await?);
+    Ok(())
+}
+
+async fn load_ai_bible_context_projection(
+    path: PathBuf,
+    node_id: NodeId,
+) -> Result<ProjectionEnvelope<AiBibleContextProjection>, BackendError> {
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&path).map_err(|error| {
+            BackendError::Internal(format!("open AI bible context database failed: {error}"))
+        })?;
+        crate::ai_context_projection::load_ai_bible_context_projection(&conn, node_id)
+            .map_err(|error| BackendError::Internal(error.to_string()))
+    })
+    .await
+    .map_err(|error| {
+        BackendError::Internal(format!("AI bible context projection task failed: {error}"))
+    })?
+}
+
 fn display_model(config: &AiConfig, detected_model: &str) -> String {
     if config.model.eq_ignore_ascii_case("auto") || config.model.is_empty() {
         if detected_model.is_empty() {
@@ -81,8 +152,11 @@ fn display_model(config: &AiConfig, detected_model: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{AiConfigUpdate, display_model, update_ai_config};
+    use super::{AiConfigUpdate, display_model, preview_ai_context, update_ai_config};
     use crate::state::{AiConfig, AppState, BackendType};
+    use eidetic_core::Template;
+    use eidetic_core::timeline::node::ContentStatus;
+    use uuid::Uuid;
 
     #[test]
     fn display_model_uses_detected_model_for_auto_config() {
@@ -116,5 +190,48 @@ mod tests {
         assert_eq!(config.max_tokens, 1024);
         assert_eq!(config.base_url, "https://example.test/v1");
         assert_eq!(config.api_key, None);
+    }
+
+    #[tokio::test]
+    async fn preview_ai_context_hydrates_story_arcs_from_sqlite_when_project_mirror_is_stale() {
+        let path =
+            std::env::temp_dir().join(format!("eidetic-ai-service-context-{}.db", Uuid::new_v4()));
+        let state = AppState::new().await;
+        let mut project = Template::MultiCam.build_project("AI Context Test");
+        let node_arc = project.timeline.node_arcs[0].clone();
+        let node = project
+            .timeline
+            .node_mut(node_arc.node_id)
+            .expect("tagged node");
+        node.content.notes = "SQLite-only rain argument".to_string();
+        node.content.status = ContentStatus::NotesOnly;
+        let arc_name = project
+            .arcs
+            .iter()
+            .find(|arc| arc.id == node_arc.arc_id)
+            .expect("tagged arc")
+            .name
+            .clone();
+        crate::persistence::save_project(&project, &path, None)
+            .await
+            .expect("seed project database");
+        project.arcs.clear();
+        let node = project
+            .timeline
+            .node_mut(node_arc.node_id)
+            .expect("tagged node");
+        node.content.notes.clear();
+        node.content.status = ContentStatus::Empty;
+        *state.project.lock() = Some(project);
+        *state.project_path.lock() = Some(path.clone());
+
+        let preview = preview_ai_context(&state, node_arc.node_id.0)
+            .await
+            .expect("preview");
+
+        assert!(preview.user.contains(&arc_name));
+        assert!(preview.user.contains("SQLite-only rain argument"));
+
+        let _ = std::fs::remove_file(path);
     }
 }

@@ -28,6 +28,7 @@ pub fn run() {
             project_commands::project_list,
             ai_commands::ai_status,
             ai_commands::ai_config_update,
+            ai_commands::ai_context_preview,
             model_commands::model_list,
             commands::object_script_story::command_object_field,
             commands::object_script_story::command_script_block,

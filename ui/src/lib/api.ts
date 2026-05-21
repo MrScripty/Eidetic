@@ -97,6 +97,11 @@ export function updateAiConfig(updates: Partial<AiConfig>): Promise<AiConfig> {
 }
 
 export function getAiContext(nodeId: string): Promise<{ system: string; user: string }> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<{ system: string; user: string }>('ai_context_preview', {
+      nodeId,
+    });
+  }
   return request(`/ai/context/${nodeId}`);
 }
 
