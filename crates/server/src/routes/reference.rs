@@ -72,23 +72,25 @@ async fn upload_reference(
 
     // Spawn async embedding task — doesn't block the response.
     let state_clone = state.clone();
-    tokio::spawn(async move {
-        let config = state_clone.ai_config.lock().clone();
-        let client =
-            EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
+    state
+        .task_supervisor
+        .spawn("reference-embedding", async move {
+            let config = state_clone.ai_config.lock().clone();
+            let client =
+                EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
 
-        for chunk in chunks {
-            match client.embed(&chunk.content).await {
-                Ok(embedding) => {
-                    state_clone.vector_store.lock().insert(chunk, embedding);
-                }
-                Err(e) => {
-                    tracing::warn!("Failed to embed chunk: {e}");
+            for chunk in chunks {
+                match client.embed(&chunk.content).await {
+                    Ok(embedding) => {
+                        state_clone.vector_store.lock().insert(chunk, embedding);
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to embed chunk: {e}");
+                    }
                 }
             }
-        }
-        tracing::info!("Reference material embedding complete");
-    });
+            tracing::info!("Reference material embedding complete");
+        });
 
     Ok(Json(json))
 }

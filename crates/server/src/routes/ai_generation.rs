@@ -65,7 +65,7 @@ pub(super) async fn generate(
 
     let state_clone = state.clone();
     let node_uuid = body.node_id;
-    tokio::spawn(async move {
+    state.task_supervisor.spawn("ai-generation", async move {
         run_generation(state_clone, project_path, node_uuid, request).await;
     });
 
@@ -106,11 +106,13 @@ pub(super) async fn generate_batch(
 
     let child_count = child_ids.len();
     let state_clone = state.clone();
-    tokio::spawn(async move {
-        for child_uuid in &child_ids {
-            generate_child_in_batch(state_clone.clone(), *child_uuid).await;
-        }
-    });
+    state
+        .task_supervisor
+        .spawn("ai-generation-batch", async move {
+            for child_uuid in &child_ids {
+                generate_child_in_batch(state_clone.clone(), *child_uuid).await;
+            }
+        });
 
     Json(serde_json::json!({
         "status": "started",

@@ -588,12 +588,16 @@ Completed slices:
   lifecycle supervisor, moved AppState-owned autosave and Y.Doc manager tasks
   behind it, and wired desktop window teardown to abort supervised backend
   tasks instead of leaving them detached.
+- `refactor(server): supervise route background tasks` moved legacy AI
+  generation, batch generation, and reference embedding route background work
+  onto the backend task supervisor so the remaining route fallback paths share
+  the same desktop shutdown behavior as AppState-owned tasks.
 
 Discovered issues:
 
-- Open: reference upload still spawns unmanaged embedding work from the legacy
-  route path. Before migrating references to Tauri, the embedding enqueue/work
-  path needs an explicit lifecycle owner with shutdown/cancellation behavior.
+- Resolved: reference upload still spawned unmanaged embedding work from the
+  legacy route path. Reference embedding now enters through the backend task
+  supervisor so desktop shutdown can abort it with the rest of the runtime.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
