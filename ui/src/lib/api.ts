@@ -51,7 +51,14 @@ export function updateProject(updates: { name?: string; premise?: string }): Pro
 
 // --- References ---
 
+function referenceTypeToWireValue(docType: ReferenceType): string {
+  return typeof docType === 'string' ? docType : docType.Custom;
+}
+
 export function listReferences(): Promise<ReferenceDocument[]> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ReferenceDocument[]>('reference_list');
+  }
   return request('/references');
 }
 
@@ -60,13 +67,22 @@ export function uploadReference(
   content: string,
   docType: ReferenceType,
 ): Promise<ReferenceDocument> {
+  const doc_type = referenceTypeToWireValue(docType);
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ReferenceDocument>('reference_upload', {
+      request: { name, content, doc_type },
+    });
+  }
   return request('/references', {
     method: 'POST',
-    body: JSON.stringify({ name, content, doc_type: docType }),
+    body: JSON.stringify({ name, content, doc_type }),
   });
 }
 
 export function deleteReference(id: string): Promise<{ deleted: boolean }> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<{ deleted: boolean }>('reference_delete', { id });
+  }
   return request(`/references/${id}`, { method: 'DELETE' });
 }
 

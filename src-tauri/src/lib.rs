@@ -7,6 +7,7 @@ mod health;
 mod model_commands;
 mod project_commands;
 mod projections;
+mod reference_commands;
 
 use eidetic_server::state::AppState;
 use tauri::Manager;
@@ -38,6 +39,9 @@ pub fn run() {
             ai_commands::ai_context_preview,
             model_commands::model_list,
             export_commands::export_pdf,
+            reference_commands::reference_list,
+            reference_commands::reference_upload,
+            reference_commands::reference_delete,
             commands::object_script_story::command_object_field,
             commands::object_script_story::command_script_block,
             commands::object_script_story::command_script_lock,

@@ -2,15 +2,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createProject,
+  deleteReference,
   exportPdf,
   getAiContext,
   getAiStatus,
   getProject,
   listModels,
   listProjects,
+  listReferences,
   saveProject,
   updateAiConfig,
   updateProject,
+  uploadReference,
 } from './api.js';
 
 afterEach(() => {
@@ -183,6 +186,43 @@ describe('api request handling', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(blob.type).toBe('application/pdf');
     await expect(blob.arrayBuffer()).resolves.toEqual(Uint8Array.from([37, 80, 68, 70]).buffer);
+  });
+
+  it('uses desktop reference commands when Tauri transport is available', async () => {
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'reference-1',
+        name: 'Tone Guide',
+        content: 'Keep turns precise.',
+        doc_type: 'StyleGuide',
+      })
+      .mockResolvedValueOnce({ deleted: true });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await listReferences();
+    await uploadReference('Tone Guide', 'Keep turns precise.', 'StyleGuide');
+    await deleteReference('00000000-0000-0000-0000-000000000001');
+
+    expect(invoke).toHaveBeenNthCalledWith(1, 'reference_list', undefined);
+    expect(invoke).toHaveBeenNthCalledWith(2, 'reference_upload', {
+      request: {
+        name: 'Tone Guide',
+        content: 'Keep turns precise.',
+        doc_type: 'StyleGuide',
+      },
+    });
+    expect(invoke).toHaveBeenNthCalledWith(3, 'reference_delete', {
+      id: '00000000-0000-0000-0000-000000000001',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('normalizes desktop command errors', async () => {

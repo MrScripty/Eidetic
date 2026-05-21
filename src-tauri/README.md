@@ -17,6 +17,7 @@ commands and events.
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
 | `src/export_commands.rs` | Tauri commands for export service access. |
 | `src/model_commands.rs` | Tauri commands for Pumas model-library projection reads. |
+| `src/reference_commands.rs` | Tauri commands for reference document list/upload/delete service access. |
 
 ## Invariants
 - Tauri is the desktop transport boundary only. Canonical state remains owned by

@@ -592,6 +592,10 @@ Completed slices:
   generation, batch generation, and reference embedding route background work
   onto the backend task supervisor so the remaining route fallback paths share
   the same desktop shutdown behavior as AppState-owned tasks.
+- `feat(desktop): route references through tauri` extracted reference
+  list/upload/delete behavior into a host-neutral backend service, exposed
+  Tauri reference commands, and made frontend reference helpers prefer desktop
+  IPC while preserving legacy route fallback and supervised embedding.
 
 Discovered issues:
 
@@ -654,17 +658,18 @@ Discovered issues:
 - Resolved: `crates/server/src/timeline_command.rs` exceeded the 500-line decomposition threshold after adding timeline command history recording. History-recording helpers were split into `timeline_command_history.rs` so the mutation applicator remains easier to reason about before the larger node-delete and child-replacement slices.
 - Open: Milestone 7 route/service extraction still has Axum-shaped route
   handlers and route tests. Reusable validators now return backend-neutral
-  errors, and project route behavior now has a host-neutral service boundary,
-  but command/projection/AI/export/reference route handlers and many route tests
-  still use HTTP status codes as the behavior boundary; extract service
-  functions and service-level tests before adding Tauri command adapters.
+  errors, and project, command, projection, AI status/config/context,
+  model-list, export, and reference behavior now have host-neutral service
+  boundaries, but AI generation route tests and some legacy route fixtures still
+  use HTTP status codes as the behavior boundary; extract the remaining
+  generation contracts before deleting the Axum route surface.
 - Resolved: the first Tauri dependency resolution selected `tauri` 2.10.3 with
   newer 2.11 runtime crates, which failed inside `tauri-runtime-wry`. The desktop
   crate now pins `tauri` to 2.11.2 so the runtime stack resolves consistently.
-- Open: Milestone 7 lifecycle compliance is blocked by detached backend tasks.
-  Autosave, Y.Doc, AI generation, batch generation, and reference embedding use
-  `tokio::spawn` without a runtime owner; move them behind a Tauri-owned
-  backend lifecycle supervisor before deleting Axum startup.
+- Resolved: Milestone 7 lifecycle compliance was blocked by detached backend
+  tasks. Autosave, Y.Doc, AI generation, batch generation, and reference
+  embedding now run through the backend task supervisor, and Tauri window
+  teardown aborts supervised work through the shared backend lifecycle owner.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

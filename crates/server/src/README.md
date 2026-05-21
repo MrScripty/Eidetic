@@ -19,6 +19,7 @@ legacy Axum host over the domain model in `eidetic-core`.
 | `ai_service.rs` | Host-neutral AI status, config, and context-preview behavior consumed by legacy routes and Tauri commands. |
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by legacy routes and Tauri commands. |
 | `export_service.rs` | Host-neutral PDF export behavior consumed by legacy routes and Tauri commands. |
+| `reference_service.rs` | Host-neutral reference document list/upload/delete behavior consumed by legacy routes and Tauri commands. |
 | `command_service.rs` | Host-neutral command handlers shared by legacy routes and Tauri command adapters during transport migration. |
 | `projection_service.rs` | Host-neutral projection readers shared by legacy routes and Tauri command adapters during transport migration. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |

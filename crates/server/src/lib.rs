@@ -41,6 +41,7 @@ pub(crate) mod propagation_proposal_script_accept;
 pub(crate) mod propagation_proposal_store;
 pub(crate) mod propagation_proposal_target;
 pub(crate) mod propagation_proposal_update;
+pub mod reference_service;
 pub(crate) mod revision_projection;
 pub mod routes;
 pub(crate) mod script_document_command;
