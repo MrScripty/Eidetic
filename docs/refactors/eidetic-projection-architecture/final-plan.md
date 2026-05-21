@@ -629,6 +629,10 @@ Completed slices:
   server binary, Axum listener/router composition, static file host, WebSocket
   host, and the now-unused `tower-http` dependency while retaining route
   adapters for the remaining service-test migration.
+- `refactor(server): remove axum route adapters` deleted the remaining legacy
+  Axum route adapter tree, Axum-only error adapter, and now-unused `axum` and
+  `tower` dependencies after Tauri commands/projections became the active
+  frontend/backend boundary.
 
 Discovered issues:
 
@@ -689,14 +693,11 @@ Discovered issues:
 - Resolved: `unlock_node` derived content status from legacy `node.content.content`. Unlock now leaves status unchanged because script document projections own durable screenplay text.
 - Resolved: `ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts` exceeded the 500-line decomposition threshold while covering list, detail, create, field, and edge cache behavior. Read/cache behavior and command cache-write behavior were split into separate test files before schema editor work.
 - Resolved: `crates/server/src/timeline_command.rs` exceeded the 500-line decomposition threshold after adding timeline command history recording. History-recording helpers were split into `timeline_command_history.rs` so the mutation applicator remains easier to reason about before the larger node-delete and child-replacement slices.
-- Open: Milestone 7 route/service extraction still has Axum-shaped route
-  handlers and route tests. Reusable validators now return backend-neutral
-  errors, and project, command, projection, AI status/config/context,
-  model-list, export, reference, child-plan generation, streaming generation,
-  and batch generation behavior now have host-neutral service boundaries, but
-  some legacy route fixtures still use HTTP status codes as the behavior
-  boundary; replace those with service and Tauri adapter tests before deleting
-  the Axum route surface.
+- Resolved: Milestone 7 route/service extraction still had Axum-shaped route
+  handlers and route tests after equivalent service and Tauri command surfaces
+  existed for the active desktop path. The legacy route tree, route tests,
+  Axum-only error adapter, and direct Axum/Tower server dependencies were
+  deleted; future coverage must target backend services or Tauri adapters.
 - Resolved: the first Tauri dependency resolution selected `tauri` 2.10.3 with
   newer 2.11 runtime crates, which failed inside `tauri-runtime-wry`. The desktop
   crate now pins `tauri` to 2.11.2 so the runtime stack resolves consistently.
@@ -731,9 +732,7 @@ Discovered issues:
   no longer owns fetch behavior.
 - Resolved: `eidetic-server` still exposed a standalone Axum listener, static
   web host, and WebSocket host after the launcher moved to Tauri. The server
-  crate no longer builds a listener binary or static/WebSocket runtime; route
-  adapters remain temporarily for service-test migration before Axum itself can
-  be removed.
+  crate no longer builds a listener binary or static/WebSocket runtime.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

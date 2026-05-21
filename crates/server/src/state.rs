@@ -98,7 +98,7 @@ impl Default for AiConfig {
     }
 }
 
-/// Shared application state, wrapped in an Arc for use as axum state.
+/// Shared application state, wrapped in an Arc for desktop command adapters.
 #[derive(Clone)]
 pub struct AppState {
     /// Loaded project mirror for structural data that has not moved to SQLite stores yet.

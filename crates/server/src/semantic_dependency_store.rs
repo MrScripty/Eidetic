@@ -1,13 +1,19 @@
+#[cfg(test)]
 use eidetic_core::contracts::{
-    ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectKind,
-    ObjectRevision, ProjectionEnvelope, ProjectionVersion, RecordSemanticDependencyCommand,
-    RevisionOperation, SemanticDependency, SemanticDependencyEndpoint, SemanticDependencyId,
-    SemanticDependencyProjection,
+    ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectRevision,
+    RecordSemanticDependencyCommand, RevisionOperation,
 };
-use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
-use serde::Serialize;
+use eidetic_core::contracts::{
+    ObjectKind, ProjectionEnvelope, ProjectionVersion, SemanticDependency,
+    SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyProjection,
+};
+use rusqlite::{Connection, Row, params};
+#[cfg(test)]
+use rusqlite::{OptionalExtension, Transaction};
 
-use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
+#[cfg(test)]
+use crate::history_store::RecordChangeOutcome;
+use crate::history_store::{self, HistoryStoreError};
 
 const SEMANTIC_DEPENDENCY_SCHEMA_SQL: &str = r#"
 CREATE TABLE IF NOT EXISTS semantic_dependencies (
@@ -57,24 +63,13 @@ pub(crate) struct DependencyEndpointFilter {
     pub field_key: Option<String>,
 }
 
-impl DependencyEndpointFilter {
-    pub(crate) fn from_endpoint(endpoint: &SemanticDependencyEndpoint) -> Self {
-        let endpoint = SqlEndpoint::from_endpoint(endpoint);
-        Self {
-            kind: endpoint.kind,
-            id: endpoint.id,
-            part_key: endpoint.part_key,
-            field_key: endpoint.field_key,
-        }
-    }
-}
-
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), SemanticDependencyStoreError> {
     history_store::create_schema(conn)?;
     conn.execute_batch(SEMANTIC_DEPENDENCY_SCHEMA_SQL)?;
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) fn record_semantic_dependency(
     conn: &mut Connection,
     command: &CommandEnvelope<RecordSemanticDependencyCommand>,
@@ -135,6 +130,7 @@ pub(crate) fn load_semantic_dependency_projection(
     }
 }
 
+#[cfg(test)]
 fn validate_dependency(
     dependency: &SemanticDependency,
 ) -> Result<(), SemanticDependencyStoreError> {
@@ -148,6 +144,7 @@ fn validate_dependency(
     Ok(())
 }
 
+#[cfg(test)]
 fn dependency_exists(
     conn: &Connection,
     dependency_id: &SemanticDependencyId,
@@ -162,6 +159,7 @@ fn dependency_exists(
     .map_err(SemanticDependencyStoreError::from)
 }
 
+#[cfg(test)]
 fn insert_dependency_in_transaction(
     tx: &Transaction<'_>,
     dependency: &SemanticDependency,
@@ -270,6 +268,7 @@ fn row_to_dependency(row: &Row<'_>) -> Result<SemanticDependency, SemanticDepend
     })
 }
 
+#[cfg(test)]
 fn dependency_revision(
     dependency: &SemanticDependency,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -313,6 +312,7 @@ fn dependency_revision(
     })
 }
 
+#[cfg(test)]
 fn endpoint_label(endpoint: &SemanticDependencyEndpoint) -> String {
     let sql = SqlEndpoint::from_endpoint(endpoint);
     match (sql.part_key, sql.field_key) {
@@ -333,6 +333,7 @@ struct SqlEndpoint {
 }
 
 impl SqlEndpoint {
+    #[cfg(test)]
     fn from_endpoint(endpoint: &SemanticDependencyEndpoint) -> Self {
         match endpoint {
             SemanticDependencyEndpoint::TimelineNode { node_id } => Self {
@@ -414,9 +415,10 @@ impl SqlEndpoint {
     }
 }
 
+#[cfg(test)]
 fn encode_string_enum<T>(value: &T) -> Result<String, HistoryStoreError>
 where
-    T: Serialize,
+    T: serde::Serialize,
 {
     match serde_json::to_value(value)? {
         serde_json::Value::String(value) => Ok(value),

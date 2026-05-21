@@ -13,8 +13,6 @@ serde_json = { workspace = true }
 uuid = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-axum = { workspace = true }
-tower = { workspace = true }
 parking_lot = { workspace = true }
 futures = { workspace = true }
 tracing = { workspace = true }

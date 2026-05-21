@@ -148,34 +148,6 @@ pub(crate) fn validate_child_plan_for_apply(
     Ok(())
 }
 
-pub(crate) fn validate_child_plan_pending(
-    conn: &Connection,
-    plan_id: &ChildPlanId,
-) -> Result<(), ChildPlanStoreError> {
-    create_schema(conn)?;
-    let Some(stored_status) = conn
-        .query_row(
-            "SELECT status FROM child_plans WHERE id = ?1",
-            [plan_id.as_str()],
-            |row| row.get::<_, String>(0),
-        )
-        .optional()?
-    else {
-        return Err(ChildPlanStoreError::NotFound(format!(
-            "child plan not found: {}",
-            plan_id.as_str()
-        )));
-    };
-    let expected_status = encode_string_enum(&ChildPlanStatus::Pending)?;
-    if stored_status != expected_status {
-        return Err(ChildPlanStoreError::InvalidCommand(format!(
-            "child plan {} is not pending",
-            plan_id.as_str()
-        )));
-    }
-    Ok(())
-}
-
 pub(crate) fn applied_child_plan_revision(
     plan_id: &ChildPlanId,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -197,36 +169,6 @@ pub(crate) fn applied_child_plan_revision(
     )))
 }
 
-pub(crate) fn rejected_child_plan_revision(
-    plan_id: &ChildPlanId,
-    reason: Option<&str>,
-    event_id: eidetic_core::contracts::ChangeEventId,
-) -> Result<ObjectRevision, HistoryStoreError> {
-    let mut revision = ObjectRevision::new(
-        ObjectKind::ChildPlan,
-        plan_id.as_str().to_string(),
-        event_id,
-        RevisionOperation::Update,
-    )
-    .with_field(FieldDelta::new(
-        "status",
-        Some(FieldValue::Text(encode_string_enum(
-            &ChildPlanStatus::Pending,
-        )?)),
-        Some(FieldValue::Text(encode_string_enum(
-            &ChildPlanStatus::Rejected,
-        )?)),
-    ));
-    if let Some(reason) = reason {
-        revision = revision.with_field(FieldDelta::new(
-            "rejection_reason",
-            None,
-            Some(FieldValue::Text(reason.to_string())),
-        ));
-    }
-    Ok(revision)
-}
-
 pub(crate) fn mark_child_plan_applied_in_transaction(
     tx: &Transaction<'_>,
     plan_id: &ChildPlanId,
@@ -244,29 +186,6 @@ pub(crate) fn mark_child_plan_applied_in_transaction(
     if updated != 1 {
         return Err(HistoryStoreError::InvalidValue(format!(
             "child plan status changed before apply: {}",
-            plan_id.as_str()
-        )));
-    }
-    Ok(())
-}
-
-pub(crate) fn mark_child_plan_rejected_in_transaction(
-    tx: &Transaction<'_>,
-    plan_id: &ChildPlanId,
-) -> Result<(), HistoryStoreError> {
-    let updated = tx.execute(
-        "UPDATE child_plans
-         SET status = ?1
-         WHERE id = ?2 AND status = ?3",
-        params![
-            encode_string_enum(&ChildPlanStatus::Rejected)?,
-            plan_id.as_str(),
-            encode_string_enum(&ChildPlanStatus::Pending)?
-        ],
-    )?;
-    if updated != 1 {
-        return Err(HistoryStoreError::InvalidValue(format!(
-            "child plan status changed before reject: {}",
             plan_id.as_str()
         )));
     }

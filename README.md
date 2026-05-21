@@ -5,7 +5,7 @@ Eidetic is a local-first, AI-assisted scriptwriting workspace built as a Tauri d
 ## Workspace Layout
 
 - `crates/core/` contains the domain model, timeline/story logic, screenplay helpers, and AI prompt/context assembly.
-- `crates/server/` owns backend services, persistence, event production, and AI backend adapters. Legacy HTTP/WebSocket modules remain only during the Tauri migration.
+- `crates/server/` owns backend services, persistence, event production, and AI backend adapters consumed by the Tauri desktop shell.
 - `src-tauri/` contains the desktop shell and Tauri command/event adapters over backend-owned services.
 - `ui/` contains the Svelte application, shared client contracts, state stores, and frontend verification tooling.
 - `docs/` holds product research and architecture/decomposition records.
