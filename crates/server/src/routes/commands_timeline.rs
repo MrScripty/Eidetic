@@ -3,13 +3,12 @@ use axum::routing::post;
 use axum::{Json, Router};
 use eidetic_core::contracts::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CommandEnvelope, CommandId,
-    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, TimelineRenderProjection,
+    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope,
+    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use eidetic_core::timeline::node::NodeId;
-use eidetic_core::timeline::relationship::RelationshipId;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -91,23 +90,6 @@ struct ApplyTimelineChildRoutePayload {
     props: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CreateTimelineRelationshipRouteCommand {
-    id: CommandId,
-    payload: CreateTimelineRelationshipRoutePayload,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CreateTimelineRelationshipRoutePayload {
-    #[serde(default)]
-    relationship_id: Option<RelationshipId>,
-    from_node_id: NodeId,
-    to_node_id: NodeId,
-    relationship_type: eidetic_core::timeline::relationship::RelationshipType,
-}
-
 impl ApplyTimelineChildrenRouteCommand {
     fn into_core_command(self) -> CommandEnvelope<ApplyTimelineChildrenCommand> {
         CommandEnvelope {
@@ -137,22 +119,6 @@ impl ApplyTimelineChildrenRouteCommand {
                         props: child.props,
                     })
                     .collect(),
-            },
-        }
-    }
-}
-
-impl CreateTimelineRelationshipRouteCommand {
-    fn into_core_command(self) -> CommandEnvelope<CreateTimelineRelationshipCommand> {
-        CommandEnvelope {
-            id: self.id,
-            payload: CreateTimelineRelationshipCommand {
-                relationship_id: self.payload.relationship_id.unwrap_or_else(|| {
-                    RelationshipId(derived_command_uuid(self.id, b"timeline.relationship"))
-                }),
-                from_node_id: self.payload.from_node_id,
-                to_node_id: self.payload.to_node_id,
-                relationship_type: self.payload.relationship_type,
             },
         }
     }
@@ -289,31 +255,11 @@ fn children_have_bible_references(children: &[ApplyTimelineChildCommand]) -> boo
 
 async fn create_timeline_relationship(
     State(state): State<AppState>,
-    Json(command): Json<CreateTimelineRelationshipRouteCommand>,
+    Json(command): Json<crate::command_service::CreateTimelineRelationshipRequestCommand>,
 ) -> ApiJson {
-    let command = command.into_core_command();
-    let path = active_project_path(&state)?;
-    let response = {
-        let project = timeline_command_project(&state, &path).await?;
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_create_timeline_relationship_history(
-            &mut conn, &project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
-            .map_err(map_timeline_command_error)?;
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        state.trigger_save();
-    }
+    let response = crate::command_service::create_timeline_relationship(&state, command)
+        .await
+        .map_err(ApiError::from)?;
     crate::error::json_value(response)
 }
 

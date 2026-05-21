@@ -1,10 +1,12 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, CreateTimelineNodeCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, TimelineRenderProjection,
+    CommandEnvelope, CommandId, CreateTimelineNodeCommand, CreateTimelineRelationshipCommand,
+    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope,
+    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -54,6 +56,23 @@ pub struct SplitTimelineNodeRequestCommand {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct CreateTimelineRelationshipRequestCommand {
+    id: CommandId,
+    payload: CreateTimelineRelationshipRequestPayload,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CreateTimelineRelationshipRequestPayload {
+    #[serde(default)]
+    relationship_id: Option<RelationshipId>,
+    from_node_id: NodeId,
+    to_node_id: NodeId,
+    relationship_type: RelationshipType,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SplitTimelineNodeRequestPayload {
     node_id: NodeId,
     at_ms: u64,
@@ -98,6 +117,22 @@ impl SplitTimelineNodeRequestCommand {
                 right_node_id: self.payload.right_node_id.unwrap_or_else(|| {
                     NodeId(derived_command_uuid(self.id, b"timeline.split.right"))
                 }),
+            },
+        }
+    }
+}
+
+impl CreateTimelineRelationshipRequestCommand {
+    fn into_core_command(self) -> CommandEnvelope<CreateTimelineRelationshipCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: CreateTimelineRelationshipCommand {
+                relationship_id: self.payload.relationship_id.unwrap_or_else(|| {
+                    RelationshipId(derived_command_uuid(self.id, b"timeline.relationship"))
+                }),
+                from_node_id: self.payload.from_node_id,
+                to_node_id: self.payload.to_node_id,
+                relationship_type: self.payload.relationship_type,
             },
         }
     }
@@ -318,6 +353,42 @@ pub async fn delete_timeline_relationship(
     .map_err(|error| {
         BackendError::internal(format!(
             "timeline relationship delete command task failed: {error}"
+        ))
+    })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        state.trigger_save();
+    }
+    Ok(response)
+}
+
+pub async fn create_timeline_relationship(
+    state: &AppState,
+    command: CreateTimelineRelationshipRequestCommand,
+) -> Result<TimelineCommandResponse, BackendError> {
+    let command = command.into_core_command();
+    let path = active_project_path(state)?;
+    let project = timeline_command_project(state, &path).await?;
+    let response = tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome = timeline_command::record_create_timeline_relationship_history(
+            &mut conn, &project, &command, 0,
+        )
+        .map_err(map_timeline_command_error)?;
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
+        Ok::<_, BackendError>(TimelineCommandResponse {
+            outcome,
+            projection,
+        })
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!(
+            "timeline relationship create command task failed: {error}"
         ))
     })??;
 

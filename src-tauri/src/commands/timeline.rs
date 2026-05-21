@@ -75,6 +75,17 @@ pub async fn command_timeline_delete_relationship(
 }
 
 #[tauri::command]
+pub async fn command_timeline_create_relationship(
+    app: tauri::AppHandle,
+    command: command_service::CreateTimelineRelationshipRequestCommand,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::create_timeline_relationship(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 pub async fn command_timeline_split_node(
     app: tauri::AppHandle,
     command: command_service::SplitTimelineNodeRequestCommand,

@@ -499,6 +499,12 @@ export function createTimelineRelationship(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<TimelineCommandResponse>('command_timeline_create_relationship', {
+      command,
+    });
+  }
+
   return request('/commands/timeline/create-relationship', {
     method: 'POST',
     body: JSON.stringify(command),
