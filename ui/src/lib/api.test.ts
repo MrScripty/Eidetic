@@ -7,6 +7,7 @@ import {
   getAiContext,
   getAiStatus,
   getProject,
+  generateChildren,
   listModels,
   listProjects,
   listReferences,
@@ -140,6 +141,29 @@ describe('api request handling', () => {
 
     expect(invoke).toHaveBeenCalledWith('ai_context_preview', {
       nodeId: '00000000-0000-0000-0000-000000000001',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the desktop child generation command when Tauri transport is available', async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      id: 'child_plan.test',
+      parent_node_id: '00000000-0000-0000-0000-000000000001',
+      target_child_level: 'Scene',
+      children: [],
+    });
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await generateChildren('00000000-0000-0000-0000-000000000001');
+
+    expect(invoke).toHaveBeenCalledWith('ai_generate_children', {
+      request: { node_id: '00000000-0000-0000-0000-000000000001' },
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

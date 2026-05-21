@@ -1,4 +1,7 @@
-use eidetic_server::ai_service::{self, AiConfigUpdate, AiContextPreview, AiStatus};
+use eidetic_core::ai::backend::ChildPlan;
+use eidetic_server::ai_service::{
+    self, AiConfigUpdate, AiContextPreview, AiGenerateChildrenRequest, AiStatus,
+};
 use eidetic_server::state::{AiConfig, AppState};
 use tauri::Manager;
 use uuid::Uuid;
@@ -24,6 +27,17 @@ pub async fn ai_context_preview(
 ) -> Result<AiContextPreview, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     ai_service::preview_ai_context(&state, node_id)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn ai_generate_children(
+    app: tauri::AppHandle,
+    request: AiGenerateChildrenRequest,
+) -> Result<ChildPlan, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    ai_service::generate_children(&state, request)
         .await
         .map_err(CommandError::from)
 }

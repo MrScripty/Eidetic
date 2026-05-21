@@ -596,6 +596,10 @@ Completed slices:
   list/upload/delete behavior into a host-neutral backend service, exposed
   Tauri reference commands, and made frontend reference helpers prefer desktop
   IPC while preserving legacy route fallback and supervised embedding.
+- `feat(desktop): route child generation through tauri` moved AI child-plan
+  generation into the backend AI service, exposed a Tauri command for desktop
+  decomposition requests, and made the frontend child-generation helper prefer
+  desktop IPC while keeping the legacy route as a thin fallback adapter.
 
 Discovered issues:
 
@@ -659,10 +663,11 @@ Discovered issues:
 - Open: Milestone 7 route/service extraction still has Axum-shaped route
   handlers and route tests. Reusable validators now return backend-neutral
   errors, and project, command, projection, AI status/config/context,
-  model-list, export, and reference behavior now have host-neutral service
-  boundaries, but AI generation route tests and some legacy route fixtures still
-  use HTTP status codes as the behavior boundary; extract the remaining
-  generation contracts before deleting the Axum route surface.
+  model-list, export, reference, and child-plan generation behavior now have
+  host-neutral service boundaries, but streaming script generation route tests
+  and some legacy route fixtures still use HTTP status codes as the behavior
+  boundary; extract the remaining generation contracts before deleting the Axum
+  route surface.
 - Resolved: the first Tauri dependency resolution selected `tauri` 2.10.3 with
   newer 2.11 runtime crates, which failed inside `tauri-runtime-wry`. The desktop
   crate now pins `tauri` to 2.11.2 so the runtime stack resolves consistently.

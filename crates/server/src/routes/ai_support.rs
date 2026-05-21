@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use eidetic_core::ai::backend::{GenerateChildrenRequest, GenerateRequest};
+#[cfg(test)]
+use eidetic_core::ai::backend::GenerateChildrenRequest;
+use eidetic_core::ai::backend::GenerateRequest;
 use eidetic_core::contracts::{AiBibleContextProjection, ProjectionEnvelope};
 use eidetic_core::timeline::node::NodeId;
 
@@ -42,6 +44,7 @@ pub(crate) async fn attach_ai_bible_context(
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) async fn attach_ai_bible_context_to_children(
     request: &mut GenerateChildrenRequest,
     path: PathBuf,

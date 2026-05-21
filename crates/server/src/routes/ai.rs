@@ -16,9 +16,9 @@ mod ai_generation_runtime;
 #[path = "ai_support.rs"]
 mod ai_support;
 
-pub(crate) use ai_support::{
-    active_sqlite_project, attach_ai_bible_context, attach_ai_bible_context_to_children,
-};
+#[cfg(test)]
+pub(crate) use ai_support::attach_ai_bible_context_to_children;
+pub(crate) use ai_support::{active_sqlite_project, attach_ai_bible_context};
 
 pub fn router() -> Router<AppState> {
     Router::new()

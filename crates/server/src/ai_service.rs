@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use eidetic_core::Project;
-use eidetic_core::ai::prompt::build_generate_request;
+use eidetic_core::ai::backend::{ChildPlan, ChildPlanId, ChildProposal, GenerateChildrenRequest};
+use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
 use eidetic_core::contracts::{AiBibleContextProjection, ProjectionEnvelope};
 use eidetic_core::timeline::node::NodeId;
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,7 @@ use uuid::Uuid;
 
 use crate::ai_backends::Backend;
 use crate::backend_error::BackendError;
-use crate::prompt_format::build_chat_prompt;
+use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
 use crate::state::{AiConfig, AppState, BackendType};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -35,6 +36,11 @@ pub struct AiConfigUpdate {
 pub struct AiContextPreview {
     pub system: String,
     pub user: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AiGenerateChildrenRequest {
+    pub node_id: Uuid,
 }
 
 pub async fn get_ai_status(state: &AppState) -> AiStatus {
@@ -74,6 +80,59 @@ pub async fn preview_ai_context(
         system: prompt.system,
         user: prompt.user,
     })
+}
+
+pub async fn generate_children(
+    state: &AppState,
+    body: AiGenerateChildrenRequest,
+) -> Result<ChildPlan, BackendError> {
+    let node_id = NodeId(body.node_id);
+    let (mut request, project_path) = {
+        let (project, project_path) = active_sqlite_project(state).await?;
+        let node = project
+            .timeline
+            .node(node_id)
+            .map_err(|_| BackendError::not_found(format!("node not found: {}", body.node_id)))?;
+        if node.content.notes.trim().is_empty() {
+            return Err(BackendError::bad_request("node has no notes"));
+        }
+
+        let request = build_generate_children_request(&project, node_id)
+            .map_err(|error| BackendError::bad_request(error.to_string()))?;
+        (request, project_path)
+    };
+    attach_ai_bible_context_to_children(&mut request, project_path, node_id).await?;
+
+    let config = state.ai_config.lock().clone();
+    let backend = Backend::from_config(&config);
+    let prompt = build_decompose_prompt(&request);
+    let json_text = backend
+        .generate_json(&prompt, &config)
+        .await
+        .map_err(|error| {
+            tracing::error!(
+                "Child decomposition failed for node {}: {error}",
+                body.node_id
+            );
+            BackendError::internal(error.to_string())
+        })?;
+
+    let children = parse_child_proposals(&json_text, body.node_id)?;
+    let plan = ChildPlan {
+        id: ChildPlanId::new(format!("child_plan.{}", Uuid::new_v4()))
+            .expect("generated child plan ids are non-empty"),
+        parent_node_id: node_id,
+        target_child_level: request.target_child_level,
+        children,
+    };
+    let mut conn = state
+        .project_database
+        .open_active_write_connection()
+        .map_err(|error| BackendError::internal(error.to_string()))?;
+    crate::child_plan_store::record_child_plan(&mut conn, &plan, 0)
+        .map_err(|error| BackendError::internal(error.to_string()))?;
+
+    Ok(plan)
 }
 
 pub fn update_ai_config(state: &AppState, update: AiConfigUpdate) -> AiConfig {
@@ -138,6 +197,56 @@ async fn load_ai_bible_context_projection(
     })?
 }
 
+async fn attach_ai_bible_context_to_children(
+    request: &mut GenerateChildrenRequest,
+    path: PathBuf,
+    node_id: NodeId,
+) -> Result<(), BackendError> {
+    request.bible_context = Some(load_ai_bible_context_projection(path, node_id).await?);
+    Ok(())
+}
+
+fn parse_child_proposals(
+    json_text: &str,
+    node_id: Uuid,
+) -> Result<Vec<ChildProposal>, BackendError> {
+    match serde_json::from_str::<Vec<ChildProposal>>(json_text) {
+        Ok(children) => Ok(children),
+        Err(_) => parse_wrapped_or_single_child_proposal(json_text, node_id),
+    }
+}
+
+fn parse_wrapped_or_single_child_proposal(
+    json_text: &str,
+    node_id: Uuid,
+) -> Result<Vec<ChildProposal>, BackendError> {
+    #[derive(Deserialize)]
+    struct Wrapped {
+        #[serde(
+            alias = "acts",
+            alias = "beats",
+            alias = "children",
+            alias = "sequences",
+            alias = "scenes"
+        )]
+        items: Vec<ChildProposal>,
+    }
+    match serde_json::from_str::<Wrapped>(json_text) {
+        Ok(wrapped) => Ok(wrapped.items),
+        Err(_) => match serde_json::from_str::<ChildProposal>(json_text) {
+            Ok(single) => Ok(vec![single]),
+            Err(error) => {
+                tracing::warn!(
+                    "Failed to parse child plan JSON for node {node_id}: {error}\nRaw: {json_text}"
+                );
+                Err(BackendError::bad_request(format!(
+                    "failed to parse AI response: {error}"
+                )))
+            }
+        },
+    }
+}
+
 fn display_model(config: &AiConfig, detected_model: &str) -> String {
     if config.model.eq_ignore_ascii_case("auto") || config.model.is_empty() {
         if detected_model.is_empty() {
@@ -152,7 +261,10 @@ fn display_model(config: &AiConfig, detected_model: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{AiConfigUpdate, display_model, preview_ai_context, update_ai_config};
+    use super::{
+        AiConfigUpdate, AiGenerateChildrenRequest, display_model, generate_children,
+        preview_ai_context, update_ai_config,
+    };
     use crate::state::{AiConfig, AppState, BackendType};
     use eidetic_core::Template;
     use eidetic_core::timeline::node::ContentStatus;
@@ -190,6 +302,22 @@ mod tests {
         assert_eq!(config.max_tokens, 1024);
         assert_eq!(config.base_url, "https://example.test/v1");
         assert_eq!(config.api_key, None);
+    }
+
+    #[tokio::test]
+    async fn generate_children_requires_loaded_project() {
+        let state = AppState::new().await;
+
+        let error = generate_children(
+            &state,
+            AiGenerateChildrenRequest {
+                node_id: Uuid::new_v4(),
+            },
+        )
+        .await
+        .expect_err("missing project");
+
+        assert_eq!(error.message(), "no project loaded");
     }
 
     #[tokio::test]

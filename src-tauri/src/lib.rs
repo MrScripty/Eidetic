@@ -37,6 +37,7 @@ pub fn run() {
             ai_commands::ai_status,
             ai_commands::ai_config_update,
             ai_commands::ai_context_preview,
+            ai_commands::ai_generate_children,
             model_commands::model_list,
             export_commands::export_pdf,
             reference_commands::reference_list,

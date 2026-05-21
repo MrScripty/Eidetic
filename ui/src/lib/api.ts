@@ -122,6 +122,11 @@ export function getAiContext(nodeId: string): Promise<{ system: string; user: st
 }
 
 export function generateChildren(nodeId: string): Promise<ChildPlan> {
+  if (hasDesktopTransport()) {
+    return invokeDesktop<ChildPlan>('ai_generate_children', {
+      request: { node_id: nodeId },
+    });
+  }
   return request('/ai/generate-children', {
     method: 'POST',
     body: JSON.stringify({ node_id: nodeId }),
