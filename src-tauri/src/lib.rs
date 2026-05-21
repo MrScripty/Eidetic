@@ -45,6 +45,7 @@ pub fn run() {
             commands::timeline::command_timeline_node_lock,
             commands::timeline::command_timeline_node_notes,
             commands::timeline::command_timeline_delete_node,
+            commands::timeline::command_timeline_delete_relationship,
             commands::timeline::command_timeline_split_node,
             projections::story_script::projection_object_field,
             projections::story_script::projection_script_document,

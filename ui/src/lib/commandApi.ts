@@ -514,6 +514,12 @@ export function deleteTimelineRelationship(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_relationship', {
+      command,
+    });
+  }
+
   return request('/commands/timeline/delete-relationship', {
     method: 'POST',
     body: JSON.stringify(command),

@@ -321,28 +321,9 @@ async fn delete_timeline_relationship(
     State(state): State<AppState>,
     Json(command): Json<CommandEnvelope<DeleteTimelineRelationshipCommand>>,
 ) -> ApiJson {
-    let path = active_project_path(&state)?;
-    let response = {
-        let project = timeline_command_project(&state, &path).await?;
-        let mut conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ApiError::internal(e.to_string()))?;
-        history_store::create_schema(&conn).map_err(map_history_error)?;
-        let outcome = timeline_command::record_delete_timeline_relationship_history(
-            &mut conn, &project, &command, 0,
-        )
-        .map_err(map_timeline_command_error)?;
-        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
-            .map_err(map_timeline_command_error)?;
-        TimelineCommandResponse {
-            outcome,
-            projection,
-        }
-    };
-
-    if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
-        state.trigger_save();
-    }
+    let response = crate::command_service::delete_timeline_relationship(&state, command)
+        .await
+        .map_err(ApiError::from)?;
     crate::error::json_value(response)
 }
 
