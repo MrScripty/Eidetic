@@ -34,7 +34,7 @@ pub mod constants {
     pub const RAG_TOP_K: usize = 3;
 }
 
-/// Events broadcast to all connected WebSocket clients after mutations.
+/// Events broadcast to desktop event subscribers after mutations.
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerEvent {
@@ -106,16 +106,16 @@ pub struct AppState {
     pub events_tx: broadcast::Sender<ServerEvent>,
     /// Channel to the Y.Doc manager task (single source of truth for text content).
     pub doc_tx: tokio::sync::mpsc::Sender<DocCommand>,
-    /// Broadcasts Y.Doc binary updates to WebSocket clients.
+    /// Broadcasts Y.Doc binary updates to document update subscribers.
     pub doc_update_tx: broadcast::Sender<DocUpdate>,
     pub ai_config: Arc<Mutex<AiConfig>>,
     /// Node IDs currently being generated — prevents duplicate requests.
     pub generating: Arc<Mutex<HashSet<uuid::Uuid>>>,
-    /// Transitional test access to the active project path while older route
-    /// fixtures are moved onto `ProjectDatabase`.
+    /// Transitional test access to the active project path while older fixtures
+    /// are moved onto `ProjectDatabase`.
     #[cfg(test)]
     pub project_path: Arc<Mutex<Option<PathBuf>>>,
-    /// Active SQLite database owner for command and projection routes.
+    /// Active SQLite database owner for command and projection services.
     pub project_database: ProjectDatabase,
     /// In-memory vector store for RAG reference material.
     pub vector_store: Arc<Mutex<VectorStore>>,

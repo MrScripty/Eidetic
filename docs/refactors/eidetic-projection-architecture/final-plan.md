@@ -640,6 +640,9 @@ Completed slices:
 - `refactor(core): remove wasm target dependencies` removed the core crate's
   `wasm32` dependency block and updated the domain-layer README so core remains
   host-agnostic without carrying browser/WASM-specific support.
+- `docs(server): retire websocket-owned wording` updated backend Y.Doc and
+  state comments so realtime events are described as desktop/document
+  subscribers instead of the removed WebSocket transport.
 
 Discovered issues:
 
@@ -654,6 +657,9 @@ Discovered issues:
   dependencies from the earlier browser-host plan. Those direct target
   dependencies were removed; any remaining WASM-related lockfile entries are
   transitive dependency metadata from third-party desktop dependencies.
+- Resolved: backend realtime comments still described WebSocket clients after
+  WebSocket delivery moved behind Tauri events and the listener was deleted.
+  Comments now describe desktop event and document update subscribers.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

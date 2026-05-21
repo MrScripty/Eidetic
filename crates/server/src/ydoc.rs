@@ -2,7 +2,7 @@
 //!
 //! All text content (notes, scripts, outlines) lives in a Yrs `Doc`.
 //! This module provides a channel-based interface so that concurrent
-//! callers (HTTP handlers, WebSocket clients, AI generation) never
+//! callers (Tauri commands, desktop event adapters, AI generation) never
 //! contend on the Doc directly — they send [`DocCommand`] messages
 //! and optionally await a reply via a oneshot channel.
 //!
@@ -64,7 +64,7 @@ pub struct AttributedSpan {
     pub author: String,
 }
 
-/// A binary update to broadcast to WebSocket clients.
+/// A binary update to broadcast to document update subscribers.
 #[derive(Debug, Clone)]
 pub struct DocUpdate {
     /// Client that originated this update (0 = server/AI).
@@ -75,7 +75,7 @@ pub struct DocUpdate {
 
 /// Commands sent to the Y.Doc manager task via channel.
 pub enum DocCommand {
-    /// Apply a binary update from a WebSocket client.
+    /// Apply a binary update from a collaborative document client.
     ApplyUpdate {
         client_id: u64,
         update: Vec<u8>,
@@ -101,9 +101,9 @@ pub enum DocCommand {
         node_id: NodeId,
         reply: oneshot::Sender<NodeTextSnapshot>,
     },
-    /// Ensure a node entry exists in Y.Doc (called when node created via REST).
+    /// Ensure a node entry exists in Y.Doc when a timeline node is created.
     EnsureNode { node_id: NodeId },
-    /// Remove a node entry from Y.Doc (called when node deleted via REST).
+    /// Remove a node entry from Y.Doc when a timeline node is deleted.
     RemoveNode { node_id: NodeId },
     /// Serialize full doc state for persistence.
     Serialize { reply: oneshot::Sender<Vec<u8>> },
@@ -117,7 +117,7 @@ pub enum DocCommand {
 /// Channel capacity for the doc command queue.
 pub const DOC_CHANNEL_CAPACITY: usize = 256;
 
-/// Channel capacity for the doc update broadcast (WebSocket feed).
+/// Channel capacity for the doc update broadcast feed.
 pub const UPDATE_BROADCAST_CAPACITY: usize = 256;
 
 // ──────────────────────────────────────────────
@@ -126,8 +126,7 @@ pub const UPDATE_BROADCAST_CAPACITY: usize = 256;
 
 /// Spawn the doc manager and return the command sender.
 ///
-/// Also returns the broadcast sender for doc updates (WebSocket clients
-/// subscribe to this).
+/// Also returns the broadcast sender for doc updates.
 pub fn spawn_doc_manager(
     supervisor: &BackendTaskSupervisor,
 ) -> (mpsc::Sender<DocCommand>, broadcast::Sender<DocUpdate>) {
@@ -162,7 +161,7 @@ async fn run_doc_manager(
         let _ = txn.get_or_insert_map("project_text");
     }
 
-    // Subscribe to doc updates for broadcasting to WebSocket clients.
+    // Subscribe to doc updates for broadcasting to document update subscribers.
     // We capture updates via observe_update_v1 and forward them.
     // However, since the doc is owned by this task and we process commands
     // sequentially, we track which command triggered the update to set the
@@ -443,7 +442,7 @@ fn read_attributed_spans(
     spans
 }
 
-/// Apply a binary update from a WebSocket client.
+/// Apply a binary update from a collaborative document client.
 async fn apply_client_update(doc: &Doc, update_bytes: &[u8]) -> Result<(), String> {
     let update = Update::decode_v1(update_bytes).map_err(|e| format!("decode error: {e}"))?;
     doc.transact_mut()
