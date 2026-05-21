@@ -24,7 +24,7 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `aiStatus.svelte.ts`                      | Shared AI-status polling ownership.                                                  |
 | `shortcuts.svelte.ts`                     | Keyboard shortcut registry and dispatch helpers.                                     |
 | `notifications.svelte.ts`                 | Toast notification queue state.                                                      |
-| `wsHandlers.ts`                           | Backend event handlers that fan Tauri server events into stores.                     |
+| `serverEventHandlers.ts`                  | Backend event handlers that fan Tauri server events into stores.                     |
 
 ## Problem
 
@@ -71,7 +71,7 @@ continues.
 | `storyArcProjection.svelte.ts`            | Projection cache and command bridge | Caches backend story arc projection and replaces cache from command responses with stale-response guards.                                 | Keep.                                                                                                         |
 | `timeline.svelte.ts`                      | Transient UI state                  | Stores viewport, zoom, playhead, active tool, snapping, and connection drag only.                                                         | Keep timeline clips/tracks/arcs in `timelineRenderProjection.svelte.ts`; do not add broad timeline DTO state. |
 | `timelineRenderProjection.svelte.ts`      | Projection cache and command bridge | Desired pattern for timeline commands: command responses replace the projection cache with stale-response guards.                         | Keep; add coalescing and shared command helper only after ownership cleanup.                                  |
-| `wsHandlers.ts`                           | Projection refresh orchestration    | Routes Tauri backend events into projection refresh requests through `projectionRefreshQueue.ts`; does not hydrate or patch broad durable DTOs. | Keep as orchestration only; add new event handling by requesting focused projection refreshes.                |
+| `serverEventHandlers.ts`                  | Projection refresh orchestration    | Routes Tauri backend events into projection refresh requests through `projectionRefreshQueue.ts`; does not hydrate or patch broad durable DTOs. | Keep as orchestration only; add new event handling by requesting focused projection refreshes.                |
 
 ## Alternatives Rejected
 

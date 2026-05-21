@@ -643,6 +643,9 @@ Completed slices:
 - `docs(server): retire websocket-owned wording` updated backend Y.Doc and
   state comments so realtime events are described as desktop/document
   subscribers instead of the removed WebSocket transport.
+- `refactor(ui): rename server event handlers` renamed frontend `wsHandlers`
+  and `wsTypes` modules to server-event terminology after backend event
+  delivery became Tauri-only.
 
 Discovered issues:
 
@@ -660,6 +663,9 @@ Discovered issues:
 - Resolved: backend realtime comments still described WebSocket clients after
   WebSocket delivery moved behind Tauri events and the listener was deleted.
   Comments now describe desktop event and document update subscribers.
+- Resolved: frontend event refresh orchestration still used `wsHandlers` and
+  `wsTypes` names after the transport moved to Tauri events. The modules,
+  imports, tests, and route/store docs now use server-event terminology.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

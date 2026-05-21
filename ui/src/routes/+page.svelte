@@ -4,13 +4,13 @@
   import SplashScreen from '$lib/components/layout/SplashScreen.svelte';
   import ToastContainer from '$lib/components/layout/ToastContainer.svelte';
   import { createServerEventClient } from '$lib/serverEventClient.js';
-  import { setupWsHandlers } from '$lib/stores/wsHandlers.js';
+  import { setupServerEventHandlers } from '$lib/stores/serverEventHandlers.js';
 
   const events = createServerEventClient();
 
   onMount(() => {
     events.connect();
-    const teardownHandlers = setupWsHandlers(events);
+    const teardownHandlers = setupServerEventHandlers(events);
     return () => {
       teardownHandlers();
       events.disconnect();

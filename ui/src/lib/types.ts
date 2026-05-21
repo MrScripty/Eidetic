@@ -66,4 +66,4 @@ export type { Project, ReferenceDocument, ReferenceId, ReferenceType } from './p
 
 export type { AiConfig, AiStatus, BackendType, ModelEntry, ModelListResponse } from './aiTypes.js';
 
-export type { ServerMessage } from './wsTypes.js';
+export type { ServerMessage } from './serverEventTypes.js';

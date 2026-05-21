@@ -30,7 +30,7 @@ Keep route entrypoints small and delegate feature behavior into `$lib` component
 - The app adds multiple route groups or authenticated shells that need distinct entrypoints.
 
 ## Dependencies
-**Internal:** `ui/src/lib/components/layout`, `ui/src/lib/serverEventClient.ts`, `ui/src/lib/stores/wsHandlers.ts`.
+**Internal:** `ui/src/lib/components/layout`, `ui/src/lib/serverEventClient.ts`, `ui/src/lib/stores/serverEventHandlers.ts`.
 **External:** SvelteKit.
 
 ## Related ADRs

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setupWsHandlers } from './wsHandlers.js';
-import type { ServerMessage } from '$lib/wsTypes.js';
+import { setupServerEventHandlers } from './serverEventHandlers.js';
+import type { ServerMessage } from '$lib/serverEventTypes.js';
 import { refreshScriptDocumentProjection } from './scriptDocumentProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
@@ -87,10 +87,10 @@ beforeEach(() => {
 
 describe('backend event projection handlers', () => {
   it('refreshes timeline projections for timeline events', async () => {
-    const ws = new MockServerEventClient();
-    setupWsHandlers(ws as never);
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
 
-    ws.emit({ type: 'timeline_changed' });
+    events.emit({ type: 'timeline_changed' });
 
     await vi.waitFor(() => {
       expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
@@ -98,11 +98,11 @@ describe('backend event projection handlers', () => {
   });
 
   it('coalesces bursty timeline projection events', async () => {
-    const ws = new MockServerEventClient();
-    setupWsHandlers(ws as never);
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
 
-    ws.emit({ type: 'timeline_changed' });
-    ws.emit({ type: 'hierarchy_changed' });
+    events.emit({ type: 'timeline_changed' });
+    events.emit({ type: 'hierarchy_changed' });
 
     await vi.waitFor(() => {
       expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
@@ -110,10 +110,10 @@ describe('backend event projection handlers', () => {
   });
 
   it('refreshes affected projections for node updates without local durable patches', async () => {
-    const ws = new MockServerEventClient();
-    setupWsHandlers(ws as never);
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
 
-    ws.emit({ type: 'node_updated', node_id: 'node.beat.one' });
+    events.emit({ type: 'node_updated', node_id: 'node.beat.one' });
 
     await vi.waitFor(() => {
       expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
@@ -124,10 +124,10 @@ describe('backend event projection handlers', () => {
   });
 
   it('refreshes projections before completing generation progress', async () => {
-    const ws = new MockServerEventClient();
-    setupWsHandlers(ws as never);
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
 
-    ws.emit({ type: 'generation_complete', node_id: 'node.beat.one' });
+    events.emit({ type: 'generation_complete', node_id: 'node.beat.one' });
 
     await vi.waitFor(() => {
       expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
@@ -139,11 +139,11 @@ describe('backend event projection handlers', () => {
   });
 
   it('unsubscribes handlers during backend event teardown', async () => {
-    const ws = new MockServerEventClient();
-    const teardown = setupWsHandlers(ws as never);
+    const events = new MockServerEventClient();
+    const teardown = setupServerEventHandlers(events as never);
 
     teardown();
-    ws.emit({ type: 'timeline_changed' });
+    events.emit({ type: 'timeline_changed' });
 
     await Promise.resolve();
 
@@ -151,10 +151,10 @@ describe('backend event projection handlers', () => {
   });
 
   it('clears queued projection refreshes during backend event teardown', async () => {
-    const ws = new MockServerEventClient();
-    const teardown = setupWsHandlers(ws as never);
+    const events = new MockServerEventClient();
+    const teardown = setupServerEventHandlers(events as never);
 
-    ws.emit({ type: 'timeline_changed' });
+    events.emit({ type: 'timeline_changed' });
     teardown();
 
     await Promise.resolve();

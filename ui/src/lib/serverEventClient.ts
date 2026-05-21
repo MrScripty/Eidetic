@@ -3,7 +3,7 @@ import {
   listenDesktop,
   type DesktopUnlisten,
 } from './desktopTransport.js';
-import type { ServerMessage } from './wsTypes.js';
+import type { ServerMessage } from './serverEventTypes.js';
 
 const SERVER_EVENT_TOPIC = 'eidetic://server-event';
 

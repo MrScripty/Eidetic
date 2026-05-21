@@ -61,46 +61,46 @@ function refreshChangeReview() {
 }
 
 /** Register backend event handlers that update Svelte stores. */
-export function setupWsHandlers(ws: ServerEventClient) {
+export function setupServerEventHandlers(events: ServerEventClient) {
   const unsubscribers = [
-    ws.on('timeline_changed', async () => {
+    events.on('timeline_changed', async () => {
       await refreshTimelineRender();
     }),
 
-    ws.on('hierarchy_changed', async () => {
+    events.on('hierarchy_changed', async () => {
       await refreshTimelineRender();
     }),
 
-    ws.on('story_changed', async () => {
+    events.on('story_changed', async () => {
       await refreshStoryArcs();
     }),
 
-    ws.on('node_updated', async () => {
+    events.on('node_updated', async () => {
       await Promise.all([refreshTimelineRender(), refreshMainScriptDocument()]);
     }),
 
-    ws.on('generation_context', (data) => {
+    events.on('generation_context', (data) => {
       setGenerationContext(data.node_id, data.system_prompt, data.user_prompt);
     }),
 
-    ws.on('generation_progress', (data) => {
+    events.on('generation_progress', (data) => {
       appendStreamingToken(data.node_id, data.token, data.tokens_generated);
     }),
 
-    ws.on('generation_complete', async (data) => {
+    events.on('generation_complete', async (data) => {
       await Promise.all([refreshTimelineRender(), refreshMainScriptDocument()]);
       completeGeneration(data.node_id);
     }),
 
-    ws.on('generation_error', (data) => {
+    events.on('generation_error', (data) => {
       setGenerationError(data.node_id, data.error);
     }),
 
-    ws.on('bible_changed', async () => {
+    events.on('bible_changed', async () => {
       await Promise.all([refreshBibleNodeList(), refreshBibleRenderGraph(), refreshChangeReview()]);
     }),
 
-    ws.on('semantic_proposals_changed', async () => {
+    events.on('semantic_proposals_changed', async () => {
       await Promise.all([
         refreshSemanticProposals(),
         refreshPropagationProposals(),
@@ -108,7 +108,7 @@ export function setupWsHandlers(ws: ServerEventClient) {
       ]);
     }),
 
-    ws.on('script_changed', async () => {
+    events.on('script_changed', async () => {
       await Promise.all([refreshMainScriptDocument(), refreshChangeReview()]);
     }),
   ];
