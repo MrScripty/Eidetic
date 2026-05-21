@@ -32,6 +32,7 @@ use yrs::{
     Update, WriteTxn,
 };
 
+use crate::backend_task::BackendTaskSupervisor;
 use eidetic_core::timeline::node::NodeId;
 
 // ──────────────────────────────────────────────
@@ -127,12 +128,14 @@ pub const UPDATE_BROADCAST_CAPACITY: usize = 256;
 ///
 /// Also returns the broadcast sender for doc updates (WebSocket clients
 /// subscribe to this).
-pub fn spawn_doc_manager() -> (mpsc::Sender<DocCommand>, broadcast::Sender<DocUpdate>) {
+pub fn spawn_doc_manager(
+    supervisor: &BackendTaskSupervisor,
+) -> (mpsc::Sender<DocCommand>, broadcast::Sender<DocUpdate>) {
     let (cmd_tx, cmd_rx) = mpsc::channel(DOC_CHANNEL_CAPACITY);
     let (update_tx, _) = broadcast::channel(UPDATE_BROADCAST_CAPACITY);
 
     let update_tx_clone = update_tx.clone();
-    tokio::spawn(run_doc_manager(cmd_rx, update_tx_clone));
+    supervisor.spawn("y-doc-manager", run_doc_manager(cmd_rx, update_tx_clone));
 
     (cmd_tx, update_tx)
 }
@@ -703,7 +706,8 @@ mod tests {
 
     #[tokio::test]
     async fn spawn_and_communicate() {
-        let (doc_tx, _update_tx) = spawn_doc_manager();
+        let supervisor = BackendTaskSupervisor::default();
+        let (doc_tx, _update_tx) = spawn_doc_manager(&supervisor);
 
         let node_id = NodeId(Uuid::new_v4());
 
@@ -729,5 +733,6 @@ mod tests {
         assert_eq!(snapshot.content, "Hello from task");
 
         drop(doc_tx);
+        supervisor.abort_all();
     }
 }

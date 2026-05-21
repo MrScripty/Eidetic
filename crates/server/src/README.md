@@ -11,6 +11,7 @@ legacy Axum host over the domain model in `eidetic-core`.
 | `lib.rs` | Backend runtime module root consumed by binaries, tests, and future desktop bindings. |
 | `main.rs` | Thin binary entrypoint that initializes tracing and starts the legacy Axum runtime. |
 | `axum_runtime.rs` | Legacy Axum router composition, CORS policy, static hosting, and listener startup while Milestone 7 migrates production desktop transport to Tauri. |
+| `backend_task.rs` | Backend task supervisor for explicit desktop lifecycle ownership. |
 | `routes/` | HTTP handlers for project, command, timeline, story, AI, export, and reference workflows. |
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |

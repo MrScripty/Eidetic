@@ -4,6 +4,7 @@ pub(crate) mod ai_context_projection;
 pub mod ai_service;
 pub mod axum_runtime;
 pub mod backend_error;
+pub mod backend_task;
 pub(crate) mod bible_graph_command;
 pub(crate) mod bible_graph_edge_store;
 pub(crate) mod bible_graph_field_store;

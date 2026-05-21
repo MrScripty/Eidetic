@@ -19,6 +19,12 @@ pub fn run() {
             app.manage(app_state);
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                let state = window.state::<AppState>();
+                state.shutdown_tasks();
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             health::desktop_health,
             project_commands::project_create,

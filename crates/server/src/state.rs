@@ -7,6 +7,7 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
+use crate::backend_task::BackendTaskSupervisor;
 use crate::persistence;
 use crate::project_database::ProjectDatabase;
 use crate::vector_store::VectorStore;
@@ -122,6 +123,8 @@ pub struct AppState {
     save_tx: tokio::sync::mpsc::Sender<()>,
     /// Model library from Pumas for listing available local models.
     pub model_library: Option<Arc<ModelLibrary>>,
+    /// Owns long-running backend tasks so desktop shutdown can stop them.
+    pub task_supervisor: BackendTaskSupervisor,
 }
 
 impl AppState {
@@ -132,22 +135,21 @@ impl AppState {
         let project = Arc::new(Mutex::new(None));
         let project_path = Arc::new(Mutex::new(None::<PathBuf>));
         let project_database = ProjectDatabase::new(project_path.clone());
+        let task_supervisor = BackendTaskSupervisor::default();
 
         // Spawn the debounced auto-save background task.
         let save_project = project.clone();
         let save_path = project_path.clone();
 
         // Spawn the Y.Doc manager task (owns the CRDT doc, receives commands via channel).
-        let (doc_tx, doc_update_tx) = ydoc::spawn_doc_manager();
+        let (doc_tx, doc_update_tx) = ydoc::spawn_doc_manager(&task_supervisor);
 
         // Start auto-save (needs doc_tx to serialize Y.Doc state).
         let save_doc_tx = doc_tx.clone();
-        tokio::spawn(auto_save_task(
-            save_rx,
-            save_project,
-            save_path,
-            save_doc_tx,
-        ));
+        task_supervisor.spawn(
+            "auto-save",
+            auto_save_task(save_rx, save_project, save_path, save_doc_tx),
+        );
 
         // Initialize the Pumas model library (optional — best-effort).
         let model_library = Self::init_model_library().await;
@@ -165,7 +167,12 @@ impl AppState {
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
             model_library,
+            task_supervisor,
         }
+    }
+
+    pub fn shutdown_tasks(&self) {
+        self.task_supervisor.abort_all();
     }
 
     /// Initialize the Pumas model library from env or sibling directory.

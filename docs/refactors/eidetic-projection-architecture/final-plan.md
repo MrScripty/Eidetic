@@ -584,6 +584,10 @@ Completed slices:
   bible graph wasm-bindgen bridge modules, removed wasm-only renderer
   dependencies, and updated renderer docs to record native desktop Bevy host
   integration as the production path.
+- `feat(server): add backend task supervisor` added a backend-owned task
+  lifecycle supervisor, moved AppState-owned autosave and Y.Doc manager tasks
+  behind it, and wired desktop window teardown to abort supervised backend
+  tasks instead of leaving them detached.
 
 Discovered issues:
 

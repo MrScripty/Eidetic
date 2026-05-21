@@ -25,6 +25,8 @@ commands and events.
   command/projection results.
 - Tauri events are transport projections of backend-owned events. They must not
   introduce a second frontend-owned event source of truth.
+- The desktop shell calls backend lifecycle shutdown when the window is
+  destroyed so long-running backend tasks do not remain detached.
 - The desktop crate may depend on Tauri; `eidetic-core`, renderer crates, and
   backend services must not depend on Tauri.
 
