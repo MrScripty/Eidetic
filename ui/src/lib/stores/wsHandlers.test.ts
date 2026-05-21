@@ -51,7 +51,7 @@ const refreshTimelineRenderProjectionMock = vi.mocked(refreshTimelineRenderProje
 const refreshScriptDocumentProjectionMock = vi.mocked(refreshScriptDocumentProjection);
 const completeGenerationMock = vi.mocked(completeGeneration);
 
-class MockWsClient {
+class MockServerEventClient {
   readonly handlers = new Map<ServerMessage['type'], (data: ServerMessage) => void>();
 
   on<T extends ServerMessage['type']>(
@@ -85,9 +85,9 @@ beforeEach(() => {
   completeGenerationMock.mockReset();
 });
 
-describe('websocket projection handlers', () => {
+describe('backend event projection handlers', () => {
   it('refreshes timeline projections for timeline events', async () => {
-    const ws = new MockWsClient();
+    const ws = new MockServerEventClient();
     setupWsHandlers(ws as never);
 
     ws.emit({ type: 'timeline_changed' });
@@ -98,7 +98,7 @@ describe('websocket projection handlers', () => {
   });
 
   it('coalesces bursty timeline projection events', async () => {
-    const ws = new MockWsClient();
+    const ws = new MockServerEventClient();
     setupWsHandlers(ws as never);
 
     ws.emit({ type: 'timeline_changed' });
@@ -110,7 +110,7 @@ describe('websocket projection handlers', () => {
   });
 
   it('refreshes affected projections for node updates without local durable patches', async () => {
-    const ws = new MockWsClient();
+    const ws = new MockServerEventClient();
     setupWsHandlers(ws as never);
 
     ws.emit({ type: 'node_updated', node_id: 'node.beat.one' });
@@ -124,7 +124,7 @@ describe('websocket projection handlers', () => {
   });
 
   it('refreshes projections before completing generation progress', async () => {
-    const ws = new MockWsClient();
+    const ws = new MockServerEventClient();
     setupWsHandlers(ws as never);
 
     ws.emit({ type: 'generation_complete', node_id: 'node.beat.one' });
@@ -138,8 +138,8 @@ describe('websocket projection handlers', () => {
     });
   });
 
-  it('unsubscribes handlers during websocket teardown', async () => {
-    const ws = new MockWsClient();
+  it('unsubscribes handlers during backend event teardown', async () => {
+    const ws = new MockServerEventClient();
     const teardown = setupWsHandlers(ws as never);
 
     teardown();
@@ -150,8 +150,8 @@ describe('websocket projection handlers', () => {
     expect(refreshTimelineRenderProjectionMock).not.toHaveBeenCalled();
   });
 
-  it('clears queued projection refreshes during websocket teardown', async () => {
-    const ws = new MockWsClient();
+  it('clears queued projection refreshes during backend event teardown', async () => {
+    const ws = new MockServerEventClient();
     const teardown = setupWsHandlers(ws as never);
 
     ws.emit({ type: 'timeline_changed' });

@@ -39,9 +39,5 @@
     "typescript-eslint": "^8.46.2",
     "vite": "^6.1.0",
     "vitest": "^3.2.4"
-  },
-  "dependencies": {
-    "lib0": "^0.2.117",
-    "yjs": "^13.6.29"
   }
 }

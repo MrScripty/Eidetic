@@ -76,6 +76,14 @@ describe('desktop server event client', () => {
 
     expect(client).toBeInstanceOf(DesktopServerEventClient);
   });
+
+  it('requires desktop event transport for backend events', () => {
+    vi.stubGlobal('window', {});
+
+    expect(() => createServerEventClient()).toThrow(
+      'Tauri event transport is required for backend events',
+    );
+  });
 });
 
 function flushPromises(): Promise<void> {

@@ -19,7 +19,7 @@ This directory contains the main beat and script viewing workflow, including AI 
 The app needs focused editing surfaces where timeline selection, AI generation, and projection-backed script review stay coordinated.
 
 ## Constraints
-- Editor interactions depend on shared stores and websocket events.
+- Editor interactions depend on shared stores and backend events.
 - Editor Svelte components stay below the preferred size threshold documented in `ADR-001`.
 - Keyboard and accessibility behavior must remain intact across split points.
 
@@ -39,7 +39,7 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Another editor mode needs only a subset of the current `BeatEditor.svelte` responsibilities.
 
 ## Dependencies
-**Internal:** `ui/src/lib/stores`, `ui/src/lib/api.ts`, `ui/src/lib/yjs.ts`.
+**Internal:** `ui/src/lib/stores`, `ui/src/lib/api.ts`.
 **External:** Svelte.
 
 ## Related ADRs

@@ -3,7 +3,6 @@ import {
   listenDesktop,
   type DesktopUnlisten,
 } from './desktopTransport.js';
-import { WsClient } from './ws.js';
 import type { ServerMessage } from './wsTypes.js';
 
 const SERVER_EVENT_TOPIC = 'eidetic://server-event';
@@ -84,7 +83,7 @@ export function createServerEventClient(): ServerEventClient {
   if (hasDesktopEventTransport()) {
     return new DesktopServerEventClient();
   }
-  return new WsClient();
+  throw new Error('Tauri event transport is required for backend events');
 }
 
 function isServerMessage(value: unknown): value is ServerMessage {

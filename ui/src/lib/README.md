@@ -15,7 +15,7 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | `commandApi.ts`            | Browser-side command helper barrel for backend-owned commands and versioned command projections. |
 | `timelineCommandApi.ts`    | Timeline-specific command helpers that prefer Tauri IPC and fall back to legacy HTTP adapters.   |
 | `commandTransport.ts`      | Shared command IDs and legacy HTTP command transport used while Tauri migration is in progress.  |
-| `serverEventClient.ts`     | Backend event client that prefers Tauri events and falls back to legacy WebSocket transport.     |
+| `serverEventClient.ts`     | Backend event client for Tauri desktop event transport.                                         |
 | `commandApi.test.ts`       | Tests for command helper request shape and backend error handling.                               |
 | `projectionApi.ts`         | Browser-side read helpers for focused backend projections.                                       |
 | `projectionApi.test.ts`    | Tests for projection helper query shape and backend error handling.                              |
@@ -56,7 +56,7 @@ Keep shared UI contracts, stores, and feature components under `ui/src/lib` and 
 ## Dependencies
 
 **Internal:** `ui/src/routes`, `ui/src/app.html`, Rust backend APIs exposed through `api.ts`, `commandApi.ts`, `projectionApi.ts`, and Tauri commands in `desktopTransport.ts`.
-**External:** Svelte 5, SvelteKit, Vite, Yjs client dependencies.
+**External:** Svelte 5, SvelteKit, Vite.
 
 ## Related ADRs
 

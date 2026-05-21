@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This directory contains the shared reactive frontend state used to coordinate the timeline shell, editor, sidebar panels, notifications, and websocket-driven updates.
+This directory contains the shared reactive frontend state used to coordinate the timeline shell, editor, sidebar panels, notifications, and backend event-driven updates.
 
 ## Contents
 
@@ -24,7 +24,7 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `aiStatus.svelte.ts`                      | Shared AI-status polling ownership.                                                  |
 | `shortcuts.svelte.ts`                     | Keyboard shortcut registry and dispatch helpers.                                     |
 | `notifications.svelte.ts`                 | Toast notification queue state.                                                      |
-| `wsHandlers.ts`                           | Backend event handlers that fan server events into stores.                           |
+| `wsHandlers.ts`                           | Backend event handlers that fan Tauri server events into stores.                     |
 
 ## Problem
 
@@ -33,12 +33,12 @@ Multiple UI surfaces need shared state and event coordination without turning th
 ## Constraints
 
 - Store state must remain aligned with backend payload semantics.
-- Polling and websocket ownership must stay single-owner to avoid duplicate work.
+- Polling and backend event ownership must stay single-owner to avoid duplicate work.
 - Tests now cover API error handling and shared AI-status polling behavior from this boundary.
 
 ## Decision
 
-Use focused Svelte state modules per feature area and keep websocket/polling orchestration here instead of burying it in component lifecycles.
+Use focused Svelte state modules per feature area and keep backend event and polling orchestration here instead of burying it in component lifecycles.
 
 Projection stores are the only allowed frontend caches for backend-owned
 durable state. Transient stores may coordinate selection, hover, focus,
@@ -63,7 +63,7 @@ continues.
 | `project.svelte.ts`                       | Transient/session metadata          | Stores active project metadata used to gate the shell after backend create/load.                                                          | Keep visible durable project data projection-backed; do not store full `Project` DTOs here.                   |
 | `projectSession.ts`                       | Projection refresh orchestration    | Owns project create/load activation ordering, lifecycle clearing, transient-state reset, and initial projection refreshes.                | Keep as the single project activation owner; do not hydrate broad project/timeline DTOs into stores.          |
 | `projectionCacheGuards.ts`                | Projection cache infrastructure     | Provides shared version guards for replace-only projection cache writes.                                                                  | Keep as infrastructure; projection stores should use it instead of ad hoc stale-response checks.              |
-| `projectionRefreshQueue.ts`               | Projection refresh orchestration    | Coalesces websocket/project-triggered projection refreshes and resolves queued waiters during teardown.                                   | Keep as the single refresh coalescing owner; do not start per-component refresh state machines.               |
+| `projectionRefreshQueue.ts`               | Projection refresh orchestration    | Coalesces backend event/project-triggered projection refreshes and resolves queued waiters during teardown.                                | Keep as the single refresh coalescing owner; do not start per-component refresh state machines.               |
 | `propagationProposalProjection.svelte.ts` | Projection cache and command bridge | Caches backend proposal list and replaces cache from command responses with stale-response guards.                                        | Keep.                                                                                                         |
 | `scriptDocumentProjection.svelte.ts`      | Projection cache and command bridge | Caches backend script document projections and replaces cache from command responses with stale-response guards.                          | Keep.                                                                                                         |
 | `semanticProposalProjection.svelte.ts`    | Projection cache and command bridge | Caches backend semantic proposal list and replaces cache from command responses with stale-response guards.                               | Keep.                                                                                                         |
@@ -71,7 +71,7 @@ continues.
 | `storyArcProjection.svelte.ts`            | Projection cache and command bridge | Caches backend story arc projection and replaces cache from command responses with stale-response guards.                                 | Keep.                                                                                                         |
 | `timeline.svelte.ts`                      | Transient UI state                  | Stores viewport, zoom, playhead, active tool, snapping, and connection drag only.                                                         | Keep timeline clips/tracks/arcs in `timelineRenderProjection.svelte.ts`; do not add broad timeline DTO state. |
 | `timelineRenderProjection.svelte.ts`      | Projection cache and command bridge | Desired pattern for timeline commands: command responses replace the projection cache with stale-response guards.                         | Keep; add coalescing and shared command helper only after ownership cleanup.                                  |
-| `wsHandlers.ts`                           | Projection refresh orchestration    | Routes backend events into projection refresh requests through `projectionRefreshQueue.ts`; does not hydrate or patch broad durable DTOs. | Keep as orchestration only; add new event handling by requesting focused projection refreshes.                |
+| `wsHandlers.ts`                           | Projection refresh orchestration    | Routes Tauri backend events into projection refresh requests through `projectionRefreshQueue.ts`; does not hydrate or patch broad durable DTOs. | Keep as orchestration only; add new event handling by requesting focused projection refreshes.                |
 
 ## Alternatives Rejected
 
@@ -79,7 +79,7 @@ continues.
 
 ## Invariants
 
-- Shared polling and websocket flows retain explicit ownership and cleanup semantics.
+- Shared polling and backend event flows retain explicit ownership and cleanup semantics.
 - Stores remain the source of transient UI coordination; components react to them.
 - Projection stores cache backend envelopes and must not patch broad durable entity state optimistically.
 - Backend contract changes are reflected here before individual components fork around them.
@@ -91,8 +91,8 @@ continues.
 
 ## Dependencies
 
-**Internal:** `ui/src/lib/api.ts`, `ui/src/lib/ws.ts`, `ui/src/lib/types.ts`.
-**External:** Svelte 5, Yjs.
+**Internal:** `ui/src/lib/api.ts`, `ui/src/lib/serverEventClient.ts`, `ui/src/lib/types.ts`.
+**External:** Svelte 5.
 
 ## Related ADRs
 
@@ -116,4 +116,4 @@ await refreshTimelineRenderProjection();
 
 - Projection cache stores hold backend `ProjectionEnvelope` payloads as replace-only snapshots. Components may read cached envelopes but must not mutate payload contents.
 - Transient stores own local interaction state only. If the backend stores or acts on a field, that field must be changed through a command helper and refreshed through a projection response or invalidation.
-- Changes to shared store fields must land with dependent component, websocket, README, and verification updates in the same logical slice.
+- Changes to shared store fields must land with dependent component, backend event, README, and verification updates in the same logical slice.

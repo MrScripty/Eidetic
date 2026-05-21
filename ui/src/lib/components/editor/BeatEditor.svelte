@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import type { YTextEvent } from 'yjs';
   import type { NodeId, StoryNode } from '$lib/timelineTypes.js';
   import type {
     SelectedNodeEditorNode,
@@ -23,7 +22,6 @@
     refreshSelectedNodeEditorProjection,
     selectedNodeEditorProjectionState,
   } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
-  import { getNodeNotes } from '$lib/yjs.js';
   import BeatChildContext from './BeatChildContext.svelte';
   import BeatEditorHeader from './BeatEditorHeader.svelte';
   import BeatNotesPanel from './BeatNotesPanel.svelte';
@@ -222,21 +220,6 @@
     }
     if (nodeId === contextNodeId && nodeContext) return;
     loadContext(nodeId);
-  });
-
-  $effect(() => {
-    const nodeId = editorState.selectedNodeId;
-    if (!nodeId) return;
-
-    const yNotes = getNodeNotes(nodeId);
-    const onNotesChange = (_event: YTextEvent) => {
-      if (editorState.selectedNodeId === nodeId) {
-        void refreshSelectedNodeEditorProjection(nodeId).catch(() => {});
-      }
-    };
-
-    yNotes.observe(onNotesChange);
-    return () => yNotes.unobserve(onNotesChange);
   });
 
   function loadContext(nodeId: string) {

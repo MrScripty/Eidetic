@@ -609,6 +609,10 @@ Completed slices:
   launcher target from the legacy Axum server to the Tauri desktop binary,
   starts Vite only as the dev webview asset server, removes browser auto-open
   behavior, and updates README workflow language for the desktop app.
+- `refactor(ui): remove websocket event fallback` made Tauri event transport
+  mandatory for backend events, deleted the legacy browser WebSocket/Yjs sync
+  client and tests, and removed unused frontend Yjs dependencies after notes
+  editing moved through backend timeline commands/projections.
 
 Discovered issues:
 
@@ -688,6 +692,10 @@ Discovered issues:
   binary, waited for `127.0.0.1:3000`, and opened a browser. The launcher now
   targets `eidetic-desktop`, uses Vite only for the Tauri development webview,
   and release runs execute the desktop binary directly.
+- Resolved: the frontend still had a browser WebSocket fallback that owned Yjs
+  binary sync and could act as a second realtime transport. Backend events now
+  require Tauri event transport, and notes editing remains command/projection
+  driven without frontend Yjs synchronization.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

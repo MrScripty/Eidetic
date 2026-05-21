@@ -7,14 +7,14 @@ This directory contains the Svelte route entrypoints that mount Eidetic’s sing
 | File/Folder | Description |
 |-------------|-------------|
 | `+layout.svelte` | Route-level layout wrapper. |
-| `+page.svelte` | Main page entrypoint that mounts the shell and websocket lifecycle. |
+| `+page.svelte` | Main page entrypoint that mounts the shell and backend event lifecycle. |
 
 ## Problem
 The frontend needs stable route entrypoints that stay thin while still owning app bootstrap concerns.
 
 ## Constraints
 - Route files should avoid accumulating feature logic that belongs in `$lib`.
-- Websocket setup and teardown must remain deterministic from the page root.
+- Backend event setup and teardown must remain deterministic from the page root.
 
 ## Decision
 Keep route entrypoints small and delegate feature behavior into `$lib` components and stores.
@@ -23,14 +23,14 @@ Keep route entrypoints small and delegate feature behavior into `$lib` component
 - Mounting feature logic directly inside route files: rejected because it obscures ownership and hurts reuse.
 
 ## Invariants
-- `+page.svelte` remains the mount point for the shell and websocket handler setup.
+- `+page.svelte` remains the mount point for the shell and backend event handler setup.
 - Route files stay thin wrappers over documented library boundaries.
 
 ## Revisit Triggers
 - The app adds multiple route groups or authenticated shells that need distinct entrypoints.
 
 ## Dependencies
-**Internal:** `ui/src/lib/components/layout`, `ui/src/lib/ws.ts`, `ui/src/lib/stores/wsHandlers.ts`.
+**Internal:** `ui/src/lib/components/layout`, `ui/src/lib/serverEventClient.ts`, `ui/src/lib/stores/wsHandlers.ts`.
 **External:** SvelteKit.
 
 ## Related ADRs
