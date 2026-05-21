@@ -6,5 +6,23 @@ fn main() {
         )
         .init();
 
+    match std::env::args().nth(1).as_deref() {
+        Some("--smoke") => {
+            match eidetic_desktop::smoke_report_json() {
+                Ok(report) => println!("{report}"),
+                Err(error) => {
+                    eprintln!("failed to serialize smoke report: {error}");
+                    std::process::exit(1);
+                }
+            }
+            return;
+        }
+        Some("--help") => {
+            println!("Usage: eidetic-desktop [--smoke]");
+            return;
+        }
+        _ => {}
+    }
+
     eidetic_desktop::run();
 }

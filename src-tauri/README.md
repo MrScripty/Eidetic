@@ -12,7 +12,7 @@ commands and events.
 | `tauri.conf.json` | Desktop window, frontend asset, and build command configuration. |
 | `capabilities/` | Tauri permission configuration for desktop IPC access. |
 | `src/lib.rs` | Tauri command/event registration and backend runtime composition. |
-| `src/main.rs` | Native desktop binary entrypoint. |
+| `src/main.rs` | Native desktop binary entrypoint and `--smoke` startup probe. |
 | `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
 | `src/export_commands.rs` | Tauri commands for export service access. |
@@ -28,6 +28,8 @@ commands and events.
   introduce a second frontend-owned event source of truth.
 - The desktop shell calls backend lifecycle shutdown when the window is
   destroyed so long-running backend tasks do not remain detached.
+- The `--smoke` binary path initializes the backend runtime, emits JSON health,
+  shuts down supervised backend tasks, and exits without opening a window.
 - The desktop crate may depend on Tauri; `eidetic-core`, renderer crates, and
   backend services must not depend on Tauri.
 

@@ -15,12 +15,14 @@ Eidetic is a local-first, AI-assisted scriptwriting workspace built as a Tauri d
 ```bash
 ./launcher.sh --install
 ./launcher.sh --build
+./launcher.sh --release-smoke
 ./launcher.sh --run
 ./launcher.sh --test
 ```
 
 The launcher isolates state by default under `.launcher-state/`. Set `EIDETIC_LAUNCHER_ISOLATE_STATE=0` only when intentionally using host state directories.
 `--run` starts the Vite dev server for the Tauri webview and opens the desktop app; it no longer starts the legacy Axum browser server.
+`--release-smoke` runs the release desktop binary with `--smoke`, initializes the backend runtime, reports JSON health, and exits without opening a window.
 
 ## Verification
 

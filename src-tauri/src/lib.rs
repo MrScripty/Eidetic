@@ -10,7 +10,17 @@ mod projections;
 mod reference_commands;
 
 use eidetic_server::state::AppState;
+use serde::Serialize;
 use tauri::Manager;
+
+#[derive(Serialize)]
+pub struct DesktopSmokeReport {
+    status: &'static str,
+    boundary: &'static str,
+    backend_runtime: &'static str,
+    active_backend_tasks: usize,
+    model_library_configured: bool,
+}
 
 pub fn run() {
     tauri::Builder::default()
@@ -90,4 +100,34 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Eidetic desktop application");
+}
+
+pub fn smoke_report() -> DesktopSmokeReport {
+    let app_state = tauri::async_runtime::block_on(AppState::new());
+    let report = DesktopSmokeReport {
+        status: "ok",
+        boundary: "tauri",
+        backend_runtime: "initialized",
+        active_backend_tasks: app_state.task_supervisor.active_task_count(),
+        model_library_configured: app_state.model_library.is_some(),
+    };
+    app_state.shutdown_tasks();
+    report
+}
+
+pub fn smoke_report_json() -> Result<String, serde_json::Error> {
+    serde_json::to_string(&smoke_report())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn smoke_report_initializes_backend_runtime() {
+        let report = super::smoke_report();
+
+        assert_eq!(report.status, "ok");
+        assert_eq!(report.boundary, "tauri");
+        assert_eq!(report.backend_runtime, "initialized");
+        assert!(report.active_backend_tasks >= 2);
+    }
 }

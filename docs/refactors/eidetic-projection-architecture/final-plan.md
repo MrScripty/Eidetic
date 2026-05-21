@@ -646,6 +646,10 @@ Completed slices:
 - `refactor(ui): rename server event handlers` renamed frontend `wsHandlers`
   and `wsTypes` modules to server-event terminology after backend event
   delivery became Tauri-only.
+- `feat(desktop): add release smoke startup probe` added an `eidetic-desktop
+  --smoke` path that initializes the backend runtime, emits JSON health,
+  shuts down supervised backend tasks, and exits without opening a window, plus
+  a launcher `--release-smoke` command over the release binary.
 
 Discovered issues:
 
@@ -666,6 +670,10 @@ Discovered issues:
 - Resolved: frontend event refresh orchestration still used `wsHandlers` and
   `wsTypes` names after the transport moved to Tauri events. The modules,
   imports, tests, and route/store docs now use server-event terminology.
+- Resolved: the launcher documented release-smoke requirements in Milestone 7
+  but had no release-smoke command. The desktop binary now owns a headless
+  `--smoke` startup probe and the launcher exposes `--release-smoke` for the
+  packaged release artifact.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

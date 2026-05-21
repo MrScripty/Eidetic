@@ -21,6 +21,7 @@ Usage:
   ./${SCRIPT_NAME} --install
   ./${SCRIPT_NAME} --build
   ./${SCRIPT_NAME} --build-release
+  ./${SCRIPT_NAME} --release-smoke
   ./${SCRIPT_NAME} --run [-- <app args...>]
   ./${SCRIPT_NAME} --run-release [-- <app args...>]
   ./${SCRIPT_NAME} --test
@@ -29,6 +30,7 @@ Examples:
   ./${SCRIPT_NAME} --install
   ./${SCRIPT_NAME} --build
   ./${SCRIPT_NAME} --build-release
+  ./${SCRIPT_NAME} --release-smoke
   ./${SCRIPT_NAME} --run
   ./${SCRIPT_NAME} --run -- --log-level debug
   ./${SCRIPT_NAME} --run-release
@@ -264,6 +266,27 @@ run_release() {
   exec "$RELEASE_BIN_PATH" "${run_args[@]}"
 }
 
+run_release_smoke() {
+  local state_dir
+
+  ensure_ui_assets
+
+  if [[ ! -x "$RELEASE_BIN_PATH" ]]; then
+    log "missing release binary: $RELEASE_BIN_PATH"
+    log "run ./${SCRIPT_NAME} --build-release first"
+    exit 4
+  fi
+
+  state_dir="$(prepare_temp_state "release-smoke")"
+  trap "rm -rf '$state_dir'" EXIT
+
+  log "[smoke] checking release desktop backend startup"
+  "$RELEASE_BIN_PATH" --smoke
+
+  trap - EXIT
+  rm -rf "$state_dir"
+}
+
 run_tests() {
   local state_dir
 
@@ -316,6 +339,11 @@ main() {
         action="build-release"
         shift
         ;;
+      --release-smoke)
+        [[ -z "$action" ]] || die_usage "only one action flag is allowed"
+        action="release-smoke"
+        shift
+        ;;
       --run)
         [[ -z "$action" ]] || die_usage "only one action flag is allowed"
         action="run"
@@ -360,6 +388,9 @@ main() {
     build-release)
       build_ui_assets
       build_desktop "release"
+      ;;
+    release-smoke)
+      run_release_smoke
       ;;
     run)
       run_dev "${run_args[@]}"
