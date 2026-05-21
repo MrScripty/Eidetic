@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createProject,
+  exportPdf,
   getAiContext,
   getAiStatus,
   getProject,
@@ -164,6 +165,24 @@ describe('api request handling', () => {
       },
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the desktop PDF export command when Tauri transport is available', async () => {
+    const invoke = vi.fn().mockResolvedValue([37, 80, 68, 70]);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const blob = await exportPdf();
+
+    expect(invoke).toHaveBeenCalledWith('export_pdf', undefined);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(blob.type).toBe('application/pdf');
+    await expect(blob.arrayBuffer()).resolves.toEqual(Uint8Array.from([37, 80, 68, 70]).buffer);
   });
 
   it('normalizes desktop command errors', async () => {

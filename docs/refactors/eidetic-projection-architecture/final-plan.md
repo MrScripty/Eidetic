@@ -576,9 +576,16 @@ Completed slices:
   preview construction into the backend AI service, exposed a Tauri read command
   for desktop context preview, and made the frontend context helper prefer
   desktop IPC while retaining the legacy route fallback.
+- `feat(desktop): route PDF export through tauri` moved screenplay PDF export
+  into a host-neutral backend service, exposed a Tauri command returning PDF
+  bytes, and made the frontend export helper wrap desktop bytes into the same
+  `Blob` contract while retaining the legacy HTTP fallback.
 
 Discovered issues:
 
+- Open: reference upload still spawns unmanaged embedding work from the legacy
+  route path. Before migrating references to Tauri, the embedding enqueue/work
+  path needs an explicit lifecycle owner with shutdown/cancellation behavior.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

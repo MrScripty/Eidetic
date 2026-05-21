@@ -3,99 +3,32 @@ use axum::extract::State;
 use axum::http::{HeaderName, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use eidetic_core::contracts::ScriptDocumentId;
 
-use crate::export::generate_screenplay_pdf;
-use crate::history_store::HistoryStoreError;
-use crate::script_store;
+use crate::backend_error::BackendError;
+use crate::export_service;
 use crate::state::AppState;
-
-use super::support::{active_project_path, map_history_error};
-
-const MAIN_SCRIPT_DOCUMENT_ID: &str = "script.document.main";
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/export/pdf", post(export_pdf))
 }
 
 async fn export_pdf(State(state): State<AppState>) -> impl IntoResponse {
-    let project_name = {
-        let guard = state.project.lock();
-        match guard.as_ref() {
-            Some(p) => p.name.clone(),
-            None => {
-                return error_response(StatusCode::BAD_REQUEST, "no project loaded".to_string());
-            }
-        }
-    };
-    let path = match active_project_path(&state) {
-        Ok(path) => path,
-        Err(error) => return error_response(error.0, error.1),
-    };
-
-    // PDF generation is CPU-bound; run on blocking thread pool.
-    let result = tokio::task::spawn_blocking(move || {
-        let conn = crate::sqlite::open_write_connection(&path)
-            .map_err(|e| ExportPdfError::internal(e.to_string()))?;
-        script_store::create_schema(&conn).map_err(map_history_error_status)?;
-        let document_id = ScriptDocumentId::new(MAIN_SCRIPT_DOCUMENT_ID)
-            .map_err(|e| ExportPdfError::bad_request(e.to_string()))?;
-        let projection = script_store::load_document_projection(&conn, &document_id)
-            .map_err(map_history_error_status)?
-            .ok_or_else(|| ExportPdfError::not_found("script document not found"))?;
-        generate_screenplay_pdf(&project_name, &projection).map_err(ExportPdfError::internal)
-    })
-    .await;
-
-    match result {
-        Ok(Ok(pdf_bytes)) => (
+    match export_service::export_pdf(&state).await {
+        Ok(pdf_bytes) => (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "application/pdf")],
             pdf_bytes,
         ),
-        Ok(Err(error)) => error_response(error.status, error.message),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            [(header::CONTENT_TYPE, "application/json")],
-            format!("{{\"error\":\"task join error: {e}\"}}").into_bytes(),
-        ),
+        Err(error) => error_response(error_status(&error), error.message().to_string()),
     }
 }
 
-#[derive(Debug)]
-struct ExportPdfError {
-    status: StatusCode,
-    message: String,
-}
-
-impl ExportPdfError {
-    fn bad_request(message: impl Into<String>) -> Self {
-        Self {
-            status: StatusCode::BAD_REQUEST,
-            message: message.into(),
-        }
-    }
-
-    fn not_found(message: impl Into<String>) -> Self {
-        Self {
-            status: StatusCode::NOT_FOUND,
-            message: message.into(),
-        }
-    }
-
-    fn internal(message: impl Into<String>) -> Self {
-        Self {
-            status: StatusCode::INTERNAL_SERVER_ERROR,
-            message: message.into(),
-        }
-    }
-}
-
-fn map_history_error_status(error: HistoryStoreError) -> ExportPdfError {
-    let error = map_history_error(error);
-    ExportPdfError {
-        status: error.0,
-        message: error.1,
+fn error_status(error: &BackendError) -> StatusCode {
+    match error {
+        BackendError::BadRequest(_) => StatusCode::BAD_REQUEST,
+        BackendError::NotFound(_) => StatusCode::NOT_FOUND,
+        BackendError::Conflict(_) => StatusCode::CONFLICT,
+        BackendError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
 

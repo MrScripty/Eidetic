@@ -15,6 +15,7 @@ commands and events.
 | `src/main.rs` | Native desktop binary entrypoint. |
 | `src/ai_commands.rs` | Tauri commands for AI status, config, and context-preview service access. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
+| `src/export_commands.rs` | Tauri commands for export service access. |
 | `src/model_commands.rs` | Tauri commands for Pumas model-library projection reads. |
 
 ## Invariants

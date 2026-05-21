@@ -151,6 +151,10 @@ export function listModels(params?: {
 // --- Export ---
 
 export async function exportPdf(): Promise<Blob> {
+  if (hasDesktopTransport()) {
+    const bytes = await invokeDesktop<number[]>('export_pdf');
+    return new Blob([Uint8Array.from(bytes)], { type: 'application/pdf' });
+  }
   const res = await fetch(`${BASE}/export/pdf`, { method: 'POST' });
   if (!res.ok) {
     const err = await res.json();

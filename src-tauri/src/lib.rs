@@ -2,6 +2,7 @@ mod ai_commands;
 mod commands;
 mod desktop_events;
 mod error;
+mod export_commands;
 mod health;
 mod model_commands;
 mod project_commands;
@@ -30,6 +31,7 @@ pub fn run() {
             ai_commands::ai_config_update,
             ai_commands::ai_context_preview,
             model_commands::model_list,
+            export_commands::export_pdf,
             commands::object_script_story::command_object_field,
             commands::object_script_story::command_script_block,
             commands::object_script_story::command_script_lock,

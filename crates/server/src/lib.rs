@@ -24,6 +24,7 @@ pub(crate) mod command_service_timeline_requests;
 pub(crate) mod embeddings;
 pub mod error;
 pub(crate) mod export;
+pub mod export_service;
 pub(crate) mod history_read_store;
 pub(crate) mod history_store;
 pub mod model_service;
