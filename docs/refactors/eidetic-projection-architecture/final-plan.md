@@ -1277,6 +1277,14 @@ move to a Tauri shell before the Bevy timeline renderer becomes the primary
 timeline surface. The desktop migration also removes the Axum HTTP/WebSocket
 boundary instead of embedding a loopback server inside the desktop app.
 
+Status: Completed. The active production desktop path is Tauri IPC/events over
+backend-owned services; the Axum listener, route adapters, WebSocket server,
+browser dev proxy, browser-open launcher flow, and direct workspace-owned WASM
+bridge/dependency surfaces have been removed. Final closeout validation passed
+`./launcher.sh --test`, `./launcher.sh --build-release`,
+`./launcher.sh --release-smoke`, and live-code scans for removed Axum,
+WebSocket, HTTP proxy, and WASM bridge surfaces.
+
 Decisions:
 
 - Use Tauri as the desktop application shell.
