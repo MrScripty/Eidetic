@@ -616,6 +616,9 @@ Completed slices:
 - `refactor(ui): remove main api http fallback` removed legacy fetch fallback
   paths from the main frontend API helper for project, reference, AI, model,
   export, and persistence operations so those helpers now require Tauri IPC.
+- `refactor(ui): remove projection http fallback` removed legacy fetch fallback
+  paths from focused frontend projection helpers so all active projection reads
+  now require Tauri IPC and fail fast when the desktop transport is missing.
 
 Discovered issues:
 
@@ -703,6 +706,10 @@ Discovered issues:
   after equivalent Tauri commands existed for its active surfaces. The helper
   now uses desktop IPC directly and reports missing Tauri transport as a
   configuration error.
+- Resolved: `ui/src/lib/projectionApi.ts` still carried browser HTTP fallback
+  behavior after equivalent Tauri commands existed for active projection reads.
+  Projection helpers now use desktop IPC directly and report missing Tauri
+  transport as a configuration error.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

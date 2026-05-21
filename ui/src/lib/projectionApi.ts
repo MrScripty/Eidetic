@@ -14,9 +14,7 @@ import type { BibleReferenceProposalListProjection } from './semanticProposalTyp
 import type { StoryArcListProjection, StoryArcProgressionProjection } from './storyArcTypes.js';
 import type { NodeId } from './timelineTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
-import { hasDesktopTransport, invokeDesktop } from './desktopTransport.js';
-
-const BASE = '/api';
+import { invokeDesktop } from './desktopTransport.js';
 
 export interface ObjectFieldProjectionKey {
   object_kind: ObjectKind;
@@ -35,157 +33,90 @@ export interface SelectedNodeEditorProjectionKey {
   node_id?: NodeId | null;
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-  });
-  const body = await res.json().catch(() => null);
-  if (!res.ok) {
-    throw new Error((body as Record<string, string> | null)?.error || `HTTP ${res.status}`);
-  }
-  if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
-    throw new Error(body.error);
-  }
-  return body as T;
-}
-
 export function getObjectFieldProjection({
   object_kind,
   object_id,
 }: ObjectFieldProjectionKey): Promise<ProjectionEnvelope<ObjectFieldProjection>> {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<ObjectFieldProjection>>('projection_object_field', {
-      query: { object_kind, object_id },
-    });
-  }
-
-  const params = new URLSearchParams({ object_kind, object_id });
-  return getJson(`/projections/object-field?${params.toString()}`);
+  return invokeDesktop<ProjectionEnvelope<ObjectFieldProjection>>('projection_object_field', {
+    query: { object_kind, object_id },
+  });
 }
 
 export function getBibleGraphNodeProjection({
   node_id,
 }: BibleGraphNodeProjectionKey): Promise<ProjectionEnvelope<BibleNodeDetailProjection>> {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<BibleNodeDetailProjection>>(
-      'projection_bible_graph_node',
-      {
-        query: { node_id },
-      },
-    );
-  }
-
-  const params = new URLSearchParams({ node_id });
-  return getJson(`/projections/bible-graph/node?${params.toString()}`);
+  return invokeDesktop<ProjectionEnvelope<BibleNodeDetailProjection>>(
+    'projection_bible_graph_node',
+    {
+      query: { node_id },
+    },
+  );
 }
 
 export function getBibleGraphNodeListProjection(): Promise<
   ProjectionEnvelope<BibleGraphNodeListProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<BibleGraphNodeListProjection>>(
-      'projection_bible_graph_nodes',
-    );
-  }
-
-  return getJson('/projections/bible-graph/nodes');
+  return invokeDesktop<ProjectionEnvelope<BibleGraphNodeListProjection>>(
+    'projection_bible_graph_nodes',
+  );
 }
 
 export function getBibleGraphSchemaListProjection(): Promise<
   ProjectionEnvelope<BibleGraphSchemaListProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<BibleGraphSchemaListProjection>>(
-      'projection_bible_graph_schemas',
-    );
-  }
-
-  return getJson('/projections/bible-graph/schemas');
+  return invokeDesktop<ProjectionEnvelope<BibleGraphSchemaListProjection>>(
+    'projection_bible_graph_schemas',
+  );
 }
 
 export function getBibleRenderGraphProjection(): Promise<
   ProjectionEnvelope<BibleRenderGraphProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<BibleRenderGraphProjection>>(
-      'projection_bible_render_graph',
-    );
-  }
-
-  return getJson('/projections/bible-graph/render');
+  return invokeDesktop<ProjectionEnvelope<BibleRenderGraphProjection>>(
+    'projection_bible_render_graph',
+  );
 }
 
 export function getScriptDocumentProjection({
   document_id,
 }: ScriptDocumentProjectionKey): Promise<ProjectionEnvelope<ScriptDocumentProjection>> {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<ScriptDocumentProjection>>(
-      'projection_script_document',
-      {
-        query: { document_id },
-      },
-    );
-  }
-
-  const params = new URLSearchParams({ document_id });
-  return getJson(`/projections/script/document?${params.toString()}`);
+  return invokeDesktop<ProjectionEnvelope<ScriptDocumentProjection>>('projection_script_document', {
+    query: { document_id },
+  });
 }
 
 export function getBibleReferenceProposalListProjection(): Promise<
   ProjectionEnvelope<BibleReferenceProposalListProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<BibleReferenceProposalListProjection>>(
-      'projection_bible_reference_proposals',
-    );
-  }
-
-  return getJson('/projections/semantic/bible-reference-proposals');
+  return invokeDesktop<ProjectionEnvelope<BibleReferenceProposalListProjection>>(
+    'projection_bible_reference_proposals',
+  );
 }
 
 export function getPropagationProposalListProjection(): Promise<
   ProjectionEnvelope<PropagationProposalListProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<PropagationProposalListProjection>>(
-      'projection_propagation_proposals',
-    );
-  }
-
-  return getJson('/projections/semantic/propagation-proposals');
+  return invokeDesktop<ProjectionEnvelope<PropagationProposalListProjection>>(
+    'projection_propagation_proposals',
+  );
 }
 
 export function getStoryArcListProjection(): Promise<ProjectionEnvelope<StoryArcListProjection>> {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<StoryArcListProjection>>('projection_story_arcs');
-  }
-
-  return getJson('/projections/story/arcs');
+  return invokeDesktop<ProjectionEnvelope<StoryArcListProjection>>('projection_story_arcs');
 }
 
 export function getStoryArcProgressionProjection(): Promise<
   ProjectionEnvelope<StoryArcProgressionProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<StoryArcProgressionProjection>>(
-      'projection_story_arc_progression',
-    );
-  }
-
-  return getJson('/projections/story/arc-progression');
+  return invokeDesktop<ProjectionEnvelope<StoryArcProgressionProjection>>(
+    'projection_story_arc_progression',
+  );
 }
 
 export function getTimelineRenderProjection(): Promise<
   ProjectionEnvelope<TimelineRenderProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<TimelineRenderProjection>>(
-      'projection_timeline_render',
-    );
-  }
-
-  return getJson('/projections/timeline/render');
+  return invokeDesktop<ProjectionEnvelope<TimelineRenderProjection>>('projection_timeline_render');
 }
 
 export function getSelectedNodeEditorProjection({
@@ -193,26 +124,14 @@ export function getSelectedNodeEditorProjection({
 }: SelectedNodeEditorProjectionKey = {}): Promise<
   ProjectionEnvelope<SelectedNodeEditorProjection>
 > {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<SelectedNodeEditorProjection>>(
-      'projection_selected_node',
-      {
-        query: { node_id: node_id ?? null },
-      },
-    );
-  }
-
-  if (!node_id) {
-    return getJson('/projections/timeline/selected-node');
-  }
-  const params = new URLSearchParams({ node_id });
-  return getJson(`/projections/timeline/selected-node?${params.toString()}`);
+  return invokeDesktop<ProjectionEnvelope<SelectedNodeEditorProjection>>(
+    'projection_selected_node',
+    {
+      query: { node_id: node_id ?? null },
+    },
+  );
 }
 
 export function getChangeReviewProjection(): Promise<ProjectionEnvelope<ChangeReviewProjection>> {
-  if (hasDesktopTransport()) {
-    return invokeDesktop<ProjectionEnvelope<ChangeReviewProjection>>('projection_change_review');
-  }
-
-  return getJson('/projections/history/changes');
+  return invokeDesktop<ProjectionEnvelope<ChangeReviewProjection>>('projection_change_review');
 }

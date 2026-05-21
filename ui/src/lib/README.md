@@ -17,8 +17,8 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | `commandTransport.ts`      | Shared command IDs and legacy HTTP command transport used while Tauri migration is in progress.  |
 | `serverEventClient.ts`     | Backend event client for Tauri desktop event transport.                                         |
 | `commandApi.test.ts`       | Tests for command helper request shape and backend error handling.                               |
-| `projectionApi.ts`         | Browser-side read helpers for focused backend projections.                                       |
-| `projectionApi.test.ts`    | Tests for projection helper query shape and backend error handling.                              |
+| `projectionApi.ts`         | Tauri command helpers for focused backend projections.                                           |
+| `projectionApi.test.ts`    | Tests for projection helper command shape and transport error handling.                          |
 | `stores/`                  | Reactive Svelte state used to coordinate the UI around backend-driven data.                      |
 | `components/`              | Feature UI modules for layout, timeline editing, sidebars, and relationship views.               |
 
@@ -85,7 +85,7 @@ async function openTimeline() {
 - Store consumers should treat backend-backed entities as read-through state and mutate them through API/store actions, not local object surgery.
 - Command helpers return backend projections and must not patch persistent stores optimistically.
 - Desktop command helpers return backend projections through Tauri IPC; legacy HTTP fallback paths are not production frontend contracts.
-- Projection helpers are read-only and return backend-owned versioned read models.
+- Projection helpers are read-only, use Tauri IPC directly, and return backend-owned versioned read models.
 - Layout consumers should reuse exported constants/helpers instead of re-declaring pixel budgets in component-local CSS.
 - Compatibility is maintained by updating this directory README or an ADR whenever shared contracts materially change.
 

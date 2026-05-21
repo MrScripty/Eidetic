@@ -4,13 +4,27 @@ import {
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
   getBibleGraphSchemaListProjection,
+  getBibleReferenceProposalListProjection,
   getBibleRenderGraphProjection,
+  getChangeReviewProjection,
   getObjectFieldProjection,
+  getPropagationProposalListProjection,
+  getScriptDocumentProjection,
   getSelectedNodeEditorProjection,
   getStoryArcListProjection,
   getStoryArcProgressionProjection,
   getTimelineRenderProjection,
 } from './projectionApi.js';
+
+function installDesktopInvoke(response: unknown) {
+  const invoke = vi.fn().mockResolvedValue(response);
+  vi.stubGlobal('window', {
+    __TAURI__: {
+      core: { invoke },
+    },
+  });
+  return invoke;
+}
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -18,61 +32,22 @@ afterEach(() => {
 });
 
 describe('projection api helpers', () => {
-  it('fetches object field projections with encoded query params', async () => {
-    const response = {
-      version: 2,
-      change_event_id: 'event-1',
-      payload: {
-        object_kind: 'bible_part_field',
-        object_id: 'field/weather one',
-        deleted: false,
-        fields: {
-          weather: { type: 'text', value: 'rainy' },
-        },
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
+  it('requires desktop transport instead of falling back to HTTP', async () => {
+    vi.stubGlobal('fetch', vi.fn());
 
     await expect(
       getObjectFieldProjection({
         object_kind: 'bible_part_field',
-        object_id: 'field/weather one',
+        object_id: 'field-weather',
       }),
-    ).resolves.toEqual(response);
+    ).rejects.toThrow('desktop transport is unavailable');
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/projections/object-field?object_kind=bible_part_field&object_id=field%2Fweather+one',
-      {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      },
-    );
+    expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('uses desktop object field projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 2,
-      payload: {
-        object_kind: 'bible_part_field',
-        object_id: 'field/weather one',
-        deleted: false,
-        fields: {},
-      },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop object field projection command', async () => {
+    const response = { version: 2, payload: { fields: {} } };
+    const invoke = installDesktopInvoke(response);
 
     await expect(
       getObjectFieldProjection({
@@ -87,94 +62,11 @@ describe('projection api helpers', () => {
         object_id: 'field/weather one',
       },
     });
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('throws backend errors without patching local state', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: 'projection unavailable' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      ),
-    );
-
-    await expect(
-      getObjectFieldProjection({
-        object_kind: 'bible_part_field',
-        object_id: 'field-weather',
-      }),
-    ).rejects.toThrow('projection unavailable');
-  });
-
-  it('fetches bible graph node projections with encoded query params', async () => {
-    const response = {
-      version: 2,
-      change_event_id: 'event-1',
-      payload: {
-        node: {
-          id: 'node.character/ada one',
-          parent_id: null,
-          schema_key: 'character',
-          name: 'Ada',
-          system_owned: false,
-          sort_order: 3,
-        },
-        parts: [],
-        incoming_edges: [],
-        outgoing_edges: [],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(
-      getBibleGraphNodeProjection({
-        node_id: 'node.character/ada one',
-      }),
-    ).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/projections/bible-graph/node?node_id=node.character%2Fada+one',
-      {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      },
-    );
-  });
-
-  it('uses desktop bible graph node projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 2,
-      payload: {
-        node: {
-          id: 'node.character/ada one',
-          parent_id: null,
-          schema_key: 'character',
-          name: 'Ada',
-          system_owned: false,
-          sort_order: 3,
-        },
-        parts: [],
-        incoming_edges: [],
-        outgoing_edges: [],
-      },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop bible graph node projection command', async () => {
+    const response = { version: 2, payload: { node: { id: 'node.character/ada one' } } };
+    const invoke = installDesktopInvoke(response);
 
     await expect(
       getBibleGraphNodeProjection({
@@ -185,264 +77,89 @@ describe('projection api helpers', () => {
     expect(invoke).toHaveBeenCalledWith('projection_bible_graph_node', {
       query: { node_id: 'node.character/ada one' },
     });
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fetches bible graph node list projections without query params', async () => {
-    const response = {
-      version: 3,
-      change_event_id: 'event-2',
-      payload: {
-        nodes: [
-          {
-            id: 'node.character.ada',
-            parent_id: null,
-            schema_key: 'character',
-            name: 'Ada',
-            system_owned: false,
-            sort_order: 3,
-          },
-        ],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getBibleGraphNodeListProjection()).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/nodes', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-  });
-
-  it('uses desktop bible graph node list projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 3,
-      payload: { nodes: [] },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop bible graph node list projection command', async () => {
+    const response = { version: 3, payload: { nodes: [] } };
+    const invoke = installDesktopInvoke(response);
 
     await expect(getBibleGraphNodeListProjection()).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('projection_bible_graph_nodes', undefined);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fetches bible graph schema list projections without query params', async () => {
-    const response = {
-      version: 1,
-      payload: {
-        schemas: [
-          {
-            schema_key: 'character',
-            parts: [
-              {
-                part_key: 'profile',
-                name: 'Profile',
-                sort_order: 10,
-                fields: [
-                  {
-                    field_key: 'summary',
-                    sort_order: 10,
-                  },
-                  {
-                    field_key: 'tagline',
-                    sort_order: 20,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getBibleGraphSchemaListProjection()).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/schemas', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-  });
-
-  it('uses desktop bible graph schema projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 1,
-      payload: { schemas: [] },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop bible graph schema projection command', async () => {
+    const response = { version: 1, payload: { schemas: [] } };
+    const invoke = installDesktopInvoke(response);
 
     await expect(getBibleGraphSchemaListProjection()).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('projection_bible_graph_schemas', undefined);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fetches bible render graph projections without query params', async () => {
-    const response = {
-      version: 4,
-      change_event_id: 'event-3',
-      payload: {
-        nodes: [
-          {
-            node_id: 'node.character.ada',
-            parent_id: null,
-            schema_key: 'character',
-            label: 'Ada',
-            system_owned: false,
-            sort_order: 1,
-            depth: 0,
-            position: { x: 0, y: 0, z: 0 },
-          },
-        ],
-        edges: [
-          {
-            edge_id: 'edge.ada.beach',
-            from_node_id: 'node.character.ada',
-            to_node_id: 'node.place.beach',
-            edge_kind: 'located_in',
-            label: 'located in',
-            directed: true,
-            sort_order: 0,
-          },
-        ],
-        neighborhoods: [
-          {
-            node_id: 'node.character.ada',
-            connected_node_ids: ['node.place.beach'],
-            edge_ids: ['edge.ada.beach'],
-          },
-        ],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getBibleRenderGraphProjection()).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/bible-graph/render', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-  });
-
-  it('uses desktop bible render graph projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 4,
-      payload: {
-        nodes: [],
-        edges: [],
-        neighborhoods: [],
-      },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop bible render graph projection command', async () => {
+    const response = { version: 4, payload: { nodes: [], edges: [], neighborhoods: [] } };
+    const invoke = installDesktopInvoke(response);
 
     await expect(getBibleRenderGraphProjection()).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('projection_bible_render_graph', undefined);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fetches timeline render projections without query params', async () => {
-    const response = {
-      version: 4,
-      change_event_id: 'event-3',
-      payload: {
-        total_duration_ms: 120_000,
-        tracks: [
-          {
-            track_id: 'track.scene',
-            level: 'Scene',
-            label: 'Scenes',
-            sort_order: 30,
-            collapsed: false,
-          },
-        ],
-        clips: [
-          {
-            node_id: 'node.scene.beach',
-            parent_id: 'node.sequence.opening',
-            track_id: 'track.scene',
-            level: 'Scene',
-            name: 'Beach argument',
-            start_ms: 1_000,
-            end_ms: 4_000,
-            sort_order: 10,
-            locked: false,
-            content_status: 'NotesOnly',
-            beat_type: null,
-            arc_ids: ['arc.a'],
-          },
-        ],
-        relationships: [
-          {
-            relationship_id: 'rel.theme',
-            from_node_id: 'node.scene.beach',
-            to_node_id: 'node.scene.beach',
-            relationship_type: 'Thematic',
-          },
-        ],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
+  it('uses the desktop script document projection command', async () => {
+    const response = { version: 1, payload: { document_id: 'script.main' } };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(
+      getScriptDocumentProjection({
+        document_id: 'script.main',
       }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    ).resolves.toEqual(response);
 
-    await expect(getTimelineRenderProjection()).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/timeline/render', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
+    expect(invoke).toHaveBeenCalledWith('projection_script_document', {
+      query: { document_id: 'script.main' },
     });
   });
 
-  it('uses desktop timeline render projection command when Tauri transport is available', async () => {
+  it('uses the desktop bible reference proposal list projection command', async () => {
+    const response = { version: 1, payload: { proposals: [] } };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(getBibleReferenceProposalListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_bible_reference_proposals', undefined);
+  });
+
+  it('uses the desktop propagation proposal list projection command', async () => {
+    const response = { version: 1, payload: { proposals: [] } };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(getPropagationProposalListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_propagation_proposals', undefined);
+  });
+
+  it('uses the desktop story arc list projection command', async () => {
+    const response = { version: 1, payload: { arcs: [] } };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(getStoryArcListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_story_arcs', undefined);
+  });
+
+  it('uses the desktop story arc progression projection command', async () => {
+    const response = { version: 1, payload: { progressions: [] } };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(getStoryArcProgressionProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_story_arc_progression', undefined);
+  });
+
+  it('uses the desktop timeline render projection command', async () => {
     const response = {
       version: 4,
-      change_event_id: 'event-3',
       payload: {
         total_duration_ms: 120_000,
         tracks: [],
@@ -450,87 +167,16 @@ describe('projection api helpers', () => {
         relationships: [],
       },
     };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+    const invoke = installDesktopInvoke(response);
 
     await expect(getTimelineRenderProjection()).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('projection_timeline_render', undefined);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fetches selected node editor projections with encoded query params', async () => {
-    const response = {
-      version: 5,
-      payload: {
-        node: {
-          node_id: 'node.scene/beach one',
-          parent_id: 'node.sequence.opening',
-          level: 'Scene',
-          sort_order: 10,
-          start_ms: 1_000,
-          end_ms: 4_000,
-          name: 'Beach argument',
-          notes: 'Rainy',
-          content_status: 'NotesOnly',
-          beat_type: null,
-          locked: false,
-        },
-        child_level: 'Beat',
-        has_children: false,
-        parent: null,
-        siblings: [],
-        current_sibling_index: 0,
-        children: [],
-        adjacent_parents: {},
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(
-      getSelectedNodeEditorProjection({ node_id: 'node.scene/beach one' }),
-    ).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/projections/timeline/selected-node?node_id=node.scene%2Fbeach+one',
-      {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      },
-    );
-  });
-
-  it('uses desktop selected node projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 5,
-      payload: {
-        node: null,
-        has_children: false,
-        siblings: [],
-        children: [],
-        adjacent_parents: {},
-      },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop selected node projection command with a node id', async () => {
+    const response = { version: 5, payload: { node: null } };
+    const invoke = installDesktopInvoke(response);
 
     await expect(
       getSelectedNodeEditorProjection({ node_id: 'node.scene/beach one' }),
@@ -539,152 +185,25 @@ describe('projection api helpers', () => {
     expect(invoke).toHaveBeenCalledWith('projection_selected_node', {
       query: { node_id: 'node.scene/beach one' },
     });
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fetches empty selected node editor projections without query params', async () => {
-    const response = {
-      version: 1,
-      payload: {
-        node: null,
-        has_children: false,
-        siblings: [],
-        children: [],
-        adjacent_parents: {},
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop selected node projection command with a null node id', async () => {
+    const response = { version: 5, payload: { node: null } };
+    const invoke = installDesktopInvoke(response);
 
     await expect(getSelectedNodeEditorProjection()).resolves.toEqual(response);
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/timeline/selected-node', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
+    expect(invoke).toHaveBeenCalledWith('projection_selected_node', {
+      query: { node_id: null },
     });
   });
 
-  it('fetches story arc list projections without query params', async () => {
-    const response = {
-      version: 1,
-      payload: {
-        arcs: [
-          {
-            id: 'arc.mystery',
-            parent_arc_id: null,
-            name: 'Mystery',
-            description: 'Central investigation',
-            arc_type: 'APlot',
-            color: { r: 1, g: 2, b: 3 },
-          },
-        ],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
+  it('uses the desktop change review projection command', async () => {
+    const response = { version: 1, payload: { changes: [] } };
+    const invoke = installDesktopInvoke(response);
 
-    await expect(getStoryArcListProjection()).resolves.toEqual(response);
+    await expect(getChangeReviewProjection()).resolves.toEqual(response);
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/story/arcs', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-  });
-
-  it('uses desktop story arc list projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 1,
-      payload: {
-        arcs: [
-          {
-            id: 'arc.mystery',
-            parent_arc_id: null,
-            name: 'Mystery',
-            description: 'Central investigation',
-            arc_type: 'APlot',
-            color: { r: 1, g: 2, b: 3 },
-          },
-        ],
-      },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getStoryArcListProjection()).resolves.toEqual(response);
-
-    expect(invoke).toHaveBeenCalledWith('projection_story_arcs', undefined);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('fetches story arc progression projections without query params', async () => {
-    const response = {
-      version: 1,
-      payload: {
-        progressions: [
-          {
-            arc_id: 'arc.mystery',
-            arc_name: 'Mystery',
-            node_count: 4,
-            has_setup: true,
-            has_resolution: false,
-            coverage_percent: 24,
-            longest_gap_ms: 60_000,
-            issues: [],
-          },
-        ],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getStoryArcProgressionProjection()).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/story/arc-progression', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-  });
-
-  it('uses desktop story arc progression projection command when Tauri transport is available', async () => {
-    const response = {
-      version: 1,
-      payload: {
-        progressions: [],
-      },
-    };
-    const invoke = vi.fn().mockResolvedValue(response);
-    vi.stubGlobal('window', {
-      __TAURI__: {
-        core: { invoke },
-      },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getStoryArcProgressionProjection()).resolves.toEqual(response);
-
-    expect(invoke).toHaveBeenCalledWith('projection_story_arc_progression', undefined);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(invoke).toHaveBeenCalledWith('projection_change_review', undefined);
   });
 });

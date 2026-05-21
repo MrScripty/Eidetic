@@ -8,59 +8,7 @@ afterEach(() => {
 });
 
 describe('change review projection api helpers', () => {
-  it('fetches change review projections without query params', async () => {
-    const response = {
-      version: 2,
-      change_event_id: 'event-1',
-      payload: {
-        changes: [
-          {
-            event: {
-              id: 'event-1',
-              command_id: 'command-1',
-              kind: 'ai_proposal_accepted',
-              summary: 'accept bible reference Ada',
-              created_at_ms: 100,
-            },
-            revisions: [
-              {
-                id: 'revision-1',
-                object_kind: 'semantic_proposal',
-                object_id: 'proposal.ada',
-                change_event_id: 'event-1',
-                base_revision_id: null,
-                operation: 'update',
-                fields: [
-                  {
-                    field_key: 'status',
-                    old_value: { type: 'text', value: 'pending' },
-                    new_value: { type: 'text', value: 'accepted' },
-                    sort_order: 0,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    };
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(response), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getChangeReviewProjection()).resolves.toEqual(response);
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/projections/history/changes', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-  });
-
-  it('uses desktop change review projection command when Tauri transport is available', async () => {
+  it('uses the desktop change review projection command', async () => {
     const response = {
       version: 2,
       change_event_id: 'event-1',
@@ -81,5 +29,13 @@ describe('change review projection api helpers', () => {
 
     expect(invoke).toHaveBeenCalledWith('projection_change_review', undefined);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('requires desktop transport instead of falling back to HTTP', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+
+    await expect(getChangeReviewProjection()).rejects.toThrow('desktop transport is unavailable');
+
+    expect(fetch).not.toHaveBeenCalled();
   });
 });
