@@ -613,6 +613,9 @@ Completed slices:
   mandatory for backend events, deleted the legacy browser WebSocket/Yjs sync
   client and tests, and removed unused frontend Yjs dependencies after notes
   editing moved through backend timeline commands/projections.
+- `refactor(ui): remove main api http fallback` removed legacy fetch fallback
+  paths from the main frontend API helper for project, reference, AI, model,
+  export, and persistence operations so those helpers now require Tauri IPC.
 
 Discovered issues:
 
@@ -696,6 +699,10 @@ Discovered issues:
   binary sync and could act as a second realtime transport. Backend events now
   require Tauri event transport, and notes editing remains command/projection
   driven without frontend Yjs synchronization.
+- Resolved: `ui/src/lib/api.ts` still carried browser HTTP fallback behavior
+  after equivalent Tauri commands existed for its active surfaces. The helper
+  now uses desktop IPC directly and reports missing Tauri transport as a
+  configuration error.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

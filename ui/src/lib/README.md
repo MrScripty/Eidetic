@@ -10,7 +10,7 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | -------------------------- | ------------------------------------------------------------------------------------------------ |
 | `types.ts`                 | Shared TypeScript mirrors of core timeline, story, and UI layout contracts.                      |
 | `bibleGraphSchemaTypes.ts` | Focused TypeScript mirrors for backend-owned bible graph schema projection shapes.               |
-| `api.ts`                   | Frontend request helpers for project, timeline, story, and export operations.                    |
+| `api.ts`                   | Tauri command helpers for project, references, AI, models, export, and persistence operations.   |
 | `desktopTransport.ts`      | Tauri IPC detection and command invocation helpers for desktop-hosted frontend code.             |
 | `commandApi.ts`            | Browser-side command helper barrel for backend-owned commands and versioned command projections. |
 | `timelineCommandApi.ts`    | Timeline-specific command helpers that prefer Tauri IPC and fall back to legacy HTTP adapters.   |
@@ -43,7 +43,7 @@ Keep shared UI contracts, stores, and feature components under `ui/src/lib` and 
 
 ## Invariants
 
-- Backend-owned project data enters the UI through typed HTTP or Tauri IPC contracts instead of free-form objects.
+- Backend-owned project data enters the UI through typed Tauri IPC contracts instead of free-form objects.
 - Shared timeline geometry values are defined once and reused by all dependent components.
 - Stores own transient UI coordination; components render from store state rather than manual DOM mutation.
 
@@ -84,7 +84,7 @@ async function openTimeline() {
 - Internal consumers import typed shapes and helpers from `$lib/*`.
 - Store consumers should treat backend-backed entities as read-through state and mutate them through API/store actions, not local object surgery.
 - Command helpers return backend projections and must not patch persistent stores optimistically.
-- Desktop command helpers return backend projections through Tauri IPC and must fall back only while Milestone 7 keeps legacy HTTP parity paths.
+- Desktop command helpers return backend projections through Tauri IPC; legacy HTTP fallback paths are not production frontend contracts.
 - Projection helpers are read-only and return backend-owned versioned read models.
 - Layout consumers should reuse exported constants/helpers instead of re-declaring pixel budgets in component-local CSS.
 - Compatibility is maintained by updating this directory README or an ADR whenever shared contracts materially change.
