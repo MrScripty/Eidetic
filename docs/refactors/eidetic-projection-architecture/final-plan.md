@@ -518,14 +518,18 @@ Completed slices:
   legacy Axum route as a service adapter, exposed
   `command_timeline_create_node` through Tauri, and made the frontend helper
   prefer desktop IPC when available.
+- `refactor(desktop): split tauri command adapters` decomposed the Tauri shell
+  into focused error, health, project, command-domain, projection-domain, and
+  setup modules so desktop transport registration remains a thin adapter layer
+  before more Milestone 7 command migration.
 
 Discovered issues:
 
-- Open: `src-tauri/src/lib.rs` now exceeds the 500-line decomposition
+- Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
-  error-adapter responsibilities. Split the Tauri shell into focused command,
-  projection, project, and setup modules before continuing broad command-surface
-  migration.
+  error-adapter responsibilities. The Tauri shell was split into focused
+  modules, and command/projection adapters were further separated by domain so
+  touched desktop modules stay below decomposition thresholds.
 - Resolved: commit hooks reported `Can't find lefthook in PATH` because the root `node_modules/lefthook` symlink pointed at a stale path. The local symlink was repaired and the hook config now uses edition-aware Cargo formatting instead of direct `rustfmt` invocation.
 - Resolved: baseline `cargo fmt --all -- --check` reported pre-existing formatting drift in core/server Rust files. A dedicated formatting slice normalized the workspace instead of mixing formatting churn into feature commits.
 - Resolved: `rustfmt` on `crates/server/src/main.rs` previously recursed through out-of-line modules and reformatted unrelated baseline-drift server files. After the dedicated formatting cleanup, repo-wide Rust formatting is expected and can be used as a validation gate.

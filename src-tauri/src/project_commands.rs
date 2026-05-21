@@ -1,0 +1,63 @@
+use eidetic_server::project_service::{
+    self, CreateProjectRequest, LoadProjectRequest, SaveProjectRequest, UpdateProjectRequest,
+};
+use eidetic_server::state::AppState;
+use tauri::Manager;
+
+use crate::error::CommandError;
+
+#[tauri::command]
+pub async fn project_create(
+    app: tauri::AppHandle,
+    name: String,
+    template: String,
+) -> Result<serde_json::Value, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    project_service::create_project(&state, CreateProjectRequest { name, template })
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub fn project_get(app: tauri::AppHandle) -> Result<serde_json::Value, CommandError> {
+    let state = app.state::<AppState>();
+    project_service::get_project(&state).map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub fn project_update(
+    app: tauri::AppHandle,
+    name: Option<String>,
+    premise: Option<String>,
+) -> Result<serde_json::Value, CommandError> {
+    let state = app.state::<AppState>();
+    project_service::update_project(&state, UpdateProjectRequest { name, premise })
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn project_save(
+    app: tauri::AppHandle,
+    path: Option<String>,
+) -> Result<serde_json::Value, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    project_service::save_project(&state, SaveProjectRequest { path })
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn project_load(
+    app: tauri::AppHandle,
+    path: String,
+) -> Result<serde_json::Value, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    project_service::load_project(&state, LoadProjectRequest { path })
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn project_list() -> serde_json::Value {
+    project_service::list_projects().await
+}
