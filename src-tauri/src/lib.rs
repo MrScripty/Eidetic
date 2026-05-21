@@ -317,6 +317,17 @@ async fn command_propagation_proposal_accept(
 }
 
 #[tauri::command]
+async fn command_timeline_create_node(
+    app: tauri::AppHandle,
+    command: command_service::CreateTimelineNodeRequestCommand,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::create_timeline_node(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 async fn command_timeline_node_lock(
     app: tauri::AppHandle,
     command: CommandEnvelope<SetTimelineNodeLockCommand>,
@@ -546,6 +557,7 @@ pub fn run() {
             command_propagation_proposal_reject,
             command_propagation_proposal_update,
             command_propagation_proposal_accept,
+            command_timeline_create_node,
             command_timeline_node_lock,
             command_timeline_node_notes,
             command_timeline_delete_node,

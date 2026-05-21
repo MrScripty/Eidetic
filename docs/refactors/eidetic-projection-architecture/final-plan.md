@@ -512,9 +512,20 @@ Completed slices:
   service, kept the legacy Axum route as a service adapter, exposed
   `command_timeline_split_node` through Tauri, and made the frontend helper
   prefer desktop IPC when available.
+- `feat(desktop): route timeline create node command through tauri` moved
+  timeline node creation and its Y.Doc initialization/hierarchy invalidation
+  side effects into the focused backend timeline command service, kept the
+  legacy Axum route as a service adapter, exposed
+  `command_timeline_create_node` through Tauri, and made the frontend helper
+  prefer desktop IPC when available.
 
 Discovered issues:
 
+- Open: `src-tauri/src/lib.rs` now exceeds the 500-line decomposition
+  threshold while registering mixed project, command, projection, setup, and
+  error-adapter responsibilities. Split the Tauri shell into focused command,
+  projection, project, and setup modules before continuing broad command-surface
+  migration.
 - Resolved: commit hooks reported `Can't find lefthook in PATH` because the root `node_modules/lefthook` symlink pointed at a stale path. The local symlink was repaired and the hook config now uses edition-aware Cargo formatting instead of direct `rustfmt` invocation.
 - Resolved: baseline `cargo fmt --all -- --check` reported pre-existing formatting drift in core/server Rust files. A dedicated formatting slice normalized the workspace instead of mixing formatting churn into feature commits.
 - Resolved: `rustfmt` on `crates/server/src/main.rs` previously recursed through out-of-line modules and reformatted unrelated baseline-drift server files. After the dedicated formatting cleanup, repo-wide Rust formatting is expected and can be used as a validation gate.

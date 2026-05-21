@@ -461,6 +461,10 @@ export function createTimelineNode(
     payload,
   };
 
+  if (hasDesktopTransport()) {
+    return invokeDesktop<TimelineCommandResponse>('command_timeline_create_node', { command });
+  }
+
   return request('/commands/timeline/create-node', {
     method: 'POST',
     body: JSON.stringify(command),

@@ -32,8 +32,9 @@ pub use crate::command_service_semantic::{
     update_propagation_proposal,
 };
 pub use crate::command_service_timeline::{
-    SplitTimelineNodeRequestCommand, TimelineCommandResponse, delete_timeline_node,
-    set_timeline_node_lock, set_timeline_node_notes, split_timeline_node,
+    CreateTimelineNodeRequestCommand, SplitTimelineNodeRequestCommand, TimelineCommandResponse,
+    create_timeline_node, delete_timeline_node, set_timeline_node_lock, set_timeline_node_notes,
+    split_timeline_node,
 };
 
 #[derive(Debug, Serialize)]

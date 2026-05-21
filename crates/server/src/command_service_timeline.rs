@@ -1,9 +1,10 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, DeleteTimelineNodeCommand, ObjectKind, ProjectionEnvelope,
-    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, TimelineRenderProjection,
+    CommandEnvelope, CommandId, CreateTimelineNodeCommand, DeleteTimelineNodeCommand, ObjectKind,
+    ProjectionEnvelope, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
+    TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
-use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -14,6 +15,7 @@ use crate::command_service_support::{
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::state::{AppState, ServerEvent};
 use crate::timeline_command::{self, TimelineCommandError};
+use crate::validation;
 use crate::ydoc::DocCommand;
 use crate::{timeline_node_store, timeline_relationship_store};
 
@@ -21,6 +23,26 @@ use crate::{timeline_node_store, timeline_relationship_store};
 pub struct TimelineCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<TimelineRenderProjection>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CreateTimelineNodeRequestCommand {
+    id: CommandId,
+    payload: CreateTimelineNodeRequestPayload,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CreateTimelineNodeRequestPayload {
+    #[serde(default)]
+    node_id: Option<NodeId>,
+    parent_id: Option<NodeId>,
+    level: StoryLevel,
+    name: String,
+    start_ms: u64,
+    end_ms: u64,
+    beat_type: Option<BeatType>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,6 +63,26 @@ struct SplitTimelineNodeRequestPayload {
     right_node_id: Option<NodeId>,
 }
 
+impl CreateTimelineNodeRequestCommand {
+    fn into_core_command(self) -> CommandEnvelope<CreateTimelineNodeCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: CreateTimelineNodeCommand {
+                node_id: self
+                    .payload
+                    .node_id
+                    .unwrap_or_else(|| NodeId(derived_command_uuid(self.id, b"timeline.node"))),
+                parent_id: self.payload.parent_id,
+                level: self.payload.level,
+                name: self.payload.name,
+                start_ms: self.payload.start_ms,
+                end_ms: self.payload.end_ms,
+                beat_type: self.payload.beat_type,
+            },
+        }
+    }
+}
+
 impl SplitTimelineNodeRequestCommand {
     fn into_core_command(
         self,
@@ -59,6 +101,45 @@ impl SplitTimelineNodeRequestCommand {
             },
         }
     }
+}
+
+pub async fn create_timeline_node(
+    state: &AppState,
+    command: CreateTimelineNodeRequestCommand,
+) -> Result<TimelineCommandResponse, BackendError> {
+    validation::validate_name(&command.payload.name, "node name")?;
+    let command = command.into_core_command();
+    let path = active_project_path(state)?;
+    let created_node_id = command.payload.node_id;
+    let project = timeline_command_project(state, &path).await?;
+    let response = tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        history_store::create_schema(&conn).map_err(map_history_error)?;
+        let outcome =
+            timeline_command::record_create_timeline_node_history(&mut conn, &project, &command, 0)
+                .map_err(map_timeline_command_error)?;
+        let projection = timeline_render_projection_from_current_state(&conn, &project.timeline)
+            .map_err(map_timeline_command_error)?;
+        Ok::<_, BackendError>(TimelineCommandResponse {
+            outcome,
+            projection,
+        })
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("timeline node create command task failed: {error}"))
+    })??;
+
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
+            node_id: created_node_id,
+        });
+        let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+        let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+        state.trigger_save();
+    }
+    Ok(response)
 }
 
 pub async fn set_timeline_node_lock(
