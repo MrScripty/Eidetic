@@ -3,17 +3,17 @@
   import AppShell from '$lib/components/layout/AppShell.svelte';
   import SplashScreen from '$lib/components/layout/SplashScreen.svelte';
   import ToastContainer from '$lib/components/layout/ToastContainer.svelte';
-  import { WsClient } from '$lib/ws.js';
+  import { createServerEventClient } from '$lib/serverEventClient.js';
   import { setupWsHandlers } from '$lib/stores/wsHandlers.js';
 
-  const ws = new WsClient();
+  const events = createServerEventClient();
 
   onMount(() => {
-    ws.connect();
-    const teardownHandlers = setupWsHandlers(ws);
+    events.connect();
+    const teardownHandlers = setupWsHandlers(events);
     return () => {
       teardownHandlers();
-      ws.disconnect();
+      events.disconnect();
     };
   });
 </script>

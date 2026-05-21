@@ -6,20 +6,21 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 
 ## Contents
 
-| File/Folder                | Description                                                                                        |
-| -------------------------- | -------------------------------------------------------------------------------------------------- |
-| `types.ts`                 | Shared TypeScript mirrors of core timeline, story, and UI layout contracts.                        |
-| `bibleGraphSchemaTypes.ts` | Focused TypeScript mirrors for backend-owned bible graph schema projection shapes.                 |
-| `api.ts`                   | Frontend request helpers for project, timeline, story, and export operations.                      |
-| `desktopTransport.ts`      | Tauri IPC detection and command invocation helpers for desktop-hosted frontend code.                |
-| `commandApi.ts`            | Browser-side command helper barrel for backend-owned commands and versioned command projections.   |
-| `timelineCommandApi.ts`    | Timeline-specific command helpers that prefer Tauri IPC and fall back to legacy HTTP adapters.     |
-| `commandTransport.ts`      | Shared command IDs and legacy HTTP command transport used while Tauri migration is in progress.    |
-| `commandApi.test.ts`       | Tests for command helper request shape and backend error handling.                                 |
-| `projectionApi.ts`         | Browser-side read helpers for focused backend projections.                                         |
-| `projectionApi.test.ts`    | Tests for projection helper query shape and backend error handling.                                |
-| `stores/`                  | Reactive Svelte state used to coordinate the UI around backend-driven data.                        |
-| `components/`              | Feature UI modules for layout, timeline editing, sidebars, and relationship views.                 |
+| File/Folder                | Description                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| `types.ts`                 | Shared TypeScript mirrors of core timeline, story, and UI layout contracts.                      |
+| `bibleGraphSchemaTypes.ts` | Focused TypeScript mirrors for backend-owned bible graph schema projection shapes.               |
+| `api.ts`                   | Frontend request helpers for project, timeline, story, and export operations.                    |
+| `desktopTransport.ts`      | Tauri IPC detection and command invocation helpers for desktop-hosted frontend code.             |
+| `commandApi.ts`            | Browser-side command helper barrel for backend-owned commands and versioned command projections. |
+| `timelineCommandApi.ts`    | Timeline-specific command helpers that prefer Tauri IPC and fall back to legacy HTTP adapters.   |
+| `commandTransport.ts`      | Shared command IDs and legacy HTTP command transport used while Tauri migration is in progress.  |
+| `serverEventClient.ts`     | Backend event client that prefers Tauri events and falls back to legacy WebSocket transport.     |
+| `commandApi.test.ts`       | Tests for command helper request shape and backend error handling.                               |
+| `projectionApi.ts`         | Browser-side read helpers for focused backend projections.                                       |
+| `projectionApi.test.ts`    | Tests for projection helper query shape and backend error handling.                              |
+| `stores/`                  | Reactive Svelte state used to coordinate the UI around backend-driven data.                      |
+| `components/`              | Feature UI modules for layout, timeline editing, sidebars, and relationship views.               |
 
 ## Problem
 

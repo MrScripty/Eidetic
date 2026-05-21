@@ -559,6 +559,11 @@ Completed slices:
   stable `eidetic://server-event` Tauri payloads for the future WebSocket
   replacement path, with serialization tests covering event type and field
   preservation.
+- `feat(ui): prefer tauri server events in desktop shell` added a transport
+  neutral frontend server-event client that listens to `eidetic://server-event`
+  through Tauri when desktop event transport is available and falls back to the
+  legacy WebSocket client otherwise, preserving the existing projection refresh
+  orchestration handlers while covering event dispatch and teardown.
 
 Discovered issues:
 

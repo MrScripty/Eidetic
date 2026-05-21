@@ -1,4 +1,4 @@
-import type { WsClient } from '$lib/ws.js';
+import type { ServerEventClient } from '$lib/serverEventClient.js';
 import {
   appendStreamingToken,
   completeGeneration,
@@ -60,8 +60,8 @@ function refreshChangeReview() {
   return requestProjectionRefresh('change-review', refreshChangeReviewProjection);
 }
 
-/** Register WebSocket event handlers that update Svelte stores. */
-export function setupWsHandlers(ws: WsClient) {
+/** Register backend event handlers that update Svelte stores. */
+export function setupWsHandlers(ws: ServerEventClient) {
   const unsubscribers = [
     ws.on('timeline_changed', async () => {
       await refreshTimelineRender();

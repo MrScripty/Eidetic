@@ -2,8 +2,19 @@ interface TauriCore {
   invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>;
 }
 
+export type DesktopUnlisten = () => void;
+
+interface TauriEvent<T = unknown> {
+  payload: T;
+}
+
+interface TauriEventApi {
+  listen<T>(event: string, handler: (event: TauriEvent<T>) => void): Promise<DesktopUnlisten>;
+}
+
 interface TauriGlobal {
   core?: TauriCore;
+  event?: TauriEventApi;
 }
 
 declare global {
@@ -24,8 +35,33 @@ function tauriCore(): TauriCore | null {
   return window.__TAURI__?.core ?? null;
 }
 
+function tauriEventApi(): TauriEventApi | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return window.__TAURI__?.event ?? null;
+}
+
 export function hasDesktopTransport(): boolean {
   return tauriCore() !== null;
+}
+
+export function hasDesktopEventTransport(): boolean {
+  return tauriEventApi() !== null;
+}
+
+export async function listenDesktop<T>(
+  event: string,
+  handler: (payload: T) => void,
+): Promise<DesktopUnlisten> {
+  const eventApi = tauriEventApi();
+  if (!eventApi) {
+    throw new Error('desktop event transport is unavailable');
+  }
+
+  return eventApi.listen<T>(event, ({ payload }) => {
+    handler(payload);
+  });
 }
 
 export async function invokeDesktop<T>(
