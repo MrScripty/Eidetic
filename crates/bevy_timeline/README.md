@@ -20,7 +20,7 @@ Current scope:
 - Derive and expose disposable relationship curve control points from timeline render projections.
 - Emit validated node range command requests for backend-confirmed move/resize.
 - Emit validated split command requests with backend-required replacement node IDs.
-- Expose a wasm-bindgen bridge for browser hosts.
+- Expose native Rust renderer state for the desktop host boundary.
 
 Dependency review:
 
@@ -29,13 +29,15 @@ Dependency review:
 - `bevy` is declared with `default-features = false` and only the `std`
   feature because this crate currently uses ECS/resource types and does not
   render windows, assets, text, audio, or UI.
-- Browser interop dependencies are target-scoped to `wasm32`.
+- Browser/WASM interop dependencies are intentionally absent. Eidetic's
+  production renderer path is native desktop host integration through Tauri and
+  Bevy, not browser canvas or wasm-bindgen.
 - Adding Bevy render/window/asset/text/input features requires a new dependency
   review and a commit that explains the transitive dependency cost.
 
 Future scope:
 
-- Browser canvas or desktop host lifecycle.
+- Desktop host lifecycle.
 - Track and clip visual entities.
 - Pointer, keyboard, and accessibility command flows.
 - Backend-confirmed move, resize, split, and relationship commands.

@@ -9,8 +9,6 @@ mod playhead;
 mod relationship_curve;
 mod scene;
 mod viewport;
-#[cfg(target_arch = "wasm32")]
-mod wasm;
 
 pub use playhead::TimelinePlayhead;
 pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};
@@ -19,8 +17,6 @@ pub use scene::{
     rebuild_timeline_scene,
 };
 pub use viewport::TimelineViewport;
-#[cfg(target_arch = "wasm32")]
-pub use wasm::WasmTimelineRenderer;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]

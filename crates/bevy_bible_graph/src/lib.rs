@@ -6,14 +6,10 @@ use serde::Serialize;
 use thiserror::Error;
 
 mod scene;
-#[cfg(target_arch = "wasm32")]
-mod wasm;
 
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphNodeEntity, BibleGraphSceneStats, rebuild_bible_graph_scene,
 };
-#[cfg(target_arch = "wasm32")]
-pub use wasm::WasmBibleGraphRenderer;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]

@@ -580,6 +580,10 @@ Completed slices:
   into a host-neutral backend service, exposed a Tauri command returning PDF
   bytes, and made the frontend export helper wrap desktop bytes into the same
   `Blob` contract while retaining the legacy HTTP fallback.
+- `refactor(renderer): remove wasm renderer bridges` deleted the timeline and
+  bible graph wasm-bindgen bridge modules, removed wasm-only renderer
+  dependencies, and updated renderer docs to record native desktop Bevy host
+  integration as the production path.
 
 Discovered issues:
 

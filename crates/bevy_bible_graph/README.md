@@ -14,7 +14,7 @@ Current scope:
 - Rebuild read-only Bevy ECS entities for graph nodes and edges.
 - Expose projection-provided neighborhood indexes for host-side graph highlighting.
 - Validate selectable/inspectable graph node IDs before emitting commands.
-- Expose a wasm-bindgen bridge for browser hosts.
+- Expose native Rust renderer state for the desktop host boundary.
 
 Dependency review:
 
@@ -23,13 +23,15 @@ Dependency review:
 - `bevy` is declared with `default-features = false` and only the `std`
   feature because this crate currently uses ECS/resource types and does not
   render windows, assets, text, audio, or UI.
-- Browser interop dependencies are target-scoped to `wasm32`.
+- Browser/WASM interop dependencies are intentionally absent. Eidetic's
+  production renderer path is native desktop host integration through Tauri and
+  Bevy, not browser canvas or wasm-bindgen.
 - Adding Bevy render/window/asset/text/input features requires a new dependency
   review and a commit that explains the transitive dependency cost.
 
 Future scope:
 
-- Browser canvas or desktop host lifecycle.
+- Desktop host lifecycle.
 - Camera, force-layout, and interaction state.
 - Pointer, keyboard, and accessibility command flows.
 - Backend-confirmed graph mutation commands.

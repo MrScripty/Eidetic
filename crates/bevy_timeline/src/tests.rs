@@ -87,7 +87,7 @@ fn renderer_app_derives_relationship_curves_from_projection() {
 }
 
 #[test]
-fn relationship_curves_serialize_for_wasm_bridge() {
+fn relationship_curves_serialize_for_host_bridge() {
     let node_id = NodeId::new();
     let track_id = TrackId::new();
     let relationship_id = eidetic_core::timeline::relationship::RelationshipId::new();
