@@ -522,6 +522,11 @@ Completed slices:
   into focused error, health, project, command-domain, projection-domain, and
   setup modules so desktop transport registration remains a thin adapter layer
   before more Milestone 7 command migration.
+- `feat(desktop): route timeline range command through tauri` moved timeline
+  node range updates into the focused backend timeline command service, kept the
+  legacy Axum route as a service adapter, exposed
+  `command_timeline_node_range` through Tauri, and made the frontend helper
+  prefer desktop IPC when available.
 
 Discovered issues:
 

@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
     CommandEnvelope, DeleteTimelineNodeCommand, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand,
+    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
 };
 use eidetic_server::command_service;
 use eidetic_server::state::AppState;
@@ -15,6 +15,17 @@ pub async fn command_timeline_create_node(
 ) -> Result<command_service::TimelineCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     command_service::create_timeline_node(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn command_timeline_node_range(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetTimelineNodeRangeCommand>,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_timeline_node_range(&state, command)
         .await
         .map_err(CommandError::from)
 }

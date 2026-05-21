@@ -41,6 +41,7 @@ pub fn run() {
             commands::semantic::command_propagation_proposal_update,
             commands::semantic::command_propagation_proposal_accept,
             commands::timeline::command_timeline_create_node,
+            commands::timeline::command_timeline_node_range,
             commands::timeline::command_timeline_node_lock,
             commands::timeline::command_timeline_node_notes,
             commands::timeline::command_timeline_delete_node,

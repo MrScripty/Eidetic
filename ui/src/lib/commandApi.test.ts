@@ -225,6 +225,52 @@ describe('command api helpers', () => {
     );
   });
 
+  it('uses desktop timeline range commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [],
+          clips: [],
+          relationships: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setTimelineNodeRange(
+        {
+          node_id: 'node.scene.beach',
+          start_ms: 1_000,
+          end_ms: 4_000,
+        },
+        'command-timeline-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_timeline_node_range', {
+      command: {
+        id: 'command-timeline-1',
+        payload: {
+          node_id: 'node.scene.beach',
+          start_ms: 1_000,
+          end_ms: 4_000,
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('sends story arc commands and returns arc list projections', async () => {
     const response = {
       outcome: 'recorded',
