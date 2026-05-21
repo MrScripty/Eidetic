@@ -605,6 +605,10 @@ Completed slices:
   service, exposed Tauri commands for desktop generation requests, and made the
   frontend generation helpers prefer desktop IPC while keeping legacy routes as
   fallback adapters.
+- `refactor(launcher): run tauri desktop by default` changed the canonical
+  launcher target from the legacy Axum server to the Tauri desktop binary,
+  starts Vite only as the dev webview asset server, removes browser auto-open
+  behavior, and updates README workflow language for the desktop app.
 
 Discovered issues:
 
@@ -680,6 +684,10 @@ Discovered issues:
   tasks. Autosave, Y.Doc, AI generation, batch generation, and reference
   embedding now run through the backend task supervisor, and Tauri window
   teardown aborts supervised work through the shared backend lifecycle owner.
+- Resolved: the root launcher still built and ran the legacy `eidetic-server`
+  binary, waited for `127.0.0.1:3000`, and opened a browser. The launcher now
+  targets `eidetic-desktop`, uses Vite only for the Tauri development webview,
+  and release runs execute the desktop binary directly.
 - Resolved: `crates/server/src/command_service.rs` reached 681 lines after bible
   graph command extraction. Bible graph command handling now lives in the
   focused `command_service_bible.rs` module and shared helpers live in

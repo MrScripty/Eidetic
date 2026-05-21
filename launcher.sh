@@ -4,12 +4,12 @@ IFS=$'\n\t'
 
 SCRIPT_NAME="$(basename "$0")"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_BIN="eidetic-server"
+APP_BIN="eidetic-desktop"
 UI_DIR="$PROJECT_ROOT/ui"
 UI_BUILD_DIR="$PROJECT_ROOT/dist/ui"
 RELEASE_BIN_PATH="$PROJECT_ROOT/target/release/${APP_BIN}"
 LAUNCHER_STATE_ROOT="${EIDETIC_LAUNCHER_STATE_ROOT:-$PROJECT_ROOT/.launcher-state}"
-APP_URL="http://127.0.0.1:3000"
+UI_DEV_URL="http://127.0.0.1:5173"
 DEPENDENCIES=(node npm cargo ui_deps git_hooks)
 
 usage() {
@@ -169,45 +169,40 @@ prepare_temp_state() {
   printf '%s\n' "$temp_dir"
 }
 
-open_app_when_ready() {
+wait_for_ui_dev_server() {
   local url="$1"
   local attempts=60
 
-  if [[ "${EIDETIC_OPEN_BROWSER:-1}" == "0" ]]; then
-    log "[ui] browser auto-open disabled; open $url"
+  log "[ui] waiting for $url"
+
+  if ! command -v curl >/dev/null 2>&1; then
+    sleep 2
     return
   fi
 
-  if ! command -v xdg-open >/dev/null 2>&1; then
-    log "[ui] xdg-open not found; open $url"
-    return
-  fi
-
-  (
-    log "[ui] waiting for $url"
-
-    if ! command -v curl >/dev/null 2>&1; then
-      sleep 2
-      log "[ui] opening $url"
-      if ! xdg-open "$url" >/dev/null 2>&1; then
-        log "[ui] browser open failed; open $url"
-      fi
-      exit 0
+  while ((attempts > 0)); do
+    if curl -fsS "$url" >/dev/null 2>&1; then
+      return
     fi
+    attempts=$((attempts - 1))
+    sleep 0.25
+  done
+  die "UI dev server did not become ready at $url"
+}
 
-    while ((attempts > 0)); do
-      if curl -fsS "$url" >/dev/null 2>&1; then
-        log "[ui] opening $url"
-        if ! xdg-open "$url" >/dev/null 2>&1; then
-          log "[ui] browser open failed; open $url"
-        fi
-        exit 0
-      fi
-      attempts=$((attempts - 1))
-      sleep 0.25
-    done
-    log "[ui] server did not become ready; open $url"
-  ) &
+start_ui_dev_server() {
+  ensure_dependencies node npm ui_deps
+  log "[ui] starting Vite dev server for Tauri webview"
+  (cd "$UI_DIR" && npm run dev -- --host 127.0.0.1) &
+  UI_DEV_PID=$!
+  wait_for_ui_dev_server "$UI_DEV_URL"
+}
+
+stop_ui_dev_server() {
+  if [[ -n "${UI_DEV_PID:-}" ]] && kill -0 "$UI_DEV_PID" >/dev/null 2>&1; then
+    kill "$UI_DEV_PID" >/dev/null 2>&1 || true
+    wait "$UI_DEV_PID" >/dev/null 2>&1 || true
+  fi
 }
 
 ensure_ui_assets() {
@@ -220,18 +215,18 @@ build_ui_assets() {
   (cd "$UI_DIR" && npm run build)
 }
 
-build_server() {
+build_desktop() {
   local mode="$1"
 
   ensure_dependencies cargo
 
   case "$mode" in
     dev)
-      log "[build] compiling dev server binary"
+      log "[build] compiling dev desktop binary"
       cargo build -p "$APP_BIN"
       ;;
     release)
-      log "[build] compiling release server binary"
+      log "[build] compiling release desktop binary"
       cargo build --release -p "$APP_BIN"
       ;;
     *)
@@ -243,12 +238,15 @@ build_server() {
 run_dev() {
   local run_args=("$@")
 
-  ensure_dependencies cargo
-  ensure_ui_assets
+  ensure_dependencies cargo node npm ui_deps
   prepare_persistent_state "dev"
-  open_app_when_ready "$APP_URL"
+  start_ui_dev_server
+  trap stop_ui_dev_server EXIT INT TERM
 
-  exec cargo run -p "$APP_BIN" -- "${run_args[@]}"
+  cargo run -p "$APP_BIN" -- "${run_args[@]}"
+
+  trap - EXIT INT TERM
+  stop_ui_dev_server
 }
 
 run_release() {
@@ -256,7 +254,6 @@ run_release() {
 
   ensure_ui_assets
   prepare_persistent_state "release"
-  open_app_when_ready "$APP_URL"
 
   if [[ ! -x "$RELEASE_BIN_PATH" ]]; then
     log "missing release binary: $RELEASE_BIN_PATH"
@@ -358,11 +355,11 @@ main() {
       ;;
     build)
       build_ui_assets
-      build_server "dev"
+      build_desktop "dev"
       ;;
     build-release)
       build_ui_assets
-      build_server "release"
+      build_desktop "release"
       ;;
     run)
       run_dev "${run_args[@]}"
