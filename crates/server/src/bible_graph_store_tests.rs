@@ -359,13 +359,89 @@ fn render_graph_projection_envelope_applies_bounded_request() {
     );
 }
 
+#[test]
+fn render_graph_projection_limits_default_query() {
+    let mut conn = memory_connection();
+    for index in 0..25 {
+        seed_node(
+            &mut conn,
+            &format!("node.test.{index:02}"),
+            &format!("Node {index:02}"),
+            index,
+        );
+    }
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            max_nodes: 7,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    let node_ids: Vec<_> = projection
+        .payload
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(node_ids.len(), 7);
+    assert_eq!(node_ids[0], "node.test.00");
+    assert_eq!(node_ids[6], "node.test.06");
+}
+
+#[test]
+fn render_graph_projection_queries_focused_root_descendants() {
+    let mut conn = memory_connection();
+    seed_parented_node(&mut conn, "node.root", None, "Root", 1);
+    seed_parented_node(&mut conn, "node.root.child", Some("node.root"), "Child", 2);
+    seed_parented_node(
+        &mut conn,
+        "node.root.grandchild",
+        Some("node.root.child"),
+        "Grandchild",
+        3,
+    );
+    seed_parented_node(&mut conn, "node.other", None, "Other", 4);
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            focused_root_id: Some(BibleGraphNodeId::new("node.root").unwrap()),
+            neighborhood_depth: 1,
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    let node_ids: Vec<_> = projection
+        .payload
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(node_ids, vec!["node.root", "node.root.child"]);
+}
+
 fn seed_node(conn: &mut Connection, node_id: &str, name: &str, sort_order: u32) {
+    seed_parented_node(conn, node_id, None, name, sort_order);
+}
+
+fn seed_parented_node(
+    conn: &mut Connection,
+    node_id: &str,
+    parent_id: Option<&str>,
+    name: &str,
+    sort_order: u32,
+) {
     let command = CommandEnvelope::new(TestCommand);
     let event =
         eidetic_core::contracts::ChangeEvent::new(command.id, ChangeEventKind::UserEdit, name);
     let node = BibleGraphNode {
         id: BibleGraphNodeId::new(node_id).unwrap(),
-        parent_id: None,
+        parent_id: parent_id.map(|id| BibleGraphNodeId::new(id).unwrap()),
         schema_key: BibleGraphSchemaKey::new("test").unwrap(),
         name: name.to_string(),
         system_owned: false,

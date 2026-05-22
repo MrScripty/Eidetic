@@ -37,7 +37,7 @@ impl Default for BibleRenderGraphProjectionRequest {
 }
 
 impl BibleRenderGraphProjectionRequest {
-    fn normalized(&self) -> Self {
+    pub fn normalized(&self) -> Self {
         Self {
             focused_root_id: self.focused_root_id.clone(),
             selected_node_id: self.selected_node_id.clone(),

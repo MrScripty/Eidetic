@@ -238,10 +238,11 @@ pub(crate) fn load_render_graph_projection(
     conn: &Connection,
     request: &BibleRenderGraphProjectionRequest,
 ) -> Result<BibleRenderGraphProjection, HistoryStoreError> {
-    let nodes = load_node_list_projection(conn)?.nodes;
-    let edges = bible_graph_edge_store::load_all_edges(conn)?;
+    let graph = crate::bible_render_graph_query::load_bounded_render_graph(conn, request)?;
     Ok(BibleRenderGraphProjection::from_graph_for_request(
-        nodes, edges, request,
+        graph.nodes,
+        graph.edges,
+        request,
     ))
 }
 
@@ -390,7 +391,7 @@ fn load_node_detail_revision_summary(
     })
 }
 
-fn row_to_node(row: &Row<'_>) -> Result<BibleGraphNode, rusqlite::Error> {
+pub(crate) fn row_to_node(row: &Row<'_>) -> Result<BibleGraphNode, rusqlite::Error> {
     let id: String = row.get(0)?;
     let parent_id: Option<String> = row.get(1)?;
     let schema_key: String = row.get(2)?;

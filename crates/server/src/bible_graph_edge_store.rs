@@ -2,7 +2,7 @@ use eidetic_core::contracts::{
     BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, ChangeEventId,
     SetBibleGraphEdgeCommand,
 };
-use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
+use rusqlite::{Connection, OptionalExtension, Row, Transaction, params, params_from_iter};
 
 use crate::history_store::HistoryStoreError;
 
@@ -83,12 +83,28 @@ pub(crate) fn load_incoming_edges(
     load_edges_for_node(conn, node_id, "to_node_id")
 }
 
-pub(crate) fn load_all_edges(conn: &Connection) -> Result<Vec<BibleGraphEdge>, HistoryStoreError> {
-    let sql = edge_select_sql(
-        "WHERE deleted_event_id IS NULL ORDER BY sort_order ASC, label ASC, id ASC",
-    );
+pub(crate) fn load_edges_between_nodes(
+    conn: &Connection,
+    node_ids: &[BibleGraphNodeId],
+) -> Result<Vec<BibleGraphEdge>, HistoryStoreError> {
+    if node_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let placeholders = placeholders(node_ids.len());
+    let sql = edge_select_sql(format!(
+        "WHERE deleted_event_id IS NULL
+            AND from_node_id IN ({placeholders})
+            AND to_node_id IN ({placeholders})
+         ORDER BY sort_order ASC, label ASC, id ASC"
+    ));
+    let params: Vec<_> = node_ids
+        .iter()
+        .chain(node_ids.iter())
+        .map(BibleGraphNodeId::as_str)
+        .collect();
     let mut statement = conn.prepare(&sql)?;
-    let rows = statement.query_map([], row_to_edge)?;
+    let rows = statement.query_map(params_from_iter(params), row_to_edge)?;
 
     let mut edges = Vec::new();
     for row in rows {
@@ -135,6 +151,12 @@ fn edge_select_sql(where_clause: impl AsRef<str>) -> String {
          FROM bible_graph_edges {}",
         where_clause.as_ref()
     )
+}
+
+fn placeholders(count: usize) -> String {
+    std::iter::repeat_n("?", count)
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn row_to_edge(row: &Row<'_>) -> Result<BibleGraphEdge, rusqlite::Error> {
