@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::timeline::node::{NodeId, StoryLevel};
+use crate::timeline::node::{NodeId, StoryLevel, StoryNode};
 
 use super::{BibleGraphEdgeId, BibleGraphNodeId};
 
@@ -58,6 +58,49 @@ pub struct ContextStackProjection {
     pub target_node_id: NodeId,
     #[serde(default)]
     pub layers: Vec<ContextStackLayer>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContextStackProjectionRequest {
+    pub target_node_id: NodeId,
+}
+
+impl ContextStackProjection {
+    pub fn from_nodes(nodes: &[StoryNode], target_node_id: NodeId) -> Option<Self> {
+        let mut layers = Vec::new();
+        let mut current_id = target_node_id;
+
+        for _ in 0..nodes.len() {
+            let node = nodes.iter().find(|node| node.id == current_id)?;
+            layers.push(ContextStackLayer {
+                node_id: node.id,
+                level: node.level,
+                label: node.name.clone(),
+                role: if node.id == target_node_id {
+                    ContextLayerRole::Target
+                } else {
+                    ContextLayerRole::Inherited
+                },
+                distilled_context: node.content.scene_recap.clone(),
+                sort_order: node.sort_order,
+            });
+            let Some(parent_id) = node.parent_id else {
+                break;
+            };
+            current_id = parent_id;
+        }
+
+        if layers.is_empty() {
+            return None;
+        }
+
+        layers.reverse();
+        Some(Self {
+            target_node_id,
+            layers,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -192,5 +235,39 @@ mod tests {
         let error = serde_json::from_str::<ContextStackProjection>(&json).unwrap_err();
 
         assert!(error.to_string().contains("unknown field"));
+    }
+
+    #[test]
+    fn context_stack_projection_follows_timeline_ancestors() {
+        let premise = StoryNode::new(
+            "Premise",
+            StoryLevel::Premise,
+            crate::timeline::timing::TimeRange::new(0, 10).unwrap(),
+        );
+        let mut act = StoryNode::new(
+            "Act",
+            StoryLevel::Act,
+            crate::timeline::timing::TimeRange::new(0, 10).unwrap(),
+        );
+        act.parent_id = Some(premise.id);
+        let mut scene = StoryNode::new(
+            "Scene",
+            StoryLevel::Scene,
+            crate::timeline::timing::TimeRange::new(0, 10).unwrap(),
+        );
+        scene.parent_id = Some(act.id);
+        scene.content.scene_recap = Some("Rain at the harbor.".to_string());
+        let scene_id = scene.id;
+
+        let projection =
+            ContextStackProjection::from_nodes(&[scene, act, premise], scene_id).unwrap();
+
+        assert_eq!(projection.layers.len(), 3);
+        assert_eq!(projection.layers[0].level, StoryLevel::Premise);
+        assert_eq!(projection.layers[2].role, ContextLayerRole::Target);
+        assert_eq!(
+            projection.layers[2].distilled_context.as_deref(),
+            Some("Rain at the harbor.")
+        );
     }
 }

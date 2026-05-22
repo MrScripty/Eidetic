@@ -10,6 +10,8 @@ import type { ChangeReviewProjection } from './changeReviewTypes.js';
 import type {
   ContextInfluenceProjection,
   ContextInfluenceProjectionRequest,
+  ContextStackProjection,
+  ContextStackProjectionRequest,
 } from './contextInfluenceTypes.js';
 import type { ObjectFieldProjection, ObjectKind, ProjectionEnvelope } from './projectionTypes.js';
 import type { PropagationProposalListProjection } from './propagationProposalTypes.js';
@@ -93,6 +95,14 @@ export function getContextInfluenceProjection({
       query: { target_node_id },
     },
   );
+}
+
+export function getContextStackProjection({
+  target_node_id,
+}: ContextStackProjectionRequest): Promise<ProjectionEnvelope<ContextStackProjection>> {
+  return invokeDesktop<ProjectionEnvelope<ContextStackProjection>>('projection_context_stack', {
+    query: { target_node_id },
+  });
 }
 
 export function getScriptDocumentProjection({

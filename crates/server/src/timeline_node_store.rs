@@ -180,6 +180,54 @@ pub(crate) fn load_nodes(conn: &Connection) -> Result<Vec<StoryNode>, HistorySto
     Ok(nodes)
 }
 
+pub(crate) fn load_node_ancestor_stack(
+    conn: &Connection,
+    target_node_id: NodeId,
+) -> Result<Vec<StoryNode>, HistoryStoreError> {
+    conn.execute_batch(TIMELINE_NODE_SCHEMA_SQL)?;
+    let mut stmt = conn.prepare(
+        "WITH RECURSIVE stack(
+            id, parent_id, level, sort_order, start_ms, end_ms,
+            name, content_json, beat_type, locked, depth
+         ) AS (
+            SELECT id, parent_id, level, sort_order, start_ms, end_ms,
+                name, content_json, beat_type, locked, 0
+            FROM nodes
+            WHERE id = ?1
+            UNION ALL
+            SELECT parent.id, parent.parent_id, parent.level, parent.sort_order,
+                parent.start_ms, parent.end_ms, parent.name, parent.content_json,
+                parent.beat_type, parent.locked, stack.depth + 1
+            FROM nodes parent
+            INNER JOIN stack ON stack.parent_id = parent.id
+         )
+         SELECT id, parent_id, level, sort_order, start_ms, end_ms,
+            name, content_json, beat_type, locked
+         FROM stack
+         ORDER BY depth DESC",
+    )?;
+    let rows = stmt.query_map([target_node_id.0.to_string()], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, Option<String>>(1)?,
+            row.get::<_, String>(2)?,
+            row.get::<_, i32>(3)?,
+            row.get::<_, i64>(4)?,
+            row.get::<_, i64>(5)?,
+            row.get::<_, String>(6)?,
+            row.get::<_, String>(7)?,
+            row.get::<_, Option<String>>(8)?,
+            row.get::<_, i32>(9)?,
+        ))
+    })?;
+
+    let mut nodes = Vec::new();
+    for row in rows {
+        nodes.push(story_node_from_row(row?)?);
+    }
+    Ok(nodes)
+}
+
 pub(crate) fn load_node_arcs(conn: &Connection) -> Result<Vec<NodeArc>, HistoryStoreError> {
     conn.execute_batch(TIMELINE_NODE_SCHEMA_SQL)?;
     let mut stmt = conn.prepare("SELECT node_id, arc_id FROM node_arcs")?;
@@ -197,6 +245,52 @@ pub(crate) fn load_node_arcs(conn: &Connection) -> Result<Vec<NodeArc>, HistoryS
     }
 
     Ok(node_arcs)
+}
+
+fn story_node_from_row(
+    row: (
+        String,
+        Option<String>,
+        String,
+        i32,
+        i64,
+        i64,
+        String,
+        String,
+        Option<String>,
+        i32,
+    ),
+) -> Result<StoryNode, HistoryStoreError> {
+    let (
+        id,
+        parent_id,
+        level,
+        sort_order,
+        start_ms,
+        end_ms,
+        name,
+        content_json,
+        beat_type_json,
+        locked,
+    ) = row;
+    Ok(StoryNode {
+        id: NodeId(parse_uuid(&id)?),
+        parent_id: parent_id
+            .map(|id| parse_uuid(&id).map(NodeId))
+            .transpose()?,
+        level: parse_story_level(&level)?,
+        sort_order: sort_order as u32,
+        time_range: TimeRange {
+            start_ms: start_ms as u64,
+            end_ms: end_ms as u64,
+        },
+        name,
+        content: serde_json::from_str::<NodeContent>(&content_json)?,
+        beat_type: beat_type_json
+            .map(|beat_type| serde_json::from_str::<BeatType>(&beat_type))
+            .transpose()?,
+        locked: locked != 0,
+    })
 }
 
 pub(crate) fn update_node_content_status(
@@ -310,5 +404,38 @@ mod tests {
             nodes[0].content.scene_recap.as_deref(),
             Some("Ada leaves in rain.")
         );
+    }
+
+    #[test]
+    fn loads_node_ancestor_stack_from_root_to_target() {
+        let conn = Connection::open_in_memory().expect("open sqlite");
+        let premise = StoryNode::new(
+            "Premise",
+            StoryLevel::Premise,
+            TimeRange::new(0, 10_000).expect("range"),
+        );
+        let mut act = StoryNode::new(
+            "Act",
+            StoryLevel::Act,
+            TimeRange::new(0, 10_000).expect("range"),
+        );
+        act.parent_id = Some(premise.id);
+        let mut scene = StoryNode::new(
+            "Scene",
+            StoryLevel::Scene,
+            TimeRange::new(0, 10_000).expect("range"),
+        );
+        scene.parent_id = Some(act.id);
+        let scene_id = scene.id;
+        let tx = conn.unchecked_transaction().expect("transaction");
+        upsert_nodes_in_transaction(&tx, &[scene, act, premise]).expect("seed nodes");
+        tx.commit().expect("commit");
+
+        let stack = load_node_ancestor_stack(&conn, scene_id).expect("load stack");
+
+        assert_eq!(stack.len(), 3);
+        assert_eq!(stack[0].level, StoryLevel::Premise);
+        assert_eq!(stack[1].level, StoryLevel::Act);
+        assert_eq!(stack[2].id, scene_id);
     }
 }

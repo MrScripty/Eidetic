@@ -1,5 +1,6 @@
 use eidetic_core::contracts::{
-    ContextInfluenceProjection, ContextInfluenceProjectionRequest, ProjectionEnvelope,
+    ContextInfluenceProjection, ContextInfluenceProjectionRequest, ContextStackProjection,
+    ContextStackProjectionRequest, ProjectionEnvelope,
 };
 use eidetic_server::context_influence_service;
 use eidetic_server::state::AppState;
@@ -14,6 +15,17 @@ pub async fn projection_context_influence(
 ) -> Result<ProjectionEnvelope<ContextInfluenceProjection>, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     context_influence_service::context_influence_projection(&state, query)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn projection_context_stack(
+    app: tauri::AppHandle,
+    query: ContextStackProjectionRequest,
+) -> Result<ProjectionEnvelope<ContextStackProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    context_influence_service::context_stack_projection(&state, query)
         .await
         .map_err(CommandError::from)
 }

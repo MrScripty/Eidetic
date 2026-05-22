@@ -90,6 +90,7 @@ pub fn run() {
             projections::bible::projection_bible_graph_schemas,
             projections::bible::projection_bible_render_graph,
             projections::context::projection_context_influence,
+            projections::context::projection_context_stack,
             projections::semantic::projection_bible_reference_proposals,
             projections::semantic::projection_propagation_proposals,
             projections::semantic::projection_semantic_dependencies,

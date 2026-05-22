@@ -894,6 +894,10 @@ Discovered issues:
   desktop command/projection routes, and TypeScript command/projection helpers.
   The next context slice can build active hierarchy stack and graph-highlight
   projections on top of these backend-owned records.
+- Resolved: selected timeline nodes now have a backend-owned context-stack
+  projection that walks the persisted timeline ancestor chain and returns the
+  active premise/act/sequence/scene/beat layers for UI and graph highlighting
+  without deriving hierarchy context in Svelte or Bevy.
 - Resolved: `crates/server/src/routes/commands.rs` and `crates/server/src/routes/commands_tests.rs` exceeded the decomposition thresholds while owning many command handlers and route tests. Timeline command handlers and command route coverage were split into focused modules before adding more semantic proposal or Bevy bridge command surfaces.
 - Resolved: `crates/server/src/routes/projections_tests.rs` exceeded the decomposition threshold after adding SQLite-backed story arc route coverage. Script, timeline, and story projection route tests were split into a focused out-of-line module.
 - Resolved: frontend bible editing mutated broad `Entity` caches and whole detail objects. Legacy entity detail, node-link display/unlinking, websocket entity refreshes, and `storyState.entities` were removed; UI bible edits now use focused graph projection stores instead of broad entity cache patching.

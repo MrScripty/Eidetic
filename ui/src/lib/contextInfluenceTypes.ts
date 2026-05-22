@@ -28,6 +28,10 @@ export interface ContextStackProjection {
   layers: ContextStackLayer[];
 }
 
+export interface ContextStackProjectionRequest {
+  target_node_id: NodeId;
+}
+
 export interface ContextStackLayer {
   node_id: NodeId;
   level: StoryLevel;

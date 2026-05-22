@@ -47,7 +47,7 @@ pub use context_influence::{
     ContextEvaluation, ContextEvaluationId, ContextEvaluationTaskKind, ContextInfluenceId,
     ContextInfluenceKind, ContextInfluenceProjection, ContextInfluenceProjectionRequest,
     ContextInfluenceProvenance, ContextInfluenceRecord, ContextLayerRole, ContextStackLayer,
-    ContextStackProjection, RecordContextEvaluationCommand,
+    ContextStackProjection, ContextStackProjectionRequest, RecordContextEvaluationCommand,
 };
 pub use propagation_proposal::{
     AcceptPropagationProposalCommand, CreatePropagationProposalCommand, PropagationProposal,
