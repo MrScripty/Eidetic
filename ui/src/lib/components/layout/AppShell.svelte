@@ -12,7 +12,7 @@
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { aiStatusState, startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
-  import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
+  import { selectBibleGraphNode, selectedBibleGraphNodeId } from '$lib/stores/bible.svelte.js';
   import { saveProject, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
@@ -94,7 +94,7 @@
   let rightPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
   let windowHeight = $state(0);
 
-  const selectedGraphNodeId = $derived(bibleState.selectedGraphNodeId);
+  const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const bibleDetailOpen = $derived(selectedGraphNodeId !== null);
   const rightPanelOpen = $derived(bibleDetailOpen);
   const workspaceMode = $derived(workspaceModeState.mode);

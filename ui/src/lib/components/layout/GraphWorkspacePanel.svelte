@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
+  import { selectBibleGraphNode, selectedBibleGraphNodeId } from '$lib/stores/bible.svelte.js';
   import { getCachedBibleRenderGraphProjection } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
   import BibleRenderGraphOutline from '../sidebar/bible/BibleRenderGraphOutline.svelte';
 
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graph = $derived(renderGraphProjection?.payload ?? null);
+  const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
 
   function handleSelect(id: string) {
-    selectBibleGraphNode(bibleState.selectedGraphNodeId === id ? null : id);
+    selectBibleGraphNode(selectedGraphNodeId === id ? null : id);
   }
 </script>
 
@@ -22,7 +23,7 @@
     <div class="graph-surface">
       <BibleRenderGraphOutline
         projection={graph}
-        selectedNodeId={bibleState.selectedGraphNodeId}
+        selectedNodeId={selectedGraphNodeId}
         onselect={handleSelect}
       />
     </div>

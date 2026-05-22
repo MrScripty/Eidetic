@@ -16,7 +16,7 @@
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
-  import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
+  import { selectBibleGraphNode, selectedBibleGraphNodeId } from '$lib/stores/bible.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import BibleGraphAddControls from './BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from './BibleGraphCategoryFilters.svelte';
@@ -42,6 +42,7 @@
   const nodeListProjection = $derived(getCachedBibleGraphNodeListProjection());
   const schemaProjection = $derived(getCachedBibleGraphSchemaListProjection());
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
+  const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const graphNodes = $derived(nodeListProjection?.payload.nodes ?? []);
   const disabledAddCategories = $derived(
     new Set(
@@ -91,7 +92,7 @@
   }
 
   function handleSelect(id: string) {
-    selectBibleGraphNode(bibleState.selectedGraphNodeId === id ? null : id);
+    selectBibleGraphNode(selectedGraphNodeId === id ? null : id);
   }
 
   function activeRenderGraphQuery() {
@@ -169,7 +170,7 @@
 
   <BibleRenderGraphOutline
     projection={renderGraphProjection?.payload ?? null}
-    selectedNodeId={bibleState.selectedGraphNodeId}
+    selectedNodeId={selectedGraphNodeId}
     query={searchQuery}
     onselect={handleSelect}
   />
@@ -184,7 +185,7 @@
         <BibleGraphNodeCard
           node={entity}
           category={nodeCategory(entity)}
-          selected={bibleState.selectedGraphNodeId === entity.id}
+          selected={selectedGraphNodeId === entity.id}
           onselect={handleSelect}
         />
       </li>
