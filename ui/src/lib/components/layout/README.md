@@ -7,9 +7,12 @@ This directory contains the top-level shell components that partition the Eideti
 | File/Folder | Description |
 |-------------|-------------|
 | `AppShell.svelte` | Primary application frame that composes the sidebar, editor/script region, right panel, and bottom timeline stack. |
+| `AiStatusIndicator.svelte` | Floating AI connection status indicator positioned by the shell. |
 | `AppToolbar.svelte` | Focused top toolbar surface for shell-level save/export commands. |
+| `AppWorkspace.svelte` | Focused central workspace switcher for script, graph, and split layouts. |
 | `BottomTimelineStack.svelte` | Fixed-height bottom region that keeps the timeline anchored to the window bottom and conditionally stacks the character timeline beneath it. |
 | `GraphSelectionDetail.svelte` | Right-panel detail projection for selected graph edges, influence paths, context layers, and neighborhoods. |
+| `GraphRightInspector.svelte` | Right inspector owner that selects between node detail and graph selection detail projections. |
 | `graphSelectionDetails.ts` | Pure adapter from bounded bible render graph projections plus transient selection into inspectable detail rows. |
 | `GraphWorkspacePanel.svelte` | Central workspace graph projection surface for graph-focused and split workspace modes. |
 | `GraphWorkspaceSideLists.svelte` | Keyboard-accessible side lists for inspectable context layers, graph influences, edges, and neighborhoods. |
@@ -65,8 +68,12 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 - `AppShell.svelte` is the composition root for project-active layout.
 - `AppToolbar.svelte` receives save/export/workspace callbacks from the shell
   and does not read or mutate project state directly.
+- `AppWorkspace.svelte` owns central workspace mode rendering and script-editor
+  height state.
 - `GraphWorkspacePanel.svelte` consumes backend-owned bible render graph
   projection caches and emits only transient graph selection.
+- `GraphRightInspector.svelte` reads projection caches for the right panel and
+  does not write durable graph state directly.
 - `GraphWorkspaceSideLists.svelte` provides keyboard-accessible alternatives
   for context layer, graph influence, edge, and neighborhood inspection from
   projection payloads.
