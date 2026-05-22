@@ -1,9 +1,9 @@
 use super::*;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphPartKey,
-    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, ChangeEventKind,
-    CommandEnvelope, FieldValue, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
-    SetBibleGraphSnapshotFieldCommand,
+    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
+    BibleRenderGraphProjectionRequest, ChangeEventKind, CommandEnvelope, FieldValue,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
 };
 
 #[derive(Debug, serde::Serialize)]
@@ -313,6 +313,52 @@ fn node_detail_projection_includes_snapshots_and_fields() {
     );
 }
 
+#[test]
+fn render_graph_projection_envelope_applies_bounded_request() {
+    let mut conn = memory_connection();
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    seed_node(&mut conn, "node.place.beach", "Beach", 20);
+    seed_node(&mut conn, "node.place.tower", "Tower", 30);
+    seed_edge(
+        &mut conn,
+        "edge.ada.beach",
+        "node.character.ada",
+        "node.place.beach",
+        1,
+    );
+    seed_edge(
+        &mut conn,
+        "edge.beach.tower",
+        "node.place.beach",
+        "node.place.tower",
+        2,
+    );
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(BibleGraphNodeId::new("node.character.ada").unwrap()),
+            neighborhood_depth: 1,
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    let node_ids: Vec<_> = projection
+        .payload
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(node_ids, vec!["node.character.ada", "node.place.beach"]);
+    assert_eq!(projection.payload.edges.len(), 1);
+    assert_eq!(
+        projection.payload.edges[0].edge_id.as_str(),
+        "edge.ada.beach"
+    );
+}
+
 fn seed_node(conn: &mut Connection, node_id: &str, name: &str, sort_order: u32) {
     let command = CommandEnvelope::new(TestCommand);
     let event =
@@ -340,6 +386,37 @@ fn seed_node(conn: &mut Connection, node_id: &str, name: &str, sort_order: u32) 
         &[revision],
         |tx| insert_node_in_transaction(tx, &node, event.id),
     )
+    .unwrap();
+}
+
+fn seed_edge(
+    conn: &mut Connection,
+    edge_id: &str,
+    from_node_id: &str,
+    to_node_id: &str,
+    sort_order: u32,
+) {
+    let command = CommandEnvelope::new(SetBibleGraphEdgeCommand {
+        edge_id: BibleGraphEdgeId::new(edge_id).unwrap(),
+        from_node_id: BibleGraphNodeId::new(from_node_id).unwrap(),
+        to_node_id: BibleGraphNodeId::new(to_node_id).unwrap(),
+        edge_kind: BibleGraphEdgeKind::References,
+        label: "references".to_string(),
+        directed: true,
+        sort_order,
+    });
+    let event =
+        eidetic_core::contracts::ChangeEvent::new(command.id, ChangeEventKind::UserEdit, edge_id);
+    let revision = eidetic_core::contracts::ObjectRevision::new(
+        ObjectKind::BibleEdge,
+        command.payload.edge_id.as_str(),
+        event.id,
+        eidetic_core::contracts::RevisionOperation::Create,
+    );
+
+    history_store::record_change_with(conn, &command, "test.set_edge", &event, &[revision], |tx| {
+        crate::bible_graph_edge_store::set_edge_in_transaction(tx, &command.payload, event.id)
+    })
     .unwrap();
 }
 

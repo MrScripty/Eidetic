@@ -1,9 +1,9 @@
 use eidetic_core::contracts::{
     BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPartProjection,
-    BibleGraphSchemaKey, BibleNodeDetailProjection, BibleRenderGraphProjection, ChangeEventId,
-    ObjectKind, ProjectionEnvelope, ProjectionVersion, SetBibleGraphFieldCommand,
-    SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
-    default_part_projections_for_node,
+    BibleGraphSchemaKey, BibleNodeDetailProjection, BibleRenderGraphProjection,
+    BibleRenderGraphProjectionRequest, ChangeEventId, ObjectKind, ProjectionEnvelope,
+    ProjectionVersion, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    canonical_bible_root_nodes, default_part_projections_for_node,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
@@ -236,16 +236,20 @@ pub(crate) fn load_node_list_projection_envelope(
 
 pub(crate) fn load_render_graph_projection(
     conn: &Connection,
+    request: &BibleRenderGraphProjectionRequest,
 ) -> Result<BibleRenderGraphProjection, HistoryStoreError> {
     let nodes = load_node_list_projection(conn)?.nodes;
     let edges = bible_graph_edge_store::load_all_edges(conn)?;
-    Ok(BibleRenderGraphProjection::from_graph(nodes, edges))
+    Ok(BibleRenderGraphProjection::from_graph_for_request(
+        nodes, edges, request,
+    ))
 }
 
 pub(crate) fn load_render_graph_projection_envelope(
     conn: &Connection,
+    request: &BibleRenderGraphProjectionRequest,
 ) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, HistoryStoreError> {
-    let projection = load_render_graph_projection(conn)?;
+    let projection = load_render_graph_projection(conn, request)?;
     let summary = history_store::load_revision_summary_for_kinds(
         conn,
         &[ObjectKind::BibleNode, ObjectKind::BibleEdge],

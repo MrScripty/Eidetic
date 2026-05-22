@@ -2,6 +2,7 @@ import type {
   BibleGraphNodeId,
   BibleGraphNodeListProjection,
   BibleRenderGraphProjection,
+  BibleRenderGraphProjectionRequest,
   BibleNodeDetailProjection,
 } from './bibleGraphTypes.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
@@ -69,11 +70,13 @@ export function getBibleGraphSchemaListProjection(): Promise<
   );
 }
 
-export function getBibleRenderGraphProjection(): Promise<
-  ProjectionEnvelope<BibleRenderGraphProjection>
-> {
+export function getBibleRenderGraphProjection(
+  query?: BibleRenderGraphProjectionRequest,
+): Promise<ProjectionEnvelope<BibleRenderGraphProjection>> {
+  const args = query === undefined ? undefined : { query };
   return invokeDesktop<ProjectionEnvelope<BibleRenderGraphProjection>>(
     'projection_bible_render_graph',
+    args,
   );
 }
 

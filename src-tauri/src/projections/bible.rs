@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
     BibleGraphNodeListProjection, BibleGraphSchemaListProjection, BibleNodeDetailProjection,
-    BibleRenderGraphProjection, ProjectionEnvelope,
+    BibleRenderGraphProjection, BibleRenderGraphProjectionRequest, ProjectionEnvelope,
 };
+use eidetic_server::bible_render_graph_projection;
 use eidetic_server::projection_service::{self, BibleGraphNodeProjectionRequest};
 use eidetic_server::state::AppState;
 use tauri::Manager;
@@ -40,9 +41,10 @@ pub fn projection_bible_graph_schemas(
 #[tauri::command]
 pub async fn projection_bible_render_graph(
     app: tauri::AppHandle,
+    query: Option<BibleRenderGraphProjectionRequest>,
 ) -> Result<ProjectionEnvelope<BibleRenderGraphProjection>, CommandError> {
     let state = app.state::<AppState>().inner().clone();
-    projection_service::bible_render_graph_projection(&state)
+    bible_render_graph_projection::bible_render_graph_projection(&state, query.unwrap_or_default())
         .await
         .map_err(CommandError::from)
 }

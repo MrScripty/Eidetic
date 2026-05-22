@@ -873,6 +873,13 @@ Discovered issues:
 - Resolved: the cloned-project undo/redo routes still existed after cloned snapshot producers were removed. The routes, websocket event, frontend API helpers, shortcuts, toolbar controls, and transient UI flags were deleted; future undo/redo must enter through revision-backed command/event history.
 - Resolved: the first implementation attempt exposed the stale Pumas path and lockfile state as a build metadata blocker. The path and lockfile were fixed in earlier build slices, and subsequent implementation slices now use Cargo verification instead of stale metadata.
 - Resolved: command/projection routes previously reached into `AppState.project_path` directly because `AppState` had no backend-owned database lifecycle owner. `ProjectDatabase` now owns active project database state and exposes the active path/connection boundary for command, projection, AI, and project route surfaces while transitional autosave state is retired.
+- Open: `crates/server/src/projection_service.rs` remains over the 500-line
+  decomposition threshold after Milestone 8 render-graph request wiring. The
+  new bible render graph request path was moved into
+  `bible_render_graph_projection.rs` so this slice does not expand the
+  oversized service, but the remaining mixed projection facade still needs a
+  focused decomposition pass before additional projection endpoints are added
+  there.
 - Resolved: `crates/server/src/routes/commands.rs` and `crates/server/src/routes/commands_tests.rs` exceeded the decomposition thresholds while owning many command handlers and route tests. Timeline command handlers and command route coverage were split into focused modules before adding more semantic proposal or Bevy bridge command surfaces.
 - Resolved: `crates/server/src/routes/projections_tests.rs` exceeded the decomposition threshold after adding SQLite-backed story arc route coverage. Script, timeline, and story projection route tests were split into a focused out-of-line module.
 - Resolved: frontend bible editing mutated broad `Entity` caches and whole detail objects. Legacy entity detail, node-link display/unlinking, websocket entity refreshes, and `storyState.entities` were removed; UI bible edits now use focused graph projection stores instead of broad entity cache patching.

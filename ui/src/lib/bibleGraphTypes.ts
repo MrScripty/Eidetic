@@ -141,6 +141,14 @@ export interface BibleGraphNodeListProjection {
   nodes: BibleGraphNode[];
 }
 
+export interface BibleRenderGraphProjectionRequest {
+  focused_root_id?: BibleGraphNodeId | null;
+  selected_node_id?: BibleGraphNodeId | null;
+  search?: string | null;
+  neighborhood_depth?: number;
+  max_nodes?: number;
+}
+
 export interface BibleRenderGraphProjection {
   nodes: BibleRenderGraphNode[];
   edges: BibleRenderGraphEdge[];

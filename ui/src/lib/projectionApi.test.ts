@@ -106,6 +106,27 @@ describe('projection api helpers', () => {
     expect(invoke).toHaveBeenCalledWith('projection_bible_render_graph', undefined);
   });
 
+  it('passes bounded bible render graph projection queries to desktop', async () => {
+    const response = { version: 4, payload: { nodes: [], edges: [], neighborhoods: [] } };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(
+      getBibleRenderGraphProjection({
+        selected_node_id: 'node.character.ada',
+        neighborhood_depth: 1,
+        max_nodes: 25,
+      }),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_bible_render_graph', {
+      query: {
+        selected_node_id: 'node.character.ada',
+        neighborhood_depth: 1,
+        max_nodes: 25,
+      },
+    });
+  });
+
   it('uses the desktop script document projection command', async () => {
     const response = { version: 1, payload: { document_id: 'script.main' } };
     const invoke = installDesktopInvoke(response);
