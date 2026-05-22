@@ -1,8 +1,10 @@
 use bevy::prelude::{Component, Entity, Resource, With, World};
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphSchemaKey,
-    BibleRenderGraphPosition, BibleRenderGraphProjection,
+    BibleRenderGraphPosition, BibleRenderGraphProjection, ContextInfluenceId, ContextInfluenceKind,
+    ContextInfluenceProvenance,
 };
+use eidetic_core::timeline::node::{NodeId, StoryLevel};
 
 #[derive(Component)]
 pub struct BibleGraphSceneEntity;
@@ -30,10 +32,25 @@ pub struct BibleGraphEdgeEntity {
     pub sort_order: u32,
 }
 
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphInfluenceEntity {
+    pub influence_id: ContextInfluenceId,
+    pub timeline_node_id: NodeId,
+    pub source_layer: StoryLevel,
+    pub influence_kind: ContextInfluenceKind,
+    pub confidence: f32,
+    pub reason: String,
+    pub provenance: ContextInfluenceProvenance,
+    pub bible_node_id: Option<BibleGraphNodeId>,
+    pub bible_edge_id: Option<BibleGraphEdgeId>,
+    pub sort_order: u32,
+}
+
 #[derive(Resource, Default)]
 pub struct BibleGraphSceneStats {
     pub node_count: usize,
     pub edge_count: usize,
+    pub influence_count: usize,
 }
 
 pub fn rebuild_bible_graph_scene(world: &mut World, projection: &BibleRenderGraphProjection) {
@@ -70,8 +87,27 @@ pub fn rebuild_bible_graph_scene(world: &mut World, projection: &BibleRenderGrap
         ));
     }
 
+    for influence in &projection.influences {
+        world.spawn((
+            BibleGraphSceneEntity,
+            BibleGraphInfluenceEntity {
+                influence_id: influence.influence_id,
+                timeline_node_id: influence.timeline_node_id,
+                source_layer: influence.source_layer,
+                influence_kind: influence.influence_kind.clone(),
+                confidence: influence.confidence,
+                reason: influence.reason.clone(),
+                provenance: influence.provenance.clone(),
+                bible_node_id: influence.bible_node_id.clone(),
+                bible_edge_id: influence.bible_edge_id.clone(),
+                sort_order: influence.sort_order,
+            },
+        ));
+    }
+
     world.resource_mut::<BibleGraphSceneStats>().node_count = projection.nodes.len();
     world.resource_mut::<BibleGraphSceneStats>().edge_count = projection.edges.len();
+    world.resource_mut::<BibleGraphSceneStats>().influence_count = projection.influences.len();
 }
 
 fn despawn_existing_scene(world: &mut World) {

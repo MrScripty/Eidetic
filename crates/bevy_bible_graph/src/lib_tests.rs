@@ -1,0 +1,232 @@
+use super::*;
+use eidetic_core::contracts::{
+    BibleGraphEdgeKind, BibleGraphSchemaKey, BibleRenderGraphEdge, BibleRenderGraphInfluence,
+    BibleRenderGraphNode, BibleRenderGraphPosition, ContextInfluenceKind,
+    ContextInfluenceProvenance,
+};
+use eidetic_core::timeline::node::{NodeId, StoryLevel};
+
+#[test]
+fn renderer_app_receives_projection_and_emits_validated_selection_command() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let mut renderer = BibleGraphRendererApp::new();
+
+    renderer.set_projection(projection_with_node(node_id.clone()));
+
+    assert_eq!(renderer.projection_node_count(), 1);
+    assert_eq!(renderer.select_node(node_id.clone()), Ok(()));
+    assert_eq!(
+        renderer.drain_commands(),
+        vec![BibleGraphRendererCommand::SelectNode { node_id }]
+    );
+    assert!(renderer.drain_commands().is_empty());
+}
+
+#[test]
+fn renderer_app_rebuilds_scene_entities_from_projection() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let mut renderer = BibleGraphRendererApp::new();
+
+    renderer.set_projection(projection_with_edge(node_id));
+    assert_eq!(renderer.scene_counts(), (2, 1));
+    assert_eq!(renderer.influence_count(), 0);
+
+    renderer.set_projection(BibleRenderGraphProjection {
+        nodes: Vec::new(),
+        edges: Vec::new(),
+        neighborhoods: Vec::new(),
+        influences: Vec::new(),
+    });
+    assert_eq!(renderer.scene_counts(), (0, 0));
+    assert_eq!(renderer.influence_count(), 0);
+}
+
+#[test]
+fn renderer_app_rejects_selection_before_projection_load() {
+    let mut renderer = BibleGraphRendererApp::new();
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+
+    assert_eq!(
+        renderer.select_node(node_id),
+        Err(BibleGraphRendererError::MissingProjection)
+    );
+    assert!(renderer.drain_commands().is_empty());
+}
+
+#[test]
+fn renderer_app_rejects_unknown_node_selection() {
+    let mut renderer = BibleGraphRendererApp::new();
+    let known_node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let unknown_node_id = BibleGraphNodeId::new("node.character.nope").unwrap();
+    renderer.set_projection(projection_with_node(known_node_id));
+
+    assert_eq!(
+        renderer.inspect_node(unknown_node_id.clone()),
+        Err(BibleGraphRendererError::UnknownNode {
+            node_id: unknown_node_id
+        })
+    );
+    assert!(renderer.drain_commands().is_empty());
+}
+
+#[test]
+fn renderer_app_returns_neighborhood_indexes_from_projection() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer.set_projection(projection_with_edge(node_id.clone()));
+
+    assert_eq!(
+        renderer.edge_ids_for_node(&node_id),
+        Ok(vec![BibleGraphEdgeId::new("edge.ada.beach").unwrap()])
+    );
+}
+
+#[test]
+fn renderer_app_indexes_influence_highlights_from_projection() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let mut renderer = BibleGraphRendererApp::new();
+
+    renderer.set_projection(projection_with_influence(
+        node_id.clone(),
+        edge_id.clone(),
+        influence_id,
+    ));
+
+    assert_eq!(renderer.scene_counts(), (2, 1));
+    assert_eq!(renderer.influence_count(), 1);
+    assert_eq!(
+        renderer.influence_ids_for_node(&node_id),
+        Ok(vec![influence_id])
+    );
+    assert_eq!(
+        renderer.influence_ids_for_edge(&edge_id),
+        Ok(vec![influence_id])
+    );
+    assert_eq!(renderer.select_influence(influence_id), Ok(()));
+    assert_eq!(
+        renderer.drain_commands(),
+        vec![BibleGraphRendererCommand::SelectInfluence { influence_id }]
+    );
+}
+
+#[test]
+fn renderer_app_rejects_unknown_influence_selection() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let unknown_influence_id = ContextInfluenceId::new();
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer.set_projection(projection_with_node(node_id));
+
+    assert_eq!(
+        renderer.select_influence(unknown_influence_id),
+        Err(BibleGraphRendererError::UnknownInfluence {
+            influence_id: unknown_influence_id
+        })
+    );
+}
+
+fn projection_with_node(node_id: BibleGraphNodeId) -> BibleRenderGraphProjection {
+    BibleRenderGraphProjection {
+        nodes: vec![BibleRenderGraphNode {
+            node_id,
+            parent_id: None,
+            schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+            label: "Ada".to_string(),
+            system_owned: false,
+            sort_order: 0,
+            depth: 0,
+            position: BibleRenderGraphPosition {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+        }],
+        edges: Vec::new(),
+        neighborhoods: Vec::new(),
+        influences: Vec::new(),
+    }
+}
+
+fn projection_with_edge(source_id: BibleGraphNodeId) -> BibleRenderGraphProjection {
+    let target_id = BibleGraphNodeId::new("node.place.beach").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    BibleRenderGraphProjection {
+        nodes: vec![
+            BibleRenderGraphNode {
+                node_id: source_id.clone(),
+                parent_id: None,
+                schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                label: "Ada".to_string(),
+                system_owned: false,
+                sort_order: 0,
+                depth: 0,
+                position: BibleRenderGraphPosition {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+            },
+            BibleRenderGraphNode {
+                node_id: target_id.clone(),
+                parent_id: None,
+                schema_key: BibleGraphSchemaKey::new("place").unwrap(),
+                label: "Beach".to_string(),
+                system_owned: false,
+                sort_order: 1,
+                depth: 0,
+                position: BibleRenderGraphPosition {
+                    x: 0.0,
+                    y: 150.0,
+                    z: 0.0,
+                },
+            },
+        ],
+        edges: vec![BibleRenderGraphEdge {
+            edge_id: edge_id.clone(),
+            from_node_id: source_id.clone(),
+            to_node_id: target_id.clone(),
+            edge_kind: BibleGraphEdgeKind::LocatedIn,
+            label: "located in".to_string(),
+            directed: true,
+            sort_order: 0,
+        }],
+        neighborhoods: vec![
+            BibleRenderGraphNeighborhood {
+                node_id: source_id,
+                connected_node_ids: vec![target_id.clone()],
+                edge_ids: vec![edge_id.clone()],
+            },
+            BibleRenderGraphNeighborhood {
+                node_id: target_id,
+                connected_node_ids: Vec::new(),
+                edge_ids: vec![edge_id],
+            },
+        ],
+        influences: Vec::new(),
+    }
+}
+
+fn projection_with_influence(
+    source_id: BibleGraphNodeId,
+    edge_id: BibleGraphEdgeId,
+    influence_id: ContextInfluenceId,
+) -> BibleRenderGraphProjection {
+    let mut projection = projection_with_edge(source_id.clone());
+    projection.edges[0].edge_id = edge_id.clone();
+    projection.neighborhoods[0].edge_ids = vec![edge_id.clone()];
+    projection.neighborhoods[1].edge_ids = vec![edge_id.clone()];
+    projection.influences = vec![BibleRenderGraphInfluence {
+        influence_id,
+        timeline_node_id: NodeId::new(),
+        source_layer: StoryLevel::Scene,
+        influence_kind: ContextInfluenceKind::Direct,
+        confidence: 0.9,
+        reason: "Scene uses Ada at the beach.".to_string(),
+        provenance: ContextInfluenceProvenance::AiSelected,
+        bible_node_id: Some(source_id),
+        bible_edge_id: Some(edge_id),
+        sort_order: 1,
+    }];
+    projection
+}
