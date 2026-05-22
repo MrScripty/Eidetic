@@ -12,6 +12,8 @@ This directory contains the top-level shell components that partition the Eideti
 | `GraphSelectionDetail.svelte` | Right-panel detail projection for selected graph edges, influence paths, context layers, and neighborhoods. |
 | `graphSelectionDetails.ts` | Pure adapter from bounded bible render graph projections plus transient selection into inspectable detail rows. |
 | `GraphWorkspacePanel.svelte` | Central workspace graph projection surface for graph-focused and split workspace modes. |
+| `GraphWorkspaceSideLists.svelte` | Keyboard-accessible side lists for inspectable graph influences, edges, and neighborhoods. |
+| `graphWorkspaceItems.ts` | Pure adapter from bounded bible render graph projections into graph workspace side-list rows. |
 | `PanelResizer.svelte` | Generic drag handle used for resizable in-shell panel boundaries that remain user-adjustable. |
 | `Sidebar.svelte` | Left-side navigation and detail entry point for story/bible content. |
 | `SplashScreen.svelte` | Project bootstrap UI shown before a project is active. |
@@ -65,6 +67,9 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
   and does not read or mutate project state directly.
 - `GraphWorkspacePanel.svelte` consumes backend-owned bible render graph
   projection caches and emits only transient graph selection.
+- `GraphWorkspaceSideLists.svelte` provides keyboard-accessible alternatives
+  for graph influence, edge, and neighborhood inspection from projection
+  payloads.
 - `GraphSelectionDetail.svelte` reads the current bounded render graph
   projection and transient graph selection; it must not request broader graph
   data or store durable graph facts locally.
