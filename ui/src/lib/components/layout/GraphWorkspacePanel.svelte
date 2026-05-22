@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import {
     bibleState,
     selectBibleGraphContextLayer,
@@ -10,6 +11,7 @@
   } from '$lib/stores/bible.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { getCachedBibleRenderGraphProjection } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
+  import { startGraphRendererCommandDrain } from '$lib/stores/graphRendererCommandDrain.js';
   import {
     clearContextStackProjection,
     getCachedContextStackProjection,
@@ -38,6 +40,8 @@
           neighborhoodItems.length > 0
       : false,
   );
+
+  onMount(() => startGraphRendererCommandDrain());
 
   $effect(() => {
     const selectedTimelineNodeId = editorState.selectedNodeId;

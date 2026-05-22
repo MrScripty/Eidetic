@@ -1043,6 +1043,15 @@ Discovered issues:
   status or drained interaction commands. It now has typed desktop helpers and
   a pure command application adapter that updates transient graph selection
   only, leaving durable graph facts backend-owned.
+- Resolved: the graph workspace did not own a native renderer command-drain
+  lifecycle, so Bevy selections would not reach the Svelte detail/review
+  surfaces. The workspace now starts a bounded drain loop on mount and applies
+  validated renderer commands to transient graph selection only.
+- Open: the central graph workspace still uses the Svelte outline as the
+  visible graph surface while Bevy is a projection/command consumer. Finishing
+  Milestone 8 still requires native Bevy viewport integration with a fresh
+  render/window dependency review before replacing the Svelte outline as the
+  central visual graph.
 
 ## Concurrent Worker Policy
 
