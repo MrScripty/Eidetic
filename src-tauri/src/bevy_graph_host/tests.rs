@@ -35,11 +35,13 @@ fn host_validates_renderer_commands_and_drains_them() {
     let mut host = DesktopBibleGraphHost::new();
     let projection = sample_projection();
     let node_id = projection.nodes[0].node_id.clone();
+    let edge_id = projection.edges[0].edge_id.clone();
     let influence_id = projection.influences[0].influence_id;
     host.set_projection(projection).unwrap();
 
     host.select_node(node_id.clone()).unwrap();
     host.inspect_node(node_id.clone()).unwrap();
+    host.select_edge(edge_id.clone()).unwrap();
     host.select_influence(influence_id).unwrap();
 
     assert_eq!(
@@ -49,6 +51,7 @@ fn host_validates_renderer_commands_and_drains_them() {
                 node_id: node_id.clone()
             },
             BibleGraphRendererCommand::InspectNode { node_id },
+            BibleGraphRendererCommand::SelectEdge { edge_id },
             BibleGraphRendererCommand::SelectInfluence { influence_id },
         ]
     );
@@ -105,11 +108,13 @@ fn owner_drains_validated_renderer_commands() {
     let owner = DesktopBibleGraphRendererOwner::start().unwrap();
     let projection = sample_projection();
     let node_id = projection.nodes[0].node_id.clone();
+    let edge_id = projection.edges[0].edge_id.clone();
     let influence_id = projection.influences[0].influence_id;
     owner.set_projection(projection).unwrap();
 
     owner.select_node(node_id.clone()).unwrap();
     owner.inspect_node(node_id.clone()).unwrap();
+    owner.select_edge(edge_id.clone()).unwrap();
     owner.select_influence(influence_id).unwrap();
 
     assert_eq!(
@@ -119,6 +124,7 @@ fn owner_drains_validated_renderer_commands() {
                 node_id: node_id.clone()
             },
             BibleGraphRendererCommand::InspectNode { node_id },
+            BibleGraphRendererCommand::SelectEdge { edge_id },
             BibleGraphRendererCommand::SelectInfluence { influence_id },
         ]
     );

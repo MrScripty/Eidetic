@@ -1031,6 +1031,10 @@ Discovered issues:
   projection payload into the managed Bevy renderer owner when available,
   giving the renderer thread a projection-driven data path without creating a
   second durable graph owner.
+- Resolved: the native graph renderer command surface validated node and
+  influence selections but omitted edge selection while Milestone 8 requires
+  typed transient edge selection. The Bevy renderer and desktop owner now
+  validate projected edge IDs and emit `select_edge` renderer commands.
 
 ## Concurrent Worker Policy
 

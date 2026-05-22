@@ -2,7 +2,9 @@ use std::sync::{Mutex, mpsc};
 use std::thread::{self, JoinHandle};
 
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
-use eidetic_core::contracts::{BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId};
+use eidetic_core::contracts::{
+    BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
+};
 
 use super::{
     BibleGraphHostError, BibleGraphHostResult, BibleGraphHostStatus, DesktopBibleGraphHost,
@@ -19,6 +21,10 @@ enum BibleGraphHostRequest {
     },
     InspectNode {
         node_id: BibleGraphNodeId,
+        reply: mpsc::Sender<BibleGraphHostResult<()>>,
+    },
+    SelectEdge {
+        edge_id: BibleGraphEdgeId,
         reply: mpsc::Sender<BibleGraphHostResult<()>>,
     },
     SelectInfluence {
@@ -78,6 +84,14 @@ impl DesktopBibleGraphRendererOwner {
         let (reply, receiver) = mpsc::channel();
         self.sender
             .send(BibleGraphHostRequest::InspectNode { node_id, reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
+    pub fn select_edge(&self, edge_id: BibleGraphEdgeId) -> BibleGraphHostResult<()> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::SelectEdge { edge_id, reply })
             .map_err(|_| BibleGraphHostError::OwnerStopped)?;
         receive_reply(receiver)
     }
@@ -151,6 +165,9 @@ fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
             }
             BibleGraphHostRequest::InspectNode { node_id, reply } => {
                 let _ = reply.send(host.inspect_node(node_id));
+            }
+            BibleGraphHostRequest::SelectEdge { edge_id, reply } => {
+                let _ = reply.send(host.select_edge(edge_id));
             }
             BibleGraphHostRequest::SelectInfluence {
                 influence_id,

@@ -17,6 +17,7 @@ pub use scene::{
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum BibleGraphRendererCommand {
     SelectNode { node_id: BibleGraphNodeId },
+    SelectEdge { edge_id: BibleGraphEdgeId },
     SelectInfluence { influence_id: ContextInfluenceId },
     InspectNode { node_id: BibleGraphNodeId },
 }
@@ -115,6 +116,19 @@ impl BibleGraphRendererApp {
             .resource_mut::<BibleGraphRendererCommandQueue>()
             .commands
             .push(BibleGraphRendererCommand::InspectNode { node_id });
+        Ok(())
+    }
+
+    pub fn select_edge(
+        &mut self,
+        edge_id: BibleGraphEdgeId,
+    ) -> Result<(), BibleGraphRendererError> {
+        self.validate_edge(&edge_id)?;
+        self.app
+            .world_mut()
+            .resource_mut::<BibleGraphRendererCommandQueue>()
+            .commands
+            .push(BibleGraphRendererCommand::SelectEdge { edge_id });
         Ok(())
     }
 

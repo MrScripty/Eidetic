@@ -1,7 +1,9 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use eidetic_bevy_bible_graph::{BibleGraphRendererApp, BibleGraphRendererError};
-use eidetic_core::contracts::{BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId};
+use eidetic_core::contracts::{
+    BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
+};
 
 use super::{BibleGraphHostError, BibleGraphHostStatus};
 
@@ -56,6 +58,10 @@ impl DesktopBibleGraphHost {
 
     pub fn inspect_node(&mut self, node_id: BibleGraphNodeId) -> Result<(), BibleGraphHostError> {
         self.with_renderer_mut(|renderer| renderer.inspect_node(node_id))
+    }
+
+    pub fn select_edge(&mut self, edge_id: BibleGraphEdgeId) -> Result<(), BibleGraphHostError> {
+        self.with_renderer_mut(|renderer| renderer.select_edge(edge_id))
     }
 
     pub fn select_influence(

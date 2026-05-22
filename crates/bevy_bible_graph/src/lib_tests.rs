@@ -72,13 +72,35 @@ fn renderer_app_rejects_unknown_node_selection() {
 #[test]
 fn renderer_app_returns_neighborhood_indexes_from_projection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
     renderer.set_projection(projection_with_edge(node_id.clone()));
 
     assert_eq!(
         renderer.edge_ids_for_node(&node_id),
-        Ok(vec![BibleGraphEdgeId::new("edge.ada.beach").unwrap()])
+        Ok(vec![edge_id.clone()])
     );
+    assert_eq!(renderer.select_edge(edge_id.clone()), Ok(()));
+    assert_eq!(
+        renderer.drain_commands(),
+        vec![BibleGraphRendererCommand::SelectEdge { edge_id }]
+    );
+}
+
+#[test]
+fn renderer_app_rejects_unknown_edge_selection() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let unknown_edge_id = BibleGraphEdgeId::new("edge.unknown").unwrap();
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer.set_projection(projection_with_node(node_id));
+
+    assert_eq!(
+        renderer.select_edge(unknown_edge_id.clone()),
+        Err(BibleGraphRendererError::UnknownEdge {
+            edge_id: unknown_edge_id
+        })
+    );
+    assert!(renderer.drain_commands().is_empty());
 }
 
 #[test]
