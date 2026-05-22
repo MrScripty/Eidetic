@@ -5,7 +5,9 @@ use eidetic_core::contracts::{
 };
 use eidetic_core::timeline::node::{NodeId, StoryLevel};
 
-use super::{load_context_influence_projection, record_context_evaluation};
+use super::{
+    load_context_influence_projection, load_latest_context_evaluations, record_context_evaluation,
+};
 use crate::history_store::{self, RecordChangeOutcome};
 
 #[test]
@@ -90,16 +92,73 @@ fn rejects_influence_for_different_evaluation() {
     assert!(error.to_string().contains("different evaluation"));
 }
 
+#[test]
+fn loads_latest_context_evaluations_for_context_stack_layers() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    let parent_node_id = NodeId::new();
+    let child_node_id = NodeId::new();
+    let old_parent = context_command_with_distilled_context(
+        parent_node_id,
+        "Old parent context",
+        "old parent context",
+        10,
+    );
+    let new_parent = context_command_with_distilled_context(
+        parent_node_id,
+        "New parent context",
+        "new parent context",
+        20,
+    );
+    let child =
+        context_command_with_distilled_context(child_node_id, "Child context", "child context", 30);
+    record_context_evaluation(&mut conn, &old_parent, 10).unwrap();
+    record_context_evaluation(&mut conn, &new_parent, 20).unwrap();
+    record_context_evaluation(&mut conn, &child, 30).unwrap();
+
+    let evaluations =
+        load_latest_context_evaluations(&conn, &[parent_node_id, child_node_id]).unwrap();
+
+    assert_eq!(evaluations.len(), 2);
+    assert_eq!(
+        evaluations
+            .iter()
+            .find(|evaluation| evaluation.target_node_id == parent_node_id)
+            .and_then(|evaluation| evaluation.distilled_context.as_deref()),
+        Some("new parent context")
+    );
+    assert_eq!(
+        evaluations
+            .iter()
+            .find(|evaluation| evaluation.target_node_id == child_node_id)
+            .and_then(|evaluation| evaluation.distilled_context.as_deref()),
+        Some("child context")
+    );
+}
+
 fn context_command(target_node_id: NodeId) -> CommandEnvelope<RecordContextEvaluationCommand> {
+    context_command_with_distilled_context(
+        target_node_id,
+        "Scene context evaluation",
+        "Harbor weather shapes the scene.",
+        100,
+    )
+}
+
+fn context_command_with_distilled_context(
+    target_node_id: NodeId,
+    summary: &str,
+    distilled_context: &str,
+    created_at_ms: u64,
+) -> CommandEnvelope<RecordContextEvaluationCommand> {
     let evaluation_id = eidetic_core::contracts::ContextEvaluationId::new();
     CommandEnvelope::new(RecordContextEvaluationCommand {
         evaluation: ContextEvaluation {
             id: evaluation_id,
             target_node_id,
             task_kind: ContextEvaluationTaskKind::GenerateTimelineContext,
-            summary: "Scene context evaluation".to_string(),
-            distilled_context: Some("Harbor weather shapes the scene.".to_string()),
-            created_at_ms: 100,
+            summary: summary.to_string(),
+            distilled_context: Some(distilled_context.to_string()),
+            created_at_ms,
         },
         influences: vec![ContextInfluenceRecord {
             id: eidetic_core::contracts::ContextInfluenceId::new(),
