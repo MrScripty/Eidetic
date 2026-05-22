@@ -6,7 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-bevy = { version = "0.16.1", default-features = false, features = ["std"] }
+bevy = { version = "0.18.1", default-features = false, features = ["std"] }
 eidetic-core.workspace = true
 serde.workspace = true
 thiserror.workspace = true

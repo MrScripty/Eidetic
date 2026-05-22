@@ -22,9 +22,12 @@ Dependency review:
 
 - Bevy is isolated to this leaf crate and is not a dependency of `eidetic-core`
   or `eidetic-server`.
-- `bevy` is declared with `default-features = false` and only the `std`
+- `bevy` is pinned to 0.18.1 and declared with `default-features = false` and only the `std`
   feature because this crate currently uses ECS/resource types and does not
   render windows, assets, text, audio, or UI.
+- `cargo tree -p eidetic-bevy-bible-graph --depth 2` shows Bevy remains under
+  this leaf crate, with `eidetic-core`, `serde`, and `thiserror` as the only
+  other direct dependency families.
 - Browser/WASM interop dependencies are intentionally absent. Eidetic's
   production renderer path is native desktop host integration through Tauri and
   Bevy, not browser canvas or wasm-bindgen.
