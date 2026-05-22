@@ -1035,6 +1035,10 @@ Discovered issues:
   influence selections but omitted edge selection while Milestone 8 requires
   typed transient edge selection. The Bevy renderer and desktop owner now
   validate projected edge IDs and emit `select_edge` renderer commands.
+- Resolved: the native graph renderer owner had no desktop IPC read surface for
+  lifecycle status or validated renderer commands. Tauri now exposes status and
+  command-drain commands that return transport-safe projections without giving
+  the renderer durable graph mutation authority.
 
 ## Concurrent Worker Policy
 

@@ -4,6 +4,7 @@ mod commands;
 mod desktop_events;
 mod error;
 mod export_commands;
+mod graph_renderer_commands;
 mod health;
 mod model_commands;
 mod project_commands;
@@ -61,6 +62,8 @@ pub fn run() {
             ai_commands::ai_generate_batch,
             model_commands::model_list,
             export_commands::export_pdf,
+            graph_renderer_commands::graph_renderer_status,
+            graph_renderer_commands::graph_renderer_drain_commands,
             reference_commands::reference_list,
             reference_commands::reference_upload,
             reference_commands::reference_delete,

@@ -22,3 +22,30 @@ impl From<BackendError> for CommandError {
         }
     }
 }
+
+impl CommandError {
+    pub(crate) fn internal(message: impl Into<String>) -> Self {
+        Self {
+            kind: "internal",
+            message: message.into(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CommandError;
+
+    #[test]
+    fn internal_error_serializes_transport_shape() {
+        let error = CommandError::internal("renderer unavailable");
+
+        assert_eq!(
+            serde_json::to_value(error).unwrap(),
+            serde_json::json!({
+                "kind": "internal",
+                "message": "renderer unavailable",
+            })
+        );
+    }
+}

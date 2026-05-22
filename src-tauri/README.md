@@ -17,6 +17,7 @@ commands and events.
 | `src/bevy_graph_host/` | Desktop-managed lifecycle owner and focused host adapter for the Bevy bible graph renderer leaf crate. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
 | `src/export_commands.rs` | Tauri commands for export service access. |
+| `src/graph_renderer_commands.rs` | Tauri commands for native Bevy graph renderer status and validated command draining. |
 | `src/model_commands.rs` | Tauri commands for Pumas model-library projection reads. |
 | `src/reference_commands.rs` | Tauri commands for reference document list/upload/delete service access. |
 
@@ -40,6 +41,9 @@ commands and events.
   into the Bevy renderer owner when desktop state is available. Svelte still
   receives the same projection envelope, so renderer failures are logged instead
   of turning the read projection into a UI-blocking error.
+- Native renderer IPC exposes status and command-drain reads only. Drained
+  renderer commands are validated transient interaction intents, not durable
+  bible graph mutations.
 - Renderer host state must not be stored in `tauri::State` unless the owner is
   `Send + Sync`; Bevy `App` is not. Native render-window integration needs a
   dedicated desktop renderer owner instead of storing `App` in global managed

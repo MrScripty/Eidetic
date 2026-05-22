@@ -7,7 +7,7 @@ pub use owner::DesktopBibleGraphRendererOwner;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct BibleGraphHostStatus {
     pub running: bool,
     pub node_count: usize,
