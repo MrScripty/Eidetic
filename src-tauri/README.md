@@ -14,7 +14,7 @@ commands and events.
 | `src/lib.rs` | Tauri command/event registration and backend runtime composition. |
 | `src/main.rs` | Native desktop binary entrypoint and `--smoke` startup probe. |
 | `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
-| `src/bevy_graph_host.rs` | Desktop-managed lifecycle host for the Bevy bible graph renderer leaf crate. |
+| `src/bevy_graph_host/` | Desktop-managed lifecycle owner and focused host adapter for the Bevy bible graph renderer leaf crate. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
 | `src/export_commands.rs` | Tauri commands for export service access. |
 | `src/model_commands.rs` | Tauri commands for Pumas model-library projection reads. |

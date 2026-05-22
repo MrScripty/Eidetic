@@ -1022,6 +1022,10 @@ Discovered issues:
   focused `command_service_bible.rs` module and shared helpers live in
   `command_service_support.rs`, reducing the main service file below the
   decomposition threshold before further command migration.
+- Resolved: `src-tauri/src/bevy_graph_host.rs` exceeded the 500-line
+  decomposition threshold after adding the renderer owner. The desktop Bevy
+  graph boundary is now split into focused host, owner, and test modules before
+  adding projection subscription plumbing.
 
 ## Concurrent Worker Policy
 
