@@ -4,6 +4,7 @@ mod bible_graph_defaults;
 mod bible_render_graph;
 mod bible_render_graph_filter;
 mod change_review;
+mod context_influence;
 mod propagation_proposal;
 mod script_document;
 mod selected_node_editor;
@@ -42,6 +43,11 @@ pub use bible_render_graph::{
 };
 pub use bible_render_graph_filter::BibleRenderGraphProjectionRequest;
 pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
+pub use context_influence::{
+    ContextEvaluationId, ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProjection,
+    ContextInfluenceProvenance, ContextInfluenceRecord, ContextLayerRole, ContextStackLayer,
+    ContextStackProjection,
+};
 pub use propagation_proposal::{
     AcceptPropagationProposalCommand, CreatePropagationProposalCommand, PropagationProposal,
     PropagationProposalAction, PropagationProposalContractError, PropagationProposalId,
