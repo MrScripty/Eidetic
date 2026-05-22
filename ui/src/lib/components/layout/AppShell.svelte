@@ -4,6 +4,7 @@
   import BottomTimelineStack from './BottomTimelineStack.svelte';
   import AppToolbar from './AppToolbar.svelte';
   import GraphWorkspacePanel from './GraphWorkspacePanel.svelte';
+  import GraphSelectionDetail from './GraphSelectionDetail.svelte';
   import BeatEditor from '../editor/BeatEditor.svelte';
   import ScriptPanel from '../editor/ScriptPanel.svelte';
   import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
@@ -12,13 +13,18 @@
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import { aiStatusState, startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
-  import { selectBibleGraphNode, selectedBibleGraphNodeId } from '$lib/stores/bible.svelte.js';
+  import {
+    bibleState,
+    clearBibleGraphSelection,
+    selectedBibleGraphNodeId,
+  } from '$lib/stores/bible.svelte.js';
   import { saveProject, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
   import { applyDeleteTimelineNodeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { refreshSelectedNodeEditorProjection } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import { setWorkspaceMode, workspaceModeState } from '$lib/stores/workspaceMode.svelte.js';
+  import { getCachedBibleRenderGraphProjection } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
 
   $effect(() => {
     return startAiStatusPolling();
@@ -94,9 +100,12 @@
   let rightPanelWidth = $state(PANEL.DEFAULT_RELATIONSHIP_WIDTH_PX);
   let windowHeight = $state(0);
 
+  const graphSelection = $derived(bibleState.graphSelection);
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
-  const bibleDetailOpen = $derived(selectedGraphNodeId !== null);
-  const rightPanelOpen = $derived(bibleDetailOpen);
+  const graphDetailOpen = $derived(graphSelection.kind !== 'none');
+  const rightPanelOpen = $derived(graphDetailOpen);
+  const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
+  const renderGraph = $derived(renderGraphProjection?.payload ?? null);
   const workspaceMode = $derived(workspaceModeState.mode);
   const maxTimelineHeight = $derived.by(() => {
     if (windowHeight <= 0) return Infinity;
@@ -193,8 +202,12 @@
             <div class="entity-detail-panel">
               <BibleGraphNodeDetail
                 nodeId={selectedGraphNodeId}
-                onclose={() => selectBibleGraphNode(null)}
+                onclose={clearBibleGraphSelection}
               />
+            </div>
+          {:else}
+            <div class="entity-detail-panel">
+              <GraphSelectionDetail projection={renderGraph} selection={graphSelection} />
             </div>
           {/if}
         </aside>

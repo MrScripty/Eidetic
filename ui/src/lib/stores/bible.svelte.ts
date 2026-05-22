@@ -37,6 +37,10 @@ export function selectBibleGraphNeighborhood(id: BibleGraphNodeId | null) {
   bibleState.graphSelection = id ? { kind: 'neighborhood', nodeId: id } : { kind: 'none' };
 }
 
+export function clearBibleGraphSelection() {
+  bibleState.graphSelection = { kind: 'none' };
+}
+
 export function selectedBibleGraphNodeId(): BibleGraphNodeId | null {
   return bibleState.graphSelection.kind === 'node' ? bibleState.graphSelection.nodeId : null;
 }

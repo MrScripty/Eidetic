@@ -9,6 +9,8 @@ This directory contains the top-level shell components that partition the Eideti
 | `AppShell.svelte` | Primary application frame that composes the sidebar, editor/script region, right panel, and bottom timeline stack. |
 | `AppToolbar.svelte` | Focused top toolbar surface for shell-level save/export commands. |
 | `BottomTimelineStack.svelte` | Fixed-height bottom region that keeps the timeline anchored to the window bottom and conditionally stacks the character timeline beneath it. |
+| `GraphSelectionDetail.svelte` | Right-panel detail projection for selected graph edges, influence paths, context layers, and neighborhoods. |
+| `graphSelectionDetails.ts` | Pure adapter from bounded bible render graph projections plus transient selection into inspectable detail rows. |
 | `GraphWorkspacePanel.svelte` | Central workspace graph projection surface for graph-focused and split workspace modes. |
 | `PanelResizer.svelte` | Generic drag handle used for resizable in-shell panel boundaries that remain user-adjustable. |
 | `Sidebar.svelte` | Left-side navigation and detail entry point for story/bible content. |
@@ -63,6 +65,9 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
   and does not read or mutate project state directly.
 - `GraphWorkspacePanel.svelte` consumes backend-owned bible render graph
   projection caches and emits only transient graph selection.
+- `GraphSelectionDetail.svelte` reads the current bounded render graph
+  projection and transient graph selection; it must not request broader graph
+  data or store durable graph facts locally.
 - `BottomTimelineStack.svelte` exposes no custom props; it renders from shared stores and shared layout helpers.
 - `AppShell.svelte` owns the preferred timeline height and passes the currently rendered height into `BottomTimelineStack.svelte`.
 - Consumers should not duplicate the bottom stack markup elsewhere; alternative shell layouts should compose this module or replace it explicitly.

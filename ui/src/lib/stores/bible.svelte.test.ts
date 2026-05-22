@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   bibleState,
+  clearBibleGraphSelection,
   selectBibleGraphEdge,
   selectBibleGraphInfluence,
   selectBibleGraphNode,
@@ -38,5 +39,9 @@ describe('bible selection store', () => {
       influenceId: 'influence-1',
     });
     expect(selectedBibleGraphNodeId()).toBeNull();
+
+    clearBibleGraphSelection();
+
+    expect(bibleState.graphSelection).toEqual({ kind: 'none' });
   });
 });

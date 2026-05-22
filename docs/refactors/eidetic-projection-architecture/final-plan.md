@@ -930,6 +930,11 @@ Discovered issues:
   nodes, edges, influence paths, context layers, and neighborhoods. Node detail
   panels derive a node ID only from node selections, so future graph commands do
   not overload `selectedGraphNodeId`.
+- Resolved: the right inspector now handles non-node graph selections from the
+  current bounded render graph projection. Influence paths, edges, context
+  layers, and neighborhoods are adapted through a pure projection helper, while
+  the central graph workspace exposes influence selection without storing
+  durable graph state in Svelte.
 - Resolved: `crates/server/src/routes/commands.rs` and `crates/server/src/routes/commands_tests.rs` exceeded the decomposition thresholds while owning many command handlers and route tests. Timeline command handlers and command route coverage were split into focused modules before adding more semantic proposal or Bevy bridge command surfaces.
 - Resolved: `crates/server/src/routes/projections_tests.rs` exceeded the decomposition threshold after adding SQLite-backed story arc route coverage. Script, timeline, and story projection route tests were split into a focused out-of-line module.
 - Resolved: frontend bible editing mutated broad `Entity` caches and whole detail objects. Legacy entity detail, node-link display/unlinking, websocket entity refreshes, and `storyState.entities` were removed; UI bible edits now use focused graph projection stores instead of broad entity cache patching.
