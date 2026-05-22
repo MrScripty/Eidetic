@@ -947,10 +947,14 @@ Discovered issues:
   boundary for renderer start/stop, projection application, validated command
   draining, and panic-to-error conversion. The host depends on the Bevy leaf
   renderer without making `eidetic-server` depend on Bevy or Tauri.
-- Open: Bevy `App` is not `Send`, so the graph renderer host must not be stored
-  in Tauri managed state. The native render-window slice still needs a
-  dedicated desktop renderer owner/thread with explicit startup, shutdown,
-  command queue, and projection subscription ownership.
+- Resolved: Bevy `App` is not `Send`, so the graph renderer host is no longer
+  stored directly in Tauri managed state. `DesktopBibleGraphRendererOwner` is a
+  `Send + Sync` desktop boundary that owns a dedicated renderer thread, request/
+  reply command queue, command draining, and shutdown joining from Tauri window
+  teardown.
+- Open: the native graph renderer owner still needs projection subscription
+  plumbing from backend refresh events into the renderer thread before the Bevy
+  graph can be the visible central workspace surface.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined

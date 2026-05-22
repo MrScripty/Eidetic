@@ -38,7 +38,9 @@ commands and events.
   write durable project state or make `eidetic-server` depend on Bevy.
 - Renderer host state must not be stored in `tauri::State` unless the owner is
   `Send + Sync`; Bevy `App` is not. Native render-window integration needs a
-  dedicated desktop renderer owner instead of global managed state.
+  dedicated desktop renderer owner instead of storing `App` in global managed
+  state. `DesktopBibleGraphRendererOwner` is the managed boundary; the Bevy
+  renderer itself lives on its owned thread.
 
 ## API Consumer Contract
 - Svelte invokes desktop commands by name through Tauri IPC.

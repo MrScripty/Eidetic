@@ -1,4 +1,6 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::sync::{Mutex, mpsc};
+use std::thread::{self, JoinHandle};
 
 use eidetic_bevy_bible_graph::{
     BibleGraphRendererApp, BibleGraphRendererCommand, BibleGraphRendererError,
@@ -18,6 +20,173 @@ pub struct BibleGraphHostStatus {
 pub enum BibleGraphHostError {
     Renderer(String),
     RendererPanic,
+    OwnerStopped,
+}
+
+type BibleGraphHostResult<T> = Result<T, BibleGraphHostError>;
+
+enum BibleGraphHostRequest {
+    SetProjection {
+        projection: BibleRenderGraphProjection,
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
+    SelectNode {
+        node_id: BibleGraphNodeId,
+        reply: mpsc::Sender<BibleGraphHostResult<()>>,
+    },
+    InspectNode {
+        node_id: BibleGraphNodeId,
+        reply: mpsc::Sender<BibleGraphHostResult<()>>,
+    },
+    SelectInfluence {
+        influence_id: ContextInfluenceId,
+        reply: mpsc::Sender<BibleGraphHostResult<()>>,
+    },
+    DrainCommands {
+        reply: mpsc::Sender<BibleGraphHostResult<Vec<BibleGraphRendererCommand>>>,
+    },
+    Status {
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
+    Stop {
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
+}
+
+pub struct DesktopBibleGraphRendererOwner {
+    sender: mpsc::Sender<BibleGraphHostRequest>,
+    join_handle: Mutex<Option<JoinHandle<()>>>,
+}
+
+impl DesktopBibleGraphRendererOwner {
+    pub fn start() -> BibleGraphHostResult<Self> {
+        let (sender, receiver) = mpsc::channel();
+        let join_handle = thread::Builder::new()
+            .name("eidetic-bevy-bible-graph".to_string())
+            .spawn(move || run_renderer_owner(receiver))
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+
+        Ok(Self {
+            sender,
+            join_handle: Mutex::new(Some(join_handle)),
+        })
+    }
+
+    pub fn set_projection(
+        &self,
+        projection: BibleRenderGraphProjection,
+    ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::SetProjection { projection, reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
+    pub fn select_node(&self, node_id: BibleGraphNodeId) -> BibleGraphHostResult<()> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::SelectNode { node_id, reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
+    pub fn inspect_node(&self, node_id: BibleGraphNodeId) -> BibleGraphHostResult<()> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::InspectNode { node_id, reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
+    pub fn select_influence(&self, influence_id: ContextInfluenceId) -> BibleGraphHostResult<()> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::SelectInfluence {
+                influence_id,
+                reply,
+            })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
+    pub fn drain_commands(&self) -> BibleGraphHostResult<Vec<BibleGraphRendererCommand>> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::DrainCommands { reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
+    pub fn status(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::Status { reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
+    pub fn stop(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::Stop { reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        let status = receive_reply(receiver)?;
+        if let Ok(mut join_handle) = self.join_handle.lock()
+            && let Some(join_handle) = join_handle.take()
+        {
+            join_handle
+                .join()
+                .map_err(|_| BibleGraphHostError::RendererPanic)?;
+        }
+        Ok(status)
+    }
+}
+
+impl Drop for DesktopBibleGraphRendererOwner {
+    fn drop(&mut self) {
+        let _ = self.stop();
+    }
+}
+
+fn receive_reply<T>(receiver: mpsc::Receiver<BibleGraphHostResult<T>>) -> BibleGraphHostResult<T> {
+    receiver
+        .recv()
+        .map_err(|_| BibleGraphHostError::OwnerStopped)?
+}
+
+fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
+    let mut host = DesktopBibleGraphHost::new();
+
+    for request in receiver {
+        match request {
+            BibleGraphHostRequest::SetProjection { projection, reply } => {
+                let _ = reply.send(host.set_projection(projection));
+            }
+            BibleGraphHostRequest::SelectNode { node_id, reply } => {
+                let _ = reply.send(host.select_node(node_id));
+            }
+            BibleGraphHostRequest::InspectNode { node_id, reply } => {
+                let _ = reply.send(host.inspect_node(node_id));
+            }
+            BibleGraphHostRequest::SelectInfluence {
+                influence_id,
+                reply,
+            } => {
+                let _ = reply.send(host.select_influence(influence_id));
+            }
+            BibleGraphHostRequest::DrainCommands { reply } => {
+                let _ = reply.send(Ok(host.drain_commands()));
+            }
+            BibleGraphHostRequest::Status { reply } => {
+                let _ = reply.send(Ok(host.status()));
+            }
+            BibleGraphHostRequest::Stop { reply } => {
+                let _ = reply.send(Ok(host.stop()));
+                break;
+            }
+        }
+    }
 }
 
 pub struct DesktopBibleGraphHost {
@@ -212,6 +381,56 @@ mod tests {
                 last_error: None,
             }
         );
+    }
+
+    #[test]
+    fn owner_runs_renderer_on_dedicated_thread() {
+        let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+        let projection = sample_projection();
+
+        let status = owner.set_projection(projection).unwrap();
+
+        assert_eq!(status.node_count, 2);
+        assert_eq!(status.edge_count, 1);
+        assert_eq!(status.influence_count, 1);
+        assert!(status.running);
+        owner.stop().unwrap();
+    }
+
+    #[test]
+    fn owner_drains_validated_renderer_commands() {
+        let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+        let projection = sample_projection();
+        let node_id = projection.nodes[0].node_id.clone();
+        let influence_id = projection.influences[0].influence_id;
+        owner.set_projection(projection).unwrap();
+
+        owner.select_node(node_id.clone()).unwrap();
+        owner.inspect_node(node_id.clone()).unwrap();
+        owner.select_influence(influence_id).unwrap();
+
+        assert_eq!(
+            owner.drain_commands().unwrap(),
+            vec![
+                BibleGraphRendererCommand::SelectNode {
+                    node_id: node_id.clone()
+                },
+                BibleGraphRendererCommand::InspectNode { node_id },
+                BibleGraphRendererCommand::SelectInfluence { influence_id },
+            ]
+        );
+        assert!(owner.drain_commands().unwrap().is_empty());
+        owner.stop().unwrap();
+    }
+
+    #[test]
+    fn owner_reports_stopped_after_shutdown() {
+        let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+        owner.stop().unwrap();
+
+        let error = owner.status().unwrap_err();
+
+        assert_eq!(error, BibleGraphHostError::OwnerStopped);
     }
 
     fn sample_projection() -> BibleRenderGraphProjection {

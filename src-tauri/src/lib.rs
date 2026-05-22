@@ -10,6 +10,7 @@ mod project_commands;
 mod projections;
 mod reference_commands;
 
+use bevy_graph_host::DesktopBibleGraphRendererOwner;
 use eidetic_server::state::AppState;
 use serde::Serialize;
 use tauri::Manager;
@@ -29,10 +30,17 @@ pub fn run() {
             let app_state = tauri::async_runtime::block_on(AppState::new());
             desktop_events::spawn_server_event_bridge(app.handle().clone(), &app_state);
             app.manage(app_state);
+            app.manage(
+                DesktopBibleGraphRendererOwner::start()
+                    .expect("failed to start Bevy bible graph renderer owner"),
+            );
             Ok(())
         })
         .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::Destroyed) {
+                if let Some(graph_owner) = window.try_state::<DesktopBibleGraphRendererOwner>() {
+                    let _ = graph_owner.stop();
+                }
                 let state = window.state::<AppState>();
                 state.shutdown_tasks();
             }
