@@ -25,6 +25,7 @@
   import { refreshSelectedNodeEditorProjection } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import { setWorkspaceMode, workspaceModeState } from '$lib/stores/workspaceMode.svelte.js';
   import { getCachedBibleRenderGraphProjection } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
+  import { getCachedContextStackProjection } from '$lib/stores/contextStackProjection.svelte.js';
 
   $effect(() => {
     return startAiStatusPolling();
@@ -106,6 +107,8 @@
   const rightPanelOpen = $derived(graphDetailOpen);
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const renderGraph = $derived(renderGraphProjection?.payload ?? null);
+  const contextStackProjection = $derived(getCachedContextStackProjection());
+  const contextStack = $derived(contextStackProjection?.payload ?? null);
   const workspaceMode = $derived(workspaceModeState.mode);
   const maxTimelineHeight = $derived.by(() => {
     if (windowHeight <= 0) return Infinity;
@@ -207,7 +210,11 @@
             </div>
           {:else}
             <div class="entity-detail-panel">
-              <GraphSelectionDetail projection={renderGraph} selection={graphSelection} />
+              <GraphSelectionDetail
+                projection={renderGraph}
+                selection={graphSelection}
+                {contextStack}
+              />
             </div>
           {/if}
         </aside>

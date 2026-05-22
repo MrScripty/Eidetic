@@ -1,17 +1,20 @@
 <script lang="ts">
   import { clearBibleGraphSelection, type BibleGraphSelection } from '$lib/stores/bible.svelte.js';
   import type { BibleRenderGraphProjection } from '$lib/bibleGraphTypes.js';
+  import type { ContextStackProjection } from '$lib/contextInfluenceTypes.js';
   import { graphSelectionDetail } from './graphSelectionDetails.js';
 
   let {
     projection,
     selection,
+    contextStack,
   }: {
     projection: BibleRenderGraphProjection | null;
     selection: BibleGraphSelection;
+    contextStack?: ContextStackProjection | null;
   } = $props();
 
-  const detail = $derived(graphSelectionDetail(projection, selection));
+  const detail = $derived(graphSelectionDetail(projection, selection, contextStack ?? null));
 </script>
 
 <section class="graph-selection-detail" aria-label="Graph selection detail">
@@ -78,6 +81,20 @@
     </dl>
   {:else if detail?.kind === 'context_layer'}
     <dl>
+      {#if detail.layer}
+        <div>
+          <dt>Layer</dt>
+          <dd>{detail.layer.label}</dd>
+        </div>
+        <div>
+          <dt>Level</dt>
+          <dd>{detail.layer.level}</dd>
+        </div>
+        <div>
+          <dt>Role</dt>
+          <dd>{detail.layer.role}</dd>
+        </div>
+      {/if}
       <div>
         <dt>Timeline Node</dt>
         <dd>{detail.timelineNodeId}</dd>
@@ -86,6 +103,12 @@
         <dt>Influences</dt>
         <dd>{detail.influenceCount}</dd>
       </div>
+      {#if detail.layer?.distilled_context}
+        <div>
+          <dt>Distilled Context</dt>
+          <dd>{detail.layer.distilled_context}</dd>
+        </div>
+      {/if}
     </dl>
   {:else if detail?.kind === 'neighborhood'}
     <dl>

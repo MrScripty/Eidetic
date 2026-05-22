@@ -16,6 +16,7 @@ import {
   clearBibleRenderGraphProjection,
   refreshBibleRenderGraphProjection,
 } from './bibleRenderGraphProjection.svelte.js';
+import { clearContextStackProjection } from './contextStackProjection.svelte.js';
 import { selectBibleGraphNode } from './bible.svelte.js';
 import {
   clearChangeReviewProjection,
@@ -65,6 +66,7 @@ const defaultProjectSessionLifecycle: ProjectSessionLifecycle = {
     clearBibleGraphNodeListProjection();
     clearBibleGraphSchemaListProjection();
     clearBibleRenderGraphProjection();
+    clearContextStackProjection();
     clearBibleReferenceProposalListProjection();
     clearPropagationProposalListProjection();
     clearChangeReviewProjection();

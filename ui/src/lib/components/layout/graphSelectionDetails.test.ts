@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BibleRenderGraphProjection } from '$lib/bibleGraphTypes.js';
+import type { ContextStackProjection } from '$lib/contextInfluenceTypes.js';
 import { graphSelectionDetail } from './graphSelectionDetails.js';
 
 const projection: BibleRenderGraphProjection = {
@@ -60,6 +61,20 @@ const projection: BibleRenderGraphProjection = {
   ],
 };
 
+const contextStack: ContextStackProjection = {
+  target_node_id: 'node.scene.beach',
+  layers: [
+    {
+      node_id: 'node.scene.beach',
+      level: 'Scene',
+      label: 'Beach Scene',
+      role: 'target',
+      distilled_context: 'Ada arrives at the beach.',
+      sort_order: 0,
+    },
+  ],
+};
+
 describe('graph selection details', () => {
   it('derives edge detail labels from the bounded projection', () => {
     expect(graphSelectionDetail(projection, { kind: 'edge', edgeId: 'edge.ada.beach' })).toEqual({
@@ -83,14 +98,19 @@ describe('graph selection details', () => {
 
   it('derives context layer influence counts by timeline node', () => {
     expect(
-      graphSelectionDetail(projection, {
-        kind: 'context_layer',
-        timelineNodeId: 'node.scene.beach',
-      }),
+      graphSelectionDetail(
+        projection,
+        {
+          kind: 'context_layer',
+          timelineNodeId: 'node.scene.beach',
+        },
+        contextStack,
+      ),
     ).toEqual({
       kind: 'context_layer',
       timelineNodeId: 'node.scene.beach',
       influenceCount: 1,
+      layer: contextStack.layers[0],
     });
   });
 

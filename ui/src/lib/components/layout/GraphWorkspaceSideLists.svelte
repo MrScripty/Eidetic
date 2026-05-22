@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { BibleRenderGraphInfluence } from '$lib/bibleGraphTypes.js';
+  import type { ContextStackLayer } from '$lib/contextInfluenceTypes.js';
   import type { BibleGraphSelection } from '$lib/stores/bible.svelte.js';
   import type {
     GraphWorkspaceEdgeItem,
@@ -9,23 +10,47 @@
   let {
     selection,
     influences,
+    contextLayers,
     edgeItems,
     neighborhoodItems,
     onselectinfluence,
+    onselectcontextlayer,
     onselectedge,
     onselectneighborhood,
   }: {
     selection: BibleGraphSelection;
     influences: BibleRenderGraphInfluence[];
+    contextLayers: ContextStackLayer[];
     edgeItems: GraphWorkspaceEdgeItem[];
     neighborhoodItems: GraphWorkspaceNeighborhoodItem[];
     onselectinfluence: (id: string) => void;
+    onselectcontextlayer: (id: string) => void;
     onselectedge: (id: string) => void;
     onselectneighborhood: (id: string) => void;
   } = $props();
 </script>
 
 <div class="graph-side-lists">
+  {#if contextLayers.length > 0}
+    <section class="graph-list" aria-label="Active context layers">
+      <h2>Context</h2>
+      {#each contextLayers as layer (layer.node_id)}
+        <button
+          type="button"
+          class:selected={selection.kind === 'context_layer' &&
+            selection.timelineNodeId === layer.node_id}
+          aria-pressed={selection.kind === 'context_layer' &&
+            selection.timelineNodeId === layer.node_id}
+          onclick={() => onselectcontextlayer(layer.node_id)}
+        >
+          <span class="item-kind">{layer.level}</span>
+          <span class="item-reason">{layer.label}</span>
+          <span class="item-metric">{layer.role}</span>
+        </button>
+      {/each}
+    </section>
+  {/if}
+
   {#if influences.length > 0}
     <section class="graph-list" aria-label="Active graph influences">
       <h2>Influences</h2>

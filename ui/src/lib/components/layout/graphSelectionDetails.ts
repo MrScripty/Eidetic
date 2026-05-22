@@ -7,6 +7,7 @@ import type {
   BibleRenderGraphNode,
   BibleRenderGraphProjection,
 } from '$lib/bibleGraphTypes.js';
+import type { ContextStackLayer, ContextStackProjection } from '$lib/contextInfluenceTypes.js';
 import type { BibleGraphSelection } from '$lib/stores/bible.svelte.js';
 
 export type GraphSelectionDetail =
@@ -17,7 +18,12 @@ export type GraphSelectionDetail =
       nodeLabel?: string;
       edgeLabel?: string;
     }
-  | { kind: 'context_layer'; timelineNodeId: string; influenceCount: number }
+  | {
+      kind: 'context_layer';
+      timelineNodeId: string;
+      influenceCount: number;
+      layer?: ContextStackLayer;
+    }
   | {
       kind: 'neighborhood';
       node: BibleRenderGraphNode;
@@ -28,6 +34,7 @@ export type GraphSelectionDetail =
 export function graphSelectionDetail(
   projection: BibleRenderGraphProjection | null,
   selection: BibleGraphSelection,
+  contextStack: ContextStackProjection | null = null,
 ): GraphSelectionDetail | null {
   if (!projection) return null;
 
@@ -74,6 +81,7 @@ export function graphSelectionDetail(
         influenceCount: projection.influences.filter(
           (influence) => influence.timeline_node_id === selection.timelineNodeId,
         ).length,
+        layer: contextStack?.layers.find((layer) => layer.node_id === selection.timelineNodeId),
       };
     }
     case 'neighborhood': {

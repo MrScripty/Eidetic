@@ -1,13 +1,20 @@
 <script lang="ts">
   import {
     bibleState,
+    selectBibleGraphContextLayer,
     selectBibleGraphEdge,
     selectBibleGraphInfluence,
     selectBibleGraphNeighborhood,
     selectBibleGraphNode,
     selectedBibleGraphNodeId,
   } from '$lib/stores/bible.svelte.js';
+  import { editorState } from '$lib/stores/editor.svelte.js';
   import { getCachedBibleRenderGraphProjection } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
+  import {
+    clearContextStackProjection,
+    getCachedContextStackProjection,
+    refreshContextStackProjection,
+  } from '$lib/stores/contextStackProjection.svelte.js';
   import BibleRenderGraphOutline from '../sidebar/bible/BibleRenderGraphOutline.svelte';
   import GraphWorkspaceSideLists from './GraphWorkspaceSideLists.svelte';
   import {
@@ -17,15 +24,29 @@
 
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graph = $derived(renderGraphProjection?.payload ?? null);
+  const contextStackProjection = $derived(getCachedContextStackProjection());
+  const contextLayers = $derived(contextStackProjection?.payload.layers ?? []);
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const graphSelection = $derived(bibleState.graphSelection);
   const edgeItems = $derived(graph ? graphWorkspaceEdgeItems(graph) : []);
   const neighborhoodItems = $derived(graph ? graphWorkspaceNeighborhoodItems(graph) : []);
   const hasSideLists = $derived(
     graph
-      ? graph.influences.length > 0 || edgeItems.length > 0 || neighborhoodItems.length > 0
+      ? contextLayers.length > 0 ||
+          graph.influences.length > 0 ||
+          edgeItems.length > 0 ||
+          neighborhoodItems.length > 0
       : false,
   );
+
+  $effect(() => {
+    const selectedTimelineNodeId = editorState.selectedNodeId;
+    if (!selectedTimelineNodeId) {
+      clearContextStackProjection();
+      return;
+    }
+    void refreshContextStackProjection(selectedTimelineNodeId).catch(() => {});
+  });
 
   function handleSelect(id: string) {
     selectBibleGraphNode(selectedGraphNodeId === id ? null : id);
@@ -34,6 +55,12 @@
   function handleSelectInfluence(id: string) {
     selectBibleGraphInfluence(
       graphSelection.kind === 'influence' && graphSelection.influenceId === id ? null : id,
+    );
+  }
+
+  function handleSelectContextLayer(id: string) {
+    selectBibleGraphContextLayer(
+      graphSelection.kind === 'context_layer' && graphSelection.timelineNodeId === id ? null : id,
     );
   }
 
@@ -69,9 +96,11 @@
         <GraphWorkspaceSideLists
           selection={graphSelection}
           influences={graph.influences}
+          {contextLayers}
           {edgeItems}
           {neighborhoodItems}
           onselectinfluence={handleSelectInfluence}
+          onselectcontextlayer={handleSelectContextLayer}
           onselectedge={handleSelectEdge}
           onselectneighborhood={handleSelectNeighborhood}
         />
