@@ -44,7 +44,20 @@ const projection: BibleRenderGraphProjection = {
       edge_ids: ['edge.ada.beach'],
     },
   ],
-  influences: [],
+  influences: [
+    {
+      influence_id: 'influence-1',
+      timeline_node_id: 'node.scene.beach',
+      source_layer: 'scene',
+      influence_kind: 'direct',
+      confidence: 0.9,
+      reason: 'Scene uses Ada at the beach.',
+      provenance: 'ai_selected',
+      bible_node_id: 'node.character.ada',
+      bible_edge_id: 'edge.ada.beach',
+      sort_order: 1,
+    },
+  ],
 };
 
 describe('bible render graph outline', () => {
@@ -58,6 +71,8 @@ describe('bible render graph outline', () => {
         depth: 1,
         connected_node_count: 1,
         edge_count: 1,
+        influence_count: 1,
+        active: true,
         selected: true,
       },
       {
@@ -66,6 +81,8 @@ describe('bible render graph outline', () => {
         depth: 1,
         connected_node_count: 0,
         edge_count: 0,
+        influence_count: 0,
+        active: false,
         selected: false,
       },
     ]);

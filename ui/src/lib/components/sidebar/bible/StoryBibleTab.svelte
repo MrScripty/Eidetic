@@ -17,6 +17,7 @@
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
   import { bibleState, selectBibleGraphNode } from '$lib/stores/bible.svelte.js';
+  import { editorState } from '$lib/stores/editor.svelte.js';
   import BibleGraphAddControls from './BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from './BibleGraphCategoryFilters.svelte';
   import BibleGraphNodeCard from './BibleGraphNodeCard.svelte';
@@ -36,6 +37,7 @@
   let searchQuery = $state('');
   let activeFilter: BibleGraphFilter = $state('All');
   let loadError = $state<string | null>(null);
+  let lastRenderGraphTimelineNodeId: string | null | undefined = undefined;
 
   const nodeListProjection = $derived(getCachedBibleGraphNodeListProjection());
   const schemaProjection = $derived(getCachedBibleGraphSchemaListProjection());
@@ -81,7 +83,7 @@
         name: newNodeName(category),
         sort_order: nextSortOrder(category),
       });
-      await refreshBibleRenderGraphProjection();
+      await refreshActiveRenderGraphProjection();
       selectBibleGraphNode(projection.projection.payload.node.id);
     } catch (error) {
       loadError = error instanceof Error ? error.message : 'Failed to create bible graph node';
@@ -90,6 +92,16 @@
 
   function handleSelect(id: string) {
     selectBibleGraphNode(bibleState.selectedGraphNodeId === id ? null : id);
+  }
+
+  function activeRenderGraphQuery() {
+    return editorState.selectedNodeId
+      ? { selected_timeline_node_id: editorState.selectedNodeId }
+      : undefined;
+  }
+
+  async function refreshActiveRenderGraphProjection(): Promise<void> {
+    await refreshBibleRenderGraphProjection(activeRenderGraphQuery());
   }
 
   function nextSortOrder(category: BibleGraphRootCategory): number {
@@ -119,7 +131,7 @@
       if (projection.payload.nodes.length === 0) {
         await ensureCanonicalBibleRootProjections();
       }
-      await refreshBibleRenderGraphProjection();
+      await refreshActiveRenderGraphProjection();
     } catch (error) {
       loadError = error instanceof Error ? error.message : 'Failed to load bible graph nodes';
     }
@@ -127,6 +139,19 @@
 
   onMount(() => {
     void loadBibleGraphNodes();
+  });
+
+  $effect(() => {
+    const selectedTimelineNodeId = editorState.selectedNodeId;
+    if (selectedTimelineNodeId === lastRenderGraphTimelineNodeId) {
+      return;
+    }
+    lastRenderGraphTimelineNodeId = selectedTimelineNodeId;
+    void refreshBibleRenderGraphProjection(
+      selectedTimelineNodeId ? { selected_timeline_node_id: selectedTimelineNodeId } : undefined,
+    ).catch((error) => {
+      loadError = error instanceof Error ? error.message : 'Failed to load bible graph nodes';
+    });
   });
 </script>
 

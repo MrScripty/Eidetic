@@ -1,5 +1,8 @@
 import { getBibleRenderGraphProjection } from '$lib/projectionApi.js';
-import type { BibleRenderGraphProjection } from '$lib/bibleGraphTypes.js';
+import type {
+  BibleRenderGraphProjection,
+  BibleRenderGraphProjectionRequest,
+} from '$lib/bibleGraphTypes.js';
 import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
@@ -29,14 +32,14 @@ function replaceBibleRenderGraphProjectionIfFresh(
   }
 }
 
-export async function refreshBibleRenderGraphProjection(): Promise<
-  ProjectionEnvelope<BibleRenderGraphProjection>
-> {
+export async function refreshBibleRenderGraphProjection(
+  query?: BibleRenderGraphProjectionRequest,
+): Promise<ProjectionEnvelope<BibleRenderGraphProjection>> {
   bibleRenderGraphProjectionState.pending = true;
   bibleRenderGraphProjectionState.error = undefined;
 
   try {
-    const projection = await getBibleRenderGraphProjection();
+    const projection = await getBibleRenderGraphProjection(query);
     replaceBibleRenderGraphProjectionIfFresh(projection);
     return projection;
   } catch (error) {

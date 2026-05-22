@@ -89,10 +89,22 @@ describe('bible render graph projection store', () => {
 
     await expect(refreshBibleRenderGraphProjection()).resolves.toEqual(projection);
 
-    expect(getBibleRenderGraphProjectionMock).toHaveBeenCalledWith();
+    expect(getBibleRenderGraphProjectionMock).toHaveBeenCalledWith(undefined);
     expect(getCachedBibleRenderGraphProjection()).toEqual(projection);
     expect(bibleRenderGraphProjectionState.pending).toBe(false);
     expect(bibleRenderGraphProjectionState.error).toBeUndefined();
+  });
+
+  it('requests selected timeline node bounded render graph projections', async () => {
+    getBibleRenderGraphProjectionMock.mockResolvedValue(projection);
+
+    await expect(
+      refreshBibleRenderGraphProjection({ selected_timeline_node_id: 'node.scene.beach' }),
+    ).resolves.toEqual(projection);
+
+    expect(getBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
+      selected_timeline_node_id: 'node.scene.beach',
+    });
   });
 
   it('records errors without replacing cached projections', async () => {

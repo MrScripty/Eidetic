@@ -26,11 +26,20 @@
         <li>
           <button
             class:selected={item.selected}
+            class:active={item.active}
             style:--graph-indent={`${Math.min(item.depth, 6) * 10}px`}
             aria-pressed={item.selected}
             onclick={() => onselect(item.node_id)}
           >
             <span class="node-label">{item.label}</span>
+            {#if item.influence_count > 0}
+              <span
+                class="influence-count"
+                aria-label={`${item.influence_count} active influences`}
+              >
+                {item.influence_count}
+              </span>
+            {/if}
             <span
               class="connection-count"
               aria-label={`${item.connected_node_count} connected nodes, ${item.edge_count} edges`}
@@ -89,6 +98,11 @@
     box-shadow: inset 2px 0 0 var(--color-accent);
   }
 
+  button.active:not(.selected) {
+    color: var(--color-text-primary);
+    box-shadow: inset 2px 0 0 var(--color-warning);
+  }
+
   .node-label {
     flex: 1;
     min-width: 0;
@@ -98,7 +112,8 @@
     font-size: 0.78rem;
   }
 
-  .connection-count {
+  .connection-count,
+  .influence-count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -109,5 +124,10 @@
     color: var(--color-text-muted);
     font-size: 0.68rem;
     font-variant-numeric: tabular-nums;
+  }
+
+  .influence-count {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
   }
 </style>
