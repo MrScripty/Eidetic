@@ -51,6 +51,7 @@ Desktop.ini
 # ========================
 # Build & runtime artifacts
 # ========================
+.launcher-state
 *.log
 *.sqlite
 *.sqlite-journal
@@ -62,3 +63,8 @@ Desktop.ini
 # ========================
 .claude/
 CLAUDE.local.md
+
+# ========================
+# Local research notes
+# ========================
+docs/research/

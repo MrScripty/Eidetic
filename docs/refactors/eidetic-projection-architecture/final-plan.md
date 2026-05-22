@@ -23,6 +23,7 @@ This execution plan consolidates the discovery notes in:
 Implementation must comply with:
 
 - `CODING-STANDARDS.md`
+- `COMMIT-STANDARDS.md`
 - `ARCHITECTURE-PATTERNS.md`
 - `PLAN-STANDARDS.md`
 - `TESTING-STANDARDS.md`
@@ -31,10 +32,13 @@ Implementation must comply with:
 - `ACCESSIBILITY-STANDARDS.md`
 - `CONCURRENCY-STANDARDS.md`
 - `INTEROP-STANDARDS.md`
+- `LANGUAGE-BINDINGS-STANDARDS.md`
 - `SECURITY-STANDARDS.md`
 - `DEPENDENCY-STANDARDS.md`
 - `TOOLING-STANDARDS.md`
 - `CROSS-PLATFORM-STANDARDS.md`
+- `LAUNCHER-STANDARDS.md`
+- `RELEASE-STANDARDS.md`
 - `languages/rust/RUST-API-STANDARDS.md`
 - `languages/rust/RUST-ASYNC-STANDARDS.md`
 - `languages/rust/RUST-SECURITY-STANDARDS.md`
@@ -42,6 +46,147 @@ Implementation must comply with:
 - `languages/rust/RUST-DEPENDENCY-STANDARDS.md`
 - `languages/rust/RUST-TOOLING-STANDARDS.md`
 - `languages/rust/RUST-CROSS-PLATFORM-STANDARDS.md`
+
+## Standards Compliance Gates
+
+This 2026-05-22 standards pass makes the following gates non-negotiable for
+Milestones 8-11 and their blast radius.
+
+Architecture and package boundaries:
+
+- Contracts must be defined and reviewed before implementation. DTOs that cross
+  Tauri, Bevy, AI-provider, persisted-command, or generated-TypeScript
+  boundaries must use explicit serde wire shapes, validated IDs/enums, runtime
+  decoders, and round-trip tests.
+- `eidetic-core` and contract modules may contain DTOs, validated types, pure
+  adapters, and synchronous domain helpers only. They must not depend on
+  SQLite, Tauri, Axum, Bevy, Svelte, model providers, filesystem watchers, or
+  runtime process management.
+- `eidetic-server` owns SQLite persistence, command handlers, query services,
+  graph/context/affect/agent orchestration, and provider adapters behind narrow
+  traits. It must not depend on Svelte components, Bevy ECS/render internals, or
+  Tauri runtime types.
+- `src-tauri` remains the desktop composition root. It owns command/event
+  transport wiring, runtime startup/shutdown, task lifecycle, and error
+  mapping; it must not contain reusable domain workflow logic or direct SQL
+  mutation paths.
+- Bevy graph and timeline crates are leaf renderers. They consume versioned
+  projections, own only transient camera/hover/animation/simulation state, and
+  emit validated command requests. They must not own persistence, AI workflows,
+  durable selections, or project facts.
+- Svelte owns projection caches, local form drafts, focus, filters, hover,
+  panel sizing, and other transient UI state only. Backend-owned data must not
+  be optimistically mutated in stores or components.
+
+Storage and canonical state:
+
+- SQLite relational rows remain canonical for queryable bible facts, context
+  influence records, semantic dependencies, affect values, script spans, locks,
+  proposals, agent runs, tool calls, command events, and revisions.
+- JSON may be used only for opaque payload snapshots or bounded diagnostic
+  detail that is not queried, merged, partially updated, or treated as a source
+  of truth.
+- Large assets, reference media, URLs, and imported/exported files must be
+  represented by SQLite metadata plus validated project-relative file paths or
+  validated URL records.
+- Every durable write must enter through an idempotent command path that records
+  history before the change is exposed through projections.
+
+Code organization and documentation:
+
+- Do not add responsibilities to files already over standards thresholds.
+  `projection_service.rs`, `AppShell.svelte`, and graph persistence modules
+  must be decomposed before new graph, affect, renderer, or harness scope is
+  added to them.
+- Files over 500 lines, Svelte components over 250 lines, and modules/services
+  with more than roughly 7 public functions or 3 distinct responsibilities need
+  an explicit decomposition decision before expansion.
+- Any touched source directory must have an up-to-date `README.md` or an ADR
+  explaining the boundary, contracts, invariants, alternatives rejected, and
+  revisit triggers.
+- Host-facing or machine-consumed directories must document API consumer
+  contracts and structured producer contracts, including lifecycle, ordering,
+  validation, compatibility, and regeneration rules.
+
+Concurrency, lifecycle, and recovery:
+
+- Domain/core work stays synchronous unless concurrent I/O is part of the
+  contract. Async belongs at Tauri, provider, database, filesystem, IPC, and
+  other I/O boundaries.
+- Every background task, renderer bridge, provider call loop, event pump, or
+  agent workflow must have a single lifecycle owner with tracked handles,
+  cancellation, shutdown, panic logging, and deterministic cleanup.
+- Queues that accept frontend, renderer, provider, or tool input must be
+  bounded and must document whether overflow rejects, drops, or backpressures.
+- No detached `tokio::spawn` patterns are allowed. No synchronous or parking
+  lock guard may be held across `.await`.
+- Durable multi-step operations must be transactional, idempotent, or have
+  explicit compensation/replay behavior. Projections must rebuild correctly
+  after restart.
+
+Interop and security:
+
+- Tauri commands/events, Bevy bridges, model-provider responses, agent tool
+  calls, imported/exported artifacts, URLs, paths, and persisted command
+  payloads are trust boundaries.
+- Validate once at the boundary into typed/newtyped values, reject unknown or
+  malformed payloads before dispatch, then pass validated values inward.
+- Provider URLs and external reference URLs must be parsed and scheme/host
+  allowlisted by backend policy. File paths must use a single backend path
+  validator and canonicalized project containment checks.
+- LLM and agent tool requests must never accept raw SQL, raw filesystem paths,
+  raw renderer payloads, or unbounded graph reads. Tool payloads must use typed
+  IDs, limits, budgets, and reviewable proposal records.
+- Boundary errors must preserve source causes and bounded correlation context
+  without logging secrets, unbounded prompt bodies, binary assets, or large
+  provider responses.
+
+Frontend and accessibility:
+
+- Svelte rendering stays declarative except isolated Bevy host surfaces. Any
+  direct DOM/canvas/WebGL integration must be isolated and cleaned up in
+  lifecycle teardown.
+- Non-canvas controls use semantic HTML. Icon-only controls require accessible
+  names. Dialogs and review surfaces must manage focus and Escape behavior.
+- Every critical Bevy/canvas graph or timeline action must have a
+  keyboard-accessible Svelte command alternative backed by the same backend
+  command path.
+- Frontend tests must use accessible selectors where possible and include
+  keyboard interaction coverage for new graph, timeline, affect, and proposal
+  controls.
+
+Dependencies, tooling, and release:
+
+- Bevy 0.18.1 and other heavy renderer/provider dependencies must remain in
+  leaf crates/packages that directly execute them. If a dependency adds 100+
+  transitive dependencies, document the justification and feature-gate it where
+  practical.
+- Dependency ownership must match the execution boundary. Package-local
+  commands must declare their own runtime/test/build dependencies instead of
+  relying on root hoisting or incidental transitive crates.
+- Removing Axum/WASM paths must include dependency cleanup checks so unused
+  web-server or wasm bridge dependencies do not remain.
+- `launcher.sh` remains the canonical entry point for run/build/test/release
+  smoke flows and must keep managed state under `.launcher-state` unless the
+  operator opts out.
+- Atomic implementation commits must use conventional commit format and include
+  code, tests, docs, schema, and fixtures for the verified slice they complete.
+
+Verification gates:
+
+- The first change in each cross-layer milestone must be a thin vertical slice
+  with an acceptance test that crosses the real producer/consumer boundaries.
+- Durable command/projection work must include replay, reload, duplicate
+  command, partial failure, and idempotency coverage where applicable.
+- Tauri/Bevy/TypeScript/Rust boundary changes require native-side contract
+  tests, host-side smoke tests, and serde/TypeScript round-trip coverage.
+- Graph query, context influence, affect overlay, and renderer projection hot
+  paths need deterministic unit tests and Criterion benchmarks before
+  performance claims or regression budgets are accepted.
+- Required local/CI equivalents remain formatting, clippy with warnings denied,
+  Rust tests including doctests, all-features/no-default-features checks where
+  applicable, frontend lint/typecheck/tests, decision traceability, dependency
+  review, and launcher release-smoke coverage.
 
 ## Hard Constraints
 
@@ -694,7 +839,11 @@ Discovered issues:
 - Resolved: `ui/src/lib/components/editor/BeatEditor.svelte` exceeded the component decomposition threshold after child-planning work. The editor was split into focused header, child-context, planning-action, notes, and prompt-preview components; `BeatEditor.svelte` now stays under the threshold and the unused oversized legacy `BeatPlanEditor.svelte` was removed.
 - Resolved: `crates/server/src/routes/ai.rs` exceeded the 500-line decomposition threshold after durable child-plan work. AI generation entrypoints, generation runtime/persistence helpers, child planning, context preview, config/status, and support helpers were split into focused modules, with each touched AI route module under the decomposition threshold.
 - Resolved: the managed diffusion runtime pulled Python/PyTorch into normal desktop startup even though Eidetic should use external inference. The server no longer compiles or spawns diffusion/PyO3 code, the launcher no longer provisions Python packages, the frontend no longer calls diffusion routes, and text generation now has a local llama.cpp adapter for an externally managed server.
-- Open: Milestone 6 lists valence/arousal overlays, but the codebase has no canonical backend source of truth for valence, arousal, mood, or affect scores. Before renderer work can continue on that overlay, add a backend-owned affect/overlay contract with history-backed commands, projection tests, and script/timeline influence semantics; do not add renderer-only overlay state.
+- Moved to Milestone 10: Milestone 6 exposed that valence/arousal overlays have
+  no canonical backend source of truth for valence, arousal, mood, or affect
+  scores. Affect data now has its own milestone after the bible graph/context
+  influence surface and before timeline renderer overlay work so Bevy never
+  owns renderer-local affect state.
 - Resolved: `crates/server/src/history_store.rs` exceeded the decomposition threshold after adding read-side change review loading. Revision summaries, object revision reads, and change review history queries were split into `history_read_store.rs`.
 - Resolved: timeline structural commands record sparse SQLite command/event/revision rows with replay protection across node range, node create/delete/split, child replacement, node lock, node notes, and relationship create/delete commands, and all of those command handlers persist SQLite current-state rows transactionally. Timeline render projections, read-only legacy timeline routes, broad save/autosave preservation, and all timeline command response projections now use SQLite current-state rows instead of trusting the in-memory project mirror.
 - Resolved: timeline command routes no longer mutate the in-memory project mirror after SQLite writes. Command-specific Y.Doc and websocket side effects remain explicit route side effects, while durable timeline state is owned by SQLite current-state rows.
@@ -1448,7 +1597,467 @@ Verification:
 - No production desktop path depends on Axum, local HTTP, browser-open startup,
   wasm-bindgen, or wasm32 renderer bridge modules.
 
-## Milestone 8: Bevy Timeline Renderer
+## Milestone 8: Bible Graph And Context Influence View
+
+Tasks:
+
+- Add `BibleRenderGraph` projection DTOs for graph nodes, edges, categories,
+  canonical roots, labels, visual grouping hints, selected/focused identities,
+  neighborhood limits, and projection versions.
+- Add backend-owned context stack projections for the active playhead and
+  selected timeline clip, showing the intersecting premise, act, sequence,
+  scene, beat, and shot context layers.
+- Add context influence records that connect timeline clips, generation tasks,
+  bible nodes, bible edges, selected graph paths, inherited context, distilled
+  context output, AI-created proposals, and ignored/rejected candidates.
+- Add graph influence projections that show which bible nodes and paths are
+  active for the selected clip, which layer introduced them, whether they are
+  inherited or local, and why they are relevant.
+- Add a bounded graph/context query service before extending the current
+  whole-graph render projection. Query inputs must include focused root,
+  selected node, selected timeline clip/playhead, depth, search/filter, and
+  projection size limits.
+- Add pure adapters from persisted bible graph and context influence state to
+  bounded render projections. The adapter must not depend on Bevy or Svelte.
+- Keep the existing whole-graph `BibleRenderGraphProjection` as a baseline
+  projection only. Milestone 8 render/context views must be request-shaped and
+  bounded so large bibles do not require loading and positioning the entire
+  graph for every refresh.
+- Add deterministic layout helpers and selection/neighborhood indexes for
+  bounded graph views, including focused roots, selected-node neighborhoods,
+  playhead influence paths, and search/filter subsets.
+- Promote context influence writes into production backend commands/storage.
+  Do not rely on test-only semantic dependency writers for context influence
+  records.
+- Upgrade Bevy graph planning and the graph renderer crate to Bevy 0.18.1 with
+  a fresh dependency review before adding native render/window/input features.
+- Add a native Bevy bible graph host as a projection consumer. It receives
+  `BibleRenderGraph`/influence projections and emits validated selection,
+  focus, inspect, and navigation commands only.
+- Add explicit desktop renderer host lifecycle ownership for Bevy graph
+  subscriptions, command queues, renderer tasks, and teardown. Do not copy
+  detached task patterns for renderer bridge work.
+- Add Svelte filters, search, detail panels, review panels, and
+  keyboard-accessible alternatives for critical graph navigation and selection
+  commands.
+- Add a primary workspace graph mode so the Bevy bible graph is displayed in
+  the central workspace, not only inside the narrow bible sidebar. Keep the
+  bottom timeline visible so playhead and selected-clip changes can drive graph
+  influence highlighting.
+- Add workspace mode controls for script-focused, graph-focused, and split
+  graph/editor layouts. The sidebar remains the Svelte home for graph filters,
+  search, roots/categories, and proposal queues; the right panel remains the
+  Svelte home for selected node, selected edge, active context, and influence
+  path details.
+- Decompose the current application shell before adding graph workspace modes:
+  `AppShell` should compose focused workspace, toolbar, right-inspector, and
+  shortcut/lifecycle modules instead of owning every layout and command path.
+- Add transient graph selection state that can represent selected node,
+  selected edge, selected influence path, focused context layer, and focused
+  graph neighborhood. Durable graph facts remain backend-owned projections.
+- Support hierarchical context refinement: act generation uses premise context,
+  sequence generation uses premise plus act context, scene generation uses
+  premise plus act plus sequence context, and lower layers consume distilled
+  parent context instead of re-evaluating the whole graph by default.
+- Expose existing graph proposals and context influence records in the graph
+  projections when they already exist, but do not build the agent harness or
+  LLM graph tools in this milestone.
+- Replace the 2D SVG relationship graph after the Bevy graph and Svelte
+  command/detail surfaces cover selection, inspection, filtering, and
+  navigation.
+
+Context model:
+
+- The bible graph owns world, story, character, relationship, place, object,
+  culture, faction, rule, theme, and production knowledge.
+- Timeline clips own scoped context for a specific layer of the story
+  hierarchy. A clip may reference graph nodes, distill inherited context, and
+  create proposals for new graph knowledge, but durable graph state remains
+  backend-owned.
+- Context evaluations record what graph knowledge was considered for a task,
+  which nodes/edges/paths were selected, which parent contexts were inherited,
+  which distilled context was produced, and which downstream outputs were
+  influenced.
+- The graph view visualizes both the durable bible and the active reasoning
+  path for the selected playhead/clip. Strong highlights represent directly
+  used context, softer highlights represent inherited context, and dimmed nodes
+  represent graph knowledge outside the current context window.
+- The UI surface is split by responsibility: Bevy owns the central spatial graph
+  visualization, Svelte owns graph controls/details/review and keyboard
+  command alternatives, and the timeline remains visible as the temporal
+  selector for influence projections.
+- Bevy may own transient camera, hover, simulation, animation, and unsaved
+  layout state. Durable graph facts, influence records, saved layout decisions,
+  and accepted proposals must enter through backend commands and projections.
+- The milestone is visualization- and projection-focused. LLM workflow tooling
+  consumes these graph/context projections in the next milestone instead of
+  being built into the renderer or Svelte graph surface.
+- Graph render projections are bounded read models, not a full-project mirror.
+  Full-graph exports or diagnostics can exist separately, but interactive graph
+  surfaces must request a bounded context by focus, playhead/clip, search, or
+  root.
+- UI selection is transient and typed by selection kind. A selected edge,
+  influence path, or context layer must not be squeezed through
+  `selectedGraphNodeId` or broad durable frontend objects.
+
+Implementation order:
+
+- Define the backend `BibleRenderGraph`, context stack, context evaluation, and
+  context influence DTOs first, including typed IDs, projection versions,
+  influence kinds, source layer, confidence, reason, and provenance fields.
+- Define the UI placement contract before Bevy work: central graph workspace
+  mode, split graph/editor mode, sidebar controls, right-panel details, and
+  bottom timeline coordination.
+- Decompose `AppShell` into focused layout/workspace/right-inspector/shortcut
+  owners before adding workspace graph mode or split mode.
+- Upgrade `eidetic-bevy-bible-graph` to Bevy 0.18.1 with a documented
+  dependency review while it is still a leaf crate and before render/window
+  features are enabled.
+- Add relational SQLite current-state and history storage for context
+  evaluations and influence records. Do not store queryable graph influence
+  only as JSON blobs.
+- Add a bounded graph/context query service over SQLite indexes. It must avoid
+  the existing full-node-list plus per-node-detail AI context pattern.
+- Add the smallest projection vertical slice: select one timeline clip, load
+  its active hierarchy stack, query only the bounded graph neighborhood needed
+  for that clip, and expose highlighted influence paths.
+- Add hierarchical refinement projection support so act, sequence, scene, beat,
+  and shot context can point to parent distilled context and directly relevant
+  graph paths.
+- Add the Bevy graph host after the projection and influence adapters are
+  deterministic, bounded, and tested.
+- Add Svelte detail/filter/review panels and keyboard command alternatives
+  around the same backend projections and commands.
+- Remove the old 2D SVG relationship graph only after the Bevy graph covers the
+  target interactions and the Svelte alternatives cover accessibility.
+
+Standards gates:
+
+- `BibleRenderGraph`, context-stack, context-evaluation, and influence DTOs are
+  executable boundary contracts with explicit serde shape, typed IDs/enums,
+  validation, TypeScript mirror types, and round-trip tests before Bevy or
+  Svelte consumes them.
+- The bounded graph/context query service lives behind a backend service
+  boundary and owns SQL/index strategy. Core projection adapters remain pure
+  and synchronous; Bevy/Svelte never query SQLite or derive canonical context.
+- Context influence writes are transactional, idempotent, history-backed, and
+  replayable. Failed influence writes must leave graph and timeline projections
+  unchanged.
+- Interactive graph projections must enforce depth, count, search, and
+  neighborhood limits at the backend boundary. Renderer or UI-supplied limits
+  are validated before any graph traversal or allocation.
+- The AppShell/layout decomposition is a prerequisite, not a cleanup task.
+  Workspace mode, right inspector, shortcut ownership, timeline sizing, and
+  renderer lifecycle must be separate modules under component/file thresholds.
+- The Bevy graph host has one desktop lifecycle owner, bounded command queues,
+  subscription teardown, panic/cancellation reporting, and no detached tasks.
+- Svelte graph controls own only drafts, filters, focus, local expansion, and
+  projection caches. Selection that changes generation or persistence must go
+  through backend commands/projections.
+- Bevy 0.18.1 remains a leaf dependency. The upgrade includes `cargo tree`
+  cost review, feature selection notes, and proof that `eidetic-core` and
+  server query logic do not depend on Bevy.
+
+Verification:
+
+- Vertical slice: select a scene clip -> backend returns active context stack ->
+  graph projection highlights directly used scene nodes, inherited premise/act/
+  sequence nodes, and the edges explaining those paths.
+- UI placement tests or smoke checks prove graph workspace, split view, sidebar
+  controls, right-panel details, and bottom timeline selection can coexist
+  without creating a second durable graph owner.
+- Projection bounding tests prove large bible graphs return bounded
+  neighborhoods by selected clip, focused root, filter, or search result.
+- Query-service tests prove graph/context reads do not use full graph scans for
+  selected-clip, focused-root, selected-node, or search/filter projections.
+- Layout helper unit tests prove deterministic derived positions/indexes for
+  stable inputs.
+- Selection/neighborhood index tests prove selected-node, parent-context, and
+  influence-path lookups do not require component-local graph scans.
+- History/reload tests prove accepted graph proposals and context influence
+  records rebuild the same projections after project reload.
+- App shell decomposition tests/smoke checks prove workspace mode, right
+  inspector, shortcuts, export/save controls, and timeline sizing remain owned
+  by focused modules and stay under component decomposition thresholds.
+- Renderer lifecycle tests prove Bevy graph subscriptions, commands, and
+  transient renderer state are torn down on unmount/project close.
+- Dependency review proves Bevy 0.18.1 remains isolated to leaf renderer crates
+  and that any render/window/input features are justified before they land.
+- Frontend tests prove graph filters/details/review controls replace projection
+  caches from backend responses and do not mutate durable graph state locally.
+
+Exit criteria:
+
+- The bible graph is visible as a bounded Bevy projection with Svelte
+  detail/filter/review controls.
+- Interactive graph projections are request-shaped and bounded; the default
+  graph workspace does not load or lay out the entire bible unless the user
+  explicitly requests a full diagnostic/export view.
+- The graph has an explicit central workspace placement, split/editor mode, and
+  Svelte side panels for controls/details while the bottom timeline remains
+  available to drive playhead/clip influence highlighting.
+- The selected playhead/clip can show which bible nodes, edges, and parent
+  context layers are actively influencing that point in the timeline.
+- Premise/act/sequence/scene/beat/shot context refinement is represented as
+  traceable backend-owned context evaluations and influence records.
+- The shell/layout refactor keeps graph workspace, split view, right inspector,
+  shortcuts, and bottom timeline understandable as separate owners instead of
+  expanding `AppShell` into a larger coordinator.
+- The old 2D SVG relationship graph is removed or no longer a supported graph
+  view.
+
+## Milestone 9: Agent Harness And Graph Tooling
+
+Tasks:
+
+- Add backend-owned agent workflow contracts for workflow definitions, scoped
+  tool manifests, agent runs, tool calls, tool results, tool budgets, and
+  workflow policy.
+- Add an agent harness executor that gives each workflow only the graph, script,
+  timeline, proposal, and context tools explicitly allowed by that workflow's
+  manifest.
+- Add graph read tools for agent workflows: search bible nodes, read a bible
+  node, read a bounded neighborhood, read the active timeline context stack,
+  read active graph context for a timeline node, and read influence paths.
+- Add graph proposal tools for agent workflows: propose bible nodes, fields,
+  edges, and timeline-context links. Proposal tools must create reviewable
+  proposal records and must not mutate canonical graph state directly.
+- Add a generic graph proposal model for node, field, edge, and context-link
+  targets. Do not extend the existing bible-reference proposal table into a
+  catch-all schema for graph workflow proposals.
+- Add context-evaluation write tools that let workflows record which graph
+  nodes, edges, paths, parent contexts, and distilled context outputs were used
+  for a generation task.
+- Add a provider-independent structured tool loop so llama.cpp/Pumas can run
+  workflows without native tool-calling support, while leaving room for
+  Pantograph or native tool-call providers later.
+- Add a Pumas/llama.cpp endpoint resolver for harness providers so workflows
+  can use the active model server even when Pumas exposes a dynamic local port.
+  The harness must not depend on the static default base URL as its only
+  connection strategy.
+- Keep LLM graph interaction visualization-independent. The LLM receives
+  backend graph/context/influence projections and tool results; it never
+  receives or mutates Bevy state, visual layout, camera state, colors,
+  highlights, or renderer-local selections.
+- Support premise-first graph development through the harness: premise
+  generation can read bounded graph context, generate premise context, propose
+  bible nodes/edges/fields, and record why each proposal was made.
+- Support hierarchical workflow refinement: act generation uses premise context,
+  sequence generation uses premise plus act context, scene generation uses
+  premise plus act plus sequence context, and lower layers consume distilled
+  parent context instead of re-evaluating the whole graph by default.
+- Surface harness-generated graph proposals and context evaluations through the
+  Milestone 8 graph/context projections so users can inspect what the AI used
+  and why.
+
+Workflow model:
+
+- Workflows do not receive the app. They receive a workflow intent, bounded
+  backend projections, a scoped tool manifest, validation rules, proposal
+  policy, and history recording.
+- Tools are backend capabilities, not UI operations. No workflow tool may
+  manipulate Svelte stores, Bevy ECS state, renderer layout, or local viewport
+  state.
+- Read tools may query bounded projections and graph context. Proposal tools
+  may create reviewable graph/script/context proposals. Commit tools are
+  reserved for explicit user actions or narrowly approved backend policies.
+- Every tool call and tool result is recorded against an agent run with enough
+  data to review, replay, debug, and explain downstream graph/script changes.
+- Tool execution is validated at the backend boundary. Tool arguments must use
+  typed IDs, bounded limits, idempotent command identifiers where writes are
+  involved, and explicit error handling.
+
+Implementation order:
+
+- Define workflow, tool manifest, agent run, tool call, tool result, and tool
+  policy DTOs before wiring any model provider.
+- Add relational SQLite current-state/history storage for agent runs, tool
+  calls, tool results, and workflow status.
+- Add a mock-provider harness test path so workflow/tool execution can be
+  verified without relying on a live LLM.
+- Add read-only graph tools over existing bible graph/context projections.
+- Add generic proposal storage for graph node, field, edge, and context-link
+  targets before implementing proposal-producing graph tools.
+- Add proposal-producing graph tools that write generic reviewable proposal
+  records and never mutate canonical graph rows directly.
+- Add active llama.cpp endpoint resolution through Pumas/model-service seams
+  before the first live-provider harness slice.
+- Add the provider-independent structured tool loop for llama.cpp/Pumas.
+- Add the smallest workflow vertical slice: premise generation reads bounded
+  graph context, proposes one bible node or edge, records the tool calls and
+  rationale, and exposes the proposal for user review.
+- Extend the workflow harness to act, sequence, scene, beat, and shot context
+  refinement after the premise slice is verified.
+
+Standards gates:
+
+- Workflow definitions, tool manifests, tool-call requests, tool results,
+  proposal payloads, budgets, and provider responses are executable boundary
+  contracts with runtime validation, explicit enum/string casing, and
+  serialization tests.
+- The harness is a backend service with a narrow provider trait. It must not
+  import Tauri, Svelte, Bevy, renderer layout, or frontend projection-store
+  modules.
+- Tool calls are allowlisted by manifest, budgeted, bounded, and typed. Unknown
+  tools, malformed arguments, unbounded graph reads, raw SQL, raw file paths,
+  raw URLs, and renderer-shaped payloads are rejected before execution.
+- Agent runs, tool calls, tool results, retries, cancellations, provider
+  errors, proposals, and accepted outputs are recorded durably enough to replay
+  or review the workflow after restart.
+- Long-running workflow execution has a lifecycle owner with cancellation,
+  tracked task handles, bounded provider/tool queues, and deterministic cleanup
+  before project close or app shutdown.
+- Proposal tools can write reviewable proposal records only. Canonical graph,
+  script, timeline, affect, or context state changes require explicit
+  acceptance commands through the normal backend command/event path.
+- Provider URL resolution through Pumas/llama.cpp is parsed and policy-checked
+  by the backend. The harness cannot depend on a hardcoded static `18080`
+  endpoint as its only success path.
+- The mock-provider vertical slice must pass before live-provider workflow
+  execution is introduced, so the tool loop can be verified without external
+  model availability.
+
+Verification:
+
+- Workflow manifest tests prove a workflow receives only the tools it is
+  allowed to use and that unknown/disallowed tool calls are rejected.
+- Tool validation tests prove bad IDs, unbounded neighborhood reads, malformed
+  proposal payloads, duplicate command IDs, and renderer-shaped payloads are
+  rejected before execution.
+- Read-tool tests prove graph context reads are bounded, projection-driven, and
+  do not expose visualization state.
+- Proposal-tool tests prove node/field/edge/context-link proposals are
+  reviewable records and do not mutate canonical graph state before acceptance.
+- Proposal-schema tests prove graph workflow proposals are represented by the
+  generic proposal model and do not overload bible-reference proposal rows.
+- Agent-run history tests prove tool calls, tool results, generated output,
+  proposals, errors, retries, and cancellation are recorded and reloadable.
+- Provider-resolution tests prove the harness can discover or configure the
+  active llama.cpp endpoint exposed by Pumas and does not assume `18080`.
+- Provider-loop tests prove the structured tool loop works with a mock
+  llama.cpp/Pumas-style text provider that has no native tool-calling support.
+- Vertical slice: generate premise context -> harness reads bounded graph
+  context -> model proposes bible nodes/edges -> user accepts proposals ->
+  graph projection shows new premise-owned context and records generation
+  influence.
+
+Exit criteria:
+
+- The agent harness can run at least one graph-aware workflow with a scoped
+  tool manifest, bounded backend reads, reviewable graph proposals, and
+  recorded tool history.
+- The LLM can navigate the bible graph through backend read operations and
+  propose node/field/edge/context-link changes without knowing about or
+  mutating the visualization.
+- AI-created bible graph additions are visible as proposals and become durable
+  graph state only through backend acceptance commands.
+- Agent runs and tool calls are traceable enough to explain what graph context
+  influenced a generated timeline context.
+- Graph workflow proposals use a general proposal target model instead of
+  stretching bible-reference proposal storage beyond its purpose.
+- The harness remains provider-independent for llama.cpp/Pumas now and future
+  Pantograph integration later.
+
+## Milestone 10: Affect Model And Prompting Semantics
+
+Tasks:
+
+- Add backend-owned affect contracts for valence, arousal, mood labels,
+  emotional intensity, confidence, provenance, and the story scope where the
+  affect applies.
+- Store affect values in relational SQLite current-state rows with
+  command/event/revision history. Do not store queryable affect values only as
+  JSON blobs.
+- Support affect targets at the useful story levels: project/story, act,
+  sequence, scene, beat, shot, script segment, bible node, and bible snapshot
+  where appropriate.
+- Add affect commands for setting, revising, deleting, and accepting proposed
+  affect changes through the same command-in/projection-out backend boundary as
+  timeline, script, and bible edits.
+- Add affect projections for timeline overlays, script-generation context,
+  change review, and bible/script influence analysis.
+- Add semantic dependency records that link affect traits to the script
+  segments, timeline nodes, bible fields, and generation prompts they influence.
+- Extend AI proposal flows so detected affect changes from manual script edits
+  become reviewable proposals instead of silent graph/script mutations.
+- Define prompt construction rules for how valence/arousal curves and local
+  affect constraints influence generated script without overriding locked text
+  or accepted bible facts.
+- Add Svelte review/edit surfaces for affect values using projection caches and
+  backend commands only. Draft slider/input state may be local, but persisted
+  affect state is backend-owned.
+- Document how affect values are interpreted by generation, timeline overlays,
+  propagation, undo/redo, and change review.
+
+Implementation order:
+
+- Define the core affect DTOs and value ranges first, including validation rules
+  for valence, arousal, confidence, target scope, source/provenance, and command
+  IDs.
+- Add SQLite schema/current-state/revision storage for affect values and
+  dependencies.
+- Add the smallest command/projection vertical slice: set affect for one
+  timeline node, read the affect projection, and replay it after project reload.
+- Add script-generation context integration after the affect projection is
+  durable and tested.
+- Add proposal/review integration for AI-detected affect changes from manual
+  script edits.
+- Add timeline overlay projection output only after affect state and generation
+  semantics are backend-owned.
+
+Standards gates:
+
+- Valence, arousal, confidence, intensity, target scope, provenance, and mood
+  values are validated domain types. Internal APIs do not pass raw numbers or
+  strings where invalid values would cross module boundaries.
+- Affect persistence uses relational SQLite current-state, dependency, command,
+  event, and revision rows for queryable values. JSON cannot be the canonical
+  store for affect curves, targets, confidence, or influence records.
+- Affect commands are idempotent, replayable, undoable, and transactional with
+  their semantic dependency writes. A failed affect update must not partially
+  update projections or prompt context.
+- Prompt construction stays in sync domain helpers where possible. Async model
+  calls live at the provider boundary, and locked script spans are never
+  rewritten by affect prompt integration.
+- Manual script edits that imply affect changes become proposals or explicit
+  accepted commands; no AI analysis path may silently mutate canonical affect,
+  bible, script, or timeline state.
+- Svelte affect controls own draft slider/input state only. Saved affect,
+  proposed affect, and overlay data are backend projections.
+- Affect overlay projections are renderer-neutral contracts consumed by both
+  Svelte and Bevy. Renderer crates must not invent or persist their own affect
+  scores.
+
+Verification:
+
+- Vertical slice: set beat-level valence/arousal -> read projection ->
+  generation context includes the affect constraint -> timeline overlay
+  projection exposes the curve.
+- History tests prove affect updates, deletes, proposal acceptance/rejection,
+  undo, redo, and reload rebuild the same affect projections.
+- Validation tests reject out-of-range affect values, unknown target IDs,
+  duplicate command IDs, and renderer-supplied payloads that bypass backend
+  validation.
+- Prompt-construction tests prove locked script spans are preserved and affect
+  constraints influence only unlocked/regenerated context.
+- Semantic dependency tests prove the system can identify which script segments
+  and timeline nodes were influenced by an accepted affect change.
+- Frontend tests prove affect edit/review controls replace projection caches
+  from backend responses and do not mutate durable affect state locally.
+
+Exit criteria:
+
+- Affect has a canonical backend-owned relational model with command/event/
+  revision history.
+- Valence/arousal overlays are renderable from backend projections without
+  renderer-local persistent state.
+- Script generation can consume affect context from projections in a
+  deterministic, test-covered way.
+- AI-detected affect changes are reviewable proposals before acceptance.
+- Undo/redo and before/after review can trace affect changes and their
+  downstream influence.
+
+## Milestone 11: Bevy Timeline Renderer
 
 Tasks:
 
@@ -1458,9 +2067,52 @@ Tasks:
   backend-owned `TimelineRenderProjection` is insufficient.
 - Add native Bevy timeline host as an isolated leaf renderer owned by the Tauri
   desktop runtime.
-- Add pan, zoom, playhead, selection, hit testing, move, resize, split, arcs, relationship curves, and valence/arousal overlays through backend-confirmed commands/projections.
+- Add pan, zoom, playhead, selection, hit testing, move, resize, split, arcs,
+  relationship curves, and affect overlays through backend-confirmed commands
+  and projections.
 - Add keyboard-accessible Svelte command alternatives for critical timeline operations.
 - Remove the DOM/SVG timeline renderer after Bevy covers target interactions.
+
+Implementation order:
+
+- Confirm existing backend-owned `TimelineRenderProjection` and timeline
+  command contracts cover the native renderer slice. Add renderer-facing DTOs
+  only for missing renderer-neutral data, and define them before native host
+  work.
+- Remove remaining WASM renderer bridges and wasm-only dependency paths before
+  introducing the native Tauri-owned Bevy host as the supported desktop path.
+- Add the native Bevy timeline host as a leaf renderer with a lifecycle owner
+  in the desktop composition root.
+- Add the smallest native renderer vertical slice: receive a projection, build
+  disposable ECS render state, hit-test one clip, emit one validated command,
+  and apply the returned backend projection.
+- Add pan/zoom/playhead/selection/move/resize/split/delete/create interactions
+  through backend-confirmed commands before adding arcs, relationship curves,
+  or affect overlays.
+- Add affect overlays only after Milestone 10 provides backend-owned affect
+  projections.
+- Remove the DOM/SVG timeline renderer and its tests only after Bevy and
+  Svelte accessibility alternatives cover the target interactions.
+
+Standards gates:
+
+- The native Bevy timeline host is owned by Tauri runtime composition, has
+  tracked tasks/subscriptions, bounded command queues, shutdown/cancellation
+  coverage, and no local HTTP/WebSocket/WASM transport fallback.
+- Bevy consumes projection snapshots and produces command requests only.
+  Timeline selection, clip data, arcs, relationships, affect overlays, and
+  saved layout decisions stay backend-owned.
+- Renderer input payloads and dimensions are validated with checked arithmetic
+  before allocation or hit-test math. Malformed renderer commands are rejected
+  at the backend boundary before timeline mutation.
+- Critical canvas/Bevy actions have semantic Svelte keyboard alternatives that
+  call the same command path and wait for backend-confirmed projections.
+- The DOM/SVG timeline removal includes dead-code and dependency cleanup so
+  old render paths, wasm-bindgen wrappers, and unused web renderer dependencies
+  do not remain as supported fallbacks.
+- Bevy 0.18.1 feature selection and dependency cost are documented before
+  render/window/input/text features are enabled, and Bevy remains out of
+  `eidetic-core`.
 
 Verification:
 
@@ -1470,25 +2122,6 @@ Verification:
 - Renderer lifecycle tests for mount/unmount subscription cleanup.
 - Dependency review proving Bevy is not in `eidetic-core` and is justified/feature-gated if it adds 100+ transitive dependencies.
 
-## Milestone 9: Bevy Bible Graph View
-
-Tasks:
-
-- Add `BibleRenderGraph` projection DTOs.
-- Add pure adapter from bible graph to render graph.
-- Add deterministic layout helpers and selection/neighborhood indexes.
-- Add Bevy bible graph host as a projection consumer.
-- Add Svelte filters, detail panels, and accessibility command alternatives.
-- Replace the 2D SVG relationship graph after Bevy graph projections cover target interactions.
-
-Verification:
-
-- Vertical slice: Bevy bible graph render model receives projection and emits selection/inspect command.
-- Layout helper unit tests.
-- Selection/neighborhood index tests.
-- Projection bounding tests for large graph neighborhoods.
-- Renderer lifecycle cleanup tests.
-
 ## Cross-Cutting Implementation Requirements
 
 Code organization:
@@ -1497,6 +2130,22 @@ Code organization:
 - UI components over 250 lines require decomposition review.
 - Modules/services with more than roughly 7 public functions or 3 responsibilities require decomposition review.
 - Directories under `src/` touched by the refactor must have current READMEs.
+- Feature work must not expand already-over-threshold files before the
+  decomposition decision is completed and recorded.
+
+Contracts and boundaries:
+
+- Contracts are defined before implementations and frozen for each parallel or
+  cross-layer slice.
+- Public wire DTOs use explicit serde tags/casing and mirrored TypeScript types
+  in the same slice.
+- Boundary payloads are parsed once into validated values. Internal code must
+  accept the validated types instead of raw strings, numbers, JSON blobs, or
+  renderer/provider payloads.
+- Append-only contract extension is preferred. Any breaking contract rewrite is
+  allowed only because this refactor explicitly does not preserve old runtime
+  compatibility, and the implementation must delete the replaced path in the
+  same milestone.
 
 Concurrency:
 
@@ -1504,6 +2153,11 @@ Concurrency:
 - Every `tokio::spawn` must be owned by a lifecycle manager with tracked handles, cancellation, shutdown, panic logging, and draining.
 - No lock guards may be held across `.await` unless the lock type and design explicitly support it.
 - Related mutable state has one owner.
+- Frontend, renderer, provider, and agent event queues are bounded and document
+  overflow behavior.
+- Async responses from commands, provider calls, and event streams carry
+  correlation/version data so stale responses can be discarded without mutating
+  projection caches.
 
 Interop:
 
@@ -1514,6 +2168,8 @@ Interop:
 - Unsubscribe all event/bridge subscriptions on teardown.
 - Document thread requirements for Tauri command/event adapters, Bevy bridge
   calls, and callbacks.
+- Rust/TypeScript/Bevy/Tauri boundary tests must prove both sides preserve the
+  same wire shape, defaults, enum meanings, and error semantics.
 
 Frontend and accessibility:
 
@@ -1528,6 +2184,11 @@ Security:
 - Validate project, asset, import, export, and reference paths through one backend validator.
 - Validate URLs by parsing and scheme allowlisting.
 - Use checked arithmetic for external dimensions, lengths, and ranges.
+- Agent tools and provider responses must not pass raw SQL, raw paths, raw
+  URLs, unbounded prompt bodies, or renderer-local payloads into domain logic.
+- Boundary diagnostics must include enough bounded correlation context to debug
+  failures without logging secrets, credentials, binary assets, or unbounded
+  model/provider payloads.
 - If any temporary local listener exists before Milestone 7 completes, bind it
   to loopback and enforce connection limits; no production desktop path may keep
   a local HTTP/WebSocket listener after Milestone 7.
@@ -1538,12 +2199,18 @@ Dependencies:
 - Dependencies are declared by the package/crate that directly uses them.
 - Heavy optional features are feature-gated.
 - Dependency cost is measured before adding renderer/RAG/export dependencies.
+- Dependency removal is verified when old Axum, WASM, DOM/SVG renderer, or
+  diffusion paths are deleted so unused packages do not remain hidden in
+  manifests or lockfiles.
 
 Tooling:
 
 - Warnings are errors in CI.
 - Generated contracts are deterministic and verified.
 - Persisted schema fixtures, command fixtures, projection fixtures, and sample events have validation hooks.
+- Decision traceability checks must run for touched source directories.
+- Launcher run/build/test/release-smoke paths must remain the documented local
+  and CI entry points for desktop verification.
 
 ## Baseline Verification Commands
 
@@ -1556,12 +2223,21 @@ cargo test --workspace
 cargo test --workspace --doc
 cargo check --workspace --all-features
 cargo check --workspace --no-default-features
+npm run format:check
 npm run lint
 npm run typecheck
 npm run test
+./launcher.sh --test
+./launcher.sh --release-smoke
 ```
 
 Performance-sensitive graph queries, projection rebuilds, and renderer projection serialization require Criterion benchmarks before performance claims or regression budgets are accepted.
+
+Dependency-sensitive slices must also record the relevant dependency review in
+the plan, using the package manager for the affected boundary, for example
+`cargo tree`, `cargo tree --duplicates`, `cargo tree -i <crate>`, `npm ls`, or
+equivalent commands. Bevy upgrades, Axum/WASM removal, provider integration,
+and renderer feature changes always require this review.
 
 ## Risks And Mitigations
 
