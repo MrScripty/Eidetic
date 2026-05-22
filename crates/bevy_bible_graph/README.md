@@ -36,7 +36,9 @@ Dependency review:
 
 Future scope:
 
-- Desktop host lifecycle.
+- Native desktop host lifecycle is owned by `eidetic-desktop`; the leaf
+  renderer remains responsible only for projection consumption, ECS state, and
+  validated renderer commands.
 - Camera, force-layout, and interaction state.
 - Pointer, keyboard, and accessibility command flows.
 - Backend-confirmed graph mutation commands.

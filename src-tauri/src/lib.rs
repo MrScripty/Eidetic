@@ -1,4 +1,5 @@
 mod ai_commands;
+pub mod bevy_graph_host;
 mod commands;
 mod desktop_events;
 mod error;

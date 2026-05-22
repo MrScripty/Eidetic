@@ -14,6 +14,7 @@ commands and events.
 | `src/lib.rs` | Tauri command/event registration and backend runtime composition. |
 | `src/main.rs` | Native desktop binary entrypoint and `--smoke` startup probe. |
 | `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
+| `src/bevy_graph_host.rs` | Desktop-managed lifecycle host for the Bevy bible graph renderer leaf crate. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
 | `src/export_commands.rs` | Tauri commands for export service access. |
 | `src/model_commands.rs` | Tauri commands for Pumas model-library projection reads. |
@@ -32,6 +33,12 @@ commands and events.
   shuts down supervised backend tasks, and exits without opening a window.
 - The desktop crate may depend on Tauri; `eidetic-core`, renderer crates, and
   backend services must not depend on Tauri.
+- Bevy renderer hosts live in this desktop crate. They may consume backend
+  projections and emit validated transient renderer commands, but they must not
+  write durable project state or make `eidetic-server` depend on Bevy.
+- Renderer host state must not be stored in `tauri::State` unless the owner is
+  `Send + Sync`; Bevy `App` is not. Native render-window integration needs a
+  dedicated desktop renderer owner instead of global managed state.
 
 ## API Consumer Contract
 - Svelte invokes desktop commands by name through Tauri IPC.

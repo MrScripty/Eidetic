@@ -10,6 +10,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 eidetic-core.workspace = true
+eidetic-bevy-bible-graph = { path = "../crates/bevy_bible_graph" }
 eidetic-server = { path = "../crates/server" }
 serde.workspace = true
 serde_json.workspace = true

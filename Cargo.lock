@@ -1811,6 +1811,7 @@ dependencies = [
 name = "eidetic-desktop"
 version = "0.1.0"
 dependencies = [
+ "eidetic-bevy-bible-graph",
  "eidetic-core",
  "eidetic-server",
  "serde",
