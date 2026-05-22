@@ -14,6 +14,7 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `bibleGraphNodeProjection.svelte.ts`      | Focused cache/action layer for backend-owned bible graph node and field projections. |
 | `bible.svelte.ts`                         | Bible panel selection state.                                                         |
 | `bibleRenderGraphProjection.svelte.ts`    | Focused cache layer for backend-owned bible render graph projections.                |
+| `workspaceMode.svelte.ts`                 | Transient workspace layout mode for script, graph, and split views.                  |
 | `bibleGraphSchemaProjection.svelte.ts`    | Focused cache layer for backend-owned bible graph schema projections.                |
 | `objectFieldProjection.svelte.ts`         | Focused cache/action layer for backend-owned object-field projections.               |
 | `scriptDocumentProjection.svelte.ts`      | Focused cache/action layer for backend-owned script document projections.            |

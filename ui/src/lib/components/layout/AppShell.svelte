@@ -3,6 +3,7 @@
   import PanelResizer from './PanelResizer.svelte';
   import BottomTimelineStack from './BottomTimelineStack.svelte';
   import AppToolbar from './AppToolbar.svelte';
+  import GraphWorkspacePanel from './GraphWorkspacePanel.svelte';
   import BeatEditor from '../editor/BeatEditor.svelte';
   import ScriptPanel from '../editor/ScriptPanel.svelte';
   import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
@@ -17,6 +18,7 @@
   import { notify } from '$lib/stores/notifications.svelte.js';
   import { applyDeleteTimelineNodeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
   import { refreshSelectedNodeEditorProjection } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
+  import { setWorkspaceMode, workspaceModeState } from '$lib/stores/workspaceMode.svelte.js';
 
   $effect(() => {
     return startAiStatusPolling();
@@ -95,6 +97,7 @@
   const selectedGraphNodeId = $derived(bibleState.selectedGraphNodeId);
   const bibleDetailOpen = $derived(selectedGraphNodeId !== null);
   const rightPanelOpen = $derived(bibleDetailOpen);
+  const workspaceMode = $derived(workspaceModeState.mode);
   const maxTimelineHeight = $derived.by(() => {
     if (windowHeight <= 0) return Infinity;
     return Math.max(
@@ -145,17 +148,37 @@
       {/if}
 
       <div class="main-area">
-        <AppToolbar onsave={handleSave} onexport={handleExportPdf} />
+        <AppToolbar
+          onsave={handleSave}
+          onexport={handleExportPdf}
+          {workspaceMode}
+          onworkspace={setWorkspaceMode}
+        />
 
-        <div class="editor-panel" style="height: {editorHeight}px">
-          <BeatEditor />
-        </div>
+        {#if workspaceMode === 'script'}
+          <div class="editor-panel" style="height: {editorHeight}px">
+            <BeatEditor />
+          </div>
 
-        <PanelResizer min={PANEL.MIN_EDITOR_HEIGHT_PX} bind:position={editorHeight} />
+          <PanelResizer min={PANEL.MIN_EDITOR_HEIGHT_PX} bind:position={editorHeight} />
 
-        <div class="script-panel">
-          <ScriptPanel />
-        </div>
+          <div class="script-panel">
+            <ScriptPanel />
+          </div>
+        {:else if workspaceMode === 'graph'}
+          <div class="workspace-panel">
+            <GraphWorkspacePanel />
+          </div>
+        {:else}
+          <div class="split-workspace">
+            <div class="split-pane">
+              <BeatEditor />
+            </div>
+            <div class="split-pane">
+              <GraphWorkspacePanel />
+            </div>
+          </div>
+        {/if}
       </div>
 
       {#if rightPanelOpen}
@@ -250,6 +273,33 @@
     flex: 1;
     overflow: hidden;
     background: var(--color-bg-secondary);
+  }
+
+  .workspace-panel {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+  }
+
+  .split-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+  }
+
+  .split-pane {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    border-right: 1px solid var(--color-border-default);
+  }
+
+  .split-pane:last-child {
+    border-right: 0;
   }
 
   .sidebar-toggle {

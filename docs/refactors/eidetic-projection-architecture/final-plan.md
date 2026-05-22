@@ -921,6 +921,11 @@ Discovered issues:
 - Resolved: shell toolbar markup and styling moved from `AppShell.svelte` into
   `AppToolbar.svelte`, reducing shell responsibility before graph-focused and
   split workspace modes are added.
+- Resolved: the shell now has transient script, graph, and split workspace
+  modes. The central graph workspace consumes backend-owned bible render graph
+  projection caches through `GraphWorkspacePanel.svelte` and emits only
+  transient graph selection, while the bottom timeline remains mounted below
+  the workspace.
 - Resolved: `crates/server/src/routes/commands.rs` and `crates/server/src/routes/commands_tests.rs` exceeded the decomposition thresholds while owning many command handlers and route tests. Timeline command handlers and command route coverage were split into focused modules before adding more semantic proposal or Bevy bridge command surfaces.
 - Resolved: `crates/server/src/routes/projections_tests.rs` exceeded the decomposition threshold after adding SQLite-backed story arc route coverage. Script, timeline, and story projection route tests were split into a focused out-of-line module.
 - Resolved: frontend bible editing mutated broad `Entity` caches and whole detail objects. Legacy entity detail, node-link display/unlinking, websocket entity refreshes, and `storyState.entities` were removed; UI bible edits now use focused graph projection stores instead of broad entity cache patching.
