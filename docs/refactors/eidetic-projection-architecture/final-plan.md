@@ -1039,6 +1039,10 @@ Discovered issues:
   lifecycle status or validated renderer commands. Tauri now exposes status and
   command-drain commands that return transport-safe projections without giving
   the renderer durable graph mutation authority.
+- Resolved: the frontend had no transport contract for native graph renderer
+  status or drained interaction commands. It now has typed desktop helpers and
+  a pure command application adapter that updates transient graph selection
+  only, leaving durable graph facts backend-owned.
 
 ## Concurrent Worker Policy
 
