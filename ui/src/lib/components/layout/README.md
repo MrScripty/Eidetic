@@ -7,6 +7,7 @@ This directory contains the top-level shell components that partition the Eideti
 | File/Folder | Description |
 |-------------|-------------|
 | `AppShell.svelte` | Primary application frame that composes the sidebar, editor/script region, right panel, and bottom timeline stack. |
+| `AppToolbar.svelte` | Focused top toolbar surface for shell-level save/export commands. |
 | `BottomTimelineStack.svelte` | Fixed-height bottom region that keeps the timeline anchored to the window bottom and conditionally stacks the character timeline beneath it. |
 | `PanelResizer.svelte` | Generic drag handle used for resizable in-shell panel boundaries that remain user-adjustable. |
 | `Sidebar.svelte` | Left-side navigation and detail entry point for story/bible content. |
@@ -21,7 +22,7 @@ The app shell has to coordinate multiple panels with different layout rules. The
 - Layout code already lives in large Svelte components, so new shell behavior should stay isolated where possible.
 
 ## Decision
-Keep the main composition in `AppShell.svelte` but isolate the bottom timeline stack in `BottomTimelineStack.svelte` so the shell owns panel composition, the shell owns the user-selected timeline height, and the bottom stack only renders the clamped height it is given.
+Keep the main composition in `AppShell.svelte` but isolate the bottom timeline stack in `BottomTimelineStack.svelte` and shell command bar in `AppToolbar.svelte` so the shell owns panel composition, the shell owns the user-selected timeline height, and focused child components own their own markup and styling.
 
 ## Alternatives Rejected
 - Leaving the timeline directly in `AppShell.svelte` with more inline sizing logic: rejected because `AppShell.svelte` already exceeds the decomposition review threshold.
@@ -57,6 +58,8 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 
 ## API Consumer Contract
 - `AppShell.svelte` is the composition root for project-active layout.
+- `AppToolbar.svelte` receives save/export callbacks from the shell and does
+  not read or mutate project state directly.
 - `BottomTimelineStack.svelte` exposes no custom props; it renders from shared stores and shared layout helpers.
 - `AppShell.svelte` owns the preferred timeline height and passes the currently rendered height into `BottomTimelineStack.svelte`.
 - Consumers should not duplicate the bottom stack markup elsewhere; alternative shell layouts should compose this module or replace it explicitly.

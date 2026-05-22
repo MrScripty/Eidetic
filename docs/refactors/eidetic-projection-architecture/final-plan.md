@@ -918,6 +918,9 @@ Discovered issues:
   `default-features = false` and the `std` feature only. Dependency reviews in
   the graph and timeline renderer READMEs record the `cargo tree --depth 2`
   checks and keep Bevy isolated from `eidetic-core` and `eidetic-server`.
+- Resolved: shell toolbar markup and styling moved from `AppShell.svelte` into
+  `AppToolbar.svelte`, reducing shell responsibility before graph-focused and
+  split workspace modes are added.
 - Resolved: `crates/server/src/routes/commands.rs` and `crates/server/src/routes/commands_tests.rs` exceeded the decomposition thresholds while owning many command handlers and route tests. Timeline command handlers and command route coverage were split into focused modules before adding more semantic proposal or Bevy bridge command surfaces.
 - Resolved: `crates/server/src/routes/projections_tests.rs` exceeded the decomposition threshold after adding SQLite-backed story arc route coverage. Script, timeline, and story projection route tests were split into a focused out-of-line module.
 - Resolved: frontend bible editing mutated broad `Entity` caches and whole detail objects. Legacy entity detail, node-link display/unlinking, websocket entity refreshes, and `storyState.entities` were removed; UI bible edits now use focused graph projection stores instead of broad entity cache patching.

@@ -2,6 +2,7 @@
   import Sidebar from './Sidebar.svelte';
   import PanelResizer from './PanelResizer.svelte';
   import BottomTimelineStack from './BottomTimelineStack.svelte';
+  import AppToolbar from './AppToolbar.svelte';
   import BeatEditor from '../editor/BeatEditor.svelte';
   import ScriptPanel from '../editor/ScriptPanel.svelte';
   import BibleGraphNodeDetail from '../sidebar/bible/BibleGraphNodeDetail.svelte';
@@ -119,6 +120,12 @@
       notify('error', `Export failed: ${e instanceof Error ? e.message : 'unknown error'}`);
     }
   }
+
+  function handleSave() {
+    saveProject()
+      .then(() => notify('success', 'Saved'))
+      .catch(() => notify('error', 'Save failed'));
+  }
 </script>
 
 <svelte:window bind:innerHeight={windowHeight} onkeydown={handleKeydown} />
@@ -138,16 +145,7 @@
       {/if}
 
       <div class="main-area">
-        <div class="toolbar">
-          <button
-            class="toolbar-btn"
-            title="Save (Ctrl+S)"
-            onclick={() => saveProject().catch(() => {})}>&#128190;</button
-          >
-          <button class="toolbar-btn" title="Export PDF (Ctrl+Shift+E)" onclick={handleExportPdf}
-            >PDF</button
-          >
-        </div>
+        <AppToolbar onsave={handleSave} onexport={handleExportPdf} />
 
         <div class="editor-panel" style="height: {editorHeight}px">
           <BeatEditor />
@@ -240,37 +238,6 @@
     flex-direction: column;
     overflow: hidden;
     min-width: 0;
-  }
-
-  .toolbar {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 2px 8px;
-    background: var(--color-bg-secondary);
-    border-bottom: 1px solid var(--color-border-subtle);
-    flex-shrink: 0;
-  }
-
-  .toolbar-btn {
-    background: none;
-    border: 1px solid transparent;
-    color: var(--color-text-secondary);
-    padding: 2px 6px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    line-height: 1;
-  }
-
-  .toolbar-btn:hover:not(:disabled) {
-    background: var(--color-bg-hover);
-    border-color: var(--color-border-subtle);
-  }
-
-  .toolbar-btn:disabled {
-    opacity: 0.35;
-    cursor: default;
   }
 
   .editor-panel {
