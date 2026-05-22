@@ -10,6 +10,7 @@ import {
   deleteTimelineNode,
   deleteTimelineRelationship,
   ensureCanonicalBibleRoots,
+  recordContextEvaluation,
   setBibleGraphEdge,
   setBibleGraphField,
   setBibleGraphSnapshotField,
@@ -137,6 +138,45 @@ describe('command api helpers', () => {
       },
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop context evaluation commands when Tauri transport is available', async () => {
+    const response = {
+      version: 2,
+      payload: {
+        target_node_id: 'timeline-node-1',
+        evaluation_id: 'evaluation-1',
+        task_kind: 'generate_timeline_context',
+        records: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+
+    const payload = {
+      evaluation: {
+        id: 'evaluation-1',
+        target_node_id: 'timeline-node-1',
+        task_kind: 'generate_timeline_context' as const,
+        summary: 'Scene context',
+        distilled_context: 'Harbor context',
+        created_at_ms: 100,
+      },
+      influences: [],
+    };
+
+    await expect(recordContextEvaluation(payload, 'command-context-1')).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_context_evaluation', {
+      command: {
+        id: 'command-context-1',
+        payload,
+      },
+    });
   });
 
   it('uses desktop story arc commands when Tauri transport is available', async () => {

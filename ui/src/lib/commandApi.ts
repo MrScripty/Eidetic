@@ -10,8 +10,13 @@ import type {
 import type {
   CommandEnvelope,
   ObjectFieldCommandResponse,
+  ProjectionEnvelope,
   SetObjectFieldCommand,
 } from './projectionTypes.js';
+import type {
+  ContextInfluenceProjection,
+  RecordContextEvaluationCommand,
+} from './contextInfluenceTypes.js';
 import type {
   AcceptPropagationProposalCommand,
   CreatePropagationProposalCommand,
@@ -125,6 +130,21 @@ export function ensureCanonicalBibleRoots(
   return invokeDesktop<BibleGraphRootsCommandResponse>('command_bible_graph_roots', {
     command,
   });
+}
+
+export function recordContextEvaluation(
+  payload: RecordContextEvaluationCommand,
+  commandId = createCommandId(),
+): Promise<ProjectionEnvelope<ContextInfluenceProjection>> {
+  const command: CommandEnvelope<RecordContextEvaluationCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<ProjectionEnvelope<ContextInfluenceProjection>>(
+    'command_context_evaluation',
+    { command },
+  );
 }
 
 export function createBibleReferenceProposal(

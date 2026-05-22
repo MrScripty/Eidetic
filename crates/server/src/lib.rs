@@ -24,6 +24,8 @@ pub(crate) mod command_service_semantic;
 pub(crate) mod command_service_support;
 pub(crate) mod command_service_timeline;
 pub(crate) mod command_service_timeline_requests;
+pub mod context_influence_service;
+pub(crate) mod context_influence_store;
 pub(crate) mod embeddings;
 pub(crate) mod export;
 pub mod export_service;

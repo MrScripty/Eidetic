@@ -44,9 +44,10 @@ pub use bible_render_graph::{
 pub use bible_render_graph_filter::BibleRenderGraphProjectionRequest;
 pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
 pub use context_influence::{
-    ContextEvaluationId, ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProjection,
+    ContextEvaluation, ContextEvaluationId, ContextEvaluationTaskKind, ContextInfluenceId,
+    ContextInfluenceKind, ContextInfluenceProjection, ContextInfluenceProjectionRequest,
     ContextInfluenceProvenance, ContextInfluenceRecord, ContextLayerRole, ContextStackLayer,
-    ContextStackProjection,
+    ContextStackProjection, RecordContextEvaluationCommand,
 };
 pub use propagation_proposal::{
     AcceptPropagationProposalCommand, CreatePropagationProposalCommand, PropagationProposal,
@@ -153,6 +154,8 @@ pub enum ObjectKind {
     SemanticDependency,
     ReferenceAsset,
     Projection,
+    ContextEvaluation,
+    ContextInfluence,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

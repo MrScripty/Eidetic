@@ -7,6 +7,10 @@ import type {
 } from './bibleGraphTypes.js';
 import type { BibleGraphSchemaListProjection } from './bibleGraphSchemaTypes.js';
 import type { ChangeReviewProjection } from './changeReviewTypes.js';
+import type {
+  ContextInfluenceProjection,
+  ContextInfluenceProjectionRequest,
+} from './contextInfluenceTypes.js';
 import type { ObjectFieldProjection, ObjectKind, ProjectionEnvelope } from './projectionTypes.js';
 import type { PropagationProposalListProjection } from './propagationProposalTypes.js';
 import type { ScriptDocumentId, ScriptDocumentProjection } from './scriptTypes.js';
@@ -77,6 +81,17 @@ export function getBibleRenderGraphProjection(
   return invokeDesktop<ProjectionEnvelope<BibleRenderGraphProjection>>(
     'projection_bible_render_graph',
     args,
+  );
+}
+
+export function getContextInfluenceProjection({
+  target_node_id,
+}: ContextInfluenceProjectionRequest): Promise<ProjectionEnvelope<ContextInfluenceProjection>> {
+  return invokeDesktop<ProjectionEnvelope<ContextInfluenceProjection>>(
+    'projection_context_influence',
+    {
+      query: { target_node_id },
+    },
   );
 }
 

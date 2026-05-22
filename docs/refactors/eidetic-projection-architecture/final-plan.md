@@ -888,8 +888,12 @@ Discovered issues:
 - Resolved: Milestone 8 now has executable context-stack and context-influence
   boundary DTOs in `eidetic-core`, including typed evaluation/influence IDs,
   source layer, influence kind, confidence, reason, provenance, and bible
-  node/edge references. The first slice is contract-only; storage and query
-  adapters remain separate follow-up slices.
+  node/edge references.
+- Resolved: context evaluations and influence records now have relational
+  SQLite storage, command/event/revision history, idempotent command replay,
+  desktop command/projection routes, and TypeScript command/projection helpers.
+  The next context slice can build active hierarchy stack and graph-highlight
+  projections on top of these backend-owned records.
 - Resolved: `crates/server/src/routes/commands.rs` and `crates/server/src/routes/commands_tests.rs` exceeded the decomposition thresholds while owning many command handlers and route tests. Timeline command handlers and command route coverage were split into focused modules before adding more semantic proposal or Bevy bridge command surfaces.
 - Resolved: `crates/server/src/routes/projections_tests.rs` exceeded the decomposition threshold after adding SQLite-backed story arc route coverage. Script, timeline, and story projection route tests were split into a focused out-of-line module.
 - Resolved: frontend bible editing mutated broad `Entity` caches and whole detail objects. Legacy entity detail, node-link display/unlinking, websocket entity refreshes, and `storyState.entities` were removed; UI bible edits now use focused graph projection stores instead of broad entity cache patching.

@@ -7,6 +7,7 @@ import {
   getBibleReferenceProposalListProjection,
   getBibleRenderGraphProjection,
   getChangeReviewProjection,
+  getContextInfluenceProjection,
   getObjectFieldProjection,
   getPropagationProposalListProjection,
   getScriptDocumentProjection,
@@ -124,6 +125,29 @@ describe('projection api helpers', () => {
         neighborhood_depth: 1,
         max_nodes: 25,
       },
+    });
+  });
+
+  it('uses the desktop context influence projection command', async () => {
+    const response = {
+      version: 2,
+      payload: {
+        target_node_id: 'timeline-node-1',
+        evaluation_id: 'evaluation-1',
+        task_kind: 'generate_timeline_context',
+        records: [],
+      },
+    };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(
+      getContextInfluenceProjection({
+        target_node_id: 'timeline-node-1',
+      }),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_context_influence', {
+      query: { target_node_id: 'timeline-node-1' },
     });
   });
 

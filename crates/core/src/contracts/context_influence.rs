@@ -25,6 +25,35 @@ impl ContextInfluenceId {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct RecordContextEvaluationCommand {
+    pub evaluation: ContextEvaluation,
+    #[serde(default)]
+    pub influences: Vec<ContextInfluenceRecord>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContextEvaluation {
+    pub id: ContextEvaluationId,
+    pub target_node_id: NodeId,
+    pub task_kind: ContextEvaluationTaskKind,
+    pub summary: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distilled_context: Option<String>,
+    #[serde(default)]
+    pub created_at_ms: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ContextEvaluationTaskKind {
+    GenerateTimelineContext,
+    GenerateScript,
+    InspectContext,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ContextStackProjection {
     pub target_node_id: NodeId,
     #[serde(default)]
@@ -57,8 +86,17 @@ pub enum ContextLayerRole {
 pub struct ContextInfluenceProjection {
     pub target_node_id: NodeId,
     pub evaluation_id: ContextEvaluationId,
+    pub task_kind: ContextEvaluationTaskKind,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distilled_context: Option<String>,
     #[serde(default)]
     pub records: Vec<ContextInfluenceRecord>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContextInfluenceProjectionRequest {
+    pub target_node_id: NodeId,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -128,6 +166,8 @@ mod tests {
         let projection = ContextInfluenceProjection {
             target_node_id,
             evaluation_id,
+            task_kind: ContextEvaluationTaskKind::GenerateTimelineContext,
+            distilled_context: Some("Harbor weather controls the scene tone.".to_string()),
             records: vec![record.clone()],
         };
 
