@@ -36,6 +36,10 @@ commands and events.
 - Bevy renderer hosts live in this desktop crate. They may consume backend
   projections and emit validated transient renderer commands, but they must not
   write durable project state or make `eidetic-server` depend on Bevy.
+- `projection_bible_render_graph` mirrors the backend-owned graph projection
+  into the Bevy renderer owner when desktop state is available. Svelte still
+  receives the same projection envelope, so renderer failures are logged instead
+  of turning the read projection into a UI-blocking error.
 - Renderer host state must not be stored in `tauri::State` unless the owner is
   `Send + Sync`; Bevy `App` is not. Native render-window integration needs a
   dedicated desktop renderer owner instead of storing `App` in global managed

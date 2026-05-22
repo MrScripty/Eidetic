@@ -1026,6 +1026,11 @@ Discovered issues:
   decomposition threshold after adding the renderer owner. The desktop Bevy
   graph boundary is now split into focused host, owner, and test modules before
   adding projection subscription plumbing.
+- Resolved: the desktop bible render graph projection command returned the
+  backend-owned graph projection only to Svelte. It now mirrors the same
+  projection payload into the managed Bevy renderer owner when available,
+  giving the renderer thread a projection-driven data path without creating a
+  second durable graph owner.
 
 ## Concurrent Worker Policy
 
