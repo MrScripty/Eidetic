@@ -44,6 +44,7 @@ const projection: BibleRenderGraphProjection = {
       edge_ids: ['edge.ada.beach'],
     },
   ],
+  influences: [],
 };
 
 describe('bible render graph outline', () => {

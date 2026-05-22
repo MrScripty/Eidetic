@@ -100,7 +100,10 @@ describe('projection api helpers', () => {
   });
 
   it('uses the desktop bible render graph projection command', async () => {
-    const response = { version: 4, payload: { nodes: [], edges: [], neighborhoods: [] } };
+    const response = {
+      version: 4,
+      payload: { nodes: [], edges: [], neighborhoods: [], influences: [] },
+    };
     const invoke = installDesktopInvoke(response);
 
     await expect(getBibleRenderGraphProjection()).resolves.toEqual(response);
@@ -109,12 +112,16 @@ describe('projection api helpers', () => {
   });
 
   it('passes bounded bible render graph projection queries to desktop', async () => {
-    const response = { version: 4, payload: { nodes: [], edges: [], neighborhoods: [] } };
+    const response = {
+      version: 4,
+      payload: { nodes: [], edges: [], neighborhoods: [], influences: [] },
+    };
     const invoke = installDesktopInvoke(response);
 
     await expect(
       getBibleRenderGraphProjection({
         selected_node_id: 'node.character.ada',
+        selected_timeline_node_id: 'timeline-node-1',
         neighborhood_depth: 1,
         max_nodes: 25,
       }),
@@ -123,6 +130,7 @@ describe('projection api helpers', () => {
     expect(invoke).toHaveBeenCalledWith('projection_bible_render_graph', {
       query: {
         selected_node_id: 'node.character.ada',
+        selected_timeline_node_id: 'timeline-node-1',
         neighborhood_depth: 1,
         max_nodes: 25,
       },

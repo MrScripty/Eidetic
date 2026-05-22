@@ -38,8 +38,8 @@ pub use bible_graph_defaults::{
     builtin_bible_graph_schema_list_projection, default_part_projections_for_node,
 };
 pub use bible_render_graph::{
-    BibleRenderGraphEdge, BibleRenderGraphNeighborhood, BibleRenderGraphNode,
-    BibleRenderGraphPosition, BibleRenderGraphProjection,
+    BibleRenderGraphEdge, BibleRenderGraphInfluence, BibleRenderGraphNeighborhood,
+    BibleRenderGraphNode, BibleRenderGraphPosition, BibleRenderGraphProjection,
 };
 pub use bible_render_graph_filter::BibleRenderGraphProjectionRequest;
 pub use change_review::{ChangeReviewChange, ChangeReviewProjection};

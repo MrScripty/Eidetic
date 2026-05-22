@@ -198,6 +198,7 @@ mod tests {
             nodes: Vec::new(),
             edges: Vec::new(),
             neighborhoods: Vec::new(),
+            influences: Vec::new(),
         });
         assert_eq!(renderer.scene_counts(), (0, 0));
     }
@@ -260,6 +261,7 @@ mod tests {
             }],
             edges: Vec::new(),
             neighborhoods: Vec::new(),
+            influences: Vec::new(),
         }
     }
 
@@ -318,6 +320,7 @@ mod tests {
                     edge_ids: vec![edge_id],
                 },
             ],
+            influences: Vec::new(),
         }
     }
 }

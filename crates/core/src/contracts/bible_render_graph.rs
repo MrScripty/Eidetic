@@ -2,9 +2,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
+use crate::timeline::node::{NodeId, StoryLevel};
+
 use super::{
     BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNode, BibleGraphNodeId,
-    BibleGraphSchemaKey,
+    BibleGraphSchemaKey, ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProvenance,
+    ContextInfluenceRecord,
     bible_render_graph_filter::{BibleRenderGraphProjectionRequest, included_node_ids_for_request},
 };
 
@@ -21,6 +24,8 @@ pub struct BibleRenderGraphProjection {
     pub edges: Vec<BibleRenderGraphEdge>,
     #[serde(default)]
     pub neighborhoods: Vec<BibleRenderGraphNeighborhood>,
+    #[serde(default)]
+    pub influences: Vec<BibleRenderGraphInfluence>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -68,6 +73,23 @@ pub struct BibleRenderGraphNeighborhood {
     pub edge_ids: Vec<BibleGraphEdgeId>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BibleRenderGraphInfluence {
+    pub influence_id: ContextInfluenceId,
+    pub timeline_node_id: NodeId,
+    pub source_layer: StoryLevel,
+    pub influence_kind: ContextInfluenceKind,
+    pub confidence: f32,
+    pub reason: String,
+    pub provenance: ContextInfluenceProvenance,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_node_id: Option<BibleGraphNodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_edge_id: Option<BibleGraphEdgeId>,
+    #[serde(default)]
+    pub sort_order: u32,
+}
+
 impl BibleRenderGraphProjection {
     pub fn from_graph(nodes: Vec<BibleGraphNode>, edges: Vec<BibleGraphEdge>) -> Self {
         Self::from_graph_for_request(nodes, edges, &BibleRenderGraphProjectionRequest::default())
@@ -77,6 +99,15 @@ impl BibleRenderGraphProjection {
         nodes: Vec<BibleGraphNode>,
         edges: Vec<BibleGraphEdge>,
         request: &BibleRenderGraphProjectionRequest,
+    ) -> Self {
+        Self::from_graph_for_request_with_influences(nodes, edges, request, Vec::new())
+    }
+
+    pub fn from_graph_for_request_with_influences(
+        nodes: Vec<BibleGraphNode>,
+        edges: Vec<BibleGraphEdge>,
+        request: &BibleRenderGraphProjectionRequest,
+        influences: Vec<ContextInfluenceRecord>,
     ) -> Self {
         let sorted_nodes = sorted_nodes(nodes);
         let sorted_edges = sorted_graph_edges(edges);
@@ -96,7 +127,7 @@ impl BibleRenderGraphProjection {
 
         let depths = node_depths(&filtered_nodes);
         let row_indexes = row_indexes_by_depth(&filtered_nodes, &depths);
-        let render_nodes = filtered_nodes
+        let render_nodes: Vec<_> = filtered_nodes
             .into_iter()
             .map(|node| {
                 let depth = depths.get(&node.id).copied().unwrap_or_default();
@@ -124,11 +155,13 @@ impl BibleRenderGraphProjection {
 
         let render_edges = render_edges(filtered_edges);
         let neighborhoods = neighborhoods_for_edges(&render_edges);
+        let influences = render_influences(influences, &render_nodes, &render_edges);
 
         Self {
             nodes: render_nodes,
             edges: render_edges,
             neighborhoods,
+            influences,
         }
     }
 }
@@ -238,6 +271,45 @@ fn neighborhoods_for_edges(edges: &[BibleRenderGraphEdge]) -> Vec<BibleRenderGra
         .collect()
 }
 
+fn render_influences(
+    mut influences: Vec<ContextInfluenceRecord>,
+    nodes: &[BibleRenderGraphNode],
+    edges: &[BibleRenderGraphEdge],
+) -> Vec<BibleRenderGraphInfluence> {
+    let node_ids: BTreeSet<_> = nodes.iter().map(|node| node.node_id.clone()).collect();
+    let edge_ids: BTreeSet<_> = edges.iter().map(|edge| edge.edge_id.clone()).collect();
+    influences.sort_by(|a, b| {
+        a.sort_order
+            .cmp(&b.sort_order)
+            .then_with(|| a.id.0.cmp(&b.id.0))
+    });
+    influences
+        .into_iter()
+        .filter(|record| {
+            record
+                .bible_node_id
+                .as_ref()
+                .is_none_or(|node_id| node_ids.contains(node_id))
+                && record
+                    .bible_edge_id
+                    .as_ref()
+                    .is_none_or(|edge_id| edge_ids.contains(edge_id))
+        })
+        .map(|record| BibleRenderGraphInfluence {
+            influence_id: record.id,
+            timeline_node_id: record.timeline_node_id,
+            source_layer: record.source_layer,
+            influence_kind: record.influence_kind,
+            confidence: record.confidence,
+            reason: record.reason,
+            provenance: record.provenance,
+            bible_node_id: record.bible_node_id,
+            bible_edge_id: record.bible_edge_id,
+            sort_order: record.sort_order,
+        })
+        .collect()
+}
+
 #[derive(Default)]
 struct NeighborhoodBuilder {
     connected_node_ids: BTreeSet<BibleGraphNodeId>,
@@ -256,188 +328,5 @@ fn default_directed() -> bool {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::contracts::BibleGraphSchemaKey;
-
-    #[test]
-    fn render_graph_projection_is_deterministic_and_indexes_neighbors() {
-        let root = BibleGraphNode {
-            id: BibleGraphNodeId::new("canonical.characters").unwrap(),
-            parent_id: None,
-            schema_key: BibleGraphSchemaKey::new("canonical.root.characters").unwrap(),
-            name: "Characters".to_string(),
-            system_owned: true,
-            sort_order: 0,
-        };
-        let ada = BibleGraphNode {
-            id: BibleGraphNodeId::new("node.character.ada").unwrap(),
-            parent_id: Some(root.id.clone()),
-            schema_key: BibleGraphSchemaKey::new("character").unwrap(),
-            name: "Ada".to_string(),
-            system_owned: false,
-            sort_order: 1,
-        };
-        let beach = BibleGraphNode {
-            id: BibleGraphNodeId::new("node.place.beach").unwrap(),
-            parent_id: None,
-            schema_key: BibleGraphSchemaKey::new("place").unwrap(),
-            name: "Beach".to_string(),
-            system_owned: false,
-            sort_order: 2,
-        };
-        let edge = BibleGraphEdge {
-            id: BibleGraphEdgeId::new("edge.ada.beach").unwrap(),
-            from_node_id: ada.id.clone(),
-            to_node_id: beach.id.clone(),
-            edge_kind: BibleGraphEdgeKind::LocatedIn,
-            label: "located in".to_string(),
-            directed: true,
-            sort_order: 0,
-        };
-
-        let projection = BibleRenderGraphProjection::from_graph(vec![beach, ada, root], vec![edge]);
-
-        assert_eq!(projection.nodes[0].node_id.as_str(), "canonical.characters");
-        assert_eq!(projection.nodes[0].position.z, SYSTEM_NODE_Z);
-        assert_eq!(projection.nodes[1].depth, 1);
-        assert_eq!(projection.nodes[1].position.x, NODE_COLUMN_SPACING);
-        assert_eq!(projection.edges[0].edge_id.as_str(), "edge.ada.beach");
-        assert_eq!(projection.neighborhoods.len(), 2);
-        assert_eq!(
-            projection.neighborhoods[0].connected_node_ids[0].as_str(),
-            "node.place.beach"
-        );
-    }
-
-    #[test]
-    fn render_graph_projection_round_trips() {
-        let projection = BibleRenderGraphProjection {
-            nodes: vec![BibleRenderGraphNode {
-                node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
-                parent_id: None,
-                schema_key: BibleGraphSchemaKey::new("character").unwrap(),
-                label: "Ada".to_string(),
-                system_owned: false,
-                sort_order: 0,
-                depth: 0,
-                position: BibleRenderGraphPosition {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            }],
-            edges: Vec::new(),
-            neighborhoods: Vec::new(),
-        };
-
-        let json = serde_json::to_string(&projection).unwrap();
-        let round_trip: BibleRenderGraphProjection = serde_json::from_str(&json).unwrap();
-
-        assert_eq!(round_trip, projection);
-    }
-
-    #[test]
-    fn render_graph_projection_request_filters_selected_neighborhood() {
-        let root = graph_node("canonical.characters", None, "root", "Characters", true, 0);
-        let ada = graph_node(
-            "node.character.ada",
-            Some("canonical.characters"),
-            "character",
-            "Ada",
-            false,
-            1,
-        );
-        let beach = graph_node("node.place.beach", None, "place", "Beach", false, 2);
-        let tower = graph_node("node.place.tower", None, "place", "Tower", false, 3);
-        let ada_beach = graph_edge("edge.ada.beach", &ada.id, &beach.id, 0);
-        let beach_tower = graph_edge("edge.beach.tower", &beach.id, &tower.id, 1);
-
-        let projection = BibleRenderGraphProjection::from_graph_for_request(
-            vec![root, tower, beach, ada.clone()],
-            vec![beach_tower, ada_beach],
-            &BibleRenderGraphProjectionRequest {
-                selected_node_id: Some(ada.id),
-                neighborhood_depth: 1,
-                max_nodes: 10,
-                ..BibleRenderGraphProjectionRequest::default()
-            },
-        );
-
-        let node_ids: Vec<_> = projection
-            .nodes
-            .iter()
-            .map(|node| node.node_id.as_str())
-            .collect();
-        assert_eq!(
-            node_ids,
-            vec![
-                "canonical.characters",
-                "node.character.ada",
-                "node.place.beach"
-            ]
-        );
-        assert_eq!(projection.edges.len(), 1);
-        assert_eq!(projection.edges[0].edge_id.as_str(), "edge.ada.beach");
-    }
-
-    #[test]
-    fn render_graph_projection_request_bounds_default_projection() {
-        let nodes = vec![
-            graph_node("node.place.alpha", None, "place", "Alpha", false, 1),
-            graph_node("node.place.beta", None, "place", "Beta", false, 2),
-            graph_node("node.place.gamma", None, "place", "Gamma", false, 3),
-        ];
-
-        let projection = BibleRenderGraphProjection::from_graph_for_request(
-            nodes,
-            Vec::new(),
-            &BibleRenderGraphProjectionRequest {
-                max_nodes: 2,
-                ..BibleRenderGraphProjectionRequest::default()
-            },
-        );
-
-        let node_ids: Vec<_> = projection
-            .nodes
-            .iter()
-            .map(|node| node.node_id.as_str())
-            .collect();
-        assert_eq!(node_ids, vec!["node.place.alpha", "node.place.beta"]);
-    }
-
-    fn graph_node(
-        id: &str,
-        parent_id: Option<&str>,
-        schema_key: &str,
-        name: &str,
-        system_owned: bool,
-        sort_order: u32,
-    ) -> BibleGraphNode {
-        BibleGraphNode {
-            id: BibleGraphNodeId::new(id).unwrap(),
-            parent_id: parent_id.map(|id| BibleGraphNodeId::new(id).unwrap()),
-            schema_key: BibleGraphSchemaKey::new(schema_key).unwrap(),
-            name: name.to_string(),
-            system_owned,
-            sort_order,
-        }
-    }
-
-    fn graph_edge(
-        id: &str,
-        from_node_id: &BibleGraphNodeId,
-        to_node_id: &BibleGraphNodeId,
-        sort_order: u32,
-    ) -> BibleGraphEdge {
-        BibleGraphEdge {
-            id: BibleGraphEdgeId::new(id).unwrap(),
-            from_node_id: from_node_id.clone(),
-            to_node_id: to_node_id.clone(),
-            edge_kind: BibleGraphEdgeKind::References,
-            label: "references".to_string(),
-            directed: true,
-            sort_order,
-        }
-    }
-}
+#[path = "bible_render_graph_tests.rs"]
+mod tests;

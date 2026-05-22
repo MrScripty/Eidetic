@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 
 use eidetic_core::contracts::{
-    BibleGraphEdge, BibleGraphNode, BibleGraphNodeId, BibleRenderGraphProjectionRequest,
+    BibleGraphEdge, BibleGraphEdgeId, BibleGraphNode, BibleGraphNodeId,
+    BibleRenderGraphProjectionRequest, ContextInfluenceRecord,
 };
 use rusqlite::{Connection, params, params_from_iter};
 
@@ -13,6 +14,7 @@ const MAX_PARENT_DEPTH: u32 = 64;
 pub(crate) struct BoundedBibleRenderGraph {
     pub(crate) nodes: Vec<BibleGraphNode>,
     pub(crate) edges: Vec<BibleGraphEdge>,
+    pub(crate) influences: Vec<ContextInfluenceRecord>,
 }
 
 pub(crate) fn load_bounded_render_graph(
@@ -22,6 +24,7 @@ pub(crate) fn load_bounded_render_graph(
     let request = request.normalized();
     let max_nodes = i64::from(request.max_nodes);
     let mut node_ids = BTreeSet::new();
+    let influences = load_selected_context_influences(conn, &request)?;
 
     if let Some(root_id) = &request.focused_root_id {
         node_ids.extend(load_descendant_node_ids(
@@ -45,6 +48,13 @@ pub(crate) fn load_bounded_render_graph(
         node_ids.extend(load_search_node_ids(conn, search, max_nodes)?);
     }
 
+    node_ids.extend(
+        influences
+            .iter()
+            .filter_map(|record| record.bible_node_id.as_ref().cloned()),
+    );
+    node_ids.extend(load_influenced_edge_endpoint_ids(conn, &influences)?);
+
     if node_ids.is_empty() {
         node_ids.extend(load_default_node_ids(conn, max_nodes)?);
     }
@@ -54,7 +64,38 @@ pub(crate) fn load_bounded_render_graph(
     let node_ids: Vec<_> = nodes.iter().map(|node| node.id.clone()).collect();
     let edges = bible_graph_edge_store::load_edges_between_nodes(conn, &node_ids)?;
 
-    Ok(BoundedBibleRenderGraph { nodes, edges })
+    Ok(BoundedBibleRenderGraph {
+        nodes,
+        edges,
+        influences,
+    })
+}
+
+fn load_selected_context_influences(
+    conn: &Connection,
+    request: &BibleRenderGraphProjectionRequest,
+) -> Result<Vec<ContextInfluenceRecord>, HistoryStoreError> {
+    let Some(target_node_id) = request.selected_timeline_node_id else {
+        return Ok(Vec::new());
+    };
+    crate::context_influence_store::load_latest_context_influence_records(conn, target_node_id)
+}
+
+fn load_influenced_edge_endpoint_ids(
+    conn: &Connection,
+    influences: &[ContextInfluenceRecord],
+) -> Result<Vec<BibleGraphNodeId>, HistoryStoreError> {
+    let edge_ids: Vec<_> = influences
+        .iter()
+        .filter_map(|record| record.bible_edge_id.as_ref().cloned())
+        .collect();
+    let edges = bible_graph_edge_store::load_edges_by_ids(conn, &deduplicate_edge_ids(edge_ids))?;
+    let mut node_ids = BTreeSet::new();
+    for edge in edges {
+        node_ids.insert(edge.from_node_id);
+        node_ids.insert(edge.to_node_id);
+    }
+    Ok(node_ids.into_iter().collect())
 }
 
 fn load_default_node_ids(
@@ -260,4 +301,12 @@ fn placeholders(count: usize) -> String {
     std::iter::repeat_n("?", count)
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+fn deduplicate_edge_ids(edge_ids: Vec<BibleGraphEdgeId>) -> Vec<BibleGraphEdgeId> {
+    edge_ids
+        .into_iter()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
 }

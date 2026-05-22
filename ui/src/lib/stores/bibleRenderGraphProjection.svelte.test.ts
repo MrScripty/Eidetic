@@ -32,6 +32,7 @@ const projection = {
     ],
     edges: [],
     neighborhoods: [],
+    influences: [],
   },
 };
 

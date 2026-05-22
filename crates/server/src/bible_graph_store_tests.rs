@@ -1,9 +1,9 @@
 use super::*;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphPartKey,
-    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
-    BibleRenderGraphProjectionRequest, ChangeEventKind, CommandEnvelope, FieldValue,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, ChangeEventKind,
+    CommandEnvelope, FieldValue, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand,
 };
 
 #[derive(Debug, serde::Serialize)]
@@ -313,117 +313,8 @@ fn node_detail_projection_includes_snapshots_and_fields() {
     );
 }
 
-#[test]
-fn render_graph_projection_envelope_applies_bounded_request() {
-    let mut conn = memory_connection();
-    seed_node(&mut conn, "node.character.ada", "Ada", 10);
-    seed_node(&mut conn, "node.place.beach", "Beach", 20);
-    seed_node(&mut conn, "node.place.tower", "Tower", 30);
-    seed_edge(
-        &mut conn,
-        "edge.ada.beach",
-        "node.character.ada",
-        "node.place.beach",
-        1,
-    );
-    seed_edge(
-        &mut conn,
-        "edge.beach.tower",
-        "node.place.beach",
-        "node.place.tower",
-        2,
-    );
-
-    let projection = load_render_graph_projection_envelope(
-        &conn,
-        &BibleRenderGraphProjectionRequest {
-            selected_node_id: Some(BibleGraphNodeId::new("node.character.ada").unwrap()),
-            neighborhood_depth: 1,
-            max_nodes: 10,
-            ..BibleRenderGraphProjectionRequest::default()
-        },
-    )
-    .unwrap();
-
-    let node_ids: Vec<_> = projection
-        .payload
-        .nodes
-        .iter()
-        .map(|node| node.node_id.as_str())
-        .collect();
-    assert_eq!(node_ids, vec!["node.character.ada", "node.place.beach"]);
-    assert_eq!(projection.payload.edges.len(), 1);
-    assert_eq!(
-        projection.payload.edges[0].edge_id.as_str(),
-        "edge.ada.beach"
-    );
-}
-
-#[test]
-fn render_graph_projection_limits_default_query() {
-    let mut conn = memory_connection();
-    for index in 0..25 {
-        seed_node(
-            &mut conn,
-            &format!("node.test.{index:02}"),
-            &format!("Node {index:02}"),
-            index,
-        );
-    }
-
-    let projection = load_render_graph_projection_envelope(
-        &conn,
-        &BibleRenderGraphProjectionRequest {
-            max_nodes: 7,
-            ..BibleRenderGraphProjectionRequest::default()
-        },
-    )
-    .unwrap();
-
-    let node_ids: Vec<_> = projection
-        .payload
-        .nodes
-        .iter()
-        .map(|node| node.node_id.as_str())
-        .collect();
-    assert_eq!(node_ids.len(), 7);
-    assert_eq!(node_ids[0], "node.test.00");
-    assert_eq!(node_ids[6], "node.test.06");
-}
-
-#[test]
-fn render_graph_projection_queries_focused_root_descendants() {
-    let mut conn = memory_connection();
-    seed_parented_node(&mut conn, "node.root", None, "Root", 1);
-    seed_parented_node(&mut conn, "node.root.child", Some("node.root"), "Child", 2);
-    seed_parented_node(
-        &mut conn,
-        "node.root.grandchild",
-        Some("node.root.child"),
-        "Grandchild",
-        3,
-    );
-    seed_parented_node(&mut conn, "node.other", None, "Other", 4);
-
-    let projection = load_render_graph_projection_envelope(
-        &conn,
-        &BibleRenderGraphProjectionRequest {
-            focused_root_id: Some(BibleGraphNodeId::new("node.root").unwrap()),
-            neighborhood_depth: 1,
-            max_nodes: 10,
-            ..BibleRenderGraphProjectionRequest::default()
-        },
-    )
-    .unwrap();
-
-    let node_ids: Vec<_> = projection
-        .payload
-        .nodes
-        .iter()
-        .map(|node| node.node_id.as_str())
-        .collect();
-    assert_eq!(node_ids, vec!["node.root", "node.root.child"]);
-}
+#[path = "bible_graph_store_render_tests.rs"]
+mod render_tests;
 
 fn seed_node(conn: &mut Connection, node_id: &str, name: &str, sort_order: u32) {
     seed_parented_node(conn, node_id, None, name, sort_order);

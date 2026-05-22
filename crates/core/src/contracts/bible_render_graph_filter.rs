@@ -2,6 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
+use crate::timeline::node::NodeId;
+
 use super::{BibleGraphEdge, BibleGraphNode, BibleGraphNodeId};
 
 const DEFAULT_MAX_RENDER_GRAPH_NODES: u32 = 200;
@@ -17,6 +19,8 @@ pub struct BibleRenderGraphProjectionRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub selected_node_id: Option<BibleGraphNodeId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selected_timeline_node_id: Option<NodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub search: Option<String>,
     #[serde(default = "default_neighborhood_depth")]
     pub neighborhood_depth: u32,
@@ -29,6 +33,7 @@ impl Default for BibleRenderGraphProjectionRequest {
         Self {
             focused_root_id: None,
             selected_node_id: None,
+            selected_timeline_node_id: None,
             search: None,
             neighborhood_depth: DEFAULT_NEIGHBORHOOD_DEPTH,
             max_nodes: DEFAULT_MAX_RENDER_GRAPH_NODES,
@@ -41,6 +46,7 @@ impl BibleRenderGraphProjectionRequest {
         Self {
             focused_root_id: self.focused_root_id.clone(),
             selected_node_id: self.selected_node_id.clone(),
+            selected_timeline_node_id: self.selected_timeline_node_id,
             search: normalized_search(self.search.as_deref()),
             neighborhood_depth: self.neighborhood_depth.min(MAX_NEIGHBORHOOD_DEPTH),
             max_nodes: self.max_nodes.clamp(1, MAX_RENDER_GRAPH_NODES),

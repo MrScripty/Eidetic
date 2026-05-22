@@ -113,6 +113,33 @@ pub(crate) fn load_edges_between_nodes(
     Ok(edges)
 }
 
+pub(crate) fn load_edges_by_ids(
+    conn: &Connection,
+    edge_ids: &[BibleGraphEdgeId],
+) -> Result<Vec<BibleGraphEdge>, HistoryStoreError> {
+    if edge_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let placeholders = placeholders(edge_ids.len());
+    let sql = edge_select_sql(format!(
+        "WHERE deleted_event_id IS NULL
+            AND id IN ({placeholders})
+         ORDER BY sort_order ASC, label ASC, id ASC"
+    ));
+    let mut statement = conn.prepare(&sql)?;
+    let rows = statement.query_map(
+        params_from_iter(edge_ids.iter().map(BibleGraphEdgeId::as_str)),
+        row_to_edge,
+    )?;
+
+    let mut edges = Vec::new();
+    for row in rows {
+        edges.push(row?);
+    }
+    Ok(edges)
+}
+
 fn load_edges_for_node(
     conn: &Connection,
     node_id: &BibleGraphNodeId,

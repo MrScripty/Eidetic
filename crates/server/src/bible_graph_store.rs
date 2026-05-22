@@ -239,11 +239,14 @@ pub(crate) fn load_render_graph_projection(
     request: &BibleRenderGraphProjectionRequest,
 ) -> Result<BibleRenderGraphProjection, HistoryStoreError> {
     let graph = crate::bible_render_graph_query::load_bounded_render_graph(conn, request)?;
-    Ok(BibleRenderGraphProjection::from_graph_for_request(
-        graph.nodes,
-        graph.edges,
-        request,
-    ))
+    Ok(
+        BibleRenderGraphProjection::from_graph_for_request_with_influences(
+            graph.nodes,
+            graph.edges,
+            request,
+            graph.influences,
+        ),
+    )
 }
 
 pub(crate) fn load_render_graph_projection_envelope(

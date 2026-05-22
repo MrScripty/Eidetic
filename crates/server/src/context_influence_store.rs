@@ -124,6 +124,17 @@ pub(crate) fn load_context_influence_projection(
     }
 }
 
+pub(crate) fn load_latest_context_influence_records(
+    conn: &Connection,
+    target_node_id: NodeId,
+) -> Result<Vec<ContextInfluenceRecord>, HistoryStoreError> {
+    create_schema(conn)?;
+    let Some(evaluation) = load_latest_evaluation(conn, target_node_id)? else {
+        return Ok(Vec::new());
+    };
+    load_influence_records(conn, evaluation.id)
+}
+
 fn validate_command(command: &RecordContextEvaluationCommand) -> Result<(), HistoryStoreError> {
     for record in &command.influences {
         if record.evaluation_id != command.evaluation.id {
