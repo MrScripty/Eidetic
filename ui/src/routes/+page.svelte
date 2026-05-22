@@ -6,9 +6,8 @@
   import { createServerEventClient } from '$lib/serverEventClient.js';
   import { setupServerEventHandlers } from '$lib/stores/serverEventHandlers.js';
 
-  const events = createServerEventClient();
-
   onMount(() => {
+    const events = createServerEventClient();
     events.connect();
     const teardownHandlers = setupServerEventHandlers(events);
     return () => {

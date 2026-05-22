@@ -650,6 +650,9 @@ Completed slices:
   --smoke` path that initializes the backend runtime, emits JSON health,
   shuts down supervised backend tasks, and exits without opening a window, plus
   a launcher `--release-smoke` command over the release binary.
+- `fix(ui): defer server event client creation` moved root-page server event
+  client construction into `onMount` and added an SSR regression test so
+  SvelteKit's server render no longer requires Tauri globals.
 
 Discovered issues:
 
@@ -674,6 +677,11 @@ Discovered issues:
   but had no release-smoke command. The desktop binary now owns a headless
   `--smoke` startup probe and the launcher exposes `--release-smoke` for the
   packaged release artifact.
+- Resolved: the root Svelte page created the Tauri event client during module
+  initialization, so SvelteKit SSR failed with `[500] GET /` whenever
+  `window.__TAURI__` was unavailable. Event client creation now happens only in
+  `onMount`, and `page.ssr.test.ts` covers server rendering without Tauri event
+  transport.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
