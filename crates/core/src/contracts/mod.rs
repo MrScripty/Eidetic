@@ -2,6 +2,7 @@ mod ai_context;
 mod bible_graph;
 mod bible_graph_defaults;
 mod bible_render_graph;
+mod bible_render_graph_filter;
 mod change_review;
 mod propagation_proposal;
 mod script_document;
@@ -39,6 +40,7 @@ pub use bible_render_graph::{
     BibleRenderGraphEdge, BibleRenderGraphNeighborhood, BibleRenderGraphNode,
     BibleRenderGraphPosition, BibleRenderGraphProjection,
 };
+pub use bible_render_graph_filter::BibleRenderGraphProjectionRequest;
 pub use change_review::{ChangeReviewChange, ChangeReviewProjection};
 pub use propagation_proposal::{
     AcceptPropagationProposalCommand, CreatePropagationProposalCommand, PropagationProposal,
