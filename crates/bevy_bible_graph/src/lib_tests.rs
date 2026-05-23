@@ -161,16 +161,29 @@ fn renderer_app_exposes_projection_derived_visual_snapshot() {
 #[cfg(feature = "native_render")]
 #[test]
 fn native_render_plugin_records_borderless_panel_intent() {
-    use bevy::prelude::Plugin;
+    use bevy::prelude::{Plugin, With};
 
     let mut app = bevy::prelude::App::new();
 
     BibleGraphNativeRenderPlugin.build(&mut app);
+    app.update();
+
+    let scene = app.world().resource::<BibleGraphNativePanelScene>();
 
     assert!(
         app.world()
             .resource::<BibleGraphNativeRenderConfig>()
             .borderless_panel
+    );
+    assert_eq!(scene.background_color, "#11151d");
+    assert_eq!(scene.grid_color, "#253041");
+    assert_eq!(scene.accent_color, "#f2c94c");
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeCamera>>()
+            .iter(app.world())
+            .count(),
+        1
     );
 }
 

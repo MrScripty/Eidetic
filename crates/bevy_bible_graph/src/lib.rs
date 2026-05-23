@@ -13,7 +13,10 @@ mod visual;
 mod native_render;
 
 #[cfg(feature = "native_render")]
-pub use native_render::{BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin};
+pub use native_render::{
+    BibleGraphNativeCamera, BibleGraphNativePanelScene, BibleGraphNativeRenderConfig,
+    BibleGraphNativeRenderPlugin,
+};
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
     rebuild_bible_graph_scene,

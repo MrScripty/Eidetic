@@ -48,6 +48,9 @@ Dependency review:
   `bevy_winit` plus Linux `wayland`/`x11` window backends, and is intentionally
   off by default so projection-only tests and server builds do not pay for
   native rendering.
+- Native panel setup starts with a borderless scene resource, Eidetic graph
+  colors, clear color, and one marked `Camera2d`. The plugin does not open a
+  window by itself; Tauri embedding owns the future surface lifecycle.
 - Asset/text/UI/audio features remain out of scope for the bible graph viewport
   until there is a concrete graph-rendering requirement that cannot be met with
   primitive meshes, materials, and Svelte-side semantic text/detail panels.

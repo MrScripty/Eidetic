@@ -1095,6 +1095,10 @@ Discovered issues:
   `native_render` feature enables the reviewed Bevy 2D render/window/winit stack
   with Linux Wayland/X11 backends and starts with a plugin-level borderless
   panel intent resource before any graph node or edge render systems are added.
+- Resolved: the native graph renderer now has a feature-gated borderless panel
+  scene setup that records Eidetic graph colors, sets the Bevy clear color, and
+  spawns exactly one marked `Camera2d` without opening a window. Actual Tauri
+  surface embedding remains a separate lifecycle slice.
 
 ## Concurrent Worker Policy
 
