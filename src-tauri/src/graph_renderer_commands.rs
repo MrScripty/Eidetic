@@ -38,7 +38,7 @@ pub async fn graph_renderer_open(
 #[tauri::command]
 pub fn graph_renderer_focus(app: tauri::AppHandle) -> Result<BibleGraphHostStatus, CommandError> {
     graph_renderer_owner(&app)?
-        .start_renderer()
+        .status()
         .map_err(|error| CommandError::internal(format!("graph renderer focus failed: {error:?}")))
 }
 

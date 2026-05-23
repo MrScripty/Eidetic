@@ -859,6 +859,9 @@ Completed slices:
 - `refactor(desktop): bound graph renderer queue` replaced the graph renderer
   owner's unbounded command channel with a fixed-capacity queue and explicit
   queue-full error so renderer work cannot accumulate without backpressure.
+- `fix(desktop): keep graph focus read-only` changed the graph renderer focus
+  command to report current renderer status instead of starting the renderer,
+  because focusing is not meaningful until the visible native window exists.
 
 Discovered issues:
 
@@ -906,6 +909,9 @@ Discovered issues:
   even though Milestone 8 requires bounded renderer queues. The owner now uses a
   fixed-capacity queue and reports `QueueFull` instead of accepting unlimited
   pending renderer commands.
+- Resolved: the graph renderer focus command started the renderer lifecycle even
+  though no visible native window can be focused yet. Focus now remains a
+  read-only status command until native window focus support lands.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
