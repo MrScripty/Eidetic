@@ -8,6 +8,7 @@
     openGraphRenderer,
   } from '$lib/graphRendererApi.js';
   import type { GraphRendererStatus } from '$lib/graphRendererTypes.js';
+  import { graphRendererWindowStatusDisplay } from './graphRendererWindowStatus.js';
 
   let {
     graphProjectionRequest,
@@ -20,8 +21,7 @@
   let error = $state<string | null>(null);
 
   const isOpen = $derived(status?.renderer_window_open ?? false);
-  const isVisible = $derived(status?.renderer_window_visible ?? false);
-  const statusText = $derived(status?.renderer_window_message ?? 'Graph renderer window is closed');
+  const statusDisplay = $derived(graphRendererWindowStatusDisplay(status));
 
   async function run(action: () => Promise<GraphRendererStatus>): Promise<void> {
     pending = true;
@@ -58,16 +58,8 @@
 
 <section class="renderer-window-controls" aria-label="Bible graph renderer window">
   <div class="renderer-window-status" aria-live="polite">
-    <span class:active={isVisible}>
-      {#if isVisible}
-        Renderer visible
-      {:else if isOpen}
-        Renderer preparing
-      {:else}
-        Renderer closed
-      {/if}
-    </span>
-    <span>{statusText}</span>
+    <span class:active={statusDisplay.active}>{statusDisplay.label}</span>
+    <span>{statusDisplay.message}</span>
     {#if error}
       <span class="error">{error}</span>
     {/if}

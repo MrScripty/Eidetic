@@ -874,6 +874,10 @@ Completed slices:
   renderer-window kind contract and marked the bible graph renderer status as
   the graph window, preparing the lifecycle surface for timeline reuse without
   creating a second frontend owner.
+- `refactor(ui): derive graph renderer status labels from lifecycle` moved the
+  graph renderer control label mapping into a tested pure projection helper so
+  Svelte reads backend lifecycle status instead of inferring renderer state from
+  loose booleans.
 
 Discovered issues:
 
@@ -937,6 +941,11 @@ Discovered issues:
   support graph now and timeline later. The desktop status now carries a shared
   renderer-window kind so future timeline work can reuse the same lifecycle
   vocabulary.
+- Resolved: graph renderer controls still derived user-visible renderer state
+  directly from `renderer_window_open` and `renderer_window_visible` after the
+  backend added a lifecycle enum. The controls now use a tested lifecycle
+  display adapter, keeping lifecycle interpretation projection-driven and
+  avoiding duplicate frontend state inference.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
