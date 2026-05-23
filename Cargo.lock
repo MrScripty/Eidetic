@@ -2649,6 +2649,7 @@ dependencies = [
  "eidetic-bevy-bible-graph",
  "eidetic-core",
  "eidetic-server",
+ "raw-window-handle",
  "serde",
  "serde_json",
  "tauri",

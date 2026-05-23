@@ -1153,6 +1153,11 @@ Discovered issues:
   edge counts separately from logical projection scene counts, giving smoke
   checks a backend-owned diagnostic that the native Bevy panel has consumed the
   projection into render-prep components.
+- Resolved: embedded viewport surface state now records a typed platform
+  attachment strategy in addition to pending/attached status. Viewport mount
+  probes the main Tauri webview window handle and records whether the current
+  parent surface is an X11/Win32/AppKit candidate for child-surface attachment
+  or an explicitly unsupported strategy such as the current Wayland path.
 
 ## Concurrent Worker Policy
 

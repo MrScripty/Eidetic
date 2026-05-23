@@ -35,6 +35,7 @@ describe('embedded viewport api helpers', () => {
   const surface = {
     attached: false,
     status: 'pending_attachment',
+    strategy: 'unsupported',
     message: 'native Bevy surface attachment is not implemented yet',
   };
 

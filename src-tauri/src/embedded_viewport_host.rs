@@ -35,6 +35,7 @@ pub struct EmbeddedViewportState {
 pub struct EmbeddedViewportSurfaceState {
     pub attached: bool,
     pub status: EmbeddedViewportSurfaceStatus,
+    pub strategy: EmbeddedViewportSurfaceStrategy,
     pub message: String,
 }
 
@@ -42,11 +43,22 @@ pub struct EmbeddedViewportSurfaceState {
 #[serde(rename_all = "snake_case")]
 pub enum EmbeddedViewportSurfaceStatus {
     PendingAttachment,
+    AttachmentUnsupported,
     #[allow(
         dead_code,
         reason = "native surface attachment lands in a later milestone 8 viewport slice"
     )]
     Attached,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EmbeddedViewportSurfaceStrategy {
+    Unsupported,
+    X11ChildWindow,
+    WaylandExternalSurface,
+    Win32ChildWindow,
+    AppKitSubview,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -167,6 +179,22 @@ impl EmbeddedViewportHost {
         Ok(state.clone())
     }
 
+    pub fn set_surface_state(
+        &self,
+        viewport_id: String,
+        surface: EmbeddedViewportSurfaceState,
+    ) -> Result<EmbeddedViewportState, EmbeddedViewportHostError> {
+        let mut viewports = self
+            .viewports
+            .lock()
+            .map_err(|_| EmbeddedViewportHostError::LockPoisoned)?;
+        let state = viewports
+            .get_mut(&viewport_id)
+            .ok_or_else(|| EmbeddedViewportHostError::ViewportNotMounted(viewport_id))?;
+        state.surface = surface;
+        Ok(state.clone())
+    }
+
     #[allow(
         dead_code,
         reason = "native surface attachment lands in a later milestone 8 viewport slice"
@@ -211,10 +239,24 @@ impl EmbeddedViewportHost {
 }
 
 impl EmbeddedViewportSurfaceState {
+    pub fn from_capability(
+        status: EmbeddedViewportSurfaceStatus,
+        strategy: EmbeddedViewportSurfaceStrategy,
+        message: impl Into<String>,
+    ) -> Self {
+        Self {
+            attached: status == EmbeddedViewportSurfaceStatus::Attached,
+            status,
+            strategy,
+            message: message.into(),
+        }
+    }
+
     fn pending_attachment() -> Self {
         Self {
             attached: false,
             status: EmbeddedViewportSurfaceStatus::PendingAttachment,
+            strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
             message: "native Bevy surface attachment is not implemented yet".to_string(),
         }
     }
@@ -227,6 +269,7 @@ impl EmbeddedViewportSurfaceState {
         Self {
             attached: true,
             status: EmbeddedViewportSurfaceStatus::Attached,
+            strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
             message: "native Bevy surface is attached".to_string(),
         }
     }
@@ -320,6 +363,7 @@ mod tests {
             EmbeddedViewportSurfaceState {
                 attached: false,
                 status: EmbeddedViewportSurfaceStatus::PendingAttachment,
+                strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
                 message: "native Bevy surface attachment is not implemented yet".to_string(),
             }
         );
@@ -426,7 +470,40 @@ mod tests {
             EmbeddedViewportSurfaceState {
                 attached: true,
                 status: EmbeddedViewportSurfaceStatus::Attached,
+                strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
                 message: "native Bevy surface is attached".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn surface_capability_updates_existing_viewport() {
+        let host = EmbeddedViewportHost::default();
+        host.mount(MountEmbeddedViewportRequest {
+            viewport_id: "graph-main".to_string(),
+            kind: EmbeddedViewportKind::Graph,
+            bounds: sample_bounds(),
+        })
+        .unwrap();
+
+        let state = host
+            .set_surface_state(
+                "graph-main".to_string(),
+                EmbeddedViewportSurfaceState::from_capability(
+                    EmbeddedViewportSurfaceStatus::AttachmentUnsupported,
+                    EmbeddedViewportSurfaceStrategy::WaylandExternalSurface,
+                    "Wayland parent surface is available",
+                ),
+            )
+            .unwrap();
+
+        assert_eq!(
+            state.surface,
+            EmbeddedViewportSurfaceState {
+                attached: false,
+                status: EmbeddedViewportSurfaceStatus::AttachmentUnsupported,
+                strategy: EmbeddedViewportSurfaceStrategy::WaylandExternalSurface,
+                message: "Wayland parent surface is available".to_string(),
             }
         );
     }

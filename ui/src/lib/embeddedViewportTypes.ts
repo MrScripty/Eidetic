@@ -19,6 +19,7 @@ export interface EmbeddedViewportState {
 export interface EmbeddedViewportSurfaceState {
   attached: boolean;
   status: EmbeddedViewportSurfaceStatus;
+  strategy: EmbeddedViewportSurfaceStrategy;
   message: string;
 }
 
@@ -26,7 +27,17 @@ export interface EmbeddedViewportHostStatus {
   viewports: EmbeddedViewportState[];
 }
 
-export type EmbeddedViewportSurfaceStatus = 'pending_attachment' | 'attached';
+export type EmbeddedViewportSurfaceStatus =
+  | 'pending_attachment'
+  | 'attachment_unsupported'
+  | 'attached';
+
+export type EmbeddedViewportSurfaceStrategy =
+  | 'unsupported'
+  | 'x11_child_window'
+  | 'wayland_external_surface'
+  | 'win32_child_window'
+  | 'app_kit_subview';
 
 export interface MountEmbeddedViewportRequest {
   viewport_id: string;

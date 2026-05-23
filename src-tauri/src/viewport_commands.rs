@@ -6,6 +6,7 @@ use crate::embedded_viewport_host::{
     EmbeddedViewportKind, EmbeddedViewportState, MountEmbeddedViewportRequest,
     SetEmbeddedViewportFocusRequest, UpdateEmbeddedViewportBoundsRequest,
 };
+use crate::embedded_viewport_surface::detect_main_window_surface;
 use crate::error::CommandError;
 
 #[tauri::command]
@@ -13,7 +14,11 @@ pub fn viewport_mount(
     app: tauri::AppHandle,
     request: MountEmbeddedViewportRequest,
 ) -> Result<EmbeddedViewportState, CommandError> {
-    let state = viewport_host(&app)?.mount(request).map_err(command_error)?;
+    let mut state = viewport_host(&app)?.mount(request).map_err(command_error)?;
+    let surface = detect_main_window_surface(&app);
+    state = viewport_host(&app)?
+        .set_surface_state(state.viewport_id.clone(), surface)
+        .map_err(command_error)?;
     if state.kind == EmbeddedViewportKind::Graph
         && let Err(error) = graph_renderer_owner(&app)?.start_renderer()
     {

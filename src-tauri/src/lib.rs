@@ -3,6 +3,7 @@ pub mod bevy_graph_host;
 mod commands;
 mod desktop_events;
 mod embedded_viewport_host;
+mod embedded_viewport_surface;
 mod error;
 mod export_commands;
 mod graph_renderer_commands;
