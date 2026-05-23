@@ -7,7 +7,6 @@ use tauri::{Emitter, Manager};
 use tokio::sync::broadcast;
 
 use crate::bevy_graph_host::DesktopBibleGraphRendererOwner;
-use crate::embedded_viewport_host::{EmbeddedViewportHost, EmbeddedViewportKind};
 
 pub const SERVER_EVENT_TOPIC: &str = "eidetic://server-event";
 
@@ -86,7 +85,7 @@ async fn refresh_graph_renderer_projection(
     state: &AppState,
     request: BibleRenderGraphProjectionRequest,
 ) {
-    if !has_graph_viewport(app) {
+    if !is_graph_renderer_open(app) {
         return;
     }
 
@@ -106,15 +105,10 @@ async fn refresh_graph_renderer_projection(
     }
 }
 
-fn has_graph_viewport(app: &tauri::AppHandle) -> bool {
-    app.try_state::<EmbeddedViewportHost>()
-        .and_then(|viewport_host| viewport_host.status().ok())
-        .map(|status| {
-            status
-                .viewports
-                .iter()
-                .any(|viewport| viewport.kind == EmbeddedViewportKind::Graph)
-        })
+fn is_graph_renderer_open(app: &tauri::AppHandle) -> bool {
+    app.try_state::<DesktopBibleGraphRendererOwner>()
+        .and_then(|graph_owner| graph_owner.status().ok())
+        .map(|status| status.renderer_window_open)
         .unwrap_or(false)
 }
 

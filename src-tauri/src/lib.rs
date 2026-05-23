@@ -2,8 +2,6 @@ mod ai_commands;
 pub mod bevy_graph_host;
 mod commands;
 mod desktop_events;
-mod embedded_viewport_host;
-mod embedded_viewport_surface;
 mod error;
 mod export_commands;
 mod graph_renderer_commands;
@@ -12,11 +10,9 @@ mod model_commands;
 mod project_commands;
 mod projections;
 mod reference_commands;
-mod viewport_commands;
 
 use bevy_graph_host::DesktopBibleGraphRendererOwner;
 use eidetic_server::state::AppState;
-use embedded_viewport_host::EmbeddedViewportHost;
 use serde::Serialize;
 use tauri::Manager;
 
@@ -33,7 +29,6 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let app_state = tauri::async_runtime::block_on(AppState::new());
-            app.manage(EmbeddedViewportHost::default());
             app.manage(
                 DesktopBibleGraphRendererOwner::start()
                     .expect("failed to start Bevy bible graph renderer owner"),
@@ -77,11 +72,6 @@ pub fn run() {
             graph_renderer_commands::graph_renderer_status,
             graph_renderer_commands::graph_renderer_drain_commands,
             graph_renderer_commands::graph_renderer_visual_snapshot,
-            viewport_commands::viewport_mount,
-            viewport_commands::viewport_update_bounds,
-            viewport_commands::viewport_set_focus,
-            viewport_commands::viewport_unmount,
-            viewport_commands::viewport_status,
             reference_commands::reference_list,
             reference_commands::reference_upload,
             reference_commands::reference_delete,

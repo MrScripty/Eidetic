@@ -844,6 +844,10 @@ Completed slices:
   backend-owned graph renderer open, focus, and close commands, renderer-window
   status fields, and Svelte launch/focus/status controls so graph workspace no
   longer starts the production Bevy path through the embedded viewport panel.
+- `refactor(desktop): remove embedded viewport path` deleted the unused Svelte
+  embedded viewport component/helpers and removed the registered Tauri
+  child-surface viewport host/commands so production graph refresh now keys off
+  the backend graph renderer lifecycle instead of WebView panel attachment.
 
 Discovered issues:
 
@@ -873,6 +877,11 @@ Discovered issues:
   `window.__TAURI__` was unavailable. Event client creation now happens only in
   `onMount`, and `page.ssr.test.ts` covers server rendering without Tauri event
   transport.
+- Resolved: the superseded embedded viewport host and helpers were still
+  registered after the graph workspace moved to floating renderer controls,
+  keeping the X11/WebView child-surface path reachable from desktop IPC. The
+  registered commands, host modules, Svelte component, helpers, and tests were
+  deleted; graph projection refresh now checks the graph renderer owner.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

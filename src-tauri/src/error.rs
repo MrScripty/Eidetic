@@ -24,13 +24,6 @@ impl From<BackendError> for CommandError {
 }
 
 impl CommandError {
-    pub(crate) fn bad_request(message: impl Into<String>) -> Self {
-        Self {
-            kind: "bad_request",
-            message: message.into(),
-        }
-    }
-
     pub(crate) fn internal(message: impl Into<String>) -> Self {
         Self {
             kind: "internal",
@@ -52,19 +45,6 @@ mod tests {
             serde_json::json!({
                 "kind": "internal",
                 "message": "renderer unavailable",
-            })
-        );
-    }
-
-    #[test]
-    fn bad_request_error_serializes_transport_shape() {
-        let error = CommandError::bad_request("invalid viewport bounds");
-
-        assert_eq!(
-            serde_json::to_value(error).unwrap(),
-            serde_json::json!({
-                "kind": "bad_request",
-                "message": "invalid viewport bounds",
             })
         );
     }
