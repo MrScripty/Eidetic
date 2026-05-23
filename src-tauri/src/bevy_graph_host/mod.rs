@@ -11,7 +11,10 @@ pub use native_runner::{
     NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerStatus,
     PendingNativeRendererRunner,
 };
-pub use owner::{DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY};
+pub use owner::{
+    DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
+    GRAPH_RENDERER_REPLY_TIMEOUT_MS,
+};
 pub use window_strategy::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowLifecycle,
     BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
@@ -50,6 +53,7 @@ pub enum BibleGraphHostError {
     RendererPanic,
     InvalidRendererWindowBounds { width_px: u32, height_px: u32 },
     QueueFull,
+    OwnerReplyTimeout,
     OwnerStopped,
 }
 

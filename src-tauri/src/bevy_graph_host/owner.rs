@@ -1,5 +1,6 @@
 use std::sync::{Mutex, mpsc};
 use std::thread::{self, JoinHandle};
+use std::time::Duration;
 
 use eidetic_bevy_bible_graph::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
@@ -15,6 +16,7 @@ use super::{
 
 pub const GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize =
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY;
+pub const GRAPH_RENDERER_REPLY_TIMEOUT_MS: u64 = 2_000;
 
 enum BibleGraphHostRequest {
     Start {
@@ -213,9 +215,11 @@ impl Drop for DesktopBibleGraphRendererOwner {
 }
 
 fn receive_reply<T>(receiver: mpsc::Receiver<BibleGraphHostResult<T>>) -> BibleGraphHostResult<T> {
-    receiver
-        .recv()
-        .map_err(|_| BibleGraphHostError::OwnerStopped)?
+    match receiver.recv_timeout(Duration::from_millis(GRAPH_RENDERER_REPLY_TIMEOUT_MS)) {
+        Ok(result) => result,
+        Err(mpsc::RecvTimeoutError::Timeout) => Err(BibleGraphHostError::OwnerReplyTimeout),
+        Err(mpsc::RecvTimeoutError::Disconnected) => Err(BibleGraphHostError::OwnerStopped),
+    }
 }
 
 fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {

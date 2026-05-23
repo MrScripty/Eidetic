@@ -14,14 +14,15 @@ use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowCapability,
     BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowStrategy,
     BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
-    GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY,
-    NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS, NativeRendererRunner, NativeRendererRunnerHandle,
-    PendingNativeRendererRunner,
+    GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
+    NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
+    NativeRendererRunner, NativeRendererRunnerHandle, PendingNativeRendererRunner,
 };
 
 #[test]
 fn owner_uses_bounded_command_queue() {
     assert_eq!(GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, 128);
+    assert_eq!(GRAPH_RENDERER_REPLY_TIMEOUT_MS, 2_000);
     assert_eq!(
         GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
         BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY

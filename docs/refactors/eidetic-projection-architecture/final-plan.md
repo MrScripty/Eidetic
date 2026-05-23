@@ -1158,6 +1158,10 @@ Discovered issues:
   instead of silently returning pending capability state. The real Bevy/winit
   runner still needs panic/status reporting from the actual event-loop thread
   before the visible window gate can pass.
+- Updated: desktop graph renderer owner request/reply calls now have a bounded
+  reply timeout and typed timeout error, so Tauri command handlers do not wait
+  indefinitely if the renderer owner thread stops responding during native
+  runner development.
 - Updated: bible render graph projection reads no longer mirror their response
   into the Bevy renderer. Renderer projection mutation now flows through a
   shared desktop-owned projection refresh module used by graph renderer
