@@ -13,6 +13,7 @@
     refreshBibleGraphSchemaListProjection,
   } from '$lib/stores/bibleGraphSchemaProjection.svelte.js';
   import {
+    bibleRenderGraphRequestForTimelineSelection,
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
@@ -96,9 +97,7 @@
   }
 
   function activeRenderGraphQuery() {
-    return editorState.selectedNodeId
-      ? { selected_timeline_node_id: editorState.selectedNodeId }
-      : undefined;
+    return bibleRenderGraphRequestForTimelineSelection(editorState.selectedNodeId);
   }
 
   async function refreshActiveRenderGraphProjection(): Promise<void> {
@@ -149,7 +148,7 @@
     }
     lastRenderGraphTimelineNodeId = selectedTimelineNodeId;
     void refreshBibleRenderGraphProjection(
-      selectedTimelineNodeId ? { selected_timeline_node_id: selectedTimelineNodeId } : undefined,
+      bibleRenderGraphRequestForTimelineSelection(selectedTimelineNodeId),
     ).catch((error) => {
       loadError = error instanceof Error ? error.message : 'Failed to load bible graph nodes';
     });

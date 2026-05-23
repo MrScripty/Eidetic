@@ -13,6 +13,7 @@ import {
   refreshBibleGraphSchemaListProjection,
 } from './bibleGraphSchemaProjection.svelte.js';
 import {
+  bibleRenderGraphRequestForTimelineSelection,
   clearBibleRenderGraphProjection,
   refreshBibleRenderGraphProjection,
 } from './bibleRenderGraphProjection.svelte.js';
@@ -81,7 +82,7 @@ const defaultProjectSessionLifecycle: ProjectSessionLifecycle = {
       refreshScriptDocumentProjection(mainScriptDocumentKey),
       refreshBibleGraphNodeListProjection(),
       refreshBibleGraphSchemaListProjection(),
-      refreshBibleRenderGraphProjection(),
+      refreshBibleRenderGraphProjection(bibleRenderGraphRequestForTimelineSelection(null)),
       refreshBibleReferenceProposalListProjection(),
       refreshPropagationProposalListProjection(),
       refreshChangeReviewProjection(),

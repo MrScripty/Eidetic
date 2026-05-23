@@ -1122,6 +1122,10 @@ Discovered issues:
   with an explicit bounded request keyed to the selected timeline node. The
   central graph view follows selected-clip context through backend projection
   reads instead of relying only on a default whole-graph cache refresh.
+- Resolved: project activation and the sidebar bible outline now use the same
+  explicit bounded render graph request shape as the central graph workspace,
+  keeping interactive graph projection reads consistently request-shaped across
+  Svelte surfaces.
 
 ## Concurrent Worker Policy
 
