@@ -1405,6 +1405,11 @@ Discovered issues:
   shutdown after size-hint or projection-seeding failures. Failed opens now
   close renderer state through the reusable lifecycle path so the app can retry
   without recreating the managed desktop owner.
+- Resolved: the Tauri bible render graph projection read command mirrored every
+  projection into the Bevy owner, and that mirror path could start renderer
+  lifecycle from a passive read. Projection reads now mirror only when the graph
+  renderer is already open; explicit renderer open/set-projection commands own
+  renderer startup.
 
 ## Concurrent Worker Policy
 
