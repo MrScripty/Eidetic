@@ -1343,6 +1343,10 @@ Discovered issues:
   request also included search/focus filters. Influence nodes and influenced
   edge endpoints are now treated as required within the already-bounded graph
   input, with core and server regression coverage.
+- Resolved: bounded render graph SQL search treated user `%`, `_`, and
+  backslash input as SQLite `LIKE` wildcards even though the pure projection
+  adapter treats search text literally. Search patterns are now escaped at the
+  query boundary with regression coverage for literal wildcard characters.
 
 ## Concurrent Worker Policy
 

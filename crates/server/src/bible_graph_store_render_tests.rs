@@ -85,6 +85,31 @@ fn render_graph_projection_limits_default_query() {
 }
 
 #[test]
+fn render_graph_projection_search_treats_like_wildcards_as_literal_text() {
+    let mut conn = memory_connection();
+    seed_node(&mut conn, "node.place.dry", "Dry Archive", 10);
+    seed_node(&mut conn, "node.place.percent", "100% Rain Room", 20);
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            search: Some("%".to_string()),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    let node_ids: Vec<_> = projection
+        .payload
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(node_ids, vec!["node.place.percent"]);
+}
+
+#[test]
 fn render_graph_projection_queries_focused_root_descendants() {
     let mut conn = memory_connection();
     seed_parented_node(&mut conn, "node.root", None, "Root", 1);

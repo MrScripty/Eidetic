@@ -196,21 +196,36 @@ fn load_search_node_ids(
     search: &str,
     max_nodes: i64,
 ) -> Result<Vec<BibleGraphNodeId>, HistoryStoreError> {
-    let pattern = format!("%{search}%");
+    let pattern = escaped_like_pattern(search);
     let mut statement = conn.prepare(
         "SELECT id
          FROM bible_graph_nodes
          WHERE deleted_event_id IS NULL
            AND (
-                lower(id) LIKE ?1
-             OR lower(schema_key) LIKE ?1
-             OR lower(name) LIKE ?1
+                lower(id) LIKE ?1 ESCAPE '\\'
+             OR lower(schema_key) LIKE ?1 ESCAPE '\\'
+             OR lower(name) LIKE ?1 ESCAPE '\\'
            )
          ORDER BY sort_order ASC, name ASC, id ASC
          LIMIT ?2",
     )?;
     let rows = statement.query_map(params![pattern, max_nodes], |row| row.get::<_, String>(0))?;
     rows_to_node_ids(rows)
+}
+
+fn escaped_like_pattern(search: &str) -> String {
+    let mut pattern = String::from("%");
+    for character in search.chars() {
+        match character {
+            '%' | '_' | '\\' => {
+                pattern.push('\\');
+                pattern.push(character);
+            }
+            _ => pattern.push(character),
+        }
+    }
+    pattern.push('%');
+    pattern
 }
 
 fn include_ancestors(
