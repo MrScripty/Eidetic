@@ -235,6 +235,25 @@ fn owner_records_renderer_window_bounds_on_renderer_thread() {
 }
 
 #[test]
+fn owner_rejects_empty_renderer_window_bounds_without_starting_renderer() {
+    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+
+    let error = owner.set_renderer_window_bounds(0, 720).unwrap_err();
+    let status = owner.status().unwrap();
+
+    assert_eq!(
+        error,
+        BibleGraphHostError::InvalidRendererWindowBounds {
+            width_px: 0,
+            height_px: 720
+        }
+    );
+    assert!(!status.running);
+    assert!(!status.renderer_window_open);
+    owner.stop().unwrap();
+}
+
+#[test]
 fn owner_drains_validated_renderer_commands() {
     let owner = DesktopBibleGraphRendererOwner::start().unwrap();
     let projection = sample_projection();

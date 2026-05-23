@@ -66,6 +66,7 @@ impl DesktopBibleGraphHost {
         width_px: u32,
         height_px: u32,
     ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
+        validate_renderer_window_bounds(width_px, height_px)?;
         self.start()?;
         self.with_renderer_mut(|renderer| {
             renderer.set_renderer_window_bounds(width_px, height_px);
@@ -192,4 +193,18 @@ fn renderer_window_message(running: bool, scene_ready: bool) -> String {
         (true, false) => "graph renderer lifecycle is active; scene is starting".to_string(),
         (false, _) => "floating graph renderer window is closed".to_string(),
     }
+}
+
+fn validate_renderer_window_bounds(
+    width_px: u32,
+    height_px: u32,
+) -> Result<(), BibleGraphHostError> {
+    if width_px == 0 || height_px == 0 {
+        return Err(BibleGraphHostError::InvalidRendererWindowBounds {
+            width_px,
+            height_px,
+        });
+    }
+
+    Ok(())
 }

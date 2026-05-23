@@ -40,6 +40,7 @@ pub struct BibleGraphHostStatus {
 pub enum BibleGraphHostError {
     Renderer(String),
     RendererPanic,
+    InvalidRendererWindowBounds { width_px: u32, height_px: u32 },
     QueueFull,
     OwnerStopped,
 }

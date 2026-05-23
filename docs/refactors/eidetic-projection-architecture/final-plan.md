@@ -878,6 +878,9 @@ Completed slices:
   graph renderer control label mapping into a tested pure projection helper so
   Svelte reads backend lifecycle status instead of inferring renderer state from
   loose booleans.
+- `fix(desktop): validate graph renderer window bounds` rejected zero-sized
+  renderer window bounds before starting the graph renderer, making size hints
+  a validated desktop-host boundary instead of raw dimensions.
 
 Discovered issues:
 
@@ -946,6 +949,9 @@ Discovered issues:
   backend added a lifecycle enum. The controls now use a tested lifecycle
   display adapter, keeping lifecycle interpretation projection-driven and
   avoiding duplicate frontend state inference.
+- Resolved: graph renderer window bounds were accepted as raw dimensions and
+  could start the renderer before invalid zero-sized hints were rejected. The
+  desktop host now validates bounds before lifecycle state changes.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
