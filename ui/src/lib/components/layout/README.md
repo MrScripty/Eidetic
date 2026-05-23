@@ -10,6 +10,7 @@ This directory contains the top-level shell components that partition the Eideti
 | `AiStatusIndicator.svelte` | Floating AI connection status indicator positioned by the shell. |
 | `AppToolbar.svelte` | Focused top toolbar surface for shell-level save/export commands. |
 | `AppWorkspace.svelte` | Focused central workspace switcher for script, graph, and split layouts. |
+| `BevyViewportPanel.svelte` | Borderless embedded Bevy viewport panel lifecycle surface for native graph/timeline views. |
 | `BottomTimelineStack.svelte` | Fixed-height bottom region that keeps the timeline anchored to the window bottom and conditionally stacks the character timeline beneath it. |
 | `GraphSelectionDetail.svelte` | Right-panel detail projection for selected graph edges, influence paths, context layers, and neighborhoods. |
 | `GraphRightInspector.svelte` | Right inspector owner that selects between node detail and graph selection detail projections. |
@@ -80,6 +81,10 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 - `GraphSelectionDetail.svelte` reads the current bounded render graph
   projection and transient graph selection; it must not request broader graph
   data or store durable graph facts locally.
+- `BevyViewportPanel.svelte` owns only embedded viewport mount, resize, focus,
+  and unmount IPC for a borderless panel; renderer projections and durable
+  graph/timeline state remain owned by backend projection stores and renderer
+  hosts.
 - `BottomTimelineStack.svelte` exposes no custom props; it renders from shared stores and shared layout helpers.
 - `AppShell.svelte` owns the preferred timeline height and passes the currently rendered height into `BottomTimelineStack.svelte`.
 - Consumers should not duplicate the bottom stack markup elsewhere; alternative shell layouts should compose this module or replace it explicitly.

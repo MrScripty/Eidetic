@@ -1059,6 +1059,10 @@ Discovered issues:
   validated embedded viewport host for borderless graph/timeline panel
   lifecycle state, including viewport kind, panel bounds, focus, status, and
   unmount operations.
+- Resolved: the frontend did not have a typed embedded viewport IPC contract or
+  reusable borderless viewport panel component. The UI now has viewport
+  mount/resize/focus/unmount helpers, bounds normalization tests, and a
+  borderless Svelte panel lifecycle surface ready for graph/timeline viewports.
 - Open: the central graph workspace still uses the Svelte outline as the
   visible graph surface while Bevy is a projection/command consumer. Finishing
   Milestone 8 still requires native Bevy viewport integration with a fresh
