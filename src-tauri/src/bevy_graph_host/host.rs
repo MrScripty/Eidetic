@@ -166,6 +166,7 @@ impl DesktopBibleGraphHost {
             .map(BibleGraphRendererApp::renderer_window_bounds)
             .unwrap_or_default();
         let native_runner = self.native_runner.status();
+        let last_error = self.last_error.clone().or(native_runner.last_error.clone());
         let renderer_window_lifecycle = BibleGraphRendererWindowLifecycle::from_state(
             self.renderer.is_some(),
             renderer_scene_ready,
@@ -195,7 +196,7 @@ impl DesktopBibleGraphHost {
             renderer_window_width_px: renderer_window_bounds.width_px,
             renderer_window_height_px: renderer_window_bounds.height_px,
             influence_count,
-            last_error: self.last_error.clone(),
+            last_error,
         }
     }
 

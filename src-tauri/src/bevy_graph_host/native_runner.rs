@@ -1,5 +1,6 @@
 use std::sync::mpsc;
 use std::thread::{self, JoinHandle};
+use std::time::Duration;
 
 use super::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowStrategy,
@@ -7,6 +8,7 @@ use super::{
 };
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
+pub const NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS: u64 = 2_000;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NativeRendererRunnerStatus {
@@ -16,6 +18,7 @@ pub struct NativeRendererRunnerStatus {
     pub window_visible: bool,
     pub window_ready: bool,
     pub focus_supported: bool,
+    pub last_error: Option<String>,
 }
 
 pub trait NativeRendererRunner {
@@ -66,12 +69,20 @@ impl NativeRendererRunnerHandle {
         build: impl FnOnce(mpsc::Sender<NativeRendererRunnerStatus>) -> NativeRendererRunnerRequest,
     ) -> NativeRendererRunnerStatus {
         let (reply, receiver) = mpsc::channel();
-        if self.sender.try_send(build(reply)).is_err() {
-            return pending_runner_unavailable_status();
+        if let Err(error) = self.sender.try_send(build(reply)) {
+            return pending_runner_unavailable_status(format!(
+                "native renderer runner command queue unavailable: {error}"
+            ));
         }
         receiver
-            .recv()
-            .unwrap_or_else(|_| pending_runner_unavailable_status())
+            .recv_timeout(Duration::from_millis(
+                NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
+            ))
+            .unwrap_or_else(|error| {
+                pending_runner_unavailable_status(format!(
+                    "native renderer runner reply unavailable: {error}"
+                ))
+            })
     }
 }
 
@@ -138,6 +149,7 @@ impl NativeRendererRunner for PendingNativeRendererRunner {
             window_visible: false,
             window_ready: false,
             focus_supported: false,
+            last_error: None,
         }
     }
 }
@@ -174,6 +186,9 @@ fn run_pending_native_renderer_runner(receiver: mpsc::Receiver<NativeRendererRun
     }
 }
 
-fn pending_runner_unavailable_status() -> NativeRendererRunnerStatus {
-    PendingNativeRendererRunner::default().status()
+fn pending_runner_unavailable_status(message: String) -> NativeRendererRunnerStatus {
+    NativeRendererRunnerStatus {
+        last_error: Some(message),
+        ..PendingNativeRendererRunner::default().status()
+    }
 }

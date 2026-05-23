@@ -15,7 +15,8 @@ use super::{
     BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowStrategy,
     BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
     GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY,
-    NativeRendererRunner, NativeRendererRunnerHandle, PendingNativeRendererRunner,
+    NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS, NativeRendererRunner, NativeRendererRunnerHandle,
+    PendingNativeRendererRunner,
 };
 
 #[test]
@@ -30,6 +31,7 @@ fn owner_uses_bounded_command_queue() {
 #[test]
 fn native_renderer_runner_uses_bounded_command_queue() {
     assert_eq!(NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, 16);
+    assert_eq!(NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS, 2_000);
 }
 
 #[test]
@@ -65,6 +67,7 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
     assert!(!initial.window_visible);
     assert!(!initial.window_ready);
     assert!(!initial.focus_supported);
+    assert_eq!(initial.last_error, None);
     assert!(!runner.open_requested());
 
     let opened = runner.open();
@@ -76,8 +79,11 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
     assert!(!opened.focus_supported);
+    assert_eq!(opened.last_error, None);
     assert!(!focused.focus_supported);
+    assert_eq!(focused.last_error, None);
     assert!(!closed.window_visible);
+    assert_eq!(closed.last_error, None);
     assert!(!runner.open_requested());
 }
 
@@ -100,8 +106,11 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
     assert!(!opened.visible_window_supported);
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
+    assert_eq!(opened.last_error, None);
     assert!(!focused.focus_supported);
+    assert_eq!(focused.last_error, None);
     assert!(!closed.window_visible);
+    assert_eq!(closed.last_error, None);
 }
 
 #[test]

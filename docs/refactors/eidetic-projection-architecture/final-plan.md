@@ -1153,6 +1153,11 @@ Discovered issues:
   instead of as an in-thread struct owned directly by the graph host. The real
   Bevy/winit runner still must replace the pending implementation and prove
   open/focus/close/reopen/teardown before visual graph replacement.
+- Updated: native renderer runner request/reply failures now degrade through
+  typed backend status with a bounded reply timeout and `last_error` projection
+  instead of silently returning pending capability state. The real Bevy/winit
+  runner still needs panic/status reporting from the actual event-loop thread
+  before the visible window gate can pass.
 - Updated: bible render graph projection reads no longer mirror their response
   into the Bevy renderer. Renderer projection mutation now flows through a
   shared desktop-owned projection refresh module used by graph renderer
