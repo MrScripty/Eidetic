@@ -67,7 +67,8 @@ pub(crate) fn load_bounded_render_graph(
         request.max_nodes as usize,
     );
     let node_ids: Vec<_> = nodes.iter().map(|node| node.id.clone()).collect();
-    let edges = bible_graph_edge_store::load_edges_between_nodes(conn, &node_ids)?;
+    let edges =
+        bible_graph_edge_store::load_edges_between_nodes(conn, &node_ids, request.max_edges)?;
 
     Ok(BoundedBibleRenderGraph {
         nodes,

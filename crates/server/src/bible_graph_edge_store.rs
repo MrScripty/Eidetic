@@ -86,6 +86,7 @@ pub(crate) fn load_incoming_edges(
 pub(crate) fn load_edges_between_nodes(
     conn: &Connection,
     node_ids: &[BibleGraphNodeId],
+    limit: u32,
 ) -> Result<Vec<BibleGraphEdge>, HistoryStoreError> {
     if node_ids.is_empty() {
         return Ok(Vec::new());
@@ -96,12 +97,16 @@ pub(crate) fn load_edges_between_nodes(
         "WHERE deleted_event_id IS NULL
             AND from_node_id IN ({placeholders})
             AND to_node_id IN ({placeholders})
-         ORDER BY sort_order ASC, label ASC, id ASC"
+         ORDER BY sort_order ASC, label ASC, id ASC
+         LIMIT ?"
     ));
     let params: Vec<_> = node_ids
         .iter()
         .chain(node_ids.iter())
-        .map(BibleGraphNodeId::as_str)
+        .map(|node_id| rusqlite::types::Value::from(node_id.as_str().to_string()))
+        .chain(std::iter::once(rusqlite::types::Value::from(i64::from(
+            limit,
+        ))))
         .collect();
     let mut statement = conn.prepare(&sql)?;
     let rows = statement.query_map(params_from_iter(params), row_to_edge)?;

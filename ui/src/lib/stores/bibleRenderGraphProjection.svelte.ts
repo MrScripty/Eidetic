@@ -7,6 +7,7 @@ import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
 const DEFAULT_RENDER_GRAPH_MAX_NODES = 200;
+const DEFAULT_RENDER_GRAPH_MAX_EDGES = 500;
 const DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH = 1;
 
 export const bibleRenderGraphProjectionState = $state<{
@@ -26,6 +27,7 @@ function defaultBibleRenderGraphRequest(): BibleRenderGraphProjectionRequest {
   return {
     neighborhood_depth: DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH,
     max_nodes: DEFAULT_RENDER_GRAPH_MAX_NODES,
+    max_edges: DEFAULT_RENDER_GRAPH_MAX_EDGES,
   };
 }
 
@@ -68,6 +70,7 @@ export function bibleRenderGraphRequestForWorkspaceSelection({
     ...(normalizedSearch ? { search: normalizedSearch } : {}),
     neighborhood_depth: DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH,
     max_nodes: DEFAULT_RENDER_GRAPH_MAX_NODES,
+    max_edges: DEFAULT_RENDER_GRAPH_MAX_EDGES,
   };
 }
 

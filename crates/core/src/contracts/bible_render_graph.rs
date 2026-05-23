@@ -115,24 +115,30 @@ impl BibleRenderGraphProjection {
         request: &BibleRenderGraphProjectionRequest,
         influences: Vec<ContextInfluenceRecord>,
     ) -> Self {
+        let request = request.normalized();
         let sorted_nodes = sorted_nodes(nodes);
         let sorted_edges = sorted_graph_edges(edges);
         let mut included_node_ids =
-            included_node_ids_for_request(&sorted_nodes, &sorted_edges, request);
+            included_node_ids_for_request(&sorted_nodes, &sorted_edges, &request);
         if request.selected_timeline_node_id.is_some() {
             include_influenced_node_ids(&mut included_node_ids, &sorted_edges, &influences);
         }
+        let required_edge_ids = required_edge_ids(&influences);
         let filtered_nodes: Vec<_> = sorted_nodes
             .into_iter()
             .filter(|node| included_node_ids.contains(&node.id))
             .collect();
-        let filtered_edges: Vec<_> = sorted_edges
-            .into_iter()
-            .filter(|edge| {
-                included_node_ids.contains(&edge.from_node_id)
-                    && included_node_ids.contains(&edge.to_node_id)
-            })
-            .collect();
+        let filtered_edges = limit_edges(
+            sorted_edges
+                .into_iter()
+                .filter(|edge| {
+                    included_node_ids.contains(&edge.from_node_id)
+                        && included_node_ids.contains(&edge.to_node_id)
+                })
+                .collect(),
+            &required_edge_ids,
+            request.max_edges as usize,
+        );
 
         let depths = node_depths(&filtered_nodes);
         let row_indexes = row_indexes_by_depth(&filtered_nodes, &depths);
@@ -176,6 +182,13 @@ impl BibleRenderGraphProjection {
             influences,
         }
     }
+}
+
+fn required_edge_ids(influences: &[ContextInfluenceRecord]) -> BTreeSet<BibleGraphEdgeId> {
+    influences
+        .iter()
+        .filter_map(|record| record.bible_edge_id.as_ref().cloned())
+        .collect()
 }
 
 fn include_influenced_node_ids(
@@ -230,6 +243,37 @@ fn render_edges(edges: Vec<BibleGraphEdge>) -> Vec<BibleRenderGraphEdge> {
             sort_order: edge.sort_order,
         })
         .collect()
+}
+
+fn limit_edges(
+    edges: Vec<BibleGraphEdge>,
+    required_edge_ids: &BTreeSet<BibleGraphEdgeId>,
+    max_edges: usize,
+) -> Vec<BibleGraphEdge> {
+    let mut included_edge_ids = BTreeSet::new();
+    let mut limited = Vec::new();
+
+    for edge in edges
+        .iter()
+        .filter(|edge| required_edge_ids.contains(&edge.id))
+    {
+        if limited.len() >= max_edges {
+            return limited;
+        }
+        included_edge_ids.insert(edge.id.clone());
+        limited.push(edge.clone());
+    }
+
+    for edge in edges {
+        if limited.len() >= max_edges {
+            break;
+        }
+        if included_edge_ids.insert(edge.id.clone()) {
+            limited.push(edge);
+        }
+    }
+
+    limited
 }
 
 fn node_depths(nodes: &[BibleGraphNode]) -> BTreeMap<BibleGraphNodeId, u32> {

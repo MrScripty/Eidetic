@@ -148,6 +148,7 @@ export interface BibleRenderGraphProjectionRequest {
   search?: string | null;
   neighborhood_depth?: number;
   max_nodes?: number;
+  max_edges?: number;
 }
 
 export interface BibleRenderGraphProjection {

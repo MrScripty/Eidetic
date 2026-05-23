@@ -31,6 +31,7 @@ vi.mock('./bibleRenderGraphProjection.svelte.js', () => ({
     selected_node_id: 'node.character.ada',
     neighborhood_depth: 1,
     max_nodes: 200,
+    max_edges: 500,
   })),
   refreshBibleRenderGraphProjection: vi.fn(),
 }));
@@ -166,6 +167,7 @@ describe('backend event projection handlers', () => {
         selected_node_id: 'node.character.ada',
         neighborhood_depth: 1,
         max_nodes: 200,
+        max_edges: 500,
       });
     });
   });

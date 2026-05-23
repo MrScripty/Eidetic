@@ -92,10 +92,12 @@ describe('bible render graph projection store', () => {
       selected_timeline_node_id: 'node.scene.beach',
       neighborhood_depth: 1,
       max_nodes: 200,
+      max_edges: 500,
     });
     expect(bibleRenderGraphRequestForTimelineSelection(null)).toEqual({
       neighborhood_depth: 1,
       max_nodes: 200,
+      max_edges: 500,
     });
   });
 
@@ -114,6 +116,7 @@ describe('bible render graph projection store', () => {
       search: 'Ada',
       neighborhood_depth: 1,
       max_nodes: 200,
+      max_edges: 500,
     });
   });
 

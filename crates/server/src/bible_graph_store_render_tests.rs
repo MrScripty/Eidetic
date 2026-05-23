@@ -85,6 +85,47 @@ fn render_graph_projection_limits_default_query() {
 }
 
 #[test]
+fn render_graph_projection_limits_edges() {
+    let mut conn = memory_connection();
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    seed_node(&mut conn, "node.place.beach", "Beach", 20);
+    seed_node(&mut conn, "node.place.tower", "Tower", 30);
+    seed_edge(
+        &mut conn,
+        "edge.ada.beach",
+        "node.character.ada",
+        "node.place.beach",
+        1,
+    );
+    seed_edge(
+        &mut conn,
+        "edge.ada.tower",
+        "node.character.ada",
+        "node.place.tower",
+        2,
+    );
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(BibleGraphNodeId::new("node.character.ada").unwrap()),
+            neighborhood_depth: 1,
+            max_nodes: 10,
+            max_edges: 1,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    assert_eq!(projection.payload.edges.len(), 1);
+    assert_eq!(
+        projection.payload.edges[0].edge_id.as_str(),
+        "edge.ada.beach"
+    );
+    assert_eq!(projection.payload.neighborhoods.len(), 2);
+}
+
+#[test]
 fn render_graph_projection_search_treats_like_wildcards_as_literal_text() {
     let mut conn = memory_connection();
     seed_node(&mut conn, "node.place.dry", "Dry Archive", 10);

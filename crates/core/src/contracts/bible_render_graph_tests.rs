@@ -162,6 +162,32 @@ fn render_graph_projection_request_bounds_default_projection() {
 }
 
 #[test]
+fn render_graph_projection_request_bounds_edges() {
+    let ada = graph_node("node.character.ada", None, "character", "Ada", false, 1);
+    let beach = graph_node("node.place.beach", None, "place", "Beach", false, 2);
+    let tower = graph_node("node.place.tower", None, "place", "Tower", false, 3);
+
+    let projection = BibleRenderGraphProjection::from_graph_for_request(
+        vec![ada.clone(), beach.clone(), tower.clone()],
+        vec![
+            graph_edge("edge.ada.beach", &ada.id, &beach.id, 0),
+            graph_edge("edge.ada.tower", &ada.id, &tower.id, 1),
+        ],
+        &BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(ada.id),
+            neighborhood_depth: 1,
+            max_nodes: 10,
+            max_edges: 1,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    );
+
+    assert_eq!(projection.edges.len(), 1);
+    assert_eq!(projection.edges[0].edge_id.as_str(), "edge.ada.beach");
+    assert_eq!(projection.neighborhoods.len(), 2);
+}
+
+#[test]
 fn render_graph_projection_keeps_empty_request_filters_empty() {
     let nodes = vec![
         graph_node("node.place.alpha", None, "place", "Alpha", false, 1),

@@ -1187,6 +1187,11 @@ Discovered issues:
   renderer owner and native runner boundary instead of returning passive status
   from the Tauri command adapter. The pending runner still reports unsupported
   focus truthfully until a real native window runner lands.
+- Resolved: bounded bible render graph requests now include and enforce a
+  `max_edges` limit in core contracts, frontend request builders, and the
+  SQLite-backed query path. Dense local graph neighborhoods can no longer
+  return an unbounded edge set after node/depth/search limits have been
+  applied.
 - Resolved: `AppShell.svelte` is back under the component decomposition
   threshold. Central workspace rendering now lives in `AppWorkspace.svelte`,
   graph detail selection lives in `GraphRightInspector.svelte`, and AI status

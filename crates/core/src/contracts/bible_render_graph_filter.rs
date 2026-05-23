@@ -8,6 +8,8 @@ use super::{BibleGraphEdge, BibleGraphNode, BibleGraphNodeId};
 
 const DEFAULT_MAX_RENDER_GRAPH_NODES: u32 = 200;
 const MAX_RENDER_GRAPH_NODES: u32 = 500;
+const DEFAULT_MAX_RENDER_GRAPH_EDGES: u32 = 500;
+const MAX_RENDER_GRAPH_EDGES: u32 = 1_000;
 const DEFAULT_NEIGHBORHOOD_DEPTH: u32 = 1;
 const MAX_NEIGHBORHOOD_DEPTH: u32 = 6;
 
@@ -26,6 +28,8 @@ pub struct BibleRenderGraphProjectionRequest {
     pub neighborhood_depth: u32,
     #[serde(default = "default_max_render_graph_nodes")]
     pub max_nodes: u32,
+    #[serde(default = "default_max_render_graph_edges")]
+    pub max_edges: u32,
 }
 
 impl Default for BibleRenderGraphProjectionRequest {
@@ -37,6 +41,7 @@ impl Default for BibleRenderGraphProjectionRequest {
             search: None,
             neighborhood_depth: DEFAULT_NEIGHBORHOOD_DEPTH,
             max_nodes: DEFAULT_MAX_RENDER_GRAPH_NODES,
+            max_edges: DEFAULT_MAX_RENDER_GRAPH_EDGES,
         }
     }
 }
@@ -50,6 +55,7 @@ impl BibleRenderGraphProjectionRequest {
             search: normalized_search(self.search.as_deref()),
             neighborhood_depth: self.neighborhood_depth.min(MAX_NEIGHBORHOOD_DEPTH),
             max_nodes: self.max_nodes.clamp(1, MAX_RENDER_GRAPH_NODES),
+            max_edges: self.max_edges.clamp(1, MAX_RENDER_GRAPH_EDGES),
         }
     }
 }
@@ -241,6 +247,10 @@ fn limit_node_ids(
 
 fn default_max_render_graph_nodes() -> u32 {
     DEFAULT_MAX_RENDER_GRAPH_NODES
+}
+
+fn default_max_render_graph_edges() -> u32 {
+    DEFAULT_MAX_RENDER_GRAPH_EDGES
 }
 
 fn default_neighborhood_depth() -> u32 {
