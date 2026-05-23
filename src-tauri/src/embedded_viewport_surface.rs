@@ -92,6 +92,10 @@ mod tests {
             state.strategy,
             EmbeddedViewportSurfaceStrategy::X11ChildWindow
         );
+        assert_eq!(
+            state.renderer_window.status,
+            crate::embedded_viewport_host::EmbeddedViewportRendererWindowStatus::PendingCreation
+        );
         assert!(
             state
                 .message
@@ -113,6 +117,10 @@ mod tests {
         assert_eq!(
             state.strategy,
             EmbeddedViewportSurfaceStrategy::WaylandExternalSurface
+        );
+        assert_eq!(
+            state.renderer_window.status,
+            crate::embedded_viewport_host::EmbeddedViewportRendererWindowStatus::CreationUnsupported
         );
         assert!(
             state

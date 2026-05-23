@@ -37,6 +37,10 @@ describe('embedded viewport api helpers', () => {
     status: 'pending_attachment',
     strategy: 'unsupported',
     message: 'native Bevy surface attachment is not implemented yet',
+    renderer_window: {
+      status: 'not_started',
+      message: 'renderer child window lifecycle has not started',
+    },
   };
 
   it('mounts a graph viewport through desktop IPC', async () => {

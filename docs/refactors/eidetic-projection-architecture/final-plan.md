@@ -1183,6 +1183,12 @@ Discovered issues:
   needed to create and resize that child window. The next implementation slice
   must introduce an explicit renderer window lifecycle owner for the supported
   strategy before marking `EmbeddedViewportSurfaceStatus::Attached`.
+- Resolved: embedded viewport surface state now separates detected parent
+  surface capability from renderer child-window lifecycle. Surface detection can
+  report X11/Win32/AppKit as pending attachment while the renderer window
+  lifecycle remains explicitly pending creation, and unsupported parent
+  strategies now expose a child-window `creation_unsupported` state instead of
+  relying on a broad surface message.
 
 ## Concurrent Worker Policy
 

@@ -37,6 +37,7 @@ pub struct EmbeddedViewportSurfaceState {
     pub status: EmbeddedViewportSurfaceStatus,
     pub strategy: EmbeddedViewportSurfaceStrategy,
     pub message: String,
+    pub renderer_window: EmbeddedViewportRendererWindowState,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -59,6 +60,21 @@ pub enum EmbeddedViewportSurfaceStrategy {
     WaylandExternalSurface,
     Win32ChildWindow,
     AppKitSubview,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct EmbeddedViewportRendererWindowState {
+    pub status: EmbeddedViewportRendererWindowStatus,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EmbeddedViewportRendererWindowStatus {
+    NotStarted,
+    PendingCreation,
+    CreationUnsupported,
+    Attached,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -254,11 +270,13 @@ impl EmbeddedViewportSurfaceState {
         strategy: EmbeddedViewportSurfaceStrategy,
         message: impl Into<String>,
     ) -> Self {
+        let message = message.into();
         Self {
             attached: status == EmbeddedViewportSurfaceStatus::Attached,
             status,
             strategy,
-            message: message.into(),
+            message,
+            renderer_window: EmbeddedViewportRendererWindowState::from_surface_status(status),
         }
     }
 
@@ -268,6 +286,7 @@ impl EmbeddedViewportSurfaceState {
             status: EmbeddedViewportSurfaceStatus::PendingAttachment,
             strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
             message: "native Bevy surface attachment is not implemented yet".to_string(),
+            renderer_window: EmbeddedViewportRendererWindowState::not_started(),
         }
     }
 
@@ -281,6 +300,40 @@ impl EmbeddedViewportSurfaceState {
             status: EmbeddedViewportSurfaceStatus::Attached,
             strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
             message: "native Bevy surface is attached".to_string(),
+            renderer_window: EmbeddedViewportRendererWindowState::attached(),
+        }
+    }
+}
+
+impl EmbeddedViewportRendererWindowState {
+    fn from_surface_status(status: EmbeddedViewportSurfaceStatus) -> Self {
+        match status {
+            EmbeddedViewportSurfaceStatus::PendingAttachment => Self {
+                status: EmbeddedViewportRendererWindowStatus::PendingCreation,
+                message:
+                    "renderer child window lifecycle is waiting for platform-specific creation"
+                        .to_string(),
+            },
+            EmbeddedViewportSurfaceStatus::AttachmentUnsupported => Self {
+                status: EmbeddedViewportRendererWindowStatus::CreationUnsupported,
+                message: "renderer child window cannot be created for the detected parent surface"
+                    .to_string(),
+            },
+            EmbeddedViewportSurfaceStatus::Attached => Self::attached(),
+        }
+    }
+
+    fn not_started() -> Self {
+        Self {
+            status: EmbeddedViewportRendererWindowStatus::NotStarted,
+            message: "renderer child window lifecycle has not started".to_string(),
+        }
+    }
+
+    fn attached() -> Self {
+        Self {
+            status: EmbeddedViewportRendererWindowStatus::Attached,
+            message: "renderer child window is attached to the viewport panel".to_string(),
         }
     }
 }
@@ -375,6 +428,10 @@ mod tests {
                 status: EmbeddedViewportSurfaceStatus::PendingAttachment,
                 strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
                 message: "native Bevy surface attachment is not implemented yet".to_string(),
+                renderer_window: EmbeddedViewportRendererWindowState {
+                    status: EmbeddedViewportRendererWindowStatus::NotStarted,
+                    message: "renderer child window lifecycle has not started".to_string(),
+                },
             }
         );
         assert_eq!(host.status().unwrap().viewports, vec![state]);
@@ -512,6 +569,10 @@ mod tests {
                 status: EmbeddedViewportSurfaceStatus::Attached,
                 strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
                 message: "native Bevy surface is attached".to_string(),
+                renderer_window: EmbeddedViewportRendererWindowState {
+                    status: EmbeddedViewportRendererWindowStatus::Attached,
+                    message: "renderer child window is attached to the viewport panel".to_string(),
+                },
             }
         );
     }
@@ -544,6 +605,12 @@ mod tests {
                 status: EmbeddedViewportSurfaceStatus::AttachmentUnsupported,
                 strategy: EmbeddedViewportSurfaceStrategy::WaylandExternalSurface,
                 message: "Wayland parent surface is available".to_string(),
+                renderer_window: EmbeddedViewportRendererWindowState {
+                    status: EmbeddedViewportRendererWindowStatus::CreationUnsupported,
+                    message:
+                        "renderer child window cannot be created for the detected parent surface"
+                            .to_string(),
+                },
             }
         );
     }

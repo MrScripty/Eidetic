@@ -23,6 +23,7 @@ export interface EmbeddedViewportSurfaceState {
   status: EmbeddedViewportSurfaceStatus;
   strategy: EmbeddedViewportSurfaceStrategy;
   message: string;
+  renderer_window: EmbeddedViewportRendererWindowState;
 }
 
 export interface EmbeddedViewportHostStatus {
@@ -40,6 +41,17 @@ export type EmbeddedViewportSurfaceStrategy =
   | 'wayland_external_surface'
   | 'win32_child_window'
   | 'app_kit_subview';
+
+export interface EmbeddedViewportRendererWindowState {
+  status: EmbeddedViewportRendererWindowStatus;
+  message: string;
+}
+
+export type EmbeddedViewportRendererWindowStatus =
+  | 'not_started'
+  | 'pending_creation'
+  | 'creation_unsupported'
+  | 'attached';
 
 export interface MountEmbeddedViewportRequest {
   viewport_id: string;
