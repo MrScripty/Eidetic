@@ -75,6 +75,7 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_lifecycle:
                 BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner,
             renderer_window_ready: false,
+            renderer_window_focus_supported: false,
             renderer_window_message:
                 "graph renderer scene is ready; visible native window is pending implementation"
                     .to_string(),
@@ -167,6 +168,7 @@ fn host_stop_drops_renderer_state() {
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,
             renderer_window_ready: false,
+            renderer_window_focus_supported: false,
             renderer_window_message: "floating graph renderer window is closed".to_string(),
             node_count: 0,
             edge_count: 0,
@@ -197,6 +199,7 @@ fn owner_runs_renderer_on_dedicated_thread() {
     assert!(status.renderer_scene_ready);
     assert!(!status.renderer_window_visible);
     assert!(!status.renderer_window_ready);
+    assert!(!status.renderer_window_focus_supported);
     owner.stop().unwrap();
 }
 

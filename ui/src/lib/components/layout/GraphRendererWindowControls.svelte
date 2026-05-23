@@ -21,6 +21,7 @@
   let error = $state<string | null>(null);
 
   const isOpen = $derived(status?.renderer_window_open ?? false);
+  const canFocus = $derived(status?.renderer_window_focus_supported ?? false);
   const statusDisplay = $derived(graphRendererWindowStatusDisplay(status));
 
   async function run(action: () => Promise<GraphRendererStatus>): Promise<void> {
@@ -67,7 +68,7 @@
 
   <div class="renderer-window-actions">
     <button type="button" onclick={openWindow} disabled={pending}> Open Graph </button>
-    <button type="button" onclick={focusWindow} disabled={pending || !isOpen}> Focus </button>
+    <button type="button" onclick={focusWindow} disabled={pending || !canFocus}> Focus </button>
     <button type="button" onclick={closeWindow} disabled={pending || !isOpen}> Close </button>
   </div>
 </section>

@@ -19,6 +19,7 @@ export interface GraphRendererStatus {
   renderer_window_capability: GraphRendererWindowCapability;
   renderer_window_lifecycle: GraphRendererWindowLifecycle;
   renderer_window_ready: boolean;
+  renderer_window_focus_supported: boolean;
   renderer_window_message: string;
   node_count: number;
   edge_count: number;

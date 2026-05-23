@@ -881,6 +881,9 @@ Completed slices:
 - `fix(desktop): validate graph renderer window bounds` rejected zero-sized
   renderer window bounds before starting the graph renderer, making size hints
   a validated desktop-host boundary instead of raw dimensions.
+- `fix(desktop): project graph renderer focus support` added an explicit
+  backend-owned focus capability flag and made the Svelte focus action depend
+  on that projection instead of assuming every open renderer can be focused.
 
 Discovered issues:
 
@@ -952,6 +955,10 @@ Discovered issues:
 - Resolved: graph renderer window bounds were accepted as raw dimensions and
   could start the renderer before invalid zero-sized hints were rejected. The
   desktop host now validates bounds before lifecycle state changes.
+- Resolved: graph renderer controls enabled focus whenever the renderer was
+  open, even though focus is unsupported until a visible native window exists.
+  Focus support now crosses the desktop boundary as typed status and the UI
+  treats it as projection data.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

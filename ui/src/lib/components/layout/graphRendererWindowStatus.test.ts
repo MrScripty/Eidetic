@@ -18,6 +18,7 @@ function statusFor(
     renderer_window_capability: 'pending_native_runner',
     renderer_window_lifecycle,
     renderer_window_ready: renderer_window_lifecycle === 'visible',
+    renderer_window_focus_supported: renderer_window_lifecycle === 'visible',
     renderer_window_message: `message:${renderer_window_lifecycle}`,
     node_count: 0,
     edge_count: 0,
