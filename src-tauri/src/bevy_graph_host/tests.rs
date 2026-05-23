@@ -56,8 +56,16 @@ fn renderer_window_lifecycle_is_derived_from_backend_state() {
         BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner
     );
     assert_eq!(
-        BibleGraphRendererWindowLifecycle::from_state(false, false, true),
+        BibleGraphRendererWindowLifecycle::from_state(true, true, true),
         BibleGraphRendererWindowLifecycle::Visible
+    );
+    assert_eq!(
+        BibleGraphRendererWindowLifecycle::from_state(false, true, true),
+        BibleGraphRendererWindowLifecycle::Closed
+    );
+    assert_eq!(
+        BibleGraphRendererWindowLifecycle::from_state(true, false, true),
+        BibleGraphRendererWindowLifecycle::SceneStarting
     );
 }
 

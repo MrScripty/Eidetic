@@ -39,10 +39,10 @@ impl BibleGraphRendererWindowStrategyStatus {
 impl BibleGraphRendererWindowLifecycle {
     pub fn from_state(running: bool, scene_ready: bool, window_visible: bool) -> Self {
         match (running, scene_ready, window_visible) {
-            (_, _, true) => Self::Visible,
+            (true, true, true) => Self::Visible,
             (true, true, false) => Self::SceneReadyPendingNativeRunner,
-            (true, false, false) => Self::SceneStarting,
-            (false, _, false) => Self::Closed,
+            (true, false, _) => Self::SceneStarting,
+            (false, _, _) => Self::Closed,
         }
     }
 }

@@ -1129,6 +1129,10 @@ Discovered issues:
   therefore truthfully reports `PendingNativeRunner`; Milestone 8 still needs a
   cross-platform floating-window runner that consumes backend projections and
   command channels without moving durable graph state into Bevy or Svelte.
+- Resolved: graph renderer lifecycle derivation could report `visible` from an
+  impossible state where the renderer was not running or the scene was not
+  ready. The lifecycle helper now requires a running, scene-ready renderer
+  before visible-window state can be projected.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined
