@@ -1138,6 +1138,11 @@ Discovered issues:
   `renderer_window_visible_supported` explicitly so unsupported native runner
   capability degrades through typed backend-owned status instead of frontend
   enum inference.
+- Resolved: graph renderer UI status treated the pending native runner state as
+  a normal waiting state even when the desktop backend reported no visible
+  window support. The Svelte status projection now uses the backend support
+  boolean to report the current renderer as unavailable until the native runner
+  lands.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined

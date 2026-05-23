@@ -5,6 +5,7 @@ import { graphRendererWindowStatusDisplay } from './graphRendererWindowStatus.js
 
 function statusFor(
   renderer_window_lifecycle: GraphRendererStatus['renderer_window_lifecycle'],
+  renderer_window_visible_supported = renderer_window_lifecycle === 'visible',
 ): GraphRendererStatus {
   return {
     renderer_window_kind: 'bible_graph',
@@ -18,7 +19,7 @@ function statusFor(
     renderer_window_capability: 'pending_native_runner',
     renderer_window_lifecycle,
     renderer_window_ready: renderer_window_lifecycle === 'visible',
-    renderer_window_visible_supported: renderer_window_lifecycle === 'visible',
+    renderer_window_visible_supported,
     renderer_window_focus_supported: renderer_window_lifecycle === 'visible',
     renderer_window_message: `message:${renderer_window_lifecycle}`,
     node_count: 0,
@@ -54,6 +55,13 @@ describe('graph renderer window status display', () => {
     });
     expect(
       graphRendererWindowStatusDisplay(statusFor('scene_ready_pending_native_runner')),
+    ).toEqual({
+      label: 'Renderer unavailable',
+      active: false,
+      message: 'message:scene_ready_pending_native_runner',
+    });
+    expect(
+      graphRendererWindowStatusDisplay(statusFor('scene_ready_pending_native_runner', true)),
     ).toEqual({
       label: 'Renderer waiting',
       active: false,

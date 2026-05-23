@@ -25,6 +25,13 @@ export function graphRendererWindowStatusDisplay(
         message: status.renderer_window_message,
       };
     case 'scene_ready_pending_native_runner':
+      if (!status.renderer_window_visible_supported) {
+        return {
+          label: 'Renderer unavailable',
+          active: false,
+          message: status.renderer_window_message,
+        };
+      }
       return {
         label: 'Renderer waiting',
         active: false,
