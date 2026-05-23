@@ -1118,6 +1118,10 @@ Discovered issues:
   normalized `max_nodes` limit after ancestor expansion. This prevents focused
   node, focused root, or influence queries from exceeding the backend projection
   size boundary while preserving required node priority inside the limit.
+- Resolved: the graph workspace now refreshes bible render graph projections
+  with an explicit bounded request keyed to the selected timeline node. The
+  central graph view follows selected-clip context through backend projection
+  reads instead of relying only on a default whole-graph cache refresh.
 
 ## Concurrent Worker Policy
 

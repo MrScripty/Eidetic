@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getBibleRenderGraphProjection } from '$lib/projectionApi.js';
 import {
+  bibleRenderGraphRequestForTimelineSelection,
   bibleRenderGraphProjectionState,
   clearBibleRenderGraphProjection,
   getCachedBibleRenderGraphProjection,
@@ -84,6 +85,18 @@ beforeEach(() => {
 });
 
 describe('bible render graph projection store', () => {
+  it('builds bounded selected timeline graph requests', () => {
+    expect(bibleRenderGraphRequestForTimelineSelection('node.scene.beach')).toEqual({
+      selected_timeline_node_id: 'node.scene.beach',
+      neighborhood_depth: 1,
+      max_nodes: 200,
+    });
+    expect(bibleRenderGraphRequestForTimelineSelection(null)).toEqual({
+      neighborhood_depth: 1,
+      max_nodes: 200,
+    });
+  });
+
   it('stores backend bible render graph projections', async () => {
     getBibleRenderGraphProjectionMock.mockResolvedValue(projection);
 

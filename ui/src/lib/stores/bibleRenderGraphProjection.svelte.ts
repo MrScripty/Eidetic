@@ -6,6 +6,9 @@ import type {
 import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
+const DEFAULT_RENDER_GRAPH_MAX_NODES = 200;
+const DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH = 1;
+
 export const bibleRenderGraphProjectionState = $state<{
   projection: ProjectionEnvelope<BibleRenderGraphProjection> | null;
   pending: boolean;
@@ -22,6 +25,16 @@ function errorMessage(error: unknown, fallback: string): string {
 
 export function getCachedBibleRenderGraphProjection(): ProjectionEnvelope<BibleRenderGraphProjection> | null {
   return bibleRenderGraphProjectionState.projection;
+}
+
+export function bibleRenderGraphRequestForTimelineSelection(
+  selectedTimelineNodeId: string | null | undefined,
+): BibleRenderGraphProjectionRequest {
+  return {
+    ...(selectedTimelineNodeId ? { selected_timeline_node_id: selectedTimelineNodeId } : {}),
+    neighborhood_depth: DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH,
+    max_nodes: DEFAULT_RENDER_GRAPH_MAX_NODES,
+  };
 }
 
 function replaceBibleRenderGraphProjectionIfFresh(
