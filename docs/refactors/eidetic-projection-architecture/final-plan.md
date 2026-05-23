@@ -1357,6 +1357,11 @@ Discovered issues:
   backend for that node's neighborhood. Workspace projection requests now carry
   both selected timeline context and selected graph node focus while keeping
   durable graph data backend-owned.
+- Resolved: an already-open graph renderer was only seeded on open, so later
+  workspace request changes could refresh the Svelte projection without
+  updating the Bevy projection consumer. The desktop bridge now exposes a
+  bounded projection sync command, and the renderer controls reseed open graph
+  windows when the backend projection request changes.
 
 ## Concurrent Worker Policy
 

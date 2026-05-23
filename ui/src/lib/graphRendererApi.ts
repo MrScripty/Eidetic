@@ -1,4 +1,5 @@
 import { invokeDesktop } from './desktopTransport.js';
+import type { BibleRenderGraphProjectionRequest } from './bibleGraphTypes.js';
 import type {
   GraphRendererCommand,
   GraphRendererStatus,
@@ -22,6 +23,12 @@ export function closeGraphRenderer(): Promise<GraphRendererStatus> {
 
 export function getGraphRendererStatus(): Promise<GraphRendererStatus> {
   return invokeDesktop<GraphRendererStatus>('graph_renderer_status');
+}
+
+export function setGraphRendererProjection(
+  request: BibleRenderGraphProjectionRequest,
+): Promise<GraphRendererStatus> {
+  return invokeDesktop<GraphRendererStatus>('graph_renderer_set_projection', { request });
 }
 
 export function drainGraphRendererCommands(): Promise<GraphRendererCommand[]> {

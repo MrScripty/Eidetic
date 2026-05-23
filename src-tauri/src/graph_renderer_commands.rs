@@ -70,6 +70,23 @@ pub fn graph_renderer_status(app: tauri::AppHandle) -> Result<BibleGraphHostStat
 }
 
 #[tauri::command]
+pub async fn graph_renderer_set_projection(
+    app: tauri::AppHandle,
+    request: BibleRenderGraphProjectionRequest,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    let status = graph_renderer_owner(&app)?.status().map_err(|error| {
+        CommandError::internal(format!(
+            "graph renderer projection status failed: {error:?}"
+        ))
+    })?;
+    if !status.renderer_window_open {
+        return Ok(status);
+    }
+
+    seed_graph_renderer_projection(&app, request).await
+}
+
+#[tauri::command]
 pub fn graph_renderer_drain_commands(
     app: tauri::AppHandle,
 ) -> Result<Vec<BibleGraphRendererCommand>, CommandError> {

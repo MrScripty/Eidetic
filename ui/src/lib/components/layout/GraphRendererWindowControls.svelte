@@ -6,6 +6,7 @@
     focusGraphRenderer,
     getGraphRendererStatus,
     openGraphRenderer,
+    setGraphRendererProjection,
   } from '$lib/graphRendererApi.js';
   import type { GraphRendererStatus } from '$lib/graphRendererTypes.js';
   import { graphRendererWindowStatusDisplay } from './graphRendererWindowStatus.js';
@@ -19,6 +20,7 @@
   let status = $state<GraphRendererStatus | null>(null);
   let pending = $state(false);
   let error = $state<string | null>(null);
+  let lastSyncedRequestKey = $state<string | null>(null);
 
   const isOpen = $derived(status?.renderer_window_open ?? false);
   const canFocus = $derived(status?.renderer_window_focus_supported ?? false);
@@ -37,11 +39,14 @@
   }
 
   function openWindow(): void {
+    const requestKey = JSON.stringify(graphProjectionRequest);
     void run(() =>
       openGraphRenderer({
         graph_projection_request: graphProjectionRequest,
       }),
-    );
+    ).then(() => {
+      lastSyncedRequestKey = requestKey;
+    });
   }
 
   function focusWindow(): void {
@@ -54,6 +59,20 @@
 
   onMount(() => {
     void run(getGraphRendererStatus);
+  });
+
+  $effect(() => {
+    if (!status?.renderer_window_open) {
+      lastSyncedRequestKey = null;
+      return;
+    }
+
+    const requestKey = JSON.stringify(graphProjectionRequest);
+    if (requestKey === lastSyncedRequestKey) {
+      return;
+    }
+    lastSyncedRequestKey = requestKey;
+    void run(() => setGraphRendererProjection(graphProjectionRequest));
   });
 </script>
 

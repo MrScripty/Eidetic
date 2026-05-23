@@ -71,6 +71,7 @@ pub fn run() {
             graph_renderer_commands::graph_renderer_focus,
             graph_renderer_commands::graph_renderer_close,
             graph_renderer_commands::graph_renderer_status,
+            graph_renderer_commands::graph_renderer_set_projection,
             graph_renderer_commands::graph_renderer_drain_commands,
             graph_renderer_commands::graph_renderer_visual_snapshot,
             reference_commands::reference_list,
