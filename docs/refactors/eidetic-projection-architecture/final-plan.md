@@ -1347,6 +1347,11 @@ Discovered issues:
   backslash input as SQLite `LIKE` wildcards even though the pure projection
   adapter treats search text literally. Search patterns are now escaped at the
   query boundary with regression coverage for literal wildcard characters.
+- Resolved: the desktop graph renderer visual-snapshot read path implicitly
+  started the renderer through the shared mutable renderer helper. Snapshot
+  reads now report the missing projection/window state without creating
+  renderer lifecycle state, preserving backend-owned lifecycle boundaries for
+  read-only diagnostics.
 
 ## Concurrent Worker Policy
 

@@ -143,6 +143,19 @@ fn host_exposes_renderer_visual_snapshot() {
 }
 
 #[test]
+fn host_visual_snapshot_does_not_start_renderer_without_projection() {
+    let mut host = DesktopBibleGraphHost::new();
+
+    let error = host.visual_snapshot().unwrap_err();
+    let status = host.status();
+
+    assert!(matches!(error, BibleGraphHostError::Renderer(_)));
+    assert!(!status.running);
+    assert!(!status.renderer_window_open);
+    assert!(!status.renderer_scene_ready);
+}
+
+#[test]
 fn host_records_renderer_errors_without_panicking() {
     let mut host = DesktopBibleGraphHost::new();
     host.set_projection(sample_projection()).unwrap();

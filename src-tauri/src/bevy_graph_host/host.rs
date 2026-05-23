@@ -102,7 +102,20 @@ impl DesktopBibleGraphHost {
     }
 
     pub fn visual_snapshot(&mut self) -> Result<BibleGraphVisualSnapshot, BibleGraphHostError> {
-        self.with_renderer_mut(|renderer| renderer.visual_snapshot())
+        let Some(renderer) = self.renderer.as_ref() else {
+            return Err(BibleGraphHostError::Renderer(
+                BibleGraphRendererError::MissingProjection.to_string(),
+            ));
+        };
+        let result = Self::catch_renderer_panic(|| renderer.visual_snapshot())?.map_err(|error| {
+            let message = error.to_string();
+            self.last_error = Some(message.clone());
+            BibleGraphHostError::Renderer(message)
+        });
+        if result.is_ok() {
+            self.last_error = None;
+        }
+        result
     }
 
     pub fn status(&self) -> BibleGraphHostStatus {
