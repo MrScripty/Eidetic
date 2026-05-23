@@ -201,6 +201,52 @@ fn render_graph_projection_includes_selected_timeline_influences() {
     );
 }
 
+#[test]
+fn render_graph_projection_keeps_selected_timeline_influences_when_searching() {
+    let mut conn = memory_connection();
+    let timeline_node_id = NodeId::new();
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    seed_node(&mut conn, "node.place.beach", "Beach", 20);
+    seed_node(&mut conn, "node.place.tower", "Tower", 30);
+    seed_edge(
+        &mut conn,
+        "edge.ada.beach",
+        "node.character.ada",
+        "node.place.beach",
+        1,
+    );
+    seed_context_influence(
+        &mut conn,
+        timeline_node_id,
+        "node.character.ada",
+        "edge.ada.beach",
+    );
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            selected_timeline_node_id: Some(timeline_node_id),
+            search: Some("tower".to_string()),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    let node_ids: Vec<_> = projection
+        .payload
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(
+        node_ids,
+        vec!["node.character.ada", "node.place.beach", "node.place.tower"]
+    );
+    assert_eq!(projection.payload.edges.len(), 1);
+    assert_eq!(projection.payload.influences.len(), 1);
+}
+
 fn seed_context_influence(
     conn: &mut Connection,
     timeline_node_id: NodeId,

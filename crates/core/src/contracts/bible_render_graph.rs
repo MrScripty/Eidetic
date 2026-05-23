@@ -111,8 +111,11 @@ impl BibleRenderGraphProjection {
     ) -> Self {
         let sorted_nodes = sorted_nodes(nodes);
         let sorted_edges = sorted_graph_edges(edges);
-        let included_node_ids =
+        let mut included_node_ids =
             included_node_ids_for_request(&sorted_nodes, &sorted_edges, request);
+        if request.selected_timeline_node_id.is_some() {
+            include_influenced_node_ids(&mut included_node_ids, &sorted_edges, &influences);
+        }
         let filtered_nodes: Vec<_> = sorted_nodes
             .into_iter()
             .filter(|node| included_node_ids.contains(&node.id))
@@ -162,6 +165,25 @@ impl BibleRenderGraphProjection {
             edges: render_edges,
             neighborhoods,
             influences,
+        }
+    }
+}
+
+fn include_influenced_node_ids(
+    included_node_ids: &mut BTreeSet<BibleGraphNodeId>,
+    edges: &[BibleGraphEdge],
+    influences: &[ContextInfluenceRecord],
+) {
+    let edges_by_id: BTreeMap<_, _> = edges.iter().map(|edge| (edge.id.clone(), edge)).collect();
+    for influence in influences {
+        if let Some(node_id) = &influence.bible_node_id {
+            included_node_ids.insert(node_id.clone());
+        }
+        if let Some(edge_id) = &influence.bible_edge_id
+            && let Some(edge) = edges_by_id.get(edge_id)
+        {
+            included_node_ids.insert(edge.from_node_id.clone());
+            included_node_ids.insert(edge.to_node_id.clone());
         }
     }
 }

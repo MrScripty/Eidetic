@@ -1338,6 +1338,11 @@ Discovered issues:
   after the drain stops. The bridge now normalizes invalid intervals to the
   default cadence and proves pending renderer commands are not applied after
   teardown.
+- Resolved: selected timeline context influences could be loaded by the bounded
+  SQL query and then filtered out by the pure render adapter when the same
+  request also included search/focus filters. Influence nodes and influenced
+  edge endpoints are now treated as required within the already-bounded graph
+  input, with core and server regression coverage.
 
 ## Concurrent Worker Policy
 

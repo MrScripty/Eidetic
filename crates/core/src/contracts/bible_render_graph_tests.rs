@@ -207,6 +207,47 @@ fn render_graph_projection_filters_influences_to_visible_graph() {
     );
 }
 
+#[test]
+fn render_graph_projection_keeps_influenced_nodes_during_search_filter() {
+    let target_node_id = NodeId::new();
+    let evaluation_id = ContextEvaluationId::new();
+    let ada = graph_node("node.character.ada", None, "character", "Ada", false, 1);
+    let beach = graph_node("node.place.beach", None, "place", "Beach", false, 2);
+    let tower = graph_node("node.place.tower", None, "place", "Tower", false, 3);
+    let ada_beach = graph_edge("edge.ada.beach", &ada.id, &beach.id, 0);
+    let visible_record = influence_record(
+        target_node_id,
+        evaluation_id,
+        Some(ada.id.clone()),
+        Some(ada_beach.id.clone()),
+        1,
+    );
+
+    let projection = BibleRenderGraphProjection::from_graph_for_request_with_influences(
+        vec![ada, beach, tower],
+        vec![ada_beach],
+        &BibleRenderGraphProjectionRequest {
+            selected_timeline_node_id: Some(target_node_id),
+            search: Some("tower".to_string()),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+        vec![visible_record],
+    );
+
+    let node_ids: Vec<_> = projection
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(
+        node_ids,
+        vec!["node.character.ada", "node.place.beach", "node.place.tower"]
+    );
+    assert_eq!(projection.edges.len(), 1);
+    assert_eq!(projection.influences.len(), 1);
+}
+
 fn graph_node(
     id: &str,
     parent_id: Option<&str>,
