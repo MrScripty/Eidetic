@@ -884,6 +884,10 @@ Completed slices:
 - `fix(desktop): project graph renderer focus support` added an explicit
   backend-owned focus capability flag and made the Svelte focus action depend
   on that projection instead of assuming every open renderer can be focused.
+- `feat(desktop): accept graph renderer size hints` added an optional
+  validated renderer-window size hint to the graph renderer open command so
+  placement/size input has an explicit desktop request contract before native
+  OS window support lands.
 
 Discovered issues:
 
@@ -959,6 +963,10 @@ Discovered issues:
   open, even though focus is unsupported until a visible native window exists.
   Focus support now crosses the desktop boundary as typed status and the UI
   treats it as projection data.
+- Resolved: graph renderer open requests had no typed path for optional
+  renderer-window size hints, even though Milestone 8 requires size/placement
+  hints to be validated by the floating renderer host. Open requests now accept
+  a validated size hint and reject zero dimensions before renderer startup.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

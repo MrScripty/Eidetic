@@ -12,6 +12,14 @@ use crate::error::CommandError;
 pub struct OpenGraphRendererRequest {
     #[serde(default)]
     pub graph_projection_request: Option<BibleRenderGraphProjectionRequest>,
+    #[serde(default)]
+    pub renderer_window_size_hint: Option<RendererWindowSizeHint>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct RendererWindowSizeHint {
+    pub width_px: u32,
+    pub height_px: u32,
 }
 
 #[tauri::command]
@@ -19,11 +27,16 @@ pub async fn graph_renderer_open(
     app: tauri::AppHandle,
     request: OpenGraphRendererRequest,
 ) -> Result<BibleGraphHostStatus, CommandError> {
+    validate_renderer_window_size_hint(request.renderer_window_size_hint)?;
     graph_renderer_owner(&app)?
         .start_renderer()
         .map_err(|error| {
             CommandError::internal(format!("graph renderer open failed: {error:?}"))
         })?;
+    if let Err(error) = apply_renderer_window_size_hint(&app, request.renderer_window_size_hint) {
+        let _ = graph_renderer_owner(&app)?.stop();
+        return Err(error);
+    }
     match seed_graph_renderer_projection(&app, request.graph_projection_request.unwrap_or_default())
         .await
     {
@@ -65,6 +78,79 @@ pub fn graph_renderer_drain_commands(
         .map_err(|error| {
             CommandError::internal(format!("graph renderer command drain failed: {error:?}"))
         })
+}
+
+fn apply_renderer_window_size_hint(
+    app: &tauri::AppHandle,
+    size_hint: Option<RendererWindowSizeHint>,
+) -> Result<(), CommandError> {
+    let Some(size_hint) = size_hint else {
+        return Ok(());
+    };
+
+    graph_renderer_owner(app)?
+        .set_renderer_window_bounds(size_hint.width_px, size_hint.height_px)
+        .map(|_| ())
+        .map_err(|error| {
+            CommandError::internal(format!("graph renderer size hint failed: {error:?}"))
+        })
+}
+
+fn validate_renderer_window_size_hint(
+    size_hint: Option<RendererWindowSizeHint>,
+) -> Result<(), CommandError> {
+    let Some(size_hint) = size_hint else {
+        return Ok(());
+    };
+
+    if size_hint.width_px == 0 || size_hint.height_px == 0 {
+        return Err(CommandError::bad_request(
+            "graph renderer window size hint must be greater than zero",
+        ));
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::{
+        OpenGraphRendererRequest, RendererWindowSizeHint, validate_renderer_window_size_hint,
+    };
+
+    #[test]
+    fn open_request_deserializes_renderer_window_size_hint() {
+        let request: OpenGraphRendererRequest = serde_json::from_value(json!({
+            "renderer_window_size_hint": {
+                "width_px": 1280,
+                "height_px": 720
+            }
+        }))
+        .unwrap();
+
+        let size_hint = request.renderer_window_size_hint.unwrap();
+        assert_eq!(size_hint.width_px, 1280);
+        assert_eq!(size_hint.height_px, 720);
+    }
+
+    #[test]
+    fn renderer_window_size_hint_rejects_zero_dimensions() {
+        let error = validate_renderer_window_size_hint(Some(RendererWindowSizeHint {
+            width_px: 0,
+            height_px: 720,
+        }))
+        .unwrap_err();
+
+        assert_eq!(
+            serde_json::to_value(error).unwrap(),
+            json!({
+                "kind": "bad_request",
+                "message": "graph renderer window size hint must be greater than zero"
+            })
+        );
+    }
 }
 
 #[tauri::command]

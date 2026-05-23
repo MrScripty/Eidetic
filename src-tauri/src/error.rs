@@ -24,6 +24,13 @@ impl From<BackendError> for CommandError {
 }
 
 impl CommandError {
+    pub(crate) fn bad_request(message: impl Into<String>) -> Self {
+        Self {
+            kind: "bad_request",
+            message: message.into(),
+        }
+    }
+
     pub(crate) fn internal(message: impl Into<String>) -> Self {
         Self {
             kind: "internal",
@@ -35,6 +42,19 @@ impl CommandError {
 #[cfg(test)]
 mod tests {
     use super::CommandError;
+
+    #[test]
+    fn bad_request_error_serializes_transport_shape() {
+        let error = CommandError::bad_request("invalid renderer window size");
+
+        assert_eq!(
+            serde_json::to_value(error).unwrap(),
+            serde_json::json!({
+                "kind": "bad_request",
+                "message": "invalid renderer window size",
+            })
+        );
+    }
 
     #[test]
     fn internal_error_serializes_transport_shape() {

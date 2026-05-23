@@ -7,6 +7,12 @@ import type {
 
 export interface OpenGraphRendererRequest {
   graph_projection_request?: BibleRenderGraphProjectionRequest;
+  renderer_window_size_hint?: GraphRendererWindowSizeHint;
+}
+
+export interface GraphRendererWindowSizeHint {
+  width_px: number;
+  height_px: number;
 }
 
 export interface GraphRendererStatus {

@@ -84,6 +84,10 @@ describe('graph renderer api helpers', () => {
         neighborhood_depth: 1,
         max_nodes: 200,
       },
+      renderer_window_size_hint: {
+        width_px: 1280,
+        height_px: 720,
+      },
     };
     const invoke = installDesktopInvoke(response);
 
