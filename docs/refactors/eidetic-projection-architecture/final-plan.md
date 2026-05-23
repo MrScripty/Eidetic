@@ -1104,6 +1104,12 @@ Discovered issues:
   constructor. Renderer status exposes `native_panel_ready` as a diagnostic so
   UI and smoke checks can distinguish a running projection bridge from a native
   panel scene that has actually initialized.
+- Open: the current embedded viewport host is still a Tauri command-side bounds
+  and lifecycle registry. It does not yet own or attach a native child surface
+  for Bevy inside the Svelte panel, so the graph workspace can start a native
+  Bevy panel scene but cannot yet display that scene in the app layout. The next
+  viewport slice must add an explicit desktop surface attachment strategy before
+  graph nodes and edges are rendered visibly.
 
 ## Concurrent Worker Policy
 
