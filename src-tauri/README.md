@@ -16,6 +16,7 @@ commands and events.
 | `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
 | `src/bevy_graph_host/` | Desktop-managed lifecycle owner and focused host adapter for the Bevy bible graph renderer leaf crate. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
+| `src/embedded_viewport_host.rs` | Desktop-owned registry for borderless embedded Bevy viewport panel lifecycle state. |
 | `src/export_commands.rs` | Tauri commands for export service access. |
 | `src/graph_renderer_commands.rs` | Tauri commands for native Bevy graph renderer status and validated command draining. |
 | `src/model_commands.rs` | Tauri commands for Pumas model-library projection reads. |
@@ -44,6 +45,9 @@ commands and events.
 - Native renderer IPC exposes status and command-drain reads only. Drained
   renderer commands are validated transient interaction intents, not durable
   bible graph mutations.
+- Embedded viewport IPC owns panel lifecycle state for borderless Bevy visual
+  surfaces. It validates viewport IDs, panel bounds, resize updates, focus, and
+  unmounts before any renderer code can allocate or route input for a panel.
 - Renderer host state must not be stored in `tauri::State` unless the owner is
   `Send + Sync`; Bevy `App` is not. Native render-window integration needs a
   dedicated desktop renderer owner instead of storing `App` in global managed

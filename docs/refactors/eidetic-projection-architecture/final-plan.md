@@ -1054,6 +1054,11 @@ Discovered issues:
   lifecycle, so Bevy selections would not reach the Svelte detail/review
   surfaces. The workspace now starts a bounded drain loop on mount and applies
   validated renderer commands to transient graph selection only.
+- Resolved: Milestone 8 named a shared embedded viewport host but the desktop
+  runtime did not have an executable host contract. Tauri now manages a
+  validated embedded viewport host for borderless graph/timeline panel
+  lifecycle state, including viewport kind, panel bounds, focus, status, and
+  unmount operations.
 - Open: the central graph workspace still uses the Svelte outline as the
   visible graph surface while Bevy is a projection/command consumer. Finishing
   Milestone 8 still requires native Bevy viewport integration with a fresh
