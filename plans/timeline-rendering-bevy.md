@@ -185,6 +185,15 @@ Production target:
   Svelte may launch, focus, close, and display status for the renderer window,
   but must not own renderer lifecycle, durable timeline state, command queues,
   or projection subscriptions.
+- The timeline renderer must reuse the desktop-owned native renderer runner
+  proven for the bible graph. The runner boundary separates Tauri command/reply
+  handling from the long-lived Bevy/winit event loop through bounded channels,
+  so an open renderer window cannot block status, focus, close, or projection
+  request commands.
+- The desktop renderer host owns the active projection subscription. Svelte may
+  request workspace/focus/filter changes and render accessible alternatives,
+  but it must not push independent timeline or graph projections into Bevy in
+  parallel with backend event refresh.
 
 Rejected production paths:
 
@@ -232,6 +241,15 @@ Specific renderer requirements:
 - Renderer bridge payloads are trust boundaries and must be validated on receipt.
 - Renderer lifecycle must define initialization, teardown, event unsubscribe, cancellation, panic/error handling, and queue overflow behavior.
 - Queues/events between backend, Svelte, and Bevy must be bounded.
+- Projection delivery for a renderer window must have one active writer owned
+  by the desktop host. Route mirroring, event refresh, and Svelte set-projection
+  calls must not remain parallel writers for the same renderer state.
+- Native runner work must not run Bevy/winit's blocking event loop inside a
+  synchronous Tauri request handler or owner loop. Status and close commands
+  must remain responsive while the renderer event loop is alive.
+- Raw OS/window-handle dependencies are absent by default. If they are required,
+  they belong only in the desktop runner/platform module and need an explicit
+  safety and verification plan before the renderer becomes production.
 - Canvas/Bevy critical actions require keyboard-accessible Svelte command alternatives.
 - UI tests must cover keyboard alternatives, focus paths, pointer capture/release, parent gesture conflicts, and projection-to-command flow.
 - The DOM/SVG timeline must be removed as a supported runtime path once Bevy covers target interactions.
@@ -258,17 +276,22 @@ Recommended path:
    contracts exist.
 3. Upgrade renderer planning and crates to Bevy 0.18.1 with a fresh dependency
    review.
-4. Define any missing renderer-facing timeline projection DTOs around context
+4. Prove the desktop-owned native renderer runner with the bible graph's
+   minimal Bevy window gate before adding timeline visuals.
+5. Consolidate renderer projection delivery into the desktop host so Svelte
+   controls request focus/filter/open state but do not push renderer projections
+   as a second writer.
+6. Define any missing renderer-facing timeline projection DTOs around context
    chunks, overlays, and script-generation coverage.
-5. Prototype a native Bevy timeline renderer window with read-only tracks/context
+7. Prototype a native Bevy timeline renderer window with read-only tracks/context
    chunks.
-6. Add pan/zoom/playhead behavior.
-7. Add selection and hit-testing.
-8. Add move/resize/split command dispatch for context chunks.
-9. Add relationship curves and arc overlays.
-10. Add script coverage/staleness overlays.
-11. Add advanced overlays such as valence/arousal after backend-owned affect
+8. Add pan/zoom/playhead behavior.
+9. Add selection and hit-testing.
+10. Add move/resize/split command dispatch for context chunks.
+11. Add relationship curves and arc overlays.
+12. Add script coverage/staleness overlays.
+13. Add advanced overlays such as valence/arousal after backend-owned affect
     contracts exist.
-12. Add keyboard-accessible Svelte command alternatives for timeline operations
+14. Add keyboard-accessible Svelte command alternatives for timeline operations
     that cannot be directly represented in the Bevy viewport.
-13. Remove the DOM/SVG timeline renderer once the Bevy renderer is active.
+15. Remove the DOM/SVG timeline renderer once the Bevy renderer is active.
