@@ -8,20 +8,20 @@ use crate::build_bible_graph_visual_snapshot;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
-    pub borderless_panel: bool,
+    pub borderless_window: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Resource)]
-pub struct BibleGraphNativePanelScene {
+pub struct BibleGraphNativeRendererWindowScene {
     pub background_color: &'static str,
     pub grid_color: &'static str,
     pub accent_color: &'static str,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
-pub struct BibleGraphNativePanelStatus {
+pub struct BibleGraphNativeRendererWindowStatus {
     pub camera_count: usize,
-    pub bounds: BibleGraphNativePanelBounds,
+    pub bounds: BibleGraphNativeRendererWindowBounds,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -31,12 +31,12 @@ pub struct BibleGraphNativeVisualStatus {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct BibleGraphNativePanelBounds {
+pub struct BibleGraphNativeRendererWindowBounds {
     pub width_px: u32,
     pub height_px: u32,
 }
 
-impl Default for BibleGraphNativePanelScene {
+impl Default for BibleGraphNativeRendererWindowScene {
     fn default() -> Self {
         Self {
             background_color: "#11151d",
@@ -81,7 +81,7 @@ pub struct BibleGraphNativeEdgeVisual {
 impl Default for BibleGraphNativeRenderConfig {
     fn default() -> Self {
         Self {
-            borderless_panel: true,
+            borderless_window: true,
         }
     }
 }
@@ -91,17 +91,17 @@ pub struct BibleGraphNativeRenderPlugin;
 impl Plugin for BibleGraphNativeRenderPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(BibleGraphNativeRenderConfig::default());
-        app.insert_resource(BibleGraphNativePanelScene::default());
-        app.insert_resource(BibleGraphNativePanelStatus::default());
+        app.insert_resource(BibleGraphNativeRendererWindowScene::default());
+        app.insert_resource(BibleGraphNativeRendererWindowStatus::default());
         app.insert_resource(BibleGraphNativeVisualStatus::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
-        app.add_systems(Startup, spawn_bible_graph_native_panel_scene);
+        app.add_systems(Startup, spawn_bible_graph_renderer_window_scene);
     }
 }
 
-fn spawn_bible_graph_native_panel_scene(
+fn spawn_bible_graph_renderer_window_scene(
     mut commands: Commands,
-    mut status: ResMut<BibleGraphNativePanelStatus>,
+    mut status: ResMut<BibleGraphNativeRendererWindowStatus>,
 ) {
     commands.spawn((Camera2d, BibleGraphNativeCamera));
     status.camera_count = 1;
@@ -159,9 +159,9 @@ pub fn rebuild_bible_graph_native_visuals(
     status.edge_count = edge_count;
 }
 
-pub fn update_bible_graph_native_panel_bounds(world: &mut World, width_px: u32, height_px: u32) {
-    if let Some(mut status) = world.get_resource_mut::<BibleGraphNativePanelStatus>() {
-        status.bounds = BibleGraphNativePanelBounds {
+pub fn update_bible_graph_renderer_window_bounds(world: &mut World, width_px: u32, height_px: u32) {
+    if let Some(mut status) = world.get_resource_mut::<BibleGraphNativeRendererWindowStatus>() {
+        status.bounds = BibleGraphNativeRendererWindowBounds {
             width_px,
             height_px,
         };

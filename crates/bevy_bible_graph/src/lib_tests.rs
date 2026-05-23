@@ -160,7 +160,7 @@ fn renderer_app_exposes_projection_derived_visual_snapshot() {
 
 #[cfg(feature = "native_render")]
 #[test]
-fn native_render_plugin_records_borderless_panel_intent() {
+fn native_render_plugin_records_borderless_window_intent() {
     use bevy::prelude::{Plugin, With};
 
     let mut app = bevy::prelude::App::new();
@@ -168,19 +168,21 @@ fn native_render_plugin_records_borderless_panel_intent() {
     BibleGraphNativeRenderPlugin.build(&mut app);
     app.update();
 
-    let scene = app.world().resource::<BibleGraphNativePanelScene>();
+    let scene = app
+        .world()
+        .resource::<BibleGraphNativeRendererWindowScene>();
 
     assert!(
         app.world()
             .resource::<BibleGraphNativeRenderConfig>()
-            .borderless_panel
+            .borderless_window
     );
     assert_eq!(scene.background_color, "#11151d");
     assert_eq!(scene.grid_color, "#253041");
     assert_eq!(scene.accent_color, "#f2c94c");
     assert_eq!(
         app.world()
-            .resource::<BibleGraphNativePanelStatus>()
+            .resource::<BibleGraphNativeRendererWindowStatus>()
             .camera_count,
         1
     );
@@ -195,31 +197,31 @@ fn native_render_plugin_records_borderless_panel_intent() {
 
 #[cfg(feature = "native_render")]
 #[test]
-fn renderer_app_can_start_as_native_panel_consumer() {
-    let renderer = BibleGraphRendererApp::new_native_panel();
+fn renderer_app_can_start_as_renderer_window_consumer() {
+    let renderer = BibleGraphRendererApp::new_renderer_window();
 
-    assert!(renderer.native_panel_ready());
+    assert!(renderer.renderer_window_ready());
 }
 
 #[cfg(feature = "native_render")]
 #[test]
-fn native_panel_records_physical_bounds() {
-    let mut renderer = BibleGraphRendererApp::new_native_panel();
+fn renderer_window_records_physical_bounds() {
+    let mut renderer = BibleGraphRendererApp::new_renderer_window();
 
-    renderer.set_native_panel_bounds(1280, 720);
+    renderer.set_renderer_window_bounds(1280, 720);
 
-    let bounds = renderer.native_panel_bounds();
+    let bounds = renderer.renderer_window_bounds();
     assert_eq!(bounds.width_px, 1280);
     assert_eq!(bounds.height_px, 720);
 }
 
 #[cfg(feature = "native_render")]
 #[test]
-fn native_panel_rebuilds_projection_visual_entities() {
+fn renderer_window_rebuilds_projection_visual_entities() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
     let influence_id = ContextInfluenceId::new();
-    let mut renderer = BibleGraphRendererApp::new_native_panel();
+    let mut renderer = BibleGraphRendererApp::new_renderer_window();
 
     renderer.set_projection(projection_with_influence(node_id, edge_id, influence_id));
 

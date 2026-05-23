@@ -26,13 +26,12 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_ready: true,
             renderer_window_message: "floating graph renderer window lifecycle is active"
                 .to_string(),
-            native_panel_ready: true,
             node_count: 2,
             edge_count: 1,
             native_visual_node_count: 2,
             native_visual_edge_count: 1,
-            native_panel_width_px: 0,
-            native_panel_height_px: 0,
+            renderer_window_width_px: 0,
+            renderer_window_height_px: 0,
             influence_count: 1,
             last_error: None,
         }
@@ -111,13 +110,12 @@ fn host_stop_drops_renderer_state() {
             renderer_window_open: false,
             renderer_window_ready: false,
             renderer_window_message: "floating graph renderer window is closed".to_string(),
-            native_panel_ready: false,
             node_count: 0,
             edge_count: 0,
             native_visual_node_count: 0,
             native_visual_edge_count: 0,
-            native_panel_width_px: 0,
-            native_panel_height_px: 0,
+            renderer_window_width_px: 0,
+            renderer_window_height_px: 0,
             influence_count: 0,
             last_error: None,
         }
@@ -139,7 +137,6 @@ fn owner_runs_renderer_on_dedicated_thread() {
     assert!(status.running);
     assert!(status.renderer_window_open);
     assert!(status.renderer_window_ready);
-    assert!(status.native_panel_ready);
     owner.stop().unwrap();
 }
 
@@ -152,7 +149,6 @@ fn owner_can_start_renderer_before_projection_arrives() {
     assert!(status.running);
     assert!(status.renderer_window_open);
     assert!(status.renderer_window_ready);
-    assert!(status.native_panel_ready);
     assert_eq!(status.node_count, 0);
     assert_eq!(status.edge_count, 0);
     assert_eq!(status.native_visual_node_count, 0);
@@ -162,15 +158,15 @@ fn owner_can_start_renderer_before_projection_arrives() {
 }
 
 #[test]
-fn owner_records_native_panel_bounds_on_renderer_thread() {
+fn owner_records_renderer_window_bounds_on_renderer_thread() {
     let owner = DesktopBibleGraphRendererOwner::start().unwrap();
 
-    let status = owner.set_panel_bounds(1280, 720).unwrap();
+    let status = owner.set_renderer_window_bounds(1280, 720).unwrap();
 
     assert!(status.running);
-    assert!(status.native_panel_ready);
-    assert_eq!(status.native_panel_width_px, 1280);
-    assert_eq!(status.native_panel_height_px, 720);
+    assert!(status.renderer_window_ready);
+    assert_eq!(status.renderer_window_width_px, 1280);
+    assert_eq!(status.renderer_window_height_px, 720);
     owner.stop().unwrap();
 }
 

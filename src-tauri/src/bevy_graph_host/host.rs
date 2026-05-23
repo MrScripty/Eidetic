@@ -31,7 +31,7 @@ impl DesktopBibleGraphHost {
     pub fn start(&mut self) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
         if self.renderer.is_none() {
             self.renderer = Some(Self::catch_renderer_panic(
-                BibleGraphRendererApp::new_native_panel,
+                BibleGraphRendererApp::new_renderer_window,
             )?);
         }
         self.last_error = None;
@@ -56,14 +56,14 @@ impl DesktopBibleGraphHost {
         Ok(self.status())
     }
 
-    pub fn set_panel_bounds(
+    pub fn set_renderer_window_bounds(
         &mut self,
         width_px: u32,
         height_px: u32,
     ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
         self.start()?;
         self.with_renderer_mut(|renderer| {
-            renderer.set_native_panel_bounds(width_px, height_px);
+            renderer.set_renderer_window_bounds(width_px, height_px);
             Ok(())
         })?;
         Ok(self.status())
@@ -108,34 +108,33 @@ impl DesktopBibleGraphHost {
                 (node_count, edge_count, renderer.influence_count())
             })
             .unwrap_or_default();
-        let native_panel_ready = self
+        let renderer_window_ready = self
             .renderer
             .as_ref()
-            .map(BibleGraphRendererApp::native_panel_ready)
+            .map(BibleGraphRendererApp::renderer_window_ready)
             .unwrap_or_default();
         let (native_visual_node_count, native_visual_edge_count) = self
             .renderer
             .as_ref()
             .map(BibleGraphRendererApp::native_visual_counts)
             .unwrap_or_default();
-        let native_panel_bounds = self
+        let renderer_window_bounds = self
             .renderer
             .as_ref()
-            .map(BibleGraphRendererApp::native_panel_bounds)
+            .map(BibleGraphRendererApp::renderer_window_bounds)
             .unwrap_or_default();
 
         BibleGraphHostStatus {
             running: self.renderer.is_some(),
             renderer_window_open: self.renderer.is_some(),
-            renderer_window_ready: native_panel_ready,
+            renderer_window_ready,
             renderer_window_message: renderer_window_message(self.renderer.is_some()),
-            native_panel_ready,
             node_count,
             edge_count,
             native_visual_node_count,
             native_visual_edge_count,
-            native_panel_width_px: native_panel_bounds.width_px,
-            native_panel_height_px: native_panel_bounds.height_px,
+            renderer_window_width_px: renderer_window_bounds.width_px,
+            renderer_window_height_px: renderer_window_bounds.height_px,
             influence_count,
             last_error: self.last_error.clone(),
         }

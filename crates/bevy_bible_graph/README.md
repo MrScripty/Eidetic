@@ -32,32 +32,33 @@ Dependency review:
   this leaf crate, with `eidetic-core`, `serde`, and `thiserror` as the only
   other direct dependency families. The current Bevy subtree is app/ECS/input/
   math/time/transform/reflection support, not render/window/asset/text/audio.
-- `cargo tree -p eidetic-bevy-bible-graph -e features --depth 3` shows the
-  only enabled Bevy feature is `std`. This keeps the renderer crate usable as a
-  projection-driven ECS bridge while the desktop embedding boundary is proven.
+- `cargo tree -p eidetic-bevy-bible-graph -e features --depth 3` without
+  optional features shows the only enabled Bevy feature is `std`. This keeps the
+  renderer crate usable as a projection-driven ECS bridge while the desktop
+  renderer-window boundary is proven.
 - Browser/WASM interop dependencies are intentionally absent. Eidetic's
   production renderer path is native desktop host integration through Tauri and
   Bevy, not browser canvas or wasm-bindgen.
-- Native visual rendering must be added in a separate reviewed slice. Enabling
-  Bevy render/window features is justified only for a borderless panel host that
-  embeds inside the Tauri workspace, resizes from `EmbeddedViewportBounds`, and
-  does not open a separate product window. The first render slice should prove
-  a minimal background/grid scene before graph nodes/edges are visualized.
+- Native visual rendering must stay behind reviewed slices. Enabling Bevy
+  render/window features is justified only for app-managed floating renderer
+  windows owned by the desktop host, not WebView child-surface embedding. The
+  first render slices should prove a minimal background/grid scene before graph
+  nodes/edges are visualized.
 - The `native_render` feature gates the reviewed Bevy render/window stack for
-  desktop panel work. It enables `2d_bevy_render`, `bevy_window`, and
+  desktop renderer-window work. It enables `2d_bevy_render`, `bevy_window`, and
   `bevy_winit` plus Linux `wayland`/`x11` window backends, and is intentionally
   off by default so projection-only tests and server builds do not pay for
   native rendering.
-- Native panel setup starts with a borderless scene resource, Eidetic graph
-  colors, clear color, and one marked `Camera2d`. The plugin does not open a
-  window by itself; Tauri embedding owns the future surface lifecycle.
+- Native renderer-window setup starts with a borderless scene resource, Eidetic
+  graph colors, clear color, and one marked `Camera2d`. The plugin does not
+  own durable graph data; the desktop host owns renderer-window lifecycle.
 - Desktop hosts enable `native_render` explicitly and start the renderer through
-  `new_native_panel()` so native readiness can be reported without letting the
+  `new_renderer_window()` so native readiness can be reported without letting the
   renderer own durable project state.
-- Asset/text/UI/audio features remain out of scope for the bible graph viewport
+- Asset/text/UI/audio features remain out of scope for the bible graph renderer window
   until there is a concrete graph-rendering requirement that cannot be met with
   primitive meshes, materials, and Svelte-side semantic text/detail panels.
-- `eidetic-desktop` may own OS/Tauri window handles and viewport lifecycle.
+- `eidetic-desktop` may own OS/Tauri window handles and renderer window lifecycle.
   `eidetic-bevy-bible-graph` must continue to own only renderer-local scene
   state and validated commands; it must not learn Tauri, SQLite, or project
   persistence APIs.

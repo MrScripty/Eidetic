@@ -18,7 +18,7 @@ enum BibleGraphHostRequest {
         projection: BibleRenderGraphProjection,
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
     },
-    SetPanelBounds {
+    SetRendererWindowBounds {
         width_px: u32,
         height_px: u32,
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
@@ -91,14 +91,14 @@ impl DesktopBibleGraphRendererOwner {
         receive_reply(receiver)
     }
 
-    pub fn set_panel_bounds(
+    pub fn set_renderer_window_bounds(
         &self,
         width_px: u32,
         height_px: u32,
     ) -> BibleGraphHostResult<BibleGraphHostStatus> {
         let (reply, receiver) = mpsc::channel();
         self.sender
-            .send(BibleGraphHostRequest::SetPanelBounds {
+            .send(BibleGraphHostRequest::SetRendererWindowBounds {
                 width_px,
                 height_px,
                 reply,
@@ -206,12 +206,12 @@ fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
             BibleGraphHostRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(host.set_projection(projection));
             }
-            BibleGraphHostRequest::SetPanelBounds {
+            BibleGraphHostRequest::SetRendererWindowBounds {
                 width_px,
                 height_px,
                 reply,
             } => {
-                let _ = reply.send(host.set_panel_bounds(width_px, height_px));
+                let _ = reply.send(host.set_renderer_window_bounds(width_px, height_px));
             }
             BibleGraphHostRequest::SelectNode { node_id, reply } => {
                 let _ = reply.send(host.select_node(node_id));

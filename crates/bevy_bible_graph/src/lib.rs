@@ -15,8 +15,9 @@ mod native_render;
 #[cfg(feature = "native_render")]
 pub use native_render::{
     BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeNodeVisual,
-    BibleGraphNativePanelBounds, BibleGraphNativePanelScene, BibleGraphNativePanelStatus,
-    BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin, BibleGraphNativeVisualEntity,
+    BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
+    BibleGraphNativeRendererWindowBounds, BibleGraphNativeRendererWindowScene,
+    BibleGraphNativeRendererWindowStatus, BibleGraphNativeVisualEntity,
     BibleGraphNativeVisualStatus,
 };
 pub use scene::{
@@ -79,7 +80,7 @@ impl BibleGraphRendererApp {
     }
 
     #[cfg(feature = "native_render")]
-    pub fn new_native_panel() -> Self {
+    pub fn new_renderer_window() -> Self {
         let mut renderer = Self::new();
         renderer.app.add_plugins(BibleGraphNativeRenderPlugin);
         renderer.app.update();
@@ -87,26 +88,26 @@ impl BibleGraphRendererApp {
     }
 
     #[cfg(feature = "native_render")]
-    pub fn native_panel_ready(&self) -> bool {
+    pub fn renderer_window_ready(&self) -> bool {
         self.app
             .world()
-            .get_resource::<BibleGraphNativePanelStatus>()
+            .get_resource::<BibleGraphNativeRendererWindowStatus>()
             .map(|status| status.camera_count == 1)
             .unwrap_or_default()
     }
 
     #[cfg(feature = "native_render")]
-    pub fn native_panel_bounds(&self) -> BibleGraphNativePanelBounds {
+    pub fn renderer_window_bounds(&self) -> BibleGraphNativeRendererWindowBounds {
         self.app
             .world()
-            .get_resource::<BibleGraphNativePanelStatus>()
+            .get_resource::<BibleGraphNativeRendererWindowStatus>()
             .map(|status| status.bounds)
             .unwrap_or_default()
     }
 
     #[cfg(feature = "native_render")]
-    pub fn set_native_panel_bounds(&mut self, width_px: u32, height_px: u32) {
-        native_render::update_bible_graph_native_panel_bounds(
+    pub fn set_renderer_window_bounds(&mut self, width_px: u32, height_px: u32) {
+        native_render::update_bible_graph_renderer_window_bounds(
             self.app.world_mut(),
             width_px,
             height_px,

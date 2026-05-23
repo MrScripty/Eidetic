@@ -14,13 +14,12 @@ export interface GraphRendererStatus {
   renderer_window_open: boolean;
   renderer_window_ready: boolean;
   renderer_window_message: string;
-  native_panel_ready: boolean;
   node_count: number;
   edge_count: number;
   native_visual_node_count: number;
   native_visual_edge_count: number;
-  native_panel_width_px: number;
-  native_panel_height_px: number;
+  renderer_window_width_px: number;
+  renderer_window_height_px: number;
   influence_count: number;
   last_error: string | null;
 }

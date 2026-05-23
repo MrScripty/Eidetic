@@ -848,6 +848,10 @@ Completed slices:
   embedded viewport component/helpers and removed the registered Tauri
   child-surface viewport host/commands so production graph refresh now keys off
   the backend graph renderer lifecycle instead of WebView panel attachment.
+- `refactor(renderer): rename graph host window status` replaced remaining
+  native-panel terminology in the Bevy bible graph host, desktop renderer owner,
+  and graph renderer IPC status with renderer-window naming so the next native
+  work does not inherit embedded viewport language.
 
 Discovered issues:
 
@@ -882,6 +886,10 @@ Discovered issues:
   keeping the X11/WebView child-surface path reachable from desktop IPC. The
   registered commands, host modules, Svelte component, helpers, and tests were
   deleted; graph projection refresh now checks the graph renderer owner.
+- Resolved: the renderer host still exposed `native_panel_*` APIs and status
+  fields after the embedded panel path was retired. The Bevy graph crate,
+  desktop host, tests, frontend status DTO, and dependency notes now use
+  renderer-window terminology.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
