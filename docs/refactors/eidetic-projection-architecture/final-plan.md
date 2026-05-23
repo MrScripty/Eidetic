@@ -1174,6 +1174,15 @@ Discovered issues:
   panel bounds into the native Bevy graph host. Renderer status reports those
   bounds so future child-surface smoke checks can prove the Bevy panel follows
   the Svelte layout before replacing the outline fallback.
+- Open: local dependency inspection confirms that the real native attachment
+  slice must choose between platform-specific paths instead of treating
+  `RawWindowHandle` as a complete embedding API. Wry documents raw parent-handle
+  child windows as Linux X11-only and recommends GTK container embedding for
+  Wayland; winit exposes unsafe `with_parent_window` child-window creation, but
+  the current Bevy host does not yet own the winit event loop/window lifecycle
+  needed to create and resize that child window. The next implementation slice
+  must introduce an explicit renderer window lifecycle owner for the supported
+  strategy before marking `EmbeddedViewportSurfaceStatus::Attached`.
 
 ## Concurrent Worker Policy
 

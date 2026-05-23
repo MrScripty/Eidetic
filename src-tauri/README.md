@@ -50,6 +50,11 @@ commands and events.
   unmounts before any renderer code can allocate or route input for a panel.
   Viewport state also reports native surface attachment status so a mounted
   panel is not confused with a visibly attached Bevy render surface.
+- Native surface attachment is intentionally not inferred from a raw parent
+  handle alone. Linux X11, Linux Wayland, Windows, and macOS need explicit
+  renderer window/container strategies, and the viewport state remains
+  `pending_attachment` or `attachment_unsupported` until that strategy has
+  created and resized a real child surface.
 - Renderer host state must not be stored in `tauri::State` unless the owner is
   `Send + Sync`; Bevy `App` is not. Native render-window integration needs a
   dedicated desktop renderer owner instead of storing `App` in global managed
