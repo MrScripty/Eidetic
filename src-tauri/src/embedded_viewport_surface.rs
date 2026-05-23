@@ -29,10 +29,11 @@ pub fn detect_main_window_surface(app: &tauri::AppHandle) -> EmbeddedViewportSur
 
 pub fn surface_state_for_raw_handle(handle: RawWindowHandle) -> EmbeddedViewportSurfaceState {
     let capability = surface_capability_for_raw_handle(handle);
-    EmbeddedViewportSurfaceState::from_capability(
+    EmbeddedViewportSurfaceState::from_capability_with_parent_window_id(
         capability.status,
         capability.strategy,
         capability.message,
+        capability.parent_window_id,
     )
 }
 
@@ -42,27 +43,40 @@ fn surface_capability_for_raw_handle(handle: RawWindowHandle) -> EmbeddedViewpor
             status: EmbeddedViewportSurfaceStatus::PendingAttachment,
             strategy: EmbeddedViewportSurfaceStrategy::X11ChildWindow,
             message: "X11 parent window handle is available; Bevy child surface attachment is the next implementation step".to_string(),
+            parent_window_id: x11_parent_window_id(handle),
         },
         RawWindowHandle::Wayland(_) => EmbeddedViewportSurfaceCapability {
             status: EmbeddedViewportSurfaceStatus::AttachmentUnsupported,
             strategy: EmbeddedViewportSurfaceStrategy::WaylandExternalSurface,
             message: "Wayland parent surface is available, but the current Milestone 8 attachment strategy requires a supported child-surface path".to_string(),
+            parent_window_id: None,
         },
         RawWindowHandle::Win32(_) => EmbeddedViewportSurfaceCapability {
             status: EmbeddedViewportSurfaceStatus::PendingAttachment,
             strategy: EmbeddedViewportSurfaceStrategy::Win32ChildWindow,
             message: "Win32 parent window handle is available; Bevy child surface attachment is the next implementation step".to_string(),
+            parent_window_id: None,
         },
         RawWindowHandle::AppKit(_) => EmbeddedViewportSurfaceCapability {
             status: EmbeddedViewportSurfaceStatus::PendingAttachment,
             strategy: EmbeddedViewportSurfaceStrategy::AppKitSubview,
             message: "AppKit parent view handle is available; Bevy child surface attachment is the next implementation step".to_string(),
+            parent_window_id: None,
         },
         _ => EmbeddedViewportSurfaceCapability {
             status: EmbeddedViewportSurfaceStatus::AttachmentUnsupported,
             strategy: EmbeddedViewportSurfaceStrategy::Unsupported,
             message: "current platform window handle is not supported for embedded Bevy viewport attachment".to_string(),
+            parent_window_id: None,
         },
+    }
+}
+
+fn x11_parent_window_id(handle: RawWindowHandle) -> Option<String> {
+    match handle {
+        RawWindowHandle::Xlib(handle) => Some(handle.window.to_string()),
+        RawWindowHandle::Xcb(handle) => Some(handle.window.get().to_string()),
+        _ => None,
     }
 }
 
@@ -71,6 +85,7 @@ struct EmbeddedViewportSurfaceCapability {
     status: EmbeddedViewportSurfaceStatus,
     strategy: EmbeddedViewportSurfaceStrategy,
     message: String,
+    parent_window_id: Option<String>,
 }
 
 #[cfg(test)]
@@ -95,6 +110,10 @@ mod tests {
         assert_eq!(
             state.renderer_window.status,
             crate::embedded_viewport_host::EmbeddedViewportRendererWindowStatus::PendingCreation
+        );
+        assert_eq!(
+            state.renderer_window.parent_window_id,
+            Some("42".to_string())
         );
         assert!(
             state
@@ -122,6 +141,7 @@ mod tests {
             state.renderer_window.status,
             crate::embedded_viewport_host::EmbeddedViewportRendererWindowStatus::CreationUnsupported
         );
+        assert_eq!(state.renderer_window.parent_window_id, None);
         assert!(
             state
                 .message

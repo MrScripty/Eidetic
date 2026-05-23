@@ -40,6 +40,7 @@ describe('embedded viewport api helpers', () => {
     renderer_window: {
       status: 'not_started',
       message: 'renderer child window lifecycle has not started',
+      parent_window_id: null,
     },
   };
 

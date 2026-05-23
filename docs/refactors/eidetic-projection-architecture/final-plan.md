@@ -1189,6 +1189,10 @@ Discovered issues:
   lifecycle remains explicitly pending creation, and unsupported parent
   strategies now expose a child-window `creation_unsupported` state instead of
   relying on a broad surface message.
+- Resolved: X11/XCB surface detection now captures the native parent window id
+  into the renderer child-window lifecycle state. The eventual winit X11
+  embedder can consume that backend-owned parent id directly, while Wayland and
+  other unsupported strategies continue to expose no attachable parent id.
 
 ## Concurrent Worker Policy
 

@@ -45,6 +45,7 @@ export type EmbeddedViewportSurfaceStrategy =
 export interface EmbeddedViewportRendererWindowState {
   status: EmbeddedViewportRendererWindowStatus;
   message: string;
+  parent_window_id: string | null;
 }
 
 export type EmbeddedViewportRendererWindowStatus =

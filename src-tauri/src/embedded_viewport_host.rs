@@ -66,6 +66,7 @@ pub enum EmbeddedViewportSurfaceStrategy {
 pub struct EmbeddedViewportRendererWindowState {
     pub status: EmbeddedViewportRendererWindowStatus,
     pub message: String,
+    pub parent_window_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -270,13 +271,25 @@ impl EmbeddedViewportSurfaceState {
         strategy: EmbeddedViewportSurfaceStrategy,
         message: impl Into<String>,
     ) -> Self {
+        Self::from_capability_with_parent_window_id(status, strategy, message, None)
+    }
+
+    pub fn from_capability_with_parent_window_id(
+        status: EmbeddedViewportSurfaceStatus,
+        strategy: EmbeddedViewportSurfaceStrategy,
+        message: impl Into<String>,
+        parent_window_id: Option<String>,
+    ) -> Self {
         let message = message.into();
         Self {
             attached: status == EmbeddedViewportSurfaceStatus::Attached,
             status,
             strategy,
             message,
-            renderer_window: EmbeddedViewportRendererWindowState::from_surface_status(status),
+            renderer_window: EmbeddedViewportRendererWindowState::from_surface_status(
+                status,
+                parent_window_id,
+            ),
         }
     }
 
@@ -306,18 +319,23 @@ impl EmbeddedViewportSurfaceState {
 }
 
 impl EmbeddedViewportRendererWindowState {
-    fn from_surface_status(status: EmbeddedViewportSurfaceStatus) -> Self {
+    fn from_surface_status(
+        status: EmbeddedViewportSurfaceStatus,
+        parent_window_id: Option<String>,
+    ) -> Self {
         match status {
             EmbeddedViewportSurfaceStatus::PendingAttachment => Self {
                 status: EmbeddedViewportRendererWindowStatus::PendingCreation,
                 message:
                     "renderer child window lifecycle is waiting for platform-specific creation"
                         .to_string(),
+                parent_window_id,
             },
             EmbeddedViewportSurfaceStatus::AttachmentUnsupported => Self {
                 status: EmbeddedViewportRendererWindowStatus::CreationUnsupported,
                 message: "renderer child window cannot be created for the detected parent surface"
                     .to_string(),
+                parent_window_id,
             },
             EmbeddedViewportSurfaceStatus::Attached => Self::attached(),
         }
@@ -327,6 +345,7 @@ impl EmbeddedViewportRendererWindowState {
         Self {
             status: EmbeddedViewportRendererWindowStatus::NotStarted,
             message: "renderer child window lifecycle has not started".to_string(),
+            parent_window_id: None,
         }
     }
 
@@ -334,6 +353,7 @@ impl EmbeddedViewportRendererWindowState {
         Self {
             status: EmbeddedViewportRendererWindowStatus::Attached,
             message: "renderer child window is attached to the viewport panel".to_string(),
+            parent_window_id: None,
         }
     }
 }
@@ -431,6 +451,7 @@ mod tests {
                 renderer_window: EmbeddedViewportRendererWindowState {
                     status: EmbeddedViewportRendererWindowStatus::NotStarted,
                     message: "renderer child window lifecycle has not started".to_string(),
+                    parent_window_id: None,
                 },
             }
         );
@@ -572,6 +593,7 @@ mod tests {
                 renderer_window: EmbeddedViewportRendererWindowState {
                     status: EmbeddedViewportRendererWindowStatus::Attached,
                     message: "renderer child window is attached to the viewport panel".to_string(),
+                    parent_window_id: None,
                 },
             }
         );
@@ -610,6 +632,7 @@ mod tests {
                     message:
                         "renderer child window cannot be created for the detected parent surface"
                             .to_string(),
+                    parent_window_id: None,
                 },
             }
         );
