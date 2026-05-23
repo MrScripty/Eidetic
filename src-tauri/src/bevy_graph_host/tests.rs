@@ -8,13 +8,29 @@ use eidetic_core::timeline::node::StoryLevel;
 use uuid::Uuid;
 
 use super::{
-    BibleGraphHostError, BibleGraphHostStatus, DesktopBibleGraphHost,
-    DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
+    BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowCapability,
+    BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
+    DesktopBibleGraphHost, DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
 };
 
 #[test]
 fn owner_uses_bounded_command_queue() {
     assert_eq!(GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, 128);
+}
+
+#[test]
+fn renderer_window_strategy_reports_pending_native_runner() {
+    let status = BibleGraphRendererWindowStrategyStatus::current();
+
+    assert_eq!(
+        status.strategy,
+        BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
+    );
+    assert_eq!(
+        status.capability,
+        BibleGraphRendererWindowCapability::PendingNativeRunner
+    );
+    assert!(!status.visible_window_supported);
 }
 
 #[test]
@@ -30,6 +46,8 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_open: true,
             renderer_scene_ready: true,
             renderer_window_visible: false,
+            renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
+            renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_ready: false,
             renderer_window_message:
                 "graph renderer scene is ready; visible native window is pending implementation"
@@ -118,6 +136,8 @@ fn host_stop_drops_renderer_state() {
             renderer_window_open: false,
             renderer_scene_ready: false,
             renderer_window_visible: false,
+            renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
+            renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_ready: false,
             renderer_window_message: "floating graph renderer window is closed".to_string(),
             node_count: 0,

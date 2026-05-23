@@ -862,6 +862,10 @@ Completed slices:
 - `fix(desktop): keep graph focus read-only` changed the graph renderer focus
   command to report current renderer status instead of starting the renderer,
   because focusing is not meaningful until the visible native window exists.
+- `feat(desktop): add graph renderer window strategy status` added typed graph
+  renderer window strategy and capability fields so the backend projection
+  explicitly reports Bevy/winit floating-window intent and pending native runner
+  support before the visible OS window proof lands.
 
 Discovered issues:
 
@@ -912,6 +916,10 @@ Discovered issues:
 - Resolved: the graph renderer focus command started the renderer lifecycle even
   though no visible native window can be focused yet. Focus now remains a
   read-only status command until native window focus support lands.
+- Resolved: native graph renderer window capability was only represented by a
+  free-text status message. The desktop graph renderer status now reports the
+  Bevy/winit floating-window strategy and pending native-runner capability as
+  typed backend-owned projection data.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

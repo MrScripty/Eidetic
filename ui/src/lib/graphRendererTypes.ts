@@ -14,6 +14,8 @@ export interface GraphRendererStatus {
   renderer_window_open: boolean;
   renderer_scene_ready: boolean;
   renderer_window_visible: boolean;
+  renderer_window_strategy: GraphRendererWindowStrategy;
+  renderer_window_capability: GraphRendererWindowCapability;
   renderer_window_ready: boolean;
   renderer_window_message: string;
   node_count: number;
@@ -25,6 +27,10 @@ export interface GraphRendererStatus {
   influence_count: number;
   last_error: string | null;
 }
+
+export type GraphRendererWindowStrategy = 'bevy_winit_floating_window';
+
+export type GraphRendererWindowCapability = 'pending_native_runner';
 
 export type GraphRendererCommand =
   | { type: 'select_node'; node_id: BibleGraphNodeId }

@@ -1,8 +1,13 @@
 mod host;
 mod owner;
+mod window_strategy;
 
 pub use host::DesktopBibleGraphHost;
 pub use owner::{DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY};
+pub use window_strategy::{
+    BibleGraphRendererWindowCapability, BibleGraphRendererWindowStrategy,
+    BibleGraphRendererWindowStrategyStatus,
+};
 
 #[cfg(test)]
 mod tests;
@@ -13,6 +18,8 @@ pub struct BibleGraphHostStatus {
     pub renderer_window_open: bool,
     pub renderer_scene_ready: bool,
     pub renderer_window_visible: bool,
+    pub renderer_window_strategy: BibleGraphRendererWindowStrategy,
+    pub renderer_window_capability: BibleGraphRendererWindowCapability,
     pub renderer_window_ready: bool,
     pub renderer_window_message: String,
     pub node_count: usize,
