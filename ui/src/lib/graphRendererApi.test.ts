@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  closeGraphRenderer,
   drainGraphRendererCommands,
+  focusGraphRenderer,
   getGraphRendererStatus,
   getGraphRendererVisualSnapshot,
+  openGraphRenderer,
 } from './graphRendererApi.js';
 
 function installDesktopInvoke(response: unknown) {
@@ -25,6 +28,9 @@ describe('graph renderer api helpers', () => {
   it('uses the desktop graph renderer status command', async () => {
     const response = {
       running: true,
+      renderer_window_open: true,
+      renderer_window_ready: true,
+      renderer_window_message: 'floating graph renderer window lifecycle is active',
       native_panel_ready: true,
       node_count: 2,
       edge_count: 1,
@@ -40,6 +46,61 @@ describe('graph renderer api helpers', () => {
     await expect(getGraphRendererStatus()).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('graph_renderer_status', undefined);
+  });
+
+  it('opens the desktop graph renderer window with a bounded projection request', async () => {
+    const response = {
+      running: true,
+      renderer_window_open: true,
+      renderer_window_ready: true,
+      renderer_window_message: 'floating graph renderer window lifecycle is active',
+      native_panel_ready: true,
+      node_count: 2,
+      edge_count: 1,
+      native_visual_node_count: 2,
+      native_visual_edge_count: 1,
+      native_panel_width_px: 0,
+      native_panel_height_px: 0,
+      influence_count: 1,
+      last_error: null,
+    };
+    const request = {
+      graph_projection_request: {
+        selected_timeline_node_id: 'node.scene.beach',
+        neighborhood_depth: 1,
+        max_nodes: 200,
+      },
+    };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(openGraphRenderer(request)).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('graph_renderer_open', { request });
+  });
+
+  it('focuses and closes the desktop graph renderer window', async () => {
+    const response = {
+      running: true,
+      renderer_window_open: true,
+      renderer_window_ready: true,
+      renderer_window_message: 'floating graph renderer window lifecycle is active',
+      native_panel_ready: true,
+      node_count: 0,
+      edge_count: 0,
+      native_visual_node_count: 0,
+      native_visual_edge_count: 0,
+      native_panel_width_px: 0,
+      native_panel_height_px: 0,
+      influence_count: 0,
+      last_error: null,
+    };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(focusGraphRenderer()).resolves.toEqual(response);
+    await expect(closeGraphRenderer()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenNthCalledWith(1, 'graph_renderer_focus', undefined);
+    expect(invoke).toHaveBeenNthCalledWith(2, 'graph_renderer_close', undefined);
   });
 
   it('uses the desktop graph renderer command drain', async () => {

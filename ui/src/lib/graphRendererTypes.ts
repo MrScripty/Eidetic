@@ -1,11 +1,19 @@
 import type {
   BibleGraphEdgeId,
   BibleGraphNodeId,
+  BibleRenderGraphProjectionRequest,
   BibleRenderGraphPosition,
 } from './bibleGraphTypes.js';
 
+export interface OpenGraphRendererRequest {
+  graph_projection_request?: BibleRenderGraphProjectionRequest;
+}
+
 export interface GraphRendererStatus {
   running: boolean;
+  renderer_window_open: boolean;
+  renderer_window_ready: boolean;
+  renderer_window_message: string;
   native_panel_ready: boolean;
   node_count: number;
   edge_count: number;

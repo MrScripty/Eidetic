@@ -126,6 +126,9 @@ impl DesktopBibleGraphHost {
 
         BibleGraphHostStatus {
             running: self.renderer.is_some(),
+            renderer_window_open: self.renderer.is_some(),
+            renderer_window_ready: native_panel_ready,
+            renderer_window_message: renderer_window_message(self.renderer.is_some()),
             native_panel_ready,
             node_count,
             edge_count,
@@ -157,5 +160,13 @@ impl DesktopBibleGraphHost {
 
     fn catch_renderer_panic<T>(operation: impl FnOnce() -> T) -> Result<T, BibleGraphHostError> {
         catch_unwind(AssertUnwindSafe(operation)).map_err(|_| BibleGraphHostError::RendererPanic)
+    }
+}
+
+fn renderer_window_message(running: bool) -> String {
+    if running {
+        "floating graph renderer window lifecycle is active".to_string()
+    } else {
+        "floating graph renderer window is closed".to_string()
     }
 }

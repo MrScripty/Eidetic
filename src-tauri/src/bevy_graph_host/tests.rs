@@ -22,6 +22,10 @@ fn host_applies_projection_and_reports_scene_counts() {
         status,
         BibleGraphHostStatus {
             running: true,
+            renderer_window_open: true,
+            renderer_window_ready: true,
+            renderer_window_message: "floating graph renderer window lifecycle is active"
+                .to_string(),
             native_panel_ready: true,
             node_count: 2,
             edge_count: 1,
@@ -104,6 +108,9 @@ fn host_stop_drops_renderer_state() {
         status,
         BibleGraphHostStatus {
             running: false,
+            renderer_window_open: false,
+            renderer_window_ready: false,
+            renderer_window_message: "floating graph renderer window is closed".to_string(),
             native_panel_ready: false,
             node_count: 0,
             edge_count: 0,
@@ -130,6 +137,8 @@ fn owner_runs_renderer_on_dedicated_thread() {
     assert_eq!(status.native_visual_edge_count, 1);
     assert_eq!(status.influence_count, 1);
     assert!(status.running);
+    assert!(status.renderer_window_open);
+    assert!(status.renderer_window_ready);
     assert!(status.native_panel_ready);
     owner.stop().unwrap();
 }
@@ -141,6 +150,8 @@ fn owner_can_start_renderer_before_projection_arrives() {
     let status = owner.start_renderer().unwrap();
 
     assert!(status.running);
+    assert!(status.renderer_window_open);
+    assert!(status.renderer_window_ready);
     assert!(status.native_panel_ready);
     assert_eq!(status.node_count, 0);
     assert_eq!(status.edge_count, 0);

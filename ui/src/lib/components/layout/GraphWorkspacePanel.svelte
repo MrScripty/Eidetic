@@ -27,7 +27,7 @@
     graphWorkspaceEdgeItems,
     graphWorkspaceNeighborhoodItems,
   } from './graphWorkspaceItems.js';
-  import BevyViewportPanel from './BevyViewportPanel.svelte';
+  import GraphRendererWindowControls from './GraphRendererWindowControls.svelte';
 
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graph = $derived(renderGraphProjection?.payload ?? null);
@@ -102,13 +102,8 @@
     </div>
 
     <div class="graph-surface" class:has-side-lists={hasSideLists}>
-      <div class="graph-viewport-shell">
-        <BevyViewportPanel
-          viewportId="graph-main"
-          kind="graph"
-          ariaLabel="Bible graph viewport"
-          initialGraphProjectionRequest={renderGraphRequest}
-        />
+      <div class="graph-renderer-shell">
+        <GraphRendererWindowControls graphProjectionRequest={renderGraphRequest} />
         <div class="graph-outline-fallback">
           <BibleRenderGraphOutline
             projection={graph}
@@ -176,22 +171,17 @@
     border: 0;
   }
 
-  .graph-viewport-shell {
-    position: relative;
+  .graph-renderer-shell {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
     min-height: 0;
-  }
-
-  .graph-viewport-shell :global(.bevy-viewport-panel) {
-    position: absolute;
-    inset: 0;
   }
 
   .graph-outline-fallback {
-    position: relative;
-    z-index: 1;
     min-width: 0;
     min-height: 0;
+    flex: 1;
     height: 100%;
     background: var(--color-bg-primary);
   }

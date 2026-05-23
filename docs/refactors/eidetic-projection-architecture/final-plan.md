@@ -840,6 +840,10 @@ Completed slices:
 - `fix(ui): defer server event client creation` moved root-page server event
   client construction into `onMount` and added an SSR regression test so
   SvelteKit's server render no longer requires Tauri globals.
+- `feat(desktop): add floating graph renderer controls` added explicit
+  backend-owned graph renderer open, focus, and close commands, renderer-window
+  status fields, and Svelte launch/focus/status controls so graph workspace no
+  longer starts the production Bevy path through the embedded viewport panel.
 
 Discovered issues:
 
