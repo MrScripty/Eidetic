@@ -173,7 +173,7 @@
 
   <BibleRenderGraphOutline
     projection={renderGraphProjection?.payload ?? null}
-    selectedNodeId={selectedGraphNodeId}
+    selectedNodeId={renderGraphProjection?.payload.selected_node_id ?? null}
     query={searchQuery}
     onselect={handleSelect}
   />

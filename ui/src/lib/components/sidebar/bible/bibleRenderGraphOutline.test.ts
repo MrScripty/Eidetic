@@ -4,6 +4,7 @@ import type { BibleRenderGraphProjection } from '$lib/bibleGraphTypes.js';
 import { bibleRenderGraphOutlineItems } from './bibleRenderGraphOutline.js';
 
 const projection: BibleRenderGraphProjection = {
+  selected_node_id: 'node.character.ada',
   nodes: [
     {
       node_id: 'node.character.ada',
@@ -62,7 +63,7 @@ const projection: BibleRenderGraphProjection = {
 
 describe('bible render graph outline', () => {
   it('derives keyboard outline items from backend render graph projections', () => {
-    const items = bibleRenderGraphOutlineItems(projection, 'node.character.ada');
+    const items = bibleRenderGraphOutlineItems(projection);
 
     expect(items).toEqual([
       {
@@ -92,5 +93,14 @@ describe('bible render graph outline', () => {
     const items = bibleRenderGraphOutlineItems(projection, null, 'bea');
 
     expect(items.map((item) => item.node_id)).toEqual(['node.location.beach']);
+  });
+
+  it('allows callers to override projected selection with transient selection', () => {
+    const items = bibleRenderGraphOutlineItems(projection, 'node.location.beach');
+
+    expect(items.map((item) => [item.node_id, item.selected])).toEqual([
+      ['node.character.ada', false],
+      ['node.location.beach', true],
+    ]);
   });
 });

@@ -17,9 +17,10 @@ export interface BibleRenderGraphOutlineItem {
 
 export function bibleRenderGraphOutlineItems(
   projection: BibleRenderGraphProjection,
-  selectedNodeId: BibleGraphNodeId | null,
+  selectedNodeId: BibleGraphNodeId | null = projection.selected_node_id ?? null,
   query = '',
 ): BibleRenderGraphOutlineItem[] {
+  const projectedSelectedNodeId = selectedNodeId ?? projection.selected_node_id ?? null;
   const normalizedQuery = query.trim().toLowerCase();
   const neighborhoods = new Map<BibleGraphNodeId, BibleRenderGraphNeighborhood>(
     projection.neighborhoods.map((neighborhood) => [neighborhood.node_id, neighborhood]),
@@ -45,7 +46,7 @@ export function bibleRenderGraphOutlineItems(
         edge_count: neighborhood?.edge_ids.length ?? 0,
         influence_count: influenceCounts.get(node.node_id) ?? 0,
         active: influenceCounts.has(node.node_id),
-        selected: node.node_id === selectedNodeId,
+        selected: node.node_id === projectedSelectedNodeId,
       };
     });
 }

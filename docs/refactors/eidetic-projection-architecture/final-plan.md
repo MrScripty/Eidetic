@@ -1391,6 +1391,11 @@ Discovered issues:
   graph for explicit empty filters even after the SQL-backed bounded query was
   fixed. Core and SQL projection paths now agree that an explicit search or
   focus filter with no matches produces an empty bounded graph.
+- Resolved: graph outline selection display still used local transient
+  selection even though bounded render graph projections now expose the
+  selected graph node that shaped the backend response. Svelte graph outlines
+  now prefer projection-selected identity for display while preserving
+  transient selection as request input and explicit test-only override.
 
 ## Concurrent Worker Policy
 

@@ -34,6 +34,7 @@
   const contextStackProjection = $derived(getCachedContextStackProjection());
   const contextLayers = $derived(contextStackProjection?.payload.layers ?? []);
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
+  const projectedSelectedGraphNodeId = $derived(graph?.selected_node_id ?? null);
   const graphSelection = $derived(bibleState.graphSelection);
   const renderGraphRequest = $derived(
     bibleRenderGraphRequestForWorkspaceSelection({
@@ -108,7 +109,7 @@
         <div class="graph-outline-fallback">
           <BibleRenderGraphOutline
             projection={graph}
-            selectedNodeId={selectedGraphNodeId}
+            selectedNodeId={projectedSelectedGraphNodeId}
             onselect={handleSelect}
           />
         </div>
