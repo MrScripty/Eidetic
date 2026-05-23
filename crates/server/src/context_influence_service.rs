@@ -66,8 +66,10 @@ fn record_context_evaluation_at_path(
 > {
     let mut conn = crate::sqlite::open_write_connection(&path)
         .map_err(|e| BackendError::internal(e.to_string()))?;
-    let outcome = context_influence_store::record_context_evaluation(&mut conn, &command, 0)
-        .map_err(map_history_error)?;
+    let created_at_ms = command.payload.evaluation.created_at_ms;
+    let outcome =
+        context_influence_store::record_context_evaluation(&mut conn, &command, created_at_ms)
+            .map_err(map_history_error)?;
     let projection = context_influence_store::load_context_influence_projection(
         &conn,
         command.payload.evaluation.target_node_id,
@@ -141,8 +143,10 @@ fn apply_distilled_context_overrides(
 #[cfg(test)]
 mod tests {
     use eidetic_core::contracts::{
-        ContextEvaluation, ContextEvaluationId, ContextEvaluationTaskKind, ContextLayerRole,
-        ContextStackLayer,
+        BibleGraphNodeId, CommandEnvelope, ContextEvaluation, ContextEvaluationId,
+        ContextEvaluationTaskKind, ContextInfluenceKind, ContextInfluenceProvenance,
+        ContextInfluenceRecord, ContextLayerRole, ContextStackLayer,
+        RecordContextEvaluationCommand,
     };
     use eidetic_core::timeline::node::{NodeId, StoryLevel};
 
@@ -189,5 +193,68 @@ mod tests {
             Some("Refined parent context.")
         );
         assert!(projection.layers[1].distilled_context.is_none());
+    }
+
+    #[test]
+    fn context_evaluation_history_uses_payload_timestamp() {
+        let path = std::env::temp_dir().join(format!(
+            "eidetic-context-evaluation-{}.sqlite",
+            uuid::Uuid::new_v4()
+        ));
+        let command = context_evaluation_command(42_000);
+
+        record_context_evaluation_at_path(path.clone(), command.clone()).unwrap();
+
+        let conn = rusqlite::Connection::open(&path).unwrap();
+        let command_created_at_ms: i64 = conn
+            .query_row(
+                "SELECT created_at_ms FROM commands WHERE id = ?1",
+                [command.id.0.to_string()],
+                |row| row.get(0),
+            )
+            .unwrap();
+        let event_created_at_ms: i64 = conn
+            .query_row(
+                "SELECT created_at_ms FROM change_events WHERE command_id = ?1",
+                [command.id.0.to_string()],
+                |row| row.get(0),
+            )
+            .unwrap();
+
+        assert_eq!(command_created_at_ms, 42_000);
+        assert_eq!(event_created_at_ms, 42_000);
+
+        std::fs::remove_file(path).unwrap();
+    }
+
+    fn context_evaluation_command(
+        created_at_ms: u64,
+    ) -> CommandEnvelope<RecordContextEvaluationCommand> {
+        let target_node_id = NodeId::new();
+        let evaluation_id = ContextEvaluationId::new();
+        CommandEnvelope::new(RecordContextEvaluationCommand {
+            evaluation: ContextEvaluation {
+                id: evaluation_id,
+                target_node_id,
+                task_kind: ContextEvaluationTaskKind::GenerateTimelineContext,
+                summary: "Scene context evaluation".to_string(),
+                distilled_context: Some("Harbor weather shapes the scene.".to_string()),
+                created_at_ms,
+            },
+            influences: vec![ContextInfluenceRecord {
+                id: eidetic_core::contracts::ContextInfluenceId::new(),
+                evaluation_id,
+                timeline_node_id: target_node_id,
+                source_layer: StoryLevel::Scene,
+                influence_kind: ContextInfluenceKind::Direct,
+                confidence: 0.91,
+                reason: "Scene takes place at the harbor.".to_string(),
+                provenance: ContextInfluenceProvenance::AiSelected,
+                bible_node_id: Some(BibleGraphNodeId::new("node.place.harbor").unwrap()),
+                bible_edge_id: None,
+                introduced_by_node_id: Some(target_node_id),
+                sort_order: 1,
+            }],
+        })
     }
 }

@@ -1178,6 +1178,11 @@ Discovered issues:
   to timeline node recap text. Lower hierarchy layers can consume refined
   parent context from backend-owned context evaluation history without
   re-evaluating the whole bible graph in Svelte or Bevy.
+- Resolved: context evaluation service writes now use the evaluation payload's
+  `created_at_ms` for command and change-event history instead of recording
+  zero-valued timestamps. This keeps context influence history review,
+  before/after traceability, and undo/redo ordering aligned with the actual
+  evaluation time.
 - Resolved: `AppShell.svelte` is back under the component decomposition
   threshold. Central workspace rendering now lives in `AppWorkspace.svelte`,
   graph detail selection lives in `GraphRightInspector.svelte`, and AI status
