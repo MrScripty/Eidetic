@@ -59,8 +59,13 @@ pub(crate) fn load_bounded_render_graph(
         node_ids.extend(load_default_node_ids(conn, max_nodes)?);
     }
 
+    let required_node_ids = node_ids.clone();
     let ids_with_ancestors = include_ancestors(conn, &node_ids)?;
-    let nodes = load_nodes_by_id(conn, &ids_with_ancestors)?;
+    let nodes = limit_nodes(
+        load_nodes_by_id(conn, &ids_with_ancestors)?,
+        &required_node_ids,
+        request.max_nodes as usize,
+    );
     let node_ids: Vec<_> = nodes.iter().map(|node| node.id.clone()).collect();
     let edges = bible_graph_edge_store::load_edges_between_nodes(conn, &node_ids)?;
 
@@ -270,6 +275,37 @@ fn load_nodes_by_id(
         nodes.push(row?);
     }
     Ok(nodes)
+}
+
+fn limit_nodes(
+    nodes: Vec<BibleGraphNode>,
+    required_node_ids: &BTreeSet<BibleGraphNodeId>,
+    max_nodes: usize,
+) -> Vec<BibleGraphNode> {
+    let mut included_node_ids = BTreeSet::new();
+    let mut limited = Vec::new();
+
+    for node in nodes
+        .iter()
+        .filter(|node| required_node_ids.contains(&node.id))
+    {
+        if limited.len() >= max_nodes {
+            return limited;
+        }
+        included_node_ids.insert(node.id.clone());
+        limited.push(node.clone());
+    }
+
+    for node in nodes {
+        if limited.len() >= max_nodes {
+            break;
+        }
+        if included_node_ids.insert(node.id.clone()) {
+            limited.push(node);
+        }
+    }
+
+    limited
 }
 
 fn load_node_ids<P>(

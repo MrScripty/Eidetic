@@ -119,6 +119,39 @@ fn render_graph_projection_queries_focused_root_descendants() {
 }
 
 #[test]
+fn render_graph_projection_keeps_ancestor_expansion_within_node_limit() {
+    let mut conn = memory_connection();
+    seed_parented_node(&mut conn, "node.root", None, "Root", 1);
+    seed_parented_node(&mut conn, "node.root.child", Some("node.root"), "Child", 2);
+    seed_parented_node(
+        &mut conn,
+        "node.root.grandchild",
+        Some("node.root.child"),
+        "Grandchild",
+        3,
+    );
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(BibleGraphNodeId::new("node.root.grandchild").unwrap()),
+            neighborhood_depth: 1,
+            max_nodes: 1,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    let node_ids: Vec<_> = projection
+        .payload
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(node_ids, vec!["node.root.grandchild"]);
+}
+
+#[test]
 fn render_graph_projection_includes_selected_timeline_influences() {
     let mut conn = memory_connection();
     let timeline_node_id = NodeId::new();

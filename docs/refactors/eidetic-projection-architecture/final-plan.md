@@ -1114,6 +1114,10 @@ Discovered issues:
   attachment status. A mounted graph viewport reports `pending_attachment` until
   a future desktop surface strategy attaches Bevy to the panel, which prevents
   renderer lifecycle readiness from being mistaken for visible graph rendering.
+- Resolved: the SQL-backed bounded bible render graph query now reapplies the
+  normalized `max_nodes` limit after ancestor expansion. This prevents focused
+  node, focused root, or influence queries from exceeding the backend projection
+  size boundary while preserving required node priority inside the limit.
 
 ## Concurrent Worker Policy
 
