@@ -1333,6 +1333,11 @@ Discovered issues:
   into the renderer child-window lifecycle state for the embedding experiment.
   Production graph rendering no longer depends on that parent id; it should use
   backend-owned floating renderer window lifecycle instead.
+- Resolved: the frontend graph renderer command-drain bridge accepted invalid
+  polling intervals and lacked teardown coverage for commands that resolve
+  after the drain stops. The bridge now normalizes invalid intervals to the
+  default cadence and proves pending renderer commands are not applied after
+  teardown.
 
 ## Concurrent Worker Policy
 

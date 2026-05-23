@@ -2,6 +2,8 @@ import { drainGraphRendererCommands } from '$lib/graphRendererApi.js';
 import type { GraphRendererCommand } from '$lib/graphRendererTypes.js';
 import { applyGraphRendererCommands } from './graphRendererCommands.js';
 
+const DEFAULT_GRAPH_RENDERER_COMMAND_DRAIN_INTERVAL_MS = 100;
+
 export interface GraphRendererCommandDrainOptions {
   intervalMs?: number;
   drain?: () => Promise<GraphRendererCommand[]>;
@@ -19,8 +21,15 @@ function stopInterval(handle: unknown): void {
   clearInterval(handle as ReturnType<typeof setInterval>);
 }
 
+function normalizeIntervalMs(intervalMs: number): number {
+  if (!Number.isFinite(intervalMs) || intervalMs <= 0) {
+    return DEFAULT_GRAPH_RENDERER_COMMAND_DRAIN_INTERVAL_MS;
+  }
+  return intervalMs;
+}
+
 export function startGraphRendererCommandDrain({
-  intervalMs = 100,
+  intervalMs = DEFAULT_GRAPH_RENDERER_COMMAND_DRAIN_INTERVAL_MS,
   drain = drainGraphRendererCommands,
   apply = applyGraphRendererCommands,
   onError,
@@ -50,7 +59,7 @@ export function startGraphRendererCommandDrain({
 
   const interval = setIntervalFn(() => {
     void tick();
-  }, intervalMs);
+  }, normalizeIntervalMs(intervalMs));
   void tick();
 
   return () => {

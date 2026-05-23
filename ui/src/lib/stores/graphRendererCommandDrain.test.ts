@@ -57,4 +57,43 @@ describe('graph renderer command drain lifecycle', () => {
     expect(apply).toHaveBeenCalledTimes(1);
     stop();
   });
+
+  it('drops commands that resolve after the drain is stopped', async () => {
+    let resolveDrain: (commands: GraphRendererCommand[]) => void = () => {};
+    const drain = vi.fn(
+      () =>
+        new Promise<GraphRendererCommand[]>((resolve) => {
+          resolveDrain = resolve;
+        }),
+    );
+    const apply = vi.fn();
+
+    const stop = startGraphRendererCommandDrain({
+      drain,
+      apply,
+      setIntervalFn: vi.fn().mockReturnValue(1),
+      clearIntervalFn: vi.fn(),
+    });
+
+    stop();
+    resolveDrain([{ type: 'inspect_node', node_id: 'node.ada' }]);
+    await Promise.resolve();
+
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it('normalizes invalid polling intervals to the default cadence', () => {
+    const setIntervalFn = vi.fn().mockReturnValue(1);
+
+    const stop = startGraphRendererCommandDrain({
+      intervalMs: 0,
+      drain: vi.fn().mockResolvedValue([]),
+      apply: vi.fn(),
+      setIntervalFn,
+      clearIntervalFn: vi.fn(),
+    });
+
+    expect(setIntervalFn).toHaveBeenCalledWith(expect.any(Function), 100);
+    stop();
+  });
 });
