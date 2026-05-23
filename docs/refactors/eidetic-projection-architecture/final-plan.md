@@ -1352,6 +1352,11 @@ Discovered issues:
   reads now report the missing projection/window state without creating
   renderer lifecycle state, preserving backend-owned lifecycle boundaries for
   read-only diagnostics.
+- Resolved: the graph workspace transient node selection did not participate in
+  the bounded render graph request, so selecting a bible node could not ask the
+  backend for that node's neighborhood. Workspace projection requests now carry
+  both selected timeline context and selected graph node focus while keeping
+  durable graph data backend-owned.
 
 ## Concurrent Worker Policy
 

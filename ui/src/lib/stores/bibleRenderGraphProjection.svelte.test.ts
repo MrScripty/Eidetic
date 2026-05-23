@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getBibleRenderGraphProjection } from '$lib/projectionApi.js';
 import {
   bibleRenderGraphRequestForTimelineSelection,
+  bibleRenderGraphRequestForWorkspaceSelection,
   bibleRenderGraphProjectionState,
   clearBibleRenderGraphProjection,
   getCachedBibleRenderGraphProjection,
@@ -92,6 +93,20 @@ describe('bible render graph projection store', () => {
       max_nodes: 200,
     });
     expect(bibleRenderGraphRequestForTimelineSelection(null)).toEqual({
+      neighborhood_depth: 1,
+      max_nodes: 200,
+    });
+  });
+
+  it('builds bounded graph workspace requests with selected node neighborhoods', () => {
+    expect(
+      bibleRenderGraphRequestForWorkspaceSelection({
+        selectedTimelineNodeId: 'node.scene.beach',
+        selectedGraphNodeId: 'node.character.ada',
+      }),
+    ).toEqual({
+      selected_timeline_node_id: 'node.scene.beach',
+      selected_node_id: 'node.character.ada',
       neighborhood_depth: 1,
       max_nodes: 200,
     });

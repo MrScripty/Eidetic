@@ -30,8 +30,21 @@ export function getCachedBibleRenderGraphProjection(): ProjectionEnvelope<BibleR
 export function bibleRenderGraphRequestForTimelineSelection(
   selectedTimelineNodeId: string | null | undefined,
 ): BibleRenderGraphProjectionRequest {
+  return bibleRenderGraphRequestForWorkspaceSelection({
+    selectedTimelineNodeId,
+  });
+}
+
+export function bibleRenderGraphRequestForWorkspaceSelection({
+  selectedTimelineNodeId,
+  selectedGraphNodeId,
+}: {
+  selectedTimelineNodeId?: string | null;
+  selectedGraphNodeId?: string | null;
+}): BibleRenderGraphProjectionRequest {
   return {
     ...(selectedTimelineNodeId ? { selected_timeline_node_id: selectedTimelineNodeId } : {}),
+    ...(selectedGraphNodeId ? { selected_node_id: selectedGraphNodeId } : {}),
     neighborhood_depth: DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH,
     max_nodes: DEFAULT_RENDER_GRAPH_MAX_NODES,
   };

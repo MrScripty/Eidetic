@@ -11,7 +11,7 @@
   } from '$lib/stores/bible.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import {
-    bibleRenderGraphRequestForTimelineSelection,
+    bibleRenderGraphRequestForWorkspaceSelection,
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
@@ -36,7 +36,10 @@
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const graphSelection = $derived(bibleState.graphSelection);
   const renderGraphRequest = $derived(
-    bibleRenderGraphRequestForTimelineSelection(editorState.selectedNodeId),
+    bibleRenderGraphRequestForWorkspaceSelection({
+      selectedTimelineNodeId: editorState.selectedNodeId,
+      selectedGraphNodeId: selectedGraphNodeId,
+    }),
   );
   const edgeItems = $derived(graph ? graphWorkspaceEdgeItems(graph) : []);
   const neighborhoodItems = $derived(graph ? graphWorkspaceNeighborhoodItems(graph) : []);
@@ -53,9 +56,7 @@
 
   $effect(() => {
     const selectedTimelineNodeId = editorState.selectedNodeId;
-    void refreshBibleRenderGraphProjection(
-      bibleRenderGraphRequestForTimelineSelection(selectedTimelineNodeId),
-    ).catch(() => {});
+    void refreshBibleRenderGraphProjection(renderGraphRequest).catch(() => {});
 
     if (!selectedTimelineNodeId) {
       clearContextStackProjection();
