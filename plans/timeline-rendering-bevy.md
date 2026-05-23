@@ -20,9 +20,11 @@ The main timeline should not be rendered as ordinary Svelte DOM.
 
 The timeline is expected to update frequently and support visually complex realtime behavior that typical DOM timeline rendering will not handle well enough.
 
-Use Svelte for the surrounding application shell, panels, forms, and inspectors, but move the main NLE/timeline viewport to a realtime renderer.
+Use Svelte for the surrounding application shell, panels, forms, and
+inspectors, but move the main NLE/timeline visual surface to a realtime
+renderer.
 
-Bevy is the target renderer for the main timeline viewport.
+Bevy is the target renderer for the main timeline visual surface.
 
 Hard requirements:
 
@@ -59,7 +61,7 @@ Svelte should own:
 
 Bevy should own:
 
-- main timeline viewport,
+- main timeline visual surface,
 - track and clip rendering,
 - realtime interaction hit-testing,
 - drag/resize/trim/split interactions,
@@ -70,7 +72,10 @@ Bevy should own:
 - zoom/pan camera behavior,
 - realtime visual effects and previews.
 
-The server/core remains authoritative for project state. Bevy renders a client-side projection, then dispatches commands back to the API or a future local command bridge. The projection is a versioned read model that can be discarded and rebuilt from backend state at any time.
+The server/core remains authoritative for project state. Bevy renders a
+projection, then dispatches command intents through the backend-owned desktop
+command/event path. The projection is a versioned read model that can be
+discarded and rebuilt from backend state at any time.
 
 ## Timeline Scene Model
 
@@ -173,19 +178,19 @@ Production target:
 - Tauri owns the standalone desktop application shell.
 - Svelte remains the WebView UI shell for non-renderer panels and accessible
   command alternatives.
-- Bevy runs as a native desktop renderer, not as a browser/WASM canvas.
+- Bevy runs as an app-managed floating native renderer window, not as a browser/
+  WASM canvas, not as a WebView-embedded child surface, and not as a renderer
+  sidecar that owns business logic.
+- The floating renderer host is owned by the desktop runtime/composition root.
+  Svelte may launch, focus, close, and display status for the renderer window,
+  but must not own renderer lifecycle, durable timeline state, command queues,
+  or projection subscriptions.
 
-Native integration choices may still vary by implementation slice:
+Rejected production paths:
 
-1. Native Bevy viewport embedded/inset beside the Tauri WebView.
-2. Split-process native Bevy renderer communicating over bounded local IPC.
-3. Temporary separate Bevy window for early smoke validation only, not a final
-   product UX.
-
-Rejected production path:
-
-- Bevy compiled to WASM and rendered into a Svelte canvas. Eidetic is a
-  desktop application, and the renderer should use the native Bevy path.
+- Bevy compiled to WASM and rendered into a Svelte canvas.
+- Native Bevy child surfaces embedded/inset inside the Tauri WebView.
+- Split-process native Bevy renderer IPC as the production renderer path.
 
 ## Interaction Contract
 
@@ -213,8 +218,17 @@ Specific renderer requirements:
 - Bevy must not own canonical timeline, script, bible, propagation, selection, or history state.
 - Selection that affects business logic must be backend-confirmed or submitted as command input.
 - No optimistic updates for backend-owned state. Bevy can show transient previews while dragging, but committed state changes only after backend confirmation.
-- Bevy, native renderer, Tauri, or IPC dependencies must stay in a leaf
-  crate/package and out of `eidetic-core`.
+- Bevy, native renderer, and Tauri command/event dependencies must stay in a
+  leaf crate/package and out of `eidetic-core`.
+- Embedded WebView child-surface code, WASM bridges, local HTTP/WebSocket
+  fallbacks, and split-process renderer-sidecar paths are not supported
+  production timeline paths.
+- Renderer window lifecycle must have one owner, tracked tasks/threads, bounded
+  command queues, deterministic shutdown, panic reporting, and checked
+  dimension arithmetic before allocation or hit testing.
+- Platform-specific renderer/window behavior must live behind desktop runtime
+  strategy modules, not in timeline business logic, projection adapters, or
+  Svelte stores.
 - Renderer bridge payloads are trust boundaries and must be validated on receipt.
 - Renderer lifecycle must define initialization, teardown, event unsubscribe, cancellation, panic/error handling, and queue overflow behavior.
 - Queues/events between backend, Svelte, and Bevy must be bounded.
@@ -224,8 +238,8 @@ Specific renderer requirements:
 
 ## Open Questions
 
-- Should the production native Bevy host be embedded/inset in the Tauri window
-  or run as a split-process native renderer?
+- Should the graph and timeline use separate floating renderer windows, or a
+  shared floating renderer window with graph/timeline modes?
 - How should text rendering be handled for dense clip labels?
 - Should timeline hit-testing live entirely in Bevy?
 - How should Bevy receive state updates: full snapshots, diffs, or command/event streams?
@@ -246,7 +260,7 @@ Recommended path:
    review.
 4. Define any missing renderer-facing timeline projection DTOs around context
    chunks, overlays, and script-generation coverage.
-5. Prototype a native Bevy timeline viewport with read-only tracks/context
+5. Prototype a native Bevy timeline renderer window with read-only tracks/context
    chunks.
 6. Add pan/zoom/playhead behavior.
 7. Add selection and hit-testing.

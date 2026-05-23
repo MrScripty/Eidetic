@@ -589,13 +589,14 @@ Current behavior:
 
 Plan impact:
 
-- Bevy should own the timeline viewport, hit testing, drag/resize, overlays, arcs, and dense realtime visuals.
+- Bevy should own the floating timeline renderer window, hit testing,
+  drag/resize, overlays, arcs, and dense realtime visuals.
 - Svelte should own shell panels and command forms.
 
 Blast radius:
 
 - Build system and asset pipeline.
-- Frontend embedding strategy.
+- Desktop floating renderer window strategy.
 - Timeline interaction contract.
 - UI test strategy.
 - Accessibility command alternatives for operations that move into canvas/WebGPU/WebGL.
@@ -1343,8 +1344,10 @@ Current role:
 
 Plan effect:
 
-- Replace main rendering with Bevy host and bridge.
-- Delete the DOM/SVG clip timeline as a renderer once the Bevy host owns the target timeline viewport.
+- Replace main rendering with a backend-owned floating Bevy renderer window and
+  Svelte launch/focus/status controls.
+- Delete the DOM/SVG clip timeline as a renderer once the Bevy renderer window
+  owns the target timeline visual surface.
 - Keep Svelte only for toolbar, forms, side panels, and accessibility command alternatives.
 
 Anti-patterns to avoid:
@@ -1352,11 +1355,13 @@ Anti-patterns to avoid:
 - Maintaining DOM/SVG clips and Bevy clips as parallel renderers.
 - Treating the old DOM/SVG timeline as a fallback runtime path after the Bevy timeline is active.
 - Reusing `timelineState` as both Bevy scene state and backend projection state.
+- Reintroducing embedded WebView child-surface, WASM, local HTTP/WebSocket, or
+  split-process renderer-sidecar paths as timeline production paths.
 
 Simplification opportunity:
 
 ```text
-timeline/BevyTimelineHost.svelte
+timeline/TimelineRendererWindowControls.svelte
 timeline/TimelineToolbar.svelte
 timeline/TimelineA11yCommandList.svelte
 timeline/TimelineInspectorPanel.svelte
@@ -1378,17 +1383,20 @@ Current role:
 
 Plan effect:
 
-- Replace with Bevy 3D bible graph plus Svelte filters/detail/inspection.
+- Replace with a floating Bevy 3D bible graph window plus Svelte filters,
+  launch/focus/status controls, detail, and inspection.
 
 Anti-patterns to avoid:
 
 - Treating 3D graph as the only way to edit or inspect facts.
 - Rendering the full canonical graph instead of a useful projection/neighborhood.
+- Treating the floating Bevy window as a second graph state owner.
+- Continuing the superseded embedded WebView child-surface path.
 
 Simplification opportunity:
 
 ```text
-relationship/BevyBibleGraphHost.svelte
+relationship/BibleGraphRendererWindowControls.svelte
 relationship/BibleGraphFilters.svelte
 relationship/BibleGraphInspector.svelte
 ```
@@ -1686,8 +1694,8 @@ BibleGraphPanel
 BibleSchemaEditor
 ChangeReviewPanel
 PropagationInspector
-BevyTimelineHost
-BevyBibleGraphHost
+TimelineRendererWindowControls
+BibleGraphRendererWindowControls
 ```
 
 ### Command Layer And Correct-By-Construction Types
@@ -1986,13 +1994,20 @@ Implications:
 ### Phase 6: Add Bevy renderers
 
 - Start with read-only render projections.
-- Add selection and viewport sync.
+- Add the shared floating renderer window host before graph/timeline native
+  rendering.
+- Retire or quarantine the superseded embedded WebView child-surface path before
+  extending renderer behavior.
+- Add selection and renderer status/focus sync through backend-owned command
+  and projection paths.
 - Add timeline editing commands.
 - Add graph interaction commands.
 - Remove the old DOM/SVG timeline renderer once Bevy projections cover the target timeline interactions.
 - Do not keep a DOM/SVG timeline fallback after the Bevy timeline is active.
 - Replace the 2D SVG relationship graph with the Bevy bible graph once graph projections cover the target interactions.
 - Keep Bevy dependency isolated in a leaf crate/package with written dependency-cost justification.
+- Keep platform-specific window behavior behind desktop runtime strategy
+  modules, with typed status for unsupported capabilities.
 - Add keyboard-accessible Svelte command alternatives and pointer/focus smoke checks for Bevy surfaces before shipping Bevy as the only timeline renderer.
 
 ## Main Design Risks

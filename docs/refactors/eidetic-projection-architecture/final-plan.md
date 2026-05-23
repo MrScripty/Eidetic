@@ -17,9 +17,10 @@ This execution plan consolidates the discovery notes in:
 - `plans/story-bible-3d-graph-view.md`
 - `plans/architecture-blast-radius.md`
 - Current product direction: finish making Svelte a projection consumer while
-  adding borderless embedded Bevy viewport panels for realtime surfaces. The
-  bible graph uses the shared viewport host first; the timeline reuses that
-  host later instead of inventing a separate renderer embedding path.
+  adding backend-owned floating Bevy renderer windows for realtime surfaces.
+  The bible graph uses the shared floating renderer host first; the timeline
+  reuses that host later instead of embedding Bevy into the WebView or running
+  a renderer sidecar as a second application layer.
 
 ## Standards Reviewed
 
@@ -77,10 +78,26 @@ Architecture and package boundaries:
   projections, own only transient camera/hover/animation/simulation state, and
   emit validated command requests. They must not own persistence, AI workflows,
   durable selections, or project facts.
-- Borderless embedded Bevy viewport panels are the supported native visual
-  surface for graph and timeline work. The viewport host owns panel bounds,
-  resize, focus, input routing, projection subscription, command draining, and
-  teardown; renderer crates own only the scene state for their viewport kind.
+- App-managed floating Bevy renderer windows are the supported native visual
+  surface for graph and timeline work. The desktop renderer host owns window
+  lifecycle, focus/status, projection subscription, command draining, and
+  teardown; renderer crates own only disposable scene state for their renderer
+  kind. The Bevy renderer must not own business logic or canonical project
+  state. A split-process renderer transport is not the production target and
+  would require a separate standards review before being introduced.
+- The floating renderer host is infrastructure owned by the desktop
+  composition root. Svelte components may request launch/focus/close and render
+  status projections, but they must not own renderer lifecycle state machines,
+  background task handles, command queues, or projection subscriptions.
+- The superseded embedded viewport/child-surface code path must be retired,
+  renamed, or quarantined before more renderer behavior is added. New Milestone
+  8 or 11 implementation must not extend X11-only WebView child-window
+  attachment APIs as a production path.
+- Any platform-specific renderer/window behavior must live behind a
+  platform-strategy/factory boundary selected by the desktop composition root.
+  Do not put `cfg`, OS checks, raw-window-handle branching, or Wayland/X11/
+  Win32/AppKit logic in domain services, Svelte stores, graph/timeline
+  projection adapters, or renderer-independent contracts.
 - Svelte owns projection caches, local form drafts, focus, filters, hover,
   panel sizing, and other transient UI state only. Backend-owned data must not
   be optimistically mutated in stores or components.
@@ -123,6 +140,11 @@ Concurrency, lifecycle, and recovery:
 - Every background task, renderer bridge, provider call loop, event pump, or
   agent workflow must have a single lifecycle owner with tracked handles,
   cancellation, shutdown, panic logging, and deterministic cleanup.
+- Floating renderer windows must have an explicit owner with idempotent
+  start/focus/close operations, tracked renderer thread/task handles, bounded
+  command queues, cancellation or stop signaling, shutdown joining, panic
+  reporting, and restart/reopen behavior documented before native render work
+  proceeds.
 - Queues that accept frontend, renderer, provider, or tool input must be
   bounded and must document whether overflow rejects, drops, or backpressures.
 - No detached `tokio::spawn` patterns are allowed. No synchronous or parking
@@ -136,6 +158,11 @@ Interop and security:
 - Tauri commands/events, Bevy bridges, model-provider responses, agent tool
   calls, imported/exported artifacts, URLs, paths, and persisted command
   payloads are trust boundaries.
+- Floating renderer requests, size/placement hints, command drains, selection
+  intents, and renderer status payloads are trust boundaries. Validate incoming
+  IDs/enums/dimensions before dispatch, use checked arithmetic before renderer
+  allocation or hit-test math, and reject malformed renderer commands before
+  any backend mutation.
 - Validate once at the boundary into typed/newtyped values, reject unknown or
   malformed payloads before dispatch, then pass validated values inward.
 - Provider URLs and external reference URLs must be parsed and scheme/host
@@ -158,6 +185,10 @@ Frontend and accessibility:
 - Every critical Bevy/canvas graph or timeline action must have a
   keyboard-accessible Svelte command alternative backed by the same backend
   command path.
+- Floating renderer launch/focus/close controls must use semantic controls,
+  accessible names, visible focus states, Escape/close behavior where
+  applicable, and focus return to the invoking Svelte control after a renderer
+  window is closed.
 - Frontend tests must use accessible selectors where possible and include
   keyboard interaction coverage for new graph, timeline, affect, and proposal
   controls.
@@ -168,6 +199,10 @@ Dependencies, tooling, and release:
   leaf crates/packages that directly execute them. If a dependency adds 100+
   transitive dependencies, document the justification and feature-gate it where
   practical.
+- Native window/render features for Bevy must be dependency-reviewed as part of
+  the renderer-owning crate, with `cargo tree`/feature notes proving the cost is
+  isolated from `eidetic-core`, `eidetic-server` query logic, and Svelte build
+  tooling.
 - Dependency ownership must match the execution boundary. Package-local
   commands must declare their own runtime/test/build dependencies instead of
   relying on root hoisting or incidental transitive crates.
@@ -960,7 +995,7 @@ Discovered issues:
 - Resolved: the native graph renderer owner now has projection refresh
   plumbing from backend mutation events. The desktop bridge refreshes the
   backend-owned bible render graph projection into the renderer thread only
-  while a graph viewport is mounted.
+  while a graph renderer window is active.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined
@@ -1053,33 +1088,32 @@ Discovered issues:
   lifecycle, so Bevy selections would not reach the Svelte detail/review
   surfaces. The workspace now starts a bounded drain loop on mount and applies
   validated renderer commands to transient graph selection only.
-- Resolved: Milestone 8 named a shared embedded viewport host but the desktop
-  runtime did not have an executable host contract. Tauri now manages a
-  validated embedded viewport host for borderless graph/timeline panel
-  lifecycle state, including viewport kind, panel bounds, focus, status, and
-  unmount operations.
-- Resolved: the frontend did not have a typed embedded viewport IPC contract or
-  reusable borderless viewport panel component. The UI now has viewport
-  mount/resize/focus/unmount helpers, bounds normalization tests, and a
-  borderless Svelte panel lifecycle surface ready for graph/timeline viewports.
-- Resolved: the central graph workspace did not mount the embedded viewport
-  lifecycle surface. Graph workspace mode now mounts the `graph-main`
-  borderless viewport panel while the Svelte outline remains the temporary
-  visible semantic graph until the native Bevy render target is connected.
-- Resolved: graph viewport lifecycle now drives the desktop graph renderer
-  owner. Mounting a graph viewport starts the native Bevy graph projection
-  consumer, and unmounting the final graph viewport stops it without affecting
-  future timeline viewports.
+- Superseded: Milestone 8 previously named a shared embedded viewport host and
+  the desktop runtime added a command-side lifecycle registry for graph/timeline
+  panel state. That registry must now be replaced or renamed around floating
+  renderer window lifecycle before more renderer work lands.
+- Superseded: the frontend added embedded viewport helpers and a borderless
+  Svelte panel lifecycle surface for graph/timeline viewports. Those APIs
+  should not be extended as a production path; Svelte should expose floating
+  renderer launch/focus/status/close controls instead.
+- Superseded: graph workspace mode mounted the `graph-main` borderless viewport
+  panel while the Svelte outline remained the temporary visible semantic graph.
+  The visible graph replacement now targets an app-managed floating Bevy graph
+  window.
+- Superseded: graph viewport lifecycle currently starts the desktop graph
+  renderer owner. The next renderer slice must move this lifecycle trigger to
+  the floating renderer host so graph/timeline windows share one standards-
+  compliant lifecycle owner.
 - Open: the central graph workspace still uses the Svelte outline as the
   visible graph surface while Bevy is a projection/command consumer. Finishing
-  Milestone 8 still requires native Bevy viewport integration with a fresh
-  render/window dependency review before replacing the Svelte outline as the
-  central visual graph.
+  Milestone 8 now requires app-managed floating Bevy graph window integration
+  with a fresh render/window dependency review before replacing the Svelte
+  outline as the primary visual graph.
 - Resolved: the fresh Bevy 0.18.1 graph-render dependency review confirmed the
   graph crate currently enables only the `std` feature and keeps Bevy isolated
   to the leaf renderer. Native visual rendering must land in a separate slice
-  that embeds a borderless panel inside Tauri, resizes from
-  `EmbeddedViewportBounds`, and proves a minimal scene before graph nodes/edges
+  that opens an app-managed floating renderer window, accepts backend-owned
+  projection updates, and proves a minimal scene before graph nodes/edges
   replace the Svelte outline.
 - Resolved: graph visual styling is now renderer-owned instead of being a
   future Svelte concern. The Bevy bible graph leaf crate derives disposable
@@ -1093,27 +1127,26 @@ Discovered issues:
 - Resolved: native Bevy graph rendering now has an explicit opt-in feature gate
   instead of expanding the default renderer dependency surface. The
   `native_render` feature enables the reviewed Bevy 2D render/window/winit stack
-  with Linux Wayland/X11 backends and starts with a plugin-level borderless
-  panel intent resource before any graph node or edge render systems are added.
-- Resolved: the native graph renderer now has a feature-gated borderless panel
-  scene setup that records Eidetic graph colors, sets the Bevy clear color, and
-  spawns exactly one marked `Camera2d` without opening a window. Actual Tauri
-  surface embedding remains a separate lifecycle slice.
+  with Linux Wayland/X11 backends. Existing borderless-panel naming should be
+  retired or isolated as part of the floating renderer host slice.
+- Resolved: the native graph renderer now has a feature-gated scene setup that
+  records Eidetic graph colors, sets the Bevy clear color, and spawns exactly
+  one marked `Camera2d`. The remaining work is floating window lifecycle, not
+  Tauri surface embedding.
 - Resolved: the desktop graph host now enables the graph renderer's
-  `native_render` feature and starts the renderer through the native-panel
-  constructor. Renderer status exposes `native_panel_ready` as a diagnostic so
-  UI and smoke checks can distinguish a running projection bridge from a native
-  panel scene that has actually initialized.
-- Open: the current embedded viewport host is still a Tauri command-side bounds
-  and lifecycle registry. It does not yet own or attach a native child surface
-  for Bevy inside the Svelte panel, so the graph workspace can start a native
-  Bevy panel scene but cannot yet display that scene in the app layout. The next
-  viewport slice must add an explicit desktop surface attachment strategy before
-  graph nodes and edges are rendered visibly.
-- Resolved: embedded viewport state now includes a typed native surface
-  attachment status. A mounted graph viewport reports `pending_attachment` until
-  a future desktop surface strategy attaches Bevy to the panel, which prevents
-  renderer lifecycle readiness from being mistaken for visible graph rendering.
+  `native_render` feature and starts the renderer through the current native
+  constructor. Renderer status diagnostics should be renamed from panel-centric
+  readiness to floating renderer window readiness in the next lifecycle slice.
+- Superseded: the current embedded viewport host is still a Tauri command-side
+  bounds and lifecycle registry and does not own or attach a native child
+  surface for Bevy inside the Svelte panel. This child-surface embedding path is
+  no longer the production target. The next renderer slice must replace or
+  rename that host around floating renderer window lifecycle instead of adding
+  platform-specific WebView child-surface attachment.
+- Superseded: embedded viewport state includes a typed native surface
+  attachment status. That diagnostic can remain while the experiment is removed
+  or retired, but production graph rendering should report floating renderer
+  window lifecycle/readiness instead of panel attachment readiness.
 - Resolved: the SQL-backed bounded bible render graph query now reapplies the
   normalized `max_nodes` limit after ancestor expansion. This prevents focused
   node, focused root, or influence queries from exceeding the backend projection
@@ -1133,9 +1166,9 @@ Discovered issues:
   waiting for an unrelated bible or timeline mutation.
 - Resolved: desktop validation exposed dead-code warnings for the planned
   native surface attachment transition state. Those future-use APIs are now
-  marked with explicit lint-allow reasons tied to the remaining Milestone 8
-  viewport slice, keeping checks warning-clean without pretending the surface
-  attachment is already implemented.
+  marked with explicit lint-allow reasons, but the remaining Milestone 8
+  renderer slice should retire or replace the attachment state with floating
+  renderer window lifecycle state.
 - Resolved: the desktop Bevy projection bridge now maps context influence
   change events into selected-timeline bounded render graph requests for the
   affected timeline node instead of refreshing the renderer with the default
@@ -1143,7 +1176,7 @@ Discovered issues:
 - Resolved: the native Bevy graph panel now rebuilds projection-derived visual
   node and edge components inside the renderer ECS whenever a projection lands.
   This prepares the native scene to render graph primitives from backend-owned
-  projections while the separate Tauri child-surface attachment remains open.
+  projections while the visible floating renderer window lifecycle remains open.
 - Resolved: feature-enabled graph crate tests exposed that plain renderer apps
   compiled with `native_render` could try to update native visual resources
   without installing the native plugin. Native visual rebuilds now no-op unless
@@ -1153,46 +1186,42 @@ Discovered issues:
   edge counts separately from logical projection scene counts, giving smoke
   checks a backend-owned diagnostic that the native Bevy panel has consumed the
   projection into render-prep components.
-- Resolved: embedded viewport surface state now records a typed platform
-  attachment strategy in addition to pending/attached status. Viewport mount
-  probes the main Tauri webview window handle and records whether the current
-  parent surface is an X11/Win32/AppKit candidate for child-surface attachment
-  or an explicitly unsupported strategy such as the current Wayland path.
-- Resolved: graph viewport mount now seeds the native Bevy graph renderer from
+- Superseded: embedded viewport surface state records a typed platform
+  attachment strategy in addition to pending/attached status. This remains
+  useful as a record of the abandoned embedding experiment, but production work
+  should replace it with floating renderer window lifecycle status.
+- Resolved: graph renderer startup now seeds the native Bevy graph renderer from
   the backend-owned render graph projection service immediately after renderer
-  startup. A failed seed rolls back the graph viewport mount so the desktop host
-  does not report a mounted graph panel without an initial backend projection.
-- Resolved: graph viewport mount accepts the same bounded render graph request
+  startup. A failed seed rolls back renderer startup so the desktop host does
+  not report a running graph window without an initial backend projection.
+- Resolved: graph renderer startup accepts the same bounded render graph request
   used by the graph workspace, so initial Bevy renderer seeding is scoped to the
   selected timeline clip/playhead context instead of racing a default whole-view
   seed against the workspace projection refresh.
-- Resolved: embedded viewport mounting now rejects duplicate viewport ids
-  instead of replacing an existing panel lifecycle record. This keeps the shared
-  graph/timeline viewport host aligned with the one-owner-per-mounted-panel
-  lifecycle requirement before native surface attachment lands.
-- Resolved: graph viewport mount and resize now propagate validated physical
-  panel bounds into the native Bevy graph host. Renderer status reports those
-  bounds so future child-surface smoke checks can prove the Bevy panel follows
-  the Svelte layout before replacing the outline fallback.
-- Open: local dependency inspection confirms that the real native attachment
-  slice must choose between platform-specific paths instead of treating
-  `RawWindowHandle` as a complete embedding API. Wry documents raw parent-handle
+- Superseded: embedded viewport mounting rejects duplicate viewport ids instead
+  of replacing an existing panel lifecycle record. The floating renderer host
+  should preserve the one-owner rule with renderer-window IDs instead of
+  mounted-panel IDs.
+- Superseded: graph viewport mount and resize propagate validated physical
+  panel bounds into the native Bevy graph host. The floating renderer host may
+  accept size/placement hints, but it should not depend on WebView panel bounds
+  or child-surface smoke checks.
+- Decision: local dependency inspection confirmed that native WebView
+  child-surface attachment would require platform-specific paths instead of a
+  portable `RawWindowHandle` embedding API. Wry documents raw parent-handle
   child windows as Linux X11-only and recommends GTK container embedding for
   Wayland; winit exposes unsafe `with_parent_window` child-window creation, but
-  the current Bevy host does not yet own the winit event loop/window lifecycle
-  needed to create and resize that child window. The next implementation slice
-  must introduce an explicit renderer window lifecycle owner for the supported
-  strategy before marking `EmbeddedViewportSurfaceStatus::Attached`.
-- Resolved: embedded viewport surface state now separates detected parent
-  surface capability from renderer child-window lifecycle. Surface detection can
-  report X11/Win32/AppKit as pending attachment while the renderer window
-  lifecycle remains explicitly pending creation, and unsupported parent
-  strategies now expose a child-window `creation_unsupported` state instead of
-  relying on a broad surface message.
-- Resolved: X11/XCB surface detection now captures the native parent window id
-  into the renderer child-window lifecycle state. The eventual winit X11
-  embedder can consume that backend-owned parent id directly, while Wayland and
-  other unsupported strategies continue to expose no attachable parent id.
+  the current Bevy host does not own a portable embedding lifecycle. Milestone
+  8 should avoid that maintenance burden by moving to app-managed floating
+  Bevy renderer windows.
+- Superseded: embedded viewport surface state separates detected parent surface
+  capability from renderer child-window lifecycle. The floating renderer host
+  should keep explicit renderer-window lifecycle states but remove the
+  production dependency on detected parent-surface capabilities.
+- Superseded: X11/XCB surface detection captured the native parent window id
+  into the renderer child-window lifecycle state for the embedding experiment.
+  Production graph rendering no longer depends on that parent id; it should use
+  backend-owned floating renderer window lifecycle instead.
 
 ## Concurrent Worker Policy
 
@@ -1242,7 +1271,7 @@ In scope:
 - Semantic claims, dependencies, propagation proposals, change review, undo/redo, and before/after history.
 - SQLite schema and repositories for canonical state, revisions, projections, and assets.
 - Command, event, and projection DTOs.
-- Bevy timeline viewport and Bevy bible graph view as projection consumers.
+- Bevy timeline and bible graph renderer windows as projection consumers.
 - Svelte shell, forms, inspectors, editors, and accessibility command alternatives.
 - Tests, documentation, lifecycle management, validation, and dependency placement required by standards.
 
@@ -1894,10 +1923,12 @@ Tasks:
   records.
 - Upgrade Bevy graph planning and the graph renderer crate to Bevy 0.18.1 with
   a fresh dependency review before adding native render/window/input features.
-- Add a shared embedded Bevy viewport host for native visual panels. The host
-  must support borderless panel embedding, viewport kind (`graph` now,
-  `timeline` later), bounds/resize updates, focus/input routing, projection
-  subscription, command draining, and deterministic teardown.
+- Add a shared floating Bevy renderer host for native visual windows. The host
+  must support renderer kind (`graph` now, `timeline` later), open/close,
+  focus/status, optional size/placement hints, projection subscription,
+  command draining, and deterministic teardown. It must not embed child
+  surfaces into the WebView or make the renderer runtime the owner of business
+  logic.
 - Add a native Bevy bible graph host as a projection consumer. It receives
   `BibleRenderGraph`/influence projections and emits validated selection,
   focus, inspect, and navigation commands only.
@@ -1907,10 +1938,10 @@ Tasks:
 - Add Svelte filters, search, detail panels, review panels, and
   keyboard-accessible alternatives for critical graph navigation and selection
   commands.
-- Add a primary workspace graph mode so the Bevy bible graph is displayed in a
-  borderless embedded viewport panel in the central workspace, not only inside
-  the narrow bible sidebar. Keep the bottom timeline visible so playhead and
-  selected-clip changes can drive graph influence highlighting.
+- Add a primary workspace graph mode that launches, focuses, and monitors the
+  floating Bevy bible graph window while keeping Svelte controls, outline,
+  status, and details in the main app. Keep the bottom timeline visible so
+  playhead and selected-clip changes can drive graph influence highlighting.
 - Add workspace mode controls for script-focused, graph-focused, and split
   graph/editor layouts. The sidebar remains the Svelte home for graph filters,
   search, roots/categories, and proposal queues; the right panel remains the
@@ -1929,7 +1960,7 @@ Tasks:
 - Expose existing graph proposals and context influence records in the graph
   projections when they already exist, but do not build the agent harness or
   LLM graph tools in this milestone.
-- Replace the 2D SVG relationship graph after the embedded Bevy graph viewport
+- Replace the 2D SVG relationship graph after the floating Bevy graph window
   and Svelte command/detail surfaces cover selection, inspection, filtering,
   and navigation. The Svelte outline remains a keyboard-accessible semantic
   alternative, not the primary visual graph surface.
@@ -1950,10 +1981,11 @@ Context model:
   path for the selected playhead/clip. Strong highlights represent directly
   used context, softer highlights represent inherited context, and dimmed nodes
   represent graph knowledge outside the current context window.
-- The UI surface is split by responsibility: the app shell owns panel layout,
-  Svelte owns graph controls/details/review and keyboard command alternatives,
-  and Bevy owns borderless embedded viewport panels for realtime visuals. The
-  graph viewport lands first; the timeline viewport reuses the same host later.
+- The UI surface is split by responsibility: the app shell owns layout and
+  floating window controls, Svelte owns graph controls/details/review and
+  keyboard command alternatives, and Bevy owns floating renderer windows for
+  realtime visuals. The graph window lands first; the timeline window reuses
+  the same host later.
 - Bevy may own transient camera, hover, simulation, animation, and unsaved
   layout state. Durable graph facts, influence records, saved layout decisions,
   and accepted proposals must enter through backend commands and projections.
@@ -1981,13 +2013,19 @@ Implementation order:
 - Upgrade `eidetic-bevy-bible-graph` to Bevy 0.18.1 with a documented
   dependency review while it is still a leaf crate and before render/window
   features are enabled.
-- Define the embedded viewport host contract before enabling render/window/input
-  features: viewport identity, viewport kind, panel bounds, resize lifecycle,
-  focus state, pointer/keyboard ownership, projection subscription, command
-  drain, and teardown.
-- Prove the embedded viewport with the smallest borderless test scene before
-  wiring the bible graph scene into it. The test scene must resize with the
-  app panel and must not appear as a separate product window.
+- Retire the embedded viewport production path before enabling more native
+  render behavior. Either rename the existing desktop surface registry into a
+  floating renderer window host or quarantine/delete the WebView child-surface
+  attachment APIs so future slices cannot accidentally continue the X11-only
+  embedding path.
+- Define the floating renderer host contract before enabling render/window/input
+  features: renderer identity, renderer kind, open/close lifecycle, focus
+  state, pointer/keyboard ownership inside the renderer window, projection
+  subscription, command drain, and teardown.
+- Prove the floating renderer host with the smallest native test scene before
+  wiring the bible graph scene into it. The test scene must open, focus,
+  close, and shut down deterministically without blocking the Svelte shell or
+  creating backend state outside the command/projection path.
 - Add relational SQLite current-state and history storage for context
   evaluations and influence records. Do not store queryable graph influence
   only as JSON blobs.
@@ -2001,8 +2039,8 @@ Implementation order:
   graph paths.
 - Add the Bevy graph host after the projection and influence adapters are
   deterministic, bounded, and tested.
-- Connect the graph host to the embedded viewport host so the same projection
-  and command-drain contracts drive the visible borderless graph panel.
+- Connect the graph host to the floating renderer host so the same projection
+  and command-drain contracts drive the visible graph window.
 - Add Svelte detail/filter/review panels and keyboard command alternatives
   around the same backend projections and commands.
 - Remove the old 2D SVG relationship graph only after the Bevy graph covers the
@@ -2028,10 +2066,19 @@ Standards gates:
   renderer lifecycle must be separate modules under component/file thresholds.
 - The Bevy graph host has one desktop lifecycle owner, bounded command queues,
   subscription teardown, panic/cancellation reporting, and no detached tasks.
-- The embedded viewport host has one lifecycle owner per mounted viewport panel.
-  It validates panel dimensions before allocation, has deterministic resize and
-  teardown behavior, and keeps renderer-local state separate from backend
+- The floating renderer host has one lifecycle owner per renderer window. It
+  validates size/placement hints before use, has deterministic open/focus/close
+  and teardown behavior, and keeps renderer-local state separate from backend
   projections and Svelte stores.
+- The floating renderer host must not be introduced as a separate frontend
+  application layer. It consumes backend projections, emits backend command
+  intents, and owns only renderer-local resources. Any future split-process
+  renderer option requires a new ADR, standards pass, and explicit proof that
+  backend ownership is unchanged.
+- Renderer window support must be cross-platform by construction: platform
+  behavior is isolated behind desktop runtime strategy modules, unsupported
+  capabilities degrade through typed status projections, and implementation
+  slices must not mark Linux X11-specific behavior as the general solution.
 - Svelte graph controls own only drafts, filters, focus, local expansion, and
   projection caches. Selection that changes generation or persistence must go
   through backend commands/projections.
@@ -2047,10 +2094,18 @@ Verification:
 - UI placement tests or smoke checks prove graph workspace, split view, sidebar
   controls, right-panel details, and bottom timeline selection can coexist
   without creating a second durable graph owner.
-- Embedded viewport smoke checks prove the graph viewport is borderless inside
-  the app panel, resizes with the layout, routes pointer/focus input to Bevy
-  only while the viewport owns focus, and never opens as a separate product
-  window.
+- Floating renderer smoke checks prove the graph window opens and closes under
+  desktop lifecycle control, routes pointer/focus input to Bevy only while the
+  renderer window owns focus, and keeps all durable state changes behind
+  backend command/projection confirmation.
+- Embedded-viewport retirement checks prove no production graph path depends on
+  WebView child-surface attachment, X11 parent window IDs, or panel-bound
+  resize contracts. Any remaining experimental code must be feature-gated,
+  documented as non-production, and unreachable from launcher/default builds.
+- Platform strategy tests or compile checks prove renderer window lifecycle is
+  selected through a single desktop platform boundary and reports unsupported
+  capabilities through typed status instead of panicking or falling back to
+  domain/UI branching.
 - Projection bounding tests prove large bible graphs return bounded
   neighborhoods by selected clip, focused root, filter, or search result.
 - Query-service tests prove graph/context reads do not use full graph scans for
@@ -2064,8 +2119,8 @@ Verification:
 - App shell decomposition tests/smoke checks prove workspace mode, right
   inspector, shortcuts, export/save controls, and timeline sizing remain owned
   by focused modules and stay under component decomposition thresholds.
-- Renderer lifecycle tests prove embedded viewport subscriptions, commands, and
-  transient renderer state are torn down on unmount/project close.
+- Renderer lifecycle tests prove floating renderer subscriptions, commands, and
+  transient renderer state are torn down on window close/project close.
 - Dependency review proves Bevy 0.18.1 remains isolated to leaf renderer crates
   and that any render/window/input features are justified before they land.
 - Frontend tests prove graph filters/details/review controls replace projection
@@ -2073,16 +2128,17 @@ Verification:
 
 Exit criteria:
 
-- The bible graph is visible as a bounded Bevy projection in a borderless
-  embedded viewport panel with Svelte detail/filter/review controls around it.
+- The bible graph is visible as a bounded Bevy projection in an app-managed
+  floating native renderer window with Svelte detail/filter/review controls in
+  the main shell.
 - Interactive graph projections are request-shaped and bounded; the default
   graph workspace does not load or lay out the entire bible unless the user
   explicitly requests a full diagnostic/export view.
 - The graph has an explicit central workspace placement, split/editor mode, and
   Svelte side panels for controls/details while the bottom timeline remains
   available to drive playhead/clip influence highlighting.
-- The graph viewport host is reusable for the later timeline viewport, with
-  shared lifecycle, resize, focus, input-routing, projection-subscription, and
+- The graph renderer host is reusable for the later timeline renderer, with
+  shared lifecycle, focus, input-routing, projection-subscription, and
   command-drain contracts.
 - The selected playhead/clip can show which bible nodes, edges, and parent
   context layers are actively influencing that point in the timeline.
@@ -2353,8 +2409,8 @@ Tasks:
   review before enabling render/window/input/text features.
 - Add renderer-facing timeline projection DTOs only where the existing
   backend-owned `TimelineRenderProjection` is insufficient.
-- Add native Bevy timeline host as an isolated leaf renderer mounted through
-  the same borderless embedded viewport host used by the bible graph.
+- Add native Bevy timeline host as an isolated leaf renderer managed by the
+  same floating renderer host pattern used by the bible graph.
 - Add pan, zoom, playhead, selection, hit testing, move, resize, split, arcs,
   relationship curves, and affect overlays through backend-confirmed commands
   and projections.
@@ -2369,11 +2425,15 @@ Implementation order:
   work.
 - Remove remaining WASM renderer bridges and wasm-only dependency paths before
   introducing the native Tauri-owned Bevy host as the supported desktop path.
-- Reuse the embedded viewport host from Milestone 8 for the timeline panel.
-  Timeline work may add timeline-specific renderer state, but must not add a
-  second viewport lifecycle, resize, focus, input, or command-drain framework.
-- Add the native Bevy timeline host as a leaf renderer mounted in the desktop
-  composition root through that shared viewport host.
+- Reuse the floating renderer host from Milestone 8 for the timeline renderer
+  window. Timeline work may add timeline-specific renderer state, but must not
+  add a second lifecycle, focus, input, or command-drain framework.
+- Do not reintroduce embedded viewport, WebView child-surface, WASM, local
+  HTTP/WebSocket, or split-process renderer-sidecar paths while replacing the
+  timeline. If the Milestone 8 host cannot support timeline needs, re-plan the
+  shared floating host contract before adding timeline-specific infrastructure.
+- Add the native Bevy timeline host as a leaf renderer managed in the desktop
+  composition root through that shared floating renderer host.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
@@ -2387,10 +2447,14 @@ Implementation order:
 
 Standards gates:
 
-- The native Bevy timeline host is mounted through the shared embedded viewport
+- The native Bevy timeline host is managed through the shared floating renderer
   host, has tracked tasks/subscriptions, bounded command queues,
   shutdown/cancellation coverage, and no local HTTP/WebSocket/WASM transport
   fallback.
+- Timeline renderer lifecycle, status, command draining, and projection
+  subscription must remain backend/desktop-host owned. Svelte may expose
+  controls and status but must not store durable timeline renderer state or
+  mutate timeline projections optimistically.
 - Bevy consumes projection snapshots and produces command requests only.
   Timeline selection, clip data, arcs, relationships, affect overlays, and
   saved layout decisions stay backend-owned.
@@ -2409,9 +2473,9 @@ Standards gates:
 Verification:
 
 - Vertical slice: Bevy timeline render model receives projection and emits a validated command.
-- Embedded viewport reuse check proves the timeline panel uses the same
-  borderless viewport lifecycle, resize, focus, input-routing, and command-drain
-  owner as the graph panel.
+- Floating renderer reuse check proves the timeline window uses the same
+  renderer lifecycle, focus, input-routing, and command-drain owner as the graph
+  window.
 - Pointer, focus, keyboard, and parent-gesture conflict smoke checks.
 - Projection serialization tests.
 - Renderer lifecycle tests for mount/unmount subscription cleanup.

@@ -37,15 +37,19 @@ This should complement the normal sidebar/tree/detail editor. It should not repl
 
 Use Bevy for the 3D bible graph view.
 
-The graph should be rendered by the same Bevy direction being considered for the main realtime timeline renderer. The `whip-docs` Three graph is a visual/interaction reference only.
+The graph should be rendered by the same Bevy direction being considered for
+the main realtime timeline renderer. The `whip-docs` Three graph is a visual/
+interaction reference only. The production display target is an app-managed
+floating native Bevy window, not a WebView-embedded child surface and not a
+renderer sidecar that owns business logic.
 
 Svelte should own:
 
-- the panel/shell around the graph,
+- graph workspace controls, launch/focus/status UI, and Svelte fallback outline,
 - filters and mode controls,
 - selected-node detail panes,
 - command dispatch,
-- lifecycle and bridge management for the Bevy graph view.
+- floating renderer lifecycle requests and command-drain orchestration.
 
 Bevy should own:
 
@@ -99,7 +103,14 @@ Key principles to keep:
 - selection/highlight changes restyle existing Bevy entities when possible,
 - full geometry rebuilds are reserved for graph/layout changes.
 
-Implementation language and boundary are still open. The graph helpers can live in Rust if Bevy runs natively, or be exposed through a WASM/IPC bridge if the app shell remains Svelte-first.
+The production boundary is native Rust Bevy under the desktop runtime. Do not
+target a WASM bridge, WebView child-surface embedding path, or split-process
+renderer sidecar as the production graph view. A split-process renderer
+transport would require a separate standards review before being introduced.
+The desktop composition root owns renderer window lifecycle. Svelte can request
+launch/focus/close and render status projections, but it must not own renderer
+threads, command queues, durable graph selections, or projection subscription
+state.
 
 ## Render Graph Projection
 
@@ -296,6 +307,16 @@ Specific graph-view requirements:
 - Persisted graph facts, relationships, snapshots, asset refs, and user-adjusted layout data must be saved only through backend commands.
 - Direct graph editing in Bevy, if added, must emit commands and wait for backend-confirmed projection updates.
 - Renderer bridge payloads must be validated at every boundary and use explicit contract shapes.
+- The floating Bevy graph window is a renderer-only projection surface. It may
+  own camera, hover, animation, local layout simulation, and disposable ECS
+  resources, but not durable graph facts, history, selection that affects
+  generation, or persistence.
+- Floating renderer lifecycle must have one desktop owner, bounded command
+  queues, deterministic shutdown, panic reporting, checked dimension handling,
+  and typed status for unsupported platform capabilities.
+- Any platform-specific window behavior must live behind desktop runtime
+  strategy modules, not in graph domain services, Svelte stores, or
+  renderer-independent projection adapters.
 - Bevy dependencies must stay in a leaf crate/package and out of `eidetic-core`.
 - Layout math and projection adapters should be pure and testable without Bevy.
 - Large graph rendering must use bounded projections/neighborhoods rather than sending the full canonical graph by default.
@@ -305,7 +326,9 @@ Specific graph-view requirements:
 
 ## Open Questions
 
-- Should the Bevy 3D graph and Bevy timeline share one renderer/runtime, or remain separate views?
+- Should the Bevy 3D graph and Bevy timeline share one floating renderer host
+  with separate windows, or remain separate renderer owners behind the same
+  command/projection contract?
 - Should the graph use real force simulation, deterministic layout, or both?
 - Should user-adjusted node positions be persisted?
 - Should the graph support custom visual themes per project?
@@ -324,7 +347,7 @@ No backwards compatibility with the current 2D relationship graph is required. I
 3. Add deterministic layout helpers and tests.
 4. Add selection/neighborhood indexes and tests.
 5. Build a Bevy graph scene/plugin that consumes `BibleRenderGraph`.
-6. Mount/bridge the Bevy graph view from a Svelte panel or shared Bevy viewport.
+6. Connect the Bevy graph scene/plugin to the shared floating renderer host.
 7. Add selection and detail-panel integration.
 8. Add filtering by canonical section, node type, and edge kind.
 9. Add timeline cross-linking and active-at-playhead filtering.
