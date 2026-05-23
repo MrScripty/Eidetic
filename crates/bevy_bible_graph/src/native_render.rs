@@ -1,6 +1,10 @@
 use bevy::prelude::{
-    App, Camera2d, ClearColor, Color, Commands, Component, Plugin, ResMut, Resource, Startup,
+    App, Camera2d, ClearColor, Color, Commands, Component, Entity, Plugin, ResMut, Resource,
+    Startup, With, World,
 };
+use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection};
+
+use crate::build_bible_graph_visual_snapshot;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
@@ -19,6 +23,12 @@ pub struct BibleGraphNativePanelStatus {
     pub camera_count: usize,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
+pub struct BibleGraphNativeVisualStatus {
+    pub node_count: usize,
+    pub edge_count: usize,
+}
+
 impl Default for BibleGraphNativePanelScene {
     fn default() -> Self {
         Self {
@@ -31,6 +41,35 @@ impl Default for BibleGraphNativePanelScene {
 
 #[derive(Component)]
 pub struct BibleGraphNativeCamera;
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeVisualEntity;
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeNodeVisual {
+    pub node_id: BibleGraphNodeId,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub radius: f32,
+    pub fill_color: &'static str,
+    pub outline_color: &'static str,
+    pub highlighted: bool,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeEdgeVisual {
+    pub edge_id: BibleGraphEdgeId,
+    pub from_node_id: BibleGraphNodeId,
+    pub to_node_id: BibleGraphNodeId,
+    pub from_x: f32,
+    pub from_y: f32,
+    pub to_x: f32,
+    pub to_y: f32,
+    pub width: f32,
+    pub stroke_color: &'static str,
+    pub highlighted: bool,
+}
 
 impl Default for BibleGraphNativeRenderConfig {
     fn default() -> Self {
@@ -47,6 +86,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeRenderConfig::default());
         app.insert_resource(BibleGraphNativePanelScene::default());
         app.insert_resource(BibleGraphNativePanelStatus::default());
+        app.insert_resource(BibleGraphNativeVisualStatus::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.add_systems(Startup, spawn_bible_graph_native_panel_scene);
     }
@@ -58,4 +98,67 @@ fn spawn_bible_graph_native_panel_scene(
 ) {
     commands.spawn((Camera2d, BibleGraphNativeCamera));
     status.camera_count = 1;
+}
+
+pub fn rebuild_bible_graph_native_visuals(
+    world: &mut World,
+    projection: &BibleRenderGraphProjection,
+) {
+    if !world.contains_resource::<BibleGraphNativeVisualStatus>() {
+        return;
+    }
+
+    despawn_existing_native_visuals(world);
+    let snapshot = build_bible_graph_visual_snapshot(projection);
+    let node_count = snapshot.nodes.len();
+    let edge_count = snapshot.edges.len();
+
+    for edge in snapshot.edges {
+        world.spawn((
+            BibleGraphNativeVisualEntity,
+            BibleGraphNativeEdgeVisual {
+                edge_id: edge.edge_id,
+                from_node_id: edge.from_node_id,
+                to_node_id: edge.to_node_id,
+                from_x: edge.from_position.x,
+                from_y: edge.from_position.y,
+                to_x: edge.to_position.x,
+                to_y: edge.to_position.y,
+                width: edge.width,
+                stroke_color: edge.stroke_color,
+                highlighted: edge.highlighted,
+            },
+        ));
+    }
+
+    for node in snapshot.nodes {
+        world.spawn((
+            BibleGraphNativeVisualEntity,
+            BibleGraphNativeNodeVisual {
+                node_id: node.node_id,
+                x: node.position.x,
+                y: node.position.y,
+                z: node.position.z,
+                radius: node.radius,
+                fill_color: node.fill_color,
+                outline_color: node.outline_color,
+                highlighted: node.highlighted,
+            },
+        ));
+    }
+
+    let mut status = world.resource_mut::<BibleGraphNativeVisualStatus>();
+    status.node_count = node_count;
+    status.edge_count = edge_count;
+}
+
+fn despawn_existing_native_visuals(world: &mut World) {
+    let entities: Vec<Entity> = world
+        .query_filtered::<Entity, With<BibleGraphNativeVisualEntity>>()
+        .iter(world)
+        .collect();
+
+    for entity in entities {
+        let _ = world.despawn(entity);
+    }
 }

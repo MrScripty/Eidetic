@@ -1140,6 +1140,15 @@ Discovered issues:
   change events into selected-timeline bounded render graph requests for the
   affected timeline node instead of refreshing the renderer with the default
   graph projection.
+- Resolved: the native Bevy graph panel now rebuilds projection-derived visual
+  node and edge components inside the renderer ECS whenever a projection lands.
+  This prepares the native scene to render graph primitives from backend-owned
+  projections while the separate Tauri child-surface attachment remains open.
+- Resolved: feature-enabled graph crate tests exposed that plain renderer apps
+  compiled with `native_render` could try to update native visual resources
+  without installing the native plugin. Native visual rebuilds now no-op unless
+  the native panel resource exists, preserving the leaf renderer's headless
+  projection tests.
 
 ## Concurrent Worker Policy
 

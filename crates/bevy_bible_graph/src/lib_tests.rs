@@ -201,6 +201,19 @@ fn renderer_app_can_start_as_native_panel_consumer() {
     assert!(renderer.native_panel_ready());
 }
 
+#[cfg(feature = "native_render")]
+#[test]
+fn native_panel_rebuilds_projection_visual_entities() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let mut renderer = BibleGraphRendererApp::new_native_panel();
+
+    renderer.set_projection(projection_with_influence(node_id, edge_id, influence_id));
+
+    assert_eq!(renderer.native_visual_counts(), (2, 1));
+}
+
 #[test]
 fn renderer_app_rejects_unknown_influence_selection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();

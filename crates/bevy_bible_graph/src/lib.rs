@@ -14,8 +14,9 @@ mod native_render;
 
 #[cfg(feature = "native_render")]
 pub use native_render::{
-    BibleGraphNativeCamera, BibleGraphNativePanelScene, BibleGraphNativePanelStatus,
-    BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
+    BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeNodeVisual,
+    BibleGraphNativePanelScene, BibleGraphNativePanelStatus, BibleGraphNativeRenderConfig,
+    BibleGraphNativeRenderPlugin, BibleGraphNativeVisualEntity, BibleGraphNativeVisualStatus,
 };
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
@@ -93,12 +94,23 @@ impl BibleGraphRendererApp {
             .unwrap_or_default()
     }
 
+    #[cfg(feature = "native_render")]
+    pub fn native_visual_counts(&self) -> (usize, usize) {
+        self.app
+            .world()
+            .get_resource::<BibleGraphNativeVisualStatus>()
+            .map(|status| (status.node_count, status.edge_count))
+            .unwrap_or_default()
+    }
+
     pub fn set_projection(&mut self, projection: BibleRenderGraphProjection) {
         self.app
             .world_mut()
             .resource_mut::<BibleGraphRenderState>()
             .projection = Some(projection.clone());
         rebuild_bible_graph_scene(self.app.world_mut(), &projection);
+        #[cfg(feature = "native_render")]
+        native_render::rebuild_bible_graph_native_visuals(self.app.world_mut(), &projection);
     }
 
     pub fn projection_node_count(&self) -> usize {
