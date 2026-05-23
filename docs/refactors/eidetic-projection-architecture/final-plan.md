@@ -1136,6 +1136,10 @@ Discovered issues:
   marked with explicit lint-allow reasons tied to the remaining Milestone 8
   viewport slice, keeping checks warning-clean without pretending the surface
   attachment is already implemented.
+- Resolved: the desktop Bevy projection bridge now maps context influence
+  change events into selected-timeline bounded render graph requests for the
+  affected timeline node instead of refreshing the renderer with the default
+  graph projection.
 
 ## Concurrent Worker Policy
 

@@ -1,3 +1,5 @@
+use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
+use eidetic_core::timeline::node::NodeId;
 use eidetic_server::bible_render_graph_projection;
 use eidetic_server::state::{AppState, ServerEvent};
 use serde::Serialize;
@@ -41,13 +43,14 @@ pub fn spawn_graph_renderer_projection_bridge(app: tauri::AppHandle, state: &App
     let _projection_bridge = tauri::async_runtime::spawn(async move {
         loop {
             match events.recv().await {
-                Ok(event) if should_refresh_graph_renderer_projection(&event) => {
-                    refresh_graph_renderer_projection(&app, &state).await;
+                Ok(event) => {
+                    if let Some(request) = graph_projection_request_for_event(&event) {
+                        refresh_graph_renderer_projection(&app, &state, request).await;
+                    }
                 }
-                Ok(_) => {}
                 Err(broadcast::error::RecvError::Lagged(skipped)) => {
                     tracing::warn!("graph renderer projection bridge skipped {skipped} events");
-                    refresh_graph_renderer_projection(&app, &state).await;
+                    refresh_graph_renderer_projection(&app, &state, Default::default()).await;
                 }
                 Err(broadcast::error::RecvError::Closed) => break,
             }
@@ -55,7 +58,9 @@ pub fn spawn_graph_renderer_projection_bridge(app: tauri::AppHandle, state: &App
     });
 }
 
-fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
+fn graph_projection_request_for_event(
+    event: &ServerEvent,
+) -> Option<BibleRenderGraphProjectionRequest> {
     matches!(
         event,
         ServerEvent::BibleChanged
@@ -65,25 +70,34 @@ fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
             | ServerEvent::SemanticProposalsChanged
             | ServerEvent::ContextInfluenceChanged { .. }
     )
+    .then(|| match event {
+        ServerEvent::ContextInfluenceChanged { target_node_id } => {
+            BibleRenderGraphProjectionRequest {
+                selected_timeline_node_id: Some(NodeId(*target_node_id)),
+                ..BibleRenderGraphProjectionRequest::default()
+            }
+        }
+        _ => BibleRenderGraphProjectionRequest::default(),
+    })
 }
 
-async fn refresh_graph_renderer_projection(app: &tauri::AppHandle, state: &AppState) {
+async fn refresh_graph_renderer_projection(
+    app: &tauri::AppHandle,
+    state: &AppState,
+    request: BibleRenderGraphProjectionRequest,
+) {
     if !has_graph_viewport(app) {
         return;
     }
 
-    let envelope = match bible_render_graph_projection::bible_render_graph_projection(
-        state,
-        Default::default(),
-    )
-    .await
-    {
-        Ok(envelope) => envelope,
-        Err(error) => {
-            tracing::warn!("failed to refresh graph renderer projection: {error}");
-            return;
-        }
-    };
+    let envelope =
+        match bible_render_graph_projection::bible_render_graph_projection(state, request).await {
+            Ok(envelope) => envelope,
+            Err(error) => {
+                tracing::warn!("failed to refresh graph renderer projection: {error}");
+                return;
+            }
+        };
 
     if let Some(graph_owner) = app.try_state::<DesktopBibleGraphRendererOwner>()
         && let Err(error) = graph_owner.set_projection(envelope.payload)
@@ -106,7 +120,7 @@ fn has_graph_viewport(app: &tauri::AppHandle) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{DesktopServerEvent, SERVER_EVENT_TOPIC, should_refresh_graph_renderer_projection};
+    use super::{DesktopServerEvent, SERVER_EVENT_TOPIC, graph_projection_request_for_event};
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
 
@@ -144,29 +158,38 @@ mod tests {
 
     #[test]
     fn graph_projection_bridge_refreshes_only_structural_events() {
-        assert!(should_refresh_graph_renderer_projection(
-            &ServerEvent::BibleChanged
-        ));
-        assert!(should_refresh_graph_renderer_projection(
-            &ServerEvent::TimelineChanged
-        ));
-        assert!(should_refresh_graph_renderer_projection(
-            &ServerEvent::SemanticProposalsChanged
-        ));
-        assert!(should_refresh_graph_renderer_projection(
-            &ServerEvent::ContextInfluenceChanged {
+        assert!(graph_projection_request_for_event(&ServerEvent::BibleChanged).is_some());
+        assert!(graph_projection_request_for_event(&ServerEvent::TimelineChanged).is_some());
+        assert!(
+            graph_projection_request_for_event(&ServerEvent::SemanticProposalsChanged).is_some()
+        );
+        assert!(
+            graph_projection_request_for_event(&ServerEvent::ContextInfluenceChanged {
                 target_node_id: uuid::Uuid::nil(),
-            }
-        ));
-        assert!(!should_refresh_graph_renderer_projection(
-            &ServerEvent::GenerationProgress {
+            })
+            .is_some()
+        );
+        assert!(
+            graph_projection_request_for_event(&ServerEvent::GenerationProgress {
                 node_id: uuid::Uuid::nil(),
                 token: "draft".to_string(),
                 tokens_generated: 1,
-            }
-        ));
-        assert!(!should_refresh_graph_renderer_projection(
-            &ServerEvent::ScriptChanged
-        ));
+            })
+            .is_none()
+        );
+        assert!(graph_projection_request_for_event(&ServerEvent::ScriptChanged).is_none());
+    }
+
+    #[test]
+    fn graph_projection_bridge_scopes_context_influence_refreshes() {
+        let target_node_id = uuid::uuid!("f4bb67a9-c87e-40c8-a9a1-99e5a9bfaf24");
+        let request = graph_projection_request_for_event(&ServerEvent::ContextInfluenceChanged {
+            target_node_id,
+        })
+        .unwrap();
+
+        assert_eq!(request.selected_timeline_node_id.unwrap().0, target_node_id);
+        assert_eq!(request.neighborhood_depth, 1);
+        assert_eq!(request.max_nodes, 200);
     }
 }
