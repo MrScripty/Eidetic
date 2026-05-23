@@ -1,10 +1,14 @@
 mod host;
+mod native_runner;
 mod owner;
 mod window_strategy;
 
 use crate::renderer_window::DesktopRendererWindowKind;
 
 pub use host::DesktopBibleGraphHost;
+pub use native_runner::{
+    NativeRendererRunner, NativeRendererRunnerStatus, PendingNativeRendererRunner,
+};
 pub use owner::{DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY};
 pub use window_strategy::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowLifecycle,

@@ -11,11 +11,12 @@ use crate::renderer_window::DesktopRendererWindowKind;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowLifecycle,
-    BibleGraphRendererWindowStrategyStatus,
+    NativeRendererRunner, PendingNativeRendererRunner,
 };
 
 pub struct DesktopBibleGraphHost {
     renderer: Option<BibleGraphRendererApp>,
+    native_runner: PendingNativeRendererRunner,
     last_error: Option<String>,
 }
 
@@ -29,6 +30,7 @@ impl DesktopBibleGraphHost {
     pub fn new() -> Self {
         Self {
             renderer: None,
+            native_runner: PendingNativeRendererRunner::default(),
             last_error: None,
         }
     }
@@ -39,12 +41,14 @@ impl DesktopBibleGraphHost {
                 BibleGraphRendererApp::new_renderer_window,
             )?);
         }
+        self.native_runner.open();
         self.last_error = None;
         Ok(self.status())
     }
 
     pub fn stop(&mut self) -> BibleGraphHostStatus {
         self.renderer = None;
+        self.native_runner.close();
         self.last_error = None;
         self.status()
     }
@@ -155,12 +159,11 @@ impl DesktopBibleGraphHost {
             .as_ref()
             .map(BibleGraphRendererApp::renderer_window_bounds)
             .unwrap_or_default();
-        let renderer_window_strategy = BibleGraphRendererWindowStrategyStatus::current();
-        let renderer_window_visible = false;
+        let native_runner = self.native_runner.status();
         let renderer_window_lifecycle = BibleGraphRendererWindowLifecycle::from_state(
             self.renderer.is_some(),
             renderer_scene_ready,
-            renderer_window_visible,
+            native_runner.window_visible,
         );
 
         BibleGraphHostStatus {
@@ -168,13 +171,13 @@ impl DesktopBibleGraphHost {
             running: self.renderer.is_some(),
             renderer_window_open: self.renderer.is_some(),
             renderer_scene_ready,
-            renderer_window_visible,
-            renderer_window_strategy: renderer_window_strategy.strategy,
-            renderer_window_capability: renderer_window_strategy.capability,
+            renderer_window_visible: native_runner.window_visible,
+            renderer_window_strategy: native_runner.strategy,
+            renderer_window_capability: native_runner.capability,
             renderer_window_lifecycle,
-            renderer_window_ready: false,
-            renderer_window_visible_supported: renderer_window_strategy.visible_window_supported,
-            renderer_window_focus_supported: renderer_window_visible,
+            renderer_window_ready: native_runner.window_ready,
+            renderer_window_visible_supported: native_runner.visible_window_supported,
+            renderer_window_focus_supported: native_runner.focus_supported,
             renderer_window_message: renderer_window_message(
                 self.renderer.is_some(),
                 renderer_scene_ready,
