@@ -56,6 +56,19 @@ impl DesktopBibleGraphHost {
         Ok(self.status())
     }
 
+    pub fn set_panel_bounds(
+        &mut self,
+        width_px: u32,
+        height_px: u32,
+    ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
+        self.start()?;
+        self.with_renderer_mut(|renderer| {
+            renderer.set_native_panel_bounds(width_px, height_px);
+            Ok(())
+        })?;
+        Ok(self.status())
+    }
+
     pub fn select_node(&mut self, node_id: BibleGraphNodeId) -> Result<(), BibleGraphHostError> {
         self.with_renderer_mut(|renderer| renderer.select_node(node_id))
     }
@@ -105,6 +118,11 @@ impl DesktopBibleGraphHost {
             .as_ref()
             .map(BibleGraphRendererApp::native_visual_counts)
             .unwrap_or_default();
+        let native_panel_bounds = self
+            .renderer
+            .as_ref()
+            .map(BibleGraphRendererApp::native_panel_bounds)
+            .unwrap_or_default();
 
         BibleGraphHostStatus {
             running: self.renderer.is_some(),
@@ -113,6 +131,8 @@ impl DesktopBibleGraphHost {
             edge_count,
             native_visual_node_count,
             native_visual_edge_count,
+            native_panel_width_px: native_panel_bounds.width_px,
+            native_panel_height_px: native_panel_bounds.height_px,
             influence_count,
             last_error: self.last_error.clone(),
         }

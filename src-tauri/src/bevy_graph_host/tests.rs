@@ -27,6 +27,8 @@ fn host_applies_projection_and_reports_scene_counts() {
             edge_count: 1,
             native_visual_node_count: 2,
             native_visual_edge_count: 1,
+            native_panel_width_px: 0,
+            native_panel_height_px: 0,
             influence_count: 1,
             last_error: None,
         }
@@ -107,6 +109,8 @@ fn host_stop_drops_renderer_state() {
             edge_count: 0,
             native_visual_node_count: 0,
             native_visual_edge_count: 0,
+            native_panel_width_px: 0,
+            native_panel_height_px: 0,
             influence_count: 0,
             last_error: None,
         }
@@ -143,6 +147,19 @@ fn owner_can_start_renderer_before_projection_arrives() {
     assert_eq!(status.native_visual_node_count, 0);
     assert_eq!(status.native_visual_edge_count, 0);
     assert_eq!(status.influence_count, 0);
+    owner.stop().unwrap();
+}
+
+#[test]
+fn owner_records_native_panel_bounds_on_renderer_thread() {
+    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+
+    let status = owner.set_panel_bounds(1280, 720).unwrap();
+
+    assert!(status.running);
+    assert!(status.native_panel_ready);
+    assert_eq!(status.native_panel_width_px, 1280);
+    assert_eq!(status.native_panel_height_px, 720);
     owner.stop().unwrap();
 }
 

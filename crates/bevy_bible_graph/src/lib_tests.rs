@@ -203,6 +203,18 @@ fn renderer_app_can_start_as_native_panel_consumer() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_panel_records_physical_bounds() {
+    let mut renderer = BibleGraphRendererApp::new_native_panel();
+
+    renderer.set_native_panel_bounds(1280, 720);
+
+    let bounds = renderer.native_panel_bounds();
+    assert_eq!(bounds.width_px, 1280);
+    assert_eq!(bounds.height_px, 720);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_panel_rebuilds_projection_visual_entities() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();

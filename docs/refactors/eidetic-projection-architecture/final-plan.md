@@ -1170,6 +1170,10 @@ Discovered issues:
   instead of replacing an existing panel lifecycle record. This keeps the shared
   graph/timeline viewport host aligned with the one-owner-per-mounted-panel
   lifecycle requirement before native surface attachment lands.
+- Resolved: graph viewport mount and resize now propagate validated physical
+  panel bounds into the native Bevy graph host. Renderer status reports those
+  bounds so future child-surface smoke checks can prove the Bevy panel follows
+  the Svelte layout before replacing the outline fallback.
 
 ## Concurrent Worker Policy
 

@@ -21,12 +21,19 @@ pub struct BibleGraphNativePanelScene {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativePanelStatus {
     pub camera_count: usize,
+    pub bounds: BibleGraphNativePanelBounds,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeVisualStatus {
     pub node_count: usize,
     pub edge_count: usize,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct BibleGraphNativePanelBounds {
+    pub width_px: u32,
+    pub height_px: u32,
 }
 
 impl Default for BibleGraphNativePanelScene {
@@ -150,6 +157,15 @@ pub fn rebuild_bible_graph_native_visuals(
     let mut status = world.resource_mut::<BibleGraphNativeVisualStatus>();
     status.node_count = node_count;
     status.edge_count = edge_count;
+}
+
+pub fn update_bible_graph_native_panel_bounds(world: &mut World, width_px: u32, height_px: u32) {
+    if let Some(mut status) = world.get_resource_mut::<BibleGraphNativePanelStatus>() {
+        status.bounds = BibleGraphNativePanelBounds {
+            width_px,
+            height_px,
+        };
+    }
 }
 
 fn despawn_existing_native_visuals(world: &mut World) {

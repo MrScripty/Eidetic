@@ -30,6 +30,8 @@ describe('graph renderer api helpers', () => {
       edge_count: 1,
       native_visual_node_count: 2,
       native_visual_edge_count: 1,
+      native_panel_width_px: 1280,
+      native_panel_height_px: 720,
       influence_count: 1,
       last_error: null,
     };

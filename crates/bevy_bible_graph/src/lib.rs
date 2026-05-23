@@ -15,8 +15,9 @@ mod native_render;
 #[cfg(feature = "native_render")]
 pub use native_render::{
     BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeNodeVisual,
-    BibleGraphNativePanelScene, BibleGraphNativePanelStatus, BibleGraphNativeRenderConfig,
-    BibleGraphNativeRenderPlugin, BibleGraphNativeVisualEntity, BibleGraphNativeVisualStatus,
+    BibleGraphNativePanelBounds, BibleGraphNativePanelScene, BibleGraphNativePanelStatus,
+    BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin, BibleGraphNativeVisualEntity,
+    BibleGraphNativeVisualStatus,
 };
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
@@ -92,6 +93,24 @@ impl BibleGraphRendererApp {
             .get_resource::<BibleGraphNativePanelStatus>()
             .map(|status| status.camera_count == 1)
             .unwrap_or_default()
+    }
+
+    #[cfg(feature = "native_render")]
+    pub fn native_panel_bounds(&self) -> BibleGraphNativePanelBounds {
+        self.app
+            .world()
+            .get_resource::<BibleGraphNativePanelStatus>()
+            .map(|status| status.bounds)
+            .unwrap_or_default()
+    }
+
+    #[cfg(feature = "native_render")]
+    pub fn set_native_panel_bounds(&mut self, width_px: u32, height_px: u32) {
+        native_render::update_bible_graph_native_panel_bounds(
+            self.app.world_mut(),
+            width_px,
+            height_px,
+        );
     }
 
     #[cfg(feature = "native_render")]

@@ -28,6 +28,7 @@ pub async fn viewport_mount(
     request: MountViewportCommandRequest,
 ) -> Result<EmbeddedViewportState, CommandError> {
     let graph_projection_request = request.graph_projection_request.clone().unwrap_or_default();
+    let requested_bounds = request.bounds.clone();
     let mut state = viewport_host(&app)?
         .mount(MountEmbeddedViewportRequest {
             viewport_id: request.viewport_id,
@@ -48,6 +49,15 @@ pub async fn viewport_mount(
         )));
     }
     if state.kind == EmbeddedViewportKind::Graph
+        && let Err(error) = update_graph_renderer_panel_bounds(&app, &requested_bounds)
+    {
+        let status = viewport_host(&app)?
+            .unmount(state.viewport_id.clone())
+            .map_err(command_error)?;
+        stop_graph_renderer_when_unmounted(&app, &status)?;
+        return Err(error);
+    }
+    if state.kind == EmbeddedViewportKind::Graph
         && let Err(error) = seed_graph_renderer_projection(&app, graph_projection_request).await
     {
         let status = viewport_host(&app)?
@@ -64,9 +74,13 @@ pub fn viewport_update_bounds(
     app: tauri::AppHandle,
     request: UpdateEmbeddedViewportBoundsRequest,
 ) -> Result<EmbeddedViewportState, CommandError> {
-    viewport_host(&app)?
+    let state = viewport_host(&app)?
         .update_bounds(request)
-        .map_err(command_error)
+        .map_err(command_error)?;
+    if state.kind == EmbeddedViewportKind::Graph {
+        update_graph_renderer_panel_bounds(&app, &state.bounds)?;
+    }
+    Ok(state)
 }
 
 #[tauri::command]
@@ -135,6 +149,33 @@ fn stop_graph_renderer_when_unmounted(
         .stop()
         .map(|_| ())
         .map_err(|error| CommandError::internal(format!("graph renderer stop failed: {error:?}")))
+}
+
+fn update_graph_renderer_panel_bounds(
+    app: &tauri::AppHandle,
+    bounds: &crate::embedded_viewport_host::EmbeddedViewportBounds,
+) -> Result<(), CommandError> {
+    let (width_px, height_px) = viewport_physical_size(bounds);
+    graph_renderer_owner(app)?
+        .set_panel_bounds(width_px, height_px)
+        .map(|_| ())
+        .map_err(|error| {
+            CommandError::internal(format!(
+                "graph renderer panel bounds update failed: {error:?}"
+            ))
+        })
+}
+
+fn viewport_physical_size(
+    bounds: &crate::embedded_viewport_host::EmbeddedViewportBounds,
+) -> (u32, u32) {
+    let width_px = (bounds.width * bounds.scale_factor)
+        .round()
+        .clamp(1.0, u32::MAX as f64) as u32;
+    let height_px = (bounds.height * bounds.scale_factor)
+        .round()
+        .clamp(1.0, u32::MAX as f64) as u32;
+    (width_px, height_px)
 }
 
 async fn seed_graph_renderer_projection(
