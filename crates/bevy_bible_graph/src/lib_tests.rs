@@ -134,6 +134,31 @@ fn renderer_app_indexes_influence_highlights_from_projection() {
 }
 
 #[test]
+fn renderer_app_exposes_projection_derived_visual_snapshot() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let mut renderer = BibleGraphRendererApp::new();
+
+    renderer.set_projection(projection_with_influence(
+        node_id.clone(),
+        edge_id.clone(),
+        influence_id,
+    ));
+
+    let snapshot = renderer.visual_snapshot().unwrap();
+
+    assert_eq!(snapshot.nodes.len(), 2);
+    assert_eq!(snapshot.edges.len(), 1);
+    assert_eq!(snapshot.nodes[0].node_id, node_id);
+    assert!(snapshot.nodes[0].highlighted);
+    assert_eq!(snapshot.nodes[0].fill_color, "#1f6f78");
+    assert_eq!(snapshot.edges[0].edge_id, edge_id);
+    assert!(snapshot.edges[0].highlighted);
+    assert_eq!(snapshot.edges[0].stroke_color, "#f2c94c");
+}
+
+#[test]
 fn renderer_app_rejects_unknown_influence_selection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let unknown_influence_id = ContextInfluenceId::new();

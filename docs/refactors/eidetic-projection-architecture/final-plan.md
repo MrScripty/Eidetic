@@ -1081,6 +1081,11 @@ Discovered issues:
   that embeds a borderless panel inside Tauri, resizes from
   `EmbeddedViewportBounds`, and proves a minimal scene before graph nodes/edges
   replace the Svelte outline.
+- Resolved: graph visual styling is now renderer-owned instead of being a
+  future Svelte concern. The Bevy bible graph leaf crate derives disposable
+  visual primitives for projection nodes and edges, including positions,
+  colors, radii, stroke widths, and influence highlight flags for the native
+  panel renderer to consume.
 
 ## Concurrent Worker Policy
 

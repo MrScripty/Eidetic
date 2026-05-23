@@ -7,10 +7,15 @@ use serde::Serialize;
 use thiserror::Error;
 
 mod scene;
+mod visual;
 
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
     rebuild_bible_graph_scene,
+};
+pub use visual::{
+    BibleGraphVisualEdge, BibleGraphVisualNode, BibleGraphVisualSnapshot,
+    build_bible_graph_visual_snapshot,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -91,6 +96,15 @@ impl BibleGraphRendererApp {
             .world()
             .resource::<BibleGraphSceneStats>()
             .influence_count
+    }
+
+    pub fn visual_snapshot(&self) -> Result<BibleGraphVisualSnapshot, BibleGraphRendererError> {
+        let state = self.app.world().resource::<BibleGraphRenderState>();
+        let projection = state
+            .projection
+            .as_ref()
+            .ok_or(BibleGraphRendererError::MissingProjection)?;
+        Ok(build_bible_graph_visual_snapshot(projection))
     }
 
     pub fn select_node(

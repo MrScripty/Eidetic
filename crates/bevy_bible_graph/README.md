@@ -13,6 +13,9 @@ Current scope:
 - Receive `BibleRenderGraphProjection` snapshots.
 - Rebuild read-only Bevy ECS entities for graph nodes, edges, and influence
   highlights.
+- Derive disposable visual primitives for nodes and edges, including positions,
+  radii, colors, widths, and highlight flags, so native render systems do not
+  re-derive graph styling in Svelte or desktop command code.
 - Expose projection-provided neighborhood indexes for host-side graph highlighting.
 - Validate selectable/inspectable graph node, edge, and influence IDs before
   emitting commands.
