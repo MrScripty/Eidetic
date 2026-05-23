@@ -10,6 +10,7 @@ mod model_commands;
 mod project_commands;
 mod projections;
 mod reference_commands;
+mod renderer_window;
 
 use bevy_graph_host::DesktopBibleGraphRendererOwner;
 use eidetic_server::state::AppState;

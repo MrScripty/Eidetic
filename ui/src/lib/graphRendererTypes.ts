@@ -10,6 +10,7 @@ export interface OpenGraphRendererRequest {
 }
 
 export interface GraphRendererStatus {
+  renderer_window_kind: GraphRendererWindowKind;
   running: boolean;
   renderer_window_open: boolean;
   renderer_scene_ready: boolean;
@@ -28,6 +29,8 @@ export interface GraphRendererStatus {
   influence_count: number;
   last_error: string | null;
 }
+
+export type GraphRendererWindowKind = 'bible_graph';
 
 export type GraphRendererWindowStrategy = 'bevy_winit_floating_window';
 

@@ -7,6 +7,8 @@ use eidetic_core::contracts::{
 use eidetic_core::timeline::node::StoryLevel;
 use uuid::Uuid;
 
+use crate::renderer_window::DesktopRendererWindowKind;
+
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowCapability,
     BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowStrategy,
@@ -63,6 +65,7 @@ fn host_applies_projection_and_reports_scene_counts() {
     assert_eq!(
         status,
         BibleGraphHostStatus {
+            renderer_window_kind: DesktopRendererWindowKind::BibleGraph,
             running: true,
             renderer_window_open: true,
             renderer_scene_ready: true,
@@ -155,6 +158,7 @@ fn host_stop_drops_renderer_state() {
     assert_eq!(
         status,
         BibleGraphHostStatus {
+            renderer_window_kind: DesktopRendererWindowKind::BibleGraph,
             running: false,
             renderer_window_open: false,
             renderer_scene_ready: false,

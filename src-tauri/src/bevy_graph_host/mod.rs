@@ -2,6 +2,8 @@ mod host;
 mod owner;
 mod window_strategy;
 
+use crate::renderer_window::DesktopRendererWindowKind;
+
 pub use host::DesktopBibleGraphHost;
 pub use owner::{DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY};
 pub use window_strategy::{
@@ -14,6 +16,7 @@ mod tests;
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct BibleGraphHostStatus {
+    pub renderer_window_kind: DesktopRendererWindowKind,
     pub running: bool,
     pub renderer_window_open: bool,
     pub renderer_scene_ready: bool,

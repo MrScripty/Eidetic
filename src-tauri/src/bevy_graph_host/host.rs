@@ -7,6 +7,8 @@ use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
 };
 
+use crate::renderer_window::DesktopRendererWindowKind;
+
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowLifecycle,
     BibleGraphRendererWindowStrategyStatus,
@@ -135,6 +137,7 @@ impl DesktopBibleGraphHost {
         );
 
         BibleGraphHostStatus {
+            renderer_window_kind: DesktopRendererWindowKind::BibleGraph,
             running: self.renderer.is_some(),
             renderer_window_open: self.renderer.is_some(),
             renderer_scene_ready,

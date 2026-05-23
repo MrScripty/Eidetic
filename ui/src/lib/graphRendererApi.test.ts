@@ -27,6 +27,7 @@ afterEach(() => {
 describe('graph renderer api helpers', () => {
   it('uses the desktop graph renderer status command', async () => {
     const response = {
+      renderer_window_kind: 'bible_graph',
       running: true,
       renderer_window_open: true,
       renderer_scene_ready: true,
@@ -55,6 +56,7 @@ describe('graph renderer api helpers', () => {
 
   it('opens the desktop graph renderer window with a bounded projection request', async () => {
     const response = {
+      renderer_window_kind: 'bible_graph',
       running: true,
       renderer_window_open: true,
       renderer_scene_ready: true,
@@ -90,6 +92,7 @@ describe('graph renderer api helpers', () => {
 
   it('focuses and closes the desktop graph renderer window', async () => {
     const response = {
+      renderer_window_kind: 'bible_graph',
       running: true,
       renderer_window_open: true,
       renderer_scene_ready: true,

@@ -870,6 +870,10 @@ Completed slices:
   renderer-window lifecycle projection so graph window state is reported as a
   backend-owned state machine instead of being inferred from booleans and
   status text.
+- `feat(desktop): identify graph renderer window kind` added a shared desktop
+  renderer-window kind contract and marked the bible graph renderer status as
+  the graph window, preparing the lifecycle surface for timeline reuse without
+  creating a second frontend owner.
 
 Discovered issues:
 
@@ -928,6 +932,11 @@ Discovered issues:
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
   without adding frontend-owned state inference.
+- Resolved: graph renderer status did not identify which renderer kind owned
+  the lifecycle record, even though Milestone 8 requires the window host to
+  support graph now and timeline later. The desktop status now carries a shared
+  renderer-window kind so future timeline work can reuse the same lifecycle
+  vocabulary.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused
