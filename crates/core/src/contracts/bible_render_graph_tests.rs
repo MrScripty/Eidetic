@@ -58,6 +58,9 @@ fn render_graph_projection_is_deterministic_and_indexes_neighbors() {
 #[test]
 fn render_graph_projection_round_trips() {
     let projection = BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: None,
+        selected_timeline_node_id: None,
         nodes: vec![BibleRenderGraphNode {
             node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
             parent_id: None,
@@ -110,6 +113,12 @@ fn render_graph_projection_request_filters_selected_neighborhood() {
         },
     );
 
+    assert_eq!(
+        projection.selected_node_id.as_ref().map(|id| id.as_str()),
+        Some("node.character.ada")
+    );
+    assert_eq!(projection.focused_root_id, None);
+    assert_eq!(projection.selected_timeline_node_id, None);
     let node_ids: Vec<_> = projection
         .nodes
         .iter()

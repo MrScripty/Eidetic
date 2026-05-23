@@ -18,6 +18,12 @@ const USER_NODE_Z: f32 = 0.0;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BibleRenderGraphProjection {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub focused_root_id: Option<BibleGraphNodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selected_node_id: Option<BibleGraphNodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selected_timeline_node_id: Option<NodeId>,
     #[serde(default)]
     pub nodes: Vec<BibleRenderGraphNode>,
     #[serde(default)]
@@ -161,6 +167,9 @@ impl BibleRenderGraphProjection {
         let influences = render_influences(influences, &render_nodes, &render_edges);
 
         Self {
+            focused_root_id: request.focused_root_id.clone(),
+            selected_node_id: request.selected_node_id.clone(),
+            selected_timeline_node_id: request.selected_timeline_node_id,
             nodes: render_nodes,
             edges: render_edges,
             neighborhoods,

@@ -151,6 +151,9 @@ export interface BibleRenderGraphProjectionRequest {
 }
 
 export interface BibleRenderGraphProjection {
+  focused_root_id?: BibleGraphNodeId | null;
+  selected_node_id?: BibleGraphNodeId | null;
+  selected_timeline_node_id?: string | null;
   nodes: BibleRenderGraphNode[];
   edges: BibleRenderGraphEdge[];
   neighborhoods: BibleRenderGraphNeighborhood[];

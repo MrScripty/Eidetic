@@ -55,6 +55,9 @@ fn renderer_app_rebuilds_scene_entities_from_projection() {
     assert_eq!(renderer.influence_count(), 0);
 
     renderer.set_projection(BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: None,
+        selected_timeline_node_id: None,
         nodes: Vec::new(),
         edges: Vec::new(),
         neighborhoods: Vec::new(),
@@ -268,6 +271,9 @@ fn renderer_app_rejects_unknown_influence_selection() {
 
 fn projection_with_node(node_id: BibleGraphNodeId) -> BibleRenderGraphProjection {
     BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: None,
+        selected_timeline_node_id: None,
         nodes: vec![BibleRenderGraphNode {
             node_id,
             parent_id: None,
@@ -292,6 +298,9 @@ fn projection_with_edge(source_id: BibleGraphNodeId) -> BibleRenderGraphProjecti
     let target_id = BibleGraphNodeId::new("node.place.beach").unwrap();
     let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
     BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: None,
+        selected_timeline_node_id: None,
         nodes: vec![
             BibleRenderGraphNode {
                 node_id: source_id.clone(),

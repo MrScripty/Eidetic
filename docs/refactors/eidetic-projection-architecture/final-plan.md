@@ -1382,6 +1382,11 @@ Discovered issues:
   unrelated bible state. The SQL-backed render graph query now only uses default
   nodes for unfiltered projection requests while preserving timeline influence
   seeding.
+- Resolved: bible render graph projections were produced from bounded requests
+  but did not expose the focused root, selected graph node, or selected
+  timeline node that shaped the projection. The projection DTO now carries
+  request identity metadata so Bevy and Svelte consumers can stay projection
+  driven instead of reconstructing ownership from local state.
 
 ## Concurrent Worker Policy
 
