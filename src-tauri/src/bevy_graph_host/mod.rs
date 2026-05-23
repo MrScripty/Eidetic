@@ -2,7 +2,7 @@ mod host;
 mod owner;
 
 pub use host::DesktopBibleGraphHost;
-pub use owner::DesktopBibleGraphRendererOwner;
+pub use owner::{DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY};
 
 #[cfg(test)]
 mod tests;
@@ -29,6 +29,7 @@ pub struct BibleGraphHostStatus {
 pub enum BibleGraphHostError {
     Renderer(String),
     RendererPanic,
+    QueueFull,
     OwnerStopped,
 }
 

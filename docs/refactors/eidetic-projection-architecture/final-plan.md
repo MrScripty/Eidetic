@@ -856,6 +856,9 @@ Completed slices:
   readiness from visible renderer-window readiness in the desktop status
   projection so Svelte no longer reports a visible native window before the OS
   window proof exists.
+- `refactor(desktop): bound graph renderer queue` replaced the graph renderer
+  owner's unbounded command channel with a fixed-capacity queue and explicit
+  queue-full error so renderer work cannot accumulate without backpressure.
 
 Discovered issues:
 
@@ -899,6 +902,10 @@ Discovered issues:
   `renderer_scene_ready`, `renderer_window_visible`, and
   `renderer_window_ready` separately so native window proof work has a truthful
   baseline.
+- Resolved: the desktop graph renderer owner used an unbounded command channel
+  even though Milestone 8 requires bounded renderer queues. The owner now uses a
+  fixed-capacity queue and reports `QueueFull` instead of accepting unlimited
+  pending renderer commands.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

@@ -9,8 +9,13 @@ use uuid::Uuid;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, DesktopBibleGraphHost,
-    DesktopBibleGraphRendererOwner,
+    DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
 };
+
+#[test]
+fn owner_uses_bounded_command_queue() {
+    assert_eq!(GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, 128);
+}
 
 #[test]
 fn host_applies_projection_and_reports_scene_counts() {
