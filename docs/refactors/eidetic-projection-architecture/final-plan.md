@@ -1133,6 +1133,11 @@ Discovered issues:
   impossible state where the renderer was not running or the scene was not
   ready. The lifecycle helper now requires a running, scene-ready renderer
   before visible-window state can be projected.
+- Resolved: graph renderer status dropped the desktop strategy's visible-window
+  support boolean before reaching Tauri/Svelte. Status projections now expose
+  `renderer_window_visible_supported` explicitly so unsupported native runner
+  capability degrades through typed backend-owned status instead of frontend
+  enum inference.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined

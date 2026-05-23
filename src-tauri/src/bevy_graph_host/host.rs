@@ -173,6 +173,7 @@ impl DesktopBibleGraphHost {
             renderer_window_capability: renderer_window_strategy.capability,
             renderer_window_lifecycle,
             renderer_window_ready: false,
+            renderer_window_visible_supported: renderer_window_strategy.visible_window_supported,
             renderer_window_focus_supported: renderer_window_visible,
             renderer_window_message: renderer_window_message(
                 self.renderer.is_some(),
