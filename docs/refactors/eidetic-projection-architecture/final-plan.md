@@ -1123,6 +1123,12 @@ Discovered issues:
   marker now advances only after a successful backend status response so failed
   projection updates stay visible and retryable without creating frontend-owned
   durable graph state.
+- Open: `eidetic-bevy-bible-graph` currently builds a Bevy scene resource graph
+  and native visual entities, but `BibleGraphRendererApp::new_renderer_window`
+  does not yet install/run a Bevy 0.18.1 window event loop. The desktop host
+  therefore truthfully reports `PendingNativeRunner`; Milestone 8 still needs a
+  cross-platform floating-window runner that consumes backend projections and
+  command channels without moving durable graph state into Bevy or Svelte.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined
