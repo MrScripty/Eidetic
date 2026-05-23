@@ -1107,6 +1107,12 @@ Discovered issues:
   plumbing from backend mutation events. The desktop bridge refreshes the
   backend-owned bible render graph projection into the renderer thread only
   while a graph renderer window is active.
+- Resolved: bible render graph projections included selected context influence
+  records but derived their envelope version only from bible node and edge
+  revisions. Render graph envelopes now include context evaluation and context
+  influence revisions so influence-only changes are cache-visible and
+  reload/history review can tie graph highlights to the change that produced
+  them.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined

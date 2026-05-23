@@ -256,7 +256,12 @@ pub(crate) fn load_render_graph_projection_envelope(
     let projection = load_render_graph_projection(conn, request)?;
     let summary = history_store::load_revision_summary_for_kinds(
         conn,
-        &[ObjectKind::BibleNode, ObjectKind::BibleEdge],
+        &[
+            ObjectKind::BibleNode,
+            ObjectKind::BibleEdge,
+            ObjectKind::ContextEvaluation,
+            ObjectKind::ContextInfluence,
+        ],
     )?;
 
     match summary.latest_change_event_id {

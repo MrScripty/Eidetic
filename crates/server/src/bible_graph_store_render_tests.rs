@@ -238,6 +238,10 @@ fn render_graph_projection_includes_selected_timeline_influences() {
     assert_eq!(projection.payload.edges.len(), 1);
     assert_eq!(projection.payload.influences.len(), 1);
     assert_eq!(
+        projection.version,
+        eidetic_core::contracts::ProjectionVersion(7)
+    );
+    assert_eq!(
         projection.payload.influences[0]
             .bible_node_id
             .as_ref()
