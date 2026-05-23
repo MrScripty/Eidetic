@@ -1118,6 +1118,11 @@ Discovered issues:
   edges, and influence records, closes the connection, reopens the database,
   and proves the render graph payload, version, and change event are rebuilt
   from persisted backend state.
+- Resolved: graph renderer Svelte controls marked projection requests as synced
+  before backend open/set-projection commands succeeded. The local request
+  marker now advances only after a successful backend status response so failed
+  projection updates stay visible and retryable without creating frontend-owned
+  durable graph state.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined

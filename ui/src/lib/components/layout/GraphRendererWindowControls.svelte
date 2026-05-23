@@ -26,13 +26,15 @@
   const canFocus = $derived(status?.renderer_window_focus_supported ?? false);
   const statusDisplay = $derived(graphRendererWindowStatusDisplay(status));
 
-  async function run(action: () => Promise<GraphRendererStatus>): Promise<void> {
+  async function run(action: () => Promise<GraphRendererStatus>): Promise<boolean> {
     pending = true;
     error = null;
     try {
       status = await action();
+      return true;
     } catch (caught) {
       error = caught instanceof Error ? caught.message : 'Graph renderer command failed';
+      return false;
     } finally {
       pending = false;
     }
@@ -44,8 +46,10 @@
       openGraphRenderer({
         graph_projection_request: graphProjectionRequest,
       }),
-    ).then(() => {
-      lastSyncedRequestKey = requestKey;
+    ).then((succeeded) => {
+      if (succeeded) {
+        lastSyncedRequestKey = requestKey;
+      }
     });
   }
 
@@ -71,8 +75,11 @@
     if (requestKey === lastSyncedRequestKey) {
       return;
     }
-    lastSyncedRequestKey = requestKey;
-    void run(() => setGraphRendererProjection(graphProjectionRequest));
+    void run(() => setGraphRendererProjection(graphProjectionRequest)).then((succeeded) => {
+      if (succeeded) {
+        lastSyncedRequestKey = requestKey;
+      }
+    });
   });
 </script>
 
