@@ -11,6 +11,9 @@ use super::{
 };
 
 enum BibleGraphHostRequest {
+    Start {
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
     SetProjection {
         projection: BibleRenderGraphProjection,
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
@@ -59,6 +62,14 @@ impl DesktopBibleGraphRendererOwner {
             sender,
             join_handle: Mutex::new(Some(join_handle)),
         })
+    }
+
+    pub fn start_renderer(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::Start { reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
     }
 
     pub fn set_projection(
@@ -157,6 +168,9 @@ fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
 
     for request in receiver {
         match request {
+            BibleGraphHostRequest::Start { reply } => {
+                let _ = reply.send(host.start());
+            }
             BibleGraphHostRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(host.set_projection(projection));
             }

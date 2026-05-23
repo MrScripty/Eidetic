@@ -104,6 +104,19 @@ fn owner_runs_renderer_on_dedicated_thread() {
 }
 
 #[test]
+fn owner_can_start_renderer_before_projection_arrives() {
+    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+
+    let status = owner.start_renderer().unwrap();
+
+    assert!(status.running);
+    assert_eq!(status.node_count, 0);
+    assert_eq!(status.edge_count, 0);
+    assert_eq!(status.influence_count, 0);
+    owner.stop().unwrap();
+}
+
+#[test]
 fn owner_drains_validated_renderer_commands() {
     let owner = DesktopBibleGraphRendererOwner::start().unwrap();
     let projection = sample_projection();
