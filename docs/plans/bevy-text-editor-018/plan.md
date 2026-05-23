@@ -180,12 +180,12 @@ TypeScript type, or persisted Eidetic contract is affected.
 
 **Tasks:**
 
-- [ ] Implement a conservative Fountain loader for title, scene heading, action,
+- [x] Implement a conservative Fountain loader for title, scene heading, action,
   character, dialogue, parenthetical, transition, and unknown blocks.
-- [ ] Convert parsed blocks into experiment-local semantic `Document` data.
-- [ ] Add a screenplay stylesheet with page width, margins, indentation, block
+- [x] Convert parsed blocks into experiment-local semantic `Document` data.
+- [x] Add a screenplay stylesheet with page width, margins, indentation, block
   spacing, and monospace font settings.
-- [ ] Render the first script as text in the Bevy window.
+- [x] Render the first script as text in the Bevy window.
 - [ ] Add keyboard shortcut or config selection for the initial fixture.
 
 **Verification:**
@@ -195,7 +195,8 @@ TypeScript type, or persisted Eidetic contract is affected.
 - `cargo test`
 - `cargo run`
 
-**Status:** Not started.
+**Status:** Complete for the first read-only viewer slice. Script switching is
+deferred to Milestone 5 as originally planned.
 
 ### Milestone 3: Layout Cache and Virtualized Rendering
 
@@ -315,6 +316,12 @@ weaknesses.
   environment because `winit` cannot open an X display
   (`XOpenDisplayFailed`). Use a local desktop session or a future headless
   display harness for runtime window smoke tests.
+- 2026-05-23: Milestone 2 added experiment-local `document` and `fountain`
+  modules plus a bounded screenplay preview renderer. The conservative parser
+  currently maps unrecognized nonblank lines to `Action` instead of a separate
+  `Unknown` block because the converted Fountain fixtures are more useful when
+  ambiguous PDF lines remain visible in the screenplay flow. Revisit if parser
+  diagnostics become a first-class requirement.
 
 ## Commit Cadence Notes
 
@@ -365,10 +372,12 @@ parser, and renderer workstreams with non-overlapping write sets.
 ### Completed
 
 - Milestone 1 project shell.
+- Milestone 2 first read-only Fountain viewer slice.
 
 ### Deviations
 
-- None.
+- Milestone 2: `Unknown` block output is deferred; ambiguous lines currently
+  fall back to `Action` to keep converted PDF fixtures readable.
 
 ### Follow-Ups
 
@@ -382,6 +391,9 @@ parser, and renderer workstreams with non-overlapping write sets.
   `experiments/bevy-text-editor-018/`.
 - Milestone 1: `timeout 5s cargo run` compiled the binary but could not open a
   native window because the command environment has no X display.
+- Milestone 2: `cargo fmt --check`, `cargo check`, and `cargo test` passed from
+  `experiments/bevy-text-editor-018/`; parser/document coverage currently has
+  five unit tests.
 
 ### Traceability Links
 

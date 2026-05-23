@@ -9,6 +9,8 @@ and experiment-local implementation modules.
 
 | File/Folder | Description |
 | ----------- | ----------- |
+| `document.rs` | Experiment-local semantic document model for screenplay/prose blocks. |
+| `fountain.rs` | Conservative Fountain loader for local screenplay fixtures. |
 | `main.rs` | Bevy app entry point, window setup, and initial debug text surface. |
 
 ## Problem
@@ -25,9 +27,8 @@ surface can be evaluated without production Eidetic architecture changes.
 
 ## Decision
 
-Start with a single executable entry point for the project shell. Split into
-document, parser, layout, renderer, input, metrics, and fixture modules as each
-thin vertical slice lands.
+Keep the Bevy app entry point thin and move reusable non-Bevy behavior into
+plain Rust modules as each vertical slice lands.
 
 ## Alternatives Rejected
 
@@ -52,9 +53,11 @@ thin vertical slice lands.
 
 ## Dependencies
 
-**Internal:** None at project creation.
+**Internal:** `document.rs` owns semantic blocks; `fountain.rs` owns fixture
+parsing into those blocks.
 
-**External:** Bevy for the direct native window and render loop.
+**External:** Bevy for the direct native window and render loop, and `ropey`
+for editable block text storage.
 
 ## Related ADRs
 
@@ -82,4 +85,3 @@ cargo run
 - Reason: runtime metrics are displayed locally and are not consumed by tools.
 - Revisit trigger: metrics or benchmark output become stable files consumed by
   CI or decision reports.
-

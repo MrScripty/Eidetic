@@ -22,3 +22,4 @@ bevy = { version = "0.18.1", default-features = false, features = [
     "wayland",
     "x11",
 ] }
+ropey = "1"
