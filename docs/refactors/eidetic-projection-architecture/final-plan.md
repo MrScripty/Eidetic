@@ -1090,6 +1090,11 @@ Discovered issues:
   boundary through an explicit Tauri command and TypeScript mirror types. This
   keeps future native panel smoke tests and diagnostics on the same Bevy-owned
   visual contract without exposing Bevy ECS internals to Svelte.
+- Resolved: native Bevy graph rendering now has an explicit opt-in feature gate
+  instead of expanding the default renderer dependency surface. The
+  `native_render` feature enables the reviewed Bevy 2D render/window/winit stack
+  with Linux Wayland/X11 backends and starts with a plugin-level borderless
+  panel intent resource before any graph node or edge render systems are added.
 
 ## Concurrent Worker Policy
 

@@ -158,6 +158,22 @@ fn renderer_app_exposes_projection_derived_visual_snapshot() {
     assert_eq!(snapshot.edges[0].stroke_color, "#f2c94c");
 }
 
+#[cfg(feature = "native_render")]
+#[test]
+fn native_render_plugin_records_borderless_panel_intent() {
+    use bevy::prelude::Plugin;
+
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+
+    assert!(
+        app.world()
+            .resource::<BibleGraphNativeRenderConfig>()
+            .borderless_panel
+    );
+}
+
 #[test]
 fn renderer_app_rejects_unknown_influence_selection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();

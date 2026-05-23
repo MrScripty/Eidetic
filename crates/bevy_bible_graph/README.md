@@ -43,6 +43,11 @@ Dependency review:
   embeds inside the Tauri workspace, resizes from `EmbeddedViewportBounds`, and
   does not open a separate product window. The first render slice should prove
   a minimal background/grid scene before graph nodes/edges are visualized.
+- The `native_render` feature gates the reviewed Bevy render/window stack for
+  desktop panel work. It enables `2d_bevy_render`, `bevy_window`, and
+  `bevy_winit` plus Linux `wayland`/`x11` window backends, and is intentionally
+  off by default so projection-only tests and server builds do not pay for
+  native rendering.
 - Asset/text/UI/audio features remain out of scope for the bible graph viewport
   until there is a concrete graph-rendering requirement that cannot be met with
   primitive meshes, materials, and Svelte-side semantic text/detail panels.

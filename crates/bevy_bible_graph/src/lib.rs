@@ -9,6 +9,11 @@ use thiserror::Error;
 mod scene;
 mod visual;
 
+#[cfg(feature = "native_render")]
+mod native_render;
+
+#[cfg(feature = "native_render")]
+pub use native_render::{BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin};
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
     rebuild_bible_graph_scene,
