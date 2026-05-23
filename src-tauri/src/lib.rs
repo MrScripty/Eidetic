@@ -13,6 +13,7 @@ mod reference_commands;
 mod renderer_window;
 
 use bevy_graph_host::DesktopBibleGraphRendererOwner;
+use desktop_events::DesktopEventBridgeOwner;
 use eidetic_server::state::AppState;
 use graph_renderer_commands::GraphRendererProjectionRequestState;
 use serde::Serialize;
@@ -36,16 +37,18 @@ pub fn run() {
                     .expect("failed to start Bevy bible graph renderer owner"),
             );
             app.manage(GraphRendererProjectionRequestState::default());
-            desktop_events::spawn_server_event_bridge(app.handle().clone(), &app_state);
-            desktop_events::spawn_graph_renderer_projection_bridge(
+            app.manage(DesktopEventBridgeOwner::spawn(
                 app.handle().clone(),
                 &app_state,
-            );
+            ));
             app.manage(app_state);
             Ok(())
         })
         .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::Destroyed) {
+                if let Some(event_bridges) = window.try_state::<DesktopEventBridgeOwner>() {
+                    event_bridges.stop();
+                }
                 if let Some(graph_owner) = window.try_state::<DesktopBibleGraphRendererOwner>() {
                     let _ = graph_owner.stop();
                 }

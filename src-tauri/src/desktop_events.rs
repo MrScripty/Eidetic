@@ -1,6 +1,7 @@
 use eidetic_server::bible_render_graph_projection;
 use eidetic_server::state::{AppState, ServerEvent};
 use serde::Serialize;
+use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 use tokio::sync::broadcast;
 
@@ -14,10 +15,42 @@ pub struct DesktopServerEvent {
     event: ServerEvent,
 }
 
-pub fn spawn_server_event_bridge(app: tauri::AppHandle, state: &AppState) {
+pub struct DesktopEventBridgeOwner {
+    handles: Mutex<Vec<tauri::async_runtime::JoinHandle<()>>>,
+}
+
+impl DesktopEventBridgeOwner {
+    pub fn spawn(app: tauri::AppHandle, state: &AppState) -> Self {
+        Self {
+            handles: Mutex::new(vec![
+                spawn_server_event_bridge(app.clone(), state),
+                spawn_graph_renderer_projection_bridge(app, state),
+            ]),
+        }
+    }
+
+    pub fn stop(&self) {
+        if let Ok(mut handles) = self.handles.lock() {
+            for handle in handles.drain(..) {
+                handle.abort();
+            }
+        }
+    }
+}
+
+impl Drop for DesktopEventBridgeOwner {
+    fn drop(&mut self) {
+        self.stop();
+    }
+}
+
+fn spawn_server_event_bridge(
+    app: tauri::AppHandle,
+    state: &AppState,
+) -> tauri::async_runtime::JoinHandle<()> {
     let mut events = state.events_tx.subscribe();
 
-    let _event_bridge = tauri::async_runtime::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         loop {
             match events.recv().await {
                 Ok(event) => {
@@ -31,14 +64,17 @@ pub fn spawn_server_event_bridge(app: tauri::AppHandle, state: &AppState) {
                 Err(broadcast::error::RecvError::Closed) => break,
             }
         }
-    });
+    })
 }
 
-pub fn spawn_graph_renderer_projection_bridge(app: tauri::AppHandle, state: &AppState) {
+fn spawn_graph_renderer_projection_bridge(
+    app: tauri::AppHandle,
+    state: &AppState,
+) -> tauri::async_runtime::JoinHandle<()> {
     let mut events = state.events_tx.subscribe();
     let state = state.clone();
 
-    let _projection_bridge = tauri::async_runtime::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         loop {
             match events.recv().await {
                 Ok(event) => {
@@ -53,7 +89,7 @@ pub fn spawn_graph_renderer_projection_bridge(app: tauri::AppHandle, state: &App
                 Err(broadcast::error::RecvError::Closed) => break,
             }
         }
-    });
+    })
 }
 
 fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
@@ -102,9 +138,13 @@ fn is_graph_renderer_open(app: &tauri::AppHandle) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{DesktopServerEvent, SERVER_EVENT_TOPIC, should_refresh_graph_renderer_projection};
+    use super::{
+        DesktopEventBridgeOwner, DesktopServerEvent, SERVER_EVENT_TOPIC,
+        should_refresh_graph_renderer_projection,
+    };
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
+    use std::sync::Mutex;
 
     #[test]
     fn serializes_backend_events_inside_stable_desktop_payload() {
@@ -164,5 +204,15 @@ mod tests {
         assert!(!should_refresh_graph_renderer_projection(
             &ServerEvent::ScriptChanged
         ));
+    }
+
+    #[test]
+    fn desktop_event_bridge_owner_stop_is_idempotent_without_handles() {
+        let owner = DesktopEventBridgeOwner {
+            handles: Mutex::new(Vec::new()),
+        };
+
+        owner.stop();
+        owner.stop();
     }
 }

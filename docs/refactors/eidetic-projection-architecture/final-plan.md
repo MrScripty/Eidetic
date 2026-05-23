@@ -1158,11 +1158,10 @@ Discovered issues:
   explicit graph renderer command path and the desktop mutation-event refresh
   bridge while Milestone 8 continues converging those into one desktop-owned
   renderer projection subscription path.
-- Open: desktop event bridges and the Svelte graph renderer command drain still
-  use temporary detached-task or polling-style bridge patterns. The native
-  renderer runner slice must replace or contain those patterns with explicit
-  lifecycle ownership, tracked cancellation, bounded queues, and event-driven
-  command projection where feasible.
+- Open: the Svelte graph renderer command drain still uses a temporary polling
+  bridge. The native renderer runner slice must replace or contain that pattern
+  with explicit lifecycle ownership, tracked cancellation, bounded queues, and
+  event-driven command projection where feasible.
 - Resolved: stale embedded-viewport documentation and the unused
   `raw-window-handle` dependency were removed after the production child-surface
   path was rejected. Raw handles must be reintroduced only through the native
@@ -1192,6 +1191,11 @@ Discovered issues:
   SQLite-backed query path. Dense local graph neighborhoods can no longer
   return an unbounded edge set after node/depth/search limits have been
   applied.
+- Updated: desktop server-event and graph-renderer projection bridges now have
+  a `DesktopEventBridgeOwner` that tracks spawned task handles and aborts them
+  on app/window shutdown. The remaining temporary Svelte command-drain polling
+  still needs to be replaced or retired before the Bevy graph becomes the
+  primary visual surface.
 - Resolved: `AppShell.svelte` is back under the component decomposition
   threshold. Central workspace rendering now lives in `AppWorkspace.svelte`,
   graph detail selection lives in `GraphRightInspector.svelte`, and AI status
