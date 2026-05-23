@@ -53,6 +53,11 @@ impl DesktopBibleGraphHost {
         self.status()
     }
 
+    pub fn focus(&mut self) -> BibleGraphHostStatus {
+        self.native_runner.focus();
+        self.status()
+    }
+
     pub fn set_projection(
         &mut self,
         projection: BibleRenderGraphProjection,

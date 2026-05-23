@@ -257,6 +257,19 @@ fn host_stop_drops_renderer_state() {
 }
 
 #[test]
+fn host_focus_routes_through_native_runner_status() {
+    let mut host = DesktopBibleGraphHost::new();
+    host.start().unwrap();
+
+    let status = host.focus();
+
+    assert!(status.renderer_window_open);
+    assert!(!status.renderer_window_focus_supported);
+    assert!(!status.renderer_window_visible);
+    assert!(!status.renderer_window_ready);
+}
+
+#[test]
 fn owner_runs_renderer_on_dedicated_thread() {
     let owner = DesktopBibleGraphRendererOwner::start().unwrap();
     let projection = sample_projection();
@@ -294,6 +307,20 @@ fn owner_can_start_renderer_before_projection_arrives() {
     assert_eq!(status.native_visual_node_count, 0);
     assert_eq!(status.native_visual_edge_count, 0);
     assert_eq!(status.influence_count, 0);
+    owner.stop().unwrap();
+}
+
+#[test]
+fn owner_focus_routes_to_renderer_thread() {
+    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    owner.start_renderer().unwrap();
+
+    let status = owner.focus_renderer().unwrap();
+
+    assert!(status.renderer_window_open);
+    assert!(!status.renderer_window_focus_supported);
+    assert!(!status.renderer_window_visible);
+    assert!(!status.renderer_window_ready);
     owner.stop().unwrap();
 }
 

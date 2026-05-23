@@ -1183,6 +1183,10 @@ Discovered issues:
   zero-valued timestamps. This keeps context influence history review,
   before/after traceability, and undo/redo ordering aligned with the actual
   evaluation time.
+- Resolved: graph renderer focus commands now route through the desktop
+  renderer owner and native runner boundary instead of returning passive status
+  from the Tauri command adapter. The pending runner still reports unsupported
+  focus truthfully until a real native window runner lands.
 - Resolved: `AppShell.svelte` is back under the component decomposition
   threshold. Central workspace rendering now lives in `AppWorkspace.svelte`,
   graph detail selection lives in `GraphRightInspector.svelte`, and AI status
