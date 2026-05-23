@@ -888,6 +888,9 @@ Completed slices:
   validated renderer-window size hint to the graph renderer open command so
   placement/size input has an explicit desktop request contract before native
   OS window support lands.
+- `refactor(renderer): bound graph command buffer` added a fixed capacity to
+  the Bevy bible graph leaf renderer command buffer so renderer-emitted command
+  intents cannot grow without backpressure.
 
 Discovered issues:
 
@@ -967,6 +970,10 @@ Discovered issues:
   renderer-window size hints, even though Milestone 8 requires size/placement
   hints to be validated by the floating renderer host. Open requests now accept
   a validated size hint and reject zero dimensions before renderer startup.
+- Resolved: the desktop graph renderer owner queue was bounded, but the Bevy
+  bible graph leaf renderer still stored emitted command intents in an
+  unbounded `Vec`. The renderer command buffer now has the same fixed capacity
+  and returns a typed queue-full error.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

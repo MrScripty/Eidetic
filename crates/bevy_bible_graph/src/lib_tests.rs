@@ -23,6 +23,29 @@ fn renderer_app_receives_projection_and_emits_validated_selection_command() {
 }
 
 #[test]
+fn renderer_app_uses_bounded_command_queue() {
+    assert_eq!(BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, 128);
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer.set_projection(projection_with_node(node_id.clone()));
+
+    for _ in 0..BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY {
+        assert_eq!(renderer.inspect_node(node_id.clone()), Ok(()));
+    }
+
+    assert_eq!(
+        renderer.inspect_node(node_id),
+        Err(BibleGraphRendererError::CommandQueueFull)
+    );
+    assert_eq!(
+        renderer.drain_commands().len(),
+        BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY
+    );
+    assert!(renderer.drain_commands().is_empty());
+}
+
+#[test]
 fn renderer_app_rebuilds_scene_entities_from_projection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let mut renderer = BibleGraphRendererApp::new();

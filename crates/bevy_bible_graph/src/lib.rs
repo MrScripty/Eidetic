@@ -29,6 +29,8 @@ pub use visual::{
     build_bible_graph_visual_snapshot,
 };
 
+pub const BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum BibleGraphRendererCommand {
@@ -48,6 +50,8 @@ pub enum BibleGraphRendererError {
     UnknownEdge { edge_id: BibleGraphEdgeId },
     #[error("bible graph projection does not contain influence {influence_id:?}")]
     UnknownInfluence { influence_id: ContextInfluenceId },
+    #[error("bible graph renderer command queue is full")]
+    CommandQueueFull,
 }
 
 #[derive(Resource, Default)]
@@ -169,12 +173,7 @@ impl BibleGraphRendererApp {
         node_id: BibleGraphNodeId,
     ) -> Result<(), BibleGraphRendererError> {
         self.validate_node(&node_id)?;
-        self.app
-            .world_mut()
-            .resource_mut::<BibleGraphRendererCommandQueue>()
-            .commands
-            .push(BibleGraphRendererCommand::SelectNode { node_id });
-        Ok(())
+        self.enqueue_command(BibleGraphRendererCommand::SelectNode { node_id })
     }
 
     pub fn inspect_node(
@@ -182,12 +181,7 @@ impl BibleGraphRendererApp {
         node_id: BibleGraphNodeId,
     ) -> Result<(), BibleGraphRendererError> {
         self.validate_node(&node_id)?;
-        self.app
-            .world_mut()
-            .resource_mut::<BibleGraphRendererCommandQueue>()
-            .commands
-            .push(BibleGraphRendererCommand::InspectNode { node_id });
-        Ok(())
+        self.enqueue_command(BibleGraphRendererCommand::InspectNode { node_id })
     }
 
     pub fn select_edge(
@@ -195,12 +189,7 @@ impl BibleGraphRendererApp {
         edge_id: BibleGraphEdgeId,
     ) -> Result<(), BibleGraphRendererError> {
         self.validate_edge(&edge_id)?;
-        self.app
-            .world_mut()
-            .resource_mut::<BibleGraphRendererCommandQueue>()
-            .commands
-            .push(BibleGraphRendererCommand::SelectEdge { edge_id });
-        Ok(())
+        self.enqueue_command(BibleGraphRendererCommand::SelectEdge { edge_id })
     }
 
     pub fn select_influence(
@@ -208,12 +197,7 @@ impl BibleGraphRendererApp {
         influence_id: ContextInfluenceId,
     ) -> Result<(), BibleGraphRendererError> {
         self.validate_influence(influence_id)?;
-        self.app
-            .world_mut()
-            .resource_mut::<BibleGraphRendererCommandQueue>()
-            .commands
-            .push(BibleGraphRendererCommand::SelectInfluence { influence_id });
-        Ok(())
+        self.enqueue_command(BibleGraphRendererCommand::SelectInfluence { influence_id })
     }
 
     pub fn neighborhood(
@@ -291,6 +275,22 @@ impl BibleGraphRendererApp {
                 .resource_mut::<BibleGraphRendererCommandQueue>()
                 .commands,
         )
+    }
+
+    fn enqueue_command(
+        &mut self,
+        command: BibleGraphRendererCommand,
+    ) -> Result<(), BibleGraphRendererError> {
+        let mut queue = self
+            .app
+            .world_mut()
+            .resource_mut::<BibleGraphRendererCommandQueue>();
+        if queue.commands.len() >= BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY {
+            return Err(BibleGraphRendererError::CommandQueueFull);
+        }
+
+        queue.commands.push(command);
+        Ok(())
     }
 
     fn validate_node(&self, node_id: &BibleGraphNodeId) -> Result<(), BibleGraphRendererError> {
