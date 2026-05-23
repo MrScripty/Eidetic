@@ -1167,11 +1167,11 @@ Discovered issues:
   path was rejected. Raw handles must be reintroduced only through the native
   runner safety and platform verification path if a later gate proves they are
   required.
-- Open: AI bible context projection still loads all non-system bible graph
-  nodes plus per-node detail projections for prompting. Milestone 8 bounded
-  graph/context projections should not copy that pattern, and the later agent
-  harness milestone must replace AI prompting context with bounded, influence-
-  aware graph queries.
+- Resolved: AI bible context projection now consumes the bounded bible render
+  graph query defaults instead of loading every non-system graph node. Prompting
+  context is capped by the same node/edge limits as the interactive graph while
+  the later agent harness milestone still replaces this preview/generation
+  context with explicit graph tools.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined

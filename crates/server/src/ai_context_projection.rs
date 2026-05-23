@@ -1,7 +1,10 @@
+use std::collections::BTreeSet;
+
 use eidetic_core::contracts::{
     AiBibleContextEdge, AiBibleContextField, AiBibleContextNode, AiBibleContextProjection,
-    AiBibleContextSnapshot, BibleGraphEdge, BibleGraphNode, BibleGraphPartProjection,
-    BibleGraphSnapshotProjection, ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion,
+    AiBibleContextSnapshot, BibleGraphEdge, BibleGraphEdgeId, BibleGraphNode,
+    BibleGraphPartProjection, BibleGraphSnapshotProjection, BibleRenderGraphProjectionRequest,
+    ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion,
 };
 use eidetic_core::timeline::node::NodeId;
 use rusqlite::{Connection, OptionalExtension, params};
@@ -15,11 +18,21 @@ pub(crate) fn load_ai_bible_context_projection(
 ) -> Result<ProjectionEnvelope<AiBibleContextProjection>, HistoryStoreError> {
     bible_graph_store::create_schema(conn)?;
 
-    let nodes = bible_graph_store::load_node_list_projection(conn)?
+    let request = BibleRenderGraphProjectionRequest {
+        selected_timeline_node_id: Some(target_node_id),
+        ..BibleRenderGraphProjectionRequest::default()
+    };
+    let bounded_graph = crate::bible_render_graph_query::load_bounded_render_graph(conn, &request)?;
+    let visible_edge_ids: BTreeSet<_> = bounded_graph
+        .edges
+        .iter()
+        .map(|edge| edge.id.clone())
+        .collect();
+    let nodes = bounded_graph
         .nodes
         .into_iter()
         .filter(|node| !node.system_owned)
-        .map(|node| load_context_node(conn, node))
+        .map(|node| load_context_node(conn, node, &visible_edge_ids))
         .collect::<Result<Vec<_>, _>>()?;
     let projection = AiBibleContextProjection {
         target_node_id,
@@ -40,6 +53,7 @@ pub(crate) fn load_ai_bible_context_projection(
 fn load_context_node(
     conn: &Connection,
     node: BibleGraphNode,
+    visible_edge_ids: &BTreeSet<BibleGraphEdgeId>,
 ) -> Result<AiBibleContextNode, HistoryStoreError> {
     let Some(detail) = bible_graph_store::load_node_detail_projection(conn, &node.id)? else {
         return Err(HistoryStoreError::InvalidValue(format!(
@@ -55,8 +69,8 @@ fn load_context_node(
         name: node.name,
         fields: context_fields(detail.parts),
         snapshots: context_snapshots(detail.snapshots),
-        incoming_edges: context_edges(detail.incoming_edges),
-        outgoing_edges: context_edges(detail.outgoing_edges),
+        incoming_edges: context_edges(detail.incoming_edges, visible_edge_ids),
+        outgoing_edges: context_edges(detail.outgoing_edges, visible_edge_ids),
     })
 }
 
@@ -108,9 +122,13 @@ fn context_snapshots(snapshots: Vec<BibleGraphSnapshotProjection>) -> Vec<AiBibl
         .collect()
 }
 
-fn context_edges(edges: Vec<BibleGraphEdge>) -> Vec<AiBibleContextEdge> {
+fn context_edges(
+    edges: Vec<BibleGraphEdge>,
+    visible_edge_ids: &BTreeSet<BibleGraphEdgeId>,
+) -> Vec<AiBibleContextEdge> {
     edges
         .into_iter()
+        .filter(|edge| visible_edge_ids.contains(&edge.id))
         .map(|edge| AiBibleContextEdge {
             edge_id: edge.id,
             from_node_id: edge.from_node_id,
