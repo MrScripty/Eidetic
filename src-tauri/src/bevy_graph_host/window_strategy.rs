@@ -6,6 +6,15 @@ pub enum BibleGraphRendererWindowStrategy {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
+pub enum BibleGraphRendererWindowPlatform {
+    Linux,
+    Macos,
+    Windows,
+    Unsupported,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum BibleGraphRendererWindowCapability {
     PendingNativeRunner,
 }
@@ -22,6 +31,7 @@ pub enum BibleGraphRendererWindowLifecycle {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct BibleGraphRendererWindowStrategyStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
+    pub platform: BibleGraphRendererWindowPlatform,
     pub capability: BibleGraphRendererWindowCapability,
     pub visible_window_supported: bool,
 }
@@ -30,8 +40,23 @@ impl BibleGraphRendererWindowStrategyStatus {
     pub fn current() -> Self {
         Self {
             strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
+            platform: BibleGraphRendererWindowPlatform::current(),
             capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             visible_window_supported: false,
+        }
+    }
+}
+
+impl BibleGraphRendererWindowPlatform {
+    pub fn current() -> Self {
+        if cfg!(target_os = "linux") {
+            Self::Linux
+        } else if cfg!(target_os = "macos") {
+            Self::Macos
+        } else if cfg!(target_os = "windows") {
+            Self::Windows
+        } else {
+            Self::Unsupported
         }
     }
 }

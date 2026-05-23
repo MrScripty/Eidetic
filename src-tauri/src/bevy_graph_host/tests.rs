@@ -12,11 +12,12 @@ use crate::renderer_window::DesktopRendererWindowKind;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowCapability,
-    BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowStrategy,
-    BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
-    GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
-    NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
-    NativeRendererRunner, NativeRendererRunnerHandle, PendingNativeRendererRunner,
+    BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowPlatform,
+    BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
+    DesktopBibleGraphHost, DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
+    GRAPH_RENDERER_REPLY_TIMEOUT_MS, NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY,
+    NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS, NativeRendererRunner, NativeRendererRunnerHandle,
+    PendingNativeRendererRunner,
 };
 
 #[test]
@@ -43,6 +44,7 @@ fn renderer_window_strategy_reports_pending_native_runner() {
         status.strategy,
         BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
     );
+    assert_eq!(status.platform, BibleGraphRendererWindowPlatform::current());
     assert_eq!(
         status.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
@@ -59,6 +61,10 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
     assert_eq!(
         initial.strategy,
         BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
+    );
+    assert_eq!(
+        initial.platform,
+        BibleGraphRendererWindowPlatform::current()
     );
     assert_eq!(
         initial.capability,
@@ -100,6 +106,7 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
         opened.strategy,
         BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
     );
+    assert_eq!(opened.platform, BibleGraphRendererWindowPlatform::current());
     assert_eq!(
         opened.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
@@ -157,6 +164,7 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_scene_ready: true,
             renderer_window_visible: false,
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
+            renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_lifecycle:
                 BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner,
@@ -277,6 +285,7 @@ fn host_stop_drops_renderer_state() {
             renderer_scene_ready: false,
             renderer_window_visible: false,
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
+            renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,
             renderer_window_ready: false,

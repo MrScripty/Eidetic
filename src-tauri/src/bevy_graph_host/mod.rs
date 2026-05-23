@@ -17,7 +17,8 @@ pub use owner::{
 };
 pub use window_strategy::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowLifecycle,
-    BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
+    BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
+    BibleGraphRendererWindowStrategyStatus,
 };
 
 #[cfg(test)]
@@ -31,6 +32,7 @@ pub struct BibleGraphHostStatus {
     pub renderer_scene_ready: bool,
     pub renderer_window_visible: bool,
     pub renderer_window_strategy: BibleGraphRendererWindowStrategy,
+    pub renderer_window_platform: BibleGraphRendererWindowPlatform,
     pub renderer_window_capability: BibleGraphRendererWindowCapability,
     pub renderer_window_lifecycle: BibleGraphRendererWindowLifecycle,
     pub renderer_window_ready: bool,

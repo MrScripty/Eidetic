@@ -180,6 +180,7 @@ impl DesktopBibleGraphHost {
             renderer_scene_ready,
             renderer_window_visible: native_runner.window_visible,
             renderer_window_strategy: native_runner.strategy,
+            renderer_window_platform: native_runner.platform,
             renderer_window_capability: native_runner.capability,
             renderer_window_lifecycle,
             renderer_window_ready: native_runner.window_ready,

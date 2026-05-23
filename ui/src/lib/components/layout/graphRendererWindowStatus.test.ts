@@ -16,6 +16,7 @@ function statusFor(
       renderer_window_lifecycle === 'visible',
     renderer_window_visible: renderer_window_lifecycle === 'visible',
     renderer_window_strategy: 'bevy_winit_floating_window',
+    renderer_window_platform: 'linux',
     renderer_window_capability: 'pending_native_runner',
     renderer_window_lifecycle,
     renderer_window_ready: renderer_window_lifecycle === 'visible',

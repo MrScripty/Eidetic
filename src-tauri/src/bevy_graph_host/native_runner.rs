@@ -3,8 +3,8 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use super::{
-    BibleGraphRendererWindowCapability, BibleGraphRendererWindowStrategy,
-    BibleGraphRendererWindowStrategyStatus,
+    BibleGraphRendererWindowCapability, BibleGraphRendererWindowPlatform,
+    BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
 };
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
@@ -13,6 +13,7 @@ pub const NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS: u64 = 2_000;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NativeRendererRunnerStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
+    pub platform: BibleGraphRendererWindowPlatform,
     pub capability: BibleGraphRendererWindowCapability,
     pub visible_window_supported: bool,
     pub window_visible: bool,
@@ -144,6 +145,7 @@ impl NativeRendererRunner for PendingNativeRendererRunner {
         let strategy = BibleGraphRendererWindowStrategyStatus::current();
         NativeRendererRunnerStatus {
             strategy: strategy.strategy,
+            platform: strategy.platform,
             capability: strategy.capability,
             visible_window_supported: strategy.visible_window_supported,
             window_visible: false,

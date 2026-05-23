@@ -1162,6 +1162,11 @@ Discovered issues:
   reply timeout and typed timeout error, so Tauri command handlers do not wait
   indefinitely if the renderer owner thread stops responding during native
   runner development.
+- Updated: graph renderer status now carries a typed desktop platform
+  projection (`linux`, `macos`, `windows`, or `unsupported`) selected behind
+  the desktop renderer strategy boundary. The native window runner still must
+  prove backend-owned open/focus/close behavior per platform before reporting
+  visible-window support.
 - Updated: bible render graph projection reads no longer mirror their response
   into the Bevy renderer. Renderer projection mutation now flows through a
   shared desktop-owned projection refresh module used by graph renderer

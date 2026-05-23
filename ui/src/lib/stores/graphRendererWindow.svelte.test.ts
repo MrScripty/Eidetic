@@ -14,6 +14,7 @@ const baseStatus: GraphRendererStatus = {
   renderer_scene_ready: true,
   renderer_window_visible: false,
   renderer_window_strategy: 'bevy_winit_floating_window',
+  renderer_window_platform: 'linux',
   renderer_window_capability: 'pending_native_runner',
   renderer_window_lifecycle: 'scene_ready_pending_native_runner',
   renderer_window_ready: false,
