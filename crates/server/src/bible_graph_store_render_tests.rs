@@ -252,6 +252,51 @@ fn render_graph_projection_includes_selected_timeline_influences() {
 }
 
 #[test]
+fn render_graph_projection_reloads_selected_context_influences() {
+    let path = std::env::temp_dir().join(format!(
+        "eidetic-render-graph-reload-{}.sqlite",
+        uuid::Uuid::new_v4()
+    ));
+    let timeline_node_id = NodeId::new();
+    let request = BibleRenderGraphProjectionRequest {
+        selected_timeline_node_id: Some(timeline_node_id),
+        max_nodes: 10,
+        ..BibleRenderGraphProjectionRequest::default()
+    };
+
+    let original = {
+        let mut conn = crate::sqlite::open_write_connection(&path).unwrap();
+        create_schema(&conn).unwrap();
+        seed_node(&mut conn, "node.character.ada", "Ada", 10);
+        seed_node(&mut conn, "node.place.beach", "Beach", 20);
+        seed_edge(
+            &mut conn,
+            "edge.ada.beach",
+            "node.character.ada",
+            "node.place.beach",
+            1,
+        );
+        seed_context_influence(
+            &mut conn,
+            timeline_node_id,
+            "node.character.ada",
+            "edge.ada.beach",
+        );
+        load_render_graph_projection_envelope(&conn, &request).unwrap()
+    };
+
+    let reloaded = {
+        let conn = crate::sqlite::open_write_connection(&path).unwrap();
+        load_render_graph_projection_envelope(&conn, &request).unwrap()
+    };
+
+    cleanup_sqlite_files(&path);
+    assert_eq!(reloaded.version, original.version);
+    assert_eq!(reloaded.change_event_id, original.change_event_id);
+    assert_eq!(reloaded.payload, original.payload);
+}
+
+#[test]
 fn render_graph_projection_keeps_selected_timeline_influences_when_searching() {
     let mut conn = memory_connection();
     let timeline_node_id = NodeId::new();
@@ -329,4 +374,10 @@ fn seed_context_influence(
         }],
     });
     crate::context_influence_store::record_context_evaluation(conn, &command, 100).unwrap();
+}
+
+fn cleanup_sqlite_files(path: &std::path::Path) {
+    let _ = std::fs::remove_file(path);
+    let _ = std::fs::remove_file(format!("{}-shm", path.display()));
+    let _ = std::fs::remove_file(format!("{}-wal", path.display()));
 }

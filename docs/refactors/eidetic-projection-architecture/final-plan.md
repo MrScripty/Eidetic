@@ -1113,6 +1113,11 @@ Discovered issues:
   influence revisions so influence-only changes are cache-visible and
   reload/history review can tie graph highlights to the change that produced
   them.
+- Resolved: selected timeline context influence graph projections now have a
+  file-backed SQLite reload regression test. The test records graph nodes,
+  edges, and influence records, closes the connection, reopens the database,
+  and proves the render graph payload, version, and change event are rebuilt
+  from persisted backend state.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined
