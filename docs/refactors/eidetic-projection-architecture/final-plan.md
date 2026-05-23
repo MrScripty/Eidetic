@@ -1153,21 +1153,21 @@ Discovered issues:
   keep running. Milestone 8 must add a desktop-owned native renderer runner
   boundary before graph visuals, so `App::run()` or equivalent event-loop work
   does not block Tauri command replies or command/status handling.
-- Open: graph renderer projection updates currently have multiple delivery
-  paths: projection-route mirroring, the desktop server-event bridge, and
-  Svelte-initiated `graph_renderer_set_projection`. Milestone 8 must converge
-  this into one desktop-owned renderer projection subscription path, with
-  Svelte owning only request/filter drafts and launch/focus/close/status
-  controls.
+- Updated: bible render graph projection reads no longer mirror their response
+  into the Bevy renderer. Renderer projection mutation now remains in the
+  explicit graph renderer command path and the desktop mutation-event refresh
+  bridge while Milestone 8 continues converging those into one desktop-owned
+  renderer projection subscription path.
 - Open: desktop event bridges and the Svelte graph renderer command drain still
   use temporary detached-task or polling-style bridge patterns. The native
   renderer runner slice must replace or contain those patterns with explicit
   lifecycle ownership, tracked cancellation, bounded queues, and event-driven
   command projection where feasible.
-- Open: stale embedded-viewport documentation and the unused `raw-window-handle`
-  dependency remain after the production child-surface path was rejected. The
-  native runner gate must either remove them or justify any retained raw handle
-  dependency through the unsafe/platform verification path.
+- Resolved: stale embedded-viewport documentation and the unused
+  `raw-window-handle` dependency were removed after the production child-surface
+  path was rejected. Raw handles must be reintroduced only through the native
+  runner safety and platform verification path if a later gate proves they are
+  required.
 - Open: AI bible context projection still loads all non-system bible graph
   nodes plus per-node detail projections for prompting. Milestone 8 bounded
   graph/context projections should not copy that pattern, and the later agent
