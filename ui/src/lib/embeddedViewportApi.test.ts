@@ -32,9 +32,14 @@ describe('embedded viewport api helpers', () => {
     height: 360,
     scale_factor: 1,
   };
+  const surface = {
+    attached: false,
+    status: 'pending_attachment',
+    message: 'native Bevy surface attachment is not implemented yet',
+  };
 
   it('mounts a graph viewport through desktop IPC', async () => {
-    const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: false };
+    const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: false, surface };
     const invoke = installDesktopInvoke(response);
 
     await expect(
@@ -55,7 +60,7 @@ describe('embedded viewport api helpers', () => {
   });
 
   it('updates viewport bounds through desktop IPC', async () => {
-    const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: false };
+    const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: false, surface };
     const invoke = installDesktopInvoke(response);
 
     await expect(
@@ -74,7 +79,7 @@ describe('embedded viewport api helpers', () => {
   });
 
   it('sets viewport focus through desktop IPC', async () => {
-    const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: true };
+    const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: true, surface };
     const invoke = installDesktopInvoke(response);
 
     await expect(

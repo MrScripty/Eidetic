@@ -13,11 +13,20 @@ export interface EmbeddedViewportState {
   kind: EmbeddedViewportKind;
   bounds: EmbeddedViewportBounds;
   focused: boolean;
+  surface: EmbeddedViewportSurfaceState;
+}
+
+export interface EmbeddedViewportSurfaceState {
+  attached: boolean;
+  status: EmbeddedViewportSurfaceStatus;
+  message: string;
 }
 
 export interface EmbeddedViewportHostStatus {
   viewports: EmbeddedViewportState[];
 }
+
+export type EmbeddedViewportSurfaceStatus = 'pending_attachment' | 'attached';
 
 export interface MountEmbeddedViewportRequest {
   viewport_id: string;

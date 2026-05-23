@@ -1110,6 +1110,10 @@ Discovered issues:
   Bevy panel scene but cannot yet display that scene in the app layout. The next
   viewport slice must add an explicit desktop surface attachment strategy before
   graph nodes and edges are rendered visibly.
+- Resolved: embedded viewport state now includes a typed native surface
+  attachment status. A mounted graph viewport reports `pending_attachment` until
+  a future desktop surface strategy attaches Bevy to the panel, which prevents
+  renderer lifecycle readiness from being mistaken for visible graph rendering.
 
 ## Concurrent Worker Policy
 

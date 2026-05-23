@@ -28,6 +28,21 @@ pub struct EmbeddedViewportState {
     pub kind: EmbeddedViewportKind,
     pub bounds: EmbeddedViewportBounds,
     pub focused: bool,
+    pub surface: EmbeddedViewportSurfaceState,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct EmbeddedViewportSurfaceState {
+    pub attached: bool,
+    pub status: EmbeddedViewportSurfaceStatus,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EmbeddedViewportSurfaceStatus {
+    PendingAttachment,
+    Attached,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -101,6 +116,7 @@ impl EmbeddedViewportHost {
             kind: request.kind,
             bounds: request.bounds,
             focused: false,
+            surface: EmbeddedViewportSurfaceState::pending_attachment(),
         };
 
         self.viewports
@@ -147,6 +163,21 @@ impl EmbeddedViewportHost {
         Ok(state.clone())
     }
 
+    pub fn attach_surface(
+        &self,
+        viewport_id: String,
+    ) -> Result<EmbeddedViewportState, EmbeddedViewportHostError> {
+        let mut viewports = self
+            .viewports
+            .lock()
+            .map_err(|_| EmbeddedViewportHostError::LockPoisoned)?;
+        let state = viewports
+            .get_mut(&viewport_id)
+            .ok_or_else(|| EmbeddedViewportHostError::ViewportNotMounted(viewport_id))?;
+        state.surface = EmbeddedViewportSurfaceState::attached();
+        Ok(state.clone())
+    }
+
     pub fn unmount(
         &self,
         viewport_id: String,
@@ -168,6 +199,24 @@ impl EmbeddedViewportHost {
             .cloned()
             .collect();
         Ok(EmbeddedViewportHostStatus { viewports })
+    }
+}
+
+impl EmbeddedViewportSurfaceState {
+    fn pending_attachment() -> Self {
+        Self {
+            attached: false,
+            status: EmbeddedViewportSurfaceStatus::PendingAttachment,
+            message: "native Bevy surface attachment is not implemented yet".to_string(),
+        }
+    }
+
+    fn attached() -> Self {
+        Self {
+            attached: true,
+            status: EmbeddedViewportSurfaceStatus::Attached,
+            message: "native Bevy surface is attached".to_string(),
+        }
     }
 }
 
@@ -254,6 +303,14 @@ mod tests {
         assert_eq!(state.viewport_id, "graph-main");
         assert_eq!(state.kind, EmbeddedViewportKind::Graph);
         assert!(!state.focused);
+        assert_eq!(
+            state.surface,
+            EmbeddedViewportSurfaceState {
+                attached: false,
+                status: EmbeddedViewportSurfaceStatus::PendingAttachment,
+                message: "native Bevy surface attachment is not implemented yet".to_string(),
+            }
+        );
         assert_eq!(host.status().unwrap().viewports, vec![state]);
     }
 
@@ -338,6 +395,28 @@ mod tests {
         let status = host.unmount("graph-main".to_string()).unwrap();
 
         assert!(status.viewports.is_empty());
+    }
+
+    #[test]
+    fn attach_surface_marks_viewport_as_visibly_attached() {
+        let host = EmbeddedViewportHost::default();
+        host.mount(MountEmbeddedViewportRequest {
+            viewport_id: "graph-main".to_string(),
+            kind: EmbeddedViewportKind::Graph,
+            bounds: sample_bounds(),
+        })
+        .unwrap();
+
+        let state = host.attach_surface("graph-main".to_string()).unwrap();
+
+        assert_eq!(
+            state.surface,
+            EmbeddedViewportSurfaceState {
+                attached: true,
+                status: EmbeddedViewportSurfaceStatus::Attached,
+                message: "native Bevy surface is attached".to_string(),
+            }
+        );
     }
 
     #[test]
