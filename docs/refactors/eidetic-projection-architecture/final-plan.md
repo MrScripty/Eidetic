@@ -1063,6 +1063,10 @@ Discovered issues:
   reusable borderless viewport panel component. The UI now has viewport
   mount/resize/focus/unmount helpers, bounds normalization tests, and a
   borderless Svelte panel lifecycle surface ready for graph/timeline viewports.
+- Resolved: the central graph workspace did not mount the embedded viewport
+  lifecycle surface. Graph workspace mode now mounts the `graph-main`
+  borderless viewport panel while the Svelte outline remains the temporary
+  visible semantic graph until the native Bevy render target is connected.
 - Resolved: graph viewport lifecycle now drives the desktop graph renderer
   owner. Mounting a graph viewport starts the native Bevy graph projection
   consumer, and unmounting the final graph viewport stops it without affecting
