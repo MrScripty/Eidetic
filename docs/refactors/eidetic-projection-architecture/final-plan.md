@@ -1075,6 +1075,12 @@ Discovered issues:
   Milestone 8 still requires native Bevy viewport integration with a fresh
   render/window dependency review before replacing the Svelte outline as the
   central visual graph.
+- Resolved: the fresh Bevy 0.18.1 graph-render dependency review confirmed the
+  graph crate currently enables only the `std` feature and keeps Bevy isolated
+  to the leaf renderer. Native visual rendering must land in a separate slice
+  that embeds a borderless panel inside Tauri, resizes from
+  `EmbeddedViewportBounds`, and proves a minimal scene before graph nodes/edges
+  replace the Svelte outline.
 
 ## Concurrent Worker Policy
 

@@ -25,14 +25,28 @@ Dependency review:
 - `bevy` is pinned to 0.18.1 and declared with `default-features = false` and only the `std`
   feature because this crate currently uses ECS/resource types and does not
   render windows, assets, text, audio, or UI.
-- `cargo tree -p eidetic-bevy-bible-graph --depth 2` shows Bevy remains under
+- `cargo tree -p eidetic-bevy-bible-graph --depth 3` shows Bevy remains under
   this leaf crate, with `eidetic-core`, `serde`, and `thiserror` as the only
-  other direct dependency families.
+  other direct dependency families. The current Bevy subtree is app/ECS/input/
+  math/time/transform/reflection support, not render/window/asset/text/audio.
+- `cargo tree -p eidetic-bevy-bible-graph -e features --depth 3` shows the
+  only enabled Bevy feature is `std`. This keeps the renderer crate usable as a
+  projection-driven ECS bridge while the desktop embedding boundary is proven.
 - Browser/WASM interop dependencies are intentionally absent. Eidetic's
   production renderer path is native desktop host integration through Tauri and
   Bevy, not browser canvas or wasm-bindgen.
-- Adding Bevy render/window/asset/text/input features requires a new dependency
-  review and a commit that explains the transitive dependency cost.
+- Native visual rendering must be added in a separate reviewed slice. Enabling
+  Bevy render/window features is justified only for a borderless panel host that
+  embeds inside the Tauri workspace, resizes from `EmbeddedViewportBounds`, and
+  does not open a separate product window. The first render slice should prove
+  a minimal background/grid scene before graph nodes/edges are visualized.
+- Asset/text/UI/audio features remain out of scope for the bible graph viewport
+  until there is a concrete graph-rendering requirement that cannot be met with
+  primitive meshes, materials, and Svelte-side semantic text/detail panels.
+- `eidetic-desktop` may own OS/Tauri window handles and viewport lifecycle.
+  `eidetic-bevy-bible-graph` must continue to own only renderer-local scene
+  state and validated commands; it must not learn Tauri, SQLite, or project
+  persistence APIs.
 
 Future scope:
 
