@@ -14,7 +14,8 @@ use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowCapability,
     BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowStrategy,
     BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
-    GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, NativeRendererRunner, PendingNativeRendererRunner,
+    GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY,
+    NativeRendererRunner, NativeRendererRunnerHandle, PendingNativeRendererRunner,
 };
 
 #[test]
@@ -24,6 +25,11 @@ fn owner_uses_bounded_command_queue() {
         GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
         BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY
     );
+}
+
+#[test]
+fn native_renderer_runner_uses_bounded_command_queue() {
+    assert_eq!(NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, 16);
 }
 
 #[test]
@@ -73,6 +79,29 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
     assert!(!focused.focus_supported);
     assert!(!closed.window_visible);
     assert!(!runner.open_requested());
+}
+
+#[test]
+fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
+    let mut runner = NativeRendererRunnerHandle::start_pending().unwrap();
+
+    let opened = runner.open();
+    let focused = runner.focus();
+    let closed = runner.close();
+
+    assert_eq!(
+        opened.strategy,
+        BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
+    );
+    assert_eq!(
+        opened.capability,
+        BibleGraphRendererWindowCapability::PendingNativeRunner
+    );
+    assert!(!opened.visible_window_supported);
+    assert!(!opened.window_visible);
+    assert!(!opened.window_ready);
+    assert!(!focused.focus_supported);
+    assert!(!closed.window_visible);
 }
 
 #[test]

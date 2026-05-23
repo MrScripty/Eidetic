@@ -1148,11 +1148,11 @@ Discovered issues:
   event-loop strategy before graph visuals replace the Svelte semantic outline,
   and it records ownership, platform, dependency, verification, and re-plan
   constraints from the coding standards.
-- Open: the current desktop graph renderer owner processes synchronous requests
-  on one thread, while a real Bevy/winit runner will need an event loop that can
-  keep running. Milestone 8 must add a desktop-owned native renderer runner
-  boundary before graph visuals, so `App::run()` or equivalent event-loop work
-  does not block Tauri command replies or command/status handling.
+- Updated: the current native renderer runner is still a pending runner, but
+  it now runs behind a bounded `NativeRendererRunnerHandle` command boundary
+  instead of as an in-thread struct owned directly by the graph host. The real
+  Bevy/winit runner still must replace the pending implementation and prove
+  open/focus/close/reopen/teardown before visual graph replacement.
 - Updated: bible render graph projection reads no longer mirror their response
   into the Bevy renderer. Renderer projection mutation now remains in the
   explicit graph renderer command path and the desktop mutation-event refresh

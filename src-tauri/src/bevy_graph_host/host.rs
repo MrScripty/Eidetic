@@ -11,12 +11,12 @@ use crate::renderer_window::DesktopRendererWindowKind;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowLifecycle,
-    NativeRendererRunner, PendingNativeRendererRunner,
+    NativeRendererRunner, NativeRendererRunnerHandle,
 };
 
 pub struct DesktopBibleGraphHost {
     renderer: Option<BibleGraphRendererApp>,
-    native_runner: PendingNativeRendererRunner,
+    native_runner: NativeRendererRunnerHandle,
     last_error: Option<String>,
 }
 
@@ -30,7 +30,8 @@ impl DesktopBibleGraphHost {
     pub fn new() -> Self {
         Self {
             renderer: None,
-            native_runner: PendingNativeRendererRunner::default(),
+            native_runner: NativeRendererRunnerHandle::start_pending()
+                .expect("failed to start native renderer runner boundary"),
             last_error: None,
         }
     }

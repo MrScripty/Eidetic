@@ -7,7 +7,8 @@ use crate::renderer_window::DesktopRendererWindowKind;
 
 pub use host::DesktopBibleGraphHost;
 pub use native_runner::{
-    NativeRendererRunner, NativeRendererRunnerStatus, PendingNativeRendererRunner,
+    NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NativeRendererRunner,
+    NativeRendererRunnerHandle, NativeRendererRunnerStatus, PendingNativeRendererRunner,
 };
 pub use owner::{DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY};
 pub use window_strategy::{
