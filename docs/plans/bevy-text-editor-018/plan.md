@@ -159,11 +159,11 @@ TypeScript type, or persisted Eidetic contract is affected.
 
 **Tasks:**
 
-- [ ] Create `experiments/bevy-text-editor-018/` as a standalone Rust project.
-- [ ] Add a local `README.md` explaining purpose, constraints, and run command.
-- [ ] Add minimal Bevy dependencies without touching production crates.
-- [ ] Open a Bevy window with a blank text surface and Bevy-rendered metrics.
-- [ ] Add a fixture path configuration that can find ignored local scripts.
+- [x] Create `experiments/bevy-text-editor-018/` as a standalone Rust project.
+- [x] Add a local `README.md` explaining purpose, constraints, and run command.
+- [x] Add minimal Bevy dependencies without touching production crates.
+- [x] Open a Bevy window with a blank text surface and Bevy-rendered metrics.
+- [x] Add a fixture path configuration that can find ignored local scripts.
 
 **Verification:**
 
@@ -172,7 +172,7 @@ TypeScript type, or persisted Eidetic contract is affected.
 - `cargo run`
 - Confirm no Bevy dependency is added to existing production crates.
 
-**Status:** Not started.
+**Status:** Complete.
 
 ### Milestone 2: Fountain Viewer Slice
 
@@ -303,6 +303,18 @@ weaknesses.
 - Before implementation begins, inspect `git status` and resolve or explicitly
   allow unrelated dirty implementation files according to `PLAN-STANDARDS.md`.
 - The existing `.gitignore` change for `/screenplays/` is related setup work.
+- 2026-05-23: Milestone 1 created a nested standalone Cargo workspace at
+  `experiments/bevy-text-editor-018/` and intentionally did not add it to the
+  root workspace.
+- 2026-05-23: Dependency finding: `bevy = 0.18.1` declares Rust 1.89 as its
+  MSRV. The experiment sets `rust-version = "1.89"`. The root workspace still
+  advertises Rust 1.85 while existing production Bevy crates also depend on
+  Bevy 0.18.1; that mismatch should be resolved before treating the root
+  workspace MSRV as authoritative for Bevy-enabled production builds.
+- 2026-05-23: `cargo run` cannot be fully smoke-tested in this command
+  environment because `winit` cannot open an X display
+  (`XOpenDisplayFailed`). Use a local desktop session or a future headless
+  display harness for runtime window smoke tests.
 
 ## Commit Cadence Notes
 
@@ -352,7 +364,7 @@ parser, and renderer workstreams with non-overlapping write sets.
 
 ### Completed
 
-- Not started.
+- Milestone 1 project shell.
 
 ### Deviations
 
@@ -366,7 +378,10 @@ parser, and renderer workstreams with non-overlapping write sets.
 
 ### Verification Summary
 
-- Not run. This document is the planning artifact only.
+- Milestone 1: `cargo fmt --check`, `cargo check`, and `cargo test` passed from
+  `experiments/bevy-text-editor-018/`.
+- Milestone 1: `timeout 5s cargo run` compiled the binary but could not open a
+  native window because the command environment has no X display.
 
 ### Traceability Links
 
@@ -377,4 +392,3 @@ parser, and renderer workstreams with non-overlapping write sets.
   `/media/jeremy/OrangeCream/Linux Software/repos/owned/developer-tooling/Coding-Standards/PLAN-STANDARDS.md`
   and
   `/media/jeremy/OrangeCream/Linux Software/repos/owned/developer-tooling/Coding-Standards/DOCUMENTATION-STANDARDS.md`.
-

@@ -1,0 +1,24 @@
+[package]
+name = "eidetic-bevy-text-editor-experiment"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.89"
+publish = false
+
+[workspace]
+
+[dependencies]
+bevy = { version = "0.18.1", default-features = false, features = [
+    "bevy_core_pipeline",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_sprite_render",
+    "bevy_text",
+    "bevy_winit",
+    "default_app",
+    "default_font",
+    "multi_threaded",
+    "wayland",
+    "x11",
+] }
