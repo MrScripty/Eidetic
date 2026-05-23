@@ -7,8 +7,8 @@ use eidetic_core::contracts::{
 use crate::backend_error::BackendError;
 use crate::command_service_support::{active_project_path, map_history_error};
 use crate::context_influence_store;
-use crate::history_store;
-use crate::state::AppState;
+use crate::history_store::{self, RecordChangeOutcome};
+use crate::state::{AppState, ServerEvent};
 use crate::timeline_node_store;
 
 pub async fn record_context_evaluation(
@@ -16,11 +16,18 @@ pub async fn record_context_evaluation(
     command: CommandEnvelope<RecordContextEvaluationCommand>,
 ) -> Result<ProjectionEnvelope<ContextInfluenceProjection>, BackendError> {
     let path = active_project_path(state)?;
-    tokio::task::spawn_blocking(move || record_context_evaluation_at_path(path, command))
-        .await
-        .map_err(|error| {
-            BackendError::internal(format!("context evaluation task failed: {error}"))
-        })?
+    let (outcome, projection) =
+        tokio::task::spawn_blocking(move || record_context_evaluation_at_path(path, command))
+            .await
+            .map_err(|error| {
+                BackendError::internal(format!("context evaluation task failed: {error}"))
+            })??;
+    if outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::ContextInfluenceChanged {
+            target_node_id: projection.payload.target_node_id.0,
+        });
+    }
+    Ok(projection)
 }
 
 pub async fn context_influence_projection(
@@ -50,18 +57,25 @@ pub async fn context_stack_projection(
 fn record_context_evaluation_at_path(
     path: std::path::PathBuf,
     command: CommandEnvelope<RecordContextEvaluationCommand>,
-) -> Result<ProjectionEnvelope<ContextInfluenceProjection>, BackendError> {
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<ContextInfluenceProjection>,
+    ),
+    BackendError,
+> {
     let mut conn = crate::sqlite::open_write_connection(&path)
         .map_err(|e| BackendError::internal(e.to_string()))?;
-    context_influence_store::record_context_evaluation(&mut conn, &command, 0)
+    let outcome = context_influence_store::record_context_evaluation(&mut conn, &command, 0)
         .map_err(map_history_error)?;
     let projection = context_influence_store::load_context_influence_projection(
         &conn,
         command.payload.evaluation.target_node_id,
     )
     .map_err(map_history_error)?;
-    projection
-        .ok_or_else(|| BackendError::internal("missing recorded context influence projection"))
+    let projection = projection
+        .ok_or_else(|| BackendError::internal("missing recorded context influence projection"))?;
+    Ok((outcome, projection))
 }
 
 fn load_context_influence_projection_at_path(

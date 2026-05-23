@@ -64,6 +64,9 @@ pub enum ServerEvent {
     BibleChanged,
     ScriptChanged,
     SemanticProposalsChanged,
+    ContextInfluenceChanged {
+        target_node_id: uuid::Uuid,
+    },
 }
 
 /// Which AI backend to use.

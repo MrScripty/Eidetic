@@ -63,6 +63,7 @@ fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
             | ServerEvent::StoryChanged
             | ServerEvent::TimelineChanged
             | ServerEvent::SemanticProposalsChanged
+            | ServerEvent::ContextInfluenceChanged { .. }
     )
 }
 
@@ -151,6 +152,11 @@ mod tests {
         ));
         assert!(should_refresh_graph_renderer_projection(
             &ServerEvent::SemanticProposalsChanged
+        ));
+        assert!(should_refresh_graph_renderer_projection(
+            &ServerEvent::ContextInfluenceChanged {
+                target_node_id: uuid::Uuid::nil(),
+            }
         ));
         assert!(!should_refresh_graph_renderer_projection(
             &ServerEvent::GenerationProgress {

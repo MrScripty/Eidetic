@@ -4,6 +4,7 @@ import { setupServerEventHandlers } from './serverEventHandlers.js';
 import type { ServerMessage } from '$lib/serverEventTypes.js';
 import { refreshScriptDocumentProjection } from './scriptDocumentProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
+import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import { completeGeneration } from './editor.svelte.js';
 
@@ -25,6 +26,11 @@ vi.mock('./bibleGraphNodeProjection.svelte.js', () => ({
 }));
 
 vi.mock('./bibleRenderGraphProjection.svelte.js', () => ({
+  bibleRenderGraphRequestForTimelineSelection: vi.fn((nodeId: string | null | undefined) => ({
+    ...(nodeId ? { selected_timeline_node_id: nodeId } : {}),
+    neighborhood_depth: 1,
+    max_nodes: 200,
+  })),
   refreshBibleRenderGraphProjection: vi.fn(),
 }));
 
@@ -49,6 +55,7 @@ vi.mock('./editor.svelte.js', () => ({
 
 const refreshTimelineRenderProjectionMock = vi.mocked(refreshTimelineRenderProjection);
 const refreshScriptDocumentProjectionMock = vi.mocked(refreshScriptDocumentProjection);
+const refreshBibleRenderGraphProjectionMock = vi.mocked(refreshBibleRenderGraphProjection);
 const completeGenerationMock = vi.mocked(completeGeneration);
 
 class MockServerEventClient {
@@ -81,6 +88,11 @@ beforeEach(() => {
       document: { id: 'script.document.main', title: 'Script', sort_order: 0 },
       segments: [],
     },
+  });
+  refreshBibleRenderGraphProjectionMock.mockReset();
+  refreshBibleRenderGraphProjectionMock.mockResolvedValue({
+    version: 1,
+    payload: { nodes: [], edges: [], neighborhoods: [], influences: [] },
   });
   completeGenerationMock.mockReset();
 });
@@ -135,6 +147,24 @@ describe('backend event projection handlers', () => {
         document_id: 'script.document.main',
       });
       expect(completeGenerationMock).toHaveBeenCalledWith('node.beat.one');
+    });
+  });
+
+  it('refreshes selected context graph projections for context influence changes', async () => {
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
+
+    events.emit({
+      type: 'context_influence_changed',
+      target_node_id: 'node.scene.beach',
+    });
+
+    await vi.waitFor(() => {
+      expect(refreshBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
+        selected_timeline_node_id: 'node.scene.beach',
+        neighborhood_depth: 1,
+        max_nodes: 200,
+      });
     });
   });
 

@@ -1126,6 +1126,16 @@ Discovered issues:
   explicit bounded render graph request shape as the central graph workspace,
   keeping interactive graph projection reads consistently request-shaped across
   Svelte surfaces.
+- Resolved: context influence writes now emit a typed backend event for the
+  affected timeline node. The desktop Bevy projection bridge and Svelte event
+  handlers refresh bounded graph projections from that event, so influence path
+  highlights are invalidated by the context write that changed them instead of
+  waiting for an unrelated bible or timeline mutation.
+- Resolved: desktop validation exposed dead-code warnings for the planned
+  native surface attachment transition state. Those future-use APIs are now
+  marked with explicit lint-allow reasons tied to the remaining Milestone 8
+  viewport slice, keeping checks warning-clean without pretending the surface
+  attachment is already implemented.
 
 ## Concurrent Worker Policy
 

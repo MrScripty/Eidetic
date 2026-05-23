@@ -42,6 +42,10 @@ pub struct EmbeddedViewportSurfaceState {
 #[serde(rename_all = "snake_case")]
 pub enum EmbeddedViewportSurfaceStatus {
     PendingAttachment,
+    #[allow(
+        dead_code,
+        reason = "native surface attachment lands in a later milestone 8 viewport slice"
+    )]
     Attached,
 }
 
@@ -163,6 +167,10 @@ impl EmbeddedViewportHost {
         Ok(state.clone())
     }
 
+    #[allow(
+        dead_code,
+        reason = "native surface attachment lands in a later milestone 8 viewport slice"
+    )]
     pub fn attach_surface(
         &self,
         viewport_id: String,
@@ -211,6 +219,10 @@ impl EmbeddedViewportSurfaceState {
         }
     }
 
+    #[allow(
+        dead_code,
+        reason = "native surface attachment lands in a later milestone 8 viewport slice"
+    )]
     fn attached() -> Self {
         Self {
             attached: true,

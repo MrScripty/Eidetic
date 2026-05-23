@@ -12,7 +12,10 @@ import {
 import { refreshStoryArcListProjection } from './storyArcProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleGraphNodeListProjection } from './bibleGraphNodeProjection.svelte.js';
-import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
+import {
+  bibleRenderGraphRequestForTimelineSelection,
+  refreshBibleRenderGraphProjection,
+} from './bibleRenderGraphProjection.svelte.js';
 import { refreshBibleReferenceProposalListProjection } from './semanticProposalProjection.svelte.js';
 import { refreshPropagationProposalListProjection } from './propagationProposalProjection.svelte.js';
 import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
@@ -39,7 +42,15 @@ function refreshBibleNodeList() {
 }
 
 function refreshBibleRenderGraph() {
-  return requestProjectionRefresh('bible-render-graph', refreshBibleRenderGraphProjection);
+  return requestProjectionRefresh('bible-render-graph', () =>
+    refreshBibleRenderGraphProjection(bibleRenderGraphRequestForTimelineSelection(null)),
+  );
+}
+
+function refreshBibleRenderGraphForTimelineNode(nodeId: string) {
+  return requestProjectionRefresh(`bible-render-graph:${nodeId}`, () =>
+    refreshBibleRenderGraphProjection(bibleRenderGraphRequestForTimelineSelection(nodeId)),
+  );
 }
 
 function refreshSemanticProposals() {
@@ -106,6 +117,10 @@ export function setupServerEventHandlers(events: ServerEventClient) {
         refreshPropagationProposals(),
         refreshChangeReview(),
       ]);
+    }),
+
+    events.on('context_influence_changed', async (data) => {
+      await refreshBibleRenderGraphForTimelineNode(data.target_node_id);
     }),
 
     events.on('script_changed', async () => {

@@ -9,4 +9,5 @@ export type ServerMessage =
   | { type: 'generation_error'; node_id: string; error: string }
   | { type: 'bible_changed' }
   | { type: 'semantic_proposals_changed' }
+  | { type: 'context_influence_changed'; target_node_id: string }
   | { type: 'script_changed' };
