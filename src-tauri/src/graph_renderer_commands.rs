@@ -83,7 +83,7 @@ pub fn graph_renderer_focus(app: tauri::AppHandle) -> Result<BibleGraphHostStatu
 #[tauri::command]
 pub fn graph_renderer_close(app: tauri::AppHandle) -> Result<BibleGraphHostStatus, CommandError> {
     graph_renderer_owner(&app)?
-        .stop()
+        .close_renderer()
         .map_err(|error| CommandError::internal(format!("graph renderer close failed: {error:?}")))
 }
 

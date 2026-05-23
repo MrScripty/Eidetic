@@ -1396,6 +1396,11 @@ Discovered issues:
   selected graph node that shaped the backend response. Svelte graph outlines
   now prefer projection-selected identity for display while preserving
   transient selection as request input and explicit test-only override.
+- Resolved: the desktop graph renderer close command used the owner-thread
+  shutdown path, so closing the graph renderer left the managed owner unable to
+  reopen the floating renderer during the same app session. Renderer close now
+  drops renderer state while keeping the owner thread available; owner shutdown
+  remains reserved for teardown/drop.
 
 ## Concurrent Worker Policy
 

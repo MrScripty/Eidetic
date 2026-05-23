@@ -54,6 +54,9 @@ enum BibleGraphHostRequest {
     Status {
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
     },
+    CloseRenderer {
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
     Stop {
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
     },
@@ -152,6 +155,12 @@ impl DesktopBibleGraphRendererOwner {
         receive_reply(receiver)
     }
 
+    pub fn close_renderer(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        let (reply, receiver) = mpsc::channel();
+        self.enqueue(BibleGraphHostRequest::CloseRenderer { reply })?;
+        receive_reply(receiver)
+    }
+
     pub fn stop(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::Stop { reply })?;
@@ -228,6 +237,9 @@ fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
             }
             BibleGraphHostRequest::Status { reply } => {
                 let _ = reply.send(Ok(host.status()));
+            }
+            BibleGraphHostRequest::CloseRenderer { reply } => {
+                let _ = reply.send(Ok(host.stop()));
             }
             BibleGraphHostRequest::Stop { reply } => {
                 let _ = reply.send(Ok(host.stop()));

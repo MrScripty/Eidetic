@@ -256,6 +256,23 @@ fn owner_records_renderer_window_bounds_on_renderer_thread() {
 }
 
 #[test]
+fn owner_closes_renderer_without_stopping_owner_thread() {
+    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    owner.set_projection(sample_projection()).unwrap();
+
+    let closed = owner.close_renderer().unwrap();
+    let reopened = owner.start_renderer().unwrap();
+
+    assert!(!closed.running);
+    assert!(!closed.renderer_window_open);
+    assert!(reopened.running);
+    assert!(reopened.renderer_window_open);
+    assert_eq!(reopened.node_count, 0);
+    assert_eq!(reopened.edge_count, 0);
+    owner.stop().unwrap();
+}
+
+#[test]
 fn owner_rejects_empty_renderer_window_bounds_without_starting_renderer() {
     let owner = DesktopBibleGraphRendererOwner::start().unwrap();
 
@@ -336,6 +353,9 @@ fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {
     let timeline_node_id = eidetic_core::timeline::node::NodeId(Uuid::from_u128(2));
 
     eidetic_core::contracts::BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: Some(ada_id.clone()),
+        selected_timeline_node_id: Some(timeline_node_id),
         nodes: vec![
             BibleRenderGraphNode {
                 node_id: ada_id.clone(),
