@@ -55,7 +55,7 @@ pub(crate) fn load_bounded_render_graph(
     );
     node_ids.extend(load_influenced_edge_endpoint_ids(conn, &influences)?);
 
-    if node_ids.is_empty() {
+    if node_ids.is_empty() && should_load_default_node_ids(&request) {
         node_ids.extend(load_default_node_ids(conn, max_nodes)?);
     }
 
@@ -84,6 +84,12 @@ fn load_selected_context_influences(
         return Ok(Vec::new());
     };
     crate::context_influence_store::load_latest_context_influence_records(conn, target_node_id)
+}
+
+fn should_load_default_node_ids(request: &BibleRenderGraphProjectionRequest) -> bool {
+    request.focused_root_id.is_none()
+        && request.selected_node_id.is_none()
+        && request.search.is_none()
 }
 
 fn load_influenced_edge_endpoint_ids(

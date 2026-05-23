@@ -110,6 +110,27 @@ fn render_graph_projection_search_treats_like_wildcards_as_literal_text() {
 }
 
 #[test]
+fn render_graph_projection_keeps_empty_search_results_empty() {
+    let mut conn = memory_connection();
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    seed_node(&mut conn, "node.place.beach", "Beach", 20);
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            search: Some("tower".to_string()),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    assert!(projection.payload.nodes.is_empty());
+    assert!(projection.payload.edges.is_empty());
+    assert!(projection.payload.influences.is_empty());
+}
+
+#[test]
 fn render_graph_projection_queries_focused_root_descendants() {
     let mut conn = memory_connection();
     seed_parented_node(&mut conn, "node.root", None, "Root", 1);

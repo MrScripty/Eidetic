@@ -1377,6 +1377,11 @@ Discovered issues:
   overwrite a focused graph/search projection in the cache. The projection
   store now tracks the active bounded request and event refreshes reuse that
   request.
+- Resolved: explicit bounded bible render graph searches that matched no nodes
+  fell back to the default graph, which made empty filter results display
+  unrelated bible state. The SQL-backed render graph query now only uses default
+  nodes for unfiltered projection requests while preserving timeline influence
+  seeding.
 
 ## Concurrent Worker Policy
 
