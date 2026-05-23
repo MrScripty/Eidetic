@@ -1362,6 +1362,11 @@ Discovered issues:
   updating the Bevy projection consumer. The desktop bridge now exposes a
   bounded projection sync command, and the renderer controls reseed open graph
   windows when the backend projection request changes.
+- Resolved: desktop backend-event refreshes for the graph renderer used
+  default/event-derived projection requests, which could overwrite the
+  UI-focused bounded request active in the open renderer. The desktop host now
+  tracks the active graph renderer projection request and event refreshes reuse
+  that backend-owned request shape.
 
 ## Concurrent Worker Policy
 

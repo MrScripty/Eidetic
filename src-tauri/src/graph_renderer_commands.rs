@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use eidetic_bevy_bible_graph::{BibleGraphRendererCommand, BibleGraphVisualSnapshot};
 use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
 use eidetic_server::bible_render_graph_projection;
@@ -7,6 +9,27 @@ use tauri::Manager;
 
 use crate::bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use crate::error::CommandError;
+
+#[derive(Default)]
+pub struct GraphRendererProjectionRequestState {
+    request: Mutex<BibleRenderGraphProjectionRequest>,
+}
+
+impl GraphRendererProjectionRequestState {
+    pub fn current(&self) -> BibleRenderGraphProjectionRequest {
+        self.request
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .clone()
+    }
+
+    fn replace(&self, request: BibleRenderGraphProjectionRequest) {
+        *self
+            .request
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = request;
+    }
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct OpenGraphRendererRequest {
@@ -37,10 +60,12 @@ pub async fn graph_renderer_open(
         let _ = graph_renderer_owner(&app)?.stop();
         return Err(error);
     }
-    match seed_graph_renderer_projection(&app, request.graph_projection_request.unwrap_or_default())
-        .await
-    {
-        Ok(status) => Ok(status),
+    let projection_request = request.graph_projection_request.unwrap_or_default();
+    match seed_graph_renderer_projection(&app, projection_request.clone()).await {
+        Ok(status) => {
+            graph_renderer_projection_request_state(&app)?.replace(projection_request);
+            Ok(status)
+        }
         Err(error) => {
             let _ = graph_renderer_owner(&app)?.stop();
             Err(error)
@@ -83,7 +108,9 @@ pub async fn graph_renderer_set_projection(
         return Ok(status);
     }
 
-    seed_graph_renderer_projection(&app, request).await
+    let status = seed_graph_renderer_projection(&app, request.clone()).await?;
+    graph_renderer_projection_request_state(&app)?.replace(request);
+    Ok(status)
 }
 
 #[tauri::command]
@@ -131,10 +158,12 @@ fn validate_renderer_window_size_hint(
 
 #[cfg(test)]
 mod tests {
+    use eidetic_core::contracts::BibleGraphNodeId;
     use serde_json::json;
 
     use super::{
-        OpenGraphRendererRequest, RendererWindowSizeHint, validate_renderer_window_size_hint,
+        GraphRendererProjectionRequestState, OpenGraphRendererRequest, RendererWindowSizeHint,
+        validate_renderer_window_size_hint,
     };
 
     #[test]
@@ -168,6 +197,19 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn graph_renderer_projection_request_state_tracks_active_request() {
+        let state = GraphRendererProjectionRequestState::default();
+        let request = eidetic_core::contracts::BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(BibleGraphNodeId::new("node.character.ada").unwrap()),
+            ..Default::default()
+        };
+
+        state.replace(request.clone());
+
+        assert_eq!(state.current(), request);
+    }
 }
 
 #[tauri::command]
@@ -186,6 +228,13 @@ fn graph_renderer_owner(
 ) -> Result<tauri::State<'_, DesktopBibleGraphRendererOwner>, CommandError> {
     app.try_state::<DesktopBibleGraphRendererOwner>()
         .ok_or_else(|| CommandError::internal("graph renderer owner is not managed"))
+}
+
+fn graph_renderer_projection_request_state(
+    app: &tauri::AppHandle,
+) -> Result<tauri::State<'_, GraphRendererProjectionRequestState>, CommandError> {
+    app.try_state::<GraphRendererProjectionRequestState>()
+        .ok_or_else(|| CommandError::internal("graph renderer projection request is not managed"))
 }
 
 async fn seed_graph_renderer_projection(

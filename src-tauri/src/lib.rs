@@ -14,6 +14,7 @@ mod renderer_window;
 
 use bevy_graph_host::DesktopBibleGraphRendererOwner;
 use eidetic_server::state::AppState;
+use graph_renderer_commands::GraphRendererProjectionRequestState;
 use serde::Serialize;
 use tauri::Manager;
 
@@ -34,6 +35,7 @@ pub fn run() {
                 DesktopBibleGraphRendererOwner::start()
                     .expect("failed to start Bevy bible graph renderer owner"),
             );
+            app.manage(GraphRendererProjectionRequestState::default());
             desktop_events::spawn_server_event_bridge(app.handle().clone(), &app_state);
             desktop_events::spawn_graph_renderer_projection_bridge(
                 app.handle().clone(),
