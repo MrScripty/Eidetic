@@ -1166,6 +1166,10 @@ Discovered issues:
   used by the graph workspace, so initial Bevy renderer seeding is scoped to the
   selected timeline clip/playhead context instead of racing a default whole-view
   seed against the workspace projection refresh.
+- Resolved: embedded viewport mounting now rejects duplicate viewport ids
+  instead of replacing an existing panel lifecycle record. This keeps the shared
+  graph/timeline viewport host aligned with the one-owner-per-mounted-panel
+  lifecycle requirement before native surface attachment lands.
 
 ## Concurrent Worker Policy
 

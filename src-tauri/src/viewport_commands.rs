@@ -158,6 +158,7 @@ fn command_error(error: EmbeddedViewportHostError) -> CommandError {
     match error {
         EmbeddedViewportHostError::InvalidViewportId(_)
         | EmbeddedViewportHostError::InvalidBounds(_)
+        | EmbeddedViewportHostError::ViewportAlreadyMounted(_)
         | EmbeddedViewportHostError::ViewportNotMounted(_) => {
             CommandError::bad_request(error.to_string())
         }

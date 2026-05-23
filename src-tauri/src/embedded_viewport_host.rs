@@ -89,6 +89,7 @@ pub struct SetEmbeddedViewportFocusRequest {
 pub enum EmbeddedViewportHostError {
     InvalidViewportId(String),
     InvalidBounds(String),
+    ViewportAlreadyMounted(String),
     ViewportNotMounted(String),
     LockPoisoned,
 }
@@ -101,6 +102,9 @@ impl std::fmt::Display for EmbeddedViewportHostError {
             }
             EmbeddedViewportHostError::InvalidBounds(message) => {
                 write!(formatter, "invalid viewport bounds: {message}")
+            }
+            EmbeddedViewportHostError::ViewportAlreadyMounted(viewport_id) => {
+                write!(formatter, "viewport is already mounted: {viewport_id}")
             }
             EmbeddedViewportHostError::ViewportNotMounted(viewport_id) => {
                 write!(formatter, "viewport is not mounted: {viewport_id}")
@@ -135,10 +139,16 @@ impl EmbeddedViewportHost {
             surface: EmbeddedViewportSurfaceState::pending_attachment(),
         };
 
-        self.viewports
+        let mut viewports = self
+            .viewports
             .lock()
-            .map_err(|_| EmbeddedViewportHostError::LockPoisoned)?
-            .insert(request.viewport_id, state.clone());
+            .map_err(|_| EmbeddedViewportHostError::LockPoisoned)?;
+        if viewports.contains_key(&request.viewport_id) {
+            return Err(EmbeddedViewportHostError::ViewportAlreadyMounted(
+                request.viewport_id,
+            ));
+        }
+        viewports.insert(request.viewport_id, state.clone());
         Ok(state)
     }
 
@@ -368,6 +378,36 @@ mod tests {
             }
         );
         assert_eq!(host.status().unwrap().viewports, vec![state]);
+    }
+
+    #[test]
+    fn mount_rejects_duplicate_viewport_ids_without_replacing_existing_state() {
+        let host = EmbeddedViewportHost::default();
+        let original = host
+            .mount(MountEmbeddedViewportRequest {
+                viewport_id: "graph-main".to_string(),
+                kind: EmbeddedViewportKind::Graph,
+                bounds: sample_bounds(),
+            })
+            .unwrap();
+
+        assert_eq!(
+            host.mount(MountEmbeddedViewportRequest {
+                viewport_id: "graph-main".to_string(),
+                kind: EmbeddedViewportKind::Timeline,
+                bounds: EmbeddedViewportBounds {
+                    x: 20.0,
+                    y: 30.0,
+                    width: 400.0,
+                    height: 220.0,
+                    scale_factor: 1.0,
+                },
+            })
+            .unwrap_err(),
+            EmbeddedViewportHostError::ViewportAlreadyMounted("graph-main".to_string())
+        );
+
+        assert_eq!(host.status().unwrap().viewports, vec![original]);
     }
 
     #[test]
