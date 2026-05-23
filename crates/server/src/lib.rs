@@ -37,6 +37,7 @@ pub(crate) mod persistence;
 pub(crate) mod project_database;
 pub mod project_service;
 pub mod projection_service;
+pub(crate) mod projection_service_semantic_dependency;
 pub(crate) mod prompt_format;
 pub(crate) mod propagation_proposal_accept;
 pub(crate) mod propagation_proposal_review;
