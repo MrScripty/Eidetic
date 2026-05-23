@@ -61,6 +61,19 @@ impl DesktopBibleGraphHost {
         Ok(self.status())
     }
 
+    pub fn update_projection_if_open(
+        &mut self,
+        projection: BibleRenderGraphProjection,
+    ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
+        let Some(renderer) = self.renderer.as_mut() else {
+            return Ok(self.status());
+        };
+
+        Self::catch_renderer_panic(|| renderer.set_projection(projection))?;
+        self.last_error = None;
+        Ok(self.status())
+    }
+
     pub fn set_renderer_window_bounds(
         &mut self,
         width_px: u32,

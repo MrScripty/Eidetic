@@ -97,6 +97,18 @@ fn host_applies_projection_and_reports_scene_counts() {
 }
 
 #[test]
+fn host_projection_update_does_not_start_closed_renderer() {
+    let mut host = DesktopBibleGraphHost::new();
+
+    let status = host.update_projection_if_open(sample_projection()).unwrap();
+
+    assert!(!status.running);
+    assert!(!status.renderer_window_open);
+    assert_eq!(status.node_count, 0);
+    assert_eq!(status.edge_count, 0);
+}
+
+#[test]
 fn host_validates_renderer_commands_and_drains_them() {
     let mut host = DesktopBibleGraphHost::new();
     let projection = sample_projection();
@@ -237,6 +249,21 @@ fn owner_can_start_renderer_before_projection_arrives() {
     assert_eq!(status.native_visual_node_count, 0);
     assert_eq!(status.native_visual_edge_count, 0);
     assert_eq!(status.influence_count, 0);
+    owner.stop().unwrap();
+}
+
+#[test]
+fn owner_projection_update_does_not_start_closed_renderer() {
+    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+
+    let status = owner
+        .update_projection_if_open(sample_projection())
+        .unwrap();
+
+    assert!(!status.running);
+    assert!(!status.renderer_window_open);
+    assert_eq!(status.node_count, 0);
+    assert_eq!(status.edge_count, 0);
     owner.stop().unwrap();
 }
 

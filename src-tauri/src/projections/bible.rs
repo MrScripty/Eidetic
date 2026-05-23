@@ -59,17 +59,9 @@ fn mirror_bible_render_graph_projection(
     app: &tauri::AppHandle,
     projection: BibleRenderGraphProjection,
 ) {
-    let Some(graph_owner) = app.try_state::<DesktopBibleGraphRendererOwner>() else {
-        return;
-    };
-    let Ok(status) = graph_owner.status() else {
-        return;
-    };
-    if !status.renderer_window_open {
-        return;
-    }
-
-    if let Err(error) = graph_owner.set_projection(projection) {
+    if let Some(graph_owner) = app.try_state::<DesktopBibleGraphRendererOwner>()
+        && let Err(error) = graph_owner.update_projection_if_open(projection)
+    {
         tracing::warn!(
             "failed to mirror bible render graph projection to Bevy renderer: {error:?}"
         );

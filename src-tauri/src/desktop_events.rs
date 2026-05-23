@@ -87,7 +87,7 @@ async fn refresh_graph_renderer_projection(app: &tauri::AppHandle, state: &AppSt
         };
 
     if let Some(graph_owner) = app.try_state::<DesktopBibleGraphRendererOwner>()
-        && let Err(error) = graph_owner.set_projection(envelope.payload)
+        && let Err(error) = graph_owner.update_projection_if_open(envelope.payload)
     {
         tracing::warn!("failed to update graph renderer projection: {error:?}");
     }

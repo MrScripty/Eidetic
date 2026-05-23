@@ -1410,6 +1410,11 @@ Discovered issues:
   lifecycle from a passive read. Projection reads now mirror only when the graph
   renderer is already open; explicit renderer open/set-projection commands own
   renderer startup.
+- Resolved: open-renderer projection refreshes used separate status and
+  set-projection owner requests, so a close racing between them could restart
+  the renderer from a passive/event refresh. The desktop graph owner now exposes
+  an atomic update-if-open request used by projection mirrors, event refreshes,
+  and set-projection commands.
 
 ## Concurrent Worker Policy
 

@@ -24,6 +24,10 @@ enum BibleGraphHostRequest {
         projection: BibleRenderGraphProjection,
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
     },
+    UpdateProjectionIfOpen {
+        projection: BibleRenderGraphProjection,
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
     SetRendererWindowBounds {
         width_px: u32,
         height_px: u32,
@@ -93,6 +97,15 @@ impl DesktopBibleGraphRendererOwner {
     ) -> BibleGraphHostResult<BibleGraphHostStatus> {
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::SetProjection { projection, reply })?;
+        receive_reply(receiver)
+    }
+
+    pub fn update_projection_if_open(
+        &self,
+        projection: BibleRenderGraphProjection,
+    ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        let (reply, receiver) = mpsc::channel();
+        self.enqueue(BibleGraphHostRequest::UpdateProjectionIfOpen { projection, reply })?;
         receive_reply(receiver)
     }
 
@@ -206,6 +219,9 @@ fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
             }
             BibleGraphHostRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(host.set_projection(projection));
+            }
+            BibleGraphHostRequest::UpdateProjectionIfOpen { projection, reply } => {
+                let _ = reply.send(host.update_projection_if_open(projection));
             }
             BibleGraphHostRequest::SetRendererWindowBounds {
                 width_px,

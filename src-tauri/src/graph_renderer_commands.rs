@@ -108,7 +108,7 @@ pub async fn graph_renderer_set_projection(
         return Ok(status);
     }
 
-    let status = seed_graph_renderer_projection(&app, request.clone()).await?;
+    let status = update_open_graph_renderer_projection(&app, request.clone()).await?;
     graph_renderer_projection_request_state(&app)?.replace(request);
     Ok(status)
 }
@@ -250,5 +250,23 @@ async fn seed_graph_renderer_projection(
         .set_projection(envelope.payload)
         .map_err(|error| {
             CommandError::internal(format!("graph renderer projection seed failed: {error:?}"))
+        })
+}
+
+async fn update_open_graph_renderer_projection(
+    app: &tauri::AppHandle,
+    request: BibleRenderGraphProjectionRequest,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    let envelope = bible_render_graph_projection::bible_render_graph_projection(&state, request)
+        .await
+        .map_err(CommandError::from)?;
+
+    graph_renderer_owner(app)?
+        .update_projection_if_open(envelope.payload)
+        .map_err(|error| {
+            CommandError::internal(format!(
+                "graph renderer projection update failed: {error:?}"
+            ))
         })
 }
