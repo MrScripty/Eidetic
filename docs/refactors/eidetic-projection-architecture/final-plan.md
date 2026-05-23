@@ -1149,6 +1149,10 @@ Discovered issues:
   without installing the native plugin. Native visual rebuilds now no-op unless
   the native panel resource exists, preserving the leaf renderer's headless
   projection tests.
+- Resolved: desktop graph renderer status now reports native visual node and
+  edge counts separately from logical projection scene counts, giving smoke
+  checks a backend-owned diagnostic that the native Bevy panel has consumed the
+  projection into render-prep components.
 
 ## Concurrent Worker Policy
 

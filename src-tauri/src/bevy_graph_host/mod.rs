@@ -13,6 +13,8 @@ pub struct BibleGraphHostStatus {
     pub native_panel_ready: bool,
     pub node_count: usize,
     pub edge_count: usize,
+    pub native_visual_node_count: usize,
+    pub native_visual_edge_count: usize,
     pub influence_count: usize,
     pub last_error: Option<String>,
 }

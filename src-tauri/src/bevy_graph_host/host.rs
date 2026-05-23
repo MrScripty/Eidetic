@@ -100,12 +100,19 @@ impl DesktopBibleGraphHost {
             .as_ref()
             .map(BibleGraphRendererApp::native_panel_ready)
             .unwrap_or_default();
+        let (native_visual_node_count, native_visual_edge_count) = self
+            .renderer
+            .as_ref()
+            .map(BibleGraphRendererApp::native_visual_counts)
+            .unwrap_or_default();
 
         BibleGraphHostStatus {
             running: self.renderer.is_some(),
             native_panel_ready,
             node_count,
             edge_count,
+            native_visual_node_count,
+            native_visual_edge_count,
             influence_count,
             last_error: self.last_error.clone(),
         }

@@ -9,6 +9,8 @@ export interface GraphRendererStatus {
   native_panel_ready: boolean;
   node_count: number;
   edge_count: number;
+  native_visual_node_count: number;
+  native_visual_edge_count: number;
   influence_count: number;
   last_error: string | null;
 }

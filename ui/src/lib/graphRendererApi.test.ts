@@ -28,6 +28,8 @@ describe('graph renderer api helpers', () => {
       native_panel_ready: true,
       node_count: 2,
       edge_count: 1,
+      native_visual_node_count: 2,
+      native_visual_edge_count: 1,
       influence_count: 1,
       last_error: null,
     };
