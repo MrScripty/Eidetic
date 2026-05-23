@@ -38,13 +38,20 @@ export function bibleRenderGraphRequestForTimelineSelection(
 export function bibleRenderGraphRequestForWorkspaceSelection({
   selectedTimelineNodeId,
   selectedGraphNodeId,
+  focusedRootId,
+  search,
 }: {
   selectedTimelineNodeId?: string | null;
   selectedGraphNodeId?: string | null;
+  focusedRootId?: string | null;
+  search?: string | null;
 }): BibleRenderGraphProjectionRequest {
+  const normalizedSearch = search?.trim();
   return {
+    ...(focusedRootId ? { focused_root_id: focusedRootId } : {}),
     ...(selectedTimelineNodeId ? { selected_timeline_node_id: selectedTimelineNodeId } : {}),
     ...(selectedGraphNodeId ? { selected_node_id: selectedGraphNodeId } : {}),
+    ...(normalizedSearch ? { search: normalizedSearch } : {}),
     neighborhood_depth: DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH,
     max_nodes: DEFAULT_RENDER_GRAPH_MAX_NODES,
   };

@@ -13,7 +13,7 @@
     refreshBibleGraphSchemaListProjection,
   } from '$lib/stores/bibleGraphSchemaProjection.svelte.js';
   import {
-    bibleRenderGraphRequestForTimelineSelection,
+    bibleRenderGraphRequestForWorkspaceSelection,
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
@@ -38,7 +38,7 @@
   let searchQuery = $state('');
   let activeFilter: BibleGraphFilter = $state('All');
   let loadError = $state<string | null>(null);
-  let lastRenderGraphTimelineNodeId: string | null | undefined = undefined;
+  let lastRenderGraphRequestKey: string | null = null;
 
   const nodeListProjection = $derived(getCachedBibleGraphNodeListProjection());
   const schemaProjection = $derived(getCachedBibleGraphSchemaListProjection());
@@ -97,7 +97,12 @@
   }
 
   function activeRenderGraphQuery() {
-    return bibleRenderGraphRequestForTimelineSelection(editorState.selectedNodeId);
+    return bibleRenderGraphRequestForWorkspaceSelection({
+      selectedTimelineNodeId: editorState.selectedNodeId,
+      selectedGraphNodeId: selectedGraphNodeId,
+      focusedRootId: activeFilter === 'All' ? null : canonicalParents[activeFilter],
+      search: searchQuery,
+    });
   }
 
   async function refreshActiveRenderGraphProjection(): Promise<void> {
@@ -142,14 +147,13 @@
   });
 
   $effect(() => {
-    const selectedTimelineNodeId = editorState.selectedNodeId;
-    if (selectedTimelineNodeId === lastRenderGraphTimelineNodeId) {
+    const request = activeRenderGraphQuery();
+    const requestKey = JSON.stringify(request);
+    if (requestKey === lastRenderGraphRequestKey) {
       return;
     }
-    lastRenderGraphTimelineNodeId = selectedTimelineNodeId;
-    void refreshBibleRenderGraphProjection(
-      bibleRenderGraphRequestForTimelineSelection(selectedTimelineNodeId),
-    ).catch((error) => {
+    lastRenderGraphRequestKey = requestKey;
+    void refreshBibleRenderGraphProjection(request).catch((error) => {
       loadError = error instanceof Error ? error.message : 'Failed to load bible graph nodes';
     });
   });

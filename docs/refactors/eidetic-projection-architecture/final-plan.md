@@ -1367,6 +1367,11 @@ Discovered issues:
   UI-focused bounded request active in the open renderer. The desktop host now
   tracks the active graph renderer projection request and event refreshes reuse
   that backend-owned request shape.
+- Resolved: the Story Bible tab applied search/category filters only to the
+  local list while the render graph request still used the broad timeline-only
+  projection. The tab now projects search text, category root focus, selected
+  graph node, and selected timeline context into the backend-bounded render
+  graph request.
 
 ## Concurrent Worker Policy
 
