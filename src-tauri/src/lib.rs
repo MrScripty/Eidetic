@@ -72,6 +72,7 @@ pub fn run() {
             export_commands::export_pdf,
             graph_renderer_commands::graph_renderer_status,
             graph_renderer_commands::graph_renderer_drain_commands,
+            graph_renderer_commands::graph_renderer_visual_snapshot,
             viewport_commands::viewport_mount,
             viewport_commands::viewport_update_bounds,
             viewport_commands::viewport_set_focus,

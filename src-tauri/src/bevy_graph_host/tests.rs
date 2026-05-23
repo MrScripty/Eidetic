@@ -59,6 +59,24 @@ fn host_validates_renderer_commands_and_drains_them() {
 }
 
 #[test]
+fn host_exposes_renderer_visual_snapshot() {
+    let mut host = DesktopBibleGraphHost::new();
+    let projection = sample_projection();
+    let node_id = projection.nodes[0].node_id.clone();
+    let edge_id = projection.edges[0].edge_id.clone();
+    host.set_projection(projection).unwrap();
+
+    let snapshot = host.visual_snapshot().unwrap();
+
+    assert_eq!(snapshot.nodes.len(), 2);
+    assert_eq!(snapshot.edges.len(), 1);
+    assert_eq!(snapshot.nodes[0].node_id, node_id);
+    assert!(snapshot.nodes[0].highlighted);
+    assert_eq!(snapshot.edges[0].edge_id, edge_id);
+    assert!(snapshot.edges[0].highlighted);
+}
+
+#[test]
 fn host_records_renderer_errors_without_panicking() {
     let mut host = DesktopBibleGraphHost::new();
     host.set_projection(sample_projection()).unwrap();
@@ -142,6 +160,21 @@ fn owner_drains_validated_renderer_commands() {
         ]
     );
     assert!(owner.drain_commands().unwrap().is_empty());
+    owner.stop().unwrap();
+}
+
+#[test]
+fn owner_exposes_visual_snapshot_from_dedicated_thread() {
+    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let projection = sample_projection();
+    let node_id = projection.nodes[0].node_id.clone();
+    owner.set_projection(projection).unwrap();
+
+    let snapshot = owner.visual_snapshot().unwrap();
+
+    assert_eq!(snapshot.nodes.len(), 2);
+    assert_eq!(snapshot.nodes[0].node_id, node_id);
+    assert!(snapshot.nodes[0].highlighted);
     owner.stop().unwrap();
 }
 

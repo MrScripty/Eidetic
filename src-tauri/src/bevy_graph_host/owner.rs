@@ -1,7 +1,7 @@
 use std::sync::{Mutex, mpsc};
 use std::thread::{self, JoinHandle};
 
-use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
+use eidetic_bevy_bible_graph::{BibleGraphRendererCommand, BibleGraphVisualSnapshot};
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
 };
@@ -36,6 +36,9 @@ enum BibleGraphHostRequest {
     },
     DrainCommands {
         reply: mpsc::Sender<BibleGraphHostResult<Vec<BibleGraphRendererCommand>>>,
+    },
+    VisualSnapshot {
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphVisualSnapshot>>,
     },
     Status {
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
@@ -126,6 +129,14 @@ impl DesktopBibleGraphRendererOwner {
         receive_reply(receiver)
     }
 
+    pub fn visual_snapshot(&self) -> BibleGraphHostResult<BibleGraphVisualSnapshot> {
+        let (reply, receiver) = mpsc::channel();
+        self.sender
+            .send(BibleGraphHostRequest::VisualSnapshot { reply })
+            .map_err(|_| BibleGraphHostError::OwnerStopped)?;
+        receive_reply(receiver)
+    }
+
     pub fn status(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
         let (reply, receiver) = mpsc::channel();
         self.sender
@@ -191,6 +202,9 @@ fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
             }
             BibleGraphHostRequest::DrainCommands { reply } => {
                 let _ = reply.send(Ok(host.drain_commands()));
+            }
+            BibleGraphHostRequest::VisualSnapshot { reply } => {
+                let _ = reply.send(host.visual_snapshot());
             }
             BibleGraphHostRequest::Status { reply } => {
                 let _ = reply.send(Ok(host.status()));

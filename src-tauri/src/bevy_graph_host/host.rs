@@ -1,6 +1,8 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use eidetic_bevy_bible_graph::{BibleGraphRendererApp, BibleGraphRendererError};
+use eidetic_bevy_bible_graph::{
+    BibleGraphRendererApp, BibleGraphRendererError, BibleGraphVisualSnapshot,
+};
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
 };
@@ -76,6 +78,10 @@ impl DesktopBibleGraphHost {
             .as_mut()
             .map(BibleGraphRendererApp::drain_commands)
             .unwrap_or_default()
+    }
+
+    pub fn visual_snapshot(&mut self) -> Result<BibleGraphVisualSnapshot, BibleGraphHostError> {
+        self.with_renderer_mut(|renderer| renderer.visual_snapshot())
     }
 
     pub fn status(&self) -> BibleGraphHostStatus {

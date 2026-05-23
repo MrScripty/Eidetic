@@ -1086,6 +1086,10 @@ Discovered issues:
   visual primitives for projection nodes and edges, including positions,
   colors, radii, stroke widths, and influence highlight flags for the native
   panel renderer to consume.
+- Resolved: renderer-owned graph visual primitives now cross the desktop
+  boundary through an explicit Tauri command and TypeScript mirror types. This
+  keeps future native panel smoke tests and diagnostics on the same Bevy-owned
+  visual contract without exposing Bevy ECS internals to Svelte.
 
 ## Concurrent Worker Policy
 

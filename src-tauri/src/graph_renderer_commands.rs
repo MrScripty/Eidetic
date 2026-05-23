@@ -1,4 +1,4 @@
-use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
+use eidetic_bevy_bible_graph::{BibleGraphRendererCommand, BibleGraphVisualSnapshot};
 use tauri::Manager;
 
 use crate::bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
@@ -19,6 +19,17 @@ pub fn graph_renderer_drain_commands(
         .drain_commands()
         .map_err(|error| {
             CommandError::internal(format!("graph renderer command drain failed: {error:?}"))
+        })
+}
+
+#[tauri::command]
+pub fn graph_renderer_visual_snapshot(
+    app: tauri::AppHandle,
+) -> Result<BibleGraphVisualSnapshot, CommandError> {
+    graph_renderer_owner(&app)?
+        .visual_snapshot()
+        .map_err(|error| {
+            CommandError::internal(format!("graph renderer visual snapshot failed: {error:?}"))
         })
 }
 

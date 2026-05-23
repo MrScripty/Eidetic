@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { drainGraphRendererCommands, getGraphRendererStatus } from './graphRendererApi.js';
+import {
+  drainGraphRendererCommands,
+  getGraphRendererStatus,
+  getGraphRendererVisualSnapshot,
+} from './graphRendererApi.js';
 
 function installDesktopInvoke(response: unknown) {
   const invoke = vi.fn().mockResolvedValue(response);
@@ -40,5 +44,27 @@ describe('graph renderer api helpers', () => {
     await expect(drainGraphRendererCommands()).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('graph_renderer_drain_commands', undefined);
+  });
+
+  it('uses the desktop graph renderer visual snapshot command', async () => {
+    const response = {
+      nodes: [
+        {
+          node_id: 'node.character.ada',
+          label: 'Ada',
+          position: { x: 0, y: 0, z: 0 },
+          radius: 19,
+          fill_color: '#1f6f78',
+          outline_color: '#f2c94c',
+          highlighted: true,
+        },
+      ],
+      edges: [],
+    };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(getGraphRendererVisualSnapshot()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('graph_renderer_visual_snapshot', undefined);
   });
 });
