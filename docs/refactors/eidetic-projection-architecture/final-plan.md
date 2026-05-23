@@ -1158,10 +1158,11 @@ Discovered issues:
   explicit graph renderer command path and the desktop mutation-event refresh
   bridge while Milestone 8 continues converging those into one desktop-owned
   renderer projection subscription path.
-- Open: the Svelte graph renderer command drain still uses a temporary polling
-  bridge. The native renderer runner slice must replace or contain that pattern
-  with explicit lifecycle ownership, tracked cancellation, bounded queues, and
-  event-driven command projection where feasible.
+- Updated: the Svelte graph renderer command drain still uses temporary
+  polling, but it is now gated by backend-projected renderer-window status and
+  does not drain while the renderer is closed or scene-starting. The native
+  renderer runner slice must still replace this with event-driven command
+  projection before the Bevy graph becomes the primary visual surface.
 - Resolved: stale embedded-viewport documentation and the unused
   `raw-window-handle` dependency were removed after the production child-surface
   path was rejected. Raw handles must be reintroduced only through the native
@@ -1196,6 +1197,10 @@ Discovered issues:
   on app/window shutdown. The remaining temporary Svelte command-drain polling
   still needs to be replaced or retired before the Bevy graph becomes the
   primary visual surface.
+- Updated: frontend renderer-window status now has a focused transient store
+  used only to gate the temporary command-drain bridge. Durable graph facts and
+  selection-changing commands still flow through backend projections and
+  renderer command application helpers.
 - Resolved: `AppShell.svelte` is back under the component decomposition
   threshold. Central workspace rendering now lives in `AppWorkspace.svelte`,
   graph detail selection lives in `GraphRightInspector.svelte`, and AI status

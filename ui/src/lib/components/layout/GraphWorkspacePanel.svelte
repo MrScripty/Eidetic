@@ -16,6 +16,7 @@
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
   import { startGraphRendererCommandDrain } from '$lib/stores/graphRendererCommandDrain.js';
+  import { shouldDrainGraphRendererCommands } from '$lib/stores/graphRendererWindow.svelte.js';
   import {
     clearContextStackProjection,
     getCachedContextStackProjection,
@@ -53,7 +54,11 @@
       : false,
   );
 
-  onMount(() => startGraphRendererCommandDrain());
+  onMount(() =>
+    startGraphRendererCommandDrain({
+      shouldDrain: shouldDrainGraphRendererCommands,
+    }),
+  );
 
   $effect(() => {
     const selectedTimelineNodeId = editorState.selectedNodeId;

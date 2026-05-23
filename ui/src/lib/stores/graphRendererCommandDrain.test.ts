@@ -58,6 +58,27 @@ describe('graph renderer command drain lifecycle', () => {
     stop();
   });
 
+  it('does not drain while the renderer command bridge is disabled', async () => {
+    const drain = vi.fn().mockResolvedValue([]);
+    let intervalCallback = () => {};
+
+    const stop = startGraphRendererCommandDrain({
+      drain,
+      shouldDrain: () => false,
+      setIntervalFn: (callback) => {
+        intervalCallback = callback;
+        return 1;
+      },
+      clearIntervalFn: vi.fn(),
+    });
+    await Promise.resolve();
+    intervalCallback();
+    await Promise.resolve();
+
+    expect(drain).not.toHaveBeenCalled();
+    stop();
+  });
+
   it('drops commands that resolve after the drain is stopped', async () => {
     let resolveDrain: (commands: GraphRendererCommand[]) => void = () => {};
     const drain = vi.fn(

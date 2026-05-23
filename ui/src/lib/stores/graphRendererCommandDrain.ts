@@ -8,6 +8,7 @@ export interface GraphRendererCommandDrainOptions {
   intervalMs?: number;
   drain?: () => Promise<GraphRendererCommand[]>;
   apply?: (commands: GraphRendererCommand[]) => number;
+  shouldDrain?: () => boolean;
   onError?: (error: unknown) => void;
   setIntervalFn?: (callback: () => void, intervalMs: number) => unknown;
   clearIntervalFn?: (handle: unknown) => void;
@@ -32,6 +33,7 @@ export function startGraphRendererCommandDrain({
   intervalMs = DEFAULT_GRAPH_RENDERER_COMMAND_DRAIN_INTERVAL_MS,
   drain = drainGraphRendererCommands,
   apply = applyGraphRendererCommands,
+  shouldDrain = () => true,
   onError,
   setIntervalFn = startInterval,
   clearIntervalFn = stopInterval,
@@ -40,7 +42,7 @@ export function startGraphRendererCommandDrain({
   let draining = false;
 
   async function tick(): Promise<void> {
-    if (stopped || draining) {
+    if (stopped || draining || !shouldDrain()) {
       return;
     }
 

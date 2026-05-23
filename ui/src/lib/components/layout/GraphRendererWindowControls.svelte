@@ -9,6 +9,7 @@
     setGraphRendererProjection,
   } from '$lib/graphRendererApi.js';
   import type { GraphRendererStatus } from '$lib/graphRendererTypes.js';
+  import { setGraphRendererWindowStatus } from '$lib/stores/graphRendererWindow.svelte.js';
   import { graphRendererWindowStatusDisplay } from './graphRendererWindowStatus.js';
 
   let {
@@ -31,6 +32,7 @@
     error = null;
     try {
       status = await action();
+      setGraphRendererWindowStatus(status);
       return true;
     } catch (caught) {
       error = caught instanceof Error ? caught.message : 'Graph renderer command failed';
