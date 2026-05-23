@@ -26,8 +26,9 @@ vi.mock('./bibleGraphNodeProjection.svelte.js', () => ({
 }));
 
 vi.mock('./bibleRenderGraphProjection.svelte.js', () => ({
-  bibleRenderGraphRequestForTimelineSelection: vi.fn((nodeId: string | null | undefined) => ({
-    ...(nodeId ? { selected_timeline_node_id: nodeId } : {}),
+  getActiveBibleRenderGraphProjectionRequest: vi.fn(() => ({
+    selected_timeline_node_id: 'node.scene.beach',
+    selected_node_id: 'node.character.ada',
     neighborhood_depth: 1,
     max_nodes: 200,
   })),
@@ -162,6 +163,7 @@ describe('backend event projection handlers', () => {
     await vi.waitFor(() => {
       expect(refreshBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
         selected_timeline_node_id: 'node.scene.beach',
+        selected_node_id: 'node.character.ada',
         neighborhood_depth: 1,
         max_nodes: 200,
       });

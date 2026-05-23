@@ -19,12 +19,26 @@ export const bibleRenderGraphProjectionState = $state<{
   error: undefined,
 });
 
+let activeBibleRenderGraphRequest: BibleRenderGraphProjectionRequest =
+  defaultBibleRenderGraphRequest();
+
+function defaultBibleRenderGraphRequest(): BibleRenderGraphProjectionRequest {
+  return {
+    neighborhood_depth: DEFAULT_RENDER_GRAPH_NEIGHBORHOOD_DEPTH,
+    max_nodes: DEFAULT_RENDER_GRAPH_MAX_NODES,
+  };
+}
+
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
 export function getCachedBibleRenderGraphProjection(): ProjectionEnvelope<BibleRenderGraphProjection> | null {
   return bibleRenderGraphProjectionState.projection;
+}
+
+export function getActiveBibleRenderGraphProjectionRequest(): BibleRenderGraphProjectionRequest {
+  return { ...activeBibleRenderGraphRequest };
 }
 
 export function bibleRenderGraphRequestForTimelineSelection(
@@ -68,6 +82,7 @@ function replaceBibleRenderGraphProjectionIfFresh(
 export async function refreshBibleRenderGraphProjection(
   query?: BibleRenderGraphProjectionRequest,
 ): Promise<ProjectionEnvelope<BibleRenderGraphProjection>> {
+  activeBibleRenderGraphRequest = query ?? defaultBibleRenderGraphRequest();
   bibleRenderGraphProjectionState.pending = true;
   bibleRenderGraphProjectionState.error = undefined;
 
@@ -90,4 +105,5 @@ export function clearBibleRenderGraphProjection(): void {
   bibleRenderGraphProjectionState.projection = null;
   bibleRenderGraphProjectionState.pending = false;
   bibleRenderGraphProjectionState.error = undefined;
+  activeBibleRenderGraphRequest = defaultBibleRenderGraphRequest();
 }

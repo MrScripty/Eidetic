@@ -13,7 +13,7 @@ import { refreshStoryArcListProjection } from './storyArcProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleGraphNodeListProjection } from './bibleGraphNodeProjection.svelte.js';
 import {
-  bibleRenderGraphRequestForTimelineSelection,
+  getActiveBibleRenderGraphProjectionRequest,
   refreshBibleRenderGraphProjection,
 } from './bibleRenderGraphProjection.svelte.js';
 import { refreshBibleReferenceProposalListProjection } from './semanticProposalProjection.svelte.js';
@@ -43,13 +43,13 @@ function refreshBibleNodeList() {
 
 function refreshBibleRenderGraph() {
   return requestProjectionRefresh('bible-render-graph', () =>
-    refreshBibleRenderGraphProjection(bibleRenderGraphRequestForTimelineSelection(null)),
+    refreshBibleRenderGraphProjection(getActiveBibleRenderGraphProjectionRequest()),
   );
 }
 
-function refreshBibleRenderGraphForTimelineNode(nodeId: string) {
-  return requestProjectionRefresh(`bible-render-graph:${nodeId}`, () =>
-    refreshBibleRenderGraphProjection(bibleRenderGraphRequestForTimelineSelection(nodeId)),
+function refreshActiveBibleRenderGraphForContextInfluence() {
+  return requestProjectionRefresh('bible-render-graph:active-context-influence', () =>
+    refreshBibleRenderGraphProjection(getActiveBibleRenderGraphProjectionRequest()),
   );
 }
 
@@ -119,8 +119,8 @@ export function setupServerEventHandlers(events: ServerEventClient) {
       ]);
     }),
 
-    events.on('context_influence_changed', async (data) => {
-      await refreshBibleRenderGraphForTimelineNode(data.target_node_id);
+    events.on('context_influence_changed', async () => {
+      await refreshActiveBibleRenderGraphForContextInfluence();
     }),
 
     events.on('script_changed', async () => {

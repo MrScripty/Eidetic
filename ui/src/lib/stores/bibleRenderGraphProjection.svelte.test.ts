@@ -6,6 +6,7 @@ import {
   bibleRenderGraphRequestForWorkspaceSelection,
   bibleRenderGraphProjectionState,
   clearBibleRenderGraphProjection,
+  getActiveBibleRenderGraphProjectionRequest,
   getCachedBibleRenderGraphProjection,
   refreshBibleRenderGraphProjection,
 } from './bibleRenderGraphProjection.svelte.js';
@@ -129,14 +130,12 @@ describe('bible render graph projection store', () => {
 
   it('requests selected timeline node bounded render graph projections', async () => {
     getBibleRenderGraphProjectionMock.mockResolvedValue(projection);
+    const request = { selected_timeline_node_id: 'node.scene.beach' };
 
-    await expect(
-      refreshBibleRenderGraphProjection({ selected_timeline_node_id: 'node.scene.beach' }),
-    ).resolves.toEqual(projection);
+    await expect(refreshBibleRenderGraphProjection(request)).resolves.toEqual(projection);
 
-    expect(getBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
-      selected_timeline_node_id: 'node.scene.beach',
-    });
+    expect(getBibleRenderGraphProjectionMock).toHaveBeenCalledWith(request);
+    expect(getActiveBibleRenderGraphProjectionRequest()).toEqual(request);
   });
 
   it('records errors without replacing cached projections', async () => {

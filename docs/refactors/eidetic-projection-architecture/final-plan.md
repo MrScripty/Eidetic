@@ -1372,6 +1372,11 @@ Discovered issues:
   projection. The tab now projects search text, category root focus, selected
   graph node, and selected timeline context into the backend-bounded render
   graph request.
+- Resolved: frontend backend-event handlers refreshed bible render graph
+  projections with default or event-derived timeline-only requests, which could
+  overwrite a focused graph/search projection in the cache. The projection
+  store now tracks the active bounded request and event refreshes reuse that
+  request.
 
 ## Concurrent Worker Policy
 
