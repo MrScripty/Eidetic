@@ -7,7 +7,10 @@ use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
 };
 
-use super::{BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowStrategyStatus};
+use super::{
+    BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowLifecycle,
+    BibleGraphRendererWindowStrategyStatus,
+};
 
 pub struct DesktopBibleGraphHost {
     renderer: Option<BibleGraphRendererApp>,
@@ -124,14 +127,21 @@ impl DesktopBibleGraphHost {
             .map(BibleGraphRendererApp::renderer_window_bounds)
             .unwrap_or_default();
         let renderer_window_strategy = BibleGraphRendererWindowStrategyStatus::current();
+        let renderer_window_visible = false;
+        let renderer_window_lifecycle = BibleGraphRendererWindowLifecycle::from_state(
+            self.renderer.is_some(),
+            renderer_scene_ready,
+            renderer_window_visible,
+        );
 
         BibleGraphHostStatus {
             running: self.renderer.is_some(),
             renderer_window_open: self.renderer.is_some(),
             renderer_scene_ready,
-            renderer_window_visible: false,
+            renderer_window_visible,
             renderer_window_strategy: renderer_window_strategy.strategy,
             renderer_window_capability: renderer_window_strategy.capability,
+            renderer_window_lifecycle,
             renderer_window_ready: false,
             renderer_window_message: renderer_window_message(
                 self.renderer.is_some(),

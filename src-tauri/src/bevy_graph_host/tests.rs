@@ -9,8 +9,9 @@ use uuid::Uuid;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowCapability,
-    BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
-    DesktopBibleGraphHost, DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
+    BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowStrategy,
+    BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
+    GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
 };
 
 #[test]
@@ -34,6 +35,26 @@ fn renderer_window_strategy_reports_pending_native_runner() {
 }
 
 #[test]
+fn renderer_window_lifecycle_is_derived_from_backend_state() {
+    assert_eq!(
+        BibleGraphRendererWindowLifecycle::from_state(false, false, false),
+        BibleGraphRendererWindowLifecycle::Closed
+    );
+    assert_eq!(
+        BibleGraphRendererWindowLifecycle::from_state(true, false, false),
+        BibleGraphRendererWindowLifecycle::SceneStarting
+    );
+    assert_eq!(
+        BibleGraphRendererWindowLifecycle::from_state(true, true, false),
+        BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner
+    );
+    assert_eq!(
+        BibleGraphRendererWindowLifecycle::from_state(false, false, true),
+        BibleGraphRendererWindowLifecycle::Visible
+    );
+}
+
+#[test]
 fn host_applies_projection_and_reports_scene_counts() {
     let mut host = DesktopBibleGraphHost::new();
 
@@ -48,6 +69,8 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_visible: false,
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
+            renderer_window_lifecycle:
+                BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner,
             renderer_window_ready: false,
             renderer_window_message:
                 "graph renderer scene is ready; visible native window is pending implementation"
@@ -138,6 +161,7 @@ fn host_stop_drops_renderer_state() {
             renderer_window_visible: false,
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
+            renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,
             renderer_window_ready: false,
             renderer_window_message: "floating graph renderer window is closed".to_string(),
             node_count: 0,

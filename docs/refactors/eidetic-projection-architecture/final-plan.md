@@ -866,6 +866,10 @@ Completed slices:
   renderer window strategy and capability fields so the backend projection
   explicitly reports Bevy/winit floating-window intent and pending native runner
   support before the visible OS window proof lands.
+- `feat(desktop): add graph renderer window lifecycle status` added a typed
+  renderer-window lifecycle projection so graph window state is reported as a
+  backend-owned state machine instead of being inferred from booleans and
+  status text.
 
 Discovered issues:
 
@@ -920,6 +924,10 @@ Discovered issues:
   free-text status message. The desktop graph renderer status now reports the
   Bevy/winit floating-window strategy and pending native-runner capability as
   typed backend-owned projection data.
+- Resolved: graph renderer window lifecycle could only be inferred from open,
+  scene-ready, visible, and message fields. The status projection now includes
+  an explicit lifecycle enum that future native window support can advance
+  without adding frontend-owned state inference.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

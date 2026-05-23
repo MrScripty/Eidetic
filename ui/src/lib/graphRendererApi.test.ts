@@ -33,6 +33,7 @@ describe('graph renderer api helpers', () => {
       renderer_window_visible: false,
       renderer_window_strategy: 'bevy_winit_floating_window',
       renderer_window_capability: 'pending_native_runner',
+      renderer_window_lifecycle: 'scene_ready_pending_native_runner',
       renderer_window_ready: false,
       renderer_window_message:
         'graph renderer scene is ready; visible native window is pending implementation',
@@ -60,6 +61,7 @@ describe('graph renderer api helpers', () => {
       renderer_window_visible: false,
       renderer_window_strategy: 'bevy_winit_floating_window',
       renderer_window_capability: 'pending_native_runner',
+      renderer_window_lifecycle: 'scene_ready_pending_native_runner',
       renderer_window_ready: false,
       renderer_window_message:
         'graph renderer scene is ready; visible native window is pending implementation',
@@ -94,6 +96,7 @@ describe('graph renderer api helpers', () => {
       renderer_window_visible: false,
       renderer_window_strategy: 'bevy_winit_floating_window',
       renderer_window_capability: 'pending_native_runner',
+      renderer_window_lifecycle: 'scene_ready_pending_native_runner',
       renderer_window_ready: false,
       renderer_window_message:
         'graph renderer scene is ready; visible native window is pending implementation',
