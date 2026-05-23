@@ -1,35 +1,14 @@
-use std::sync::Mutex;
-
 use eidetic_bevy_bible_graph::{BibleGraphRendererCommand, BibleGraphVisualSnapshot};
 use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
-use eidetic_server::bible_render_graph_projection;
-use eidetic_server::state::AppState;
 use serde::Deserialize;
 use tauri::Manager;
 
 use crate::bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use crate::error::CommandError;
-
-#[derive(Default)]
-pub struct GraphRendererProjectionRequestState {
-    request: Mutex<BibleRenderGraphProjectionRequest>,
-}
-
-impl GraphRendererProjectionRequestState {
-    pub fn current(&self) -> BibleRenderGraphProjectionRequest {
-        self.request
-            .lock()
-            .unwrap_or_else(|error| error.into_inner())
-            .clone()
-    }
-
-    fn replace(&self, request: BibleRenderGraphProjectionRequest) {
-        *self
-            .request
-            .lock()
-            .unwrap_or_else(|error| error.into_inner()) = request;
-    }
-}
+use crate::graph_renderer_projection::{
+    GraphRendererProjectionRequestState, refresh_open_graph_renderer_projection,
+    seed_graph_renderer_projection,
+};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct OpenGraphRendererRequest {
@@ -61,7 +40,11 @@ pub async fn graph_renderer_open(
         return Err(error);
     }
     let projection_request = request.graph_projection_request.unwrap_or_default();
-    match seed_graph_renderer_projection(&app, projection_request.clone()).await {
+    let state = app
+        .state::<eidetic_server::state::AppState>()
+        .inner()
+        .clone();
+    match seed_graph_renderer_projection(&app, &state, projection_request.clone()).await {
         Ok(status) => {
             graph_renderer_projection_request_state(&app)?.replace(projection_request);
             Ok(status)
@@ -108,7 +91,11 @@ pub async fn graph_renderer_set_projection(
         return Ok(status);
     }
 
-    let status = update_open_graph_renderer_projection(&app, request.clone()).await?;
+    let state = app
+        .state::<eidetic_server::state::AppState>()
+        .inner()
+        .clone();
+    let status = refresh_open_graph_renderer_projection(&app, &state, request.clone()).await?;
     graph_renderer_projection_request_state(&app)?.replace(request);
     Ok(status)
 }
@@ -235,38 +222,4 @@ fn graph_renderer_projection_request_state(
 ) -> Result<tauri::State<'_, GraphRendererProjectionRequestState>, CommandError> {
     app.try_state::<GraphRendererProjectionRequestState>()
         .ok_or_else(|| CommandError::internal("graph renderer projection request is not managed"))
-}
-
-async fn seed_graph_renderer_projection(
-    app: &tauri::AppHandle,
-    request: BibleRenderGraphProjectionRequest,
-) -> Result<BibleGraphHostStatus, CommandError> {
-    let state = app.state::<AppState>().inner().clone();
-    let envelope = bible_render_graph_projection::bible_render_graph_projection(&state, request)
-        .await
-        .map_err(CommandError::from)?;
-
-    graph_renderer_owner(app)?
-        .set_projection(envelope.payload)
-        .map_err(|error| {
-            CommandError::internal(format!("graph renderer projection seed failed: {error:?}"))
-        })
-}
-
-async fn update_open_graph_renderer_projection(
-    app: &tauri::AppHandle,
-    request: BibleRenderGraphProjectionRequest,
-) -> Result<BibleGraphHostStatus, CommandError> {
-    let state = app.state::<AppState>().inner().clone();
-    let envelope = bible_render_graph_projection::bible_render_graph_projection(&state, request)
-        .await
-        .map_err(CommandError::from)?;
-
-    graph_renderer_owner(app)?
-        .update_projection_if_open(envelope.payload)
-        .map_err(|error| {
-            CommandError::internal(format!(
-                "graph renderer projection update failed: {error:?}"
-            ))
-        })
 }

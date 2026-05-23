@@ -5,6 +5,7 @@ mod desktop_events;
 mod error;
 mod export_commands;
 mod graph_renderer_commands;
+mod graph_renderer_projection;
 mod health;
 mod model_commands;
 mod project_commands;
@@ -15,7 +16,7 @@ mod renderer_window;
 use bevy_graph_host::DesktopBibleGraphRendererOwner;
 use desktop_events::DesktopEventBridgeOwner;
 use eidetic_server::state::AppState;
-use graph_renderer_commands::GraphRendererProjectionRequestState;
+use graph_renderer_projection::GraphRendererProjectionRequestState;
 use serde::Serialize;
 use tauri::Manager;
 

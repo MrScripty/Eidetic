@@ -1154,10 +1154,12 @@ Discovered issues:
   Bevy/winit runner still must replace the pending implementation and prove
   open/focus/close/reopen/teardown before visual graph replacement.
 - Updated: bible render graph projection reads no longer mirror their response
-  into the Bevy renderer. Renderer projection mutation now remains in the
-  explicit graph renderer command path and the desktop mutation-event refresh
-  bridge while Milestone 8 continues converging those into one desktop-owned
-  renderer projection subscription path.
+  into the Bevy renderer. Renderer projection mutation now flows through a
+  shared desktop-owned projection refresh module used by graph renderer
+  open/set-projection commands and the desktop mutation-event bridge. The
+  remaining native runner slice still needs to turn this into a long-lived
+  renderer subscription before the Bevy graph becomes the primary visual
+  surface.
 - Updated: the Svelte graph renderer command drain still uses temporary
   polling, but it is now gated by backend-projected renderer-window status and
   does not drain while the renderer is closed or scene-starting. The native

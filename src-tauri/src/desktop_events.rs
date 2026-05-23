@@ -1,12 +1,10 @@
-use eidetic_server::bible_render_graph_projection;
 use eidetic_server::state::{AppState, ServerEvent};
 use serde::Serialize;
 use std::sync::Mutex;
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 use tokio::sync::broadcast;
 
-use crate::bevy_graph_host::DesktopBibleGraphRendererOwner;
-use crate::graph_renderer_commands::GraphRendererProjectionRequestState;
+use crate::graph_renderer_projection::refresh_active_graph_renderer_projection;
 
 pub const SERVER_EVENT_TOPIC: &str = "eidetic://server-event";
 
@@ -105,35 +103,9 @@ fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
 }
 
 async fn refresh_graph_renderer_projection(app: &tauri::AppHandle, state: &AppState) {
-    if !is_graph_renderer_open(app) {
-        return;
-    }
-
-    let request = app
-        .try_state::<GraphRendererProjectionRequestState>()
-        .map(|request_state| request_state.current())
-        .unwrap_or_default();
-    let envelope =
-        match bible_render_graph_projection::bible_render_graph_projection(state, request).await {
-            Ok(envelope) => envelope,
-            Err(error) => {
-                tracing::warn!("failed to refresh graph renderer projection: {error}");
-                return;
-            }
-        };
-
-    if let Some(graph_owner) = app.try_state::<DesktopBibleGraphRendererOwner>()
-        && let Err(error) = graph_owner.update_projection_if_open(envelope.payload)
-    {
+    if let Err(error) = refresh_active_graph_renderer_projection(app, state).await {
         tracing::warn!("failed to update graph renderer projection: {error:?}");
     }
-}
-
-fn is_graph_renderer_open(app: &tauri::AppHandle) -> bool {
-    app.try_state::<DesktopBibleGraphRendererOwner>()
-        .and_then(|graph_owner| graph_owner.status().ok())
-        .map(|status| status.renderer_window_open)
-        .unwrap_or(false)
 }
 
 #[cfg(test)]
