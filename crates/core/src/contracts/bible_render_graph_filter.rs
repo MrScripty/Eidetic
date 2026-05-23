@@ -102,7 +102,7 @@ pub(super) fn included_node_ids_for_request(
         }));
     }
 
-    if required.is_empty() && candidates.is_empty() {
+    if required.is_empty() && candidates.is_empty() && should_load_default_node_ids(&request) {
         candidates.extend(nodes.iter().map(|node| node.id.clone()));
     }
 
@@ -115,6 +115,12 @@ pub(super) fn included_node_ids_for_request(
     }
 
     limit_node_ids(nodes, included, &required, request.max_nodes as usize)
+}
+
+fn should_load_default_node_ids(request: &BibleRenderGraphProjectionRequest) -> bool {
+    request.focused_root_id.is_none()
+        && request.selected_node_id.is_none()
+        && request.search.is_none()
 }
 
 fn children_by_parent(

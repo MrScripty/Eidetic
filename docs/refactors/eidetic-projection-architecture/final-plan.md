@@ -1387,6 +1387,10 @@ Discovered issues:
   timeline node that shaped the projection. The projection DTO now carries
   request identity metadata so Bevy and Svelte consumers can stay projection
   driven instead of reconstructing ownership from local state.
+- Resolved: the pure core bible render graph adapter still returned the default
+  graph for explicit empty filters even after the SQL-backed bounded query was
+  fixed. Core and SQL projection paths now agree that an explicit search or
+  focus filter with no matches produces an empty bounded graph.
 
 ## Concurrent Worker Policy
 

@@ -162,6 +162,29 @@ fn render_graph_projection_request_bounds_default_projection() {
 }
 
 #[test]
+fn render_graph_projection_keeps_empty_request_filters_empty() {
+    let nodes = vec![
+        graph_node("node.place.alpha", None, "place", "Alpha", false, 1),
+        graph_node("node.place.beta", None, "place", "Beta", false, 2),
+    ];
+
+    let projection = BibleRenderGraphProjection::from_graph_for_request(
+        nodes,
+        Vec::new(),
+        &BibleRenderGraphProjectionRequest {
+            search: Some("tower".to_string()),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    );
+
+    assert!(projection.nodes.is_empty());
+    assert!(projection.edges.is_empty());
+    assert!(projection.neighborhoods.is_empty());
+    assert!(projection.influences.is_empty());
+}
+
+#[test]
 fn render_graph_projection_filters_influences_to_visible_graph() {
     let target_node_id = NodeId::new();
     let evaluation_id = ContextEvaluationId::new();
