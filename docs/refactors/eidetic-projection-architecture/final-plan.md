@@ -852,6 +852,10 @@ Completed slices:
   native-panel terminology in the Bevy bible graph host, desktop renderer owner,
   and graph renderer IPC status with renderer-window naming so the next native
   work does not inherit embedded viewport language.
+- `fix(desktop): distinguish graph scene readiness` separated Bevy graph scene
+  readiness from visible renderer-window readiness in the desktop status
+  projection so Svelte no longer reports a visible native window before the OS
+  window proof exists.
 
 Discovered issues:
 
@@ -890,6 +894,11 @@ Discovered issues:
   fields after the embedded panel path was retired. The Bevy graph crate,
   desktop host, tests, frontend status DTO, and dependency notes now use
   renderer-window terminology.
+- Resolved: graph renderer status conflated Bevy scene initialization with
+  visible native window readiness. The desktop status projection now exposes
+  `renderer_scene_ready`, `renderer_window_visible`, and
+  `renderer_window_ready` separately so native window proof work has a truthful
+  baseline.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

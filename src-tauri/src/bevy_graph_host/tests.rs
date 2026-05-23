@@ -23,9 +23,12 @@ fn host_applies_projection_and_reports_scene_counts() {
         BibleGraphHostStatus {
             running: true,
             renderer_window_open: true,
-            renderer_window_ready: true,
-            renderer_window_message: "floating graph renderer window lifecycle is active"
-                .to_string(),
+            renderer_scene_ready: true,
+            renderer_window_visible: false,
+            renderer_window_ready: false,
+            renderer_window_message:
+                "graph renderer scene is ready; visible native window is pending implementation"
+                    .to_string(),
             node_count: 2,
             edge_count: 1,
             native_visual_node_count: 2,
@@ -108,6 +111,8 @@ fn host_stop_drops_renderer_state() {
         BibleGraphHostStatus {
             running: false,
             renderer_window_open: false,
+            renderer_scene_ready: false,
+            renderer_window_visible: false,
             renderer_window_ready: false,
             renderer_window_message: "floating graph renderer window is closed".to_string(),
             node_count: 0,
@@ -136,7 +141,9 @@ fn owner_runs_renderer_on_dedicated_thread() {
     assert_eq!(status.influence_count, 1);
     assert!(status.running);
     assert!(status.renderer_window_open);
-    assert!(status.renderer_window_ready);
+    assert!(status.renderer_scene_ready);
+    assert!(!status.renderer_window_visible);
+    assert!(!status.renderer_window_ready);
     owner.stop().unwrap();
 }
 
@@ -148,7 +155,9 @@ fn owner_can_start_renderer_before_projection_arrives() {
 
     assert!(status.running);
     assert!(status.renderer_window_open);
-    assert!(status.renderer_window_ready);
+    assert!(status.renderer_scene_ready);
+    assert!(!status.renderer_window_visible);
+    assert!(!status.renderer_window_ready);
     assert_eq!(status.node_count, 0);
     assert_eq!(status.edge_count, 0);
     assert_eq!(status.native_visual_node_count, 0);
@@ -164,7 +173,9 @@ fn owner_records_renderer_window_bounds_on_renderer_thread() {
     let status = owner.set_renderer_window_bounds(1280, 720).unwrap();
 
     assert!(status.running);
-    assert!(status.renderer_window_ready);
+    assert!(status.renderer_scene_ready);
+    assert!(!status.renderer_window_visible);
+    assert!(!status.renderer_window_ready);
     assert_eq!(status.renderer_window_width_px, 1280);
     assert_eq!(status.renderer_window_height_px, 720);
     owner.stop().unwrap();

@@ -108,7 +108,7 @@ impl DesktopBibleGraphHost {
                 (node_count, edge_count, renderer.influence_count())
             })
             .unwrap_or_default();
-        let renderer_window_ready = self
+        let renderer_scene_ready = self
             .renderer
             .as_ref()
             .map(BibleGraphRendererApp::renderer_window_ready)
@@ -127,8 +127,13 @@ impl DesktopBibleGraphHost {
         BibleGraphHostStatus {
             running: self.renderer.is_some(),
             renderer_window_open: self.renderer.is_some(),
-            renderer_window_ready,
-            renderer_window_message: renderer_window_message(self.renderer.is_some()),
+            renderer_scene_ready,
+            renderer_window_visible: false,
+            renderer_window_ready: false,
+            renderer_window_message: renderer_window_message(
+                self.renderer.is_some(),
+                renderer_scene_ready,
+            ),
             node_count,
             edge_count,
             native_visual_node_count,
@@ -162,10 +167,13 @@ impl DesktopBibleGraphHost {
     }
 }
 
-fn renderer_window_message(running: bool) -> String {
-    if running {
-        "floating graph renderer window lifecycle is active".to_string()
-    } else {
-        "floating graph renderer window is closed".to_string()
+fn renderer_window_message(running: bool, scene_ready: bool) -> String {
+    match (running, scene_ready) {
+        (true, true) => {
+            "graph renderer scene is ready; visible native window is pending implementation"
+                .to_string()
+        }
+        (true, false) => "graph renderer lifecycle is active; scene is starting".to_string(),
+        (false, _) => "floating graph renderer window is closed".to_string(),
     }
 }

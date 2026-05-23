@@ -29,8 +29,11 @@ describe('graph renderer api helpers', () => {
     const response = {
       running: true,
       renderer_window_open: true,
-      renderer_window_ready: true,
-      renderer_window_message: 'floating graph renderer window lifecycle is active',
+      renderer_scene_ready: true,
+      renderer_window_visible: false,
+      renderer_window_ready: false,
+      renderer_window_message:
+        'graph renderer scene is ready; visible native window is pending implementation',
       node_count: 2,
       edge_count: 1,
       native_visual_node_count: 2,
@@ -51,8 +54,11 @@ describe('graph renderer api helpers', () => {
     const response = {
       running: true,
       renderer_window_open: true,
-      renderer_window_ready: true,
-      renderer_window_message: 'floating graph renderer window lifecycle is active',
+      renderer_scene_ready: true,
+      renderer_window_visible: false,
+      renderer_window_ready: false,
+      renderer_window_message:
+        'graph renderer scene is ready; visible native window is pending implementation',
       node_count: 2,
       edge_count: 1,
       native_visual_node_count: 2,
@@ -80,8 +86,11 @@ describe('graph renderer api helpers', () => {
     const response = {
       running: true,
       renderer_window_open: true,
-      renderer_window_ready: true,
-      renderer_window_message: 'floating graph renderer window lifecycle is active',
+      renderer_scene_ready: true,
+      renderer_window_visible: false,
+      renderer_window_ready: false,
+      renderer_window_message:
+        'graph renderer scene is ready; visible native window is pending implementation',
       node_count: 0,
       edge_count: 0,
       native_visual_node_count: 0,

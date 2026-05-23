@@ -11,6 +11,8 @@ mod tests;
 pub struct BibleGraphHostStatus {
     pub running: bool,
     pub renderer_window_open: bool,
+    pub renderer_scene_ready: bool,
+    pub renderer_window_visible: bool,
     pub renderer_window_ready: bool,
     pub renderer_window_message: String,
     pub node_count: usize,

@@ -12,6 +12,8 @@ export interface OpenGraphRendererRequest {
 export interface GraphRendererStatus {
   running: boolean;
   renderer_window_open: boolean;
+  renderer_scene_ready: boolean;
+  renderer_window_visible: boolean;
   renderer_window_ready: boolean;
   renderer_window_message: string;
   node_count: number;

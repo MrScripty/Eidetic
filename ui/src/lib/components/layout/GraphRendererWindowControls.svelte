@@ -20,6 +20,7 @@
   let error = $state<string | null>(null);
 
   const isOpen = $derived(status?.renderer_window_open ?? false);
+  const isVisible = $derived(status?.renderer_window_visible ?? false);
   const statusText = $derived(status?.renderer_window_message ?? 'Graph renderer window is closed');
 
   async function run(action: () => Promise<GraphRendererStatus>): Promise<void> {
@@ -57,7 +58,15 @@
 
 <section class="renderer-window-controls" aria-label="Bible graph renderer window">
   <div class="renderer-window-status" aria-live="polite">
-    <span class:active={isOpen}>{isOpen ? 'Renderer active' : 'Renderer closed'}</span>
+    <span class:active={isVisible}>
+      {#if isVisible}
+        Renderer visible
+      {:else if isOpen}
+        Renderer preparing
+      {:else}
+        Renderer closed
+      {/if}
+    </span>
     <span>{statusText}</span>
     {#if error}
       <span class="error">{error}</span>
