@@ -16,7 +16,10 @@ This execution plan consolidates the discovery notes in:
 - `plans/timeline-rendering-bevy.md`
 - `plans/story-bible-3d-graph-view.md`
 - `plans/architecture-blast-radius.md`
-- Current product direction: finish making Svelte a projection consumer before replacing the timeline renderer with Bevy.
+- Current product direction: finish making Svelte a projection consumer while
+  adding borderless embedded Bevy viewport panels for realtime surfaces. The
+  bible graph uses the shared viewport host first; the timeline reuses that
+  host later instead of inventing a separate renderer embedding path.
 
 ## Standards Reviewed
 
@@ -74,6 +77,10 @@ Architecture and package boundaries:
   projections, own only transient camera/hover/animation/simulation state, and
   emit validated command requests. They must not own persistence, AI workflows,
   durable selections, or project facts.
+- Borderless embedded Bevy viewport panels are the supported native visual
+  surface for graph and timeline work. The viewport host owns panel bounds,
+  resize, focus, input routing, projection subscription, command draining, and
+  teardown; renderer crates own only the scene state for their viewport kind.
 - Svelte owns projection caches, local form drafts, focus, filters, hover,
   panel sizing, and other transient UI state only. Backend-owned data must not
   be optimistically mutated in stores or components.
@@ -1753,6 +1760,10 @@ Tasks:
   records.
 - Upgrade Bevy graph planning and the graph renderer crate to Bevy 0.18.1 with
   a fresh dependency review before adding native render/window/input features.
+- Add a shared embedded Bevy viewport host for native visual panels. The host
+  must support borderless panel embedding, viewport kind (`graph` now,
+  `timeline` later), bounds/resize updates, focus/input routing, projection
+  subscription, command draining, and deterministic teardown.
 - Add a native Bevy bible graph host as a projection consumer. It receives
   `BibleRenderGraph`/influence projections and emits validated selection,
   focus, inspect, and navigation commands only.
@@ -1762,10 +1773,10 @@ Tasks:
 - Add Svelte filters, search, detail panels, review panels, and
   keyboard-accessible alternatives for critical graph navigation and selection
   commands.
-- Add a primary workspace graph mode so the Bevy bible graph is displayed in
-  the central workspace, not only inside the narrow bible sidebar. Keep the
-  bottom timeline visible so playhead and selected-clip changes can drive graph
-  influence highlighting.
+- Add a primary workspace graph mode so the Bevy bible graph is displayed in a
+  borderless embedded viewport panel in the central workspace, not only inside
+  the narrow bible sidebar. Keep the bottom timeline visible so playhead and
+  selected-clip changes can drive graph influence highlighting.
 - Add workspace mode controls for script-focused, graph-focused, and split
   graph/editor layouts. The sidebar remains the Svelte home for graph filters,
   search, roots/categories, and proposal queues; the right panel remains the
@@ -1784,9 +1795,10 @@ Tasks:
 - Expose existing graph proposals and context influence records in the graph
   projections when they already exist, but do not build the agent harness or
   LLM graph tools in this milestone.
-- Replace the 2D SVG relationship graph after the Bevy graph and Svelte
-  command/detail surfaces cover selection, inspection, filtering, and
-  navigation.
+- Replace the 2D SVG relationship graph after the embedded Bevy graph viewport
+  and Svelte command/detail surfaces cover selection, inspection, filtering,
+  and navigation. The Svelte outline remains a keyboard-accessible semantic
+  alternative, not the primary visual graph surface.
 
 Context model:
 
@@ -1804,10 +1816,10 @@ Context model:
   path for the selected playhead/clip. Strong highlights represent directly
   used context, softer highlights represent inherited context, and dimmed nodes
   represent graph knowledge outside the current context window.
-- The UI surface is split by responsibility: Bevy owns the central spatial graph
-  visualization, Svelte owns graph controls/details/review and keyboard
-  command alternatives, and the timeline remains visible as the temporal
-  selector for influence projections.
+- The UI surface is split by responsibility: the app shell owns panel layout,
+  Svelte owns graph controls/details/review and keyboard command alternatives,
+  and Bevy owns borderless embedded viewport panels for realtime visuals. The
+  graph viewport lands first; the timeline viewport reuses the same host later.
 - Bevy may own transient camera, hover, simulation, animation, and unsaved
   layout state. Durable graph facts, influence records, saved layout decisions,
   and accepted proposals must enter through backend commands and projections.
@@ -1835,6 +1847,13 @@ Implementation order:
 - Upgrade `eidetic-bevy-bible-graph` to Bevy 0.18.1 with a documented
   dependency review while it is still a leaf crate and before render/window
   features are enabled.
+- Define the embedded viewport host contract before enabling render/window/input
+  features: viewport identity, viewport kind, panel bounds, resize lifecycle,
+  focus state, pointer/keyboard ownership, projection subscription, command
+  drain, and teardown.
+- Prove the embedded viewport with the smallest borderless test scene before
+  wiring the bible graph scene into it. The test scene must resize with the
+  app panel and must not appear as a separate product window.
 - Add relational SQLite current-state and history storage for context
   evaluations and influence records. Do not store queryable graph influence
   only as JSON blobs.
@@ -1848,6 +1867,8 @@ Implementation order:
   graph paths.
 - Add the Bevy graph host after the projection and influence adapters are
   deterministic, bounded, and tested.
+- Connect the graph host to the embedded viewport host so the same projection
+  and command-drain contracts drive the visible borderless graph panel.
 - Add Svelte detail/filter/review panels and keyboard command alternatives
   around the same backend projections and commands.
 - Remove the old 2D SVG relationship graph only after the Bevy graph covers the
@@ -1873,6 +1894,10 @@ Standards gates:
   renderer lifecycle must be separate modules under component/file thresholds.
 - The Bevy graph host has one desktop lifecycle owner, bounded command queues,
   subscription teardown, panic/cancellation reporting, and no detached tasks.
+- The embedded viewport host has one lifecycle owner per mounted viewport panel.
+  It validates panel dimensions before allocation, has deterministic resize and
+  teardown behavior, and keeps renderer-local state separate from backend
+  projections and Svelte stores.
 - Svelte graph controls own only drafts, filters, focus, local expansion, and
   projection caches. Selection that changes generation or persistence must go
   through backend commands/projections.
@@ -1888,6 +1913,10 @@ Verification:
 - UI placement tests or smoke checks prove graph workspace, split view, sidebar
   controls, right-panel details, and bottom timeline selection can coexist
   without creating a second durable graph owner.
+- Embedded viewport smoke checks prove the graph viewport is borderless inside
+  the app panel, resizes with the layout, routes pointer/focus input to Bevy
+  only while the viewport owns focus, and never opens as a separate product
+  window.
 - Projection bounding tests prove large bible graphs return bounded
   neighborhoods by selected clip, focused root, filter, or search result.
 - Query-service tests prove graph/context reads do not use full graph scans for
@@ -1901,7 +1930,7 @@ Verification:
 - App shell decomposition tests/smoke checks prove workspace mode, right
   inspector, shortcuts, export/save controls, and timeline sizing remain owned
   by focused modules and stay under component decomposition thresholds.
-- Renderer lifecycle tests prove Bevy graph subscriptions, commands, and
+- Renderer lifecycle tests prove embedded viewport subscriptions, commands, and
   transient renderer state are torn down on unmount/project close.
 - Dependency review proves Bevy 0.18.1 remains isolated to leaf renderer crates
   and that any render/window/input features are justified before they land.
@@ -1910,14 +1939,17 @@ Verification:
 
 Exit criteria:
 
-- The bible graph is visible as a bounded Bevy projection with Svelte
-  detail/filter/review controls.
+- The bible graph is visible as a bounded Bevy projection in a borderless
+  embedded viewport panel with Svelte detail/filter/review controls around it.
 - Interactive graph projections are request-shaped and bounded; the default
   graph workspace does not load or lay out the entire bible unless the user
   explicitly requests a full diagnostic/export view.
 - The graph has an explicit central workspace placement, split/editor mode, and
   Svelte side panels for controls/details while the bottom timeline remains
   available to drive playhead/clip influence highlighting.
+- The graph viewport host is reusable for the later timeline viewport, with
+  shared lifecycle, resize, focus, input-routing, projection-subscription, and
+  command-drain contracts.
 - The selected playhead/clip can show which bible nodes, edges, and parent
   context layers are actively influencing that point in the timeline.
 - Premise/act/sequence/scene/beat/shot context refinement is represented as
@@ -2187,8 +2219,8 @@ Tasks:
   review before enabling render/window/input/text features.
 - Add renderer-facing timeline projection DTOs only where the existing
   backend-owned `TimelineRenderProjection` is insufficient.
-- Add native Bevy timeline host as an isolated leaf renderer owned by the Tauri
-  desktop runtime.
+- Add native Bevy timeline host as an isolated leaf renderer mounted through
+  the same borderless embedded viewport host used by the bible graph.
 - Add pan, zoom, playhead, selection, hit testing, move, resize, split, arcs,
   relationship curves, and affect overlays through backend-confirmed commands
   and projections.
@@ -2203,8 +2235,11 @@ Implementation order:
   work.
 - Remove remaining WASM renderer bridges and wasm-only dependency paths before
   introducing the native Tauri-owned Bevy host as the supported desktop path.
-- Add the native Bevy timeline host as a leaf renderer with a lifecycle owner
-  in the desktop composition root.
+- Reuse the embedded viewport host from Milestone 8 for the timeline panel.
+  Timeline work may add timeline-specific renderer state, but must not add a
+  second viewport lifecycle, resize, focus, input, or command-drain framework.
+- Add the native Bevy timeline host as a leaf renderer mounted in the desktop
+  composition root through that shared viewport host.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
@@ -2218,9 +2253,10 @@ Implementation order:
 
 Standards gates:
 
-- The native Bevy timeline host is owned by Tauri runtime composition, has
-  tracked tasks/subscriptions, bounded command queues, shutdown/cancellation
-  coverage, and no local HTTP/WebSocket/WASM transport fallback.
+- The native Bevy timeline host is mounted through the shared embedded viewport
+  host, has tracked tasks/subscriptions, bounded command queues,
+  shutdown/cancellation coverage, and no local HTTP/WebSocket/WASM transport
+  fallback.
 - Bevy consumes projection snapshots and produces command requests only.
   Timeline selection, clip data, arcs, relationships, affect overlays, and
   saved layout decisions stay backend-owned.
@@ -2239,6 +2275,9 @@ Standards gates:
 Verification:
 
 - Vertical slice: Bevy timeline render model receives projection and emits a validated command.
+- Embedded viewport reuse check proves the timeline panel uses the same
+  borderless viewport lifecycle, resize, focus, input-routing, and command-drain
+  owner as the graph panel.
 - Pointer, focus, keyboard, and parent-gesture conflict smoke checks.
 - Projection serialization tests.
 - Renderer lifecycle tests for mount/unmount subscription cleanup.
