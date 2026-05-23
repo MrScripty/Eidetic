@@ -32,13 +32,17 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let app_state = tauri::async_runtime::block_on(AppState::new());
-            desktop_events::spawn_server_event_bridge(app.handle().clone(), &app_state);
-            app.manage(app_state);
             app.manage(EmbeddedViewportHost::default());
             app.manage(
                 DesktopBibleGraphRendererOwner::start()
                     .expect("failed to start Bevy bible graph renderer owner"),
             );
+            desktop_events::spawn_server_event_bridge(app.handle().clone(), &app_state);
+            desktop_events::spawn_graph_renderer_projection_bridge(
+                app.handle().clone(),
+                &app_state,
+            );
+            app.manage(app_state);
             Ok(())
         })
         .on_window_event(|window, event| {

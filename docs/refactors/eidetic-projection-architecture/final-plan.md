@@ -959,9 +959,10 @@ Discovered issues:
   `Send + Sync` desktop boundary that owns a dedicated renderer thread, request/
   reply command queue, command draining, and shutdown joining from Tauri window
   teardown.
-- Open: the native graph renderer owner still needs projection subscription
-  plumbing from backend refresh events into the renderer thread before the Bevy
-  graph can be the visible central workspace surface.
+- Resolved: the native graph renderer owner now has projection refresh
+  plumbing from backend mutation events. The desktop bridge refreshes the
+  backend-owned bible render graph projection into the renderer thread only
+  while a graph viewport is mounted.
 - Resolved: context stack projections now prefer latest recorded distilled
   context evaluations for each selected timeline ancestor before falling back
   to timeline node recap text. Lower hierarchy layers can consume refined
