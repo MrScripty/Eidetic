@@ -11,13 +11,30 @@ use crate::error::CommandError;
 use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
 use eidetic_server::bible_render_graph_projection;
 use eidetic_server::state::AppState;
+use serde::Deserialize;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MountViewportCommandRequest {
+    pub viewport_id: String,
+    pub kind: EmbeddedViewportKind,
+    pub bounds: crate::embedded_viewport_host::EmbeddedViewportBounds,
+    #[serde(default)]
+    pub graph_projection_request: Option<BibleRenderGraphProjectionRequest>,
+}
 
 #[tauri::command]
 pub async fn viewport_mount(
     app: tauri::AppHandle,
-    request: MountEmbeddedViewportRequest,
+    request: MountViewportCommandRequest,
 ) -> Result<EmbeddedViewportState, CommandError> {
-    let mut state = viewport_host(&app)?.mount(request).map_err(command_error)?;
+    let graph_projection_request = request.graph_projection_request.clone().unwrap_or_default();
+    let mut state = viewport_host(&app)?
+        .mount(MountEmbeddedViewportRequest {
+            viewport_id: request.viewport_id,
+            kind: request.kind,
+            bounds: request.bounds,
+        })
+        .map_err(command_error)?;
     let surface = detect_main_window_surface(&app);
     state = viewport_host(&app)?
         .set_surface_state(state.viewport_id.clone(), surface)
@@ -31,7 +48,7 @@ pub async fn viewport_mount(
         )));
     }
     if state.kind == EmbeddedViewportKind::Graph
-        && let Err(error) = seed_graph_renderer_projection(&app).await
+        && let Err(error) = seed_graph_renderer_projection(&app, graph_projection_request).await
     {
         let status = viewport_host(&app)?
             .unmount(state.viewport_id.clone())
@@ -120,14 +137,14 @@ fn stop_graph_renderer_when_unmounted(
         .map_err(|error| CommandError::internal(format!("graph renderer stop failed: {error:?}")))
 }
 
-async fn seed_graph_renderer_projection(app: &tauri::AppHandle) -> Result<(), CommandError> {
+async fn seed_graph_renderer_projection(
+    app: &tauri::AppHandle,
+    request: BibleRenderGraphProjectionRequest,
+) -> Result<(), CommandError> {
     let state = app.state::<AppState>().inner().clone();
-    let envelope = bible_render_graph_projection::bible_render_graph_projection(
-        &state,
-        BibleRenderGraphProjectionRequest::default(),
-    )
-    .await
-    .map_err(CommandError::from)?;
+    let envelope = bible_render_graph_projection::bible_render_graph_projection(&state, request)
+        .await
+        .map_err(CommandError::from)?;
 
     graph_renderer_owner(app)?
         .set_projection(envelope.payload)

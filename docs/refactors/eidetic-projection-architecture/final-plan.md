@@ -1162,6 +1162,10 @@ Discovered issues:
   the backend-owned render graph projection service immediately after renderer
   startup. A failed seed rolls back the graph viewport mount so the desktop host
   does not report a mounted graph panel without an initial backend projection.
+- Resolved: graph viewport mount accepts the same bounded render graph request
+  used by the graph workspace, so initial Bevy renderer seeding is scoped to the
+  selected timeline clip/playhead context instead of racing a default whole-view
+  seed against the workspace projection refresh.
 
 ## Concurrent Worker Policy
 

@@ -10,16 +10,19 @@
     embeddedViewportBoundsChanged,
     embeddedViewportBoundsFromRect,
   } from '$lib/embeddedViewportBounds.js';
+  import type { BibleRenderGraphProjectionRequest } from '$lib/bibleGraphTypes.js';
   import type { EmbeddedViewportBounds, EmbeddedViewportKind } from '$lib/embeddedViewportTypes.js';
 
   let {
     viewportId,
     kind,
     ariaLabel,
+    initialGraphProjectionRequest,
   }: {
     viewportId: string;
     kind: EmbeddedViewportKind;
     ariaLabel: string;
+    initialGraphProjectionRequest?: BibleRenderGraphProjectionRequest;
   } = $props();
 
   let panel: HTMLButtonElement;
@@ -47,6 +50,9 @@
         viewport_id: viewportId,
         kind,
         bounds,
+        ...(initialGraphProjectionRequest
+          ? { graph_projection_request: initialGraphProjectionRequest }
+          : {}),
       });
       mounted = true;
     } else {

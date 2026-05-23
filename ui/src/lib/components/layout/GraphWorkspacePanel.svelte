@@ -35,6 +35,9 @@
   const contextLayers = $derived(contextStackProjection?.payload.layers ?? []);
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const graphSelection = $derived(bibleState.graphSelection);
+  const renderGraphRequest = $derived(
+    bibleRenderGraphRequestForTimelineSelection(editorState.selectedNodeId),
+  );
   const edgeItems = $derived(graph ? graphWorkspaceEdgeItems(graph) : []);
   const neighborhoodItems = $derived(graph ? graphWorkspaceNeighborhoodItems(graph) : []);
   const hasSideLists = $derived(
@@ -100,7 +103,12 @@
 
     <div class="graph-surface" class:has-side-lists={hasSideLists}>
       <div class="graph-viewport-shell">
-        <BevyViewportPanel viewportId="graph-main" kind="graph" ariaLabel="Bible graph viewport" />
+        <BevyViewportPanel
+          viewportId="graph-main"
+          kind="graph"
+          ariaLabel="Bible graph viewport"
+          initialGraphProjectionRequest={renderGraphRequest}
+        />
         <div class="graph-outline-fallback">
           <BibleRenderGraphOutline
             projection={graph}

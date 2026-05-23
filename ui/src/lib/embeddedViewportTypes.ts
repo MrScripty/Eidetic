@@ -1,3 +1,5 @@
+import type { BibleRenderGraphProjectionRequest } from './bibleGraphTypes.js';
+
 export type EmbeddedViewportKind = 'graph' | 'timeline';
 
 export interface EmbeddedViewportBounds {
@@ -43,6 +45,7 @@ export interface MountEmbeddedViewportRequest {
   viewport_id: string;
   kind: EmbeddedViewportKind;
   bounds: EmbeddedViewportBounds;
+  graph_projection_request?: BibleRenderGraphProjectionRequest;
 }
 
 export interface UpdateEmbeddedViewportBoundsRequest {

@@ -60,6 +60,34 @@ describe('embedded viewport api helpers', () => {
     });
   });
 
+  it('passes an initial graph projection request when mounting a graph viewport', async () => {
+    const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: false, surface };
+    const invoke = installDesktopInvoke(response);
+    const graphProjectionRequest = {
+      selected_timeline_node_id: 'node.scene.beach',
+      neighborhood_depth: 1,
+      max_nodes: 200,
+    };
+
+    await expect(
+      mountEmbeddedViewport({
+        viewport_id: 'graph-main',
+        kind: 'graph',
+        bounds,
+        graph_projection_request: graphProjectionRequest,
+      }),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('viewport_mount', {
+      request: {
+        viewport_id: 'graph-main',
+        kind: 'graph',
+        bounds,
+        graph_projection_request: graphProjectionRequest,
+      },
+    });
+  });
+
   it('updates viewport bounds through desktop IPC', async () => {
     const response = { viewport_id: 'graph-main', kind: 'graph', bounds, focused: false, surface };
     const invoke = installDesktopInvoke(response);
