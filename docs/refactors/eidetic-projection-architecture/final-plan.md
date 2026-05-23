@@ -1099,6 +1099,11 @@ Discovered issues:
   scene setup that records Eidetic graph colors, sets the Bevy clear color, and
   spawns exactly one marked `Camera2d` without opening a window. Actual Tauri
   surface embedding remains a separate lifecycle slice.
+- Resolved: the desktop graph host now enables the graph renderer's
+  `native_render` feature and starts the renderer through the native-panel
+  constructor. Renderer status exposes `native_panel_ready` as a diagnostic so
+  UI and smoke checks can distinguish a running projection bridge from a native
+  panel scene that has actually initialized.
 
 ## Concurrent Worker Policy
 

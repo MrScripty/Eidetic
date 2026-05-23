@@ -179,12 +179,26 @@ fn native_render_plugin_records_borderless_panel_intent() {
     assert_eq!(scene.grid_color, "#253041");
     assert_eq!(scene.accent_color, "#f2c94c");
     assert_eq!(
+        app.world()
+            .resource::<BibleGraphNativePanelStatus>()
+            .camera_count,
+        1
+    );
+    assert_eq!(
         app.world_mut()
             .query_filtered::<(), With<BibleGraphNativeCamera>>()
             .iter(app.world())
             .count(),
         1
     );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn renderer_app_can_start_as_native_panel_consumer() {
+    let renderer = BibleGraphRendererApp::new_native_panel();
+
+    assert!(renderer.native_panel_ready());
 }
 
 #[test]

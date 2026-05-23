@@ -14,8 +14,8 @@ mod native_render;
 
 #[cfg(feature = "native_render")]
 pub use native_render::{
-    BibleGraphNativeCamera, BibleGraphNativePanelScene, BibleGraphNativeRenderConfig,
-    BibleGraphNativeRenderPlugin,
+    BibleGraphNativeCamera, BibleGraphNativePanelScene, BibleGraphNativePanelStatus,
+    BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
 };
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
@@ -74,6 +74,23 @@ impl BibleGraphRendererApp {
         app.insert_resource(BibleGraphRendererCommandQueue::default());
         app.insert_resource(BibleGraphSceneStats::default());
         Self { app }
+    }
+
+    #[cfg(feature = "native_render")]
+    pub fn new_native_panel() -> Self {
+        let mut renderer = Self::new();
+        renderer.app.add_plugins(BibleGraphNativeRenderPlugin);
+        renderer.app.update();
+        renderer
+    }
+
+    #[cfg(feature = "native_render")]
+    pub fn native_panel_ready(&self) -> bool {
+        self.app
+            .world()
+            .get_resource::<BibleGraphNativePanelStatus>()
+            .map(|status| status.camera_count == 1)
+            .unwrap_or_default()
     }
 
     pub fn set_projection(&mut self, projection: BibleRenderGraphProjection) {

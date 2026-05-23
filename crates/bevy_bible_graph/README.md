@@ -51,6 +51,9 @@ Dependency review:
 - Native panel setup starts with a borderless scene resource, Eidetic graph
   colors, clear color, and one marked `Camera2d`. The plugin does not open a
   window by itself; Tauri embedding owns the future surface lifecycle.
+- Desktop hosts enable `native_render` explicitly and start the renderer through
+  `new_native_panel()` so native readiness can be reported without letting the
+  renderer own durable project state.
 - Asset/text/UI/audio features remain out of scope for the bible graph viewport
   until there is a concrete graph-rendering requirement that cannot be met with
   primitive meshes, materials, and Svelte-side semantic text/detail panels.

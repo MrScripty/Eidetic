@@ -10,6 +10,7 @@ mod tests;
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct BibleGraphHostStatus {
     pub running: bool,
+    pub native_panel_ready: bool,
     pub node_count: usize,
     pub edge_count: usize,
     pub influence_count: usize,

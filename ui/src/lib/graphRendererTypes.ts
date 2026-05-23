@@ -6,6 +6,7 @@ import type {
 
 export interface GraphRendererStatus {
   running: boolean;
+  native_panel_ready: boolean;
   node_count: number;
   edge_count: number;
   influence_count: number;

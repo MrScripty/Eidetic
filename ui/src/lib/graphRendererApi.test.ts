@@ -25,6 +25,7 @@ describe('graph renderer api helpers', () => {
   it('uses the desktop graph renderer status command', async () => {
     const response = {
       running: true,
+      native_panel_ready: true,
       node_count: 2,
       edge_count: 1,
       influence_count: 1,

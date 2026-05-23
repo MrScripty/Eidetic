@@ -30,7 +30,9 @@ impl DesktopBibleGraphHost {
 
     pub fn start(&mut self) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
         if self.renderer.is_none() {
-            self.renderer = Some(Self::catch_renderer_panic(BibleGraphRendererApp::new)?);
+            self.renderer = Some(Self::catch_renderer_panic(
+                BibleGraphRendererApp::new_native_panel,
+            )?);
         }
         self.last_error = None;
         Ok(self.status())
@@ -93,9 +95,15 @@ impl DesktopBibleGraphHost {
                 (node_count, edge_count, renderer.influence_count())
             })
             .unwrap_or_default();
+        let native_panel_ready = self
+            .renderer
+            .as_ref()
+            .map(BibleGraphRendererApp::native_panel_ready)
+            .unwrap_or_default();
 
         BibleGraphHostStatus {
             running: self.renderer.is_some(),
+            native_panel_ready,
             node_count,
             edge_count,
             influence_count,
