@@ -1,3 +1,4 @@
+use eidetic_bevy_bible_graph::BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY;
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeId, BibleRenderGraphEdge, BibleRenderGraphInfluence,
@@ -19,6 +20,10 @@ use super::{
 #[test]
 fn owner_uses_bounded_command_queue() {
     assert_eq!(GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, 128);
+    assert_eq!(
+        GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
+        BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY
+    );
 }
 
 #[test]

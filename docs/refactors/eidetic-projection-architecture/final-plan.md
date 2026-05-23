@@ -891,6 +891,9 @@ Completed slices:
 - `refactor(renderer): bound graph command buffer` added a fixed capacity to
   the Bevy bible graph leaf renderer command buffer so renderer-emitted command
   intents cannot grow without backpressure.
+- `refactor(desktop): share graph renderer queue capacity` made the desktop
+  graph renderer owner queue derive its capacity from the Bevy graph renderer
+  command buffer constant so the two backpressure limits cannot drift.
 
 Discovered issues:
 
@@ -974,6 +977,9 @@ Discovered issues:
   bible graph leaf renderer still stored emitted command intents in an
   unbounded `Vec`. The renderer command buffer now has the same fixed capacity
   and returns a typed queue-full error.
+- Resolved: the desktop owner queue and Bevy leaf renderer command buffer used
+  separate fixed-capacity literals. The desktop owner now derives its queue
+  capacity from the renderer crate's exported command-buffer capacity.
 - Resolved: `src-tauri/src/lib.rs` exceeded the 500-line decomposition
   threshold while registering mixed project, command, projection, setup, and
   error-adapter responsibilities. The Tauri shell was split into focused

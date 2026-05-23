@@ -1,7 +1,10 @@
 use std::sync::{Mutex, mpsc};
 use std::thread::{self, JoinHandle};
 
-use eidetic_bevy_bible_graph::{BibleGraphRendererCommand, BibleGraphVisualSnapshot};
+use eidetic_bevy_bible_graph::{
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
+    BibleGraphVisualSnapshot,
+};
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
 };
@@ -10,7 +13,8 @@ use super::{
     BibleGraphHostError, BibleGraphHostResult, BibleGraphHostStatus, DesktopBibleGraphHost,
 };
 
-pub const GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;
+pub const GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize =
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY;
 
 enum BibleGraphHostRequest {
     Start {
