@@ -57,7 +57,7 @@ pub async fn graph_renderer_open(
             CommandError::internal(format!("graph renderer open failed: {error:?}"))
         })?;
     if let Err(error) = apply_renderer_window_size_hint(&app, request.renderer_window_size_hint) {
-        let _ = graph_renderer_owner(&app)?.stop();
+        let _ = graph_renderer_owner(&app)?.close_renderer();
         return Err(error);
     }
     let projection_request = request.graph_projection_request.unwrap_or_default();
@@ -67,7 +67,7 @@ pub async fn graph_renderer_open(
             Ok(status)
         }
         Err(error) => {
-            let _ = graph_renderer_owner(&app)?.stop();
+            let _ = graph_renderer_owner(&app)?.close_renderer();
             Err(error)
         }
     }

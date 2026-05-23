@@ -1401,6 +1401,10 @@ Discovered issues:
   reopen the floating renderer during the same app session. Renderer close now
   drops renderer state while keeping the owner thread available; owner shutdown
   remains reserved for teardown/drop.
+- Resolved: graph renderer open rollback paths also used terminal owner
+  shutdown after size-hint or projection-seeding failures. Failed opens now
+  close renderer state through the reusable lifecycle path so the app can retry
+  without recreating the managed desktop owner.
 
 ## Concurrent Worker Policy
 
