@@ -36,7 +36,7 @@ beforeEach(() => {
 });
 
 describe('graph renderer window status', () => {
-  it('enables command drain only for an open scene-ready renderer', () => {
+  it('enables command drain only for an open supported scene-ready renderer', () => {
     expect(shouldDrainGraphRendererCommands()).toBe(false);
 
     setGraphRendererWindowStatus({
@@ -52,6 +52,12 @@ describe('graph renderer window status', () => {
     expect(shouldDrainGraphRendererCommands()).toBe(false);
 
     setGraphRendererWindowStatus(baseStatus);
+    expect(shouldDrainGraphRendererCommands()).toBe(false);
+
+    setGraphRendererWindowStatus({
+      ...baseStatus,
+      renderer_window_visible_supported: true,
+    });
     expect(shouldDrainGraphRendererCommands()).toBe(true);
   });
 });

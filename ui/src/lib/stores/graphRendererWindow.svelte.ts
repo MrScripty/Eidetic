@@ -16,5 +16,9 @@ export function clearGraphRendererWindowStatus(): void {
 
 export function shouldDrainGraphRendererCommands(): boolean {
   const status = graphRendererWindowState.status;
-  return Boolean(status?.renderer_window_open && status.renderer_scene_ready);
+  return Boolean(
+    status?.renderer_window_open &&
+    status.renderer_scene_ready &&
+    status.renderer_window_visible_supported,
+  );
 }

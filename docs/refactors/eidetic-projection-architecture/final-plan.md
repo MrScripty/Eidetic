@@ -1176,9 +1176,10 @@ Discovered issues:
   surface.
 - Updated: the Svelte graph renderer command drain still uses temporary
   polling, but it is now gated by backend-projected renderer-window status and
-  does not drain while the renderer is closed or scene-starting. The native
-  renderer runner slice must still replace this with event-driven command
-  projection before the Bevy graph becomes the primary visual surface.
+  does not drain while the renderer is closed, scene-starting, or reporting no
+  visible-window support. The native renderer runner slice must still replace
+  this with event-driven command projection before the Bevy graph becomes the
+  primary visual surface.
 - Resolved: stale embedded-viewport documentation and the unused
   `raw-window-handle` dependency were removed after the production child-surface
   path was rejected. Raw handles must be reintroduced only through the native
