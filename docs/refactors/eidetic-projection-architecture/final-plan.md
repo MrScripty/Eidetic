@@ -1158,6 +1158,10 @@ Discovered issues:
   probes the main Tauri webview window handle and records whether the current
   parent surface is an X11/Win32/AppKit candidate for child-surface attachment
   or an explicitly unsupported strategy such as the current Wayland path.
+- Resolved: graph viewport mount now seeds the native Bevy graph renderer from
+  the backend-owned render graph projection service immediately after renderer
+  startup. A failed seed rolls back the graph viewport mount so the desktop host
+  does not report a mounted graph panel without an initial backend projection.
 
 ## Concurrent Worker Policy
 

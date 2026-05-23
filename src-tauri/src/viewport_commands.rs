@@ -8,9 +8,12 @@ use crate::embedded_viewport_host::{
 };
 use crate::embedded_viewport_surface::detect_main_window_surface;
 use crate::error::CommandError;
+use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
+use eidetic_server::bible_render_graph_projection;
+use eidetic_server::state::AppState;
 
 #[tauri::command]
-pub fn viewport_mount(
+pub async fn viewport_mount(
     app: tauri::AppHandle,
     request: MountEmbeddedViewportRequest,
 ) -> Result<EmbeddedViewportState, CommandError> {
@@ -26,6 +29,15 @@ pub fn viewport_mount(
         return Err(CommandError::internal(format!(
             "graph renderer start failed: {error:?}"
         )));
+    }
+    if state.kind == EmbeddedViewportKind::Graph
+        && let Err(error) = seed_graph_renderer_projection(&app).await
+    {
+        let status = viewport_host(&app)?
+            .unmount(state.viewport_id.clone())
+            .map_err(command_error)?;
+        stop_graph_renderer_when_unmounted(&app, &status)?;
+        return Err(error);
     }
     Ok(state)
 }
@@ -106,6 +118,23 @@ fn stop_graph_renderer_when_unmounted(
         .stop()
         .map(|_| ())
         .map_err(|error| CommandError::internal(format!("graph renderer stop failed: {error:?}")))
+}
+
+async fn seed_graph_renderer_projection(app: &tauri::AppHandle) -> Result<(), CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    let envelope = bible_render_graph_projection::bible_render_graph_projection(
+        &state,
+        BibleRenderGraphProjectionRequest::default(),
+    )
+    .await
+    .map_err(CommandError::from)?;
+
+    graph_renderer_owner(app)?
+        .set_projection(envelope.payload)
+        .map(|_| ())
+        .map_err(|error| {
+            CommandError::internal(format!("graph renderer projection seed failed: {error:?}"))
+        })
 }
 
 fn command_error(error: EmbeddedViewportHostError) -> CommandError {
