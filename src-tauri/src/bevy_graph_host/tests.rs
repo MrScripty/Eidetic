@@ -18,7 +18,7 @@ use super::{
     GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
     NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
     NativeRendererPlatformStrategy, NativeRendererRunner, NativeRendererRunnerHandle,
-    NativeRendererRunnerLifecycle, PendingNativeRendererRunner,
+    NativeRendererRunnerLifecycle, NativeRendererThreadingModel, PendingNativeRendererRunner,
 };
 
 #[test]
@@ -70,6 +70,40 @@ fn native_renderer_platform_strategy_reports_current_platform_status() {
     );
     assert_eq!(status.capability_reason, expected_pending_reason());
     assert!(!status.visible_window_supported);
+}
+
+#[test]
+fn native_renderer_platform_strategy_models_threading_requirements() {
+    assert_eq!(
+        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven.threading_model(),
+        NativeRendererThreadingModel::WorkerThread
+    );
+    assert!(
+        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+            .can_attempt_minimal_window_proof()
+    );
+    assert_eq!(
+        NativeRendererPlatformStrategy::WindowsWorkerThreadUnproven.threading_model(),
+        NativeRendererThreadingModel::WorkerThread
+    );
+    assert!(
+        NativeRendererPlatformStrategy::WindowsWorkerThreadUnproven
+            .can_attempt_minimal_window_proof()
+    );
+    assert_eq!(
+        NativeRendererPlatformStrategy::MacosMainThreadUnproven.threading_model(),
+        NativeRendererThreadingModel::MainThread
+    );
+    assert!(
+        NativeRendererPlatformStrategy::MacosMainThreadUnproven.can_attempt_minimal_window_proof()
+    );
+    assert_eq!(
+        NativeRendererPlatformStrategy::UnsupportedPlatform.threading_model(),
+        NativeRendererThreadingModel::Unsupported
+    );
+    assert!(
+        !NativeRendererPlatformStrategy::UnsupportedPlatform.can_attempt_minimal_window_proof()
+    );
 }
 
 #[test]

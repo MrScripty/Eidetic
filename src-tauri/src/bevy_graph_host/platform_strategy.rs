@@ -12,6 +12,13 @@ pub enum NativeRendererPlatformStrategy {
     UnsupportedPlatform,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NativeRendererThreadingModel {
+    WorkerThread,
+    MainThread,
+    Unsupported,
+}
+
 impl NativeRendererPlatformStrategy {
     pub fn current() -> Self {
         match BibleGraphRendererWindowPlatform::current() {
@@ -30,6 +37,23 @@ impl NativeRendererPlatformStrategy {
             capability_reason: self.capability_reason(),
             visible_window_supported: false,
         }
+    }
+
+    pub fn threading_model(self) -> NativeRendererThreadingModel {
+        match self {
+            Self::LinuxWorkerThreadUnproven | Self::WindowsWorkerThreadUnproven => {
+                NativeRendererThreadingModel::WorkerThread
+            }
+            Self::MacosMainThreadUnproven => NativeRendererThreadingModel::MainThread,
+            Self::UnsupportedPlatform => NativeRendererThreadingModel::Unsupported,
+        }
+    }
+
+    pub fn can_attempt_minimal_window_proof(self) -> bool {
+        !matches!(
+            self.threading_model(),
+            NativeRendererThreadingModel::Unsupported
+        )
     }
 
     fn platform(self) -> BibleGraphRendererWindowPlatform {

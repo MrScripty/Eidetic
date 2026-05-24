@@ -1199,6 +1199,10 @@ Discovered issues:
   runner. Current platform and explicit strategy startup share the same bounded
   request/reply owner path, while all real window candidates still report
   pending or unsupported capability until their smoke proof passes.
+- Resolved: the native runner platform strategy now exposes an explicit
+  threading model. Linux and Windows are worker-thread proof candidates, macOS
+  is a main-thread proof candidate, and unsupported platforms cannot enter the
+  minimal-window proof path.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer
