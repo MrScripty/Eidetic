@@ -3,6 +3,7 @@ import type { GraphRendererCommand } from '$lib/graphRendererTypes.js';
 import {
   selectBibleGraphEdge,
   selectBibleGraphInfluence,
+  selectBibleGraphNeighborhood,
   selectBibleGraphNode,
 } from './bible.svelte.js';
 
@@ -11,6 +12,8 @@ export interface GraphRendererSelectionTarget {
   selectEdge(edgeId: BibleGraphEdgeId): void;
   selectInfluence(influenceId: string): void;
   inspectNode(nodeId: BibleGraphNodeId): void;
+  focusNode(nodeId: BibleGraphNodeId): void;
+  navigateToNode(nodeId: BibleGraphNodeId): void;
 }
 
 export const bibleGraphRendererSelectionTarget: GraphRendererSelectionTarget = {
@@ -18,6 +21,8 @@ export const bibleGraphRendererSelectionTarget: GraphRendererSelectionTarget = {
   selectEdge: selectBibleGraphEdge,
   selectInfluence: selectBibleGraphInfluence,
   inspectNode: selectBibleGraphNode,
+  focusNode: selectBibleGraphNeighborhood,
+  navigateToNode: selectBibleGraphNode,
 };
 
 export function applyGraphRendererCommand(
@@ -36,6 +41,12 @@ export function applyGraphRendererCommand(
       return;
     case 'inspect_node':
       target.inspectNode(command.node_id);
+      return;
+    case 'focus_node':
+      target.focusNode(command.node_id);
+      return;
+    case 'navigate_to_node':
+      target.navigateToNode(command.node_id);
       return;
   }
 }

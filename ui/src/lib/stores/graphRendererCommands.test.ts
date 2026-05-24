@@ -9,6 +9,8 @@ describe('graph renderer command application', () => {
       selectEdge: vi.fn(),
       selectInfluence: vi.fn(),
       inspectNode: vi.fn(),
+      focusNode: vi.fn(),
+      navigateToNode: vi.fn(),
     };
 
     const applied = applyGraphRendererCommands(
@@ -17,14 +19,18 @@ describe('graph renderer command application', () => {
         { type: 'select_edge', edge_id: 'edge.ada.beach' },
         { type: 'select_influence', influence_id: '00000000-0000-0000-0000-000000000001' },
         { type: 'inspect_node', node_id: 'node.location.beach' },
+        { type: 'focus_node', node_id: 'node.location.beach' },
+        { type: 'navigate_to_node', node_id: 'node.character.ada' },
       ],
       target,
     );
 
-    expect(applied).toBe(4);
+    expect(applied).toBe(6);
     expect(target.selectNode).toHaveBeenCalledWith('node.character.ada');
     expect(target.selectEdge).toHaveBeenCalledWith('edge.ada.beach');
     expect(target.selectInfluence).toHaveBeenCalledWith('00000000-0000-0000-0000-000000000001');
     expect(target.inspectNode).toHaveBeenCalledWith('node.location.beach');
+    expect(target.focusNode).toHaveBeenCalledWith('node.location.beach');
+    expect(target.navigateToNode).toHaveBeenCalledWith('node.character.ada');
   });
 });

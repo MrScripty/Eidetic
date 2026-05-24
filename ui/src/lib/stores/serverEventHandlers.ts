@@ -143,6 +143,14 @@ export function setupServerEventHandlers(events: ServerEventClient) {
     events.on('inspect_node', (command) => {
       applyGraphRendererCommand(command);
     }),
+
+    events.on('focus_node', (command) => {
+      applyGraphRendererCommand(command);
+    }),
+
+    events.on('navigate_to_node', (command) => {
+      applyGraphRendererCommand(command);
+    }),
   ];
 
   return () => {

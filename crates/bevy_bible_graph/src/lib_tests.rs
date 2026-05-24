@@ -50,6 +50,27 @@ fn renderer_app_uses_bounded_command_queue() {
 }
 
 #[test]
+fn renderer_app_emits_validated_focus_and_navigation_commands() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer
+        .set_projection(projection_with_node(node_id.clone()))
+        .unwrap();
+
+    assert_eq!(renderer.focus_node(node_id.clone()), Ok(()));
+    assert_eq!(renderer.navigate_to_node(node_id.clone()), Ok(()));
+    assert_eq!(
+        renderer.drain_commands(),
+        vec![
+            BibleGraphRendererCommand::FocusNode {
+                node_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::NavigateToNode { node_id }
+        ]
+    );
+}
+
+#[test]
 fn renderer_app_rebuilds_scene_entities_from_projection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
@@ -428,6 +449,39 @@ fn controlled_native_window_emits_validated_inspection_and_edge_commands() {
         Err(BibleGraphRendererError::UnknownEdge {
             edge_id: missing_edge_id
         })
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_emits_validated_focus_and_navigation_commands() {
+    use bevy::prelude::Plugin;
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_node(node_id.clone()));
+    app.update();
+
+    assert_eq!(
+        emit_bible_graph_native_node_focus(app.world_mut(), node_id.clone()),
+        Ok(())
+    );
+    assert_eq!(
+        emit_bible_graph_native_node_navigation(app.world_mut(), node_id.clone()),
+        Ok(())
+    );
+    assert_eq!(
+        control.drain_commands(),
+        vec![
+            BibleGraphRendererCommand::FocusNode {
+                node_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::NavigateToNode { node_id }
+        ]
     );
 }
 

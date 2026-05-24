@@ -22,7 +22,8 @@ pub use native_render::{
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
     configure_controlled_minimal_bible_graph_native_window_app,
     configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_edge_selection,
-    emit_bible_graph_native_influence_selection, emit_bible_graph_native_node_inspection,
+    emit_bible_graph_native_influence_selection, emit_bible_graph_native_node_focus,
+    emit_bible_graph_native_node_inspection, emit_bible_graph_native_node_navigation,
     emit_bible_graph_native_node_selection, run_controlled_minimal_bible_graph_native_window,
     run_minimal_bible_graph_native_window,
 };
@@ -46,6 +47,8 @@ pub enum BibleGraphRendererCommand {
     SelectEdge { edge_id: BibleGraphEdgeId },
     SelectInfluence { influence_id: ContextInfluenceId },
     InspectNode { node_id: BibleGraphNodeId },
+    FocusNode { node_id: BibleGraphNodeId },
+    NavigateToNode { node_id: BibleGraphNodeId },
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -204,6 +207,19 @@ impl BibleGraphRendererApp {
     ) -> Result<(), BibleGraphRendererError> {
         self.validate_node(&node_id)?;
         self.enqueue_command(BibleGraphRendererCommand::InspectNode { node_id })
+    }
+
+    pub fn focus_node(&mut self, node_id: BibleGraphNodeId) -> Result<(), BibleGraphRendererError> {
+        self.validate_node(&node_id)?;
+        self.enqueue_command(BibleGraphRendererCommand::FocusNode { node_id })
+    }
+
+    pub fn navigate_to_node(
+        &mut self,
+        node_id: BibleGraphNodeId,
+    ) -> Result<(), BibleGraphRendererError> {
+        self.validate_node(&node_id)?;
+        self.enqueue_command(BibleGraphRendererCommand::NavigateToNode { node_id })
     }
 
     pub fn select_edge(

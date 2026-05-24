@@ -523,6 +523,22 @@ pub fn emit_bible_graph_native_node_inspection(
     push_native_command(world, BibleGraphRendererCommand::InspectNode { node_id })
 }
 
+pub fn emit_bible_graph_native_node_focus(
+    world: &mut World,
+    node_id: BibleGraphNodeId,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_node(world, &node_id)?;
+    push_native_command(world, BibleGraphRendererCommand::FocusNode { node_id })
+}
+
+pub fn emit_bible_graph_native_node_navigation(
+    world: &mut World,
+    node_id: BibleGraphNodeId,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_node(world, &node_id)?;
+    push_native_command(world, BibleGraphRendererCommand::NavigateToNode { node_id })
+}
+
 pub fn emit_bible_graph_native_edge_selection(
     world: &mut World,
     edge_id: BibleGraphEdgeId,

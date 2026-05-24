@@ -2632,17 +2632,19 @@ Completed foundation, do not reimplement unless verification fails:
   inspection, edge selection, and influence selection from native visual
   entities and feed the same desktop event bridge used by other graph renderer
   commands.
+- Native graph focus and navigation command contracts now exist end-to-end.
+  The native Bevy graph validates node-backed focus/navigation intents, the
+  desktop event bridge serializes them as typed renderer commands, and Svelte
+  applies them only to transient projection-selection surfaces.
 
 Remaining implementation order:
 
-1. Complete native Bevy graph interaction producers for navigation and focus
-   commands, delivered through the backend-owned desktop event bridge.
-2. Keep Svelte graph filters, details, review, and semantic outline as
+1. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-3. Remove or demote the old 2D graph surface after Bevy covers target
+2. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-4. Add keyed ECS/native-visual diffing before expanding beyond the documented
+3. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 

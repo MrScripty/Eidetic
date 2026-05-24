@@ -212,4 +212,17 @@ describe('backend event projection handlers', () => {
 
     expect(applyGraphRendererCommandMock).toHaveBeenCalledWith(command);
   });
+
+  it('applies graph renderer focus and navigation command events', () => {
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
+    const focusCommand = { type: 'focus_node', node_id: 'node.location.beach' } as const;
+    const navigationCommand = { type: 'navigate_to_node', node_id: 'node.character.ada' } as const;
+
+    events.emit(focusCommand);
+    events.emit(navigationCommand);
+
+    expect(applyGraphRendererCommandMock).toHaveBeenCalledWith(focusCommand);
+    expect(applyGraphRendererCommandMock).toHaveBeenCalledWith(navigationCommand);
+  });
 });

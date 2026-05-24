@@ -229,6 +229,27 @@ mod tests {
     }
 
     #[test]
+    fn serializes_graph_renderer_navigation_commands_inside_stable_desktop_payload() {
+        let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+        let value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(
+                BibleGraphRendererCommand::NavigateToNode { node_id },
+            ),
+        })
+        .unwrap();
+
+        assert_eq!(
+            value,
+            json!({
+                "event": {
+                    "type": "navigate_to_node",
+                    "node_id": "node.character.ada"
+                }
+            })
+        );
+    }
+
+    #[test]
     fn graph_projection_bridge_refreshes_only_structural_events() {
         assert!(should_refresh_graph_renderer_projection(
             &ServerEvent::BibleChanged
