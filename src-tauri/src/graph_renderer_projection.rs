@@ -8,13 +8,61 @@ use tauri::Manager;
 use crate::bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use crate::error::CommandError;
 
-#[derive(Default)]
-pub struct GraphRendererProjectionRequestState {
+pub struct GraphRendererProjectionOwner {
+    app_state: AppState,
     state: Mutex<GraphRendererProjectionState>,
 }
 
-impl GraphRendererProjectionRequestState {
-    pub fn current(&self) -> BibleRenderGraphProjectionRequest {
+impl GraphRendererProjectionOwner {
+    pub fn new(app_state: AppState) -> Self {
+        Self {
+            app_state,
+            state: Mutex::new(GraphRendererProjectionState::default()),
+        }
+    }
+
+    pub async fn seed(
+        &self,
+        app: &tauri::AppHandle,
+        request: BibleRenderGraphProjectionRequest,
+    ) -> Result<BibleGraphHostStatus, CommandError> {
+        self.replace_request(request.clone());
+        let projection = self.load_projection(request).await?;
+        write_graph_renderer_projection(app, projection, GraphRendererProjectionWriteMode::Seed)
+    }
+
+    pub async fn replace_request_and_refresh(
+        &self,
+        app: &tauri::AppHandle,
+        request: BibleRenderGraphProjectionRequest,
+    ) -> Result<BibleGraphHostStatus, CommandError> {
+        self.replace_request(request);
+        self.refresh_active(app).await
+    }
+
+    pub async fn refresh_active(
+        &self,
+        app: &tauri::AppHandle,
+    ) -> Result<BibleGraphHostStatus, CommandError> {
+        if self.begin_refresh() == GraphRendererProjectionRefreshDecision::AlreadyRefreshing {
+            return graph_renderer_status(app);
+        }
+
+        loop {
+            let request = self.current_request();
+            let result = self.refresh_open(app, request).await;
+            if self.complete_refresh() == GraphRendererProjectionRefreshCompletion::Idle {
+                return result;
+            }
+        }
+    }
+
+    pub fn reset(&self) {
+        *self.state.lock().unwrap_or_else(|error| error.into_inner()) =
+            GraphRendererProjectionState::default();
+    }
+
+    fn current_request(&self) -> BibleRenderGraphProjectionRequest {
         self.state
             .lock()
             .unwrap_or_else(|error| error.into_inner())
@@ -22,16 +70,11 @@ impl GraphRendererProjectionRequestState {
             .clone()
     }
 
-    pub fn replace(&self, request: BibleRenderGraphProjectionRequest) {
+    fn replace_request(&self, request: BibleRenderGraphProjectionRequest) {
         self.state
             .lock()
             .unwrap_or_else(|error| error.into_inner())
             .request = request;
-    }
-
-    pub fn reset(&self) {
-        *self.state.lock().unwrap_or_else(|error| error.into_inner()) =
-            GraphRendererProjectionState::default();
     }
 
     fn begin_refresh(&self) -> GraphRendererProjectionRefreshDecision {
@@ -48,6 +91,39 @@ impl GraphRendererProjectionRequestState {
             .unwrap_or_else(|error| error.into_inner())
             .refresh
             .complete_refresh()
+    }
+
+    async fn refresh_open(
+        &self,
+        app: &tauri::AppHandle,
+        request: BibleRenderGraphProjectionRequest,
+    ) -> Result<BibleGraphHostStatus, CommandError> {
+        let status = graph_renderer_owner(app)?.status().map_err(|error| {
+            CommandError::internal(format!(
+                "graph renderer projection status failed: {error:?}"
+            ))
+        })?;
+        if !status.renderer_window_open {
+            return Ok(status);
+        }
+
+        let projection = self.load_projection(request).await?;
+        write_graph_renderer_projection(
+            app,
+            projection,
+            GraphRendererProjectionWriteMode::UpdateOpen,
+        )
+    }
+
+    async fn load_projection(
+        &self,
+        request: BibleRenderGraphProjectionRequest,
+    ) -> Result<BibleRenderGraphProjection, CommandError> {
+        let envelope =
+            bible_render_graph_projection::bible_render_graph_projection(&self.app_state, request)
+                .await
+                .map_err(CommandError::from)?;
+        Ok(envelope.payload)
     }
 }
 
@@ -98,81 +174,21 @@ enum GraphRendererProjectionRefreshCompletion {
     RunFollowUp,
 }
 
-pub async fn seed_graph_renderer_projection(
-    app: &tauri::AppHandle,
-    state: &AppState,
-    request: BibleRenderGraphProjectionRequest,
-) -> Result<BibleGraphHostStatus, CommandError> {
-    let projection = load_graph_renderer_projection(state, request).await?;
-    write_graph_renderer_projection(app, projection, GraphRendererProjectionWriteMode::Seed)
-}
-
-pub async fn refresh_open_graph_renderer_projection(
-    app: &tauri::AppHandle,
-    state: &AppState,
-    request: BibleRenderGraphProjectionRequest,
-) -> Result<BibleGraphHostStatus, CommandError> {
-    let status = graph_renderer_owner(app)?.status().map_err(|error| {
-        CommandError::internal(format!(
-            "graph renderer projection status failed: {error:?}"
-        ))
-    })?;
-    if !status.renderer_window_open {
-        return Ok(status);
-    }
-
-    let projection = load_graph_renderer_projection(state, request).await?;
-    write_graph_renderer_projection(
-        app,
-        projection,
-        GraphRendererProjectionWriteMode::UpdateOpen,
-    )
-}
-
 pub async fn refresh_active_graph_renderer_projection(
     app: &tauri::AppHandle,
-    state: &AppState,
 ) -> Result<BibleGraphHostStatus, CommandError> {
-    let request_state = graph_renderer_projection_request_state(app)?;
-    refresh_active_graph_renderer_projection_with_state(app, state, &request_state).await
+    graph_renderer_projection_owner(app)?
+        .refresh_active(app)
+        .await
 }
 
 pub async fn update_active_graph_renderer_projection_request(
     app: &tauri::AppHandle,
-    state: &AppState,
     request: BibleRenderGraphProjectionRequest,
 ) -> Result<BibleGraphHostStatus, CommandError> {
-    let request_state = graph_renderer_projection_request_state(app)?;
-    request_state.replace(request);
-    refresh_active_graph_renderer_projection_with_state(app, state, &request_state).await
-}
-
-async fn refresh_active_graph_renderer_projection_with_state(
-    app: &tauri::AppHandle,
-    state: &AppState,
-    request_state: &GraphRendererProjectionRequestState,
-) -> Result<BibleGraphHostStatus, CommandError> {
-    if request_state.begin_refresh() == GraphRendererProjectionRefreshDecision::AlreadyRefreshing {
-        return graph_renderer_status(app);
-    }
-
-    loop {
-        let request = request_state.current();
-        let result = refresh_open_graph_renderer_projection(app, state, request).await;
-        if request_state.complete_refresh() == GraphRendererProjectionRefreshCompletion::Idle {
-            return result;
-        }
-    }
-}
-
-async fn load_graph_renderer_projection(
-    state: &AppState,
-    request: BibleRenderGraphProjectionRequest,
-) -> Result<BibleRenderGraphProjection, CommandError> {
-    let envelope = bible_render_graph_projection::bible_render_graph_projection(state, request)
+    graph_renderer_projection_owner(app)?
+        .replace_request_and_refresh(app, request)
         .await
-        .map_err(CommandError::from)?;
-    Ok(envelope.payload)
 }
 
 fn write_graph_renderer_projection(
@@ -207,11 +223,11 @@ fn graph_renderer_status(app: &tauri::AppHandle) -> Result<BibleGraphHostStatus,
         .map_err(|error| CommandError::internal(format!("graph renderer status failed: {error:?}")))
 }
 
-fn graph_renderer_projection_request_state(
+fn graph_renderer_projection_owner(
     app: &tauri::AppHandle,
-) -> Result<tauri::State<'_, GraphRendererProjectionRequestState>, CommandError> {
-    app.try_state::<GraphRendererProjectionRequestState>()
-        .ok_or_else(|| CommandError::internal("graph renderer projection request is not managed"))
+) -> Result<tauri::State<'_, GraphRendererProjectionOwner>, CommandError> {
+    app.try_state::<GraphRendererProjectionOwner>()
+        .ok_or_else(|| CommandError::internal("graph renderer projection owner is not managed"))
 }
 
 enum GraphRendererProjectionWriteMode {
@@ -224,32 +240,35 @@ mod tests {
     use eidetic_core::contracts::{BibleGraphNodeId, BibleRenderGraphProjectionRequest};
 
     use super::{
-        GraphRendererProjectionRefreshCompletion, GraphRendererProjectionRefreshDecision,
-        GraphRendererProjectionRefreshState, GraphRendererProjectionRequestState,
+        GraphRendererProjectionOwner, GraphRendererProjectionRefreshCompletion,
+        GraphRendererProjectionRefreshDecision, GraphRendererProjectionRefreshState,
     };
 
     #[test]
-    fn graph_renderer_projection_request_state_tracks_active_request() {
-        let state = GraphRendererProjectionRequestState::default();
+    fn graph_renderer_projection_owner_tracks_active_request() {
+        let app_state = tauri::async_runtime::block_on(eidetic_server::state::AppState::new());
+        let state = GraphRendererProjectionOwner::new(app_state);
         let request = eidetic_core::contracts::BibleRenderGraphProjectionRequest {
             selected_node_id: Some(BibleGraphNodeId::new("node.character.ada").unwrap()),
             ..Default::default()
         };
 
-        state.replace(request.clone());
+        state.replace_request(request.clone());
 
-        assert_eq!(state.current(), request);
+        assert_eq!(state.current_request(), request);
+        state.app_state.shutdown_tasks();
     }
 
     #[test]
-    fn graph_renderer_projection_request_state_resets_request_and_refresh_state() {
-        let state = GraphRendererProjectionRequestState::default();
+    fn graph_renderer_projection_owner_resets_request_and_refresh_state() {
+        let app_state = tauri::async_runtime::block_on(eidetic_server::state::AppState::new());
+        let state = GraphRendererProjectionOwner::new(app_state);
         let request = eidetic_core::contracts::BibleRenderGraphProjectionRequest {
             selected_node_id: Some(BibleGraphNodeId::new("node.character.ada").unwrap()),
             ..Default::default()
         };
 
-        state.replace(request);
+        state.replace_request(request);
         assert_eq!(
             state.begin_refresh(),
             GraphRendererProjectionRefreshDecision::Started
@@ -262,13 +281,14 @@ mod tests {
         state.reset();
 
         assert_eq!(
-            state.current(),
+            state.current_request(),
             BibleRenderGraphProjectionRequest::default()
         );
         assert_eq!(
             state.begin_refresh(),
             GraphRendererProjectionRefreshDecision::Started
         );
+        state.app_state.shutdown_tasks();
     }
 
     #[test]

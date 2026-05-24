@@ -16,7 +16,7 @@ mod renderer_window;
 use bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use desktop_events::DesktopEventBridgeOwner;
 use eidetic_server::state::AppState;
-use graph_renderer_projection::GraphRendererProjectionRequestState;
+use graph_renderer_projection::GraphRendererProjectionOwner;
 use serde::Serialize;
 use std::time::Duration;
 use tauri::Manager;
@@ -55,7 +55,7 @@ pub fn run() {
                     ))
                 }),
             );
-            app.manage(GraphRendererProjectionRequestState::default());
+            app.manage(GraphRendererProjectionOwner::new(app_state.clone()));
             app.manage(DesktopEventBridgeOwner::spawn(
                 app.handle().clone(),
                 &app_state,

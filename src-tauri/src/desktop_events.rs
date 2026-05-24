@@ -87,19 +87,18 @@ fn spawn_graph_renderer_projection_bridge(
     state: &AppState,
 ) -> tauri::async_runtime::JoinHandle<()> {
     let mut events = state.events_tx.subscribe();
-    let state = state.clone();
 
     tauri::async_runtime::spawn(async move {
         loop {
             match events.recv().await {
                 Ok(event) => {
                     if should_refresh_graph_renderer_projection(&event) {
-                        refresh_graph_renderer_projection(&app, &state).await;
+                        refresh_graph_renderer_projection(&app).await;
                     }
                 }
                 Err(broadcast::error::RecvError::Lagged(skipped)) => {
                     tracing::warn!("graph renderer projection bridge skipped {skipped} events");
-                    refresh_graph_renderer_projection(&app, &state).await;
+                    refresh_graph_renderer_projection(&app).await;
                 }
                 Err(broadcast::error::RecvError::Closed) => break,
             }
@@ -152,8 +151,8 @@ fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
     )
 }
 
-async fn refresh_graph_renderer_projection(app: &tauri::AppHandle, state: &AppState) {
-    if let Err(error) = refresh_active_graph_renderer_projection(app, state).await {
+async fn refresh_graph_renderer_projection(app: &tauri::AppHandle) {
+    if let Err(error) = refresh_active_graph_renderer_projection(app).await {
         tracing::warn!("failed to update graph renderer projection: {error:?}");
     }
 }

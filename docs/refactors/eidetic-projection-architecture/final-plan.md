@@ -1369,17 +1369,17 @@ Discovered issues:
   remaining native runner slice still needs to turn this into a long-lived
   renderer subscription before the Bevy graph becomes the primary visual
   surface.
-- Open: graph renderer projection delivery still has two triggers for renderer
-  projection writes: Svelte request changes and desktop backend-event refreshes.
-  The shared helper is a useful consolidation step, but the remaining work must
-  replace this with one desktop-owned request/subscription owner that coalesces
-  refreshes and treats Svelte as a request updater, not a projection writer.
+- Resolved: graph renderer projection writes now flow through
+  `GraphRendererProjectionOwner`, a managed desktop owner that stores the
+  active request, coalesces refreshes, loads backend projections, and performs
+  renderer writes. Svelte request changes and backend-event invalidations no
+  longer own parallel projection write paths.
 - Resolved: graph renderer projection refreshes now enter through the managed
-  desktop projection request state, which coalesces overlapping refresh requests
-  into one in-flight projection load plus one follow-up refresh.
+  desktop projection owner, which coalesces overlapping refresh requests into
+  one in-flight projection load plus one follow-up refresh.
 - Resolved: the temporary Svelte-facing projection write command semantics have
   been replaced with an active renderer projection request update. Svelte sends
-  bounded request input only; the desktop-owned request state loads and writes
+  bounded request input only; the desktop-owned projection owner loads and writes
   the renderer projection through the coalesced backend path.
 - Resolved: graph renderer commands now flow through the desktop event bridge
   instead of a Svelte command-drain interval. The frontend consumes typed
@@ -2425,10 +2425,6 @@ Current implementation status:
 
 Current open blockers:
 
-- Renderer projection delivery still has two invalidation triggers: Svelte
-  request changes and desktop backend-event refreshes. These must be reduced to
-  one desktop-owned request/subscription owner before the Bevy graph becomes
-  the primary visual surface.
 - The central graph workspace still shows the Svelte semantic outline/list as
   the visible graph surface. The floating Bevy graph window now has rendered
   node/edge primitives, but the old outline cannot be demoted until Bevy covers
@@ -2627,22 +2623,22 @@ Completed foundation, do not reimplement unless verification fails:
   old Svelte command-drain interval and direct drain command API were removed,
   so graph renderer selection/inspect commands are no longer polled by the
   frontend.
+- Renderer projection delivery now has one managed desktop projection owner.
+  Graph renderer open, request-update, and backend-event refresh paths call the
+  same owner for active request state, coalesced projection loading, and
+  renderer writes.
 
 Remaining implementation order:
 
-1. Consolidate graph renderer projection delivery into a single desktop-owned
-   request/subscription owner. Svelte may update focus/filter/search/open
-   request inputs through backend commands, but it must not be a projection
-   writer parallel to backend-event refresh.
-2. Add native Bevy graph interaction producers for selection, inspection,
+1. Add native Bevy graph interaction producers for selection, inspection,
    navigation, and focus commands, delivered through the backend-owned desktop
    event bridge.
-3. Keep Svelte graph filters, details, review, and semantic outline as
+2. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-4. Remove or demote the old 2D graph surface after Bevy covers target
+3. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-5. Add keyed ECS/native-visual diffing before expanding beyond the documented
+4. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 
