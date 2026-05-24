@@ -289,7 +289,7 @@ fn native_window_runner_config_records_minimal_smoke_window_intent() {
     assert_eq!(config.title, "Eidetic Bible Graph");
     assert_eq!(config.width_px, 1280);
     assert_eq!(config.height_px, 720);
-    assert!(config.borderless_window);
+    assert!(!config.borderless_window);
     assert!(config.run_on_any_thread);
     assert_eq!(config.auto_close_after_ms, None);
 

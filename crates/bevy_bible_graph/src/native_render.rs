@@ -142,7 +142,7 @@ pub struct BibleGraphNativeInfluenceVisual {
 impl Default for BibleGraphNativeRenderConfig {
     fn default() -> Self {
         Self {
-            borderless_window: true,
+            borderless_window: false,
         }
     }
 }
@@ -153,7 +153,7 @@ impl BibleGraphNativeWindowRunnerConfig {
             title: "Eidetic Bible Graph".to_string(),
             width_px: 1280,
             height_px: 720,
-            borderless_window: true,
+            borderless_window: false,
             run_on_any_thread,
             auto_close_after_ms: None,
         }
