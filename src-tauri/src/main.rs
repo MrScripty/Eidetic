@@ -17,8 +17,18 @@ fn main() {
             }
             return;
         }
+        Some("--graph-renderer-smoke") => {
+            match eidetic_desktop::graph_renderer_lifecycle_smoke_report_json() {
+                Ok(report) => println!("{report}"),
+                Err(error) => {
+                    eprintln!("{error}");
+                    std::process::exit(1);
+                }
+            }
+            return;
+        }
         Some("--help") => {
-            println!("Usage: eidetic-desktop [--smoke]");
+            println!("Usage: eidetic-desktop [--smoke|--graph-renderer-smoke]");
             return;
         }
         _ => {}

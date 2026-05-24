@@ -13,7 +13,7 @@ mod projections;
 mod reference_commands;
 mod renderer_window;
 
-use bevy_graph_host::DesktopBibleGraphRendererOwner;
+use bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use desktop_events::DesktopEventBridgeOwner;
 use eidetic_server::state::AppState;
 use graph_renderer_projection::GraphRendererProjectionRequestState;
@@ -27,6 +27,20 @@ pub struct DesktopSmokeReport {
     backend_runtime: &'static str,
     active_backend_tasks: usize,
     model_library_configured: bool,
+}
+
+#[derive(Serialize)]
+pub struct GraphRendererLifecycleSmokeReport {
+    status: &'static str,
+    boundary: &'static str,
+    renderer: &'static str,
+    open: BibleGraphHostStatus,
+    status_after_open: BibleGraphHostStatus,
+    focus: BibleGraphHostStatus,
+    close: BibleGraphHostStatus,
+    reopen: BibleGraphHostStatus,
+    project_close: BibleGraphHostStatus,
+    app_shutdown: BibleGraphHostStatus,
 }
 
 pub fn run() {
@@ -153,8 +167,102 @@ pub fn smoke_report_json() -> Result<String, serde_json::Error> {
     serde_json::to_string(&smoke_report())
 }
 
+pub fn graph_renderer_lifecycle_smoke_report() -> Result<GraphRendererLifecycleSmokeReport, String>
+{
+    graph_renderer_lifecycle_smoke_report_with_owner(
+        "native_bevy",
+        DesktopBibleGraphRendererOwner::start()
+            .map_err(|error| format!("failed to start graph renderer owner: {error:?}"))?,
+    )
+}
+
+pub fn graph_renderer_lifecycle_smoke_report_json() -> Result<String, String> {
+    serde_json::to_string(&graph_renderer_lifecycle_smoke_report()?).map_err(|error| {
+        format!("failed to serialize graph renderer lifecycle smoke report: {error}")
+    })
+}
+
+fn graph_renderer_lifecycle_smoke_report_with_owner(
+    renderer: &'static str,
+    owner: DesktopBibleGraphRendererOwner,
+) -> Result<GraphRendererLifecycleSmokeReport, String> {
+    let open = owner
+        .start_renderer()
+        .map_err(|error| format!("graph renderer smoke open failed: {error:?}"))?;
+    let status_after_open = owner
+        .status()
+        .map_err(|error| format!("graph renderer smoke status failed: {error:?}"))?;
+    let focus = owner
+        .focus_renderer()
+        .map_err(|error| format!("graph renderer smoke focus failed: {error:?}"))?;
+    let close = owner
+        .close_renderer()
+        .map_err(|error| format!("graph renderer smoke close failed: {error:?}"))?;
+    let reopen = owner
+        .start_renderer()
+        .map_err(|error| format!("graph renderer smoke reopen failed: {error:?}"))?;
+    let project_close = owner
+        .close_renderer()
+        .map_err(|error| format!("graph renderer smoke project close failed: {error:?}"))?;
+    let app_shutdown = owner
+        .stop()
+        .map_err(|error| format!("graph renderer smoke app shutdown failed: {error:?}"))?;
+
+    let report = GraphRendererLifecycleSmokeReport {
+        status: "ok",
+        boundary: "tauri_managed_backend",
+        renderer,
+        open,
+        status_after_open,
+        focus,
+        close,
+        reopen,
+        project_close,
+        app_shutdown,
+    };
+    validate_graph_renderer_lifecycle_smoke_report(&report)?;
+    Ok(report)
+}
+
+fn validate_graph_renderer_lifecycle_smoke_report(
+    report: &GraphRendererLifecycleSmokeReport,
+) -> Result<(), String> {
+    let expectations = [
+        ("open", &report.open, true),
+        ("status_after_open", &report.status_after_open, true),
+        ("focus", &report.focus, true),
+        ("close", &report.close, false),
+        ("reopen", &report.reopen, true),
+        ("project_close", &report.project_close, false),
+        ("app_shutdown", &report.app_shutdown, false),
+    ];
+
+    for (label, status, expected_open) in expectations {
+        if status.renderer_window_open != expected_open {
+            return Err(format!(
+                "graph renderer lifecycle smoke {label} expected open={expected_open} but saw open={}",
+                status.renderer_window_open
+            ));
+        }
+        if status.last_error.is_some() {
+            return Err(format!(
+                "graph renderer lifecycle smoke {label} reported error: {}",
+                status.last_error.as_deref().unwrap_or("unknown")
+            ));
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
+    use super::*;
+    use crate::bevy_graph_host::NativeRendererWindowThreadHandle;
+    use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
+
     #[test]
     fn smoke_report_initializes_backend_runtime() {
         let report = super::smoke_report();
@@ -163,5 +271,38 @@ mod tests {
         assert_eq!(report.boundary, "tauri");
         assert_eq!(report.backend_runtime, "initialized");
         assert!(report.active_backend_tasks >= 2);
+    }
+
+    #[test]
+    fn graph_renderer_lifecycle_smoke_exercises_managed_owner() {
+        let owner = DesktopBibleGraphRendererOwner::start_with_native_window_thread_start(
+            start_test_window_thread,
+        )
+        .unwrap();
+
+        let report =
+            graph_renderer_lifecycle_smoke_report_with_owner("test_native_bevy", owner).unwrap();
+
+        assert_eq!(report.status, "ok");
+        assert_eq!(report.boundary, "tauri_managed_backend");
+        assert_eq!(report.renderer, "test_native_bevy");
+        assert!(report.open.renderer_window_open);
+        assert!(report.status_after_open.renderer_window_open);
+        assert!(report.focus.renderer_window_open);
+        assert!(!report.close.renderer_window_open);
+        assert!(report.reopen.renderer_window_open);
+        assert!(!report.project_close.renderer_window_open);
+        assert!(!report.app_shutdown.renderer_window_open);
+    }
+
+    fn start_test_window_thread(
+        config: BibleGraphNativeWindowRunnerConfig,
+    ) -> std::io::Result<NativeRendererWindowThreadHandle> {
+        NativeRendererWindowThreadHandle::start_with(config, |_config, control| {
+            control.mark_ready();
+            while !control.close_requested() {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+        })
     }
 }
