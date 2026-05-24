@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import {
     bibleState,
     selectBibleGraphContextLayer,
@@ -15,8 +14,6 @@
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
-  import { startGraphRendererCommandDrain } from '$lib/stores/graphRendererCommandDrain.js';
-  import { shouldDrainGraphRendererCommands } from '$lib/stores/graphRendererWindow.svelte.js';
   import {
     clearContextStackProjection,
     getCachedContextStackProjection,
@@ -52,12 +49,6 @@
           edgeItems.length > 0 ||
           neighborhoodItems.length > 0
       : false,
-  );
-
-  onMount(() =>
-    startGraphRendererCommandDrain({
-      shouldDrain: shouldDrainGraphRendererCommands,
-    }),
   );
 
   $effect(() => {

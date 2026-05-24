@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { GraphRendererStatus } from '$lib/graphRendererTypes.js';
 import {
   clearGraphRendererWindowStatus,
+  graphRendererWindowState,
   setGraphRendererWindowStatus,
-  shouldDrainGraphRendererCommands,
 } from './graphRendererWindow.svelte.js';
 
 const baseStatus: GraphRendererStatus = {
@@ -41,52 +41,11 @@ beforeEach(() => {
 });
 
 describe('graph renderer window status', () => {
-  it('enables command drain only for an open supported scene-ready renderer', () => {
-    expect(shouldDrainGraphRendererCommands()).toBe(false);
-
-    setGraphRendererWindowStatus({
-      ...baseStatus,
-      renderer_window_open: false,
-    });
-    expect(shouldDrainGraphRendererCommands()).toBe(false);
-
-    setGraphRendererWindowStatus({
-      ...baseStatus,
-      renderer_scene_ready: false,
-    });
-    expect(shouldDrainGraphRendererCommands()).toBe(false);
-
+  it('stores and clears backend-projected renderer status', () => {
     setGraphRendererWindowStatus(baseStatus);
-    expect(shouldDrainGraphRendererCommands()).toBe(false);
+    expect(graphRendererWindowState.status).toEqual(baseStatus);
 
-    setGraphRendererWindowStatus({
-      ...baseStatus,
-      renderer_window_visible_supported: true,
-    });
-    expect(shouldDrainGraphRendererCommands()).toBe(false);
-
-    setGraphRendererWindowStatus({
-      ...baseStatus,
-      renderer_window_verified_support: true,
-      renderer_window_visible_supported: true,
-    });
-    expect(shouldDrainGraphRendererCommands()).toBe(false);
-
-    setGraphRendererWindowStatus({
-      ...baseStatus,
-      renderer_window_verified_support: true,
-      renderer_window_visible_supported: true,
-      renderer_window_capability_reason: 'verified_support',
-    });
-    expect(shouldDrainGraphRendererCommands()).toBe(false);
-
-    setGraphRendererWindowStatus({
-      ...baseStatus,
-      renderer_window_capability: 'verified_support',
-      renderer_window_capability_reason: 'verified_support',
-      renderer_window_verified_support: true,
-      renderer_window_visible_supported: true,
-    });
-    expect(shouldDrainGraphRendererCommands()).toBe(true);
+    clearGraphRendererWindowStatus();
+    expect(graphRendererWindowState.status).toBeNull();
   });
 });

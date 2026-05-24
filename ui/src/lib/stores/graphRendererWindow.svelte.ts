@@ -13,14 +13,3 @@ export function setGraphRendererWindowStatus(status: GraphRendererStatus): void 
 export function clearGraphRendererWindowStatus(): void {
   graphRendererWindowState.status = null;
 }
-
-export function shouldDrainGraphRendererCommands(): boolean {
-  const status = graphRendererWindowState.status;
-  return Boolean(
-    status?.renderer_window_open &&
-    status.renderer_scene_ready &&
-    status.renderer_window_verified_support &&
-    status.renderer_window_visible_supported &&
-    status.renderer_window_capability === 'verified_support',
-  );
-}

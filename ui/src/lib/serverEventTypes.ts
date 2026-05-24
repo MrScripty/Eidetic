@@ -1,3 +1,5 @@
+import type { GraphRendererCommand } from './graphRendererTypes.js';
+
 export type ServerMessage =
   | { type: 'timeline_changed' }
   | { type: 'hierarchy_changed' }
@@ -10,4 +12,5 @@ export type ServerMessage =
   | { type: 'bible_changed' }
   | { type: 'semantic_proposals_changed' }
   | { type: 'context_influence_changed'; target_node_id: string }
-  | { type: 'script_changed' };
+  | { type: 'script_changed' }
+  | GraphRendererCommand;

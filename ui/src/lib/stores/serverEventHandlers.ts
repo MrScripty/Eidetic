@@ -20,6 +20,7 @@ import { refreshBibleReferenceProposalListProjection } from './semanticProposalP
 import { refreshPropagationProposalListProjection } from './propagationProposalProjection.svelte.js';
 import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
 import { clearProjectionRefreshQueue, requestProjectionRefresh } from './projectionRefreshQueue.js';
+import { applyGraphRendererCommand } from './graphRendererCommands.js';
 
 const SCRIPT_DOCUMENT_KEY = `script-document:${MAIN_SCRIPT_DOCUMENT_ID}`;
 
@@ -125,6 +126,22 @@ export function setupServerEventHandlers(events: ServerEventClient) {
 
     events.on('script_changed', async () => {
       await Promise.all([refreshMainScriptDocument(), refreshChangeReview()]);
+    }),
+
+    events.on('select_node', (command) => {
+      applyGraphRendererCommand(command);
+    }),
+
+    events.on('select_edge', (command) => {
+      applyGraphRendererCommand(command);
+    }),
+
+    events.on('select_influence', (command) => {
+      applyGraphRendererCommand(command);
+    }),
+
+    events.on('inspect_node', (command) => {
+      applyGraphRendererCommand(command);
     }),
   ];
 

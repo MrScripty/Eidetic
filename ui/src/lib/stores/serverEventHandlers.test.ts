@@ -7,6 +7,7 @@ import { refreshTimelineRenderProjection } from './timelineRenderProjection.svel
 import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import { completeGeneration } from './editor.svelte.js';
+import { applyGraphRendererCommand } from './graphRendererCommands.js';
 
 vi.mock('./timelineRenderProjection.svelte.js', () => ({
   refreshTimelineRenderProjection: vi.fn(),
@@ -55,10 +56,15 @@ vi.mock('./editor.svelte.js', () => ({
   setGenerationError: vi.fn(),
 }));
 
+vi.mock('./graphRendererCommands.js', () => ({
+  applyGraphRendererCommand: vi.fn(),
+}));
+
 const refreshTimelineRenderProjectionMock = vi.mocked(refreshTimelineRenderProjection);
 const refreshScriptDocumentProjectionMock = vi.mocked(refreshScriptDocumentProjection);
 const refreshBibleRenderGraphProjectionMock = vi.mocked(refreshBibleRenderGraphProjection);
 const completeGenerationMock = vi.mocked(completeGeneration);
+const applyGraphRendererCommandMock = vi.mocked(applyGraphRendererCommand);
 
 class MockServerEventClient {
   readonly handlers = new Map<ServerMessage['type'], (data: ServerMessage) => void>();
@@ -97,6 +103,7 @@ beforeEach(() => {
     payload: { nodes: [], edges: [], neighborhoods: [], influences: [] },
   });
   completeGenerationMock.mockReset();
+  applyGraphRendererCommandMock.mockReset();
 });
 
 describe('backend event projection handlers', () => {
@@ -194,5 +201,15 @@ describe('backend event projection handlers', () => {
     await Promise.resolve();
 
     expect(refreshTimelineRenderProjectionMock).not.toHaveBeenCalled();
+  });
+
+  it('applies graph renderer command events without polling from Svelte', () => {
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
+    const command = { type: 'select_node', node_id: 'node.character.ada' } as const;
+
+    events.emit(command);
+
+    expect(applyGraphRendererCommandMock).toHaveBeenCalledWith(command);
   });
 });

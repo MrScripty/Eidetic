@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   closeGraphRenderer,
-  drainGraphRendererCommands,
   focusGraphRenderer,
   getGraphRendererStatus,
   getGraphRendererVisualSnapshot,
@@ -193,15 +192,6 @@ describe('graph renderer api helpers', () => {
 
     expect(invoke).toHaveBeenNthCalledWith(1, 'graph_renderer_focus', undefined);
     expect(invoke).toHaveBeenNthCalledWith(2, 'graph_renderer_close', undefined);
-  });
-
-  it('uses the desktop graph renderer command drain', async () => {
-    const response = [{ type: 'select_edge', edge_id: 'edge.ada.beach' }];
-    const invoke = installDesktopInvoke(response);
-
-    await expect(drainGraphRendererCommands()).resolves.toEqual(response);
-
-    expect(invoke).toHaveBeenCalledWith('graph_renderer_drain_commands', undefined);
   });
 
   it('uses the desktop graph renderer visual snapshot command', async () => {

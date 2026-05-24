@@ -1,16 +1,27 @@
+use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
 use eidetic_server::state::{AppState, ServerEvent};
 use serde::Serialize;
 use std::sync::Mutex;
+use std::time::Duration;
 use tauri::Emitter;
+use tauri::Manager;
 use tokio::sync::broadcast;
 
+use crate::bevy_graph_host::DesktopBibleGraphRendererOwner;
 use crate::graph_renderer_projection::refresh_active_graph_renderer_projection;
 
 pub const SERVER_EVENT_TOPIC: &str = "eidetic://server-event";
 
 #[derive(Clone, Debug, Serialize)]
 pub struct DesktopServerEvent {
-    event: ServerEvent,
+    event: DesktopServerEventPayload,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(untagged)]
+enum DesktopServerEventPayload {
+    Backend(ServerEvent),
+    GraphRendererCommand(BibleGraphRendererCommand),
 }
 
 pub struct DesktopEventBridgeOwner {
@@ -22,7 +33,8 @@ impl DesktopEventBridgeOwner {
         Self {
             handles: Mutex::new(vec![
                 spawn_server_event_bridge(app.clone(), state),
-                spawn_graph_renderer_projection_bridge(app, state),
+                spawn_graph_renderer_projection_bridge(app.clone(), state),
+                spawn_graph_renderer_command_bridge(app),
             ]),
         }
     }
@@ -52,7 +64,12 @@ fn spawn_server_event_bridge(
         loop {
             match events.recv().await {
                 Ok(event) => {
-                    if let Err(error) = app.emit(SERVER_EVENT_TOPIC, DesktopServerEvent { event }) {
+                    if let Err(error) = app.emit(
+                        SERVER_EVENT_TOPIC,
+                        DesktopServerEvent {
+                            event: DesktopServerEventPayload::Backend(event),
+                        },
+                    ) {
                         tracing::warn!("failed to emit desktop server event: {error}");
                     }
                 }
@@ -90,6 +107,39 @@ fn spawn_graph_renderer_projection_bridge(
     })
 }
 
+fn spawn_graph_renderer_command_bridge(
+    app: tauri::AppHandle,
+) -> tauri::async_runtime::JoinHandle<()> {
+    tauri::async_runtime::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_millis(100));
+
+        loop {
+            interval.tick().await;
+            let Some(owner) = app.try_state::<DesktopBibleGraphRendererOwner>() else {
+                continue;
+            };
+            let commands = match owner.drain_commands() {
+                Ok(commands) => commands,
+                Err(error) => {
+                    tracing::warn!("failed to drain graph renderer commands: {error:?}");
+                    continue;
+                }
+            };
+
+            for command in commands {
+                if let Err(error) = app.emit(
+                    SERVER_EVENT_TOPIC,
+                    DesktopServerEvent {
+                        event: DesktopServerEventPayload::GraphRendererCommand(command),
+                    },
+                ) {
+                    tracing::warn!("failed to emit graph renderer command: {error}");
+                }
+            }
+        }
+    })
+}
+
 fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
     matches!(
         event,
@@ -111,9 +161,11 @@ async fn refresh_graph_renderer_projection(app: &tauri::AppHandle, state: &AppSt
 #[cfg(test)]
 mod tests {
     use super::{
-        DesktopEventBridgeOwner, DesktopServerEvent, SERVER_EVENT_TOPIC,
+        DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload, SERVER_EVENT_TOPIC,
         should_refresh_graph_renderer_projection,
     };
+    use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
+    use eidetic_core::contracts::BibleGraphNodeId;
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
     use std::sync::Mutex;
@@ -121,7 +173,10 @@ mod tests {
     #[test]
     fn serializes_backend_events_inside_stable_desktop_payload() {
         let event = ServerEvent::TimelineChanged;
-        let value = serde_json::to_value(DesktopServerEvent { event }).unwrap();
+        let value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::Backend(event),
+        })
+        .unwrap();
 
         assert_eq!(SERVER_EVENT_TOPIC, "eidetic://server-event");
         assert_eq!(value, json!({ "event": { "type": "timeline_changed" } }));
@@ -135,7 +190,10 @@ mod tests {
             token: "hello".into(),
             tokens_generated: 3,
         };
-        let value = serde_json::to_value(DesktopServerEvent { event }).unwrap();
+        let value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::Backend(event),
+        })
+        .unwrap();
 
         assert_eq!(
             value,
@@ -145,6 +203,27 @@ mod tests {
                     "node_id": node_id.to_string(),
                     "token": "hello",
                     "tokens_generated": 3
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn serializes_graph_renderer_commands_inside_stable_desktop_payload() {
+        let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+        let value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(
+                BibleGraphRendererCommand::SelectNode { node_id },
+            ),
+        })
+        .unwrap();
+
+        assert_eq!(
+            value,
+            json!({
+                "event": {
+                    "type": "select_node",
+                    "node_id": "node.character.ada"
                 }
             })
         );

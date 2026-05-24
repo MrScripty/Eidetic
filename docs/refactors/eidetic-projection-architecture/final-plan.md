@@ -1354,14 +1354,14 @@ Discovered issues:
   lifecycle through Rust and TypeScript, while visible-window support remains
   pending until the production event-loop proof is implemented.
 - Updated: renderer-window status now carries an explicit backend-owned
-  verified-support field through Rust and TypeScript. UI command-drain and
+  verified-support field through Rust and TypeScript. UI command delivery and
   waiting/unavailable display logic can no longer treat size, visibility, or
   visible-support booleans as proof that the native runner is verified.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
-  UI status display, and command-drain gate. Svelte no longer has to infer
-  pending, unsupported, error, or verified support states from messages,
-  platform names, or boolean combinations.
+  and UI status display. Svelte no longer has to infer pending, unsupported,
+  error, or verified support states from messages, platform names, or boolean
+  combinations.
 - Updated: bible render graph projection reads no longer mirror their response
   into the Bevy renderer. Renderer projection mutation now flows through a
   shared desktop-owned projection refresh module used by graph renderer
@@ -1381,17 +1381,10 @@ Discovered issues:
   been replaced with an active renderer projection request update. Svelte sends
   bounded request input only; the desktop-owned request state loads and writes
   the renderer projection through the coalesced backend path.
-- Updated: the Svelte graph renderer command drain still uses temporary
-  polling, but it is now gated by backend-projected renderer-window status and
-  does not drain while the renderer is closed, scene-starting, or reporting no
-  visible-window support. The native renderer runner slice must still replace
-  this with event-driven command projection before the Bevy graph becomes the
-  primary visual surface.
-- Resolved: the temporary Svelte graph renderer command-drain bridge is
-  contained behind an explicit lifecycle stopgap. The owner avoids overlapping
-  drains, drops resolved commands after teardown, suppresses post-stop errors,
-  clears its interval idempotently, and remains gated by backend-projected
-  renderer capability status until native renderer events replace polling.
+- Resolved: graph renderer commands now flow through the desktop event bridge
+  instead of a Svelte command-drain interval. The frontend consumes typed
+  selection/inspect command events through the same server-event client as
+  other backend-owned events.
 - Resolved for the bounded prototype: the Bevy graph scene and native visual
   paths still rebuild by despawning and respawning projection entities, but the
   renderer crate now rejects snapshots above the documented full-rebuild
@@ -1427,14 +1420,12 @@ Discovered issues:
   SQLite-backed query path. Dense local graph neighborhoods can no longer
   return an unbounded edge set after node/depth/search limits have been
   applied.
-- Updated: desktop server-event and graph-renderer projection bridges now have
-  a `DesktopEventBridgeOwner` that tracks spawned task handles and aborts them
-  on app/window shutdown. The remaining temporary Svelte command-drain polling
-  still needs to be replaced or retired before the Bevy graph becomes the
-  primary visual surface.
-- Updated: frontend renderer-window status now has a focused transient store
-  used only to gate the temporary command-drain bridge. Durable graph facts and
-  selection-changing commands still flow through backend projections and
+- Updated: desktop server-event, graph-renderer projection, and graph-renderer
+  command bridges now have a `DesktopEventBridgeOwner` that tracks spawned task
+  handles and aborts them on app/window shutdown.
+- Updated: frontend renderer-window status now has a focused projection/status
+  store used for display and renderer lifecycle controls. Durable graph facts
+  and selection-changing commands still flow through backend projections and
   renderer command application helpers.
 - Resolved: `AppShell.svelte` is back under the component decomposition
   threshold. Central workspace rendering now lives in `AppWorkspace.svelte`,
@@ -1657,11 +1648,10 @@ Discovered issues:
   into the renderer child-window lifecycle state for the embedding experiment.
   Production graph rendering no longer depends on that parent id; it should use
   backend-owned floating renderer window lifecycle instead.
-- Resolved: the frontend graph renderer command-drain bridge accepted invalid
-  polling intervals and lacked teardown coverage for commands that resolve
-  after the drain stops. The bridge now normalizes invalid intervals to the
-  default cadence and proves pending renderer commands are not applied after
-  teardown.
+- Superseded: the deleted frontend graph renderer command-drain bridge had
+  accepted invalid polling intervals and needed teardown coverage. Renderer
+  commands now flow through the desktop event bridge, so frontend polling
+  interval validation is no longer part of the production design.
 - Resolved: selected timeline context influences could be loaded by the bounded
   SQL query and then filtered out by the pure render adapter when the same
   request also included search/focus filters. Influence nodes and influenced
@@ -2439,9 +2429,6 @@ Current open blockers:
   request changes and desktop backend-event refreshes. These must be reduced to
   one desktop-owned request/subscription owner before the Bevy graph becomes
   the primary visual surface.
-- Temporary Svelte command-drain polling remains a contained stopgap. Renderer
-  selection/focus/inspect output must move to native renderer events or another
-  backend-owned projection channel before the graph becomes primary.
 - The central graph workspace still shows the Svelte semantic outline/list as
   the visible graph surface. The floating Bevy graph window now has rendered
   node/edge primitives, but the old outline cannot be demoted until Bevy covers
@@ -2514,7 +2501,7 @@ Remaining tasks:
 - Add a shared floating Bevy renderer host for native visual windows. The host
   must support renderer kind (`graph` now, `timeline` later), open/close,
   focus/status, optional size/placement hints, projection subscription,
-  command draining, and deterministic teardown. It must not embed child
+  command delivery, and deterministic teardown. It must not embed child
   surfaces into the WebView or make the renderer runtime the owner of business
   logic.
 - Keep the native Bevy bible graph host as a projection consumer. It receives
@@ -2524,9 +2511,8 @@ Remaining tasks:
   subscription path. Projection-route mirroring, server-event refreshes, and
   Svelte projection-set commands must not remain parallel ways to mutate the
   renderer's active projection.
-- Replace the temporary Svelte polling command-drain bridge with an
-  event-driven desktop projection or native renderer event path before the Bevy
-  graph becomes the primary surface.
+- Deliver renderer commands through the desktop event bridge or native renderer
+  event path before the Bevy graph becomes the primary surface.
 - Wire graph projection rendering into the visible floating Bevy window only
   after the native runner gate passes for the target platform.
 - Keep Svelte filters, search, detail panels, review panels, and
@@ -2637,6 +2623,10 @@ Completed foundation, do not reimplement unless verification fails:
   sprite-backed node/edge primitives to native graph visual ECS entities. The
   lifecycle smoke readiness budget was raised to account for render-stack
   startup while still requiring an actually ready native window.
+- Renderer command delivery now flows through the desktop event bridge. The
+  old Svelte command-drain interval and direct drain command API were removed,
+  so graph renderer selection/inspect commands are no longer polled by the
+  frontend.
 
 Remaining implementation order:
 
@@ -2644,9 +2634,9 @@ Remaining implementation order:
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-2. Replace the temporary Svelte command-drain polling bridge with native
-   renderer events or a backend-owned projection channel with deterministic
-   teardown.
+2. Add native Bevy graph interaction producers for selection, inspection,
+   navigation, and focus commands, delivered through the backend-owned desktop
+   event bridge.
 3. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
@@ -2734,7 +2724,7 @@ Standards gates:
   dedicated desktop-owned subscription owner. Event bridges and Svelte controls
   may enqueue invalidation/request updates only; they must not start independent
   projection loading loops for the same renderer.
-- Desktop renderer bridges, backend event bridges, and command-drain loops must
+- Desktop renderer bridges, backend event bridges, and command-delivery loops must
   have explicit lifecycle owners, tracked handles or unsubscribe paths, bounded
   queues, and deterministic teardown. Detached task patterns are not acceptable
   for native renderer integration.
@@ -2839,9 +2829,8 @@ Verification:
   focus/filter/search changes produce one in-flight projection load plus a
   tracked follow-up refresh, not overlapping renderer writes.
 - Renderer bridge lifecycle tests prove backend event bridges, renderer
-  projection subscriptions, command queues, and any temporary command-drain
-  stopgaps are cancelled or unsubscribed on renderer close, project close, and
-  app shutdown.
+  projection subscriptions, command queues, and command-delivery bridges are
+  cancelled or unsubscribed on renderer close, project close, and app shutdown.
 - Dependency cleanup checks prove stale embedded-viewport documentation is gone
   and raw-window-handle/platform-handle dependencies are either absent or
   justified by the native runner safety plan.
@@ -3282,7 +3271,7 @@ Verification:
 
 - Vertical slice: Bevy timeline render model receives projection and emits a validated command.
 - Floating renderer reuse check proves the timeline window uses the same
-  renderer lifecycle, focus, input-routing, and command-drain owner as the graph
+  renderer lifecycle, focus, input-routing, and command-delivery owner as the graph
   window.
 - Pointer, focus, keyboard, and parent-gesture conflict smoke checks.
 - Projection serialization tests.

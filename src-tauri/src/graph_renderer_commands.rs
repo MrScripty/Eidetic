@@ -1,4 +1,4 @@
-use eidetic_bevy_bible_graph::{BibleGraphRendererCommand, BibleGraphVisualSnapshot};
+use eidetic_bevy_bible_graph::BibleGraphVisualSnapshot;
 use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
 use serde::Deserialize;
 use tauri::Manager;
@@ -100,17 +100,6 @@ pub async fn graph_renderer_update_projection_request(
         .inner()
         .clone();
     update_active_graph_renderer_projection_request(&app, &state, request).await
-}
-
-#[tauri::command]
-pub fn graph_renderer_drain_commands(
-    app: tauri::AppHandle,
-) -> Result<Vec<BibleGraphRendererCommand>, CommandError> {
-    graph_renderer_owner(&app)?
-        .drain_commands()
-        .map_err(|error| {
-            CommandError::internal(format!("graph renderer command drain failed: {error:?}"))
-        })
 }
 
 fn apply_renderer_window_size_hint(
