@@ -124,6 +124,7 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
         initial.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
+    assert_eq!(initial.threading_model, expected_threading_model());
     assert_eq!(initial.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert_eq!(initial.capability_reason, expected_pending_reason());
     assert!(!initial.visible_window_supported);
@@ -180,6 +181,7 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
         opened.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
+    assert_eq!(opened.threading_model, expected_threading_model());
     assert_eq!(opened.capability_reason, expected_pending_reason());
     assert!(!opened.visible_window_supported);
     assert!(!opened.window_visible);
@@ -280,6 +282,7 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_runner_lifecycle: NativeRendererRunnerLifecycle::OpenRequested,
+            renderer_runner_threading_model: expected_threading_model(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle:
@@ -403,6 +406,7 @@ fn host_stop_drops_renderer_state() {
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_runner_lifecycle: NativeRendererRunnerLifecycle::Closed,
+            renderer_runner_threading_model: expected_threading_model(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,
@@ -621,6 +625,10 @@ fn expected_pending_reason() -> BibleGraphRendererWindowCapabilityReason {
             BibleGraphRendererWindowCapabilityReason::PlatformUnsupported
         }
     }
+}
+
+fn expected_threading_model() -> NativeRendererThreadingModel {
+    NativeRendererPlatformStrategy::current().threading_model()
 }
 
 fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {

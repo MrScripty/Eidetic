@@ -6,6 +6,7 @@ use super::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
     BibleGraphRendererWindowStrategyStatus, NativeRendererPlatformStrategy,
+    NativeRendererThreadingModel,
 };
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
@@ -16,6 +17,7 @@ pub struct NativeRendererRunnerStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
     pub platform: BibleGraphRendererWindowPlatform,
     pub lifecycle: NativeRendererRunnerLifecycle,
+    pub threading_model: NativeRendererThreadingModel,
     pub capability: BibleGraphRendererWindowCapability,
     pub capability_reason: BibleGraphRendererWindowCapabilityReason,
     pub visible_window_supported: bool,
@@ -203,6 +205,10 @@ impl NativeRendererRunner for PendingNativeRendererRunner {
             } else {
                 NativeRendererRunnerLifecycle::Closed
             },
+            threading_model: self
+                .strategy
+                .map(NativeRendererPlatformStrategy::threading_model)
+                .unwrap_or_else(|| NativeRendererPlatformStrategy::current().threading_model()),
             capability: strategy.capability,
             capability_reason: strategy.capability_reason,
             visible_window_supported: strategy.visible_window_supported,

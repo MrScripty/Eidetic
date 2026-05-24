@@ -36,6 +36,7 @@ pub struct BibleGraphHostStatus {
     pub renderer_window_strategy: BibleGraphRendererWindowStrategy,
     pub renderer_window_platform: BibleGraphRendererWindowPlatform,
     pub renderer_runner_lifecycle: NativeRendererRunnerLifecycle,
+    pub renderer_runner_threading_model: NativeRendererThreadingModel,
     pub renderer_window_capability: BibleGraphRendererWindowCapability,
     pub renderer_window_capability_reason: BibleGraphRendererWindowCapabilityReason,
     pub renderer_window_lifecycle: BibleGraphRendererWindowLifecycle,

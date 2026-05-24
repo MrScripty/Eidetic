@@ -1203,6 +1203,9 @@ Discovered issues:
   threading model. Linux and Windows are worker-thread proof candidates, macOS
   is a main-thread proof candidate, and unsupported platforms cannot enter the
   minimal-window proof path.
+- Resolved: graph renderer status now projects the native runner threading
+  model through the backend command contract and TypeScript mirror, so the UI
+  can display platform proof state without owning platform inference logic.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

@@ -187,6 +187,7 @@ impl DesktopBibleGraphHost {
             renderer_window_strategy: native_runner.strategy,
             renderer_window_platform: native_runner.platform,
             renderer_runner_lifecycle: native_runner.lifecycle,
+            renderer_runner_threading_model: native_runner.threading_model,
             renderer_window_capability: native_runner.capability,
             renderer_window_capability_reason: native_runner.capability_reason,
             renderer_window_lifecycle,
