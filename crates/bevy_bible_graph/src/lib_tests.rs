@@ -343,6 +343,19 @@ fn controlled_native_window_app_installs_close_control_resource() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_os_close_requests_shutdown() {
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let window_control = BibleGraphNativeWindowControl::from(&control);
+
+    control.mark_visible(true);
+    window_control.request_close_from_os_window();
+
+    assert!(control.close_requested());
+    assert!(!control.visible());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
     use bevy::prelude::{Plugin, With};
 

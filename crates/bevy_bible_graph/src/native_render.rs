@@ -11,7 +11,9 @@ use bevy::prelude::{
     Query, Res, ResMut, Resource, Sprite, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
     Transform, Update, Vec2, Vec3, Window, With, World,
 };
-use bevy::window::{ExitCondition, PrimaryWindow, WindowPlugin, WindowResolution};
+use bevy::window::{
+    ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
+};
 use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -263,6 +265,13 @@ impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowContro
     }
 }
 
+impl BibleGraphNativeWindowControl {
+    pub fn request_close_from_os_window(&self) {
+        self.shutdown_requested.store(true, Ordering::Release);
+        self.visible.store(false, Ordering::Release);
+    }
+}
+
 pub struct BibleGraphNativeRenderPlugin;
 
 impl Plugin for BibleGraphNativeRenderPlugin {
@@ -297,6 +306,7 @@ pub fn configure_controlled_minimal_bible_graph_native_window_app(
     control_handle: BibleGraphNativeWindowControlHandle,
 ) {
     app.add_message::<AppExit>();
+    app.add_message::<WindowCloseRequested>();
     app.add_plugins(
         DefaultPlugins
             .set(WindowPlugin {
@@ -317,6 +327,7 @@ pub fn configure_controlled_minimal_bible_graph_native_window_app(
     app.add_plugins(BibleGraphNativeRenderPlugin);
     app.insert_resource(BibleGraphNativeWindowControl::from(&control_handle));
     app.add_systems(Update, close_minimal_native_window_when_requested);
+    app.add_systems(Update, close_minimal_native_window_from_os_request);
     app.add_systems(Update, apply_minimal_native_window_visibility_requests);
 
     if let Some(auto_close_after_ms) = config.auto_close_after_ms {
@@ -373,6 +384,20 @@ fn close_minimal_native_window_when_requested(
     mut app_exit: MessageWriter<AppExit>,
 ) {
     if control.shutdown_requested.load(Ordering::Acquire) {
+        app_exit.write(AppExit::Success);
+    }
+}
+
+fn close_minimal_native_window_from_os_request(
+    control: Res<BibleGraphNativeWindowControl>,
+    close_requests: Option<bevy::prelude::MessageReader<WindowCloseRequested>>,
+    mut app_exit: MessageWriter<AppExit>,
+) {
+    let Some(mut close_requests) = close_requests else {
+        return;
+    };
+    if close_requests.read().next().is_some() {
+        control.request_close_from_os_window();
         app_exit.write(AppExit::Success);
     }
 }
