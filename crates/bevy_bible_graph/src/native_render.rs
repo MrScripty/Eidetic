@@ -491,15 +491,58 @@ pub fn emit_bible_graph_native_node_selection(
     world: &mut World,
     node_id: BibleGraphNodeId,
 ) -> Result<(), BibleGraphRendererError> {
-    let node_exists = world
+    validate_native_node(world, &node_id)?;
+    push_native_command(world, BibleGraphRendererCommand::SelectNode { node_id })
+}
+
+pub fn emit_bible_graph_native_node_inspection(
+    world: &mut World,
+    node_id: BibleGraphNodeId,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_node(world, &node_id)?;
+    push_native_command(world, BibleGraphRendererCommand::InspectNode { node_id })
+}
+
+pub fn emit_bible_graph_native_edge_selection(
+    world: &mut World,
+    edge_id: BibleGraphEdgeId,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_edge(world, &edge_id)?;
+    push_native_command(world, BibleGraphRendererCommand::SelectEdge { edge_id })
+}
+
+fn validate_native_node(
+    world: &mut World,
+    node_id: &BibleGraphNodeId,
+) -> Result<(), BibleGraphRendererError> {
+    if world
         .query::<&BibleGraphNativeNodeVisual>()
         .iter(world)
-        .any(|node| node.node_id == node_id);
-    if !node_exists {
-        return Err(BibleGraphRendererError::UnknownNode { node_id });
+        .any(|node| &node.node_id == node_id)
+    {
+        Ok(())
+    } else {
+        Err(BibleGraphRendererError::UnknownNode {
+            node_id: node_id.clone(),
+        })
     }
+}
 
-    push_native_command(world, BibleGraphRendererCommand::SelectNode { node_id })
+fn validate_native_edge(
+    world: &mut World,
+    edge_id: &BibleGraphEdgeId,
+) -> Result<(), BibleGraphRendererError> {
+    if world
+        .query::<&BibleGraphNativeEdgeVisual>()
+        .iter(world)
+        .any(|edge| &edge.edge_id == edge_id)
+    {
+        Ok(())
+    } else {
+        Err(BibleGraphRendererError::UnknownEdge {
+            edge_id: edge_id.clone(),
+        })
+    }
 }
 
 fn push_native_command(

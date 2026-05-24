@@ -387,6 +387,45 @@ fn controlled_native_window_emits_validated_node_selection_commands() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_validated_inspection_and_edge_commands() {
+    use bevy::prelude::Plugin;
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let missing_edge_id = BibleGraphEdgeId::new("edge.missing").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_edge(node_id.clone()));
+    app.update();
+
+    assert_eq!(
+        emit_bible_graph_native_node_inspection(app.world_mut(), node_id.clone()),
+        Ok(())
+    );
+    assert_eq!(
+        emit_bible_graph_native_edge_selection(app.world_mut(), edge_id.clone()),
+        Ok(())
+    );
+    assert_eq!(
+        control.drain_commands(),
+        vec![
+            BibleGraphRendererCommand::InspectNode { node_id },
+            BibleGraphRendererCommand::SelectEdge { edge_id }
+        ]
+    );
+    assert_eq!(
+        emit_bible_graph_native_edge_selection(app.world_mut(), missing_edge_id.clone()),
+        Err(BibleGraphRendererError::UnknownEdge {
+            edge_id: missing_edge_id
+        })
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn renderer_app_can_start_as_renderer_window_consumer() {
     let renderer = BibleGraphRendererApp::new_renderer_window();
 

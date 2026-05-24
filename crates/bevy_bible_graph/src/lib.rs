@@ -21,7 +21,8 @@ pub use native_render::{
     BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
     configure_controlled_minimal_bible_graph_native_window_app,
-    configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_node_selection,
+    configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_edge_selection,
+    emit_bible_graph_native_node_inspection, emit_bible_graph_native_node_selection,
     run_controlled_minimal_bible_graph_native_window, run_minimal_bible_graph_native_window,
 };
 pub use scene::{
