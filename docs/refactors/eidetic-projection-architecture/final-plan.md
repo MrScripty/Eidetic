@@ -916,6 +916,10 @@ Completed slices:
   renderer platform detection into a dedicated desktop platform-strategy module
   with local README invariants, keeping `cfg()` checks out of shared renderer
   host, supervisor, command, UI, and backend projection code.
+- `feat(renderer): add native window close control` added a renderer-local
+  Bevy native window control handle so the desktop supervisor can request close
+  through a leaf-crate lifecycle signal without giving the renderer access to
+  Tauri, SQLite, or durable project state.
 
 Discovered issues:
 
@@ -992,6 +996,9 @@ Discovered issues:
   status code. Platform detection is now isolated in the desktop
   `bevy_graph_host::platform_strategy` module tree, with renderer-window status
   consuming a platform-neutral function.
+- Resolved: the Bevy native smoke app had no external close control for a
+  production supervisor to use. The leaf renderer crate now exposes a
+  renderer-local close handle and controlled native-window app configuration.
 - Resolved: graph renderer window lifecycle could only be inferred from open,
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
@@ -2548,6 +2555,8 @@ Completed foundation, do not reimplement unless verification fails:
   production visible-window support.
 - Native renderer platform checks are isolated in the desktop platform strategy
   module tree with local invariants documented.
+- The Bevy leaf renderer exposes a close-control handle for future supervisor
+  shutdown without owning desktop or durable backend state.
 
 Remaining implementation order:
 

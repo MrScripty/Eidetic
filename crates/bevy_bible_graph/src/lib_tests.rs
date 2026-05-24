@@ -280,6 +280,41 @@ fn native_window_runner_config_records_minimal_smoke_window_intent() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_window_control_handle_records_close_requests() {
+    let control = BibleGraphNativeWindowControlHandle::new();
+
+    assert!(!control.close_requested());
+
+    control.request_close();
+
+    assert!(control.close_requested());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_app_installs_close_control_resource() {
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    configure_controlled_minimal_bible_graph_native_window_app(
+        &mut app,
+        BibleGraphNativeWindowRunnerConfig::minimal_smoke(true),
+        control.clone(),
+    );
+
+    assert!(
+        app.world()
+            .contains_resource::<BibleGraphNativeWindowControl>()
+    );
+    assert!(!control.close_requested());
+
+    control.request_close();
+
+    assert!(control.close_requested());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn renderer_app_can_start_as_renderer_window_consumer() {
     let renderer = BibleGraphRendererApp::new_renderer_window();
 

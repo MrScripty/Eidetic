@@ -55,6 +55,10 @@ Dependency review:
 - Native renderer-window setup starts with a borderless scene resource, Eidetic
   graph colors, clear color, and one marked `Camera2d`. The plugin does not
   own durable graph data; the desktop host owns renderer-window lifecycle.
+- Native renderer-window control is limited to renderer-local lifecycle
+  signaling. `BibleGraphNativeWindowControlHandle` lets the desktop host request
+  close without giving this leaf crate access to Tauri, SQLite, or durable
+  project state.
 - Desktop hosts enable `native_render` explicitly and start the renderer through
   `new_renderer_window()` so native readiness can be reported without letting the
   renderer own durable project state.

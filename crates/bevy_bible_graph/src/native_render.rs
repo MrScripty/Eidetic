@@ -1,4 +1,6 @@
 use std::num::NonZeroU64;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 use bevy::a11y::AccessibilityPlugin;
@@ -39,6 +41,16 @@ pub struct BibleGraphNativeRendererWindowScene {
 #[derive(Debug, Resource)]
 struct BibleGraphNativeAutoClose {
     close_at: Instant,
+}
+
+#[derive(Debug, Clone)]
+pub struct BibleGraphNativeWindowControlHandle {
+    close_requested: Arc<AtomicBool>,
+}
+
+#[derive(Debug, Clone, Resource)]
+pub struct BibleGraphNativeWindowControl {
+    close_requested: Arc<AtomicBool>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -127,6 +139,36 @@ impl BibleGraphNativeWindowRunnerConfig {
     }
 }
 
+impl Default for BibleGraphNativeWindowControlHandle {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BibleGraphNativeWindowControlHandle {
+    pub fn new() -> Self {
+        Self {
+            close_requested: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    pub fn request_close(&self) {
+        self.close_requested.store(true, Ordering::Release);
+    }
+
+    pub fn close_requested(&self) -> bool {
+        self.close_requested.load(Ordering::Acquire)
+    }
+}
+
+impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowControl {
+    fn from(handle: &BibleGraphNativeWindowControlHandle) -> Self {
+        Self {
+            close_requested: Arc::clone(&handle.close_requested),
+        }
+    }
+}
+
 pub struct BibleGraphNativeRenderPlugin;
 
 impl Plugin for BibleGraphNativeRenderPlugin {
@@ -143,6 +185,18 @@ impl Plugin for BibleGraphNativeRenderPlugin {
 pub fn configure_minimal_bible_graph_native_window_app(
     app: &mut App,
     config: BibleGraphNativeWindowRunnerConfig,
+) {
+    configure_controlled_minimal_bible_graph_native_window_app(
+        app,
+        config,
+        BibleGraphNativeWindowControlHandle::new(),
+    );
+}
+
+pub fn configure_controlled_minimal_bible_graph_native_window_app(
+    app: &mut App,
+    config: BibleGraphNativeWindowRunnerConfig,
+    control_handle: BibleGraphNativeWindowControlHandle,
 ) {
     app.add_plugins(MinimalPlugins);
     app.add_plugins(AccessibilityPlugin);
@@ -163,6 +217,8 @@ pub fn configure_minimal_bible_graph_native_window_app(
         run_on_any_thread: config.run_on_any_thread,
     });
     app.add_plugins(BibleGraphNativeRenderPlugin);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control_handle));
+    app.add_systems(Update, close_minimal_native_window_when_requested);
 
     if let Some(auto_close_after_ms) = config.auto_close_after_ms {
         app.insert_resource(BibleGraphNativeAutoClose {
@@ -191,6 +247,15 @@ fn close_minimal_native_window_after_timer(
     mut app_exit: MessageWriter<AppExit>,
 ) {
     if Instant::now() >= auto_close.close_at {
+        app_exit.write(AppExit::Success);
+    }
+}
+
+fn close_minimal_native_window_when_requested(
+    control: Res<BibleGraphNativeWindowControl>,
+    mut app_exit: MessageWriter<AppExit>,
+) {
+    if control.close_requested.load(Ordering::Acquire) {
         app_exit.write(AppExit::Success);
     }
 }
