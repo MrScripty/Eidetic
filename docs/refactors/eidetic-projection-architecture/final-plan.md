@@ -1210,6 +1210,10 @@ Discovered issues:
   configuration path for the Bevy/winit smoke scene. Desktop platform strategy
   still gates execution and visible-window support; this slice only provides
   the leaf renderer configuration needed by the later smoke proof.
+- Updated: the desktop platform strategy now maps proof candidates to the
+  minimal Bevy window config: Linux/Windows set the any-thread winit flag,
+  macOS keeps main-thread execution, and unsupported platforms produce no
+  runner config.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

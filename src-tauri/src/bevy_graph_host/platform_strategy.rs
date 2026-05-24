@@ -3,6 +3,7 @@ use super::{
     BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
     BibleGraphRendererWindowStrategyStatus,
 };
+use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NativeRendererPlatformStrategy {
@@ -55,6 +56,18 @@ impl NativeRendererPlatformStrategy {
             self.threading_model(),
             NativeRendererThreadingModel::Unsupported
         )
+    }
+
+    pub fn minimal_window_runner_config(self) -> Option<BibleGraphNativeWindowRunnerConfig> {
+        let run_on_any_thread = match self.threading_model() {
+            NativeRendererThreadingModel::WorkerThread => true,
+            NativeRendererThreadingModel::MainThread => false,
+            NativeRendererThreadingModel::Unsupported => return None,
+        };
+
+        Some(BibleGraphNativeWindowRunnerConfig::minimal_smoke(
+            run_on_any_thread,
+        ))
     }
 
     fn platform(self) -> BibleGraphRendererWindowPlatform {

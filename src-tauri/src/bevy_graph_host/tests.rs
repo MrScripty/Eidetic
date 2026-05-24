@@ -107,6 +107,31 @@ fn native_renderer_platform_strategy_models_threading_requirements() {
 }
 
 #[test]
+fn native_renderer_platform_strategy_builds_minimal_window_proof_config() {
+    let linux_config = NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+        .minimal_window_runner_config()
+        .unwrap();
+    let windows_config = NativeRendererPlatformStrategy::WindowsWorkerThreadUnproven
+        .minimal_window_runner_config()
+        .unwrap();
+    let macos_config = NativeRendererPlatformStrategy::MacosMainThreadUnproven
+        .minimal_window_runner_config()
+        .unwrap();
+
+    assert!(linux_config.run_on_any_thread);
+    assert!(windows_config.run_on_any_thread);
+    assert!(!macos_config.run_on_any_thread);
+    assert_eq!(linux_config.title, "Eidetic Bible Graph");
+    assert_eq!(linux_config.width_px, 1280);
+    assert_eq!(linux_config.height_px, 720);
+    assert!(
+        NativeRendererPlatformStrategy::UnsupportedPlatform
+            .minimal_window_runner_config()
+            .is_none()
+    );
+}
+
+#[test]
 fn pending_native_renderer_runner_records_open_intent_without_reporting_visibility() {
     let mut runner = PendingNativeRendererRunner::default();
 
