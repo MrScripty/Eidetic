@@ -7,7 +7,7 @@ import {
   getGraphRendererStatus,
   getGraphRendererVisualSnapshot,
   openGraphRenderer,
-  setGraphRendererProjection,
+  updateGraphRendererProjectionRequest,
 } from './graphRendererApi.js';
 
 function installDesktopInvoke(response: unknown) {
@@ -103,7 +103,7 @@ describe('graph renderer api helpers', () => {
     expect(invoke).toHaveBeenCalledWith('graph_renderer_open', { request });
   });
 
-  it('sets the desktop graph renderer projection from a bounded request', async () => {
+  it('updates the desktop graph renderer projection request', async () => {
     const response = {
       renderer_window_kind: 'bible_graph',
       running: true,
@@ -137,9 +137,11 @@ describe('graph renderer api helpers', () => {
     };
     const invoke = installDesktopInvoke(response);
 
-    await expect(setGraphRendererProjection(request)).resolves.toEqual(response);
+    await expect(updateGraphRendererProjectionRequest(request)).resolves.toEqual(response);
 
-    expect(invoke).toHaveBeenCalledWith('graph_renderer_set_projection', { request });
+    expect(invoke).toHaveBeenCalledWith('graph_renderer_update_projection_request', {
+      request,
+    });
   });
 
   it('focuses and closes the desktop graph renderer window', async () => {

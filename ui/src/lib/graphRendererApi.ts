@@ -25,10 +25,12 @@ export function getGraphRendererStatus(): Promise<GraphRendererStatus> {
   return invokeDesktop<GraphRendererStatus>('graph_renderer_status');
 }
 
-export function setGraphRendererProjection(
+export function updateGraphRendererProjectionRequest(
   request: BibleRenderGraphProjectionRequest,
 ): Promise<GraphRendererStatus> {
-  return invokeDesktop<GraphRendererStatus>('graph_renderer_set_projection', { request });
+  return invokeDesktop<GraphRendererStatus>('graph_renderer_update_projection_request', {
+    request,
+  });
 }
 
 export function drainGraphRendererCommands(): Promise<GraphRendererCommand[]> {

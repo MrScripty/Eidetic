@@ -6,7 +6,7 @@
     focusGraphRenderer,
     getGraphRendererStatus,
     openGraphRenderer,
-    setGraphRendererProjection,
+    updateGraphRendererProjectionRequest,
   } from '$lib/graphRendererApi.js';
   import type { GraphRendererStatus } from '$lib/graphRendererTypes.js';
   import { setGraphRendererWindowStatus } from '$lib/stores/graphRendererWindow.svelte.js';
@@ -77,11 +77,13 @@
     if (requestKey === lastSyncedRequestKey) {
       return;
     }
-    void run(() => setGraphRendererProjection(graphProjectionRequest)).then((succeeded) => {
-      if (succeeded) {
-        lastSyncedRequestKey = requestKey;
-      }
-    });
+    void run(() => updateGraphRendererProjectionRequest(graphProjectionRequest)).then(
+      (succeeded) => {
+        if (succeeded) {
+          lastSyncedRequestKey = requestKey;
+        }
+      },
+    );
   });
 </script>
 

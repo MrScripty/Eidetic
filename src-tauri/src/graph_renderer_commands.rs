@@ -78,7 +78,7 @@ pub fn graph_renderer_status(app: tauri::AppHandle) -> Result<BibleGraphHostStat
 }
 
 #[tauri::command]
-pub async fn graph_renderer_set_projection(
+pub async fn graph_renderer_update_projection_request(
     app: tauri::AppHandle,
     request: BibleRenderGraphProjectionRequest,
 ) -> Result<BibleGraphHostStatus, CommandError> {

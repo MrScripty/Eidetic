@@ -1182,7 +1182,7 @@ Discovered issues:
 - Updated: bible render graph projection reads no longer mirror their response
   into the Bevy renderer. Renderer projection mutation now flows through a
   shared desktop-owned projection refresh module used by graph renderer
-  open/set-projection commands and the desktop mutation-event bridge. The
+  open/request-update commands and the desktop mutation-event bridge. The
   remaining native runner slice still needs to turn this into a long-lived
   renderer subscription before the Bevy graph becomes the primary visual
   surface.
@@ -1193,9 +1193,11 @@ Discovered issues:
   refreshes and treats Svelte as a request updater, not a projection writer.
 - Resolved: graph renderer projection refreshes now enter through the managed
   desktop projection request state, which coalesces overlapping refresh requests
-  into one in-flight projection load plus one follow-up refresh. The remaining
-  work is API cleanup: rename or replace the temporary Svelte
-  `set_projection` command semantics so it is clearly an active request update.
+  into one in-flight projection load plus one follow-up refresh.
+- Resolved: the temporary Svelte-facing projection write command semantics have
+  been replaced with an active renderer projection request update. Svelte sends
+  bounded request input only; the desktop-owned request state loads and writes
+  the renderer projection through the coalesced backend path.
 - Updated: the Svelte graph renderer command drain still uses temporary
   polling, but it is now gated by backend-projected renderer-window status and
   does not drain while the renderer is closed, scene-starting, or reporting no
@@ -2443,11 +2445,10 @@ Implementation order:
   request and projection subscription; Svelte controls may update the requested
   focus/filter/search/open state through backend commands, but Svelte must not
   be one of several projection writers for the same renderer.
-- Convert `graph_renderer_set_projection` semantics into an active renderer
-  request update before primary graph rendering. The command may remain as a
-  temporary adapter name during migration, but its implementation must update
-  the desktop-owned request/subscription and let that owner load/write the
-  projection through a coalesced path.
+- Resolved: `graph_renderer_update_projection_request` now names the desktop
+  command by its actual responsibility. It updates the active backend-owned
+  renderer request and lets the desktop projection owner load/write renderer
+  projection snapshots through the coalesced path.
 - Replace or contain the temporary renderer command-drain polling before the
   Bevy graph becomes primary. Renderer selection/focus/inspect commands should
   be projected through desktop/backend events or another tracked lifecycle
