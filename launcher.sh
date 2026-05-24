@@ -195,8 +195,13 @@ wait_for_ui_dev_server() {
 start_ui_dev_server() {
   ensure_dependencies node npm ui_deps
   log "[ui] starting Vite dev server for Tauri webview"
-  (cd "$UI_DIR" && npm run dev -- --host 127.0.0.1) &
+  (cd "$UI_DIR" && npm run dev -- --host 127.0.0.1 --strictPort) &
   UI_DEV_PID=$!
+  sleep 0.25
+  if ! kill -0 "$UI_DEV_PID" >/dev/null 2>&1; then
+    wait "$UI_DEV_PID" >/dev/null 2>&1 || true
+    die "UI dev server exited before becoming ready at $UI_DEV_URL"
+  fi
   wait_for_ui_dev_server "$UI_DEV_URL"
 }
 
@@ -245,7 +250,7 @@ run_dev() {
   start_ui_dev_server
   trap stop_ui_dev_server EXIT INT TERM
 
-  cargo run -p "$APP_BIN" -- "${run_args[@]}"
+  cargo run -p "$APP_BIN" --bin "$APP_BIN" -- "${run_args[@]}"
 
   trap - EXIT INT TERM
   stop_ui_dev_server
