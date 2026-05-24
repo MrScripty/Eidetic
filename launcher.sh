@@ -9,7 +9,9 @@ UI_DIR="$PROJECT_ROOT/ui"
 UI_BUILD_DIR="$PROJECT_ROOT/dist/ui"
 RELEASE_BIN_PATH="$PROJECT_ROOT/target/release/${APP_BIN}"
 LAUNCHER_STATE_ROOT="${EIDETIC_LAUNCHER_STATE_ROOT:-$PROJECT_ROOT/.launcher-state}"
-UI_DEV_URL="http://127.0.0.1:5173"
+UI_DEV_HOST="127.0.0.1"
+UI_DEV_PORT="5173"
+UI_DEV_URL="http://${UI_DEV_HOST}:${UI_DEV_PORT}"
 DEPENDENCIES=(node npm cargo ui_deps git_hooks)
 
 usage() {
@@ -192,10 +194,47 @@ wait_for_ui_dev_server() {
   die "UI dev server did not become ready at $url"
 }
 
+ui_dev_server_ready() {
+  local url="$1"
+
+  command -v curl >/dev/null 2>&1 && curl -fsS "$url" >/dev/null 2>&1
+}
+
+ui_dev_port_available() {
+  node -e '
+const net = require("node:net");
+const [host, port] = process.argv.slice(1);
+const server = net.createServer();
+server.once("error", (error) => {
+  process.exit(error.code === "EADDRINUSE" ? 2 : 1);
+});
+server.listen(Number(port), host, () => {
+  server.close(() => process.exit(0));
+});
+' "$UI_DEV_HOST" "$UI_DEV_PORT"
+}
+
 start_ui_dev_server() {
   ensure_dependencies node npm ui_deps
+
+  if ui_dev_server_ready "$UI_DEV_URL"; then
+    log "[ui] reusing existing Vite dev server at $UI_DEV_URL"
+    UI_DEV_PID=""
+    return
+  fi
+
+  if ui_dev_port_available; then
+    :
+  else
+    local port_status=$?
+    if [[ "$port_status" -eq 2 ]]; then
+      die "port ${UI_DEV_PORT} is already in use but $UI_DEV_URL is not serving the UI; stop the existing Vite process and rerun ./${SCRIPT_NAME} --run"
+    fi
+    die "unable to verify whether port ${UI_DEV_PORT} is available for the UI dev server"
+  fi
+
   log "[ui] starting Vite dev server for Tauri webview"
-  (cd "$UI_DIR" && npm run dev -- --host 127.0.0.1 --strictPort) &
+  (cd "$UI_DIR" && npm run dev -- --host "$UI_DEV_HOST" --strictPort) &
   UI_DEV_PID=$!
   sleep 0.25
   if ! kill -0 "$UI_DEV_PID" >/dev/null 2>&1; then
