@@ -16,6 +16,7 @@ const baseStatus: GraphRendererStatus = {
   renderer_window_strategy: 'bevy_winit_floating_window',
   renderer_window_platform: 'linux',
   renderer_window_capability: 'pending_native_runner',
+  renderer_window_capability_reason: 'pending_native_runner',
   renderer_window_lifecycle: 'scene_ready_pending_native_runner',
   renderer_window_ready: false,
   renderer_window_visible_supported: false,
@@ -57,6 +58,13 @@ describe('graph renderer window status', () => {
     setGraphRendererWindowStatus({
       ...baseStatus,
       renderer_window_visible_supported: true,
+    });
+    expect(shouldDrainGraphRendererCommands()).toBe(false);
+
+    setGraphRendererWindowStatus({
+      ...baseStatus,
+      renderer_window_visible_supported: true,
+      renderer_window_capability_reason: 'verified_support',
     });
     expect(shouldDrainGraphRendererCommands()).toBe(true);
   });

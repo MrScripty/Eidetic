@@ -3,8 +3,9 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use super::{
-    BibleGraphRendererWindowCapability, BibleGraphRendererWindowPlatform,
-    BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
+    BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
+    BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
+    BibleGraphRendererWindowStrategyStatus,
 };
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
@@ -15,6 +16,7 @@ pub struct NativeRendererRunnerStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
     pub platform: BibleGraphRendererWindowPlatform,
     pub capability: BibleGraphRendererWindowCapability,
+    pub capability_reason: BibleGraphRendererWindowCapabilityReason,
     pub visible_window_supported: bool,
     pub window_visible: bool,
     pub window_ready: bool,
@@ -147,6 +149,7 @@ impl NativeRendererRunner for PendingNativeRendererRunner {
             strategy: strategy.strategy,
             platform: strategy.platform,
             capability: strategy.capability,
+            capability_reason: strategy.capability_reason,
             visible_window_supported: strategy.visible_window_supported,
             window_visible: false,
             window_ready: false,
@@ -190,6 +193,7 @@ fn run_pending_native_renderer_runner(receiver: mpsc::Receiver<NativeRendererRun
 
 fn pending_runner_unavailable_status(message: String) -> NativeRendererRunnerStatus {
     NativeRendererRunnerStatus {
+        capability_reason: BibleGraphRendererWindowCapabilityReason::RunnerError,
         last_error: Some(message),
         ..PendingNativeRendererRunner::default().status()
     }

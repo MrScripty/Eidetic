@@ -24,6 +24,7 @@ export interface GraphRendererStatus {
   renderer_window_strategy: GraphRendererWindowStrategy;
   renderer_window_platform: GraphRendererWindowPlatform;
   renderer_window_capability: GraphRendererWindowCapability;
+  renderer_window_capability_reason: GraphRendererWindowCapabilityReason;
   renderer_window_lifecycle: GraphRendererWindowLifecycle;
   renderer_window_ready: boolean;
   renderer_window_visible_supported: boolean;
@@ -46,6 +47,13 @@ export type GraphRendererWindowStrategy = 'bevy_winit_floating_window';
 export type GraphRendererWindowPlatform = 'linux' | 'macos' | 'windows' | 'unsupported';
 
 export type GraphRendererWindowCapability = 'pending_native_runner';
+
+export type GraphRendererWindowCapabilityReason =
+  | 'pending_native_runner'
+  | 'platform_unproven'
+  | 'platform_unsupported'
+  | 'runner_error'
+  | 'verified_support';
 
 export type GraphRendererWindowLifecycle =
   | 'closed'

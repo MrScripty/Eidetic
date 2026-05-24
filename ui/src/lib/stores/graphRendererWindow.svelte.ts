@@ -19,6 +19,7 @@ export function shouldDrainGraphRendererCommands(): boolean {
   return Boolean(
     status?.renderer_window_open &&
     status.renderer_scene_ready &&
-    status.renderer_window_visible_supported,
+    status.renderer_window_visible_supported &&
+    status.renderer_window_capability_reason === 'verified_support',
   );
 }

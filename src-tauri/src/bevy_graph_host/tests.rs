@@ -12,12 +12,12 @@ use crate::renderer_window::DesktopRendererWindowKind;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowCapability,
-    BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowPlatform,
-    BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
-    DesktopBibleGraphHost, DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
-    GRAPH_RENDERER_REPLY_TIMEOUT_MS, NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY,
-    NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS, NativeRendererRunner, NativeRendererRunnerHandle,
-    PendingNativeRendererRunner,
+    BibleGraphRendererWindowCapabilityReason, BibleGraphRendererWindowLifecycle,
+    BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
+    BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
+    GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
+    NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
+    NativeRendererRunner, NativeRendererRunnerHandle, PendingNativeRendererRunner,
 };
 
 #[test]
@@ -49,6 +49,7 @@ fn renderer_window_strategy_reports_pending_native_runner() {
         status.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
+    assert_eq!(status.capability_reason, expected_pending_reason());
     assert!(!status.visible_window_supported);
 }
 
@@ -70,6 +71,7 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
         initial.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
+    assert_eq!(initial.capability_reason, expected_pending_reason());
     assert!(!initial.visible_window_supported);
     assert!(!initial.window_visible);
     assert!(!initial.window_ready);
@@ -111,6 +113,7 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
         opened.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
+    assert_eq!(opened.capability_reason, expected_pending_reason());
     assert!(!opened.visible_window_supported);
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
@@ -166,6 +169,7 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
+            renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle:
                 BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner,
             renderer_window_ready: false,
@@ -287,6 +291,7 @@ fn host_stop_drops_renderer_state() {
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
+            renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,
             renderer_window_ready: false,
             renderer_window_visible_supported: false,
@@ -490,6 +495,19 @@ fn owner_reports_stopped_after_shutdown() {
     let error = owner.status().unwrap_err();
 
     assert_eq!(error, BibleGraphHostError::OwnerStopped);
+}
+
+fn expected_pending_reason() -> BibleGraphRendererWindowCapabilityReason {
+    match BibleGraphRendererWindowPlatform::current() {
+        BibleGraphRendererWindowPlatform::Linux
+        | BibleGraphRendererWindowPlatform::Macos
+        | BibleGraphRendererWindowPlatform::Windows => {
+            BibleGraphRendererWindowCapabilityReason::PendingNativeRunner
+        }
+        BibleGraphRendererWindowPlatform::Unsupported => {
+            BibleGraphRendererWindowCapabilityReason::PlatformUnsupported
+        }
+    }
 }
 
 fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {

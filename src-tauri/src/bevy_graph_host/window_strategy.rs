@@ -21,6 +21,16 @@ pub enum BibleGraphRendererWindowCapability {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
+pub enum BibleGraphRendererWindowCapabilityReason {
+    PendingNativeRunner,
+    PlatformUnproven,
+    PlatformUnsupported,
+    RunnerError,
+    VerifiedSupport,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum BibleGraphRendererWindowLifecycle {
     Closed,
     SceneStarting,
@@ -33,15 +43,18 @@ pub struct BibleGraphRendererWindowStrategyStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
     pub platform: BibleGraphRendererWindowPlatform,
     pub capability: BibleGraphRendererWindowCapability,
+    pub capability_reason: BibleGraphRendererWindowCapabilityReason,
     pub visible_window_supported: bool,
 }
 
 impl BibleGraphRendererWindowStrategyStatus {
     pub fn current() -> Self {
+        let platform = BibleGraphRendererWindowPlatform::current();
         Self {
             strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
-            platform: BibleGraphRendererWindowPlatform::current(),
+            platform,
             capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
+            capability_reason: platform.pending_capability_reason(),
             visible_window_supported: false,
         }
     }
@@ -57,6 +70,15 @@ impl BibleGraphRendererWindowPlatform {
             Self::Windows
         } else {
             Self::Unsupported
+        }
+    }
+
+    fn pending_capability_reason(self) -> BibleGraphRendererWindowCapabilityReason {
+        match self {
+            Self::Linux | Self::Macos | Self::Windows => {
+                BibleGraphRendererWindowCapabilityReason::PendingNativeRunner
+            }
+            Self::Unsupported => BibleGraphRendererWindowCapabilityReason::PlatformUnsupported,
         }
     }
 }

@@ -6,6 +6,9 @@ import { graphRendererWindowStatusDisplay } from './graphRendererWindowStatus.js
 function statusFor(
   renderer_window_lifecycle: GraphRendererStatus['renderer_window_lifecycle'],
   renderer_window_visible_supported = renderer_window_lifecycle === 'visible',
+  renderer_window_capability_reason: GraphRendererStatus['renderer_window_capability_reason'] = renderer_window_visible_supported
+    ? 'verified_support'
+    : 'pending_native_runner',
 ): GraphRendererStatus {
   return {
     renderer_window_kind: 'bible_graph',
@@ -18,6 +21,7 @@ function statusFor(
     renderer_window_strategy: 'bevy_winit_floating_window',
     renderer_window_platform: 'linux',
     renderer_window_capability: 'pending_native_runner',
+    renderer_window_capability_reason,
     renderer_window_lifecycle,
     renderer_window_ready: renderer_window_lifecycle === 'visible',
     renderer_window_visible_supported,
@@ -72,6 +76,27 @@ describe('graph renderer window status display', () => {
       label: 'Renderer visible',
       active: true,
       message: 'message:visible',
+    });
+  });
+
+  it('uses backend capability reason instead of inferring unsupported state', () => {
+    expect(
+      graphRendererWindowStatusDisplay(
+        statusFor('scene_ready_pending_native_runner', false, 'platform_unsupported'),
+      ),
+    ).toEqual({
+      label: 'Renderer unsupported',
+      active: false,
+      message: 'message:scene_ready_pending_native_runner',
+    });
+    expect(
+      graphRendererWindowStatusDisplay(
+        statusFor('scene_ready_pending_native_runner', true, 'runner_error'),
+      ),
+    ).toEqual({
+      label: 'Renderer error',
+      active: false,
+      message: 'message:scene_ready_pending_native_runner',
     });
   });
 });

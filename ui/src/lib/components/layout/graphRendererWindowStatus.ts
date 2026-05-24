@@ -25,9 +25,9 @@ export function graphRendererWindowStatusDisplay(
         message: status.renderer_window_message,
       };
     case 'scene_ready_pending_native_runner':
-      if (!status.renderer_window_visible_supported) {
+      if (status.renderer_window_capability_reason !== 'verified_support') {
         return {
-          label: 'Renderer unavailable',
+          label: unavailableLabel(status.renderer_window_capability_reason),
           active: false,
           message: status.renderer_window_message,
         };
@@ -49,5 +49,21 @@ export function graphRendererWindowStatusDisplay(
         active: false,
         message: status.renderer_window_message,
       };
+  }
+}
+
+function unavailableLabel(
+  reason: GraphRendererStatus['renderer_window_capability_reason'],
+): string {
+  switch (reason) {
+    case 'pending_native_runner':
+    case 'platform_unproven':
+      return 'Renderer unavailable';
+    case 'platform_unsupported':
+      return 'Renderer unsupported';
+    case 'runner_error':
+      return 'Renderer error';
+    case 'verified_support':
+      return 'Renderer waiting';
   }
 }

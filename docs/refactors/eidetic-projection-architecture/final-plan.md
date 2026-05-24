@@ -1127,8 +1127,9 @@ Discovered issues:
   and native visual entities, but `BibleGraphRendererApp::new_renderer_window`
   does not yet install/run a Bevy 0.18.1 window event loop. The desktop host
   therefore truthfully reports `PendingNativeRunner`; Milestone 8 still needs a
-  cross-platform floating-window runner that consumes backend projections and
-  command channels without moving durable graph state into Bevy or Svelte.
+  per-platform floating-window runner strategy that consumes backend
+  projections and command channels without moving durable graph state into
+  Bevy or Svelte.
 - Resolved: graph renderer lifecycle derivation could report `visible` from an
   impossible state where the renderer was not running or the scene was not
   ready. The lifecycle helper now requires a running, scene-ready renderer
@@ -1167,6 +1168,17 @@ Discovered issues:
   the desktop renderer strategy boundary. The native window runner still must
   prove backend-owned open/focus/close behavior per platform before reporting
   visible-window support.
+- Updated: the native window runner gate must no longer treat a Linux proof as
+  cross-platform completion. Bevy/winit's `run_on_any_thread` strategy may be
+  proven for Linux and Windows, while macOS needs a separate main-thread or
+  Tauri-runtime-compatible strategy before it can report visible-window
+  support. Platforms without a proven strategy must remain typed unsupported
+  through backend status.
+- Resolved: renderer-window status now carries an explicit typed
+  unsupported/capability reason through the Rust status DTO, TypeScript mirror,
+  UI status display, and command-drain gate. Svelte no longer has to infer
+  pending, unsupported, error, or verified support states from messages,
+  platform names, or boolean combinations.
 - Updated: bible render graph projection reads no longer mirror their response
   into the Bevy renderer. Renderer projection mutation now flows through a
   shared desktop-owned projection refresh module used by graph renderer
@@ -1174,12 +1186,23 @@ Discovered issues:
   remaining native runner slice still needs to turn this into a long-lived
   renderer subscription before the Bevy graph becomes the primary visual
   surface.
+- Open: graph renderer projection delivery still has two triggers for renderer
+  projection writes: Svelte request changes and desktop backend-event refreshes.
+  The shared helper is a useful consolidation step, but the remaining work must
+  replace this with one desktop-owned request/subscription owner that coalesces
+  refreshes and treats Svelte as a request updater, not a projection writer.
 - Updated: the Svelte graph renderer command drain still uses temporary
   polling, but it is now gated by backend-projected renderer-window status and
   does not drain while the renderer is closed, scene-starting, or reporting no
   visible-window support. The native renderer runner slice must still replace
   this with event-driven command projection before the Bevy graph becomes the
   primary visual surface.
+- Open: the Bevy graph scene and native visual paths currently rebuild by
+  despawning and respawning all projection entities. That remains acceptable only
+  for bounded prototype projections. Before the Bevy graph becomes primary, the
+  plan needs an explicit performance gate: either keep strict graph caps and
+  coalesced refreshes, or introduce keyed entity diffing by node/edge/influence
+  ID if refresh frequency or projection size grows.
 - Resolved: stale embedded-viewport documentation and the unused
   `raw-window-handle` dependency were removed after the production child-surface
   path was rejected. Raw handles must be reintroduced only through the native
@@ -2225,14 +2248,28 @@ Tasks:
 - Add a native window runner gate before replacing any Svelte graph surface.
   The gate must prove that Bevy 0.18.1 can open, focus, close, reopen, and
   tear down a real floating native window under the Tauri desktop runtime using
-  the smallest clear-color/grid scene. Until this gate passes,
-  `renderer_window_visible_supported` remains false and the Svelte outline
-  remains the semantic graph fallback.
+  the smallest clear-color/grid scene. The gate is per platform: Linux
+  X11/Wayland and Windows may use the Bevy/winit worker-thread strategy only
+  after it is proven on that platform, while macOS requires a separate
+  main-thread/Tauri-runtime-compatible strategy before it can report support.
+  Until a platform-specific gate passes, `renderer_window_visible_supported`
+  remains false for that platform and the Svelte outline remains the semantic
+  graph fallback.
 - Add a desktop-owned `NativeRendererRunner` contract before adding more graph
   visuals. The runner contract owns native event-loop startup, command ingress,
   status egress, shutdown, panic reporting, and capability projection without
   forcing Bevy/winit event-loop execution into the current synchronous
   request/reply owner loop.
+- Add explicit platform strategy modules for the native runner gate. The
+  platform-neutral host owns the public command/status API, while platform
+  strategies own only event-loop placement and capability proof. A strategy
+  that cannot be verified must return typed unsupported status instead of
+  faking visible-window support.
+- Extend renderer-window status with a typed unsupported/capability reason before
+  implementing the real runner. The reason must distinguish pending
+  implementation, unproven platform, unsupported platform, runner error, and
+  verified support without requiring Svelte to infer state from messages or
+  booleans.
 - Add a shared floating Bevy renderer host for native visual windows. The host
   must support renderer kind (`graph` now, `timeline` later), open/close,
   focus/status, optional size/placement hints, projection subscription,
@@ -2249,6 +2286,11 @@ Tasks:
   subscription path. Projection-route mirroring, server-event refreshes, and
   Svelte projection-set commands must not remain parallel ways to mutate the
   renderer's active projection.
+- Add renderer projection refresh coalescing to the desktop-owned subscription
+  path. Backend mutation bursts and request changes must schedule at most one
+  in-flight graph projection load per renderer request, with one tracked
+  follow-up refresh if a newer event arrives while the current refresh is
+  running.
 - Replace the temporary Svelte polling command-drain bridge with an
   event-driven desktop projection or contain it behind an explicit lifecycle
   stopgap that is removed before the Bevy graph becomes the primary surface.
@@ -2284,6 +2326,11 @@ Tasks:
   and Svelte command/detail surfaces cover selection, inspection, filtering,
   and navigation. The Svelte outline remains a keyboard-accessible semantic
   alternative, not the primary visual graph surface.
+- Keep full Bevy ECS/native-visual rebuilds only while graph projections are
+  strictly bounded and refreshes are coalesced. If graph caps, refresh frequency,
+  force-layout behavior, or renderer interaction requirements exceed that
+  prototype envelope, add keyed entity diffing before making the Bevy graph the
+  primary visual surface.
 
 Context model:
 
@@ -2333,6 +2380,10 @@ Implementation order:
 - Upgrade `eidetic-bevy-bible-graph` to Bevy 0.18.1 with a documented
   dependency review while it is still a leaf crate and before render/window
   features are enabled.
+- Reconcile Bevy native-render feature selection with the per-platform runner
+  contract before enabling visible-window support. Linux X11/Wayland features,
+  Windows requirements, and macOS requirements must be reviewed separately so a
+  Linux-oriented feature set is not treated as a cross-platform solution.
 - Retire the embedded viewport production path before enabling more native
   render behavior. Either rename the existing desktop surface registry into a
   floating renderer window host or quarantine/delete the WebView child-surface
@@ -2348,6 +2399,10 @@ Implementation order:
   command/status channels, so Tauri commands can open, focus, query status,
   update subscriptions, and close without waiting for the renderer event loop
   to exit.
+- Add the platform-neutral status DTO slice before the real event-loop runner:
+  Rust status, TypeScript mirror, UI status display, and tests must include the
+  unsupported/capability reason enum and prove unsupported platforms remain
+  explicit backend-owned state.
 - Retire stale embedded-viewport references from desktop documentation and
   remove unused raw-handle dependencies before proving the native runner. If a
   raw handle becomes necessary, reintroduce it only in a thin desktop platform
@@ -2359,6 +2414,12 @@ Implementation order:
   path. If the Bevy/winit event loop cannot run safely under the Tauri desktop
   runtime, stop Milestone 8 implementation and re-plan the renderer architecture
   before adding more visual graph code.
+- Split the native runner proof into three explicit platform outcomes before
+  enabling primary graph visuals: Linux X11/Wayland worker-thread runner,
+  Windows worker-thread runner, and macOS main-thread/Tauri-compatible runner.
+  A platform can advance independently only after its own open/focus/close/
+  reopen/teardown gate passes; unproven platforms must remain
+  `unsupported`/`PendingNativeRunner` in backend status.
 - Keep the native runner in `eidetic-desktop` as the composition-root lifecycle
   owner. It owns startup, shutdown, cancellation, join handles, command
   channels, panic reporting, and status projection. `eidetic-bevy-bible-graph`
@@ -2368,11 +2429,20 @@ Implementation order:
   modules. Linux X11, Linux Wayland, Windows, and macOS behavior must compile
   through a shared platform-neutral API, and unproven capabilities must degrade
   through typed status instead of inline UI/domain branches.
+- Implement the platform-neutral runner status first: current platform,
+  selected strategy, capability, unsupported reason, focus support, visibility
+  support, lifecycle, and last error. The frontend may display those fields but
+  must not branch into platform-specific renderer logic.
 - Consolidate graph renderer projection delivery before wiring the real graph
   scene into the runner. The desktop renderer host owns the active projection
   request and projection subscription; Svelte controls may update the requested
   focus/filter/search/open state through backend commands, but Svelte must not
   be one of several projection writers for the same renderer.
+- Convert `graph_renderer_set_projection` semantics into an active renderer
+  request update before primary graph rendering. The command may remain as a
+  temporary adapter name during migration, but its implementation must update
+  the desktop-owned request/subscription and let that owner load/write the
+  projection through a coalesced path.
 - Replace or contain the temporary renderer command-drain polling before the
   Bevy graph becomes primary. Renderer selection/focus/inspect commands should
   be projected through desktop/backend events or another tracked lifecycle
@@ -2390,6 +2460,10 @@ Implementation order:
   graph paths.
 - Add the Bevy graph host after the projection and influence adapters are
   deterministic, bounded, and tested.
+- Keep the Bevy graph host's initial rebuild strategy behind a documented
+  prototype limit. If verification shows refresh bursts or larger bounded
+  neighborhoods cause visible stalls, introduce node/edge/influence entity maps
+  and diffed updates before connecting the host as the primary graph surface.
 - Connect the graph host to the floating renderer host so the same projection
   and command-drain contracts drive the visible graph window.
 - Add Svelte detail/filter/review panels and keyboard command alternatives
@@ -2429,11 +2503,24 @@ Standards gates:
   must not set `renderer_window_visible_supported`, `renderer_window_visible`,
   `renderer_window_ready`, or focus support from inferred or hardcoded state;
   those fields must come from the actual runner capability/status path.
+- Renderer-window status must include an explicit unsupported/capability reason
+  enum owned by the backend status contract. UI code may display the reason, but
+  must not infer pending, unsupported, failed, or supported states from free-form
+  messages, platform names, or combinations of booleans.
+- Native window support is a per-platform capability, not a global milestone
+  flag. Linux X11/Wayland, Windows, and macOS each need their own verified
+  runner outcome. The app may enable the visible Bevy graph on platforms that
+  pass while unsupported platforms continue to project typed unsupported status
+  and keep the Svelte outline as the semantic fallback.
 - Renderer projection delivery has exactly one active writer owned by the
   desktop renderer host. Frontend stores may cache backend responses and request
   focus/filter changes, but they must not independently push renderer
   projections in parallel with backend event refresh or projection-route
   mirroring.
+- Renderer projection refreshes are coalesced by the desktop renderer host or a
+  dedicated desktop-owned subscription owner. Event bridges and Svelte controls
+  may enqueue invalidation/request updates only; they must not start independent
+  projection loading loops for the same renderer.
 - Desktop renderer bridges, backend event bridges, and command-drain loops must
   have explicit lifecycle owners, tracked handles or unsubscribe paths, bounded
   queues, and deterministic teardown. Detached task patterns are not acceptable
@@ -2451,6 +2538,11 @@ Standards gates:
   behavior is isolated behind desktop runtime strategy modules, unsupported
   capabilities degrade through typed status projections, and implementation
   slices must not mark Linux X11-specific behavior as the general solution.
+- The Bevy/winit `run_on_any_thread` path must be treated as a Linux/Windows
+  candidate only. macOS must use a separately proven main-thread or
+  Tauri-compatible strategy before reporting visible-window support. If that
+  strategy is not available, macOS remains unsupported in backend status
+  without blocking other proven platforms.
 - Svelte graph controls own only drafts, filters, focus, local expansion, and
   projection caches. Selection that changes generation or persistence must go
   through backend commands/projections.
@@ -2461,10 +2553,19 @@ Standards gates:
   must be justified in the dependency review for the owning leaf crate, with
   `cargo tree` notes and proof that `eidetic-core` and `eidetic-server` remain
   free of Bevy/Tauri dependencies.
+- Platform-specific Bevy/winit features are reviewed per runner strategy. Linux
+  X11/Wayland feature enablement, Windows support, and macOS support must be
+  described separately so dependency configuration does not silently encode a
+  Linux-only implementation as the default cross-platform path.
 - Raw-window-handle or platform-handle dependencies are absent by default. If
   the native runner gate proves one is required, the dependency must live only
   in `eidetic-desktop`, be used by the module that owns the platform handle,
   and be covered by the raw-handle safety/verification gate above.
+- Full despawn/respawn Bevy graph rebuilds are allowed only for small bounded
+  projections during the prototype runner gate. Primary graph rendering requires
+  either documented caps plus coalesced refresh proof or keyed ECS/native-visual
+  diffing that updates changed nodes, edges, and influence highlights without
+  rebuilding the whole scene every refresh.
 
 Verification:
 
@@ -2483,6 +2584,13 @@ Verification:
   leaking renderer threads/tasks, or setting visible-window status from fake
   state. The smoke check must run before graph nodes/edges become the primary
   visual surface.
+- Native runner verification records separate outcomes for Linux X11, Linux
+  Wayland, Windows, and macOS. Linux/Windows worker-thread proofs do not mark
+  macOS supported; macOS support requires a separate main-thread/Tauri-runtime
+  proof or remains typed unsupported.
+- Status contract tests prove pending, platform-unproven, platform-unsupported,
+  runner-error, and verified-support cases serialize through Rust and TypeScript
+  without relying on free-form messages or frontend inference.
 - Runner responsiveness checks prove Tauri commands can query status, request
   focus, update the active projection request, and close the renderer while the
   Bevy/winit event loop is running.
@@ -2490,6 +2598,9 @@ Verification:
   renderer through one desktop-owned subscription path, without duplicate
   projection writes from route mirroring, server-event refresh, and Svelte
   projection-set commands.
+- Projection coalescing tests prove backend event bursts and rapid Svelte
+  focus/filter/search changes produce one in-flight projection load plus a
+  tracked follow-up refresh, not overlapping renderer writes.
 - Renderer bridge lifecycle tests prove backend event bridges, renderer
   projection subscriptions, command queues, and any temporary command-drain
   stopgaps are cancelled or unsubscribed on renderer close, project close, and
@@ -2526,6 +2637,12 @@ Verification:
   transient renderer state are torn down on window close/project close.
 - Dependency review proves Bevy 0.18.1 remains isolated to leaf renderer crates
   and that any render/window/input features are justified before they land.
+- Dependency review or compile checks prove platform-specific Bevy/winit feature
+  choices are intentional per runner strategy and do not make untested Linux
+  X11/Wayland assumptions the default for Windows or macOS.
+- Renderer performance tests or smoke metrics prove the current full-rebuild
+  strategy stays within the documented bounded prototype envelope, or that keyed
+  diffing has replaced it before the Bevy graph becomes primary.
 - Frontend tests prove graph filters/details/review controls replace projection
   caches from backend responses and do not mutate durable graph state locally.
 - AI context projection tests for later graph-driven generation must prove
@@ -2546,11 +2663,22 @@ Re-plan triggers:
 - A proposed runner path would make Bevy, Svelte, or renderer-local state own
   durable graph facts, context influence records, accepted proposals, or saved
   layout decisions.
+- Renderer status cannot represent unsupported, pending, failed, and supported
+  runner states through typed backend-owned fields without UI inference.
 - Renderer projection delivery cannot be reduced to one desktop-owned writer
   without reintroducing frontend-owned durable state or unbounded event fanout.
+- Renderer projection invalidation cannot be coalesced without losing ordering,
+  dropping the latest active request, or allowing stale projection writes to
+  replace newer renderer state.
+- Full Bevy ECS/native-visual rebuilds cannot meet the bounded prototype
+  performance envelope and keyed diffing would require changing renderer or
+  projection ownership boundaries.
 - The native runner requires broad dependency changes outside leaf renderer or
   desktop crates, or makes `eidetic-core`/`eidetic-server` depend on Bevy,
   Tauri, or platform windowing crates.
+- Bevy/winit feature selection cannot be cleanly separated by platform strategy,
+  or the visible runner requires platform dependencies that cannot be locally
+  verified and typed as unsupported on unproven platforms.
 - Verification cannot prove deterministic startup, focus, close, reopen,
   project-close teardown, panic reporting, and no fake visible-window status.
 
