@@ -3,12 +3,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use bevy::a11y::AccessibilityPlugin;
 use bevy::app::AppExit;
-use bevy::input::InputPlugin;
 use bevy::prelude::{
-    App, Camera2d, ClearColor, Color, Commands, Component, Entity, MessageWriter, MinimalPlugins,
-    Plugin, Res, ResMut, Resource, Startup, Update, With, World,
+    App, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins, Entity, MessageWriter,
+    Plugin, PluginGroup, Res, ResMut, Resource, Sprite, Startup, Transform, Update, Vec2, Vec3,
+    With, World,
 };
 use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
@@ -262,24 +261,24 @@ pub fn configure_controlled_minimal_bible_graph_native_window_app(
     config: BibleGraphNativeWindowRunnerConfig,
     control_handle: BibleGraphNativeWindowControlHandle,
 ) {
-    app.add_plugins(MinimalPlugins);
-    app.add_plugins(AccessibilityPlugin);
-    app.add_plugins(InputPlugin);
     app.add_message::<AppExit>();
-    app.add_plugins(WindowPlugin {
-        primary_window: Some(Window {
-            title: config.title,
-            resolution: WindowResolution::new(config.width_px, config.height_px),
-            decorations: !config.borderless_window,
-            ..Default::default()
-        }),
-        exit_condition: ExitCondition::DontExit,
-        close_when_requested: false,
-        ..Default::default()
-    });
-    app.add_plugins(WinitPlugin {
-        run_on_any_thread: config.run_on_any_thread,
-    });
+    app.add_plugins(
+        DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: config.title,
+                    resolution: WindowResolution::new(config.width_px, config.height_px),
+                    decorations: !config.borderless_window,
+                    ..Default::default()
+                }),
+                exit_condition: ExitCondition::DontExit,
+                close_when_requested: false,
+                ..Default::default()
+            })
+            .set(WinitPlugin {
+                run_on_any_thread: config.run_on_any_thread,
+            }),
+    );
     app.add_plugins(BibleGraphNativeRenderPlugin);
     app.insert_resource(BibleGraphNativeWindowControl::from(&control_handle));
     app.add_systems(Update, close_minimal_native_window_when_requested);
@@ -399,6 +398,14 @@ pub fn rebuild_bible_graph_native_visuals(
     let edge_count = snapshot.edges.len();
 
     for edge in snapshot.edges {
+        let edge_length = ((edge.to_position.x - edge.from_position.x).powi(2)
+            + (edge.to_position.y - edge.from_position.y).powi(2))
+        .sqrt()
+        .max(1.0);
+        let edge_angle = (edge.to_position.y - edge.from_position.y)
+            .atan2(edge.to_position.x - edge.from_position.x);
+        let edge_midpoint_x = (edge.from_position.x + edge.to_position.x) / 2.0;
+        let edge_midpoint_y = (edge.from_position.y + edge.to_position.y) / 2.0;
         world.spawn((
             BibleGraphNativeVisualEntity,
             BibleGraphNativeEdgeVisual {
@@ -412,6 +419,15 @@ pub fn rebuild_bible_graph_native_visuals(
                 width: edge.width,
                 stroke_color: edge.stroke_color,
                 highlighted: edge.highlighted,
+            },
+            Sprite::from_color(
+                graph_color(edge.stroke_color),
+                Vec2::new(edge_length, edge.width.max(1.0)),
+            ),
+            Transform {
+                translation: Vec3::new(edge_midpoint_x, edge_midpoint_y, 0.0),
+                rotation: bevy::prelude::Quat::from_rotation_z(edge_angle),
+                ..Default::default()
             },
         ));
     }
@@ -429,6 +445,15 @@ pub fn rebuild_bible_graph_native_visuals(
                 outline_color: node.outline_color,
                 highlighted: node.highlighted,
             },
+            Sprite::from_color(
+                graph_color(node.fill_color),
+                Vec2::splat((node.radius * 2.0).max(1.0)),
+            ),
+            Transform::from_translation(Vec3::new(
+                node.position.x,
+                node.position.y,
+                node.position.z + 1.0,
+            )),
         ));
     }
 
@@ -443,6 +468,15 @@ pub fn update_bible_graph_renderer_window_bounds(world: &mut World, width_px: u3
             width_px,
             height_px,
         };
+    }
+}
+
+fn graph_color(color: &str) -> Color {
+    match color {
+        "#f2c94c" => Color::srgb(0.949, 0.788, 0.298),
+        "#253041" => Color::srgb(0.145, 0.188, 0.255),
+        "#11151d" => Color::srgb(0.067, 0.082, 0.114),
+        _ => Color::srgb(0.8, 0.84, 0.9),
     }
 }
 

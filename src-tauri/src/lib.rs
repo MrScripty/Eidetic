@@ -267,7 +267,7 @@ fn wait_for_graph_renderer_ready(
     owner: &DesktopBibleGraphRendererOwner,
     label: &str,
 ) -> Result<BibleGraphHostStatus, String> {
-    for _ in 0..250 {
+    for _ in 0..2_000 {
         let status = owner
             .status()
             .map_err(|error| format!("graph renderer smoke {label} status failed: {error:?}"))?;

@@ -2443,11 +2443,10 @@ Current open blockers:
   selection/focus/inspect output must move to native renderer events or another
   backend-owned projection channel before the graph becomes primary.
 - The central graph workspace still shows the Svelte semantic outline/list as
-  the visible graph surface. The Bevy graph is currently a projection consumer,
-  not the visible 3D graph window.
-- The floating Bevy graph window now receives backend-owned graph projections
-  and rebuilds native visual ECS entities, but it still needs actual rendered
-  node/edge primitives before the old Svelte outline can be demoted.
+  the visible graph surface. The floating Bevy graph window now has rendered
+  node/edge primitives, but the old outline cannot be demoted until Bevy covers
+  selection, inspection, filtering, navigation, focus, close, and reopen under
+  backend-owned status.
 
 Standards compliance review:
 
@@ -2633,28 +2632,27 @@ Completed foundation, do not reimplement unless verification fails:
   strategies until they have matching platform-specific runtime proof.
 - The floating native graph window has a projection handoff from the desktop
   owner into Bevy window control state. The native app consumes the latest
-  `BibleRenderGraph` projection and rebuilds native visual ECS entities, with
-  actual visible primitive rendering still remaining before the Bevy graph can
-  replace the semantic outline.
+  `BibleRenderGraph` projection and rebuilds native visual ECS entities.
+- The floating native graph window now uses Bevy's render stack and attaches
+  sprite-backed node/edge primitives to native graph visual ECS entities. The
+  lifecycle smoke readiness budget was raised to account for render-stack
+  startup while still requiring an actually ready native window.
 
 Remaining implementation order:
 
-1. Add actual Bevy-rendered node/edge primitives for the floating graph window
-   from the native visual ECS entities, keeping durable data and projection
-   selection backend-owned.
-2. Consolidate graph renderer projection delivery into a single desktop-owned
+1. Consolidate graph renderer projection delivery into a single desktop-owned
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-3. Replace the temporary Svelte command-drain polling bridge with native
+2. Replace the temporary Svelte command-drain polling bridge with native
    renderer events or a backend-owned projection channel with deterministic
    teardown.
-4. Keep Svelte graph filters, details, review, and semantic outline as
+3. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-5. Remove or demote the old 2D graph surface after Bevy covers target
+4. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-6. Add keyed ECS/native-visual diffing before expanding beyond the documented
+5. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 

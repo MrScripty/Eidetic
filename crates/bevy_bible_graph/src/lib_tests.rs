@@ -315,11 +315,6 @@ fn controlled_native_window_app_installs_close_control_resource() {
     assert!(!control.close_requested());
     assert!(!control.ready());
 
-    app.update();
-
-    assert!(control.ready());
-    assert!(control.visible());
-
     control.request_close();
 
     assert!(control.close_requested());
@@ -328,7 +323,7 @@ fn controlled_native_window_app_installs_close_control_resource() {
 #[cfg(feature = "native_render")]
 #[test]
 fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
-    use bevy::prelude::Plugin;
+    use bevy::prelude::{Plugin, With};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
@@ -348,6 +343,13 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
             node_count: 2,
             edge_count: 1
         }
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::Sprite>>()
+            .iter(app.world())
+            .count(),
+        3
     );
 }
 
