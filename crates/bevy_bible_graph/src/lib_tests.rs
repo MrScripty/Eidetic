@@ -261,6 +261,8 @@ fn native_render_plugin_records_borderless_window_intent() {
 #[cfg(feature = "native_render")]
 #[test]
 fn native_window_runner_config_records_minimal_smoke_window_intent() {
+    use std::num::NonZeroU64;
+
     let config = BibleGraphNativeWindowRunnerConfig::minimal_smoke(true);
 
     assert_eq!(config.title, "Eidetic Bible Graph");
@@ -268,6 +270,12 @@ fn native_window_runner_config_records_minimal_smoke_window_intent() {
     assert_eq!(config.height_px, 720);
     assert!(config.borderless_window);
     assert!(config.run_on_any_thread);
+    assert_eq!(config.auto_close_after_ms, None);
+
+    let auto_close_ms = NonZeroU64::new(250).unwrap();
+    let config = config.with_auto_close_after_ms(auto_close_ms);
+
+    assert_eq!(config.auto_close_after_ms, Some(auto_close_ms));
 }
 
 #[cfg(feature = "native_render")]

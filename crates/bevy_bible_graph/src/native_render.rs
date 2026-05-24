@@ -1,6 +1,9 @@
+use std::num::NonZeroU64;
+
+use bevy::app::AppExit;
 use bevy::prelude::{
-    App, Camera2d, ClearColor, Color, Commands, Component, Entity, MinimalPlugins, Plugin, ResMut,
-    Resource, Startup, With, World,
+    App, Camera2d, ClearColor, Color, Commands, Component, Entity, MessageWriter, MinimalPlugins,
+    Plugin, Res, ResMut, Resource, Startup, Time, Timer, TimerMode, Update, With, World,
 };
 use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
@@ -20,6 +23,7 @@ pub struct BibleGraphNativeWindowRunnerConfig {
     pub height_px: u32,
     pub borderless_window: bool,
     pub run_on_any_thread: bool,
+    pub auto_close_after_ms: Option<NonZeroU64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Resource)]
@@ -27,6 +31,11 @@ pub struct BibleGraphNativeRendererWindowScene {
     pub background_color: &'static str,
     pub grid_color: &'static str,
     pub accent_color: &'static str,
+}
+
+#[derive(Debug, Resource)]
+struct BibleGraphNativeAutoClose {
+    timer: Timer,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -105,7 +114,13 @@ impl BibleGraphNativeWindowRunnerConfig {
             height_px: 720,
             borderless_window: true,
             run_on_any_thread,
+            auto_close_after_ms: None,
         }
+    }
+
+    pub fn with_auto_close_after_ms(mut self, auto_close_after_ms: NonZeroU64) -> Self {
+        self.auto_close_after_ms = Some(auto_close_after_ms);
+        self
     }
 }
 
@@ -142,6 +157,13 @@ pub fn configure_minimal_bible_graph_native_window_app(
         run_on_any_thread: config.run_on_any_thread,
     });
     app.add_plugins(BibleGraphNativeRenderPlugin);
+
+    if let Some(auto_close_after_ms) = config.auto_close_after_ms {
+        app.insert_resource(BibleGraphNativeAutoClose {
+            timer: Timer::from_seconds(auto_close_after_ms.get() as f32 / 1000.0, TimerMode::Once),
+        });
+        app.add_systems(Update, close_minimal_native_window_after_timer);
+    }
 }
 
 pub fn run_minimal_bible_graph_native_window(config: BibleGraphNativeWindowRunnerConfig) {
@@ -156,6 +178,16 @@ fn spawn_bible_graph_renderer_window_scene(
 ) {
     commands.spawn((Camera2d, BibleGraphNativeCamera));
     status.camera_count = 1;
+}
+
+fn close_minimal_native_window_after_timer(
+    time: Res<Time>,
+    mut auto_close: ResMut<BibleGraphNativeAutoClose>,
+    mut app_exit: MessageWriter<AppExit>,
+) {
+    if auto_close.timer.tick(time.delta()).just_finished() {
+        app_exit.write(AppExit::Success);
+    }
 }
 
 pub fn rebuild_bible_graph_native_visuals(

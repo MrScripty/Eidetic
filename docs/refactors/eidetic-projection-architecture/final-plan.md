@@ -1227,6 +1227,10 @@ Discovered issues:
   support still requires a desktop-owned `NativeRendererSupervisor` proof under
   the Tauri runtime; a standalone Bevy/winit window proof must not flip
   production capability status by itself.
+- Updated: the diagnostic smoke binary now accepts a nonzero auto-close
+  duration so native-window preflight commands can close deterministically
+  without manual interaction. This remains a diagnostic aid only and does not
+  mark production visible-window support as verified.
 - Updated: the remaining blocker will be resolved by replacing the pending
   runner with one supervisor-owned production path per verified platform, not
   by adding frontend fallbacks, compatibility layers, or parallel renderer
