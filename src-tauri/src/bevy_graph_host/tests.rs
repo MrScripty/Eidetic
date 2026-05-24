@@ -1,5 +1,7 @@
-use eidetic_bevy_bible_graph::BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY;
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
+use eidetic_bevy_bible_graph::{
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphNativeWindowRunnerConfig,
+};
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeId, BibleRenderGraphEdge, BibleRenderGraphInfluence,
     BibleRenderGraphNeighborhood, BibleRenderGraphNode, BibleRenderGraphPosition,
@@ -177,9 +179,9 @@ fn native_renderer_platform_strategy_builds_startup_plan() {
 }
 
 #[test]
-fn native_renderer_supervisor_records_open_intent_without_reporting_visibility() {
+fn native_renderer_supervisor_keeps_unsupported_platform_closed() {
     let mut runner =
-        NativeRendererSupervisor::for_strategy(NativeRendererPlatformStrategy::current());
+        NativeRendererSupervisor::for_strategy(NativeRendererPlatformStrategy::UnsupportedPlatform);
 
     let initial = runner.status();
 
@@ -189,16 +191,25 @@ fn native_renderer_supervisor_records_open_intent_without_reporting_visibility()
     );
     assert_eq!(
         initial.platform,
-        BibleGraphRendererWindowPlatform::current()
+        BibleGraphRendererWindowPlatform::Unsupported
     );
-    assert_eq!(initial.capability, expected_capability());
-    assert_eq!(initial.threading_model, expected_threading_model());
+    assert_eq!(
+        initial.capability,
+        BibleGraphRendererWindowCapability::PlatformUnsupported
+    );
+    assert_eq!(
+        initial.threading_model,
+        NativeRendererThreadingModel::Unsupported
+    );
     assert_eq!(initial.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert_eq!(
         initial.supervisor_lifecycle,
         NativeRendererSupervisorLifecycle::NotStarted
     );
-    assert_eq!(initial.capability_reason, expected_pending_reason());
+    assert_eq!(
+        initial.capability_reason,
+        BibleGraphRendererWindowCapabilityReason::PlatformUnsupported
+    );
     assert!(!initial.verified_support);
     assert!(!initial.visible_window_supported);
     assert!(!initial.window_visible);
@@ -211,19 +222,19 @@ fn native_renderer_supervisor_records_open_intent_without_reporting_visibility()
     let focused = runner.focus();
     let closed = runner.close();
 
-    assert_eq!(opened.lifecycle, expected_open_runner_lifecycle());
+    assert_eq!(opened.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert_eq!(
         opened.supervisor_lifecycle,
-        expected_open_supervisor_lifecycle()
+        NativeRendererSupervisorLifecycle::Closed
     );
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
     assert!(!opened.focus_supported);
     assert_eq!(opened.last_error, None);
-    assert_eq!(focused.lifecycle, expected_open_runner_lifecycle());
+    assert_eq!(focused.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert_eq!(
         focused.supervisor_lifecycle,
-        expected_open_supervisor_lifecycle()
+        NativeRendererSupervisorLifecycle::Closed
     );
     assert!(!focused.focus_supported);
     assert_eq!(focused.last_error, None);
@@ -237,8 +248,53 @@ fn native_renderer_supervisor_records_open_intent_without_reporting_visibility()
 }
 
 #[test]
+fn native_renderer_supervisor_starts_injected_window_thread() {
+    let mut runner = NativeRendererSupervisor::for_strategy_with_window_thread_start(
+        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven,
+        start_test_window_thread,
+    );
+
+    let opened = runner.open();
+    let focused = runner.focus();
+    let closed = runner.close();
+
+    assert_eq!(opened.lifecycle, NativeRendererRunnerLifecycle::Visible);
+    assert_eq!(
+        opened.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Running
+    );
+    assert_eq!(
+        opened.capability,
+        BibleGraphRendererWindowCapability::PlatformUnproven
+    );
+    assert!(!opened.verified_support);
+    assert!(!opened.visible_window_supported);
+    assert!(opened.window_visible);
+    assert!(opened.window_ready);
+    assert_eq!(opened.last_error, None);
+    assert_eq!(focused.lifecycle, NativeRendererRunnerLifecycle::Visible);
+    assert_eq!(
+        focused.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Running
+    );
+    assert!(focused.window_visible);
+    assert!(!focused.focus_supported);
+    assert_eq!(focused.last_error, None);
+    assert_eq!(closed.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert_eq!(
+        closed.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Closed
+    );
+    assert!(!closed.window_visible);
+    assert_eq!(closed.last_error, None);
+}
+
+#[test]
 fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
-    let mut runner = NativeRendererRunnerHandle::start_pending().unwrap();
+    let mut runner = NativeRendererRunnerHandle::start_for_strategy(
+        NativeRendererPlatformStrategy::UnsupportedPlatform,
+    )
+    .unwrap();
 
     let opened = runner.open();
     let focused = runner.focus();
@@ -248,24 +304,36 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
         opened.strategy,
         BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
     );
-    assert_eq!(opened.platform, BibleGraphRendererWindowPlatform::current());
-    assert_eq!(opened.lifecycle, expected_open_runner_lifecycle());
+    assert_eq!(
+        opened.platform,
+        BibleGraphRendererWindowPlatform::Unsupported
+    );
+    assert_eq!(opened.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert_eq!(
         opened.supervisor_lifecycle,
-        expected_open_supervisor_lifecycle()
+        NativeRendererSupervisorLifecycle::Closed
     );
-    assert_eq!(opened.capability, expected_capability());
-    assert_eq!(opened.threading_model, expected_threading_model());
-    assert_eq!(opened.capability_reason, expected_pending_reason());
+    assert_eq!(
+        opened.capability,
+        BibleGraphRendererWindowCapability::PlatformUnsupported
+    );
+    assert_eq!(
+        opened.threading_model,
+        NativeRendererThreadingModel::Unsupported
+    );
+    assert_eq!(
+        opened.capability_reason,
+        BibleGraphRendererWindowCapabilityReason::PlatformUnsupported
+    );
     assert!(!opened.verified_support);
     assert!(!opened.visible_window_supported);
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
     assert_eq!(opened.last_error, None);
-    assert_eq!(focused.lifecycle, expected_open_runner_lifecycle());
+    assert_eq!(focused.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert_eq!(
         focused.supervisor_lifecycle,
-        expected_open_supervisor_lifecycle()
+        NativeRendererSupervisorLifecycle::Closed
     );
     assert!(!focused.focus_supported);
     assert_eq!(focused.last_error, None);
@@ -310,7 +378,10 @@ fn native_renderer_runner_handle_starts_from_explicit_platform_strategy() {
 
 #[test]
 fn native_renderer_runner_handle_stops_with_bounded_reply() {
-    let mut runner = NativeRendererRunnerHandle::start_pending().unwrap();
+    let mut runner = NativeRendererRunnerHandle::start_for_strategy(
+        NativeRendererPlatformStrategy::UnsupportedPlatform,
+    )
+    .unwrap();
     runner.open();
 
     let stopped = runner.stop();
@@ -420,7 +491,7 @@ fn renderer_window_lifecycle_is_derived_from_backend_state() {
 
 #[test]
 fn host_applies_projection_and_reports_scene_counts() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
 
     let status = host.set_projection(sample_projection()).unwrap();
 
@@ -431,17 +502,16 @@ fn host_applies_projection_and_reports_scene_counts() {
             running: true,
             renderer_window_open: true,
             renderer_scene_ready: true,
-            renderer_window_visible: false,
+            renderer_window_visible: true,
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
-            renderer_runner_lifecycle: NativeRendererRunnerLifecycle::OpenRequested,
-            renderer_supervisor_lifecycle: expected_open_supervisor_lifecycle(),
+            renderer_runner_lifecycle: NativeRendererRunnerLifecycle::Visible,
+            renderer_supervisor_lifecycle: NativeRendererSupervisorLifecycle::Running,
             renderer_runner_threading_model: expected_threading_model(),
             renderer_window_capability: expected_capability(),
             renderer_window_capability_reason: expected_pending_reason(),
-            renderer_window_lifecycle:
-                BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner,
-            renderer_window_ready: false,
+            renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Visible,
+            renderer_window_ready: true,
             renderer_window_verified_support: false,
             renderer_window_visible_supported: false,
             renderer_window_focus_supported: false,
@@ -462,7 +532,7 @@ fn host_applies_projection_and_reports_scene_counts() {
 
 #[test]
 fn host_projection_update_does_not_start_closed_renderer() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
 
     let status = host.update_projection_if_open(sample_projection()).unwrap();
 
@@ -474,7 +544,7 @@ fn host_projection_update_does_not_start_closed_renderer() {
 
 #[test]
 fn host_validates_renderer_commands_and_drains_them() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
     let projection = sample_projection();
     let node_id = projection.nodes[0].node_id.clone();
     let edge_id = projection.edges[0].edge_id.clone();
@@ -502,7 +572,7 @@ fn host_validates_renderer_commands_and_drains_them() {
 
 #[test]
 fn host_exposes_renderer_visual_snapshot() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
     let projection = sample_projection();
     let node_id = projection.nodes[0].node_id.clone();
     let edge_id = projection.edges[0].edge_id.clone();
@@ -520,7 +590,7 @@ fn host_exposes_renderer_visual_snapshot() {
 
 #[test]
 fn host_visual_snapshot_does_not_start_renderer_without_projection() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
 
     let error = host.visual_snapshot().unwrap_err();
     let status = host.status();
@@ -533,7 +603,7 @@ fn host_visual_snapshot_does_not_start_renderer_without_projection() {
 
 #[test]
 fn host_records_renderer_errors_without_panicking() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
     host.set_projection(sample_projection()).unwrap();
     let missing = BibleGraphNodeId::new("node.missing").unwrap();
 
@@ -545,7 +615,7 @@ fn host_records_renderer_errors_without_panicking() {
 
 #[test]
 fn host_stop_drops_renderer_state() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
     host.set_projection(sample_projection()).unwrap();
 
     let status = host.stop();
@@ -585,20 +655,20 @@ fn host_stop_drops_renderer_state() {
 
 #[test]
 fn host_focus_routes_through_native_runner_status() {
-    let mut host = DesktopBibleGraphHost::new();
+    let mut host = test_bible_graph_host();
     host.start().unwrap();
 
     let status = host.focus();
 
     assert!(status.renderer_window_open);
     assert!(!status.renderer_window_focus_supported);
-    assert!(!status.renderer_window_visible);
-    assert!(!status.renderer_window_ready);
+    assert!(status.renderer_window_visible);
+    assert!(status.renderer_window_ready);
 }
 
 #[test]
 fn owner_runs_renderer_on_dedicated_thread() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
     let projection = sample_projection();
 
     let status = owner.set_projection(projection).unwrap();
@@ -611,8 +681,8 @@ fn owner_runs_renderer_on_dedicated_thread() {
     assert!(status.running);
     assert!(status.renderer_window_open);
     assert!(status.renderer_scene_ready);
-    assert!(!status.renderer_window_visible);
-    assert!(!status.renderer_window_ready);
+    assert!(status.renderer_window_visible);
+    assert!(status.renderer_window_ready);
     assert!(!status.renderer_window_visible_supported);
     assert!(!status.renderer_window_focus_supported);
     owner.stop().unwrap();
@@ -620,15 +690,15 @@ fn owner_runs_renderer_on_dedicated_thread() {
 
 #[test]
 fn owner_can_start_renderer_before_projection_arrives() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
 
     let status = owner.start_renderer().unwrap();
 
     assert!(status.running);
     assert!(status.renderer_window_open);
     assert!(status.renderer_scene_ready);
-    assert!(!status.renderer_window_visible);
-    assert!(!status.renderer_window_ready);
+    assert!(status.renderer_window_visible);
+    assert!(status.renderer_window_ready);
     assert_eq!(status.node_count, 0);
     assert_eq!(status.edge_count, 0);
     assert_eq!(status.native_visual_node_count, 0);
@@ -639,21 +709,21 @@ fn owner_can_start_renderer_before_projection_arrives() {
 
 #[test]
 fn owner_focus_routes_to_renderer_thread() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
     owner.start_renderer().unwrap();
 
     let status = owner.focus_renderer().unwrap();
 
     assert!(status.renderer_window_open);
     assert!(!status.renderer_window_focus_supported);
-    assert!(!status.renderer_window_visible);
-    assert!(!status.renderer_window_ready);
+    assert!(status.renderer_window_visible);
+    assert!(status.renderer_window_ready);
     owner.stop().unwrap();
 }
 
 #[test]
 fn owner_projection_update_does_not_start_closed_renderer() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
 
     let status = owner
         .update_projection_if_open(sample_projection())
@@ -668,14 +738,14 @@ fn owner_projection_update_does_not_start_closed_renderer() {
 
 #[test]
 fn owner_records_renderer_window_bounds_on_renderer_thread() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
 
     let status = owner.set_renderer_window_bounds(1280, 720).unwrap();
 
     assert!(status.running);
     assert!(status.renderer_scene_ready);
-    assert!(!status.renderer_window_visible);
-    assert!(!status.renderer_window_ready);
+    assert!(status.renderer_window_visible);
+    assert!(status.renderer_window_ready);
     assert_eq!(status.renderer_window_width_px, 1280);
     assert_eq!(status.renderer_window_height_px, 720);
     owner.stop().unwrap();
@@ -683,7 +753,7 @@ fn owner_records_renderer_window_bounds_on_renderer_thread() {
 
 #[test]
 fn owner_closes_renderer_without_stopping_owner_thread() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
     owner.set_projection(sample_projection()).unwrap();
 
     let closed = owner.close_renderer().unwrap();
@@ -700,7 +770,7 @@ fn owner_closes_renderer_without_stopping_owner_thread() {
 
 #[test]
 fn owner_rejects_empty_renderer_window_bounds_without_starting_renderer() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
 
     let error = owner.set_renderer_window_bounds(0, 720).unwrap_err();
     let status = owner.status().unwrap();
@@ -719,7 +789,7 @@ fn owner_rejects_empty_renderer_window_bounds_without_starting_renderer() {
 
 #[test]
 fn owner_drains_validated_renderer_commands() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
     let projection = sample_projection();
     let node_id = projection.nodes[0].node_id.clone();
     let edge_id = projection.edges[0].edge_id.clone();
@@ -748,7 +818,7 @@ fn owner_drains_validated_renderer_commands() {
 
 #[test]
 fn owner_exposes_visual_snapshot_from_dedicated_thread() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
     let projection = sample_projection();
     let node_id = projection.nodes[0].node_id.clone();
     owner.set_projection(projection).unwrap();
@@ -763,7 +833,7 @@ fn owner_exposes_visual_snapshot_from_dedicated_thread() {
 
 #[test]
 fn owner_reports_stopped_after_shutdown() {
-    let owner = DesktopBibleGraphRendererOwner::start().unwrap();
+    let owner = test_bible_graph_owner();
     owner.stop().unwrap();
 
     let error = owner.status().unwrap_err();
@@ -832,26 +902,23 @@ fn expected_threading_model() -> NativeRendererThreadingModel {
     NativeRendererPlatformStrategy::current().threading_model()
 }
 
-fn expected_open_runner_lifecycle() -> NativeRendererRunnerLifecycle {
-    match NativeRendererPlatformStrategy::current().runner_startup_plan() {
-        NativeRendererRunnerStartupPlan::MinimalWindowProofCandidate { .. } => {
-            NativeRendererRunnerLifecycle::OpenRequested
+fn start_test_window_thread(
+    config: BibleGraphNativeWindowRunnerConfig,
+) -> std::io::Result<NativeRendererWindowThreadHandle> {
+    NativeRendererWindowThreadHandle::start_with(config, |_config, control| {
+        while !control.close_requested() {
+            std::thread::sleep(Duration::from_millis(1));
         }
-        NativeRendererRunnerStartupPlan::PendingOnly { .. } => {
-            NativeRendererRunnerLifecycle::Closed
-        }
-    }
+    })
 }
 
-fn expected_open_supervisor_lifecycle() -> NativeRendererSupervisorLifecycle {
-    match NativeRendererPlatformStrategy::current().runner_startup_plan() {
-        NativeRendererRunnerStartupPlan::MinimalWindowProofCandidate { .. } => {
-            NativeRendererSupervisorLifecycle::Starting
-        }
-        NativeRendererRunnerStartupPlan::PendingOnly { .. } => {
-            NativeRendererSupervisorLifecycle::Closed
-        }
-    }
+fn test_bible_graph_host() -> DesktopBibleGraphHost {
+    DesktopBibleGraphHost::new_with_native_window_thread_start(start_test_window_thread).unwrap()
+}
+
+fn test_bible_graph_owner() -> DesktopBibleGraphRendererOwner {
+    DesktopBibleGraphRendererOwner::start_with_native_window_thread_start(start_test_window_thread)
+        .unwrap()
 }
 
 fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {

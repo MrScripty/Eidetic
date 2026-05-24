@@ -91,6 +91,16 @@ impl NativeRendererWindowThreadHandle {
         self.status()
     }
 
+    pub fn join_completed(&mut self) -> NativeRendererWindowThreadStatus {
+        self.refresh_result();
+        if self.result.is_some()
+            && let Some(join_handle) = self.join_handle.take()
+        {
+            let _ = join_handle.join();
+        }
+        self.status()
+    }
+
     fn refresh_result(&mut self) {
         if self.result.is_some() {
             return;

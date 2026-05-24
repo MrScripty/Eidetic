@@ -11,8 +11,8 @@ use crate::renderer_window::DesktopRendererWindowKind;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowLifecycle,
-    NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerStatus,
-    NativeRendererSupervisor,
+    NativeRendererPlatformStrategy, NativeRendererRunner, NativeRendererRunnerHandle,
+    NativeRendererRunnerStatus, NativeRendererSupervisor, NativeRendererWindowThreadHandle,
 };
 
 pub struct DesktopBibleGraphHost {
@@ -80,6 +80,23 @@ impl DesktopBibleGraphHost {
             native_runner: DesktopNativeRendererRunner::start_current_platform(),
             last_error: None,
         }
+    }
+
+    pub fn new_with_native_window_thread_start(
+        window_thread_start: fn(
+            eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig,
+        ) -> std::io::Result<NativeRendererWindowThreadHandle>,
+    ) -> Result<Self, std::io::Error> {
+        Ok(Self {
+            renderer: None,
+            native_runner: DesktopNativeRendererRunner::Managed(
+                NativeRendererRunnerHandle::start_for_strategy_with_window_thread_start(
+                    NativeRendererPlatformStrategy::current(),
+                    window_thread_start,
+                )?,
+            ),
+            last_error: None,
+        })
     }
 
     pub fn renderer_unavailable_status(message: String) -> BibleGraphHostStatus {

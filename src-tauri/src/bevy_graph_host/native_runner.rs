@@ -6,8 +6,9 @@ use super::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
     NativeRendererPlatformStrategy, NativeRendererSupervisor, NativeRendererSupervisorLifecycle,
-    NativeRendererThreadingModel,
+    NativeRendererThreadingModel, NativeRendererWindowThreadHandle,
 };
+use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
 pub const NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS: u64 = 2_000;
@@ -73,10 +74,24 @@ impl NativeRendererRunnerHandle {
     }
 
     pub fn start_for_strategy(strategy: NativeRendererPlatformStrategy) -> std::io::Result<Self> {
+        Self::start_for_strategy_with_window_thread_start(
+            strategy,
+            NativeRendererWindowThreadHandle::start,
+        )
+    }
+
+    pub(crate) fn start_for_strategy_with_window_thread_start(
+        strategy: NativeRendererPlatformStrategy,
+        window_thread_start: fn(
+            BibleGraphNativeWindowRunnerConfig,
+        ) -> std::io::Result<NativeRendererWindowThreadHandle>,
+    ) -> std::io::Result<Self> {
         let (sender, receiver) = mpsc::sync_channel(NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY);
         let join_handle = thread::Builder::new()
             .name("eidetic-native-renderer-runner".to_string())
-            .spawn(move || run_native_renderer_runner(strategy, receiver))?;
+            .spawn(move || {
+                run_native_renderer_runner(strategy, window_thread_start, receiver);
+            })?;
 
         Ok(Self {
             sender,
@@ -166,9 +181,15 @@ impl Drop for NativeRendererRunnerHandle {
 
 fn run_native_renderer_runner(
     strategy: NativeRendererPlatformStrategy,
+    window_thread_start: fn(
+        BibleGraphNativeWindowRunnerConfig,
+    ) -> std::io::Result<NativeRendererWindowThreadHandle>,
     receiver: mpsc::Receiver<NativeRendererRunnerRequest>,
 ) {
-    let mut runner = NativeRendererSupervisor::for_strategy(strategy);
+    let mut runner = NativeRendererSupervisor::for_strategy_with_window_thread_start(
+        strategy,
+        window_thread_start,
+    );
 
     for request in receiver {
         match request {
@@ -182,7 +203,7 @@ fn run_native_renderer_runner(
                 let _ = reply.send(runner.focus());
             }
             NativeRendererRunnerRequest::Status { reply } => {
-                let _ = reply.send(runner.status());
+                let _ = reply.send(runner.refresh_status());
             }
             NativeRendererRunnerRequest::Stop { reply } => {
                 let _ = reply.send(runner.close());

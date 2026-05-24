@@ -931,6 +931,11 @@ Completed slices:
   request signaling, completion/panic result reporting, and bounded stop
   waiting so the supervisor can own Bevy event-loop lifecycle without detached
   tasks.
+- `feat(desktop): run native renderer through supervisor` wired the first
+  production `NativeRendererSupervisor` path to start the Bevy window thread,
+  project running/closed/failed status, refresh completion or panic state from
+  status/focus requests, and close with bounded joined teardown while keeping
+  unit tests on injected non-GUI runner threads.
 
 Discovered issues:
 
@@ -1018,6 +1023,11 @@ Discovered issues:
   long-lived Bevy window thread. A desktop-owned window thread handle now owns
   close signaling, completion observation, panic capture, and bounded stop
   waits.
+- Resolved: wiring the supervisor to the native window thread made graph host
+  unit tests create real Bevy/winit event loops, which is non-deterministic and
+  caused event-loop recreation failures. Host and owner tests now inject a
+  backend-owned non-GUI window-thread starter so tests validate the same
+  lifecycle contract without opening platform windows.
 - Resolved: graph renderer window lifecycle could only be inferred from open,
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
@@ -2581,13 +2591,15 @@ Completed foundation, do not reimplement unless verification fails:
   until the Tauri-owned supervisor path proves the same lifecycle.
 - Desktop native renderer window thread ownership now has a bounded close/stop
   primitive ready for supervisor integration.
+- The production native renderer supervisor path now starts the Bevy window
+  thread, reports running/closed/failed status, refreshes completion/panic
+  state on status/focus, and performs bounded joined close.
 
 Remaining implementation order:
 
-1. Implement the first production `NativeRendererSupervisor` runner path under
-   Tauri for the locally verified platform. The runner must own event-loop
-   startup, command ingress, status egress, heartbeat, panic reporting,
-   shutdown, and joined teardown.
+1. Add an explicit native renderer heartbeat/readiness signal from the Bevy
+   window thread so `window_ready` is based on a renderer-produced lifecycle
+   event instead of supervisor-thread liveness.
 2. Prove open/status/focus/close/reopen/project-close/app-shutdown under the
    Tauri runtime while status/focus/close/projection commands remain responsive
    while the Bevy/winit event loop is active.

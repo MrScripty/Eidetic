@@ -3,8 +3,8 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use eidetic_bevy_bible_graph::{
-    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
-    BibleGraphVisualSnapshot,
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphNativeWindowRunnerConfig,
+    BibleGraphRendererCommand, BibleGraphVisualSnapshot,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -12,6 +12,7 @@ use eidetic_core::contracts::{
 
 use super::{
     BibleGraphHostError, BibleGraphHostResult, BibleGraphHostStatus, DesktopBibleGraphHost,
+    NativeRendererWindowThreadHandle,
 };
 
 pub const GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize =
@@ -79,10 +80,30 @@ pub struct DesktopBibleGraphRendererOwner {
 
 impl DesktopBibleGraphRendererOwner {
     pub fn start() -> BibleGraphHostResult<Self> {
+        Self::start_with_host(|| Ok(DesktopBibleGraphHost::new()))
+    }
+
+    pub fn start_with_native_window_thread_start(
+        window_thread_start: fn(
+            BibleGraphNativeWindowRunnerConfig,
+        ) -> std::io::Result<NativeRendererWindowThreadHandle>,
+    ) -> BibleGraphHostResult<Self> {
+        Self::start_with_host(move || {
+            DesktopBibleGraphHost::new_with_native_window_thread_start(window_thread_start)
+                .map_err(|_| BibleGraphHostError::OwnerStopped)
+        })
+    }
+
+    fn start_with_host(
+        host_factory: impl FnOnce() -> BibleGraphHostResult<DesktopBibleGraphHost> + Send + 'static,
+    ) -> BibleGraphHostResult<Self> {
         let (sender, receiver) = mpsc::sync_channel(GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY);
         let join_handle = thread::Builder::new()
             .name("eidetic-bevy-bible-graph".to_string())
-            .spawn(move || run_renderer_owner(receiver))
+            .spawn(move || match host_factory() {
+                Ok(host) => run_renderer_owner(host, receiver),
+                Err(error) => run_failed_renderer_owner(error, receiver),
+            })
             .map_err(|_| BibleGraphHostError::OwnerStopped)?;
 
         Ok(Self {
@@ -282,9 +303,10 @@ fn receive_reply<T>(receiver: mpsc::Receiver<BibleGraphHostResult<T>>) -> BibleG
     }
 }
 
-fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
-    let mut host = DesktopBibleGraphHost::new();
-
+fn run_renderer_owner(
+    mut host: DesktopBibleGraphHost,
+    receiver: mpsc::Receiver<BibleGraphHostRequest>,
+) {
     for request in receiver {
         match request {
             BibleGraphHostRequest::Start { reply } => {
@@ -335,6 +357,42 @@ fn run_renderer_owner(receiver: mpsc::Receiver<BibleGraphHostRequest>) {
             }
             BibleGraphHostRequest::Stop { reply } => {
                 let _ = reply.send(Ok(host.stop()));
+                break;
+            }
+        }
+    }
+}
+
+fn run_failed_renderer_owner(
+    error: BibleGraphHostError,
+    receiver: mpsc::Receiver<BibleGraphHostRequest>,
+) {
+    let status = DesktopBibleGraphHost::renderer_unavailable_status(format!("{error:?}"));
+    for request in receiver {
+        match request {
+            BibleGraphHostRequest::SelectNode { reply, .. }
+            | BibleGraphHostRequest::InspectNode { reply, .. }
+            | BibleGraphHostRequest::SelectEdge { reply, .. }
+            | BibleGraphHostRequest::SelectInfluence { reply, .. } => {
+                let _ = reply.send(Err(error.clone()));
+            }
+            BibleGraphHostRequest::DrainCommands { reply } => {
+                let _ = reply.send(Ok(Vec::new()));
+            }
+            BibleGraphHostRequest::VisualSnapshot { reply } => {
+                let _ = reply.send(Err(error.clone()));
+            }
+            BibleGraphHostRequest::Start { reply }
+            | BibleGraphHostRequest::SetProjection { reply, .. }
+            | BibleGraphHostRequest::UpdateProjectionIfOpen { reply, .. }
+            | BibleGraphHostRequest::SetRendererWindowBounds { reply, .. }
+            | BibleGraphHostRequest::Status { reply }
+            | BibleGraphHostRequest::FocusRenderer { reply }
+            | BibleGraphHostRequest::CloseRenderer { reply } => {
+                let _ = reply.send(Ok(status.clone()));
+            }
+            BibleGraphHostRequest::Stop { reply } => {
+                let _ = reply.send(Ok(status.clone()));
                 break;
             }
         }
