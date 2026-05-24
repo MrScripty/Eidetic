@@ -23,3 +23,7 @@ uuid.workspace = true
 [[bin]]
 name = "eidetic-desktop"
 path = "src/main.rs"
+
+[[bin]]
+name = "eidetic-native-renderer-smoke"
+path = "src/bin/native_renderer_smoke.rs"

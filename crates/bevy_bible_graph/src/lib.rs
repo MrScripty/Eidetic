@@ -19,7 +19,7 @@ pub use native_render::{
     BibleGraphNativeRendererWindowBounds, BibleGraphNativeRendererWindowScene,
     BibleGraphNativeRendererWindowStatus, BibleGraphNativeVisualEntity,
     BibleGraphNativeVisualStatus, BibleGraphNativeWindowRunnerConfig,
-    configure_minimal_bible_graph_native_window_app,
+    configure_minimal_bible_graph_native_window_app, run_minimal_bible_graph_native_window,
 };
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,

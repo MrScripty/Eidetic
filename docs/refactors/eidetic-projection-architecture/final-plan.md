@@ -1217,6 +1217,10 @@ Discovered issues:
 - Updated: native runner startup is now represented as a typed backend plan:
   supported proof candidates carry threading plus minimal-window config, while
   unsupported platforms remain pending-only before any event loop is started.
+- Updated: a dedicated `eidetic-native-renderer-smoke` desktop binary now owns
+  the manual Bevy/winit minimal-window smoke path. It runs outside the main app
+  so Milestone 8 can validate native window behavior before production status
+  reports verified visible-window support.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

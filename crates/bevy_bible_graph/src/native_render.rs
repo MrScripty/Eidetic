@@ -144,6 +144,12 @@ pub fn configure_minimal_bible_graph_native_window_app(
     app.add_plugins(BibleGraphNativeRenderPlugin);
 }
 
+pub fn run_minimal_bible_graph_native_window(config: BibleGraphNativeWindowRunnerConfig) {
+    let mut app = App::new();
+    configure_minimal_bible_graph_native_window_app(&mut app, config);
+    app.run();
+}
+
 fn spawn_bible_graph_renderer_window_scene(
     mut commands: Commands,
     mut status: ResMut<BibleGraphNativeRendererWindowStatus>,
