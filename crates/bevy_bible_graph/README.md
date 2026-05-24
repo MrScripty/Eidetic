@@ -13,6 +13,9 @@ Current scope:
 - Receive `BibleRenderGraphProjection` snapshots.
 - Rebuild read-only Bevy ECS entities for graph nodes, edges, and influence
   highlights.
+- Reject projection snapshots above the documented prototype full-rebuild
+  envelope of 500 nodes and 1,000 edges. Larger primary graph views require
+  keyed entity diffing before this crate may consume them.
 - Derive disposable visual primitives for nodes and edges, including positions,
   radii, colors, widths, and highlight flags, so native render systems do not
   re-derive graph styling in Svelte or desktop command code.

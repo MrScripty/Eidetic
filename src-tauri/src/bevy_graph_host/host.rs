@@ -64,10 +64,7 @@ impl DesktopBibleGraphHost {
         projection: BibleRenderGraphProjection,
     ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
         self.start()?;
-        self.with_renderer_mut(|renderer| {
-            renderer.set_projection(projection);
-            Ok(())
-        })?;
+        self.with_renderer_mut(|renderer| renderer.set_projection(projection))?;
         Ok(self.status())
     }
 
@@ -79,8 +76,16 @@ impl DesktopBibleGraphHost {
             return Ok(self.status());
         };
 
-        Self::catch_renderer_panic(|| renderer.set_projection(projection))?;
-        self.last_error = None;
+        let result =
+            Self::catch_renderer_panic(|| renderer.set_projection(projection))?.map_err(|error| {
+                let message = error.to_string();
+                self.last_error = Some(message.clone());
+                BibleGraphHostError::Renderer(message)
+            });
+        if result.is_ok() {
+            self.last_error = None;
+        }
+        result?;
         Ok(self.status())
     }
 

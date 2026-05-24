@@ -11,7 +11,9 @@ fn renderer_app_receives_projection_and_emits_validated_selection_command() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
 
-    renderer.set_projection(projection_with_node(node_id.clone()));
+    renderer
+        .set_projection(projection_with_node(node_id.clone()))
+        .unwrap();
 
     assert_eq!(renderer.projection_node_count(), 1);
     assert_eq!(renderer.select_node(node_id.clone()), Ok(()));
@@ -28,7 +30,9 @@ fn renderer_app_uses_bounded_command_queue() {
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
-    renderer.set_projection(projection_with_node(node_id.clone()));
+    renderer
+        .set_projection(projection_with_node(node_id.clone()))
+        .unwrap();
 
     for _ in 0..BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY {
         assert_eq!(renderer.inspect_node(node_id.clone()), Ok(()));
@@ -50,21 +54,44 @@ fn renderer_app_rebuilds_scene_entities_from_projection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
 
-    renderer.set_projection(projection_with_edge(node_id));
+    renderer
+        .set_projection(projection_with_edge(node_id))
+        .unwrap();
     assert_eq!(renderer.scene_counts(), (2, 1));
     assert_eq!(renderer.influence_count(), 0);
 
-    renderer.set_projection(BibleRenderGraphProjection {
-        focused_root_id: None,
-        selected_node_id: None,
-        selected_timeline_node_id: None,
-        nodes: Vec::new(),
-        edges: Vec::new(),
-        neighborhoods: Vec::new(),
-        influences: Vec::new(),
-    });
+    renderer
+        .set_projection(BibleRenderGraphProjection {
+            focused_root_id: None,
+            selected_node_id: None,
+            selected_timeline_node_id: None,
+            nodes: Vec::new(),
+            edges: Vec::new(),
+            neighborhoods: Vec::new(),
+            influences: Vec::new(),
+        })
+        .unwrap();
     assert_eq!(renderer.scene_counts(), (0, 0));
     assert_eq!(renderer.influence_count(), 0);
+}
+
+#[test]
+fn renderer_app_rejects_projection_above_full_rebuild_envelope() {
+    let mut renderer = BibleGraphRendererApp::new();
+    let projection = projection_with_node_count(BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT + 1);
+
+    assert_eq!(
+        renderer.set_projection(projection),
+        Err(
+            BibleGraphRendererError::ProjectionExceedsPrototypeRebuildLimit {
+                node_count: BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT + 1,
+                edge_count: 0,
+                node_limit: BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT,
+                edge_limit: BIBLE_GRAPH_FULL_REBUILD_EDGE_LIMIT,
+            }
+        )
+    );
+    assert_eq!(renderer.scene_counts(), (0, 0));
 }
 
 #[test]
@@ -84,7 +111,9 @@ fn renderer_app_rejects_unknown_node_selection() {
     let mut renderer = BibleGraphRendererApp::new();
     let known_node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let unknown_node_id = BibleGraphNodeId::new("node.character.nope").unwrap();
-    renderer.set_projection(projection_with_node(known_node_id));
+    renderer
+        .set_projection(projection_with_node(known_node_id))
+        .unwrap();
 
     assert_eq!(
         renderer.inspect_node(unknown_node_id.clone()),
@@ -100,7 +129,9 @@ fn renderer_app_returns_neighborhood_indexes_from_projection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
-    renderer.set_projection(projection_with_edge(node_id.clone()));
+    renderer
+        .set_projection(projection_with_edge(node_id.clone()))
+        .unwrap();
 
     assert_eq!(
         renderer.edge_ids_for_node(&node_id),
@@ -118,7 +149,9 @@ fn renderer_app_rejects_unknown_edge_selection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let unknown_edge_id = BibleGraphEdgeId::new("edge.unknown").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
-    renderer.set_projection(projection_with_node(node_id));
+    renderer
+        .set_projection(projection_with_node(node_id))
+        .unwrap();
 
     assert_eq!(
         renderer.select_edge(unknown_edge_id.clone()),
@@ -136,11 +169,13 @@ fn renderer_app_indexes_influence_highlights_from_projection() {
     let influence_id = ContextInfluenceId::new();
     let mut renderer = BibleGraphRendererApp::new();
 
-    renderer.set_projection(projection_with_influence(
-        node_id.clone(),
-        edge_id.clone(),
-        influence_id,
-    ));
+    renderer
+        .set_projection(projection_with_influence(
+            node_id.clone(),
+            edge_id.clone(),
+            influence_id,
+        ))
+        .unwrap();
 
     assert_eq!(renderer.scene_counts(), (2, 1));
     assert_eq!(renderer.influence_count(), 1);
@@ -166,11 +201,13 @@ fn renderer_app_exposes_projection_derived_visual_snapshot() {
     let influence_id = ContextInfluenceId::new();
     let mut renderer = BibleGraphRendererApp::new();
 
-    renderer.set_projection(projection_with_influence(
-        node_id.clone(),
-        edge_id.clone(),
-        influence_id,
-    ));
+    renderer
+        .set_projection(projection_with_influence(
+            node_id.clone(),
+            edge_id.clone(),
+            influence_id,
+        ))
+        .unwrap();
 
     let snapshot = renderer.visual_snapshot().unwrap();
 
@@ -249,7 +286,9 @@ fn renderer_window_rebuilds_projection_visual_entities() {
     let influence_id = ContextInfluenceId::new();
     let mut renderer = BibleGraphRendererApp::new_renderer_window();
 
-    renderer.set_projection(projection_with_influence(node_id, edge_id, influence_id));
+    renderer
+        .set_projection(projection_with_influence(node_id, edge_id, influence_id))
+        .unwrap();
 
     assert_eq!(renderer.native_visual_counts(), (2, 1));
 }
@@ -259,7 +298,9 @@ fn renderer_app_rejects_unknown_influence_selection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let unknown_influence_id = ContextInfluenceId::new();
     let mut renderer = BibleGraphRendererApp::new();
-    renderer.set_projection(projection_with_node(node_id));
+    renderer
+        .set_projection(projection_with_node(node_id))
+        .unwrap();
 
     assert_eq!(
         renderer.select_influence(unknown_influence_id),
@@ -288,6 +329,33 @@ fn projection_with_node(node_id: BibleGraphNodeId) -> BibleRenderGraphProjection
                 z: 0.0,
             },
         }],
+        edges: Vec::new(),
+        neighborhoods: Vec::new(),
+        influences: Vec::new(),
+    }
+}
+
+fn projection_with_node_count(node_count: usize) -> BibleRenderGraphProjection {
+    BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: None,
+        selected_timeline_node_id: None,
+        nodes: (0..node_count)
+            .map(|index| BibleRenderGraphNode {
+                node_id: BibleGraphNodeId::new(format!("node.test.{index}")).unwrap(),
+                parent_id: None,
+                schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                label: format!("Node {index}"),
+                system_owned: false,
+                sort_order: u32::try_from(index).unwrap_or(u32::MAX),
+                depth: 0,
+                position: BibleRenderGraphPosition {
+                    x: index as f32,
+                    y: 0.0,
+                    z: 0.0,
+                },
+            })
+            .collect(),
         edges: Vec::new(),
         neighborhoods: Vec::new(),
         influences: Vec::new(),

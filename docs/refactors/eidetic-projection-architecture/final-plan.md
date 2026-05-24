@@ -1209,12 +1209,12 @@ Discovered issues:
   drains, drops resolved commands after teardown, suppresses post-stop errors,
   clears its interval idempotently, and remains gated by backend-projected
   renderer capability status until native renderer events replace polling.
-- Open: the Bevy graph scene and native visual paths currently rebuild by
-  despawning and respawning all projection entities. That remains acceptable only
-  for bounded prototype projections. Before the Bevy graph becomes primary, the
-  plan needs an explicit performance gate: either keep strict graph caps and
-  coalesced refreshes, or introduce keyed entity diffing by node/edge/influence
-  ID if refresh frequency or projection size grows.
+- Resolved for the bounded prototype: the Bevy graph scene and native visual
+  paths still rebuild by despawning and respawning projection entities, but the
+  renderer crate now rejects snapshots above the documented full-rebuild
+  envelope of 500 nodes and 1,000 edges. Larger or more frequent primary graph
+  views must add keyed entity diffing by node/edge/influence ID before this
+  rebuild strategy can be expanded.
 - Resolved: stale embedded-viewport documentation and the unused
   `raw-window-handle` dependency were removed after the production child-surface
   path was rejected. Raw handles must be reintroduced only through the native
@@ -2472,10 +2472,11 @@ Implementation order:
   graph paths.
 - Add the Bevy graph host after the projection and influence adapters are
   deterministic, bounded, and tested.
-- Keep the Bevy graph host's initial rebuild strategy behind a documented
-  prototype limit. If verification shows refresh bursts or larger bounded
-  neighborhoods cause visible stalls, introduce node/edge/influence entity maps
-  and diffed updates before connecting the host as the primary graph surface.
+- Resolved for the current prototype: the Bevy graph host's full-rebuild
+  strategy is behind an enforced 500-node/1,000-edge renderer envelope. If
+  verification shows refresh bursts or larger bounded neighborhoods cause
+  visible stalls, introduce node/edge/influence entity maps and diffed updates
+  before expanding the primary graph surface beyond that envelope.
 - Connect the graph host to the floating renderer host so the same projection
   and command-drain contracts drive the visible graph window.
 - Add Svelte detail/filter/review panels and keyboard command alternatives

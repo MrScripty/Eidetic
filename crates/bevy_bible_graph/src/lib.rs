@@ -30,6 +30,8 @@ pub use visual::{
 };
 
 pub const BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;
+pub const BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT: usize = 500;
+pub const BIBLE_GRAPH_FULL_REBUILD_EDGE_LIMIT: usize = 1_000;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -50,6 +52,15 @@ pub enum BibleGraphRendererError {
     UnknownEdge { edge_id: BibleGraphEdgeId },
     #[error("bible graph projection does not contain influence {influence_id:?}")]
     UnknownInfluence { influence_id: ContextInfluenceId },
+    #[error(
+        "bible graph projection exceeds prototype full-rebuild limits: {node_count} nodes/{edge_count} edges exceeds {node_limit} nodes/{edge_limit} edges"
+    )]
+    ProjectionExceedsPrototypeRebuildLimit {
+        node_count: usize,
+        edge_count: usize,
+        node_limit: usize,
+        edge_limit: usize,
+    },
     #[error("bible graph renderer command queue is full")]
     CommandQueueFull,
 }
@@ -127,7 +138,11 @@ impl BibleGraphRendererApp {
             .unwrap_or_default()
     }
 
-    pub fn set_projection(&mut self, projection: BibleRenderGraphProjection) {
+    pub fn set_projection(
+        &mut self,
+        projection: BibleRenderGraphProjection,
+    ) -> Result<(), BibleGraphRendererError> {
+        validate_projection_rebuild_limits(&projection)?;
         self.app
             .world_mut()
             .resource_mut::<BibleGraphRenderState>()
@@ -135,6 +150,7 @@ impl BibleGraphRendererApp {
         rebuild_bible_graph_scene(self.app.world_mut(), &projection);
         #[cfg(feature = "native_render")]
         native_render::rebuild_bible_graph_native_visuals(self.app.world_mut(), &projection);
+        Ok(())
     }
 
     pub fn projection_node_count(&self) -> usize {
@@ -345,6 +361,25 @@ impl BibleGraphRendererApp {
             Err(BibleGraphRendererError::UnknownInfluence { influence_id })
         }
     }
+}
+
+fn validate_projection_rebuild_limits(
+    projection: &BibleRenderGraphProjection,
+) -> Result<(), BibleGraphRendererError> {
+    if projection.nodes.len() > BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT
+        || projection.edges.len() > BIBLE_GRAPH_FULL_REBUILD_EDGE_LIMIT
+    {
+        return Err(
+            BibleGraphRendererError::ProjectionExceedsPrototypeRebuildLimit {
+                node_count: projection.nodes.len(),
+                edge_count: projection.edges.len(),
+                node_limit: BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT,
+                edge_limit: BIBLE_GRAPH_FULL_REBUILD_EDGE_LIMIT,
+            },
+        );
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
