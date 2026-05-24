@@ -6,9 +6,9 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins, Entity, MessageWriter,
-    Plugin, PluginGroup, Res, ResMut, Resource, Sprite, Startup, Transform, Update, Vec2, Vec3,
-    World,
+    App, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins, Entity, Justify,
+    MessageWriter, Plugin, PluginGroup, Res, ResMut, Resource, Sprite, Startup, Text2d, TextColor,
+    TextFont, TextLayout, Transform, Update, Vec2, Vec3, World,
 };
 use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
@@ -116,6 +116,12 @@ pub struct BibleGraphNativeNodeVisual {
     pub fill_color: &'static str,
     pub outline_color: &'static str,
     pub highlighted: bool,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeNodeLabelVisual {
+    pub node_id: BibleGraphNodeId,
+    pub label: String,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -466,12 +472,15 @@ pub fn rebuild_bible_graph_native_visuals(
     despawn_remaining_entities(world, existing_edges);
 
     let mut existing_nodes = existing_native_nodes(world);
+    let mut existing_node_labels = existing_native_node_labels(world);
 
     for node in snapshot.nodes {
+        let node_id = node.node_id.clone();
+        let node_label = node.label.clone();
         let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeNodeVisual {
-                node_id: node.node_id.clone(),
+                node_id: node_id.clone(),
                 x: node.position.x,
                 y: node.position.y,
                 z: node.position.z,
@@ -490,13 +499,37 @@ pub fn rebuild_bible_graph_native_visuals(
                 node.position.z + 1.0,
             )),
         );
-        if let Some(entity) = existing_nodes.remove(&node.node_id) {
+        if let Some(entity) = existing_nodes.remove(&node_id) {
             world.entity_mut(entity).insert(bundle);
         } else {
             world.spawn(bundle);
         }
+
+        let label_bundle = (
+            BibleGraphNativeVisualEntity,
+            BibleGraphNativeNodeLabelVisual {
+                node_id: node_id.clone(),
+                label: node_label.clone(),
+            },
+            Text2d::new(node_label),
+            TextFont::from_font_size(if node.highlighted { 15.0 } else { 13.0 }),
+            TextColor(Color::srgb(0.86, 0.9, 0.94)),
+            TextLayout::new_with_justify(Justify::Center),
+            bevy::sprite::Anchor::TOP_CENTER,
+            Transform::from_translation(Vec3::new(
+                node.position.x,
+                node.position.y - node.radius - 6.0,
+                node.position.z + 2.0,
+            )),
+        );
+        if let Some(entity) = existing_node_labels.remove(&node_id) {
+            world.entity_mut(entity).insert(label_bundle);
+        } else {
+            world.spawn(label_bundle);
+        }
     }
     despawn_remaining_entities(world, existing_nodes);
+    despawn_remaining_entities(world, existing_node_labels);
 
     let mut existing_influences = existing_native_influences(world);
 
@@ -658,6 +691,14 @@ fn graph_color(color: &str) -> Color {
         "#f2c94c" => Color::srgb(0.949, 0.788, 0.298),
         "#253041" => Color::srgb(0.145, 0.188, 0.255),
         "#11151d" => Color::srgb(0.067, 0.082, 0.114),
+        "#40576f" => Color::srgb(0.251, 0.341, 0.435),
+        "#52687f" => Color::srgb(0.322, 0.408, 0.498),
+        "#1f6f78" => Color::srgb(0.122, 0.435, 0.471),
+        "#2f7a6e" => Color::srgb(0.184, 0.478, 0.431),
+        "#3f668f" => Color::srgb(0.247, 0.4, 0.561),
+        "#7a5c8f" => Color::srgb(0.478, 0.361, 0.561),
+        "#8a6f3d" => Color::srgb(0.541, 0.435, 0.239),
+        "#34495e" => Color::srgb(0.204, 0.286, 0.369),
         _ => Color::srgb(0.8, 0.84, 0.9),
     }
 }
@@ -667,6 +708,14 @@ fn existing_native_nodes(world: &mut World) -> HashMap<BibleGraphNodeId, Entity>
         .query::<(Entity, &BibleGraphNativeNodeVisual)>()
         .iter(world)
         .map(|(entity, node)| (node.node_id.clone(), entity))
+        .collect()
+}
+
+fn existing_native_node_labels(world: &mut World) -> HashMap<BibleGraphNodeId, Entity> {
+    world
+        .query::<(Entity, &BibleGraphNativeNodeLabelVisual)>()
+        .iter(world)
+        .map(|(entity, label)| (label.node_id.clone(), entity))
         .collect()
 }
 

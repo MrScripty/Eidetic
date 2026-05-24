@@ -374,6 +374,13 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
     );
     assert_eq!(
         app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::Text2d>>()
+            .iter(app.world())
+            .count(),
+        2
+    );
+    assert_eq!(
+        app.world_mut()
             .query_filtered::<(), With<BibleGraphNativeInfluenceVisual>>()
             .iter(app.world())
             .count(),
@@ -539,6 +546,7 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
     app.update();
 
     let node_entity = native_node_entity(app.world_mut(), &node_id).unwrap();
+    let node_label_entity = native_node_label_entity(app.world_mut(), &node_id).unwrap();
     let edge_entity = native_edge_entity(app.world_mut(), &edge_id).unwrap();
     let influence_entity = native_influence_entity(app.world_mut(), influence_id).unwrap();
 
@@ -552,6 +560,10 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
     assert_eq!(
         native_node_entity(app.world_mut(), &node_id),
         Some(node_entity)
+    );
+    assert_eq!(
+        native_node_label_entity(app.world_mut(), &node_id),
+        Some(node_label_entity)
     );
     assert_eq!(
         native_edge_entity(app.world_mut(), &edge_id),
@@ -569,6 +581,10 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
         native_node_entity(app.world_mut(), &node_id),
         Some(node_entity)
     );
+    assert_eq!(
+        native_node_label_entity(app.world_mut(), &node_id),
+        Some(node_label_entity)
+    );
     assert_eq!(native_edge_entity(app.world_mut(), &edge_id), None);
     assert_eq!(native_influence_entity(app.world_mut(), influence_id), None);
 
@@ -580,6 +596,16 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
             .query::<(Entity, &BibleGraphNativeNodeVisual)>()
             .iter(world)
             .find_map(|(entity, node)| (&node.node_id == node_id).then_some(entity))
+    }
+
+    fn native_node_label_entity(
+        world: &mut bevy::prelude::World,
+        node_id: &BibleGraphNodeId,
+    ) -> Option<Entity> {
+        world
+            .query::<(Entity, &BibleGraphNativeNodeLabelVisual)>()
+            .iter(world)
+            .find_map(|(entity, label)| (&label.node_id == node_id).then_some(entity))
     }
 
     fn native_edge_entity(

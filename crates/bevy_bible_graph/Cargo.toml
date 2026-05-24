@@ -15,6 +15,7 @@ thiserror.workspace = true
 default = []
 native_render = [
     "bevy/2d_bevy_render",
+    "bevy/bevy_text",
     "bevy/bevy_window",
     "bevy/bevy_winit",
     "bevy/wayland",

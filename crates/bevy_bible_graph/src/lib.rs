@@ -15,10 +15,10 @@ mod native_render;
 #[cfg(feature = "native_render")]
 pub use native_render::{
     BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeInfluenceVisual,
-    BibleGraphNativeNodeVisual, BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
-    BibleGraphNativeRendererWindowBounds, BibleGraphNativeRendererWindowScene,
-    BibleGraphNativeRendererWindowStatus, BibleGraphNativeVisualEntity,
-    BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
+    BibleGraphNativeNodeLabelVisual, BibleGraphNativeNodeVisual, BibleGraphNativeRenderConfig,
+    BibleGraphNativeRenderPlugin, BibleGraphNativeRendererWindowBounds,
+    BibleGraphNativeRendererWindowScene, BibleGraphNativeRendererWindowStatus,
+    BibleGraphNativeVisualEntity, BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
     configure_controlled_minimal_bible_graph_native_window_app,
     configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_edge_selection,
