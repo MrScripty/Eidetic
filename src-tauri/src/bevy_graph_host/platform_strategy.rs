@@ -43,13 +43,14 @@ impl NativeRendererPlatformStrategy {
     }
 
     pub fn status(self) -> BibleGraphRendererWindowStrategyStatus {
+        let capability = self.capability();
         BibleGraphRendererWindowStrategyStatus {
             strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             platform: self.platform(),
-            capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
+            capability,
             capability_reason: self.capability_reason(),
-            verified_support: false,
-            visible_window_supported: false,
+            verified_support: capability.verified_support(),
+            visible_window_supported: capability.visible_window_supported(),
         }
     }
 
@@ -103,12 +104,23 @@ impl NativeRendererPlatformStrategy {
         }
     }
 
+    fn capability(self) -> BibleGraphRendererWindowCapability {
+        match self {
+            Self::LinuxWorkerThreadUnproven
+            | Self::MacosMainThreadUnproven
+            | Self::WindowsWorkerThreadUnproven => {
+                BibleGraphRendererWindowCapability::PlatformUnproven
+            }
+            Self::UnsupportedPlatform => BibleGraphRendererWindowCapability::PlatformUnsupported,
+        }
+    }
+
     fn capability_reason(self) -> BibleGraphRendererWindowCapabilityReason {
         match self {
             Self::LinuxWorkerThreadUnproven
             | Self::MacosMainThreadUnproven
             | Self::WindowsWorkerThreadUnproven => {
-                BibleGraphRendererWindowCapabilityReason::PendingNativeRunner
+                BibleGraphRendererWindowCapabilityReason::PlatformUnproven
             }
             Self::UnsupportedPlatform => {
                 BibleGraphRendererWindowCapabilityReason::PlatformUnsupported

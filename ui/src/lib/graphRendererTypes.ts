@@ -62,7 +62,12 @@ export type GraphRendererSupervisorLifecycle =
 
 export type GraphRendererRunnerThreadingModel = 'worker_thread' | 'main_thread' | 'unsupported';
 
-export type GraphRendererWindowCapability = 'pending_native_runner';
+export type GraphRendererWindowCapability =
+  | 'pending_native_runner'
+  | 'platform_unproven'
+  | 'platform_unsupported'
+  | 'runner_error'
+  | 'verified_support';
 
 export type GraphRendererWindowCapabilityReason =
   | 'pending_native_runner'

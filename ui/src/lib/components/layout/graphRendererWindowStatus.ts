@@ -33,7 +33,7 @@ export function graphRendererWindowStatusDisplay(
     case 'scene_ready_pending_native_runner':
       if (!status.renderer_window_verified_support) {
         return {
-          label: unavailableLabel(status.renderer_window_capability_reason),
+          label: unavailableLabel(status.renderer_window_capability),
           active: false,
           message: status.renderer_window_message,
           primaryActionLabel: status.renderer_window_open
@@ -68,10 +68,8 @@ export function graphRendererWindowStatusDisplay(
   }
 }
 
-function unavailableLabel(
-  reason: GraphRendererStatus['renderer_window_capability_reason'],
-): string {
-  switch (reason) {
+function unavailableLabel(capability: GraphRendererStatus['renderer_window_capability']): string {
+  switch (capability) {
     case 'pending_native_runner':
     case 'platform_unproven':
       return 'Renderer unavailable';

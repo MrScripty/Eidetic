@@ -18,8 +18,8 @@ const baseStatus: GraphRendererStatus = {
   renderer_runner_lifecycle: 'open_requested',
   renderer_supervisor_lifecycle: 'starting',
   renderer_runner_threading_model: 'worker_thread',
-  renderer_window_capability: 'pending_native_runner',
-  renderer_window_capability_reason: 'pending_native_runner',
+  renderer_window_capability: 'platform_unproven',
+  renderer_window_capability_reason: 'platform_unproven',
   renderer_window_lifecycle: 'scene_ready_pending_native_runner',
   renderer_window_ready: false,
   renderer_window_verified_support: false,
@@ -77,6 +77,15 @@ describe('graph renderer window status', () => {
       renderer_window_verified_support: true,
       renderer_window_visible_supported: true,
       renderer_window_capability_reason: 'verified_support',
+    });
+    expect(shouldDrainGraphRendererCommands()).toBe(false);
+
+    setGraphRendererWindowStatus({
+      ...baseStatus,
+      renderer_window_capability: 'verified_support',
+      renderer_window_capability_reason: 'verified_support',
+      renderer_window_verified_support: true,
+      renderer_window_visible_supported: true,
     });
     expect(shouldDrainGraphRendererCommands()).toBe(true);
   });

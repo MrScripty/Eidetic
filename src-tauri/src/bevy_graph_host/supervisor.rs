@@ -1,6 +1,7 @@
 use super::{
-    BibleGraphRendererWindowCapabilityReason, NativeRendererPlatformStrategy, NativeRendererRunner,
-    NativeRendererRunnerLifecycle, NativeRendererRunnerStartupPlan, NativeRendererRunnerStatus,
+    BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
+    NativeRendererPlatformStrategy, NativeRendererRunner, NativeRendererRunnerLifecycle,
+    NativeRendererRunnerStartupPlan, NativeRendererRunnerStatus,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
@@ -89,10 +90,20 @@ impl NativeRendererRunner for NativeRendererSupervisor {
 
     fn status(&self) -> NativeRendererRunnerStatus {
         let strategy = self.strategy.status();
-        let capability_reason = if self.lifecycle == NativeRendererSupervisorLifecycle::Failed {
-            BibleGraphRendererWindowCapabilityReason::RunnerError
+        let (capability, capability_reason) =
+            if self.lifecycle == NativeRendererSupervisorLifecycle::Failed {
+                (
+                    BibleGraphRendererWindowCapability::RunnerError,
+                    BibleGraphRendererWindowCapabilityReason::RunnerError,
+                )
+            } else {
+                (strategy.capability, strategy.capability_reason)
+            };
+
+        let visible_window_supported = if capability.verified_support() {
+            strategy.visible_window_supported
         } else {
-            strategy.capability_reason
+            false
         };
 
         NativeRendererRunnerStatus {
@@ -101,10 +112,10 @@ impl NativeRendererRunner for NativeRendererSupervisor {
             lifecycle: self.runner_lifecycle(),
             supervisor_lifecycle: self.lifecycle,
             threading_model: self.strategy.threading_model(),
-            capability: strategy.capability,
+            capability,
             capability_reason,
-            verified_support: strategy.verified_support,
-            visible_window_supported: strategy.visible_window_supported,
+            verified_support: capability.verified_support(),
+            visible_window_supported,
             window_visible: false,
             window_ready: false,
             focus_supported: false,

@@ -6,10 +6,13 @@ import { graphRendererWindowStatusDisplay } from './graphRendererWindowStatus.js
 function statusFor(
   renderer_window_lifecycle: GraphRendererStatus['renderer_window_lifecycle'],
   renderer_window_visible_supported = renderer_window_lifecycle === 'visible',
+  renderer_window_capability: GraphRendererStatus['renderer_window_capability'] = renderer_window_visible_supported
+    ? 'verified_support'
+    : 'platform_unproven',
   renderer_window_capability_reason: GraphRendererStatus['renderer_window_capability_reason'] = renderer_window_visible_supported
     ? 'verified_support'
-    : 'pending_native_runner',
-  renderer_window_verified_support = renderer_window_capability_reason === 'verified_support',
+    : 'platform_unproven',
+  renderer_window_verified_support = renderer_window_capability === 'verified_support',
 ): GraphRendererStatus {
   return {
     renderer_window_kind: 'bible_graph',
@@ -24,7 +27,7 @@ function statusFor(
     renderer_runner_lifecycle: 'open_requested',
     renderer_supervisor_lifecycle: 'starting',
     renderer_runner_threading_model: 'worker_thread',
-    renderer_window_capability: 'pending_native_runner',
+    renderer_window_capability,
     renderer_window_capability_reason,
     renderer_window_lifecycle,
     renderer_window_ready: renderer_window_lifecycle === 'visible',
@@ -80,7 +83,7 @@ describe('graph renderer window status display', () => {
     });
     expect(
       graphRendererWindowStatusDisplay(
-        statusFor('scene_ready_pending_native_runner', true, 'verified_support', true),
+        statusFor('scene_ready_pending_native_runner', true, 'verified_support'),
       ),
     ).toEqual({
       label: 'Renderer waiting',
@@ -98,10 +101,15 @@ describe('graph renderer window status display', () => {
     });
   });
 
-  it('uses backend capability reason instead of inferring unsupported state', () => {
+  it('uses backend capability instead of inferring unsupported state', () => {
     expect(
       graphRendererWindowStatusDisplay(
-        statusFor('scene_ready_pending_native_runner', false, 'platform_unsupported'),
+        statusFor(
+          'scene_ready_pending_native_runner',
+          false,
+          'platform_unsupported',
+          'platform_unsupported',
+        ),
       ),
     ).toEqual({
       label: 'Renderer unsupported',
@@ -112,7 +120,7 @@ describe('graph renderer window status display', () => {
     });
     expect(
       graphRendererWindowStatusDisplay(
-        statusFor('scene_ready_pending_native_runner', true, 'runner_error'),
+        statusFor('scene_ready_pending_native_runner', true, 'runner_error', 'runner_error'),
       ),
     ).toEqual({
       label: 'Renderer error',
