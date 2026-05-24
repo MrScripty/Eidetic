@@ -53,7 +53,9 @@ export function startGraphRendererCommandDrain({
         apply(commands);
       }
     } catch (error) {
-      onError?.(error);
+      if (!stopped) {
+        onError?.(error);
+      }
     } finally {
       draining = false;
     }
@@ -65,6 +67,9 @@ export function startGraphRendererCommandDrain({
   void tick();
 
   return () => {
+    if (stopped) {
+      return;
+    }
     stopped = true;
     clearIntervalFn(interval);
   };

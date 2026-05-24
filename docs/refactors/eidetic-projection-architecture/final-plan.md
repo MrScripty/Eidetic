@@ -1204,6 +1204,11 @@ Discovered issues:
   visible-window support. The native renderer runner slice must still replace
   this with event-driven command projection before the Bevy graph becomes the
   primary visual surface.
+- Resolved: the temporary Svelte graph renderer command-drain bridge is
+  contained behind an explicit lifecycle stopgap. The owner avoids overlapping
+  drains, drops resolved commands after teardown, suppresses post-stop errors,
+  clears its interval idempotently, and remains gated by backend-projected
+  renderer capability status until native renderer events replace polling.
 - Open: the Bevy graph scene and native visual paths currently rebuild by
   despawning and respawning all projection entities. That remains acceptable only
   for bounded prototype projections. Before the Bevy graph becomes primary, the
@@ -2449,10 +2454,11 @@ Implementation order:
   command by its actual responsibility. It updates the active backend-owned
   renderer request and lets the desktop projection owner load/write renderer
   projection snapshots through the coalesced path.
-- Replace or contain the temporary renderer command-drain polling before the
-  Bevy graph becomes primary. Renderer selection/focus/inspect commands should
-  be projected through desktop/backend events or another tracked lifecycle
-  channel with bounded queues and explicit teardown.
+- Resolved for the current stopgap: temporary renderer command-drain polling is
+  lifecycle-contained and backend-status-gated while the native runner is
+  pending. Before the Bevy graph becomes primary, renderer selection/focus/
+  inspect commands still need to move to native renderer events or another
+  tracked backend projection channel.
 - Add relational SQLite current-state and history storage for context
   evaluations and influence records. Do not store queryable graph influence
   only as JSON blobs.

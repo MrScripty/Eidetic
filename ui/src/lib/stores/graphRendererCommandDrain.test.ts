@@ -103,6 +103,47 @@ describe('graph renderer command drain lifecycle', () => {
     expect(apply).not.toHaveBeenCalled();
   });
 
+  it('does not surface drain errors after the drain is stopped', async () => {
+    let rejectDrain: (error: unknown) => void = () => {};
+    const drain = vi.fn(
+      () =>
+        new Promise<GraphRendererCommand[]>((_resolve, reject) => {
+          rejectDrain = reject;
+        }),
+    );
+    const onError = vi.fn();
+
+    const stop = startGraphRendererCommandDrain({
+      drain,
+      onError,
+      setIntervalFn: vi.fn().mockReturnValue(1),
+      clearIntervalFn: vi.fn(),
+    });
+
+    stop();
+    rejectDrain(new Error('closed renderer'));
+    await Promise.resolve();
+
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('clears the polling interval only once when stopped repeatedly', () => {
+    const intervalHandle = {};
+    const clearIntervalFn = vi.fn();
+
+    const stop = startGraphRendererCommandDrain({
+      drain: vi.fn().mockResolvedValue([]),
+      setIntervalFn: vi.fn().mockReturnValue(intervalHandle),
+      clearIntervalFn,
+    });
+
+    stop();
+    stop();
+
+    expect(clearIntervalFn).toHaveBeenCalledTimes(1);
+    expect(clearIntervalFn).toHaveBeenCalledWith(intervalHandle);
+  });
+
   it('normalizes invalid polling intervals to the default cadence', () => {
     const setIntervalFn = vi.fn().mockReturnValue(1);
 
