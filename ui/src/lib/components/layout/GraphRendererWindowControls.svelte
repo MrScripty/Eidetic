@@ -99,13 +99,6 @@
         <span class="error">{error}</span>
       {/if}
     </div>
-
-    {#if !statusDisplay.nativeWindowAvailable}
-      <p>
-        The 3D Bevy graph window is not enabled for this build yet. The outline below is the backend
-        graph projection.
-      </p>
-    {/if}
   </div>
 
   <div class="renderer-window-actions">
@@ -148,14 +141,6 @@
     min-width: 0;
     color: var(--color-text-muted);
     font-size: 0.76rem;
-  }
-
-  .renderer-window-main p {
-    max-width: 680px;
-    margin: 0;
-    color: var(--color-text-secondary);
-    font-size: 0.82rem;
-    line-height: 1.35;
   }
 
   .renderer-window-status span {

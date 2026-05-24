@@ -2644,13 +2644,19 @@ Completed foundation, do not reimplement unless verification fails:
   by stable graph IDs and remove stale visual entities after each projection
   refresh. The old native full-despawn visual rebuild path is no longer the
   default for bounded graph refreshes.
+- Milestone 8 standards/blast-radius review found stale UI copy and test
+  wording that still described the Svelte outline as a renderer fallback. That
+  wording was removed so the frontend presents the Bevy renderer controls as
+  the graph surface while keeping the outline as an explicit secondary
+  projection inspector.
 
 Remaining implementation order:
 
 1. Keep Svelte graph filters, details, review, and semantic outline
    projection-only as secondary controls/accessibility surfaces.
-2. Re-run the Milestone 8 standards/blast-radius review before closing the
-   milestone and record any newly discovered cleanup as follow-up tasks.
+2. Milestone 8 is implementation-complete. Future graph work should enter
+   through Milestone 9 agent harness/tooling or newly recorded follow-up tasks,
+   not by reintroducing fallback renderer paths or frontend-owned graph state.
 
 Standards gates:
 

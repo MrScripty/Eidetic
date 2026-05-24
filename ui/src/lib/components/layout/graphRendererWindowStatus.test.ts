@@ -47,7 +47,7 @@ function statusFor(
 }
 
 describe('graph renderer window status display', () => {
-  it('uses a closed fallback before backend status loads', () => {
+  it('uses a closed display before backend status loads', () => {
     expect(graphRendererWindowStatusDisplay(null)).toEqual({
       label: 'Renderer closed',
       active: false,
