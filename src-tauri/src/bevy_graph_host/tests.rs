@@ -18,7 +18,8 @@ use super::{
     GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
     NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
     NativeRendererPlatformStrategy, NativeRendererRunner, NativeRendererRunnerHandle,
-    NativeRendererRunnerLifecycle, NativeRendererThreadingModel, PendingNativeRendererRunner,
+    NativeRendererRunnerLifecycle, NativeRendererRunnerStartupPlan, NativeRendererThreadingModel,
+    PendingNativeRendererRunner,
 };
 
 #[test]
@@ -128,6 +129,36 @@ fn native_renderer_platform_strategy_builds_minimal_window_proof_config() {
         NativeRendererPlatformStrategy::UnsupportedPlatform
             .minimal_window_runner_config()
             .is_none()
+    );
+}
+
+#[test]
+fn native_renderer_platform_strategy_builds_startup_plan() {
+    let linux_plan =
+        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven.runner_startup_plan();
+    let macos_plan = NativeRendererPlatformStrategy::MacosMainThreadUnproven.runner_startup_plan();
+    let unsupported_plan =
+        NativeRendererPlatformStrategy::UnsupportedPlatform.runner_startup_plan();
+
+    assert!(matches!(
+        linux_plan,
+        NativeRendererRunnerStartupPlan::MinimalWindowProofCandidate {
+            threading_model: NativeRendererThreadingModel::WorkerThread,
+            ..
+        }
+    ));
+    assert!(matches!(
+        macos_plan,
+        NativeRendererRunnerStartupPlan::MinimalWindowProofCandidate {
+            threading_model: NativeRendererThreadingModel::MainThread,
+            ..
+        }
+    ));
+    assert_eq!(
+        unsupported_plan,
+        NativeRendererRunnerStartupPlan::PendingOnly {
+            threading_model: NativeRendererThreadingModel::Unsupported
+        }
     );
 }
 

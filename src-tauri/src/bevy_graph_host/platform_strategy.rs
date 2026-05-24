@@ -21,6 +21,17 @@ pub enum NativeRendererThreadingModel {
     Unsupported,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NativeRendererRunnerStartupPlan {
+    MinimalWindowProofCandidate {
+        threading_model: NativeRendererThreadingModel,
+        config: BibleGraphNativeWindowRunnerConfig,
+    },
+    PendingOnly {
+        threading_model: NativeRendererThreadingModel,
+    },
+}
+
 impl NativeRendererPlatformStrategy {
     pub fn current() -> Self {
         match BibleGraphRendererWindowPlatform::current() {
@@ -68,6 +79,18 @@ impl NativeRendererPlatformStrategy {
         Some(BibleGraphNativeWindowRunnerConfig::minimal_smoke(
             run_on_any_thread,
         ))
+    }
+
+    pub fn runner_startup_plan(self) -> NativeRendererRunnerStartupPlan {
+        match self.minimal_window_runner_config() {
+            Some(config) => NativeRendererRunnerStartupPlan::MinimalWindowProofCandidate {
+                threading_model: self.threading_model(),
+                config,
+            },
+            None => NativeRendererRunnerStartupPlan::PendingOnly {
+                threading_model: self.threading_model(),
+            },
+        }
     }
 
     fn platform(self) -> BibleGraphRendererWindowPlatform {

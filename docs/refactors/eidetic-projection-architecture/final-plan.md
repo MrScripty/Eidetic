@@ -1214,6 +1214,9 @@ Discovered issues:
   minimal Bevy window config: Linux/Windows set the any-thread winit flag,
   macOS keeps main-thread execution, and unsupported platforms produce no
   runner config.
+- Updated: native runner startup is now represented as a typed backend plan:
+  supported proof candidates carry threading plus minimal-window config, while
+  unsupported platforms remain pending-only before any event loop is started.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

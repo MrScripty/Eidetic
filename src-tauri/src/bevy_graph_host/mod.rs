@@ -16,7 +16,9 @@ pub use owner::{
     DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
     GRAPH_RENDERER_REPLY_TIMEOUT_MS,
 };
-pub use platform_strategy::{NativeRendererPlatformStrategy, NativeRendererThreadingModel};
+pub use platform_strategy::{
+    NativeRendererPlatformStrategy, NativeRendererRunnerStartupPlan, NativeRendererThreadingModel,
+};
 pub use window_strategy::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowPlatform,
