@@ -96,6 +96,36 @@ impl NativeRendererRunnerHandle {
                 ))
             })
     }
+
+    pub fn stop(&mut self) -> NativeRendererRunnerStatus {
+        let (reply, receiver) = mpsc::channel();
+        if let Err(error) = self
+            .sender
+            .try_send(NativeRendererRunnerRequest::Stop { reply })
+        {
+            return pending_runner_unavailable_status(format!(
+                "native renderer runner stop unavailable: {error}"
+            ));
+        }
+
+        let status = receiver
+            .recv_timeout(Duration::from_millis(
+                NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
+            ))
+            .unwrap_or_else(|error| {
+                pending_runner_unavailable_status(format!(
+                    "native renderer runner stop reply unavailable: {error}"
+                ))
+            });
+        if let Some(join_handle) = self.join_handle.take()
+            && join_handle.join().is_err()
+        {
+            return pending_runner_unavailable_status(
+                "native renderer runner thread panicked during stop".to_string(),
+            );
+        }
+        status
+    }
 }
 
 impl NativeRendererRunner for NativeRendererRunnerHandle {
@@ -118,17 +148,7 @@ impl NativeRendererRunner for NativeRendererRunnerHandle {
 
 impl Drop for NativeRendererRunnerHandle {
     fn drop(&mut self) {
-        let (reply, receiver) = mpsc::channel();
-        if self
-            .sender
-            .send(NativeRendererRunnerRequest::Stop { reply })
-            .is_ok()
-        {
-            let _ = receiver.recv();
-        }
-        if let Some(join_handle) = self.join_handle.take() {
-            let _ = join_handle.join();
-        }
+        let _ = self.stop();
     }
 }
 

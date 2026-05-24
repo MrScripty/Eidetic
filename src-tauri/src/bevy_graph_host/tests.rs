@@ -145,6 +145,24 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
 }
 
 #[test]
+fn native_renderer_runner_handle_stops_with_bounded_reply() {
+    let mut runner = NativeRendererRunnerHandle::start_pending().unwrap();
+    runner.open();
+
+    let stopped = runner.stop();
+    let after_stop = runner.status();
+
+    assert_eq!(stopped.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert!(!stopped.window_visible);
+    assert_eq!(stopped.last_error, None);
+    assert_eq!(
+        after_stop.capability_reason,
+        BibleGraphRendererWindowCapabilityReason::RunnerError
+    );
+    assert!(after_stop.last_error.is_some());
+}
+
+#[test]
 fn renderer_window_lifecycle_is_derived_from_backend_state() {
     assert_eq!(
         BibleGraphRendererWindowLifecycle::from_state(false, false, false),

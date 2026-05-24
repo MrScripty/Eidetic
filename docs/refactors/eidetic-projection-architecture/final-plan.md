@@ -1164,6 +1164,10 @@ Discovered issues:
   instead of silently returning pending capability state. The real Bevy/winit
   runner still needs panic/status reporting from the actual event-loop thread
   before the visible window gate can pass.
+- Resolved: native renderer runner shutdown now uses an explicit bounded stop
+  request and joins the runner thread through `NativeRendererRunnerHandle::stop`
+  instead of blocking indefinitely in `Drop`. Stop failures degrade through
+  typed runner-error status and `last_error` projection.
 - Updated: desktop graph renderer owner request/reply calls now have a bounded
   reply timeout and typed timeout error, so Tauri command handlers do not wait
   indefinitely if the renderer owner thread stops responding during native
