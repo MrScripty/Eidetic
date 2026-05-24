@@ -912,6 +912,10 @@ Completed slices:
   preflight path records platform, backend, threading model, window config,
   command, and report-only result without opening a renderer window or changing
   production capability status.
+- `refactor(desktop): isolate renderer platform strategy` moved native graph
+  renderer platform detection into a dedicated desktop platform-strategy module
+  with local README invariants, keeping `cfg()` checks out of shared renderer
+  host, supervisor, command, UI, and backend projection code.
 
 Discovered issues:
 
@@ -984,6 +988,10 @@ Discovered issues:
   had no machine-readable preflight record for standards review. The smoke
   binary now has a report-only JSON mode that records the platform/backend/
   threading/config/command used before a real visual smoke run.
+- Resolved: renderer platform detection still lived in shared renderer-window
+  status code. Platform detection is now isolated in the desktop
+  `bevy_graph_host::platform_strategy` module tree, with renderer-window status
+  consuming a platform-neutral function.
 - Resolved: graph renderer window lifecycle could only be inferred from open,
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
@@ -2538,6 +2546,8 @@ Completed foundation, do not reimplement unless verification fails:
 - Diagnostic native renderer smoke preflight can emit a report-only JSON record
   without opening a window. This remains diagnostic-only and does not verify
   production visible-window support.
+- Native renderer platform checks are isolated in the desktop platform strategy
+  module tree with local invariants documented.
 
 Remaining implementation order:
 

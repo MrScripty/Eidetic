@@ -1,4 +1,4 @@
-use super::NativeRendererPlatformStrategy;
+use super::{NativeRendererPlatformStrategy, current_renderer_window_platform};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -72,15 +72,7 @@ impl BibleGraphRendererWindowCapability {
 
 impl BibleGraphRendererWindowPlatform {
     pub fn current() -> Self {
-        if cfg!(target_os = "linux") {
-            Self::Linux
-        } else if cfg!(target_os = "macos") {
-            Self::Macos
-        } else if cfg!(target_os = "windows") {
-            Self::Windows
-        } else {
-            Self::Unsupported
-        }
+        current_renderer_window_platform()
     }
 }
 

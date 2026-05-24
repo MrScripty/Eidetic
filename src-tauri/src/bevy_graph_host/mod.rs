@@ -19,6 +19,7 @@ pub use owner::{
 };
 pub use platform_strategy::{
     NativeRendererPlatformStrategy, NativeRendererRunnerStartupPlan, NativeRendererThreadingModel,
+    current_renderer_window_platform,
 };
 pub use supervisor::{NativeRendererSupervisor, NativeRendererSupervisorLifecycle};
 pub use window_strategy::{

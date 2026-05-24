@@ -1,9 +1,13 @@
+mod current_platform;
+
 use super::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
     BibleGraphRendererWindowStrategyStatus,
 };
 use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
+
+pub use current_platform::current_renderer_window_platform;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NativeRendererPlatformStrategy {
@@ -34,7 +38,7 @@ pub enum NativeRendererRunnerStartupPlan {
 
 impl NativeRendererPlatformStrategy {
     pub fn current() -> Self {
-        match BibleGraphRendererWindowPlatform::current() {
+        match current_renderer_window_platform() {
             BibleGraphRendererWindowPlatform::Linux => Self::LinuxWorkerThreadUnproven,
             BibleGraphRendererWindowPlatform::Macos => Self::MacosMainThreadUnproven,
             BibleGraphRendererWindowPlatform::Windows => Self::WindowsWorkerThreadUnproven,
