@@ -907,6 +907,11 @@ Completed slices:
   graph renderer projection request identity and refresh coalescing state behind
   one desktop-owned mutex so related request/refresh transitions cannot be
   updated through independent mutable paths.
+- `feat(desktop): report native renderer smoke preflight` added
+  `eidetic-native-renderer-smoke --report-only` so the diagnostic Bevy/winit
+  preflight path records platform, backend, threading model, window config,
+  command, and report-only result without opening a renderer window or changing
+  production capability status.
 
 Discovered issues:
 
@@ -975,6 +980,10 @@ Discovered issues:
   state were stored behind separate mutexes even though refresh correctness
   depends on their combined value. They now live in one lock-protected desktop
   state object.
+- Resolved: the diagnostic native renderer smoke path could open a window but
+  had no machine-readable preflight record for standards review. The smoke
+  binary now has a report-only JSON mode that records the platform/backend/
+  threading/config/command used before a real visual smoke run.
 - Resolved: graph renderer window lifecycle could only be inferred from open,
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
@@ -2526,37 +2535,37 @@ Completed foundation, do not reimplement unless verification fails:
   failures produce typed runner-error status instead of desktop startup panics.
 - Renderer projection request and refresh coalescing state share one
   lock-protected desktop owner value.
+- Diagnostic native renderer smoke preflight can emit a report-only JSON record
+  without opening a window. This remains diagnostic-only and does not verify
+  production visible-window support.
 
 Remaining implementation order:
 
-1. Keep `eidetic-native-renderer-smoke` as diagnostic preflight only. Record
-   the exact platform/backend, command, observed open/close result, and whether
-   the smoke path used `--any-thread` or `--main-thread`.
-2. Implement the first production `NativeRendererSupervisor` runner path under
+1. Implement the first production `NativeRendererSupervisor` runner path under
    Tauri for the locally verified platform. The runner must own event-loop
    startup, command ingress, status egress, heartbeat, panic reporting,
    shutdown, and joined teardown.
-3. Prove open/status/focus/close/reopen/project-close/app-shutdown under the
+2. Prove open/status/focus/close/reopen/project-close/app-shutdown under the
    Tauri runtime while status/focus/close/projection commands remain responsive
    while the Bevy/winit event loop is active.
-4. Mark only the locally proven platform as verified support. Linux can advance
+3. Mark only the locally proven platform as verified support. Linux can advance
    independently when locally proven; Windows and macOS remain typed unproven or
    unsupported until separately verified.
-5. Consolidate graph renderer projection delivery into a single desktop-owned
+4. Consolidate graph renderer projection delivery into a single desktop-owned
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-6. Replace the temporary Svelte command-drain polling bridge with native
+5. Replace the temporary Svelte command-drain polling bridge with native
    renderer events or a backend-owned projection channel with deterministic
    teardown.
-7. Wire bounded graph projection rendering into the visible floating Bevy window
+6. Wire bounded graph projection rendering into the visible floating Bevy window
    only after the native runner gate passes for the current platform.
-8. Keep Svelte graph filters, details, review, and semantic outline as
+7. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-9. Remove or demote the old 2D graph surface after Bevy covers target
+8. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-10. Add keyed ECS/native-visual diffing before expanding beyond the documented
+9. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 

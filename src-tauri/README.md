@@ -13,6 +13,7 @@ commands and events.
 | `capabilities/` | Tauri permission configuration for desktop IPC access. |
 | `src/lib.rs` | Tauri command/event registration and backend runtime composition. |
 | `src/main.rs` | Native desktop binary entrypoint and `--smoke` startup probe. |
+| `src/bin/native_renderer_smoke.rs` | Diagnostic-only Bevy/winit native graph renderer preflight binary. |
 | `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
 | `src/bevy_graph_host/` | Desktop-managed lifecycle owner and focused host adapter for the Bevy bible graph renderer leaf crate. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
@@ -32,6 +33,11 @@ commands and events.
   destroyed so long-running backend tasks do not remain detached.
 - The `--smoke` binary path initializes the backend runtime, emits JSON health,
   shuts down supervised backend tasks, and exits without opening a window.
+- `eidetic-native-renderer-smoke --report-only` emits a JSON preflight record
+  for the diagnostic Bevy/winit graph renderer path without opening a window.
+  It records platform, backend, threading mode, window config, command, and
+  observed report-only result. This diagnostic must not mark production
+  renderer-window support as verified.
 - The desktop crate may depend on Tauri; `eidetic-core`, renderer crates, and
   backend services must not depend on Tauri.
 - Bevy renderer hosts live in this desktop crate. They may consume backend
