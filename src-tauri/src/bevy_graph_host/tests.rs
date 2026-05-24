@@ -52,6 +52,7 @@ fn renderer_window_strategy_reports_pending_native_runner() {
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
     assert_eq!(status.capability_reason, expected_pending_reason());
+    assert!(!status.verified_support);
     assert!(!status.visible_window_supported);
 }
 
@@ -70,6 +71,7 @@ fn native_renderer_platform_strategy_reports_current_platform_status() {
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
     assert_eq!(status.capability_reason, expected_pending_reason());
+    assert!(!status.verified_support);
     assert!(!status.visible_window_supported);
 }
 
@@ -188,6 +190,7 @@ fn native_renderer_supervisor_records_open_intent_without_reporting_visibility()
         NativeRendererSupervisorLifecycle::NotStarted
     );
     assert_eq!(initial.capability_reason, expected_pending_reason());
+    assert!(!initial.verified_support);
     assert!(!initial.visible_window_supported);
     assert!(!initial.window_visible);
     assert!(!initial.window_ready);
@@ -248,6 +251,7 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
     );
     assert_eq!(opened.threading_model, expected_threading_model());
     assert_eq!(opened.capability_reason, expected_pending_reason());
+    assert!(!opened.verified_support);
     assert!(!opened.visible_window_supported);
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
@@ -290,6 +294,7 @@ fn native_renderer_runner_handle_starts_from_explicit_platform_strategy() {
         status.supervisor_lifecycle,
         NativeRendererSupervisorLifecycle::NotStarted
     );
+    assert!(!status.verified_support);
     assert!(!status.visible_window_supported);
 }
 
@@ -371,6 +376,7 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_lifecycle:
                 BibleGraphRendererWindowLifecycle::SceneReadyPendingNativeRunner,
             renderer_window_ready: false,
+            renderer_window_verified_support: false,
             renderer_window_visible_supported: false,
             renderer_window_focus_supported: false,
             renderer_window_message:
@@ -495,6 +501,7 @@ fn host_stop_drops_renderer_state() {
             renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,
             renderer_window_ready: false,
+            renderer_window_verified_support: false,
             renderer_window_visible_supported: false,
             renderer_window_focus_supported: false,
             renderer_window_message: "floating graph renderer window is closed".to_string(),

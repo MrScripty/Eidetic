@@ -46,6 +46,7 @@ pub struct BibleGraphRendererWindowStrategyStatus {
     pub platform: BibleGraphRendererWindowPlatform,
     pub capability: BibleGraphRendererWindowCapability,
     pub capability_reason: BibleGraphRendererWindowCapabilityReason,
+    pub verified_support: bool,
     pub visible_window_supported: bool,
 }
 

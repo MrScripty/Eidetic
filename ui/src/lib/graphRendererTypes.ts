@@ -30,6 +30,7 @@ export interface GraphRendererStatus {
   renderer_window_capability_reason: GraphRendererWindowCapabilityReason;
   renderer_window_lifecycle: GraphRendererWindowLifecycle;
   renderer_window_ready: boolean;
+  renderer_window_verified_support: boolean;
   renderer_window_visible_supported: boolean;
   renderer_window_focus_supported: boolean;
   renderer_window_message: string;

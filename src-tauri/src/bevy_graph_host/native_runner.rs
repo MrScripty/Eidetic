@@ -21,6 +21,7 @@ pub struct NativeRendererRunnerStatus {
     pub threading_model: NativeRendererThreadingModel,
     pub capability: BibleGraphRendererWindowCapability,
     pub capability_reason: BibleGraphRendererWindowCapabilityReason,
+    pub verified_support: bool,
     pub visible_window_supported: bool,
     pub window_visible: bool,
     pub window_ready: bool,

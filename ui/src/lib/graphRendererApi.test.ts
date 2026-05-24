@@ -42,6 +42,7 @@ describe('graph renderer api helpers', () => {
       renderer_window_capability_reason: 'pending_native_runner',
       renderer_window_lifecycle: 'scene_ready_pending_native_runner',
       renderer_window_ready: false,
+      renderer_window_verified_support: false,
       renderer_window_visible_supported: false,
       renderer_window_focus_supported: false,
       renderer_window_message:
@@ -78,6 +79,7 @@ describe('graph renderer api helpers', () => {
       renderer_window_capability_reason: 'pending_native_runner',
       renderer_window_lifecycle: 'scene_ready_pending_native_runner',
       renderer_window_ready: false,
+      renderer_window_verified_support: false,
       renderer_window_visible_supported: false,
       renderer_window_focus_supported: false,
       renderer_window_message:
@@ -125,6 +127,7 @@ describe('graph renderer api helpers', () => {
       renderer_window_capability_reason: 'pending_native_runner',
       renderer_window_lifecycle: 'scene_ready_pending_native_runner',
       renderer_window_ready: false,
+      renderer_window_verified_support: false,
       renderer_window_visible_supported: false,
       renderer_window_focus_supported: false,
       renderer_window_message:
@@ -169,6 +172,7 @@ describe('graph renderer api helpers', () => {
       renderer_window_capability_reason: 'pending_native_runner',
       renderer_window_lifecycle: 'scene_ready_pending_native_runner',
       renderer_window_ready: false,
+      renderer_window_verified_support: false,
       renderer_window_visible_supported: false,
       renderer_window_focus_supported: false,
       renderer_window_message:

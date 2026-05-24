@@ -48,6 +48,7 @@ impl NativeRendererPlatformStrategy {
             platform: self.platform(),
             capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             capability_reason: self.capability_reason(),
+            verified_support: false,
             visible_window_supported: false,
         }
     }

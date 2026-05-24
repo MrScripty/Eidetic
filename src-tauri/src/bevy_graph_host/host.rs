@@ -193,6 +193,7 @@ impl DesktopBibleGraphHost {
             renderer_window_capability_reason: native_runner.capability_reason,
             renderer_window_lifecycle,
             renderer_window_ready: native_runner.window_ready,
+            renderer_window_verified_support: native_runner.verified_support,
             renderer_window_visible_supported: native_runner.visible_window_supported,
             renderer_window_focus_supported: native_runner.focus_supported,
             renderer_window_message: renderer_window_message(

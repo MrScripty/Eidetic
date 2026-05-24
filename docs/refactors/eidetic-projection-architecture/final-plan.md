@@ -1240,6 +1240,10 @@ Discovered issues:
   machine behind the runner handle. Status projects an explicit supervisor
   lifecycle through Rust and TypeScript, while visible-window support remains
   pending until the production event-loop proof is implemented.
+- Updated: renderer-window status now carries an explicit backend-owned
+  verified-support field through Rust and TypeScript. UI command-drain and
+  waiting/unavailable display logic can no longer treat size, visibility, or
+  visible-support booleans as proof that the native runner is verified.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

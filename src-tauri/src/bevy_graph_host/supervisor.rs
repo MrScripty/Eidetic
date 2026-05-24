@@ -103,6 +103,7 @@ impl NativeRendererRunner for NativeRendererSupervisor {
             threading_model: self.strategy.threading_model(),
             capability: strategy.capability,
             capability_reason,
+            verified_support: strategy.verified_support,
             visible_window_supported: strategy.visible_window_supported,
             window_visible: false,
             window_ready: false,

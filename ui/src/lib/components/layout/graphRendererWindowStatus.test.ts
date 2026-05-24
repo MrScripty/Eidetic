@@ -9,6 +9,7 @@ function statusFor(
   renderer_window_capability_reason: GraphRendererStatus['renderer_window_capability_reason'] = renderer_window_visible_supported
     ? 'verified_support'
     : 'pending_native_runner',
+  renderer_window_verified_support = renderer_window_capability_reason === 'verified_support',
 ): GraphRendererStatus {
   return {
     renderer_window_kind: 'bible_graph',
@@ -27,6 +28,7 @@ function statusFor(
     renderer_window_capability_reason,
     renderer_window_lifecycle,
     renderer_window_ready: renderer_window_lifecycle === 'visible',
+    renderer_window_verified_support,
     renderer_window_visible_supported,
     renderer_window_focus_supported: renderer_window_lifecycle === 'visible',
     renderer_window_message: `message:${renderer_window_lifecycle}`,
@@ -69,7 +71,9 @@ describe('graph renderer window status display', () => {
       message: 'message:scene_ready_pending_native_runner',
     });
     expect(
-      graphRendererWindowStatusDisplay(statusFor('scene_ready_pending_native_runner', true)),
+      graphRendererWindowStatusDisplay(
+        statusFor('scene_ready_pending_native_runner', true, 'verified_support', true),
+      ),
     ).toEqual({
       label: 'Renderer waiting',
       active: false,

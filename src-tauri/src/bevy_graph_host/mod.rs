@@ -46,6 +46,7 @@ pub struct BibleGraphHostStatus {
     pub renderer_window_capability_reason: BibleGraphRendererWindowCapabilityReason,
     pub renderer_window_lifecycle: BibleGraphRendererWindowLifecycle,
     pub renderer_window_ready: bool,
+    pub renderer_window_verified_support: bool,
     pub renderer_window_visible_supported: bool,
     pub renderer_window_focus_supported: bool,
     pub renderer_window_message: String,

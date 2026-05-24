@@ -25,7 +25,7 @@ export function graphRendererWindowStatusDisplay(
         message: status.renderer_window_message,
       };
     case 'scene_ready_pending_native_runner':
-      if (status.renderer_window_capability_reason !== 'verified_support') {
+      if (!status.renderer_window_verified_support) {
         return {
           label: unavailableLabel(status.renderer_window_capability_reason),
           active: false,
