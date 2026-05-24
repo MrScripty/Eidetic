@@ -156,6 +156,26 @@ setup_managed_state_env() {
   log "[state] using isolated ${mode} state at $state_dir"
 }
 
+clear_dev_webview_cache() {
+  local app_data_dir="$XDG_DATA_HOME/dev.eidetic.app"
+  local cache_dir
+  local cache_dirs=(
+    "$app_data_dir/CacheStorage"
+    "$app_data_dir/WebKitCache"
+  )
+
+  if ! use_isolated_state; then
+    return
+  fi
+
+  for cache_dir in "${cache_dirs[@]}"; do
+    if [[ -d "$cache_dir" ]]; then
+      rm -rf "$cache_dir"
+      log "[state] cleared dev webview cache: $cache_dir"
+    fi
+  done
+}
+
 prepare_persistent_state() {
   local mode="$1"
 
@@ -286,6 +306,7 @@ run_dev() {
 
   ensure_dependencies cargo node npm ui_deps
   prepare_persistent_state "dev"
+  clear_dev_webview_cache
   start_ui_dev_server
   trap stop_ui_dev_server EXIT INT TERM
 

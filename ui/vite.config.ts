@@ -5,9 +5,14 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit()],
-	test: {
-		environment: 'node',
-		include: ['src/**/*.test.ts'],
-	}
+  plugins: [tailwindcss(), sveltekit()],
+  server: {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+  },
 });
