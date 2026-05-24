@@ -10,47 +10,51 @@ use crate::error::CommandError;
 
 #[derive(Default)]
 pub struct GraphRendererProjectionRequestState {
-    request: Mutex<BibleRenderGraphProjectionRequest>,
-    refresh: Mutex<GraphRendererProjectionRefreshState>,
+    state: Mutex<GraphRendererProjectionState>,
 }
 
 impl GraphRendererProjectionRequestState {
     pub fn current(&self) -> BibleRenderGraphProjectionRequest {
-        self.request
+        self.state
             .lock()
             .unwrap_or_else(|error| error.into_inner())
+            .request
             .clone()
     }
 
     pub fn replace(&self, request: BibleRenderGraphProjectionRequest) {
-        *self
-            .request
+        self.state
             .lock()
-            .unwrap_or_else(|error| error.into_inner()) = request;
+            .unwrap_or_else(|error| error.into_inner())
+            .request = request;
     }
 
     pub fn reset(&self) {
-        self.replace(BibleRenderGraphProjectionRequest::default());
-        *self
-            .refresh
-            .lock()
-            .unwrap_or_else(|error| error.into_inner()) =
-            GraphRendererProjectionRefreshState::default();
+        *self.state.lock().unwrap_or_else(|error| error.into_inner()) =
+            GraphRendererProjectionState::default();
     }
 
     fn begin_refresh(&self) -> GraphRendererProjectionRefreshDecision {
-        self.refresh
+        self.state
             .lock()
             .unwrap_or_else(|error| error.into_inner())
+            .refresh
             .begin_refresh()
     }
 
     fn complete_refresh(&self) -> GraphRendererProjectionRefreshCompletion {
-        self.refresh
+        self.state
             .lock()
             .unwrap_or_else(|error| error.into_inner())
+            .refresh
             .complete_refresh()
     }
+}
+
+#[derive(Debug, Default)]
+struct GraphRendererProjectionState {
+    request: BibleRenderGraphProjectionRequest,
+    refresh: GraphRendererProjectionRefreshState,
 }
 
 #[derive(Debug, Default)]
