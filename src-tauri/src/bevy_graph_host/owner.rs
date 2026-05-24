@@ -72,8 +72,9 @@ enum BibleGraphHostRequest {
 }
 
 pub struct DesktopBibleGraphRendererOwner {
-    sender: mpsc::SyncSender<BibleGraphHostRequest>,
+    sender: Option<mpsc::SyncSender<BibleGraphHostRequest>>,
     join_handle: Mutex<Option<JoinHandle<()>>>,
+    unavailable_status: Option<BibleGraphHostStatus>,
 }
 
 impl DesktopBibleGraphRendererOwner {
@@ -85,12 +86,24 @@ impl DesktopBibleGraphRendererOwner {
             .map_err(|_| BibleGraphHostError::OwnerStopped)?;
 
         Ok(Self {
-            sender,
+            sender: Some(sender),
             join_handle: Mutex::new(Some(join_handle)),
+            unavailable_status: None,
         })
     }
 
+    pub fn unavailable(message: String) -> Self {
+        Self {
+            sender: None,
+            join_handle: Mutex::new(None),
+            unavailable_status: Some(DesktopBibleGraphHost::renderer_unavailable_status(message)),
+        }
+    }
+
     pub fn start_renderer(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::Start { reply })?;
         receive_reply(receiver)
@@ -100,6 +113,9 @@ impl DesktopBibleGraphRendererOwner {
         &self,
         projection: BibleRenderGraphProjection,
     ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::SetProjection { projection, reply })?;
         receive_reply(receiver)
@@ -109,6 +125,9 @@ impl DesktopBibleGraphRendererOwner {
         &self,
         projection: BibleRenderGraphProjection,
     ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::UpdateProjectionIfOpen { projection, reply })?;
         receive_reply(receiver)
@@ -119,6 +138,9 @@ impl DesktopBibleGraphRendererOwner {
         width_px: u32,
         height_px: u32,
     ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::SetRendererWindowBounds {
             width_px,
@@ -129,24 +151,28 @@ impl DesktopBibleGraphRendererOwner {
     }
 
     pub fn select_node(&self, node_id: BibleGraphNodeId) -> BibleGraphHostResult<()> {
+        self.reject_if_unavailable()?;
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::SelectNode { node_id, reply })?;
         receive_reply(receiver)
     }
 
     pub fn inspect_node(&self, node_id: BibleGraphNodeId) -> BibleGraphHostResult<()> {
+        self.reject_if_unavailable()?;
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::InspectNode { node_id, reply })?;
         receive_reply(receiver)
     }
 
     pub fn select_edge(&self, edge_id: BibleGraphEdgeId) -> BibleGraphHostResult<()> {
+        self.reject_if_unavailable()?;
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::SelectEdge { edge_id, reply })?;
         receive_reply(receiver)
     }
 
     pub fn select_influence(&self, influence_id: ContextInfluenceId) -> BibleGraphHostResult<()> {
+        self.reject_if_unavailable()?;
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::SelectInfluence {
             influence_id,
@@ -156,36 +182,52 @@ impl DesktopBibleGraphRendererOwner {
     }
 
     pub fn drain_commands(&self) -> BibleGraphHostResult<Vec<BibleGraphRendererCommand>> {
+        if self.unavailable_status().is_some() {
+            return Ok(Vec::new());
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::DrainCommands { reply })?;
         receive_reply(receiver)
     }
 
     pub fn visual_snapshot(&self) -> BibleGraphHostResult<BibleGraphVisualSnapshot> {
+        self.reject_if_unavailable()?;
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::VisualSnapshot { reply })?;
         receive_reply(receiver)
     }
 
     pub fn status(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::Status { reply })?;
         receive_reply(receiver)
     }
 
     pub fn focus_renderer(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::FocusRenderer { reply })?;
         receive_reply(receiver)
     }
 
     pub fn close_renderer(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::CloseRenderer { reply })?;
         receive_reply(receiver)
     }
 
     pub fn stop(&self) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::Stop { reply })?;
         let status = receive_reply(receiver)?;
@@ -200,11 +242,29 @@ impl DesktopBibleGraphRendererOwner {
     }
 
     fn enqueue(&self, request: BibleGraphHostRequest) -> BibleGraphHostResult<()> {
-        match self.sender.try_send(request) {
+        let Some(sender) = &self.sender else {
+            return Err(BibleGraphHostError::OwnerStopped);
+        };
+        match sender.try_send(request) {
             Ok(()) => Ok(()),
             Err(mpsc::TrySendError::Full(_)) => Err(BibleGraphHostError::QueueFull),
             Err(mpsc::TrySendError::Disconnected(_)) => Err(BibleGraphHostError::OwnerStopped),
         }
+    }
+
+    fn unavailable_status(&self) -> Option<BibleGraphHostStatus> {
+        self.unavailable_status.clone()
+    }
+
+    fn reject_if_unavailable(&self) -> BibleGraphHostResult<()> {
+        if let Some(status) = self.unavailable_status() {
+            return Err(BibleGraphHostError::Renderer(
+                status
+                    .last_error
+                    .unwrap_or_else(|| "graph renderer owner is unavailable".to_string()),
+            ));
+        }
+        Ok(())
     }
 }
 

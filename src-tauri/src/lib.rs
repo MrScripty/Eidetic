@@ -34,8 +34,11 @@ pub fn run() {
         .setup(|app| {
             let app_state = tauri::async_runtime::block_on(AppState::new());
             app.manage(
-                DesktopBibleGraphRendererOwner::start()
-                    .expect("failed to start Bevy bible graph renderer owner"),
+                DesktopBibleGraphRendererOwner::start().unwrap_or_else(|error| {
+                    DesktopBibleGraphRendererOwner::unavailable(format!(
+                        "failed to start Bevy bible graph renderer owner: {error:?}"
+                    ))
+                }),
             );
             app.manage(GraphRendererProjectionRequestState::default());
             app.manage(DesktopEventBridgeOwner::spawn(

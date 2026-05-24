@@ -11,13 +11,60 @@ use crate::renderer_window::DesktopRendererWindowKind;
 
 use super::{
     BibleGraphHostError, BibleGraphHostStatus, BibleGraphRendererWindowLifecycle,
-    NativeRendererRunner, NativeRendererRunnerHandle,
+    NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerStatus,
+    NativeRendererSupervisor,
 };
 
 pub struct DesktopBibleGraphHost {
     renderer: Option<BibleGraphRendererApp>,
-    native_runner: NativeRendererRunnerHandle,
+    native_runner: DesktopNativeRendererRunner,
     last_error: Option<String>,
+}
+
+enum DesktopNativeRendererRunner {
+    Managed(NativeRendererRunnerHandle),
+    Unavailable(NativeRendererRunnerStatus),
+}
+
+impl DesktopNativeRendererRunner {
+    fn start_current_platform() -> Self {
+        match NativeRendererRunnerHandle::start_for_current_platform() {
+            Ok(runner) => Self::Managed(runner),
+            Err(error) => {
+                Self::Unavailable(NativeRendererSupervisor::failed_current_platform_status(
+                    format!("failed to start native renderer runner boundary: {error}"),
+                ))
+            }
+        }
+    }
+
+    fn open(&mut self) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.open(),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
+
+    fn close(&mut self) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.close(),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
+
+    fn focus(&mut self) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.focus(),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
+
+    fn status(&self) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.status(),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
 }
 
 impl Default for DesktopBibleGraphHost {
@@ -30,10 +77,17 @@ impl DesktopBibleGraphHost {
     pub fn new() -> Self {
         Self {
             renderer: None,
-            native_runner: NativeRendererRunnerHandle::start_for_current_platform()
-                .expect("failed to start native renderer runner boundary"),
+            native_runner: DesktopNativeRendererRunner::start_current_platform(),
             last_error: None,
         }
+    }
+
+    pub fn renderer_unavailable_status(message: String) -> BibleGraphHostStatus {
+        Self::status_from_parts(
+            None,
+            NativeRendererSupervisor::failed_current_platform_status(message),
+            None,
+        )
     }
 
     pub fn start(&mut self) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
@@ -147,41 +201,45 @@ impl DesktopBibleGraphHost {
     }
 
     pub fn status(&self) -> BibleGraphHostStatus {
-        let (node_count, edge_count, influence_count) = self
-            .renderer
-            .as_ref()
+        let native_runner = self.native_runner.status();
+        Self::status_from_parts(
+            self.renderer.as_ref(),
+            native_runner,
+            self.last_error.clone(),
+        )
+    }
+
+    fn status_from_parts(
+        renderer: Option<&BibleGraphRendererApp>,
+        native_runner: NativeRendererRunnerStatus,
+        host_last_error: Option<String>,
+    ) -> BibleGraphHostStatus {
+        let (node_count, edge_count, influence_count) = renderer
             .map(|renderer| {
                 let (node_count, edge_count) = renderer.scene_counts();
                 (node_count, edge_count, renderer.influence_count())
             })
             .unwrap_or_default();
-        let renderer_scene_ready = self
-            .renderer
-            .as_ref()
+        let renderer_scene_ready = renderer
             .map(BibleGraphRendererApp::renderer_window_ready)
             .unwrap_or_default();
-        let (native_visual_node_count, native_visual_edge_count) = self
-            .renderer
-            .as_ref()
+        let (native_visual_node_count, native_visual_edge_count) = renderer
             .map(BibleGraphRendererApp::native_visual_counts)
             .unwrap_or_default();
-        let renderer_window_bounds = self
-            .renderer
-            .as_ref()
+        let renderer_window_bounds = renderer
             .map(BibleGraphRendererApp::renderer_window_bounds)
             .unwrap_or_default();
-        let native_runner = self.native_runner.status();
-        let last_error = self.last_error.clone().or(native_runner.last_error.clone());
+        let last_error = host_last_error.or(native_runner.last_error.clone());
         let renderer_window_lifecycle = BibleGraphRendererWindowLifecycle::from_state(
-            self.renderer.is_some(),
+            renderer.is_some(),
             renderer_scene_ready,
             native_runner.window_visible,
         );
 
         BibleGraphHostStatus {
             renderer_window_kind: DesktopRendererWindowKind::BibleGraph,
-            running: self.renderer.is_some(),
-            renderer_window_open: self.renderer.is_some(),
+            running: renderer.is_some(),
+            renderer_window_open: renderer.is_some(),
             renderer_scene_ready,
             renderer_window_visible: native_runner.window_visible,
             renderer_window_strategy: native_runner.strategy,
@@ -197,7 +255,7 @@ impl DesktopBibleGraphHost {
             renderer_window_visible_supported: native_runner.visible_window_supported,
             renderer_window_focus_supported: native_runner.focus_supported,
             renderer_window_message: renderer_window_message(
-                self.renderer.is_some(),
+                renderer.is_some(),
                 renderer_scene_ready,
             ),
             node_count,
@@ -216,7 +274,11 @@ impl DesktopBibleGraphHost {
         operation: impl FnOnce(&mut BibleGraphRendererApp) -> Result<T, BibleGraphRendererError>,
     ) -> Result<T, BibleGraphHostError> {
         self.start()?;
-        let renderer = self.renderer.as_mut().expect("renderer is started");
+        let Some(renderer) = self.renderer.as_mut() else {
+            return Err(BibleGraphHostError::Renderer(
+                BibleGraphRendererError::MissingProjection.to_string(),
+            ));
+        };
         let result = Self::catch_renderer_panic(|| operation(renderer))?.map_err(|error| {
             let message = error.to_string();
             self.last_error = Some(message.clone());

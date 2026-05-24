@@ -899,6 +899,10 @@ Completed slices:
   platform-unproven, platform-unsupported, runner-error, and verified-support
   are first-class backend states instead of contradictory combinations of
   `pending_native_runner`, reason strings, and support booleans.
+- `fix(desktop): project graph renderer startup failures` replaced graph
+  renderer startup `expect` paths with typed runner-error status projections so
+  native runner or renderer-owner startup failure does not crash Tauri setup and
+  remains visible through the backend-owned renderer status contract.
 
 Discovered issues:
 
@@ -958,6 +962,11 @@ Discovered issues:
   runner-error, or verified support. Capability is now the primary typed state,
   support booleans are derived by the backend from that capability, and Svelte
   command/status logic keys off the capability instead of reason strings.
+- Resolved: renderer startup still used `expect` for the native runner boundary
+  and Tauri-managed graph renderer owner. The host now projects native runner
+  startup failures as typed runner-error status, and Tauri setup installs an
+  unavailable renderer owner instead of crashing when the owner thread cannot be
+  started.
 - Resolved: graph renderer window lifecycle could only be inferred from open,
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
@@ -2343,8 +2352,6 @@ Current open blockers:
 - The production native runner still records open/focus/close intent but does
   not run a Bevy/winit event loop under Tauri. The only visible-window proof is
   the standalone `eidetic-native-renderer-smoke` diagnostic binary.
-- Renderer owner startup failures must degrade through typed backend status
-  instead of panicking through startup `expect` paths.
 - Renderer projection delivery still has two invalidation triggers: Svelte
   request changes and desktop backend-event refreshes. These must be reduced to
   one desktop-owned request/subscription owner before the Bevy graph becomes
@@ -2381,8 +2388,6 @@ Standards compliance review:
 
 Remaining tasks:
 
-- Replace renderer startup panic paths with typed unavailable/failed renderer
-  status so unsupported native runner capability never crashes the app shell.
 - Keep Tauri/Rust/TypeScript renderer contracts updated together. Any status,
   command, event, or projection wire-shape change must include strict boundary
   validation and Rust/TypeScript tests in the same slice.
@@ -2509,44 +2514,43 @@ Completed foundation, do not reimplement unless verification fails:
   platform-unsupported, runner-error, and verified-support are explicit Rust/
   TypeScript states, with reason strings treated as detail rather than the
   primary source of support state.
+- Renderer startup failure projection: native runner and renderer-owner startup
+  failures produce typed runner-error status instead of desktop startup panics.
 
 Remaining implementation order:
 
-1. Replace renderer startup `expect` paths with typed unavailable or runner
-   error status. A missing or failed native runner must not crash desktop
-   startup.
-2. Review related renderer request, refresh, lifecycle, and shutdown state.
+1. Review related renderer request, refresh, lifecycle, and shutdown state.
    Consolidate it behind one desktop owner/actor or one lock-protected state
    value before adding the real event-loop runner if transitions depend on more
    than one field.
-3. Keep `eidetic-native-renderer-smoke` as diagnostic preflight only. Record
+2. Keep `eidetic-native-renderer-smoke` as diagnostic preflight only. Record
    the exact platform/backend, command, observed open/close result, and whether
    the smoke path used `--any-thread` or `--main-thread`.
-4. Implement the first production `NativeRendererSupervisor` runner path under
+3. Implement the first production `NativeRendererSupervisor` runner path under
    Tauri for the locally verified platform. The runner must own event-loop
    startup, command ingress, status egress, heartbeat, panic reporting,
    shutdown, and joined teardown.
-5. Prove open/status/focus/close/reopen/project-close/app-shutdown under the
+4. Prove open/status/focus/close/reopen/project-close/app-shutdown under the
    Tauri runtime while status/focus/close/projection commands remain responsive
    while the Bevy/winit event loop is active.
-6. Mark only the locally proven platform as verified support. Linux can advance
+5. Mark only the locally proven platform as verified support. Linux can advance
    independently when locally proven; Windows and macOS remain typed unproven or
    unsupported until separately verified.
-7. Consolidate graph renderer projection delivery into a single desktop-owned
+6. Consolidate graph renderer projection delivery into a single desktop-owned
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-8. Replace the temporary Svelte command-drain polling bridge with native
+7. Replace the temporary Svelte command-drain polling bridge with native
    renderer events or a backend-owned projection channel with deterministic
    teardown.
-9. Wire bounded graph projection rendering into the visible floating Bevy window
+8. Wire bounded graph projection rendering into the visible floating Bevy window
    only after the native runner gate passes for the current platform.
-10. Keep Svelte graph filters, details, review, and semantic outline as
+9. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-11. Remove or demote the old 2D graph surface after Bevy covers target
+10. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-12. Add keyed ECS/native-visual diffing before expanding beyond the documented
+11. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 

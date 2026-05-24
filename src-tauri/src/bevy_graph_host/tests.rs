@@ -716,6 +716,37 @@ fn owner_reports_stopped_after_shutdown() {
     assert_eq!(error, BibleGraphHostError::OwnerStopped);
 }
 
+#[test]
+fn unavailable_owner_projects_typed_runner_error_status() {
+    let owner = DesktopBibleGraphRendererOwner::unavailable("owner thread unavailable".to_string());
+
+    let status = owner.status().unwrap();
+    let opened = owner.start_renderer().unwrap();
+
+    assert_eq!(status, opened);
+    assert!(!status.running);
+    assert!(!status.renderer_window_open);
+    assert_eq!(
+        status.renderer_window_capability,
+        BibleGraphRendererWindowCapability::RunnerError
+    );
+    assert_eq!(
+        status.renderer_window_capability_reason,
+        BibleGraphRendererWindowCapabilityReason::RunnerError
+    );
+    assert!(!status.renderer_window_verified_support);
+    assert!(!status.renderer_window_visible_supported);
+    assert_eq!(
+        status.last_error,
+        Some("owner thread unavailable".to_string())
+    );
+    assert!(owner.drain_commands().unwrap().is_empty());
+    assert!(matches!(
+        owner.visual_snapshot(),
+        Err(BibleGraphHostError::Renderer(_))
+    ));
+}
+
 fn expected_pending_reason() -> BibleGraphRendererWindowCapabilityReason {
     match BibleGraphRendererWindowPlatform::current() {
         BibleGraphRendererWindowPlatform::Linux
