@@ -29,6 +29,15 @@ impl GraphRendererProjectionRequestState {
             .unwrap_or_else(|error| error.into_inner()) = request;
     }
 
+    pub fn reset(&self) {
+        self.replace(BibleRenderGraphProjectionRequest::default());
+        *self
+            .refresh
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) =
+            GraphRendererProjectionRefreshState::default();
+    }
+
     fn begin_refresh(&self) -> GraphRendererProjectionRefreshDecision {
         self.refresh
             .lock()
@@ -208,7 +217,7 @@ enum GraphRendererProjectionWriteMode {
 
 #[cfg(test)]
 mod tests {
-    use eidetic_core::contracts::BibleGraphNodeId;
+    use eidetic_core::contracts::{BibleGraphNodeId, BibleRenderGraphProjectionRequest};
 
     use super::{
         GraphRendererProjectionRefreshCompletion, GraphRendererProjectionRefreshDecision,
@@ -226,6 +235,36 @@ mod tests {
         state.replace(request.clone());
 
         assert_eq!(state.current(), request);
+    }
+
+    #[test]
+    fn graph_renderer_projection_request_state_resets_request_and_refresh_state() {
+        let state = GraphRendererProjectionRequestState::default();
+        let request = eidetic_core::contracts::BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(BibleGraphNodeId::new("node.character.ada").unwrap()),
+            ..Default::default()
+        };
+
+        state.replace(request);
+        assert_eq!(
+            state.begin_refresh(),
+            GraphRendererProjectionRefreshDecision::Started
+        );
+        assert_eq!(
+            state.begin_refresh(),
+            GraphRendererProjectionRefreshDecision::AlreadyRefreshing
+        );
+
+        state.reset();
+
+        assert_eq!(
+            state.current(),
+            BibleRenderGraphProjectionRequest::default()
+        );
+        assert_eq!(
+            state.begin_refresh(),
+            GraphRendererProjectionRefreshDecision::Started
+        );
     }
 
     #[test]

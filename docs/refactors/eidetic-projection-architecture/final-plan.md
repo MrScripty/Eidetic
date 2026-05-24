@@ -2575,6 +2575,10 @@ Implementation order:
   pending. Before the Bevy graph becomes primary, renderer selection/focus/
   inspect commands still need to move to native renderer events or another
   tracked backend projection channel.
+- Resolved: closing the graph renderer now resets the backend-owned active
+  graph projection request and refresh-coalescing state, preventing stale
+  focus/filter requests or in-flight follow-up state from carrying into the
+  next renderer open.
 - Add relational SQLite current-state and history storage for context
   evaluations and influence records. Do not store queryable graph influence
   only as JSON blobs.
