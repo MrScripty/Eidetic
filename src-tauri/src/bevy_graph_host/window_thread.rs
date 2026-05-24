@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use eidetic_bevy_bible_graph::{
     BibleGraphNativeVisualStatus, BibleGraphNativeWindowControlHandle,
-    BibleGraphNativeWindowRunnerConfig, run_controlled_minimal_bible_graph_native_window,
+    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
+    run_controlled_minimal_bible_graph_native_window,
 };
 use eidetic_core::contracts::BibleRenderGraphProjection;
 
@@ -80,6 +81,10 @@ impl NativeRendererWindowThreadHandle {
 
     pub fn set_projection(&self, projection: BibleRenderGraphProjection) {
         self.control_handle.set_projection(projection);
+    }
+
+    pub fn drain_commands(&self) -> Vec<BibleGraphRendererCommand> {
+        self.control_handle.drain_commands()
     }
 
     pub fn status(&mut self) -> NativeRendererWindowThreadStatus {

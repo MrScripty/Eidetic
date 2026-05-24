@@ -355,6 +355,38 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_validated_node_selection_commands() {
+    use bevy::prelude::Plugin;
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let missing_node_id = BibleGraphNodeId::new("node.character.missing").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_node(node_id.clone()));
+    app.update();
+
+    assert_eq!(
+        emit_bible_graph_native_node_selection(app.world_mut(), node_id.clone()),
+        Ok(())
+    );
+    assert_eq!(
+        control.drain_commands(),
+        vec![BibleGraphRendererCommand::SelectNode { node_id }]
+    );
+    assert_eq!(
+        emit_bible_graph_native_node_selection(app.world_mut(), missing_node_id.clone()),
+        Err(BibleGraphRendererError::UnknownNode {
+            node_id: missing_node_id
+        })
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn renderer_app_can_start_as_renderer_window_consumer() {
     let renderer = BibleGraphRendererApp::new_renderer_window();
 

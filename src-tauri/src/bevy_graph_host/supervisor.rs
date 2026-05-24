@@ -4,7 +4,9 @@ use super::{
     NativeRendererRunnerStartupPlan, NativeRendererRunnerStatus, NativeRendererWindowThreadHandle,
     NativeRendererWindowThreadResult,
 };
-use eidetic_bevy_bible_graph::{BibleGraphNativeVisualStatus, BibleGraphNativeWindowRunnerConfig};
+use eidetic_bevy_bible_graph::{
+    BibleGraphNativeVisualStatus, BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
+};
 use eidetic_core::contracts::BibleRenderGraphProjection;
 use std::time::Duration;
 
@@ -254,6 +256,14 @@ impl NativeRendererRunner for NativeRendererSupervisor {
             window_thread.set_projection(projection);
         }
         self.refresh_status()
+    }
+
+    fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand> {
+        self.refresh_window_thread();
+        self.window_thread
+            .as_ref()
+            .map(NativeRendererWindowThreadHandle::drain_commands)
+            .unwrap_or_default()
     }
 
     fn status(&self) -> NativeRendererRunnerStatus {

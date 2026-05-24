@@ -2627,12 +2627,16 @@ Completed foundation, do not reimplement unless verification fails:
   Graph renderer open, request-update, and backend-event refresh paths call the
   same owner for active request state, coalesced projection loading, and
   renderer writes.
+- Native Bevy graph windows now have a bounded command path back to the desktop
+  renderer owner. The first validated producer covers node selection from
+  native visual entities and feeds the same desktop event bridge used by other
+  graph renderer commands.
 
 Remaining implementation order:
 
-1. Add native Bevy graph interaction producers for selection, inspection,
-   navigation, and focus commands, delivered through the backend-owned desktop
-   event bridge.
+1. Complete native Bevy graph interaction producers for edge selection,
+   influence selection, node inspection, navigation, and focus commands,
+   delivered through the backend-owned desktop event bridge.
 2. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.

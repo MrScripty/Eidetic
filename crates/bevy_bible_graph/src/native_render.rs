@@ -13,7 +13,10 @@ use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection};
 
-use crate::build_bible_graph_visual_snapshot;
+use crate::{
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
+    BibleGraphRendererError, build_bible_graph_visual_snapshot,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
@@ -51,6 +54,7 @@ pub struct BibleGraphNativeWindowControlHandle {
     ready: Arc<AtomicBool>,
     projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
+    commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
 }
 
 #[derive(Debug, Clone, Resource)]
@@ -62,6 +66,7 @@ pub struct BibleGraphNativeWindowControl {
     ready: Arc<AtomicBool>,
     projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
+    commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -166,6 +171,7 @@ impl BibleGraphNativeWindowControlHandle {
             ready: Arc::new(AtomicBool::new(false)),
             projection: Arc::new(Mutex::new(None)),
             native_visual_counts: Arc::new(Mutex::new(BibleGraphNativeVisualStatus::default())),
+            commands: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -214,6 +220,15 @@ impl BibleGraphNativeWindowControlHandle {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
     }
+
+    pub fn drain_commands(&self) -> Vec<BibleGraphRendererCommand> {
+        std::mem::take(
+            &mut self
+                .commands
+                .lock()
+                .unwrap_or_else(|error| error.into_inner()),
+        )
+    }
 }
 
 impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowControl {
@@ -226,6 +241,7 @@ impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowContro
             ready: Arc::clone(&handle.ready),
             projection: Arc::clone(&handle.projection),
             native_visual_counts: Arc::clone(&handle.native_visual_counts),
+            commands: Arc::clone(&handle.commands),
         }
     }
 }
@@ -469,6 +485,43 @@ pub fn update_bible_graph_renderer_window_bounds(world: &mut World, width_px: u3
             height_px,
         };
     }
+}
+
+pub fn emit_bible_graph_native_node_selection(
+    world: &mut World,
+    node_id: BibleGraphNodeId,
+) -> Result<(), BibleGraphRendererError> {
+    let node_exists = world
+        .query::<&BibleGraphNativeNodeVisual>()
+        .iter(world)
+        .any(|node| node.node_id == node_id);
+    if !node_exists {
+        return Err(BibleGraphRendererError::UnknownNode { node_id });
+    }
+
+    push_native_command(world, BibleGraphRendererCommand::SelectNode { node_id })
+}
+
+fn push_native_command(
+    world: &mut World,
+    command: BibleGraphRendererCommand,
+) -> Result<(), BibleGraphRendererError> {
+    let Some(control) = world
+        .get_resource::<BibleGraphNativeWindowControl>()
+        .cloned()
+    else {
+        return Err(BibleGraphRendererError::MissingProjection);
+    };
+    let mut commands = control
+        .commands
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    if commands.len() >= BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY {
+        return Err(BibleGraphRendererError::CommandQueueFull);
+    }
+
+    commands.push(command);
+    Ok(())
 }
 
 fn graph_color(color: &str) -> Color {

@@ -8,7 +8,7 @@ use super::{
     NativeRendererPlatformStrategy, NativeRendererSupervisor, NativeRendererSupervisorLifecycle,
     NativeRendererThreadingModel, NativeRendererWindowThreadHandle,
 };
-use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
+use eidetic_bevy_bible_graph::{BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand};
 use eidetic_core::contracts::BibleRenderGraphProjection;
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
@@ -49,6 +49,7 @@ pub trait NativeRendererRunner {
         &mut self,
         projection: BibleRenderGraphProjection,
     ) -> NativeRendererRunnerStatus;
+    fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand>;
     fn status(&self) -> NativeRendererRunnerStatus;
 }
 
@@ -65,6 +66,9 @@ enum NativeRendererRunnerRequest {
     SetProjection {
         projection: BibleRenderGraphProjection,
         reply: mpsc::Sender<NativeRendererRunnerStatus>,
+    },
+    DrainCommands {
+        reply: mpsc::Sender<Vec<BibleGraphRendererCommand>>,
     },
     Status {
         reply: mpsc::Sender<NativeRendererRunnerStatus>,
@@ -186,6 +190,22 @@ impl NativeRendererRunner for NativeRendererRunnerHandle {
         self.request(|reply| NativeRendererRunnerRequest::SetProjection { projection, reply })
     }
 
+    fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand> {
+        let (reply, receiver) = mpsc::channel();
+        if self
+            .sender
+            .try_send(NativeRendererRunnerRequest::DrainCommands { reply })
+            .is_err()
+        {
+            return Vec::new();
+        }
+        receiver
+            .recv_timeout(Duration::from_millis(
+                NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
+            ))
+            .unwrap_or_default()
+    }
+
     fn status(&self) -> NativeRendererRunnerStatus {
         self.request(|reply| NativeRendererRunnerRequest::Status { reply })
     }
@@ -222,6 +242,9 @@ fn run_native_renderer_runner(
             }
             NativeRendererRunnerRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(runner.set_projection(projection));
+            }
+            NativeRendererRunnerRequest::DrainCommands { reply } => {
+                let _ = reply.send(runner.drain_commands());
             }
             NativeRendererRunnerRequest::Status { reply } => {
                 let _ = reply.send(runner.refresh_status());

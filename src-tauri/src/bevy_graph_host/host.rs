@@ -1,7 +1,8 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use eidetic_bevy_bible_graph::{
-    BibleGraphRendererApp, BibleGraphRendererError, BibleGraphVisualSnapshot,
+    BibleGraphRendererApp, BibleGraphRendererCommand, BibleGraphRendererError,
+    BibleGraphVisualSnapshot,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -66,6 +67,13 @@ impl DesktopNativeRendererRunner {
         match self {
             Self::Managed(runner) => runner.set_projection(projection),
             Self::Unavailable(status) => status.clone(),
+        }
+    }
+
+    fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand> {
+        match self {
+            Self::Managed(runner) => runner.drain_commands(),
+            Self::Unavailable(_) => Vec::new(),
         }
     }
 
@@ -205,11 +213,14 @@ impl DesktopBibleGraphHost {
         self.with_renderer_mut(|renderer| renderer.select_influence(influence_id))
     }
 
-    pub fn drain_commands(&mut self) -> Vec<eidetic_bevy_bible_graph::BibleGraphRendererCommand> {
-        self.renderer
+    pub fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand> {
+        let mut commands = self
+            .renderer
             .as_mut()
             .map(BibleGraphRendererApp::drain_commands)
-            .unwrap_or_default()
+            .unwrap_or_default();
+        commands.extend(self.native_runner.drain_commands());
+        commands
     }
 
     pub fn visual_snapshot(&mut self) -> Result<BibleGraphVisualSnapshot, BibleGraphHostError> {
