@@ -2640,14 +2640,17 @@ Completed foundation, do not reimplement unless verification fails:
   primary graph surface. The Bevy renderer controls occupy the main graph
   workspace, and the Svelte outline is available only as an explicit secondary
   projection inspector.
+- Native Bevy graph visual refreshes now use keyed node/edge/influence upserts
+  by stable graph IDs and remove stale visual entities after each projection
+  refresh. The old native full-despawn visual rebuild path is no longer the
+  default for bounded graph refreshes.
 
 Remaining implementation order:
 
 1. Keep Svelte graph filters, details, review, and semantic outline
    projection-only as secondary controls/accessibility surfaces.
-2. Add keyed ECS/native-visual diffing before expanding beyond the documented
-   500-node/1,000-edge prototype envelope or before refresh frequency makes
-   full rebuilds visibly expensive.
+2. Re-run the Milestone 8 standards/blast-radius review before closing the
+   milestone and record any newly discovered cleanup as follow-up tasks.
 
 Standards gates:
 

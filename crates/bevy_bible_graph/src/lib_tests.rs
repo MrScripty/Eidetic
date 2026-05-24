@@ -520,6 +520,93 @@ fn controlled_native_window_emits_validated_influence_selection_commands() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
+    use bevy::prelude::{Entity, Plugin};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_influence(
+        node_id.clone(),
+        edge_id.clone(),
+        influence_id,
+    ));
+    app.update();
+
+    let node_entity = native_node_entity(app.world_mut(), &node_id).unwrap();
+    let edge_entity = native_edge_entity(app.world_mut(), &edge_id).unwrap();
+    let influence_entity = native_influence_entity(app.world_mut(), influence_id).unwrap();
+
+    control.set_projection(projection_with_influence(
+        node_id.clone(),
+        edge_id.clone(),
+        influence_id,
+    ));
+    app.update();
+
+    assert_eq!(
+        native_node_entity(app.world_mut(), &node_id),
+        Some(node_entity)
+    );
+    assert_eq!(
+        native_edge_entity(app.world_mut(), &edge_id),
+        Some(edge_entity)
+    );
+    assert_eq!(
+        native_influence_entity(app.world_mut(), influence_id),
+        Some(influence_entity)
+    );
+
+    control.set_projection(projection_with_node(node_id.clone()));
+    app.update();
+
+    assert_eq!(
+        native_node_entity(app.world_mut(), &node_id),
+        Some(node_entity)
+    );
+    assert_eq!(native_edge_entity(app.world_mut(), &edge_id), None);
+    assert_eq!(native_influence_entity(app.world_mut(), influence_id), None);
+
+    fn native_node_entity(
+        world: &mut bevy::prelude::World,
+        node_id: &BibleGraphNodeId,
+    ) -> Option<Entity> {
+        world
+            .query::<(Entity, &BibleGraphNativeNodeVisual)>()
+            .iter(world)
+            .find_map(|(entity, node)| (&node.node_id == node_id).then_some(entity))
+    }
+
+    fn native_edge_entity(
+        world: &mut bevy::prelude::World,
+        edge_id: &BibleGraphEdgeId,
+    ) -> Option<Entity> {
+        world
+            .query::<(Entity, &BibleGraphNativeEdgeVisual)>()
+            .iter(world)
+            .find_map(|(entity, edge)| (&edge.edge_id == edge_id).then_some(entity))
+    }
+
+    fn native_influence_entity(
+        world: &mut bevy::prelude::World,
+        influence_id: ContextInfluenceId,
+    ) -> Option<Entity> {
+        world
+            .query::<(Entity, &BibleGraphNativeInfluenceVisual)>()
+            .iter(world)
+            .find_map(|(entity, influence)| {
+                (influence.influence_id == influence_id).then_some(entity)
+            })
+    }
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn renderer_app_can_start_as_renderer_window_consumer() {
     let renderer = BibleGraphRendererApp::new_renderer_window();
 

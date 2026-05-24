@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::num::NonZeroU64;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -7,7 +8,7 @@ use bevy::app::AppExit;
 use bevy::prelude::{
     App, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins, Entity, MessageWriter,
     Plugin, PluginGroup, Res, ResMut, Resource, Sprite, Startup, Transform, Update, Vec2, Vec3,
-    With, World,
+    World,
 };
 use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
@@ -417,10 +418,11 @@ pub fn rebuild_bible_graph_native_visuals(
         return;
     }
 
-    despawn_existing_native_visuals(world);
     let snapshot = build_bible_graph_visual_snapshot(projection);
     let node_count = snapshot.nodes.len();
     let edge_count = snapshot.edges.len();
+
+    let mut existing_edges = existing_native_edges(world);
 
     for edge in snapshot.edges {
         let edge_length = ((edge.to_position.x - edge.from_position.x).powi(2)
@@ -431,10 +433,10 @@ pub fn rebuild_bible_graph_native_visuals(
             .atan2(edge.to_position.x - edge.from_position.x);
         let edge_midpoint_x = (edge.from_position.x + edge.to_position.x) / 2.0;
         let edge_midpoint_y = (edge.from_position.y + edge.to_position.y) / 2.0;
-        world.spawn((
+        let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeEdgeVisual {
-                edge_id: edge.edge_id,
+                edge_id: edge.edge_id.clone(),
                 from_node_id: edge.from_node_id,
                 to_node_id: edge.to_node_id,
                 from_x: edge.from_position.x,
@@ -454,14 +456,22 @@ pub fn rebuild_bible_graph_native_visuals(
                 rotation: bevy::prelude::Quat::from_rotation_z(edge_angle),
                 ..Default::default()
             },
-        ));
+        );
+        if let Some(entity) = existing_edges.remove(&edge.edge_id) {
+            world.entity_mut(entity).insert(bundle);
+        } else {
+            world.spawn(bundle);
+        }
     }
+    despawn_remaining_entities(world, existing_edges);
+
+    let mut existing_nodes = existing_native_nodes(world);
 
     for node in snapshot.nodes {
-        world.spawn((
+        let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeNodeVisual {
-                node_id: node.node_id,
+                node_id: node.node_id.clone(),
                 x: node.position.x,
                 y: node.position.y,
                 z: node.position.z,
@@ -479,19 +489,33 @@ pub fn rebuild_bible_graph_native_visuals(
                 node.position.y,
                 node.position.z + 1.0,
             )),
-        ));
+        );
+        if let Some(entity) = existing_nodes.remove(&node.node_id) {
+            world.entity_mut(entity).insert(bundle);
+        } else {
+            world.spawn(bundle);
+        }
     }
+    despawn_remaining_entities(world, existing_nodes);
+
+    let mut existing_influences = existing_native_influences(world);
 
     for influence in &projection.influences {
-        world.spawn((
+        let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeInfluenceVisual {
                 influence_id: influence.influence_id,
                 bible_node_id: influence.bible_node_id.clone(),
                 bible_edge_id: influence.bible_edge_id.clone(),
             },
-        ));
+        );
+        if let Some(entity) = existing_influences.remove(&influence.influence_id) {
+            world.entity_mut(entity).insert(bundle);
+        } else {
+            world.spawn(bundle);
+        }
     }
+    despawn_remaining_entities(world, existing_influences);
 
     let mut status = world.resource_mut::<BibleGraphNativeVisualStatus>();
     status.node_count = node_count;
@@ -638,13 +662,32 @@ fn graph_color(color: &str) -> Color {
     }
 }
 
-fn despawn_existing_native_visuals(world: &mut World) {
-    let entities: Vec<Entity> = world
-        .query_filtered::<Entity, With<BibleGraphNativeVisualEntity>>()
+fn existing_native_nodes(world: &mut World) -> HashMap<BibleGraphNodeId, Entity> {
+    world
+        .query::<(Entity, &BibleGraphNativeNodeVisual)>()
         .iter(world)
-        .collect();
+        .map(|(entity, node)| (node.node_id.clone(), entity))
+        .collect()
+}
 
-    for entity in entities {
+fn existing_native_edges(world: &mut World) -> HashMap<BibleGraphEdgeId, Entity> {
+    world
+        .query::<(Entity, &BibleGraphNativeEdgeVisual)>()
+        .iter(world)
+        .map(|(entity, edge)| (edge.edge_id.clone(), entity))
+        .collect()
+}
+
+fn existing_native_influences(world: &mut World) -> HashMap<ContextInfluenceId, Entity> {
+    world
+        .query::<(Entity, &BibleGraphNativeInfluenceVisual)>()
+        .iter(world)
+        .map(|(entity, influence)| (influence.influence_id, entity))
+        .collect()
+}
+
+fn despawn_remaining_entities<T>(world: &mut World, existing_entities: HashMap<T, Entity>) {
+    for entity in existing_entities.into_values() {
         let _ = world.despawn(entity);
     }
 }
