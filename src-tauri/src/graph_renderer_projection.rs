@@ -11,6 +11,7 @@ use crate::error::CommandError;
 #[derive(Default)]
 pub struct GraphRendererProjectionRequestState {
     request: Mutex<BibleRenderGraphProjectionRequest>,
+    refresh: Mutex<GraphRendererProjectionRefreshState>,
 }
 
 impl GraphRendererProjectionRequestState {
@@ -27,6 +28,61 @@ impl GraphRendererProjectionRequestState {
             .lock()
             .unwrap_or_else(|error| error.into_inner()) = request;
     }
+
+    fn begin_refresh(&self) -> GraphRendererProjectionRefreshDecision {
+        self.refresh
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .begin_refresh()
+    }
+
+    fn complete_refresh(&self) -> GraphRendererProjectionRefreshCompletion {
+        self.refresh
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .complete_refresh()
+    }
+}
+
+#[derive(Debug, Default)]
+struct GraphRendererProjectionRefreshState {
+    in_flight: bool,
+    follow_up_requested: bool,
+}
+
+impl GraphRendererProjectionRefreshState {
+    fn begin_refresh(&mut self) -> GraphRendererProjectionRefreshDecision {
+        if self.in_flight {
+            self.follow_up_requested = true;
+            GraphRendererProjectionRefreshDecision::AlreadyRefreshing
+        } else {
+            self.in_flight = true;
+            self.follow_up_requested = false;
+            GraphRendererProjectionRefreshDecision::Started
+        }
+    }
+
+    fn complete_refresh(&mut self) -> GraphRendererProjectionRefreshCompletion {
+        if self.follow_up_requested {
+            self.follow_up_requested = false;
+            GraphRendererProjectionRefreshCompletion::RunFollowUp
+        } else {
+            self.in_flight = false;
+            GraphRendererProjectionRefreshCompletion::Idle
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum GraphRendererProjectionRefreshDecision {
+    Started,
+    AlreadyRefreshing,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum GraphRendererProjectionRefreshCompletion {
+    Idle,
+    RunFollowUp,
 }
 
 pub async fn seed_graph_renderer_projection(
@@ -64,11 +120,36 @@ pub async fn refresh_active_graph_renderer_projection(
     app: &tauri::AppHandle,
     state: &AppState,
 ) -> Result<BibleGraphHostStatus, CommandError> {
-    let request = graph_renderer_projection_request_state(app)
-        .map(|request_state| request_state.current())
-        .unwrap_or_default();
+    let request_state = graph_renderer_projection_request_state(app)?;
+    refresh_active_graph_renderer_projection_with_state(app, state, &request_state).await
+}
 
-    refresh_open_graph_renderer_projection(app, state, request).await
+pub async fn update_active_graph_renderer_projection_request(
+    app: &tauri::AppHandle,
+    state: &AppState,
+    request: BibleRenderGraphProjectionRequest,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    let request_state = graph_renderer_projection_request_state(app)?;
+    request_state.replace(request);
+    refresh_active_graph_renderer_projection_with_state(app, state, &request_state).await
+}
+
+async fn refresh_active_graph_renderer_projection_with_state(
+    app: &tauri::AppHandle,
+    state: &AppState,
+    request_state: &GraphRendererProjectionRequestState,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    if request_state.begin_refresh() == GraphRendererProjectionRefreshDecision::AlreadyRefreshing {
+        return graph_renderer_status(app);
+    }
+
+    loop {
+        let request = request_state.current();
+        let result = refresh_open_graph_renderer_projection(app, state, request).await;
+        if request_state.complete_refresh() == GraphRendererProjectionRefreshCompletion::Idle {
+            return result;
+        }
+    }
 }
 
 async fn load_graph_renderer_projection(
@@ -107,6 +188,12 @@ fn graph_renderer_owner(
         .ok_or_else(|| CommandError::internal("graph renderer owner is not managed"))
 }
 
+fn graph_renderer_status(app: &tauri::AppHandle) -> Result<BibleGraphHostStatus, CommandError> {
+    graph_renderer_owner(app)?
+        .status()
+        .map_err(|error| CommandError::internal(format!("graph renderer status failed: {error:?}")))
+}
+
 fn graph_renderer_projection_request_state(
     app: &tauri::AppHandle,
 ) -> Result<tauri::State<'_, GraphRendererProjectionRequestState>, CommandError> {
@@ -123,7 +210,10 @@ enum GraphRendererProjectionWriteMode {
 mod tests {
     use eidetic_core::contracts::BibleGraphNodeId;
 
-    use super::GraphRendererProjectionRequestState;
+    use super::{
+        GraphRendererProjectionRefreshCompletion, GraphRendererProjectionRefreshDecision,
+        GraphRendererProjectionRefreshState, GraphRendererProjectionRequestState,
+    };
 
     #[test]
     fn graph_renderer_projection_request_state_tracks_active_request() {
@@ -136,5 +226,35 @@ mod tests {
         state.replace(request.clone());
 
         assert_eq!(state.current(), request);
+    }
+
+    #[test]
+    fn graph_renderer_projection_refresh_state_coalesces_follow_up_requests() {
+        let mut state = GraphRendererProjectionRefreshState::default();
+
+        assert_eq!(
+            state.begin_refresh(),
+            GraphRendererProjectionRefreshDecision::Started
+        );
+        assert_eq!(
+            state.begin_refresh(),
+            GraphRendererProjectionRefreshDecision::AlreadyRefreshing
+        );
+        assert_eq!(
+            state.begin_refresh(),
+            GraphRendererProjectionRefreshDecision::AlreadyRefreshing
+        );
+        assert_eq!(
+            state.complete_refresh(),
+            GraphRendererProjectionRefreshCompletion::RunFollowUp
+        );
+        assert_eq!(
+            state.complete_refresh(),
+            GraphRendererProjectionRefreshCompletion::Idle
+        );
+        assert_eq!(
+            state.begin_refresh(),
+            GraphRendererProjectionRefreshDecision::Started
+        );
     }
 }

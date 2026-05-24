@@ -6,8 +6,8 @@ use tauri::Manager;
 use crate::bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use crate::error::CommandError;
 use crate::graph_renderer_projection::{
-    GraphRendererProjectionRequestState, refresh_open_graph_renderer_projection,
-    seed_graph_renderer_projection,
+    GraphRendererProjectionRequestState, seed_graph_renderer_projection,
+    update_active_graph_renderer_projection_request,
 };
 
 #[derive(Debug, Clone, Deserialize)]
@@ -95,9 +95,7 @@ pub async fn graph_renderer_set_projection(
         .state::<eidetic_server::state::AppState>()
         .inner()
         .clone();
-    let status = refresh_open_graph_renderer_projection(&app, &state, request.clone()).await?;
-    graph_renderer_projection_request_state(&app)?.replace(request);
-    Ok(status)
+    update_active_graph_renderer_projection_request(&app, &state, request).await
 }
 
 #[tauri::command]

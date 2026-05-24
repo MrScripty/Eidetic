@@ -1191,6 +1191,11 @@ Discovered issues:
   The shared helper is a useful consolidation step, but the remaining work must
   replace this with one desktop-owned request/subscription owner that coalesces
   refreshes and treats Svelte as a request updater, not a projection writer.
+- Resolved: graph renderer projection refreshes now enter through the managed
+  desktop projection request state, which coalesces overlapping refresh requests
+  into one in-flight projection load plus one follow-up refresh. The remaining
+  work is API cleanup: rename or replace the temporary Svelte
+  `set_projection` command semantics so it is clearly an active request update.
 - Updated: the Svelte graph renderer command drain still uses temporary
   polling, but it is now gated by backend-projected renderer-window status and
   does not drain while the renderer is closed, scene-starting, or reporting no
