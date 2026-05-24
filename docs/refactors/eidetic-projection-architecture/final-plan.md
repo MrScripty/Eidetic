@@ -1130,6 +1130,12 @@ Discovered issues:
   per-platform floating-window runner strategy that consumes backend
   projections and command channels without moving durable graph state into
   Bevy or Svelte.
+- Updated: the native runner blocker is an implementation proof, not an
+  architecture redesign. The next runner work must land as a sequence of
+  pass/fail slices: a minimal real Bevy/winit window runner behind
+  `NativeRendererPlatformStrategy`, current-platform open/status/focus/close/
+  reopen/teardown verification, typed unsupported status for unverified
+  platforms, and only then graph projection rendering in the visible window.
 - Resolved: graph renderer lifecycle derivation could report `visible` from an
   impossible state where the renderer was not running or the scene was not
   ready. The lifecycle helper now requires a running, scene-ready renderer
@@ -2281,6 +2287,11 @@ Tasks:
   Until a platform-specific gate passes, `renderer_window_visible_supported`
   remains false for that platform and the Svelte outline remains the semantic
   graph fallback.
+- Add an explicit native runner proof checklist before graph visuals are wired
+  to the visible window. The checklist must cover minimal Bevy/winit window
+  creation, status heartbeat, focus request behavior, close, reopen, project/
+  app shutdown teardown, panic/error projection, command responsiveness while
+  the event loop is running, and no fake visible-window status.
 - Add a desktop-owned `NativeRendererRunner` contract before adding more graph
   visuals. The runner contract owns native event-loop startup, command ingress,
   status egress, shutdown, panic reporting, and capability projection without
@@ -2440,6 +2451,22 @@ Implementation order:
   path. If the Bevy/winit event loop cannot run safely under the Tauri desktop
   runtime, stop Milestone 8 implementation and re-plan the renderer architecture
   before adding more visual graph code.
+- Implement the native runner proof in bounded slices:
+  1. Add a real-runner feature path behind `NativeRendererPlatformStrategy`
+     without enabling visible-window support.
+  2. Start the current-platform minimal Bevy/winit runner with only a clear
+     color/grid scene and a status heartbeat; leave graph projections out of
+     this slice.
+  3. Route open/status/focus/close through the existing bounded
+     `NativeRendererRunnerHandle` request/reply contract and prove Tauri
+     commands remain responsive while the runner event loop is active.
+  4. Prove close/reopen/project-close/app-shutdown teardown, including bounded
+     stop, joined runner thread/task, and panic/error projection.
+  5. Mark only the locally proven platform as verified support. Other platform
+     strategies must keep reporting pending or unsupported status until their
+     own proof is run.
+  6. Wire graph projection rendering into the visible window only after the
+     minimal-window proof passes for the target platform.
 - Split the native runner proof into three explicit platform outcomes before
   enabling primary graph visuals: Linux X11/Wayland worker-thread runner,
   Windows worker-thread runner, and macOS main-thread/Tauri-compatible runner.
@@ -2530,6 +2557,14 @@ Standards gates:
   must not set `renderer_window_visible_supported`, `renderer_window_visible`,
   `renderer_window_ready`, or focus support from inferred or hardcoded state;
   those fields must come from the actual runner capability/status path.
+- The minimal native runner proof must be isolated from graph projection
+  rendering. A clear-color/grid window can be verified first, but it may not
+  consume durable graph data, own graph selection, or mark the Bevy graph as
+  primary until the runner lifecycle is proven.
+- A platform runner may report `verified_support` only after an executable or
+  documented smoke proof covers open, status, focus, close, reopen, teardown,
+  panic/error projection, and command responsiveness for that platform. A proof
+  on one OS/windowing backend must not change capability status for another.
 - Renderer-window status must include an explicit unsupported/capability reason
   enum owned by the backend status contract. UI code may display the reason, but
   must not infer pending, unsupported, failed, or supported states from free-form
@@ -2611,6 +2646,11 @@ Verification:
   leaking renderer threads/tasks, or setting visible-window status from fake
   state. The smoke check must run before graph nodes/edges become the primary
   visual surface.
+- Native runner proof verification records the exact platform/backend tested,
+  the command used to run the smoke proof, the observed lifecycle transitions,
+  and the unsupported/pending status for every platform not proven in that
+  slice. The proof must show that status/focus/close commands return while the
+  Bevy/winit event loop is active.
 - Native runner verification records separate outcomes for Linux X11, Linux
   Wayland, Windows, and macOS. Linux/Windows worker-thread proofs do not mark
   macOS supported; macOS support requires a separate main-thread/Tauri-runtime
