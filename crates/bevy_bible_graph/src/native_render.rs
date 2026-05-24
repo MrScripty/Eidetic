@@ -46,11 +46,13 @@ struct BibleGraphNativeAutoClose {
 #[derive(Debug, Clone)]
 pub struct BibleGraphNativeWindowControlHandle {
     close_requested: Arc<AtomicBool>,
+    ready: Arc<AtomicBool>,
 }
 
 #[derive(Debug, Clone, Resource)]
 pub struct BibleGraphNativeWindowControl {
     close_requested: Arc<AtomicBool>,
+    ready: Arc<AtomicBool>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -149,6 +151,7 @@ impl BibleGraphNativeWindowControlHandle {
     pub fn new() -> Self {
         Self {
             close_requested: Arc::new(AtomicBool::new(false)),
+            ready: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -159,12 +162,21 @@ impl BibleGraphNativeWindowControlHandle {
     pub fn close_requested(&self) -> bool {
         self.close_requested.load(Ordering::Acquire)
     }
+
+    pub fn mark_ready(&self) {
+        self.ready.store(true, Ordering::Release);
+    }
+
+    pub fn ready(&self) -> bool {
+        self.ready.load(Ordering::Acquire)
+    }
 }
 
 impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowControl {
     fn from(handle: &BibleGraphNativeWindowControlHandle) -> Self {
         Self {
             close_requested: Arc::clone(&handle.close_requested),
+            ready: Arc::clone(&handle.ready),
         }
     }
 }
@@ -179,6 +191,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeVisualStatus::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.add_systems(Startup, spawn_bible_graph_renderer_window_scene);
+        app.add_systems(Startup, mark_bible_graph_native_window_ready);
     }
 }
 
@@ -250,6 +263,13 @@ fn spawn_bible_graph_renderer_window_scene(
 ) {
     commands.spawn((Camera2d, BibleGraphNativeCamera));
     status.camera_count = 1;
+}
+
+fn mark_bible_graph_native_window_ready(control: Option<Res<BibleGraphNativeWindowControl>>) {
+    let Some(control) = control else {
+        return;
+    };
+    control.ready.store(true, Ordering::Release);
 }
 
 fn close_minimal_native_window_after_timer(

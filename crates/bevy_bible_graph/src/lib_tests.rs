@@ -284,10 +284,13 @@ fn native_window_control_handle_records_close_requests() {
     let control = BibleGraphNativeWindowControlHandle::new();
 
     assert!(!control.close_requested());
+    assert!(!control.ready());
 
     control.request_close();
+    control.mark_ready();
 
     assert!(control.close_requested());
+    assert!(control.ready());
 }
 
 #[cfg(feature = "native_render")]
@@ -307,6 +310,11 @@ fn controlled_native_window_app_installs_close_control_resource() {
             .contains_resource::<BibleGraphNativeWindowControl>()
     );
     assert!(!control.close_requested());
+    assert!(!control.ready());
+
+    app.update();
+
+    assert!(control.ready());
 
     control.request_close();
 

@@ -19,6 +19,7 @@ pub struct NativeRendererWindowThreadHandle {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NativeRendererWindowThreadStatus {
     pub running: bool,
+    pub ready: bool,
     pub close_requested: bool,
     pub result: Option<NativeRendererWindowThreadResult>,
 }
@@ -70,6 +71,7 @@ impl NativeRendererWindowThreadHandle {
         self.refresh_result();
         NativeRendererWindowThreadStatus {
             running: self.result.is_none(),
+            ready: self.control_handle.ready(),
             close_requested: self.control_handle.close_requested(),
             result: self.result,
         }

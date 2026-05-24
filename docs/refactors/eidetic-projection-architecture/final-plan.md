@@ -936,6 +936,10 @@ Completed slices:
   project running/closed/failed status, refresh completion or panic state from
   status/focus requests, and close with bounded joined teardown while keeping
   unit tests on injected non-GUI runner threads.
+- `feat(renderer): report native window readiness` added a renderer-produced
+  ready signal to the Bevy native window control path and projects that signal
+  through the desktop window thread/supervisor status instead of treating thread
+  liveness as window readiness.
 
 Discovered issues:
 
@@ -1028,6 +1032,10 @@ Discovered issues:
   caused event-loop recreation failures. Host and owner tests now inject a
   backend-owned non-GUI window-thread starter so tests validate the same
   lifecycle contract without opening platform windows.
+- Resolved: native renderer `window_ready` still came from supervisor-thread
+  liveness after the production runner path landed. The Bevy native renderer now
+  marks readiness through its control resource, and the desktop supervisor
+  projects readiness only after observing that renderer-produced signal.
 - Resolved: graph renderer window lifecycle could only be inferred from open,
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
@@ -2594,33 +2602,33 @@ Completed foundation, do not reimplement unless verification fails:
 - The production native renderer supervisor path now starts the Bevy window
   thread, reports running/closed/failed status, refreshes completion/panic
   state on status/focus, and performs bounded joined close.
+- Native renderer `window_ready` is now based on a Bevy renderer-produced ready
+  signal observed by the desktop window thread, not on supervisor-thread
+  liveness.
 
 Remaining implementation order:
 
-1. Add an explicit native renderer heartbeat/readiness signal from the Bevy
-   window thread so `window_ready` is based on a renderer-produced lifecycle
-   event instead of supervisor-thread liveness.
-2. Prove open/status/focus/close/reopen/project-close/app-shutdown under the
+1. Prove open/status/focus/close/reopen/project-close/app-shutdown under the
    Tauri runtime while status/focus/close/projection commands remain responsive
    while the Bevy/winit event loop is active.
-3. Mark only the locally proven platform as verified support. Linux can advance
+2. Mark only the locally proven platform as verified support. Linux can advance
    independently when locally proven; Windows and macOS remain typed unproven or
    unsupported until separately verified.
-4. Consolidate graph renderer projection delivery into a single desktop-owned
+3. Consolidate graph renderer projection delivery into a single desktop-owned
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-5. Replace the temporary Svelte command-drain polling bridge with native
+4. Replace the temporary Svelte command-drain polling bridge with native
    renderer events or a backend-owned projection channel with deterministic
    teardown.
-6. Wire bounded graph projection rendering into the visible floating Bevy window
+5. Wire bounded graph projection rendering into the visible floating Bevy window
    only after the native runner gate passes for the current platform.
-7. Keep Svelte graph filters, details, review, and semantic outline as
+6. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-8. Remove or demote the old 2D graph surface after Bevy covers target
+7. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-9. Add keyed ECS/native-visual diffing before expanding beyond the documented
+8. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 

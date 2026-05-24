@@ -29,6 +29,7 @@ pub struct NativeRendererSupervisor {
     startup_plan: NativeRendererRunnerStartupPlan,
     window_thread_start: NativeRendererWindowThreadStart,
     window_thread: Option<NativeRendererWindowThreadHandle>,
+    window_ready: bool,
     lifecycle: NativeRendererSupervisorLifecycle,
     last_error: Option<String>,
 }
@@ -50,6 +51,7 @@ impl NativeRendererSupervisor {
             startup_plan: strategy.runner_startup_plan(),
             window_thread_start,
             window_thread: None,
+            window_ready: false,
             lifecycle: NativeRendererSupervisorLifecycle::NotStarted,
             last_error: None,
         }
@@ -61,6 +63,7 @@ impl NativeRendererSupervisor {
             startup_plan: NativeRendererPlatformStrategy::current().runner_startup_plan(),
             window_thread_start: NativeRendererWindowThreadHandle::start,
             window_thread: None,
+            window_ready: false,
             lifecycle: NativeRendererSupervisorLifecycle::Failed,
             last_error: Some(message),
         }
@@ -98,11 +101,13 @@ impl NativeRendererSupervisor {
             return;
         };
         let status = window_thread.join_completed();
+        self.window_ready = status.ready;
         if status.running {
             return;
         }
 
         self.window_thread = None;
+        self.window_ready = false;
         match status.result {
             Some(NativeRendererWindowThreadResult::Completed) if status.close_requested => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
@@ -135,6 +140,7 @@ impl NativeRendererSupervisor {
         match (self.window_thread_start)(config) {
             Ok(window_thread) => {
                 self.window_thread = Some(window_thread);
+                self.window_ready = false;
                 self.lifecycle = NativeRendererSupervisorLifecycle::Running;
                 self.last_error = None;
             }
@@ -149,6 +155,7 @@ impl NativeRendererSupervisor {
     fn close_window_thread(&mut self) {
         let Some(mut window_thread) = self.window_thread.take() else {
             self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
+            self.window_ready = false;
             self.last_error = None;
             return;
         };
@@ -157,6 +164,7 @@ impl NativeRendererSupervisor {
         let status = window_thread.stop(NATIVE_RENDERER_WINDOW_STOP_TIMEOUT);
         if status.running {
             self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
+            self.window_ready = status.ready;
             self.last_error =
                 Some("native renderer window did not stop before timeout".to_string());
             self.window_thread = Some(window_thread);
@@ -166,14 +174,17 @@ impl NativeRendererSupervisor {
         match status.result {
             Some(NativeRendererWindowThreadResult::Completed) => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
+                self.window_ready = false;
                 self.last_error = None;
             }
             Some(NativeRendererWindowThreadResult::Panicked) => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
+                self.window_ready = false;
                 self.last_error = Some("native renderer window thread panicked".to_string());
             }
             None => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
+                self.window_ready = false;
                 self.last_error =
                     Some("native renderer window stop completed without a result".to_string());
             }
@@ -235,7 +246,7 @@ impl NativeRendererRunner for NativeRendererSupervisor {
             verified_support: capability.verified_support(),
             visible_window_supported,
             window_visible: window_running,
-            window_ready: window_running,
+            window_ready: window_running && self.window_ready,
             focus_supported: false,
             last_error: self.last_error.clone(),
         }

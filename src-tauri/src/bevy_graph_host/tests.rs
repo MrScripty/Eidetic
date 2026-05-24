@@ -255,7 +255,7 @@ fn native_renderer_supervisor_starts_injected_window_thread() {
     );
 
     let opened = runner.open();
-    let focused = runner.focus();
+    let focused = wait_for_supervisor_ready(&mut runner);
     let closed = runner.close();
 
     assert_eq!(opened.lifecycle, NativeRendererRunnerLifecycle::Visible);
@@ -270,7 +270,7 @@ fn native_renderer_supervisor_starts_injected_window_thread() {
     assert!(!opened.verified_support);
     assert!(!opened.visible_window_supported);
     assert!(opened.window_visible);
-    assert!(opened.window_ready);
+    assert!(!opened.window_ready);
     assert_eq!(opened.last_error, None);
     assert_eq!(focused.lifecycle, NativeRendererRunnerLifecycle::Visible);
     assert_eq!(
@@ -278,6 +278,7 @@ fn native_renderer_supervisor_starts_injected_window_thread() {
         NativeRendererSupervisorLifecycle::Running
     );
     assert!(focused.window_visible);
+    assert!(focused.window_ready);
     assert!(!focused.focus_supported);
     assert_eq!(focused.last_error, None);
     assert_eq!(closed.lifecycle, NativeRendererRunnerLifecycle::Closed);
@@ -422,6 +423,7 @@ fn native_renderer_window_thread_reports_completion() {
     let status = window_thread.stop(Duration::from_millis(250));
 
     assert!(status.close_requested);
+    assert!(!status.ready);
     assert!(!status.running);
     assert_eq!(
         status.result,
@@ -438,6 +440,7 @@ fn native_renderer_window_thread_can_request_bounded_close() {
             .unwrap(),
         move |_config, control| {
             started_sender.send(()).unwrap();
+            control.mark_ready();
             while !control.close_requested() {
                 std::thread::sleep(Duration::from_millis(1));
             }
@@ -452,8 +455,10 @@ fn native_renderer_window_thread_can_request_bounded_close() {
     let stopped = window_thread.stop(Duration::from_millis(250));
 
     assert!(running.running);
+    assert!(running.ready);
     assert!(!running.close_requested);
     assert!(stopped.close_requested);
+    assert!(stopped.ready);
     assert!(!stopped.running);
     assert_eq!(
         stopped.result,
@@ -496,38 +501,57 @@ fn host_applies_projection_and_reports_scene_counts() {
     let status = host.set_projection(sample_projection()).unwrap();
 
     assert_eq!(
-        status,
-        BibleGraphHostStatus {
-            renderer_window_kind: DesktopRendererWindowKind::BibleGraph,
-            running: true,
-            renderer_window_open: true,
-            renderer_scene_ready: true,
-            renderer_window_visible: true,
-            renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
-            renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
-            renderer_runner_lifecycle: NativeRendererRunnerLifecycle::Visible,
-            renderer_supervisor_lifecycle: NativeRendererSupervisorLifecycle::Running,
-            renderer_runner_threading_model: expected_threading_model(),
-            renderer_window_capability: expected_capability(),
-            renderer_window_capability_reason: expected_pending_reason(),
-            renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Visible,
-            renderer_window_ready: true,
-            renderer_window_verified_support: false,
-            renderer_window_visible_supported: false,
-            renderer_window_focus_supported: false,
-            renderer_window_message:
-                "graph renderer scene is ready; visible native window is pending implementation"
-                    .to_string(),
-            node_count: 2,
-            edge_count: 1,
-            native_visual_node_count: 2,
-            native_visual_edge_count: 1,
-            renderer_window_width_px: 0,
-            renderer_window_height_px: 0,
-            influence_count: 1,
-            last_error: None,
-        }
+        status.renderer_window_kind,
+        DesktopRendererWindowKind::BibleGraph
     );
+    assert!(status.running);
+    assert!(status.renderer_window_open);
+    assert!(status.renderer_scene_ready);
+    assert!(status.renderer_window_visible);
+    assert_eq!(
+        status.renderer_window_strategy,
+        BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
+    );
+    assert_eq!(
+        status.renderer_window_platform,
+        BibleGraphRendererWindowPlatform::current()
+    );
+    assert_eq!(
+        status.renderer_runner_lifecycle,
+        NativeRendererRunnerLifecycle::Visible
+    );
+    assert_eq!(
+        status.renderer_supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Running
+    );
+    assert_eq!(
+        status.renderer_runner_threading_model,
+        expected_threading_model()
+    );
+    assert_eq!(status.renderer_window_capability, expected_capability());
+    assert_eq!(
+        status.renderer_window_capability_reason,
+        expected_pending_reason()
+    );
+    assert_eq!(
+        status.renderer_window_lifecycle,
+        BibleGraphRendererWindowLifecycle::Visible
+    );
+    assert!(!status.renderer_window_verified_support);
+    assert!(!status.renderer_window_visible_supported);
+    assert!(!status.renderer_window_focus_supported);
+    assert_eq!(
+        status.renderer_window_message,
+        "graph renderer scene is ready; visible native window is pending implementation"
+    );
+    assert_eq!(status.node_count, 2);
+    assert_eq!(status.edge_count, 1);
+    assert_eq!(status.native_visual_node_count, 2);
+    assert_eq!(status.native_visual_edge_count, 1);
+    assert_eq!(status.renderer_window_width_px, 0);
+    assert_eq!(status.renderer_window_height_px, 0);
+    assert_eq!(status.influence_count, 1);
+    assert_eq!(status.last_error, None);
 }
 
 #[test]
@@ -663,7 +687,7 @@ fn host_focus_routes_through_native_runner_status() {
     assert!(status.renderer_window_open);
     assert!(!status.renderer_window_focus_supported);
     assert!(status.renderer_window_visible);
-    assert!(status.renderer_window_ready);
+    assert!(!status.renderer_window_ready);
 }
 
 #[test]
@@ -682,7 +706,6 @@ fn owner_runs_renderer_on_dedicated_thread() {
     assert!(status.renderer_window_open);
     assert!(status.renderer_scene_ready);
     assert!(status.renderer_window_visible);
-    assert!(status.renderer_window_ready);
     assert!(!status.renderer_window_visible_supported);
     assert!(!status.renderer_window_focus_supported);
     owner.stop().unwrap();
@@ -698,7 +721,7 @@ fn owner_can_start_renderer_before_projection_arrives() {
     assert!(status.renderer_window_open);
     assert!(status.renderer_scene_ready);
     assert!(status.renderer_window_visible);
-    assert!(status.renderer_window_ready);
+    assert!(!status.renderer_window_ready);
     assert_eq!(status.node_count, 0);
     assert_eq!(status.edge_count, 0);
     assert_eq!(status.native_visual_node_count, 0);
@@ -906,10 +929,24 @@ fn start_test_window_thread(
     config: BibleGraphNativeWindowRunnerConfig,
 ) -> std::io::Result<NativeRendererWindowThreadHandle> {
     NativeRendererWindowThreadHandle::start_with(config, |_config, control| {
+        control.mark_ready();
         while !control.close_requested() {
             std::thread::sleep(Duration::from_millis(1));
         }
     })
+}
+
+fn wait_for_supervisor_ready(
+    runner: &mut NativeRendererSupervisor,
+) -> super::NativeRendererRunnerStatus {
+    for _ in 0..100 {
+        let status = runner.focus();
+        if status.window_ready {
+            return status;
+        }
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    runner.focus()
 }
 
 fn test_bible_graph_host() -> DesktopBibleGraphHost {
