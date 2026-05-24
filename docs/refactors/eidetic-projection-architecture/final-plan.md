@@ -1221,6 +1221,15 @@ Discovered issues:
   the manual Bevy/winit minimal-window smoke path. It runs outside the main app
   so Milestone 8 can validate native window behavior before production status
   reports verified visible-window support.
+- Updated: the smoke binary is diagnostic-only. Production visible-window
+  support still requires a desktop-owned `NativeRendererSupervisor` proof under
+  the Tauri runtime; a standalone Bevy/winit window proof must not flip
+  production capability status by itself.
+- Updated: the remaining blocker will be resolved by replacing the pending
+  runner with one supervisor-owned production path per verified platform, not
+  by adding frontend fallbacks, compatibility layers, or parallel renderer
+  ownership. Unproven platforms keep typed unavailable status until their own
+  supervisor proof passes.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer
@@ -2312,8 +2321,9 @@ Tasks:
   after it is proven on that platform, while macOS requires a separate
   main-thread/Tauri-runtime-compatible strategy before it can report support.
   Until a platform-specific gate passes, `renderer_window_visible_supported`
-  remains false for that platform and the Svelte outline remains the semantic
-  graph fallback.
+  remains false for that platform and the backend projects typed unavailable
+  status. The Svelte outline remains only a keyboard-accessible semantic view,
+  not a fallback renderer path.
 - Add an explicit native runner proof checklist before graph visuals are wired
   to the visible window. The checklist must cover minimal Bevy/winit window
   creation, status heartbeat, focus request behavior, close, reopen, project/
@@ -2324,6 +2334,12 @@ Tasks:
   status egress, shutdown, panic reporting, and capability projection without
   forcing Bevy/winit event-loop execution into the current synchronous
   request/reply owner loop.
+- Add a desktop-owned `NativeRendererSupervisor` before enabling visible-window
+  support. The supervisor is the single lifecycle owner for native renderer
+  startup, worker/main-thread placement, command channel, status channel,
+  shutdown/join handle, panic/error projection, and verified capability state.
+  It consumes `NativeRendererRunnerStartupPlan` and exposes one production
+  runner path per verified platform.
 - Add explicit platform strategy modules for the native runner gate. The
   platform-neutral host owns the public command/status API, while platform
   strategies own only event-loop placement and capability proof. A strategy
@@ -2481,19 +2497,37 @@ Implementation order:
 - Implement the native runner proof in bounded slices:
   1. Add a real-runner feature path behind `NativeRendererPlatformStrategy`
      without enabling visible-window support.
-  2. Start the current-platform minimal Bevy/winit runner with only a clear
-     color/grid scene and a status heartbeat; leave graph projections out of
-     this slice.
-  3. Route open/status/focus/close through the existing bounded
+  2. Treat `eidetic-native-renderer-smoke` as a diagnostic preflight only.
+     Record the exact command, platform/windowing backend, observed
+     open/close result, and whether the smoke path used `--any-thread` or
+     `--main-thread`. Do not change production capability status from this
+     diagnostic result alone.
+  3. Add `NativeRendererSupervisor` inside `eidetic-desktop` as the single
+     production lifecycle owner. Model lifecycle explicitly as not-started,
+     starting, running, closing, closed, and failed so invalid status
+     combinations are impossible at the boundary.
+  4. Implement the first production runner path for verified worker-thread
+     platforms only. Linux X11/Wayland and Windows may use the Bevy/winit
+     any-thread path after local proof; macOS remains unverified until a
+     separate main-thread/Tauri-compatible strategy exists.
+  5. Add backend-observed heartbeat/status from the supervisor. Visible,
+     ready, focus support, verified support, lifecycle, and error fields must
+     come from runner observation, not hardcoded platform assumptions or UI
+     inference.
+  6. Route open/status/focus/close through the existing bounded
      `NativeRendererRunnerHandle` request/reply contract and prove Tauri
      commands remain responsive while the runner event loop is active.
-  4. Prove close/reopen/project-close/app-shutdown teardown, including bounded
+  7. Prove close/reopen/project-close/app-shutdown teardown, including bounded
      stop, joined runner thread/task, and panic/error projection.
-  5. Mark only the locally proven platform as verified support. Other platform
-     strategies must keep reporting pending or unsupported status until their
-     own proof is run.
-  6. Wire graph projection rendering into the visible window only after the
-     minimal-window proof passes for the target platform.
+  8. Mark only the locally proven platform as verified support. Other platform
+     strategies must keep reporting pending, unproven, or unsupported status
+     until their own supervisor proof is run.
+  9. Remove the temporary Svelte command-drain polling bridge before the Bevy
+     graph becomes the primary graph surface. Renderer command output must flow
+     through a backend-owned event/projection channel or native renderer event
+     path with deterministic teardown.
+  10. Wire graph projection rendering into the visible window only after the
+      minimal-window supervisor proof passes for the target platform.
 - Split the native runner proof into three explicit platform outcomes before
   enabling primary graph visuals: Linux X11/Wayland worker-thread runner,
   Windows worker-thread runner, and macOS main-thread/Tauri-compatible runner.
@@ -2600,7 +2634,12 @@ Standards gates:
   flag. Linux X11/Wayland, Windows, and macOS each need their own verified
   runner outcome. The app may enable the visible Bevy graph on platforms that
   pass while unsupported platforms continue to project typed unsupported status
-  and keep the Svelte outline as the semantic fallback.
+  and keep the Svelte outline as a keyboard-accessible semantic view, not as a
+  fallback renderer path.
+- No fallback or legacy renderer path may be added to resolve native runner
+  risk. The permitted unavailable state is typed backend status. If a platform
+  cannot run the production supervisor, it remains unavailable until a verified
+  platform strategy is implemented or the renderer architecture is replanned.
 - Renderer projection delivery has exactly one active writer owned by the
   desktop renderer host. Frontend stores may cache backend responses and request
   focus/filter changes, but they must not independently push renderer
@@ -2622,7 +2661,8 @@ Standards gates:
 - If native window integration requires raw OS handles, `unsafe`, or FFI, that
   work must be isolated in a thin desktop-owned module with a safe API,
   feature-gated when possible, documented with safety invariants, and covered by
-  a separate verification plan before it can replace the current safe fallback.
+  a separate verification plan before it can replace the current typed
+  unavailable path.
 - Renderer window support must be cross-platform by construction: platform
   behavior is isolated behind desktop runtime strategy modules, unsupported
   capabilities degrade through typed status projections, and implementation
