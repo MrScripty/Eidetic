@@ -34,6 +34,7 @@
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const projectedSelectedGraphNodeId = $derived(graph?.selected_node_id ?? null);
   const graphSelection = $derived(bibleState.graphSelection);
+  let showOutline = $state(false);
   const renderGraphRequest = $derived(
     bibleRenderGraphRequestForWorkspaceSelection({
       selectedTimelineNodeId: editorState.selectedNodeId,
@@ -102,13 +103,27 @@
     <div class="graph-surface" class:has-side-lists={hasSideLists}>
       <div class="graph-renderer-shell">
         <GraphRendererWindowControls graphProjectionRequest={renderGraphRequest} />
-        <div class="graph-outline-fallback">
-          <BibleRenderGraphOutline
-            projection={graph}
-            selectedNodeId={projectedSelectedGraphNodeId}
-            onselect={handleSelect}
-          />
+        <div class="graph-renderer-primary" aria-label="Bevy graph renderer workspace">
+          <button
+            type="button"
+            class="outline-toggle"
+            aria-expanded={showOutline}
+            onclick={() => {
+              showOutline = !showOutline;
+            }}
+          >
+            {showOutline ? 'Hide outline' : 'Show outline'}
+          </button>
         </div>
+        {#if showOutline}
+          <div class="graph-outline-inspector">
+            <BibleRenderGraphOutline
+              projection={graph}
+              selectedNodeId={projectedSelectedGraphNodeId}
+              onselect={handleSelect}
+            />
+          </div>
+        {/if}
       </div>
 
       {#if hasSideLists}
@@ -163,12 +178,6 @@
     grid-template-columns: minmax(0, 1fr) minmax(220px, 0.34fr);
   }
 
-  .graph-surface :global(.graph-outline) {
-    max-height: none;
-    height: 100%;
-    border: 0;
-  }
-
   .graph-renderer-shell {
     display: flex;
     flex-direction: column;
@@ -176,12 +185,50 @@
     min-height: 0;
   }
 
-  .graph-outline-fallback {
+  .graph-renderer-primary {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
     min-width: 0;
     min-height: 0;
     flex: 1;
-    height: 100%;
+    padding: 10px;
     background: var(--color-bg-primary);
+  }
+
+  .outline-toggle {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    padding: 6px 9px;
+    background: var(--color-bg-surface);
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  .outline-toggle:hover,
+  .outline-toggle:focus-visible {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .outline-toggle:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .graph-outline-inspector {
+    min-width: 0;
+    max-height: 42%;
+    overflow: hidden;
+    border-top: 1px solid var(--color-border-subtle);
+    background: var(--color-bg-primary);
+  }
+
+  .graph-outline-inspector :global(.graph-outline) {
+    max-height: none;
+    height: 100%;
+    border: 0;
   }
 
   .empty-state {

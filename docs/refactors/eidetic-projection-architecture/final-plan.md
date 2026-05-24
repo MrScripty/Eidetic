@@ -2636,15 +2636,16 @@ Completed foundation, do not reimplement unless verification fails:
   The native Bevy graph validates node-backed focus/navigation intents, the
   desktop event bridge serializes them as typed renderer commands, and Svelte
   applies them only to transient projection-selection surfaces.
+- The graph workspace no longer renders the Svelte outline as the always-on
+  primary graph surface. The Bevy renderer controls occupy the main graph
+  workspace, and the Svelte outline is available only as an explicit secondary
+  projection inspector.
 
 Remaining implementation order:
 
-1. Keep Svelte graph filters, details, review, and semantic outline as
-   projection-only controls/accessibility surfaces. The outline must no longer
-   be presented as the primary visual graph after the Bevy window is verified.
-2. Remove or demote the old 2D graph surface after Bevy covers target
-   interactions and Svelte alternatives cover accessibility.
-3. Add keyed ECS/native-visual diffing before expanding beyond the documented
+1. Keep Svelte graph filters, details, review, and semantic outline
+   projection-only as secondary controls/accessibility surfaces.
+2. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 
