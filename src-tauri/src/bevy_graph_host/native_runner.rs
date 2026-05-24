@@ -5,7 +5,7 @@ use std::time::Duration;
 use super::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
-    BibleGraphRendererWindowStrategyStatus,
+    BibleGraphRendererWindowStrategyStatus, NativeRendererPlatformStrategy,
 };
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
@@ -64,16 +64,24 @@ pub struct NativeRendererRunnerHandle {
 }
 
 impl NativeRendererRunnerHandle {
-    pub fn start_pending() -> std::io::Result<Self> {
+    pub fn start_for_current_platform() -> std::io::Result<Self> {
+        Self::start_for_strategy(NativeRendererPlatformStrategy::current())
+    }
+
+    pub fn start_for_strategy(strategy: NativeRendererPlatformStrategy) -> std::io::Result<Self> {
         let (sender, receiver) = mpsc::sync_channel(NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY);
         let join_handle = thread::Builder::new()
             .name("eidetic-native-renderer-runner".to_string())
-            .spawn(move || run_pending_native_renderer_runner(receiver))?;
+            .spawn(move || run_native_renderer_runner(strategy, receiver))?;
 
         Ok(Self {
             sender,
             join_handle: Some(join_handle),
         })
+    }
+
+    pub fn start_pending() -> std::io::Result<Self> {
+        Self::start_for_strategy(NativeRendererPlatformStrategy::current())
     }
 
     fn request(
@@ -154,7 +162,17 @@ impl Drop for NativeRendererRunnerHandle {
 
 #[derive(Debug, Default)]
 pub struct PendingNativeRendererRunner {
+    strategy: Option<NativeRendererPlatformStrategy>,
     open_requested: bool,
+}
+
+impl PendingNativeRendererRunner {
+    pub fn for_strategy(strategy: NativeRendererPlatformStrategy) -> Self {
+        Self {
+            strategy: Some(strategy),
+            open_requested: false,
+        }
+    }
 }
 
 impl NativeRendererRunner for PendingNativeRendererRunner {
@@ -173,7 +191,10 @@ impl NativeRendererRunner for PendingNativeRendererRunner {
     }
 
     fn status(&self) -> NativeRendererRunnerStatus {
-        let strategy = BibleGraphRendererWindowStrategyStatus::current();
+        let strategy = self
+            .strategy
+            .map(NativeRendererPlatformStrategy::status)
+            .unwrap_or_else(BibleGraphRendererWindowStrategyStatus::current);
         NativeRendererRunnerStatus {
             strategy: strategy.strategy,
             platform: strategy.platform,
@@ -200,8 +221,11 @@ impl PendingNativeRendererRunner {
     }
 }
 
-fn run_pending_native_renderer_runner(receiver: mpsc::Receiver<NativeRendererRunnerRequest>) {
-    let mut runner = PendingNativeRendererRunner::default();
+fn run_native_renderer_runner(
+    strategy: NativeRendererPlatformStrategy,
+    receiver: mpsc::Receiver<NativeRendererRunnerRequest>,
+) {
+    let mut runner = PendingNativeRendererRunner::for_strategy(strategy);
 
     for request in receiver {
         match request {

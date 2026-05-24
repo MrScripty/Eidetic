@@ -1194,6 +1194,11 @@ Discovered issues:
   Windows worker-thread, macOS main-thread, and unsupported-platform outcomes
   are selected explicitly while all unproven platforms continue to report
   pending native runner capability.
+- Updated: the native runner handle now starts through
+  `NativeRendererPlatformStrategy` instead of hard-coding a generic pending
+  runner. Current platform and explicit strategy startup share the same bounded
+  request/reply owner path, while all real window candidates still report
+  pending or unsupported capability until their smoke proof passes.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

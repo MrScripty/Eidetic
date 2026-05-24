@@ -163,6 +163,27 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
 }
 
 #[test]
+fn native_renderer_runner_handle_starts_from_explicit_platform_strategy() {
+    let runner = NativeRendererRunnerHandle::start_for_strategy(
+        NativeRendererPlatformStrategy::UnsupportedPlatform,
+    )
+    .unwrap();
+
+    let status = runner.status();
+
+    assert_eq!(
+        status.platform,
+        BibleGraphRendererWindowPlatform::Unsupported
+    );
+    assert_eq!(
+        status.capability_reason,
+        BibleGraphRendererWindowCapabilityReason::PlatformUnsupported
+    );
+    assert_eq!(status.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert!(!status.visible_window_supported);
+}
+
+#[test]
 fn native_renderer_runner_handle_stops_with_bounded_reply() {
     let mut runner = NativeRendererRunnerHandle::start_pending().unwrap();
     runner.open();

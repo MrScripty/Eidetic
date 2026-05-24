@@ -30,7 +30,7 @@ impl DesktopBibleGraphHost {
     pub fn new() -> Self {
         Self {
             renderer: None,
-            native_runner: NativeRendererRunnerHandle::start_pending()
+            native_runner: NativeRendererRunnerHandle::start_for_current_platform()
                 .expect("failed to start native renderer runner boundary"),
             last_error: None,
         }
