@@ -22,6 +22,7 @@
   import BibleGraphAddControls from './BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from './BibleGraphCategoryFilters.svelte';
   import BibleGraphNodeCard from './BibleGraphNodeCard.svelte';
+  import BibleGraphNodeDetail from './BibleGraphNodeDetail.svelte';
   import BibleRenderGraphOutline from './BibleRenderGraphOutline.svelte';
   import {
     canonicalParents,
@@ -171,6 +172,12 @@
 
   <BibleGraphCategoryFilters {activeFilter} onselect={(filter) => (activeFilter = filter)} />
 
+  <BibleGraphAddControls
+    {activeFilter}
+    disabledCategories={disabledAddCategories}
+    onadd={handleAdd}
+  />
+
   <BibleRenderGraphOutline
     projection={renderGraphProjection?.payload ?? null}
     selectedNodeId={renderGraphProjection?.payload.selected_node_id ?? null}
@@ -200,11 +207,14 @@
     {/if}
   </ul>
 
-  <BibleGraphAddControls
-    {activeFilter}
-    disabledCategories={disabledAddCategories}
-    onadd={handleAdd}
-  />
+  {#if selectedGraphNodeId}
+    <div class="inline-detail">
+      <BibleGraphNodeDetail
+        nodeId={selectedGraphNodeId}
+        onclose={() => selectBibleGraphNode(null)}
+      />
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -242,8 +252,16 @@
     list-style: none;
     margin: 0;
     padding: 0;
-    flex: 1;
+    flex: 0 1 auto;
+    max-height: 34%;
     overflow-y: auto;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .inline-detail {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .empty-state {

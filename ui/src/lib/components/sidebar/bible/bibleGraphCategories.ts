@@ -49,7 +49,7 @@ export const defaultNames: Record<BibleGraphRootCategory, string> = {
 
 export function filterLabel(filter: BibleGraphFilter): string {
   if (filter === 'All') return 'All';
-  return categoryShortLabel(filter);
+  return filter;
 }
 
 export function categorySchemaKey(

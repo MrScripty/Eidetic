@@ -25,7 +25,7 @@
       disabled={disabledCategories.has(activeFilter)}
       onclick={() => onadd(activeFilter)}
     >
-      + Add {activeFilter}
+      Add {activeFilter}
     </button>
   {:else}
     <div class="add-menu">
@@ -34,7 +34,7 @@
           class="add-btn-small"
           disabled={disabledCategories.has(category)}
           style="color: {categoryColor(category)}"
-          onclick={() => onadd(category)}>+ {categoryShortLabel(category)}</button
+          onclick={() => onadd(category)}>Add {categoryShortLabel(category)}</button
         >
       {/each}
     </div>
@@ -44,16 +44,19 @@
 <style>
   .add-buttons {
     border-top: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
+    background: var(--color-bg-panel);
   }
 
   .add-btn {
     width: 100%;
     padding: 8px 12px;
-    background: none;
-    border: none;
+    background: color-mix(in srgb, var(--color-accent) 14%, var(--color-bg-surface));
+    border: 1px solid color-mix(in srgb, var(--color-accent) 58%, var(--color-border-subtle));
     color: var(--color-accent);
     cursor: pointer;
     font-size: 0.85rem;
+    font-weight: 600;
     text-align: center;
   }
 
@@ -69,15 +72,16 @@
 
   .add-menu {
     display: flex;
-    justify-content: center;
-    gap: 2px;
-    padding: 4px;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 6px 8px;
+    flex-wrap: wrap;
   }
 
   .add-btn-small {
-    padding: 6px 8px;
-    background: none;
-    border: none;
+    padding: 6px 7px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-subtle);
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: 500;
