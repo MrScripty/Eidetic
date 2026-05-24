@@ -23,6 +23,7 @@ export interface GraphRendererStatus {
   renderer_window_visible: boolean;
   renderer_window_strategy: GraphRendererWindowStrategy;
   renderer_window_platform: GraphRendererWindowPlatform;
+  renderer_runner_lifecycle: GraphRendererRunnerLifecycle;
   renderer_window_capability: GraphRendererWindowCapability;
   renderer_window_capability_reason: GraphRendererWindowCapabilityReason;
   renderer_window_lifecycle: GraphRendererWindowLifecycle;
@@ -45,6 +46,8 @@ export type GraphRendererWindowKind = 'bible_graph';
 export type GraphRendererWindowStrategy = 'bevy_winit_floating_window';
 
 export type GraphRendererWindowPlatform = 'linux' | 'macos' | 'windows' | 'unsupported';
+
+export type GraphRendererRunnerLifecycle = 'closed' | 'open_requested' | 'visible';
 
 export type GraphRendererWindowCapability = 'pending_native_runner';
 

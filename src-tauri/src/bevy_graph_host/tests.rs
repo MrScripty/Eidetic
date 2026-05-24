@@ -17,7 +17,8 @@ use super::{
     BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
     GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
     NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
-    NativeRendererRunner, NativeRendererRunnerHandle, PendingNativeRendererRunner,
+    NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerLifecycle,
+    PendingNativeRendererRunner,
 };
 
 #[test]
@@ -71,6 +72,7 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
         initial.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
+    assert_eq!(initial.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert_eq!(initial.capability_reason, expected_pending_reason());
     assert!(!initial.visible_window_supported);
     assert!(!initial.window_visible);
@@ -85,12 +87,21 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
     let focused = runner.focus();
     let closed = runner.close();
 
+    assert_eq!(
+        opened.lifecycle,
+        NativeRendererRunnerLifecycle::OpenRequested
+    );
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
     assert!(!opened.focus_supported);
     assert_eq!(opened.last_error, None);
+    assert_eq!(
+        focused.lifecycle,
+        NativeRendererRunnerLifecycle::OpenRequested
+    );
     assert!(!focused.focus_supported);
     assert_eq!(focused.last_error, None);
+    assert_eq!(closed.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert!(!closed.window_visible);
     assert_eq!(closed.last_error, None);
     assert!(!runner.open_requested());
@@ -110,6 +121,10 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
     );
     assert_eq!(opened.platform, BibleGraphRendererWindowPlatform::current());
     assert_eq!(
+        opened.lifecycle,
+        NativeRendererRunnerLifecycle::OpenRequested
+    );
+    assert_eq!(
         opened.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner
     );
@@ -118,8 +133,13 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
     assert_eq!(opened.last_error, None);
+    assert_eq!(
+        focused.lifecycle,
+        NativeRendererRunnerLifecycle::OpenRequested
+    );
     assert!(!focused.focus_supported);
     assert_eq!(focused.last_error, None);
+    assert_eq!(closed.lifecycle, NativeRendererRunnerLifecycle::Closed);
     assert!(!closed.window_visible);
     assert_eq!(closed.last_error, None);
 }
@@ -168,6 +188,7 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_visible: false,
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
+            renderer_runner_lifecycle: NativeRendererRunnerLifecycle::OpenRequested,
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle:
@@ -290,6 +311,7 @@ fn host_stop_drops_renderer_state() {
             renderer_window_visible: false,
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
+            renderer_runner_lifecycle: NativeRendererRunnerLifecycle::Closed,
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,

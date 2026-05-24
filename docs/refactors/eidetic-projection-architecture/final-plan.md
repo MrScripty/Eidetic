@@ -1154,6 +1154,11 @@ Discovered issues:
   instead of as an in-thread struct owned directly by the graph host. The real
   Bevy/winit runner still must replace the pending implementation and prove
   open/focus/close/reopen/teardown before visual graph replacement.
+- Updated: native renderer runner status now projects a typed runner lifecycle
+  (`closed`, `open_requested`, `visible`) separately from scene lifecycle and
+  visible-window capability. The pending runner can therefore record open/focus/
+  close intent without Svelte or the graph host inferring runner state from
+  booleans before the real Bevy/winit runner lands.
 - Updated: native renderer runner request/reply failures now degrade through
   typed backend status with a bounded reply timeout and `last_error` projection
   instead of silently returning pending capability state. The real Bevy/winit

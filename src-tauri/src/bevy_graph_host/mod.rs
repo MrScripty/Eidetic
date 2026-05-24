@@ -8,8 +8,8 @@ use crate::renderer_window::DesktopRendererWindowKind;
 pub use host::DesktopBibleGraphHost;
 pub use native_runner::{
     NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
-    NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerStatus,
-    PendingNativeRendererRunner,
+    NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerLifecycle,
+    NativeRendererRunnerStatus, PendingNativeRendererRunner,
 };
 pub use owner::{
     DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
@@ -33,6 +33,7 @@ pub struct BibleGraphHostStatus {
     pub renderer_window_visible: bool,
     pub renderer_window_strategy: BibleGraphRendererWindowStrategy,
     pub renderer_window_platform: BibleGraphRendererWindowPlatform,
+    pub renderer_runner_lifecycle: NativeRendererRunnerLifecycle,
     pub renderer_window_capability: BibleGraphRendererWindowCapability,
     pub renderer_window_capability_reason: BibleGraphRendererWindowCapabilityReason,
     pub renderer_window_lifecycle: BibleGraphRendererWindowLifecycle,

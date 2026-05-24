@@ -15,6 +15,7 @@ pub const NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS: u64 = 2_000;
 pub struct NativeRendererRunnerStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
     pub platform: BibleGraphRendererWindowPlatform,
+    pub lifecycle: NativeRendererRunnerLifecycle,
     pub capability: BibleGraphRendererWindowCapability,
     pub capability_reason: BibleGraphRendererWindowCapabilityReason,
     pub visible_window_supported: bool,
@@ -22,6 +23,14 @@ pub struct NativeRendererRunnerStatus {
     pub window_ready: bool,
     pub focus_supported: bool,
     pub last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NativeRendererRunnerLifecycle {
+    Closed,
+    OpenRequested,
+    Visible,
 }
 
 pub trait NativeRendererRunner {
@@ -148,6 +157,11 @@ impl NativeRendererRunner for PendingNativeRendererRunner {
         NativeRendererRunnerStatus {
             strategy: strategy.strategy,
             platform: strategy.platform,
+            lifecycle: if self.open_requested {
+                NativeRendererRunnerLifecycle::OpenRequested
+            } else {
+                NativeRendererRunnerLifecycle::Closed
+            },
             capability: strategy.capability,
             capability_reason: strategy.capability_reason,
             visible_window_supported: strategy.visible_window_supported,
