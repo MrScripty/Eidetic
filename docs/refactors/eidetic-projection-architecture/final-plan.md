@@ -1155,16 +1155,18 @@ Discovered issues:
   event-loop strategy before graph visuals replace the Svelte semantic outline,
   and it records ownership, platform, dependency, verification, and re-plan
   constraints from the coding standards.
-- Updated: the current native renderer runner is still a pending runner, but
-  it now runs behind a bounded `NativeRendererRunnerHandle` command boundary
-  instead of as an in-thread struct owned directly by the graph host. The real
-  Bevy/winit runner still must replace the pending implementation and prove
-  open/focus/close/reopen/teardown before visual graph replacement.
+- Superseded: the native renderer runner is no longer an in-thread pending
+  implementation owned directly by the graph host. It now runs behind a bounded
+  `NativeRendererRunnerHandle` and `NativeRendererSupervisor` state machine.
+  The real Bevy/winit event-loop path still must be implemented under that
+  supervisor and prove open/focus/close/reopen/teardown before visual graph
+  replacement.
 - Updated: native renderer runner status now projects a typed runner lifecycle
   (`closed`, `open_requested`, `visible`) separately from scene lifecycle and
-  visible-window capability. The pending runner can therefore record open/focus/
-  close intent without Svelte or the graph host inferring runner state from
-  booleans before the real Bevy/winit runner lands.
+  visible-window capability, and now also projects the supervisor lifecycle.
+  The supervisor can therefore record open/focus/close intent without Svelte or
+  the graph host inferring runner state from booleans before the real
+  Bevy/winit event-loop path lands.
 - Updated: native renderer runner request/reply failures now degrade through
   typed backend status with a bounded reply timeout and `last_error` projection
   instead of silently returning pending capability state. The real Bevy/winit
@@ -1297,7 +1299,7 @@ Discovered issues:
   evaluation time.
 - Resolved: graph renderer focus commands now route through the desktop
   renderer owner and native runner boundary instead of returning passive status
-  from the Tauri command adapter. The pending runner still reports unsupported
+  from the Tauri command adapter. The supervisor still reports unsupported
   focus truthfully until a real native window runner lands.
 - Resolved: bounded bible render graph requests now include and enforce a
   `max_edges` limit in core contracts, frontend request builders, and the
