@@ -1,9 +1,12 @@
 use std::num::NonZeroU64;
+use std::time::{Duration, Instant};
 
+use bevy::a11y::AccessibilityPlugin;
 use bevy::app::AppExit;
+use bevy::input::InputPlugin;
 use bevy::prelude::{
     App, Camera2d, ClearColor, Color, Commands, Component, Entity, MessageWriter, MinimalPlugins,
-    Plugin, Res, ResMut, Resource, Startup, Time, Timer, TimerMode, Update, With, World,
+    Plugin, Res, ResMut, Resource, Startup, Update, With, World,
 };
 use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
@@ -35,7 +38,7 @@ pub struct BibleGraphNativeRendererWindowScene {
 
 #[derive(Debug, Resource)]
 struct BibleGraphNativeAutoClose {
-    timer: Timer,
+    close_at: Instant,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -142,6 +145,9 @@ pub fn configure_minimal_bible_graph_native_window_app(
     config: BibleGraphNativeWindowRunnerConfig,
 ) {
     app.add_plugins(MinimalPlugins);
+    app.add_plugins(AccessibilityPlugin);
+    app.add_plugins(InputPlugin);
+    app.add_message::<AppExit>();
     app.add_plugins(WindowPlugin {
         primary_window: Some(Window {
             title: config.title,
@@ -160,7 +166,7 @@ pub fn configure_minimal_bible_graph_native_window_app(
 
     if let Some(auto_close_after_ms) = config.auto_close_after_ms {
         app.insert_resource(BibleGraphNativeAutoClose {
-            timer: Timer::from_seconds(auto_close_after_ms.get() as f32 / 1000.0, TimerMode::Once),
+            close_at: Instant::now() + Duration::from_millis(auto_close_after_ms.get()),
         });
         app.add_systems(Update, close_minimal_native_window_after_timer);
     }
@@ -181,11 +187,10 @@ fn spawn_bible_graph_renderer_window_scene(
 }
 
 fn close_minimal_native_window_after_timer(
-    time: Res<Time>,
-    mut auto_close: ResMut<BibleGraphNativeAutoClose>,
+    auto_close: Res<BibleGraphNativeAutoClose>,
     mut app_exit: MessageWriter<AppExit>,
 ) {
-    if auto_close.timer.tick(time.delta()).just_finished() {
+    if Instant::now() >= auto_close.close_at {
         app_exit.write(AppExit::Success);
     }
 }

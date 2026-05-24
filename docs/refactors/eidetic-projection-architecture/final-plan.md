@@ -1231,6 +1231,14 @@ Discovered issues:
   duration so native-window preflight commands can close deterministically
   without manual interaction. This remains a diagnostic aid only and does not
   mark production visible-window support as verified.
+- Resolved: the diagnostic smoke scene now explicitly installs the Bevy
+  accessibility and input plugins required by Bevy/winit window creation and
+  uses a wall-clock auto-close deadline instead of requiring Bevy time. Local
+  Linux X11 preflight command
+  `cargo run -p eidetic-desktop --bin eidetic-native-renderer-smoke -- --any-thread --auto-close-ms 500`
+  exited successfully. This proves the standalone diagnostic window path only;
+  production capability stays pending until the desktop supervisor owns the
+  event-loop lifecycle under Tauri.
 - Updated: the remaining blocker will be resolved by replacing the pending
   runner with one supervisor-owned production path per verified platform, not
   by adding frontend fallbacks, compatibility layers, or parallel renderer
