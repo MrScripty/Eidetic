@@ -6,11 +6,12 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins, Entity, Justify,
-    MessageWriter, Plugin, PluginGroup, Res, ResMut, Resource, Sprite, Startup, Text2d, TextColor,
-    TextFont, TextLayout, Transform, Update, Vec2, Vec3, World,
+    App, ButtonInput, Camera, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins,
+    Entity, GlobalTransform, Justify, MessageWriter, MouseButton, Plugin, PluginGroup, Query, Res,
+    ResMut, Resource, Sprite, Startup, Text2d, TextColor, TextFont, TextLayout, Transform, Update,
+    Vec2, Vec3, Window, With, World,
 };
-use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
+use bevy::window::{ExitCondition, PrimaryWindow, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -274,6 +275,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Startup, spawn_bible_graph_renderer_window_scene);
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
         app.add_systems(Update, apply_bible_graph_native_projection);
+        app.add_systems(Update, emit_bible_graph_native_click_selection);
     }
 }
 
@@ -390,6 +392,62 @@ fn apply_minimal_native_window_visibility_requests(
         }
         control.visible.store(true, Ordering::Release);
     }
+}
+
+fn emit_bible_graph_native_click_selection(
+    buttons: Option<Res<ButtonInput<MouseButton>>>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    cameras: Query<(&Camera, &GlobalTransform), With<BibleGraphNativeCamera>>,
+    nodes: Query<&BibleGraphNativeNodeVisual>,
+    control: Option<Res<BibleGraphNativeWindowControl>>,
+) {
+    let Some(buttons) = buttons else {
+        return;
+    };
+    if !buttons.just_pressed(MouseButton::Left) {
+        return;
+    }
+    let Some(control) = control else {
+        return;
+    };
+    let Ok(window) = windows.single() else {
+        return;
+    };
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
+    let Ok((camera, camera_transform)) = cameras.single() else {
+        return;
+    };
+    let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+        return;
+    };
+    let Some(node_id) = nearest_native_node_at_world_position(&nodes, world_position) else {
+        return;
+    };
+
+    let _ =
+        push_native_command_to_control(&control, BibleGraphRendererCommand::SelectNode { node_id });
+}
+
+fn nearest_native_node_at_world_position(
+    nodes: &Query<&BibleGraphNativeNodeVisual>,
+    world_position: Vec2,
+) -> Option<BibleGraphNodeId> {
+    nodes
+        .iter()
+        .filter_map(|node| {
+            let distance_squared =
+                (node.x - world_position.x).powi(2) + (node.y - world_position.y).powi(2);
+            (distance_squared <= node.radius.powi(2))
+                .then_some((distance_squared, node.node_id.clone()))
+        })
+        .min_by(|(left_distance, _), (right_distance, _)| {
+            left_distance
+                .partial_cmp(right_distance)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .map(|(_, node_id)| node_id)
 }
 
 fn apply_bible_graph_native_projection(world: &mut World) {
@@ -674,6 +732,22 @@ fn push_native_command(
     else {
         return Err(BibleGraphRendererError::MissingProjection);
     };
+    let mut commands = control
+        .commands
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    if commands.len() >= BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY {
+        return Err(BibleGraphRendererError::CommandQueueFull);
+    }
+
+    commands.push(command);
+    Ok(())
+}
+
+fn push_native_command_to_control(
+    control: &BibleGraphNativeWindowControl,
+    command: BibleGraphRendererCommand,
+) -> Result<(), BibleGraphRendererError> {
     let mut commands = control
         .commands
         .lock()
