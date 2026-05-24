@@ -54,8 +54,11 @@ fn renderer_window_strategy_reports_typed_capability() {
     assert_eq!(status.platform, BibleGraphRendererWindowPlatform::current());
     assert_eq!(status.capability, expected_capability());
     assert_eq!(status.capability_reason, expected_pending_reason());
-    assert!(!status.verified_support);
-    assert!(!status.visible_window_supported);
+    assert_eq!(status.verified_support, expected_verified_support());
+    assert_eq!(
+        status.visible_window_supported,
+        expected_visible_window_supported()
+    );
 }
 
 #[test]
@@ -70,8 +73,11 @@ fn native_renderer_platform_strategy_reports_current_platform_status() {
     );
     assert_eq!(status.capability, expected_capability());
     assert_eq!(status.capability_reason, expected_pending_reason());
-    assert!(!status.verified_support);
-    assert!(!status.visible_window_supported);
+    assert_eq!(status.verified_support, expected_verified_support());
+    assert_eq!(
+        status.visible_window_supported,
+        expected_visible_window_supported()
+    );
 }
 
 #[test]
@@ -92,11 +98,11 @@ fn renderer_window_capability_owns_support_flags() {
 #[test]
 fn native_renderer_platform_strategy_models_threading_requirements() {
     assert_eq!(
-        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven.threading_model(),
+        NativeRendererPlatformStrategy::LinuxWorkerThreadVerified.threading_model(),
         NativeRendererThreadingModel::WorkerThread
     );
     assert!(
-        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+        NativeRendererPlatformStrategy::LinuxWorkerThreadVerified
             .can_attempt_minimal_window_proof()
     );
     assert_eq!(
@@ -125,7 +131,7 @@ fn native_renderer_platform_strategy_models_threading_requirements() {
 
 #[test]
 fn native_renderer_platform_strategy_builds_minimal_window_proof_config() {
-    let linux_config = NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+    let linux_config = NativeRendererPlatformStrategy::LinuxWorkerThreadVerified
         .minimal_window_runner_config()
         .unwrap();
     let windows_config = NativeRendererPlatformStrategy::WindowsWorkerThreadUnproven
@@ -151,7 +157,7 @@ fn native_renderer_platform_strategy_builds_minimal_window_proof_config() {
 #[test]
 fn native_renderer_platform_strategy_builds_startup_plan() {
     let linux_plan =
-        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven.runner_startup_plan();
+        NativeRendererPlatformStrategy::LinuxWorkerThreadVerified.runner_startup_plan();
     let macos_plan = NativeRendererPlatformStrategy::MacosMainThreadUnproven.runner_startup_plan();
     let unsupported_plan =
         NativeRendererPlatformStrategy::UnsupportedPlatform.runner_startup_plan();
@@ -250,7 +256,7 @@ fn native_renderer_supervisor_keeps_unsupported_platform_closed() {
 #[test]
 fn native_renderer_supervisor_starts_injected_window_thread() {
     let mut runner = NativeRendererSupervisor::for_strategy_with_window_thread_start(
-        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven,
+        NativeRendererPlatformStrategy::LinuxWorkerThreadVerified,
         start_test_window_thread,
     );
 
@@ -265,10 +271,10 @@ fn native_renderer_supervisor_starts_injected_window_thread() {
     );
     assert_eq!(
         opened.capability,
-        BibleGraphRendererWindowCapability::PlatformUnproven
+        BibleGraphRendererWindowCapability::VerifiedSupport
     );
-    assert!(!opened.verified_support);
-    assert!(!opened.visible_window_supported);
+    assert!(opened.verified_support);
+    assert!(opened.visible_window_supported);
     assert!(opened.window_visible);
     assert!(!opened.window_ready);
     assert_eq!(opened.last_error, None);
@@ -413,7 +419,7 @@ fn native_renderer_runner_handle_stops_with_bounded_reply() {
 #[test]
 fn native_renderer_window_thread_reports_completion() {
     let mut window_thread = NativeRendererWindowThreadHandle::start_with(
-        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+        NativeRendererPlatformStrategy::LinuxWorkerThreadVerified
             .minimal_window_runner_config()
             .unwrap(),
         |_config, _control| {},
@@ -435,7 +441,7 @@ fn native_renderer_window_thread_reports_completion() {
 fn native_renderer_window_thread_can_request_bounded_close() {
     let (started_sender, started_receiver) = mpsc::channel();
     let mut window_thread = NativeRendererWindowThreadHandle::start_with(
-        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+        NativeRendererPlatformStrategy::LinuxWorkerThreadVerified
             .minimal_window_runner_config()
             .unwrap(),
         move |_config, control| {
@@ -537,12 +543,18 @@ fn host_applies_projection_and_reports_scene_counts() {
         status.renderer_window_lifecycle,
         BibleGraphRendererWindowLifecycle::Visible
     );
-    assert!(!status.renderer_window_verified_support);
-    assert!(!status.renderer_window_visible_supported);
+    assert_eq!(
+        status.renderer_window_verified_support,
+        expected_verified_support()
+    );
+    assert_eq!(
+        status.renderer_window_visible_supported,
+        expected_visible_window_supported()
+    );
     assert!(!status.renderer_window_focus_supported);
     assert_eq!(
         status.renderer_window_message,
-        "graph renderer scene is ready; visible native window is pending implementation"
+        expected_visible_renderer_window_message(status.renderer_window_ready)
     );
     assert_eq!(status.node_count, 2);
     assert_eq!(status.edge_count, 1);
@@ -661,8 +673,8 @@ fn host_stop_drops_renderer_state() {
             renderer_window_capability_reason: expected_pending_reason(),
             renderer_window_lifecycle: BibleGraphRendererWindowLifecycle::Closed,
             renderer_window_ready: false,
-            renderer_window_verified_support: false,
-            renderer_window_visible_supported: false,
+            renderer_window_verified_support: expected_verified_support(),
+            renderer_window_visible_supported: expected_visible_window_supported(),
             renderer_window_focus_supported: false,
             renderer_window_message: "floating graph renderer window is closed".to_string(),
             node_count: 0,
@@ -687,7 +699,6 @@ fn host_focus_routes_through_native_runner_status() {
     assert!(status.renderer_window_open);
     assert!(!status.renderer_window_focus_supported);
     assert!(status.renderer_window_visible);
-    assert!(!status.renderer_window_ready);
 }
 
 #[test]
@@ -706,7 +717,10 @@ fn owner_runs_renderer_on_dedicated_thread() {
     assert!(status.renderer_window_open);
     assert!(status.renderer_scene_ready);
     assert!(status.renderer_window_visible);
-    assert!(!status.renderer_window_visible_supported);
+    assert_eq!(
+        status.renderer_window_visible_supported,
+        expected_visible_window_supported()
+    );
     assert!(!status.renderer_window_focus_supported);
     owner.stop().unwrap();
 }
@@ -895,9 +909,10 @@ fn unavailable_owner_projects_typed_runner_error_status() {
 
 fn expected_pending_reason() -> BibleGraphRendererWindowCapabilityReason {
     match BibleGraphRendererWindowPlatform::current() {
-        BibleGraphRendererWindowPlatform::Linux
-        | BibleGraphRendererWindowPlatform::Macos
-        | BibleGraphRendererWindowPlatform::Windows => {
+        BibleGraphRendererWindowPlatform::Linux => {
+            BibleGraphRendererWindowCapabilityReason::VerifiedSupport
+        }
+        BibleGraphRendererWindowPlatform::Macos | BibleGraphRendererWindowPlatform::Windows => {
             BibleGraphRendererWindowCapabilityReason::PlatformUnproven
         }
         BibleGraphRendererWindowPlatform::Unsupported => {
@@ -908,14 +923,34 @@ fn expected_pending_reason() -> BibleGraphRendererWindowCapabilityReason {
 
 fn expected_capability() -> BibleGraphRendererWindowCapability {
     match BibleGraphRendererWindowPlatform::current() {
-        BibleGraphRendererWindowPlatform::Linux
-        | BibleGraphRendererWindowPlatform::Macos
-        | BibleGraphRendererWindowPlatform::Windows => {
+        BibleGraphRendererWindowPlatform::Linux => {
+            BibleGraphRendererWindowCapability::VerifiedSupport
+        }
+        BibleGraphRendererWindowPlatform::Macos | BibleGraphRendererWindowPlatform::Windows => {
             BibleGraphRendererWindowCapability::PlatformUnproven
         }
         BibleGraphRendererWindowPlatform::Unsupported => {
             BibleGraphRendererWindowCapability::PlatformUnsupported
         }
+    }
+}
+
+fn expected_verified_support() -> bool {
+    matches!(
+        BibleGraphRendererWindowPlatform::current(),
+        BibleGraphRendererWindowPlatform::Linux
+    )
+}
+
+fn expected_visible_window_supported() -> bool {
+    expected_verified_support()
+}
+
+fn expected_visible_renderer_window_message(window_ready: bool) -> &'static str {
+    if window_ready {
+        "graph renderer native window is ready"
+    } else {
+        "graph renderer native window is starting"
     }
 }
 

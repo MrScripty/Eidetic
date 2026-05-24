@@ -2488,8 +2488,10 @@ Remaining tasks:
   The gate must prove that Bevy 0.18.1 can open, focus, close, reopen, and
   tear down a real floating native window under the Tauri desktop runtime using
   the smallest clear-color/grid scene. The gate is per platform: Linux
-  X11/Wayland and Windows may use the Bevy/winit worker-thread strategy only
-  after it is proven on that platform, while macOS requires a separate
+  worker-thread strategy is now locally proven for the current Linux desktop
+  environment by `eidetic-desktop --graph-renderer-smoke`, so it may report
+  verified support on Linux. Windows must remain unproven until the same
+  lifecycle gate passes there, and macOS requires a separate
   main-thread/Tauri-runtime-compatible strategy before it can report support.
   Until a platform-specific gate passes, `renderer_window_visible_supported`
   remains false for that platform and the backend projects typed unavailable
@@ -2626,27 +2628,27 @@ Completed foundation, do not reimplement unless verification fails:
   hide/show transitions on the existing native window. Local Linux
   `eidetic-desktop --graph-renderer-smoke` passes open/status/focus/close/
   reopen/project-close/app-shutdown with ready open/reopen snapshots.
+- Linux native graph renderer support is now marked as verified after local
+  Tauri-owned lifecycle proof. Windows and macOS remain typed unproven
+  strategies until they have matching platform-specific runtime proof.
 
 Remaining implementation order:
 
-1. Mark only the locally proven platform as verified support. Linux can advance
-   independently when locally proven; Windows and macOS remain typed unproven or
-   unsupported until separately verified.
-2. Consolidate graph renderer projection delivery into a single desktop-owned
+1. Consolidate graph renderer projection delivery into a single desktop-owned
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-3. Replace the temporary Svelte command-drain polling bridge with native
+2. Replace the temporary Svelte command-drain polling bridge with native
    renderer events or a backend-owned projection channel with deterministic
    teardown.
-4. Wire bounded graph projection rendering into the visible floating Bevy window
+3. Wire bounded graph projection rendering into the visible floating Bevy window
    only after the native runner gate passes for the current platform.
-5. Keep Svelte graph filters, details, review, and semantic outline as
+4. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-6. Remove or demote the old 2D graph surface after Bevy covers target
+5. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-7. Add keyed ECS/native-visual diffing before expanding beyond the documented
+6. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 

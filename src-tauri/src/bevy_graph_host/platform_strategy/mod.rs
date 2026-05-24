@@ -11,7 +11,7 @@ pub use current_platform::current_renderer_window_platform;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NativeRendererPlatformStrategy {
-    LinuxWorkerThreadUnproven,
+    LinuxWorkerThreadVerified,
     MacosMainThreadUnproven,
     WindowsWorkerThreadUnproven,
     UnsupportedPlatform,
@@ -39,7 +39,7 @@ pub enum NativeRendererRunnerStartupPlan {
 impl NativeRendererPlatformStrategy {
     pub fn current() -> Self {
         match current_renderer_window_platform() {
-            BibleGraphRendererWindowPlatform::Linux => Self::LinuxWorkerThreadUnproven,
+            BibleGraphRendererWindowPlatform::Linux => Self::LinuxWorkerThreadVerified,
             BibleGraphRendererWindowPlatform::Macos => Self::MacosMainThreadUnproven,
             BibleGraphRendererWindowPlatform::Windows => Self::WindowsWorkerThreadUnproven,
             BibleGraphRendererWindowPlatform::Unsupported => Self::UnsupportedPlatform,
@@ -60,7 +60,7 @@ impl NativeRendererPlatformStrategy {
 
     pub fn threading_model(self) -> NativeRendererThreadingModel {
         match self {
-            Self::LinuxWorkerThreadUnproven | Self::WindowsWorkerThreadUnproven => {
+            Self::LinuxWorkerThreadVerified | Self::WindowsWorkerThreadUnproven => {
                 NativeRendererThreadingModel::WorkerThread
             }
             Self::MacosMainThreadUnproven => NativeRendererThreadingModel::MainThread,
@@ -101,7 +101,7 @@ impl NativeRendererPlatformStrategy {
 
     fn platform(self) -> BibleGraphRendererWindowPlatform {
         match self {
-            Self::LinuxWorkerThreadUnproven => BibleGraphRendererWindowPlatform::Linux,
+            Self::LinuxWorkerThreadVerified => BibleGraphRendererWindowPlatform::Linux,
             Self::MacosMainThreadUnproven => BibleGraphRendererWindowPlatform::Macos,
             Self::WindowsWorkerThreadUnproven => BibleGraphRendererWindowPlatform::Windows,
             Self::UnsupportedPlatform => BibleGraphRendererWindowPlatform::Unsupported,
@@ -110,9 +110,8 @@ impl NativeRendererPlatformStrategy {
 
     fn capability(self) -> BibleGraphRendererWindowCapability {
         match self {
-            Self::LinuxWorkerThreadUnproven
-            | Self::MacosMainThreadUnproven
-            | Self::WindowsWorkerThreadUnproven => {
+            Self::LinuxWorkerThreadVerified => BibleGraphRendererWindowCapability::VerifiedSupport,
+            Self::MacosMainThreadUnproven | Self::WindowsWorkerThreadUnproven => {
                 BibleGraphRendererWindowCapability::PlatformUnproven
             }
             Self::UnsupportedPlatform => BibleGraphRendererWindowCapability::PlatformUnsupported,
@@ -121,9 +120,10 @@ impl NativeRendererPlatformStrategy {
 
     fn capability_reason(self) -> BibleGraphRendererWindowCapabilityReason {
         match self {
-            Self::LinuxWorkerThreadUnproven
-            | Self::MacosMainThreadUnproven
-            | Self::WindowsWorkerThreadUnproven => {
+            Self::LinuxWorkerThreadVerified => {
+                BibleGraphRendererWindowCapabilityReason::VerifiedSupport
+            }
+            Self::MacosMainThreadUnproven | Self::WindowsWorkerThreadUnproven => {
                 BibleGraphRendererWindowCapabilityReason::PlatformUnproven
             }
             Self::UnsupportedPlatform => {

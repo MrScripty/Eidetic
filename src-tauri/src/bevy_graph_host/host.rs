@@ -274,6 +274,8 @@ impl DesktopBibleGraphHost {
             renderer_window_message: renderer_window_message(
                 renderer.is_some(),
                 renderer_scene_ready,
+                native_runner.window_visible,
+                native_runner.window_ready,
             ),
             node_count,
             edge_count,
@@ -312,14 +314,20 @@ impl DesktopBibleGraphHost {
     }
 }
 
-fn renderer_window_message(running: bool, scene_ready: bool) -> String {
-    match (running, scene_ready) {
-        (true, true) => {
-            "graph renderer scene is ready; visible native window is pending implementation"
-                .to_string()
+fn renderer_window_message(
+    running: bool,
+    scene_ready: bool,
+    window_visible: bool,
+    window_ready: bool,
+) -> String {
+    match (running, scene_ready, window_visible, window_ready) {
+        (true, true, true, true) => "graph renderer native window is ready".to_string(),
+        (true, true, true, false) => "graph renderer native window is starting".to_string(),
+        (true, true, false, _) => {
+            "graph renderer scene is ready; native window is hidden".to_string()
         }
-        (true, false) => "graph renderer lifecycle is active; scene is starting".to_string(),
-        (false, _) => "floating graph renderer window is closed".to_string(),
+        (true, false, _, _) => "graph renderer lifecycle is active; scene is starting".to_string(),
+        (false, _, _, _) => "floating graph renderer window is closed".to_string(),
     }
 }
 
