@@ -49,6 +49,8 @@ describe('graph renderer window status display', () => {
       label: 'Renderer closed',
       active: false,
       message: 'Graph renderer window is closed',
+      primaryActionLabel: 'Prepare Bevy Renderer',
+      nativeWindowAvailable: false,
     });
   });
 
@@ -57,11 +59,15 @@ describe('graph renderer window status display', () => {
       label: 'Renderer closed',
       active: false,
       message: 'message:closed',
+      primaryActionLabel: 'Prepare Bevy Renderer',
+      nativeWindowAvailable: false,
     });
     expect(graphRendererWindowStatusDisplay(statusFor('scene_starting'))).toEqual({
       label: 'Renderer preparing',
       active: false,
       message: 'message:scene_starting',
+      primaryActionLabel: 'Preparing',
+      nativeWindowAvailable: false,
     });
     expect(
       graphRendererWindowStatusDisplay(statusFor('scene_ready_pending_native_runner')),
@@ -69,6 +75,8 @@ describe('graph renderer window status display', () => {
       label: 'Renderer unavailable',
       active: false,
       message: 'message:scene_ready_pending_native_runner',
+      primaryActionLabel: 'Renderer Prepared',
+      nativeWindowAvailable: false,
     });
     expect(
       graphRendererWindowStatusDisplay(
@@ -78,11 +86,15 @@ describe('graph renderer window status display', () => {
       label: 'Renderer waiting',
       active: false,
       message: 'message:scene_ready_pending_native_runner',
+      primaryActionLabel: 'Focus Bevy Window',
+      nativeWindowAvailable: true,
     });
     expect(graphRendererWindowStatusDisplay(statusFor('visible'))).toEqual({
       label: 'Renderer visible',
       active: true,
       message: 'message:visible',
+      primaryActionLabel: 'Focus Bevy Window',
+      nativeWindowAvailable: true,
     });
   });
 
@@ -95,6 +107,8 @@ describe('graph renderer window status display', () => {
       label: 'Renderer unsupported',
       active: false,
       message: 'message:scene_ready_pending_native_runner',
+      primaryActionLabel: 'Renderer Prepared',
+      nativeWindowAvailable: false,
     });
     expect(
       graphRendererWindowStatusDisplay(
@@ -104,6 +118,8 @@ describe('graph renderer window status display', () => {
       label: 'Renderer error',
       active: false,
       message: 'message:scene_ready_pending_native_runner',
+      primaryActionLabel: 'Renderer Prepared',
+      nativeWindowAvailable: false,
     });
   });
 });

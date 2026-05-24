@@ -26,6 +26,9 @@
   const isOpen = $derived(status?.renderer_window_open ?? false);
   const canFocus = $derived(status?.renderer_window_focus_supported ?? false);
   const statusDisplay = $derived(graphRendererWindowStatusDisplay(status));
+  const primaryDisabled = $derived(
+    pending || (isOpen && !statusDisplay.nativeWindowAvailable) || (!isOpen && pending),
+  );
 
   async function run(action: () => Promise<GraphRendererStatus>): Promise<boolean> {
     pending = true;
@@ -88,16 +91,32 @@
 </script>
 
 <section class="renderer-window-controls" aria-label="Bible graph renderer window">
-  <div class="renderer-window-status" aria-live="polite">
-    <span class:active={statusDisplay.active}>{statusDisplay.label}</span>
-    <span>{statusDisplay.message}</span>
-    {#if error}
-      <span class="error">{error}</span>
+  <div class="renderer-window-main">
+    <div class="renderer-window-status" aria-live="polite">
+      <span class:active={statusDisplay.active}>{statusDisplay.label}</span>
+      <span>{statusDisplay.message}</span>
+      {#if error}
+        <span class="error">{error}</span>
+      {/if}
+    </div>
+
+    {#if !statusDisplay.nativeWindowAvailable}
+      <p>
+        The 3D Bevy graph window is not enabled for this build yet. The outline below is the backend
+        graph projection.
+      </p>
     {/if}
   </div>
 
   <div class="renderer-window-actions">
-    <button type="button" onclick={openWindow} disabled={pending}> Open Graph </button>
+    <button
+      type="button"
+      class="primary"
+      onclick={statusDisplay.nativeWindowAvailable && isOpen ? focusWindow : openWindow}
+      disabled={primaryDisabled}
+    >
+      {statusDisplay.primaryActionLabel}
+    </button>
     <button type="button" onclick={focusWindow} disabled={pending || !canFocus}> Focus </button>
     <button type="button" onclick={closeWindow} disabled={pending || !isOpen}> Close </button>
   </div>
@@ -108,11 +127,18 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    min-height: 34px;
-    padding: 4px 8px;
+    gap: 14px;
+    min-height: 78px;
+    padding: 12px;
     border-bottom: 1px solid var(--color-border-subtle);
     background: var(--color-bg-secondary);
+  }
+
+  .renderer-window-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
   }
 
   .renderer-window-status {
@@ -122,6 +148,14 @@
     min-width: 0;
     color: var(--color-text-muted);
     font-size: 0.76rem;
+  }
+
+  .renderer-window-main p {
+    max-width: 680px;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.35;
   }
 
   .renderer-window-status span {
@@ -148,11 +182,17 @@
   button {
     border: 1px solid var(--color-border-subtle);
     border-radius: 4px;
-    padding: 3px 7px;
+    padding: 6px 9px;
     background: var(--color-bg-surface);
     color: var(--color-text-secondary);
-    font-size: 0.76rem;
+    font-size: 0.78rem;
     cursor: pointer;
+  }
+
+  button.primary {
+    border-color: color-mix(in srgb, var(--color-accent) 72%, var(--color-border-subtle));
+    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg-surface));
+    color: var(--color-text-primary);
   }
 
   button:hover:not(:disabled) {
