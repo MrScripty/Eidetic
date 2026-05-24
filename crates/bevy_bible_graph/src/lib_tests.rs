@@ -327,6 +327,32 @@ fn controlled_native_window_app_installs_close_control_resource() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
+    use bevy::prelude::Plugin;
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_influence(node_id, edge_id, influence_id));
+
+    app.update();
+
+    assert_eq!(
+        control.native_visual_counts(),
+        BibleGraphNativeVisualStatus {
+            node_count: 2,
+            edge_count: 1
+        }
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn renderer_app_can_start_as_renderer_window_consumer() {
     let renderer = BibleGraphRendererApp::new_renderer_window();
 

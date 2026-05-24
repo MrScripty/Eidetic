@@ -1,6 +1,6 @@
 use std::num::NonZeroU64;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bevy::a11y::AccessibilityPlugin;
@@ -50,6 +50,8 @@ pub struct BibleGraphNativeWindowControlHandle {
     hide_requested: Arc<AtomicBool>,
     visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
+    projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
+    native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
 }
 
 #[derive(Debug, Clone, Resource)]
@@ -59,6 +61,8 @@ pub struct BibleGraphNativeWindowControl {
     hide_requested: Arc<AtomicBool>,
     visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
+    projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
+    native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -161,6 +165,8 @@ impl BibleGraphNativeWindowControlHandle {
             hide_requested: Arc::new(AtomicBool::new(false)),
             visible: Arc::new(AtomicBool::new(false)),
             ready: Arc::new(AtomicBool::new(false)),
+            projection: Arc::new(Mutex::new(None)),
+            native_visual_counts: Arc::new(Mutex::new(BibleGraphNativeVisualStatus::default())),
         }
     }
 
@@ -195,6 +201,20 @@ impl BibleGraphNativeWindowControlHandle {
     pub fn ready(&self) -> bool {
         self.ready.load(Ordering::Acquire)
     }
+
+    pub fn set_projection(&self, projection: BibleRenderGraphProjection) {
+        *self
+            .projection
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = Some(projection);
+    }
+
+    pub fn native_visual_counts(&self) -> BibleGraphNativeVisualStatus {
+        *self
+            .native_visual_counts
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+    }
 }
 
 impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowControl {
@@ -205,6 +225,8 @@ impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowContro
             hide_requested: Arc::clone(&handle.hide_requested),
             visible: Arc::clone(&handle.visible),
             ready: Arc::clone(&handle.ready),
+            projection: Arc::clone(&handle.projection),
+            native_visual_counts: Arc::clone(&handle.native_visual_counts),
         }
     }
 }
@@ -220,6 +242,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.add_systems(Startup, spawn_bible_graph_renderer_window_scene);
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
+        app.add_systems(Update, apply_bible_graph_native_projection);
     }
 }
 
@@ -336,6 +359,30 @@ fn apply_minimal_native_window_visibility_requests(
         }
         control.visible.store(true, Ordering::Release);
     }
+}
+
+fn apply_bible_graph_native_projection(world: &mut World) {
+    let Some(control) = world
+        .get_resource::<BibleGraphNativeWindowControl>()
+        .cloned()
+    else {
+        return;
+    };
+    let projection = control
+        .projection
+        .lock()
+        .unwrap_or_else(|error| error.into_inner())
+        .take();
+    let Some(projection) = projection else {
+        return;
+    };
+
+    rebuild_bible_graph_native_visuals(world, &projection);
+    let status = *world.resource::<BibleGraphNativeVisualStatus>();
+    *control
+        .native_visual_counts
+        .lock()
+        .unwrap_or_else(|error| error.into_inner()) = status;
 }
 
 pub fn rebuild_bible_graph_native_visuals(

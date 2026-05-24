@@ -4,7 +4,8 @@ use super::{
     NativeRendererRunnerStartupPlan, NativeRendererRunnerStatus, NativeRendererWindowThreadHandle,
     NativeRendererWindowThreadResult,
 };
-use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
+use eidetic_bevy_bible_graph::{BibleGraphNativeVisualStatus, BibleGraphNativeWindowRunnerConfig};
+use eidetic_core::contracts::BibleRenderGraphProjection;
 use std::time::Duration;
 
 const NATIVE_RENDERER_WINDOW_STOP_TIMEOUT: Duration = Duration::from_millis(2_000);
@@ -30,6 +31,7 @@ pub struct NativeRendererSupervisor {
     window_thread_start: NativeRendererWindowThreadStart,
     window_thread: Option<NativeRendererWindowThreadHandle>,
     window_ready: bool,
+    native_visual_counts: BibleGraphNativeVisualStatus,
     lifecycle: NativeRendererSupervisorLifecycle,
     last_error: Option<String>,
 }
@@ -52,6 +54,7 @@ impl NativeRendererSupervisor {
             window_thread_start,
             window_thread: None,
             window_ready: false,
+            native_visual_counts: BibleGraphNativeVisualStatus::default(),
             lifecycle: NativeRendererSupervisorLifecycle::NotStarted,
             last_error: None,
         }
@@ -64,6 +67,7 @@ impl NativeRendererSupervisor {
             window_thread_start: NativeRendererWindowThreadHandle::start,
             window_thread: None,
             window_ready: false,
+            native_visual_counts: BibleGraphNativeVisualStatus::default(),
             lifecycle: NativeRendererSupervisorLifecycle::Failed,
             last_error: Some(message),
         }
@@ -107,12 +111,14 @@ impl NativeRendererSupervisor {
         };
         let status = window_thread.join_completed();
         self.window_ready = status.ready;
+        self.native_visual_counts = status.native_visual_counts;
         if status.running {
             return;
         }
 
         self.window_thread = None;
         self.window_ready = false;
+        self.native_visual_counts = BibleGraphNativeVisualStatus::default();
         match status.result {
             Some(NativeRendererWindowThreadResult::Completed) if status.close_requested => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
@@ -162,6 +168,7 @@ impl NativeRendererSupervisor {
         let Some(window_thread) = self.window_thread.as_ref() else {
             self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
             self.window_ready = false;
+            self.native_visual_counts = BibleGraphNativeVisualStatus::default();
             self.last_error = None;
             return;
         };
@@ -175,6 +182,7 @@ impl NativeRendererSupervisor {
         let Some(mut window_thread) = self.window_thread.take() else {
             self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
             self.window_ready = false;
+            self.native_visual_counts = BibleGraphNativeVisualStatus::default();
             self.last_error = None;
             return;
         };
@@ -184,6 +192,7 @@ impl NativeRendererSupervisor {
         if status.running {
             self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
             self.window_ready = status.ready;
+            self.native_visual_counts = status.native_visual_counts;
             self.last_error =
                 Some("native renderer window did not stop before timeout".to_string());
             self.window_thread = Some(window_thread);
@@ -194,16 +203,19 @@ impl NativeRendererSupervisor {
             Some(NativeRendererWindowThreadResult::Completed) => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
                 self.window_ready = false;
+                self.native_visual_counts = BibleGraphNativeVisualStatus::default();
                 self.last_error = None;
             }
             Some(NativeRendererWindowThreadResult::Panicked) => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
                 self.window_ready = false;
+                self.native_visual_counts = BibleGraphNativeVisualStatus::default();
                 self.last_error = Some("native renderer window thread panicked".to_string());
             }
             None => {
                 self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
                 self.window_ready = false;
+                self.native_visual_counts = BibleGraphNativeVisualStatus::default();
                 self.last_error =
                     Some("native renderer window stop completed without a result".to_string());
             }
@@ -231,6 +243,16 @@ impl NativeRendererRunner for NativeRendererSupervisor {
     }
 
     fn focus(&mut self) -> NativeRendererRunnerStatus {
+        self.refresh_status()
+    }
+
+    fn set_projection(
+        &mut self,
+        projection: BibleRenderGraphProjection,
+    ) -> NativeRendererRunnerStatus {
+        if let Some(window_thread) = self.window_thread.as_ref() {
+            window_thread.set_projection(projection);
+        }
         self.refresh_status()
     }
 
@@ -267,6 +289,8 @@ impl NativeRendererRunner for NativeRendererSupervisor {
             window_visible: window_running && self.window_thread_visible(),
             window_ready: window_running && self.window_ready,
             focus_supported: false,
+            native_visual_node_count: self.native_visual_counts.node_count,
+            native_visual_edge_count: self.native_visual_counts.edge_count,
             last_error: self.last_error.clone(),
         }
     }

@@ -59,6 +59,16 @@ impl DesktopNativeRendererRunner {
         }
     }
 
+    fn set_projection(
+        &mut self,
+        projection: BibleRenderGraphProjection,
+    ) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.set_projection(projection),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
+
     fn status(&self) -> NativeRendererRunnerStatus {
         match self {
             Self::Managed(runner) => runner.status(),
@@ -135,7 +145,8 @@ impl DesktopBibleGraphHost {
         projection: BibleRenderGraphProjection,
     ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
         self.start()?;
-        self.with_renderer_mut(|renderer| renderer.set_projection(projection))?;
+        self.with_renderer_mut(|renderer| renderer.set_projection(projection.clone()))?;
+        self.native_runner.set_projection(projection);
         Ok(self.status())
     }
 
@@ -147,14 +158,15 @@ impl DesktopBibleGraphHost {
             return Ok(self.status());
         };
 
-        let result =
-            Self::catch_renderer_panic(|| renderer.set_projection(projection))?.map_err(|error| {
+        let result = Self::catch_renderer_panic(|| renderer.set_projection(projection.clone()))?
+            .map_err(|error| {
                 let message = error.to_string();
                 self.last_error = Some(message.clone());
                 BibleGraphHostError::Renderer(message)
             });
         if result.is_ok() {
             self.last_error = None;
+            self.native_runner.set_projection(projection);
         }
         result?;
         Ok(self.status())
@@ -240,9 +252,10 @@ impl DesktopBibleGraphHost {
         let renderer_scene_ready = renderer
             .map(BibleGraphRendererApp::renderer_window_ready)
             .unwrap_or_default();
-        let (native_visual_node_count, native_visual_edge_count) = renderer
-            .map(BibleGraphRendererApp::native_visual_counts)
-            .unwrap_or_default();
+        let (native_visual_node_count, native_visual_edge_count) = (
+            native_runner.native_visual_node_count,
+            native_runner.native_visual_edge_count,
+        );
         let renderer_window_bounds = renderer
             .map(BibleGraphRendererApp::renderer_window_bounds)
             .unwrap_or_default();

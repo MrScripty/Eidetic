@@ -9,6 +9,7 @@ use super::{
     NativeRendererThreadingModel, NativeRendererWindowThreadHandle,
 };
 use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
+use eidetic_core::contracts::BibleRenderGraphProjection;
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
 pub const NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS: u64 = 2_000;
@@ -27,6 +28,8 @@ pub struct NativeRendererRunnerStatus {
     pub window_visible: bool,
     pub window_ready: bool,
     pub focus_supported: bool,
+    pub native_visual_node_count: usize,
+    pub native_visual_edge_count: usize,
     pub last_error: Option<String>,
 }
 
@@ -42,6 +45,10 @@ pub trait NativeRendererRunner {
     fn open(&mut self) -> NativeRendererRunnerStatus;
     fn close(&mut self) -> NativeRendererRunnerStatus;
     fn focus(&mut self) -> NativeRendererRunnerStatus;
+    fn set_projection(
+        &mut self,
+        projection: BibleRenderGraphProjection,
+    ) -> NativeRendererRunnerStatus;
     fn status(&self) -> NativeRendererRunnerStatus;
 }
 
@@ -53,6 +60,10 @@ enum NativeRendererRunnerRequest {
         reply: mpsc::Sender<NativeRendererRunnerStatus>,
     },
     Focus {
+        reply: mpsc::Sender<NativeRendererRunnerStatus>,
+    },
+    SetProjection {
+        projection: BibleRenderGraphProjection,
         reply: mpsc::Sender<NativeRendererRunnerStatus>,
     },
     Status {
@@ -168,6 +179,13 @@ impl NativeRendererRunner for NativeRendererRunnerHandle {
         self.request(|reply| NativeRendererRunnerRequest::Focus { reply })
     }
 
+    fn set_projection(
+        &mut self,
+        projection: BibleRenderGraphProjection,
+    ) -> NativeRendererRunnerStatus {
+        self.request(|reply| NativeRendererRunnerRequest::SetProjection { projection, reply })
+    }
+
     fn status(&self) -> NativeRendererRunnerStatus {
         self.request(|reply| NativeRendererRunnerRequest::Status { reply })
     }
@@ -201,6 +219,9 @@ fn run_native_renderer_runner(
             }
             NativeRendererRunnerRequest::Focus { reply } => {
                 let _ = reply.send(runner.focus());
+            }
+            NativeRendererRunnerRequest::SetProjection { projection, reply } => {
+                let _ = reply.send(runner.set_projection(projection));
             }
             NativeRendererRunnerRequest::Status { reply } => {
                 let _ = reply.send(runner.refresh_status());

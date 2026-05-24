@@ -4,9 +4,10 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use eidetic_bevy_bible_graph::{
-    BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
-    run_controlled_minimal_bible_graph_native_window,
+    BibleGraphNativeVisualStatus, BibleGraphNativeWindowControlHandle,
+    BibleGraphNativeWindowRunnerConfig, run_controlled_minimal_bible_graph_native_window,
 };
+use eidetic_core::contracts::BibleRenderGraphProjection;
 
 #[derive(Debug)]
 pub struct NativeRendererWindowThreadHandle {
@@ -21,6 +22,7 @@ pub struct NativeRendererWindowThreadStatus {
     pub running: bool,
     pub ready: bool,
     pub visible: bool,
+    pub native_visual_counts: BibleGraphNativeVisualStatus,
     pub close_requested: bool,
     pub result: Option<NativeRendererWindowThreadResult>,
 }
@@ -76,12 +78,17 @@ impl NativeRendererWindowThreadHandle {
         self.control_handle.request_hide();
     }
 
+    pub fn set_projection(&self, projection: BibleRenderGraphProjection) {
+        self.control_handle.set_projection(projection);
+    }
+
     pub fn status(&mut self) -> NativeRendererWindowThreadStatus {
         self.refresh_result();
         NativeRendererWindowThreadStatus {
             running: self.result.is_none(),
             ready: self.control_handle.ready(),
             visible: self.control_handle.visible(),
+            native_visual_counts: self.control_handle.native_visual_counts(),
             close_requested: self.control_handle.close_requested(),
             result: self.result,
         }

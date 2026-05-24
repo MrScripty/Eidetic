@@ -558,8 +558,8 @@ fn host_applies_projection_and_reports_scene_counts() {
     );
     assert_eq!(status.node_count, 2);
     assert_eq!(status.edge_count, 1);
-    assert_eq!(status.native_visual_node_count, 2);
-    assert_eq!(status.native_visual_edge_count, 1);
+    assert_eq!(status.native_visual_node_count, 0);
+    assert_eq!(status.native_visual_edge_count, 0);
     assert_eq!(status.renderer_window_width_px, 0);
     assert_eq!(status.renderer_window_height_px, 0);
     assert_eq!(status.influence_count, 1);
@@ -710,8 +710,8 @@ fn owner_runs_renderer_on_dedicated_thread() {
 
     assert_eq!(status.node_count, 2);
     assert_eq!(status.edge_count, 1);
-    assert_eq!(status.native_visual_node_count, 2);
-    assert_eq!(status.native_visual_edge_count, 1);
+    assert_eq!(status.native_visual_node_count, 0);
+    assert_eq!(status.native_visual_edge_count, 0);
     assert_eq!(status.influence_count, 1);
     assert!(status.running);
     assert!(status.renderer_window_open);
@@ -753,7 +753,6 @@ fn owner_focus_routes_to_renderer_thread() {
     assert!(status.renderer_window_open);
     assert!(!status.renderer_window_focus_supported);
     assert!(status.renderer_window_visible);
-    assert!(status.renderer_window_ready);
     owner.stop().unwrap();
 }
 

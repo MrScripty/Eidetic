@@ -2435,9 +2435,6 @@ Current implementation status:
 
 Current open blockers:
 
-- The production native runner still records open/focus/close intent but does
-  not run a Bevy/winit event loop under Tauri. The only visible-window proof is
-  the standalone `eidetic-native-renderer-smoke` diagnostic binary.
 - Renderer projection delivery still has two invalidation triggers: Svelte
   request changes and desktop backend-event refreshes. These must be reduced to
   one desktop-owned request/subscription owner before the Bevy graph becomes
@@ -2448,6 +2445,9 @@ Current open blockers:
 - The central graph workspace still shows the Svelte semantic outline/list as
   the visible graph surface. The Bevy graph is currently a projection consumer,
   not the visible 3D graph window.
+- The floating Bevy graph window now receives backend-owned graph projections
+  and rebuilds native visual ECS entities, but it still needs actual rendered
+  node/edge primitives before the old Svelte outline can be demoted.
 
 Standards compliance review:
 
@@ -2631,18 +2631,24 @@ Completed foundation, do not reimplement unless verification fails:
 - Linux native graph renderer support is now marked as verified after local
   Tauri-owned lifecycle proof. Windows and macOS remain typed unproven
   strategies until they have matching platform-specific runtime proof.
+- The floating native graph window has a projection handoff from the desktop
+  owner into Bevy window control state. The native app consumes the latest
+  `BibleRenderGraph` projection and rebuilds native visual ECS entities, with
+  actual visible primitive rendering still remaining before the Bevy graph can
+  replace the semantic outline.
 
 Remaining implementation order:
 
-1. Consolidate graph renderer projection delivery into a single desktop-owned
+1. Add actual Bevy-rendered node/edge primitives for the floating graph window
+   from the native visual ECS entities, keeping durable data and projection
+   selection backend-owned.
+2. Consolidate graph renderer projection delivery into a single desktop-owned
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-2. Replace the temporary Svelte command-drain polling bridge with native
+3. Replace the temporary Svelte command-drain polling bridge with native
    renderer events or a backend-owned projection channel with deterministic
    teardown.
-3. Wire bounded graph projection rendering into the visible floating Bevy window
-   only after the native runner gate passes for the current platform.
 4. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
