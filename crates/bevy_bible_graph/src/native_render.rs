@@ -45,13 +45,19 @@ struct BibleGraphNativeAutoClose {
 
 #[derive(Debug, Clone)]
 pub struct BibleGraphNativeWindowControlHandle {
-    close_requested: Arc<AtomicBool>,
+    shutdown_requested: Arc<AtomicBool>,
+    show_requested: Arc<AtomicBool>,
+    hide_requested: Arc<AtomicBool>,
+    visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
 }
 
 #[derive(Debug, Clone, Resource)]
 pub struct BibleGraphNativeWindowControl {
-    close_requested: Arc<AtomicBool>,
+    shutdown_requested: Arc<AtomicBool>,
+    show_requested: Arc<AtomicBool>,
+    hide_requested: Arc<AtomicBool>,
+    visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
 }
 
@@ -150,17 +156,36 @@ impl Default for BibleGraphNativeWindowControlHandle {
 impl BibleGraphNativeWindowControlHandle {
     pub fn new() -> Self {
         Self {
-            close_requested: Arc::new(AtomicBool::new(false)),
+            shutdown_requested: Arc::new(AtomicBool::new(false)),
+            show_requested: Arc::new(AtomicBool::new(false)),
+            hide_requested: Arc::new(AtomicBool::new(false)),
+            visible: Arc::new(AtomicBool::new(false)),
             ready: Arc::new(AtomicBool::new(false)),
         }
     }
 
     pub fn request_close(&self) {
-        self.close_requested.store(true, Ordering::Release);
+        self.shutdown_requested.store(true, Ordering::Release);
     }
 
     pub fn close_requested(&self) -> bool {
-        self.close_requested.load(Ordering::Acquire)
+        self.shutdown_requested.load(Ordering::Acquire)
+    }
+
+    pub fn request_show(&self) {
+        self.show_requested.store(true, Ordering::Release);
+    }
+
+    pub fn request_hide(&self) {
+        self.hide_requested.store(true, Ordering::Release);
+    }
+
+    pub fn visible(&self) -> bool {
+        self.visible.load(Ordering::Acquire)
+    }
+
+    pub fn mark_visible(&self, visible: bool) {
+        self.visible.store(visible, Ordering::Release);
     }
 
     pub fn mark_ready(&self) {
@@ -175,7 +200,10 @@ impl BibleGraphNativeWindowControlHandle {
 impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowControl {
     fn from(handle: &BibleGraphNativeWindowControlHandle) -> Self {
         Self {
-            close_requested: Arc::clone(&handle.close_requested),
+            shutdown_requested: Arc::clone(&handle.shutdown_requested),
+            show_requested: Arc::clone(&handle.show_requested),
+            hide_requested: Arc::clone(&handle.hide_requested),
+            visible: Arc::clone(&handle.visible),
             ready: Arc::clone(&handle.ready),
         }
     }
@@ -222,8 +250,8 @@ pub fn configure_controlled_minimal_bible_graph_native_window_app(
             decorations: !config.borderless_window,
             ..Default::default()
         }),
-        exit_condition: ExitCondition::OnPrimaryClosed,
-        close_when_requested: true,
+        exit_condition: ExitCondition::DontExit,
+        close_when_requested: false,
         ..Default::default()
     });
     app.add_plugins(WinitPlugin {
@@ -232,6 +260,7 @@ pub fn configure_controlled_minimal_bible_graph_native_window_app(
     app.add_plugins(BibleGraphNativeRenderPlugin);
     app.insert_resource(BibleGraphNativeWindowControl::from(&control_handle));
     app.add_systems(Update, close_minimal_native_window_when_requested);
+    app.add_systems(Update, apply_minimal_native_window_visibility_requests);
 
     if let Some(auto_close_after_ms) = config.auto_close_after_ms {
         app.insert_resource(BibleGraphNativeAutoClose {
@@ -270,6 +299,7 @@ fn mark_bible_graph_native_window_ready(control: Option<Res<BibleGraphNativeWind
         return;
     };
     control.ready.store(true, Ordering::Release);
+    control.visible.store(true, Ordering::Release);
 }
 
 fn close_minimal_native_window_after_timer(
@@ -285,8 +315,26 @@ fn close_minimal_native_window_when_requested(
     control: Res<BibleGraphNativeWindowControl>,
     mut app_exit: MessageWriter<AppExit>,
 ) {
-    if control.close_requested.load(Ordering::Acquire) {
+    if control.shutdown_requested.load(Ordering::Acquire) {
         app_exit.write(AppExit::Success);
+    }
+}
+
+fn apply_minimal_native_window_visibility_requests(
+    control: Res<BibleGraphNativeWindowControl>,
+    mut windows: bevy::prelude::Query<&mut Window>,
+) {
+    if control.hide_requested.swap(false, Ordering::AcqRel) {
+        for mut window in &mut windows {
+            window.visible = false;
+        }
+        control.visible.store(false, Ordering::Release);
+    }
+    if control.show_requested.swap(false, Ordering::AcqRel) {
+        for mut window in &mut windows {
+            window.visible = true;
+        }
+        control.visible.store(true, Ordering::Release);
     }
 }
 

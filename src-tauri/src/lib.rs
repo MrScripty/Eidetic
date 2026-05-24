@@ -18,6 +18,7 @@ use desktop_events::DesktopEventBridgeOwner;
 use eidetic_server::state::AppState;
 use graph_renderer_projection::GraphRendererProjectionRequestState;
 use serde::Serialize;
+use std::time::Duration;
 use tauri::Manager;
 
 #[derive(Serialize)]
@@ -186,9 +187,10 @@ fn graph_renderer_lifecycle_smoke_report_with_owner(
     renderer: &'static str,
     owner: DesktopBibleGraphRendererOwner,
 ) -> Result<GraphRendererLifecycleSmokeReport, String> {
-    let open = owner
+    owner
         .start_renderer()
         .map_err(|error| format!("graph renderer smoke open failed: {error:?}"))?;
+    let open = wait_for_graph_renderer_ready(&owner, "open")?;
     let status_after_open = owner
         .status()
         .map_err(|error| format!("graph renderer smoke status failed: {error:?}"))?;
@@ -198,9 +200,10 @@ fn graph_renderer_lifecycle_smoke_report_with_owner(
     let close = owner
         .close_renderer()
         .map_err(|error| format!("graph renderer smoke close failed: {error:?}"))?;
-    let reopen = owner
+    owner
         .start_renderer()
         .map_err(|error| format!("graph renderer smoke reopen failed: {error:?}"))?;
+    let reopen = wait_for_graph_renderer_ready(&owner, "reopen")?;
     let project_close = owner
         .close_renderer()
         .map_err(|error| format!("graph renderer smoke project close failed: {error:?}"))?;
@@ -250,15 +253,37 @@ fn validate_graph_renderer_lifecycle_smoke_report(
                 status.last_error.as_deref().unwrap_or("unknown")
             ));
         }
+        if expected_open && !status.renderer_window_ready {
+            return Err(format!(
+                "graph renderer lifecycle smoke {label} expected a ready native window"
+            ));
+        }
     }
 
     Ok(())
 }
 
+fn wait_for_graph_renderer_ready(
+    owner: &DesktopBibleGraphRendererOwner,
+    label: &str,
+) -> Result<BibleGraphHostStatus, String> {
+    for _ in 0..250 {
+        let status = owner
+            .status()
+            .map_err(|error| format!("graph renderer smoke {label} status failed: {error:?}"))?;
+        if status.renderer_window_ready || status.last_error.is_some() {
+            return Ok(status);
+        }
+        std::thread::sleep(Duration::from_millis(1));
+    }
+
+    owner
+        .status()
+        .map_err(|error| format!("graph renderer smoke {label} status failed: {error:?}"))
+}
+
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use super::*;
     use crate::bevy_graph_host::NativeRendererWindowThreadHandle;
     use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;

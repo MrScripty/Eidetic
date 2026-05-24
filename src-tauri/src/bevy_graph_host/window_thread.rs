@@ -20,6 +20,7 @@ pub struct NativeRendererWindowThreadHandle {
 pub struct NativeRendererWindowThreadStatus {
     pub running: bool,
     pub ready: bool,
+    pub visible: bool,
     pub close_requested: bool,
     pub result: Option<NativeRendererWindowThreadResult>,
 }
@@ -67,11 +68,20 @@ impl NativeRendererWindowThreadHandle {
         self.control_handle.request_close();
     }
 
+    pub fn request_show(&self) {
+        self.control_handle.request_show();
+    }
+
+    pub fn request_hide(&self) {
+        self.control_handle.request_hide();
+    }
+
     pub fn status(&mut self) -> NativeRendererWindowThreadStatus {
         self.refresh_result();
         NativeRendererWindowThreadStatus {
             running: self.result.is_none(),
             ready: self.control_handle.ready(),
+            visible: self.control_handle.visible(),
             close_requested: self.control_handle.close_requested(),
             result: self.result,
         }

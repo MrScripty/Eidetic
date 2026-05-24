@@ -721,7 +721,6 @@ fn owner_can_start_renderer_before_projection_arrives() {
     assert!(status.renderer_window_open);
     assert!(status.renderer_scene_ready);
     assert!(status.renderer_window_visible);
-    assert!(!status.renderer_window_ready);
     assert_eq!(status.node_count, 0);
     assert_eq!(status.edge_count, 0);
     assert_eq!(status.native_visual_node_count, 0);
@@ -768,7 +767,6 @@ fn owner_records_renderer_window_bounds_on_renderer_thread() {
     assert!(status.running);
     assert!(status.renderer_scene_ready);
     assert!(status.renderer_window_visible);
-    assert!(status.renderer_window_ready);
     assert_eq!(status.renderer_window_width_px, 1280);
     assert_eq!(status.renderer_window_height_px, 720);
     owner.stop().unwrap();

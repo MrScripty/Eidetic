@@ -206,7 +206,7 @@ fn run_native_renderer_runner(
                 let _ = reply.send(runner.refresh_status());
             }
             NativeRendererRunnerRequest::Stop { reply } => {
-                let _ = reply.send(runner.close());
+                let _ = reply.send(runner.shutdown());
                 break;
             }
         }

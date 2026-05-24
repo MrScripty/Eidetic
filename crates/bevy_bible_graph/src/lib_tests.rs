@@ -285,12 +285,15 @@ fn native_window_control_handle_records_close_requests() {
 
     assert!(!control.close_requested());
     assert!(!control.ready());
+    assert!(!control.visible());
 
     control.request_close();
     control.mark_ready();
+    control.mark_visible(true);
 
     assert!(control.close_requested());
     assert!(control.ready());
+    assert!(control.visible());
 }
 
 #[cfg(feature = "native_render")]
@@ -315,6 +318,7 @@ fn controlled_native_window_app_installs_close_control_resource() {
     app.update();
 
     assert!(control.ready());
+    assert!(control.visible());
 
     control.request_close();
 

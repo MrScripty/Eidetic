@@ -96,6 +96,11 @@ impl NativeRendererSupervisor {
         self.status()
     }
 
+    pub fn shutdown(&mut self) -> NativeRendererRunnerStatus {
+        self.shutdown_window_thread();
+        self.status()
+    }
+
     fn refresh_window_thread(&mut self) {
         let Some(window_thread) = self.window_thread.as_mut() else {
             return;
@@ -130,7 +135,8 @@ impl NativeRendererSupervisor {
         config: BibleGraphNativeWindowRunnerConfig,
     ) -> NativeRendererRunnerStatus {
         self.refresh_window_thread();
-        if self.window_thread.is_some() {
+        if let Some(window_thread) = self.window_thread.as_ref() {
+            window_thread.request_show();
             self.lifecycle = NativeRendererSupervisorLifecycle::Running;
             self.last_error = None;
             return self.status();
@@ -153,6 +159,19 @@ impl NativeRendererSupervisor {
     }
 
     fn close_window_thread(&mut self) {
+        let Some(window_thread) = self.window_thread.as_ref() else {
+            self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
+            self.window_ready = false;
+            self.last_error = None;
+            return;
+        };
+
+        window_thread.request_hide();
+        self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
+        self.last_error = None;
+    }
+
+    fn shutdown_window_thread(&mut self) {
         let Some(mut window_thread) = self.window_thread.take() else {
             self.lifecycle = NativeRendererSupervisorLifecycle::Closed;
             self.window_ready = false;
@@ -245,10 +264,16 @@ impl NativeRendererRunner for NativeRendererSupervisor {
             capability_reason,
             verified_support: capability.verified_support(),
             visible_window_supported,
-            window_visible: window_running,
+            window_visible: window_running && self.window_thread_visible(),
             window_ready: window_running && self.window_ready,
             focus_supported: false,
             last_error: self.last_error.clone(),
         }
+    }
+}
+
+impl NativeRendererSupervisor {
+    fn window_thread_visible(&self) -> bool {
+        matches!(self.lifecycle, NativeRendererSupervisorLifecycle::Running)
     }
 }

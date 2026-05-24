@@ -944,20 +944,22 @@ Completed slices:
   `eidetic-desktop --graph-renderer-smoke` to exercise the desktop-managed graph
   renderer lifecycle through open/status/focus/close/reopen/project-close/
   app-shutdown and fail if any stage reports an error or mismatched open state.
+- `fix(desktop): keep native renderer event loop alive` changed renderer close
+  into a hide/show lifecycle transition inside the long-lived Bevy app and
+  reserved `AppExit` for owner shutdown, so local Linux
+  `eidetic-desktop --graph-renderer-smoke` now proves open/status/focus/close/
+  reopen/project-close/app-shutdown without recreating winit.
 
 Discovered issues:
 
-- Open: real native graph renderer lifecycle smoke on local Linux exposed
-  Bevy/winit `RecreationAttempt` when the current supervisor stops the Bevy app
-  on close and then tries to reopen by creating another event loop in the same
-  process. The smoke now fails on lifecycle errors instead of reporting success.
-  Local proof command:
+- Resolved: real native graph renderer lifecycle smoke on local Linux exposed
+  Bevy/winit `RecreationAttempt` when the supervisor stopped the Bevy app on
+  close and then tried to reopen by creating another event loop in the same
+  process. Renderer close/reopen now hides/shows the existing native window
+  inside one long-lived Bevy app, and app shutdown is the only path that sends
+  `AppExit`. Local proof command
   `cargo run -p eidetic-desktop --bin eidetic-desktop -- --graph-renderer-smoke`
-  exits 1 with `graph renderer lifecycle smoke project_close reported error:
-  native renderer window thread panicked`.
-  The next implementation slice must keep the Bevy event loop alive across
-  renderer close/reopen, likely by moving open/close into renderer commands
-  inside one long-lived Bevy app/window owner rather than recreating Bevy.
+  exits 0 with ready open/reopen snapshots.
 - Resolved: reference upload still spawned unmanaged embedding work from the
   legacy route path. Reference embedding now enters through the backend task
   supervisor so desktop shutdown can abort it with the rest of the runtime.
@@ -2620,34 +2622,31 @@ Completed foundation, do not reimplement unless verification fails:
 - Native renderer `window_ready` is now based on a Bevy renderer-produced ready
   signal observed by the desktop window thread, not on supervisor-thread
   liveness.
+- Renderer close/reopen now keeps the Bevy/winit event loop alive and performs
+  hide/show transitions on the existing native window. Local Linux
+  `eidetic-desktop --graph-renderer-smoke` passes open/status/focus/close/
+  reopen/project-close/app-shutdown with ready open/reopen snapshots.
 
 Remaining implementation order:
 
-1. Replace close/reopen-by-Bevy-recreation with a long-lived native renderer
-   event-loop owner. Renderer close/reopen must not create a second winit event
-   loop in the same process; it must transition window visibility/state through
-   the existing backend-owned renderer lifecycle.
-2. Prove open/status/focus/close/reopen/project-close/app-shutdown with
-   `eidetic-desktop --graph-renderer-smoke` while status/focus/close/projection
-   commands remain responsive while the Bevy/winit event loop is active.
-3. Mark only the locally proven platform as verified support. Linux can advance
+1. Mark only the locally proven platform as verified support. Linux can advance
    independently when locally proven; Windows and macOS remain typed unproven or
    unsupported until separately verified.
-4. Consolidate graph renderer projection delivery into a single desktop-owned
+2. Consolidate graph renderer projection delivery into a single desktop-owned
    request/subscription owner. Svelte may update focus/filter/search/open
    request inputs through backend commands, but it must not be a projection
    writer parallel to backend-event refresh.
-5. Replace the temporary Svelte command-drain polling bridge with native
+3. Replace the temporary Svelte command-drain polling bridge with native
    renderer events or a backend-owned projection channel with deterministic
    teardown.
-6. Wire bounded graph projection rendering into the visible floating Bevy window
+4. Wire bounded graph projection rendering into the visible floating Bevy window
    only after the native runner gate passes for the current platform.
-7. Keep Svelte graph filters, details, review, and semantic outline as
+5. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.
-8. Remove or demote the old 2D graph surface after Bevy covers target
+6. Remove or demote the old 2D graph surface after Bevy covers target
    interactions and Svelte alternatives cover accessibility.
-9. Add keyed ECS/native-visual diffing before expanding beyond the documented
+7. Add keyed ECS/native-visual diffing before expanding beyond the documented
    500-node/1,000-edge prototype envelope or before refresh frequency makes
    full rebuilds visibly expensive.
 
