@@ -1206,6 +1206,10 @@ Discovered issues:
 - Resolved: graph renderer status now projects the native runner threading
   model through the backend command contract and TypeScript mirror, so the UI
   can display platform proof state without owning platform inference logic.
+- Updated: `eidetic-bevy-bible-graph` now owns a minimal native-window runner
+  configuration path for the Bevy/winit smoke scene. Desktop platform strategy
+  still gates execution and visible-window support; this slice only provides
+  the leaf renderer configuration needed by the later smoke proof.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

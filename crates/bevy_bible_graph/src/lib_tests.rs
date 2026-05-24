@@ -260,6 +260,18 @@ fn native_render_plugin_records_borderless_window_intent() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_window_runner_config_records_minimal_smoke_window_intent() {
+    let config = BibleGraphNativeWindowRunnerConfig::minimal_smoke(true);
+
+    assert_eq!(config.title, "Eidetic Bible Graph");
+    assert_eq!(config.width_px, 1280);
+    assert_eq!(config.height_px, 720);
+    assert!(config.borderless_window);
+    assert!(config.run_on_any_thread);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn renderer_app_can_start_as_renderer_window_consumer() {
     let renderer = BibleGraphRendererApp::new_renderer_window();
 

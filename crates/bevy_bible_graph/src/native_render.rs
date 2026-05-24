@@ -1,7 +1,9 @@
 use bevy::prelude::{
-    App, Camera2d, ClearColor, Color, Commands, Component, Entity, Plugin, ResMut, Resource,
-    Startup, With, World,
+    App, Camera2d, ClearColor, Color, Commands, Component, Entity, MinimalPlugins, Plugin, ResMut,
+    Resource, Startup, With, World,
 };
+use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
+use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection};
 
 use crate::build_bible_graph_visual_snapshot;
@@ -9,6 +11,15 @@ use crate::build_bible_graph_visual_snapshot;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
     pub borderless_window: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BibleGraphNativeWindowRunnerConfig {
+    pub title: String,
+    pub width_px: u32,
+    pub height_px: u32,
+    pub borderless_window: bool,
+    pub run_on_any_thread: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Resource)]
@@ -86,6 +97,18 @@ impl Default for BibleGraphNativeRenderConfig {
     }
 }
 
+impl BibleGraphNativeWindowRunnerConfig {
+    pub fn minimal_smoke(run_on_any_thread: bool) -> Self {
+        Self {
+            title: "Eidetic Bible Graph".to_string(),
+            width_px: 1280,
+            height_px: 720,
+            borderless_window: true,
+            run_on_any_thread,
+        }
+    }
+}
+
 pub struct BibleGraphNativeRenderPlugin;
 
 impl Plugin for BibleGraphNativeRenderPlugin {
@@ -97,6 +120,28 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.add_systems(Startup, spawn_bible_graph_renderer_window_scene);
     }
+}
+
+pub fn configure_minimal_bible_graph_native_window_app(
+    app: &mut App,
+    config: BibleGraphNativeWindowRunnerConfig,
+) {
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(WindowPlugin {
+        primary_window: Some(Window {
+            title: config.title,
+            resolution: WindowResolution::new(config.width_px, config.height_px),
+            decorations: !config.borderless_window,
+            ..Default::default()
+        }),
+        exit_condition: ExitCondition::OnPrimaryClosed,
+        close_when_requested: true,
+        ..Default::default()
+    });
+    app.add_plugins(WinitPlugin {
+        run_on_any_thread: config.run_on_any_thread,
+    });
+    app.add_plugins(BibleGraphNativeRenderPlugin);
 }
 
 fn spawn_bible_graph_renderer_window_scene(
