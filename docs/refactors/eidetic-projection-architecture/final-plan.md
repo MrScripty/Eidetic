@@ -1230,6 +1230,10 @@ Discovered issues:
   by adding frontend fallbacks, compatibility layers, or parallel renderer
   ownership. Unproven platforms keep typed unavailable status until their own
   supervisor proof passes.
+- Updated: `NativeRendererSupervisor` now owns the native renderer state
+  machine behind the runner handle. Status projects an explicit supervisor
+  lifecycle through Rust and TypeScript, while visible-window support remains
+  pending until the production event-loop proof is implemented.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

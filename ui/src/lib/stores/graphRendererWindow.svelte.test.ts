@@ -16,6 +16,7 @@ const baseStatus: GraphRendererStatus = {
   renderer_window_strategy: 'bevy_winit_floating_window',
   renderer_window_platform: 'linux',
   renderer_runner_lifecycle: 'open_requested',
+  renderer_supervisor_lifecycle: 'starting',
   renderer_runner_threading_model: 'worker_thread',
   renderer_window_capability: 'pending_native_runner',
   renderer_window_capability_reason: 'pending_native_runner',

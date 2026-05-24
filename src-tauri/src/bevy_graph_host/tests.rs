@@ -18,8 +18,8 @@ use super::{
     GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
     NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
     NativeRendererPlatformStrategy, NativeRendererRunner, NativeRendererRunnerHandle,
-    NativeRendererRunnerLifecycle, NativeRendererRunnerStartupPlan, NativeRendererThreadingModel,
-    PendingNativeRendererRunner,
+    NativeRendererRunnerLifecycle, NativeRendererRunnerStartupPlan, NativeRendererSupervisor,
+    NativeRendererSupervisorLifecycle, NativeRendererThreadingModel,
 };
 
 #[test]
@@ -163,8 +163,9 @@ fn native_renderer_platform_strategy_builds_startup_plan() {
 }
 
 #[test]
-fn pending_native_renderer_runner_records_open_intent_without_reporting_visibility() {
-    let mut runner = PendingNativeRendererRunner::default();
+fn native_renderer_supervisor_records_open_intent_without_reporting_visibility() {
+    let mut runner =
+        NativeRendererSupervisor::for_strategy(NativeRendererPlatformStrategy::current());
 
     let initial = runner.status();
 
@@ -182,38 +183,45 @@ fn pending_native_renderer_runner_records_open_intent_without_reporting_visibili
     );
     assert_eq!(initial.threading_model, expected_threading_model());
     assert_eq!(initial.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert_eq!(
+        initial.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::NotStarted
+    );
     assert_eq!(initial.capability_reason, expected_pending_reason());
     assert!(!initial.visible_window_supported);
     assert!(!initial.window_visible);
     assert!(!initial.window_ready);
     assert!(!initial.focus_supported);
     assert_eq!(initial.last_error, None);
-    assert!(!runner.open_requested());
 
     let opened = runner.open();
-    assert!(runner.open_requested());
 
     let focused = runner.focus();
     let closed = runner.close();
 
+    assert_eq!(opened.lifecycle, expected_open_runner_lifecycle());
     assert_eq!(
-        opened.lifecycle,
-        NativeRendererRunnerLifecycle::OpenRequested
+        opened.supervisor_lifecycle,
+        expected_open_supervisor_lifecycle()
     );
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
     assert!(!opened.focus_supported);
     assert_eq!(opened.last_error, None);
+    assert_eq!(focused.lifecycle, expected_open_runner_lifecycle());
     assert_eq!(
-        focused.lifecycle,
-        NativeRendererRunnerLifecycle::OpenRequested
+        focused.supervisor_lifecycle,
+        expected_open_supervisor_lifecycle()
     );
     assert!(!focused.focus_supported);
     assert_eq!(focused.last_error, None);
     assert_eq!(closed.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert_eq!(
+        closed.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Closed
+    );
     assert!(!closed.window_visible);
     assert_eq!(closed.last_error, None);
-    assert!(!runner.open_requested());
 }
 
 #[test]
@@ -229,9 +237,10 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
         BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
     );
     assert_eq!(opened.platform, BibleGraphRendererWindowPlatform::current());
+    assert_eq!(opened.lifecycle, expected_open_runner_lifecycle());
     assert_eq!(
-        opened.lifecycle,
-        NativeRendererRunnerLifecycle::OpenRequested
+        opened.supervisor_lifecycle,
+        expected_open_supervisor_lifecycle()
     );
     assert_eq!(
         opened.capability,
@@ -243,13 +252,18 @@ fn native_renderer_runner_handle_routes_pending_commands_through_boundary() {
     assert!(!opened.window_visible);
     assert!(!opened.window_ready);
     assert_eq!(opened.last_error, None);
+    assert_eq!(focused.lifecycle, expected_open_runner_lifecycle());
     assert_eq!(
-        focused.lifecycle,
-        NativeRendererRunnerLifecycle::OpenRequested
+        focused.supervisor_lifecycle,
+        expected_open_supervisor_lifecycle()
     );
     assert!(!focused.focus_supported);
     assert_eq!(focused.last_error, None);
     assert_eq!(closed.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert_eq!(
+        closed.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Closed
+    );
     assert!(!closed.window_visible);
     assert_eq!(closed.last_error, None);
 }
@@ -272,6 +286,10 @@ fn native_renderer_runner_handle_starts_from_explicit_platform_strategy() {
         BibleGraphRendererWindowCapabilityReason::PlatformUnsupported
     );
     assert_eq!(status.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert_eq!(
+        status.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::NotStarted
+    );
     assert!(!status.visible_window_supported);
 }
 
@@ -284,11 +302,19 @@ fn native_renderer_runner_handle_stops_with_bounded_reply() {
     let after_stop = runner.status();
 
     assert_eq!(stopped.lifecycle, NativeRendererRunnerLifecycle::Closed);
+    assert_eq!(
+        stopped.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Closed
+    );
     assert!(!stopped.window_visible);
     assert_eq!(stopped.last_error, None);
     assert_eq!(
         after_stop.capability_reason,
         BibleGraphRendererWindowCapabilityReason::RunnerError
+    );
+    assert_eq!(
+        after_stop.supervisor_lifecycle,
+        NativeRendererSupervisorLifecycle::Failed
     );
     assert!(after_stop.last_error.is_some());
 }
@@ -338,6 +364,7 @@ fn host_applies_projection_and_reports_scene_counts() {
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_runner_lifecycle: NativeRendererRunnerLifecycle::OpenRequested,
+            renderer_supervisor_lifecycle: expected_open_supervisor_lifecycle(),
             renderer_runner_threading_model: expected_threading_model(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_capability_reason: expected_pending_reason(),
@@ -462,6 +489,7 @@ fn host_stop_drops_renderer_state() {
             renderer_window_strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: BibleGraphRendererWindowPlatform::current(),
             renderer_runner_lifecycle: NativeRendererRunnerLifecycle::Closed,
+            renderer_supervisor_lifecycle: NativeRendererSupervisorLifecycle::Closed,
             renderer_runner_threading_model: expected_threading_model(),
             renderer_window_capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
             renderer_window_capability_reason: expected_pending_reason(),
@@ -685,6 +713,28 @@ fn expected_pending_reason() -> BibleGraphRendererWindowCapabilityReason {
 
 fn expected_threading_model() -> NativeRendererThreadingModel {
     NativeRendererPlatformStrategy::current().threading_model()
+}
+
+fn expected_open_runner_lifecycle() -> NativeRendererRunnerLifecycle {
+    match NativeRendererPlatformStrategy::current().runner_startup_plan() {
+        NativeRendererRunnerStartupPlan::MinimalWindowProofCandidate { .. } => {
+            NativeRendererRunnerLifecycle::OpenRequested
+        }
+        NativeRendererRunnerStartupPlan::PendingOnly { .. } => {
+            NativeRendererRunnerLifecycle::Closed
+        }
+    }
+}
+
+fn expected_open_supervisor_lifecycle() -> NativeRendererSupervisorLifecycle {
+    match NativeRendererPlatformStrategy::current().runner_startup_plan() {
+        NativeRendererRunnerStartupPlan::MinimalWindowProofCandidate { .. } => {
+            NativeRendererSupervisorLifecycle::Starting
+        }
+        NativeRendererRunnerStartupPlan::PendingOnly { .. } => {
+            NativeRendererSupervisorLifecycle::Closed
+        }
+    }
 }
 
 fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {

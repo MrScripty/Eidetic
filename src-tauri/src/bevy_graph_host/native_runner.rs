@@ -5,7 +5,7 @@ use std::time::Duration;
 use super::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
-    BibleGraphRendererWindowStrategyStatus, NativeRendererPlatformStrategy,
+    NativeRendererPlatformStrategy, NativeRendererSupervisor, NativeRendererSupervisorLifecycle,
     NativeRendererThreadingModel,
 };
 
@@ -17,6 +17,7 @@ pub struct NativeRendererRunnerStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
     pub platform: BibleGraphRendererWindowPlatform,
     pub lifecycle: NativeRendererRunnerLifecycle,
+    pub supervisor_lifecycle: NativeRendererSupervisorLifecycle,
     pub threading_model: NativeRendererThreadingModel,
     pub capability: BibleGraphRendererWindowCapability,
     pub capability_reason: BibleGraphRendererWindowCapabilityReason,
@@ -162,76 +163,11 @@ impl Drop for NativeRendererRunnerHandle {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct PendingNativeRendererRunner {
-    strategy: Option<NativeRendererPlatformStrategy>,
-    open_requested: bool,
-}
-
-impl PendingNativeRendererRunner {
-    pub fn for_strategy(strategy: NativeRendererPlatformStrategy) -> Self {
-        Self {
-            strategy: Some(strategy),
-            open_requested: false,
-        }
-    }
-}
-
-impl NativeRendererRunner for PendingNativeRendererRunner {
-    fn open(&mut self) -> NativeRendererRunnerStatus {
-        self.open_requested = true;
-        self.status()
-    }
-
-    fn close(&mut self) -> NativeRendererRunnerStatus {
-        self.open_requested = false;
-        self.status()
-    }
-
-    fn focus(&mut self) -> NativeRendererRunnerStatus {
-        self.status()
-    }
-
-    fn status(&self) -> NativeRendererRunnerStatus {
-        let strategy = self
-            .strategy
-            .map(NativeRendererPlatformStrategy::status)
-            .unwrap_or_else(BibleGraphRendererWindowStrategyStatus::current);
-        NativeRendererRunnerStatus {
-            strategy: strategy.strategy,
-            platform: strategy.platform,
-            lifecycle: if self.open_requested {
-                NativeRendererRunnerLifecycle::OpenRequested
-            } else {
-                NativeRendererRunnerLifecycle::Closed
-            },
-            threading_model: self
-                .strategy
-                .map(NativeRendererPlatformStrategy::threading_model)
-                .unwrap_or_else(|| NativeRendererPlatformStrategy::current().threading_model()),
-            capability: strategy.capability,
-            capability_reason: strategy.capability_reason,
-            visible_window_supported: strategy.visible_window_supported,
-            window_visible: false,
-            window_ready: false,
-            focus_supported: false,
-            last_error: None,
-        }
-    }
-}
-
-#[cfg(test)]
-impl PendingNativeRendererRunner {
-    pub fn open_requested(&self) -> bool {
-        self.open_requested
-    }
-}
-
 fn run_native_renderer_runner(
     strategy: NativeRendererPlatformStrategy,
     receiver: mpsc::Receiver<NativeRendererRunnerRequest>,
 ) {
-    let mut runner = PendingNativeRendererRunner::for_strategy(strategy);
+    let mut runner = NativeRendererSupervisor::for_strategy(strategy);
 
     for request in receiver {
         match request {
@@ -256,9 +192,5 @@ fn run_native_renderer_runner(
 }
 
 fn pending_runner_unavailable_status(message: String) -> NativeRendererRunnerStatus {
-    NativeRendererRunnerStatus {
-        capability_reason: BibleGraphRendererWindowCapabilityReason::RunnerError,
-        last_error: Some(message),
-        ..PendingNativeRendererRunner::default().status()
-    }
+    NativeRendererSupervisor::failed_current_platform_status(message)
 }

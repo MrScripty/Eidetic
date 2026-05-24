@@ -2,6 +2,7 @@ mod host;
 mod native_runner;
 mod owner;
 mod platform_strategy;
+mod supervisor;
 mod window_strategy;
 
 use crate::renderer_window::DesktopRendererWindowKind;
@@ -10,7 +11,7 @@ pub use host::DesktopBibleGraphHost;
 pub use native_runner::{
     NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
     NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerLifecycle,
-    NativeRendererRunnerStatus, PendingNativeRendererRunner,
+    NativeRendererRunnerStatus,
 };
 pub use owner::{
     DesktopBibleGraphRendererOwner, GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY,
@@ -19,6 +20,7 @@ pub use owner::{
 pub use platform_strategy::{
     NativeRendererPlatformStrategy, NativeRendererRunnerStartupPlan, NativeRendererThreadingModel,
 };
+pub use supervisor::{NativeRendererSupervisor, NativeRendererSupervisorLifecycle};
 pub use window_strategy::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowPlatform,
@@ -38,6 +40,7 @@ pub struct BibleGraphHostStatus {
     pub renderer_window_strategy: BibleGraphRendererWindowStrategy,
     pub renderer_window_platform: BibleGraphRendererWindowPlatform,
     pub renderer_runner_lifecycle: NativeRendererRunnerLifecycle,
+    pub renderer_supervisor_lifecycle: NativeRendererSupervisorLifecycle,
     pub renderer_runner_threading_model: NativeRendererThreadingModel,
     pub renderer_window_capability: BibleGraphRendererWindowCapability,
     pub renderer_window_capability_reason: BibleGraphRendererWindowCapabilityReason,
