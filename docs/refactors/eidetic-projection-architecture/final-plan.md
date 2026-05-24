@@ -2649,14 +2649,23 @@ Completed foundation, do not reimplement unless verification fails:
   wording was removed so the frontend presents the Bevy renderer controls as
   the graph surface while keeping the outline as an explicit secondary
   projection inspector.
+- Follow-up renderer usability review found the native graph window still used
+  a borderless prototype configuration, category node colors fell through to
+  placeholder pale sprites, labels were not rendered, and native selection/
+  navigation command contracts were not connected to window input. The native
+  runner now opens as a decorated OS window, graph colors and labels render from
+  backend projections, left-click selection emits backend-owned renderer
+  commands, and WASD/arrow-key panning moves the Bevy graph camera.
 
 Remaining implementation order:
 
 1. Keep Svelte graph filters, details, review, and semantic outline
    projection-only as secondary controls/accessibility surfaces.
-2. Milestone 8 is implementation-complete. Future graph work should enter
-   through Milestone 9 agent harness/tooling or newly recorded follow-up tasks,
-   not by reintroducing fallback renderer paths or frontend-owned graph state.
+2. Milestone 8 is implementation-complete for backend-owned graph projection
+   delivery and native renderer ownership. Future visual refinement should
+   enter as explicit graph-renderer follow-up tasks or through Milestone 9
+   agent harness/tooling, not by reintroducing fallback renderer paths or
+   frontend-owned graph state.
 
 Standards gates:
 

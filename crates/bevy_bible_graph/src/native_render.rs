@@ -7,9 +7,9 @@ use std::time::{Duration, Instant};
 use bevy::app::AppExit;
 use bevy::prelude::{
     App, ButtonInput, Camera, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins,
-    Entity, GlobalTransform, Justify, MessageWriter, MouseButton, Plugin, PluginGroup, Query, Res,
-    ResMut, Resource, Sprite, Startup, Text2d, TextColor, TextFont, TextLayout, Transform, Update,
-    Vec2, Vec3, Window, With, World,
+    Entity, GlobalTransform, Justify, KeyCode, MessageWriter, MouseButton, Plugin, PluginGroup,
+    Query, Res, ResMut, Resource, Sprite, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
+    Transform, Update, Vec2, Vec3, Window, With, World,
 };
 use bevy::window::{ExitCondition, PrimaryWindow, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
@@ -276,6 +276,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
         app.add_systems(Update, apply_bible_graph_native_projection);
         app.add_systems(Update, emit_bible_graph_native_click_selection);
+        app.add_systems(Update, pan_bible_graph_native_camera);
     }
 }
 
@@ -428,6 +429,44 @@ fn emit_bible_graph_native_click_selection(
 
     let _ =
         push_native_command_to_control(&control, BibleGraphRendererCommand::SelectNode { node_id });
+}
+
+fn pan_bible_graph_native_camera(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    time: Option<Res<Time>>,
+    mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    let Some(time) = time else {
+        return;
+    };
+    let Ok(mut camera_transform) = cameras.single_mut() else {
+        return;
+    };
+    let mut direction = Vec2::ZERO;
+
+    if keys.pressed(KeyCode::KeyA) || keys.pressed(KeyCode::ArrowLeft) {
+        direction.x -= 1.0;
+    }
+    if keys.pressed(KeyCode::KeyD) || keys.pressed(KeyCode::ArrowRight) {
+        direction.x += 1.0;
+    }
+    if keys.pressed(KeyCode::KeyW) || keys.pressed(KeyCode::ArrowUp) {
+        direction.y += 1.0;
+    }
+    if keys.pressed(KeyCode::KeyS) || keys.pressed(KeyCode::ArrowDown) {
+        direction.y -= 1.0;
+    }
+
+    if direction == Vec2::ZERO {
+        return;
+    }
+
+    let pan_speed = 420.0;
+    camera_transform.translation +=
+        (direction.normalize() * pan_speed * time.delta_secs()).extend(0.0);
 }
 
 fn nearest_native_node_at_world_position(
