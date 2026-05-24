@@ -50,6 +50,9 @@ commands and events.
 - Native renderer IPC exposes status and command-drain reads only. Drained
   renderer commands are validated transient interaction intents, not durable
   bible graph mutations.
+- Native renderer window threads are desktop-owned lifecycle resources. They
+  must expose bounded close/join behavior and report completion or panic through
+  backend status instead of detaching unmanaged Bevy event loops.
 - Production Bevy rendering uses app-managed floating renderer windows, not
   WebView child-surface embedding. Svelte may launch, focus, close, and display
   status for a renderer window, but desktop Rust owns renderer lifecycle,

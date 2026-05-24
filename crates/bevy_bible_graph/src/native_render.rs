@@ -229,8 +229,18 @@ pub fn configure_controlled_minimal_bible_graph_native_window_app(
 }
 
 pub fn run_minimal_bible_graph_native_window(config: BibleGraphNativeWindowRunnerConfig) {
+    run_controlled_minimal_bible_graph_native_window(
+        config,
+        BibleGraphNativeWindowControlHandle::new(),
+    );
+}
+
+pub fn run_controlled_minimal_bible_graph_native_window(
+    config: BibleGraphNativeWindowRunnerConfig,
+    control_handle: BibleGraphNativeWindowControlHandle,
+) {
     let mut app = App::new();
-    configure_minimal_bible_graph_native_window_app(&mut app, config);
+    configure_controlled_minimal_bible_graph_native_window_app(&mut app, config, control_handle);
     app.run();
 }
 

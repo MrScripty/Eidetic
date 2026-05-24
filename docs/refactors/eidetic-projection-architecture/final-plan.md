@@ -926,6 +926,11 @@ Completed slices:
   the command exited successfully after the auto-close window run. This proves
   only the standalone diagnostic path and does not mark production Tauri runner
   support as verified.
+- `feat(desktop): add native renderer window thread owner` added a desktop
+  native renderer window thread handle with injectable runner startup, close
+  request signaling, completion/panic result reporting, and bounded stop
+  waiting so the supervisor can own Bevy event-loop lifecycle without detached
+  tasks.
 
 Discovered issues:
 
@@ -1009,6 +1014,10 @@ Discovered issues:
   report-only preflight mode landed. Local Linux worker-thread diagnostic smoke
   now has both a report-only JSON record and a successful auto-close window run
   recorded in the plan.
+- Resolved: the desktop supervisor had no bounded lifecycle primitive for a
+  long-lived Bevy window thread. A desktop-owned window thread handle now owns
+  close signaling, completion observation, panic capture, and bounded stop
+  waits.
 - Resolved: graph renderer window lifecycle could only be inferred from open,
   scene-ready, visible, and message fields. The status projection now includes
   an explicit lifecycle enum that future native window support can advance
@@ -2570,6 +2579,8 @@ Completed foundation, do not reimplement unless verification fails:
 - Local Linux diagnostic Bevy/winit smoke proof succeeded with
   `--any-thread --auto-close-ms 500`; production support remains unverified
   until the Tauri-owned supervisor path proves the same lifecycle.
+- Desktop native renderer window thread ownership now has a bounded close/stop
+  primitive ready for supervisor integration.
 
 Remaining implementation order:
 

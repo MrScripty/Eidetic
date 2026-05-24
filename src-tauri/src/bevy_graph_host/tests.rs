@@ -6,6 +6,8 @@ use eidetic_core::contracts::{
     ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProvenance,
 };
 use eidetic_core::timeline::node::StoryLevel;
+use std::sync::mpsc;
+use std::time::Duration;
 use uuid::Uuid;
 
 use crate::renderer_window::DesktopRendererWindowKind;
@@ -20,6 +22,7 @@ use super::{
     NativeRendererPlatformStrategy, NativeRendererRunner, NativeRendererRunnerHandle,
     NativeRendererRunnerLifecycle, NativeRendererRunnerStartupPlan, NativeRendererSupervisor,
     NativeRendererSupervisorLifecycle, NativeRendererThreadingModel,
+    NativeRendererWindowThreadHandle, NativeRendererWindowThreadResult,
 };
 
 #[test]
@@ -333,6 +336,58 @@ fn native_renderer_runner_handle_stops_with_bounded_reply() {
         NativeRendererSupervisorLifecycle::Failed
     );
     assert!(after_stop.last_error.is_some());
+}
+
+#[test]
+fn native_renderer_window_thread_reports_completion() {
+    let mut window_thread = NativeRendererWindowThreadHandle::start_with(
+        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+            .minimal_window_runner_config()
+            .unwrap(),
+        |_config, _control| {},
+    )
+    .unwrap();
+
+    let status = window_thread.stop(Duration::from_millis(250));
+
+    assert!(status.close_requested);
+    assert!(!status.running);
+    assert_eq!(
+        status.result,
+        Some(NativeRendererWindowThreadResult::Completed)
+    );
+}
+
+#[test]
+fn native_renderer_window_thread_can_request_bounded_close() {
+    let (started_sender, started_receiver) = mpsc::channel();
+    let mut window_thread = NativeRendererWindowThreadHandle::start_with(
+        NativeRendererPlatformStrategy::LinuxWorkerThreadUnproven
+            .minimal_window_runner_config()
+            .unwrap(),
+        move |_config, control| {
+            started_sender.send(()).unwrap();
+            while !control.close_requested() {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+        },
+    )
+    .unwrap();
+    started_receiver
+        .recv_timeout(Duration::from_millis(250))
+        .unwrap();
+
+    let running = window_thread.status();
+    let stopped = window_thread.stop(Duration::from_millis(250));
+
+    assert!(running.running);
+    assert!(!running.close_requested);
+    assert!(stopped.close_requested);
+    assert!(!stopped.running);
+    assert_eq!(
+        stopped.result,
+        Some(NativeRendererWindowThreadResult::Completed)
+    );
 }
 
 #[test]

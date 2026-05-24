@@ -4,6 +4,7 @@ mod owner;
 mod platform_strategy;
 mod supervisor;
 mod window_strategy;
+mod window_thread;
 
 use crate::renderer_window::DesktopRendererWindowKind;
 
@@ -26,6 +27,10 @@ pub use window_strategy::{
     BibleGraphRendererWindowCapability, BibleGraphRendererWindowCapabilityReason,
     BibleGraphRendererWindowLifecycle, BibleGraphRendererWindowPlatform,
     BibleGraphRendererWindowStrategy, BibleGraphRendererWindowStrategyStatus,
+};
+pub use window_thread::{
+    NativeRendererWindowThreadHandle, NativeRendererWindowThreadResult,
+    NativeRendererWindowThreadStatus,
 };
 
 #[cfg(test)]
