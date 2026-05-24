@@ -1183,6 +1183,11 @@ Discovered issues:
   Tauri-runtime-compatible strategy before it can report visible-window
   support. Platforms without a proven strategy must remain typed unsupported
   through backend status.
+- Updated: native renderer platform strategy selection now lives behind a
+  desktop-owned `NativeRendererPlatformStrategy` boundary. Linux worker-thread,
+  Windows worker-thread, macOS main-thread, and unsupported-platform outcomes
+  are selected explicitly while all unproven platforms continue to report
+  pending native runner capability.
 - Resolved: renderer-window status now carries an explicit typed
   unsupported/capability reason through the Rust status DTO, TypeScript mirror,
   UI status display, and command-drain gate. Svelte no longer has to infer

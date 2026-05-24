@@ -17,8 +17,8 @@ use super::{
     BibleGraphRendererWindowStrategyStatus, DesktopBibleGraphHost, DesktopBibleGraphRendererOwner,
     GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, GRAPH_RENDERER_REPLY_TIMEOUT_MS,
     NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY, NATIVE_RENDERER_RUNNER_REPLY_TIMEOUT_MS,
-    NativeRendererRunner, NativeRendererRunnerHandle, NativeRendererRunnerLifecycle,
-    PendingNativeRendererRunner,
+    NativeRendererPlatformStrategy, NativeRendererRunner, NativeRendererRunnerHandle,
+    NativeRendererRunnerLifecycle, PendingNativeRendererRunner,
 };
 
 #[test]
@@ -46,6 +46,24 @@ fn renderer_window_strategy_reports_pending_native_runner() {
         BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
     );
     assert_eq!(status.platform, BibleGraphRendererWindowPlatform::current());
+    assert_eq!(
+        status.capability,
+        BibleGraphRendererWindowCapability::PendingNativeRunner
+    );
+    assert_eq!(status.capability_reason, expected_pending_reason());
+    assert!(!status.visible_window_supported);
+}
+
+#[test]
+fn native_renderer_platform_strategy_reports_current_platform_status() {
+    let strategy = NativeRendererPlatformStrategy::current();
+    let status = strategy.status();
+
+    assert_eq!(status.platform, BibleGraphRendererWindowPlatform::current());
+    assert_eq!(
+        status.strategy,
+        BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow
+    );
     assert_eq!(
         status.capability,
         BibleGraphRendererWindowCapability::PendingNativeRunner

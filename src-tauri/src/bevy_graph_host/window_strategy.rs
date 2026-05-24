@@ -1,3 +1,5 @@
+use super::NativeRendererPlatformStrategy;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BibleGraphRendererWindowStrategy {
@@ -49,14 +51,7 @@ pub struct BibleGraphRendererWindowStrategyStatus {
 
 impl BibleGraphRendererWindowStrategyStatus {
     pub fn current() -> Self {
-        let platform = BibleGraphRendererWindowPlatform::current();
-        Self {
-            strategy: BibleGraphRendererWindowStrategy::BevyWinitFloatingWindow,
-            platform,
-            capability: BibleGraphRendererWindowCapability::PendingNativeRunner,
-            capability_reason: platform.pending_capability_reason(),
-            visible_window_supported: false,
-        }
+        NativeRendererPlatformStrategy::current().status()
     }
 }
 
@@ -70,15 +65,6 @@ impl BibleGraphRendererWindowPlatform {
             Self::Windows
         } else {
             Self::Unsupported
-        }
-    }
-
-    fn pending_capability_reason(self) -> BibleGraphRendererWindowCapabilityReason {
-        match self {
-            Self::Linux | Self::Macos | Self::Windows => {
-                BibleGraphRendererWindowCapabilityReason::PendingNativeRunner
-            }
-            Self::Unsupported => BibleGraphRendererWindowCapabilityReason::PlatformUnsupported,
         }
     }
 }
