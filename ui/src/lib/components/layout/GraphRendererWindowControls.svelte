@@ -98,27 +98,26 @@
       {#if error}
         <span class="error">{error}</span>
       {/if}
-    </div>
-  </div>
 
-  <div class="renderer-window-actions">
-    <button
-      type="button"
-      class="primary"
-      onclick={statusDisplay.nativeWindowAvailable && isOpen ? focusWindow : openWindow}
-      disabled={primaryDisabled}
-    >
-      {statusDisplay.primaryActionLabel}
-    </button>
-    <button type="button" onclick={focusWindow} disabled={pending || !canFocus}> Focus </button>
-    <button type="button" onclick={closeWindow} disabled={pending || !isOpen}> Close </button>
+      <span class="renderer-window-actions">
+        <button
+          type="button"
+          class="primary"
+          onclick={statusDisplay.nativeWindowAvailable && isOpen ? focusWindow : openWindow}
+          disabled={primaryDisabled}
+        >
+          {statusDisplay.primaryActionLabel}
+        </button>
+        <button type="button" onclick={focusWindow} disabled={pending || !canFocus}> Focus </button>
+        <button type="button" onclick={closeWindow} disabled={pending || !isOpen}> Close </button>
+      </span>
+    </div>
   </div>
 </section>
 
 <style>
   .renderer-window-controls {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
     align-items: center;
     gap: 14px;
     padding: 12px;
@@ -131,11 +130,13 @@
     flex-direction: column;
     gap: 6px;
     min-width: 0;
+    width: 100%;
   }
 
   .renderer-window-status {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     min-width: 0;
     color: var(--color-text-muted);
@@ -143,6 +144,12 @@
   }
 
   .renderer-window-status span {
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .renderer-window-status > span:not(.renderer-window-actions) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -160,8 +167,9 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    justify-content: flex-end;
-    min-width: max-content;
+    justify-content: flex-start;
+    min-width: 0;
+    flex-wrap: wrap;
   }
 
   button {
@@ -194,17 +202,5 @@
   button:disabled {
     opacity: 0.45;
     cursor: default;
-  }
-
-  @media (max-width: 720px) {
-    .renderer-window-controls {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .renderer-window-actions {
-      justify-content: flex-start;
-      min-width: 0;
-      flex-wrap: wrap;
-    }
   }
 </style>
