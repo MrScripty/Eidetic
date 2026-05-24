@@ -117,11 +117,10 @@
 
 <style>
   .renderer-window-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 14px;
-    min-height: 78px;
     padding: 12px;
     border-bottom: 1px solid var(--color-border-subtle);
     background: var(--color-bg-secondary);
@@ -161,7 +160,8 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-shrink: 0;
+    justify-content: flex-end;
+    min-width: max-content;
   }
 
   button {
@@ -178,6 +178,7 @@
     border-color: color-mix(in srgb, var(--color-accent) 72%, var(--color-border-subtle));
     background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg-surface));
     color: var(--color-text-primary);
+    font-weight: 600;
   }
 
   button:hover:not(:disabled) {
@@ -193,5 +194,17 @@
   button:disabled {
     opacity: 0.45;
     cursor: default;
+  }
+
+  @media (max-width: 720px) {
+    .renderer-window-controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .renderer-window-actions {
+      justify-content: flex-start;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
   }
 </style>

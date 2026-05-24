@@ -16,7 +16,7 @@ export function graphRendererWindowStatusDisplay(
       label: 'Renderer closed',
       active: false,
       message: 'Graph renderer window is closed',
-      primaryActionLabel: 'Prepare Bevy Renderer',
+      primaryActionLabel: 'Open Graph Window',
       nativeWindowAvailable: false,
     };
   }
@@ -38,7 +38,7 @@ export function graphRendererWindowStatusDisplay(
           message: status.renderer_window_message,
           primaryActionLabel: status.renderer_window_open
             ? 'Renderer Prepared'
-            : 'Prepare Bevy Renderer',
+            : 'Open Graph Window',
           nativeWindowAvailable: false,
         };
       }
@@ -62,7 +62,7 @@ export function graphRendererWindowStatusDisplay(
         label: 'Renderer closed',
         active: false,
         message: status.renderer_window_message,
-        primaryActionLabel: 'Prepare Bevy Renderer',
+        primaryActionLabel: 'Open Graph Window',
         nativeWindowAvailable: false,
       };
   }

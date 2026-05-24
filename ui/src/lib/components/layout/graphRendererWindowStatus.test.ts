@@ -52,7 +52,7 @@ describe('graph renderer window status display', () => {
       label: 'Renderer closed',
       active: false,
       message: 'Graph renderer window is closed',
-      primaryActionLabel: 'Prepare Bevy Renderer',
+      primaryActionLabel: 'Open Graph Window',
       nativeWindowAvailable: false,
     });
   });
@@ -62,7 +62,7 @@ describe('graph renderer window status display', () => {
       label: 'Renderer closed',
       active: false,
       message: 'message:closed',
-      primaryActionLabel: 'Prepare Bevy Renderer',
+      primaryActionLabel: 'Open Graph Window',
       nativeWindowAvailable: false,
     });
     expect(graphRendererWindowStatusDisplay(statusFor('scene_starting'))).toEqual({
