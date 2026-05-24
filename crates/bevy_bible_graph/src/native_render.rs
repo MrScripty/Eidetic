@@ -11,7 +11,9 @@ use bevy::prelude::{
 };
 use bevy::window::{ExitCondition, Window, WindowPlugin, WindowResolution};
 use bevy::winit::WinitPlugin;
-use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection};
+use eidetic_core::contracts::{
+    BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
+};
 
 use crate::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
@@ -127,6 +129,13 @@ pub struct BibleGraphNativeEdgeVisual {
     pub width: f32,
     pub stroke_color: &'static str,
     pub highlighted: bool,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeInfluenceVisual {
+    pub influence_id: ContextInfluenceId,
+    pub bible_node_id: Option<BibleGraphNodeId>,
+    pub bible_edge_id: Option<BibleGraphEdgeId>,
 }
 
 impl Default for BibleGraphNativeRenderConfig {
@@ -473,6 +482,17 @@ pub fn rebuild_bible_graph_native_visuals(
         ));
     }
 
+    for influence in &projection.influences {
+        world.spawn((
+            BibleGraphNativeVisualEntity,
+            BibleGraphNativeInfluenceVisual {
+                influence_id: influence.influence_id,
+                bible_node_id: influence.bible_node_id.clone(),
+                bible_edge_id: influence.bible_edge_id.clone(),
+            },
+        ));
+    }
+
     let mut status = world.resource_mut::<BibleGraphNativeVisualStatus>();
     status.node_count = node_count;
     status.edge_count = edge_count;
@@ -511,6 +531,17 @@ pub fn emit_bible_graph_native_edge_selection(
     push_native_command(world, BibleGraphRendererCommand::SelectEdge { edge_id })
 }
 
+pub fn emit_bible_graph_native_influence_selection(
+    world: &mut World,
+    influence_id: ContextInfluenceId,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_influence(world, influence_id)?;
+    push_native_command(
+        world,
+        BibleGraphRendererCommand::SelectInfluence { influence_id },
+    )
+}
+
 fn validate_native_node(
     world: &mut World,
     node_id: &BibleGraphNodeId,
@@ -542,6 +573,21 @@ fn validate_native_edge(
         Err(BibleGraphRendererError::UnknownEdge {
             edge_id: edge_id.clone(),
         })
+    }
+}
+
+fn validate_native_influence(
+    world: &mut World,
+    influence_id: ContextInfluenceId,
+) -> Result<(), BibleGraphRendererError> {
+    if world
+        .query::<&BibleGraphNativeInfluenceVisual>()
+        .iter(world)
+        .any(|influence| influence.influence_id == influence_id)
+    {
+        Ok(())
+    } else {
+        Err(BibleGraphRendererError::UnknownInfluence { influence_id })
     }
 }
 

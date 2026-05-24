@@ -2629,14 +2629,14 @@ Completed foundation, do not reimplement unless verification fails:
   renderer writes.
 - Native Bevy graph windows now have a bounded command path back to the desktop
   renderer owner. Validated native producers cover node selection, node
-  inspection, and edge selection from native visual entities and feed the same
-  desktop event bridge used by other graph renderer commands.
+  inspection, edge selection, and influence selection from native visual
+  entities and feed the same desktop event bridge used by other graph renderer
+  commands.
 
 Remaining implementation order:
 
-1. Complete native Bevy graph interaction producers for influence selection,
-   navigation, and focus commands, delivered through the backend-owned desktop
-   event bridge.
+1. Complete native Bevy graph interaction producers for navigation and focus
+   commands, delivered through the backend-owned desktop event bridge.
 2. Keep Svelte graph filters, details, review, and semantic outline as
    projection-only controls/accessibility surfaces. The outline must no longer
    be presented as the primary visual graph after the Bevy window is verified.

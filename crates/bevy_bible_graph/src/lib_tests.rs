@@ -351,6 +351,13 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
             .count(),
         3
     );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeInfluenceVisual>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
 }
 
 #[cfg(feature = "native_render")]
@@ -420,6 +427,39 @@ fn controlled_native_window_emits_validated_inspection_and_edge_commands() {
         emit_bible_graph_native_edge_selection(app.world_mut(), missing_edge_id.clone()),
         Err(BibleGraphRendererError::UnknownEdge {
             edge_id: missing_edge_id
+        })
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_emits_validated_influence_selection_commands() {
+    use bevy::prelude::Plugin;
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let missing_influence_id = ContextInfluenceId::new();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_influence(node_id, edge_id, influence_id));
+    app.update();
+
+    assert_eq!(
+        emit_bible_graph_native_influence_selection(app.world_mut(), influence_id),
+        Ok(())
+    );
+    assert_eq!(
+        control.drain_commands(),
+        vec![BibleGraphRendererCommand::SelectInfluence { influence_id }]
+    );
+    assert_eq!(
+        emit_bible_graph_native_influence_selection(app.world_mut(), missing_influence_id),
+        Err(BibleGraphRendererError::UnknownInfluence {
+            influence_id: missing_influence_id
         })
     );
 }

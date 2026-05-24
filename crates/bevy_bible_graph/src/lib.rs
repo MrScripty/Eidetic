@@ -14,16 +14,17 @@ mod native_render;
 
 #[cfg(feature = "native_render")]
 pub use native_render::{
-    BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeNodeVisual,
-    BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
+    BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeInfluenceVisual,
+    BibleGraphNativeNodeVisual, BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
     BibleGraphNativeRendererWindowBounds, BibleGraphNativeRendererWindowScene,
     BibleGraphNativeRendererWindowStatus, BibleGraphNativeVisualEntity,
     BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
     configure_controlled_minimal_bible_graph_native_window_app,
     configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_edge_selection,
-    emit_bible_graph_native_node_inspection, emit_bible_graph_native_node_selection,
-    run_controlled_minimal_bible_graph_native_window, run_minimal_bible_graph_native_window,
+    emit_bible_graph_native_influence_selection, emit_bible_graph_native_node_inspection,
+    emit_bible_graph_native_node_selection, run_controlled_minimal_bible_graph_native_window,
+    run_minimal_bible_graph_native_window,
 };
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
