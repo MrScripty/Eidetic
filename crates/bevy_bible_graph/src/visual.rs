@@ -63,7 +63,7 @@ pub fn build_bible_graph_visual_snapshot(
                 label: node.label.clone(),
                 position: node.position.clone(),
                 radius: node_radius(node.depth, highlighted),
-                fill_color: node_fill_color(node.schema_key.as_str(), highlighted),
+                fill_color: node_fill_color(node.schema_key.as_str()),
                 outline_color: if highlighted { "#f2c94c" } else { "#40576f" },
                 highlighted,
             }
@@ -98,18 +98,25 @@ fn node_radius(depth: u32, highlighted: bool) -> f32 {
     if highlighted { base + 3.0 } else { base }
 }
 
-fn node_fill_color(schema_key: &str, highlighted: bool) -> &'static str {
-    if highlighted {
-        return "#1f6f78";
-    }
+fn node_fill_color(schema_key: &str) -> &'static str {
     if schema_key.contains("character") {
         "#2f7a6e"
     } else if schema_key.contains("place") || schema_key.contains("location") {
         "#3f668f"
-    } else if schema_key.contains("object") {
+    } else if schema_key.contains("object") || schema_key.contains("prop") {
         "#7a5c8f"
+    } else if schema_key.contains("culture") {
+        "#6f7a2f"
+    } else if schema_key.contains("event") {
+        "#8f4f5c"
     } else if schema_key.contains("theme") {
         "#8a6f3d"
+    } else if schema_key.contains("rule") {
+        "#8f5c3f"
+    } else if schema_key.contains("reference") {
+        "#4f7f8f"
+    } else if schema_key.contains("canonical") {
+        "#536f88"
     } else {
         "#34495e"
     }

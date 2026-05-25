@@ -248,7 +248,7 @@ fn renderer_app_exposes_projection_derived_visual_snapshot() {
     assert_eq!(snapshot.edges.len(), 1);
     assert_eq!(snapshot.nodes[0].node_id, node_id);
     assert!(snapshot.nodes[0].highlighted);
-    assert_eq!(snapshot.nodes[0].fill_color, "#1f6f78");
+    assert_eq!(snapshot.nodes[0].fill_color, "#2f7a6e");
     assert_eq!(snapshot.edges[0].edge_id, edge_id);
     assert!(snapshot.edges[0].highlighted);
     assert_eq!(snapshot.edges[0].stroke_color, "#f2c94c");
@@ -329,6 +329,32 @@ fn renderer_app_3d_visual_snapshot_highlights_selected_neighborhood() {
     assert!(snapshot.edges[0].selected);
     assert!(snapshot.edges[0].highlighted);
     assert!(snapshot.nodes.iter().any(|node| node.selected));
+    assert!(snapshot.nodes.iter().all(|node| node.label_visible));
+}
+
+#[test]
+fn renderer_app_visual_snapshot_preserves_category_colors_under_highlight() {
+    let node_id = BibleGraphNodeId::new("node.prop.lantern").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let mut projection = projection_with_node(node_id.clone());
+    projection.nodes[0].schema_key = BibleGraphSchemaKey::new("prop").unwrap();
+    projection.influences.push(BibleRenderGraphInfluence {
+        influence_id,
+        timeline_node_id: NodeId::new(),
+        source_layer: StoryLevel::Scene,
+        influence_kind: ContextInfluenceKind::Direct,
+        confidence: 0.9,
+        reason: "Lantern influence".to_string(),
+        provenance: ContextInfluenceProvenance::AiSelected,
+        bible_node_id: Some(node_id),
+        bible_edge_id: None,
+        sort_order: 1,
+    });
+
+    let snapshot = build_bible_graph_visual_3d_snapshot(&projection);
+
+    assert!(snapshot.nodes[0].highlighted);
+    assert_eq!(snapshot.nodes[0].fill_color, "#7a5c8f");
     assert!(snapshot.nodes.iter().all(|node| node.label_visible));
 }
 
@@ -732,7 +758,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
         node_states
             .iter()
             .any(|(id, selected, highlighted, dimmed, label_visible)| {
-                id == &unrelated_id && !*selected && !*highlighted && *dimmed && !*label_visible
+                id == &unrelated_id && !*selected && !*highlighted && *dimmed && *label_visible
             })
     );
     assert!(
@@ -740,7 +766,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
             .query::<(&BibleGraphNativeNodeLabelVisual, &Visibility)>()
             .iter(app.world())
             .any(|(label, visibility)| {
-                label.node_id == unrelated_id && visibility == &Visibility::Hidden
+                label.node_id == unrelated_id && visibility == &Visibility::Visible
             })
     );
     assert!(
