@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import {
     bibleState,
     selectBibleGraphContextLayer,
@@ -14,6 +15,7 @@
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
+  import { ensureCanonicalBibleRootProjections } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import {
     clearContextStackProjection,
     getCachedContextStackProjection,
@@ -26,6 +28,7 @@
     graphWorkspaceNeighborhoodItems,
   } from './graphWorkspaceItems.js';
   import GraphRendererWindowControls from './GraphRendererWindowControls.svelte';
+  import { ensureGraphWorkspaceScaffoldProjection } from './graphWorkspaceBootstrap.js';
 
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graph = $derived(renderGraphProjection?.payload ?? null);
@@ -35,6 +38,8 @@
   const projectedSelectedGraphNodeId = $derived(graph?.selected_node_id ?? null);
   const graphSelection = $derived(bibleState.graphSelection);
   let showOutline = $state(false);
+  let initialGraphScaffoldLoaded = $state(false);
+  let graphLoadError = $state<string | null>(null);
   const renderGraphRequest = $derived(
     bibleRenderGraphRequestForWorkspaceSelection({
       selectedTimelineNodeId: editorState.selectedNodeId,
@@ -52,9 +57,27 @@
       : false,
   );
 
+  onMount(() => {
+    void ensureGraphWorkspaceScaffoldProjection(renderGraphRequest, {
+      ensureCanonicalRoots: ensureCanonicalBibleRootProjections,
+      refreshRenderGraph: refreshBibleRenderGraphProjection,
+    })
+      .catch((error) => {
+        graphLoadError = error instanceof Error ? error.message : 'Failed to load graph workspace';
+      })
+      .finally(() => {
+        initialGraphScaffoldLoaded = true;
+      });
+  });
+
   $effect(() => {
+    if (!initialGraphScaffoldLoaded) {
+      return;
+    }
     const selectedTimelineNodeId = editorState.selectedNodeId;
-    void refreshBibleRenderGraphProjection(renderGraphRequest).catch(() => {});
+    void refreshBibleRenderGraphProjection(renderGraphRequest).catch((error) => {
+      graphLoadError = error instanceof Error ? error.message : 'Failed to load graph workspace';
+    });
 
     if (!selectedTimelineNodeId) {
       clearContextStackProjection();
@@ -98,6 +121,9 @@
       <span>{graph.nodes.length} nodes</span>
       <span>{graph.edges.length} edges</span>
       <span>{graph.influences.length} influences</span>
+      {#if graphLoadError}
+        <span class="error">{graphLoadError}</span>
+      {/if}
     </div>
 
     <div class="graph-surface" class:has-side-lists={hasSideLists}>
@@ -141,7 +167,9 @@
       {/if}
     </div>
   {:else}
-    <div class="empty-state">No graph projection</div>
+    <div class="empty-state">
+      {graphLoadError ?? 'No graph projection'}
+    </div>
   {/if}
 </section>
 
@@ -164,6 +192,10 @@
     color: var(--color-text-muted);
     font-size: 0.76rem;
     font-variant-numeric: tabular-nums;
+  }
+
+  .graph-summary .error {
+    color: var(--color-danger);
   }
 
   .graph-surface {
