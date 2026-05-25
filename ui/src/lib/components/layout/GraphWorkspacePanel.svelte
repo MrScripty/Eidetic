@@ -34,6 +34,10 @@
   } from './graphWorkspaceItems.js';
   import GraphRendererWindowControls from './GraphRendererWindowControls.svelte';
   import { ensureGraphWorkspaceScaffoldProjection } from './graphWorkspaceBootstrap.js';
+  import {
+    graphWorkspaceEdgeKindFilters,
+    toggleGraphWorkspaceEdgeKindFilter,
+  } from './graphWorkspaceEdgeKindFilters.js';
   import { graphWorkspaceProjectionRequest } from './graphWorkspaceProjectionRequest.js';
   import BibleGraphAddControls from '../sidebar/bible/BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from '../sidebar/bible/BibleGraphCategoryFilters.svelte';
@@ -44,6 +48,7 @@
     type BibleGraphRootCategory,
   } from '../sidebar/bible/bibleGraphCategories.js';
   import { createBibleGraphNodeForCategory } from '../sidebar/bible/bibleGraphNodeCreateFlow.js';
+  import type { BibleGraphEdgeKind } from '$lib/bibleGraphTypes.js';
 
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graph = $derived(renderGraphProjection?.payload ?? null);
@@ -55,6 +60,7 @@
   let showOutline = $state(false);
   let graphSearchQuery = $state('');
   let activeFilter: BibleGraphFilter = $state('All');
+  let activeEdgeKinds: BibleGraphEdgeKind[] = $state([]);
   let focusedNeighborhoodNodeId = $state<string | null>(null);
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
@@ -64,6 +70,7 @@
       focusedNeighborhoodNodeId,
       activeTimelineMs: timelineState.playheadMs,
       activeFilter,
+      edgeKinds: activeEdgeKinds,
       search: graphSearchQuery,
     }),
   );
@@ -119,6 +126,10 @@
 
   function handleSelect(id: string) {
     selectBibleGraphNode(selectedGraphNodeId === id ? null : id);
+  }
+
+  function toggleEdgeKindFilter(kind: BibleGraphEdgeKind): void {
+    activeEdgeKinds = toggleGraphWorkspaceEdgeKindFilter(activeEdgeKinds, kind);
   }
 
   async function handleAddGraphNode(category: BibleGraphRootCategory): Promise<void> {
@@ -198,6 +209,18 @@
               {activeFilter}
               onselect={(filter) => (activeFilter = filter)}
             />
+            <div class="edge-kind-controls" aria-label="Edge kind filters">
+              {#each graphWorkspaceEdgeKindFilters as filter (filter.label)}
+                <button
+                  type="button"
+                  class:active={activeEdgeKinds.includes(filter.kind)}
+                  aria-pressed={activeEdgeKinds.includes(filter.kind)}
+                  onclick={() => toggleEdgeKindFilter(filter.kind)}
+                >
+                  {filter.label}
+                </button>
+              {/each}
+            </div>
             <BibleGraphAddControls
               {activeFilter}
               disabledCategories={disabledAddCategories}
@@ -347,6 +370,34 @@
   .graph-controls :global(.add-btn) {
     width: auto;
     padding: 6px 9px;
+  }
+
+  .edge-kind-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .edge-kind-controls button {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    padding: 5px 7px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 0.72rem;
+  }
+
+  .edge-kind-controls button:hover,
+  .edge-kind-controls button:focus-visible {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .edge-kind-controls button.active {
+    border-color: color-mix(in srgb, var(--color-warning) 60%, var(--color-border-subtle));
+    color: var(--color-warning);
   }
 
   .search-input {

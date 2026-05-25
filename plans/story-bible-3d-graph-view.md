@@ -789,6 +789,9 @@ Current implementation progress:
 - Completed: render graph projection requests now support backend-owned
   `edge_kinds` filtering through core contracts, SQLite edge queries, and the
   Graph workspace request helper, with filtering applied before edge limits.
+- Completed: Graph workspace exposes edge-kind filter controls that feed the
+  backend-owned projection request instead of filtering durable graph facts in
+  frontend state.
 - Completed: no separate old 2D bible relationship graph remains as a supported
   visual graph surface. Keep `BibleRenderGraphOutline` as the required
   keyboard-accessible projection alternative, not as a visual graph fallback.
@@ -874,8 +877,8 @@ Current implementation progress:
     adding targeted verification when new renderer command paths are added.
 20. Partially completed: add filtering by canonical section, node type, edge
     kind, search, and active playhead/clip context. Canonical section, search,
-    active playhead/clip context, and backend-owned edge-kind request filtering
-    now exist. Visible edge-kind controls and any additional node-type control
-    still need to be wired in the Graph workspace UI.
+    active playhead/clip context, backend-owned edge-kind request filtering,
+    and visible edge-kind controls now exist. Any additional node-type control
+    still needs to be wired in the Graph workspace UI.
 21. Add timeline cross-linking and active-at-playhead filtering.
 22. Remove the old 2D relationship graph once the 3D graph view is active.

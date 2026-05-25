@@ -3072,6 +3072,9 @@ Standards gates:
   filters. Core and SQLite filtering both apply the filter before edge limits
   so matching edges are not dropped because an earlier nonmatching edge filled
   the bounded result window.
+- Completed: Graph workspace edge-kind controls now submit those filters as
+  projection request inputs; the frontend owns only the transient control
+  selection and does not filter or mutate durable graph facts locally.
 - Structural edges shown for parent/child hierarchy must be projection facts or
   deterministic projection derivatives, not Bevy-invented durable graph state.
 - Selection/highlight changes restyle existing Bevy entities where practical.
