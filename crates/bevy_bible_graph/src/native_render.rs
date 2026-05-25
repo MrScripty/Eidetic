@@ -6,10 +6,11 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, DefaultPlugins,
-    Entity, GlobalTransform, Justify, KeyCode, MessageWriter, MouseButton, Plugin, PluginGroup,
-    PointLight, Query, Res, ResMut, Resource, Sprite, Startup, Text2d, TextColor, TextFont,
-    TextLayout, Time, Transform, Update, Vec2, Vec3, Window, With, World,
+    App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component,
+    DefaultPlugins, Entity, GlobalTransform, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d,
+    MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Res, ResMut, Resource,
+    Sphere, Sprite, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
+    Transform, Update, Vec2, Vec3, Window, With, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -276,6 +277,8 @@ pub struct BibleGraphNativeRenderPlugin;
 
 impl Plugin for BibleGraphNativeRenderPlugin {
     fn build(&self, app: &mut App) {
+        app.init_resource::<Assets<Mesh>>();
+        app.init_resource::<Assets<StandardMaterial>>();
         app.insert_resource(BibleGraphNativeRenderConfig::default());
         app.insert_resource(BibleGraphNativeRendererWindowScene::default());
         app.insert_resource(BibleGraphNativeRendererWindowStatus::default());
@@ -604,6 +607,14 @@ pub fn rebuild_bible_graph_native_visuals(
     for node in snapshot.nodes {
         let node_id = node.node_id.clone();
         let node_label = node.label.clone();
+        let node_mesh = {
+            let mut meshes = world.resource_mut::<Assets<Mesh>>();
+            meshes.add(Sphere::new(node.radius.max(1.0)))
+        };
+        let node_material = {
+            let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
+            materials.add(graph_color(node.fill_color))
+        };
         let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeNodeVisual {
@@ -616,10 +627,8 @@ pub fn rebuild_bible_graph_native_visuals(
                 outline_color: node.outline_color,
                 highlighted: node.highlighted,
             },
-            Sprite::from_color(
-                graph_color(node.fill_color),
-                Vec2::splat((node.radius * 2.0).max(1.0)),
-            ),
+            Mesh3d(node_mesh),
+            MeshMaterial3d(node_material),
             Transform::from_translation(Vec3::new(
                 node.position.x,
                 node.position.y,
@@ -627,7 +636,7 @@ pub fn rebuild_bible_graph_native_visuals(
             )),
         );
         if let Some(entity) = existing_nodes.remove(&node_id) {
-            world.entity_mut(entity).insert(bundle);
+            world.entity_mut(entity).remove::<Sprite>().insert(bundle);
         } else {
             world.spawn(bundle);
         }

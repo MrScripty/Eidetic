@@ -474,7 +474,21 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
             .query_filtered::<(), With<bevy::prelude::Sprite>>()
             .iter(app.world())
             .count(),
-        3
+        1
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::Mesh3d>>()
+            .iter(app.world())
+            .count(),
+        2
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::MeshMaterial3d<bevy::prelude::StandardMaterial>>>()
+            .iter(app.world())
+            .count(),
+        2
     );
     assert_eq!(
         app.world_mut()

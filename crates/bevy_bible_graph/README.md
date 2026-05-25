@@ -59,8 +59,9 @@ Dependency review:
   and server builds do not pay for native rendering.
 - Native renderer-window setup starts with a borderless scene resource, Eidetic
   graph colors, clear color, one marked `Camera3d`, and a renderer-local light.
-  The plugin does not own durable graph data; the desktop host owns
-  renderer-window lifecycle.
+  Graph nodes are renderer-local `Mesh3d` spheres with `StandardMaterial`
+  colors derived from the backend projection. The plugin does not own durable
+  graph data; the desktop host owns renderer-window lifecycle.
 - Native renderer-window control is limited to renderer-local lifecycle
   signaling. `BibleGraphNativeWindowControlHandle` lets the desktop host request
   close without giving this leaf crate access to Tauri, SQLite, or durable
@@ -81,7 +82,7 @@ Future scope:
 - Native desktop host lifecycle is owned by `eidetic-desktop`; the leaf
   renderer remains responsible only for projection consumption, ECS state, and
   validated renderer commands.
-- True 3D Bevy camera, mesh, edge-geometry, label, force-layout, and
-  interaction state built from the renderer-neutral 3D snapshot boundary.
+- True 3D Bevy edge geometry, label billboards, force-layout, and interaction
+  state built from the renderer-neutral 3D snapshot boundary.
 - Pointer, keyboard, and accessibility command flows.
 - Backend-confirmed graph mutation commands.
