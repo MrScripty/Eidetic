@@ -526,17 +526,23 @@ viewer/editor, not just a render target.
   - open renderer,
   - focus renderer,
   - close renderer,
-  - fit graph,
-  - frame selected,
-  - reset camera,
   - clear selection,
   - focus neighborhood.
+- The Bevy graph viewport must expose a typed camera-control API for workflow
+  and agent-driven presentation actions:
+  - fit graph,
+  - frame node or edge,
+  - frame active influence/context path,
+  - reset camera,
+  - navigate to node or neighborhood.
 - Bevy supports mouse navigation for normal use: orbit, pan, and zoom.
 - Keyboard navigation can remain, but the UI must show available actions through
   controls or concise labels.
 - Renderer closed/error state should include a clear action to reopen or recover.
-- Navigation commands that originate in Svelte are transient renderer commands.
-  They may change camera/focus presentation state, but not durable graph facts.
+- Camera commands are transient renderer presentation commands. They may be
+  issued by backend workflows, agent harnesses, or optional UI surfaces, but
+  they must flow through a typed backend-owned renderer command boundary and
+  must not mutate durable graph facts.
 - Every Svelte control must use semantic controls with accessible names,
   visible focus states, and keyboard activation. Icon-only controls need
   `aria-label` or equivalent hidden text.
@@ -644,11 +650,12 @@ be called complete:
 - Bible graph node/edge delete commands do not appear to exist yet. The UI must
   not present delete controls until backend commands and history projections are
   implemented.
-- Graph workspace visible camera controls cannot be completed by wiring Svelte
-  directly to local state. The current graph renderer command bridge is
-  renderer-to-UI for selection/inspection commands; Milestone 9 still needs a
-  typed backend-owned UI-to-renderer camera command endpoint for fit graph,
-  frame selected, reset camera, and navigate/focus camera actions.
+- Camera control cannot be modeled as Svelte-owned local state. The current
+  graph renderer command bridge is renderer-to-UI for selection/inspection
+  commands; Milestone 9 still needs a typed backend-owned camera command API so
+  backend workflows and agents can direct the Bevy viewport to fit the graph,
+  frame important nodes/edges/influence paths, reset the camera, or navigate to
+  a graph scope while preserving Bevy-local interactive navigation state.
 - `native_render.rs` currently creates new mesh/material assets during each
   projection rebuild. Add renderer-local reusable assets before relying on
   frequent playhead/context refreshes.
@@ -713,7 +720,10 @@ Before implementing each remaining Milestone 9 slice, confirm:
   - renderer lifecycle tasks stop cleanly and queue overflow behavior is
     bounded and observable,
   - keyboard-accessible Svelte controls can perform the same selection,
-    inspection, filtering, focus, reset, and open/close actions as the renderer.
+    inspection, filtering, focus, and open/close actions as the renderer,
+  - backend-issued camera commands can fit the graph, frame selected graph
+    entities, reset the camera, and navigate to important graph scopes without
+    requiring Svelte camera buttons.
 - Manual smoke test covers:
   - new project opens canonical scaffold with labels,
   - user can open/focus/close/reopen the Bevy graph,
@@ -825,10 +835,11 @@ Current implementation progress:
 14. Add orbit/pan/zoom, frame selected, reset/fit view, explicit focus
     neighborhood, clear selection, keyboard navigation, and visible controls for
     those actions.
-15. Add a typed backend-owned UI-to-renderer camera command endpoint before
-    adding Svelte fit/reset/frame/navigate buttons. Commands must be transient
-    renderer presentation commands, bounded through the existing renderer owner,
-    and verified through Rust/TypeScript contract tests.
+15. Add a typed backend-owned camera command API for the Bevy viewport.
+    Commands must be transient renderer presentation commands, bounded through
+    the existing renderer owner, callable by backend workflows and the future
+    agent harness, and verified through Rust/TypeScript contract tests. Svelte
+    camera buttons are optional and not required for this milestone.
 16. Add graph-local backend-command workflows for node and edge add/edit, using
     selectable graph/node controls rather than opaque ID entry. Record delete
     blockers explicitly until backend delete commands exist.
