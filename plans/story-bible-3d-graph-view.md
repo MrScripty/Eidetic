@@ -445,7 +445,27 @@ Current implementation progress:
   `active_timeline_ms`. The Graph workspace passes playhead time as projection
   request metadata, and the backend resolves active timeline clips plus their
   context influences before producing the bounded graph projection.
-- Remaining: none for the current Milestone 9 MVP scope.
+- Reopened: the graph is not product-usable yet. Implemented projection and
+  renderer plumbing exists, but the current user-facing graph still fails the
+  intended node editor/viewer experience.
+- Remaining usability gaps:
+  - Selecting a node must highlight it without collapsing the graph to only that
+    node's neighborhood. Neighborhood focus should be an explicit command/mode,
+    not the default selection behavior.
+  - Node labels/titles must be visible enough for normal graph reading, with
+    label density handled as a renderer presentation concern rather than hiding
+    most titles by default.
+  - Edges must be anchored consistently to node surfaces or centers in 3D space;
+    they should not appear offset from the nodes they connect.
+  - Category color coding must be visibly distinct for canonical roots,
+    characters, places, objects, themes, events, and other/custom nodes.
+  - Navigation affordances must be discoverable in the UI, not only hidden
+    keyboard behavior in the Bevy window.
+  - The Graph workspace needs obvious add/edit/remove entry points that submit
+    backend commands and refresh projections. The existing Story Bible sidebar
+    controls are not sufficient for the graph viewer workflow.
+  - The Bevy graph window needs clear close/focus/open behavior and enough
+    window chrome or in-app controls for users to recover from renderer state.
 
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
