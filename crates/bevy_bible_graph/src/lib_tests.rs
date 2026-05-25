@@ -841,6 +841,26 @@ fn native_camera_orbit_rotates_camera_around_target() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_visual_state_color_brightens_selection_and_dims_unrelated_nodes() {
+    use crate::native_render::native_visual_state_color;
+    use bevy::prelude::Color;
+
+    assert_eq!(
+        native_visual_state_color("#1f6f78", true, false, false),
+        Color::srgb(0.342, 0.655, 0.691)
+    );
+    assert_eq!(
+        native_visual_state_color("#1f6f78", false, true, false),
+        Color::srgb(0.342, 0.655, 0.691)
+    );
+    assert_eq!(
+        native_visual_state_color("#1f6f78", false, false, true),
+        Color::srgb(0.03904, 0.1392, 0.15071999)
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_node_selection_commands() {
     use bevy::prelude::Plugin;
 

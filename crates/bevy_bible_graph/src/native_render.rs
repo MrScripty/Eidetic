@@ -830,7 +830,12 @@ pub fn rebuild_bible_graph_native_visuals(
         };
         let edge_material = {
             let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
-            materials.add(graph_color(edge.stroke_color))
+            materials.add(native_visual_state_color(
+                edge.stroke_color,
+                edge.selected,
+                edge.highlighted,
+                edge.dimmed,
+            ))
         };
         let bundle = (
             BibleGraphNativeVisualEntity,
@@ -879,7 +884,12 @@ pub fn rebuild_bible_graph_native_visuals(
         };
         let node_material = {
             let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
-            materials.add(graph_color(node.fill_color))
+            materials.add(native_visual_state_color(
+                node.fill_color,
+                node.selected,
+                node.highlighted,
+                node.dimmed,
+            ))
         };
         let bundle = (
             BibleGraphNativeVisualEntity,
@@ -1119,20 +1129,40 @@ fn push_native_command_to_control(
     Ok(())
 }
 
-fn graph_color(color: &str) -> Color {
+pub(crate) fn native_visual_state_color(
+    color: &str,
+    selected: bool,
+    highlighted: bool,
+    dimmed: bool,
+) -> Color {
+    let (red, green, blue) = graph_color_components(color);
+    if dimmed {
+        return Color::srgb(red * 0.32, green * 0.32, blue * 0.32);
+    }
+    if selected || highlighted {
+        return Color::srgb(
+            (red + 0.22).min(1.0),
+            (green + 0.22).min(1.0),
+            (blue + 0.22).min(1.0),
+        );
+    }
+    Color::srgb(red, green, blue)
+}
+
+fn graph_color_components(color: &str) -> (f32, f32, f32) {
     match color {
-        "#f2c94c" => Color::srgb(0.949, 0.788, 0.298),
-        "#253041" => Color::srgb(0.145, 0.188, 0.255),
-        "#11151d" => Color::srgb(0.067, 0.082, 0.114),
-        "#40576f" => Color::srgb(0.251, 0.341, 0.435),
-        "#52687f" => Color::srgb(0.322, 0.408, 0.498),
-        "#1f6f78" => Color::srgb(0.122, 0.435, 0.471),
-        "#2f7a6e" => Color::srgb(0.184, 0.478, 0.431),
-        "#3f668f" => Color::srgb(0.247, 0.4, 0.561),
-        "#7a5c8f" => Color::srgb(0.478, 0.361, 0.561),
-        "#8a6f3d" => Color::srgb(0.541, 0.435, 0.239),
-        "#34495e" => Color::srgb(0.204, 0.286, 0.369),
-        _ => Color::srgb(0.8, 0.84, 0.9),
+        "#f2c94c" => (0.949, 0.788, 0.298),
+        "#253041" => (0.145, 0.188, 0.255),
+        "#11151d" => (0.067, 0.082, 0.114),
+        "#40576f" => (0.251, 0.341, 0.435),
+        "#52687f" => (0.322, 0.408, 0.498),
+        "#1f6f78" => (0.122, 0.435, 0.471),
+        "#2f7a6e" => (0.184, 0.478, 0.431),
+        "#3f668f" => (0.247, 0.4, 0.561),
+        "#7a5c8f" => (0.478, 0.361, 0.561),
+        "#8a6f3d" => (0.541, 0.435, 0.239),
+        "#34495e" => (0.204, 0.286, 0.369),
+        _ => (0.8, 0.84, 0.9),
     }
 }
 
