@@ -250,6 +250,25 @@ mod tests {
     }
 
     #[test]
+    fn serializes_graph_renderer_clear_selection_inside_stable_desktop_payload() {
+        let value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(
+                BibleGraphRendererCommand::ClearSelection,
+            ),
+        })
+        .unwrap();
+
+        assert_eq!(
+            value,
+            json!({
+                "event": {
+                    "type": "clear_selection"
+                }
+            })
+        );
+    }
+
+    #[test]
     fn graph_projection_bridge_refreshes_only_structural_events() {
         assert!(should_refresh_graph_renderer_projection(
             &ServerEvent::BibleChanged

@@ -88,7 +88,8 @@ export type GraphRendererCommand =
   | { type: 'select_influence'; influence_id: string }
   | { type: 'inspect_node'; node_id: BibleGraphNodeId }
   | { type: 'focus_node'; node_id: BibleGraphNodeId }
-  | { type: 'navigate_to_node'; node_id: BibleGraphNodeId };
+  | { type: 'navigate_to_node'; node_id: BibleGraphNodeId }
+  | { type: 'clear_selection' };
 
 export interface GraphRendererVisualSnapshot {
   nodes: GraphRendererVisualNode[];

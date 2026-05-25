@@ -299,6 +299,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
         app.add_systems(Update, apply_bible_graph_native_projection);
         app.add_systems(Update, emit_bible_graph_native_click_selection);
+        app.add_systems(Update, emit_bible_graph_native_keyboard_commands);
         app.add_systems(Update, billboard_bible_graph_native_labels);
         app.add_systems(Update, navigate_bible_graph_native_camera);
         app.add_systems(Update, frame_bible_graph_native_camera_on_selected);
@@ -485,6 +486,23 @@ fn emit_bible_graph_native_click_selection(
             BibleGraphRendererCommand::SelectEdge { edge_id },
         );
     }
+}
+
+fn emit_bible_graph_native_keyboard_commands(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    control: Option<Res<BibleGraphNativeWindowControl>>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    if !keys.just_pressed(KeyCode::Escape) {
+        return;
+    }
+    let Some(control) = control else {
+        return;
+    };
+
+    let _ = push_native_command_to_control(&control, BibleGraphRendererCommand::ClearSelection);
 }
 
 fn navigate_bible_graph_native_camera(
@@ -957,6 +975,12 @@ pub fn emit_bible_graph_native_influence_selection(
         world,
         BibleGraphRendererCommand::SelectInfluence { influence_id },
     )
+}
+
+pub fn emit_bible_graph_native_clear_selection(
+    world: &mut World,
+) -> Result<(), BibleGraphRendererError> {
+    push_native_command(world, BibleGraphRendererCommand::ClearSelection)
 }
 
 fn validate_native_node(

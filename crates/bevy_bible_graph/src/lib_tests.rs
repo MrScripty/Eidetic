@@ -71,6 +71,17 @@ fn renderer_app_emits_validated_focus_and_navigation_commands() {
 }
 
 #[test]
+fn renderer_app_emits_clear_selection_without_projection_ownership() {
+    let mut renderer = BibleGraphRendererApp::new();
+
+    assert_eq!(renderer.clear_selection(), Ok(()));
+    assert_eq!(
+        renderer.drain_commands(),
+        vec![BibleGraphRendererCommand::ClearSelection]
+    );
+}
+
+#[test]
 fn renderer_app_rebuilds_scene_entities_from_projection() {
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let mut renderer = BibleGraphRendererApp::new();
@@ -946,6 +957,27 @@ fn controlled_native_window_emits_validated_influence_selection_commands() {
         Err(BibleGraphRendererError::UnknownInfluence {
             influence_id: missing_influence_id
         })
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_emits_clear_selection_command() {
+    use bevy::prelude::Plugin;
+
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+
+    assert_eq!(
+        emit_bible_graph_native_clear_selection(app.world_mut()),
+        Ok(())
+    );
+    assert_eq!(
+        control.drain_commands(),
+        vec![BibleGraphRendererCommand::ClearSelection]
     );
 }
 

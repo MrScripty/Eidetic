@@ -1,6 +1,7 @@
 import type { BibleGraphEdgeId, BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
 import type { GraphRendererCommand } from '$lib/graphRendererTypes.js';
 import {
+  clearBibleGraphSelection,
   selectBibleGraphEdge,
   selectBibleGraphInfluence,
   selectBibleGraphNeighborhood,
@@ -14,6 +15,7 @@ export interface GraphRendererSelectionTarget {
   inspectNode(nodeId: BibleGraphNodeId): void;
   focusNode(nodeId: BibleGraphNodeId): void;
   navigateToNode(nodeId: BibleGraphNodeId): void;
+  clearSelection(): void;
 }
 
 export const bibleGraphRendererSelectionTarget: GraphRendererSelectionTarget = {
@@ -23,6 +25,7 @@ export const bibleGraphRendererSelectionTarget: GraphRendererSelectionTarget = {
   inspectNode: selectBibleGraphNode,
   focusNode: selectBibleGraphNeighborhood,
   navigateToNode: selectBibleGraphNode,
+  clearSelection: clearBibleGraphSelection,
 };
 
 export function applyGraphRendererCommand(
@@ -47,6 +50,9 @@ export function applyGraphRendererCommand(
       return;
     case 'navigate_to_node':
       target.navigateToNode(command.node_id);
+      return;
+    case 'clear_selection':
+      target.clearSelection();
       return;
   }
 }
