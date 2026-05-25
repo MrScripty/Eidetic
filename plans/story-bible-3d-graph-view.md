@@ -781,6 +781,9 @@ Current implementation progress:
   category create flow as the Bible tab, including schema validation,
   canonical-root ensure, backend create command, render projection refresh, and
   selection of the confirmed node projection.
+- Completed: native renderer rebuilds now reuse renderer-local mesh and
+  material assets for identical node radii, edge dimensions, and visual states
+  instead of allocating fresh assets on every projection refresh.
 - Completed: no separate old 2D bible relationship graph remains as a supported
   visual graph surface. Keep `BibleRenderGraphOutline` as the required
   keyboard-accessible projection alternative, not as a visual graph fallback.
@@ -857,7 +860,8 @@ Current implementation progress:
     simulated in frontend state.
 17. Refactor projection construction into query, scope, layout, and DTO helpers
     with targeted tests.
-18. Add renderer-local mesh/material reuse for frequent projection refreshes.
+18. Completed: add renderer-local mesh/material reuse for frequent projection
+    refreshes.
 19. Add lifecycle/queue/shutdown/error verification for renderer host,
     projection bridge, and command drain ownership.
 20. Add filtering by canonical section, node type, edge kind, search, and

@@ -7,10 +7,10 @@ use std::time::{Duration, Instant};
 use bevy::app::AppExit;
 use bevy::prelude::{
     App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, Cuboid,
-    DefaultPlugins, Entity, GlobalTransform, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d,
-    MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Ray3d, Res, ResMut,
-    Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
-    Transform, Update, Vec2, Vec3, Visibility, Window, With, Without, World,
+    DefaultPlugins, Entity, GlobalTransform, Handle, Justify, KeyCode, Mesh, Mesh3d,
+    MeshMaterial3d, MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Ray3d, Res,
+    ResMut, Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout,
+    Time, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -89,6 +89,21 @@ pub struct BibleGraphNativeRendererWindowStatus {
 pub struct BibleGraphNativeVisualStatus {
     pub node_count: usize,
     pub edge_count: usize,
+}
+
+#[derive(Debug, Default, Resource)]
+struct BibleGraphNativeAssetCache {
+    node_meshes: HashMap<u32, Handle<Mesh>>,
+    edge_meshes: HashMap<(u32, u32), Handle<Mesh>>,
+    materials: HashMap<BibleGraphNativeMaterialKey, Handle<StandardMaterial>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct BibleGraphNativeMaterialKey {
+    color: &'static str,
+    selected: bool,
+    highlighted: bool,
+    dimmed: bool,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -332,6 +347,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeRendererWindowScene::default());
         app.insert_resource(BibleGraphNativeRendererWindowStatus::default());
         app.insert_resource(BibleGraphNativeVisualStatus::default());
+        app.insert_resource(BibleGraphNativeAssetCache::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.add_systems(Startup, spawn_bible_graph_renderer_window_scene);
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
@@ -983,7 +999,9 @@ pub fn rebuild_bible_graph_native_visuals(
     world: &mut World,
     projection: &BibleRenderGraphProjection,
 ) {
-    if !world.contains_resource::<BibleGraphNativeVisualStatus>() {
+    if !world.contains_resource::<BibleGraphNativeVisualStatus>()
+        || !world.contains_resource::<BibleGraphNativeAssetCache>()
+    {
         return;
     }
 
@@ -1003,19 +1021,14 @@ pub fn rebuild_bible_graph_native_visuals(
             Vec3::new(edge.to_position.x, edge.to_position.y, edge.to_position.z),
         );
         let edge_thickness = edge.radius.max(1.0);
-        let edge_mesh = {
-            let mut meshes = world.resource_mut::<Assets<Mesh>>();
-            meshes.add(Cuboid::new(edge_length, edge_thickness, edge_thickness))
-        };
-        let edge_material = {
-            let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
-            materials.add(native_visual_state_color(
-                edge.stroke_color,
-                edge.selected,
-                edge.highlighted,
-                edge.dimmed,
-            ))
-        };
+        let edge_mesh = cached_native_edge_mesh(world, edge_length, edge_thickness);
+        let edge_material = cached_native_material(
+            world,
+            edge.stroke_color,
+            edge.selected,
+            edge.highlighted,
+            edge.dimmed,
+        );
         let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeEdgeVisual {
@@ -1053,19 +1066,14 @@ pub fn rebuild_bible_graph_native_visuals(
     for node in snapshot.nodes {
         let node_id = node.node_id.clone();
         let node_label = node.label.clone();
-        let node_mesh = {
-            let mut meshes = world.resource_mut::<Assets<Mesh>>();
-            meshes.add(Sphere::new(node.radius.max(1.0)))
-        };
-        let node_material = {
-            let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
-            materials.add(native_visual_state_color(
-                node.fill_color,
-                node.selected,
-                node.highlighted,
-                node.dimmed,
-            ))
-        };
+        let node_mesh = cached_native_node_mesh(world, node.radius);
+        let node_material = cached_native_material(
+            world,
+            node.fill_color,
+            node.selected,
+            node.highlighted,
+            node.dimmed,
+        );
         let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeNodeVisual {
@@ -1149,6 +1157,101 @@ pub fn rebuild_bible_graph_native_visuals(
     let mut status = world.resource_mut::<BibleGraphNativeVisualStatus>();
     status.node_count = node_count;
     status.edge_count = edge_count;
+}
+
+fn cached_native_node_mesh(world: &mut World, radius: f32) -> Handle<Mesh> {
+    let radius = radius.max(1.0);
+    let key = quantized_visual_scalar(radius);
+    if let Some(handle) = world
+        .resource::<BibleGraphNativeAssetCache>()
+        .node_meshes
+        .get(&key)
+        .cloned()
+    {
+        return handle;
+    }
+
+    let handle = world
+        .resource_mut::<Assets<Mesh>>()
+        .add(Sphere::new(radius));
+    world
+        .resource_mut::<BibleGraphNativeAssetCache>()
+        .node_meshes
+        .insert(key, handle.clone());
+    handle
+}
+
+fn cached_native_edge_mesh(
+    world: &mut World,
+    edge_length: f32,
+    edge_thickness: f32,
+) -> Handle<Mesh> {
+    let edge_length = edge_length.max(1.0);
+    let edge_thickness = edge_thickness.max(1.0);
+    let key = (
+        quantized_visual_scalar(edge_length),
+        quantized_visual_scalar(edge_thickness),
+    );
+    if let Some(handle) = world
+        .resource::<BibleGraphNativeAssetCache>()
+        .edge_meshes
+        .get(&key)
+        .cloned()
+    {
+        return handle;
+    }
+
+    let handle = world.resource_mut::<Assets<Mesh>>().add(Cuboid::new(
+        edge_length,
+        edge_thickness,
+        edge_thickness,
+    ));
+    world
+        .resource_mut::<BibleGraphNativeAssetCache>()
+        .edge_meshes
+        .insert(key, handle.clone());
+    handle
+}
+
+fn cached_native_material(
+    world: &mut World,
+    color: &'static str,
+    selected: bool,
+    highlighted: bool,
+    dimmed: bool,
+) -> Handle<StandardMaterial> {
+    let key = BibleGraphNativeMaterialKey {
+        color,
+        selected,
+        highlighted,
+        dimmed,
+    };
+    if let Some(handle) = world
+        .resource::<BibleGraphNativeAssetCache>()
+        .materials
+        .get(&key)
+        .cloned()
+    {
+        return handle;
+    }
+
+    let handle = world
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(native_visual_state_color(
+            color,
+            selected,
+            highlighted,
+            dimmed,
+        ));
+    world
+        .resource_mut::<BibleGraphNativeAssetCache>()
+        .materials
+        .insert(key, handle.clone());
+    handle
+}
+
+fn quantized_visual_scalar(value: f32) -> u32 {
+    (value.max(0.0) * 100.0).round() as u32
 }
 
 pub fn update_bible_graph_renderer_window_bounds(world: &mut World, width_px: u32, height_px: u32) {

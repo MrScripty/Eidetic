@@ -3073,6 +3073,10 @@ Standards gates:
 - Selection/highlight changes restyle existing Bevy entities where practical.
   Full rebuilds are reserved for graph/projection/layout changes and must stay
   within documented bounded caps unless keyed diffing covers the path.
+- Completed: native graph rebuilds now keep renderer-local mesh/material caches
+  for repeated node radii, edge dimensions, and visual state materials, so
+  frequent bounded projection refreshes reuse assets instead of allocating new
+  handles for identical visuals.
 - Renderer commands for node selection, edge selection, focus, inspect,
   navigation, and any future Bevy-initiated edits use typed IDs and strict
   validation at the desktop/backend boundary.

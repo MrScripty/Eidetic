@@ -1130,7 +1130,7 @@ fn controlled_native_window_emits_clear_selection_command() {
 #[cfg(feature = "native_render")]
 #[test]
 fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
-    use bevy::prelude::{Entity, Plugin};
+    use bevy::prelude::{Assets, Entity, Mesh, Plugin, StandardMaterial};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
@@ -1151,6 +1151,7 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
     let node_label_entity = native_node_label_entity(app.world_mut(), &node_id).unwrap();
     let edge_entity = native_edge_entity(app.world_mut(), &edge_id).unwrap();
     let influence_entity = native_influence_entity(app.world_mut(), influence_id).unwrap();
+    let first_asset_counts = native_asset_counts(app.world());
 
     control.set_projection(projection_with_influence(
         node_id.clone(),
@@ -1175,6 +1176,7 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
         native_influence_entity(app.world_mut(), influence_id),
         Some(influence_entity)
     );
+    assert_eq!(native_asset_counts(app.world()), first_asset_counts);
 
     control.set_projection(projection_with_node(node_id.clone()));
     app.update();
@@ -1230,6 +1232,13 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
             .find_map(|(entity, influence)| {
                 (influence.influence_id == influence_id).then_some(entity)
             })
+    }
+
+    fn native_asset_counts(world: &bevy::prelude::World) -> (usize, usize) {
+        (
+            world.resource::<Assets<Mesh>>().len(),
+            world.resource::<Assets<StandardMaterial>>().len(),
+        )
     }
 }
 
