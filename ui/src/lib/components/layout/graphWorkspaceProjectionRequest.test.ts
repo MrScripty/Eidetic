@@ -8,6 +8,7 @@ describe('graph workspace projection request', () => {
       graphWorkspaceProjectionRequest({
         selectedTimelineNodeId: 'timeline.scene.beach',
         selectedGraphNodeId: 'node.character.ada',
+        activeTimelineMs: 42_500,
         activeFilter: 'Character',
         search: ' Ada ',
       }),
@@ -15,6 +16,7 @@ describe('graph workspace projection request', () => {
       focused_root_id: 'canonical.characters',
       selected_timeline_node_id: 'timeline.scene.beach',
       selected_node_id: 'node.character.ada',
+      active_timeline_ms: 42_500,
       search: 'Ada',
     });
   });

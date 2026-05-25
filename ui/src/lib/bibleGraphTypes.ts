@@ -145,6 +145,7 @@ export interface BibleRenderGraphProjectionRequest {
   focused_root_id?: BibleGraphNodeId | null;
   selected_node_id?: BibleGraphNodeId | null;
   selected_timeline_node_id?: string | null;
+  active_timeline_ms?: number | null;
   search?: string | null;
   neighborhood_depth?: number;
   max_nodes?: number;
@@ -155,6 +156,7 @@ export interface BibleRenderGraphProjection {
   focused_root_id?: BibleGraphNodeId | null;
   selected_node_id?: BibleGraphNodeId | null;
   selected_timeline_node_id?: string | null;
+  active_timeline_ms?: number | null;
   nodes: BibleRenderGraphNode[];
   edges: BibleRenderGraphEdge[];
   neighborhoods: BibleRenderGraphNeighborhood[];

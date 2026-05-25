@@ -106,6 +106,7 @@ describe('bible render graph projection store', () => {
       bibleRenderGraphRequestForWorkspaceSelection({
         selectedTimelineNodeId: 'node.scene.beach',
         selectedGraphNodeId: 'node.character.ada',
+        activeTimelineMs: 12_345.67,
         focusedRootId: 'canonical.characters',
         search: ' Ada ',
       }),
@@ -113,6 +114,7 @@ describe('bible render graph projection store', () => {
       focused_root_id: 'canonical.characters',
       selected_timeline_node_id: 'node.scene.beach',
       selected_node_id: 'node.character.ada',
+      active_timeline_ms: 12_345,
       search: 'Ada',
       neighborhood_depth: 1,
       max_nodes: 200,

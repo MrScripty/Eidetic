@@ -5,6 +5,7 @@ import { canonicalParents, type BibleGraphFilter } from '../sidebar/bible/bibleG
 export interface GraphWorkspaceProjectionSelection {
   selectedTimelineNodeId?: string | null;
   selectedGraphNodeId?: string | null;
+  activeTimelineMs?: number | null;
   activeFilter: BibleGraphFilter;
   search?: string | null;
 }
@@ -12,12 +13,14 @@ export interface GraphWorkspaceProjectionSelection {
 export function graphWorkspaceProjectionRequest({
   selectedTimelineNodeId,
   selectedGraphNodeId,
+  activeTimelineMs,
   activeFilter,
   search,
 }: GraphWorkspaceProjectionSelection): BibleRenderGraphProjectionRequest {
   return bibleRenderGraphRequestForWorkspaceSelection({
     selectedTimelineNodeId,
     selectedGraphNodeId,
+    activeTimelineMs,
     focusedRootId: activeFilter === 'All' ? null : canonicalParents[activeFilter],
     search,
   });

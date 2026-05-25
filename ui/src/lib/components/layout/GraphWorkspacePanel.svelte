@@ -22,6 +22,7 @@
   } from '$lib/stores/contextStackProjection.svelte.js';
   import BibleRenderGraphOutline from '../sidebar/bible/BibleRenderGraphOutline.svelte';
   import GraphWorkspaceSideLists from './GraphWorkspaceSideLists.svelte';
+  import { timelineState } from '$lib/stores/timeline.svelte.js';
   import {
     graphWorkspaceEdgeItems,
     graphWorkspaceNeighborhoodItems,
@@ -48,6 +49,7 @@
     graphWorkspaceProjectionRequest({
       selectedTimelineNodeId: editorState.selectedNodeId,
       selectedGraphNodeId: selectedGraphNodeId,
+      activeTimelineMs: timelineState.playheadMs,
       activeFilter,
       search: graphSearchQuery,
     }),
