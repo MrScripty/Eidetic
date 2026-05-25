@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import {
     bibleState,
+    clearBibleGraphSelection,
     selectBibleGraphContextLayer,
     selectBibleGraphEdge,
     selectBibleGraphInfluence,
@@ -108,6 +109,11 @@
     focusedNeighborhoodNodeId = null;
   }
 
+  function clearGraphSelectionAndFocus() {
+    clearBibleGraphSelection();
+    focusedNeighborhoodNodeId = null;
+  }
+
   function handleSelectInfluence(id: string) {
     selectBibleGraphInfluence(
       graphSelection.kind === 'influence' && graphSelection.influenceId === id ? null : id,
@@ -182,6 +188,13 @@
               onclick={clearFocusedNeighborhood}
             >
               Clear focus
+            </button>
+            <button
+              type="button"
+              disabled={graphSelection.kind === 'none' && !focusedNeighborhoodNodeId}
+              onclick={clearGraphSelectionAndFocus}
+            >
+              Clear selection
             </button>
           </div>
         </div>
