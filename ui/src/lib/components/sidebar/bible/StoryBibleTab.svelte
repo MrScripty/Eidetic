@@ -100,7 +100,6 @@
   function activeRenderGraphQuery() {
     return bibleRenderGraphRequestForWorkspaceSelection({
       selectedTimelineNodeId: editorState.selectedNodeId,
-      selectedGraphNodeId: selectedGraphNodeId,
       focusedRootId: activeFilter === 'All' ? null : canonicalParents[activeFilter],
       search: searchQuery,
     });
@@ -180,7 +179,7 @@
 
   <BibleRenderGraphOutline
     projection={renderGraphProjection?.payload ?? null}
-    selectedNodeId={renderGraphProjection?.payload.selected_node_id ?? null}
+    selectedNodeId={selectedGraphNodeId}
     query={searchQuery}
     onselect={handleSelect}
   />

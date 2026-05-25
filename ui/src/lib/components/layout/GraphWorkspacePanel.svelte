@@ -38,17 +38,17 @@
   const contextStackProjection = $derived(getCachedContextStackProjection());
   const contextLayers = $derived(contextStackProjection?.payload.layers ?? []);
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
-  const projectedSelectedGraphNodeId = $derived(graph?.selected_node_id ?? null);
   const graphSelection = $derived(bibleState.graphSelection);
   let showOutline = $state(false);
   let graphSearchQuery = $state('');
   let activeFilter: BibleGraphFilter = $state('All');
+  let focusedNeighborhoodNodeId = $state<string | null>(null);
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
   const renderGraphRequest = $derived(
     graphWorkspaceProjectionRequest({
       selectedTimelineNodeId: editorState.selectedNodeId,
-      selectedGraphNodeId: selectedGraphNodeId,
+      focusedNeighborhoodNodeId,
       activeTimelineMs: timelineState.playheadMs,
       activeFilter,
       search: graphSearchQuery,
@@ -96,6 +96,16 @@
 
   function handleSelect(id: string) {
     selectBibleGraphNode(selectedGraphNodeId === id ? null : id);
+  }
+
+  function focusSelectedNeighborhood() {
+    if (selectedGraphNodeId) {
+      focusedNeighborhoodNodeId = selectedGraphNodeId;
+    }
+  }
+
+  function clearFocusedNeighborhood() {
+    focusedNeighborhoodNodeId = null;
   }
 
   function handleSelectInfluence(id: string) {
@@ -159,13 +169,27 @@
             >
               {showOutline ? 'Hide outline' : 'Show outline'}
             </button>
+            <button
+              type="button"
+              disabled={!selectedGraphNodeId || focusedNeighborhoodNodeId === selectedGraphNodeId}
+              onclick={focusSelectedNeighborhood}
+            >
+              Focus neighborhood
+            </button>
+            <button
+              type="button"
+              disabled={!focusedNeighborhoodNodeId}
+              onclick={clearFocusedNeighborhood}
+            >
+              Clear focus
+            </button>
           </div>
         </div>
         {#if showOutline}
           <div class="graph-outline-inspector">
             <BibleRenderGraphOutline
               projection={graph}
-              selectedNodeId={projectedSelectedGraphNodeId}
+              selectedNodeId={selectedGraphNodeId}
               onselect={handleSelect}
             />
           </div>

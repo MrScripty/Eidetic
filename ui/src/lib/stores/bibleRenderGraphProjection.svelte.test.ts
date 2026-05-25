@@ -101,11 +101,10 @@ describe('bible render graph projection store', () => {
     });
   });
 
-  it('builds bounded graph workspace requests with selected node neighborhoods', () => {
+  it('builds bounded graph workspace requests without normal selection scope', () => {
     expect(
       bibleRenderGraphRequestForWorkspaceSelection({
         selectedTimelineNodeId: 'node.scene.beach',
-        selectedGraphNodeId: 'node.character.ada',
         activeTimelineMs: 12_345.67,
         focusedRootId: 'canonical.characters',
         search: ' Ada ',
@@ -113,9 +112,21 @@ describe('bible render graph projection store', () => {
     ).toEqual({
       focused_root_id: 'canonical.characters',
       selected_timeline_node_id: 'node.scene.beach',
-      selected_node_id: 'node.character.ada',
       active_timeline_ms: 12_345,
       search: 'Ada',
+      neighborhood_depth: 1,
+      max_nodes: 200,
+      max_edges: 500,
+    });
+  });
+
+  it('uses selected node scope only for explicit focus-neighborhood requests', () => {
+    expect(
+      bibleRenderGraphRequestForWorkspaceSelection({
+        focusedNeighborhoodNodeId: 'node.character.ada',
+      }),
+    ).toEqual({
+      selected_node_id: 'node.character.ada',
       neighborhood_depth: 1,
       max_nodes: 200,
       max_edges: 500,

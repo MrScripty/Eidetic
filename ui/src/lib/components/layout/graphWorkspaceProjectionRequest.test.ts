@@ -7,7 +7,6 @@ describe('graph workspace projection request', () => {
     expect(
       graphWorkspaceProjectionRequest({
         selectedTimelineNodeId: 'timeline.scene.beach',
-        selectedGraphNodeId: 'node.character.ada',
         activeTimelineMs: 42_500,
         activeFilter: 'Character',
         search: ' Ada ',
@@ -15,9 +14,30 @@ describe('graph workspace projection request', () => {
     ).toMatchObject({
       focused_root_id: 'canonical.characters',
       selected_timeline_node_id: 'timeline.scene.beach',
-      selected_node_id: 'node.character.ada',
       active_timeline_ms: 42_500,
       search: 'Ada',
+    });
+  });
+
+  it('does not use normal graph selection as backend projection scope', () => {
+    expect(
+      graphWorkspaceProjectionRequest({
+        selectedTimelineNodeId: 'timeline.scene.beach',
+        activeTimelineMs: 42_500,
+        activeFilter: 'All',
+        search: '',
+      }),
+    ).not.toHaveProperty('selected_node_id');
+  });
+
+  it('requests selected node scope only for explicit focus-neighborhood actions', () => {
+    expect(
+      graphWorkspaceProjectionRequest({
+        focusedNeighborhoodNodeId: 'node.character.ada',
+        activeFilter: 'All',
+      }),
+    ).toMatchObject({
+      selected_node_id: 'node.character.ada',
     });
   });
 

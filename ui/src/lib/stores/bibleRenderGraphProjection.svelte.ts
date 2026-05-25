@@ -53,13 +53,13 @@ export function bibleRenderGraphRequestForTimelineSelection(
 
 export function bibleRenderGraphRequestForWorkspaceSelection({
   selectedTimelineNodeId,
-  selectedGraphNodeId,
+  focusedNeighborhoodNodeId,
   activeTimelineMs,
   focusedRootId,
   search,
 }: {
   selectedTimelineNodeId?: string | null;
-  selectedGraphNodeId?: string | null;
+  focusedNeighborhoodNodeId?: string | null;
   activeTimelineMs?: number | null;
   focusedRootId?: string | null;
   search?: string | null;
@@ -68,7 +68,7 @@ export function bibleRenderGraphRequestForWorkspaceSelection({
   return {
     ...(focusedRootId ? { focused_root_id: focusedRootId } : {}),
     ...(selectedTimelineNodeId ? { selected_timeline_node_id: selectedTimelineNodeId } : {}),
-    ...(selectedGraphNodeId ? { selected_node_id: selectedGraphNodeId } : {}),
+    ...(focusedNeighborhoodNodeId ? { selected_node_id: focusedNeighborhoodNodeId } : {}),
     ...(activeTimelineMs !== null && activeTimelineMs !== undefined
       ? { active_timeline_ms: Math.max(0, Math.trunc(activeTimelineMs)) }
       : {}),
