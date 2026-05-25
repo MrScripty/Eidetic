@@ -427,10 +427,13 @@ Current implementation progress:
   mesh/material assets, 3D node meshes, 3D edge meshes, label billboards,
   ray-based node picking, pan/zoom camera movement, and derived structural
   parent/child edges from the 3D visual snapshot.
-- Remaining: canonical scaffold visibility in new projects, edge picking,
-  selection highlight styling in the native scene, orbit/frame/clear-selection
-  navigation, filters/search/playhead projections, and removal of the old 2D
-  relationship graph after the Bevy graph covers target interactions.
+- Completed: semantic edge picking, native ECS selection/highlight/dimmed state,
+  backend-derived label visibility, frame-selected camera navigation, and typed
+  clear-selection commands.
+- Remaining: canonical scaffold visibility in new projects, orbit navigation,
+  filters/search/playhead projections, richer visual styling for selected and
+  dimmed native materials, edge detail integration verification, and removal of
+  the old 2D relationship graph after the Bevy graph covers target interactions.
 
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
