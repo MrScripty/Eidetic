@@ -5,6 +5,8 @@ use eidetic_core::contracts::{
 };
 use serde::Serialize;
 
+use crate::category::node_fill_color;
+
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct BibleGraphVisual3dSnapshot {
     pub nodes: Vec<BibleGraphVisual3dNode>,
@@ -180,30 +182,6 @@ fn structural_edge_id(
 fn node_radius(depth: u32, system_owned: bool, highlighted: bool) -> f32 {
     let base = if system_owned { 22.0 } else { 16.0 } - (depth.min(4) as f32 * 1.25);
     if highlighted { base + 3.0 } else { base }
-}
-
-fn node_fill_color(schema_key: &str) -> &'static str {
-    if schema_key.contains("character") {
-        "#2f7a6e"
-    } else if schema_key.contains("place") || schema_key.contains("location") {
-        "#3f668f"
-    } else if schema_key.contains("object") || schema_key.contains("prop") {
-        "#7a5c8f"
-    } else if schema_key.contains("culture") {
-        "#6f7a2f"
-    } else if schema_key.contains("event") {
-        "#8f4f5c"
-    } else if schema_key.contains("theme") {
-        "#8a6f3d"
-    } else if schema_key.contains("rule") {
-        "#8f5c3f"
-    } else if schema_key.contains("reference") {
-        "#4f7f8f"
-    } else if schema_key.contains("canonical") {
-        "#536f88"
-    } else {
-        "#34495e"
-    }
 }
 
 fn semantic_edge_color(highlighted: bool) -> &'static str {

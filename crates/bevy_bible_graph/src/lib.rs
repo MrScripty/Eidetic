@@ -6,6 +6,7 @@ use eidetic_core::contracts::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+mod category;
 mod scene;
 mod visual;
 mod visual_3d;

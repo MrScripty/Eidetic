@@ -358,6 +358,22 @@ fn renderer_app_visual_snapshot_preserves_category_colors_under_highlight() {
     assert!(snapshot.nodes.iter().all(|node| node.label_visible));
 }
 
+#[test]
+fn renderer_visual_snapshots_share_category_fill_colors() {
+    let mut projection =
+        projection_with_node(BibleGraphNodeId::new("node.location.archive").unwrap());
+    projection.nodes[0].schema_key = BibleGraphSchemaKey::new("location").unwrap();
+
+    let visual_snapshot = build_bible_graph_visual_snapshot(&projection);
+    let visual_3d_snapshot = build_bible_graph_visual_3d_snapshot(&projection);
+
+    assert_eq!(visual_snapshot.nodes[0].fill_color, "#3f668f");
+    assert_eq!(
+        visual_snapshot.nodes[0].fill_color,
+        visual_3d_snapshot.nodes[0].fill_color
+    );
+}
+
 #[cfg(feature = "native_render")]
 #[test]
 fn native_render_plugin_records_3d_window_scene_intent() {
@@ -1353,6 +1369,7 @@ fn projection_with_node(node_id: BibleGraphNodeId) -> BibleRenderGraphProjection
     }
 }
 
+#[cfg(feature = "native_render")]
 fn projection_with_parent_node(child_id: BibleGraphNodeId) -> BibleRenderGraphProjection {
     let root_id = BibleGraphNodeId::new("canonical.characters").unwrap();
     BibleRenderGraphProjection {

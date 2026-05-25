@@ -803,6 +803,9 @@ Current implementation progress:
   input, scope selection, scoped node loading, and edge loading inside the
   backend projection module, with the existing projection behavior verified by
   targeted server tests.
+- Completed: Bevy renderer graph category color identity now comes from one
+  crate-local helper shared by 2D and 3D visual snapshots, with a regression
+  test proving the snapshots preserve the same category fill color.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
@@ -810,7 +813,8 @@ Current implementation progress:
   - normal selection is coupled to backend projection scope,
   - edge rendering uses 2D math while picking uses 3D math,
   - label visibility is too restrictive for MVP graph reading,
-  - category mapping/coloring is duplicated and incomplete,
+  - category mapping/coloring still needs one cross-boundary source of truth
+    between backend projections and frontend controls,
   - graph-local add/edit workflows are incomplete and delete commands are not
     available,
   - visible navigation/recovery controls are incomplete.
@@ -845,8 +849,11 @@ Current implementation progress:
 9. Add the vertical-slice acceptance path for selection/scope: backend
    projection request, Tauri renderer bridge, Svelte control, Bevy render
    refresh, and detail projection must all agree without optimistic updates.
-10. Centralize graph category classification/color identity for canonical roots,
-   supported schemas, custom schemas, and unknown nodes.
+10. Partially completed: centralize graph category classification/color
+   identity for canonical roots, supported schemas, custom schemas, and unknown
+   nodes. Bevy renderer visual snapshots now share one category color helper;
+   frontend controls and backend projection contracts still need a single
+   cross-boundary category projection.
 11. Replace 2D edge mesh placement with tested 3D segment geometry shared by
     rendering and picking.
 12. Update labels and material transforms so MVP graph nodes are readable and
