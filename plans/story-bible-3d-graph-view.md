@@ -420,6 +420,18 @@ No backwards compatibility with the current 2D relationship graph is required. I
 The current floating 2D Bevy graph window is a renderer-host proof. Replace it
 with the 3D graph rather than preserving it as a supported fallback.
 
+Current implementation progress:
+
+- Completed: renderer-neutral 3D visual snapshot boundary.
+- Completed: native Bevy graph window uses a `Camera3d`, renderer-local light,
+  mesh/material assets, 3D node meshes, 3D edge meshes, label billboards,
+  ray-based node picking, pan/zoom camera movement, and derived structural
+  parent/child edges from the 3D visual snapshot.
+- Remaining: canonical scaffold visibility in new projects, edge picking,
+  selection highlight styling in the native scene, orbit/frame/clear-selection
+  navigation, filters/search/playhead projections, and removal of the old 2D
+  relationship graph after the Bevy graph covers target interactions.
+
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
 3. Add deterministic layout helpers and tests.
