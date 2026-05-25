@@ -8,9 +8,9 @@ use bevy::app::AppExit;
 use bevy::prelude::{
     App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, Cuboid,
     DefaultPlugins, Entity, GlobalTransform, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d,
-    MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Res, ResMut, Resource,
-    Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time, Transform,
-    Update, Vec2, Vec3, Window, With, World,
+    MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Ray3d, Res, ResMut,
+    Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
+    Transform, Update, Vec2, Vec3, Window, With, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -453,10 +453,10 @@ fn emit_bible_graph_native_click_selection(
     let Ok((camera, camera_transform)) = cameras.single() else {
         return;
     };
-    let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
+    let Ok(ray) = camera.viewport_to_world(camera_transform, cursor_position) else {
         return;
     };
-    let Some(node_id) = nearest_native_node_at_world_position(&nodes, world_position) else {
+    let Some(node_id) = nearest_native_node_on_ray(nodes.iter(), ray) else {
         return;
     };
 
@@ -502,21 +502,27 @@ fn pan_bible_graph_native_camera(
         (direction.normalize() * pan_speed * time.delta_secs()).extend(0.0);
 }
 
-fn nearest_native_node_at_world_position(
-    nodes: &Query<&BibleGraphNativeNodeVisual>,
-    world_position: Vec2,
+pub(crate) fn nearest_native_node_on_ray<'a>(
+    nodes: impl Iterator<Item = &'a BibleGraphNativeNodeVisual>,
+    ray: Ray3d,
 ) -> Option<BibleGraphNodeId> {
+    let direction = *ray.direction;
     nodes
-        .iter()
         .filter_map(|node| {
-            let distance_squared =
-                (node.x - world_position.x).powi(2) + (node.y - world_position.y).powi(2);
+            let center = Vec3::new(node.x, node.y, node.z);
+            let center_from_ray_origin = center - ray.origin;
+            let ray_distance = center_from_ray_origin.dot(direction);
+            if ray_distance < 0.0 {
+                return None;
+            }
+            let closest_point = ray.origin + direction * ray_distance;
+            let distance_squared = center.distance_squared(closest_point);
             (distance_squared <= node.radius.powi(2))
-                .then_some((distance_squared, node.node_id.clone()))
+                .then_some((ray_distance, node.node_id.clone()))
         })
-        .min_by(|(left_distance, _), (right_distance, _)| {
-            left_distance
-                .partial_cmp(right_distance)
+        .min_by(|(left_ray_distance, _), (right_ray_distance, _)| {
+            left_ray_distance
+                .partial_cmp(right_ray_distance)
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
         .map(|(_, node_id)| node_id)

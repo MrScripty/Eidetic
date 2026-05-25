@@ -508,6 +508,46 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_uses_3d_ray_node_hit_testing() {
+    use crate::native_render::nearest_native_node_on_ray;
+    use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let target_id = BibleGraphNodeId::new("node.place.beach").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_edge(node_id.clone()));
+    app.update();
+
+    let mut nodes = app.world_mut().query::<&BibleGraphNativeNodeVisual>();
+    assert_eq!(
+        nearest_native_node_on_ray(
+            nodes.iter(app.world()),
+            Ray3d::new(Vec3::new(0.0, 0.0, 900.0), Dir3::NEG_Z)
+        ),
+        Some(node_id)
+    );
+    assert_eq!(
+        nearest_native_node_on_ray(
+            nodes.iter(app.world()),
+            Ray3d::new(Vec3::new(0.0, 150.0, 900.0), Dir3::NEG_Z)
+        ),
+        Some(target_id)
+    );
+    assert_eq!(
+        nearest_native_node_on_ray(
+            nodes.iter(app.world()),
+            Ray3d::new(Vec3::new(900.0, 900.0, 900.0), Dir3::NEG_Z)
+        ),
+        None
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_node_selection_commands() {
     use bevy::prelude::Plugin;
 
