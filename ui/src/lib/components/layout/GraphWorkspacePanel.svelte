@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import {
     bibleState,
+    clearBibleGraphFocusedNeighborhood,
     clearBibleGraphSelection,
+    focusBibleGraphNeighborhood,
     selectBibleGraphContextLayer,
     selectBibleGraphEdge,
     selectBibleGraphInfluence,
@@ -62,7 +64,7 @@
   let graphSearchQuery = $state('');
   let activeFilter: BibleGraphFilter = $state('All');
   let activeEdgeKinds: BibleGraphEdgeKind[] = $state([]);
-  let focusedNeighborhoodNodeId = $state<string | null>(null);
+  const focusedNeighborhoodNodeId = $derived(bibleState.graphFocusedNeighborhoodNodeId);
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
   const renderGraphRequest = $derived(
@@ -146,17 +148,17 @@
 
   function focusSelectedNeighborhood() {
     if (selectedGraphNodeId) {
-      focusedNeighborhoodNodeId = selectedGraphNodeId;
+      focusBibleGraphNeighborhood(selectedGraphNodeId);
     }
   }
 
   function clearFocusedNeighborhood() {
-    focusedNeighborhoodNodeId = null;
+    clearBibleGraphFocusedNeighborhood();
   }
 
   function clearGraphSelectionAndFocus() {
     clearBibleGraphSelection();
-    focusedNeighborhoodNodeId = null;
+    clearBibleGraphFocusedNeighborhood();
   }
 
   function handleSelectInfluence(id: string) {

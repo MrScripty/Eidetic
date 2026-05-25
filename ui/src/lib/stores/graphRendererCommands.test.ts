@@ -45,6 +45,7 @@ const edgeProjection: BibleRenderGraphProjection = {
 
 beforeEach(() => {
   bibleState.graphSelection = { kind: 'none' };
+  bibleState.graphFocusedNeighborhoodNodeId = null;
 });
 
 describe('graph renderer command application', () => {
@@ -92,5 +93,15 @@ describe('graph renderer command application', () => {
       fromLabel: 'Ada',
       toLabel: 'Beach',
     });
+  });
+
+  it('connects native focus commands to explicit graph projection scope', () => {
+    applyGraphRendererCommands([{ type: 'focus_node', node_id: 'node.character.ada' }]);
+
+    expect(bibleState.graphSelection).toEqual({
+      kind: 'neighborhood',
+      nodeId: 'node.character.ada',
+    });
+    expect(bibleState.graphFocusedNeighborhoodNodeId).toBe('node.character.ada');
   });
 });

@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   bibleState,
+  clearBibleGraphFocusedNeighborhood,
   clearBibleGraphSelection,
+  focusBibleGraphNeighborhood,
   selectBibleGraphEdge,
   selectBibleGraphInfluence,
   selectBibleGraphNode,
@@ -11,6 +13,7 @@ import {
 
 beforeEach(() => {
   bibleState.graphSelection = { kind: 'none' };
+  bibleState.graphFocusedNeighborhoodNodeId = null;
 });
 
 describe('bible selection store', () => {
@@ -43,5 +46,29 @@ describe('bible selection store', () => {
     clearBibleGraphSelection();
 
     expect(bibleState.graphSelection).toEqual({ kind: 'none' });
+  });
+
+  it('stores explicit graph focus scope separately from normal selection', () => {
+    selectBibleGraphNode('node.character.ada');
+
+    expect(bibleState.graphSelection).toEqual({ kind: 'node', nodeId: 'node.character.ada' });
+    expect(bibleState.graphFocusedNeighborhoodNodeId).toBeNull();
+
+    focusBibleGraphNeighborhood('node.place.beach');
+
+    expect(bibleState.graphSelection).toEqual({
+      kind: 'neighborhood',
+      nodeId: 'node.place.beach',
+    });
+    expect(bibleState.graphFocusedNeighborhoodNodeId).toBe('node.place.beach');
+
+    clearBibleGraphSelection();
+
+    expect(bibleState.graphSelection).toEqual({ kind: 'none' });
+    expect(bibleState.graphFocusedNeighborhoodNodeId).toBe('node.place.beach');
+
+    clearBibleGraphFocusedNeighborhood();
+
+    expect(bibleState.graphFocusedNeighborhoodNodeId).toBeNull();
   });
 });

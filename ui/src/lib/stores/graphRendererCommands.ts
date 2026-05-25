@@ -2,9 +2,9 @@ import type { BibleGraphEdgeId, BibleGraphNodeId } from '$lib/bibleGraphTypes.js
 import type { GraphRendererCommand } from '$lib/graphRendererTypes.js';
 import {
   clearBibleGraphSelection,
+  focusBibleGraphNeighborhood,
   selectBibleGraphEdge,
   selectBibleGraphInfluence,
-  selectBibleGraphNeighborhood,
   selectBibleGraphNode,
 } from './bible.svelte.js';
 
@@ -23,7 +23,7 @@ export const bibleGraphRendererSelectionTarget: GraphRendererSelectionTarget = {
   selectEdge: selectBibleGraphEdge,
   selectInfluence: selectBibleGraphInfluence,
   inspectNode: selectBibleGraphNode,
-  focusNode: selectBibleGraphNeighborhood,
+  focusNode: focusBibleGraphNeighborhood,
   navigateToNode: selectBibleGraphNode,
   clearSelection: clearBibleGraphSelection,
 };

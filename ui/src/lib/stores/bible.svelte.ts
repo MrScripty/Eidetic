@@ -11,8 +11,10 @@ export type BibleGraphSelection =
 /** Shared bible selection state — connects sidebar list to the detail panel. */
 export const bibleState = $state<{
   graphSelection: BibleGraphSelection;
+  graphFocusedNeighborhoodNodeId: BibleGraphNodeId | null;
 }>({
   graphSelection: { kind: 'none' },
+  graphFocusedNeighborhoodNodeId: null,
 });
 
 export function selectBibleGraphNode(id: BibleGraphNodeId | null) {
@@ -35,6 +37,17 @@ export function selectBibleGraphContextLayer(timelineNodeId: string | null) {
 
 export function selectBibleGraphNeighborhood(id: BibleGraphNodeId | null) {
   bibleState.graphSelection = id ? { kind: 'neighborhood', nodeId: id } : { kind: 'none' };
+}
+
+export function focusBibleGraphNeighborhood(id: BibleGraphNodeId | null) {
+  bibleState.graphFocusedNeighborhoodNodeId = id;
+  if (id) {
+    bibleState.graphSelection = { kind: 'neighborhood', nodeId: id };
+  }
+}
+
+export function clearBibleGraphFocusedNeighborhood() {
+  bibleState.graphFocusedNeighborhoodNodeId = null;
 }
 
 export function clearBibleGraphSelection() {

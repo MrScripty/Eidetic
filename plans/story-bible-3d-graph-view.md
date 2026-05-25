@@ -810,11 +810,14 @@ Current implementation progress:
   timeline node when a context layer is selected from the active graph context
   list, while active playhead projection filtering remains backend-owned
   through `active_timeline_ms`.
+- Completed: explicit graph neighborhood focus scope now lives in shared
+  transient bible UI state, so native renderer `focus_node` commands and
+  Graph workspace controls drive the same backend projection request path
+  without making normal graph selection alter projection scope.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
 - Code review findings to resolve before completion:
-  - normal selection is coupled to backend projection scope,
   - edge rendering uses 2D math while picking uses 3D math,
   - label visibility is too restrictive for MVP graph reading,
   - category mapping/coloring still needs one cross-boundary source of truth
@@ -847,9 +850,9 @@ Current implementation progress:
    lighting using Eidetic's visual language.
 6. Build a Bevy graph scene/plugin that consumes `BibleRenderGraph`.
 7. Connect the Bevy graph scene/plugin to the shared floating renderer host.
-8. Split normal graph selection from projection scope. Normal selection updates
-   transient UI/detail state only; explicit focus-neighborhood requests update
-   backend projection scope.
+8. Completed: split normal graph selection from projection scope. Normal
+   selection updates transient UI/detail state only; explicit
+   focus-neighborhood requests update backend projection scope.
 9. Add the vertical-slice acceptance path for selection/scope: backend
    projection request, Tauri renderer bridge, Svelte control, Bevy render
    refresh, and detail projection must all agree without optimistic updates.
