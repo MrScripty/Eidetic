@@ -6,10 +6,10 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, ButtonInput, Camera, Camera2d, ClearColor, Color, Commands, Component, DefaultPlugins,
+    App, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, DefaultPlugins,
     Entity, GlobalTransform, Justify, KeyCode, MessageWriter, MouseButton, Plugin, PluginGroup,
-    Query, Res, ResMut, Resource, Sprite, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
-    Transform, Update, Vec2, Vec3, Window, With, World,
+    PointLight, Query, Res, ResMut, Resource, Sprite, Startup, Text2d, TextColor, TextFont,
+    TextLayout, Time, Transform, Update, Vec2, Vec3, Window, With, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -358,7 +358,12 @@ fn spawn_bible_graph_renderer_window_scene(
     mut commands: Commands,
     mut status: ResMut<BibleGraphNativeRendererWindowStatus>,
 ) {
-    commands.spawn((Camera2d, BibleGraphNativeCamera));
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y),
+        BibleGraphNativeCamera,
+    ));
+    commands.spawn((PointLight::default(), Transform::from_xyz(0.0, 0.0, 700.0)));
     status.camera_count = 1;
 }
 

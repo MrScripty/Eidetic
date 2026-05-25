@@ -53,13 +53,14 @@ Dependency review:
   first render slices should prove a minimal background/grid scene before graph
   nodes/edges are visualized.
 - The `native_render` feature gates the reviewed Bevy render/window stack for
-  desktop renderer-window work. It enables `2d_bevy_render`, `bevy_window`, and
-  `bevy_winit` plus Linux `wayland`/`x11` window backends, and is intentionally
-  off by default so projection-only tests and server builds do not pay for
-  native rendering.
+  desktop renderer-window work. It enables `2d_bevy_render`, `bevy_light`,
+  `bevy_pbr`, `bevy_window`, and `bevy_winit` plus Linux `wayland`/`x11`
+  window backends, and is intentionally off by default so projection-only tests
+  and server builds do not pay for native rendering.
 - Native renderer-window setup starts with a borderless scene resource, Eidetic
-  graph colors, clear color, and one marked `Camera2d`. The plugin does not
-  own durable graph data; the desktop host owns renderer-window lifecycle.
+  graph colors, clear color, one marked `Camera3d`, and a renderer-local light.
+  The plugin does not own durable graph data; the desktop host owns
+  renderer-window lifecycle.
 - Native renderer-window control is limited to renderer-local lifecycle
   signaling. `BibleGraphNativeWindowControlHandle` lets the desktop host request
   close without giving this leaf crate access to Tauri, SQLite, or durable

@@ -321,7 +321,7 @@ fn renderer_app_3d_visual_snapshot_highlights_selected_neighborhood() {
 
 #[cfg(feature = "native_render")]
 #[test]
-fn native_render_plugin_records_borderless_window_intent() {
+fn native_render_plugin_records_3d_window_scene_intent() {
     use bevy::prelude::{Plugin, With};
 
     let mut app = bevy::prelude::App::new();
@@ -334,7 +334,7 @@ fn native_render_plugin_records_borderless_window_intent() {
         .resource::<BibleGraphNativeRendererWindowScene>();
 
     assert!(
-        app.world()
+        !app.world()
             .resource::<BibleGraphNativeRenderConfig>()
             .borderless_window
     );
@@ -349,7 +349,21 @@ fn native_render_plugin_records_borderless_window_intent() {
     );
     assert_eq!(
         app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::Camera3d>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+    assert_eq!(
+        app.world_mut()
             .query_filtered::<(), With<BibleGraphNativeCamera>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::PointLight>>()
             .iter(app.world())
             .count(),
         1
