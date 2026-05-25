@@ -6,11 +6,11 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component,
+    App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, Cuboid,
     DefaultPlugins, Entity, GlobalTransform, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d,
     MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Res, ResMut, Resource,
-    Sphere, Sprite, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
-    Transform, Update, Vec2, Vec3, Window, With, World,
+    Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time, Transform,
+    Update, Vec2, Vec3, Window, With, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -569,6 +569,16 @@ pub fn rebuild_bible_graph_native_visuals(
             .atan2(edge.to_position.x - edge.from_position.x);
         let edge_midpoint_x = (edge.from_position.x + edge.to_position.x) / 2.0;
         let edge_midpoint_y = (edge.from_position.y + edge.to_position.y) / 2.0;
+        let edge_midpoint_z = (edge.from_position.z + edge.to_position.z) / 2.0;
+        let edge_thickness = edge.width.max(1.0);
+        let edge_mesh = {
+            let mut meshes = world.resource_mut::<Assets<Mesh>>();
+            meshes.add(Cuboid::new(edge_length, edge_thickness, edge_thickness))
+        };
+        let edge_material = {
+            let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
+            materials.add(graph_color(edge.stroke_color))
+        };
         let bundle = (
             BibleGraphNativeVisualEntity,
             BibleGraphNativeEdgeVisual {
@@ -583,12 +593,10 @@ pub fn rebuild_bible_graph_native_visuals(
                 stroke_color: edge.stroke_color,
                 highlighted: edge.highlighted,
             },
-            Sprite::from_color(
-                graph_color(edge.stroke_color),
-                Vec2::new(edge_length, edge.width.max(1.0)),
-            ),
+            Mesh3d(edge_mesh),
+            MeshMaterial3d(edge_material),
             Transform {
-                translation: Vec3::new(edge_midpoint_x, edge_midpoint_y, 0.0),
+                translation: Vec3::new(edge_midpoint_x, edge_midpoint_y, edge_midpoint_z),
                 rotation: bevy::prelude::Quat::from_rotation_z(edge_angle),
                 ..Default::default()
             },
@@ -636,7 +644,7 @@ pub fn rebuild_bible_graph_native_visuals(
             )),
         );
         if let Some(entity) = existing_nodes.remove(&node_id) {
-            world.entity_mut(entity).remove::<Sprite>().insert(bundle);
+            world.entity_mut(entity).insert(bundle);
         } else {
             world.spawn(bundle);
         }
