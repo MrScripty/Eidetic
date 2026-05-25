@@ -786,6 +786,9 @@ Current implementation progress:
   instead of allocating fresh assets on every projection refresh.
 - Completed: camera command queue behavior is covered by bounded-capacity and
   drain verification on the native window control path.
+- Completed: render graph projection requests now support backend-owned
+  `edge_kinds` filtering through core contracts, SQLite edge queries, and the
+  Graph workspace request helper, with filtering applied before edge limits.
 - Completed: no separate old 2D bible relationship graph remains as a supported
   visual graph surface. Keep `BibleRenderGraphOutline` as the required
   keyboard-accessible projection alternative, not as a visual graph fallback.
@@ -869,7 +872,10 @@ Current implementation progress:
     host lifecycle tests cover open/focus/close/shutdown and command drain
     ownership; camera command queue capacity/drain is now covered. Continue
     adding targeted verification when new renderer command paths are added.
-20. Add filtering by canonical section, node type, edge kind, search, and
-    active playhead/clip context.
+20. Partially completed: add filtering by canonical section, node type, edge
+    kind, search, and active playhead/clip context. Canonical section, search,
+    active playhead/clip context, and backend-owned edge-kind request filtering
+    now exist. Visible edge-kind controls and any additional node-type control
+    still need to be wired in the Graph workspace UI.
 21. Add timeline cross-linking and active-at-playhead filtering.
 22. Remove the old 2D relationship graph once the 3D graph view is active.

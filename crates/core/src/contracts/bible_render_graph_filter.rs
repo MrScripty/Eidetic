@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::timeline::node::NodeId;
 
-use super::{BibleGraphEdge, BibleGraphNode, BibleGraphNodeId};
+use super::{BibleGraphEdge, BibleGraphEdgeKind, BibleGraphNode, BibleGraphNodeId};
 
 const DEFAULT_MAX_RENDER_GRAPH_NODES: u32 = 200;
 const MAX_RENDER_GRAPH_NODES: u32 = 500;
@@ -26,6 +26,8 @@ pub struct BibleRenderGraphProjectionRequest {
     pub active_timeline_ms: Option<u64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub search: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub edge_kinds: Vec<BibleGraphEdgeKind>,
     #[serde(default = "default_neighborhood_depth")]
     pub neighborhood_depth: u32,
     #[serde(default = "default_max_render_graph_nodes")]
@@ -42,6 +44,7 @@ impl Default for BibleRenderGraphProjectionRequest {
             selected_timeline_node_id: None,
             active_timeline_ms: None,
             search: None,
+            edge_kinds: Vec::new(),
             neighborhood_depth: DEFAULT_NEIGHBORHOOD_DEPTH,
             max_nodes: DEFAULT_MAX_RENDER_GRAPH_NODES,
             max_edges: DEFAULT_MAX_RENDER_GRAPH_EDGES,
@@ -57,6 +60,7 @@ impl BibleRenderGraphProjectionRequest {
             selected_timeline_node_id: self.selected_timeline_node_id,
             active_timeline_ms: self.active_timeline_ms,
             search: normalized_search(self.search.as_deref()),
+            edge_kinds: self.edge_kinds.clone(),
             neighborhood_depth: self.neighborhood_depth.min(MAX_NEIGHBORHOOD_DEPTH),
             max_nodes: self.max_nodes.clamp(1, MAX_RENDER_GRAPH_NODES),
             max_edges: self.max_edges.clamp(1, MAX_RENDER_GRAPH_EDGES),

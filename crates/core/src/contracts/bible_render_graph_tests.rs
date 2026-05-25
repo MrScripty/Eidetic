@@ -206,6 +206,45 @@ fn render_graph_projection_request_bounds_edges() {
 }
 
 #[test]
+fn render_graph_projection_request_filters_edges_by_kind() {
+    let ada = graph_node("node.character.ada", None, "character", "Ada", false, 1);
+    let beach = graph_node("node.place.beach", None, "place", "Beach", false, 2);
+    let tower = graph_node("node.place.tower", None, "place", "Tower", false, 3);
+
+    let projection = BibleRenderGraphProjection::from_graph_for_request(
+        vec![ada.clone(), beach.clone(), tower.clone()],
+        vec![
+            graph_edge_with_kind(
+                "edge.ada.beach",
+                &ada.id,
+                &beach.id,
+                BibleGraphEdgeKind::LocatedIn,
+                0,
+            ),
+            graph_edge_with_kind(
+                "edge.ada.tower",
+                &ada.id,
+                &tower.id,
+                BibleGraphEdgeKind::References,
+                1,
+            ),
+        ],
+        &BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(ada.id),
+            neighborhood_depth: 1,
+            edge_kinds: vec![BibleGraphEdgeKind::LocatedIn],
+            max_nodes: 10,
+            max_edges: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    );
+
+    assert_eq!(projection.edges.len(), 1);
+    assert_eq!(projection.edges[0].edge_id.as_str(), "edge.ada.beach");
+    assert_eq!(projection.edges[0].edge_kind, BibleGraphEdgeKind::LocatedIn);
+}
+
+#[test]
 fn render_graph_projection_keeps_empty_request_filters_empty() {
     let nodes = vec![
         graph_node("node.place.alpha", None, "place", "Alpha", false, 1),
@@ -348,12 +387,28 @@ fn graph_edge(
     to_node_id: &BibleGraphNodeId,
     sort_order: u32,
 ) -> BibleGraphEdge {
+    graph_edge_with_kind(
+        id,
+        from_node_id,
+        to_node_id,
+        BibleGraphEdgeKind::References,
+        sort_order,
+    )
+}
+
+fn graph_edge_with_kind(
+    id: &str,
+    from_node_id: &BibleGraphNodeId,
+    to_node_id: &BibleGraphNodeId,
+    edge_kind: BibleGraphEdgeKind,
+    sort_order: u32,
+) -> BibleGraphEdge {
     BibleGraphEdge {
         id: BibleGraphEdgeId::new(id).unwrap(),
         from_node_id: from_node_id.clone(),
         to_node_id: to_node_id.clone(),
-        edge_kind: BibleGraphEdgeKind::References,
-        label: "references".to_string(),
+        label: format!("{edge_kind:?}"),
+        edge_kind,
         directed: true,
         sort_order,
     }

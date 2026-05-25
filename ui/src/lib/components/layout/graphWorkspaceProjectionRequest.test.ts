@@ -53,4 +53,15 @@ describe('graph workspace projection request', () => {
       max_edges: 500,
     });
   });
+
+  it('includes edge kind filters when graph controls request them', () => {
+    expect(
+      graphWorkspaceProjectionRequest({
+        activeFilter: 'All',
+        edgeKinds: ['located_in', 'supports_theme'],
+      }),
+    ).toMatchObject({
+      edge_kinds: ['located_in', 'supports_theme'],
+    });
+  });
 });

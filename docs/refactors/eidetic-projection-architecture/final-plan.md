@@ -3068,6 +3068,10 @@ Standards gates:
 - Graph projections remain bounded by focus, root, search, selected timeline
   node, playhead context, neighborhood depth, `max_nodes`, and `max_edges`.
   The renderer must reject or refuse unbounded graph payloads.
+- Completed: graph projection requests can now carry backend-owned edge-kind
+  filters. Core and SQLite filtering both apply the filter before edge limits
+  so matching edges are not dropped because an earlier nonmatching edge filled
+  the bounded result window.
 - Structural edges shown for parent/child hierarchy must be projection facts or
   deterministic projection derivatives, not Bevy-invented durable graph state.
 - Selection/highlight changes restyle existing Bevy entities where practical.

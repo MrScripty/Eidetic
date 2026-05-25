@@ -83,9 +83,10 @@ pub(crate) fn load_incoming_edges(
     load_edges_for_node(conn, node_id, "to_node_id")
 }
 
-pub(crate) fn load_edges_between_nodes(
+pub(crate) fn load_edges_between_nodes_for_kinds(
     conn: &Connection,
     node_ids: &[BibleGraphNodeId],
+    edge_kinds: &[BibleGraphEdgeKind],
     limit: u32,
 ) -> Result<Vec<BibleGraphEdge>, HistoryStoreError> {
     if node_ids.is_empty() {
@@ -93,10 +94,15 @@ pub(crate) fn load_edges_between_nodes(
     }
 
     let placeholders = placeholders(node_ids.len());
+    let (edge_kind_filter, edge_kind_params) = edge_kind_filter(edge_kinds);
+    let edge_kind_clause = edge_kind_filter
+        .map(|filter| format!(" AND ({filter})"))
+        .unwrap_or_default();
     let sql = edge_select_sql(format!(
         "WHERE deleted_event_id IS NULL
             AND from_node_id IN ({placeholders})
             AND to_node_id IN ({placeholders})
+            {edge_kind_clause}
          ORDER BY sort_order ASC, label ASC, id ASC
          LIMIT ?"
     ));
@@ -104,6 +110,7 @@ pub(crate) fn load_edges_between_nodes(
         .iter()
         .chain(node_ids.iter())
         .map(|node_id| rusqlite::types::Value::from(node_id.as_str().to_string()))
+        .chain(edge_kind_params)
         .chain(std::iter::once(rusqlite::types::Value::from(i64::from(
             limit,
         ))))
@@ -116,6 +123,33 @@ pub(crate) fn load_edges_between_nodes(
         edges.push(row?);
     }
     Ok(edges)
+}
+
+fn edge_kind_filter(
+    edge_kinds: &[BibleGraphEdgeKind],
+) -> (Option<String>, Vec<rusqlite::types::Value>) {
+    if edge_kinds.is_empty() {
+        return (None, Vec::new());
+    }
+
+    let mut clauses = Vec::new();
+    let mut params = Vec::new();
+    for edge_kind in edge_kinds {
+        let kind = SqlGraphEdgeKind::from_edge_kind(edge_kind);
+        match kind.custom {
+            Some(custom) => {
+                clauses.push("(edge_kind = ? AND custom_kind = ?)".to_string());
+                params.push(rusqlite::types::Value::from(kind.kind));
+                params.push(rusqlite::types::Value::from(custom));
+            }
+            None => {
+                clauses.push("edge_kind = ?".to_string());
+                params.push(rusqlite::types::Value::from(kind.kind));
+            }
+        }
+    }
+
+    (Some(clauses.join(" OR ")), params)
 }
 
 pub(crate) fn load_edges_by_ids(

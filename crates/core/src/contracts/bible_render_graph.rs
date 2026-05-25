@@ -136,6 +136,7 @@ impl BibleRenderGraphProjection {
                 .filter(|edge| {
                     included_node_ids.contains(&edge.from_node_id)
                         && included_node_ids.contains(&edge.to_node_id)
+                        && request_matches_edge_kind(&request, edge)
                 })
                 .collect(),
             &required_edge_ids,
@@ -185,6 +186,17 @@ impl BibleRenderGraphProjection {
             influences,
         }
     }
+}
+
+fn request_matches_edge_kind(
+    request: &BibleRenderGraphProjectionRequest,
+    edge: &BibleGraphEdge,
+) -> bool {
+    request.edge_kinds.is_empty()
+        || request
+            .edge_kinds
+            .iter()
+            .any(|kind| kind == &edge.edge_kind)
 }
 
 fn required_edge_ids(influences: &[ContextInfluenceRecord]) -> BTreeSet<BibleGraphEdgeId> {

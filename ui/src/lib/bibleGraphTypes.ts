@@ -147,6 +147,7 @@ export interface BibleRenderGraphProjectionRequest {
   selected_timeline_node_id?: string | null;
   active_timeline_ms?: number | null;
   search?: string | null;
+  edge_kinds?: BibleGraphEdgeKind[];
   neighborhood_depth?: number;
   max_nodes?: number;
   max_edges?: number;

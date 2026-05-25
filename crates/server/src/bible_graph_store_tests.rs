@@ -363,12 +363,30 @@ fn seed_edge(
     to_node_id: &str,
     sort_order: u32,
 ) {
+    seed_edge_with_kind(
+        conn,
+        edge_id,
+        from_node_id,
+        to_node_id,
+        BibleGraphEdgeKind::References,
+        sort_order,
+    );
+}
+
+fn seed_edge_with_kind(
+    conn: &mut Connection,
+    edge_id: &str,
+    from_node_id: &str,
+    to_node_id: &str,
+    edge_kind: BibleGraphEdgeKind,
+    sort_order: u32,
+) {
     let command = CommandEnvelope::new(SetBibleGraphEdgeCommand {
         edge_id: BibleGraphEdgeId::new(edge_id).unwrap(),
         from_node_id: BibleGraphNodeId::new(from_node_id).unwrap(),
         to_node_id: BibleGraphNodeId::new(to_node_id).unwrap(),
-        edge_kind: BibleGraphEdgeKind::References,
-        label: "references".to_string(),
+        label: format!("{edge_kind:?}"),
+        edge_kind,
         directed: true,
         sort_order,
     });
