@@ -18,21 +18,62 @@ pub(crate) struct BoundedBibleRenderGraph {
     pub(crate) influences: Vec<ContextInfluenceRecord>,
 }
 
+struct RenderGraphQueryInput {
+    request: BibleRenderGraphProjectionRequest,
+    max_nodes: i64,
+}
+
+struct RenderGraphScope {
+    required_node_ids: BTreeSet<BibleGraphNodeId>,
+    influences: Vec<ContextInfluenceRecord>,
+}
+
 pub(crate) fn load_bounded_render_graph(
     conn: &Connection,
     request: &BibleRenderGraphProjectionRequest,
 ) -> Result<BoundedBibleRenderGraph, HistoryStoreError> {
-    let request = request.normalized();
-    let max_nodes = i64::from(request.max_nodes);
+    let input = RenderGraphQueryInput::new(request);
+    let scope = load_render_graph_scope(conn, &input)?;
+    let nodes = load_scoped_render_graph_nodes(conn, &scope, input.request.max_nodes as usize)?;
+    let node_ids: Vec<_> = nodes.iter().map(|node| node.id.clone()).collect();
+    let edges = bible_graph_edge_store::load_edges_between_nodes_for_kinds(
+        conn,
+        &node_ids,
+        &input.request.edge_kinds,
+        input.request.max_edges,
+    )?;
+
+    Ok(BoundedBibleRenderGraph {
+        nodes,
+        edges,
+        influences: scope.influences,
+    })
+}
+
+impl RenderGraphQueryInput {
+    fn new(request: &BibleRenderGraphProjectionRequest) -> Self {
+        let request = request.normalized();
+        Self {
+            max_nodes: i64::from(request.max_nodes),
+            request,
+        }
+    }
+}
+
+fn load_render_graph_scope(
+    conn: &Connection,
+    input: &RenderGraphQueryInput,
+) -> Result<RenderGraphScope, HistoryStoreError> {
+    let request = &input.request;
     let mut node_ids = BTreeSet::new();
-    let influences = load_selected_context_influences(conn, &request)?;
+    let influences = load_selected_context_influences(conn, request)?;
 
     if let Some(root_id) = &request.focused_root_id {
         node_ids.extend(load_descendant_node_ids(
             conn,
             root_id,
             request.neighborhood_depth,
-            max_nodes,
+            input.max_nodes,
         )?);
     }
 
@@ -41,12 +82,12 @@ pub(crate) fn load_bounded_render_graph(
             conn,
             selected_node_id,
             request.neighborhood_depth,
-            max_nodes,
+            input.max_nodes,
         )?);
     }
 
     if let Some(search) = &request.search {
-        node_ids.extend(load_search_node_ids(conn, search, max_nodes)?);
+        node_ids.extend(load_search_node_ids(conn, search, input.max_nodes)?);
     }
 
     node_ids.extend(
@@ -56,30 +97,27 @@ pub(crate) fn load_bounded_render_graph(
     );
     node_ids.extend(load_influenced_edge_endpoint_ids(conn, &influences)?);
 
-    if node_ids.is_empty() && should_load_default_node_ids(&request) {
-        node_ids.extend(load_default_node_ids(conn, max_nodes)?);
+    if node_ids.is_empty() && should_load_default_node_ids(request) {
+        node_ids.extend(load_default_node_ids(conn, input.max_nodes)?);
     }
 
-    let required_node_ids = node_ids.clone();
-    let ids_with_ancestors = include_ancestors(conn, &node_ids)?;
-    let nodes = limit_nodes(
-        load_nodes_by_id(conn, &ids_with_ancestors)?,
-        &required_node_ids,
-        request.max_nodes as usize,
-    );
-    let node_ids: Vec<_> = nodes.iter().map(|node| node.id.clone()).collect();
-    let edges = bible_graph_edge_store::load_edges_between_nodes_for_kinds(
-        conn,
-        &node_ids,
-        &request.edge_kinds,
-        request.max_edges,
-    )?;
-
-    Ok(BoundedBibleRenderGraph {
-        nodes,
-        edges,
+    Ok(RenderGraphScope {
+        required_node_ids: node_ids,
         influences,
     })
+}
+
+fn load_scoped_render_graph_nodes(
+    conn: &Connection,
+    scope: &RenderGraphScope,
+    max_nodes: usize,
+) -> Result<Vec<BibleGraphNode>, HistoryStoreError> {
+    let ids_with_ancestors = include_ancestors(conn, &scope.required_node_ids)?;
+    Ok(limit_nodes(
+        load_nodes_by_id(conn, &ids_with_ancestors)?,
+        &scope.required_node_ids,
+        max_nodes,
+    ))
 }
 
 fn load_selected_context_influences(

@@ -799,6 +799,10 @@ Current implementation progress:
   `active_timeline_ms`. The Graph workspace passes playhead time as projection
   request metadata, and the backend resolves active timeline clips plus their
   context influences before producing the bounded graph projection.
+- Completed: render graph query construction now separates normalized request
+  input, scope selection, scoped node loading, and edge loading inside the
+  backend projection module, with the existing projection behavior verified by
+  targeted server tests.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
@@ -809,9 +813,7 @@ Current implementation progress:
   - category mapping/coloring is duplicated and incomplete,
   - graph-local add/edit workflows are incomplete and delete commands are not
     available,
-  - visible navigation/recovery controls are incomplete,
-  - renderer rebuilds allocate fresh assets on each projection refresh,
-  - projection construction mixes scope, layout, and DTO assembly.
+  - visible navigation/recovery controls are incomplete.
 - Standards review findings to resolve before implementation completion:
   - prevent frontend/renderer ownership of backend facts or generation-affecting
     selection,
@@ -866,8 +868,8 @@ Current implementation progress:
     edge detail editing remain through the selected-node inspector. Delete
     remains blocked until backend delete commands exist and must not be
     simulated in frontend state.
-17. Refactor projection construction into query, scope, layout, and DTO helpers
-    with targeted tests.
+17. Completed: refactor projection construction into query, scope, layout, and
+    DTO helpers with targeted tests.
 18. Completed: add renderer-local mesh/material reuse for frequent projection
     refreshes.
 19. Partially completed: add lifecycle/queue/shutdown/error verification for
