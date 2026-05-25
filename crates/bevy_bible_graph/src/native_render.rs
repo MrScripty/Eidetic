@@ -22,7 +22,7 @@ use eidetic_core::contracts::{
 
 use crate::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
-    BibleGraphRendererError, build_bible_graph_visual_3d_snapshot,
+    BibleGraphRendererError, BibleGraphVisual3dEdgeClass, build_bible_graph_visual_3d_snapshot,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
@@ -134,12 +134,15 @@ pub struct BibleGraphNativeLabelBillboard;
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeEdgeVisual {
     pub edge_id: BibleGraphEdgeId,
+    pub edge_class: BibleGraphVisual3dEdgeClass,
     pub from_node_id: BibleGraphNodeId,
     pub to_node_id: BibleGraphNodeId,
     pub from_x: f32,
     pub from_y: f32,
+    pub from_z: f32,
     pub to_x: f32,
     pub to_y: f32,
+    pub to_z: f32,
     pub width: f32,
     pub stroke_color: &'static str,
     pub highlighted: bool,
@@ -437,6 +440,7 @@ fn emit_bible_graph_native_click_selection(
     windows: Query<&Window, With<PrimaryWindow>>,
     cameras: Query<(&Camera, &GlobalTransform), With<BibleGraphNativeCamera>>,
     nodes: Query<&BibleGraphNativeNodeVisual>,
+    edges: Query<&BibleGraphNativeEdgeVisual>,
     control: Option<Res<BibleGraphNativeWindowControl>>,
 ) {
     let Some(buttons) = buttons else {
@@ -460,12 +464,21 @@ fn emit_bible_graph_native_click_selection(
     let Ok(ray) = camera.viewport_to_world(camera_transform, cursor_position) else {
         return;
     };
-    let Some(node_id) = nearest_native_node_on_ray(nodes.iter(), ray) else {
-        return;
-    };
 
-    let _ =
-        push_native_command_to_control(&control, BibleGraphRendererCommand::SelectNode { node_id });
+    if let Some(node_id) = nearest_native_node_on_ray(nodes.iter(), ray) {
+        let _ = push_native_command_to_control(
+            &control,
+            BibleGraphRendererCommand::SelectNode { node_id },
+        );
+        return;
+    }
+
+    if let Some(edge_id) = nearest_selectable_native_edge_on_ray(edges.iter(), ray) {
+        let _ = push_native_command_to_control(
+            &control,
+            BibleGraphRendererCommand::SelectEdge { edge_id },
+        );
+    }
 }
 
 fn navigate_bible_graph_native_camera(
@@ -591,6 +604,71 @@ pub(crate) fn nearest_native_node_on_ray<'a>(
         .map(|(_, node_id)| node_id)
 }
 
+pub(crate) fn nearest_selectable_native_edge_on_ray<'a>(
+    edges: impl Iterator<Item = &'a BibleGraphNativeEdgeVisual>,
+    ray: Ray3d,
+) -> Option<BibleGraphEdgeId> {
+    edges
+        .filter(|edge| edge.edge_class == BibleGraphVisual3dEdgeClass::Semantic)
+        .filter_map(|edge| {
+            let from = Vec3::new(edge.from_x, edge.from_y, edge.from_z);
+            let to = Vec3::new(edge.to_x, edge.to_y, edge.to_z);
+            let ray_distance = ray_distance_to_segment(ray, from, to)?;
+            let closest_point = ray.get_point(ray_distance);
+            let segment_distance = distance_from_point_to_segment(closest_point, from, to);
+            (segment_distance <= edge.width.max(8.0))
+                .then_some((ray_distance, edge.edge_id.clone()))
+        })
+        .min_by(|(left_ray_distance, _), (right_ray_distance, _)| {
+            left_ray_distance
+                .partial_cmp(right_ray_distance)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .map(|(_, edge_id)| edge_id)
+}
+
+fn ray_distance_to_segment(ray: Ray3d, segment_start: Vec3, segment_end: Vec3) -> Option<f32> {
+    let ray_direction = *ray.direction;
+    let segment_direction = segment_end - segment_start;
+    let segment_length_squared = segment_direction.length_squared();
+    if segment_length_squared <= f32::EPSILON {
+        return None;
+    }
+
+    let ray_to_segment_start = ray.origin - segment_start;
+    let ray_segment_dot = ray_direction.dot(segment_direction);
+    let start_ray_dot = ray_to_segment_start.dot(ray_direction);
+    let start_segment_dot = ray_to_segment_start.dot(segment_direction);
+    let denominator = segment_length_squared - ray_segment_dot.powi(2);
+    let unclamped_ray_distance = if denominator.abs() <= f32::EPSILON {
+        -start_ray_dot
+    } else {
+        (ray_segment_dot * start_segment_dot - start_ray_dot * segment_length_squared) / denominator
+    };
+    let ray_distance = unclamped_ray_distance.max(0.0);
+    let segment_position = ((ray_segment_dot * ray_distance + start_segment_dot)
+        / segment_length_squared)
+        .clamp(0.0, 1.0);
+    let closest_segment_point = segment_start + segment_direction * segment_position;
+
+    Some(
+        (closest_segment_point - ray.origin)
+            .dot(ray_direction)
+            .max(0.0),
+    )
+}
+
+fn distance_from_point_to_segment(point: Vec3, segment_start: Vec3, segment_end: Vec3) -> f32 {
+    let segment_direction = segment_end - segment_start;
+    let segment_length_squared = segment_direction.length_squared();
+    if segment_length_squared <= f32::EPSILON {
+        return point.distance(segment_start);
+    }
+    let segment_position =
+        ((point - segment_start).dot(segment_direction) / segment_length_squared).clamp(0.0, 1.0);
+    point.distance(segment_start + segment_direction * segment_position)
+}
+
 fn apply_bible_graph_native_projection(world: &mut World) {
     let Some(control) = world
         .get_resource::<BibleGraphNativeWindowControl>()
@@ -652,12 +730,15 @@ pub fn rebuild_bible_graph_native_visuals(
             BibleGraphNativeVisualEntity,
             BibleGraphNativeEdgeVisual {
                 edge_id: edge.edge_id.clone(),
+                edge_class: edge.edge_class,
                 from_node_id: edge.from_node_id,
                 to_node_id: edge.to_node_id,
                 from_x: edge.from_position.x,
                 from_y: edge.from_position.y,
+                from_z: edge.from_position.z,
                 to_x: edge.to_position.x,
                 to_y: edge.to_position.y,
+                to_z: edge.to_position.z,
                 width: edge.radius,
                 stroke_color: edge.stroke_color,
                 highlighted: edge.highlighted,

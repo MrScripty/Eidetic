@@ -586,6 +586,64 @@ fn controlled_native_window_uses_3d_ray_node_hit_testing() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_uses_3d_ray_semantic_edge_hit_testing() {
+    use crate::native_render::nearest_selectable_native_edge_on_ray;
+    use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_edge(node_id));
+    app.update();
+
+    let mut edges = app.world_mut().query::<&BibleGraphNativeEdgeVisual>();
+    assert_eq!(
+        nearest_selectable_native_edge_on_ray(
+            edges.iter(app.world()),
+            Ray3d::new(Vec3::new(0.0, 75.0, 900.0), Dir3::NEG_Z)
+        ),
+        Some(edge_id)
+    );
+    assert_eq!(
+        nearest_selectable_native_edge_on_ray(
+            edges.iter(app.world()),
+            Ray3d::new(Vec3::new(220.0, 75.0, 900.0), Dir3::NEG_Z)
+        ),
+        None
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_does_not_pick_structural_edges_as_relationships() {
+    use crate::native_render::nearest_selectable_native_edge_on_ray;
+    use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
+
+    let child_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_parent_node(child_id));
+    app.update();
+
+    let mut edges = app.world_mut().query::<&BibleGraphNativeEdgeVisual>();
+    assert_eq!(
+        nearest_selectable_native_edge_on_ray(
+            edges.iter(app.world()),
+            Ray3d::new(Vec3::new(160.0, 0.0, 900.0), Dir3::NEG_Z)
+        ),
+        None
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_billboards_node_labels_to_camera() {
     use bevy::prelude::{Plugin, Quat, Transform, With};
 
