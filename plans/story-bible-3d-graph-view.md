@@ -441,11 +441,11 @@ Current implementation progress:
 - Completed: no separate old 2D bible relationship graph remains as a supported
   visual graph surface. Keep `BibleRenderGraphOutline` as the required
   keyboard-accessible projection alternative, not as a visual graph fallback.
-- Remaining: active playhead/clip context projection controls.
-- Blocker found: active timeline clip filtering is currently keyed only by
-  `selected_timeline_node_id`. True playhead-driven graph filtering needs a
-  backend projection contract for active time or backend-derived active clip
-  selection before Bevy/Svelte can consume it without owning business logic.
+- Completed: active playhead/clip context projections now use
+  `active_timeline_ms`. The Graph workspace passes playhead time as projection
+  request metadata, and the backend resolves active timeline clips plus their
+  context influences before producing the bounded graph projection.
+- Remaining: none for the current Milestone 9 MVP scope.
 
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
