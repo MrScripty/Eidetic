@@ -11,7 +11,6 @@
   } from '$lib/stores/bible.svelte.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import {
-    bibleRenderGraphRequestForWorkspaceSelection,
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
@@ -29,6 +28,9 @@
   } from './graphWorkspaceItems.js';
   import GraphRendererWindowControls from './GraphRendererWindowControls.svelte';
   import { ensureGraphWorkspaceScaffoldProjection } from './graphWorkspaceBootstrap.js';
+  import { graphWorkspaceProjectionRequest } from './graphWorkspaceProjectionRequest.js';
+  import BibleGraphCategoryFilters from '../sidebar/bible/BibleGraphCategoryFilters.svelte';
+  import type { BibleGraphFilter } from '../sidebar/bible/bibleGraphCategories.js';
 
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graph = $derived(renderGraphProjection?.payload ?? null);
@@ -38,12 +40,16 @@
   const projectedSelectedGraphNodeId = $derived(graph?.selected_node_id ?? null);
   const graphSelection = $derived(bibleState.graphSelection);
   let showOutline = $state(false);
+  let graphSearchQuery = $state('');
+  let activeFilter: BibleGraphFilter = $state('All');
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
   const renderGraphRequest = $derived(
-    bibleRenderGraphRequestForWorkspaceSelection({
+    graphWorkspaceProjectionRequest({
       selectedTimelineNodeId: editorState.selectedNodeId,
       selectedGraphNodeId: selectedGraphNodeId,
+      activeFilter,
+      search: graphSearchQuery,
     }),
   );
   const edgeItems = $derived(graph ? graphWorkspaceEdgeItems(graph) : []);
@@ -130,16 +136,28 @@
       <div class="graph-renderer-shell">
         <GraphRendererWindowControls graphProjectionRequest={renderGraphRequest} />
         <div class="graph-renderer-primary" aria-label="Bevy graph renderer workspace">
-          <button
-            type="button"
-            class="outline-toggle"
-            aria-expanded={showOutline}
-            onclick={() => {
-              showOutline = !showOutline;
-            }}
-          >
-            {showOutline ? 'Hide outline' : 'Show outline'}
-          </button>
+          <div class="graph-controls" aria-label="Graph projection controls">
+            <input
+              class="search-input"
+              type="text"
+              placeholder="Search graph..."
+              bind:value={graphSearchQuery}
+            />
+            <BibleGraphCategoryFilters
+              {activeFilter}
+              onselect={(filter) => (activeFilter = filter)}
+            />
+            <button
+              type="button"
+              class="outline-toggle"
+              aria-expanded={showOutline}
+              onclick={() => {
+                showOutline = !showOutline;
+              }}
+            >
+              {showOutline ? 'Hide outline' : 'Show outline'}
+            </button>
+          </div>
         </div>
         {#if showOutline}
           <div class="graph-outline-inspector">
@@ -226,6 +244,33 @@
     flex: 1;
     padding: 10px;
     background: var(--color-bg-primary);
+  }
+
+  .graph-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: min(100%, 760px);
+    padding: 7px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 5px;
+    background: var(--color-bg-surface);
+  }
+
+  .search-input {
+    width: min(220px, 28vw);
+    min-width: 120px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    padding: 6px 8px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: 0.78rem;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
   }
 
   .outline-toggle {
