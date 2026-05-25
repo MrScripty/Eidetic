@@ -8,6 +8,7 @@ use thiserror::Error;
 
 mod scene;
 mod visual;
+mod visual_3d;
 
 #[cfg(feature = "native_render")]
 mod native_render;
@@ -34,6 +35,10 @@ pub use scene::{
 pub use visual::{
     BibleGraphVisualEdge, BibleGraphVisualNode, BibleGraphVisualSnapshot,
     build_bible_graph_visual_snapshot,
+};
+pub use visual_3d::{
+    BibleGraphVisual3dEdge, BibleGraphVisual3dEdgeClass, BibleGraphVisual3dNode,
+    BibleGraphVisual3dSnapshot, build_bible_graph_visual_3d_snapshot,
 };
 
 pub const BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;

@@ -242,6 +242,83 @@ fn renderer_app_exposes_projection_derived_visual_snapshot() {
     assert_eq!(snapshot.edges[0].stroke_color, "#f2c94c");
 }
 
+#[test]
+fn renderer_app_derives_3d_structural_edges_from_parent_nodes() {
+    let root_id = BibleGraphNodeId::new("canonical.characters").unwrap();
+    let child_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let projection = BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: None,
+        selected_timeline_node_id: None,
+        nodes: vec![
+            BibleRenderGraphNode {
+                node_id: root_id.clone(),
+                parent_id: None,
+                schema_key: BibleGraphSchemaKey::new("canonical.root.characters").unwrap(),
+                label: "Characters".to_string(),
+                system_owned: true,
+                sort_order: 0,
+                depth: 0,
+                position: BibleRenderGraphPosition {
+                    x: 0.0,
+                    y: 0.0,
+                    z: -80.0,
+                },
+            },
+            BibleRenderGraphNode {
+                node_id: child_id.clone(),
+                parent_id: Some(root_id.clone()),
+                schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                label: "Ada".to_string(),
+                system_owned: false,
+                sort_order: 1,
+                depth: 1,
+                position: BibleRenderGraphPosition {
+                    x: 320.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+            },
+        ],
+        edges: Vec::new(),
+        neighborhoods: Vec::new(),
+        influences: Vec::new(),
+    };
+
+    let snapshot = build_bible_graph_visual_3d_snapshot(&projection);
+
+    assert_eq!(snapshot.nodes.len(), 2);
+    assert_eq!(snapshot.edges.len(), 1);
+    assert_eq!(
+        snapshot.edges[0].edge_class,
+        BibleGraphVisual3dEdgeClass::Structural
+    );
+    assert_eq!(snapshot.edges[0].from_node_id, root_id);
+    assert_eq!(snapshot.edges[0].to_node_id, child_id);
+    assert!(snapshot.nodes[0].label_visible);
+}
+
+#[test]
+fn renderer_app_3d_visual_snapshot_highlights_selected_neighborhood() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let mut projection = projection_with_edge(node_id.clone());
+    projection.selected_node_id = Some(node_id.clone());
+
+    let snapshot = build_bible_graph_visual_3d_snapshot(&projection);
+
+    assert_eq!(snapshot.edges.len(), 1);
+    assert_eq!(
+        snapshot.edges[0].edge_class,
+        BibleGraphVisual3dEdgeClass::Semantic
+    );
+    assert_eq!(snapshot.edges[0].edge_id, edge_id);
+    assert!(snapshot.edges[0].selected);
+    assert!(snapshot.edges[0].highlighted);
+    assert!(snapshot.nodes.iter().any(|node| node.selected));
+    assert!(snapshot.nodes.iter().all(|node| node.label_visible));
+}
+
 #[cfg(feature = "native_render")]
 #[test]
 fn native_render_plugin_records_borderless_window_intent() {

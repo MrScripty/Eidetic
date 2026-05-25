@@ -19,6 +19,11 @@ Current scope:
 - Derive disposable visual primitives for nodes and edges, including positions,
   radii, colors, widths, and highlight flags, so native render systems do not
   re-derive graph styling in Svelte or desktop command code.
+- Derive renderer-neutral 3D visual snapshots for Milestone 9, including
+  selected/highlighted/dimmed node states, bounded-label visibility, semantic
+  graph edges, and structural parent/child edges derived from backend
+  projections. These snapshots are disposable renderer inputs, not durable
+  graph facts.
 - Expose projection-provided neighborhood indexes for host-side graph highlighting.
 - Validate selectable/inspectable graph node, edge, and influence IDs before
   emitting commands.
@@ -75,6 +80,7 @@ Future scope:
 - Native desktop host lifecycle is owned by `eidetic-desktop`; the leaf
   renderer remains responsible only for projection consumption, ECS state, and
   validated renderer commands.
-- Camera, force-layout, and interaction state.
+- True 3D Bevy camera, mesh, edge-geometry, label, force-layout, and
+  interaction state built from the renderer-neutral 3D snapshot boundary.
 - Pointer, keyboard, and accessibility command flows.
 - Backend-confirmed graph mutation commands.
