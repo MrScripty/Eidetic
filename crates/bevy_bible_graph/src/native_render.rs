@@ -302,6 +302,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, emit_bible_graph_native_keyboard_commands);
         app.add_systems(Update, billboard_bible_graph_native_labels);
         app.add_systems(Update, navigate_bible_graph_native_camera);
+        app.add_systems(Update, orbit_bible_graph_native_camera);
         app.add_systems(Update, frame_bible_graph_native_camera_on_selected);
     }
 }
@@ -559,6 +560,39 @@ fn frame_bible_graph_native_camera_on_selected(
         native_camera_frame_selected_translation(camera_transform.translation, selected_node);
 }
 
+fn orbit_bible_graph_native_camera(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    time: Option<Res<Time>>,
+    nodes: Query<&BibleGraphNativeNodeVisual>,
+    mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    let Some(time) = time else {
+        return;
+    };
+    let orbit_left = keys.pressed(KeyCode::KeyZ);
+    let orbit_right = keys.pressed(KeyCode::KeyC);
+    if orbit_left == orbit_right {
+        return;
+    }
+    let Ok(mut camera_transform) = cameras.single_mut() else {
+        return;
+    };
+    let orbit_target = nodes
+        .iter()
+        .find(|node| node.selected)
+        .map(|node| Vec3::new(node.x, node.y, node.z))
+        .unwrap_or(Vec3::ZERO);
+    let direction = if orbit_left { 1.0 } else { -1.0 };
+    let angle_delta = direction * 0.85 * time.delta_secs();
+
+    camera_transform.translation =
+        native_camera_orbit_translation(camera_transform.translation, orbit_target, angle_delta);
+    camera_transform.look_at(orbit_target, Vec3::Y);
+}
+
 pub(crate) fn native_camera_navigation_delta(
     pan_left: bool,
     pan_right: bool,
@@ -613,6 +647,21 @@ pub(crate) fn native_camera_frame_selected_translation(
         selected_node.x,
         selected_node.y,
         current_translation.z.max(selected_node.z + 220.0),
+    )
+}
+
+pub(crate) fn native_camera_orbit_translation(
+    current_translation: Vec3,
+    orbit_target: Vec3,
+    angle_delta_radians: f32,
+) -> Vec3 {
+    let relative = current_translation - orbit_target;
+    let (sin_delta, cos_delta) = angle_delta_radians.sin_cos();
+
+    Vec3::new(
+        orbit_target.x + relative.x * cos_delta + relative.z * sin_delta,
+        current_translation.y,
+        orbit_target.z - relative.x * sin_delta + relative.z * cos_delta,
     )
 }
 

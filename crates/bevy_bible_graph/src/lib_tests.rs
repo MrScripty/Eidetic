@@ -825,6 +825,22 @@ fn native_camera_frame_selected_moves_camera_over_selected_node() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_camera_orbit_rotates_camera_around_target() {
+    use crate::native_render::native_camera_orbit_translation;
+    use bevy::prelude::Vec3;
+    use std::f32::consts::FRAC_PI_2;
+
+    let target = Vec3::new(100.0, 20.0, 40.0);
+    let next_translation =
+        native_camera_orbit_translation(Vec3::new(100.0, -60.0, 340.0), target, FRAC_PI_2);
+
+    assert!((next_translation.x - 400.0).abs() < 0.001);
+    assert_eq!(next_translation.y, -60.0);
+    assert!((next_translation.z - 40.0).abs() < 0.001);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_node_selection_commands() {
     use bevy::prelude::Plugin;
 
