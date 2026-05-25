@@ -430,10 +430,15 @@ Current implementation progress:
 - Completed: semantic edge picking, native ECS selection/highlight/dimmed state,
   backend-derived label visibility, frame-selected camera navigation, and typed
   clear-selection commands.
-- Remaining: canonical scaffold visibility in new projects, orbit navigation,
-  filters/search/playhead projections, richer visual styling for selected and
-  dimmed native materials, edge detail integration verification, and removal of
-  the old 2D relationship graph after the Bevy graph covers target interactions.
+- Completed: Graph workspace bootstrap ensures backend-owned canonical roots
+  before loading render projections, so new projects show the canonical scaffold.
+- Completed: native orbit camera navigation and native selected/highlighted/
+  dimmed material styling.
+- Completed: Graph workspace search and category controls request bounded
+  backend render projections rather than filtering durable graph facts locally.
+- Remaining: active playhead/clip context projection controls, edge detail
+  integration verification, and removal of the old 2D relationship graph after
+  the Bevy graph covers target interactions.
 
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
