@@ -22,7 +22,7 @@ use eidetic_core::contracts::{
 
 use crate::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
-    BibleGraphRendererError, build_bible_graph_visual_snapshot,
+    BibleGraphRendererError, build_bible_graph_visual_3d_snapshot,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
@@ -623,7 +623,7 @@ pub fn rebuild_bible_graph_native_visuals(
         return;
     }
 
-    let snapshot = build_bible_graph_visual_snapshot(projection);
+    let snapshot = build_bible_graph_visual_3d_snapshot(projection);
     let node_count = snapshot.nodes.len();
     let edge_count = snapshot.edges.len();
 
@@ -639,7 +639,7 @@ pub fn rebuild_bible_graph_native_visuals(
         let edge_midpoint_x = (edge.from_position.x + edge.to_position.x) / 2.0;
         let edge_midpoint_y = (edge.from_position.y + edge.to_position.y) / 2.0;
         let edge_midpoint_z = (edge.from_position.z + edge.to_position.z) / 2.0;
-        let edge_thickness = edge.width.max(1.0);
+        let edge_thickness = edge.radius.max(1.0);
         let edge_mesh = {
             let mut meshes = world.resource_mut::<Assets<Mesh>>();
             meshes.add(Cuboid::new(edge_length, edge_thickness, edge_thickness))
@@ -658,7 +658,7 @@ pub fn rebuild_bible_graph_native_visuals(
                 from_y: edge.from_position.y,
                 to_x: edge.to_position.x,
                 to_y: edge.to_position.y,
-                width: edge.width,
+                width: edge.radius,
                 stroke_color: edge.stroke_color,
                 highlighted: edge.highlighted,
             },

@@ -24,6 +24,9 @@ Current scope:
   graph edges, and structural parent/child edges derived from backend
   projections. These snapshots are disposable renderer inputs, not durable
   graph facts.
+- The native Bevy scene consumes that 3D visual snapshot boundary directly, so
+  structural parent/child edges render even when a sparse projection has no
+  explicit semantic relationship edges.
 - Expose projection-provided neighborhood indexes for host-side graph highlighting.
 - Validate selectable/inspectable graph node, edge, and influence IDs before
   emitting commands.

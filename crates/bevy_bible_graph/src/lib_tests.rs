@@ -508,6 +508,44 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_renders_projection_derived_structural_edges() {
+    use bevy::prelude::{Plugin, With};
+
+    let child_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_parent_node(child_id));
+
+    app.update();
+
+    assert_eq!(
+        control.native_visual_counts(),
+        BibleGraphNativeVisualStatus {
+            node_count: 2,
+            edge_count: 1
+        }
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeEdgeVisual>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::Mesh3d>>()
+            .iter(app.world())
+            .count(),
+        3
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_uses_3d_ray_node_hit_testing() {
     use crate::native_render::nearest_native_node_on_ray;
     use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
@@ -923,6 +961,48 @@ fn projection_with_node(node_id: BibleGraphNodeId) -> BibleRenderGraphProjection
                 z: 0.0,
             },
         }],
+        edges: Vec::new(),
+        neighborhoods: Vec::new(),
+        influences: Vec::new(),
+    }
+}
+
+fn projection_with_parent_node(child_id: BibleGraphNodeId) -> BibleRenderGraphProjection {
+    let root_id = BibleGraphNodeId::new("canonical.characters").unwrap();
+    BibleRenderGraphProjection {
+        focused_root_id: None,
+        selected_node_id: None,
+        selected_timeline_node_id: None,
+        nodes: vec![
+            BibleRenderGraphNode {
+                node_id: root_id.clone(),
+                parent_id: None,
+                schema_key: BibleGraphSchemaKey::new("canonical.root.characters").unwrap(),
+                label: "Characters".to_string(),
+                system_owned: true,
+                sort_order: 0,
+                depth: 0,
+                position: BibleRenderGraphPosition {
+                    x: 0.0,
+                    y: 0.0,
+                    z: -80.0,
+                },
+            },
+            BibleRenderGraphNode {
+                node_id: child_id,
+                parent_id: Some(root_id),
+                schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                label: "Ada".to_string(),
+                system_owned: false,
+                sort_order: 1,
+                depth: 1,
+                position: BibleRenderGraphPosition {
+                    x: 320.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+            },
+        ],
         edges: Vec::new(),
         neighborhoods: Vec::new(),
         influences: Vec::new(),
