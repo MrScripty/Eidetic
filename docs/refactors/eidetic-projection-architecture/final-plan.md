@@ -54,7 +54,7 @@ Implementation must comply with:
 ## Standards Compliance Gates
 
 This 2026-05-22 standards pass makes the following gates non-negotiable for
-Milestones 8-11 and their blast radius.
+Milestones 8-12 and their blast radius.
 
 Architecture and package boundaries:
 
@@ -1097,7 +1097,7 @@ Discovered issues:
 - Resolved: `ui/src/lib/components/editor/BeatEditor.svelte` exceeded the component decomposition threshold after child-planning work. The editor was split into focused header, child-context, planning-action, notes, and prompt-preview components; `BeatEditor.svelte` now stays under the threshold and the unused oversized legacy `BeatPlanEditor.svelte` was removed.
 - Resolved: `crates/server/src/routes/ai.rs` exceeded the 500-line decomposition threshold after durable child-plan work. AI generation entrypoints, generation runtime/persistence helpers, child planning, context preview, config/status, and support helpers were split into focused modules, with each touched AI route module under the decomposition threshold.
 - Resolved: the managed diffusion runtime pulled Python/PyTorch into normal desktop startup even though Eidetic should use external inference. The server no longer compiles or spawns diffusion/PyO3 code, the launcher no longer provisions Python packages, the frontend no longer calls diffusion routes, and text generation now has a local llama.cpp adapter for an externally managed server.
-- Moved to Milestone 10: Milestone 6 exposed that valence/arousal overlays have
+- Moved to Milestone 11: Milestone 6 exposed that valence/arousal overlays have
   no canonical backend source of truth for valence, arousal, mood, or affect
   scores. Affect data now has its own milestone after the bible graph/context
   influence surface and before timeline renderer overlay work so Bevy never
@@ -2425,11 +2425,14 @@ Current implementation status:
 
 Current open blockers:
 
-- The central graph workspace still shows the Svelte semantic outline/list as
-  the visible graph surface. The floating Bevy graph window now has rendered
-  node/edge primitives, but the old outline cannot be demoted until Bevy covers
-  selection, inspection, filtering, navigation, focus, close, and reopen under
-  backend-owned status.
+- The projection, context, and floating renderer ownership foundation is in
+  place, but the actual product graph experience is not complete. The current
+  floating Bevy window is a 2D/sprite-based native renderer proof with basic
+  labels, colors, selection, panning, lifecycle, and projection handoff. It is
+  not yet the target 3D graph.
+- A dedicated 3D bible graph experience milestone now follows this milestone
+  before agent harness work. Agent tooling must not depend on the graph being
+  "done" until that milestone provides a usable 3D visual surface.
 
 Standards compliance review:
 
@@ -2661,11 +2664,12 @@ Remaining implementation order:
 
 1. Keep Svelte graph filters, details, review, and semantic outline
    projection-only as secondary controls/accessibility surfaces.
-2. Milestone 8 is implementation-complete for backend-owned graph projection
-   delivery and native renderer ownership. Future visual refinement should
-   enter as explicit graph-renderer follow-up tasks or through Milestone 9
-   agent harness/tooling, not by reintroducing fallback renderer paths or
-   frontend-owned graph state.
+2. Treat Milestone 8 as implementation-complete only for backend-owned graph
+   projection delivery, context influence projection, and native floating
+   renderer ownership.
+3. Move product graph work into Milestone 9: true 3D scene, 3D layout,
+   navigation, edge readability, labels, selection highlighting, and usable
+   graph editing/inspection workflows.
 
 Standards gates:
 
@@ -2946,29 +2950,173 @@ Re-plan triggers:
 
 Exit criteria:
 
-- The bible graph is visible as a bounded Bevy projection in an app-managed
-  floating native renderer window with Svelte detail/filter/review controls in
-  the main shell.
-- Interactive graph projections are request-shaped and bounded; the default
-  graph workspace does not load or lay out the entire bible unless the user
-  explicitly requests a full diagnostic/export view.
-- The graph has an explicit central workspace placement, split/editor mode, and
-  Svelte side panels for controls/details while the bottom timeline remains
-  available to drive playhead/clip influence highlighting.
-- The graph renderer host is reusable for the later timeline renderer, with
-  shared lifecycle, focus, input-routing, projection-subscription, and
-  command-drain contracts.
-- The selected playhead/clip can show which bible nodes, edges, and parent
-  context layers are actively influencing that point in the timeline.
-- Premise/act/sequence/scene/beat/shot context refinement is represented as
-  traceable backend-owned context evaluations and influence records.
-- The shell/layout refactor keeps graph workspace, split view, right inspector,
-  shortcuts, and bottom timeline understandable as separate owners instead of
-  expanding `AppShell` into a larger coordinator.
+- Backend-owned bible render graph, context stack, context evaluation, and
+  influence projections exist and are bounded, reloadable, and validated.
+- The floating Bevy graph renderer host is owned by the desktop composition
+  root, has typed lifecycle/status, bounded command delivery, deterministic
+  teardown, and projection refresh coalescing.
+- Svelte graph controls/details/outline remain projection-only secondary
+  surfaces and do not own durable graph state.
 - The old 2D SVG relationship graph is removed or no longer a supported graph
   view.
+- The remaining user-facing 3D graph requirements are explicitly carried by
+  Milestone 9 instead of being hidden as follow-up polish.
 
-## Milestone 9: Agent Harness And Graph Tooling
+## Milestone 9: Native 3D Bible Graph Experience
+
+Purpose:
+
+- Turn the renderer foundation from Milestone 8 into a usable 3D spatial graph
+  for the story bible before agent tooling depends on graph interaction.
+- Use `/media/jeremy/OrangeCream/Linux Software/repos/owned/developer-tooling/whip-docs/`
+  as a visual and interaction reference, especially `src/lib/graph-v0/`, while
+  implementing the Eidetic graph in Bevy with Eidetic colors and backend-owned
+  projection contracts.
+- Keep the graph as an inspector/editor surface for backend-owned bible data.
+  Bevy owns transient camera, hover, animation, selection preview, and local
+  layout simulation only.
+
+Tasks:
+
+- Replace the current 2D/sprite renderer proof with a true 3D Bevy graph scene:
+  `Camera3d`, 3D node meshes, depth-aware positions, 3D edge geometry, lighting,
+  and bounds-aware framing.
+- Render structural edges from backend projections so canonical roots and
+  parent/child relationships are visible even before the user adds semantic
+  bible relationships.
+- Render explicit bible graph edges with distinct styles from structural edges:
+  semantic relationship edges, timeline/context edges, influence edges, and
+  proposal edges must be visually distinguishable.
+- Add bounded label behavior modeled after the whip-docs graph: labels for
+  selected/focused nodes, nearby nodes, canonical roots, and search matches;
+  avoid labeling every distant node by default.
+- Add selection highlighting: selected node, incident edges, adjacent nodes,
+  second-level neighborhood labels, graph-distance dimming, and selected edge/
+  influence highlighting.
+- Add usable camera/navigation controls: orbit, pan, zoom, frame selection,
+  focus selected neighborhood, clear focus, and keyboard graph navigation.
+- Add tested hit testing for nodes and edges using Bevy ray picking or an
+  equivalent renderer-local selection index. Selection output must still become
+  typed backend/desktop renderer commands.
+- Keep Svelte as the durable editor surface for add/edit/remove node fields,
+  create/remove edges, inspect details, review proposals, and keyboard
+  alternatives. Direct Bevy editing can be added only as backend commands that
+  wait for confirmed projections.
+- Add graph workspace controls for view mode, category filter, edge-kind
+  filter, search, selected-clip/playhead context, frame selected, and focus
+  neighborhood. These controls may own local drafts only.
+- Add active-context and playhead/clip highlighting so selecting a timeline
+  clip can show which bible nodes, edges, parent contexts, and distilled
+  context layers influence that point.
+- Add empty-bible usability: canonical scaffold/category roots are visible,
+  adding the first character/location/object is obvious from Svelte controls,
+  and the graph never appears as disconnected unexplained squares.
+- Port the reference architecture conceptually into Rust/Bevy: pure layout
+  helpers, selection index, neighborhood/highlight derivation, visibility
+  filtering, camera framing helpers, and renderer systems separated from graph
+  domain services.
+- Preserve the shared floating renderer host from Milestone 8. Do not add a
+  second renderer lifecycle, local HTTP/WebSocket transport, WASM bridge,
+  WebView child-surface path, split-process renderer sidecar, or frontend-owned
+  projection writer.
+
+Implementation order:
+
+- Define the render-facing visual model for 3D nodes, structural edges,
+  semantic edges, labels, selected/highlighted/dimmed states, and camera
+  framing before changing Bevy systems.
+- Add pure Rust layout and selection-index helpers adapted from the whip-docs
+  concepts, with tests independent of Bevy rendering.
+- Extend backend `BibleRenderGraph` projections only if the current contract
+  lacks renderer-neutral data required for structural edges, edge classes,
+  label priority, or active context highlights. Keep all such fields bounded
+  and validated.
+- Replace the native 2D graph scene with the smallest true 3D slice: canonical
+  roots, one user node, one structural edge, one semantic edge, labels for
+  focused nodes, orbit/pan/zoom, and node selection.
+- Add neighborhood highlighting, edge selection, framing, focus mode, and
+  search/filter-driven projection refresh after the basic 3D slice is stable.
+- Add playhead/selected-clip influence highlighting after graph selection and
+  labels are usable.
+- Keep Svelte detail/edit/review controls available throughout. Bevy visual
+  actions must have semantic Svelte command alternatives for accessibility.
+- Update `crates/bevy_bible_graph/README.md`, layout/sidebar READMEs, and this
+  plan whenever ownership, view modes, renderer commands, or dependency
+  features change.
+
+Standards gates:
+
+- Bevy graph code remains a leaf renderer. `eidetic-core` and `eidetic-server`
+  must not depend on Bevy, Tauri runtime types, renderer ECS components, or
+  platform windowing crates.
+- Durable graph facts, edges, fields, snapshots, proposals, context
+  evaluations, influence records, saved layout decisions, and history remain
+  backend-owned SQLite state changed only through idempotent backend commands.
+- Renderer-local camera, hover, animation, temporary layout simulation,
+  selection preview, and focus mode are disposable and rebuildable from
+  backend projections.
+- Graph projections remain bounded by focus, root, search, selected timeline
+  node, playhead context, neighborhood depth, `max_nodes`, and `max_edges`.
+  The renderer must reject or refuse unbounded graph payloads.
+- Structural edges shown for parent/child hierarchy must be projection facts or
+  deterministic projection derivatives, not Bevy-invented durable graph state.
+- Selection/highlight changes restyle existing Bevy entities where practical.
+  Full rebuilds are reserved for graph/projection/layout changes and must stay
+  within documented bounded caps unless keyed diffing covers the path.
+- Renderer commands for node selection, edge selection, focus, inspect,
+  navigation, and any future Bevy-initiated edits use typed IDs and strict
+  validation at the desktop/backend boundary.
+- Svelte may own draft form fields, filter inputs, selected transient view
+  controls, and projection caches. It must not optimistically mutate persisted
+  bible graph state.
+- Any new Bevy render, mesh, text, picking, asset, or material features require
+  dependency review in the owning leaf crate and proof that core/server remain
+  free of renderer dependencies.
+- Platform behavior remains behind the desktop renderer strategy boundary from
+  Milestone 8. This milestone must not reintroduce embedded viewport,
+  child-surface, X11-only, or raw-window-handle production paths.
+
+Verification:
+
+- Layout tests prove deterministic 3D positions for canonical tree,
+  weighted/radial, layered, and focused-neighborhood layouts.
+- Selection-index tests prove incident-edge, adjacent-node, second-level
+  neighborhood, visible-edge filtering, and graph-distance highlighting without
+  rescanning all edges per selection.
+- Renderer tests or smoke checks prove the 3D graph opens, renders nodes,
+  renders structural and semantic edges, shows bounded labels, selects nodes
+  and edges, frames selection, and closes/reopens through the Milestone 8 host.
+- Projection tests prove empty/new projects show canonical scaffold edges and
+  adding nodes/edges through Svelte commands updates the 3D projection after
+  backend confirmation.
+- Frontend tests prove graph filters/details/review/edit controls remain
+  projection-only and do not become a second graph owner.
+- Interaction smoke checks cover orbit, pan, zoom, frame selected, clear focus,
+  keyboard navigation, node click, edge click, and Svelte keyboard alternatives.
+- Active-context tests prove selecting a timeline clip/playhead context
+  highlights the graph nodes, edges, and parent context layers that influenced
+  that point.
+- Dependency checks prove Bevy feature expansion stays isolated to renderer
+  crates and desktop composition code.
+
+Exit criteria:
+
+- The bible graph is visible as an actual 3D Bevy graph in an app-managed
+  floating native renderer window.
+- A new project shows a meaningful canonical scaffold instead of disconnected
+  blank/square nodes.
+- A user can add bible nodes and edges through Svelte, see them appear in the
+  3D graph, select nodes/edges in Bevy, and inspect/edit details in Svelte.
+- The graph supports orbit/pan/zoom/frame/focus navigation and readable
+  bounded labels.
+- Selection highlights neighborhoods and dims unrelated graph regions.
+- Selected timeline/playhead context can highlight active graph influence.
+- The Svelte outline remains a secondary semantic/accessibility inspector, not
+  the primary graph surface and not a fallback renderer path.
+- The graph is usable enough that Milestone 10 agent harness/tooling can build
+  on graph/context projections without hiding basic graph usability gaps.
+
+## Milestone 10: Agent Harness And Graph Tooling
 
 Tasks:
 
@@ -3009,8 +3157,8 @@ Tasks:
   premise plus act plus sequence context, and lower layers consume distilled
   parent context instead of re-evaluating the whole graph by default.
 - Surface harness-generated graph proposals and context evaluations through the
-  Milestone 8 graph/context projections so users can inspect what the AI used
-  and why.
+  Milestone 8 graph/context projections and Milestone 9 graph experience so
+  users can inspect what the AI used and why.
 
 Workflow model:
 
@@ -3120,7 +3268,7 @@ Exit criteria:
 - The harness remains provider-independent for llama.cpp/Pumas now and future
   Pantograph integration later.
 
-## Milestone 10: Affect Model And Prompting Semantics
+## Milestone 11: Affect Model And Prompting Semantics
 
 Tasks:
 
@@ -3219,7 +3367,7 @@ Exit criteria:
 - Undo/redo and before/after review can trace affect changes and their
   downstream influence.
 
-## Milestone 11: Bevy Timeline Renderer
+## Milestone 12: Bevy Timeline Renderer
 
 Tasks:
 
@@ -3258,7 +3406,7 @@ Implementation order:
 - Add pan/zoom/playhead/selection/move/resize/split/delete/create interactions
   through backend-confirmed commands before adding arcs, relationship curves,
   or affect overlays.
-- Add affect overlays only after Milestone 10 provides backend-owned affect
+- Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
 - Remove the DOM/SVG timeline renderer and its tests only after Bevy and
   Svelte accessibility alternatives cover the target interactions.

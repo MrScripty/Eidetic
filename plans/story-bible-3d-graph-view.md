@@ -33,6 +33,22 @@ The graph should help users see:
 
 This should complement the normal sidebar/tree/detail editor. It should not replace structured editing forms.
 
+## Current Status And Milestone Boundary
+
+The current floating Bevy bible graph window proves native renderer lifecycle,
+projection handoff, basic labels/colors, click selection, and simple panning.
+It is not the target 3D graph experience yet. The current renderer still uses a
+2D camera and sprite/text primitives, so it should be treated as Milestone 8
+renderer-host infrastructure rather than a completed graph product.
+
+The next graph milestone is the native 3D bible graph experience:
+
+- replace the 2D/sprite proof with a true 3D Bevy scene,
+- render structural and semantic edges clearly,
+- make labels, selection, highlighting, and navigation usable,
+- keep Svelte as the durable add/edit/remove/detail surface,
+- make the graph useful before agent harness/tooling depends on it.
+
 ## Rendering Direction
 
 Use Bevy for the 3D bible graph view.
@@ -45,11 +61,11 @@ renderer sidecar that owns business logic.
 
 Svelte should own:
 
-- graph workspace controls, launch/focus/status UI, and Svelte fallback outline,
+- graph workspace controls, launch/focus/status UI, and a secondary semantic outline,
 - filters and mode controls,
 - selected-node detail panes,
-- command dispatch,
-- floating renderer lifecycle requests and command-drain orchestration.
+- backend command dispatch through typed desktop/backend commands,
+- floating renderer lifecycle requests and status display.
 
 Bevy should own:
 
@@ -62,6 +78,10 @@ Bevy should own:
 - graph neighborhood highlighting,
 - local focus modes,
 - animation and transitions.
+
+Bevy should not own durable graph facts, accepted proposals, generation
+selection, history, or saved project state. It emits typed command intents and
+waits for backend-confirmed projections.
 
 ## Architecture Pattern From Reference App
 
@@ -215,6 +235,11 @@ Visual tone should match Eidetic:
 - subdued distant nodes and edges,
 - clear selected/hover/focus highlighting.
 
+The initial usable graph must show structure even for a new or sparse bible.
+Canonical roots and parent/child edges should render as a meaningful scaffold
+so the graph does not appear as disconnected unexplained nodes before semantic
+relationships are added.
+
 ## Interaction
 
 Expected interactions:
@@ -241,6 +266,18 @@ Keyboard interactions to consider:
 - `Tab` enters or exits a focused neighborhood mode,
 - `Esc` clears focus/selection.
 
+Initial durable editing should stay in Svelte:
+
+- add graph nodes,
+- edit node fields and snapshots,
+- add or remove graph edges,
+- delete/archive nodes where supported,
+- accept or reject AI proposals,
+- inspect selected nodes, edges, context layers, and influence paths.
+
+Direct Bevy editing can be added later only as backend command intents that are
+validated and reflected back through projection updates.
+
 ## Selection And Hit Testing
 
 Use the reference app's selection approach as a model:
@@ -258,6 +295,16 @@ The selection index should support:
 - first- and second-level neighborhoods,
 - graph distance from selected node,
 - visible-edge filtering so hidden edges do not affect highlight state.
+
+Selection/highlight behavior should follow the reference graph's useful
+patterns:
+
+- selected node is visually primary,
+- incident edges are highlighted,
+- adjacent nodes remain prominent,
+- second-level nodes can receive labels,
+- distant unrelated graph regions are dimmed,
+- edge and node selection both feed the same right-panel detail projection.
 
 ## Relationship To Composable Bible Model
 
@@ -296,6 +343,14 @@ Possible cross-links:
 - filter the graph to entities active at the current playhead time,
 - show story arcs as graph overlays or colored edge/node accents.
 
+The graph should support context/influence views:
+
+- selecting a timeline clip highlights directly used bible nodes and edges,
+- inherited premise/act/sequence context appears as softer highlights,
+- selected context layers explain which parent context was distilled into the
+  current clip,
+- selected influence paths show why a graph fact affected generation or review.
+
 ## Standards Compliance Gates
 
 Implementation must follow the standards plan in `docs/refactors/eidetic-projection-architecture/final-plan.md`.
@@ -324,6 +379,26 @@ Specific graph-view requirements:
 - Renderer lifecycle must clean up subscriptions and renderer resources deterministically.
 - The old 2D SVG relationship graph must be removed as a supported graph view once the Bevy bible graph covers target interactions.
 
+Milestone 9 must not be considered complete until the graph is usable as a 3D
+surface. Renderer lifecycle, projection delivery, and a 2D native proof are
+necessary prerequisites, not the final graph.
+
+## Usable MVP
+
+The first product-complete slice should prove:
+
+1. A new project opens with a meaningful canonical bible scaffold.
+2. The Bevy graph uses a true 3D camera, 3D node geometry, and 3D edge geometry.
+3. Structural parent/child edges and explicit semantic bible edges are both visible.
+4. The user can add two nodes and one edge in Svelte and see them appear in the graph.
+5. Clicking a node selects it and opens the normal bible detail/edit surface.
+6. Clicking an edge selects the relationship and shows edge detail.
+7. Selected nodes highlight incident edges, adjacent nodes, and nearby labels.
+8. Orbit, pan, zoom, frame selected, and clear selection are available.
+9. Search/category/edge filters reshape backend projections rather than
+   mutating renderer-local durable state.
+10. Selecting a timeline clip can highlight active graph/context influence.
+
 ## Open Questions
 
 - Should the Bevy 3D graph and Bevy timeline share one floating renderer host
@@ -342,13 +417,20 @@ Recommended path:
 
 No backwards compatibility with the current 2D relationship graph is required. It can remain a temporary reference during development, but the target graph view should be built directly around the composable bible graph.
 
+The current floating 2D Bevy graph window is a renderer-host proof. Replace it
+with the 3D graph rather than preserving it as a supported fallback.
+
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
 3. Add deterministic layout helpers and tests.
 4. Add selection/neighborhood indexes and tests.
-5. Build a Bevy graph scene/plugin that consumes `BibleRenderGraph`.
-6. Connect the Bevy graph scene/plugin to the shared floating renderer host.
-7. Add selection and detail-panel integration.
-8. Add filtering by canonical section, node type, and edge kind.
-9. Add timeline cross-linking and active-at-playhead filtering.
-10. Remove the old 2D relationship graph once the 3D graph view is active.
+5. Add true 3D visual primitives: 3D camera, meshes, edge geometry, labels, and
+   lighting using Eidetic's visual language.
+6. Build a Bevy graph scene/plugin that consumes `BibleRenderGraph`.
+7. Connect the Bevy graph scene/plugin to the shared floating renderer host.
+8. Add selection, edge selection, highlighting, and detail-panel integration.
+9. Add orbit/pan/zoom, frame selected, focus neighborhood, and keyboard navigation.
+10. Add filtering by canonical section, node type, edge kind, search, and
+    active playhead/clip context.
+11. Add timeline cross-linking and active-at-playhead filtering.
+12. Remove the old 2D relationship graph once the 3D graph view is active.
