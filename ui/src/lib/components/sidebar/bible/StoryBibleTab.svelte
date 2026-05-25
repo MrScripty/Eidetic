@@ -1,9 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  import type { BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
   import {
-    createBibleGraphNodeProjection,
     ensureCanonicalBibleRootProjections,
     getCachedBibleGraphNodeListProjection,
     refreshBibleGraphNodeListProjection,
@@ -26,15 +24,13 @@
   import BibleRenderGraphOutline from './BibleRenderGraphOutline.svelte';
   import {
     canonicalParents,
-    canonicalRootSchemaKeys,
     bibleGraphCategories,
     categorySchemaAvailable,
-    categorySchemaKey,
-    newNodeName,
     nodeCategory,
     type BibleGraphFilter,
     type BibleGraphRootCategory,
   } from './bibleGraphCategories.js';
+  import { createBibleGraphNodeForCategory } from './bibleGraphNodeCreateFlow.js';
 
   let searchQuery = $state('');
   let activeFilter: BibleGraphFilter = $state('All');
@@ -69,22 +65,8 @@
   async function handleAdd(category: BibleGraphRootCategory) {
     try {
       loadError = null;
-      if (!categorySchemaAvailable(category, schemaProjection?.payload)) {
-        await refreshBibleGraphSchemaListProjection();
-      }
-      const schemaKey = categorySchemaKey(
-        category,
-        getCachedBibleGraphSchemaListProjection()?.payload,
-      );
-      if (!schemaKey) {
-        throw new Error(`Schema unavailable for ${category}`);
-      }
-      const parentId = await ensureRootForCategory(category);
-      const projection = await createBibleGraphNodeProjection({
-        parent_id: parentId,
-        schema_key: schemaKey,
-        name: newNodeName(category),
-        sort_order: nextSortOrder(category),
+      const projection = await createBibleGraphNodeForCategory(category, {
+        graphNodes,
       });
       await refreshActiveRenderGraphProjection();
       selectBibleGraphNode(projection.projection.payload.node.id);
@@ -107,25 +89,6 @@
 
   async function refreshActiveRenderGraphProjection(): Promise<void> {
     await refreshBibleRenderGraphProjection(activeRenderGraphQuery());
-  }
-
-  function nextSortOrder(category: BibleGraphRootCategory): number {
-    return graphNodes.filter((node) => node.parent_id === canonicalParents[category]).length;
-  }
-
-  async function ensureRootForCategory(
-    category: BibleGraphRootCategory,
-  ): Promise<BibleGraphNodeId> {
-    const existingRoot = graphNodes.find(
-      (node) => node.schema_key === canonicalRootSchemaKeys[category],
-    );
-    if (existingRoot) return existingRoot.id;
-
-    const response = await ensureCanonicalBibleRootProjections();
-    const ensuredRoot = response.projection.payload.nodes.find(
-      (node) => node.schema_key === canonicalRootSchemaKeys[category],
-    );
-    return ensuredRoot?.id ?? canonicalParents[category];
   }
 
   async function loadBibleGraphNodes(): Promise<void> {

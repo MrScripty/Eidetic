@@ -3007,6 +3007,11 @@ Tasks:
   create/remove edges, inspect details, review proposals, and keyboard
   alternatives. Direct Bevy editing can be added only as backend commands that
   wait for confirmed projections.
+- Completed: Graph workspace node creation uses the shared backend-owned
+  category create flow from the Bible tab. It validates schema availability,
+  ensures canonical roots, sends a backend create command, refreshes the render
+  projection, and selects the confirmed node projection without optimistic
+  graph mutation.
 - Add graph workspace controls for view mode, category filter, edge-kind
   filter, search, selected-clip/playhead context, frame selected, and focus
   neighborhood. These controls may own local drafts only.

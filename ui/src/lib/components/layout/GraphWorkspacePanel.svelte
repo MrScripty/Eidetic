@@ -17,6 +17,10 @@
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
   import { ensureCanonicalBibleRootProjections } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import {
+    getCachedBibleGraphSchemaListProjection,
+    refreshBibleGraphSchemaListProjection,
+  } from '$lib/stores/bibleGraphSchemaProjection.svelte.js';
+  import {
     clearContextStackProjection,
     getCachedContextStackProjection,
     refreshContextStackProjection,
@@ -31,13 +35,21 @@
   import GraphRendererWindowControls from './GraphRendererWindowControls.svelte';
   import { ensureGraphWorkspaceScaffoldProjection } from './graphWorkspaceBootstrap.js';
   import { graphWorkspaceProjectionRequest } from './graphWorkspaceProjectionRequest.js';
+  import BibleGraphAddControls from '../sidebar/bible/BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from '../sidebar/bible/BibleGraphCategoryFilters.svelte';
-  import type { BibleGraphFilter } from '../sidebar/bible/bibleGraphCategories.js';
+  import {
+    bibleGraphCategories,
+    categorySchemaAvailable,
+    type BibleGraphFilter,
+    type BibleGraphRootCategory,
+  } from '../sidebar/bible/bibleGraphCategories.js';
+  import { createBibleGraphNodeForCategory } from '../sidebar/bible/bibleGraphNodeCreateFlow.js';
 
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const graph = $derived(renderGraphProjection?.payload ?? null);
   const contextStackProjection = $derived(getCachedContextStackProjection());
   const contextLayers = $derived(contextStackProjection?.payload.layers ?? []);
+  const schemaProjection = $derived(getCachedBibleGraphSchemaListProjection());
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const graphSelection = $derived(bibleState.graphSelection);
   let showOutline = $state(false);
@@ -57,6 +69,13 @@
   );
   const edgeItems = $derived(graph ? graphWorkspaceEdgeItems(graph) : []);
   const neighborhoodItems = $derived(graph ? graphWorkspaceNeighborhoodItems(graph) : []);
+  const disabledAddCategories = $derived(
+    new Set(
+      bibleGraphCategories.filter(
+        (category) => !categorySchemaAvailable(category, schemaProjection?.payload),
+      ),
+    ),
+  );
   const hasSideLists = $derived(
     graph
       ? contextLayers.length > 0 ||
@@ -67,6 +86,9 @@
   );
 
   onMount(() => {
+    void refreshBibleGraphSchemaListProjection().catch((error) => {
+      graphLoadError = error instanceof Error ? error.message : 'Failed to load graph schemas';
+    });
     void ensureGraphWorkspaceScaffoldProjection(renderGraphRequest, {
       ensureCanonicalRoots: ensureCanonicalBibleRootProjections,
       refreshRenderGraph: refreshBibleRenderGraphProjection,
@@ -97,6 +119,17 @@
 
   function handleSelect(id: string) {
     selectBibleGraphNode(selectedGraphNodeId === id ? null : id);
+  }
+
+  async function handleAddGraphNode(category: BibleGraphRootCategory): Promise<void> {
+    try {
+      graphLoadError = null;
+      const projection = await createBibleGraphNodeForCategory(category);
+      await refreshBibleRenderGraphProjection(renderGraphRequest);
+      selectBibleGraphNode(projection.projection.payload.node.id);
+    } catch (error) {
+      graphLoadError = error instanceof Error ? error.message : 'Failed to create bible graph node';
+    }
   }
 
   function focusSelectedNeighborhood() {
@@ -164,6 +197,11 @@
             <BibleGraphCategoryFilters
               {activeFilter}
               onselect={(filter) => (activeFilter = filter)}
+            />
+            <BibleGraphAddControls
+              {activeFilter}
+              disabledCategories={disabledAddCategories}
+              onadd={handleAddGraphNode}
             />
             <button
               type="button"
@@ -288,12 +326,27 @@
   .graph-controls {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     max-width: min(100%, 760px);
     padding: 7px;
     border: 1px solid var(--color-border-subtle);
     border-radius: 5px;
     background: var(--color-bg-surface);
+  }
+
+  .graph-controls :global(.add-buttons) {
+    border: 0;
+    background: transparent;
+  }
+
+  .graph-controls :global(.add-menu) {
+    padding: 0;
+  }
+
+  .graph-controls :global(.add-btn) {
+    width: auto;
+    padding: 6px 9px;
   }
 
   .search-input {

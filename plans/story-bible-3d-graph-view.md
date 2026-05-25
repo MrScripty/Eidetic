@@ -777,6 +777,10 @@ Current implementation progress:
   the Bevy graph viewport through the renderer owner, native runner, native
   window control, Tauri command boundary, and TypeScript API without making
   Svelte own durable camera or graph facts.
+- Completed: Graph workspace node creation now uses the same backend-owned
+  category create flow as the Bible tab, including schema validation,
+  canonical-root ensure, backend create command, render projection refresh, and
+  selection of the confirmed node projection.
 - Completed: no separate old 2D bible relationship graph remains as a supported
   visual graph surface. Keep `BibleRenderGraphOutline` as the required
   keyboard-accessible projection alternative, not as a visual graph fallback.
@@ -845,9 +849,12 @@ Current implementation progress:
     the existing renderer owner, callable by backend workflows and the future
     agent harness, and verified through Rust/TypeScript contract tests. Svelte
     camera buttons are optional and not required for this milestone.
-16. Add graph-local backend-command workflows for node and edge add/edit, using
-    selectable graph/node controls rather than opaque ID entry. Record delete
-    blockers explicitly until backend delete commands exist.
+16. Partially completed: add graph-local backend-command workflows for node and
+    edge add/edit, using selectable graph/node controls rather than opaque ID
+    entry. Graph workspace node creation now exists; edge creation and node/
+    edge detail editing remain through the selected-node inspector. Delete
+    remains blocked until backend delete commands exist and must not be
+    simulated in frontend state.
 17. Refactor projection construction into query, scope, layout, and DTO helpers
     with targeted tests.
 18. Add renderer-local mesh/material reuse for frequent projection refreshes.
