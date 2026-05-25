@@ -438,8 +438,10 @@ Current implementation progress:
   backend render projections rather than filtering durable graph facts locally.
 - Completed: native edge-selection commands are verified through the shared
   selection store into projection-derived edge detail.
-- Remaining: active playhead/clip context projection controls and removal of
-  the old 2D relationship graph after the Bevy graph covers target interactions.
+- Completed: no separate old 2D bible relationship graph remains as a supported
+  visual graph surface. Keep `BibleRenderGraphOutline` as the required
+  keyboard-accessible projection alternative, not as a visual graph fallback.
+- Remaining: active playhead/clip context projection controls.
 - Blocker found: active timeline clip filtering is currently keyed only by
   `selected_timeline_node_id`. True playhead-driven graph filtering needs a
   backend projection contract for active time or backend-derived active clip
