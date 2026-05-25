@@ -784,6 +784,8 @@ Current implementation progress:
 - Completed: native renderer rebuilds now reuse renderer-local mesh and
   material assets for identical node radii, edge dimensions, and visual states
   instead of allocating fresh assets on every projection refresh.
+- Completed: camera command queue behavior is covered by bounded-capacity and
+  drain verification on the native window control path.
 - Completed: no separate old 2D bible relationship graph remains as a supported
   visual graph surface. Keep `BibleRenderGraphOutline` as the required
   keyboard-accessible projection alternative, not as a visual graph fallback.
@@ -862,8 +864,11 @@ Current implementation progress:
     with targeted tests.
 18. Completed: add renderer-local mesh/material reuse for frequent projection
     refreshes.
-19. Add lifecycle/queue/shutdown/error verification for renderer host,
-    projection bridge, and command drain ownership.
+19. Partially completed: add lifecycle/queue/shutdown/error verification for
+    renderer host, projection bridge, and command drain ownership. Existing
+    host lifecycle tests cover open/focus/close/shutdown and command drain
+    ownership; camera command queue capacity/drain is now covered. Continue
+    adding targeted verification when new renderer command paths are added.
 20. Add filtering by canonical section, node type, edge kind, search, and
     active playhead/clip context.
 21. Add timeline cross-linking and active-at-playhead filtering.

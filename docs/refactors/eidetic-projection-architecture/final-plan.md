@@ -3103,6 +3103,9 @@ Verification:
 - Camera command tests prove backend-issued reset/fit/frame/navigation intents
   are validated, routed through the desktop/native renderer boundary, and
   applied to the Bevy camera without requiring Svelte camera controls.
+- Completed: native camera command queue tests prove the floating renderer
+  control path is bounded and drains transient camera intents without retaining
+  stale commands.
 - Projection tests prove empty/new projects show canonical scaffold edges and
   adding nodes/edges through Svelte commands updates the 3D projection after
   backend confirmation.

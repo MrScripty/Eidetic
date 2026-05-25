@@ -1129,6 +1129,39 @@ fn controlled_native_window_emits_clear_selection_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_camera_commands_are_bounded_and_drained() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+
+    for _ in 0..BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY {
+        assert_eq!(
+            control.push_camera_command(BibleGraphCameraCommand::FrameNode {
+                node_id: node_id.clone()
+            }),
+            Ok(())
+        );
+    }
+
+    assert_eq!(
+        control.push_camera_command(BibleGraphCameraCommand::FrameNode {
+            node_id: node_id.clone()
+        }),
+        Err(BibleGraphRendererError::CommandQueueFull)
+    );
+    assert_eq!(
+        control.drain_camera_commands(),
+        vec![
+            BibleGraphCameraCommand::FrameNode {
+                node_id: node_id.clone()
+            };
+            BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY
+        ]
+    );
+    assert!(control.drain_camera_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
     use bevy::prelude::{Assets, Entity, Mesh, Plugin, StandardMaterial};
 
