@@ -1,9 +1,10 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 use eidetic_core::contracts::{
     BibleGraphEdge, BibleGraphEdgeId, BibleGraphNode, BibleGraphNodeId,
     BibleRenderGraphProjectionRequest, ContextInfluenceRecord,
 };
+use eidetic_core::timeline::node::NodeId;
 use rusqlite::{Connection, params, params_from_iter};
 
 use crate::bible_graph_edge_store;
@@ -81,10 +82,55 @@ fn load_selected_context_influences(
     conn: &Connection,
     request: &BibleRenderGraphProjectionRequest,
 ) -> Result<Vec<ContextInfluenceRecord>, HistoryStoreError> {
-    let Some(target_node_id) = request.selected_timeline_node_id else {
-        return Ok(Vec::new());
-    };
-    crate::context_influence_store::load_latest_context_influence_records(conn, target_node_id)
+    let mut target_node_ids = Vec::new();
+    let mut seen_target_node_ids = HashSet::new();
+    if let Some(target_node_id) = request.selected_timeline_node_id
+        && seen_target_node_ids.insert(target_node_id)
+    {
+        target_node_ids.push(target_node_id);
+    }
+    if let Some(active_timeline_ms) = request.active_timeline_ms {
+        for target_node_id in load_active_timeline_node_ids(conn, active_timeline_ms)? {
+            if seen_target_node_ids.insert(target_node_id) {
+                target_node_ids.push(target_node_id);
+            }
+        }
+    }
+
+    let mut records = Vec::new();
+    let mut seen_record_ids = HashSet::new();
+    for target_node_id in target_node_ids {
+        for record in crate::context_influence_store::load_latest_context_influence_records(
+            conn,
+            target_node_id,
+        )? {
+            if seen_record_ids.insert(record.id) {
+                records.push(record);
+            }
+        }
+    }
+    Ok(records)
+}
+
+fn load_active_timeline_node_ids(
+    conn: &Connection,
+    active_timeline_ms: u64,
+) -> Result<Vec<NodeId>, HistoryStoreError> {
+    let mut statement = conn.prepare(
+        "SELECT id
+         FROM nodes
+         WHERE start_ms <= ?1 AND end_ms > ?1
+         ORDER BY level ASC, start_ms ASC, sort_order ASC, id ASC",
+    )?;
+    let rows = statement.query_map([active_timeline_ms as i64], |row| row.get::<_, String>(0))?;
+    let mut node_ids = Vec::new();
+    for row in rows {
+        let raw_id = row?;
+        let id = uuid::Uuid::parse_str(&raw_id)
+            .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
+        node_ids.push(NodeId(id));
+    }
+    Ok(node_ids)
 }
 
 fn should_load_default_node_ids(request: &BibleRenderGraphProjectionRequest) -> bool {

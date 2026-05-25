@@ -4,7 +4,8 @@ use eidetic_core::contracts::{
     ContextEvaluationTaskKind, ContextInfluenceId, ContextInfluenceKind,
     ContextInfluenceProvenance, ContextInfluenceRecord, RecordContextEvaluationCommand,
 };
-use eidetic_core::timeline::node::{NodeId, StoryLevel};
+use eidetic_core::timeline::node::{NodeId, StoryLevel, StoryNode};
+use eidetic_core::timeline::timing::TimeRange;
 
 #[test]
 fn render_graph_projection_envelope_applies_bounded_request() {
@@ -293,6 +294,61 @@ fn render_graph_projection_includes_selected_timeline_influences() {
 }
 
 #[test]
+fn render_graph_projection_includes_active_playhead_context_influences() {
+    let mut conn = memory_connection();
+    let inactive_timeline_node_id = NodeId::new();
+    let active_timeline_node_id = NodeId::new();
+    seed_timeline_node(&mut conn, inactive_timeline_node_id, 0, 1_000);
+    seed_timeline_node(&mut conn, active_timeline_node_id, 1_000, 2_000);
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    seed_node(&mut conn, "node.place.beach", "Beach", 20);
+    seed_edge(
+        &mut conn,
+        "edge.ada.beach",
+        "node.character.ada",
+        "node.place.beach",
+        1,
+    );
+    seed_context_influence(
+        &mut conn,
+        inactive_timeline_node_id,
+        "node.place.beach",
+        "edge.ada.beach",
+    );
+    seed_context_influence(
+        &mut conn,
+        active_timeline_node_id,
+        "node.character.ada",
+        "edge.ada.beach",
+    );
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            active_timeline_ms: Some(1_500),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    assert_eq!(projection.payload.active_timeline_ms, Some(1_500));
+    assert_eq!(projection.payload.influences.len(), 1);
+    assert_eq!(
+        projection.payload.influences[0].timeline_node_id,
+        active_timeline_node_id
+    );
+    assert_eq!(
+        projection.payload.influences[0]
+            .bible_node_id
+            .as_ref()
+            .unwrap()
+            .as_str(),
+        "node.character.ada"
+    );
+}
+
+#[test]
 fn render_graph_projection_reloads_selected_context_influences() {
     let path = std::env::temp_dir().join(format!(
         "eidetic-render-graph-reload-{}.sqlite",
@@ -415,6 +471,18 @@ fn seed_context_influence(
         }],
     });
     crate::context_influence_store::record_context_evaluation(conn, &command, 100).unwrap();
+}
+
+fn seed_timeline_node(conn: &mut Connection, node_id: NodeId, start_ms: u64, end_ms: u64) {
+    let mut node = StoryNode::new(
+        "Timeline node",
+        StoryLevel::Scene,
+        TimeRange::new(start_ms, end_ms).unwrap(),
+    );
+    node.id = node_id;
+    let tx = conn.transaction().unwrap();
+    crate::timeline_node_store::upsert_nodes_in_transaction(&tx, &[node]).unwrap();
+    tx.commit().unwrap();
 }
 
 fn cleanup_sqlite_files(path: &std::path::Path) {
