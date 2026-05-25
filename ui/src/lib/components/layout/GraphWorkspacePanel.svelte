@@ -32,6 +32,7 @@
     graphWorkspaceEdgeItems,
     graphWorkspaceNeighborhoodItems,
   } from './graphWorkspaceItems.js';
+  import { selectGraphContextLayerForTimeline } from './graphWorkspaceTimelineCrossLink.js';
   import GraphRendererWindowControls from './GraphRendererWindowControls.svelte';
   import { ensureGraphWorkspaceScaffoldProjection } from './graphWorkspaceBootstrap.js';
   import {
@@ -165,8 +166,16 @@
   }
 
   function handleSelectContextLayer(id: string) {
+    const result = selectGraphContextLayerForTimeline(
+      {
+        graphSelection,
+        selectedTimelineNodeId: editorState.selectedNodeId,
+      },
+      id,
+    );
+    editorState.selectedNodeId = result.selectedTimelineNodeId;
     selectBibleGraphContextLayer(
-      graphSelection.kind === 'context_layer' && graphSelection.timelineNodeId === id ? null : id,
+      result.graphSelection.kind === 'context_layer' ? result.graphSelection.timelineNodeId : null,
     );
   }
 

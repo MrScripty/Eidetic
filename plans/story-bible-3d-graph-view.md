@@ -806,6 +806,10 @@ Current implementation progress:
 - Completed: Bevy renderer graph category color identity now comes from one
   crate-local helper shared by 2D and 3D visual snapshots, with a regression
   test proving the snapshots preserve the same category fill color.
+- Completed: Graph workspace timeline cross-linking now selects the matching
+  timeline node when a context layer is selected from the active graph context
+  list, while active playhead projection filtering remains backend-owned
+  through `active_timeline_ms`.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
@@ -889,5 +893,5 @@ Current implementation progress:
     active playhead/clip context, backend-owned edge-kind request filtering,
     and visible edge-kind controls now exist. Any additional node-type control
     still needs to be wired in the Graph workspace UI.
-21. Add timeline cross-linking and active-at-playhead filtering.
+21. Completed: add timeline cross-linking and active-at-playhead filtering.
 22. Remove the old 2D relationship graph once the 3D graph view is active.
