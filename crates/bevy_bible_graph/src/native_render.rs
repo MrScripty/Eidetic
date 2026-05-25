@@ -21,8 +21,9 @@ use eidetic_core::contracts::{
 };
 
 use crate::{
-    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphRendererCommand,
-    BibleGraphRendererError, BibleGraphVisual3dEdgeClass, build_bible_graph_visual_3d_snapshot,
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
+    BibleGraphRendererCommand, BibleGraphRendererError, BibleGraphVisual3dEdgeClass,
+    build_bible_graph_visual_3d_snapshot,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
@@ -62,6 +63,7 @@ pub struct BibleGraphNativeWindowControlHandle {
     projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
     commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
+    camera_commands: Arc<Mutex<Vec<BibleGraphCameraCommand>>>,
 }
 
 #[derive(Debug, Clone, Resource)]
@@ -74,6 +76,7 @@ pub struct BibleGraphNativeWindowControl {
     projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
     commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
+    camera_commands: Arc<Mutex<Vec<BibleGraphCameraCommand>>>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -203,6 +206,7 @@ impl BibleGraphNativeWindowControlHandle {
             projection: Arc::new(Mutex::new(None)),
             native_visual_counts: Arc::new(Mutex::new(BibleGraphNativeVisualStatus::default())),
             commands: Arc::new(Mutex::new(Vec::new())),
+            camera_commands: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -260,6 +264,30 @@ impl BibleGraphNativeWindowControlHandle {
                 .unwrap_or_else(|error| error.into_inner()),
         )
     }
+
+    pub fn push_camera_command(
+        &self,
+        command: BibleGraphCameraCommand,
+    ) -> Result<(), BibleGraphRendererError> {
+        let mut commands = self
+            .camera_commands
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        if commands.len() >= BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY {
+            return Err(BibleGraphRendererError::CommandQueueFull);
+        }
+        commands.push(command);
+        Ok(())
+    }
+
+    pub fn drain_camera_commands(&self) -> Vec<BibleGraphCameraCommand> {
+        std::mem::take(
+            &mut self
+                .camera_commands
+                .lock()
+                .unwrap_or_else(|error| error.into_inner()),
+        )
+    }
 }
 
 impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowControl {
@@ -273,6 +301,7 @@ impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowContro
             projection: Arc::clone(&handle.projection),
             native_visual_counts: Arc::clone(&handle.native_visual_counts),
             commands: Arc::clone(&handle.commands),
+            camera_commands: Arc::clone(&handle.camera_commands),
         }
     }
 }
@@ -281,6 +310,15 @@ impl BibleGraphNativeWindowControl {
     pub fn request_close_from_os_window(&self) {
         self.shutdown_requested.store(true, Ordering::Release);
         self.visible.store(false, Ordering::Release);
+    }
+
+    fn drain_camera_commands(&self) -> Vec<BibleGraphCameraCommand> {
+        std::mem::take(
+            &mut self
+                .camera_commands
+                .lock()
+                .unwrap_or_else(|error| error.into_inner()),
+        )
     }
 }
 
@@ -304,6 +342,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, navigate_bible_graph_native_camera);
         app.add_systems(Update, orbit_bible_graph_native_camera);
         app.add_systems(Update, frame_bible_graph_native_camera_on_selected);
+        app.add_systems(Update, apply_bible_graph_native_camera_commands);
     }
 }
 
@@ -560,6 +599,79 @@ fn frame_bible_graph_native_camera_on_selected(
         native_camera_frame_selected_translation(camera_transform.translation, selected_node);
 }
 
+fn apply_bible_graph_native_camera_commands(world: &mut World) {
+    let Some(control) = world
+        .get_resource::<BibleGraphNativeWindowControl>()
+        .cloned()
+    else {
+        return;
+    };
+
+    for command in control.drain_camera_commands() {
+        apply_bible_graph_native_camera_command(world, command);
+    }
+}
+
+pub fn apply_bible_graph_native_camera_command(
+    world: &mut World,
+    command: BibleGraphCameraCommand,
+) {
+    let Some(transform) = native_camera_transform_for_command(world, &command) else {
+        return;
+    };
+    let mut cameras = world.query_filtered::<&mut Transform, With<BibleGraphNativeCamera>>();
+    let Ok(mut camera_transform) = cameras.single_mut(world) else {
+        return;
+    };
+    *camera_transform = transform;
+}
+
+fn native_camera_transform_for_command(
+    world: &mut World,
+    command: &BibleGraphCameraCommand,
+) -> Option<Transform> {
+    match command {
+        BibleGraphCameraCommand::ResetCamera => Some(native_camera_reset_transform()),
+        BibleGraphCameraCommand::FitGraph => {
+            let mut nodes = world.query::<&BibleGraphNativeNodeVisual>();
+            native_camera_fit_nodes_transform(nodes.iter(world))
+        }
+        BibleGraphCameraCommand::FrameNode { node_id }
+        | BibleGraphCameraCommand::NavigateToNode { node_id }
+        | BibleGraphCameraCommand::NavigateToNeighborhood { node_id } => {
+            let mut nodes = world.query::<&BibleGraphNativeNodeVisual>();
+            let node = nodes.iter(world).find(|node| &node.node_id == node_id)?;
+            Some(native_camera_frame_node_transform(node))
+        }
+        BibleGraphCameraCommand::FrameEdge { edge_id } => {
+            let mut edges = world.query::<&BibleGraphNativeEdgeVisual>();
+            let edge = edges.iter(world).find(|edge| &edge.edge_id == edge_id)?;
+            Some(native_camera_frame_edge_transform(edge))
+        }
+        BibleGraphCameraCommand::FrameInfluence { influence_id } => {
+            let mut influences = world.query::<&BibleGraphNativeInfluenceVisual>();
+            let influence = influences
+                .iter(world)
+                .find(|influence| &influence.influence_id == influence_id)?;
+            if let Some(node_id) = &influence.bible_node_id {
+                return native_camera_transform_for_command(
+                    world,
+                    &BibleGraphCameraCommand::FrameNode {
+                        node_id: node_id.clone(),
+                    },
+                );
+            }
+            let edge_id = influence.bible_edge_id.as_ref()?;
+            native_camera_transform_for_command(
+                world,
+                &BibleGraphCameraCommand::FrameEdge {
+                    edge_id: edge_id.clone(),
+                },
+            )
+        }
+    }
+}
+
 fn orbit_bible_graph_native_camera(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     time: Option<Res<Time>>,
@@ -637,6 +749,54 @@ pub(crate) fn native_camera_navigation_delta(
         pan_delta.y,
         zoom_direction * zoom_speed * delta_seconds,
     )
+}
+
+pub(crate) fn native_camera_reset_transform() -> Transform {
+    Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y)
+}
+
+pub(crate) fn native_camera_fit_nodes_transform<'a>(
+    nodes: impl Iterator<Item = &'a BibleGraphNativeNodeVisual>,
+) -> Option<Transform> {
+    let mut min = Vec3::splat(f32::INFINITY);
+    let mut max = Vec3::splat(f32::NEG_INFINITY);
+    let mut node_count = 0;
+    for node in nodes {
+        let radius = node.radius.max(1.0);
+        let position = Vec3::new(node.x, node.y, node.z);
+        min = min.min(position - Vec3::splat(radius));
+        max = max.max(position + Vec3::splat(radius));
+        node_count += 1;
+    }
+    if node_count == 0 {
+        return Some(native_camera_reset_transform());
+    }
+
+    let center = (min + max) * 0.5;
+    let extent = (max - min).length().max(220.0);
+    Some(native_camera_frame_target_transform(center, extent * 1.6))
+}
+
+pub(crate) fn native_camera_frame_node_transform(node: &BibleGraphNativeNodeVisual) -> Transform {
+    native_camera_frame_target_transform(
+        Vec3::new(node.x, node.y, node.z),
+        (node.radius * 8.0).max(220.0),
+    )
+}
+
+pub(crate) fn native_camera_frame_edge_transform(edge: &BibleGraphNativeEdgeVisual) -> Transform {
+    let from = Vec3::new(edge.from_x, edge.from_y, edge.from_z);
+    let to = Vec3::new(edge.to_x, edge.to_y, edge.to_z);
+    native_camera_frame_target_transform((from + to) * 0.5, from.distance(to).max(220.0) * 1.4)
+}
+
+fn native_camera_frame_target_transform(center: Vec3, distance: f32) -> Transform {
+    Transform::from_translation(Vec3::new(
+        center.x,
+        center.y,
+        center.z + distance.max(220.0),
+    ))
+    .looking_at(center, Vec3::Y)
 }
 
 pub(crate) fn native_edge_segment_transform(from: Vec3, to: Vec3) -> (f32, Transform) {

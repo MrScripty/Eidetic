@@ -1,8 +1,8 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use eidetic_bevy_bible_graph::{
-    BibleGraphRendererApp, BibleGraphRendererCommand, BibleGraphRendererError,
-    BibleGraphVisualSnapshot,
+    BibleGraphCameraCommand, BibleGraphRendererApp, BibleGraphRendererCommand,
+    BibleGraphRendererError, BibleGraphVisualSnapshot,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -66,6 +66,16 @@ impl DesktopNativeRendererRunner {
     ) -> NativeRendererRunnerStatus {
         match self {
             Self::Managed(runner) => runner.set_projection(projection),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
+
+    fn apply_camera_command(
+        &mut self,
+        command: BibleGraphCameraCommand,
+    ) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.apply_camera_command(command),
             Self::Unavailable(status) => status.clone(),
         }
     }
@@ -211,6 +221,16 @@ impl DesktopBibleGraphHost {
         influence_id: ContextInfluenceId,
     ) -> Result<(), BibleGraphHostError> {
         self.with_renderer_mut(|renderer| renderer.select_influence(influence_id))
+    }
+
+    pub fn apply_camera_command(
+        &mut self,
+        command: BibleGraphCameraCommand,
+    ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
+        self.start()?;
+        self.with_renderer_mut(|renderer| renderer.apply_camera_command(command.clone()))?;
+        self.native_runner.apply_camera_command(command);
+        Ok(self.status())
     }
 
     pub fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand> {

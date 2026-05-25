@@ -91,6 +91,15 @@ export type GraphRendererCommand =
   | { type: 'navigate_to_node'; node_id: BibleGraphNodeId }
   | { type: 'clear_selection' };
 
+export type GraphRendererCameraCommand =
+  | { type: 'fit_graph' }
+  | { type: 'reset_camera' }
+  | { type: 'frame_node'; node_id: BibleGraphNodeId }
+  | { type: 'frame_edge'; edge_id: BibleGraphEdgeId }
+  | { type: 'frame_influence'; influence_id: string }
+  | { type: 'navigate_to_node'; node_id: BibleGraphNodeId }
+  | { type: 'navigate_to_neighborhood'; node_id: BibleGraphNodeId };
+
 export interface GraphRendererVisualSnapshot {
   nodes: GraphRendererVisualNode[];
   edges: GraphRendererVisualEdge[];

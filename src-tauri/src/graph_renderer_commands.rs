@@ -1,4 +1,4 @@
-use eidetic_bevy_bible_graph::BibleGraphVisualSnapshot;
+use eidetic_bevy_bible_graph::{BibleGraphCameraCommand, BibleGraphVisualSnapshot};
 use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
 use serde::Deserialize;
 use tauri::Manager;
@@ -93,6 +93,18 @@ pub async fn graph_renderer_update_projection_request(
     update_active_graph_renderer_projection_request(&app, request).await
 }
 
+#[tauri::command]
+pub fn graph_renderer_camera_command(
+    app: tauri::AppHandle,
+    command: BibleGraphCameraCommand,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    graph_renderer_owner(&app)?
+        .apply_camera_command(command)
+        .map_err(|error| {
+            CommandError::internal(format!("graph renderer camera command failed: {error:?}"))
+        })
+}
+
 fn apply_renderer_window_size_hint(
     app: &tauri::AppHandle,
     size_hint: Option<RendererWindowSizeHint>,
@@ -127,6 +139,8 @@ fn validate_renderer_window_size_hint(
 
 #[cfg(test)]
 mod tests {
+    use eidetic_bevy_bible_graph::BibleGraphCameraCommand;
+    use eidetic_core::contracts::BibleGraphNodeId;
     use serde_json::json;
 
     use super::{
@@ -162,6 +176,22 @@ mod tests {
                 "kind": "bad_request",
                 "message": "graph renderer window size hint must be greater than zero"
             })
+        );
+    }
+
+    #[test]
+    fn camera_command_deserializes_backend_owned_viewport_intent() {
+        let command: BibleGraphCameraCommand = serde_json::from_value(json!({
+            "type": "frame_node",
+            "node_id": "node.character.ada"
+        }))
+        .unwrap();
+
+        assert_eq!(
+            command,
+            BibleGraphCameraCommand::FrameNode {
+                node_id: BibleGraphNodeId::new("node.character.ada").unwrap()
+            }
         );
     }
 }

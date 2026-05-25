@@ -8,7 +8,9 @@ use super::{
     NativeRendererPlatformStrategy, NativeRendererSupervisor, NativeRendererSupervisorLifecycle,
     NativeRendererThreadingModel, NativeRendererWindowThreadHandle,
 };
-use eidetic_bevy_bible_graph::{BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand};
+use eidetic_bevy_bible_graph::{
+    BibleGraphCameraCommand, BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
+};
 use eidetic_core::contracts::BibleRenderGraphProjection;
 
 pub const NATIVE_RENDERER_RUNNER_COMMAND_QUEUE_CAPACITY: usize = 16;
@@ -49,6 +51,10 @@ pub trait NativeRendererRunner {
         &mut self,
         projection: BibleRenderGraphProjection,
     ) -> NativeRendererRunnerStatus;
+    fn apply_camera_command(
+        &mut self,
+        command: BibleGraphCameraCommand,
+    ) -> NativeRendererRunnerStatus;
     fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand>;
     fn status(&self) -> NativeRendererRunnerStatus;
 }
@@ -65,6 +71,10 @@ enum NativeRendererRunnerRequest {
     },
     SetProjection {
         projection: BibleRenderGraphProjection,
+        reply: mpsc::Sender<NativeRendererRunnerStatus>,
+    },
+    ApplyCameraCommand {
+        command: BibleGraphCameraCommand,
         reply: mpsc::Sender<NativeRendererRunnerStatus>,
     },
     DrainCommands {
@@ -190,6 +200,13 @@ impl NativeRendererRunner for NativeRendererRunnerHandle {
         self.request(|reply| NativeRendererRunnerRequest::SetProjection { projection, reply })
     }
 
+    fn apply_camera_command(
+        &mut self,
+        command: BibleGraphCameraCommand,
+    ) -> NativeRendererRunnerStatus {
+        self.request(|reply| NativeRendererRunnerRequest::ApplyCameraCommand { command, reply })
+    }
+
     fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand> {
         let (reply, receiver) = mpsc::channel();
         if self
@@ -242,6 +259,9 @@ fn run_native_renderer_runner(
             }
             NativeRendererRunnerRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(runner.set_projection(projection));
+            }
+            NativeRendererRunnerRequest::ApplyCameraCommand { command, reply } => {
+                let _ = reply.send(runner.apply_camera_command(command));
             }
             NativeRendererRunnerRequest::DrainCommands { reply } => {
                 let _ = reply.send(runner.drain_commands());

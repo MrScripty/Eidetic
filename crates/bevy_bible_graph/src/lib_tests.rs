@@ -873,6 +873,68 @@ fn native_camera_frame_selected_moves_camera_over_selected_node() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn renderer_app_applies_validated_native_camera_commands() {
+    use bevy::prelude::{Transform, Vec3, With};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
+    let influence_id = ContextInfluenceId::new();
+    let mut renderer = BibleGraphRendererApp::new_renderer_window();
+    renderer
+        .set_projection(projection_with_influence(
+            node_id.clone(),
+            edge_id.clone(),
+            influence_id,
+        ))
+        .unwrap();
+
+    renderer
+        .apply_camera_command(BibleGraphCameraCommand::FrameNode {
+            node_id: node_id.clone(),
+        })
+        .unwrap();
+    assert_eq!(
+        native_camera_translation(&mut renderer),
+        Vec3::new(0.0, 0.0, 220.0)
+    );
+
+    renderer
+        .apply_camera_command(BibleGraphCameraCommand::FrameEdge { edge_id })
+        .unwrap();
+    assert_eq!(
+        native_camera_translation(&mut renderer),
+        Vec3::new(0.0, 75.0, 308.0)
+    );
+
+    renderer
+        .apply_camera_command(BibleGraphCameraCommand::FrameInfluence { influence_id })
+        .unwrap();
+    assert_eq!(
+        native_camera_translation(&mut renderer),
+        Vec3::new(0.0, 0.0, 220.0)
+    );
+
+    let missing_node_id = BibleGraphNodeId::new("node.character.missing").unwrap();
+    assert_eq!(
+        renderer.apply_camera_command(BibleGraphCameraCommand::FrameNode {
+            node_id: missing_node_id.clone()
+        }),
+        Err(BibleGraphRendererError::UnknownNode {
+            node_id: missing_node_id
+        })
+    );
+
+    fn native_camera_translation(renderer: &mut BibleGraphRendererApp) -> Vec3 {
+        let mut cameras = renderer
+            .app
+            .world_mut()
+            .query_filtered::<&Transform, With<BibleGraphNativeCamera>>();
+        cameras.single(renderer.app.world()).unwrap().translation
+    }
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_camera_orbit_rotates_camera_around_target() {
     use crate::native_render::native_camera_orbit_translation;
     use bevy::prelude::Vec3;

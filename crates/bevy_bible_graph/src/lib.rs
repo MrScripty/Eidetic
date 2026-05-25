@@ -3,7 +3,7 @@ use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphNeighborhood, BibleRenderGraphProjection,
     ContextInfluenceId,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 mod scene;
@@ -56,6 +56,18 @@ pub enum BibleGraphRendererCommand {
     FocusNode { node_id: BibleGraphNodeId },
     NavigateToNode { node_id: BibleGraphNodeId },
     ClearSelection,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum BibleGraphCameraCommand {
+    FitGraph,
+    ResetCamera,
+    FrameNode { node_id: BibleGraphNodeId },
+    FrameEdge { edge_id: BibleGraphEdgeId },
+    FrameInfluence { influence_id: ContextInfluenceId },
+    NavigateToNode { node_id: BibleGraphNodeId },
+    NavigateToNeighborhood { node_id: BibleGraphNodeId },
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -249,6 +261,16 @@ impl BibleGraphRendererApp {
         self.enqueue_command(BibleGraphRendererCommand::ClearSelection)
     }
 
+    pub fn apply_camera_command(
+        &mut self,
+        command: BibleGraphCameraCommand,
+    ) -> Result<(), BibleGraphRendererError> {
+        self.validate_camera_command(&command)?;
+        #[cfg(feature = "native_render")]
+        native_render::apply_bible_graph_native_camera_command(self.app.world_mut(), command);
+        Ok(())
+    }
+
     pub fn neighborhood(
         &self,
         node_id: &BibleGraphNodeId,
@@ -392,6 +414,24 @@ impl BibleGraphRendererApp {
             Ok(())
         } else {
             Err(BibleGraphRendererError::UnknownInfluence { influence_id })
+        }
+    }
+
+    fn validate_camera_command(
+        &self,
+        command: &BibleGraphCameraCommand,
+    ) -> Result<(), BibleGraphRendererError> {
+        match command {
+            BibleGraphCameraCommand::FitGraph | BibleGraphCameraCommand::ResetCamera => Ok(()),
+            BibleGraphCameraCommand::FrameNode { node_id }
+            | BibleGraphCameraCommand::NavigateToNode { node_id }
+            | BibleGraphCameraCommand::NavigateToNeighborhood { node_id } => {
+                self.validate_node(node_id)
+            }
+            BibleGraphCameraCommand::FrameEdge { edge_id } => self.validate_edge(edge_id),
+            BibleGraphCameraCommand::FrameInfluence { influence_id } => {
+                self.validate_influence(*influence_id)
+            }
         }
     }
 }

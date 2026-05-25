@@ -5,7 +5,8 @@ use super::{
     NativeRendererWindowThreadResult,
 };
 use eidetic_bevy_bible_graph::{
-    BibleGraphNativeVisualStatus, BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
+    BibleGraphCameraCommand, BibleGraphNativeVisualStatus, BibleGraphNativeWindowRunnerConfig,
+    BibleGraphRendererCommand,
 };
 use eidetic_core::contracts::BibleRenderGraphProjection;
 use std::time::Duration;
@@ -254,6 +255,19 @@ impl NativeRendererRunner for NativeRendererSupervisor {
     ) -> NativeRendererRunnerStatus {
         if let Some(window_thread) = self.window_thread.as_ref() {
             window_thread.set_projection(projection);
+        }
+        self.refresh_status()
+    }
+
+    fn apply_camera_command(
+        &mut self,
+        command: BibleGraphCameraCommand,
+    ) -> NativeRendererRunnerStatus {
+        if let Some(window_thread) = self.window_thread.as_ref()
+            && let Err(error) = window_thread.apply_camera_command(command)
+        {
+            self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
+            self.last_error = Some(format!("native renderer camera command failed: {error}"));
         }
         self.refresh_status()
     }

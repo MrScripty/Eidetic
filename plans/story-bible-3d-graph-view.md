@@ -773,6 +773,10 @@ Current implementation progress:
   backend render projections rather than filtering durable graph facts locally.
 - Completed: native edge-selection commands are verified through the shared
   selection store into projection-derived edge detail.
+- Completed: typed backend-owned camera commands can reset/fit/frame/navigate
+  the Bevy graph viewport through the renderer owner, native runner, native
+  window control, Tauri command boundary, and TypeScript API without making
+  Svelte own durable camera or graph facts.
 - Completed: no separate old 2D bible relationship graph remains as a supported
   visual graph surface. Keep `BibleRenderGraphOutline` as the required
   keyboard-accessible projection alternative, not as a visual graph fallback.
@@ -835,7 +839,8 @@ Current implementation progress:
 14. Add orbit/pan/zoom, frame selected, reset/fit view, explicit focus
     neighborhood, clear selection, keyboard navigation, and visible controls for
     those actions.
-15. Add a typed backend-owned camera command API for the Bevy viewport.
+15. Completed: add a typed backend-owned camera command API for the Bevy
+    viewport.
     Commands must be transient renderer presentation commands, bounded through
     the existing renderer owner, callable by backend workflows and the future
     agent harness, and verified through Rust/TypeScript contract tests. Svelte

@@ -2995,6 +2995,11 @@ Tasks:
   influence highlighting.
 - Add usable camera/navigation controls: orbit, pan, zoom, frame selection,
   focus selected neighborhood, clear focus, and keyboard graph navigation.
+- Completed: backend-owned camera command intents for reset, fit, frame node,
+  frame edge, frame influence, node navigation, and neighborhood navigation now
+  route through the Bevy graph app, native runner, floating window control,
+  Tauri command boundary, and TypeScript API. These are transient renderer
+  presentation commands, not Svelte-owned durable graph facts.
 - Add tested hit testing for nodes and edges using Bevy ray picking or an
   equivalent renderer-local selection index. Selection output must still become
   typed backend/desktop renderer commands.
@@ -3086,6 +3091,9 @@ Verification:
 - Renderer tests or smoke checks prove the 3D graph opens, renders nodes,
   renders structural and semantic edges, shows bounded labels, selects nodes
   and edges, frames selection, and closes/reopens through the Milestone 8 host.
+- Camera command tests prove backend-issued reset/fit/frame/navigation intents
+  are validated, routed through the desktop/native renderer boundary, and
+  applied to the Bevy camera without requiring Svelte camera controls.
 - Projection tests prove empty/new projects show canonical scaffold edges and
   adding nodes/edges through Svelte commands updates the 3D projection after
   backend confirmation.

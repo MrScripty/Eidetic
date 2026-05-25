@@ -4,7 +4,7 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use eidetic_bevy_bible_graph::{
-    BibleGraphNativeVisualStatus, BibleGraphNativeWindowControlHandle,
+    BibleGraphCameraCommand, BibleGraphNativeVisualStatus, BibleGraphNativeWindowControlHandle,
     BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
     run_controlled_minimal_bible_graph_native_window,
 };
@@ -81,6 +81,13 @@ impl NativeRendererWindowThreadHandle {
 
     pub fn set_projection(&self, projection: BibleRenderGraphProjection) {
         self.control_handle.set_projection(projection);
+    }
+
+    pub fn apply_camera_command(
+        &self,
+        command: BibleGraphCameraCommand,
+    ) -> Result<(), eidetic_bevy_bible_graph::BibleGraphRendererError> {
+        self.control_handle.push_camera_command(command)
     }
 
     pub fn drain_commands(&self) -> Vec<BibleGraphRendererCommand> {

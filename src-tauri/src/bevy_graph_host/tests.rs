@@ -1,6 +1,6 @@
-use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
 use eidetic_bevy_bible_graph::{
-    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphNativeWindowRunnerConfig,
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
+    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeId, BibleRenderGraphEdge, BibleRenderGraphInfluence,
@@ -607,6 +607,35 @@ fn host_validates_renderer_commands_and_drains_them() {
 }
 
 #[test]
+fn host_routes_validated_camera_commands_to_native_runner() {
+    let mut host = test_bible_graph_host();
+    let projection = sample_projection();
+    let node_id = projection.nodes[0].node_id.clone();
+    host.set_projection(projection).unwrap();
+
+    let status = host
+        .apply_camera_command(BibleGraphCameraCommand::FrameNode {
+            node_id: node_id.clone(),
+        })
+        .unwrap();
+
+    assert!(status.renderer_window_open);
+    assert!(status.running);
+    assert_eq!(status.node_count, 2);
+    assert_eq!(status.last_error, None);
+
+    let missing_node_id = BibleGraphNodeId::new("node.missing").unwrap();
+    let error = host
+        .apply_camera_command(BibleGraphCameraCommand::FrameNode {
+            node_id: missing_node_id,
+        })
+        .unwrap_err();
+
+    assert!(matches!(error, BibleGraphHostError::Renderer(_)));
+    assert!(host.status().last_error.is_some());
+}
+
+#[test]
 fn host_exposes_renderer_visual_snapshot() {
     let mut host = test_bible_graph_host();
     let projection = sample_projection();
@@ -1001,6 +1030,7 @@ fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {
         focused_root_id: None,
         selected_node_id: Some(ada_id.clone()),
         selected_timeline_node_id: Some(timeline_node_id),
+        active_timeline_ms: None,
         nodes: vec![
             BibleRenderGraphNode {
                 node_id: ada_id.clone(),
