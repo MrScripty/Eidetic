@@ -644,6 +644,82 @@ fn controlled_native_window_does_not_pick_structural_edges_as_relationships() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_retains_selection_state_and_label_visibility() {
+    use bevy::prelude::{Plugin, Visibility};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let unrelated_id = BibleGraphNodeId::new("node.object.lantern").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+    let mut projection = projection_with_edge(node_id.clone());
+    projection.selected_node_id = Some(node_id.clone());
+    projection.nodes.push(BibleRenderGraphNode {
+        node_id: unrelated_id.clone(),
+        parent_id: None,
+        schema_key: BibleGraphSchemaKey::new("object").unwrap(),
+        label: "Lantern".to_string(),
+        system_owned: false,
+        sort_order: 2,
+        depth: 0,
+        position: BibleRenderGraphPosition {
+            x: 400.0,
+            y: 400.0,
+            z: 0.0,
+        },
+    });
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection);
+    app.update();
+
+    let node_states = app
+        .world_mut()
+        .query::<&BibleGraphNativeNodeVisual>()
+        .iter(app.world())
+        .map(|node| {
+            (
+                node.node_id.clone(),
+                node.selected,
+                node.highlighted,
+                node.dimmed,
+                node.label_visible,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    assert!(
+        node_states
+            .iter()
+            .any(|(id, selected, highlighted, dimmed, label_visible)| {
+                id == &node_id && *selected && *highlighted && !*dimmed && *label_visible
+            })
+    );
+    assert!(
+        node_states
+            .iter()
+            .any(|(id, selected, highlighted, dimmed, label_visible)| {
+                id == &unrelated_id && !*selected && !*highlighted && *dimmed && !*label_visible
+            })
+    );
+    assert!(
+        app.world_mut()
+            .query::<(&BibleGraphNativeNodeLabelVisual, &Visibility)>()
+            .iter(app.world())
+            .any(|(label, visibility)| {
+                label.node_id == unrelated_id && visibility == &Visibility::Hidden
+            })
+    );
+    assert!(
+        app.world_mut()
+            .query::<&BibleGraphNativeEdgeVisual>()
+            .iter(app.world())
+            .any(|edge| edge.selected && edge.highlighted && !edge.dimmed)
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_billboards_node_labels_to_camera() {
     use bevy::prelude::{Plugin, Quat, Transform, With};
 

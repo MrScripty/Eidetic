@@ -10,7 +10,7 @@ use bevy::prelude::{
     DefaultPlugins, Entity, GlobalTransform, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d,
     MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Ray3d, Res, ResMut,
     Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
-    Transform, Update, Vec2, Vec3, Window, With, Without, World,
+    Transform, Update, Vec2, Vec3, Visibility, Window, With, Without, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -119,7 +119,10 @@ pub struct BibleGraphNativeNodeVisual {
     pub radius: f32,
     pub fill_color: &'static str,
     pub outline_color: &'static str,
+    pub selected: bool,
     pub highlighted: bool,
+    pub dimmed: bool,
+    pub label_visible: bool,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -145,7 +148,9 @@ pub struct BibleGraphNativeEdgeVisual {
     pub to_z: f32,
     pub width: f32,
     pub stroke_color: &'static str,
+    pub selected: bool,
     pub highlighted: bool,
+    pub dimmed: bool,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -741,7 +746,9 @@ pub fn rebuild_bible_graph_native_visuals(
                 to_z: edge.to_position.z,
                 width: edge.radius,
                 stroke_color: edge.stroke_color,
+                selected: edge.selected,
                 highlighted: edge.highlighted,
+                dimmed: edge.dimmed,
             },
             Mesh3d(edge_mesh),
             MeshMaterial3d(edge_material),
@@ -783,7 +790,10 @@ pub fn rebuild_bible_graph_native_visuals(
                 radius: node.radius,
                 fill_color: node.fill_color,
                 outline_color: node.outline_color,
+                selected: node.selected,
                 highlighted: node.highlighted,
+                dimmed: node.dimmed,
+                label_visible: node.label_visible,
             },
             Mesh3d(node_mesh),
             MeshMaterial3d(node_material),
@@ -811,6 +821,11 @@ pub fn rebuild_bible_graph_native_visuals(
             TextLayout::new_with_justify(Justify::Center),
             bevy::sprite::Anchor::TOP_CENTER,
             BibleGraphNativeLabelBillboard,
+            if node.label_visible {
+                Visibility::Visible
+            } else {
+                Visibility::Hidden
+            },
             Transform::from_translation(Vec3::new(
                 node.position.x,
                 node.position.y - node.radius - 6.0,
