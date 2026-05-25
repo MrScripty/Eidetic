@@ -639,6 +639,26 @@ pub(crate) fn native_camera_navigation_delta(
     )
 }
 
+pub(crate) fn native_edge_segment_transform(from: Vec3, to: Vec3) -> (f32, Transform) {
+    let segment = to - from;
+    let segment_length = segment.length();
+    let edge_length = segment_length.max(1.0);
+    let rotation = if segment_length <= f32::EPSILON {
+        Default::default()
+    } else {
+        bevy::prelude::Quat::from_rotation_arc(Vec3::X, segment / segment_length)
+    };
+
+    (
+        edge_length,
+        Transform {
+            translation: from + segment * 0.5,
+            rotation,
+            ..Default::default()
+        },
+    )
+}
+
 pub(crate) fn native_camera_frame_selected_translation(
     current_translation: Vec3,
     selected_node: &BibleGraphNativeNodeVisual,
@@ -814,15 +834,14 @@ pub fn rebuild_bible_graph_native_visuals(
     let mut existing_edges = existing_native_edges(world);
 
     for edge in snapshot.edges {
-        let edge_length = ((edge.to_position.x - edge.from_position.x).powi(2)
-            + (edge.to_position.y - edge.from_position.y).powi(2))
-        .sqrt()
-        .max(1.0);
-        let edge_angle = (edge.to_position.y - edge.from_position.y)
-            .atan2(edge.to_position.x - edge.from_position.x);
-        let edge_midpoint_x = (edge.from_position.x + edge.to_position.x) / 2.0;
-        let edge_midpoint_y = (edge.from_position.y + edge.to_position.y) / 2.0;
-        let edge_midpoint_z = (edge.from_position.z + edge.to_position.z) / 2.0;
+        let (edge_length, edge_transform) = native_edge_segment_transform(
+            Vec3::new(
+                edge.from_position.x,
+                edge.from_position.y,
+                edge.from_position.z,
+            ),
+            Vec3::new(edge.to_position.x, edge.to_position.y, edge.to_position.z),
+        );
         let edge_thickness = edge.radius.max(1.0);
         let edge_mesh = {
             let mut meshes = world.resource_mut::<Assets<Mesh>>();
@@ -858,11 +877,7 @@ pub fn rebuild_bible_graph_native_visuals(
             },
             Mesh3d(edge_mesh),
             MeshMaterial3d(edge_material),
-            Transform {
-                translation: Vec3::new(edge_midpoint_x, edge_midpoint_y, edge_midpoint_z),
-                rotation: bevy::prelude::Quat::from_rotation_z(edge_angle),
-                ..Default::default()
-            },
+            edge_transform,
         );
         if let Some(entity) = existing_edges.remove(&edge.edge_id) {
             world.entity_mut(entity).insert(bundle);

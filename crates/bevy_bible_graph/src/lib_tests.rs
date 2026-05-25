@@ -632,6 +632,26 @@ fn controlled_native_window_uses_3d_ray_semantic_edge_hit_testing() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_edge_segment_transform_uses_full_3d_segment() {
+    use crate::native_render::native_edge_segment_transform;
+    use bevy::prelude::Vec3;
+
+    let from = Vec3::new(10.0, 20.0, 30.0);
+    let to = Vec3::new(10.0, 120.0, 330.0);
+    let expected_direction = (to - from).normalize();
+
+    let (length, transform) = native_edge_segment_transform(from, to);
+    let rotated_local_x = transform.rotation * Vec3::X;
+
+    assert!((length - from.distance(to)).abs() < 0.001);
+    assert_eq!(transform.translation, Vec3::new(10.0, 70.0, 180.0));
+    assert!((rotated_local_x.x - expected_direction.x).abs() < 0.001);
+    assert!((rotated_local_x.y - expected_direction.y).abs() < 0.001);
+    assert!((rotated_local_x.z - expected_direction.z).abs() < 0.001);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_does_not_pick_structural_edges_as_relationships() {
     use crate::native_render::nearest_selectable_native_edge_on_ray;
     use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
