@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
+  import type {
+    BibleGraphNode,
+    BibleGraphNodeId,
+    BibleRenderGraphNode,
+  } from '$lib/bibleGraphTypes.js';
   import {
     getBibleGraphNodeProjectionError,
     getCachedBibleGraphNodeProjection,
@@ -7,6 +11,7 @@
     refreshBibleGraphNodeProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import BibleGraphEdgeEditor from './BibleGraphEdgeEditor.svelte';
+  import { bibleGraphEdgeTargetOptions } from './bibleGraphEdgeTargetOptions.js';
   import BibleGraphEdgeList from './BibleGraphEdgeList.svelte';
   import BibleGraphPartFields from './BibleGraphPartFields.svelte';
   import BibleGraphSnapshotEditor from './BibleGraphSnapshotEditor.svelte';
@@ -15,15 +20,18 @@
   let {
     nodeId,
     onclose,
+    edgeTargetNodes,
   }: {
     nodeId: BibleGraphNodeId;
     onclose: () => void;
+    edgeTargetNodes: Array<BibleGraphNode | BibleRenderGraphNode>;
   } = $props();
 
   const key = $derived({ node_id: nodeId });
   const projection = $derived(getCachedBibleGraphNodeProjection(key));
   const pending = $derived(isBibleGraphNodeProjectionPending(key));
   const error = $derived(getBibleGraphNodeProjectionError(key));
+  const edgeTargetOptions = $derived(bibleGraphEdgeTargetOptions(edgeTargetNodes, nodeId));
 
   $effect(() => {
     void refreshBibleGraphNodeProjection({ node_id: nodeId }).catch(() => {});
@@ -72,6 +80,7 @@
       <BibleGraphEdgeEditor
         sourceNodeId={projection.payload.node.id}
         nextSortOrder={projection.payload.outgoing_edges.length + 1}
+        targetOptions={edgeTargetOptions}
       />
       <BibleGraphEdgeList
         title="Outgoing Edges"

@@ -814,11 +814,13 @@ Current implementation progress:
   transient bible UI state, so native renderer `focus_node` commands and
   Graph workspace controls drive the same backend projection request path
   without making normal graph selection alter projection scope.
+- Completed: graph-local edge creation now uses selectable target nodes from
+  the current graph projection or Bible node list instead of requiring opaque
+  target node id entry.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
 - Code review findings to resolve before completion:
-  - edge rendering uses 2D math while picking uses 3D math,
   - label visibility is too restrictive for MVP graph reading,
   - category mapping/coloring still needs one cross-boundary source of truth
     between backend projections and frontend controls,
@@ -861,8 +863,8 @@ Current implementation progress:
    nodes. Bevy renderer visual snapshots now share one category color helper;
    frontend controls and backend projection contracts still need a single
    cross-boundary category projection.
-11. Replace 2D edge mesh placement with tested 3D segment geometry shared by
-    rendering and picking.
+11. Completed: replace 2D edge mesh placement with tested 3D segment geometry
+    shared by rendering and picking.
 12. Update labels and material transforms so MVP graph nodes are readable and
     highlight/dim states preserve category identity.
 13. Add selection, edge selection, highlighting, and detail-panel integration
@@ -878,10 +880,10 @@ Current implementation progress:
     camera buttons are optional and not required for this milestone.
 16. Partially completed: add graph-local backend-command workflows for node and
     edge add/edit, using selectable graph/node controls rather than opaque ID
-    entry. Graph workspace node creation now exists; edge creation and node/
-    edge detail editing remain through the selected-node inspector. Delete
-    remains blocked until backend delete commands exist and must not be
-    simulated in frontend state.
+    entry. Graph workspace node creation and selectable edge target creation
+    now exist; node/edge detail editing remain through the selected-node
+    inspector. Delete remains blocked until backend delete commands exist and
+    must not be simulated in frontend state.
 17. Completed: refactor projection construction into query, scope, layout, and
     DTO helpers with targeted tests.
 18. Completed: add renderer-local mesh/material reuse for frequent projection

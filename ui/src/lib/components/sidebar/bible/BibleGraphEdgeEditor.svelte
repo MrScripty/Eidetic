@@ -1,13 +1,16 @@
 <script lang="ts">
   import { setBibleGraphEdgeProjection } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import type { BibleGraphEdgeKind, BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
+  import type { BibleGraphEdgeTargetOption } from './bibleGraphEdgeTargetOptions.js';
 
   let {
     sourceNodeId,
     nextSortOrder,
+    targetOptions,
   }: {
     sourceNodeId: BibleGraphNodeId;
     nextSortOrder: number;
+    targetOptions: BibleGraphEdgeTargetOption[];
   } = $props();
 
   const edgeKinds: Exclude<BibleGraphEdgeKind, { custom: string }>[] = [
@@ -57,7 +60,12 @@
   <div class="edge-form">
     <label>
       <span>Target Node</span>
-      <input bind:value={targetNodeId} />
+      <select bind:value={targetNodeId}>
+        <option value="">Select target</option>
+        {#each targetOptions as target (target.nodeId)}
+          <option value={target.nodeId}>{target.label} ({target.schemaKey})</option>
+        {/each}
+      </select>
     </label>
     <label>
       <span>Kind</span>
@@ -78,12 +86,15 @@
     {/if}
     <button
       type="button"
-      disabled={saving || !targetNodeId.trim() || !label.trim()}
+      disabled={saving || targetOptions.length === 0 || !targetNodeId.trim() || !label.trim()}
       onclick={addEdge}
     >
       {saving ? 'Saving' : 'Add Edge'}
     </button>
   </div>
+  {#if targetOptions.length === 0}
+    <p class="edge-hint">No selectable target nodes in the current graph projection.</p>
+  {/if}
 </section>
 
 <style>
@@ -166,5 +177,11 @@
     margin-right: auto;
     color: var(--color-danger, #b74c4c);
     font-size: 0.8rem;
+  }
+
+  .edge-hint {
+    margin-top: 8px;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
   }
 </style>

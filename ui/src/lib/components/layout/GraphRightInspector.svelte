@@ -19,7 +19,11 @@
 
 {#if selectedGraphNodeId}
   <div class="entity-detail-panel">
-    <BibleGraphNodeDetail nodeId={selectedGraphNodeId} onclose={clearBibleGraphSelection} />
+    <BibleGraphNodeDetail
+      nodeId={selectedGraphNodeId}
+      onclose={clearBibleGraphSelection}
+      edgeTargetNodes={renderGraph?.nodes ?? []}
+    />
   </div>
 {:else}
   <div class="entity-detail-panel">

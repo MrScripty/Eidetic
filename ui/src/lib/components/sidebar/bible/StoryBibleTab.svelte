@@ -174,6 +174,7 @@
       <BibleGraphNodeDetail
         nodeId={selectedGraphNodeId}
         onclose={() => selectBibleGraphNode(null)}
+        edgeTargetNodes={graphNodes}
       />
     </div>
   {/if}
