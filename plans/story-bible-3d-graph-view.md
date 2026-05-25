@@ -378,6 +378,48 @@ Specific graph-view requirements:
 - Canvas/Bevy graph actions need keyboard-accessible Svelte command alternatives for selection, inspection, filtering, focus, and opening details.
 - Renderer lifecycle must clean up subscriptions and renderer resources deterministically.
 - The old 2D SVG relationship graph must be removed as a supported graph view once the Bevy bible graph covers target interactions.
+- Normal graph selection must not mutate graph projection scope. Projection
+  requests that include `selected_node_id` are reserved for explicit
+  focus-neighborhood actions or backend-selected generation context, not default
+  click selection.
+- Category classification, canonical root coverage, and graph colors must be
+  centralized in projection/contract data or a shared pure helper. Svelte and
+  Bevy must not maintain divergent hard-coded category maps.
+- Renderer geometry helpers must be pure and shared by rendering and picking so
+  visible edges and hit testing cannot drift.
+- Frequent projection updates must reuse renderer assets where practical. The
+  native renderer must not keep creating unbounded mesh/material assets for
+  every refresh.
+- Projection construction should separate graph querying, scope selection,
+  layout derivation, and DTO assembly so each step remains testable and easy to
+  reason about.
+- Frontend stores and Svelte components must remain projection/view-model
+  consumers. They may own transient UI state such as open panels, draft form
+  values, hover, focus, and camera command intent, but they must not own graph
+  facts, graph selection that affects generation, persisted layout,
+  command outcomes, or durable renderer capability state.
+- Graph add/edit/remove flows must not use optimistic updates. The UI submits a
+  backend command, waits for the backend-confirmed projection/event, then
+  refreshes or receives the projected graph.
+- Graph workspace synchronization should be event-driven through the existing
+  backend/Tauri event bridge. Any polling or command-drain loop must be scoped
+  to a single lifecycle owner, bounded, documented, and stopped deterministically.
+- Every Tauri, renderer-command, and projection payload that crosses a process
+  or runtime boundary must be parsed or validated at the boundary before domain
+  code or renderer code trusts it.
+- Rust implementation slices must keep pure layout/category/geometry helpers
+  synchronous and framework-free. Async belongs at Tauri/database/event bridge
+  shells, with blocking work isolated through owned blocking boundaries.
+- Rust production paths must return typed errors for recoverable failures and
+  avoid `unwrap`/`expect` in request, lifecycle, renderer host, and background
+  bridge paths.
+- Platform-specific renderer window behavior must compile through thin strategy
+  modules for Linux, Windows, and macOS targets where practical. Graph domain,
+  projection, and Svelte code must not contain inline platform branching.
+- New or expanded modules should respect decomposition thresholds: keep UI
+  components under the component-size target, split renderer files when they
+  accumulate unrelated camera, geometry, material, lifecycle, and input logic,
+  and add/update `README.md` files for non-obvious source directories.
 
 Milestone 9 must not be considered complete until the graph is usable as a 3D
 surface. Renderer lifecycle, projection delivery, and a 2D native proof are
@@ -391,13 +433,296 @@ The first product-complete slice should prove:
 2. The Bevy graph uses a true 3D camera, 3D node geometry, and 3D edge geometry.
 3. Structural parent/child edges and explicit semantic bible edges are both visible.
 4. The user can add two nodes and one edge in Svelte and see them appear in the graph.
-5. Clicking a node selects it and opens the normal bible detail/edit surface.
+5. Clicking a node selects it and opens the normal bible detail/edit surface
+   without collapsing the graph projection. Focused-neighborhood filtering is
+   an explicit action, not the default click behavior.
 6. Clicking an edge selects the relationship and shows edge detail.
-7. Selected nodes highlight incident edges, adjacent nodes, and nearby labels.
-8. Orbit, pan, zoom, frame selected, and clear selection are available.
-9. Search/category/edge filters reshape backend projections rather than
-   mutating renderer-local durable state.
-10. Selecting a timeline clip can highlight active graph/context influence.
+7. Selected nodes highlight incident edges, adjacent nodes, and nearby labels
+   while keeping non-selected graph context visible.
+8. Node titles are readable by default for MVP-sized projections. Label-density
+   culling can be added later, but the initial graph must not hide most titles.
+9. Edges align in 3D and connect consistently to node centers or node surfaces.
+10. Canonical roots, characters, places, objects, themes, events, and
+    other/custom nodes have visibly distinct color identities. Selection and
+    dimming must preserve category identity instead of flattening everything to
+    one highlight color.
+11. Orbit, pan, zoom, frame selected, reset/fit view, and clear selection are
+    available through discoverable UI controls, not only hidden keyboard input.
+12. Search/category/edge filters reshape backend projections rather than
+    mutating renderer-local durable state.
+13. Selecting a timeline clip or moving the playhead can highlight active
+    graph/context influence.
+14. Graph-local add/edit/remove controls exist for nodes and edges. These
+    controls submit backend commands and refresh backend-confirmed projections;
+    Svelte and Bevy do not mutate durable graph state locally.
+15. Renderer window open/focus/close/recover behavior is obvious enough that a
+    user can reopen the graph after closing or losing the floating Bevy window.
+
+## Viewer Completion Requirements
+
+Milestone 9 completion requires the 3D graph to function as a usable
+viewer/editor, not just a render target.
+
+### Selection And Scope
+
+- Node selection and edge selection are transient UI state backed by projection
+  requests/events; they do not own canonical graph facts.
+- Selecting a node highlights the node, incident edges, adjacent nodes, and
+  related labels while preserving the current graph scope.
+- Graph workspace request builders must keep normal selected-node UI state out
+  of the render projection request.
+- Focused neighborhood mode is explicit. It may update the backend projection
+  request with `selected_node_id`, but only when the user chooses a focus action.
+- Focused neighborhood state must be modeled separately from selected-node
+  inspection state so clearing focus does not also clear the selected detail
+  panel unless the user asks for that behavior.
+- Clear selection restores the visible graph context without requiring a graph
+  reload workaround.
+
+### Labels And Readability
+
+- Every visible node in MVP-sized projections has a readable title.
+- Selected, hovered, adjacent, and canonical root labels are always visible.
+- Later density control may hide far-away or low-priority labels, but it must be
+  deterministic renderer presentation state, not durable graph state.
+- Label billboards must face the camera and avoid being placed so close to nodes
+  that text overlaps the sphere.
+
+### Edge Geometry
+
+- Edge endpoints are computed in 3D using both XY and Z.
+- Edges either connect center-to-center or are shortened to node surfaces using
+  the current node radii; the behavior must be consistent and tested.
+- Semantic edges and structural parent/child edges remain visually distinct.
+- Edge picking uses the same 3D endpoint data that rendering uses.
+- Edge rendering must not use 2D-only length/rotation math. A pure 3D segment
+  helper should return the mesh length, midpoint, orientation, and selectable
+  segment used by both rendering and hit testing.
+
+### Color And Materials
+
+- Category colors are explicit for:
+  - canonical roots,
+  - characters,
+  - places/locations,
+  - objects/props,
+  - cultures,
+  - events,
+  - themes,
+  - rules,
+  - references,
+  - other/custom nodes.
+- Selection/highlight/dim transforms are material treatments layered over the
+  category color. They must not erase category color identity.
+- Unknown colors must not silently collapse important categories into a generic
+  fallback.
+- `prop`, `object`, and canonical object/root names must resolve to the same
+  object/prop category. Cultures, rules, and references must not fall into
+  "other" only because an older UI category list omitted them.
+
+### Navigation And Recovery
+
+- Graph workspace exposes visible controls for:
+  - open renderer,
+  - focus renderer,
+  - close renderer,
+  - fit graph,
+  - frame selected,
+  - reset camera,
+  - clear selection,
+  - focus neighborhood.
+- Bevy supports mouse navigation for normal use: orbit, pan, and zoom.
+- Keyboard navigation can remain, but the UI must show available actions through
+  controls or concise labels.
+- Renderer closed/error state should include a clear action to reopen or recover.
+- Navigation commands that originate in Svelte are transient renderer commands.
+  They may change camera/focus presentation state, but not durable graph facts.
+- Every Svelte control must use semantic controls with accessible names,
+  visible focus states, and keyboard activation. Icon-only controls need
+  `aria-label` or equivalent hidden text.
+- Embedded graph controls must be verified against parent graph gestures so
+  orbit, pan, zoom, drag, focus, and Escape behavior do not steal interaction
+  from buttons, inputs, selects, sliders, or other controls.
+
+### Graph Editing Workflow
+
+- Graph workspace provides obvious node creation controls scoped by category or
+  selected canonical root.
+- Selected nodes can be edited through the normal backend-owned node detail
+  surface from the graph workspace.
+- Nodes can be removed through a confirmed backend command when deletion support
+  exists. If delete is not yet implemented, the plan must record that blocker
+  instead of presenting delete as available.
+- Edges can be added, edited, and removed through backend commands and refreshed
+  projections.
+- Edge add workflows should use selectable source/target nodes or graph
+  selections, not require users to manually type opaque node IDs.
+- Creating or editing graph data must update the Bevy graph after the backend
+  confirms the command and emits/returns the new projection.
+
+### Renderer Performance
+
+- The renderer may full-rebuild MVP projections, but reusable sphere/cylinder
+  meshes and category/material palettes should be cached instead of recreated
+  for every projection refresh.
+- Per-projection updates should update transforms, visibility, and material
+  handles before allocating new assets.
+- Large graph support remains bounded by projection requests first; renderer
+  optimizations are not a reason to send the entire bible graph by default.
+- Performance-oriented caching is renderer-local presentation state only. It
+  must not become a second source of graph truth.
+- Do not make performance claims without measurement. If a slice claims
+  improved refresh or interaction performance, add a repeatable benchmark,
+  smoke measurement, or profiling note appropriate to the risk.
+
+### Projection And Layout Structure
+
+- Backend graph queries should return graph facts and influence facts.
+- Scope selection should decide which nodes/edges are included for default,
+  focused-root, explicit-neighborhood, search, and active-playhead cases.
+- Layout derivation should be a pure helper with deterministic tests.
+- DTO assembly should combine facts, layout, labels, categories, relationships,
+  and influence metadata without embedding unrelated query or renderer concerns.
+- Use correct-by-construction types for graph scope modes, renderer command
+  kinds, camera command kinds, category identifiers, and node/edge IDs when
+  invalid combinations would cross module or runtime boundaries.
+- Prefer named enums over boolean parameters for modes such as default graph,
+  focused root, focused neighborhood, selected context, and active playhead.
+- Projection helpers must not depend on Bevy, Svelte, Tauri, or platform
+  modules.
+
+### Lifecycle And Concurrency
+
+- The floating renderer host remains the single owner for native renderer
+  lifecycle. Feature modules may request open/focus/close/status through typed
+  commands but must not start independent windows, tasks, or timers.
+- Background bridge tasks must have an owner that can stop them. Panics,
+  cancellation, and closed channels must be surfaced through the existing
+  diagnostics/status path.
+- Command queues and event drains must remain bounded. Overflow behavior must
+  be explicit and observable.
+- Shared mutable state crossing threads must stay behind one owner or one lock
+  per logically consistent state group. Do not split related renderer lifecycle
+  fields across independent locks.
+- Shutdown and close paths must be idempotent and deterministic.
+
+### Boundary Contracts
+
+- Rust serde attributes and TypeScript receiver types must be updated together
+  in the same implementation slice for every renderer command, graph projection,
+  category, and status payload change.
+- Add serialization round-trip tests for new or changed tagged enums, string
+  enums, optional/default fields, bounded numeric fields, and branded IDs.
+- Boundary decoders should reject malformed commands, dimensions, IDs, and
+  unsupported modes before they reach graph domain code or Bevy systems.
+- Cross-process messages should carry stable action/type names and enough safe
+  diagnostic context to identify the failed command, projection request, or
+  renderer operation.
+
+## Codebase Impact Corrections
+
+The current implementation already has the renderer host and projection plumbing,
+but the next slices must correct these code-level issues before Milestone 9 can
+be called complete:
+
+- `GraphWorkspacePanel.svelte` currently passes selected node state into
+  `graphWorkspaceProjectionRequest`, and `bibleRenderGraphProjection.svelte.ts`
+  turns that into `selected_node_id`. This couples click selection to backend
+  graph scope and must be split.
+- `bible_render_graph_query.rs` and `bible_render_graph_filter.rs` currently
+  treat `selected_node_id` as a neighborhood query input. That behavior should
+  remain only for explicit focus-neighborhood requests.
+- `native_render.rs` stores Z coordinates for edges but computes edge length and
+  rotation in XY only. Replace this with shared 3D segment math.
+- `visual_3d.rs` hides most labels and replaces category color with one
+  highlight color. It needs default MVP labels plus layered material state.
+- `bibleGraphCategories.ts` covers fewer categories than the canonical bible
+  roots. Category data should be derived from shared projection/contract data or
+  kept in one tested helper used consistently by UI and renderer adapters.
+- `BibleGraphEdgeEditor.svelte` requires manual target IDs. Graph-local edge
+  creation should use selected nodes or a selectable node picker.
+- Bible graph node/edge delete commands do not appear to exist yet. The UI must
+  not present delete controls until backend commands and history projections are
+  implemented.
+- Graph workspace visible camera controls cannot be completed by wiring Svelte
+  directly to local state. The current graph renderer command bridge is
+  renderer-to-UI for selection/inspection commands; Milestone 9 still needs a
+  typed backend-owned UI-to-renderer camera command endpoint for fit graph,
+  frame selected, reset camera, and navigate/focus camera actions.
+- `native_render.rs` currently creates new mesh/material assets during each
+  projection rebuild. Add renderer-local reusable assets before relying on
+  frequent playhead/context refreshes.
+- Existing graph/renderer files are already near or past decomposition review
+  thresholds. Any slice that grows `native_render.rs`, graph workspace
+  components, projection stores, or command bridges should first extract focused
+  helpers/modules for geometry, materials, camera commands, category mapping,
+  lifecycle/status, and request building rather than continuing to add mixed
+  responsibilities to one file.
+
+## Standards Compliance Checklist
+
+Before implementing each remaining Milestone 9 slice, confirm:
+
+- Backend remains the single source of truth for graph facts, graph mutations,
+  persisted layout, history, and generation-affecting selection.
+- Frontend and Bevy own only transient UI/renderer state and submit backend
+  commands for durable changes.
+- No optimistic updates are introduced for graph data. UI updates after command
+  confirmation and backend projection refresh/event delivery.
+- Runtime boundaries validate payloads and keep Rust/TypeScript contract shapes
+  aligned in the same slice.
+- Platform-specific behavior stays behind renderer strategy modules, not graph
+  domain, projection, or Svelte code.
+- Async/background work has one lifecycle owner, bounded queues, deterministic
+  shutdown, and surfaced errors.
+- Pure graph scope, category, layout, and 3D geometry helpers stay independent
+  of Bevy, Tauri, Svelte, database, and platform modules.
+- UI controls are semantic, labeled, keyboard-accessible, and tested against
+  parent graph gestures.
+- Decomposition thresholds are reviewed before expanding large renderer,
+  projection, or component files.
+- Verification includes the thinnest useful vertical slice through backend
+  command/projection, Tauri bridge, Svelte control, and Bevy projection
+  rendering before broader horizontal refactors.
+
+### Acceptance Tests
+
+- Automated tests cover:
+  - selection does not add `selected_node_id` to the default graph projection
+    request,
+  - explicit focus-neighborhood action does add `selected_node_id`,
+  - all MVP graph nodes get visible labels,
+  - 3D edge endpoint math uses Z and aligns with node radii,
+  - category color mapping covers all canonical categories,
+  - selected/highlighted/dimmed material transforms preserve category identity,
+  - UI and renderer category helpers classify every canonical bible root and
+    supported node schema consistently,
+  - rendered edge transforms and edge picking are produced from the same 3D
+    segment helper,
+  - renderer projection refreshes reuse stable mesh/material assets for common
+    node and edge primitives,
+  - renderer command application updates selection/detail state without owning
+    graph facts,
+  - add/edit edge and add/edit node flows submit backend commands then refresh
+    projections,
+  - no optimistic graph-node or graph-edge UI update is visible before backend
+    command confirmation,
+  - malformed renderer/projection boundary payloads fail with typed errors,
+  - TypeScript command/projection types match Rust serde wire shapes for changed
+    contracts,
+  - renderer lifecycle tasks stop cleanly and queue overflow behavior is
+    bounded and observable,
+  - keyboard-accessible Svelte controls can perform the same selection,
+    inspection, filtering, focus, reset, and open/close actions as the renderer.
+- Manual smoke test covers:
+  - new project opens canonical scaffold with labels,
+  - user can open/focus/close/reopen the Bevy graph,
+  - user can add two nodes and one edge from the graph workflow,
+  - user can select a node without losing the rest of the graph,
+  - user can select an edge and inspect its details,
+  - user can navigate with mouse and visible controls,
+  - user can reset/fit the camera after getting lost,
+  - category colors are visually distinguishable.
 
 ## Open Questions
 
@@ -448,24 +773,32 @@ Current implementation progress:
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
-- Remaining usability gaps:
-  - Selecting a node must highlight it without collapsing the graph to only that
-    node's neighborhood. Neighborhood focus should be an explicit command/mode,
-    not the default selection behavior.
-  - Node labels/titles must be visible enough for normal graph reading, with
-    label density handled as a renderer presentation concern rather than hiding
-    most titles by default.
-  - Edges must be anchored consistently to node surfaces or centers in 3D space;
-    they should not appear offset from the nodes they connect.
-  - Category color coding must be visibly distinct for canonical roots,
-    characters, places, objects, themes, events, and other/custom nodes.
-  - Navigation affordances must be discoverable in the UI, not only hidden
-    keyboard behavior in the Bevy window.
-  - The Graph workspace needs obvious add/edit/remove entry points that submit
-    backend commands and refresh projections. The existing Story Bible sidebar
-    controls are not sufficient for the graph viewer workflow.
-  - The Bevy graph window needs clear close/focus/open behavior and enough
-    window chrome or in-app controls for users to recover from renderer state.
+- Code review findings to resolve before completion:
+  - normal selection is coupled to backend projection scope,
+  - edge rendering uses 2D math while picking uses 3D math,
+  - label visibility is too restrictive for MVP graph reading,
+  - category mapping/coloring is duplicated and incomplete,
+  - graph-local add/edit workflows are incomplete and delete commands are not
+    available,
+  - visible navigation/recovery controls are incomplete,
+  - renderer rebuilds allocate fresh assets on each projection refresh,
+  - projection construction mixes scope, layout, and DTO assembly.
+- Standards review findings to resolve before implementation completion:
+  - prevent frontend/renderer ownership of backend facts or generation-affecting
+    selection,
+  - prohibit optimistic graph data updates,
+  - keep graph synchronization event-driven except for the bounded renderer
+    command drain owned by the desktop bridge,
+  - validate and round-trip-test every changed runtime boundary contract,
+  - keep platform-specific behavior inside renderer strategy modules,
+  - keep async shells outside pure graph helpers,
+  - add lifecycle, queue, shutdown, and panic/error verification for renderer
+    background work,
+  - add accessibility and parent-gesture conflict checks for graph controls,
+  - split large mixed-responsibility renderer/projection/component files as part
+    of the relevant implementation slices.
+- Remaining usability gaps are tracked in "Viewer Completion Requirements" and
+  must be completed before Milestone 9 is considered done.
 
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
@@ -475,9 +808,36 @@ Current implementation progress:
    lighting using Eidetic's visual language.
 6. Build a Bevy graph scene/plugin that consumes `BibleRenderGraph`.
 7. Connect the Bevy graph scene/plugin to the shared floating renderer host.
-8. Add selection, edge selection, highlighting, and detail-panel integration.
-9. Add orbit/pan/zoom, frame selected, focus neighborhood, and keyboard navigation.
-10. Add filtering by canonical section, node type, edge kind, search, and
+8. Split normal graph selection from projection scope. Normal selection updates
+   transient UI/detail state only; explicit focus-neighborhood requests update
+   backend projection scope.
+9. Add the vertical-slice acceptance path for selection/scope: backend
+   projection request, Tauri renderer bridge, Svelte control, Bevy render
+   refresh, and detail projection must all agree without optimistic updates.
+10. Centralize graph category classification/color identity for canonical roots,
+   supported schemas, custom schemas, and unknown nodes.
+11. Replace 2D edge mesh placement with tested 3D segment geometry shared by
+    rendering and picking.
+12. Update labels and material transforms so MVP graph nodes are readable and
+    highlight/dim states preserve category identity.
+13. Add selection, edge selection, highlighting, and detail-panel integration
+    without collapsing graph scope on normal selection.
+14. Add orbit/pan/zoom, frame selected, reset/fit view, explicit focus
+    neighborhood, clear selection, keyboard navigation, and visible controls for
+    those actions.
+15. Add a typed backend-owned UI-to-renderer camera command endpoint before
+    adding Svelte fit/reset/frame/navigate buttons. Commands must be transient
+    renderer presentation commands, bounded through the existing renderer owner,
+    and verified through Rust/TypeScript contract tests.
+16. Add graph-local backend-command workflows for node and edge add/edit, using
+    selectable graph/node controls rather than opaque ID entry. Record delete
+    blockers explicitly until backend delete commands exist.
+17. Refactor projection construction into query, scope, layout, and DTO helpers
+    with targeted tests.
+18. Add renderer-local mesh/material reuse for frequent projection refreshes.
+19. Add lifecycle/queue/shutdown/error verification for renderer host,
+    projection bridge, and command drain ownership.
+20. Add filtering by canonical section, node type, edge kind, search, and
     active playhead/clip context.
-11. Add timeline cross-linking and active-at-playhead filtering.
-12. Remove the old 2D relationship graph once the 3D graph view is active.
+21. Add timeline cross-linking and active-at-playhead filtering.
+22. Remove the old 2D relationship graph once the 3D graph view is active.
