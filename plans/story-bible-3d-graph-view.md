@@ -436,9 +436,14 @@ Current implementation progress:
   dimmed material styling.
 - Completed: Graph workspace search and category controls request bounded
   backend render projections rather than filtering durable graph facts locally.
-- Remaining: active playhead/clip context projection controls, edge detail
-  integration verification, and removal of the old 2D relationship graph after
-  the Bevy graph covers target interactions.
+- Completed: native edge-selection commands are verified through the shared
+  selection store into projection-derived edge detail.
+- Remaining: active playhead/clip context projection controls and removal of
+  the old 2D relationship graph after the Bevy graph covers target interactions.
+- Blocker found: active timeline clip filtering is currently keyed only by
+  `selected_timeline_node_id`. True playhead-driven graph filtering needs a
+  backend projection contract for active time or backend-derived active clip
+  selection before Bevy/Svelte can consume it without owning business logic.
 
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
