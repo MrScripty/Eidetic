@@ -62,8 +62,11 @@
   --color-entity-character: #6495ed;
   --color-entity-location: #22c55e;
   --color-entity-prop: #f97316;
+  --color-entity-culture: #14b8a6;
   --color-entity-theme: #a855f7;
   --color-entity-event: #ef4444;
+  --color-entity-rule: #eab308;
+  --color-entity-reference: #38bdf8;
   --color-bible-development: #14b8a6;
 
   /* Character progression markers */
