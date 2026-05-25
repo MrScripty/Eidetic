@@ -817,6 +817,10 @@ Current implementation progress:
 - Completed: graph-local edge creation now uses selectable target nodes from
   the current graph projection or Bible node list instead of requiring opaque
   target node id entry.
+- Completed: the explicit Focus neighborhood control now also sends a
+  backend-owned transient camera command to the Bevy renderer so the native
+  viewport can navigate to the focused graph region without Svelte owning
+  camera state.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
@@ -869,9 +873,11 @@ Current implementation progress:
     highlight/dim states preserve category identity.
 13. Add selection, edge selection, highlighting, and detail-panel integration
     without collapsing graph scope on normal selection.
-14. Add orbit/pan/zoom, frame selected, reset/fit view, explicit focus
-    neighborhood, clear selection, keyboard navigation, and visible controls for
-    those actions.
+14. Partially completed: add orbit/pan/zoom, frame selected, reset/fit view,
+    explicit focus neighborhood, clear selection, keyboard navigation, and
+    visible controls for those actions. Native orbit/pan/zoom and backend-owned
+    camera commands exist; the Graph workspace explicit focus control now
+    drives a renderer camera navigation command.
 15. Completed: add a typed backend-owned camera command API for the Bevy
     viewport.
     Commands must be transient renderer presentation commands, bounded through

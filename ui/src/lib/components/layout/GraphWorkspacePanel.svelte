@@ -17,6 +17,7 @@
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
+  import { applyGraphRendererCameraCommand } from '$lib/graphRendererApi.js';
   import { ensureCanonicalBibleRootProjections } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import {
     getCachedBibleGraphSchemaListProjection,
@@ -149,6 +150,10 @@
   function focusSelectedNeighborhood() {
     if (selectedGraphNodeId) {
       focusBibleGraphNeighborhood(selectedGraphNodeId);
+      void applyGraphRendererCameraCommand({
+        type: 'navigate_to_neighborhood',
+        node_id: selectedGraphNodeId,
+      }).catch(() => {});
     }
   }
 
