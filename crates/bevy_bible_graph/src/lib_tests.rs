@@ -783,6 +783,37 @@ fn native_camera_navigation_supports_pan_and_zoom_intents() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_camera_frame_selected_moves_camera_over_selected_node() {
+    use crate::native_render::native_camera_frame_selected_translation;
+    use bevy::prelude::Vec3;
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let selected_node = BibleGraphNativeNodeVisual {
+        node_id,
+        x: 240.0,
+        y: -120.0,
+        z: 60.0,
+        radius: 18.0,
+        fill_color: "#1f6f78",
+        outline_color: "#f2c94c",
+        selected: true,
+        highlighted: true,
+        dimmed: false,
+        label_visible: true,
+    };
+
+    assert_eq!(
+        native_camera_frame_selected_translation(Vec3::new(10.0, 20.0, 900.0), &selected_node),
+        Vec3::new(240.0, -120.0, 900.0)
+    );
+    assert_eq!(
+        native_camera_frame_selected_translation(Vec3::new(10.0, 20.0, 120.0), &selected_node),
+        Vec3::new(240.0, -120.0, 280.0)
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_node_selection_commands() {
     use bevy::prelude::Plugin;
 

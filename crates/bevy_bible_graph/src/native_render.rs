@@ -301,6 +301,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, emit_bible_graph_native_click_selection);
         app.add_systems(Update, billboard_bible_graph_native_labels);
         app.add_systems(Update, navigate_bible_graph_native_camera);
+        app.add_systems(Update, frame_bible_graph_native_camera_on_selected);
     }
 }
 
@@ -518,6 +519,28 @@ fn navigate_bible_graph_native_camera(
     camera_transform.translation.z = camera_transform.translation.z.max(120.0);
 }
 
+fn frame_bible_graph_native_camera_on_selected(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    nodes: Query<&BibleGraphNativeNodeVisual>,
+    mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    if !keys.just_pressed(KeyCode::KeyF) {
+        return;
+    }
+    let Some(selected_node) = nodes.iter().find(|node| node.selected) else {
+        return;
+    };
+    let Ok(mut camera_transform) = cameras.single_mut() else {
+        return;
+    };
+
+    camera_transform.translation =
+        native_camera_frame_selected_translation(camera_transform.translation, selected_node);
+}
+
 pub(crate) fn native_camera_navigation_delta(
     pan_left: bool,
     pan_right: bool,
@@ -561,6 +584,17 @@ pub(crate) fn native_camera_navigation_delta(
         pan_delta.x,
         pan_delta.y,
         zoom_direction * zoom_speed * delta_seconds,
+    )
+}
+
+pub(crate) fn native_camera_frame_selected_translation(
+    current_translation: Vec3,
+    selected_node: &BibleGraphNativeNodeVisual,
+) -> Vec3 {
+    Vec3::new(
+        selected_node.x,
+        selected_node.y,
+        current_translation.z.max(selected_node.z + 220.0),
     )
 }
 
