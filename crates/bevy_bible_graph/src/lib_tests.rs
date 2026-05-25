@@ -587,6 +587,30 @@ fn controlled_native_window_billboards_node_labels_to_camera() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_camera_navigation_supports_pan_and_zoom_intents() {
+    use crate::native_render::native_camera_navigation_delta;
+    use bevy::prelude::Vec3;
+
+    assert_eq!(
+        native_camera_navigation_delta(false, false, false, false, false, false, 1.0),
+        Vec3::ZERO
+    );
+    assert_eq!(
+        native_camera_navigation_delta(true, false, false, false, false, false, 1.0),
+        Vec3::new(-420.0, 0.0, 0.0)
+    );
+    assert_eq!(
+        native_camera_navigation_delta(false, false, false, false, false, true, 1.0),
+        Vec3::new(0.0, 0.0, -650.0)
+    );
+    assert_eq!(
+        native_camera_navigation_delta(false, false, false, false, true, false, 0.5),
+        Vec3::new(0.0, 0.0, 325.0)
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_node_selection_commands() {
     use bevy::prelude::Plugin;
 

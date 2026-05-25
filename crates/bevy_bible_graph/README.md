@@ -64,6 +64,9 @@ Dependency review:
   the backend projection. Node labels are renderer-local text billboards that
   follow the native graph camera. The plugin does not own durable graph data;
   the desktop host owns renderer-window lifecycle.
+- Native camera movement is renderer-local only: keyboard pan and zoom change
+  the Bevy camera transform without mutating graph selection, layout, or
+  backend-owned project data.
 - Native renderer-window control is limited to renderer-local lifecycle
   signaling. `BibleGraphNativeWindowControlHandle` lets the desktop host request
   close without giving this leaf crate access to Tauri, SQLite, or durable

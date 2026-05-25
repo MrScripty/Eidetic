@@ -292,7 +292,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, apply_bible_graph_native_projection);
         app.add_systems(Update, emit_bible_graph_native_click_selection);
         app.add_systems(Update, billboard_bible_graph_native_labels);
-        app.add_systems(Update, pan_bible_graph_native_camera);
+        app.add_systems(Update, navigate_bible_graph_native_camera);
     }
 }
 
@@ -468,7 +468,7 @@ fn emit_bible_graph_native_click_selection(
         push_native_command_to_control(&control, BibleGraphRendererCommand::SelectNode { node_id });
 }
 
-fn pan_bible_graph_native_camera(
+fn navigate_bible_graph_native_camera(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     time: Option<Res<Time>>,
     mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
@@ -482,28 +482,68 @@ fn pan_bible_graph_native_camera(
     let Ok(mut camera_transform) = cameras.single_mut() else {
         return;
     };
-    let mut direction = Vec2::ZERO;
+    let translation_delta = native_camera_navigation_delta(
+        keys.pressed(KeyCode::KeyA) || keys.pressed(KeyCode::ArrowLeft),
+        keys.pressed(KeyCode::KeyD) || keys.pressed(KeyCode::ArrowRight),
+        keys.pressed(KeyCode::KeyW) || keys.pressed(KeyCode::ArrowUp),
+        keys.pressed(KeyCode::KeyS) || keys.pressed(KeyCode::ArrowDown),
+        keys.pressed(KeyCode::KeyQ) || keys.pressed(KeyCode::Minus),
+        keys.pressed(KeyCode::KeyE) || keys.pressed(KeyCode::Equal),
+        time.delta_secs(),
+    );
 
-    if keys.pressed(KeyCode::KeyA) || keys.pressed(KeyCode::ArrowLeft) {
-        direction.x -= 1.0;
-    }
-    if keys.pressed(KeyCode::KeyD) || keys.pressed(KeyCode::ArrowRight) {
-        direction.x += 1.0;
-    }
-    if keys.pressed(KeyCode::KeyW) || keys.pressed(KeyCode::ArrowUp) {
-        direction.y += 1.0;
-    }
-    if keys.pressed(KeyCode::KeyS) || keys.pressed(KeyCode::ArrowDown) {
-        direction.y -= 1.0;
-    }
-
-    if direction == Vec2::ZERO {
+    if translation_delta == Vec3::ZERO {
         return;
     }
 
+    camera_transform.translation += translation_delta;
+    camera_transform.translation.z = camera_transform.translation.z.max(120.0);
+}
+
+pub(crate) fn native_camera_navigation_delta(
+    pan_left: bool,
+    pan_right: bool,
+    pan_up: bool,
+    pan_down: bool,
+    zoom_out: bool,
+    zoom_in: bool,
+    delta_seconds: f32,
+) -> Vec3 {
+    let mut pan_direction = Vec2::ZERO;
+    let mut zoom_direction = 0.0;
+
+    if pan_left {
+        pan_direction.x -= 1.0;
+    }
+    if pan_right {
+        pan_direction.x += 1.0;
+    }
+    if pan_up {
+        pan_direction.y += 1.0;
+    }
+    if pan_down {
+        pan_direction.y -= 1.0;
+    }
+    if zoom_out {
+        zoom_direction += 1.0;
+    }
+    if zoom_in {
+        zoom_direction -= 1.0;
+    }
+
     let pan_speed = 420.0;
-    camera_transform.translation +=
-        (direction.normalize() * pan_speed * time.delta_secs()).extend(0.0);
+    let zoom_speed = 650.0;
+    let pan_delta = if pan_direction == Vec2::ZERO {
+        Vec2::ZERO
+    } else {
+        pan_direction.normalize() * pan_speed * delta_seconds
+    };
+
+    Vec3::new(
+        pan_delta.x,
+        pan_delta.y,
+        zoom_direction * zoom_speed * delta_seconds,
+    )
 }
 
 fn billboard_bible_graph_native_labels(
