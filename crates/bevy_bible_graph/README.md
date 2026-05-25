@@ -61,8 +61,9 @@ Dependency review:
   graph colors, clear color, one marked `Camera3d`, and a renderer-local light.
   Graph nodes are renderer-local `Mesh3d` spheres and graph edges are
   renderer-local `Mesh3d` cuboids with `StandardMaterial` colors derived from
-  the backend projection. The plugin does not own durable graph data; the
-  desktop host owns renderer-window lifecycle.
+  the backend projection. Node labels are renderer-local text billboards that
+  follow the native graph camera. The plugin does not own durable graph data;
+  the desktop host owns renderer-window lifecycle.
 - Native renderer-window control is limited to renderer-local lifecycle
   signaling. `BibleGraphNativeWindowControlHandle` lets the desktop host request
   close without giving this leaf crate access to Tauri, SQLite, or durable
@@ -83,7 +84,7 @@ Future scope:
 - Native desktop host lifecycle is owned by `eidetic-desktop`; the leaf
   renderer remains responsible only for projection consumption, ECS state, and
   validated renderer commands.
-- Label billboards, force-layout, and interaction state built from the
-  renderer-neutral 3D snapshot boundary.
+- Force-layout and richer interaction state built from the renderer-neutral 3D
+  snapshot boundary.
 - Pointer, keyboard, and accessibility command flows.
 - Backend-confirmed graph mutation commands.

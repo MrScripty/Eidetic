@@ -548,6 +548,45 @@ fn controlled_native_window_uses_3d_ray_node_hit_testing() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_billboards_node_labels_to_camera() {
+    use bevy::prelude::{Plugin, Quat, Transform, With};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_node(node_id));
+    app.update();
+
+    let expected_rotation = Quat::from_rotation_y(0.25);
+    {
+        let world = app.world_mut();
+        let mut camera_transforms =
+            world.query_filtered::<&mut Transform, With<BibleGraphNativeCamera>>();
+        for mut camera_transform in camera_transforms.iter_mut(world) {
+            camera_transform.rotation = expected_rotation;
+        }
+    }
+
+    app.update();
+
+    let label_rotations = {
+        let mut label_transforms = app
+            .world_mut()
+            .query_filtered::<&Transform, With<BibleGraphNativeLabelBillboard>>();
+        label_transforms
+            .iter(app.world())
+            .map(|transform| transform.rotation)
+            .collect::<Vec<_>>()
+    };
+
+    assert_eq!(label_rotations, vec![expected_rotation]);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_node_selection_commands() {
     use bevy::prelude::Plugin;
 

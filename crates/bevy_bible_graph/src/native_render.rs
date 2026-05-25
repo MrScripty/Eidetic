@@ -10,7 +10,7 @@ use bevy::prelude::{
     DefaultPlugins, Entity, GlobalTransform, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d,
     MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Ray3d, Res, ResMut,
     Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout, Time,
-    Transform, Update, Vec2, Vec3, Window, With, World,
+    Transform, Update, Vec2, Vec3, Window, With, Without, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -127,6 +127,9 @@ pub struct BibleGraphNativeNodeLabelVisual {
     pub node_id: BibleGraphNodeId,
     pub label: String,
 }
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeLabelBillboard;
 
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeEdgeVisual {
@@ -288,6 +291,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
         app.add_systems(Update, apply_bible_graph_native_projection);
         app.add_systems(Update, emit_bible_graph_native_click_selection);
+        app.add_systems(Update, billboard_bible_graph_native_labels);
         app.add_systems(Update, pan_bible_graph_native_camera);
     }
 }
@@ -502,6 +506,25 @@ fn pan_bible_graph_native_camera(
         (direction.normalize() * pan_speed * time.delta_secs()).extend(0.0);
 }
 
+fn billboard_bible_graph_native_labels(
+    cameras: Query<&Transform, With<BibleGraphNativeCamera>>,
+    mut labels: Query<
+        &mut Transform,
+        (
+            With<BibleGraphNativeLabelBillboard>,
+            Without<BibleGraphNativeCamera>,
+        ),
+    >,
+) {
+    let Ok(camera_transform) = cameras.single() else {
+        return;
+    };
+
+    for mut label_transform in &mut labels {
+        label_transform.rotation = camera_transform.rotation;
+    }
+}
+
 pub(crate) fn nearest_native_node_on_ray<'a>(
     nodes: impl Iterator<Item = &'a BibleGraphNativeNodeVisual>,
     ray: Ray3d,
@@ -666,6 +689,7 @@ pub fn rebuild_bible_graph_native_visuals(
             TextColor(Color::srgb(0.86, 0.9, 0.94)),
             TextLayout::new_with_justify(Justify::Center),
             bevy::sprite::Anchor::TOP_CENTER,
+            BibleGraphNativeLabelBillboard,
             Transform::from_translation(Vec3::new(
                 node.position.x,
                 node.position.y - node.radius - 6.0,
