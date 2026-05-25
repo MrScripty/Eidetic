@@ -24,6 +24,8 @@ pub struct BibleRenderGraphProjection {
     pub selected_node_id: Option<BibleGraphNodeId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub selected_timeline_node_id: Option<NodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_timeline_ms: Option<u64>,
     #[serde(default)]
     pub nodes: Vec<BibleRenderGraphNode>,
     #[serde(default)]
@@ -176,6 +178,7 @@ impl BibleRenderGraphProjection {
             focused_root_id: request.focused_root_id.clone(),
             selected_node_id: request.selected_node_id.clone(),
             selected_timeline_node_id: request.selected_timeline_node_id,
+            active_timeline_ms: request.active_timeline_ms,
             nodes: render_nodes,
             edges: render_edges,
             neighborhoods,

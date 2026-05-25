@@ -23,6 +23,8 @@ pub struct BibleRenderGraphProjectionRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub selected_timeline_node_id: Option<NodeId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_timeline_ms: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub search: Option<String>,
     #[serde(default = "default_neighborhood_depth")]
     pub neighborhood_depth: u32,
@@ -38,6 +40,7 @@ impl Default for BibleRenderGraphProjectionRequest {
             focused_root_id: None,
             selected_node_id: None,
             selected_timeline_node_id: None,
+            active_timeline_ms: None,
             search: None,
             neighborhood_depth: DEFAULT_NEIGHBORHOOD_DEPTH,
             max_nodes: DEFAULT_MAX_RENDER_GRAPH_NODES,
@@ -52,6 +55,7 @@ impl BibleRenderGraphProjectionRequest {
             focused_root_id: self.focused_root_id.clone(),
             selected_node_id: self.selected_node_id.clone(),
             selected_timeline_node_id: self.selected_timeline_node_id,
+            active_timeline_ms: self.active_timeline_ms,
             search: normalized_search(self.search.as_deref()),
             neighborhood_depth: self.neighborhood_depth.min(MAX_NEIGHBORHOOD_DEPTH),
             max_nodes: self.max_nodes.clamp(1, MAX_RENDER_GRAPH_NODES),

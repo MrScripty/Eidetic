@@ -61,6 +61,7 @@ fn render_graph_projection_round_trips() {
         focused_root_id: None,
         selected_node_id: None,
         selected_timeline_node_id: None,
+        active_timeline_ms: None,
         nodes: vec![BibleRenderGraphNode {
             node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
             parent_id: None,
@@ -134,6 +135,23 @@ fn render_graph_projection_request_filters_selected_neighborhood() {
     );
     assert_eq!(projection.edges.len(), 1);
     assert_eq!(projection.edges[0].edge_id.as_str(), "edge.ada.beach");
+}
+
+#[test]
+fn render_graph_projection_preserves_active_timeline_time_request() {
+    let ada = graph_node("node.character.ada", None, "character", "Ada", false, 1);
+
+    let projection = BibleRenderGraphProjection::from_graph_for_request(
+        vec![ada],
+        Vec::new(),
+        &BibleRenderGraphProjectionRequest {
+            active_timeline_ms: Some(12_345),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    );
+
+    assert_eq!(projection.active_timeline_ms, Some(12_345));
 }
 
 #[test]

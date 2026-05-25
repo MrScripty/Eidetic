@@ -97,6 +97,7 @@ fn renderer_app_rebuilds_scene_entities_from_projection() {
             focused_root_id: None,
             selected_node_id: None,
             selected_timeline_node_id: None,
+            active_timeline_ms: None,
             nodes: Vec::new(),
             edges: Vec::new(),
             neighborhoods: Vec::new(),
@@ -261,6 +262,7 @@ fn renderer_app_derives_3d_structural_edges_from_parent_nodes() {
         focused_root_id: None,
         selected_node_id: None,
         selected_timeline_node_id: None,
+        active_timeline_ms: None,
         nodes: vec![
             BibleRenderGraphNode {
                 node_id: root_id.clone(),
@@ -1180,6 +1182,7 @@ fn projection_with_node(node_id: BibleGraphNodeId) -> BibleRenderGraphProjection
         focused_root_id: None,
         selected_node_id: None,
         selected_timeline_node_id: None,
+        active_timeline_ms: None,
         nodes: vec![BibleRenderGraphNode {
             node_id,
             parent_id: None,
@@ -1206,6 +1209,7 @@ fn projection_with_parent_node(child_id: BibleGraphNodeId) -> BibleRenderGraphPr
         focused_root_id: None,
         selected_node_id: None,
         selected_timeline_node_id: None,
+        active_timeline_ms: None,
         nodes: vec![
             BibleRenderGraphNode {
                 node_id: root_id.clone(),
@@ -1247,6 +1251,7 @@ fn projection_with_node_count(node_count: usize) -> BibleRenderGraphProjection {
         focused_root_id: None,
         selected_node_id: None,
         selected_timeline_node_id: None,
+        active_timeline_ms: None,
         nodes: (0..node_count)
             .map(|index| BibleRenderGraphNode {
                 node_id: BibleGraphNodeId::new(format!("node.test.{index}")).unwrap(),
@@ -1276,6 +1281,7 @@ fn projection_with_edge(source_id: BibleGraphNodeId) -> BibleRenderGraphProjecti
         focused_root_id: None,
         selected_node_id: None,
         selected_timeline_node_id: None,
+        active_timeline_ms: None,
         nodes: vec![
             BibleRenderGraphNode {
                 node_id: source_id.clone(),
