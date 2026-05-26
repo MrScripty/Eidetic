@@ -1,4 +1,5 @@
 <script lang="ts">
+  import TimelineRendererWindowControls from './TimelineRendererWindowControls.svelte';
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
   import { TIMELINE, formatTime } from '$lib/timelineTypes.js';
 </script>
@@ -80,6 +81,8 @@
 
   <!-- Playhead time display -->
   <span class="tl-time" title="Playhead position">{formatTime(timelineState.playheadMs)}</span>
+
+  <TimelineRendererWindowControls />
 </div>
 
 <style>

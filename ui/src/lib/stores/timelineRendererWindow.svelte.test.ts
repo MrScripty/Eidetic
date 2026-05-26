@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest';
+import type { TimelineRendererStatus } from '$lib/timelineRendererTypes.js';
+import {
+  clearTimelineRendererWindowStatus,
+  setTimelineRendererWindowStatus,
+  timelineRendererWindowState,
+} from './timelineRendererWindow.svelte.js';
+
+const baseStatus: TimelineRendererStatus = {
+  renderer_window_kind: 'timeline',
+  running: true,
+  renderer_scene_ready: true,
+  track_count: 5,
+  clip_count: 13,
+  relationship_count: 2,
+  affect_overlay_count: 3,
+  queued_command_count: 0,
+  last_error: null,
+};
+
+describe('timeline renderer window state', () => {
+  it('stores only the latest backend status projection', () => {
+    clearTimelineRendererWindowStatus();
+
+    setTimelineRendererWindowStatus(baseStatus);
+    expect(timelineRendererWindowState.status).toEqual(baseStatus);
+
+    clearTimelineRendererWindowStatus();
+    expect(timelineRendererWindowState.status).toBeNull();
+  });
+});

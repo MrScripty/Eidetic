@@ -3514,6 +3514,10 @@ Implementation order:
   open/status/close commands. These helpers only invoke the Tauri-owned
   renderer lifecycle and mirror returned status; they do not introduce
   frontend-owned renderer state or optimistic timeline mutation.
+- Started: the timeline toolbar now exposes compact keyboard-accessible
+  renderer lifecycle controls backed by the Tauri timeline renderer commands.
+  The toolbar stores only the latest returned status projection for display and
+  does not own timeline clips, viewport state, or renderer commands.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
