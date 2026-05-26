@@ -3690,6 +3690,10 @@ Implementation order:
 - Started: the native timeline window API can now emit validated split-node
   command requests only for split points inside the projected clip and fresh
   replacement node IDs, keeping split mutation semantics at the backend bridge.
+- Started: the native timeline window API can now emit validated create-node
+  command requests only when parent references and requested ranges are valid
+  for the active backend projection, completing the first native command
+  primitive set for later Bevy create interactions.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

@@ -15,7 +15,7 @@ use bevy::window::{
 };
 use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::TimelineRenderProjection;
-use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
 use eidetic_core::timeline::track::TrackId;
 
 use crate::scene::{TimelineSceneEntity, TimelineSceneStats, rebuild_timeline_scene};
@@ -701,6 +701,47 @@ pub fn emit_timeline_native_split_node_request(
             at_ms,
             left_node_id,
             right_node_id,
+        });
+    Ok(())
+}
+
+pub fn emit_timeline_native_create_node_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    node_id: NodeId,
+    parent_id: Option<NodeId>,
+    level: StoryLevel,
+    name: String,
+    start_ms: u64,
+    end_ms: u64,
+    beat_type: Option<BeatType>,
+) -> Result<(), TimelineRendererError> {
+    if let Some(parent_id) = parent_id
+        && !projection
+            .clips
+            .iter()
+            .any(|clip| clip.node_id == parent_id)
+    {
+        return Err(TimelineRendererError::UnknownNode { node_id: parent_id });
+    }
+    if start_ms >= end_ms || end_ms > projection.total_duration_ms {
+        return Err(TimelineRendererError::InvalidNodeRange {
+            start_ms,
+            end_ms,
+            duration_ms: projection.total_duration_ms,
+        });
+    }
+
+    let _ = control
+        .command_sender
+        .try_send(TimelineRendererCommand::CreateNode {
+            node_id,
+            parent_id,
+            level,
+            name,
+            start_ms,
+            end_ms,
+            beat_type,
         });
     Ok(())
 }

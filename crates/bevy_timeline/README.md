@@ -39,6 +39,8 @@ Current scope:
   backend projection.
 - Emit native split command requests only when the split point is inside the
   projected clip and replacement node IDs are available.
+- Emit native create command requests only when parent references and requested
+  ranges are valid for the active backend projection.
 
 Dependency review:
 

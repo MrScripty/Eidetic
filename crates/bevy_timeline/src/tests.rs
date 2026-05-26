@@ -475,6 +475,67 @@ fn controlled_native_window_rejects_invalid_split_node_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_validated_create_node_command() {
+    let parent_id = NodeId::new();
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    crate::native_render::emit_timeline_native_create_node_request(
+        &window_control,
+        &projection_with_node(parent_id),
+        node_id,
+        Some(parent_id),
+        StoryLevel::Act,
+        "Inserted act".to_string(),
+        2_000,
+        5_000,
+        None,
+    )
+    .unwrap();
+
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::CreateNode {
+            node_id,
+            parent_id: Some(parent_id),
+            level: StoryLevel::Act,
+            name: "Inserted act".to_string(),
+            start_ms: 2_000,
+            end_ms: 5_000,
+            beat_type: None,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_rejects_create_node_command_with_unknown_parent() {
+    let known_node_id = NodeId::new();
+    let parent_id = NodeId::new();
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    assert_eq!(
+        crate::native_render::emit_timeline_native_create_node_request(
+            &window_control,
+            &projection_with_node(known_node_id),
+            node_id,
+            Some(parent_id),
+            StoryLevel::Act,
+            "Inserted act".to_string(),
+            2_000,
+            5_000,
+            None,
+        ),
+        Err(TimelineRendererError::UnknownNode { node_id: parent_id })
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_window_control_handle_records_close_requests() {
     let control = TimelineNativeWindowControlHandle::new();
 
