@@ -37,6 +37,7 @@ pub mod graph_proposal_service;
 pub(crate) mod graph_proposal_store;
 pub(crate) mod history_read_store;
 pub(crate) mod history_store;
+pub mod model_endpoint_resolver;
 pub mod model_service;
 pub(crate) mod object_field_command;
 pub(crate) mod persistence;

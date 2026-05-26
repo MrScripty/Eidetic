@@ -3246,6 +3246,10 @@ Implementation order:
   leave canonical graph, timeline, and renderer state untouched.
 - Add active llama.cpp endpoint resolution through Pumas/model-service seams
   before the first live-provider harness slice.
+- Completed: server now has a backend-owned llama.cpp endpoint resolver that
+  normalizes explicit loopback OpenAI-compatible base URLs, rejects remote or
+  malformed endpoints, and resolves active Pumas runtime-profile endpoints when
+  the workflow requests Pumas-owned selection instead of a fixed port.
 - Add the provider-independent structured tool loop for llama.cpp/Pumas.
 - Add the smallest workflow vertical slice: premise generation reads bounded
   graph context, proposes one bible node or edge, records the tool calls and
