@@ -1,3 +1,5 @@
+pub mod affect_service;
+pub(crate) mod affect_store;
 pub mod agent_graph_tools;
 pub mod agent_premise_workflow;
 pub mod agent_structured_tool_provider;

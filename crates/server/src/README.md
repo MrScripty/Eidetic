@@ -16,6 +16,7 @@ domain model in `eidetic-core`.
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
 | `ai_generation_service.rs` | Host-neutral streaming script generation and batch generation orchestration consumed by Tauri commands. |
 | `ai_generation_runtime.rs` | Supervised AI generation runtime for streaming, status persistence, script block writes, and recap generation. |
+| `affect_service.rs` | Host-neutral affect command/projection behavior over backend-owned affect storage. |
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by Tauri commands. |
 | `model_endpoint_resolver.rs` | Backend-owned llama.cpp OpenAI endpoint policy and Pumas runtime-profile resolution for live provider workflows. |
 | `agent_structured_tool_provider.rs` | Provider-independent structured JSON tool loop for text-only model providers. |
