@@ -51,6 +51,10 @@ export interface SetBibleGraphEdgeCommand {
   sort_order?: number;
 }
 
+export interface DeleteBibleGraphEdgeCommand {
+  edge_id: BibleGraphEdgeId;
+}
+
 export interface SetBibleGraphSnapshotFieldCommand {
   snapshot_id?: BibleGraphSnapshotId;
   node_id: BibleGraphNodeId;

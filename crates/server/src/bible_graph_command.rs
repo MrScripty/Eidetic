@@ -1,9 +1,9 @@
 use eidetic_core::contracts::{
     BibleGraphEdge, BibleGraphNode, BibleNodeDetailProjection, ChangeEvent, ChangeEventKind,
-    CommandEnvelope, CreateBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldDelta,
-    FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    builtin_bible_graph_schema,
+    CommandEnvelope, CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand,
+    EnsureCanonicalBibleRootsCommand, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
+    ProjectionEnvelope, RevisionOperation, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand, builtin_bible_graph_schema,
 };
 use rusqlite::Connection;
 
@@ -213,6 +213,75 @@ pub(crate) fn apply_set_bible_graph_edge(
             command.payload.from_node_id.as_str()
         )))
     })?;
+
+    Ok((outcome, projection))
+}
+
+pub(crate) fn apply_delete_bible_graph_edge(
+    conn: &mut Connection,
+    command: &CommandEnvelope<DeleteBibleGraphEdgeCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<BibleNodeDetailProjection>,
+    ),
+    BibleGraphCommandError,
+> {
+    bible_graph_store::create_schema(conn)?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "bible_graph.delete_edge")?
+    {
+        let projection = bible_graph_store::load_node_detail_projection_envelope(
+            conn,
+            &deleted_edge_source_id(conn, &command.payload.edge_id)?,
+        )?
+        .ok_or_else(|| {
+            BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(format!(
+                "bible graph source node projection missing after repeated edge delete: {}",
+                command.payload.edge_id.as_str()
+            )))
+        })?;
+        return Ok((outcome, projection));
+    }
+
+    let edge =
+        bible_graph_edge_store::load_edge(conn, &command.payload.edge_id)?.ok_or_else(|| {
+            BibleGraphCommandError::InvalidCommand(format!(
+                "bible graph edge does not exist: {}",
+                command.payload.edge_id.as_str()
+            ))
+        })?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("delete bible graph edge {}", edge.label),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = delete_edge_revision(&edge, event.id);
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "bible_graph.delete_edge",
+        &event,
+        &[revision],
+        |tx| {
+            bible_graph_edge_store::delete_edge_in_transaction(
+                tx,
+                &command.payload.edge_id,
+                event.id,
+            )
+        },
+    )?;
+    let projection =
+        bible_graph_store::load_node_detail_projection_envelope(conn, &edge.from_node_id)?
+            .ok_or_else(|| {
+                BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(format!(
+                    "bible graph source node projection missing after edge delete: {}",
+                    edge.from_node_id.as_str()
+                )))
+            })?;
 
     Ok((outcome, projection))
 }
@@ -569,6 +638,70 @@ fn edge_revision(
             before.map(|edge| FieldValue::Integer(i64::from(edge.sort_order))),
             Some(FieldValue::Integer(i64::from(edge.sort_order))),
         ))
+}
+
+fn delete_edge_revision(
+    edge: &BibleGraphEdge,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> ObjectRevision {
+    ObjectRevision::new(
+        ObjectKind::BibleEdge,
+        edge.id.as_str(),
+        event_id,
+        RevisionOperation::Delete,
+    )
+    .with_field(FieldDelta::new(
+        "from_node_id",
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::BibleNode,
+            id: edge.from_node_id.as_str().to_string(),
+        }),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "to_node_id",
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::BibleNode,
+            id: edge.to_node_id.as_str().to_string(),
+        }),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "edge_kind",
+        Some(FieldValue::Text(format!("{:?}", edge.edge_kind))),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "label",
+        Some(FieldValue::Text(edge.label.clone())),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "directed",
+        Some(FieldValue::Bool(edge.directed)),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "sort_order",
+        Some(FieldValue::Integer(i64::from(edge.sort_order))),
+        None,
+    ))
+}
+
+fn deleted_edge_source_id(
+    conn: &Connection,
+    edge_id: &eidetic_core::contracts::BibleGraphEdgeId,
+) -> Result<eidetic_core::contracts::BibleGraphNodeId, BibleGraphCommandError> {
+    let source_id = conn
+        .query_row(
+            "SELECT from_node_id FROM bible_graph_edges WHERE id = ?1",
+            [edge_id.as_str()],
+            |row| row.get::<_, String>(0),
+        )
+        .map_err(HistoryStoreError::from)?;
+    eidetic_core::contracts::BibleGraphNodeId::new(source_id).map_err(|error| {
+        BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(error.to_string()))
+    })
 }
 
 #[derive(Debug, thiserror::Error)]

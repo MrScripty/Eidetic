@@ -1,5 +1,6 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, EnsureCanonicalBibleRootsCommand, SetBibleGraphFieldCommand,
+    CommandEnvelope, DeleteBibleGraphEdgeCommand, EnsureCanonicalBibleRootsCommand,
+    SetBibleGraphFieldCommand,
 };
 use eidetic_server::command_service;
 use eidetic_server::state::AppState;
@@ -36,6 +37,17 @@ pub async fn command_bible_graph_edge(
 ) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     command_service::set_bible_graph_edge(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn command_bible_graph_delete_edge(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<DeleteBibleGraphEdgeCommand>,
+) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::delete_bible_graph_edge(&state, command)
         .await
         .map_err(CommandError::from)
 }

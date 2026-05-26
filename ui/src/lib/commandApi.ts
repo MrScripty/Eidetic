@@ -2,6 +2,7 @@ import type {
   BibleGraphNodeCommandResponse,
   BibleGraphRootsCommandResponse,
   CreateBibleGraphNodeCommand,
+  DeleteBibleGraphEdgeCommand,
   EnsureCanonicalBibleRootsCommand,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
@@ -103,6 +104,20 @@ export function setBibleGraphEdge(
   };
 
   return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_edge', { command });
+}
+
+export function deleteBibleGraphEdge(
+  payload: DeleteBibleGraphEdgeCommand,
+  commandId = createCommandId(),
+): Promise<BibleGraphNodeCommandResponse> {
+  const command: CommandEnvelope<DeleteBibleGraphEdgeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_delete_edge', {
+    command,
+  });
 }
 
 export function setBibleGraphSnapshotField(

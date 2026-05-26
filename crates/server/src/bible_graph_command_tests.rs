@@ -2,8 +2,8 @@ use super::*;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
     BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, CommandEnvelope,
-    EnsureCanonicalBibleRootsCommand, FieldValue, SetBibleGraphEdgeCommand,
-    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    DeleteBibleGraphEdgeCommand, EnsureCanonicalBibleRootsCommand, FieldValue,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
 };
 
 fn memory_connection() -> Connection {
@@ -54,6 +54,12 @@ fn edge_command() -> CommandEnvelope<SetBibleGraphEdgeCommand> {
         label: "located in".to_string(),
         directed: true,
         sort_order: 4,
+    })
+}
+
+fn delete_edge_command() -> CommandEnvelope<DeleteBibleGraphEdgeCommand> {
+    CommandEnvelope::new(DeleteBibleGraphEdgeCommand {
+        edge_id: BibleGraphEdgeId::new("edge.ada.beach").unwrap(),
     })
 }
 
@@ -420,6 +426,75 @@ fn set_edge_rejects_missing_target_without_history_rows() {
     assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
     assert_eq!(table_count(&conn, "commands"), 1);
     assert_eq!(table_count(&conn, "object_revisions"), 1);
+    assert_eq!(table_count(&conn, "bible_graph_edges"), 0);
+}
+
+#[test]
+fn delete_bible_graph_edge_soft_deletes_edge_and_updates_projection() {
+    let mut conn = memory_connection();
+    let source = create_command("node.character.ada", "Ada");
+    let target = create_command("node.place.beach", "Beach");
+    apply_create_bible_graph_node(&mut conn, &source, 100).unwrap();
+    apply_create_bible_graph_node(&mut conn, &target, 200).unwrap();
+    apply_set_bible_graph_edge(&mut conn, &edge_command(), 300).unwrap();
+    let delete_edge = delete_edge_command();
+
+    let (outcome, projection) =
+        apply_delete_bible_graph_edge(&mut conn, &delete_edge, 400).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert_eq!(
+        projection.version,
+        eidetic_core::contracts::ProjectionVersion(4)
+    );
+    assert!(projection.payload.outgoing_edges.is_empty());
+    assert!(
+        bible_graph_edge_store::load_edge(&conn, &delete_edge.payload.edge_id)
+            .unwrap()
+            .is_none()
+    );
+    assert_eq!(table_count(&conn, "commands"), 4);
+    assert_eq!(table_count(&conn, "change_events"), 4);
+    assert_eq!(table_count(&conn, "object_revisions"), 4);
+    assert_eq!(table_count(&conn, "bible_graph_edges"), 1);
+}
+
+#[test]
+fn duplicate_delete_edge_command_is_idempotent() {
+    let mut conn = memory_connection();
+    let source = create_command("node.character.ada", "Ada");
+    let target = create_command("node.place.beach", "Beach");
+    apply_create_bible_graph_node(&mut conn, &source, 100).unwrap();
+    apply_create_bible_graph_node(&mut conn, &target, 200).unwrap();
+    apply_set_bible_graph_edge(&mut conn, &edge_command(), 300).unwrap();
+    let delete_edge = delete_edge_command();
+
+    let (first, _) = apply_delete_bible_graph_edge(&mut conn, &delete_edge, 400).unwrap();
+    let (second, projection) = apply_delete_bible_graph_edge(&mut conn, &delete_edge, 400).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert!(projection.payload.outgoing_edges.is_empty());
+    assert_eq!(table_count(&conn, "commands"), 4);
+    assert_eq!(table_count(&conn, "object_revisions"), 4);
+    assert_eq!(table_count(&conn, "bible_graph_edges"), 1);
+}
+
+#[test]
+fn delete_edge_rejects_missing_edge_without_history_rows() {
+    let mut conn = memory_connection();
+    let source = create_command("node.character.ada", "Ada");
+    let target = create_command("node.place.beach", "Beach");
+    apply_create_bible_graph_node(&mut conn, &source, 100).unwrap();
+    apply_create_bible_graph_node(&mut conn, &target, 200).unwrap();
+    let delete_edge = delete_edge_command();
+
+    let error = apply_delete_bible_graph_edge(&mut conn, &delete_edge, 400).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "change_events"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
     assert_eq!(table_count(&conn, "bible_graph_edges"), 0);
 }
 

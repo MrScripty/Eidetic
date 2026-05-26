@@ -860,8 +860,9 @@ Current implementation progress:
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
 - Code review findings to resolve before completion:
-  - graph-local add/edit workflows are incomplete and delete commands are not
-    available,
+  - graph-local add/edit workflows are incomplete; edge delete now has a
+    backend soft-delete command path, but UI controls and strict node delete are
+    still missing,
   - Bevy keyboard/mouse navigation recovery and Svelte Ctrl+click-to-frame
     bridge from bible list items are incomplete.
 - Standards review findings to resolve before implementation completion:
@@ -928,10 +929,13 @@ Current implementation progress:
     edge add/edit, using selectable graph/node controls rather than opaque ID
     entry. Graph workspace node creation and selectable edge target creation
     now exist; node/edge detail editing remain through the selected-node
-    inspector. Remaining delete work must add backend soft-delete commands with
-    history first: edge delete, then strict node delete that rejects canonical
-    roots and nodes with children or incident edges. Delete must not be
-    simulated in frontend state.
+    inspector. Edge delete now exists as a backend soft-delete command with
+    history revisions, a Tauri command boundary, and a TypeScript command/store
+    wrapper that refreshes backend-returned projections instead of patching
+    frontend state. Remaining delete work must expose the edge delete in the
+    graph UI and then add strict node delete that rejects canonical roots and
+    nodes with children or incident edges. Delete must not be simulated in
+    frontend state.
 17. Completed: refactor projection construction into query, scope, layout, and
     DTO helpers with targeted tests.
 18. Completed: add renderer-local mesh/material reuse for frequent projection

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   applyTimelineChildren,
   createBibleGraphNode,
+  deleteBibleGraphEdge,
   createStoryArc,
   createTimelineNode,
   createTimelineRelationship,
@@ -840,6 +841,56 @@ describe('command api helpers', () => {
           label: 'located in',
           directed: true,
           sort_order: 1,
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop bible graph edge delete commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 6,
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: 'canonical.characters',
+            schema_key: 'character',
+            name: 'Ada',
+            system_owned: false,
+            sort_order: 3,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      deleteBibleGraphEdge(
+        {
+          edge_id: 'edge.ada.harbor',
+        },
+        'command-delete-edge-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_delete_edge', {
+      command: {
+        id: 'command-delete-edge-1',
+        payload: {
+          edge_id: 'edge.ada.harbor',
         },
       },
     });

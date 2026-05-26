@@ -21,7 +21,7 @@ use crate::story_arc_store;
 pub use crate::command_service_bible::{
     BibleGraphNodeCommandResponse, BibleGraphRootsCommandResponse,
     CreateBibleGraphNodeRequestCommand, SetBibleGraphEdgeRequestCommand,
-    SetBibleGraphSnapshotFieldRequestCommand, create_bible_graph_node,
+    SetBibleGraphSnapshotFieldRequestCommand, create_bible_graph_node, delete_bible_graph_edge,
     ensure_canonical_bible_roots, set_bible_graph_edge, set_bible_graph_field,
     set_bible_graph_snapshot_field,
 };

@@ -56,6 +56,27 @@ pub(crate) fn set_edge_in_transaction(
     Ok(())
 }
 
+pub(crate) fn delete_edge_in_transaction(
+    tx: &Transaction<'_>,
+    edge_id: &BibleGraphEdgeId,
+    event_id: ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    let changed = tx.execute(
+        "UPDATE bible_graph_edges
+         SET updated_event_id = ?2,
+             deleted_event_id = ?2
+         WHERE id = ?1 AND deleted_event_id IS NULL",
+        params![edge_id.as_str(), event_id.0.to_string()],
+    )?;
+    if changed == 0 {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "bible graph edge does not exist: {}",
+            edge_id.as_str()
+        )));
+    }
+    Ok(())
+}
+
 pub(crate) fn load_edge(
     conn: &Connection,
     edge_id: &BibleGraphEdgeId,

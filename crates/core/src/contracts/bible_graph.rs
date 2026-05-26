@@ -238,6 +238,11 @@ pub struct SetBibleGraphEdgeCommand {
     pub sort_order: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeleteBibleGraphEdgeCommand {
+    pub edge_id: BibleGraphEdgeId,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetBibleGraphSnapshotFieldCommand {
     pub snapshot_id: BibleGraphSnapshotId,
@@ -635,6 +640,18 @@ mod tests {
 
         let json = serde_json::to_string(&command).unwrap();
         let round_trip: SetBibleGraphEdgeCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn delete_edge_command_round_trips() {
+        let command = DeleteBibleGraphEdgeCommand {
+            edge_id: BibleGraphEdgeId::new("edge.ada.beach").unwrap(),
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let round_trip: DeleteBibleGraphEdgeCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
     }

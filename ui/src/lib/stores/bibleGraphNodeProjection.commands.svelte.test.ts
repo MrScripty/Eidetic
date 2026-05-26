@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createBibleGraphNode,
+  deleteBibleGraphEdge,
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
@@ -23,6 +24,7 @@ import {
   isBibleGraphNodeProjectionPending,
   refreshBibleGraphNodeListProjection,
   refreshBibleGraphNodeProjection,
+  deleteBibleGraphEdgeProjection,
   setBibleGraphEdgeProjection,
   setBibleGraphFieldProjection,
   setBibleGraphSnapshotFieldProjection,
@@ -30,6 +32,7 @@ import {
 
 vi.mock('$lib/commandApi.js', () => ({
   createBibleGraphNode: vi.fn(),
+  deleteBibleGraphEdge: vi.fn(),
   ensureCanonicalBibleRoots: vi.fn(),
   setBibleGraphEdge: vi.fn(),
   setBibleGraphField: vi.fn(),
@@ -42,6 +45,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 }));
 
 const createBibleGraphNodeMock = vi.mocked(createBibleGraphNode);
+const deleteBibleGraphEdgeMock = vi.mocked(deleteBibleGraphEdge);
 const ensureCanonicalBibleRootsMock = vi.mocked(ensureCanonicalBibleRoots);
 const setBibleGraphEdgeMock = vi.mocked(setBibleGraphEdge);
 const setBibleGraphFieldMock = vi.mocked(setBibleGraphField);
@@ -235,6 +239,7 @@ function resetProjectionState(): void {
 beforeEach(() => {
   resetProjectionState();
   createBibleGraphNodeMock.mockReset();
+  deleteBibleGraphEdgeMock.mockReset();
   ensureCanonicalBibleRootsMock.mockReset();
   setBibleGraphEdgeMock.mockReset();
   setBibleGraphFieldMock.mockReset();
@@ -550,6 +555,101 @@ describe('bible graph node projection command cache writes', () => {
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBe('edge rejected');
+  });
+
+  it('stores edge delete command source projections and invalidates cached target projections', async () => {
+    getBibleGraphNodeProjectionMock
+      .mockResolvedValueOnce(projection)
+      .mockResolvedValueOnce(targetProjection);
+    await refreshBibleGraphNodeProjection(key);
+    await refreshBibleGraphNodeProjection(targetKey);
+    deleteBibleGraphEdgeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: edgeProjection,
+    });
+
+    await expect(
+      deleteBibleGraphEdgeProjection(
+        {
+          id: 'edge.ada.beach',
+          from_node_id: 'node.character/ada one',
+          to_node_id: 'node.place.beach',
+          edge_kind: 'located_in',
+          label: 'located in',
+          directed: true,
+          sort_order: 1,
+        },
+        'command-delete-edge-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: edgeProjection,
+    });
+
+    expect(deleteBibleGraphEdgeMock).toHaveBeenCalledWith(
+      {
+        edge_id: 'edge.ada.beach',
+      },
+      'command-delete-edge-1',
+    );
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(edgeProjection);
+    expect(getCachedBibleGraphNodeProjection(targetKey)).toBeUndefined();
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('does not invalidate cached edge targets for stale edge delete responses', async () => {
+    getBibleGraphNodeProjectionMock
+      .mockResolvedValueOnce(newerProjection)
+      .mockResolvedValueOnce(targetProjection);
+    await refreshBibleGraphNodeProjection(key);
+    await refreshBibleGraphNodeProjection(targetKey);
+    deleteBibleGraphEdgeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    await expect(
+      deleteBibleGraphEdgeProjection({
+        id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      }),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    expect(getCachedBibleGraphNodeProjection(targetKey)).toEqual(targetProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('records edge delete command errors and leaves cached projections unchanged', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
+    await refreshBibleGraphNodeProjection(key);
+    deleteBibleGraphEdgeMock.mockRejectedValue(new Error('edge delete rejected'));
+
+    await expect(
+      deleteBibleGraphEdgeProjection({
+        id: 'edge.ada.beach',
+        from_node_id: 'node.character/ada one',
+        to_node_id: 'node.place.beach',
+        edge_kind: 'located_in',
+        label: 'located in',
+        directed: true,
+        sort_order: 1,
+      }),
+    ).rejects.toThrow('edge delete rejected');
+
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBe('edge delete rejected');
   });
 
   it('stores snapshot field command response projections without invalidating cached node lists', async () => {
