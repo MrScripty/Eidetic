@@ -14,7 +14,10 @@ use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
 };
 use bevy::winit::WinitPlugin;
-use eidetic_core::contracts::{TimelineRenderProjection, TimelineRenderTrack};
+use eidetic_core::contracts::{
+    AffectValueId, EmotionalIntensity, TimelineRenderAffectSample, TimelineRenderProjection,
+    TimelineRenderTrack, Valence,
+};
 use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
 use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use eidetic_core::timeline::track::TrackId;
@@ -33,6 +36,8 @@ const TIMELINE_NATIVE_HORIZONTAL_PADDING_PX: f32 = 48.0;
 const TIMELINE_NATIVE_TOP_PADDING_PX: f32 = 48.0;
 const TIMELINE_NATIVE_PLAYHEAD_WIDTH_PX: f32 = 3.0;
 const TIMELINE_NATIVE_RELATIONSHIP_WIDTH_PX: f32 = 2.0;
+const TIMELINE_NATIVE_AFFECT_MIN_HEIGHT_PX: f32 = 4.0;
+const TIMELINE_NATIVE_AFFECT_MAX_HEIGHT_PX: f32 = 10.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct TimelineNativeRenderConfig {
@@ -94,6 +99,19 @@ pub struct TimelineNativeRelationshipVisual {
     pub start_px: [f32; 2],
     pub end_px: [f32; 2],
     pub length_px: f32,
+    pub color_rgb: [f32; 3],
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct TimelineNativeAffectOverlayVisual {
+    pub affect_id: AffectValueId,
+    pub node_id: NodeId,
+    pub x_px: f32,
+    pub y_px: f32,
+    pub width_px: f32,
+    pub height_px: f32,
+    pub start_ms: u64,
+    pub end_ms: u64,
     pub color_rgb: [f32; 3],
 }
 
@@ -705,6 +723,13 @@ pub(crate) fn rebuild_timeline_native_visuals(
     }
 
     spawn_timeline_native_relationship_visuals(world, projection, layout, viewport, &sorted_tracks);
+    spawn_timeline_native_affect_overlay_visuals(
+        world,
+        projection,
+        layout,
+        viewport,
+        &sorted_tracks,
+    );
 
     if let Some(playhead) = world
         .get_resource::<TimelineNativeProjectionState>()
@@ -712,6 +737,95 @@ pub(crate) fn rebuild_timeline_native_visuals(
     {
         spawn_timeline_native_playhead_visual(world, layout, viewport, playhead);
     }
+}
+
+fn spawn_timeline_native_affect_overlay_visuals(
+    world: &mut World,
+    projection: &TimelineRenderProjection,
+    layout: TimelineNativeRenderLayout,
+    viewport: TimelineViewport,
+    sorted_tracks: &[TimelineRenderTrack],
+) {
+    for affect in &projection.affect_overlays {
+        let Some((x_px, y_px, width_px, height_px)) =
+            affect_overlay_geometry_px(projection, sorted_tracks, layout, viewport, affect)
+        else {
+            continue;
+        };
+        let color_rgb = native_affect_color_rgb(affect.valence);
+
+        world.spawn((
+            TimelineSceneEntity,
+            TimelineNativeVisualEntity,
+            TimelineNativeAffectOverlayVisual {
+                affect_id: affect.affect_id,
+                node_id: affect.node_id,
+                x_px,
+                y_px,
+                width_px,
+                height_px,
+                start_ms: affect.start_ms,
+                end_ms: affect.end_ms,
+                color_rgb,
+            },
+            Sprite::from_color(
+                Color::srgb(color_rgb[0], color_rgb[1], color_rgb[2]),
+                Vec2::new(width_px, height_px),
+            ),
+            Transform::from_translation(Vec3::new(x_px, y_px, 0.75)),
+        ));
+    }
+}
+
+fn affect_overlay_geometry_px(
+    projection: &TimelineRenderProjection,
+    sorted_tracks: &[TimelineRenderTrack],
+    layout: TimelineNativeRenderLayout,
+    viewport: TimelineViewport,
+    affect: &TimelineRenderAffectSample,
+) -> Option<(f32, f32, f32, f32)> {
+    let clip = projection
+        .clips
+        .iter()
+        .find(|clip| clip.node_id == affect.node_id)?;
+    let visible_start_ms = affect.start_ms.max(viewport.start_ms);
+    let visible_end_ms = affect.end_ms.min(viewport.end_ms);
+    if visible_end_ms <= visible_start_ms {
+        return None;
+    }
+    let track_index = sorted_tracks
+        .iter()
+        .position(|track| track.track_id == clip.track_id)?;
+    let start_ratio =
+        visible_start_ms.saturating_sub(viewport.start_ms) as f32 / viewport.width_ms() as f32;
+    let end_ratio =
+        visible_end_ms.saturating_sub(viewport.start_ms) as f32 / viewport.width_ms() as f32;
+    if end_ratio <= start_ratio {
+        return None;
+    }
+    let x_start = layout.left_px() + (start_ratio * layout.usable_width_px());
+    let x_end = layout.left_px() + (end_ratio * layout.usable_width_px());
+    let width_px = (x_end - x_start).max(1.0);
+    let x_px = x_start + (width_px / 2.0);
+    let clip_y_px =
+        layout.top_px() - (track_index as f32 * (layout.clip_height_px + layout.track_gap_px));
+    let height_px = native_affect_height_px(affect.intensity);
+    let y_px = clip_y_px - (layout.clip_height_px / 2.0) - (height_px / 2.0) - 4.0;
+    Some((x_px, y_px, width_px, height_px))
+}
+
+pub(crate) fn native_affect_color_rgb(valence: Valence) -> [f32; 3] {
+    match valence.basis_points() {
+        value if value < -150 => [0.376, 0.592, 0.827],
+        value if value > 150 => [0.282, 0.686, 0.424],
+        _ => [0.933, 0.831, 0.455],
+    }
+}
+
+pub(crate) fn native_affect_height_px(intensity: EmotionalIntensity) -> f32 {
+    let ratio = intensity.basis_points() as f32 / 1_000.0;
+    TIMELINE_NATIVE_AFFECT_MIN_HEIGHT_PX
+        + ((TIMELINE_NATIVE_AFFECT_MAX_HEIGHT_PX - TIMELINE_NATIVE_AFFECT_MIN_HEIGHT_PX) * ratio)
 }
 
 fn spawn_timeline_native_relationship_visuals(

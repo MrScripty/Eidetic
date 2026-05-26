@@ -3706,6 +3706,10 @@ Implementation order:
   connectors from backend-projected relationship endpoints and relationship
   types. Connectors are rebuilt from projection snapshots and remain separate
   from durable relationship state.
+- Started: native timeline visuals now render disposable affect overlay bars
+  from backend-projected affect samples, valence, and intensity. Affect
+  rendering remains read-only projection work and does not duplicate affect
+  model ownership in Bevy.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
