@@ -3819,6 +3819,11 @@ Implementation order:
 - Started: the Bevy timeline leaf crate now consumes backend
   `affect_overlays` into disposable ECS scene entities and exposes overlay
   counts for host smoke tests without persisting renderer-local affect state.
+- Started: native Bevy playhead navigation and the temporary Svelte ruler/
+  playhead controls now route committed playhead changes through the
+  backend-owned transient playhead command/event path. Bevy and Svelte may show
+  local transient preview while interacting, but committed `playhead_ms` state
+  is updated only from the backend `timeline_playhead_changed` event.
 - Remove the DOM/SVG timeline renderer and its tests only after Bevy and
   Svelte accessibility alternatives cover the target interactions.
 
