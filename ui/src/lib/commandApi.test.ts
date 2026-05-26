@@ -4,6 +4,7 @@ import {
   applyTimelineChildren,
   createBibleGraphNode,
   deleteBibleGraphEdge,
+  deleteBibleGraphNode,
   createStoryArc,
   createTimelineNode,
   createTimelineRelationship,
@@ -714,6 +715,45 @@ describe('command api helpers', () => {
       command: {
         id: 'command-roots-1',
         payload: {},
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop bible graph node delete command when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 10,
+        payload: {
+          nodes: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      deleteBibleGraphNode(
+        {
+          node_id: 'node.character.ada',
+        },
+        'command-delete-node-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_delete_node', {
+      command: {
+        id: 'command-delete-node-1',
+        payload: {
+          node_id: 'node.character.ada',
+        },
       },
     });
     expect(fetchMock).not.toHaveBeenCalled();

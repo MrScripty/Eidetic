@@ -4,8 +4,9 @@ use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphNodeListProjection,
     BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
     BibleNodeDetailProjection, CommandEnvelope, CommandId, CreateBibleGraphNodeCommand,
-    DeleteBibleGraphEdgeCommand, EnsureCanonicalBibleRootsCommand, FieldValue, ProjectionEnvelope,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
+    FieldValue, ProjectionEnvelope, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand,
 };
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +26,12 @@ pub struct BibleGraphNodeCommandResponse {
 
 #[derive(Debug, Serialize)]
 pub struct BibleGraphRootsCommandResponse {
+    outcome: RecordChangeOutcome,
+    projection: ProjectionEnvelope<BibleGraphNodeListProjection>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BibleGraphNodeListCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<BibleGraphNodeListProjection>,
 }
@@ -274,6 +281,22 @@ pub async fn create_bible_graph_node(
     Ok(response)
 }
 
+pub async fn delete_bible_graph_node(
+    state: &AppState,
+    command: CommandEnvelope<DeleteBibleGraphNodeCommand>,
+) -> Result<BibleGraphNodeListCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let response =
+        tokio::task::spawn_blocking(move || delete_bible_graph_node_at_path(path, command))
+            .await
+            .map_err(|error| {
+                BackendError::internal(format!("bible graph node delete task failed: {error}"))
+            })??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    Ok(response)
+}
+
 pub async fn ensure_canonical_bible_roots(
     state: &AppState,
     command: CommandEnvelope<EnsureCanonicalBibleRootsCommand>,
@@ -300,6 +323,22 @@ fn create_bible_node_at_path(
             .map_err(map_bible_graph_error)?;
 
     Ok(BibleGraphNodeCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
+fn delete_bible_graph_node_at_path(
+    path: PathBuf,
+    command: CommandEnvelope<DeleteBibleGraphNodeCommand>,
+) -> Result<BibleGraphNodeListCommandResponse, BackendError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        bible_graph_command::apply_delete_bible_graph_node(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+
+    Ok(BibleGraphNodeListCommandResponse {
         outcome,
         projection,
     })

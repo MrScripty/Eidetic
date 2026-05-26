@@ -29,6 +29,10 @@ export interface CreateBibleGraphNodeCommand {
   sort_order?: number;
 }
 
+export interface DeleteBibleGraphNodeCommand {
+  node_id: BibleGraphNodeId;
+}
+
 export interface SetBibleGraphFieldCommand {
   node_id: BibleGraphNodeId;
   part_id: BibleGraphPartId;
@@ -232,6 +236,11 @@ export interface BibleGraphNodeCommandResponse {
 }
 
 export interface BibleGraphRootsCommandResponse {
+  outcome: CommandOutcome;
+  projection: ProjectionEnvelope<BibleGraphNodeListProjection>;
+}
+
+export interface BibleGraphNodeListCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<BibleGraphNodeListProjection>;
 }

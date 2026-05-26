@@ -1,8 +1,10 @@
 import type {
   BibleGraphNodeCommandResponse,
+  BibleGraphNodeListCommandResponse,
   BibleGraphRootsCommandResponse,
   CreateBibleGraphNodeCommand,
   DeleteBibleGraphEdgeCommand,
+  DeleteBibleGraphNodeCommand,
   EnsureCanonicalBibleRootsCommand,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
@@ -80,6 +82,20 @@ export function createBibleGraphNode(
   };
 
   return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_node', { command });
+}
+
+export function deleteBibleGraphNode(
+  payload: DeleteBibleGraphNodeCommand,
+  commandId = createCommandId(),
+): Promise<BibleGraphNodeListCommandResponse> {
+  const command: CommandEnvelope<DeleteBibleGraphNodeCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<BibleGraphNodeListCommandResponse>('command_bible_graph_delete_node', {
+    command,
+  });
 }
 
 export function setBibleGraphField(

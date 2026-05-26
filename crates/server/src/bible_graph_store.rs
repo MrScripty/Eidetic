@@ -68,6 +68,26 @@ pub(crate) fn insert_missing_canonical_roots_in_transaction(
     Ok(inserted)
 }
 
+pub(crate) fn delete_node_in_transaction(
+    tx: &Transaction<'_>,
+    node_id: &BibleGraphNodeId,
+    event_id: ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    let changed = tx.execute(
+        "UPDATE bible_graph_nodes
+         SET deleted_event_id = ?2
+         WHERE id = ?1 AND deleted_event_id IS NULL",
+        params![node_id.as_str(), event_id.0.to_string()],
+    )?;
+    if changed == 0 {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "bible graph node does not exist: {}",
+            node_id.as_str()
+        )));
+    }
+    Ok(())
+}
+
 pub(crate) fn set_field_in_transaction(
     tx: &Transaction<'_>,
     command: &SetBibleGraphFieldCommand,
@@ -129,6 +149,45 @@ pub(crate) fn load_node_detail_projection(
         outgoing_edges,
         snapshots,
     }))
+}
+
+pub(crate) fn load_node(
+    conn: &Connection,
+    node_id: &BibleGraphNodeId,
+) -> Result<Option<BibleGraphNode>, HistoryStoreError> {
+    conn.query_row(
+        "SELECT id, parent_id, schema_key, name, system_owned, sort_order
+         FROM bible_graph_nodes
+         WHERE id = ?1 AND deleted_event_id IS NULL",
+        [node_id.as_str()],
+        row_to_node,
+    )
+    .optional()
+    .map_err(HistoryStoreError::from)
+}
+
+pub(crate) fn active_child_count(
+    conn: &Connection,
+    node_id: &BibleGraphNodeId,
+) -> Result<u64, HistoryStoreError> {
+    count_active_refs(
+        conn,
+        "SELECT COUNT(*) FROM bible_graph_nodes WHERE parent_id = ?1 AND deleted_event_id IS NULL",
+        node_id,
+    )
+}
+
+pub(crate) fn active_incident_edge_count(
+    conn: &Connection,
+    node_id: &BibleGraphNodeId,
+) -> Result<u64, HistoryStoreError> {
+    count_active_refs(
+        conn,
+        "SELECT COUNT(*)
+         FROM bible_graph_edges
+         WHERE deleted_event_id IS NULL AND (from_node_id = ?1 OR to_node_id = ?1)",
+        node_id,
+    )
 }
 
 fn merge_default_part_projections(
@@ -300,6 +359,15 @@ fn node_exists_in_transaction(
     .optional()
     .map(|value| value.is_some())
     .map_err(HistoryStoreError::from)
+}
+
+fn count_active_refs(
+    conn: &Connection,
+    sql: &str,
+    node_id: &BibleGraphNodeId,
+) -> Result<u64, HistoryStoreError> {
+    let count = conn.query_row(sql, [node_id.as_str()], |row| row.get::<_, i64>(0))?;
+    Ok(u64::try_from(count).unwrap_or_default())
 }
 
 fn load_node_detail_revision_summary(

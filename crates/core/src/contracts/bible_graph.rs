@@ -207,6 +207,11 @@ pub struct CreateBibleGraphNodeCommand {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DeleteBibleGraphNodeCommand {
+    pub node_id: BibleGraphNodeId,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnsureCanonicalBibleRootsCommand {}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -652,6 +657,18 @@ mod tests {
 
         let json = serde_json::to_string(&command).unwrap();
         let round_trip: DeleteBibleGraphEdgeCommand = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn delete_node_command_round_trips() {
+        let command = DeleteBibleGraphNodeCommand {
+            node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+        };
+
+        let json = serde_json::to_string(&command).unwrap();
+        let round_trip: DeleteBibleGraphNodeCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
     }

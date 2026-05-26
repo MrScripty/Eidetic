@@ -2,8 +2,9 @@ use super::*;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
     BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, CommandEnvelope,
-    DeleteBibleGraphEdgeCommand, EnsureCanonicalBibleRootsCommand, FieldValue,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
+    FieldValue, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand,
 };
 
 fn memory_connection() -> Connection {
@@ -42,6 +43,12 @@ fn field_command(value: Option<FieldValue>) -> CommandEnvelope<SetBibleGraphFiel
         field_key: eidetic_core::contracts::BibleGraphFieldKey::new("tagline").unwrap(),
         value,
         field_sort_order: 2,
+    })
+}
+
+fn delete_node_command(node_id: &str) -> CommandEnvelope<DeleteBibleGraphNodeCommand> {
+    CommandEnvelope::new(DeleteBibleGraphNodeCommand {
+        node_id: BibleGraphNodeId::new(node_id).unwrap(),
     })
 }
 
@@ -157,6 +164,111 @@ fn create_bible_graph_node_records_history_and_projection() {
     assert_eq!(table_count(&conn, "change_events"), 1);
     assert_eq!(table_count(&conn, "object_revisions"), 1);
     assert_eq!(table_count(&conn, "bible_graph_nodes"), 1);
+}
+
+#[test]
+fn delete_bible_graph_node_soft_deletes_node_and_updates_list_projection() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let delete_node = delete_node_command("node.character.ada");
+
+    let (outcome, projection) =
+        apply_delete_bible_graph_node(&mut conn, &delete_node, 200).unwrap();
+
+    assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    assert!(projection.payload.nodes.is_empty());
+    assert!(
+        bible_graph_store::load_node(&conn, &delete_node.payload.node_id)
+            .unwrap()
+            .is_none()
+    );
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "change_events"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 1);
+}
+
+#[test]
+fn duplicate_delete_node_command_is_idempotent() {
+    let mut conn = memory_connection();
+    let node = create_command("node.character.ada", "Ada");
+    apply_create_bible_graph_node(&mut conn, &node, 100).unwrap();
+    let delete_node = delete_node_command("node.character.ada");
+
+    let (first, _) = apply_delete_bible_graph_node(&mut conn, &delete_node, 200).unwrap();
+    let (second, projection) = apply_delete_bible_graph_node(&mut conn, &delete_node, 200).unwrap();
+
+    assert_eq!(first, RecordChangeOutcome::Recorded);
+    assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+    assert!(projection.payload.nodes.is_empty());
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 1);
+}
+
+#[test]
+fn delete_node_rejects_missing_node_without_history_rows() {
+    let mut conn = memory_connection();
+    let delete_node = delete_node_command("node.character.ada");
+
+    let error = apply_delete_bible_graph_node(&mut conn, &delete_node, 200).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 0);
+    assert_eq!(table_count(&conn, "object_revisions"), 0);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 0);
+}
+
+#[test]
+fn delete_node_rejects_system_owned_roots_without_history_rows() {
+    let mut conn = memory_connection();
+    let ensure_roots = CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {});
+    apply_ensure_canonical_bible_roots(&mut conn, &ensure_roots, 100).unwrap();
+    let delete_node = delete_node_command("canonical.characters");
+
+    let error = apply_delete_bible_graph_node(&mut conn, &delete_node, 200).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 8);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 8);
+}
+
+#[test]
+fn delete_node_rejects_active_children_without_history_rows() {
+    let mut conn = memory_connection();
+    let parent = create_command("node.group.protagonists", "Protagonists");
+    let child =
+        create_command_with_parent("node.character.ada", Some("node.group.protagonists"), "Ada");
+    apply_create_bible_graph_node(&mut conn, &parent, 100).unwrap();
+    apply_create_bible_graph_node(&mut conn, &child, 200).unwrap();
+    let delete_node = delete_node_command("node.group.protagonists");
+
+    let error = apply_delete_bible_graph_node(&mut conn, &delete_node, 300).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 2);
+    assert_eq!(table_count(&conn, "object_revisions"), 2);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 2);
+}
+
+#[test]
+fn delete_node_rejects_incident_edges_without_history_rows() {
+    let mut conn = memory_connection();
+    let source = create_command("node.character.ada", "Ada");
+    let target = create_command("node.place.beach", "Beach");
+    apply_create_bible_graph_node(&mut conn, &source, 100).unwrap();
+    apply_create_bible_graph_node(&mut conn, &target, 200).unwrap();
+    apply_set_bible_graph_edge(&mut conn, &edge_command(), 300).unwrap();
+    let delete_node = delete_node_command("node.character.ada");
+
+    let error = apply_delete_bible_graph_node(&mut conn, &delete_node, 400).unwrap_err();
+
+    assert!(matches!(error, BibleGraphCommandError::InvalidCommand(_)));
+    assert_eq!(table_count(&conn, "commands"), 3);
+    assert_eq!(table_count(&conn, "object_revisions"), 3);
+    assert_eq!(table_count(&conn, "bible_graph_nodes"), 2);
 }
 
 #[test]

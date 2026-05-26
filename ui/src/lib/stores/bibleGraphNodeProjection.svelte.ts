@@ -1,6 +1,7 @@
 import {
   createBibleGraphNode,
   deleteBibleGraphEdge,
+  deleteBibleGraphNode,
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
@@ -196,6 +197,34 @@ export async function createBibleGraphNodeProjection(
     throw error;
   } finally {
     bibleGraphNodeProjectionState.pending[keyString] = false;
+  }
+}
+
+export async function deleteBibleGraphNodeProjection(
+  nodeId: BibleGraphNodeId,
+  commandId?: CommandId,
+): Promise<BibleGraphRootsCommandResponse> {
+  const key = { node_id: nodeId };
+  const keyString = cacheKey(key);
+  bibleGraphNodeProjectionState.pending[keyString] = true;
+  bibleGraphNodeProjectionState.errors[keyString] = undefined;
+  bibleGraphNodeProjectionState.nodeListPending = true;
+  bibleGraphNodeProjectionState.nodeListError = undefined;
+
+  try {
+    const response = await deleteBibleGraphNode({ node_id: nodeId }, commandId);
+    cacheNodeListProjection(response.projection);
+    delete bibleGraphNodeProjectionState.projections[keyString];
+    delete bibleGraphNodeProjectionState.errors[keyString];
+    return response;
+  } catch (error) {
+    const message = errorMessage(error, 'Failed to delete bible graph node');
+    bibleGraphNodeProjectionState.errors[keyString] = message;
+    bibleGraphNodeProjectionState.nodeListError = message;
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.pending[keyString] = false;
+    bibleGraphNodeProjectionState.nodeListPending = false;
   }
 }
 

@@ -108,6 +108,7 @@ pub fn run() {
             commands::object_script_story::command_story_update,
             commands::object_script_story::command_story_delete,
             commands::bible::command_bible_graph_node,
+            commands::bible::command_bible_graph_delete_node,
             commands::bible::command_bible_graph_field,
             commands::bible::command_bible_graph_edge,
             commands::bible::command_bible_graph_delete_edge,

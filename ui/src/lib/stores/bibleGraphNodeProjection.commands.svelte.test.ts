@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createBibleGraphNode,
   deleteBibleGraphEdge,
+  deleteBibleGraphNode,
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
@@ -25,6 +26,7 @@ import {
   refreshBibleGraphNodeListProjection,
   refreshBibleGraphNodeProjection,
   deleteBibleGraphEdgeProjection,
+  deleteBibleGraphNodeProjection,
   setBibleGraphEdgeProjection,
   setBibleGraphFieldProjection,
   setBibleGraphSnapshotFieldProjection,
@@ -33,6 +35,7 @@ import {
 vi.mock('$lib/commandApi.js', () => ({
   createBibleGraphNode: vi.fn(),
   deleteBibleGraphEdge: vi.fn(),
+  deleteBibleGraphNode: vi.fn(),
   ensureCanonicalBibleRoots: vi.fn(),
   setBibleGraphEdge: vi.fn(),
   setBibleGraphField: vi.fn(),
@@ -46,6 +49,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 
 const createBibleGraphNodeMock = vi.mocked(createBibleGraphNode);
 const deleteBibleGraphEdgeMock = vi.mocked(deleteBibleGraphEdge);
+const deleteBibleGraphNodeMock = vi.mocked(deleteBibleGraphNode);
 const ensureCanonicalBibleRootsMock = vi.mocked(ensureCanonicalBibleRoots);
 const setBibleGraphEdgeMock = vi.mocked(setBibleGraphEdge);
 const setBibleGraphFieldMock = vi.mocked(setBibleGraphField);
@@ -91,6 +95,14 @@ const listProjection = {
   change_event_id: 'event-1',
   payload: {
     nodes: [projection.payload.node],
+  },
+};
+
+const emptyListProjection = {
+  version: 3,
+  change_event_id: 'event-delete-node-1',
+  payload: {
+    nodes: [],
   },
 };
 
@@ -240,6 +252,7 @@ beforeEach(() => {
   resetProjectionState();
   createBibleGraphNodeMock.mockReset();
   deleteBibleGraphEdgeMock.mockReset();
+  deleteBibleGraphNodeMock.mockReset();
   ensureCanonicalBibleRootsMock.mockReset();
   setBibleGraphEdgeMock.mockReset();
   setBibleGraphFieldMock.mockReset();
@@ -352,6 +365,53 @@ describe('bible graph node projection command cache writes', () => {
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBe('node conflict');
+  });
+
+  it('stores node delete list projections and clears deleted detail projections', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
+    await refreshBibleGraphNodeListProjection();
+    await refreshBibleGraphNodeProjection(key);
+    deleteBibleGraphNodeMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: emptyListProjection,
+    });
+
+    await expect(
+      deleteBibleGraphNodeProjection('node.character/ada one', 'command-delete-node-1'),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: emptyListProjection,
+    });
+
+    expect(deleteBibleGraphNodeMock).toHaveBeenCalledWith(
+      {
+        node_id: 'node.character/ada one',
+      },
+      'command-delete-node-1',
+    );
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(emptyListProjection);
+    expect(getCachedBibleGraphNodeProjection(key)).toBeUndefined();
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('records node delete errors and leaves cached projections unchanged', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
+    await refreshBibleGraphNodeListProjection();
+    await refreshBibleGraphNodeProjection(key);
+    deleteBibleGraphNodeMock.mockRejectedValue(new Error('node delete rejected'));
+
+    await expect(deleteBibleGraphNodeProjection('node.character/ada one')).rejects.toThrow(
+      'node delete rejected',
+    );
+
+    expect(getCachedBibleGraphNodeListProjection()).toEqual(listProjection);
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(projection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBe('node delete rejected');
+    expect(bibleGraphNodeProjectionState.nodeListError).toBe('node delete rejected');
   });
 
   it('stores field command response projections without invalidating cached node lists', async () => {

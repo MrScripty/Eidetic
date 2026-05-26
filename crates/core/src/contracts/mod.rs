@@ -28,9 +28,9 @@ pub use bible_graph::{
     BibleGraphPartKey, BibleGraphPartProjection, BibleGraphSchemaKey, BibleGraphSnapshot,
     BibleGraphSnapshotField, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
     BibleGraphSnapshotProjection, BibleNodeDetailProjection, CanonicalBibleRoot,
-    CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand, EnsureCanonicalBibleRootsCommand,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    canonical_bible_root_nodes,
+    CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand,
+    EnsureCanonicalBibleRootsCommand, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
 };
 pub use bible_graph_defaults::{
     BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphCategoryProjection, BibleGraphFieldDefault,

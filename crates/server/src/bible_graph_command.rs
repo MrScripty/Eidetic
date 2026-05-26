@@ -1,9 +1,10 @@
 use eidetic_core::contracts::{
-    BibleGraphEdge, BibleGraphNode, BibleNodeDetailProjection, ChangeEvent, ChangeEventKind,
-    CommandEnvelope, CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand,
-    EnsureCanonicalBibleRootsCommand, FieldDelta, FieldValue, ObjectKind, ObjectRevision,
-    ProjectionEnvelope, RevisionOperation, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
-    SetBibleGraphSnapshotFieldCommand, builtin_bible_graph_schema,
+    BibleGraphEdge, BibleGraphNode, BibleGraphNodeListProjection, BibleNodeDetailProjection,
+    ChangeEvent, ChangeEventKind, CommandEnvelope, CreateBibleGraphNodeCommand,
+    DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
+    FieldDelta, FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    builtin_bible_graph_schema,
 };
 use rusqlite::Connection;
 
@@ -51,6 +52,53 @@ pub(crate) fn apply_create_bible_graph_node(
                 node.id.as_str()
             )))
         })?;
+
+    Ok((outcome, projection))
+}
+
+pub(crate) fn apply_delete_bible_graph_node(
+    conn: &mut Connection,
+    command: &CommandEnvelope<DeleteBibleGraphNodeCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<BibleGraphNodeListProjection>,
+    ),
+    BibleGraphCommandError,
+> {
+    bible_graph_store::create_schema(conn)?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "bible_graph.delete_node")?
+    {
+        let projection = bible_graph_store::load_node_list_projection_envelope(conn)?;
+        return Ok((outcome, projection));
+    }
+
+    let node = bible_graph_store::load_node(conn, &command.payload.node_id)?.ok_or_else(|| {
+        BibleGraphCommandError::InvalidCommand(format!(
+            "bible graph node does not exist: {}",
+            command.payload.node_id.as_str()
+        ))
+    })?;
+    validate_node_can_delete(conn, &node)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("delete bible graph node {}", node.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = delete_node_revision(&node, event.id);
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "bible_graph.delete_node",
+        &event,
+        &[revision],
+        |tx| bible_graph_store::delete_node_in_transaction(tx, &command.payload.node_id, event.id),
+    )?;
+    let projection = bible_graph_store::load_node_list_projection_envelope(conn)?;
 
     Ok((outcome, projection))
 }
@@ -379,6 +427,36 @@ fn validate_parent_exists(
     )))
 }
 
+fn validate_node_can_delete(
+    conn: &Connection,
+    node: &BibleGraphNode,
+) -> Result<(), BibleGraphCommandError> {
+    if node.system_owned || node.schema_key.as_str().starts_with("canonical.") {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "canonical bible graph node cannot be deleted: {}",
+            node.id.as_str()
+        )));
+    }
+
+    let child_count = bible_graph_store::active_child_count(conn, &node.id)?;
+    if child_count > 0 {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "bible graph node has active children: {}",
+            node.id.as_str()
+        )));
+    }
+
+    let edge_count = bible_graph_store::active_incident_edge_count(conn, &node.id)?;
+    if edge_count > 0 {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "bible graph node has active edges: {}",
+            node.id.as_str()
+        )));
+    }
+
+    Ok(())
+}
+
 fn validate_edge_endpoint_exists(
     conn: &Connection,
     node_id: &eidetic_core::contracts::BibleGraphNodeId,
@@ -531,6 +609,51 @@ fn node_revision(
                 kind: ObjectKind::BibleNode,
                 id: parent_id.as_str().to_string(),
             }),
+        ));
+    }
+
+    revision
+}
+
+fn delete_node_revision(
+    node: &BibleGraphNode,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> ObjectRevision {
+    let mut revision = ObjectRevision::new(
+        ObjectKind::BibleNode,
+        node.id.as_str(),
+        event_id,
+        RevisionOperation::Delete,
+    )
+    .with_field(FieldDelta::new(
+        "name",
+        Some(FieldValue::Text(node.name.clone())),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "schema_key",
+        Some(FieldValue::Text(node.schema_key.as_str().to_string())),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "system_owned",
+        Some(FieldValue::Bool(node.system_owned)),
+        None,
+    ))
+    .with_field(FieldDelta::new(
+        "sort_order",
+        Some(FieldValue::Integer(i64::from(node.sort_order))),
+        None,
+    ));
+
+    if let Some(parent_id) = node.parent_id.as_ref() {
+        revision = revision.with_field(FieldDelta::new(
+            "parent_id",
+            Some(FieldValue::ObjectRef {
+                kind: ObjectKind::BibleNode,
+                id: parent_id.as_str().to_string(),
+            }),
+            None,
         ));
     }
 
