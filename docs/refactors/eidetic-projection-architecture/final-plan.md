@@ -3226,6 +3226,11 @@ Implementation order:
   successful history recording, disallowed tool rejection, and budget
   exhaustion without a live model.
 - Add read-only graph tools over existing bible graph/context projections.
+- Completed: server now has read-only graph tool execution over existing
+  backend projections for node search, node reads, bounded bible neighborhoods,
+  active graph context, timeline context stacks, and influence-path records.
+  The executor returns serialized backend projection payloads, rejects
+  write/proposal tools, and does not read or mutate visualization state.
 - Add generic proposal storage for graph node, field, edge, and context-link
   targets before implementing proposal-producing graph tools.
 - Add proposal-producing graph tools that write generic reviewable proposal

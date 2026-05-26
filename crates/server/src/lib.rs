@@ -1,3 +1,4 @@
+pub mod agent_graph_tools;
 pub mod agent_workflow_harness;
 pub mod agent_workflow_service;
 pub(crate) mod agent_workflow_store;
