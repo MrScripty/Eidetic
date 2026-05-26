@@ -3744,6 +3744,11 @@ Implementation order:
   resizes the selected clip start, ctrl+alt+left/right resizes the selected
   clip end, and all requests are clamped to the active backend projection
   before entering the backend command bridge.
+- Started: native timeline input systems have been extracted into a focused
+  `native_input.rs` module. Keyboard and pointer systems still read only the
+  active backend projection plus transient renderer viewport/playhead state and
+  emit validated command requests, while native window lifecycle and visual
+  projection remain in the renderer module.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

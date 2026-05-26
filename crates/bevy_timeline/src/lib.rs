@@ -10,6 +10,8 @@ mod hit_test;
 #[cfg(feature = "native_render")]
 mod native_command;
 #[cfg(feature = "native_render")]
+mod native_input;
+#[cfg(feature = "native_render")]
 mod native_render;
 #[cfg(feature = "native_render")]
 mod native_style;

@@ -61,6 +61,9 @@ Current scope:
   window module stays focused on lifecycle, input, and visual projection work.
 - Keep native styling decisions in `native_style.rs` so color and size mapping
   stays separate from Bevy window lifecycle and input handling.
+- Keep native keyboard and pointer systems in `native_input.rs` so command
+  intent handling reads backend projections and transient renderer viewport
+  state without accumulating inside the window lifecycle module.
 
 Dependency review:
 
