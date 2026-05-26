@@ -106,8 +106,8 @@ pub use story_arc::{
     StoryArcListProjection, StoryArcProgressionProjection,
 };
 pub use timeline_command::{
-    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineNodeCommand,
-    CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
+    ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineChildFromParentCommand,
+    CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };

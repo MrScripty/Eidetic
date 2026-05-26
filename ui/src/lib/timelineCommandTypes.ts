@@ -39,6 +39,11 @@ export interface CreateTimelineNodeCommand {
   beat_type: BeatType | null;
 }
 
+export interface CreateTimelineChildFromParentCommand {
+  node_id?: string;
+  parent_id: string;
+}
+
 export interface ApplyTimelineChildrenCommand {
   parent_id: string;
   child_plan_id?: string;

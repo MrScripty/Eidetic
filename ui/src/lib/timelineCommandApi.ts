@@ -1,6 +1,7 @@
 import type { CommandEnvelope } from './projectionTypes.js';
 import type {
   ApplyTimelineChildrenCommand,
+  CreateTimelineChildFromParentCommand,
   CreateTimelineNodeCommand,
   CreateTimelineRelationshipCommand,
   DeleteTimelineNodeCommand,
@@ -36,6 +37,20 @@ export function createTimelineNode(
   };
 
   return invokeDesktop<TimelineCommandResponse>('command_timeline_create_node', { command });
+}
+
+export function createTimelineChildFromParent(
+  payload: CreateTimelineChildFromParentCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<CreateTimelineChildFromParentCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_create_child_from_parent', {
+    command,
+  });
 }
 
 export function applyTimelineChildren(

@@ -77,6 +77,7 @@ pub(crate) mod timeline_children_history;
 pub(crate) mod timeline_command;
 pub(crate) mod timeline_command_history;
 pub(crate) mod timeline_command_history_codec;
+pub(crate) mod timeline_create_intent;
 pub(crate) mod timeline_node_delete_history;
 pub(crate) mod timeline_node_split_history;
 pub(crate) mod timeline_node_store;

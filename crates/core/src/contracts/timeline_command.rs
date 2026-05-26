@@ -47,6 +47,12 @@ pub struct CreateTimelineNodeCommand {
     pub beat_type: Option<BeatType>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CreateTimelineChildFromParentCommand {
+    pub node_id: NodeId,
+    pub parent_id: NodeId,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ApplyTimelineChildrenCommand {
     pub parent_id: NodeId,

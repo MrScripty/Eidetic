@@ -1,8 +1,8 @@
 use eidetic_core::contracts::{
-    ApplyTimelineChildCommand, CommandEnvelope, CreateTimelineNodeCommand,
-    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope,
-    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand, TimelineRenderProjection,
+    ApplyTimelineChildCommand, CommandEnvelope, CreateTimelineChildFromParentCommand,
+    CreateTimelineNodeCommand, DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand,
+    ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use rusqlite::Connection;
@@ -17,8 +17,9 @@ use crate::ydoc::DocCommand;
 use crate::{timeline_node_store, timeline_relationship_store};
 
 pub use crate::command_service_timeline_requests::{
-    ApplyTimelineChildrenRequestCommand, CreateTimelineNodeRequestCommand,
-    CreateTimelineRelationshipRequestCommand, SplitTimelineNodeRequestCommand,
+    ApplyTimelineChildrenRequestCommand, CreateTimelineChildFromParentRequestCommand,
+    CreateTimelineNodeRequestCommand, CreateTimelineRelationshipRequestCommand,
+    SplitTimelineNodeRequestCommand,
 };
 
 #[derive(Debug, Serialize)]
@@ -33,6 +34,26 @@ pub async fn create_timeline_node(
 ) -> Result<TimelineCommandResponse, BackendError> {
     command.validate()?;
     let command = command.into_core_command();
+    create_timeline_node_from_core_command(state, command).await
+}
+
+pub async fn create_timeline_child_from_parent(
+    state: &AppState,
+    command: CreateTimelineChildFromParentRequestCommand,
+) -> Result<TimelineCommandResponse, BackendError> {
+    let command = command.into_core_command();
+    create_timeline_child_from_parent_core_command(state, command).await
+}
+
+pub async fn create_timeline_child_from_parent_core_command(
+    state: &AppState,
+    command: CommandEnvelope<CreateTimelineChildFromParentCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let project = timeline_command_project(state, &path).await?;
+    let command =
+        crate::timeline_create_intent::derive_create_child_timeline_node_command(&project, command)
+            .map_err(map_timeline_command_error)?;
     create_timeline_node_from_core_command(state, command).await
 }
 

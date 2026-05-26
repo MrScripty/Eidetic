@@ -20,6 +20,17 @@ pub async fn command_timeline_create_node(
 }
 
 #[tauri::command]
+pub async fn command_timeline_create_child_from_parent(
+    app: tauri::AppHandle,
+    command: command_service::CreateTimelineChildFromParentRequestCommand,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::create_timeline_child_from_parent(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 pub async fn command_timeline_node_range(
     app: tauri::AppHandle,
     command: CommandEnvelope<SetTimelineNodeRangeCommand>,

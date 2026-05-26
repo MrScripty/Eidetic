@@ -1,7 +1,8 @@
 use eidetic_core::ai::backend::ChildPlanId;
 use eidetic_core::contracts::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CommandEnvelope, CommandId,
-    CreateTimelineNodeCommand, CreateTimelineRelationshipCommand,
+    CreateTimelineChildFromParentCommand, CreateTimelineNodeCommand,
+    CreateTimelineRelationshipCommand,
 };
 use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
 use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
@@ -20,6 +21,13 @@ pub struct CreateTimelineNodeRequestCommand {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct CreateTimelineChildFromParentRequestCommand {
+    id: CommandId,
+    payload: CreateTimelineChildFromParentRequestPayload,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct CreateTimelineNodeRequestPayload {
     #[serde(default)]
     node_id: Option<NodeId>,
@@ -29,6 +37,14 @@ struct CreateTimelineNodeRequestPayload {
     start_ms: u64,
     end_ms: u64,
     beat_type: Option<BeatType>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CreateTimelineChildFromParentRequestPayload {
+    #[serde(default)]
+    node_id: Option<NodeId>,
+    parent_id: NodeId,
 }
 
 #[derive(Debug, Deserialize)]
@@ -118,6 +134,20 @@ impl CreateTimelineNodeRequestCommand {
                 start_ms: self.payload.start_ms,
                 end_ms: self.payload.end_ms,
                 beat_type: self.payload.beat_type,
+            },
+        }
+    }
+}
+
+impl CreateTimelineChildFromParentRequestCommand {
+    pub(crate) fn into_core_command(self) -> CommandEnvelope<CreateTimelineChildFromParentCommand> {
+        CommandEnvelope {
+            id: self.id,
+            payload: CreateTimelineChildFromParentCommand {
+                node_id: self.payload.node_id.unwrap_or_else(|| {
+                    NodeId(derived_command_uuid(self.id, b"timeline.child_from_parent"))
+                }),
+                parent_id: self.payload.parent_id,
             },
         }
     }

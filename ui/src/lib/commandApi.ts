@@ -59,6 +59,7 @@ import { createCommandId } from './commandTransport.js';
 export { createCommandId } from './commandTransport.js';
 export {
   applyTimelineChildren,
+  createTimelineChildFromParent,
   createTimelineNode,
   createTimelineRelationship,
   deleteTimelineNode,

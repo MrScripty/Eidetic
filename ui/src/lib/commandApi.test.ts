@@ -8,6 +8,7 @@ import {
   deleteBibleGraphEdge,
   deleteBibleGraphNode,
   createStoryArc,
+  createTimelineChildFromParent,
   createTimelineNode,
   createTimelineRelationship,
   deleteStoryArc,
@@ -704,6 +705,50 @@ describe('command api helpers', () => {
           start_ms: 1_000,
           end_ms: 4_000,
           beat_type: null,
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses backend-owned timeline child create intent commands when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 1,
+        payload: {
+          total_duration_ms: 120_000,
+          tracks: [],
+          clips: [],
+          relationships: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createTimelineChildFromParent(
+        {
+          node_id: 'node.act.new',
+          parent_id: 'node.premise',
+        },
+        'command-timeline-create-child-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_timeline_create_child_from_parent', {
+      command: {
+        id: 'command-timeline-create-child-1',
+        payload: {
+          node_id: 'node.act.new',
+          parent_id: 'node.premise',
         },
       },
     });
