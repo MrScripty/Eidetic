@@ -13,6 +13,7 @@ mod project_commands;
 mod projections;
 mod reference_commands;
 mod renderer_window;
+mod timeline_renderer_commands;
 
 use bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use desktop_events::DesktopEventBridgeOwner;
@@ -57,6 +58,13 @@ pub fn run() {
                 }),
             );
             app.manage(GraphRendererProjectionOwner::new(app_state.clone()));
+            app.manage(
+                bevy_timeline_host::DesktopTimelineRendererOwner::start().unwrap_or_else(|error| {
+                    bevy_timeline_host::DesktopTimelineRendererOwner::unavailable(format!(
+                        "failed to start Bevy timeline renderer owner: {error:?}"
+                    ))
+                }),
+            );
             app.manage(DesktopEventBridgeOwner::spawn(
                 app.handle().clone(),
                 &app_state,
@@ -71,6 +79,11 @@ pub fn run() {
                 }
                 if let Some(graph_owner) = window.try_state::<DesktopBibleGraphRendererOwner>() {
                     let _ = graph_owner.stop();
+                }
+                if let Some(timeline_owner) =
+                    window.try_state::<bevy_timeline_host::DesktopTimelineRendererOwner>()
+                {
+                    let _ = timeline_owner.stop();
                 }
                 let state = window.state::<AppState>();
                 state.shutdown_tasks();
@@ -99,6 +112,9 @@ pub fn run() {
             graph_renderer_commands::graph_renderer_update_projection_request,
             graph_renderer_commands::graph_renderer_camera_command,
             graph_renderer_commands::graph_renderer_visual_snapshot,
+            timeline_renderer_commands::timeline_renderer_open,
+            timeline_renderer_commands::timeline_renderer_status,
+            timeline_renderer_commands::timeline_renderer_close,
             reference_commands::reference_list,
             reference_commands::reference_upload,
             reference_commands::reference_delete,

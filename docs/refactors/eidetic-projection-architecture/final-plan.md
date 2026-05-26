@@ -3504,6 +3504,12 @@ Implementation order:
   projections, reports scene counts/status, and drains renderer command
   requests without owning durable timeline state. Native floating-window
   lifecycle integration remains the next host slice.
+- Started: Tauri now manages a bounded desktop timeline renderer owner and
+  exposes open/status/close commands. Opening the renderer seeds the
+  thread-owned Bevy host from the backend `TimelineRenderProjection`; no
+  UI-local timeline state, HTTP transport, renderer-side persistence, or
+  unsafe non-`Send` Bevy state in Tauri managed state is introduced. Native
+  visible-window lifecycle remains a follow-up slice.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
