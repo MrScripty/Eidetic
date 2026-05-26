@@ -3208,6 +3208,9 @@ Implementation order:
 
 - Define workflow, tool manifest, agent run, tool call, tool result, and tool
   policy DTOs before wiring any model provider.
+- Completed: core now defines host-agnostic agent workflow, scoped tool
+  manifest, run, tool call, tool result, budget, policy, and typed graph/context
+  tool argument DTOs with manifest/budget validation and serialization tests.
 - Add relational SQLite current-state/history storage for agent runs, tool
   calls, tool results, and workflow status.
 - Add a mock-provider harness test path so workflow/tool execution can be

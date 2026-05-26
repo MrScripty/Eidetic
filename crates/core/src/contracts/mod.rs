@@ -1,3 +1,4 @@
+mod agent_workflow;
 mod ai_context;
 mod bible_graph;
 mod bible_graph_defaults;
@@ -17,6 +18,13 @@ mod timeline_render;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub use agent_workflow::{
+    AgentProposalMode, AgentRun, AgentRunId, AgentRunStatus, AgentToolArguments, AgentToolBudget,
+    AgentToolCall, AgentToolCallId, AgentToolCallStatus, AgentToolDefinition, AgentToolKind,
+    AgentToolManifest, AgentToolName, AgentToolRequest, AgentToolResult, AgentToolResultPayload,
+    AgentToolResultStatus, AgentWorkflowContractError, AgentWorkflowDefinition, AgentWorkflowId,
+    AgentWorkflowIntent, AgentWorkflowPolicy,
+};
 pub use ai_context::{
     AiBibleContextEdge, AiBibleContextField, AiBibleContextNode, AiBibleContextProjection,
     AiBibleContextSnapshot,
