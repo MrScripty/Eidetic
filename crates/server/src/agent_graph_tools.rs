@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
-    AgentToolArguments, AgentToolRequest, AgentToolResultPayload, BibleGraphNodeListProjection,
-    BibleRenderGraphProjectionRequest, CommandEnvelope, ContextStackProjection,
-    CreateGraphProposalCommand, GraphProposalAction, GraphProposalId, GraphProposalTarget,
+    AgentToolArguments, AgentToolKind, AgentToolRequest, AgentToolResultPayload,
+    BibleGraphNodeListProjection, BibleRenderGraphProjectionRequest, CommandEnvelope,
+    ContextStackProjection, CreateGraphProposalCommand, GraphProposalAction, GraphProposalId,
+    GraphProposalTarget,
 };
 use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId};
 use rusqlite::Connection;
@@ -229,6 +230,33 @@ impl AgentWorkflowToolExecutor for AgentGraphProposalTools<'_> {
         )?;
         let projection = graph_proposal_store::load_graph_proposal_list_projection(self.conn)?;
         json_payload(&projection.payload)
+    }
+}
+
+pub struct AgentGraphWorkflowTools<'a> {
+    conn: &'a mut Connection,
+}
+
+impl<'a> AgentGraphWorkflowTools<'a> {
+    pub fn new(conn: &'a mut Connection) -> Self {
+        Self { conn }
+    }
+}
+
+impl AgentWorkflowToolExecutor for AgentGraphWorkflowTools<'_> {
+    fn execute_tool(
+        &mut self,
+        request: &AgentToolRequest,
+    ) -> Result<AgentToolResultPayload, AgentHarnessError> {
+        match request.arguments.kind() {
+            AgentToolKind::GraphRead => AgentGraphReadTools::new(self.conn).execute_tool(request),
+            AgentToolKind::GraphProposal => {
+                AgentGraphProposalTools::new(self.conn).execute_tool(request)
+            }
+            AgentToolKind::ContextEvaluation => Err(AgentHarnessError::Tool(
+                "agent graph workflow tools do not execute context-evaluation tools".to_string(),
+            )),
+        }
     }
 }
 

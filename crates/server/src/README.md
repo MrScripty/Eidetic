@@ -19,6 +19,7 @@ domain model in `eidetic-core`.
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by Tauri commands. |
 | `model_endpoint_resolver.rs` | Backend-owned llama.cpp OpenAI endpoint policy and Pumas runtime-profile resolution for live provider workflows. |
 | `agent_structured_tool_provider.rs` | Provider-independent structured JSON tool loop for text-only model providers. |
+| `agent_premise_workflow.rs` | First premise graph-context workflow slice over backend graph reads, reviewable proposals, and harness history. |
 | `export_service.rs` | Host-neutral PDF export behavior consumed by Tauri commands. |
 | `reference_service.rs` | Host-neutral reference document list/upload/delete behavior consumed by Tauri commands. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |

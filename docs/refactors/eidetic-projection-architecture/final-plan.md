@@ -3259,6 +3259,10 @@ Implementation order:
 - Add the smallest workflow vertical slice: premise generation reads bounded
   graph context, proposes one bible node or edge, records the tool calls and
   rationale, and exposes the proposal for user review.
+- Completed: server now has the first premise graph-context workflow slice
+  that runs through the harness, uses connection-aware backend graph tools to
+  read active graph context and record reviewable bible graph proposals, records
+  run/tool history, and verifies the canonical graph remains proposal-gated.
 - Extend the workflow harness to act, sequence, scene, beat, and shot context
   refinement after the premise slice is verified.
 

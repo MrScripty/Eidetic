@@ -57,6 +57,29 @@ where
     P: AgentWorkflowProvider,
     T: AgentWorkflowToolExecutor,
 {
+    run_agent_workflow_with_connection_tools(
+        conn,
+        workflow,
+        provider,
+        |_, request| tools.execute_tool(request),
+        clock,
+    )
+}
+
+pub fn run_agent_workflow_with_connection_tools<P, F>(
+    conn: &mut Connection,
+    workflow: AgentWorkflowDefinition,
+    provider: &mut P,
+    mut execute_tool: F,
+    clock: &mut AgentHarnessClock,
+) -> Result<AgentRunHistoryProjection, AgentHarnessError>
+where
+    P: AgentWorkflowProvider,
+    F: FnMut(
+        &mut Connection,
+        &AgentToolRequest,
+    ) -> Result<AgentToolResultPayload, AgentHarnessError>,
+{
     workflow.validate()?;
     let mut run = AgentRun {
         id: AgentRunId::new(),
@@ -88,7 +111,7 @@ where
             .manifest
             .validate_call(&request, &workflow.budget)?;
 
-        let payload = tools.execute_tool(&request)?;
+        let payload = execute_tool(conn, &request)?;
         let call = AgentToolCall {
             id: AgentToolCallId::new(),
             run_id: run.id,
