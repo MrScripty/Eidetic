@@ -11,6 +11,8 @@ mod hit_test;
 mod native_command;
 #[cfg(feature = "native_render")]
 mod native_render;
+#[cfg(feature = "native_render")]
+mod native_style;
 mod playhead;
 mod relationship_curve;
 mod scene;

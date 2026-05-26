@@ -3710,6 +3710,9 @@ Implementation order:
   from backend-projected affect samples, valence, and intensity. Affect
   rendering remains read-only projection work and does not duplicate affect
   model ownership in Bevy.
+- Started: native timeline styling decisions have been extracted into a
+  focused `native_style.rs` module so color and size mapping stays separate
+  from Bevy window lifecycle, input handling, and visual entity spawning.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

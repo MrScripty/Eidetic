@@ -49,6 +49,8 @@ Current scope:
   ranges are valid for the active backend projection.
 - Keep native command validation in `native_command.rs` so the native renderer
   window module stays focused on lifecycle, input, and visual projection work.
+- Keep native styling decisions in `native_style.rs` so color and size mapping
+  stays separate from Bevy window lifecycle and input handling.
 
 Dependency review:
 

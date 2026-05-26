@@ -130,7 +130,7 @@ fn controlled_native_window_replaces_projection_derived_clip_visuals() {
 #[test]
 fn controlled_native_window_clip_visuals_use_projection_status_colors() {
     assert_eq!(
-        crate::native_render::native_clip_color_rgb(
+        crate::native_style::native_clip_color_rgb(
             StoryLevel::Scene,
             false,
             ContentStatus::NotesOnly,
@@ -138,11 +138,11 @@ fn controlled_native_window_clip_visuals_use_projection_status_colors() {
         [0.342, 0.655, 0.691]
     );
     assert_eq!(
-        crate::native_render::native_clip_color_rgb(StoryLevel::Beat, false, ContentStatus::Empty),
+        crate::native_style::native_clip_color_rgb(StoryLevel::Beat, false, ContentStatus::Empty),
         [0.188, 0.227, 0.298]
     );
     assert_eq!(
-        crate::native_render::native_clip_color_rgb(
+        crate::native_style::native_clip_color_rgb(
             StoryLevel::Act,
             false,
             ContentStatus::Generating,
@@ -150,7 +150,7 @@ fn controlled_native_window_clip_visuals_use_projection_status_colors() {
         [0.937, 0.706, 0.294]
     );
     assert_eq!(
-        crate::native_render::native_clip_color_rgb(
+        crate::native_style::native_clip_color_rgb(
             StoryLevel::Sequence,
             false,
             ContentStatus::HasContent,
@@ -158,11 +158,7 @@ fn controlled_native_window_clip_visuals_use_projection_status_colors() {
         [0.282, 0.686, 0.424]
     );
     assert_eq!(
-        crate::native_render::native_clip_color_rgb(
-            StoryLevel::Premise,
-            true,
-            ContentStatus::Empty
-        ),
+        crate::native_style::native_clip_color_rgb(StoryLevel::Premise, true, ContentStatus::Empty),
         [0.431, 0.455, 0.502]
     );
 }
@@ -208,15 +204,15 @@ fn controlled_native_window_renders_projection_relationship_visuals() {
 #[test]
 fn controlled_native_window_relationship_visuals_use_projection_type_colors() {
     assert_eq!(
-        crate::native_render::native_relationship_color_rgb(&RelationshipType::Causal),
+        crate::native_style::native_relationship_color_rgb(&RelationshipType::Causal),
         [0.937, 0.384, 0.314]
     );
     assert_eq!(
-        crate::native_render::native_relationship_color_rgb(&RelationshipType::Thematic),
+        crate::native_style::native_relationship_color_rgb(&RelationshipType::Thematic),
         [0.933, 0.831, 0.455]
     );
     assert_eq!(
-        crate::native_render::native_relationship_color_rgb(&RelationshipType::Convergence {
+        crate::native_style::native_relationship_color_rgb(&RelationshipType::Convergence {
             arc_ids: Vec::new()
         }),
         [0.655, 0.463, 0.914]
@@ -264,23 +260,23 @@ fn controlled_native_window_renders_projection_affect_overlay_visuals() {
 #[test]
 fn controlled_native_window_affect_overlay_visuals_use_projection_colors() {
     assert_eq!(
-        crate::native_render::native_affect_color_rgb(Valence::new(-400).unwrap()),
+        crate::native_style::native_affect_color_rgb(Valence::new(-400).unwrap()),
         [0.376, 0.592, 0.827]
     );
     assert_eq!(
-        crate::native_render::native_affect_color_rgb(Valence::new(0).unwrap()),
+        crate::native_style::native_affect_color_rgb(Valence::new(0).unwrap()),
         [0.933, 0.831, 0.455]
     );
     assert_eq!(
-        crate::native_render::native_affect_color_rgb(Valence::new(400).unwrap()),
+        crate::native_style::native_affect_color_rgb(Valence::new(400).unwrap()),
         [0.282, 0.686, 0.424]
     );
     assert_eq!(
-        crate::native_render::native_affect_height_px(EmotionalIntensity::new(0).unwrap()),
+        crate::native_style::native_affect_height_px(EmotionalIntensity::new(0).unwrap()),
         4.0
     );
     assert_eq!(
-        crate::native_render::native_affect_height_px(EmotionalIntensity::new(1_000).unwrap()),
+        crate::native_style::native_affect_height_px(EmotionalIntensity::new(1_000).unwrap()),
         10.0
     );
 }
