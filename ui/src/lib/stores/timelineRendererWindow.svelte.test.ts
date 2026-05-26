@@ -12,6 +12,7 @@ const baseStatus: TimelineRendererStatus = {
   renderer_window_open: true,
   renderer_scene_ready: true,
   renderer_window_lifecycle: 'scene_ready_pending_native_runner',
+  renderer_runner_lifecycle: 'closed',
   renderer_window_visible: false,
   renderer_window_ready: false,
   renderer_window_focus_supported: false,

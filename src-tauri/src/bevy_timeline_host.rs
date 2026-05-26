@@ -6,7 +6,9 @@ use std::time::Duration;
 use eidetic_bevy_timeline::{TimelineRendererApp, TimelineRendererCommand, TimelineRendererError};
 use eidetic_core::contracts::TimelineRenderProjection;
 
-use crate::renderer_window::{DesktopRendererWindowKind, DesktopRendererWindowLifecycle};
+use crate::renderer_window::{
+    DesktopRendererRunnerLifecycle, DesktopRendererWindowKind, DesktopRendererWindowLifecycle,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct TimelineHostStatus {
@@ -15,6 +17,7 @@ pub struct TimelineHostStatus {
     pub renderer_window_open: bool,
     pub renderer_scene_ready: bool,
     pub renderer_window_lifecycle: DesktopRendererWindowLifecycle,
+    pub renderer_runner_lifecycle: DesktopRendererRunnerLifecycle,
     pub renderer_window_visible: bool,
     pub renderer_window_ready: bool,
     pub renderer_window_focus_supported: bool,
@@ -67,6 +70,7 @@ impl DesktopTimelineHost {
             renderer_window_open: false,
             renderer_scene_ready: false,
             renderer_window_lifecycle: DesktopRendererWindowLifecycle::Closed,
+            renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
             renderer_window_visible: false,
             renderer_window_ready: false,
             renderer_window_focus_supported: false,
@@ -156,6 +160,7 @@ impl DesktopTimelineHost {
                 self.renderer.is_some(),
                 false,
             ),
+            renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
             renderer_window_visible: false,
             renderer_window_ready: false,
             renderer_window_focus_supported: false,
@@ -397,6 +402,10 @@ mod tests {
             status.renderer_window_lifecycle,
             DesktopRendererWindowLifecycle::SceneReadyPendingNativeRunner
         );
+        assert_eq!(
+            status.renderer_runner_lifecycle,
+            DesktopRendererRunnerLifecycle::Closed
+        );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
         assert!(!status.renderer_window_focus_supported);
@@ -433,6 +442,10 @@ mod tests {
         assert_eq!(
             status.renderer_window_lifecycle,
             DesktopRendererWindowLifecycle::Closed
+        );
+        assert_eq!(
+            status.renderer_runner_lifecycle,
+            DesktopRendererRunnerLifecycle::Closed
         );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
@@ -475,6 +488,10 @@ mod tests {
         assert_eq!(
             status.renderer_window_lifecycle,
             DesktopRendererWindowLifecycle::Closed
+        );
+        assert_eq!(
+            status.renderer_runner_lifecycle,
+            DesktopRendererRunnerLifecycle::Closed
         );
         assert!(!status.renderer_window_focus_supported);
         assert!(!stopped.running);
