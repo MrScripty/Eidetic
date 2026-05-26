@@ -3642,6 +3642,11 @@ Implementation order:
   scene and opens the floating Bevy window, projection refresh only re-seeds
   disposable renderer scene state, and close/stop tears down both without
   adding frontend-owned renderer state or a fallback transport.
+- Started: the native timeline window runner can receive the backend-owned
+  `TimelineRenderProjection` at open time and build disposable Bevy ECS scene
+  entities inside the floating window app. This keeps initial visible-window
+  content projection-driven while later slices add live projection refresh,
+  input systems, and actual render geometry.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

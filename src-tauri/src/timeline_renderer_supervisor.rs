@@ -3,6 +3,7 @@ use std::time::Duration;
 use std::time::Instant;
 
 use eidetic_bevy_timeline::TimelineNativeWindowRunnerConfig;
+use eidetic_core::contracts::TimelineRenderProjection;
 
 use crate::renderer_window::{
     DesktopRendererRunnerLifecycle, DesktopRendererSupervisorLifecycle,
@@ -111,6 +112,22 @@ impl TimelineRendererSupervisor {
         match self.startup_plan.clone() {
             TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate { config, .. } => {
                 return self.open_minimal_window(config);
+            }
+            TimelineRendererRunnerStartupPlan::PendingOnly { .. } => {
+                self.lifecycle = DesktopRendererSupervisorLifecycle::Closed;
+                self.last_error = None;
+            }
+        }
+        self.status()
+    }
+
+    pub fn open_with_projection(
+        &mut self,
+        projection: TimelineRenderProjection,
+    ) -> TimelineRendererRunnerStatus {
+        match self.startup_plan.clone() {
+            TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate { config, .. } => {
+                return self.open_minimal_window(config.with_initial_projection(projection));
             }
             TimelineRendererRunnerStartupPlan::PendingOnly { .. } => {
                 self.lifecycle = DesktopRendererSupervisorLifecycle::Closed;

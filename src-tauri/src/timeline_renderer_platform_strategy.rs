@@ -15,7 +15,7 @@ pub(crate) enum TimelineRendererPlatformStrategy {
     UnsupportedPlatform,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum TimelineRendererRunnerStartupPlan {
     MinimalWindowProofCandidate {
         threading_model: DesktopRendererThreadingModel,

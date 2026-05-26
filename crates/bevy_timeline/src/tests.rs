@@ -38,11 +38,32 @@ fn native_window_runner_config_records_minimal_smoke_window_intent() {
     assert!(!config.borderless_window);
     assert!(config.run_on_any_thread);
     assert_eq!(config.auto_close_after_ms, None);
+    assert_eq!(config.initial_projection, None);
 
     let auto_close_ms = std::num::NonZeroU64::new(250).unwrap();
     let config = config.with_auto_close_after_ms(auto_close_ms);
 
     assert_eq!(config.auto_close_after_ms, Some(auto_close_ms));
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_app_builds_scene_from_initial_projection() {
+    let node_id = NodeId::new();
+    let mut app = bevy::prelude::App::new();
+    let config = TimelineNativeWindowRunnerConfig::minimal_smoke(true)
+        .with_initial_projection(projection_with_node(node_id));
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(
+        &mut app,
+        config.initial_projection.as_ref(),
+    );
+
+    let stats = app.world().resource::<TimelineSceneStats>();
+    assert_eq!(stats.track_count, 1);
+    assert_eq!(stats.clip_count, 1);
+    assert_eq!(stats.relationship_count, 0);
 }
 
 #[cfg(feature = "native_render")]

@@ -127,8 +127,8 @@ impl DesktopTimelineHost {
         &mut self,
         projection: TimelineRenderProjection,
     ) -> Result<TimelineHostStatus, TimelineHostError> {
-        self.set_projection(projection)?;
-        self.native_window.open();
+        self.set_projection(projection.clone())?;
+        self.native_window.open_with_projection(projection);
         Ok(self.status())
     }
 

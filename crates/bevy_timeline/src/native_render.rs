@@ -12,13 +12,16 @@ use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
 };
 use bevy::winit::WinitPlugin;
+use eidetic_core::contracts::TimelineRenderProjection;
+
+use crate::scene::{TimelineSceneStats, rebuild_timeline_scene};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct TimelineNativeRenderConfig {
     pub borderless_window: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TimelineNativeWindowRunnerConfig {
     pub title: String,
     pub width_px: u32,
@@ -26,6 +29,7 @@ pub struct TimelineNativeWindowRunnerConfig {
     pub borderless_window: bool,
     pub run_on_any_thread: bool,
     pub auto_close_after_ms: Option<NonZeroU64>,
+    pub initial_projection: Option<TimelineRenderProjection>,
 }
 
 #[derive(Debug, Resource)]
@@ -68,11 +72,17 @@ impl TimelineNativeWindowRunnerConfig {
             borderless_window: false,
             run_on_any_thread,
             auto_close_after_ms: None,
+            initial_projection: None,
         }
     }
 
     pub fn with_auto_close_after_ms(mut self, auto_close_after_ms: NonZeroU64) -> Self {
         self.auto_close_after_ms = Some(auto_close_after_ms);
+        self
+    }
+
+    pub fn with_initial_projection(mut self, projection: TimelineRenderProjection) -> Self {
+        self.initial_projection = Some(projection);
         self
     }
 }
@@ -152,6 +162,7 @@ impl Plugin for TimelineNativeRenderPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(TimelineNativeRenderConfig::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
+        app.insert_resource(TimelineSceneStats::default());
         app.add_systems(Update, mark_timeline_native_window_ready);
     }
 }
@@ -197,12 +208,24 @@ pub fn configure_controlled_minimal_timeline_native_window_app(
     app.add_systems(Update, close_minimal_native_window_from_os_request);
     app.add_systems(Update, apply_minimal_native_window_visibility_requests);
 
+    seed_initial_timeline_native_render_scene(app, config.initial_projection.as_ref());
+
     if let Some(auto_close_after_ms) = config.auto_close_after_ms {
         app.insert_resource(TimelineNativeAutoClose {
             close_at: Instant::now() + Duration::from_millis(auto_close_after_ms.get()),
         });
         app.add_systems(Update, close_minimal_native_window_after_timer);
     }
+}
+
+pub(crate) fn seed_initial_timeline_native_render_scene(
+    app: &mut App,
+    projection: Option<&TimelineRenderProjection>,
+) {
+    let Some(projection) = projection else {
+        return;
+    };
+    rebuild_timeline_scene(app.world_mut(), projection);
 }
 
 pub fn run_minimal_timeline_native_window(config: TimelineNativeWindowRunnerConfig) {
