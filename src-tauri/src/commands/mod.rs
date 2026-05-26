@@ -1,3 +1,4 @@
+pub mod affect;
 pub mod bible;
 pub mod context;
 pub mod object_script_story;

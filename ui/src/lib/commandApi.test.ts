@@ -13,6 +13,7 @@ import {
   deleteTimelineRelationship,
   ensureCanonicalBibleRoots,
   recordContextEvaluation,
+  setAffectValue,
   setBibleGraphEdge,
   setBibleGraphField,
   setBibleGraphSnapshotField,
@@ -94,6 +95,46 @@ describe('command api helpers', () => {
       },
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop affect set commands when Tauri transport is available', async () => {
+    const response = {
+      version: 2,
+      payload: {
+        target: { type: 'timeline_node', node_id: 'node.scene.beach' },
+        values: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+
+    const payload = {
+      affect_id: 'affect-1',
+      target: { type: 'timeline_node' as const, node_id: 'node.scene.beach' },
+      valence: -250,
+      arousal: 650,
+      intensity: 700,
+      confidence: 900,
+      mood_labels: ['uneasy'],
+      provenance: 'user_authored' as const,
+      rationale: 'Opening mood',
+    };
+
+    await expect(setAffectValue(payload, 'command-affect-1')).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_affect_set', {
+      command: {
+        id: 'command-affect-1',
+        payload: {
+          command_id: 'command-affect-1',
+          ...payload,
+        },
+      },
+    });
   });
 
   it('uses desktop timeline range commands when Tauri transport is available', async () => {

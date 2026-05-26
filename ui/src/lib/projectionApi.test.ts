@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  getAffectProjection,
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
   getBibleGraphSchemaListProjection,
@@ -62,6 +63,29 @@ describe('projection api helpers', () => {
       query: {
         object_kind: 'bible_part_field',
         object_id: 'field/weather one',
+      },
+    });
+  });
+
+  it('uses the desktop affect projection command', async () => {
+    const response = {
+      version: 2,
+      payload: {
+        target: { type: 'timeline_node', node_id: 'node.scene.beach' },
+        values: [],
+      },
+    };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(
+      getAffectProjection({
+        target: { type: 'timeline_node', node_id: 'node.scene.beach' },
+      }),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_affect', {
+      query: {
+        target: { type: 'timeline_node', node_id: 'node.scene.beach' },
       },
     });
   });

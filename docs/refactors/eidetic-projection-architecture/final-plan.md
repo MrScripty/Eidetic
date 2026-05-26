@@ -3387,6 +3387,10 @@ Implementation order:
   through host-neutral service functions.
 - Add the smallest command/projection vertical slice: set affect for one
   timeline node, read the affect projection, and replay it after project reload.
+- Completed: desktop command/projection adapters and Svelte API helpers now
+  expose backend-owned affect set/projection operations for timeline-node affect
+  values, with a reload/replay service test proving projections are rebuilt from
+  durable SQLite state.
 - Add script-generation context integration after the affect projection is
   durable and tested.
 - Add proposal/review integration for AI-detected affect changes from manual

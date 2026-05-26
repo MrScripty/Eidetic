@@ -11,6 +11,11 @@ import type {
   SetBibleGraphSnapshotFieldCommand,
 } from './bibleGraphTypes.js';
 import type {
+  AffectCommandResponse,
+  SetAffectValueCommand,
+  SetAffectValueInput,
+} from './affectTypes.js';
+import type {
   CommandEnvelope,
   ObjectFieldCommandResponse,
   ProjectionEnvelope,
@@ -70,6 +75,21 @@ export function setObjectField(
   };
 
   return invokeDesktop<ObjectFieldCommandResponse>('command_object_field', { command });
+}
+
+export function setAffectValue(
+  payload: SetAffectValueInput,
+  commandId = createCommandId(),
+): Promise<AffectCommandResponse> {
+  const command: CommandEnvelope<SetAffectValueCommand> = {
+    id: commandId,
+    payload: {
+      command_id: commandId,
+      ...payload,
+    },
+  };
+
+  return invokeDesktop<AffectCommandResponse>('command_affect_set', { command });
 }
 
 export function createBibleGraphNode(

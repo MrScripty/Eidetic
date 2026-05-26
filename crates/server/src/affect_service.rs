@@ -105,3 +105,60 @@ fn active_project_path(state: &AppState) -> Result<PathBuf, BackendError> {
 fn map_history_error(error: HistoryStoreError) -> BackendError {
     BackendError::internal(error.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use eidetic_core::Template;
+    use eidetic_core::contracts::{
+        AffectConfidence, AffectProvenance, AffectTarget, AffectValueId, Arousal, CommandEnvelope,
+        CommandId, EmotionalIntensity, MoodLabel, SetAffectValueCommand, Valence,
+    };
+    use eidetic_core::timeline::node::NodeId;
+
+    #[tokio::test]
+    async fn affect_projection_replays_after_project_reload() {
+        let path = std::env::temp_dir().join(format!(
+            "eidetic-affect-service-{}.db",
+            uuid::Uuid::new_v4()
+        ));
+        let target = AffectTarget::TimelineNode {
+            node_id: NodeId::new(),
+        };
+        let state = crate::state::AppState::new().await;
+        state.project_database.set_active_path(path.clone());
+        *state.project.lock() = Some(Template::MultiCam.build_project("Affect Service Test"));
+        let command_id = CommandId::new();
+        let command = CommandEnvelope {
+            id: command_id,
+            payload: SetAffectValueCommand {
+                command_id,
+                affect_id: AffectValueId::new(),
+                target: target.clone(),
+                valence: Valence::new(-250).unwrap(),
+                arousal: Arousal::new(650).unwrap(),
+                intensity: EmotionalIntensity::new(700).unwrap(),
+                confidence: AffectConfidence::new(900).unwrap(),
+                mood_labels: vec![MoodLabel::new("uneasy").unwrap()],
+                provenance: AffectProvenance::UserAuthored,
+                rationale: Some("Opening mood".to_string()),
+            },
+        };
+
+        let initial_projection = super::set_affect_value(&state, command).await.unwrap();
+        state.shutdown_tasks();
+        let reloaded_state = crate::state::AppState::new().await;
+        reloaded_state
+            .project_database
+            .set_active_path(path.clone());
+        *reloaded_state.project.lock() =
+            Some(Template::MultiCam.build_project("Affect Service Test"));
+
+        let reloaded_projection = super::affect_projection(&reloaded_state, target)
+            .await
+            .unwrap();
+
+        assert_eq!(initial_projection.payload, reloaded_projection.payload);
+        reloaded_state.shutdown_tasks();
+        let _ = std::fs::remove_file(path);
+    }
+}

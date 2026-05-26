@@ -1,3 +1,4 @@
+import type { AffectProjection, AffectProjectionRequest } from './affectTypes.js';
 import type {
   BibleGraphNodeId,
   BibleGraphNodeListProjection,
@@ -46,6 +47,14 @@ export function getObjectFieldProjection({
 }: ObjectFieldProjectionKey): Promise<ProjectionEnvelope<ObjectFieldProjection>> {
   return invokeDesktop<ProjectionEnvelope<ObjectFieldProjection>>('projection_object_field', {
     query: { object_kind, object_id },
+  });
+}
+
+export function getAffectProjection({
+  target,
+}: AffectProjectionRequest): Promise<ProjectionEnvelope<AffectProjection>> {
+  return invokeDesktop<ProjectionEnvelope<AffectProjection>>('projection_affect', {
+    query: { target },
   });
 }
 
