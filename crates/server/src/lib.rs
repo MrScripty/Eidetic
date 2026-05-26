@@ -6,6 +6,7 @@ pub mod agent_structured_tool_provider;
 pub mod agent_workflow_harness;
 pub mod agent_workflow_service;
 pub(crate) mod agent_workflow_store;
+pub(crate) mod ai_affect_context_prompt;
 pub(crate) mod ai_backends;
 pub(crate) mod ai_bible_context_prompt;
 pub(crate) mod ai_context_projection;

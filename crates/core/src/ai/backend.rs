@@ -3,7 +3,7 @@ use std::pin::Pin;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
 
-use crate::contracts::{AiBibleContextProjection, ProjectionEnvelope};
+use crate::contracts::{AffectProjection, AiBibleContextProjection, ProjectionEnvelope};
 use crate::error::Error;
 use crate::story::arc::StoryArc;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel, StoryNode};
@@ -106,6 +106,9 @@ pub struct GenerateRequest {
     /// Backend-owned bible graph facts relevant to this request, when available.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_context: Option<ProjectionEnvelope<AiBibleContextProjection>>,
+    /// Backend-owned affect constraints relevant to this request, when available.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub affect_context: Option<ProjectionEnvelope<AffectProjection>>,
 }
 
 /// Adjacent node content for context.
@@ -227,6 +230,9 @@ pub struct GenerateChildrenRequest {
     /// Backend-owned bible graph facts relevant to this decomposition, when available.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_context: Option<ProjectionEnvelope<AiBibleContextProjection>>,
+    /// Backend-owned affect constraints relevant to this decomposition, when available.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub affect_context: Option<ProjectionEnvelope<AffectProjection>>,
 }
 
 /// Everything the AI needs to infer a parent from children.

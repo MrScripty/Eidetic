@@ -3393,6 +3393,9 @@ Implementation order:
   durable SQLite state.
 - Add script-generation context integration after the affect projection is
   durable and tested.
+- Completed: script-generation request hydration now loads timeline-node affect
+  projections with bible context, and prompt formatting appends renderer-neutral
+  affect constraints for generation/decomposition with focused prompt coverage.
 - Add proposal/review integration for AI-detected affect changes from manual
   script edits.
 - Add timeline overlay projection output only after affect state and generation

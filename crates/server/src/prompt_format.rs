@@ -3,7 +3,7 @@ use eidetic_core::timeline::node::StoryLevel;
 use eidetic_core::timeline::structure::SegmentType;
 use eidetic_core::timeline::timing::TimeRange;
 
-use crate::ai_bible_context_prompt;
+use crate::{ai_affect_context_prompt, ai_bible_context_prompt};
 
 /// A structured chat prompt ready for serialization to any backend API.
 pub(crate) struct ChatPrompt {
@@ -173,6 +173,9 @@ fn build_user_message(request: &GenerateRequest) -> String {
 
     if let Some(bible_context) = &request.bible_context {
         ai_bible_context_prompt::append_bible_context(&mut user, bible_context);
+    }
+    if let Some(affect_context) = &request.affect_context {
+        ai_affect_context_prompt::append_affect_context(&mut user, affect_context);
     }
 
     // Surrounding scripts for continuity.
@@ -431,6 +434,9 @@ pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatP
     if let Some(bible_context) = &request.bible_context {
         ai_bible_context_prompt::append_bible_context(&mut user, bible_context);
     }
+    if let Some(affect_context) = &request.affect_context {
+        ai_affect_context_prompt::append_affect_context(&mut user, affect_context);
+    }
 
     // JSON format for response.
     let beat_type_field = if child_level == StoryLevel::Beat {
@@ -461,4 +467,43 @@ pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatP
     ));
 
     ChatPrompt { system, user }
+}
+
+#[cfg(test)]
+mod tests {
+    use eidetic_core::Template;
+    use eidetic_core::contracts::{
+        AffectConfidence, AffectProjection, AffectProvenance, AffectTarget, AffectValue,
+        AffectValueId, Arousal, EmotionalIntensity, MoodLabel, ProjectionEnvelope, Valence,
+    };
+
+    use super::*;
+
+    #[test]
+    fn chat_prompt_includes_affect_constraints() {
+        let project = Template::MultiCam.build_project("Affect Prompt Test");
+        let node_id = project.timeline.nodes[0].id;
+        let mut request = eidetic_core::ai::prompt::build_generate_request(&project, node_id)
+            .expect("generate request");
+        request.affect_context = Some(ProjectionEnvelope::initial(AffectProjection {
+            target: AffectTarget::TimelineNode { node_id },
+            values: vec![AffectValue {
+                id: AffectValueId::new(),
+                target: AffectTarget::TimelineNode { node_id },
+                valence: Valence::new(-250).unwrap(),
+                arousal: Arousal::new(650).unwrap(),
+                intensity: EmotionalIntensity::new(700).unwrap(),
+                confidence: AffectConfidence::new(900).unwrap(),
+                mood_labels: vec![MoodLabel::new("uneasy").unwrap()],
+                provenance: AffectProvenance::UserAuthored,
+                rationale: Some("Opening mood".to_string()),
+            }],
+        }));
+
+        let prompt = build_chat_prompt(&request);
+
+        assert!(prompt.user.contains("AFFECT CONSTRAINTS"));
+        assert!(prompt.user.contains("mood: uneasy"));
+        assert!(prompt.user.contains("valence: -250"));
+    }
 }

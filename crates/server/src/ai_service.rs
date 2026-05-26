@@ -3,7 +3,9 @@ use std::path::PathBuf;
 use eidetic_core::Project;
 use eidetic_core::ai::backend::{ChildPlan, ChildPlanId, ChildProposal, GenerateChildrenRequest};
 use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
-use eidetic_core::contracts::{AiBibleContextProjection, ProjectionEnvelope};
+use eidetic_core::contracts::{
+    AffectProjection, AffectTarget, AiBibleContextProjection, ProjectionEnvelope,
+};
 use eidetic_core::timeline::node::NodeId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -73,7 +75,7 @@ pub async fn preview_ai_context(
     let (project, project_path) = active_sqlite_project(state).await?;
     let mut request = build_generate_request(&project, node_id)
         .map_err(|error| BackendError::BadRequest(error.to_string()))?;
-    attach_ai_bible_context(&mut request, project_path, node_id).await?;
+    attach_ai_generation_context(&mut request, project_path, node_id).await?;
     let prompt = build_chat_prompt(&request);
 
     Ok(AiContextPreview {
@@ -101,7 +103,7 @@ pub async fn generate_children(
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
         (request, project_path)
     };
-    attach_ai_bible_context_to_children(&mut request, project_path, node_id).await?;
+    attach_ai_generation_context_to_children(&mut request, project_path, node_id).await?;
 
     let config = state.ai_config.lock().clone();
     let backend = Backend::from_config(&config);
@@ -173,12 +175,13 @@ pub(crate) async fn active_sqlite_project(
     Ok((project, project_path))
 }
 
-pub(crate) async fn attach_ai_bible_context(
+pub(crate) async fn attach_ai_generation_context(
     request: &mut eidetic_core::ai::backend::GenerateRequest,
     path: PathBuf,
     node_id: NodeId,
 ) -> Result<(), BackendError> {
-    request.bible_context = Some(load_ai_bible_context_projection(path, node_id).await?);
+    request.bible_context = Some(load_ai_bible_context_projection(path.clone(), node_id).await?);
+    request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(())
 }
 
@@ -199,13 +202,31 @@ async fn load_ai_bible_context_projection(
     })?
 }
 
-async fn attach_ai_bible_context_to_children(
+async fn attach_ai_generation_context_to_children(
     request: &mut GenerateChildrenRequest,
     path: PathBuf,
     node_id: NodeId,
 ) -> Result<(), BackendError> {
-    request.bible_context = Some(load_ai_bible_context_projection(path, node_id).await?);
+    request.bible_context = Some(load_ai_bible_context_projection(path.clone(), node_id).await?);
+    request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(())
+}
+
+async fn load_ai_affect_projection(
+    path: PathBuf,
+    node_id: NodeId,
+) -> Result<ProjectionEnvelope<AffectProjection>, BackendError> {
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&path).map_err(|error| {
+            BackendError::Internal(format!("open AI affect context database failed: {error}"))
+        })?;
+        crate::affect_store::load_affect_projection(&conn, AffectTarget::TimelineNode { node_id })
+            .map_err(|error| BackendError::Internal(error.to_string()))
+    })
+    .await
+    .map_err(|error| {
+        BackendError::Internal(format!("AI affect context projection task failed: {error}"))
+    })?
 }
 
 fn parse_child_proposals(

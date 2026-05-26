@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::ai_generation_runtime::{mark_node_generating, run_generation};
-use crate::ai_service::{active_sqlite_project, attach_ai_bible_context};
+use crate::ai_service::{active_sqlite_project, attach_ai_generation_context};
 use crate::backend_error::BackendError;
 use crate::state::{AppState, ServerEvent};
 
@@ -57,7 +57,7 @@ pub async fn start_generation(
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
         (request, project_path)
     };
-    attach_ai_bible_context(&mut request, project_path.clone(), node_id).await?;
+    attach_ai_generation_context(&mut request, project_path.clone(), node_id).await?;
 
     state.generating.lock().insert(body.node_id);
     mark_node_generating(state, project_path.clone(), node_id, body.node_id).await;
@@ -142,7 +142,8 @@ async fn generate_child_in_batch(state: AppState, child_uuid: Uuid) {
         };
         (request, project_path)
     };
-    if let Err(error) = attach_ai_bible_context(&mut request, project_path.clone(), child_id).await
+    if let Err(error) =
+        attach_ai_generation_context(&mut request, project_path.clone(), child_id).await
     {
         let _ = state.events_tx.send(ServerEvent::GenerationError {
             node_id: child_uuid,

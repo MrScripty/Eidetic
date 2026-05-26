@@ -57,6 +57,7 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
         style_notes: None,
         rag_context: vec![],
         bible_context: None,
+        affect_context: None,
     })
 }
 
@@ -102,6 +103,7 @@ pub fn build_generate_children_request(
         surrounding_context,
         episode_structure,
         bible_context: None,
+        affect_context: None,
     })
 }
 
