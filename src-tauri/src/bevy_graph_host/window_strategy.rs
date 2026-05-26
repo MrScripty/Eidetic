@@ -1,4 +1,5 @@
 use super::{NativeRendererPlatformStrategy, current_renderer_window_platform};
+pub use crate::renderer_window::DesktopRendererWindowLifecycle as BibleGraphRendererWindowLifecycle;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -36,15 +37,6 @@ pub enum BibleGraphRendererWindowCapabilityReason {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BibleGraphRendererWindowLifecycle {
-    Closed,
-    SceneStarting,
-    SceneReadyPendingNativeRunner,
-    Visible,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct BibleGraphRendererWindowStrategyStatus {
     pub strategy: BibleGraphRendererWindowStrategy,
     pub platform: BibleGraphRendererWindowPlatform,
@@ -73,16 +65,5 @@ impl BibleGraphRendererWindowCapability {
 impl BibleGraphRendererWindowPlatform {
     pub fn current() -> Self {
         current_renderer_window_platform()
-    }
-}
-
-impl BibleGraphRendererWindowLifecycle {
-    pub fn from_state(running: bool, scene_ready: bool, window_visible: bool) -> Self {
-        match (running, scene_ready, window_visible) {
-            (true, true, true) => Self::Visible,
-            (true, true, false) => Self::SceneReadyPendingNativeRunner,
-            (true, false, _) => Self::SceneStarting,
-            (false, _, _) => Self::Closed,
-        }
     }
 }

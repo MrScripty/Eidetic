@@ -6,7 +6,7 @@ use std::time::Duration;
 use eidetic_bevy_timeline::{TimelineRendererApp, TimelineRendererCommand, TimelineRendererError};
 use eidetic_core::contracts::TimelineRenderProjection;
 
-use crate::renderer_window::DesktopRendererWindowKind;
+use crate::renderer_window::{DesktopRendererWindowKind, DesktopRendererWindowLifecycle};
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct TimelineHostStatus {
@@ -14,7 +14,7 @@ pub struct TimelineHostStatus {
     pub running: bool,
     pub renderer_window_open: bool,
     pub renderer_scene_ready: bool,
-    pub renderer_window_lifecycle: TimelineRendererWindowLifecycle,
+    pub renderer_window_lifecycle: DesktopRendererWindowLifecycle,
     pub renderer_window_visible: bool,
     pub renderer_window_ready: bool,
     pub renderer_window_focus_supported: bool,
@@ -25,14 +25,6 @@ pub struct TimelineHostStatus {
     pub affect_overlay_count: usize,
     pub queued_command_count: usize,
     pub last_error: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum TimelineRendererWindowLifecycle {
-    Closed,
-    SceneReadyPendingNativeRunner,
-    Visible,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,7 +66,7 @@ impl DesktopTimelineHost {
             running: false,
             renderer_window_open: false,
             renderer_scene_ready: false,
-            renderer_window_lifecycle: TimelineRendererWindowLifecycle::Closed,
+            renderer_window_lifecycle: DesktopRendererWindowLifecycle::Closed,
             renderer_window_visible: false,
             renderer_window_ready: false,
             renderer_window_focus_supported: false,
@@ -159,7 +151,11 @@ impl DesktopTimelineHost {
             running: self.renderer.is_some(),
             renderer_window_open: self.renderer.is_some(),
             renderer_scene_ready: self.renderer.is_some(),
-            renderer_window_lifecycle: timeline_renderer_window_lifecycle(self.renderer.is_some()),
+            renderer_window_lifecycle: DesktopRendererWindowLifecycle::from_state(
+                self.renderer.is_some(),
+                self.renderer.is_some(),
+                false,
+            ),
             renderer_window_visible: false,
             renderer_window_ready: false,
             renderer_window_focus_supported: false,
@@ -353,14 +349,6 @@ fn run_timeline_owner(
     }
 }
 
-fn timeline_renderer_window_lifecycle(running: bool) -> TimelineRendererWindowLifecycle {
-    if running {
-        TimelineRendererWindowLifecycle::SceneReadyPendingNativeRunner
-    } else {
-        TimelineRendererWindowLifecycle::Closed
-    }
-}
-
 fn timeline_renderer_window_message(running: bool) -> String {
     if running {
         "timeline renderer scene is ready; native window is not connected".to_string()
@@ -407,7 +395,7 @@ mod tests {
         assert!(status.renderer_scene_ready);
         assert_eq!(
             status.renderer_window_lifecycle,
-            TimelineRendererWindowLifecycle::SceneReadyPendingNativeRunner
+            DesktopRendererWindowLifecycle::SceneReadyPendingNativeRunner
         );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
@@ -444,7 +432,7 @@ mod tests {
         assert!(!status.renderer_scene_ready);
         assert_eq!(
             status.renderer_window_lifecycle,
-            TimelineRendererWindowLifecycle::Closed
+            DesktopRendererWindowLifecycle::Closed
         );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
@@ -486,7 +474,7 @@ mod tests {
         assert!(!status.running);
         assert_eq!(
             status.renderer_window_lifecycle,
-            TimelineRendererWindowLifecycle::Closed
+            DesktopRendererWindowLifecycle::Closed
         );
         assert!(!status.renderer_window_focus_supported);
         assert!(!stopped.running);

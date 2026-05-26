@@ -3559,6 +3559,11 @@ Implementation order:
   host reports `scene_ready_pending_native_runner` and `focus_supported=false`
   until the visible Bevy runner is connected, giving the next slice a stable
   contract without adding fallback transports or frontend-owned renderer state.
+- Started: renderer window lifecycle derivation is now shared desktop renderer
+  infrastructure instead of graph-only status code. Graph and timeline hosts
+  both use the same `closed`, `scene_starting`,
+  `scene_ready_pending_native_runner`, and `visible` lifecycle semantics while
+  keeping graph-specific platform/capability strategy separate.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
