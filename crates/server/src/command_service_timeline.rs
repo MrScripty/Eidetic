@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
-    ApplyTimelineChildCommand, CommandEnvelope, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, TimelineRenderProjection,
+    ApplyTimelineChildCommand, CommandEnvelope, CreateTimelineNodeCommand,
+    DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope,
+    SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use rusqlite::Connection;
@@ -32,6 +33,13 @@ pub async fn create_timeline_node(
 ) -> Result<TimelineCommandResponse, BackendError> {
     command.validate()?;
     let command = command.into_core_command();
+    create_timeline_node_from_core_command(state, command).await
+}
+
+pub async fn create_timeline_node_from_core_command(
+    state: &AppState,
+    command: CommandEnvelope<CreateTimelineNodeCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
     let path = active_project_path(state)?;
     let created_node_id = command.payload.node_id;
     let project = timeline_command_project(state, &path).await?;
@@ -365,6 +373,13 @@ pub async fn split_timeline_node(
     command: SplitTimelineNodeRequestCommand,
 ) -> Result<TimelineCommandResponse, BackendError> {
     let command = command.into_core_command();
+    split_timeline_node_from_core_command(state, command).await
+}
+
+pub async fn split_timeline_node_from_core_command(
+    state: &AppState,
+    command: CommandEnvelope<SplitTimelineNodeCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
     let path = active_project_path(state)?;
     let project = timeline_command_project(state, &path).await?;
     let response = tokio::task::spawn_blocking(move || {

@@ -1,7 +1,8 @@
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
 use eidetic_bevy_timeline::TimelineRendererCommand;
 use eidetic_core::contracts::{
-    CommandEnvelope, DeleteTimelineNodeCommand, SetTimelineNodeRangeCommand,
+    CommandEnvelope, CreateTimelineNodeCommand, DeleteTimelineNodeCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
 use eidetic_server::command_service;
 use eidetic_server::state::{AppState, ServerEvent};
@@ -194,6 +195,18 @@ async fn apply_timeline_renderer_command(
                 .map(|_| ())
                 .map_err(|error| error.to_string())
         }
+        Some(TimelineRendererMutationCommand::CreateNode(command)) => {
+            command_service::create_timeline_node_from_core_command(state, command)
+                .await
+                .map(|_| ())
+                .map_err(|error| error.to_string())
+        }
+        Some(TimelineRendererMutationCommand::SplitNode(command)) => {
+            command_service::split_timeline_node_from_core_command(state, command)
+                .await
+                .map(|_| ())
+                .map_err(|error| error.to_string())
+        }
         None => Ok(()),
     }
 }
@@ -202,6 +215,8 @@ async fn apply_timeline_renderer_command(
 enum TimelineRendererMutationCommand {
     SetNodeRange(CommandEnvelope<SetTimelineNodeRangeCommand>),
     DeleteNode(CommandEnvelope<DeleteTimelineNodeCommand>),
+    CreateNode(CommandEnvelope<CreateTimelineNodeCommand>),
+    SplitNode(CommandEnvelope<SplitTimelineNodeCommand>),
 }
 
 fn timeline_renderer_mutation_command(
@@ -224,9 +239,39 @@ fn timeline_renderer_mutation_command(
                 CommandEnvelope::new(DeleteTimelineNodeCommand { node_id }),
             ))
         }
-        TimelineRendererCommand::SelectNode { .. }
-        | TimelineRendererCommand::SplitNode { .. }
-        | TimelineRendererCommand::CreateNode { .. } => None,
+        TimelineRendererCommand::CreateNode {
+            node_id,
+            parent_id,
+            level,
+            name,
+            start_ms,
+            end_ms,
+            beat_type,
+        } => Some(TimelineRendererMutationCommand::CreateNode(
+            CommandEnvelope::new(CreateTimelineNodeCommand {
+                node_id,
+                parent_id,
+                level,
+                name,
+                start_ms,
+                end_ms,
+                beat_type,
+            }),
+        )),
+        TimelineRendererCommand::SplitNode {
+            node_id,
+            at_ms,
+            left_node_id,
+            right_node_id,
+        } => Some(TimelineRendererMutationCommand::SplitNode(
+            CommandEnvelope::new(SplitTimelineNodeCommand {
+                node_id,
+                at_ms,
+                left_node_id,
+                right_node_id,
+            }),
+        )),
+        TimelineRendererCommand::SelectNode { .. } => None,
     }
 }
 
@@ -258,7 +303,7 @@ mod tests {
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
     use eidetic_bevy_timeline::TimelineRendererCommand;
     use eidetic_core::contracts::{BibleGraphNodeId, DeleteTimelineNodeCommand};
-    use eidetic_core::timeline::node::NodeId;
+    use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
     use std::sync::Mutex;
@@ -418,6 +463,57 @@ mod tests {
             Some(TimelineRendererMutationCommand::DeleteNode(command))
                 if command.payload == DeleteTimelineNodeCommand { node_id }
         ));
+    }
+
+    #[test]
+    fn maps_timeline_renderer_create_commands_to_backend_commands() {
+        let node_id = NodeId::new();
+        let parent_id = Some(NodeId::new());
+
+        let Some(TimelineRendererMutationCommand::CreateNode(command)) =
+            timeline_renderer_mutation_command(TimelineRendererCommand::CreateNode {
+                node_id,
+                parent_id,
+                level: StoryLevel::Beat,
+                name: "Argument escalates".to_string(),
+                start_ms: 3_000,
+                end_ms: 5_000,
+                beat_type: Some(BeatType::Escalation),
+            })
+        else {
+            panic!("expected create mutation command");
+        };
+
+        assert_eq!(command.payload.node_id, node_id);
+        assert_eq!(command.payload.parent_id, parent_id);
+        assert_eq!(command.payload.level, StoryLevel::Beat);
+        assert_eq!(command.payload.name, "Argument escalates");
+        assert_eq!(command.payload.start_ms, 3_000);
+        assert_eq!(command.payload.end_ms, 5_000);
+        assert_eq!(command.payload.beat_type, Some(BeatType::Escalation));
+    }
+
+    #[test]
+    fn maps_timeline_renderer_split_commands_to_backend_commands() {
+        let node_id = NodeId::new();
+        let left_node_id = NodeId::new();
+        let right_node_id = NodeId::new();
+
+        let Some(TimelineRendererMutationCommand::SplitNode(command)) =
+            timeline_renderer_mutation_command(TimelineRendererCommand::SplitNode {
+                node_id,
+                at_ms: 4_000,
+                left_node_id,
+                right_node_id,
+            })
+        else {
+            panic!("expected split mutation command");
+        };
+
+        assert_eq!(command.payload.node_id, node_id);
+        assert_eq!(command.payload.at_ms, 4_000);
+        assert_eq!(command.payload.left_node_id, left_node_id);
+        assert_eq!(command.payload.right_node_id, right_node_id);
     }
 
     #[test]

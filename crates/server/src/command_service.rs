@@ -36,8 +36,9 @@ pub use crate::command_service_timeline::{
     ApplyTimelineChildrenRequestCommand, CreateTimelineNodeRequestCommand,
     CreateTimelineRelationshipRequestCommand, SplitTimelineNodeRequestCommand,
     TimelineCommandResponse, apply_timeline_children, create_timeline_node,
-    create_timeline_relationship, delete_timeline_node, delete_timeline_relationship,
-    set_timeline_node_lock, set_timeline_node_notes, set_timeline_node_range, split_timeline_node,
+    create_timeline_node_from_core_command, create_timeline_relationship, delete_timeline_node,
+    delete_timeline_relationship, set_timeline_node_lock, set_timeline_node_notes,
+    set_timeline_node_range, split_timeline_node, split_timeline_node_from_core_command,
 };
 
 #[derive(Debug, Serialize)]
