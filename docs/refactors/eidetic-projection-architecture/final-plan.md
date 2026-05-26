@@ -3413,6 +3413,9 @@ Implementation order:
   affect proposals with command history. Accepting a pending proposal updates
   canonical affect state in the same backend change; rejecting leaves canonical
   affect state untouched. Tauri/UI review commands remain the next slice.
+- Completed: affect proposal create/list/accept/reject transport is now wired
+  through Tauri commands and typed Svelte API helpers. Remaining proposal/review
+  work is the user-facing review surface that consumes these projections.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived

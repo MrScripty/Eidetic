@@ -11,9 +11,11 @@ import type {
   SetBibleGraphSnapshotFieldCommand,
 } from './bibleGraphTypes.js';
 import type {
+  AcceptAffectProposalCommand,
   AffectCommandResponse,
   AffectProposalCommandResponse,
   CreateAffectProposalCommand,
+  RejectAffectProposalCommand,
   SetAffectValueCommand,
   SetAffectValueInput,
 } from './affectTypes.js';
@@ -104,6 +106,34 @@ export function createAffectProposal(
   };
 
   return invokeDesktop<AffectProposalCommandResponse>('command_affect_proposal_create', {
+    command,
+  });
+}
+
+export function rejectAffectProposal(
+  payload: RejectAffectProposalCommand,
+  commandId = createCommandId(),
+): Promise<AffectProposalCommandResponse> {
+  const command: CommandEnvelope<RejectAffectProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<AffectProposalCommandResponse>('command_affect_proposal_reject', {
+    command,
+  });
+}
+
+export function acceptAffectProposal(
+  payload: AcceptAffectProposalCommand,
+  commandId = createCommandId(),
+): Promise<AffectProposalCommandResponse> {
+  const command: CommandEnvelope<AcceptAffectProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<AffectProposalCommandResponse>('command_affect_proposal_accept', {
     command,
   });
 }

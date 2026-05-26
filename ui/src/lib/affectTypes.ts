@@ -78,6 +78,15 @@ export interface CreateAffectProposalCommand {
   source_event_id?: string | null;
 }
 
+export interface RejectAffectProposalCommand {
+  proposal_id: AffectProposalId;
+  reason?: string | null;
+}
+
+export interface AcceptAffectProposalCommand {
+  proposal_id: AffectProposalId;
+}
+
 export interface AffectProjectionRequest {
   target: AffectTarget;
 }

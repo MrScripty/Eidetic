@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  acceptAffectProposal,
   applyTimelineChildren,
   createAffectProposal,
   createBibleGraphNode,
@@ -14,6 +15,7 @@ import {
   deleteTimelineRelationship,
   ensureCanonicalBibleRoots,
   recordContextEvaluation,
+  rejectAffectProposal,
   setAffectValue,
   setBibleGraphEdge,
   setBibleGraphField,
@@ -178,6 +180,57 @@ describe('command api helpers', () => {
     expect(invoke).toHaveBeenCalledWith('command_affect_proposal_create', {
       command: {
         id: 'command-affect-proposal-1',
+        payload,
+      },
+    });
+  });
+
+  it('uses desktop affect proposal reject commands when Tauri transport is available', async () => {
+    const response = { version: 2, payload: { proposals: [] } };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+
+    const payload = {
+      proposal_id: 'proposal.affect.scene-weather',
+      reason: 'Keep the accepted affect.',
+    };
+
+    await expect(rejectAffectProposal(payload, 'command-affect-reject-1')).resolves.toEqual(
+      response,
+    );
+
+    expect(invoke).toHaveBeenCalledWith('command_affect_proposal_reject', {
+      command: {
+        id: 'command-affect-reject-1',
+        payload,
+      },
+    });
+  });
+
+  it('uses desktop affect proposal accept commands when Tauri transport is available', async () => {
+    const response = { version: 2, payload: { proposals: [] } };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+
+    const payload = {
+      proposal_id: 'proposal.affect.scene-weather',
+    };
+
+    await expect(acceptAffectProposal(payload, 'command-affect-accept-1')).resolves.toEqual(
+      response,
+    );
+
+    expect(invoke).toHaveBeenCalledWith('command_affect_proposal_accept', {
+      command: {
+        id: 'command-affect-accept-1',
         payload,
       },
     });

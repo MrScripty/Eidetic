@@ -109,6 +109,8 @@ pub fn run() {
             commands::object_script_story::command_story_delete,
             commands::affect::command_affect_set,
             commands::affect::command_affect_proposal_create,
+            commands::affect::command_affect_proposal_reject,
+            commands::affect::command_affect_proposal_accept,
             commands::bible::command_bible_graph_node,
             commands::bible::command_bible_graph_delete_node,
             commands::bible::command_bible_graph_field,
