@@ -601,6 +601,45 @@ fn controlled_native_window_emits_validated_delete_node_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_selected_delete_command_from_projection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+
+    let deleted_node_id = crate::native_command::emit_timeline_native_selected_delete_request(
+        &window_control,
+        &projection,
+    )
+    .unwrap();
+
+    assert_eq!(deleted_node_id, Some(node_id));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::DeleteNode { node_id }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_ignores_selected_delete_without_projection_selection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    let deleted_node_id = crate::native_command::emit_timeline_native_selected_delete_request(
+        &window_control,
+        &projection_with_node(node_id),
+    )
+    .unwrap();
+
+    assert_eq!(deleted_node_id, None);
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_rejects_delete_node_command_for_unknown_node() {
     let known_node_id = NodeId::new();
     let unknown_node_id = NodeId::new();

@@ -342,6 +342,7 @@ impl Plugin for TimelineNativeRenderPlugin {
         app.add_systems(Update, mark_timeline_native_window_ready);
         app.add_systems(Update, apply_timeline_native_projection_updates);
         app.add_systems(Update, emit_timeline_native_click_selection);
+        app.add_systems(Update, emit_timeline_native_selected_delete);
         app.add_systems(Update, navigate_timeline_native_viewport);
         app.add_systems(Update, navigate_timeline_native_playhead);
     }
@@ -591,6 +592,27 @@ fn emit_timeline_native_click_selection(
         geometry,
         point,
     );
+}
+
+fn emit_timeline_native_selected_delete(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    control: Option<Res<TimelineNativeWindowControl>>,
+    projection_state: Res<TimelineNativeProjectionState>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    if !keys.just_pressed(KeyCode::Delete) && !keys.just_pressed(KeyCode::Backspace) {
+        return;
+    }
+    let Some(control) = control else {
+        return;
+    };
+    let Some(projection) = projection_state.projection.as_ref() else {
+        return;
+    };
+    let _ =
+        crate::native_command::emit_timeline_native_selected_delete_request(&control, projection);
 }
 
 fn navigate_timeline_native_viewport(world: &mut World) {

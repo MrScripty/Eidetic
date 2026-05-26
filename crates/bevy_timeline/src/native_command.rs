@@ -60,6 +60,17 @@ pub fn emit_timeline_native_delete_node_request(
     Ok(())
 }
 
+pub fn emit_timeline_native_selected_delete_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+) -> Result<Option<NodeId>, TimelineRendererError> {
+    let Some(node_id) = projection.selected_node_id else {
+        return Ok(None);
+    };
+    emit_timeline_native_delete_node_request(control, projection, node_id)?;
+    Ok(Some(node_id))
+}
+
 pub fn emit_timeline_native_split_node_request(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,

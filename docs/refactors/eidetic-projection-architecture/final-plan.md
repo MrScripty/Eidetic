@@ -3718,6 +3718,11 @@ Implementation order:
   commands now update that backend selection, backend events refresh timeline
   and graph projections, and the native timeline renderer highlights selected
   clips only from the projected selected node ID instead of Svelte-owned focus.
+- Started: native timeline delete interaction can now emit a validated delete
+  request for the backend-projected selected clip. Delete/backspace input in the
+  Bevy timeline window reads only projection state, validates the selected clip
+  against the active projection, and leaves the actual timeline mutation at the
+  backend command bridge.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
