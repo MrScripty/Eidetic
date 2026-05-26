@@ -9,8 +9,8 @@ use crate::renderer_window::{
     DesktopRendererWindowLifecycle, DesktopRendererWindowPlatform, DesktopRendererWindowStrategy,
     DesktopRendererWindowStrategyStatus,
 };
-use crate::timeline_renderer_platform_strategy::{
-    TimelineRendererPlatformStrategy, TimelineRendererRunnerStartupPlan,
+use crate::timeline_renderer_supervisor::{
+    TimelineRendererRunnerStatus, TimelineRendererSupervisor,
 };
 
 pub use crate::bevy_timeline_owner::{
@@ -58,6 +58,7 @@ pub(crate) type TimelineHostResult<T> = Result<T, TimelineHostError>;
 
 pub struct DesktopTimelineHost {
     renderer: Option<TimelineRendererApp>,
+    native_window: TimelineRendererSupervisor,
     last_error: Option<String>,
 }
 
@@ -71,6 +72,16 @@ impl DesktopTimelineHost {
     pub fn new() -> Self {
         Self {
             renderer: None,
+            native_window: TimelineRendererSupervisor::current(),
+            last_error: None,
+        }
+    }
+
+    #[cfg(test)]
+    fn with_native_window(native_window: TimelineRendererSupervisor) -> Self {
+        Self {
+            renderer: None,
+            native_window,
             last_error: None,
         }
     }
@@ -112,12 +123,22 @@ impl DesktopTimelineHost {
         self.status()
     }
 
+    pub fn open_renderer(
+        &mut self,
+        projection: TimelineRenderProjection,
+    ) -> Result<TimelineHostStatus, TimelineHostError> {
+        self.set_projection(projection)?;
+        self.native_window.open();
+        Ok(self.status())
+    }
+
     pub fn focus(&mut self) -> TimelineHostStatus {
         self.status()
     }
 
     pub fn stop(&mut self) -> TimelineHostStatus {
         self.renderer = None;
+        self.native_window.shutdown();
         self.last_error = None;
         self.status()
     }
@@ -148,16 +169,8 @@ impl DesktopTimelineHost {
             .unwrap_or_default()
     }
 
-    pub fn status(&self) -> TimelineHostStatus {
-        let platform_strategy = TimelineRendererPlatformStrategy::current();
-        let window_strategy = platform_strategy.status();
-        let renderer_runner_threading_model = match platform_strategy.runner_startup_plan() {
-            TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate {
-                threading_model,
-                ..
-            }
-            | TimelineRendererRunnerStartupPlan::PendingOnly { threading_model } => threading_model,
-        };
+    pub fn status(&mut self) -> TimelineHostStatus {
+        let native_window_status = self.native_window.refresh_status();
         let (track_count, clip_count) = self
             .renderer
             .as_ref()
@@ -178,29 +191,33 @@ impl DesktopTimelineHost {
             .as_ref()
             .map(TimelineRendererApp::queued_command_count)
             .unwrap_or_default();
+        let scene_running = self.renderer.is_some();
 
         TimelineHostStatus {
             renderer_window_kind: DesktopRendererWindowKind::Timeline,
-            running: self.renderer.is_some(),
-            renderer_window_open: self.renderer.is_some(),
-            renderer_scene_ready: self.renderer.is_some(),
+            running: scene_running,
+            renderer_window_open: scene_running,
+            renderer_scene_ready: scene_running,
             renderer_window_lifecycle: DesktopRendererWindowLifecycle::from_state(
-                self.renderer.is_some(),
-                self.renderer.is_some(),
-                false,
+                scene_running,
+                scene_running,
+                native_window_status.window_visible,
             ),
-            renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
-            renderer_runner_threading_model,
-            renderer_window_strategy: window_strategy.strategy,
-            renderer_window_platform: window_strategy.platform,
-            renderer_window_capability: window_strategy.capability,
-            renderer_window_capability_reason: window_strategy.capability_reason,
-            renderer_window_visible: false,
-            renderer_window_ready: false,
-            renderer_window_verified_support: window_strategy.verified_support,
-            renderer_window_visible_supported: window_strategy.visible_window_supported,
-            renderer_window_focus_supported: false,
-            renderer_window_message: timeline_renderer_window_message(self.renderer.is_some()),
+            renderer_runner_lifecycle: native_window_status.lifecycle,
+            renderer_runner_threading_model: native_window_status.threading_model,
+            renderer_window_strategy: native_window_status.strategy,
+            renderer_window_platform: native_window_status.platform,
+            renderer_window_capability: native_window_status.capability,
+            renderer_window_capability_reason: native_window_status.capability_reason,
+            renderer_window_visible: native_window_status.window_visible,
+            renderer_window_ready: native_window_status.window_ready,
+            renderer_window_verified_support: native_window_status.verified_support,
+            renderer_window_visible_supported: native_window_status.visible_window_supported,
+            renderer_window_focus_supported: native_window_status.focus_supported,
+            renderer_window_message: timeline_renderer_window_message(
+                scene_running,
+                &native_window_status,
+            ),
             track_count,
             clip_count,
             relationship_count,
@@ -215,11 +232,21 @@ impl DesktopTimelineHost {
     }
 }
 
-fn timeline_renderer_window_message(running: bool) -> String {
-    if running {
-        "timeline renderer scene is ready; native window is not connected".to_string()
-    } else {
-        "floating timeline renderer window is closed".to_string()
+fn timeline_renderer_window_message(
+    scene_running: bool,
+    native_window_status: &TimelineRendererRunnerStatus,
+) -> String {
+    match (
+        scene_running,
+        native_window_status.window_visible,
+        native_window_status.last_error.as_ref(),
+    ) {
+        (true, true, _) => "floating timeline renderer window is visible".to_string(),
+        (_, _, Some(error)) => error.clone(),
+        (true, false, _) => {
+            "timeline renderer scene is ready; native window is not connected".to_string()
+        }
+        (false, _, _) => "floating timeline renderer window is closed".to_string(),
     }
 }
 
@@ -242,6 +269,11 @@ mod tests {
     };
     use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
     use eidetic_core::timeline::track::TrackId;
+
+    use crate::timeline_renderer_platform_strategy::{
+        TimelineRendererPlatformStrategy, TimelineRendererRunnerStartupPlan,
+    };
+    use crate::timeline_renderer_window_thread::TimelineRendererWindowThreadHandle;
 
     use super::*;
 
@@ -348,6 +380,34 @@ mod tests {
     }
 
     #[test]
+    fn timeline_host_open_renderer_starts_injected_native_window() {
+        let node_id = NodeId::new();
+        let mut host = DesktopTimelineHost::with_native_window(
+            TimelineRendererSupervisor::for_strategy_with_window_thread_start(
+                TimelineRendererPlatformStrategy::LinuxWorkerThreadVerified,
+                injected_ready_window_thread,
+            ),
+        );
+
+        let status = host.open_renderer(projection_with_node(node_id)).unwrap();
+        let stopped = host.stop();
+
+        assert!(status.running);
+        assert_eq!(status.clip_count, 1);
+        assert_eq!(
+            status.renderer_runner_lifecycle,
+            DesktopRendererRunnerLifecycle::Visible
+        );
+        assert!(status.renderer_window_visible);
+        assert_eq!(
+            status.renderer_window_lifecycle,
+            DesktopRendererWindowLifecycle::Visible
+        );
+        assert!(!stopped.running);
+        assert!(!stopped.renderer_window_visible);
+    }
+
+    #[test]
     fn timeline_owner_uses_bounded_command_queue() {
         assert_eq!(TIMELINE_RENDERER_COMMAND_QUEUE_CAPACITY, 128);
         assert_eq!(TIMELINE_RENDERER_REPLY_TIMEOUT_MS, 2_000);
@@ -434,5 +494,17 @@ mod tests {
             }
             | TimelineRendererRunnerStartupPlan::PendingOnly { threading_model } => threading_model,
         }
+    }
+
+    fn injected_ready_window_thread(
+        config: eidetic_bevy_timeline::TimelineNativeWindowRunnerConfig,
+    ) -> std::io::Result<TimelineRendererWindowThreadHandle> {
+        TimelineRendererWindowThreadHandle::start_with(config, |_config, control| {
+            control.mark_ready();
+            control.mark_visible(true);
+            while !control.close_requested() {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        })
     }
 }

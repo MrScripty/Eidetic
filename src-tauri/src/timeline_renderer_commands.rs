@@ -14,7 +14,7 @@ pub async fn timeline_renderer_open(
         .await
         .map_err(CommandError::from)?;
     timeline_host(&app)?
-        .set_projection(projection.payload)
+        .open_renderer(projection.payload)
         .map_err(|error| {
             CommandError::internal(format!("timeline renderer open failed: {error:?}"))
         })

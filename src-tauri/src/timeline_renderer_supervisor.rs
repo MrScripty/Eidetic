@@ -51,9 +51,16 @@ pub struct TimelineRendererSupervisor {
 }
 
 impl TimelineRendererSupervisor {
+    pub fn current() -> Self {
+        Self::with_strategy_and_window_thread_start(
+            TimelineRendererPlatformStrategy::current(),
+            TimelineRendererWindowThreadHandle::start,
+        )
+    }
+
     #[cfg(test)]
     pub(crate) fn for_strategy(strategy: TimelineRendererPlatformStrategy) -> Self {
-        Self::for_strategy_with_window_thread_start(
+        Self::with_strategy_and_window_thread_start(
             strategy,
             TimelineRendererWindowThreadHandle::start,
         )
@@ -61,6 +68,13 @@ impl TimelineRendererSupervisor {
 
     #[cfg(test)]
     pub(crate) fn for_strategy_with_window_thread_start(
+        strategy: TimelineRendererPlatformStrategy,
+        window_thread_start: TimelineRendererWindowThreadStart,
+    ) -> Self {
+        Self::with_strategy_and_window_thread_start(strategy, window_thread_start)
+    }
+
+    fn with_strategy_and_window_thread_start(
         strategy: TimelineRendererPlatformStrategy,
         window_thread_start: TimelineRendererWindowThreadStart,
     ) -> Self {

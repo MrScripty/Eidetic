@@ -13,6 +13,10 @@ pub const TIMELINE_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;
 pub const TIMELINE_RENDERER_REPLY_TIMEOUT_MS: u64 = 2_000;
 
 enum TimelineHostRequest {
+    OpenRenderer {
+        projection: TimelineRenderProjection,
+        reply: mpsc::Sender<TimelineHostResult<TimelineHostStatus>>,
+    },
     SetProjection {
         projection: TimelineRenderProjection,
         reply: mpsc::Sender<TimelineHostResult<TimelineHostStatus>>,
@@ -72,6 +76,18 @@ impl DesktopTimelineRendererOwner {
         }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(TimelineHostRequest::SetProjection { projection, reply })?;
+        receive_reply(receiver)
+    }
+
+    pub fn open_renderer(
+        &self,
+        projection: TimelineRenderProjection,
+    ) -> TimelineHostResult<TimelineHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
+        let (reply, receiver) = mpsc::channel();
+        self.enqueue(TimelineHostRequest::OpenRenderer { projection, reply })?;
         receive_reply(receiver)
     }
 
@@ -164,6 +180,9 @@ fn run_timeline_owner(
 ) {
     for request in receiver {
         match request {
+            TimelineHostRequest::OpenRenderer { projection, reply } => {
+                let _ = reply.send(host.open_renderer(projection));
+            }
             TimelineHostRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(host.set_projection(projection));
             }

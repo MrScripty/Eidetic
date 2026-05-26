@@ -3637,6 +3637,11 @@ Implementation order:
   thread tests for open, refresh, bounded shutdown, unsupported platforms, and
   panic reporting. It owns only renderer-window lifecycle/status and does not
   store timeline projections, commands, or durable state.
+- Started: the desktop timeline host now attaches that native-window
+  supervisor at the backend-owned renderer boundary. Explicit open seeds the
+  scene and opens the floating Bevy window, projection refresh only re-seeds
+  disposable renderer scene state, and close/stop tears down both without
+  adding frontend-owned renderer state or a fallback transport.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
