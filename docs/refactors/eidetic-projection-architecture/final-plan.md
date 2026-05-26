@@ -3754,6 +3754,10 @@ Implementation order:
   timeline renderer with a minimal backend projection, observes status/focus/
   close/reopen/project-close/app-shutdown transitions, and serializes backend
   status snapshots without adding frontend-owned renderer state.
+- Resolved: the diagnostic graph native-renderer preflight test still expected
+  a borderless smoke window even though the current renderer config uses window
+  decorations for move/resize/close affordances. The assertion now matches the
+  production smoke configuration so broader desktop smoke tests remain useful.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

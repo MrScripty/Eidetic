@@ -255,7 +255,7 @@ mod tests {
         assert_eq!(report.platform, current_platform());
         assert_eq!(report.threading_model, "main_thread");
         assert!(!report.run_on_any_thread);
-        assert!(report.borderless_window);
+        assert!(!report.borderless_window);
         assert_eq!(report.width_px, 1280);
         assert_eq!(report.height_px, 720);
         assert_eq!(report.auto_close_after_ms, Some(250));
