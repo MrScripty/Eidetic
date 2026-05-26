@@ -1,5 +1,5 @@
 use eidetic_core::contracts::TimelineRenderProjection;
-use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
+use eidetic_core::timeline::node::NodeId;
 
 use crate::native_render::TimelineNativeWindowControl;
 use crate::{
@@ -228,41 +228,20 @@ pub fn emit_timeline_native_selected_split_request(
     Ok(Some(node_id))
 }
 
-pub fn emit_timeline_native_create_node_request(
+pub fn emit_timeline_native_create_child_from_parent_request(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,
     node_id: NodeId,
-    parent_id: Option<NodeId>,
-    level: StoryLevel,
-    name: String,
-    start_ms: u64,
-    end_ms: u64,
-    beat_type: Option<BeatType>,
+    parent_id: NodeId,
 ) -> Result<(), TimelineRendererError> {
-    if let Some(parent_id) = parent_id
-        && !projection
-            .clips
-            .iter()
-            .any(|clip| clip.node_id == parent_id)
+    if !projection
+        .clips
+        .iter()
+        .any(|clip| clip.node_id == parent_id)
     {
         return Err(TimelineRendererError::UnknownNode { node_id: parent_id });
     }
-    if start_ms >= end_ms || end_ms > projection.total_duration_ms {
-        return Err(TimelineRendererError::InvalidNodeRange {
-            start_ms,
-            end_ms,
-            duration_ms: projection.total_duration_ms,
-        });
-    }
 
-    control.enqueue_command(TimelineRendererCommand::CreateNode {
-        node_id,
-        parent_id,
-        level,
-        name,
-        start_ms,
-        end_ms,
-        beat_type,
-    });
+    control.enqueue_command(TimelineRendererCommand::CreateChildFromParent { node_id, parent_id });
     Ok(())
 }

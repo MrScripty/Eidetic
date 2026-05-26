@@ -1,6 +1,6 @@
 use eidetic_bevy_timeline::TimelineRendererCommand;
 use eidetic_core::contracts::{
-    CommandEnvelope, CreateTimelineNodeCommand, DeleteTimelineNodeCommand,
+    CommandEnvelope, CreateTimelineChildFromParentCommand, DeleteTimelineNodeCommand,
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
 use eidetic_server::command_service;
@@ -71,8 +71,8 @@ async fn apply_timeline_renderer_command(
                 .map(|_| ())
                 .map_err(|error| error.to_string())
         }
-        Some(TimelineRendererMutationCommand::CreateNode(command)) => {
-            command_service::create_timeline_node_from_core_command(state, command)
+        Some(TimelineRendererMutationCommand::CreateChildFromParent(command)) => {
+            command_service::create_timeline_child_from_parent_core_command(state, command)
                 .await
                 .map(|_| ())
                 .map_err(|error| error.to_string())
@@ -91,7 +91,7 @@ async fn apply_timeline_renderer_command(
 enum TimelineRendererMutationCommand {
     SetNodeRange(CommandEnvelope<SetTimelineNodeRangeCommand>),
     DeleteNode(CommandEnvelope<DeleteTimelineNodeCommand>),
-    CreateNode(CommandEnvelope<CreateTimelineNodeCommand>),
+    CreateChildFromParent(CommandEnvelope<CreateTimelineChildFromParentCommand>),
     SplitNode(CommandEnvelope<SplitTimelineNodeCommand>),
 }
 
@@ -115,25 +115,11 @@ fn timeline_renderer_mutation_command(
                 CommandEnvelope::new(DeleteTimelineNodeCommand { node_id }),
             ))
         }
-        TimelineRendererCommand::CreateNode {
-            node_id,
-            parent_id,
-            level,
-            name,
-            start_ms,
-            end_ms,
-            beat_type,
-        } => Some(TimelineRendererMutationCommand::CreateNode(
-            CommandEnvelope::new(CreateTimelineNodeCommand {
-                node_id,
-                parent_id,
-                level,
-                name,
-                start_ms,
-                end_ms,
-                beat_type,
-            }),
-        )),
+        TimelineRendererCommand::CreateChildFromParent { node_id, parent_id } => {
+            Some(TimelineRendererMutationCommand::CreateChildFromParent(
+                CommandEnvelope::new(CreateTimelineChildFromParentCommand { node_id, parent_id }),
+            ))
+        }
         TimelineRendererCommand::SplitNode {
             node_id,
             at_ms,
@@ -156,7 +142,7 @@ mod tests {
     use super::{TimelineRendererMutationCommand, timeline_renderer_mutation_command};
     use eidetic_bevy_timeline::TimelineRendererCommand;
     use eidetic_core::contracts::DeleteTimelineNodeCommand;
-    use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
+    use eidetic_core::timeline::node::NodeId;
 
     #[test]
     fn maps_timeline_renderer_range_commands_to_backend_commands() {
@@ -189,31 +175,21 @@ mod tests {
     }
 
     #[test]
-    fn maps_timeline_renderer_create_commands_to_backend_commands() {
+    fn maps_timeline_renderer_create_child_intents_to_backend_commands() {
         let node_id = NodeId::new();
-        let parent_id = Some(NodeId::new());
+        let parent_id = NodeId::new();
 
-        let Some(TimelineRendererMutationCommand::CreateNode(command)) =
-            timeline_renderer_mutation_command(TimelineRendererCommand::CreateNode {
+        let Some(TimelineRendererMutationCommand::CreateChildFromParent(command)) =
+            timeline_renderer_mutation_command(TimelineRendererCommand::CreateChildFromParent {
                 node_id,
                 parent_id,
-                level: StoryLevel::Beat,
-                name: "Argument escalates".to_string(),
-                start_ms: 3_000,
-                end_ms: 5_000,
-                beat_type: Some(BeatType::Escalation),
             })
         else {
-            panic!("expected create mutation command");
+            panic!("expected create child mutation command");
         };
 
         assert_eq!(command.payload.node_id, node_id);
         assert_eq!(command.payload.parent_id, parent_id);
-        assert_eq!(command.payload.level, StoryLevel::Beat);
-        assert_eq!(command.payload.name, "Argument escalates");
-        assert_eq!(command.payload.start_ms, 3_000);
-        assert_eq!(command.payload.end_ms, 5_000);
-        assert_eq!(command.payload.beat_type, Some(BeatType::Escalation));
     }
 
     #[test]

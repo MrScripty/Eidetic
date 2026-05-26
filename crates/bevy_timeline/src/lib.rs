@@ -1,4 +1,4 @@
-use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
+use eidetic_core::timeline::node::NodeId;
 use eidetic_core::timeline::track::TrackId;
 use serde::Serialize;
 use thiserror::Error;
@@ -31,8 +31,9 @@ pub use hit_test::{
 };
 #[cfg(feature = "native_render")]
 pub use native_command::{
-    emit_timeline_native_create_node_request, emit_timeline_native_delete_node_request,
-    emit_timeline_native_node_range_request, emit_timeline_native_split_node_request,
+    emit_timeline_native_create_child_from_parent_request,
+    emit_timeline_native_delete_node_request, emit_timeline_native_node_range_request,
+    emit_timeline_native_split_node_request,
 };
 #[cfg(feature = "native_render")]
 pub use native_render::{
@@ -72,14 +73,9 @@ pub enum TimelineRendererCommand {
     DeleteNode {
         node_id: NodeId,
     },
-    CreateNode {
+    CreateChildFromParent {
         node_id: NodeId,
-        parent_id: Option<NodeId>,
-        level: StoryLevel,
-        name: String,
-        start_ms: u64,
-        end_ms: u64,
-        beat_type: Option<BeatType>,
+        parent_id: NodeId,
     },
 }
 

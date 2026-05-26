@@ -1,4 +1,4 @@
-use eidetic_core::timeline::node::{NodeId, StoryLevel};
+use eidetic_core::timeline::node::NodeId;
 
 use crate::{TimelineRendererApp, TimelineRendererCommand, TimelineRendererError};
 
@@ -39,40 +39,24 @@ fn renderer_app_rejects_invalid_node_range_command() {
 }
 
 #[test]
-fn renderer_app_emits_validated_create_node_command() {
+fn renderer_app_emits_validated_create_child_from_parent_command() {
     let parent_id = NodeId::new();
     let node_id = NodeId::new();
     let mut renderer = TimelineRendererApp::new();
     renderer.set_projection(projection_with_node(parent_id));
 
     assert_eq!(
-        renderer.request_create_node(
-            node_id,
-            Some(parent_id),
-            StoryLevel::Act,
-            "Inserted act".to_string(),
-            2_000,
-            5_000,
-            None,
-        ),
+        renderer.request_create_child_from_parent(node_id, parent_id),
         Ok(())
     );
     assert_eq!(
         renderer.drain_commands(),
-        vec![TimelineRendererCommand::CreateNode {
-            node_id,
-            parent_id: Some(parent_id),
-            level: StoryLevel::Act,
-            name: "Inserted act".to_string(),
-            start_ms: 2_000,
-            end_ms: 5_000,
-            beat_type: None
-        }]
+        vec![TimelineRendererCommand::CreateChildFromParent { node_id, parent_id }]
     );
 }
 
 #[test]
-fn renderer_app_rejects_create_node_command_with_unknown_parent() {
+fn renderer_app_rejects_create_child_intent_with_unknown_parent() {
     let known_node_id = NodeId::new();
     let parent_id = NodeId::new();
     let node_id = NodeId::new();
@@ -80,15 +64,7 @@ fn renderer_app_rejects_create_node_command_with_unknown_parent() {
     renderer.set_projection(projection_with_node(known_node_id));
 
     assert_eq!(
-        renderer.request_create_node(
-            node_id,
-            Some(parent_id),
-            StoryLevel::Act,
-            "Inserted act".to_string(),
-            2_000,
-            5_000,
-            None,
-        ),
+        renderer.request_create_child_from_parent(node_id, parent_id),
         Err(TimelineRendererError::UnknownNode { node_id: parent_id })
     );
     assert!(renderer.drain_commands().is_empty());

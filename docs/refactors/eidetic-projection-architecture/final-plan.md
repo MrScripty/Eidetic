@@ -3805,6 +3805,11 @@ Implementation order:
   inherited parent range, and beat metadata before applying the existing
   command/event/history path and returning the confirmed timeline render
   projection.
+- Resolved: native Bevy timeline create commands now use the backend-owned
+  child-from-parent intent instead of the renderer's previous low-level create
+  payload. The Bevy leaf crate validates only that the parent exists in the
+  active projection, and the desktop command bridge maps the intent into the
+  server command path that derives durable timeline fields.
 - Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
 - Started: the Bevy timeline leaf crate now consumes backend

@@ -1,4 +1,4 @@
-use eidetic_core::timeline::node::{NodeId, StoryLevel};
+use eidetic_core::timeline::node::NodeId;
 
 use crate::{
     TimelineNativeWindowControl, TimelineNativeWindowControlHandle, TimelineRendererCommand,
@@ -439,42 +439,29 @@ fn controlled_native_window_rejects_invalid_split_node_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
-fn controlled_native_window_emits_validated_create_node_command() {
+fn controlled_native_window_emits_validated_create_child_from_parent_command() {
     let parent_id = NodeId::new();
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();
     let window_control = TimelineNativeWindowControl::from(&control);
 
-    crate::native_command::emit_timeline_native_create_node_request(
+    crate::native_command::emit_timeline_native_create_child_from_parent_request(
         &window_control,
         &projection_with_node(parent_id),
         node_id,
-        Some(parent_id),
-        StoryLevel::Act,
-        "Inserted act".to_string(),
-        2_000,
-        5_000,
-        None,
+        parent_id,
     )
     .unwrap();
 
     assert_eq!(
         control.drain_commands(),
-        vec![TimelineRendererCommand::CreateNode {
-            node_id,
-            parent_id: Some(parent_id),
-            level: StoryLevel::Act,
-            name: "Inserted act".to_string(),
-            start_ms: 2_000,
-            end_ms: 5_000,
-            beat_type: None,
-        }]
+        vec![TimelineRendererCommand::CreateChildFromParent { node_id, parent_id }]
     );
 }
 
 #[cfg(feature = "native_render")]
 #[test]
-fn controlled_native_window_rejects_create_node_command_with_unknown_parent() {
+fn controlled_native_window_rejects_create_child_intent_with_unknown_parent() {
     let known_node_id = NodeId::new();
     let parent_id = NodeId::new();
     let node_id = NodeId::new();
@@ -482,16 +469,11 @@ fn controlled_native_window_rejects_create_node_command_with_unknown_parent() {
     let window_control = TimelineNativeWindowControl::from(&control);
 
     assert_eq!(
-        crate::native_command::emit_timeline_native_create_node_request(
+        crate::native_command::emit_timeline_native_create_child_from_parent_request(
             &window_control,
             &projection_with_node(known_node_id),
             node_id,
-            Some(parent_id),
-            StoryLevel::Act,
-            "Inserted act".to_string(),
-            2_000,
-            5_000,
-            None,
+            parent_id,
         ),
         Err(TimelineRendererError::UnknownNode { node_id: parent_id })
     );
