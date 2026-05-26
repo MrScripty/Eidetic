@@ -21,6 +21,36 @@ pub struct DesktopRendererWindowStrategyStatus {
     pub visible_window_supported: bool,
 }
 
+impl DesktopRendererWindowStrategyStatus {
+    pub fn pending_native_runner_current_platform() -> Self {
+        Self::current_platform_with_capability(
+            DesktopRendererWindowCapability::PendingNativeRunner,
+            DesktopRendererWindowCapabilityReason::PendingNativeRunner,
+        )
+    }
+
+    pub fn runner_error_current_platform() -> Self {
+        Self::current_platform_with_capability(
+            DesktopRendererWindowCapability::RunnerError,
+            DesktopRendererWindowCapabilityReason::RunnerError,
+        )
+    }
+
+    fn current_platform_with_capability(
+        capability: DesktopRendererWindowCapability,
+        capability_reason: DesktopRendererWindowCapabilityReason,
+    ) -> Self {
+        Self {
+            strategy: DesktopRendererWindowStrategy::BevyWinitFloatingWindow,
+            platform: current_desktop_renderer_window_platform(),
+            capability,
+            capability_reason,
+            verified_support: capability.verified_support(),
+            visible_window_supported: capability.visible_window_supported(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DesktopRendererWindowPlatform {

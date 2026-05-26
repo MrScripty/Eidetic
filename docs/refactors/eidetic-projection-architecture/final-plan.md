@@ -3596,6 +3596,10 @@ Implementation order:
   renderer infrastructure. The graph supervisor keeps its public alias while
   `not_started`, `starting`, `running`, `closing`, `closed`, and `failed`
   runner-owner states are no longer graph-only names.
+- Started: shared renderer window strategy status now owns pending-native-runner
+  and runner-error status constructors. Timeline status uses those shared
+  constructors instead of hardcoding capability/support tuples in the timeline
+  host.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

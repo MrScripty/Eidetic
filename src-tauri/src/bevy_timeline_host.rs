@@ -10,7 +10,7 @@ use crate::renderer_window::{
     DesktopRendererRunnerLifecycle, DesktopRendererThreadingModel, DesktopRendererWindowCapability,
     DesktopRendererWindowCapabilityReason, DesktopRendererWindowKind,
     DesktopRendererWindowLifecycle, DesktopRendererWindowPlatform, DesktopRendererWindowStrategy,
-    current_desktop_renderer_window_platform,
+    DesktopRendererWindowStrategyStatus,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
@@ -74,6 +74,7 @@ impl DesktopTimelineHost {
     }
 
     pub fn renderer_unavailable_status(message: String) -> TimelineHostStatus {
+        let window_strategy = DesktopRendererWindowStrategyStatus::runner_error_current_platform();
         TimelineHostStatus {
             renderer_window_kind: DesktopRendererWindowKind::Timeline,
             running: false,
@@ -82,14 +83,14 @@ impl DesktopTimelineHost {
             renderer_window_lifecycle: DesktopRendererWindowLifecycle::Closed,
             renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
             renderer_runner_threading_model: DesktopRendererThreadingModel::Unsupported,
-            renderer_window_strategy: DesktopRendererWindowStrategy::BevyWinitFloatingWindow,
-            renderer_window_platform: current_desktop_renderer_window_platform(),
-            renderer_window_capability: DesktopRendererWindowCapability::RunnerError,
-            renderer_window_capability_reason: DesktopRendererWindowCapabilityReason::RunnerError,
+            renderer_window_strategy: window_strategy.strategy,
+            renderer_window_platform: window_strategy.platform,
+            renderer_window_capability: window_strategy.capability,
+            renderer_window_capability_reason: window_strategy.capability_reason,
             renderer_window_visible: false,
             renderer_window_ready: false,
-            renderer_window_verified_support: false,
-            renderer_window_visible_supported: false,
+            renderer_window_verified_support: window_strategy.verified_support,
+            renderer_window_visible_supported: window_strategy.visible_window_supported,
             renderer_window_focus_supported: false,
             renderer_window_message: "timeline renderer native window is unavailable".to_string(),
             track_count: 0,
@@ -146,6 +147,8 @@ impl DesktopTimelineHost {
     }
 
     pub fn status(&self) -> TimelineHostStatus {
+        let window_strategy =
+            DesktopRendererWindowStrategyStatus::pending_native_runner_current_platform();
         let (track_count, clip_count) = self
             .renderer
             .as_ref()
@@ -179,15 +182,14 @@ impl DesktopTimelineHost {
             ),
             renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
             renderer_runner_threading_model: DesktopRendererThreadingModel::Unsupported,
-            renderer_window_strategy: DesktopRendererWindowStrategy::BevyWinitFloatingWindow,
-            renderer_window_platform: current_desktop_renderer_window_platform(),
-            renderer_window_capability: DesktopRendererWindowCapability::PendingNativeRunner,
-            renderer_window_capability_reason:
-                DesktopRendererWindowCapabilityReason::PendingNativeRunner,
+            renderer_window_strategy: window_strategy.strategy,
+            renderer_window_platform: window_strategy.platform,
+            renderer_window_capability: window_strategy.capability,
+            renderer_window_capability_reason: window_strategy.capability_reason,
             renderer_window_visible: false,
             renderer_window_ready: false,
-            renderer_window_verified_support: false,
-            renderer_window_visible_supported: false,
+            renderer_window_verified_support: window_strategy.verified_support,
+            renderer_window_visible_supported: window_strategy.visible_window_supported,
             renderer_window_focus_supported: false,
             renderer_window_message: timeline_renderer_window_message(self.renderer.is_some()),
             track_count,
