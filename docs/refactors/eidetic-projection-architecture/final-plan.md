@@ -3810,6 +3810,10 @@ Implementation order:
   payload. The Bevy leaf crate validates only that the parent exists in the
   active projection, and the desktop command bridge maps the intent into the
   server command path that derives durable timeline fields.
+- Started: native timeline keyboard input can now emit a backend-owned
+  child-create intent for the projected selected clip. Ctrl+N in the Bevy
+  window requests a new child under the selected timeline node, while durable
+  level, name, range, and beat defaults remain derived by `eidetic-server`.
 - Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
 - Started: the Bevy timeline leaf crate now consumes backend

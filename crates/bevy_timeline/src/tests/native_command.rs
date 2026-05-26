@@ -461,6 +461,50 @@ fn controlled_native_window_emits_validated_create_child_from_parent_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_selected_create_child_from_projection() {
+    let parent_id = NodeId::new();
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(parent_id);
+    projection.selected_node_id = Some(parent_id);
+
+    let created_parent_id =
+        crate::native_command::emit_timeline_native_selected_create_child_from_parent_request(
+            &window_control,
+            &projection,
+            node_id,
+        )
+        .unwrap();
+
+    assert_eq!(created_parent_id, Some(parent_id));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::CreateChildFromParent { node_id, parent_id }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_ignores_selected_create_child_without_projection_selection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    let created_parent_id =
+        crate::native_command::emit_timeline_native_selected_create_child_from_parent_request(
+            &window_control,
+            &projection_with_node(NodeId::new()),
+            node_id,
+        )
+        .unwrap();
+
+    assert_eq!(created_parent_id, None);
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_rejects_create_child_intent_with_unknown_parent() {
     let known_node_id = NodeId::new();
     let parent_id = NodeId::new();

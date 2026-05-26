@@ -245,3 +245,15 @@ pub fn emit_timeline_native_create_child_from_parent_request(
     control.enqueue_command(TimelineRendererCommand::CreateChildFromParent { node_id, parent_id });
     Ok(())
 }
+
+pub fn emit_timeline_native_selected_create_child_from_parent_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    node_id: NodeId,
+) -> Result<Option<NodeId>, TimelineRendererError> {
+    let Some(parent_id) = projection.selected_node_id else {
+        return Ok(None);
+    };
+    emit_timeline_native_create_child_from_parent_request(control, projection, node_id, parent_id)?;
+    Ok(Some(parent_id))
+}

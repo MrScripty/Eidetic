@@ -114,6 +114,10 @@ impl Plugin for TimelineNativeRenderPlugin {
         );
         app.add_systems(
             Update,
+            crate::native_input::emit_timeline_native_selected_create_child,
+        );
+        app.add_systems(
+            Update,
             crate::native_input::emit_timeline_native_selected_nudge,
         );
         app.add_systems(

@@ -97,6 +97,30 @@ pub(crate) fn emit_timeline_native_selected_split(
     );
 }
 
+pub(crate) fn emit_timeline_native_selected_create_child(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    control: Option<Res<TimelineNativeWindowControl>>,
+    projection_state: Res<TimelineNativeProjectionState>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    if !timeline_native_control_modifier_pressed(&keys) || !keys.just_pressed(KeyCode::KeyN) {
+        return;
+    }
+    let Some(control) = control else {
+        return;
+    };
+    let Some(projection) = projection_state.projection.as_ref() else {
+        return;
+    };
+    let _ = crate::native_command::emit_timeline_native_selected_create_child_from_parent_request(
+        &control,
+        projection,
+        NodeId::new(),
+    );
+}
+
 pub(crate) fn emit_timeline_native_selected_nudge(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     control: Option<Res<TimelineNativeWindowControl>>,
