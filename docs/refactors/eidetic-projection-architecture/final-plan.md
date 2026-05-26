@@ -3416,6 +3416,10 @@ Implementation order:
 - Completed: affect proposal create/list/accept/reject transport is now wired
   through Tauri commands and typed Svelte API helpers. Remaining proposal/review
   work is the user-facing review surface that consumes these projections.
+- Started: Svelte now has an affect proposal projection store that refreshes
+  backend proposal projections and applies create/accept/reject command
+  responses without owning proposal state. The remaining slice is a compact
+  review surface that renders and invokes those store operations.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived
