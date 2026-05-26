@@ -3220,6 +3220,11 @@ Implementation order:
   timestamps remain queryable columns.
 - Add a mock-provider harness test path so workflow/tool execution can be
   verified without relying on a live LLM.
+- Completed: server now has a mockable agent harness loop with provider/tool
+  traits, manifest and budget validation before tool execution, durable
+  run/call/result recording through the agent workflow store, and tests for
+  successful history recording, disallowed tool rejection, and budget
+  exhaustion without a live model.
 - Add read-only graph tools over existing bible graph/context projections.
 - Add generic proposal storage for graph node, field, edge, and context-link
   targets before implementing proposal-producing graph tools.
