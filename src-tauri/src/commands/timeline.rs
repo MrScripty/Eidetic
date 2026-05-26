@@ -3,6 +3,7 @@ use eidetic_core::contracts::{
     SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
 };
 use eidetic_server::command_service;
+use eidetic_server::projection_service;
 use eidetic_server::state::AppState;
 use tauri::Manager;
 
@@ -124,13 +125,21 @@ pub async fn command_timeline_split_node(
 }
 
 #[tauri::command]
-pub fn command_timeline_playhead(
+pub async fn command_timeline_playhead(
     app: tauri::AppHandle,
     position_ms: u64,
-) -> TimelinePlayheadCommandResponse {
+) -> Result<TimelinePlayheadCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
+    let projection = projection_service::timeline_render_projection(&state)
+        .await
+        .map_err(CommandError::from)?;
+    let position_ms = clamp_timeline_playhead(position_ms, projection.payload.total_duration_ms);
     state.set_timeline_playhead(position_ms);
-    TimelinePlayheadCommandResponse { position_ms }
+    Ok(TimelinePlayheadCommandResponse { position_ms })
+}
+
+fn clamp_timeline_playhead(position_ms: u64, total_duration_ms: u64) -> u64 {
+    position_ms.min(total_duration_ms)
 }
 
 #[cfg(test)]
@@ -145,5 +154,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(value, serde_json::json!({ "position_ms": 42500 }));
+    }
+
+    #[test]
+    fn timeline_playhead_command_clamps_to_projection_duration() {
+        assert_eq!(super::clamp_timeline_playhead(42_500, 120_000), 42_500);
+        assert_eq!(super::clamp_timeline_playhead(240_000, 120_000), 120_000);
     }
 }

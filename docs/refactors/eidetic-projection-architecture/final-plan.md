@@ -3823,7 +3823,9 @@ Implementation order:
   playhead controls now route committed playhead changes through the
   backend-owned transient playhead command/event path. Bevy and Svelte may show
   local transient preview while interacting, but committed `playhead_ms` state
-  is updated only from the backend `timeline_playhead_changed` event.
+  is updated only from the backend `timeline_playhead_changed` event. The
+  desktop command clamps requested positions against the backend timeline
+  projection duration instead of trusting frontend duration constants.
 - Remove the DOM/SVG timeline renderer and its tests only after Bevy and
   Svelte accessibility alternatives cover the target interactions.
 

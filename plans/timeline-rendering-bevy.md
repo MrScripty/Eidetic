@@ -313,7 +313,9 @@ Current implementation progress:
 - Completed: the temporary Svelte timeline ruler and playhead now request
   playhead movement through a typed desktop command. Dragging uses local preview
   state only; committed `timelineState.playheadMs` updates still come from the
-  backend-owned `timeline_playhead_changed` event.
+  backend-owned `timeline_playhead_changed` event. The desktop command clamps
+  requested playhead positions against the current backend timeline projection
+  instead of trusting frontend duration constants.
 - Open: the temporary DOM/SVG timeline still exists as a behavioral reference
   and accessible command surface until Bevy covers the target interactions. Do
   not expand it as a parallel renderer or fallback source of timeline truth.
