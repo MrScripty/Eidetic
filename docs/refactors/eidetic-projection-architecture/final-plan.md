@@ -3402,31 +3402,12 @@ Implementation order:
   affect constraints for generation/decomposition with focused prompt coverage.
 - Add proposal/review integration for AI-detected affect changes from manual
   script edits.
-- Started: core now defines typed affect proposal contracts for reviewable
-  pending/accepted/rejected affect changes from manual script edits, agent
-  analysis, or user drafts. Storage, Tauri commands, and acceptance/rejection
-  execution remain the next slices.
-- Started: affect proposals now have relational SQLite storage and list
-  projection support that preserves proposed affect values and mood labels
-  without mutating canonical affect state. Tauri commands, Svelte projection
-  helpers, and acceptance/rejection execution remain the next slices.
-- Started: desktop command/projection adapters and Svelte API helpers now expose
-  backend-owned affect proposal creation and list projections. Review UI wiring
-  and acceptance/rejection execution remain the next slices.
-- Started: backend review execution now records accept/reject decisions for
-  affect proposals with command history. Accepting a pending proposal updates
-  canonical affect state in the same backend change; rejecting leaves canonical
-  affect state untouched. Tauri/UI review commands remain the next slice.
-- Completed: affect proposal create/list/accept/reject transport is now wired
-  through Tauri commands and typed Svelte API helpers. Remaining proposal/review
-  work is the user-facing review surface that consumes these projections.
-- Started: Svelte now has an affect proposal projection store that refreshes
-  backend proposal projections and applies create/accept/reject command
-  responses without owning proposal state. The remaining slice is a compact
-  review surface that renders and invokes those store operations.
-- Completed: the change review panel now renders backend affect proposals with
-  proposed affect values, status, rationale, and accept/reject controls wired
-  through the affect proposal projection store.
+- Completed: typed affect proposal contracts, relational SQLite proposal
+  storage, projection/service replay, Tauri create/list/accept/reject
+  transport, Svelte projection caching, and change-review UI are implemented.
+  Proposed affect values remain separate from canonical affect state until
+  accepted; reject only changes proposal status, while accept records proposal
+  status and canonical affect updates in one backend-owned history change.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived
