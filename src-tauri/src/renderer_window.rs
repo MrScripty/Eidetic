@@ -7,6 +7,45 @@ pub enum DesktopRendererWindowKind {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
+pub enum DesktopRendererWindowPlatform {
+    Linux,
+    Macos,
+    Windows,
+    Unsupported,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DesktopRendererWindowCapability {
+    PendingNativeRunner,
+    PlatformUnproven,
+    PlatformUnsupported,
+    RunnerError,
+    VerifiedSupport,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DesktopRendererWindowCapabilityReason {
+    PendingNativeRunner,
+    PlatformUnproven,
+    PlatformUnsupported,
+    RunnerError,
+    VerifiedSupport,
+}
+
+impl DesktopRendererWindowCapability {
+    pub fn verified_support(self) -> bool {
+        matches!(self, Self::VerifiedSupport)
+    }
+
+    pub fn visible_window_supported(self) -> bool {
+        matches!(self, Self::VerifiedSupport)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum DesktopRendererWindowLifecycle {
     Closed,
     SceneStarting,

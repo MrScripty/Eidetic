@@ -3577,6 +3577,10 @@ Implementation order:
   infrastructure instead of graph-only platform strategy code. Timeline native
   runner planning can reuse `worker_thread`, `main_thread`, and `unsupported`
   without duplicating graph-specific aliases.
+- Started: renderer window platform and capability enums are now shared desktop
+  renderer infrastructure. Graph keeps its public aliases and platform strategy
+  policy, while timeline can report the same support and capability statuses
+  when the visible shared runner is attached.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

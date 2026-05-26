@@ -1,39 +1,13 @@
 use super::{NativeRendererPlatformStrategy, current_renderer_window_platform};
+pub use crate::renderer_window::DesktopRendererWindowCapability as BibleGraphRendererWindowCapability;
+pub use crate::renderer_window::DesktopRendererWindowCapabilityReason as BibleGraphRendererWindowCapabilityReason;
 pub use crate::renderer_window::DesktopRendererWindowLifecycle as BibleGraphRendererWindowLifecycle;
+pub use crate::renderer_window::DesktopRendererWindowPlatform as BibleGraphRendererWindowPlatform;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BibleGraphRendererWindowStrategy {
     BevyWinitFloatingWindow,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BibleGraphRendererWindowPlatform {
-    Linux,
-    Macos,
-    Windows,
-    Unsupported,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BibleGraphRendererWindowCapability {
-    PendingNativeRunner,
-    PlatformUnproven,
-    PlatformUnsupported,
-    RunnerError,
-    VerifiedSupport,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BibleGraphRendererWindowCapabilityReason {
-    PendingNativeRunner,
-    PlatformUnproven,
-    PlatformUnsupported,
-    RunnerError,
-    VerifiedSupport,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
@@ -49,16 +23,6 @@ pub struct BibleGraphRendererWindowStrategyStatus {
 impl BibleGraphRendererWindowStrategyStatus {
     pub fn current() -> Self {
         NativeRendererPlatformStrategy::current().status()
-    }
-}
-
-impl BibleGraphRendererWindowCapability {
-    pub fn verified_support(self) -> bool {
-        matches!(self, Self::VerifiedSupport)
-    }
-
-    pub fn visible_window_supported(self) -> bool {
-        matches!(self, Self::VerifiedSupport)
     }
 }
 
