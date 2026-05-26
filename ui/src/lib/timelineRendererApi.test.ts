@@ -26,7 +26,11 @@ describe('timeline renderer api helpers', () => {
     const response = {
       renderer_window_kind: 'timeline',
       running: true,
+      renderer_window_open: true,
       renderer_scene_ready: true,
+      renderer_window_visible: false,
+      renderer_window_ready: false,
+      renderer_window_message: 'timeline renderer scene is ready; native window is not connected',
       track_count: 5,
       clip_count: 18,
       relationship_count: 3,

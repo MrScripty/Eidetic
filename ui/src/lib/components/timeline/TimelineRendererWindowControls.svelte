@@ -15,7 +15,11 @@
   const running = $derived(status?.running ?? false);
   const statusLabel = $derived(
     status?.last_error ??
-      (running ? `${status?.clip_count ?? 0} clips` : status ? 'closed' : 'not checked'),
+      (status
+        ? status.renderer_window_ready
+          ? `${status.clip_count} clips`
+          : status.renderer_window_message
+        : 'not checked'),
   );
 
   async function run(action: () => Promise<TimelineRendererStatus>): Promise<void> {

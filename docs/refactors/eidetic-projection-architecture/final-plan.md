@@ -3550,6 +3550,10 @@ Implementation order:
   call the same backend-confirmed command/projection path as the renderer
   command bridge, skip text inputs through the existing shortcut registry, and
   do not mutate durable timeline projections optimistically.
+- Started: timeline renderer status now separates scene readiness from native
+  window readiness/visibility. Until the visible Bevy window runner lands, the
+  backend explicitly reports a ready headless scene with no connected native
+  window instead of implying that `running` means visible.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

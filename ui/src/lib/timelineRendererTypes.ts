@@ -1,7 +1,11 @@
 export interface TimelineRendererStatus {
   renderer_window_kind: TimelineRendererWindowKind;
   running: boolean;
+  renderer_window_open: boolean;
   renderer_scene_ready: boolean;
+  renderer_window_visible: boolean;
+  renderer_window_ready: boolean;
+  renderer_window_message: string;
   track_count: number;
   clip_count: number;
   relationship_count: number;

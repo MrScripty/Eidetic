@@ -12,7 +12,11 @@ use crate::renderer_window::DesktopRendererWindowKind;
 pub struct TimelineHostStatus {
     pub renderer_window_kind: DesktopRendererWindowKind,
     pub running: bool,
+    pub renderer_window_open: bool,
     pub renderer_scene_ready: bool,
+    pub renderer_window_visible: bool,
+    pub renderer_window_ready: bool,
+    pub renderer_window_message: String,
     pub track_count: usize,
     pub clip_count: usize,
     pub relationship_count: usize,
@@ -58,7 +62,11 @@ impl DesktopTimelineHost {
         TimelineHostStatus {
             renderer_window_kind: DesktopRendererWindowKind::Timeline,
             running: false,
+            renderer_window_open: false,
             renderer_scene_ready: false,
+            renderer_window_visible: false,
+            renderer_window_ready: false,
+            renderer_window_message: "timeline renderer native window is unavailable".to_string(),
             track_count: 0,
             clip_count: 0,
             relationship_count: 0,
@@ -133,7 +141,11 @@ impl DesktopTimelineHost {
         TimelineHostStatus {
             renderer_window_kind: DesktopRendererWindowKind::Timeline,
             running: self.renderer.is_some(),
+            renderer_window_open: self.renderer.is_some(),
             renderer_scene_ready: self.renderer.is_some(),
+            renderer_window_visible: false,
+            renderer_window_ready: false,
+            renderer_window_message: timeline_renderer_window_message(self.renderer.is_some()),
             track_count,
             clip_count,
             relationship_count,
@@ -308,6 +320,14 @@ fn run_timeline_owner(
     }
 }
 
+fn timeline_renderer_window_message(running: bool) -> String {
+    if running {
+        "timeline renderer scene is ready; native window is not connected".to_string()
+    } else {
+        "floating timeline renderer window is closed".to_string()
+    }
+}
+
 fn error_label(error: &TimelineHostError) -> String {
     match error {
         TimelineHostError::Renderer(message) => message.clone(),
@@ -342,7 +362,14 @@ mod tests {
             DesktopRendererWindowKind::Timeline
         );
         assert!(status.running);
+        assert!(status.renderer_window_open);
         assert!(status.renderer_scene_ready);
+        assert!(!status.renderer_window_visible);
+        assert!(!status.renderer_window_ready);
+        assert_eq!(
+            status.renderer_window_message,
+            "timeline renderer scene is ready; native window is not connected"
+        );
         assert_eq!(status.track_count, 1);
         assert_eq!(status.clip_count, 1);
         assert_eq!(status.relationship_count, 0);
@@ -367,6 +394,14 @@ mod tests {
         let status = host.stop();
 
         assert!(!status.running);
+        assert!(!status.renderer_window_open);
+        assert!(!status.renderer_scene_ready);
+        assert!(!status.renderer_window_visible);
+        assert!(!status.renderer_window_ready);
+        assert_eq!(
+            status.renderer_window_message,
+            "floating timeline renderer window is closed"
+        );
         assert_eq!(status.track_count, 0);
         assert_eq!(status.clip_count, 0);
     }
