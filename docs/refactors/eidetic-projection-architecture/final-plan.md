@@ -3374,6 +3374,10 @@ Implementation order:
 - Define the core affect DTOs and value ranges first, including validation rules
   for valence, arousal, confidence, target scope, source/provenance, and command
   IDs.
+- Completed: core now defines host-agnostic affect contracts with typed
+  basis-point valence, arousal, intensity, and confidence values, mood labels,
+  provenance, project/timeline/script/bible targets, set/delete commands, and
+  serialization/validation tests.
 - Add SQLite schema/current-state/revision storage for affect values and
   dependencies.
 - Add the smallest command/projection vertical slice: set affect for one

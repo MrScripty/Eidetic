@@ -1,3 +1,4 @@
+mod affect;
 mod agent_workflow;
 mod ai_context;
 mod bible_graph;
@@ -19,6 +20,11 @@ mod timeline_render;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub use affect::{
+    AffectConfidence, AffectContractError, AffectProjection, AffectProvenance, AffectTarget,
+    AffectValue, AffectValueId, Arousal, DeleteAffectValueCommand, EmotionalIntensity, MoodLabel,
+    SetAffectValueCommand, Valence,
+};
 pub use agent_workflow::{
     AgentProposalMode, AgentRun, AgentRunId, AgentRunStatus, AgentToolArguments, AgentToolBudget,
     AgentToolCall, AgentToolCallId, AgentToolCallStatus, AgentToolDefinition, AgentToolKind,
@@ -175,6 +181,7 @@ pub enum ObjectKind {
     AgentRun,
     AgentToolCall,
     AgentToolResult,
+    AffectValue,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
