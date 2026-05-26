@@ -3368,6 +3368,10 @@ Tasks:
   affect state is backend-owned.
 - Document how affect values are interpreted by generation, timeline overlays,
   propagation, undo/redo, and change review.
+- Completed: `affect-model-semantics.md` documents canonical affect state,
+  generation prompting semantics, timeline overlays, proposal review,
+  dependencies, history, undo/redo expectations, and the projection-only
+  frontend boundary.
 
 Implementation order:
 
