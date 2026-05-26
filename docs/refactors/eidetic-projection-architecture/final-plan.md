@@ -3573,6 +3573,10 @@ Implementation order:
   field and reports `closed` while its scene remains headless. This keeps the
   status contract ready for the visible shared runner without mixing scene
   readiness and native runner readiness.
+- Started: renderer threading model vocabulary is now shared desktop renderer
+  infrastructure instead of graph-only platform strategy code. Timeline native
+  runner planning can reuse `worker_thread`, `main_thread`, and `unsupported`
+  without duplicating graph-specific aliases.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

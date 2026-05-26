@@ -32,3 +32,11 @@ pub enum DesktopRendererRunnerLifecycle {
     OpenRequested,
     Visible,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DesktopRendererThreadingModel {
+    WorkerThread,
+    MainThread,
+    Unsupported,
+}

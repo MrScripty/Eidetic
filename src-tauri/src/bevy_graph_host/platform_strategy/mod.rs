@@ -5,6 +5,7 @@ use super::{
     BibleGraphRendererWindowPlatform, BibleGraphRendererWindowStrategy,
     BibleGraphRendererWindowStrategyStatus,
 };
+pub use crate::renderer_window::DesktopRendererThreadingModel as NativeRendererThreadingModel;
 use eidetic_bevy_bible_graph::BibleGraphNativeWindowRunnerConfig;
 
 pub use current_platform::current_renderer_window_platform;
@@ -15,14 +16,6 @@ pub enum NativeRendererPlatformStrategy {
     MacosMainThreadUnproven,
     WindowsWorkerThreadUnproven,
     UnsupportedPlatform,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum NativeRendererThreadingModel {
-    WorkerThread,
-    MainThread,
-    Unsupported,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
