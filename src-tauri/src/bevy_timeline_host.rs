@@ -9,6 +9,9 @@ use crate::renderer_window::{
     DesktopRendererWindowLifecycle, DesktopRendererWindowPlatform, DesktopRendererWindowStrategy,
     DesktopRendererWindowStrategyStatus,
 };
+use crate::timeline_renderer_platform_strategy::{
+    TimelineRendererPlatformStrategy, TimelineRendererRunnerStartupPlan,
+};
 
 pub use crate::bevy_timeline_owner::{
     DesktopTimelineRendererOwner, TIMELINE_RENDERER_COMMAND_QUEUE_CAPACITY,
@@ -146,8 +149,15 @@ impl DesktopTimelineHost {
     }
 
     pub fn status(&self) -> TimelineHostStatus {
-        let window_strategy =
-            DesktopRendererWindowStrategyStatus::pending_native_runner_current_platform();
+        let platform_strategy = TimelineRendererPlatformStrategy::current();
+        let window_strategy = platform_strategy.status();
+        let renderer_runner_threading_model = match platform_strategy.runner_startup_plan() {
+            TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate {
+                threading_model,
+                ..
+            }
+            | TimelineRendererRunnerStartupPlan::PendingOnly { threading_model } => threading_model,
+        };
         let (track_count, clip_count) = self
             .renderer
             .as_ref()
@@ -180,7 +190,7 @@ impl DesktopTimelineHost {
                 false,
             ),
             renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
-            renderer_runner_threading_model: DesktopRendererThreadingModel::Unsupported,
+            renderer_runner_threading_model,
             renderer_window_strategy: window_strategy.strategy,
             renderer_window_platform: window_strategy.platform,
             renderer_window_capability: window_strategy.capability,
@@ -259,7 +269,7 @@ mod tests {
         );
         assert_eq!(
             status.renderer_runner_threading_model,
-            DesktopRendererThreadingModel::Unsupported
+            expected_threading_model()
         );
         assert_eq!(
             status.renderer_window_strategy,
@@ -267,14 +277,20 @@ mod tests {
         );
         assert_eq!(
             status.renderer_window_capability,
-            DesktopRendererWindowCapability::PendingNativeRunner
+            expected_strategy_status().capability
         );
         assert_eq!(
             status.renderer_window_capability_reason,
-            DesktopRendererWindowCapabilityReason::PendingNativeRunner
+            expected_strategy_status().capability_reason
         );
-        assert!(!status.renderer_window_verified_support);
-        assert!(!status.renderer_window_visible_supported);
+        assert_eq!(
+            status.renderer_window_verified_support,
+            expected_strategy_status().verified_support
+        );
+        assert_eq!(
+            status.renderer_window_visible_supported,
+            expected_strategy_status().visible_window_supported
+        );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
         assert!(!status.renderer_window_focus_supported);
@@ -318,7 +334,7 @@ mod tests {
         );
         assert_eq!(
             status.renderer_window_capability,
-            DesktopRendererWindowCapability::PendingNativeRunner
+            expected_strategy_status().capability
         );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
@@ -368,7 +384,7 @@ mod tests {
         );
         assert_eq!(
             status.renderer_window_capability,
-            DesktopRendererWindowCapability::PendingNativeRunner
+            expected_strategy_status().capability
         );
         assert!(!status.renderer_window_focus_supported);
         assert!(!stopped.running);
@@ -403,6 +419,20 @@ mod tests {
             relationships: Vec::new(),
             gaps: Vec::new(),
             affect_overlays: Vec::new(),
+        }
+    }
+
+    fn expected_strategy_status() -> DesktopRendererWindowStrategyStatus {
+        TimelineRendererPlatformStrategy::current().status()
+    }
+
+    fn expected_threading_model() -> DesktopRendererThreadingModel {
+        match TimelineRendererPlatformStrategy::current().runner_startup_plan() {
+            TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate {
+                threading_model,
+                ..
+            }
+            | TimelineRendererRunnerStartupPlan::PendingOnly { threading_model } => threading_model,
         }
     }
 }

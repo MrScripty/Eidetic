@@ -3624,6 +3624,15 @@ Implementation order:
   existing public owner import path. This keeps the leaf timeline host focused
   on projection ingestion, renderer command draining, and status derivation
   before visible native-window integration lands.
+- Started: desktop now has a timeline renderer platform strategy and startup
+  plan for the native Bevy window path. Linux worker-thread support is treated
+  as verified to match the graph renderer host, macOS/Windows remain unproven,
+  unsupported platforms stay pending-only, and the strategy produces timeline
+  native-window configs without launching the renderer.
+- Started: timeline renderer status now derives platform, capability, support
+  flags, and runner threading model from the timeline native-window platform
+  strategy while still reporting the native runner as closed/not visible until
+  the visible runner is attached.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
