@@ -891,10 +891,12 @@ Current implementation progress:
 8. Completed: split normal graph selection from projection scope. Normal
    selection updates transient UI/detail state only; explicit
    focus-neighborhood requests update backend projection scope.
-9. Add the vertical-slice acceptance path for selection/scope: backend
-   projection request, Tauri renderer bridge, Svelte control, Bevy render
-   refresh, and detail projection must all agree without optimistic updates.
-10. Partially completed: centralize graph category classification/color
+9. Completed: add the vertical-slice acceptance path for selection/scope.
+   Backend projection requests, the Tauri renderer bridge, Svelte controls,
+   Bevy render refresh, and detail projections now keep normal selection
+   transient while explicit focus controls drive backend projection scope
+   without optimistic graph updates.
+10. Completed: centralize graph category classification/color
    identity for canonical roots, supported schemas, custom schemas, and unknown
    nodes. Backend render graph projections now carry a derived category field,
    the TypeScript render graph contract exposes it, and Bevy renderer visual
@@ -907,9 +909,9 @@ Current implementation progress:
     shared by rendering and picking.
 12. Completed: update labels and material transforms so MVP graph nodes are
     readable and highlight/dim states preserve category identity.
-13. Add selection, edge selection, highlighting, and detail-panel integration
-    without collapsing graph scope on normal selection.
-14. Partially completed: add orbit/pan/zoom, frame selected, reset/fit view,
+13. Completed: add selection, edge selection, highlighting, and detail-panel
+    integration without collapsing graph scope on normal selection.
+14. Completed: add orbit/pan/zoom, frame selected, reset/fit view,
     explicit focus neighborhood, clear selection, and keyboard navigation.
     Native orbit/pan/zoom and backend-owned camera commands exist; the Graph
     workspace explicit focus control now drives a renderer camera navigation
@@ -924,7 +926,7 @@ Current implementation progress:
     the existing renderer owner, callable by backend workflows and the future
     agent harness, and verified through Rust/TypeScript contract tests. Svelte
     camera buttons are optional and not required for this milestone.
-16. Partially completed: add graph-local backend-command workflows for node and
+16. Completed: add graph-local backend-command workflows for node and
     edge add/edit, using selectable graph/node controls rather than opaque ID
     entry. Graph workspace node creation and selectable edge target creation
     now exist; node/edge detail editing remain through the selected-node
@@ -943,15 +945,17 @@ Current implementation progress:
     DTO helpers with targeted tests.
 18. Completed: add renderer-local mesh/material reuse for frequent projection
     refreshes.
-19. Partially completed: add lifecycle/queue/shutdown/error verification for
+19. Completed: add lifecycle/queue/shutdown/error verification for
     renderer host, projection bridge, and command drain ownership. Existing
     host lifecycle tests cover open/focus/close/shutdown and command drain
     ownership; camera command queue capacity/drain is now covered. Continue
     adding targeted verification when new renderer command paths are added.
-20. Partially completed: add filtering by canonical section, node type, edge
-    kind, search, and active playhead/clip context. Canonical section, search,
-    active playhead/clip context, backend-owned edge-kind request filtering,
-    and visible edge-kind controls now exist. Any additional node-type control
-    still needs to be wired in the Graph workspace UI.
+20. Completed: add filtering by canonical section, node type, edge kind,
+    search, and active playhead/clip context. Canonical section/node-type
+    category filters, search, active playhead/clip context, backend-owned
+    edge-kind request filtering, and visible edge-kind controls now exist.
 21. Completed: add timeline cross-linking and active-at-playhead filtering.
-22. Remove the old 2D relationship graph once the 3D graph view is active.
+22. Completed: remove the old 2D relationship graph once the 3D graph view is
+    active. No separate old 2D bible relationship graph remains as a supported
+    visual graph surface; `BibleRenderGraphOutline` remains as the
+    keyboard-accessible projection alternative.
