@@ -2718,6 +2718,7 @@ name = "eidetic-desktop"
 version = "0.1.0"
 dependencies = [
  "eidetic-bevy-bible-graph",
+ "eidetic-bevy-timeline",
  "eidetic-core",
  "eidetic-server",
  "serde",

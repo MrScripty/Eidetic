@@ -473,6 +473,14 @@ impl TimelineRendererApp {
                 .commands,
         )
     }
+
+    pub fn queued_command_count(&self) -> usize {
+        self.app
+            .world()
+            .resource::<TimelineRendererCommandQueue>()
+            .commands
+            .len()
+    }
 }
 
 #[cfg(test)]

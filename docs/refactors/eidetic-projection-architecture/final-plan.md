@@ -3499,6 +3499,11 @@ Implementation order:
   shared floating host contract before adding timeline-specific infrastructure.
 - Add the native Bevy timeline host as a leaf renderer managed in the desktop
   composition root through that shared floating renderer host.
+- Started: desktop now has a narrow `DesktopTimelineHost` boundary around the
+  `eidetic-bevy-timeline` leaf renderer. It ingests backend timeline
+  projections, reports scene counts/status, and drains renderer command
+  requests without owning durable timeline state. Native floating-window
+  lifecycle integration remains the next host slice.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
