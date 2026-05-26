@@ -3545,6 +3545,11 @@ Implementation order:
   tracks and clips. This gives future native pointer handling a tested
   projection-only hit-test path without introducing renderer-owned timeline
   layout, DOM/SVG logic, or Bevy render/window features.
+- Started: Svelte now has a keyboard command surface for selected timeline
+  delete, split-at-playhead, nudge, and edge resize operations. The shortcuts
+  call the same backend-confirmed command/projection path as the renderer
+  command bridge, skip text inputs through the existing shortcut registry, and
+  do not mutate durable timeline projections optimistically.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

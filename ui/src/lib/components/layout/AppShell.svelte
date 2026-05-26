@@ -9,14 +9,20 @@
   import { PANEL, mainTimelinePanelHeightPx } from '$lib/timelineTypes.js';
   import { projectState } from '$lib/stores/project.svelte.js';
   import { timelineState, zoomToFit, zoomTo } from '$lib/stores/timeline.svelte.js';
-  import { editorState } from '$lib/stores/editor.svelte.js';
   import { startAiStatusPolling } from '$lib/stores/aiStatus.svelte.js';
   import { bibleState } from '$lib/stores/bible.svelte.js';
   import { saveProject, exportPdf } from '$lib/api.js';
   import { registerShortcut, handleKeydown } from '$lib/stores/shortcuts.svelte.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
-  import { applyDeleteTimelineNodeCommand } from '$lib/stores/timelineRenderProjection.svelte.js';
-  import { refreshSelectedNodeEditorProjection } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
+  import {
+    TIMELINE_KEYBOARD_STEP_MS,
+    deleteSelectedTimelineNodeFromKeyboard,
+    nudgeSelectedTimelineNode,
+    resizeSelectedTimelineNodeEnd,
+    resizeSelectedTimelineNodeStart,
+    splitSelectedTimelineNodeAtPlayhead,
+    type TimelineKeyboardCommandResult,
+  } from '$lib/stores/timelineKeyboardCommands.js';
   import { setWorkspaceMode, workspaceModeState } from '$lib/stores/workspaceMode.svelte.js';
 
   $effect(() => {
@@ -41,13 +47,66 @@
         description: 'Delete selected node',
         skipInInput: true,
         action: () => {
-          if (editorState.selectedNodeId) {
-            const id = editorState.selectedNodeId;
-            editorState.selectedNodeId = null;
-            editorState.selectedLevel = null;
-            void refreshSelectedNodeEditorProjection(null).catch(() => {});
-            applyDeleteTimelineNodeCommand({ node_id: id }).catch(() => {});
-          }
+          void runTimelineShortcut(() => deleteSelectedTimelineNodeFromKeyboard(), 'Delete failed');
+        },
+      }),
+      registerShortcut({
+        key: 'Enter',
+        ctrl: true,
+        description: 'Split selected node at playhead',
+        skipInInput: true,
+        action: () => {
+          void runTimelineShortcut(() => splitSelectedTimelineNodeAtPlayhead(), 'Split failed');
+        },
+      }),
+      registerShortcut({
+        key: 'ArrowLeft',
+        alt: true,
+        description: 'Move selected node earlier',
+        skipInInput: true,
+        action: () => {
+          void runTimelineShortcut(
+            () => nudgeSelectedTimelineNode(-TIMELINE_KEYBOARD_STEP_MS),
+            'Move failed',
+          );
+        },
+      }),
+      registerShortcut({
+        key: 'ArrowRight',
+        alt: true,
+        description: 'Move selected node later',
+        skipInInput: true,
+        action: () => {
+          void runTimelineShortcut(
+            () => nudgeSelectedTimelineNode(TIMELINE_KEYBOARD_STEP_MS),
+            'Move failed',
+          );
+        },
+      }),
+      registerShortcut({
+        key: 'ArrowLeft',
+        alt: true,
+        shift: true,
+        description: 'Resize selected node start',
+        skipInInput: true,
+        action: () => {
+          void runTimelineShortcut(
+            () => resizeSelectedTimelineNodeStart(-TIMELINE_KEYBOARD_STEP_MS),
+            'Resize failed',
+          );
+        },
+      }),
+      registerShortcut({
+        key: 'ArrowRight',
+        alt: true,
+        shift: true,
+        description: 'Resize selected node end',
+        skipInInput: true,
+        action: () => {
+          void runTimelineShortcut(
+            () => resizeSelectedTimelineNodeEnd(TIMELINE_KEYBOARD_STEP_MS),
+            'Resize failed',
+          );
         },
       }),
       registerShortcut({
@@ -120,6 +179,20 @@
       notify('success', 'PDF exported');
     } catch (e) {
       notify('error', `Export failed: ${e instanceof Error ? e.message : 'unknown error'}`);
+    }
+  }
+
+  async function runTimelineShortcut(
+    action: () => Promise<TimelineKeyboardCommandResult>,
+    failureLabel: string,
+  ) {
+    try {
+      await action();
+    } catch (error) {
+      notify(
+        'error',
+        `${failureLabel}: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
     }
   }
 
