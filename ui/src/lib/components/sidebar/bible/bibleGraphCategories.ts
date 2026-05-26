@@ -1,5 +1,12 @@
-import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
-import type { BibleGraphNode, BibleGraphNodeId } from '$lib/bibleGraphTypes.js';
+import type {
+  BibleGraphSchemaListProjection,
+  BibleGraphSchemaProjection,
+} from '$lib/bibleGraphSchemaTypes.js';
+import type {
+  BibleGraphNode,
+  BibleGraphNodeCategory,
+  BibleGraphNodeId,
+} from '$lib/bibleGraphTypes.js';
 
 export type BibleGraphRootCategory =
   | 'Character'
@@ -48,7 +55,20 @@ export const canonicalRootSchemaKeys: Record<BibleGraphRootCategory, string> = {
   Reference: 'canonical.root.references',
 };
 
-export const schemaKeys: Record<BibleGraphRootCategory, string> = {
+const categoriesByBackendCategory: Record<BibleGraphNodeCategory, BibleGraphCategory> = {
+  character: 'Character',
+  location: 'Location',
+  prop: 'Prop',
+  culture: 'Culture',
+  theme: 'Theme',
+  event: 'Event',
+  rule: 'Rule',
+  reference: 'Reference',
+  canonical: 'Other',
+  other: 'Other',
+};
+
+const backendCategoriesByRootCategory: Record<BibleGraphRootCategory, BibleGraphNodeCategory> = {
   Character: 'character',
   Location: 'location',
   Prop: 'prop',
@@ -57,17 +77,6 @@ export const schemaKeys: Record<BibleGraphRootCategory, string> = {
   Event: 'event',
   Rule: 'rule',
   Reference: 'reference',
-};
-
-export const defaultNames: Record<BibleGraphRootCategory, string> = {
-  Character: 'New Character',
-  Location: 'New Location',
-  Prop: 'New Prop',
-  Culture: 'New Culture',
-  Theme: 'New Theme',
-  Event: 'New Event',
-  Rule: 'New Rule',
-  Reference: 'New Reference',
 };
 
 export function filterLabel(filter: BibleGraphFilter): string {
@@ -79,9 +88,7 @@ export function categorySchemaKey(
   category: BibleGraphRootCategory,
   projection: BibleGraphSchemaListProjection | undefined,
 ): string | undefined {
-  const schemaKey = schemaKeys[category];
-  if (!projection?.schemas.some((schema) => schema.schema_key === schemaKey)) return undefined;
-  return schemaKey;
+  return categorySchema(category, projection)?.schema_key;
 }
 
 export function categorySchemaAvailable(
@@ -91,8 +98,19 @@ export function categorySchemaAvailable(
   return categorySchemaKey(category, projection) !== undefined;
 }
 
-export function newNodeName(category: BibleGraphRootCategory): string {
-  return defaultNames[category];
+export function newNodeName(
+  category: BibleGraphRootCategory,
+  projection: BibleGraphSchemaListProjection | undefined,
+): string {
+  return categorySchema(category, projection)?.default_node_name ?? `New ${category}`;
+}
+
+export function categorySchema(
+  category: BibleGraphRootCategory,
+  projection: BibleGraphSchemaListProjection | undefined,
+): BibleGraphSchemaProjection | undefined {
+  const backendCategory = backendCategoriesByRootCategory[category];
+  return projection?.schemas.find((schema) => schema.category === backendCategory);
 }
 
 export function categoryShortLabel(category: BibleGraphCategory): string {
@@ -144,7 +162,18 @@ export function categoryColor(category: BibleGraphFilter | BibleGraphCategory): 
 }
 
 export function nodeCategory(node: BibleGraphNode): BibleGraphCategory {
-  switch (node.schema_key) {
+  return categoryForSchemaAndParent(node.schema_key, node.parent_id);
+}
+
+export function categoryForRenderNode(category: BibleGraphNodeCategory): BibleGraphCategory {
+  return categoriesByBackendCategory[category];
+}
+
+function categoryForSchemaAndParent(
+  schemaKey: string,
+  parentId: BibleGraphNodeId | null | undefined,
+): BibleGraphCategory {
+  switch (schemaKey) {
     case 'canonical.root.characters':
     case 'character':
       return 'Character';
@@ -171,7 +200,7 @@ export function nodeCategory(node: BibleGraphNode): BibleGraphCategory {
     case 'reference':
       return 'Reference';
     default:
-      return parentCategory(node.parent_id);
+      return parentCategory(parentId);
   }
 }
 

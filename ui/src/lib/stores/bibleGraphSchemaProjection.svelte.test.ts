@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getBibleGraphSchemaListProjection } from '$lib/projectionApi.js';
+import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
+import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import {
   bibleGraphSchemaProjectionState,
   clearBibleGraphSchemaListProjection,
@@ -14,12 +16,17 @@ vi.mock('$lib/projectionApi.js', () => ({
 
 const getBibleGraphSchemaListProjectionMock = vi.mocked(getBibleGraphSchemaListProjection);
 
-const projection = {
+const projection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
   version: 1,
   payload: {
     schemas: [
       {
         schema_key: 'character',
+        category: 'character',
+        display_name: 'Character',
+        default_node_name: 'New Character',
+        canonical_parent_id: 'canonical.characters',
+        canonical_root_schema_key: 'canonical.root.characters',
         parts: [
           {
             part_key: 'profile',
@@ -42,13 +49,18 @@ const projection = {
   },
 };
 
-const newerProjection = {
+const newerProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
   ...projection,
   version: 3,
   payload: {
     schemas: [
       {
         schema_key: 'location',
+        category: 'location',
+        display_name: 'Location',
+        default_node_name: 'New Location',
+        canonical_parent_id: 'canonical.places',
+        canonical_root_schema_key: 'canonical.root.places',
         parts: [
           {
             part_key: 'environment',
@@ -67,13 +79,18 @@ const newerProjection = {
   },
 };
 
-const olderProjection = {
+const olderProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
   ...projection,
   version: 2,
   payload: {
     schemas: [
       {
-        schema_key: 'object',
+        schema_key: 'prop',
+        category: 'prop',
+        display_name: 'Prop',
+        default_node_name: 'New Prop',
+        canonical_parent_id: 'canonical.objects',
+        canonical_root_schema_key: 'canonical.root.objects',
         parts: [],
       },
     ],

@@ -18,10 +18,8 @@ import {
 } from '$lib/stores/bibleGraphSchemaProjection.svelte.js';
 import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import {
-  canonicalParents,
-  canonicalRootSchemaKeys,
+  categorySchema,
   categorySchemaAvailable,
-  categorySchemaKey,
   newNodeName,
   type BibleGraphRootCategory,
 } from './bibleGraphCategories.js';
@@ -55,18 +53,18 @@ export async function createBibleGraphNodeForCategory(
 ): Promise<BibleGraphNodeCommandResponse> {
   const deps = options.deps ?? defaultDeps;
   const schemaProjection = await schemaListForCategory(category, deps);
-  const schemaKey = categorySchemaKey(category, schemaProjection);
-  if (!schemaKey) {
+  const schema = categorySchema(category, schemaProjection);
+  if (!schema) {
     throw new Error(`Schema unavailable for ${category}`);
   }
 
   const graphNodes = options.graphNodes ?? (await graphNodesForCreateFlow(deps));
-  const parentId = await parentIdForCategory(category, graphNodes, deps);
+  const parentId = await parentIdForCategory(schema, graphNodes, deps);
   return deps.createNode({
     parent_id: parentId,
-    schema_key: schemaKey,
-    name: newNodeName(category),
-    sort_order: nextSortOrderForCategory(category, graphNodes),
+    schema_key: schema.schema_key,
+    name: newNodeName(category, schemaProjection),
+    sort_order: nextSortOrderForParent(schema.canonical_parent_id, graphNodes),
   });
 }
 
@@ -92,12 +90,12 @@ async function graphNodesForCreateFlow(
 }
 
 async function parentIdForCategory(
-  category: BibleGraphRootCategory,
+  schema: NonNullable<ReturnType<typeof categorySchema>>,
   graphNodes: BibleGraphNode[],
   deps: BibleGraphNodeCreateFlowDependencies,
 ): Promise<string> {
   const existingRoot = graphNodes.find(
-    (node) => node.schema_key === canonicalRootSchemaKeys[category],
+    (node) => node.schema_key === schema.canonical_root_schema_key,
   );
   if (existingRoot) {
     return existingRoot.id;
@@ -105,14 +103,14 @@ async function parentIdForCategory(
 
   const response = await deps.ensureCanonicalRoots();
   const ensuredRoot = response.projection.payload.nodes.find(
-    (node) => node.schema_key === canonicalRootSchemaKeys[category],
+    (node) => node.schema_key === schema.canonical_root_schema_key,
   );
-  return ensuredRoot?.id ?? canonicalParents[category];
+  if (!ensuredRoot) {
+    throw new Error(`Canonical root unavailable for ${schema.display_name}`);
+  }
+  return ensuredRoot.id;
 }
 
-function nextSortOrderForCategory(
-  category: BibleGraphRootCategory,
-  graphNodes: BibleGraphNode[],
-): number {
-  return graphNodes.filter((node) => node.parent_id === canonicalParents[category]).length;
+function nextSortOrderForParent(parentId: string, graphNodes: BibleGraphNode[]): number {
+  return graphNodes.filter((node) => node.parent_id === parentId).length;
 }

@@ -48,7 +48,7 @@ non_empty_string_id!(BibleGraphSchemaKey);
 non_empty_string_id!(BibleGraphPartKey);
 non_empty_string_id!(BibleGraphFieldKey);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CanonicalBibleRoot {
     Characters,
@@ -61,7 +61,7 @@ pub enum CanonicalBibleRoot {
     References,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BibleGraphNodeCategory {
     Character,

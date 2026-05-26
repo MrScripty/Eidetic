@@ -829,13 +829,17 @@ Current implementation progress:
   TypeScript render graph contract exposes it, and Bevy node color selection
   consumes that projected category instead of reclassifying schema strings in
   the renderer.
+- Completed: built-in schema projections now include backend-owned category,
+  display name, default node name, canonical parent id, and canonical root
+  schema metadata. Graph node creation uses that projection metadata and fails
+  closed when canonical roots cannot be confirmed instead of falling back to
+  frontend-owned root constants.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
 - Code review findings to resolve before completion:
-  - frontend category creation/filter controls still need to align with the
-    backend schema/category projection contract instead of maintaining
-    independent option semantics,
+  - frontend category filter controls still need to use backend-projected
+    category/root options instead of local canonical root tables,
   - graph-local add/edit workflows are incomplete and delete commands are not
     available,
   - visible navigation/recovery controls are incomplete.
@@ -875,8 +879,10 @@ Current implementation progress:
    nodes. Backend render graph projections now carry a derived category field,
    the TypeScript render graph contract exposes it, and Bevy renderer visual
    snapshots consume that projected category through one shared color helper.
-   Frontend category creation/filter option semantics still need to align with
-   the backend schema/category projection contract.
+   Built-in schema projections now expose create metadata, and graph node
+   creation consumes that projection instead of local schema/default-name/root
+   fallback constants. Frontend filter option semantics still need to align
+   with backend-projected category/root options.
 11. Completed: replace 2D edge mesh placement with tested 3D segment geometry
     shared by rendering and picking.
 12. Completed: update labels and material transforms so MVP graph nodes are

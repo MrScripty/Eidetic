@@ -69,6 +69,20 @@ describe('bible graph node create flow', () => {
     expect(deps.refreshSchemaListProjection).toHaveBeenCalledTimes(1);
     expect(deps.createNode).not.toHaveBeenCalled();
   });
+
+  it('rejects create when backend canonical root projection is unavailable', async () => {
+    const deps = depsFor({
+      schemas: schemaEnvelope(['character']),
+      nodes: nodeListEnvelope([]),
+      roots: rootsResponse([]),
+    });
+
+    await expect(createBibleGraphNodeForCategory('Character', { deps })).rejects.toThrow(
+      'Canonical root unavailable for Character',
+    );
+
+    expect(deps.createNode).not.toHaveBeenCalled();
+  });
 });
 
 function depsFor({
@@ -98,9 +112,87 @@ function schemaEnvelope(schemaKeys: string[]): ProjectionEnvelope<BibleGraphSche
   return {
     version: 1,
     payload: {
-      schemas: schemaKeys.map((schema_key) => ({ schema_key, parts: [] })),
+      schemas: schemaKeys.map((schema_key) => ({
+        schema_key,
+        category: categoryForSchema(schema_key),
+        display_name: displayNameForSchema(schema_key),
+        default_node_name: `New ${displayNameForSchema(schema_key)}`,
+        canonical_parent_id: canonicalParentForSchema(schema_key),
+        canonical_root_schema_key: canonicalRootSchemaForSchema(schema_key),
+        parts: [],
+      })),
     },
   };
+}
+
+function categoryForSchema(
+  schemaKey: string,
+): BibleGraphSchemaListProjection['schemas'][number]['category'] {
+  switch (schemaKey) {
+    case 'character':
+      return 'character';
+    case 'location':
+      return 'location';
+    case 'prop':
+      return 'prop';
+    case 'theme':
+      return 'theme';
+    case 'event':
+      return 'event';
+    default:
+      return 'other';
+  }
+}
+
+function displayNameForSchema(schemaKey: string): string {
+  switch (schemaKey) {
+    case 'character':
+      return 'Character';
+    case 'location':
+      return 'Location';
+    case 'prop':
+      return 'Prop';
+    case 'theme':
+      return 'Theme';
+    case 'event':
+      return 'Event';
+    default:
+      return 'Other';
+  }
+}
+
+function canonicalParentForSchema(schemaKey: string): string {
+  switch (schemaKey) {
+    case 'character':
+      return 'canonical.characters';
+    case 'location':
+      return 'canonical.places';
+    case 'prop':
+      return 'canonical.objects';
+    case 'theme':
+      return 'canonical.themes';
+    case 'event':
+      return 'canonical.events';
+    default:
+      return 'canonical.references';
+  }
+}
+
+function canonicalRootSchemaForSchema(schemaKey: string): string {
+  switch (schemaKey) {
+    case 'character':
+      return 'canonical.root.characters';
+    case 'location':
+      return 'canonical.root.places';
+    case 'prop':
+      return 'canonical.root.objects';
+    case 'theme':
+      return 'canonical.root.themes';
+    case 'event':
+      return 'canonical.root.events';
+    default:
+      return 'canonical.root.references';
+  }
 }
 
 function nodeListEnvelope(

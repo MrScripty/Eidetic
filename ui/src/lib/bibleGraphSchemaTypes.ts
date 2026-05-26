@@ -1,4 +1,6 @@
 import type {
+  BibleGraphNodeCategory,
+  BibleGraphNodeId,
   BibleGraphFieldKey,
   BibleGraphPartKey,
   BibleGraphSchemaKey,
@@ -10,6 +12,11 @@ export interface BibleGraphSchemaListProjection {
 
 export interface BibleGraphSchemaProjection {
   schema_key: BibleGraphSchemaKey;
+  category: BibleGraphNodeCategory;
+  display_name: string;
+  default_node_name: string;
+  canonical_parent_id: BibleGraphNodeId;
+  canonical_root_schema_key: BibleGraphSchemaKey;
   parts: BibleGraphPartSchemaProjection[];
 }
 

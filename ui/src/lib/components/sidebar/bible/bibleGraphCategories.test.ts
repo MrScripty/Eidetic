@@ -56,6 +56,11 @@ describe('bible graph categories', () => {
       schemas: [
         {
           schema_key: 'character',
+          category: 'character' as const,
+          display_name: 'Character',
+          default_node_name: 'New Character',
+          canonical_parent_id: 'canonical.characters',
+          canonical_root_schema_key: 'canonical.root.characters',
           parts: [],
         },
       ],
