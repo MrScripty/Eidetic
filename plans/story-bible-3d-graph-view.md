@@ -862,8 +862,7 @@ Current implementation progress:
 - Code review findings to resolve before completion:
   - graph-local add/edit workflows are incomplete; edge delete now has a
     backend soft-delete command path and UI affordance, and strict node delete
-    now has a backend/API command path plus a node-detail UI affordance,
-  - Bevy keyboard/mouse navigation recovery remains to be verified.
+    now has a backend/API command path plus a node-detail UI affordance.
 - Standards review findings to resolve before implementation completion:
   - prevent frontend/renderer ownership of backend facts or generation-affecting
     selection,
@@ -916,8 +915,9 @@ Current implementation progress:
     workspace explicit focus control now drives a renderer camera navigation
     command. The bible list now supports Ctrl+click on a node card to frame
     that node in Bevy through the typed transient camera command boundary.
-    Remaining work should keep normal navigation inside Bevy through
-    mouse/keyboard controls.
+    Native keyboard recovery now maps `R` to reset camera and `0` to fit graph,
+    keeping normal navigation and recovery inside Bevy through mouse/keyboard
+    controls.
 15. Completed: add a typed backend-owned camera command API for the Bevy
     viewport.
     Commands must be transient renderer presentation commands, bounded through

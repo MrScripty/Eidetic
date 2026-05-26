@@ -903,6 +903,26 @@ fn native_camera_frame_selected_moves_camera_over_selected_node() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_camera_recovery_maps_keyboard_intents_to_camera_commands() {
+    use crate::native_render::native_camera_recovery_command;
+
+    assert_eq!(native_camera_recovery_command(false, false), None);
+    assert_eq!(
+        native_camera_recovery_command(true, false),
+        Some(BibleGraphCameraCommand::ResetCamera)
+    );
+    assert_eq!(
+        native_camera_recovery_command(false, true),
+        Some(BibleGraphCameraCommand::FitGraph)
+    );
+    assert_eq!(
+        native_camera_recovery_command(true, true),
+        Some(BibleGraphCameraCommand::ResetCamera)
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn renderer_app_applies_validated_native_camera_commands() {
     use bevy::prelude::{Transform, Vec3, With};
 

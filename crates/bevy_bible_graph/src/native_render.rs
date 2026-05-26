@@ -357,6 +357,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, billboard_bible_graph_native_labels);
         app.add_systems(Update, navigate_bible_graph_native_camera);
         app.add_systems(Update, orbit_bible_graph_native_camera);
+        app.add_systems(Update, recover_bible_graph_native_camera);
         app.add_systems(Update, frame_bible_graph_native_camera_on_selected);
         app.add_systems(Update, apply_bible_graph_native_camera_commands);
     }
@@ -615,6 +616,30 @@ fn frame_bible_graph_native_camera_on_selected(
         native_camera_frame_selected_translation(camera_transform.translation, selected_node);
 }
 
+fn recover_bible_graph_native_camera(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    nodes: Query<&BibleGraphNativeNodeVisual>,
+    mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    let Some(command) = native_camera_recovery_command(
+        keys.just_pressed(KeyCode::KeyR),
+        keys.just_pressed(KeyCode::Digit0) || keys.just_pressed(KeyCode::Numpad0),
+    ) else {
+        return;
+    };
+    let Some(transform) = native_camera_recovery_transform(command, nodes.iter()) else {
+        return;
+    };
+    let Ok(mut camera_transform) = cameras.single_mut() else {
+        return;
+    };
+
+    *camera_transform = transform;
+}
+
 fn apply_bible_graph_native_camera_commands(world: &mut World) {
     let Some(control) = world
         .get_resource::<BibleGraphNativeWindowControl>()
@@ -769,6 +794,30 @@ pub(crate) fn native_camera_navigation_delta(
 
 pub(crate) fn native_camera_reset_transform() -> Transform {
     Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y)
+}
+
+pub(crate) fn native_camera_recovery_command(
+    reset_pressed: bool,
+    fit_pressed: bool,
+) -> Option<BibleGraphCameraCommand> {
+    if reset_pressed {
+        return Some(BibleGraphCameraCommand::ResetCamera);
+    }
+    if fit_pressed {
+        return Some(BibleGraphCameraCommand::FitGraph);
+    }
+    None
+}
+
+fn native_camera_recovery_transform<'a>(
+    command: BibleGraphCameraCommand,
+    nodes: impl Iterator<Item = &'a BibleGraphNativeNodeVisual>,
+) -> Option<Transform> {
+    match command {
+        BibleGraphCameraCommand::ResetCamera => Some(native_camera_reset_transform()),
+        BibleGraphCameraCommand::FitGraph => native_camera_fit_nodes_transform(nodes),
+        _ => None,
+    }
 }
 
 pub(crate) fn native_camera_fit_nodes_transform<'a>(
