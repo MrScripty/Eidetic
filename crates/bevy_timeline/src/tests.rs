@@ -163,6 +163,48 @@ fn controlled_native_window_rejects_invalid_transient_viewport() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_pans_transient_viewport_and_rebuilds_visuals() {
+    let node_id = NodeId::new();
+    let projection = projection_with_node(node_id);
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(&mut app, Some(&projection));
+    crate::native_render::set_timeline_native_viewport(app.world_mut(), 0, 5_000).unwrap();
+
+    let viewport = crate::native_render::pan_timeline_native_viewport(app.world_mut(), 1_000)
+        .expect("viewport pan");
+
+    assert_eq!(viewport.start_ms, 1_000);
+    assert_eq!(viewport.end_ms, 6_000);
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeClipVisual>();
+    assert_eq!(visuals.iter(app.world()).count(), 1);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_zooms_transient_viewport_and_rebuilds_visuals() {
+    let node_id = NodeId::new();
+    let projection = projection_with_node(node_id);
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(&mut app, Some(&projection));
+
+    let viewport = crate::native_render::zoom_timeline_native_viewport(app.world_mut(), 2.0)
+        .expect("viewport zoom");
+
+    assert_eq!(viewport.width_ms(), 5_000);
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeClipVisual>();
+    assert_eq!(visuals.iter(app.world()).count(), 1);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_clip_selection_commands() {
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();

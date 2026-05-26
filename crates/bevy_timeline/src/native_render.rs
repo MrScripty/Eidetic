@@ -5,9 +5,9 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, ButtonInput, Camera2d, ClearColor, Color, Commands, Component, Entity, MessageWriter,
-    MouseButton, Plugin, PluginGroup, Query, Res, Resource, Startup, Transform, Update, Vec2, Vec3,
-    Window, World,
+    App, ButtonInput, Camera2d, ClearColor, Color, Commands, Component, Entity, KeyCode,
+    MessageWriter, MouseButton, Plugin, PluginGroup, Query, Res, Resource, Startup, Transform,
+    Update, Vec2, Vec3, Window, World,
 };
 use bevy::sprite::Sprite;
 use bevy::window::{
@@ -291,6 +291,7 @@ impl Plugin for TimelineNativeRenderPlugin {
         app.add_systems(Update, mark_timeline_native_window_ready);
         app.add_systems(Update, apply_timeline_native_projection_updates);
         app.add_systems(Update, emit_timeline_native_click_selection);
+        app.add_systems(Update, navigate_timeline_native_viewport);
     }
 }
 
@@ -404,7 +405,51 @@ pub fn set_timeline_native_viewport(
         });
     }
     state.viewport.set_range(start_ms, end_ms);
+    rebuild_timeline_native_visuals_from_state(world);
     Ok(())
+}
+
+pub fn pan_timeline_native_viewport(
+    world: &mut World,
+    delta_ms: i64,
+) -> Result<TimelineViewport, TimelineRendererError> {
+    let viewport = {
+        let mut state = world.resource_mut::<TimelineNativeProjectionState>();
+        state.viewport.pan_by(delta_ms);
+        state.viewport
+    };
+    rebuild_timeline_native_visuals_from_state(world);
+    Ok(viewport)
+}
+
+pub fn zoom_timeline_native_viewport(
+    world: &mut World,
+    factor: f32,
+) -> Result<TimelineViewport, TimelineRendererError> {
+    if !factor.is_finite() || factor <= 0.0 {
+        return Err(TimelineRendererError::InvalidZoomFactor);
+    }
+    let viewport = {
+        let mut state = world.resource_mut::<TimelineNativeProjectionState>();
+        let center_ms = state
+            .viewport
+            .start_ms
+            .saturating_add(state.viewport.width_ms() / 2);
+        state.viewport.zoom_around(center_ms, factor);
+        state.viewport
+    };
+    rebuild_timeline_native_visuals_from_state(world);
+    Ok(viewport)
+}
+
+fn rebuild_timeline_native_visuals_from_state(world: &mut World) {
+    let projection = world
+        .resource::<TimelineNativeProjectionState>()
+        .projection
+        .clone();
+    if let Some(projection) = projection {
+        rebuild_timeline_native_visuals(world, &projection);
+    }
 }
 
 fn spawn_timeline_native_camera(mut commands: Commands) {
@@ -451,6 +496,35 @@ fn emit_timeline_native_click_selection(
         geometry,
         point,
     );
+}
+
+fn navigate_timeline_native_viewport(world: &mut World) {
+    let Some(keys) = world.get_resource::<ButtonInput<KeyCode>>() else {
+        return;
+    };
+    let pan_left = keys.just_pressed(KeyCode::KeyA) || keys.just_pressed(KeyCode::ArrowLeft);
+    let pan_right = keys.just_pressed(KeyCode::KeyD) || keys.just_pressed(KeyCode::ArrowRight);
+    let zoom_out = keys.just_pressed(KeyCode::KeyQ) || keys.just_pressed(KeyCode::Minus);
+    let zoom_in = keys.just_pressed(KeyCode::KeyE) || keys.just_pressed(KeyCode::Equal);
+
+    let viewport_width_ms = world
+        .get_resource::<TimelineNativeProjectionState>()
+        .map(|state| state.viewport.width_ms())
+        .unwrap_or(1);
+    let pan_step_ms = (viewport_width_ms / 10).max(1) as i64;
+
+    if pan_left {
+        let _ = pan_timeline_native_viewport(world, -pan_step_ms);
+    }
+    if pan_right {
+        let _ = pan_timeline_native_viewport(world, pan_step_ms);
+    }
+    if zoom_out {
+        let _ = zoom_timeline_native_viewport(world, 0.8);
+    }
+    if zoom_in {
+        let _ = zoom_timeline_native_viewport(world, 1.25);
+    }
 }
 
 pub(crate) fn emit_timeline_native_clip_selection(

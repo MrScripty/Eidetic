@@ -3669,6 +3669,10 @@ Implementation order:
   resource when mapping backend-projected clips into Bevy coordinates, with
   validation for invalid viewport ranges. This prepares native pan/zoom without
   making viewport state durable or frontend-owned.
+- Started: native timeline keyboard navigation can now pan and zoom that
+  transient viewport with Bevy key input and rebuild projection-derived clip
+  visuals. The viewport remains renderer-local and disposable; durable timeline
+  data still comes only from backend projections.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
