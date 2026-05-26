@@ -2,6 +2,7 @@ import type { ServerEventClient } from '$lib/serverEventClient.js';
 import {
   appendStreamingToken,
   completeGeneration,
+  editorState,
   setGenerationContext,
   setGenerationError,
 } from './editor.svelte.js';
@@ -126,6 +127,10 @@ export function setupServerEventHandlers(events: ServerEventClient) {
 
     events.on('script_changed', async () => {
       await Promise.all([refreshMainScriptDocument(), refreshChangeReview()]);
+    }),
+
+    events.on('select_timeline_node', (command) => {
+      editorState.selectedNodeId = command.node_id;
     }),
 
     events.on('select_node', (command) => {

@@ -29,6 +29,15 @@ pub struct DesktopServerEvent {
 enum DesktopServerEventPayload {
     Backend(ServerEvent),
     GraphRendererCommand(BibleGraphRendererCommand),
+    TimelineRendererFocus(TimelineRendererFocusEvent),
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+enum TimelineRendererFocusEvent {
+    SelectTimelineNode {
+        node_id: eidetic_core::timeline::node::NodeId,
+    },
 }
 
 pub struct DesktopEventBridgeOwner {
@@ -168,7 +177,9 @@ fn spawn_timeline_renderer_command_bridge(
             };
 
             for command in commands {
-                if let Err(error) = apply_timeline_renderer_command(&state, command.clone()).await {
+                if let Err(error) =
+                    handle_timeline_renderer_command(&app, &state, command.clone()).await
+                {
                     tracing::warn!(
                         "failed to apply timeline renderer command {command:?}: {error:?}"
                     );
@@ -176,6 +187,27 @@ fn spawn_timeline_renderer_command_bridge(
             }
         }
     })
+}
+
+async fn handle_timeline_renderer_command(
+    app: &tauri::AppHandle,
+    state: &AppState,
+    command: TimelineRendererCommand,
+) -> Result<(), String> {
+    if let TimelineRendererCommand::SelectNode { node_id } = command {
+        return app
+            .emit(
+                SERVER_EVENT_TOPIC,
+                DesktopServerEvent {
+                    event: DesktopServerEventPayload::TimelineRendererFocus(
+                        TimelineRendererFocusEvent::SelectTimelineNode { node_id },
+                    ),
+                },
+            )
+            .map_err(|error| error.to_string());
+    }
+
+    apply_timeline_renderer_command(state, command).await
 }
 
 async fn apply_timeline_renderer_command(
@@ -297,8 +329,8 @@ async fn refresh_graph_renderer_projection(app: &tauri::AppHandle) {
 mod tests {
     use super::{
         DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload, SERVER_EVENT_TOPIC,
-        TimelineRendererMutationCommand, should_refresh_graph_renderer_projection,
-        timeline_renderer_mutation_command,
+        TimelineRendererFocusEvent, TimelineRendererMutationCommand,
+        should_refresh_graph_renderer_projection, timeline_renderer_mutation_command,
     };
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
     use eidetic_bevy_timeline::TimelineRendererCommand;
@@ -402,6 +434,27 @@ mod tests {
             json!({
                 "event": {
                     "type": "clear_selection"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn serializes_timeline_renderer_focus_events_with_distinct_type() {
+        let node_id = NodeId::new();
+        let value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::TimelineRendererFocus(
+                TimelineRendererFocusEvent::SelectTimelineNode { node_id },
+            ),
+        })
+        .unwrap();
+
+        assert_eq!(
+            value,
+            json!({
+                "event": {
+                    "type": "select_timeline_node",
+                    "node_id": node_id.0.to_string()
                 }
             })
         );

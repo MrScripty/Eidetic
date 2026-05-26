@@ -6,7 +6,7 @@ import { refreshScriptDocumentProjection } from './scriptDocumentProjection.svel
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
-import { completeGeneration } from './editor.svelte.js';
+import { completeGeneration, editorState } from './editor.svelte.js';
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
 
 vi.mock('./timelineRenderProjection.svelte.js', () => ({
@@ -52,6 +52,7 @@ vi.mock('./changeReviewProjection.svelte.js', () => ({
 vi.mock('./editor.svelte.js', () => ({
   appendStreamingToken: vi.fn(),
   completeGeneration: vi.fn(),
+  editorState: { selectedNodeId: null },
   setGenerationContext: vi.fn(),
   setGenerationError: vi.fn(),
 }));
@@ -104,6 +105,7 @@ beforeEach(() => {
   });
   completeGenerationMock.mockReset();
   applyGraphRendererCommandMock.mockReset();
+  editorState.selectedNodeId = null;
 });
 
 describe('backend event projection handlers', () => {
@@ -224,5 +226,14 @@ describe('backend event projection handlers', () => {
 
     expect(applyGraphRendererCommandMock).toHaveBeenCalledWith(focusCommand);
     expect(applyGraphRendererCommandMock).toHaveBeenCalledWith(navigationCommand);
+  });
+
+  it('applies timeline renderer selection as transient editor focus', () => {
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
+
+    events.emit({ type: 'select_timeline_node', node_id: 'node.scene.beach' });
+
+    expect(editorState.selectedNodeId).toBe('node.scene.beach');
   });
 });

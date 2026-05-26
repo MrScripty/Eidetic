@@ -3523,7 +3523,12 @@ Implementation order:
   `command_service`. The create/split gap was resolved by adding explicit
   backend service entry points for core command envelopes, avoiding ad hoc JSON
   construction around private request DTOs. Selection remains transient UI
-  focus and still needs a projection-safe event path.
+  focus.
+- Started: timeline renderer selection now emits a distinct
+  `select_timeline_node` desktop event and Svelte applies it only to transient
+  editor focus. The event type is intentionally separate from graph
+  `select_node` commands so timeline node IDs cannot be misrouted as bible
+  graph node selections.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
