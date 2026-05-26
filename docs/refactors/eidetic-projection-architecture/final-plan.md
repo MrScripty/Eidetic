@@ -3755,6 +3755,10 @@ Implementation order:
   app configuration, projection ingestion, viewport/playhead mutation, and
   lifecycle systems while visual geometry and bounded control queues remain
   separate responsibilities.
+- Started: the headless timeline renderer app has been extracted into focused
+  `app.rs`. The public crate root now owns only exports, command/error
+  contracts, and module wiring, keeping future native interaction work from
+  expanding the crate root past the decomposition threshold.
 - Started: the desktop binary now has a `--timeline-renderer-smoke` lifecycle
   probe mirroring the graph renderer smoke path. It opens the desktop-owned
   timeline renderer with a minimal backend projection, observes status/focus/

@@ -1,7 +1,8 @@
 use super::*;
 use eidetic_core::contracts::{
     AffectConfidence, AffectProvenance, AffectValueId, Arousal, EmotionalIntensity, MoodLabel,
-    TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderTrack, Valence,
+    TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderProjection, TimelineRenderTrack,
+    Valence,
 };
 use eidetic_core::timeline::node::{ContentStatus, StoryLevel};
 use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
