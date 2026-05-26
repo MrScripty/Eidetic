@@ -8,6 +8,7 @@ use super::{
     NativeRendererPlatformStrategy, NativeRendererSupervisor, NativeRendererSupervisorLifecycle,
     NativeRendererThreadingModel, NativeRendererWindowThreadHandle,
 };
+pub use crate::renderer_window::DesktopRendererRunnerLifecycle as NativeRendererRunnerLifecycle;
 use eidetic_bevy_bible_graph::{
     BibleGraphCameraCommand, BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
 };
@@ -33,14 +34,6 @@ pub struct NativeRendererRunnerStatus {
     pub native_visual_node_count: usize,
     pub native_visual_edge_count: usize,
     pub last_error: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum NativeRendererRunnerLifecycle {
-    Closed,
-    OpenRequested,
-    Visible,
 }
 
 pub trait NativeRendererRunner {

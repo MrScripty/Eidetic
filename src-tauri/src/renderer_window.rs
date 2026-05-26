@@ -24,3 +24,11 @@ impl DesktopRendererWindowLifecycle {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DesktopRendererRunnerLifecycle {
+    Closed,
+    OpenRequested,
+    Visible,
+}

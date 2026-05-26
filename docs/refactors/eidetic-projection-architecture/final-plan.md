@@ -3564,6 +3564,11 @@ Implementation order:
   both use the same `closed`, `scene_starting`,
   `scene_ready_pending_native_runner`, and `visible` lifecycle semantics while
   keeping graph-specific platform/capability strategy separate.
+- Started: renderer runner lifecycle vocabulary is now shared desktop renderer
+  infrastructure instead of graph-only native runner code. The existing graph
+  runner keeps its public alias while timeline can attach `closed`,
+  `open_requested`, and `visible` runner lifecycle status without inventing
+  timeline-specific state names.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
