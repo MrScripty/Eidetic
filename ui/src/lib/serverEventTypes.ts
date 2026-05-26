@@ -13,5 +13,5 @@ export type ServerMessage =
   | { type: 'semantic_proposals_changed' }
   | { type: 'context_influence_changed'; target_node_id: string }
   | { type: 'script_changed' }
-  | { type: 'select_timeline_node'; node_id: string }
+  | { type: 'timeline_selection_changed'; node_id: string | null }
   | GraphRendererCommand;

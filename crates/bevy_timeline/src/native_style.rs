@@ -9,7 +9,11 @@ pub(crate) fn native_clip_color_rgb(
     level: StoryLevel,
     locked: bool,
     content_status: ContentStatus,
+    selected: bool,
 ) -> [f32; 3] {
+    if selected {
+        return [0.957, 0.769, 0.188];
+    }
     if locked {
         return [0.431, 0.455, 0.502];
     }

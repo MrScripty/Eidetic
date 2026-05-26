@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use eidetic_core::Project;
+use eidetic_core::timeline::node::NodeId;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
@@ -67,6 +68,9 @@ pub enum ServerEvent {
     ContextInfluenceChanged {
         target_node_id: uuid::Uuid,
     },
+    TimelineSelectionChanged {
+        node_id: Option<NodeId>,
+    },
 }
 
 /// Which AI backend to use.
@@ -126,6 +130,8 @@ pub struct AppState {
     save_tx: tokio::sync::mpsc::Sender<()>,
     /// Model library from Pumas for listing available local models.
     pub model_library: Option<Arc<ModelLibrary>>,
+    /// Backend-owned transient timeline selection projected to renderers and UI.
+    pub selected_timeline_node_id: Arc<Mutex<Option<NodeId>>>,
     /// Owns long-running backend tasks so desktop shutdown can stop them.
     pub task_supervisor: BackendTaskSupervisor,
 }
@@ -170,8 +176,16 @@ impl AppState {
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
             model_library,
+            selected_timeline_node_id: Arc::new(Mutex::new(None)),
             task_supervisor,
         }
+    }
+
+    pub fn select_timeline_node(&self, node_id: Option<NodeId>) {
+        *self.selected_timeline_node_id.lock() = node_id;
+        let _ = self
+            .events_tx
+            .send(ServerEvent::TimelineSelectionChanged { node_id });
     }
 
     pub fn shutdown_tasks(&self) {

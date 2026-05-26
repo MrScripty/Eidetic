@@ -75,6 +75,7 @@ fn controlled_native_window_app_builds_scene_from_initial_projection() {
     assert_eq!(clips[0].level, StoryLevel::Scene);
     assert_eq!(clips[0].content_status, ContentStatus::NotesOnly);
     assert!(!clips[0].locked);
+    assert!(!clips[0].selected);
     assert_eq!(clips[0].color_rgb, [0.342, 0.655, 0.691]);
     assert!(clips[0].width_px > 0.0);
 }
@@ -128,17 +129,44 @@ fn controlled_native_window_replaces_projection_derived_clip_visuals() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_highlights_projected_selected_clip() {
+    let node_id = NodeId::new();
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(&mut app, Some(&projection));
+
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeClipVisual>();
+    let clips: Vec<_> = visuals.iter(app.world()).collect();
+    assert_eq!(clips.len(), 1);
+    assert!(clips[0].selected);
+    assert_eq!(clips[0].color_rgb, [0.957, 0.769, 0.188]);
+    assert!(clips[0].height_px > 42.0);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_clip_visuals_use_projection_status_colors() {
     assert_eq!(
         crate::native_style::native_clip_color_rgb(
             StoryLevel::Scene,
             false,
             ContentStatus::NotesOnly,
+            false,
         ),
         [0.342, 0.655, 0.691]
     );
     assert_eq!(
-        crate::native_style::native_clip_color_rgb(StoryLevel::Beat, false, ContentStatus::Empty),
+        crate::native_style::native_clip_color_rgb(
+            StoryLevel::Beat,
+            false,
+            ContentStatus::Empty,
+            false,
+        ),
         [0.188, 0.227, 0.298]
     );
     assert_eq!(
@@ -146,6 +174,7 @@ fn controlled_native_window_clip_visuals_use_projection_status_colors() {
             StoryLevel::Act,
             false,
             ContentStatus::Generating,
+            false,
         ),
         [0.937, 0.706, 0.294]
     );
@@ -154,12 +183,27 @@ fn controlled_native_window_clip_visuals_use_projection_status_colors() {
             StoryLevel::Sequence,
             false,
             ContentStatus::HasContent,
+            false,
         ),
         [0.282, 0.686, 0.424]
     );
     assert_eq!(
-        crate::native_style::native_clip_color_rgb(StoryLevel::Premise, true, ContentStatus::Empty),
+        crate::native_style::native_clip_color_rgb(
+            StoryLevel::Premise,
+            true,
+            ContentStatus::Empty,
+            false,
+        ),
         [0.431, 0.455, 0.502]
+    );
+    assert_eq!(
+        crate::native_style::native_clip_color_rgb(
+            StoryLevel::Premise,
+            true,
+            ContentStatus::Empty,
+            true,
+        ),
+        [0.957, 0.769, 0.188]
     );
 }
 
@@ -778,6 +822,7 @@ fn renderer_app_rebuilds_scene_entities_from_projection() {
 
     renderer.set_projection(TimelineRenderProjection {
         total_duration_ms: 10_000,
+        selected_node_id: None,
         structure_segments: Vec::new(),
         tracks: Vec::new(),
         clips: Vec::new(),
@@ -1293,6 +1338,7 @@ fn projection_with_clip(
 ) -> TimelineRenderProjection {
     TimelineRenderProjection {
         total_duration_ms: 10_000,
+        selected_node_id: None,
         structure_segments: Vec::new(),
         tracks: vec![TimelineRenderTrack {
             track_id,
@@ -1329,6 +1375,7 @@ fn projection_with_two_tracks(
 ) -> TimelineRenderProjection {
     TimelineRenderProjection {
         total_duration_ms: 10_000,
+        selected_node_id: None,
         structure_segments: Vec::new(),
         tracks: vec![
             TimelineRenderTrack {

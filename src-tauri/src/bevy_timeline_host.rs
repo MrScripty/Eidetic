@@ -459,6 +459,7 @@ mod tests {
         let track_id = TrackId::new();
         TimelineRenderProjection {
             total_duration_ms: 10_000,
+            selected_node_id: None,
             structure_segments: Vec::new(),
             tracks: vec![TimelineRenderTrack {
                 track_id,

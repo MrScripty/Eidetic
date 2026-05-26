@@ -29,15 +29,6 @@ pub struct DesktopServerEvent {
 enum DesktopServerEventPayload {
     Backend(ServerEvent),
     GraphRendererCommand(BibleGraphRendererCommand),
-    TimelineRendererFocus(TimelineRendererFocusEvent),
-}
-
-#[derive(Clone, Debug, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-enum TimelineRendererFocusEvent {
-    SelectTimelineNode {
-        node_id: eidetic_core::timeline::node::NodeId,
-    },
 }
 
 pub struct DesktopEventBridgeOwner {
@@ -202,8 +193,7 @@ fn spawn_timeline_renderer_command_bridge(
             };
 
             for command in commands {
-                if let Err(error) =
-                    handle_timeline_renderer_command(&app, &state, command.clone()).await
+                if let Err(error) = handle_timeline_renderer_command(&state, command.clone()).await
                 {
                     tracing::warn!(
                         "failed to apply timeline renderer command {command:?}: {error:?}"
@@ -215,21 +205,12 @@ fn spawn_timeline_renderer_command_bridge(
 }
 
 async fn handle_timeline_renderer_command(
-    app: &tauri::AppHandle,
     state: &AppState,
     command: TimelineRendererCommand,
 ) -> Result<(), String> {
     if let TimelineRendererCommand::SelectNode { node_id } = command {
-        return app
-            .emit(
-                SERVER_EVENT_TOPIC,
-                DesktopServerEvent {
-                    event: DesktopServerEventPayload::TimelineRendererFocus(
-                        TimelineRendererFocusEvent::SelectTimelineNode { node_id },
-                    ),
-                },
-            )
-            .map_err(|error| error.to_string());
+        state.select_timeline_node(Some(node_id));
+        return Ok(());
     }
 
     apply_timeline_renderer_command(state, command).await
@@ -340,6 +321,7 @@ fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
             | ServerEvent::StoryChanged
             | ServerEvent::TimelineChanged
             | ServerEvent::SemanticProposalsChanged
+            | ServerEvent::TimelineSelectionChanged { .. }
             | ServerEvent::ContextInfluenceChanged { .. }
     )
 }
@@ -350,6 +332,7 @@ fn should_refresh_timeline_renderer_projection(event: &ServerEvent) -> bool {
         ServerEvent::TimelineChanged
             | ServerEvent::HierarchyChanged
             | ServerEvent::ContextInfluenceChanged { .. }
+            | ServerEvent::TimelineSelectionChanged { .. }
     )
 }
 
@@ -394,9 +377,8 @@ async fn refresh_timeline_renderer_projection(app: &tauri::AppHandle) {
 mod tests {
     use super::{
         DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload, SERVER_EVENT_TOPIC,
-        TimelineRendererFocusEvent, TimelineRendererMutationCommand,
-        should_refresh_graph_renderer_projection, should_refresh_timeline_renderer_projection,
-        timeline_renderer_mutation_command,
+        TimelineRendererMutationCommand, should_refresh_graph_renderer_projection,
+        should_refresh_timeline_renderer_projection, timeline_renderer_mutation_command,
     };
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
     use eidetic_bevy_timeline::TimelineRendererCommand;
@@ -506,12 +488,13 @@ mod tests {
     }
 
     #[test]
-    fn serializes_timeline_renderer_focus_events_with_distinct_type() {
+    fn serializes_backend_timeline_selection_events_inside_stable_desktop_payload() {
         let node_id = NodeId::new();
+        let event = ServerEvent::TimelineSelectionChanged {
+            node_id: Some(node_id),
+        };
         let value = serde_json::to_value(DesktopServerEvent {
-            event: DesktopServerEventPayload::TimelineRendererFocus(
-                TimelineRendererFocusEvent::SelectTimelineNode { node_id },
-            ),
+            event: DesktopServerEventPayload::Backend(event),
         })
         .unwrap();
 
@@ -519,7 +502,7 @@ mod tests {
             value,
             json!({
                 "event": {
-                    "type": "select_timeline_node",
+                    "type": "timeline_selection_changed",
                     "node_id": node_id.0.to_string()
                 }
             })
@@ -540,6 +523,11 @@ mod tests {
         assert!(should_refresh_graph_renderer_projection(
             &ServerEvent::ContextInfluenceChanged {
                 target_node_id: uuid::Uuid::nil(),
+            }
+        ));
+        assert!(should_refresh_graph_renderer_projection(
+            &ServerEvent::TimelineSelectionChanged {
+                node_id: Some(NodeId::new()),
             }
         ));
         assert!(!should_refresh_graph_renderer_projection(
@@ -565,6 +553,11 @@ mod tests {
         assert!(should_refresh_timeline_renderer_projection(
             &ServerEvent::ContextInfluenceChanged {
                 target_node_id: uuid::Uuid::nil(),
+            }
+        ));
+        assert!(should_refresh_timeline_renderer_projection(
+            &ServerEvent::TimelineSelectionChanged {
+                node_id: Some(NodeId::new()),
             }
         ));
         assert!(!should_refresh_timeline_renderer_projection(

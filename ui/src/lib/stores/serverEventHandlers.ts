@@ -129,8 +129,12 @@ export function setupServerEventHandlers(events: ServerEventClient) {
       await Promise.all([refreshMainScriptDocument(), refreshChangeReview()]);
     }),
 
-    events.on('select_timeline_node', (command) => {
+    events.on('timeline_selection_changed', async (command) => {
       editorState.selectedNodeId = command.node_id;
+      await Promise.all([
+        refreshTimelineRender(),
+        refreshActiveBibleRenderGraphForContextInfluence(),
+      ]);
     }),
 
     events.on('select_node', (command) => {

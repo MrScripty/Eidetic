@@ -199,6 +199,7 @@ pub async fn timeline_render_projection(
     state: &AppState,
 ) -> Result<ProjectionEnvelope<TimelineRenderProjection>, BackendError> {
     let path = active_project_path(state)?;
+    let selected_node_id = *state.selected_timeline_node_id.lock();
     let (project, _) = crate::persistence::load_project(&path)
         .await
         .map_err(BackendError::internal)?;
@@ -206,6 +207,7 @@ pub async fn timeline_render_projection(
         let conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
         let mut projection = TimelineRenderProjection::from_timeline(&project.timeline);
+        projection.selected_node_id = selected_node_id;
         crate::timeline_affect_overlay::apply_timeline_affect_overlays(
             &conn,
             &project.timeline,

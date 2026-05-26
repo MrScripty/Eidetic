@@ -17,6 +17,8 @@ const TIMELINE_RENDER_GAP_THRESHOLD_MS: u64 = 30_000;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TimelineRenderProjection {
     pub total_duration_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selected_node_id: Option<NodeId>,
     #[serde(default)]
     pub structure_segments: Vec<TimelineRenderStructureSegment>,
     #[serde(default)]
@@ -184,6 +186,7 @@ impl TimelineRenderProjection {
 
         Self {
             total_duration_ms: timeline.total_duration_ms,
+            selected_node_id: None,
             structure_segments,
             tracks,
             clips,
@@ -228,6 +231,7 @@ mod tests {
         let projection = TimelineRenderProjection::from_timeline(&timeline);
 
         assert_eq!(projection.total_duration_ms, 100_000);
+        assert_eq!(projection.selected_node_id, None);
         assert_eq!(projection.structure_segments[0].label, "Cold Open");
         assert_eq!(projection.tracks[0].level, StoryLevel::Premise);
         assert_eq!(projection.clips.len(), 1);

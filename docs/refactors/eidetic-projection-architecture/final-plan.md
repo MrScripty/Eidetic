@@ -3713,6 +3713,11 @@ Implementation order:
 - Started: native timeline styling decisions have been extracted into a
   focused `native_style.rs` module so color and size mapping stays separate
   from Bevy window lifecycle, input handling, and visual entity spawning.
+- Started: selected timeline node ownership has moved to backend transient
+  state and is included in `TimelineRenderProjection`. Native Bevy selection
+  commands now update that backend selection, backend events refresh timeline
+  and graph projections, and the native timeline renderer highlights selected
+  clips only from the projected selected node ID instead of Svelte-owned focus.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

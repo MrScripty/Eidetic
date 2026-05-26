@@ -228,12 +228,22 @@ describe('backend event projection handlers', () => {
     expect(applyGraphRendererCommandMock).toHaveBeenCalledWith(navigationCommand);
   });
 
-  it('applies timeline renderer selection as transient editor focus', () => {
+  it('applies backend timeline selection projection as transient editor focus', async () => {
     const events = new MockServerEventClient();
     setupServerEventHandlers(events as never);
 
-    events.emit({ type: 'select_timeline_node', node_id: 'node.scene.beach' });
+    events.emit({ type: 'timeline_selection_changed', node_id: 'node.scene.beach' });
 
     expect(editorState.selectedNodeId).toBe('node.scene.beach');
+    await vi.waitFor(() => {
+      expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
+      expect(refreshBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
+        selected_timeline_node_id: 'node.scene.beach',
+        selected_node_id: 'node.character.ada',
+        neighborhood_depth: 1,
+        max_nodes: 200,
+        max_edges: 500,
+      });
+    });
   });
 });

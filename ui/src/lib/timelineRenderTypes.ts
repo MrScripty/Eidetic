@@ -14,6 +14,7 @@ import type { AffectProvenance, AffectValueId } from './affectTypes.js';
 
 export interface TimelineRenderProjection {
   total_duration_ms: number;
+  selected_node_id?: NodeId | null;
   structure_segments?: TimelineRenderStructureSegment[];
   tracks: TimelineRenderTrack[];
   clips: TimelineRenderClip[];

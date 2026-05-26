@@ -81,6 +81,7 @@ pub struct TimelineNativeClipVisual {
     pub end_ms: u64,
     pub locked: bool,
     pub content_status: ContentStatus,
+    pub selected: bool,
     pub color_rgb: [f32; 3],
 }
 
@@ -696,7 +697,14 @@ pub(crate) fn rebuild_timeline_native_visuals(
         let x_px = x_start + (width_px / 2.0);
         let y_px =
             layout.top_px() - (track_index as f32 * (layout.clip_height_px + layout.track_gap_px));
-        let color_rgb = native_clip_color_rgb(clip.level, clip.locked, clip.content_status);
+        let selected = projection.selected_node_id == Some(clip.node_id);
+        let color_rgb =
+            native_clip_color_rgb(clip.level, clip.locked, clip.content_status, selected);
+        let height_px = if selected {
+            layout.clip_height_px + 6.0
+        } else {
+            layout.clip_height_px
+        };
 
         world.spawn((
             TimelineSceneEntity,
@@ -708,16 +716,17 @@ pub(crate) fn rebuild_timeline_native_visuals(
                 x_px,
                 y_px,
                 width_px,
-                height_px: layout.clip_height_px,
+                height_px,
                 start_ms: clip.start_ms,
                 end_ms: clip.end_ms,
                 locked: clip.locked,
                 content_status: clip.content_status,
+                selected,
                 color_rgb,
             },
             Sprite::from_color(
                 Color::srgb(color_rgb[0], color_rgb[1], color_rgb[2]),
-                Vec2::new(width_px, layout.clip_height_px),
+                Vec2::new(width_px, height_px),
             ),
             Transform::from_translation(Vec3::new(x_px, y_px, 0.0)),
         ));
