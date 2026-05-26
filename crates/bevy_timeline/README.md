@@ -31,6 +31,8 @@ Current scope:
   hide, and close state.
 - Render a disposable native playhead visual from bounded renderer-local
   playhead state and the current transient viewport.
+- Nudge native playhead state through Bevy keyboard input while keeping the
+  position clamped to the backend projection duration.
 
 Dependency review:
 

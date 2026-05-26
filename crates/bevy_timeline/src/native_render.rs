@@ -301,6 +301,7 @@ impl Plugin for TimelineNativeRenderPlugin {
         app.add_systems(Update, apply_timeline_native_projection_updates);
         app.add_systems(Update, emit_timeline_native_click_selection);
         app.add_systems(Update, navigate_timeline_native_viewport);
+        app.add_systems(Update, navigate_timeline_native_playhead);
     }
 }
 
@@ -472,6 +473,28 @@ pub fn set_timeline_native_playhead(
     Ok(playhead)
 }
 
+pub fn nudge_timeline_native_playhead(world: &mut World, delta_ms: i64) -> TimelinePlayhead {
+    let playhead = {
+        let mut state = world.resource_mut::<TimelineNativeProjectionState>();
+        let next_position_ms = if delta_ms.is_negative() {
+            state
+                .playhead
+                .position_ms
+                .saturating_sub(delta_ms.unsigned_abs())
+        } else {
+            state
+                .playhead
+                .position_ms
+                .saturating_add(delta_ms as u64)
+                .min(state.playhead.duration_ms)
+        };
+        state.playhead.set_position(next_position_ms);
+        state.playhead
+    };
+    rebuild_timeline_native_visuals_from_state(world);
+    playhead
+}
+
 fn rebuild_timeline_native_visuals_from_state(world: &mut World) {
     let projection = world
         .resource::<TimelineNativeProjectionState>()
@@ -554,6 +577,31 @@ fn navigate_timeline_native_viewport(world: &mut World) {
     }
     if zoom_in {
         let _ = zoom_timeline_native_viewport(world, 1.25);
+    }
+}
+
+fn navigate_timeline_native_playhead(world: &mut World) {
+    let Some(keys) = world.get_resource::<ButtonInput<KeyCode>>() else {
+        return;
+    };
+    let nudge_left = keys.just_pressed(KeyCode::KeyJ);
+    let nudge_right = keys.just_pressed(KeyCode::KeyL);
+
+    if !nudge_left && !nudge_right {
+        return;
+    }
+
+    let viewport_width_ms = world
+        .get_resource::<TimelineNativeProjectionState>()
+        .map(|state| state.viewport.width_ms())
+        .unwrap_or(1);
+    let nudge_step_ms = (viewport_width_ms / 100).max(1) as i64;
+
+    if nudge_left {
+        nudge_timeline_native_playhead(world, -nudge_step_ms);
+    }
+    if nudge_right {
+        nudge_timeline_native_playhead(world, nudge_step_ms);
     }
 }
 

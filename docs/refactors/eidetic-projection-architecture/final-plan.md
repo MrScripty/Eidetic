@@ -3677,6 +3677,9 @@ Implementation order:
   from bounded renderer-local playhead state and the current transient
   viewport. The playhead visual is rebuilt with projection-derived clip visuals
   and rejects positions outside the backend projection duration.
+- Started: native timeline keyboard input can now nudge that transient playhead
+  left and right within the backend projection duration, rebuilding disposable
+  Bevy visuals without mutating durable timeline data.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
