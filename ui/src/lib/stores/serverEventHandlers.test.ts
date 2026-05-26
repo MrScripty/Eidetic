@@ -8,6 +8,7 @@ import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import { completeGeneration, editorState } from './editor.svelte.js';
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
+import { timelineState } from './timeline.svelte.js';
 
 vi.mock('./timelineRenderProjection.svelte.js', () => ({
   refreshTimelineRenderProjection: vi.fn(),
@@ -106,6 +107,7 @@ beforeEach(() => {
   completeGenerationMock.mockReset();
   applyGraphRendererCommandMock.mockReset();
   editorState.selectedNodeId = null;
+  timelineState.playheadMs = 0;
 });
 
 describe('backend event projection handlers', () => {
@@ -237,6 +239,24 @@ describe('backend event projection handlers', () => {
     expect(editorState.selectedNodeId).toBe('node.scene.beach');
     await vi.waitFor(() => {
       expect(refreshTimelineRenderProjectionMock).toHaveBeenCalledTimes(1);
+      expect(refreshBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
+        selected_timeline_node_id: 'node.scene.beach',
+        selected_node_id: 'node.character.ada',
+        neighborhood_depth: 1,
+        max_nodes: 200,
+        max_edges: 500,
+      });
+    });
+  });
+
+  it('applies backend timeline playhead projection as transient timeline focus', async () => {
+    const events = new MockServerEventClient();
+    setupServerEventHandlers(events as never);
+
+    events.emit({ type: 'timeline_playhead_changed', position_ms: 42_500 });
+
+    expect(timelineState.playheadMs).toBe(42_500);
+    await vi.waitFor(() => {
       expect(refreshBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
         selected_timeline_node_id: 'node.scene.beach',
         selected_node_id: 'node.character.ada',

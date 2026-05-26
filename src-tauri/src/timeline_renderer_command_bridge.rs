@@ -50,6 +50,10 @@ async fn handle_timeline_renderer_command(
         state.select_timeline_node(Some(node_id));
         return Ok(());
     }
+    if let TimelineRendererCommand::SetPlayhead { position_ms } = command {
+        state.set_timeline_playhead(position_ms);
+        return Ok(());
+    }
 
     apply_timeline_renderer_command(state, command).await
 }
@@ -133,7 +137,8 @@ fn timeline_renderer_mutation_command(
                 right_node_id,
             }),
         )),
-        TimelineRendererCommand::SelectNode { .. } => None,
+        TimelineRendererCommand::SelectNode { .. }
+        | TimelineRendererCommand::SetPlayhead { .. } => None,
     }
 }
 
@@ -221,6 +226,12 @@ mod tests {
 
         assert_eq!(
             timeline_renderer_mutation_command(TimelineRendererCommand::SelectNode { node_id }),
+            None
+        );
+        assert_eq!(
+            timeline_renderer_mutation_command(TimelineRendererCommand::SetPlayhead {
+                position_ms: 42_000,
+            }),
             None
         );
     }

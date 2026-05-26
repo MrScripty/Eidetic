@@ -14,4 +14,5 @@ export type ServerMessage =
   | { type: 'context_influence_changed'; target_node_id: string }
   | { type: 'script_changed' }
   | { type: 'timeline_selection_changed'; node_id: string | null }
+  | { type: 'timeline_playhead_changed'; position_ms: number }
   | GraphRendererCommand;

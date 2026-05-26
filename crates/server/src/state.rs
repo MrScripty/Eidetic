@@ -71,6 +71,9 @@ pub enum ServerEvent {
     TimelineSelectionChanged {
         node_id: Option<NodeId>,
     },
+    TimelinePlayheadChanged {
+        position_ms: u64,
+    },
 }
 
 /// Which AI backend to use.
@@ -132,6 +135,8 @@ pub struct AppState {
     pub model_library: Option<Arc<ModelLibrary>>,
     /// Backend-owned transient timeline selection projected to renderers and UI.
     pub selected_timeline_node_id: Arc<Mutex<Option<NodeId>>>,
+    /// Backend-owned transient playhead position projected across timeline surfaces.
+    pub timeline_playhead_ms: Arc<Mutex<u64>>,
     /// Owns long-running backend tasks so desktop shutdown can stop them.
     pub task_supervisor: BackendTaskSupervisor,
 }
@@ -177,6 +182,7 @@ impl AppState {
             save_tx,
             model_library,
             selected_timeline_node_id: Arc::new(Mutex::new(None)),
+            timeline_playhead_ms: Arc::new(Mutex::new(0)),
             task_supervisor,
         }
     }
@@ -186,6 +192,13 @@ impl AppState {
         let _ = self
             .events_tx
             .send(ServerEvent::TimelineSelectionChanged { node_id });
+    }
+
+    pub fn set_timeline_playhead(&self, position_ms: u64) {
+        *self.timeline_playhead_ms.lock() = position_ms;
+        let _ = self
+            .events_tx
+            .send(ServerEvent::TimelinePlayheadChanged { position_ms });
     }
 
     pub fn shutdown_tasks(&self) {

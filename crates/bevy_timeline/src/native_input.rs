@@ -241,18 +241,34 @@ pub(crate) fn navigate_timeline_native_playhead(world: &mut World) {
         return;
     }
 
-    let viewport_width_ms = world
-        .get_resource::<TimelineNativeProjectionState>()
-        .map(|state| state.viewport.width_ms())
-        .unwrap_or(1);
-    let nudge_step_ms = (viewport_width_ms / 100).max(1) as i64;
+    let (viewport_width_ms, projection, control) = {
+        let Some(projection_state) = world.get_resource::<TimelineNativeProjectionState>() else {
+            return;
+        };
+        let projection = projection_state.projection.clone();
+        let control = world
+            .get_resource::<TimelineNativeWindowControl>()
+            .map(|control| control.clone());
+        (projection_state.viewport.width_ms(), projection, control)
+    };
+    let Some(projection) = projection else {
+        return;
+    };
+    let Some(control) = control else {
+        return;
+    };
 
-    if nudge_left {
-        nudge_timeline_native_playhead(world, -nudge_step_ms);
-    }
-    if nudge_right {
-        nudge_timeline_native_playhead(world, nudge_step_ms);
-    }
+    let nudge_step_ms = (viewport_width_ms / 100).max(1) as i64;
+    let playhead = if nudge_left {
+        nudge_timeline_native_playhead(world, -nudge_step_ms)
+    } else {
+        nudge_timeline_native_playhead(world, nudge_step_ms)
+    };
+    let _ = crate::native_command::emit_timeline_native_playhead_request(
+        &control,
+        &projection,
+        playhead.position_ms,
+    );
 }
 
 fn timeline_native_control_modifier_pressed(keys: &ButtonInput<KeyCode>) -> bool {

@@ -523,3 +523,44 @@ fn controlled_native_window_rejects_create_child_intent_with_unknown_parent() {
     );
     assert!(control.drain_commands().is_empty());
 }
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_emits_validated_playhead_command() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    crate::native_command::emit_timeline_native_playhead_request(
+        &window_control,
+        &projection_with_node(node_id),
+        4_250,
+    )
+    .unwrap();
+
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SetPlayhead { position_ms: 4_250 }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_rejects_invalid_playhead_command() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    assert_eq!(
+        crate::native_command::emit_timeline_native_playhead_request(
+            &window_control,
+            &projection_with_node(node_id),
+            12_000,
+        ),
+        Err(TimelineRendererError::InvalidPlayheadPosition {
+            position_ms: 12_000,
+            duration_ms: 10_000,
+        })
+    );
+    assert!(control.drain_commands().is_empty());
+}

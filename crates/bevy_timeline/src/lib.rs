@@ -77,6 +77,9 @@ pub enum TimelineRendererCommand {
         node_id: NodeId,
         parent_id: NodeId,
     },
+    SetPlayhead {
+        position_ms: u64,
+    },
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]

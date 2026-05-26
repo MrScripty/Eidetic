@@ -22,6 +22,7 @@ import { refreshPropagationProposalListProjection } from './propagationProposalP
 import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
 import { clearProjectionRefreshQueue, requestProjectionRefresh } from './projectionRefreshQueue.js';
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
+import { timelineState } from './timeline.svelte.js';
 
 const SCRIPT_DOCUMENT_KEY = `script-document:${MAIN_SCRIPT_DOCUMENT_ID}`;
 
@@ -135,6 +136,11 @@ export function setupServerEventHandlers(events: ServerEventClient) {
         refreshTimelineRender(),
         refreshActiveBibleRenderGraphForContextInfluence(),
       ]);
+    }),
+
+    events.on('timeline_playhead_changed', async (command) => {
+      timelineState.playheadMs = Math.max(0, Math.trunc(command.position_ms));
+      await refreshActiveBibleRenderGraphForContextInfluence();
     }),
 
     events.on('select_node', (command) => {

@@ -295,3 +295,23 @@ Recommended path:
 14. Add keyboard-accessible Svelte command alternatives for timeline operations
     that cannot be directly represented in the Bevy viewport.
 15. Remove the DOM/SVG timeline renderer once the Bevy renderer is active.
+
+Current implementation progress:
+
+- Completed: the desktop-owned floating Bevy timeline renderer can open, close,
+  receive backend-confirmed timeline render projections, render tracks/clips/
+  relationships/affect overlays/playhead, and emit validated selection,
+  move/resize, split, delete, and create-child command intents through the
+  Tauri/backend command bridge.
+- Completed: native Bevy playhead keyboard navigation emits a validated
+  transient `SetPlayhead` command through the renderer command queue. The
+  desktop bridge records the backend-owned transient playhead, emits a
+  `timeline_playhead_changed` event, refreshes active graph/timeline renderer
+  projections, and the Svelte projection handlers update `timelineState`
+  from the backend event instead of deriving graph context from unsynchronized
+  Bevy-local state.
+- Open: the temporary DOM timeline still updates its local playhead directly.
+  Do not expand that path. When the DOM timeline is retired or when adding
+  keyboard-accessible Svelte alternatives before retirement, route playhead
+  changes through the same backend-owned transient playhead command/event
+  boundary instead of creating another durable or optimistic source of truth.

@@ -177,6 +177,7 @@ fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
             | ServerEvent::TimelineChanged
             | ServerEvent::SemanticProposalsChanged
             | ServerEvent::TimelineSelectionChanged { .. }
+            | ServerEvent::TimelinePlayheadChanged { .. }
             | ServerEvent::ContextInfluenceChanged { .. }
     )
 }
@@ -188,6 +189,7 @@ fn should_refresh_timeline_renderer_projection(event: &ServerEvent) -> bool {
             | ServerEvent::HierarchyChanged
             | ServerEvent::ContextInfluenceChanged { .. }
             | ServerEvent::TimelineSelectionChanged { .. }
+            | ServerEvent::TimelinePlayheadChanged { .. }
     )
 }
 
@@ -363,6 +365,27 @@ mod tests {
     }
 
     #[test]
+    fn serializes_backend_timeline_playhead_events_inside_stable_desktop_payload() {
+        let event = ServerEvent::TimelinePlayheadChanged {
+            position_ms: 42_500,
+        };
+        let value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::Backend(event),
+        })
+        .unwrap();
+
+        assert_eq!(
+            value,
+            json!({
+                "event": {
+                    "type": "timeline_playhead_changed",
+                    "position_ms": 42500
+                }
+            })
+        );
+    }
+
+    #[test]
     fn graph_projection_bridge_refreshes_only_structural_events() {
         assert!(should_refresh_graph_renderer_projection(
             &ServerEvent::BibleChanged
@@ -382,6 +405,9 @@ mod tests {
             &ServerEvent::TimelineSelectionChanged {
                 node_id: Some(NodeId::new()),
             }
+        ));
+        assert!(should_refresh_graph_renderer_projection(
+            &ServerEvent::TimelinePlayheadChanged { position_ms: 1_000 }
         ));
         assert!(!should_refresh_graph_renderer_projection(
             &ServerEvent::GenerationProgress {
@@ -412,6 +438,9 @@ mod tests {
             &ServerEvent::TimelineSelectionChanged {
                 node_id: Some(NodeId::new()),
             }
+        ));
+        assert!(should_refresh_timeline_renderer_projection(
+            &ServerEvent::TimelinePlayheadChanged { position_ms: 1_000 }
         ));
         assert!(!should_refresh_timeline_renderer_projection(
             &ServerEvent::BibleChanged

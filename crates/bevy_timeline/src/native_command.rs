@@ -257,3 +257,19 @@ pub fn emit_timeline_native_selected_create_child_from_parent_request(
     emit_timeline_native_create_child_from_parent_request(control, projection, node_id, parent_id)?;
     Ok(Some(parent_id))
 }
+
+pub fn emit_timeline_native_playhead_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    position_ms: u64,
+) -> Result<(), TimelineRendererError> {
+    if position_ms > projection.total_duration_ms {
+        return Err(TimelineRendererError::InvalidPlayheadPosition {
+            position_ms,
+            duration_ms: projection.total_duration_ms,
+        });
+    }
+
+    control.enqueue_command(TimelineRendererCommand::SetPlayhead { position_ms });
+    Ok(())
+}
