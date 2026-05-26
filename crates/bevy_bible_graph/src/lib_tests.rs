@@ -330,6 +330,13 @@ fn renderer_app_3d_visual_snapshot_highlights_selected_neighborhood() {
     assert!(snapshot.edges[0].highlighted);
     assert!(snapshot.nodes.iter().any(|node| node.selected));
     assert!(snapshot.nodes.iter().all(|node| node.label_visible));
+    let selected_node = snapshot
+        .nodes
+        .iter()
+        .find(|node| node.selected)
+        .expect("selected node should be projected");
+    assert_eq!(selected_node.label_font_size, 16.0);
+    assert_eq!(selected_node.label_color, "#f6d977");
 }
 
 #[test]
@@ -356,6 +363,8 @@ fn renderer_app_visual_snapshot_preserves_category_colors_under_highlight() {
     assert!(snapshot.nodes[0].highlighted);
     assert_eq!(snapshot.nodes[0].fill_color, "#7a5c8f");
     assert!(snapshot.nodes.iter().all(|node| node.label_visible));
+    assert_eq!(snapshot.nodes[0].label_font_size, 14.0);
+    assert_eq!(snapshot.nodes[0].label_color, "#c9f3f5");
 }
 
 #[test]

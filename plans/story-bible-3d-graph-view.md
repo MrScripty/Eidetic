@@ -821,11 +821,13 @@ Current implementation progress:
   backend-owned transient camera command to the Bevy renderer so the native
   viewport can navigate to the focused graph region without Svelte owning
   camera state.
+- Completed: 3D graph labels are now projection-derived for visibility, font
+  size, and color, so native text styling follows selected/highlighted graph
+  state instead of renderer-local constants.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
 - Code review findings to resolve before completion:
-  - label visibility is too restrictive for MVP graph reading,
   - category mapping/coloring still needs one cross-boundary source of truth
     between backend projections and frontend controls,
   - graph-local add/edit workflows are incomplete and delete commands are not
@@ -869,8 +871,8 @@ Current implementation progress:
    cross-boundary category projection.
 11. Completed: replace 2D edge mesh placement with tested 3D segment geometry
     shared by rendering and picking.
-12. Update labels and material transforms so MVP graph nodes are readable and
-    highlight/dim states preserve category identity.
+12. Completed: update labels and material transforms so MVP graph nodes are
+    readable and highlight/dim states preserve category identity.
 13. Add selection, edge selection, highlighting, and detail-panel integration
     without collapsing graph scope on normal selection.
 14. Partially completed: add orbit/pan/zoom, frame selected, reset/fit view,

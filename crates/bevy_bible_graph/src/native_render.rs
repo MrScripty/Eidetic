@@ -1110,8 +1110,8 @@ pub fn rebuild_bible_graph_native_visuals(
                 label: node_label.clone(),
             },
             Text2d::new(node_label),
-            TextFont::from_font_size(if node.highlighted { 15.0 } else { 13.0 }),
-            TextColor(Color::srgb(0.86, 0.9, 0.94)),
+            TextFont::from_font_size(node.label_font_size),
+            TextColor(native_color_from_hex(node.label_color)),
             TextLayout::new_with_justify(Justify::Center),
             bevy::sprite::Anchor::TOP_CENTER,
             BibleGraphNativeLabelBillboard,
@@ -1427,6 +1427,11 @@ pub(crate) fn native_visual_state_color(
     Color::srgb(red, green, blue)
 }
 
+fn native_color_from_hex(color: &str) -> Color {
+    let (red, green, blue) = graph_color_components(color);
+    Color::srgb(red, green, blue)
+}
+
 fn graph_color_components(color: &str) -> (f32, f32, f32) {
     match color {
         "#f2c94c" => (0.949, 0.788, 0.298),
@@ -1445,6 +1450,9 @@ fn graph_color_components(color: &str) -> (f32, f32, f32) {
         "#4f7f8f" => (0.31, 0.498, 0.561),
         "#536f88" => (0.325, 0.435, 0.533),
         "#6fc2c9" => (0.435, 0.761, 0.788),
+        "#f6d977" => (0.965, 0.851, 0.467),
+        "#c9f3f5" => (0.788, 0.953, 0.961),
+        "#dbe3ea" => (0.859, 0.89, 0.918),
         "#34495e" => (0.204, 0.286, 0.369),
         _ => (0.8, 0.84, 0.9),
     }
