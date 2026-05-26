@@ -581,6 +581,78 @@ fn controlled_native_window_rejects_invalid_node_range_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_selected_nudge_command_from_projection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+
+    let nudged_range = crate::native_command::emit_timeline_native_selected_nudge_request(
+        &window_control,
+        &projection,
+        500,
+    )
+    .unwrap();
+
+    assert_eq!(nudged_range, Some((node_id, 1_500, 4_500)));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SetNodeRange {
+            node_id,
+            start_ms: 1_500,
+            end_ms: 4_500,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_clamps_selected_nudge_to_projection_bounds() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+
+    let nudged_range = crate::native_command::emit_timeline_native_selected_nudge_request(
+        &window_control,
+        &projection,
+        -5_000,
+    )
+    .unwrap();
+
+    assert_eq!(nudged_range, Some((node_id, 0, 3_000)));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SetNodeRange {
+            node_id,
+            start_ms: 0,
+            end_ms: 3_000,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_ignores_selected_nudge_without_projection_selection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    let nudged_range = crate::native_command::emit_timeline_native_selected_nudge_request(
+        &window_control,
+        &projection_with_node(node_id),
+        500,
+    )
+    .unwrap();
+
+    assert_eq!(nudged_range, None);
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_delete_node_command() {
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();

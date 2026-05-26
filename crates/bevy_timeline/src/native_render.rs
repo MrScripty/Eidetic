@@ -344,6 +344,7 @@ impl Plugin for TimelineNativeRenderPlugin {
         app.add_systems(Update, emit_timeline_native_click_selection);
         app.add_systems(Update, emit_timeline_native_selected_delete);
         app.add_systems(Update, emit_timeline_native_selected_split);
+        app.add_systems(Update, emit_timeline_native_selected_nudge);
         app.add_systems(Update, navigate_timeline_native_viewport);
         app.add_systems(Update, navigate_timeline_native_playhead);
     }
@@ -642,10 +643,46 @@ fn emit_timeline_native_selected_split(
     );
 }
 
+fn emit_timeline_native_selected_nudge(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    control: Option<Res<TimelineNativeWindowControl>>,
+    projection_state: Res<TimelineNativeProjectionState>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    if !timeline_native_control_modifier_pressed(&keys) {
+        return;
+    }
+    let nudge_left = keys.just_pressed(KeyCode::ArrowLeft);
+    let nudge_right = keys.just_pressed(KeyCode::ArrowRight);
+    if !nudge_left && !nudge_right {
+        return;
+    }
+    let Some(control) = control else {
+        return;
+    };
+    let Some(projection) = projection_state.projection.as_ref() else {
+        return;
+    };
+    let nudge_step_ms = (projection_state.viewport.width_ms() / 100).max(1) as i64;
+    let delta_ms = if nudge_left {
+        -nudge_step_ms
+    } else {
+        nudge_step_ms
+    };
+    let _ = crate::native_command::emit_timeline_native_selected_nudge_request(
+        &control, projection, delta_ms,
+    );
+}
+
 fn navigate_timeline_native_viewport(world: &mut World) {
     let Some(keys) = world.get_resource::<ButtonInput<KeyCode>>() else {
         return;
     };
+    if timeline_native_control_modifier_pressed(keys) {
+        return;
+    }
     let pan_left = keys.just_pressed(KeyCode::KeyA) || keys.just_pressed(KeyCode::ArrowLeft);
     let pan_right = keys.just_pressed(KeyCode::KeyD) || keys.just_pressed(KeyCode::ArrowRight);
     let zoom_out = keys.just_pressed(KeyCode::KeyQ) || keys.just_pressed(KeyCode::Minus);
@@ -669,6 +706,10 @@ fn navigate_timeline_native_viewport(world: &mut World) {
     if zoom_in {
         let _ = zoom_timeline_native_viewport(world, 1.25);
     }
+}
+
+fn timeline_native_control_modifier_pressed(keys: &ButtonInput<KeyCode>) -> bool {
+    keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight)
 }
 
 fn navigate_timeline_native_playhead(world: &mut World) {

@@ -43,6 +43,8 @@ Current scope:
   position clamped to the backend projection duration.
 - Emit native node range command requests only after validating the node and
   requested range against the active backend projection.
+- Emit native selected-clip nudge requests from backend-projected selection
+  through validated node range commands.
 - Emit native delete command requests only for nodes present in the active
   backend projection.
 - Emit native selected-delete command requests from backend-projected selection

@@ -3728,6 +3728,10 @@ Implementation order:
   playhead. The Bevy window generates fresh replacement node IDs, validates the
   split against the active projection, and still leaves mutation and projection
   confirmation at the backend command bridge.
+- Started: native timeline selected-clip nudge can now emit validated node
+  range commands from backend-projected selection. Ctrl+left/right in the Bevy
+  timeline window requests a bounded move through the backend command bridge,
+  while plain arrow keys remain renderer-local viewport navigation.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

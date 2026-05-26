@@ -47,6 +47,44 @@ pub fn emit_timeline_native_node_range_request(
     Ok(())
 }
 
+pub fn emit_timeline_native_selected_nudge_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    delta_ms: i64,
+) -> Result<Option<(NodeId, u64, u64)>, TimelineRendererError> {
+    let Some(node_id) = projection.selected_node_id else {
+        return Ok(None);
+    };
+    let Some(clip) = projection.clips.iter().find(|clip| clip.node_id == node_id) else {
+        return Err(TimelineRendererError::UnknownNode { node_id });
+    };
+    let (start_ms, end_ms) = if delta_ms.is_negative() {
+        let shift_ms = clip.start_ms.min(delta_ms.unsigned_abs());
+        if shift_ms == 0 {
+            return Ok(None);
+        }
+        (
+            clip.start_ms.saturating_sub(shift_ms),
+            clip.end_ms.saturating_sub(shift_ms),
+        )
+    } else {
+        let shift_ms = projection
+            .total_duration_ms
+            .saturating_sub(clip.end_ms)
+            .min(delta_ms as u64);
+        if shift_ms == 0 {
+            return Ok(None);
+        }
+        (
+            clip.start_ms.saturating_add(shift_ms),
+            clip.end_ms.saturating_add(shift_ms),
+        )
+    };
+
+    emit_timeline_native_node_range_request(control, projection, node_id, start_ms, end_ms)?;
+    Ok(Some((node_id, start_ms, end_ms)))
+}
+
 pub fn emit_timeline_native_delete_node_request(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,
