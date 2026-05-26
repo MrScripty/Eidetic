@@ -3510,6 +3510,10 @@ Implementation order:
   UI-local timeline state, HTTP transport, renderer-side persistence, or
   unsafe non-`Send` Bevy state in Tauri managed state is introduced. Native
   visible-window lifecycle remains a follow-up slice.
+- Started: Svelte now has typed helpers for the desktop timeline renderer
+  open/status/close commands. These helpers only invoke the Tauri-owned
+  renderer lifecycle and mirror returned status; they do not introduce
+  frontend-owned renderer state or optimistic timeline mutation.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
