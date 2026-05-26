@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
     AffectConfidence, AffectDependency, AffectDependencyEndpoint, AffectDependencyId,
-    AffectProjection, AffectTarget, AffectValue, AffectValueId, Arousal, ChangeEvent,
-    ChangeEventKind, CommandEnvelope, DeleteAffectValueCommand, EmotionalIntensity, FieldDelta,
+    AffectProjection, AffectProposal, AffectProposalId, AffectProposalListProjection, AffectTarget,
+    AffectValue, AffectValueId, Arousal, ChangeEvent, ChangeEventKind, CommandEnvelope,
+    CreateAffectProposalCommand, DeleteAffectValueCommand, EmotionalIntensity, FieldDelta,
     FieldValue, MoodLabel, ObjectKind, ObjectRevision, ProjectionEnvelope, ProjectionVersion,
     RecordAffectDependencyCommand, RevisionOperation, SetAffectValueCommand, Valence,
 };
@@ -61,6 +62,41 @@ CREATE INDEX IF NOT EXISTS idx_affect_dependencies_source
     ON affect_dependencies(source_kind, source_id, id);
 CREATE INDEX IF NOT EXISTS idx_affect_dependencies_target
     ON affect_dependencies(target_kind, target_id, id);
+
+CREATE TABLE IF NOT EXISTS affect_proposals (
+    id TEXT PRIMARY KEY CHECK (id <> ''),
+    status TEXT NOT NULL CHECK (status <> ''),
+    source TEXT NOT NULL CHECK (source <> ''),
+    affect_id TEXT NOT NULL CHECK (affect_id <> ''),
+    target_kind TEXT NOT NULL CHECK (target_kind <> ''),
+    target_id TEXT,
+    valence_bp INTEGER NOT NULL,
+    arousal_bp INTEGER NOT NULL,
+    intensity_bp INTEGER NOT NULL,
+    confidence_bp INTEGER NOT NULL,
+    provenance TEXT NOT NULL CHECK (provenance <> ''),
+    affect_rationale TEXT,
+    summary TEXT NOT NULL CHECK (summary <> ''),
+    proposal_rationale TEXT,
+    source_event_id TEXT REFERENCES change_events(id),
+    created_at_ms INTEGER NOT NULL,
+    created_event_id TEXT NOT NULL REFERENCES change_events(id)
+);
+CREATE INDEX IF NOT EXISTS idx_affect_proposals_status
+    ON affect_proposals(status, created_at_ms, id);
+CREATE INDEX IF NOT EXISTS idx_affect_proposals_target
+    ON affect_proposals(target_kind, target_id, id);
+CREATE INDEX IF NOT EXISTS idx_affect_proposals_source_event
+    ON affect_proposals(source_event_id, id);
+
+CREATE TABLE IF NOT EXISTS affect_proposal_mood_labels (
+    proposal_id TEXT NOT NULL REFERENCES affect_proposals(id) ON DELETE CASCADE,
+    label TEXT NOT NULL CHECK (label <> ''),
+    sort_order INTEGER NOT NULL,
+    PRIMARY KEY (proposal_id, sort_order)
+);
+CREATE INDEX IF NOT EXISTS idx_affect_proposal_mood_labels_label
+    ON affect_proposal_mood_labels(label, proposal_id);
 "#;
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {
@@ -193,6 +229,47 @@ pub(crate) fn record_affect_dependency(
     )
 }
 
+pub(crate) fn record_create_affect_proposal(
+    conn: &mut Connection,
+    command: &CommandEnvelope<CreateAffectProposalCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, HistoryStoreError> {
+    create_schema(conn)?;
+    command
+        .payload
+        .validate()
+        .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "affect.proposal_create")?
+    {
+        return Ok(outcome);
+    }
+    if affect_proposal_exists(conn, &command.payload.proposal_id)? {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "affect proposal already exists: {}",
+            command.payload.proposal_id.as_str()
+        )));
+    }
+
+    let proposal = command.payload.clone().into_proposal(created_at_ms);
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::AiProposalCreated,
+        format!("propose affect {}", proposal.summary),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = affect_proposal_revision(&proposal, event.id)?;
+
+    history_store::record_change_with(
+        conn,
+        command,
+        "affect.proposal_create",
+        &event,
+        &[revision],
+        |tx| insert_affect_proposal_in_transaction(tx, &proposal, event.id),
+    )
+}
+
 pub(crate) fn load_affect_dependencies_for_affect(
     conn: &Connection,
     affect_id: AffectValueId,
@@ -240,6 +317,43 @@ pub(crate) fn load_affect_projection(
 
     let summary = history_store::load_revision_summary_for_kind(conn, ObjectKind::AffectValue)?;
     let projection = AffectProjection { target, values };
+    Ok(match summary.latest_change_event_id {
+        Some(change_event_id) => ProjectionEnvelope::from_event(
+            ProjectionVersion(summary.revision_count + 1),
+            change_event_id,
+            projection,
+        ),
+        None => ProjectionEnvelope::initial(projection),
+    })
+}
+
+pub(crate) fn load_affect_proposals(
+    conn: &Connection,
+) -> Result<Vec<AffectProposal>, HistoryStoreError> {
+    create_schema(conn)?;
+    let mut statement = conn.prepare(
+        "SELECT id, status, source, affect_id, target_kind, target_id,
+                valence_bp, arousal_bp, intensity_bp, confidence_bp, provenance,
+                affect_rationale, summary, proposal_rationale, source_event_id, created_at_ms
+         FROM affect_proposals
+         ORDER BY created_at_ms ASC, id ASC",
+    )?;
+    let rows = statement.query_map([], row_to_affect_proposal)?;
+    let mut proposals = Vec::new();
+    for row in rows {
+        let mut proposal = row?;
+        proposal.proposed_value.mood_labels = load_proposal_mood_labels(conn, &proposal.id)?;
+        proposals.push(proposal);
+    }
+    Ok(proposals)
+}
+
+pub(crate) fn load_affect_proposal_list_projection(
+    conn: &Connection,
+) -> Result<ProjectionEnvelope<AffectProposalListProjection>, HistoryStoreError> {
+    let proposals = load_affect_proposals(conn)?;
+    let summary = history_store::load_revision_summary_for_kind(conn, ObjectKind::AffectProposal)?;
+    let projection = AffectProposalListProjection { proposals };
     Ok(match summary.latest_change_event_id {
         Some(change_event_id) => ProjectionEnvelope::from_event(
             ProjectionVersion(summary.revision_count + 1),
@@ -390,6 +504,50 @@ fn insert_affect_dependency_in_transaction(
     Ok(())
 }
 
+fn insert_affect_proposal_in_transaction(
+    tx: &Transaction<'_>,
+    proposal: &AffectProposal,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    let value = &proposal.proposed_value;
+    let (target_kind, target_id) = encode_target(&value.target)?;
+    tx.execute(
+        "INSERT INTO affect_proposals (
+            id, status, source, affect_id, target_kind, target_id,
+            valence_bp, arousal_bp, intensity_bp, confidence_bp, provenance,
+            affect_rationale, summary, proposal_rationale, source_event_id,
+            created_at_ms, created_event_id
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
+        params![
+            proposal.id.as_str(),
+            encode_string_enum(&proposal.status)?,
+            encode_string_enum(&proposal.source)?,
+            value.id.0.to_string(),
+            target_kind,
+            target_id,
+            i64::from(value.valence.basis_points()),
+            i64::from(value.arousal.basis_points()),
+            i64::from(value.intensity.basis_points()),
+            i64::from(value.confidence.basis_points()),
+            encode_string_enum(&value.provenance)?,
+            value.rationale.as_deref(),
+            proposal.summary.as_str(),
+            proposal.rationale.as_deref(),
+            proposal.source_event_id.map(|id| id.0.to_string()),
+            proposal.created_at_ms as i64,
+            event_id.0.to_string(),
+        ],
+    )?;
+    for (sort_order, label) in value.mood_labels.iter().enumerate() {
+        tx.execute(
+            "INSERT INTO affect_proposal_mood_labels (proposal_id, label, sort_order)
+             VALUES (?1, ?2, ?3)",
+            params![proposal.id.as_str(), label.as_str(), sort_order as i64],
+        )?;
+    }
+    Ok(())
+}
+
 fn affect_revision(
     value: &AffectValue,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -474,6 +632,48 @@ fn affect_dependency_revision(
     )))
 }
 
+fn affect_proposal_revision(
+    proposal: &AffectProposal,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> Result<ObjectRevision, HistoryStoreError> {
+    Ok(ObjectRevision::new(
+        ObjectKind::AffectProposal,
+        proposal.id.as_str().to_string(),
+        event_id,
+        RevisionOperation::Create,
+    )
+    .with_field(FieldDelta::new(
+        "status",
+        None,
+        Some(FieldValue::Text(encode_string_enum(&proposal.status)?)),
+    ))
+    .with_field(FieldDelta::new(
+        "source",
+        None,
+        Some(FieldValue::Text(encode_string_enum(&proposal.source)?)),
+    ))
+    .with_field(FieldDelta::new(
+        "target",
+        None,
+        Some(FieldValue::Text(target_label(
+            &proposal.proposed_value.target,
+        )?)),
+    ))
+    .with_field(FieldDelta::new(
+        "summary",
+        None,
+        Some(FieldValue::Text(proposal.summary.clone())),
+    ))
+    .with_field(FieldDelta::new(
+        "affect_id",
+        None,
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::AffectValue,
+            id: proposal.proposed_value.id.0.to_string(),
+        }),
+    )))
+}
+
 fn row_to_affect_value(row: &Row<'_>) -> Result<AffectValue, rusqlite::Error> {
     let id: String = row.get(0)?;
     let target_kind: String = row.get(1)?;
@@ -544,6 +744,47 @@ fn row_to_affect_dependency(row: &Row<'_>) -> Result<AffectDependency, rusqlite:
     })
 }
 
+fn row_to_affect_proposal(row: &Row<'_>) -> Result<AffectProposal, rusqlite::Error> {
+    let id: String = row.get(0)?;
+    let status: String = row.get(1)?;
+    let source: String = row.get(2)?;
+    let affect_id: String = row.get(3)?;
+    let target_kind: String = row.get(4)?;
+    let target_id: Option<String> = row.get(5)?;
+    let provenance: String = row.get(10)?;
+    let source_event_id: Option<String> = row.get(14)?;
+    let created_at_ms: i64 = row.get(15)?;
+    Ok(AffectProposal {
+        id: AffectProposalId::new(id)
+            .map_err(|error| conversion_error(0, rusqlite::types::Type::Text, error))?,
+        status: decode_string_enum(&status, 1)?,
+        source: decode_string_enum(&source, 2)?,
+        proposed_value: AffectValue {
+            id: AffectValueId(parse_uuid(&affect_id, 3)?),
+            target: decode_target(&target_kind, target_id.as_deref(), 4)?,
+            valence: Valence::new(row.get::<_, i16>(6)?)
+                .map_err(|error| conversion_error(6, rusqlite::types::Type::Integer, error))?,
+            arousal: Arousal::new(row.get::<_, u16>(7)?)
+                .map_err(|error| conversion_error(7, rusqlite::types::Type::Integer, error))?,
+            intensity: EmotionalIntensity::new(row.get::<_, u16>(8)?)
+                .map_err(|error| conversion_error(8, rusqlite::types::Type::Integer, error))?,
+            confidence: AffectConfidence::new(row.get::<_, u16>(9)?)
+                .map_err(|error| conversion_error(9, rusqlite::types::Type::Integer, error))?,
+            mood_labels: Vec::new(),
+            provenance: decode_string_enum(&provenance, 10)?,
+            rationale: row.get(11)?,
+        },
+        summary: row.get(12)?,
+        rationale: row.get(13)?,
+        source_event_id: source_event_id
+            .as_deref()
+            .map(|value| parse_uuid(value, 14).map(eidetic_core::contracts::ChangeEventId))
+            .transpose()?,
+        created_at_ms: u64::try_from(created_at_ms)
+            .map_err(|error| conversion_error(15, rusqlite::types::Type::Integer, error))?,
+    })
+}
+
 fn load_mood_labels(
     conn: &Connection,
     affect_id: AffectValueId,
@@ -555,6 +796,33 @@ fn load_mood_labels(
          ORDER BY sort_order ASC",
     )?;
     let rows = statement.query_map([affect_id.0.to_string()], |row| {
+        let label: String = row.get(0)?;
+        MoodLabel::new(label).map_err(|error| {
+            rusqlite::Error::FromSqlConversionFailure(
+                0,
+                rusqlite::types::Type::Text,
+                Box::new(error),
+            )
+        })
+    })?;
+    let mut labels = Vec::new();
+    for row in rows {
+        labels.push(row?);
+    }
+    Ok(labels)
+}
+
+fn load_proposal_mood_labels(
+    conn: &Connection,
+    proposal_id: &AffectProposalId,
+) -> Result<Vec<MoodLabel>, HistoryStoreError> {
+    let mut statement = conn.prepare(
+        "SELECT label
+         FROM affect_proposal_mood_labels
+         WHERE proposal_id = ?1
+         ORDER BY sort_order ASC",
+    )?;
+    let rows = statement.query_map([proposal_id.as_str()], |row| {
         let label: String = row.get(0)?;
         MoodLabel::new(label).map_err(|error| {
             rusqlite::Error::FromSqlConversionFailure(
@@ -594,6 +862,20 @@ fn dependency_exists(
     conn.query_row(
         "SELECT 1 FROM affect_dependencies WHERE id = ?1 AND deleted_event_id IS NULL",
         [dependency_id.0.to_string()],
+        |_| Ok(()),
+    )
+    .optional()
+    .map(|value| value.is_some())
+    .map_err(HistoryStoreError::from)
+}
+
+fn affect_proposal_exists(
+    conn: &Connection,
+    proposal_id: &AffectProposalId,
+) -> Result<bool, HistoryStoreError> {
+    conn.query_row(
+        "SELECT 1 FROM affect_proposals WHERE id = ?1",
+        [proposal_id.as_str()],
         |_| Ok(()),
     )
     .optional()
@@ -814,7 +1096,10 @@ fn conversion_error(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use eidetic_core::contracts::{AffectProvenance, AffectTraitKind, AgentWorkflowId, CommandId};
+    use eidetic_core::contracts::{
+        AffectProposalSource, AffectProvenance, AffectTraitKind, AgentWorkflowId, CommandId,
+        SemanticProposalStatus,
+    };
 
     #[test]
     fn affect_store_records_and_projects_timeline_node_values() {
@@ -930,6 +1215,48 @@ mod tests {
         assert_eq!(
             record_affect_dependency(&mut conn, &command, 101).unwrap(),
             RecordChangeOutcome::AlreadyRecorded
+        );
+    }
+
+    #[test]
+    fn affect_store_records_and_projects_affect_proposals() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let command = CommandEnvelope::new(CreateAffectProposalCommand {
+            proposal_id: AffectProposalId::new("proposal.affect.scene-weather").unwrap(),
+            source: AffectProposalSource::ManualScriptEdit,
+            proposed_value: AffectValue {
+                id: AffectValueId::new(),
+                target: AffectTarget::Project,
+                valence: Valence::new(-100).unwrap(),
+                arousal: Arousal::new(600).unwrap(),
+                intensity: EmotionalIntensity::new(700).unwrap(),
+                confidence: AffectConfidence::new(850).unwrap(),
+                mood_labels: vec![MoodLabel::new("rainy").unwrap()],
+                provenance: AffectProvenance::ScriptEditDetected,
+                rationale: Some("User changed the scene weather.".to_string()),
+            },
+            summary: "Detected rainier project mood".to_string(),
+            rationale: Some("Manual script edit introduced rain.".to_string()),
+            source_event_id: None,
+        });
+
+        let outcome = record_create_affect_proposal(&mut conn, &command, 200).unwrap();
+
+        assert_eq!(outcome, RecordChangeOutcome::Recorded);
+        let projection = load_affect_proposal_list_projection(&conn).unwrap();
+        assert_eq!(projection.payload.proposals.len(), 1);
+        let proposal = &projection.payload.proposals[0];
+        assert_eq!(proposal.id.as_str(), "proposal.affect.scene-weather");
+        assert_eq!(proposal.status, SemanticProposalStatus::Pending);
+        assert_eq!(proposal.source, AffectProposalSource::ManualScriptEdit);
+        assert_eq!(proposal.proposed_value.mood_labels[0].as_str(), "rainy");
+        assert_eq!(proposal.created_at_ms, 200);
+        assert!(
+            load_affect_projection(&conn, AffectTarget::Project)
+                .unwrap()
+                .payload
+                .values
+                .is_empty()
         );
     }
 

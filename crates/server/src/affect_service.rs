@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use eidetic_core::contracts::{
-    AffectDependency, AffectProjection, AffectTarget, AffectValueId, CommandEnvelope,
-    DeleteAffectValueCommand, ProjectionEnvelope, RecordAffectDependencyCommand,
-    SetAffectValueCommand,
+    AffectDependency, AffectProjection, AffectProposalListProjection, AffectTarget, AffectValueId,
+    CommandEnvelope, CreateAffectProposalCommand, DeleteAffectValueCommand, ProjectionEnvelope,
+    RecordAffectDependencyCommand, SetAffectValueCommand,
 };
 
 use crate::affect_store;
@@ -95,6 +95,37 @@ pub async fn affect_dependencies_for_affect(
     })?
 }
 
+pub async fn create_affect_proposal(
+    state: &AppState,
+    command: CommandEnvelope<CreateAffectProposalCommand>,
+) -> Result<ProjectionEnvelope<AffectProposalListProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        affect_store::record_create_affect_proposal(&mut conn, &command, 0)
+            .map_err(map_history_error)?;
+        affect_store::load_affect_proposal_list_projection(&conn).map_err(map_history_error)
+    })
+    .await
+    .map_err(|error| BackendError::internal(format!("affect proposal task failed: {error}")))?
+}
+
+pub async fn affect_proposal_projection(
+    state: &AppState,
+) -> Result<ProjectionEnvelope<AffectProposalListProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        affect_store::load_affect_proposal_list_projection(&conn).map_err(map_history_error)
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("affect proposal projection task failed: {error}"))
+    })?
+}
+
 fn active_project_path(state: &AppState) -> Result<PathBuf, BackendError> {
     state
         .project_database
@@ -110,8 +141,9 @@ fn map_history_error(error: HistoryStoreError) -> BackendError {
 mod tests {
     use eidetic_core::Template;
     use eidetic_core::contracts::{
-        AffectConfidence, AffectProvenance, AffectTarget, AffectValueId, Arousal, CommandEnvelope,
-        CommandId, EmotionalIntensity, MoodLabel, SetAffectValueCommand, Valence,
+        AffectConfidence, AffectProposalId, AffectProposalSource, AffectProvenance, AffectTarget,
+        AffectValue, AffectValueId, Arousal, CommandEnvelope, CommandId,
+        CreateAffectProposalCommand, EmotionalIntensity, MoodLabel, SetAffectValueCommand, Valence,
     };
     use eidetic_core::timeline::node::NodeId;
 
@@ -154,6 +186,54 @@ mod tests {
             Some(Template::MultiCam.build_project("Affect Service Test"));
 
         let reloaded_projection = super::affect_projection(&reloaded_state, target)
+            .await
+            .unwrap();
+
+        assert_eq!(initial_projection.payload, reloaded_projection.payload);
+        reloaded_state.shutdown_tasks();
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[tokio::test]
+    async fn affect_proposal_projection_replays_after_project_reload() {
+        let path = std::env::temp_dir().join(format!(
+            "eidetic-affect-proposal-service-{}.db",
+            uuid::Uuid::new_v4()
+        ));
+        let state = crate::state::AppState::new().await;
+        state.project_database.set_active_path(path.clone());
+        *state.project.lock() = Some(Template::MultiCam.build_project("Affect Proposal Test"));
+        let command = CommandEnvelope::new(CreateAffectProposalCommand {
+            proposal_id: AffectProposalId::new("proposal.affect.service").unwrap(),
+            source: AffectProposalSource::AgentAnalysis,
+            proposed_value: AffectValue {
+                id: AffectValueId::new(),
+                target: AffectTarget::Project,
+                valence: Valence::new(250).unwrap(),
+                arousal: Arousal::new(450).unwrap(),
+                intensity: EmotionalIntensity::new(650).unwrap(),
+                confidence: AffectConfidence::new(800).unwrap(),
+                mood_labels: vec![MoodLabel::new("tender").unwrap()],
+                provenance: AffectProvenance::AgentProposed,
+                rationale: Some("Agent detected a softer project mood.".to_string()),
+            },
+            summary: "Suggest softer affect".to_string(),
+            rationale: Some("The current draft leans more intimate.".to_string()),
+            source_event_id: None,
+        });
+
+        let initial_projection = super::create_affect_proposal(&state, command)
+            .await
+            .unwrap();
+        state.shutdown_tasks();
+        let reloaded_state = crate::state::AppState::new().await;
+        reloaded_state
+            .project_database
+            .set_active_path(path.clone());
+        *reloaded_state.project.lock() =
+            Some(Template::MultiCam.build_project("Affect Proposal Test"));
+
+        let reloaded_projection = super::affect_proposal_projection(&reloaded_state)
             .await
             .unwrap();
 

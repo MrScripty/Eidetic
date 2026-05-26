@@ -3402,6 +3402,10 @@ Implementation order:
   pending/accepted/rejected affect changes from manual script edits, agent
   analysis, or user drafts. Storage, Tauri commands, and acceptance/rejection
   execution remain the next slices.
+- Started: affect proposals now have relational SQLite storage and list
+  projection support that preserves proposed affect values and mood labels
+  without mutating canonical affect state. Tauri commands, Svelte projection
+  helpers, and acceptance/rejection execution remain the next slices.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived

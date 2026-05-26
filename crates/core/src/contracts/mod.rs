@@ -182,6 +182,7 @@ pub enum ObjectKind {
     ContextInfluence,
     GraphProposal,
     AffectDependency,
+    AffectProposal,
     AgentRun,
     AgentToolCall,
     AgentToolResult,
