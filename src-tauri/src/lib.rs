@@ -16,6 +16,7 @@ mod reference_commands;
 mod renderer_window;
 mod timeline_renderer_commands;
 mod timeline_renderer_platform_strategy;
+pub mod timeline_renderer_supervisor;
 pub mod timeline_renderer_window_thread;
 
 use bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};

@@ -3633,6 +3633,10 @@ Implementation order:
   flags, and runner threading model from the timeline native-window platform
   strategy while still reporting the native runner as closed/not visible until
   the visible runner is attached.
+- Started: desktop now has a timeline native-window supervisor with injected
+  thread tests for open, refresh, bounded shutdown, unsupported platforms, and
+  panic reporting. It owns only renderer-window lifecycle/status and does not
+  store timeline projections, commands, or durable state.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
