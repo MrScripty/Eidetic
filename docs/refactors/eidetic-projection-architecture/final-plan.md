@@ -3665,6 +3665,10 @@ Implementation order:
   and can emit validated `SelectNode` commands from projection-only clip hit
   tests. The desktop host drains native window commands through the existing
   backend-owned command bridge instead of adding a frontend-owned input path.
+- Started: native timeline visuals now use a transient renderer viewport
+  resource when mapping backend-projected clips into Bevy coordinates, with
+  validation for invalid viewport ranges. This prepares native pan/zoom without
+  making viewport state durable or frontend-owned.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

@@ -49,6 +49,7 @@ pub struct TimelineNativeRenderLayout {
 #[derive(Resource, Default)]
 struct TimelineNativeProjectionState {
     projection: Option<TimelineRenderProjection>,
+    viewport: TimelineViewport,
 }
 
 #[derive(Component)]
@@ -355,9 +356,7 @@ pub(crate) fn seed_initial_timeline_native_render_scene(
     let Some(projection) = projection else {
         return;
     };
-    app.world_mut()
-        .resource_mut::<TimelineNativeProjectionState>()
-        .projection = Some(projection.clone());
+    set_timeline_native_projection_state(app.world_mut(), projection);
     rebuild_timeline_scene(app.world_mut(), projection);
     rebuild_timeline_native_visuals(app.world_mut(), projection);
 }
@@ -378,12 +377,34 @@ pub(crate) fn apply_timeline_native_projection_updates(world: &mut bevy::prelude
     };
 
     if let Some(projection) = latest_projection {
-        world
-            .resource_mut::<TimelineNativeProjectionState>()
-            .projection = Some(projection.clone());
+        set_timeline_native_projection_state(world, &projection);
         rebuild_timeline_scene(world, &projection);
         rebuild_timeline_native_visuals(world, &projection);
     }
+}
+
+fn set_timeline_native_projection_state(world: &mut World, projection: &TimelineRenderProjection) {
+    let mut state = world.resource_mut::<TimelineNativeProjectionState>();
+    state.viewport.set_duration(projection.total_duration_ms);
+    state.projection = Some(projection.clone());
+}
+
+pub fn set_timeline_native_viewport(
+    world: &mut World,
+    start_ms: u64,
+    end_ms: u64,
+) -> Result<(), TimelineRendererError> {
+    let mut state = world.resource_mut::<TimelineNativeProjectionState>();
+    let duration_ms = state.viewport.duration_ms;
+    if start_ms >= end_ms || end_ms > duration_ms {
+        return Err(TimelineRendererError::InvalidViewportRange {
+            start_ms,
+            end_ms,
+            duration_ms,
+        });
+    }
+    state.viewport.set_range(start_ms, end_ms);
+    Ok(())
 }
 
 fn spawn_timeline_native_camera(mut commands: Commands) {
@@ -423,21 +444,23 @@ fn emit_timeline_native_click_selection(
         cursor_position.x.max(0.0) as u32,
         (window.height() - cursor_position.y).max(0.0) as u32,
     );
-    let _ = emit_timeline_native_clip_selection(&control, projection, geometry, point);
+    let _ = emit_timeline_native_clip_selection(
+        &control,
+        projection,
+        projection_state.viewport,
+        geometry,
+        point,
+    );
 }
 
 pub(crate) fn emit_timeline_native_clip_selection(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,
+    viewport: TimelineViewport,
     geometry: TimelineViewportGeometry,
     point: TimelineViewportPoint,
 ) -> Result<Option<NodeId>, TimelineRendererError> {
-    let node_id = hit_test_projection_clip_at_point(
-        projection,
-        TimelineViewport::from_duration(projection.total_duration_ms),
-        geometry,
-        point,
-    )?;
+    let node_id = hit_test_projection_clip_at_point(projection, viewport, geometry, point)?;
     if let Some(node_id) = node_id {
         let _ = control
             .command_sender
@@ -460,7 +483,11 @@ pub(crate) fn rebuild_timeline_native_visuals(
         .get_resource::<TimelineNativeRenderLayout>()
         .copied()
         .unwrap_or_else(|| TimelineNativeRenderLayout::from_window(1280, 360));
-    let duration_ms = projection.total_duration_ms.max(1);
+    let viewport = world
+        .get_resource::<TimelineNativeProjectionState>()
+        .map(|state| state.viewport)
+        .unwrap_or_else(|| TimelineViewport::from_duration(projection.total_duration_ms));
+    let viewport_width_ms = viewport.width_ms();
     let sorted_tracks = {
         let mut tracks = projection.tracks.clone();
         tracks.sort_by_key(|track| track.sort_order);
@@ -474,8 +501,15 @@ pub(crate) fn rebuild_timeline_native_visuals(
         else {
             continue;
         };
-        let start_ratio = clip.start_ms.min(duration_ms) as f32 / duration_ms as f32;
-        let end_ratio = clip.end_ms.min(duration_ms) as f32 / duration_ms as f32;
+        let visible_start_ms = clip.start_ms.max(viewport.start_ms);
+        let visible_end_ms = clip.end_ms.min(viewport.end_ms);
+        if visible_end_ms <= visible_start_ms {
+            continue;
+        }
+        let start_ratio =
+            visible_start_ms.saturating_sub(viewport.start_ms) as f32 / viewport_width_ms as f32;
+        let end_ratio =
+            visible_end_ms.saturating_sub(viewport.start_ms) as f32 / viewport_width_ms as f32;
         if end_ratio <= start_ratio {
             continue;
         }

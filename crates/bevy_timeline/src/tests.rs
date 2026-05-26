@@ -123,6 +123,46 @@ fn controlled_native_window_replaces_projection_derived_clip_visuals() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_clip_visuals_use_transient_viewport() {
+    let node_id = NodeId::new();
+    let projection = projection_with_node(node_id);
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(&mut app, Some(&projection));
+    crate::native_render::set_timeline_native_viewport(app.world_mut(), 4_000, 8_000).unwrap();
+    crate::native_render::rebuild_timeline_native_visuals(app.world_mut(), &projection);
+
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeClipVisual>();
+    assert_eq!(visuals.iter(app.world()).count(), 0);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_rejects_invalid_transient_viewport() {
+    let node_id = NodeId::new();
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(
+        &mut app,
+        Some(&projection_with_node(node_id)),
+    );
+
+    assert_eq!(
+        crate::native_render::set_timeline_native_viewport(app.world_mut(), 8_000, 4_000),
+        Err(TimelineRendererError::InvalidViewportRange {
+            start_ms: 8_000,
+            end_ms: 4_000,
+            duration_ms: 10_000,
+        })
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_clip_selection_commands() {
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();
@@ -131,6 +171,7 @@ fn controlled_native_window_emits_validated_clip_selection_commands() {
     let selected_node_id = crate::native_render::emit_timeline_native_clip_selection(
         &window_control,
         &projection_with_node(node_id),
+        TimelineViewport::from_duration(10_000),
         TimelineViewportGeometry::new(1_000, 300, 60),
         TimelineViewportPoint::new(250, 10),
     )
