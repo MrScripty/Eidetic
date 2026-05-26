@@ -3529,6 +3529,12 @@ Implementation order:
   editor focus. The event type is intentionally separate from graph
   `select_node` commands so timeline node IDs cannot be misrouted as bible
   graph node selections.
+- Started: desktop now subscribes the open timeline renderer to backend
+  timeline projection refresh events. Timeline, hierarchy, and context
+  influence changes re-seed the thread-owned Bevy host from
+  `TimelineRenderProjection` only when the renderer is running, keeping refresh
+  ownership in the backend and avoiding stale renderer state after
+  command-drain mutations or external timeline changes.
 - Started: the Bevy timeline leaf crate now records the Bevy 0.18.1 dependency
   review and has a guard test that keeps render/window/text/UI features
   disabled until a future visible-window slice performs an explicit dependency

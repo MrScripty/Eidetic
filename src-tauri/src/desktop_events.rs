@@ -4,8 +4,8 @@ use eidetic_core::contracts::{
     CommandEnvelope, CreateTimelineNodeCommand, DeleteTimelineNodeCommand,
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
-use eidetic_server::command_service;
 use eidetic_server::state::{AppState, ServerEvent};
+use eidetic_server::{command_service, projection_service};
 use serde::Serialize;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -50,6 +50,7 @@ impl DesktopEventBridgeOwner {
             handles: Mutex::new(vec![
                 spawn_server_event_bridge(app.clone(), state),
                 spawn_graph_renderer_projection_bridge(app.clone(), state),
+                spawn_timeline_renderer_projection_bridge(app.clone(), state),
                 spawn_graph_renderer_command_bridge(app.clone()),
                 spawn_timeline_renderer_command_bridge(app, state.clone()),
             ]),
@@ -116,6 +117,30 @@ fn spawn_graph_renderer_projection_bridge(
                 Err(broadcast::error::RecvError::Lagged(skipped)) => {
                     tracing::warn!("graph renderer projection bridge skipped {skipped} events");
                     refresh_graph_renderer_projection(&app).await;
+                }
+                Err(broadcast::error::RecvError::Closed) => break,
+            }
+        }
+    })
+}
+
+fn spawn_timeline_renderer_projection_bridge(
+    app: tauri::AppHandle,
+    state: &AppState,
+) -> tauri::async_runtime::JoinHandle<()> {
+    let mut events = state.events_tx.subscribe();
+
+    tauri::async_runtime::spawn(async move {
+        loop {
+            match events.recv().await {
+                Ok(event) => {
+                    if should_refresh_timeline_renderer_projection(&event) {
+                        refresh_timeline_renderer_projection(&app).await;
+                    }
+                }
+                Err(broadcast::error::RecvError::Lagged(skipped)) => {
+                    tracing::warn!("timeline renderer projection bridge skipped {skipped} events");
+                    refresh_timeline_renderer_projection(&app).await;
                 }
                 Err(broadcast::error::RecvError::Closed) => break,
             }
@@ -319,9 +344,49 @@ fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
     )
 }
 
+fn should_refresh_timeline_renderer_projection(event: &ServerEvent) -> bool {
+    matches!(
+        event,
+        ServerEvent::TimelineChanged
+            | ServerEvent::HierarchyChanged
+            | ServerEvent::ContextInfluenceChanged { .. }
+    )
+}
+
 async fn refresh_graph_renderer_projection(app: &tauri::AppHandle) {
     if let Err(error) = refresh_active_graph_renderer_projection(app).await {
         tracing::warn!("failed to update graph renderer projection: {error:?}");
+    }
+}
+
+async fn refresh_timeline_renderer_projection(app: &tauri::AppHandle) {
+    let Some(owner) = app.try_state::<DesktopTimelineRendererOwner>() else {
+        return;
+    };
+    let status = match owner.status() {
+        Ok(status) => status,
+        Err(error) => {
+            tracing::warn!("failed to read timeline renderer status: {error:?}");
+            return;
+        }
+    };
+    if !status.running {
+        return;
+    }
+
+    let Some(state) = app.try_state::<AppState>() else {
+        return;
+    };
+    let state = state.inner().clone();
+    let projection = match projection_service::timeline_render_projection(&state).await {
+        Ok(projection) => projection,
+        Err(error) => {
+            tracing::warn!("failed to project timeline renderer refresh: {error:?}");
+            return;
+        }
+    };
+    if let Err(error) = owner.set_projection(projection.payload) {
+        tracing::warn!("failed to refresh timeline renderer projection: {error:?}");
     }
 }
 
@@ -330,7 +395,8 @@ mod tests {
     use super::{
         DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload, SERVER_EVENT_TOPIC,
         TimelineRendererFocusEvent, TimelineRendererMutationCommand,
-        should_refresh_graph_renderer_projection, timeline_renderer_mutation_command,
+        should_refresh_graph_renderer_projection, should_refresh_timeline_renderer_projection,
+        timeline_renderer_mutation_command,
     };
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
     use eidetic_bevy_timeline::TimelineRendererCommand;
@@ -485,6 +551,34 @@ mod tests {
         ));
         assert!(!should_refresh_graph_renderer_projection(
             &ServerEvent::ScriptChanged
+        ));
+    }
+
+    #[test]
+    fn timeline_projection_bridge_refreshes_only_timeline_renderer_events() {
+        assert!(should_refresh_timeline_renderer_projection(
+            &ServerEvent::TimelineChanged
+        ));
+        assert!(should_refresh_timeline_renderer_projection(
+            &ServerEvent::HierarchyChanged
+        ));
+        assert!(should_refresh_timeline_renderer_projection(
+            &ServerEvent::ContextInfluenceChanged {
+                target_node_id: uuid::Uuid::nil(),
+            }
+        ));
+        assert!(!should_refresh_timeline_renderer_projection(
+            &ServerEvent::BibleChanged
+        ));
+        assert!(!should_refresh_timeline_renderer_projection(
+            &ServerEvent::ScriptChanged
+        ));
+        assert!(!should_refresh_timeline_renderer_projection(
+            &ServerEvent::GenerationProgress {
+                node_id: uuid::Uuid::nil(),
+                token: "draft".to_string(),
+                tokens_generated: 1,
+            }
         ));
     }
 
