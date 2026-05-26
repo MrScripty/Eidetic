@@ -3749,6 +3749,11 @@ Implementation order:
   active backend projection plus transient renderer viewport/playhead state and
   emit validated command requests, while native window lifecycle and visual
   projection remain in the renderer module.
+- Started: the desktop binary now has a `--timeline-renderer-smoke` lifecycle
+  probe mirroring the graph renderer smoke path. It opens the desktop-owned
+  timeline renderer with a minimal backend projection, observes status/focus/
+  close/reopen/project-close/app-shutdown transitions, and serializes backend
+  status snapshots without adding frontend-owned renderer state.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

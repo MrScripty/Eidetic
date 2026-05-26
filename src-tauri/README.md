@@ -12,7 +12,7 @@ commands and events.
 | `tauri.conf.json` | Desktop window, frontend asset, and build command configuration. |
 | `capabilities/` | Tauri permission configuration for desktop IPC access. |
 | `src/lib.rs` | Tauri command/event registration and backend runtime composition. |
-| `src/main.rs` | Native desktop binary entrypoint, backend `--smoke` startup probe, and graph renderer lifecycle smoke probe. |
+| `src/main.rs` | Native desktop binary entrypoint, backend `--smoke` startup probe, and graph/timeline renderer lifecycle smoke probes. |
 | `src/bin/native_renderer_smoke.rs` | Diagnostic-only Bevy/winit native graph renderer preflight binary. |
 | `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
 | `src/bevy_graph_host/` | Desktop-managed lifecycle owner and focused host adapter for the Bevy bible graph renderer leaf crate. |
@@ -38,6 +38,10 @@ commands and events.
   app-shutdown, emits JSON status snapshots, and exits after bounded renderer
   teardown. This is a local production-renderer proof path, not a frontend
   fallback.
+- The `--timeline-renderer-smoke` binary path exercises the desktop-managed
+  timeline renderer lifecycle through open/status/focus/close/reopen/
+  project-close/app-shutdown with a minimal backend-owned projection. It emits
+  JSON status snapshots and exits after bounded renderer teardown.
 - `eidetic-native-renderer-smoke --report-only` emits a JSON preflight record
   for the diagnostic Bevy/winit graph renderer path without opening a window.
   It records platform, backend, threading mode, window config, command, and

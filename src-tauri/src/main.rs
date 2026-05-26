@@ -27,8 +27,20 @@ fn main() {
             }
             return;
         }
+        Some("--timeline-renderer-smoke") => {
+            match eidetic_desktop::timeline_renderer_lifecycle_smoke_report_json() {
+                Ok(report) => println!("{report}"),
+                Err(error) => {
+                    eprintln!("{error}");
+                    std::process::exit(1);
+                }
+            }
+            return;
+        }
         Some("--help") => {
-            println!("Usage: eidetic-desktop [--smoke|--graph-renderer-smoke]");
+            println!(
+                "Usage: eidetic-desktop [--smoke|--graph-renderer-smoke|--timeline-renderer-smoke]"
+            );
             return;
         }
         _ => {}

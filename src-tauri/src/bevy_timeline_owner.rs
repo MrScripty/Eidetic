@@ -2,12 +2,20 @@ use std::sync::{Mutex, mpsc};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
+#[cfg(test)]
+use eidetic_bevy_timeline::TimelineNativeWindowRunnerConfig;
 use eidetic_bevy_timeline::TimelineRendererCommand;
 use eidetic_core::contracts::TimelineRenderProjection;
 
 use crate::bevy_timeline_host::{
     DesktopTimelineHost, TimelineHostError, TimelineHostResult, TimelineHostStatus,
 };
+#[cfg(test)]
+use crate::timeline_renderer_platform_strategy::TimelineRendererPlatformStrategy;
+#[cfg(test)]
+use crate::timeline_renderer_supervisor::TimelineRendererSupervisor;
+#[cfg(test)]
+use crate::timeline_renderer_window_thread::TimelineRendererWindowThreadHandle;
 
 pub const TIMELINE_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;
 pub const TIMELINE_RENDERER_REPLY_TIMEOUT_MS: u64 = 2_000;
@@ -46,10 +54,32 @@ pub struct DesktopTimelineRendererOwner {
 
 impl DesktopTimelineRendererOwner {
     pub fn start() -> TimelineHostResult<Self> {
+        Self::start_with_host(DesktopTimelineHost::new)
+    }
+
+    #[cfg(test)]
+    pub fn start_with_native_window_thread_start(
+        window_thread_start: fn(
+            TimelineNativeWindowRunnerConfig,
+        ) -> std::io::Result<TimelineRendererWindowThreadHandle>,
+    ) -> TimelineHostResult<Self> {
+        Self::start_with_host(move || {
+            DesktopTimelineHost::with_native_window(
+                TimelineRendererSupervisor::for_strategy_with_window_thread_start(
+                    TimelineRendererPlatformStrategy::LinuxWorkerThreadVerified,
+                    window_thread_start,
+                ),
+            )
+        })
+    }
+
+    fn start_with_host(
+        host_factory: impl FnOnce() -> DesktopTimelineHost + Send + 'static,
+    ) -> TimelineHostResult<Self> {
         let (sender, receiver) = mpsc::sync_channel(TIMELINE_RENDERER_COMMAND_QUEUE_CAPACITY);
         let join_handle = thread::Builder::new()
             .name("eidetic-bevy-timeline".to_string())
-            .spawn(move || run_timeline_owner(DesktopTimelineHost::new(), receiver))
+            .spawn(move || run_timeline_owner(host_factory(), receiver))
             .map_err(|_| TimelineHostError::OwnerStopped)?;
 
         Ok(Self {

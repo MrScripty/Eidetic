@@ -78,7 +78,7 @@ impl DesktopTimelineHost {
     }
 
     #[cfg(test)]
-    fn with_native_window(native_window: TimelineRendererSupervisor) -> Self {
+    pub(crate) fn with_native_window(native_window: TimelineRendererSupervisor) -> Self {
         Self {
             renderer: None,
             native_window,
