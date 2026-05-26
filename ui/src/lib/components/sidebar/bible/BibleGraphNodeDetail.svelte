@@ -86,11 +86,13 @@
         title="Outgoing Edges"
         edges={projection.payload.outgoing_edges}
         direction="outgoing"
+        ownerNodeId={projection.payload.node.id}
       />
       <BibleGraphEdgeList
         title="Incoming Edges"
         edges={projection.payload.incoming_edges}
         direction="incoming"
+        ownerNodeId={projection.payload.node.id}
       />
     </div>
   {:else if pending}
