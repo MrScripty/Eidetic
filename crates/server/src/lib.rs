@@ -33,6 +33,8 @@ pub(crate) mod context_influence_store;
 pub(crate) mod embeddings;
 pub(crate) mod export;
 pub mod export_service;
+pub mod graph_proposal_service;
+pub(crate) mod graph_proposal_store;
 pub(crate) mod history_read_store;
 pub(crate) mod history_store;
 pub mod model_service;

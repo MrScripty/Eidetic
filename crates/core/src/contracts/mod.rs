@@ -6,6 +6,7 @@ mod bible_render_graph;
 mod bible_render_graph_filter;
 mod change_review;
 mod context_influence;
+mod graph_proposal;
 mod propagation_proposal;
 mod script_document;
 mod selected_node_editor;
@@ -58,6 +59,10 @@ pub use context_influence::{
     ContextInfluenceKind, ContextInfluenceProjection, ContextInfluenceProjectionRequest,
     ContextInfluenceProvenance, ContextInfluenceRecord, ContextLayerRole, ContextStackLayer,
     ContextStackProjection, ContextStackProjectionRequest, RecordContextEvaluationCommand,
+};
+pub use graph_proposal::{
+    CreateGraphProposalCommand, GraphProposal, GraphProposalAction, GraphProposalContractError,
+    GraphProposalId, GraphProposalListProjection, GraphProposalTarget,
 };
 pub use propagation_proposal::{
     AcceptPropagationProposalCommand, CreatePropagationProposalCommand, PropagationProposal,
@@ -166,6 +171,7 @@ pub enum ObjectKind {
     Projection,
     ContextEvaluation,
     ContextInfluence,
+    GraphProposal,
     AgentRun,
     AgentToolCall,
     AgentToolResult,

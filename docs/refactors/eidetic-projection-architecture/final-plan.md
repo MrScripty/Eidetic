@@ -3233,6 +3233,11 @@ Implementation order:
   write/proposal tools, and does not read or mutate visualization state.
 - Add generic proposal storage for graph node, field, edge, and context-link
   targets before implementing proposal-producing graph tools.
+- Completed: core and server now define a separate generic graph proposal model,
+  SQLite current-state/history storage, and list projection for reviewable
+  bible-node, bible-field, bible-edge, and timeline-context-link proposals.
+  This does not reuse bible-reference proposal rows and does not mutate
+  canonical graph or timeline state.
 - Add proposal-producing graph tools that write generic reviewable proposal
   records and never mutate canonical graph rows directly.
 - Add active llama.cpp endpoint resolution through Pumas/model-service seams
