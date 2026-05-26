@@ -3,7 +3,10 @@ use uuid::Uuid;
 
 use crate::timeline::node::NodeId;
 
-use super::{BibleGraphNodeId, BibleGraphSnapshotId, CommandId, ScriptSegmentId};
+use super::{
+    AgentWorkflowId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey, BibleGraphSnapshotId,
+    CommandId, ScriptSegmentId,
+};
 
 const VALENCE_MIN: i16 = -1000;
 const VALENCE_MAX: i16 = 1000;
@@ -14,6 +17,15 @@ const ZERO_TO_ONE_MAX: u16 = 1000;
 pub struct AffectValueId(pub Uuid);
 
 impl AffectValueId {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct AffectDependencyId(pub Uuid);
+
+impl AffectDependencyId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
@@ -136,6 +148,58 @@ pub enum AffectProvenance {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AffectTraitKind {
+    Valence,
+    Arousal,
+    EmotionalIntensity,
+    Confidence,
+    MoodLabel,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+pub enum AffectDependencyEndpoint {
+    TimelineNode {
+        node_id: NodeId,
+    },
+    ScriptSegment {
+        segment_id: ScriptSegmentId,
+    },
+    BibleNode {
+        node_id: BibleGraphNodeId,
+    },
+    BibleField {
+        node_id: BibleGraphNodeId,
+        part_key: BibleGraphPartKey,
+        field_key: BibleGraphFieldKey,
+    },
+    GenerationPrompt {
+        workflow_id: AgentWorkflowId,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AffectDependency {
+    pub id: AffectDependencyId,
+    pub affect_id: AffectValueId,
+    pub trait_kind: AffectTraitKind,
+    pub source: AffectDependencyEndpoint,
+    pub target: AffectDependencyEndpoint,
+    pub reason: String,
+}
+
+impl AffectDependency {
+    pub fn validate(&self) -> Result<(), AffectContractError> {
+        if self.reason.trim().is_empty() {
+            return Err(AffectContractError::EmptyDependencyReason);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AffectValue {
     pub id: AffectValueId,
@@ -206,6 +270,19 @@ pub struct DeleteAffectValueCommand {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct RecordAffectDependencyCommand {
+    pub command_id: CommandId,
+    pub dependency: AffectDependency,
+}
+
+impl RecordAffectDependencyCommand {
+    pub fn validate(&self) -> Result<(), AffectContractError> {
+        self.dependency.validate()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AffectProjection {
     pub target: AffectTarget,
     pub values: Vec<AffectValue>,
@@ -226,6 +303,8 @@ pub enum AffectContractError {
     MissingMoodLabel,
     #[error("affect rationale cannot be empty when provided")]
     EmptyRationale,
+    #[error("affect dependency reason cannot be empty")]
+    EmptyDependencyReason,
 }
 
 fn validate_i16_range(
@@ -323,5 +402,37 @@ mod tests {
         let decoded: SetAffectValueCommand = serde_json::from_str(&encoded).unwrap();
 
         assert_eq!(decoded, command);
+    }
+
+    #[test]
+    fn affect_dependency_contract_round_trips_and_validates_reason() {
+        let command = RecordAffectDependencyCommand {
+            command_id: CommandId::new(),
+            dependency: AffectDependency {
+                id: AffectDependencyId::new(),
+                affect_id: AffectValueId::new(),
+                trait_kind: AffectTraitKind::Valence,
+                source: AffectDependencyEndpoint::TimelineNode {
+                    node_id: NodeId::new(),
+                },
+                target: AffectDependencyEndpoint::GenerationPrompt {
+                    workflow_id: AgentWorkflowId::new("workflow.scene.graph_context").unwrap(),
+                },
+                reason: "Scene valence constrains the generation prompt.".to_string(),
+            },
+        };
+
+        command.validate().unwrap();
+        let encoded = serde_json::to_string(&command).unwrap();
+        let decoded: RecordAffectDependencyCommand = serde_json::from_str(&encoded).unwrap();
+
+        assert_eq!(decoded, command);
+
+        let mut invalid = command;
+        invalid.dependency.reason = " ".to_string();
+        assert_eq!(
+            invalid.validate(),
+            Err(AffectContractError::EmptyDependencyReason)
+        );
     }
 }

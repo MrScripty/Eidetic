@@ -3380,10 +3380,11 @@ Implementation order:
   serialization/validation tests.
 - Add SQLite schema/current-state/revision storage for affect values and
   dependencies.
-- Started: server now has relational SQLite current-state/history storage for
+- Completed: server now has relational SQLite current-state/history storage for
   affect values, mood-label rows, soft delete, idempotent set/delete recording,
-  host-neutral service functions, and target-scoped projections. Affect
-  dependency rows remain the next storage slice before this item is complete.
+  target-scoped projections, and queryable affect dependency rows linking
+  affect traits to timeline, script, bible, and generation-prompt endpoints
+  through host-neutral service functions.
 - Add the smallest command/projection vertical slice: set affect for one
   timeline node, read the affect projection, and replay it after project reload.
 - Add script-generation context integration after the affect projection is

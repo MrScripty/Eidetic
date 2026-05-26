@@ -21,9 +21,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub use affect::{
-    AffectConfidence, AffectContractError, AffectProjection, AffectProvenance, AffectTarget,
+    AffectConfidence, AffectContractError, AffectDependency, AffectDependencyEndpoint,
+    AffectDependencyId, AffectProjection, AffectProvenance, AffectTarget, AffectTraitKind,
     AffectValue, AffectValueId, Arousal, DeleteAffectValueCommand, EmotionalIntensity, MoodLabel,
-    SetAffectValueCommand, Valence,
+    RecordAffectDependencyCommand, SetAffectValueCommand, Valence,
 };
 pub use agent_workflow::{
     AgentProposalMode, AgentRun, AgentRunId, AgentRunStatus, AgentToolArguments, AgentToolBudget,
@@ -178,6 +179,7 @@ pub enum ObjectKind {
     ContextEvaluation,
     ContextInfluence,
     GraphProposal,
+    AffectDependency,
     AgentRun,
     AgentToolCall,
     AgentToolResult,

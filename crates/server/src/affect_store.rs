@@ -1,8 +1,9 @@
 use eidetic_core::contracts::{
-    AffectConfidence, AffectProjection, AffectTarget, AffectValue, AffectValueId, Arousal,
-    ChangeEvent, ChangeEventKind, CommandEnvelope, DeleteAffectValueCommand, EmotionalIntensity,
-    FieldDelta, FieldValue, MoodLabel, ObjectKind, ObjectRevision, ProjectionEnvelope,
-    ProjectionVersion, RevisionOperation, SetAffectValueCommand, Valence,
+    AffectConfidence, AffectDependency, AffectDependencyEndpoint, AffectDependencyId,
+    AffectProjection, AffectTarget, AffectValue, AffectValueId, Arousal, ChangeEvent,
+    ChangeEventKind, CommandEnvelope, DeleteAffectValueCommand, EmotionalIntensity, FieldDelta,
+    FieldValue, MoodLabel, ObjectKind, ObjectRevision, ProjectionEnvelope, ProjectionVersion,
+    RecordAffectDependencyCommand, RevisionOperation, SetAffectValueCommand, Valence,
 };
 use eidetic_core::timeline::node::NodeId;
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
@@ -37,6 +38,29 @@ CREATE TABLE IF NOT EXISTS affect_mood_labels (
 );
 CREATE INDEX IF NOT EXISTS idx_affect_mood_labels_label
     ON affect_mood_labels(label, affect_id);
+
+CREATE TABLE IF NOT EXISTS affect_dependencies (
+    id TEXT PRIMARY KEY CHECK (id <> ''),
+    affect_id TEXT NOT NULL REFERENCES affect_values(id),
+    trait_kind TEXT NOT NULL CHECK (trait_kind <> ''),
+    source_kind TEXT NOT NULL CHECK (source_kind <> ''),
+    source_id TEXT NOT NULL CHECK (source_id <> ''),
+    source_part_key TEXT,
+    source_field_key TEXT,
+    target_kind TEXT NOT NULL CHECK (target_kind <> ''),
+    target_id TEXT NOT NULL CHECK (target_id <> ''),
+    target_part_key TEXT,
+    target_field_key TEXT,
+    reason TEXT NOT NULL CHECK (reason <> ''),
+    created_event_id TEXT NOT NULL REFERENCES change_events(id),
+    deleted_event_id TEXT REFERENCES change_events(id)
+);
+CREATE INDEX IF NOT EXISTS idx_affect_dependencies_affect
+    ON affect_dependencies(affect_id, trait_kind, id);
+CREATE INDEX IF NOT EXISTS idx_affect_dependencies_source
+    ON affect_dependencies(source_kind, source_id, id);
+CREATE INDEX IF NOT EXISTS idx_affect_dependencies_target
+    ON affect_dependencies(target_kind, target_id, id);
 "#;
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {
@@ -118,6 +142,77 @@ pub(crate) fn record_delete_affect_value(
         )?;
         Ok(())
     })
+}
+
+pub(crate) fn record_affect_dependency(
+    conn: &mut Connection,
+    command: &CommandEnvelope<RecordAffectDependencyCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, HistoryStoreError> {
+    create_schema(conn)?;
+    command
+        .payload
+        .validate()
+        .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "affect.dependency_record")?
+    {
+        return Ok(outcome);
+    }
+    if load_affect_value(conn, command.payload.dependency.affect_id)?.is_none() {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "affect value not found: {}",
+            command.payload.dependency.affect_id.0
+        )));
+    }
+    if dependency_exists(conn, command.payload.dependency.id)? {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "affect dependency already exists: {}",
+            command.payload.dependency.id.0
+        )));
+    }
+
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!(
+            "record affect dependency {}",
+            command.payload.dependency.id.0
+        ),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = affect_dependency_revision(&command.payload.dependency, event.id)?;
+
+    history_store::record_change_with(
+        conn,
+        command,
+        "affect.dependency_record",
+        &event,
+        &[revision],
+        |tx| insert_affect_dependency_in_transaction(tx, &command.payload.dependency, event.id),
+    )
+}
+
+pub(crate) fn load_affect_dependencies_for_affect(
+    conn: &Connection,
+    affect_id: AffectValueId,
+) -> Result<Vec<AffectDependency>, HistoryStoreError> {
+    create_schema(conn)?;
+    let mut statement = conn.prepare(
+        "SELECT id, affect_id, trait_kind,
+                source_kind, source_id, source_part_key, source_field_key,
+                target_kind, target_id, target_part_key, target_field_key,
+                reason
+         FROM affect_dependencies
+         WHERE affect_id = ?1 AND deleted_event_id IS NULL
+         ORDER BY id ASC",
+    )?;
+    let rows = statement.query_map([affect_id.0.to_string()], row_to_affect_dependency)?;
+    let mut dependencies = Vec::new();
+    for row in rows {
+        dependencies.push(row?);
+    }
+    Ok(dependencies)
 }
 
 pub(crate) fn load_affect_projection(
@@ -240,6 +335,39 @@ fn upsert_affect_value_in_transaction(
     Ok(())
 }
 
+fn insert_affect_dependency_in_transaction(
+    tx: &Transaction<'_>,
+    dependency: &AffectDependency,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    let source = SqlAffectDependencyEndpoint::from_endpoint(&dependency.source);
+    let target = SqlAffectDependencyEndpoint::from_endpoint(&dependency.target);
+    tx.execute(
+        "INSERT INTO affect_dependencies (
+            id, affect_id, trait_kind,
+            source_kind, source_id, source_part_key, source_field_key,
+            target_kind, target_id, target_part_key, target_field_key,
+            reason, created_event_id
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+        params![
+            dependency.id.0.to_string(),
+            dependency.affect_id.0.to_string(),
+            encode_string_enum(&dependency.trait_kind)?,
+            source.kind,
+            source.id,
+            source.part_key,
+            source.field_key,
+            target.kind,
+            target.id,
+            target.part_key,
+            target.field_key,
+            dependency.reason,
+            event_id.0.to_string(),
+        ],
+    )?;
+    Ok(())
+}
+
 fn affect_revision(
     value: &AffectValue,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -287,6 +415,43 @@ fn affect_revision(
     )))
 }
 
+fn affect_dependency_revision(
+    dependency: &AffectDependency,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> Result<ObjectRevision, HistoryStoreError> {
+    Ok(ObjectRevision::new(
+        ObjectKind::AffectDependency,
+        dependency.id.0.to_string(),
+        event_id,
+        RevisionOperation::Create,
+    )
+    .with_field(FieldDelta::new(
+        "affect_id",
+        None,
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::AffectValue,
+            id: dependency.affect_id.0.to_string(),
+        }),
+    ))
+    .with_field(FieldDelta::new(
+        "trait_kind",
+        None,
+        Some(FieldValue::Text(encode_string_enum(
+            &dependency.trait_kind,
+        )?)),
+    ))
+    .with_field(FieldDelta::new(
+        "source",
+        None,
+        Some(FieldValue::Text(endpoint_label(&dependency.source))),
+    ))
+    .with_field(FieldDelta::new(
+        "target",
+        None,
+        Some(FieldValue::Text(endpoint_label(&dependency.target))),
+    )))
+}
+
 fn row_to_affect_value(row: &Row<'_>) -> Result<AffectValue, rusqlite::Error> {
     let id: String = row.get(0)?;
     let target_kind: String = row.get(1)?;
@@ -326,6 +491,34 @@ fn row_to_affect_value(row: &Row<'_>) -> Result<AffectValue, rusqlite::Error> {
         mood_labels: Vec::new(),
         provenance: decode_string_enum(&provenance, 7)?,
         rationale: row.get(8)?,
+    })
+}
+
+fn row_to_affect_dependency(row: &Row<'_>) -> Result<AffectDependency, rusqlite::Error> {
+    let id: String = row.get(0)?;
+    let affect_id: String = row.get(1)?;
+    let trait_kind: String = row.get(2)?;
+    let source = SqlAffectDependencyEndpoint {
+        kind: row.get(3)?,
+        id: row.get(4)?,
+        part_key: row.get(5)?,
+        field_key: row.get(6)?,
+    }
+    .into_endpoint(3)?;
+    let target = SqlAffectDependencyEndpoint {
+        kind: row.get(7)?,
+        id: row.get(8)?,
+        part_key: row.get(9)?,
+        field_key: row.get(10)?,
+    }
+    .into_endpoint(7)?;
+    Ok(AffectDependency {
+        id: AffectDependencyId(parse_uuid(&id, 0)?),
+        affect_id: AffectValueId(parse_uuid(&affect_id, 1)?),
+        trait_kind: decode_string_enum(&trait_kind, 2)?,
+        source,
+        target,
+        reason: row.get(11)?,
     })
 }
 
@@ -370,6 +563,135 @@ fn encode_target(
             ("bible_snapshot", Some(snapshot_id.as_str().to_string()))
         }
     })
+}
+
+fn dependency_exists(
+    conn: &Connection,
+    dependency_id: AffectDependencyId,
+) -> Result<bool, HistoryStoreError> {
+    conn.query_row(
+        "SELECT 1 FROM affect_dependencies WHERE id = ?1 AND deleted_event_id IS NULL",
+        [dependency_id.0.to_string()],
+        |_| Ok(()),
+    )
+    .optional()
+    .map(|value| value.is_some())
+    .map_err(HistoryStoreError::from)
+}
+
+struct SqlAffectDependencyEndpoint {
+    kind: String,
+    id: String,
+    part_key: Option<String>,
+    field_key: Option<String>,
+}
+
+impl SqlAffectDependencyEndpoint {
+    fn from_endpoint(endpoint: &AffectDependencyEndpoint) -> Self {
+        match endpoint {
+            AffectDependencyEndpoint::TimelineNode { node_id } => Self {
+                kind: "timeline_node".to_string(),
+                id: node_id.0.to_string(),
+                part_key: None,
+                field_key: None,
+            },
+            AffectDependencyEndpoint::ScriptSegment { segment_id } => Self {
+                kind: "script_segment".to_string(),
+                id: segment_id.as_str().to_string(),
+                part_key: None,
+                field_key: None,
+            },
+            AffectDependencyEndpoint::BibleNode { node_id } => Self {
+                kind: "bible_node".to_string(),
+                id: node_id.as_str().to_string(),
+                part_key: None,
+                field_key: None,
+            },
+            AffectDependencyEndpoint::BibleField {
+                node_id,
+                part_key,
+                field_key,
+            } => Self {
+                kind: "bible_field".to_string(),
+                id: node_id.as_str().to_string(),
+                part_key: Some(part_key.as_str().to_string()),
+                field_key: Some(field_key.as_str().to_string()),
+            },
+            AffectDependencyEndpoint::GenerationPrompt { workflow_id } => Self {
+                kind: "generation_prompt".to_string(),
+                id: workflow_id.as_str().to_string(),
+                part_key: None,
+                field_key: None,
+            },
+        }
+    }
+
+    fn into_endpoint(self, column: usize) -> Result<AffectDependencyEndpoint, rusqlite::Error> {
+        Ok(match self.kind.as_str() {
+            "timeline_node" => AffectDependencyEndpoint::TimelineNode {
+                node_id: NodeId(parse_uuid(&self.id, column)?),
+            },
+            "script_segment" => AffectDependencyEndpoint::ScriptSegment {
+                segment_id: eidetic_core::contracts::ScriptSegmentId::new(self.id).map_err(
+                    |error| conversion_error(column, rusqlite::types::Type::Text, error),
+                )?,
+            },
+            "bible_node" => AffectDependencyEndpoint::BibleNode {
+                node_id: eidetic_core::contracts::BibleGraphNodeId::new(self.id).map_err(
+                    |error| conversion_error(column, rusqlite::types::Type::Text, error),
+                )?,
+            },
+            "bible_field" => AffectDependencyEndpoint::BibleField {
+                node_id: eidetic_core::contracts::BibleGraphNodeId::new(self.id).map_err(
+                    |error| conversion_error(column, rusqlite::types::Type::Text, error),
+                )?,
+                part_key: eidetic_core::contracts::BibleGraphPartKey::new(required_dependency_key(
+                    self.part_key.as_deref(),
+                    column,
+                    "part_key",
+                )?)
+                .map_err(|error| conversion_error(column, rusqlite::types::Type::Text, error))?,
+                field_key: eidetic_core::contracts::BibleGraphFieldKey::new(
+                    required_dependency_key(self.field_key.as_deref(), column, "field_key")?,
+                )
+                .map_err(|error| conversion_error(column, rusqlite::types::Type::Text, error))?,
+            },
+            "generation_prompt" => AffectDependencyEndpoint::GenerationPrompt {
+                workflow_id: eidetic_core::contracts::AgentWorkflowId::new(self.id).map_err(
+                    |error| conversion_error(column, rusqlite::types::Type::Text, error),
+                )?,
+            },
+            _ => {
+                return Err(conversion_error(
+                    column,
+                    rusqlite::types::Type::Text,
+                    format!("unknown affect dependency endpoint kind: {}", self.kind),
+                ));
+            }
+        })
+    }
+}
+
+fn required_dependency_key<'a>(
+    value: Option<&'a str>,
+    column: usize,
+    name: &'static str,
+) -> Result<&'a str, rusqlite::Error> {
+    value.filter(|value| !value.is_empty()).ok_or_else(|| {
+        conversion_error(
+            column,
+            rusqlite::types::Type::Text,
+            format!("affect dependency {name} is required"),
+        )
+    })
+}
+
+fn endpoint_label(endpoint: &AffectDependencyEndpoint) -> String {
+    let sql = SqlAffectDependencyEndpoint::from_endpoint(endpoint);
+    match (sql.part_key, sql.field_key) {
+        (Some(part), Some(field)) => format!("{}:{}:{}:{}", sql.kind, sql.id, part, field),
+        _ => format!("{}:{}", sql.kind, sql.id),
+    }
 }
 
 fn decode_target(
@@ -470,7 +792,7 @@ fn conversion_error(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use eidetic_core::contracts::{AffectProvenance, CommandId};
+    use eidetic_core::contracts::{AffectProvenance, AffectTraitKind, AgentWorkflowId, CommandId};
 
     #[test]
     fn affect_store_records_and_projects_timeline_node_values() {
@@ -532,6 +854,63 @@ mod tests {
         assert!(projection.payload.values.is_empty());
     }
 
+    #[test]
+    fn affect_store_records_and_loads_dependencies() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let affect_command = set_command(AffectTarget::Project, "uneasy");
+        let affect_id = affect_command.affect_id;
+        record_set_affect_value(&mut conn, &CommandEnvelope::new(affect_command), 100).unwrap();
+        let dependency = affect_dependency(affect_id);
+
+        let outcome = record_affect_dependency(
+            &mut conn,
+            &CommandEnvelope::new(RecordAffectDependencyCommand {
+                command_id: CommandId::new(),
+                dependency: dependency.clone(),
+            }),
+            101,
+        )
+        .unwrap();
+
+        assert_eq!(outcome, RecordChangeOutcome::Recorded);
+        let dependencies = load_affect_dependencies_for_affect(&conn, affect_id).unwrap();
+        assert_eq!(dependencies, vec![dependency]);
+    }
+
+    #[test]
+    fn affect_store_rejects_dependency_for_missing_affect_value() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let command = CommandEnvelope::new(RecordAffectDependencyCommand {
+            command_id: CommandId::new(),
+            dependency: affect_dependency(AffectValueId::new()),
+        });
+
+        let error = record_affect_dependency(&mut conn, &command, 101).unwrap_err();
+
+        assert!(error.to_string().contains("affect value not found"));
+    }
+
+    #[test]
+    fn affect_store_is_idempotent_for_duplicate_dependency_commands() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let affect_command = set_command(AffectTarget::Project, "uneasy");
+        let affect_id = affect_command.affect_id;
+        record_set_affect_value(&mut conn, &CommandEnvelope::new(affect_command), 100).unwrap();
+        let command = CommandEnvelope::new(RecordAffectDependencyCommand {
+            command_id: CommandId::new(),
+            dependency: affect_dependency(affect_id),
+        });
+
+        assert_eq!(
+            record_affect_dependency(&mut conn, &command, 101).unwrap(),
+            RecordChangeOutcome::Recorded
+        );
+        assert_eq!(
+            record_affect_dependency(&mut conn, &command, 101).unwrap(),
+            RecordChangeOutcome::AlreadyRecorded
+        );
+    }
+
     fn set_command(target: AffectTarget, mood: &str) -> SetAffectValueCommand {
         SetAffectValueCommand {
             command_id: CommandId::new(),
@@ -544,6 +923,21 @@ mod tests {
             mood_labels: vec![MoodLabel::new(mood).unwrap()],
             provenance: AffectProvenance::UserAuthored,
             rationale: Some("Opening mood".to_string()),
+        }
+    }
+
+    fn affect_dependency(affect_id: AffectValueId) -> AffectDependency {
+        AffectDependency {
+            id: AffectDependencyId::new(),
+            affect_id,
+            trait_kind: AffectTraitKind::Valence,
+            source: AffectDependencyEndpoint::TimelineNode {
+                node_id: NodeId::new(),
+            },
+            target: AffectDependencyEndpoint::GenerationPrompt {
+                workflow_id: AgentWorkflowId::new("workflow.scene.graph_context").unwrap(),
+            },
+            reason: "Affect constrains prompt tone.".to_string(),
         }
     }
 }

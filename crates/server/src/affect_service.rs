@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use eidetic_core::contracts::{
-    AffectProjection, AffectTarget, CommandEnvelope, DeleteAffectValueCommand, ProjectionEnvelope,
+    AffectDependency, AffectProjection, AffectTarget, AffectValueId, CommandEnvelope,
+    DeleteAffectValueCommand, ProjectionEnvelope, RecordAffectDependencyCommand,
     SetAffectValueCommand,
 };
 
@@ -55,6 +56,43 @@ pub async fn affect_projection(
     })
     .await
     .map_err(|error| BackendError::internal(format!("affect projection task failed: {error}")))?
+}
+
+pub async fn record_affect_dependency(
+    state: &AppState,
+    command: CommandEnvelope<RecordAffectDependencyCommand>,
+) -> Result<Vec<AffectDependency>, BackendError> {
+    let path = active_project_path(state)?;
+    let affect_id = command.payload.dependency.affect_id;
+    tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        affect_store::record_affect_dependency(&mut conn, &command, 0)
+            .map_err(map_history_error)?;
+        affect_store::load_affect_dependencies_for_affect(&conn, affect_id)
+            .map_err(map_history_error)
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("affect dependency record task failed: {error}"))
+    })?
+}
+
+pub async fn affect_dependencies_for_affect(
+    state: &AppState,
+    affect_id: AffectValueId,
+) -> Result<Vec<AffectDependency>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        affect_store::load_affect_dependencies_for_affect(&conn, affect_id)
+            .map_err(map_history_error)
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("affect dependency projection task failed: {error}"))
+    })?
 }
 
 fn active_project_path(state: &AppState) -> Result<PathBuf, BackendError> {
