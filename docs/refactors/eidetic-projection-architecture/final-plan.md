@@ -3409,6 +3409,10 @@ Implementation order:
 - Started: desktop command/projection adapters and Svelte API helpers now expose
   backend-owned affect proposal creation and list projections. Review UI wiring
   and acceptance/rejection execution remain the next slices.
+- Started: backend review execution now records accept/reject decisions for
+  affect proposals with command history. Accepting a pending proposal updates
+  canonical affect state in the same backend change; rejecting leaves canonical
+  affect state untouched. Tauri/UI review commands remain the next slice.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived

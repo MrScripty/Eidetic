@@ -1,10 +1,12 @@
 use eidetic_core::contracts::{
-    AffectConfidence, AffectDependency, AffectDependencyEndpoint, AffectDependencyId,
-    AffectProjection, AffectProposal, AffectProposalId, AffectProposalListProjection, AffectTarget,
-    AffectValue, AffectValueId, Arousal, ChangeEvent, ChangeEventKind, CommandEnvelope,
-    CreateAffectProposalCommand, DeleteAffectValueCommand, EmotionalIntensity, FieldDelta,
-    FieldValue, MoodLabel, ObjectKind, ObjectRevision, ProjectionEnvelope, ProjectionVersion,
-    RecordAffectDependencyCommand, RevisionOperation, SetAffectValueCommand, Valence,
+    AcceptAffectProposalCommand, AffectConfidence, AffectDependency, AffectDependencyEndpoint,
+    AffectDependencyId, AffectProjection, AffectProposal, AffectProposalId,
+    AffectProposalListProjection, AffectTarget, AffectValue, AffectValueId, Arousal, ChangeEvent,
+    ChangeEventKind, CommandEnvelope, CreateAffectProposalCommand, DeleteAffectValueCommand,
+    EmotionalIntensity, FieldDelta, FieldValue, MoodLabel, ObjectKind, ObjectRevision,
+    ProjectionEnvelope, ProjectionVersion, RecordAffectDependencyCommand,
+    RejectAffectProposalCommand, RevisionOperation, SemanticProposalStatus, SetAffectValueCommand,
+    Valence,
 };
 use eidetic_core::timeline::node::NodeId;
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
@@ -270,6 +272,101 @@ pub(crate) fn record_create_affect_proposal(
     )
 }
 
+pub(crate) fn record_reject_affect_proposal(
+    conn: &mut Connection,
+    command: &CommandEnvelope<RejectAffectProposalCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, HistoryStoreError> {
+    create_schema(conn)?;
+    command
+        .payload
+        .validate()
+        .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "affect.proposal_reject")?
+    {
+        return Ok(outcome);
+    }
+    let proposal = load_pending_affect_proposal(conn, &command.payload.proposal_id)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::AiProposalRejected,
+        format!("reject affect {}", proposal.summary),
+    )
+    .with_created_at_ms(created_at_ms);
+    let mut revision =
+        affect_proposal_status_revision(&proposal, event.id, SemanticProposalStatus::Rejected)?;
+    if let Some(reason) = command.payload.reason.as_ref() {
+        revision = revision.with_field(FieldDelta::new(
+            "rejection_reason",
+            None,
+            Some(FieldValue::Text(reason.clone())),
+        ));
+    }
+
+    history_store::record_change_with(
+        conn,
+        command,
+        "affect.proposal_reject",
+        &event,
+        &[revision],
+        |tx| {
+            update_affect_proposal_status_in_transaction(
+                tx,
+                &proposal.id,
+                SemanticProposalStatus::Pending,
+                SemanticProposalStatus::Rejected,
+            )
+        },
+    )
+}
+
+pub(crate) fn record_accept_affect_proposal(
+    conn: &mut Connection,
+    command: &CommandEnvelope<AcceptAffectProposalCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, HistoryStoreError> {
+    create_schema(conn)?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "affect.proposal_accept")?
+    {
+        return Ok(outcome);
+    }
+    let proposal = load_pending_affect_proposal(conn, &command.payload.proposal_id)?;
+    let existing = load_affect_value(conn, proposal.proposed_value.id)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::AiProposalAccepted,
+        format!("accept affect {}", proposal.summary),
+    )
+    .with_created_at_ms(created_at_ms);
+    let operation = if existing.is_some() {
+        RevisionOperation::Update
+    } else {
+        RevisionOperation::Create
+    };
+    let proposal_revision =
+        affect_proposal_status_revision(&proposal, event.id, SemanticProposalStatus::Accepted)?;
+    let affect_revision = affect_revision(&proposal.proposed_value, event.id, operation)?;
+
+    history_store::record_change_with(
+        conn,
+        command,
+        "affect.proposal_accept",
+        &event,
+        &[proposal_revision, affect_revision],
+        |tx| {
+            update_affect_proposal_status_in_transaction(
+                tx,
+                &proposal.id,
+                SemanticProposalStatus::Pending,
+                SemanticProposalStatus::Accepted,
+            )?;
+            upsert_affect_value_in_transaction(tx, &proposal.proposed_value, event.id)
+        },
+    )
+}
+
 pub(crate) fn load_affect_dependencies_for_affect(
     conn: &Connection,
     affect_id: AffectValueId,
@@ -346,6 +443,48 @@ pub(crate) fn load_affect_proposals(
         proposals.push(proposal);
     }
     Ok(proposals)
+}
+
+pub(crate) fn load_affect_proposal(
+    conn: &Connection,
+    proposal_id: &AffectProposalId,
+) -> Result<Option<AffectProposal>, HistoryStoreError> {
+    create_schema(conn)?;
+    let Some(mut proposal) = conn
+        .query_row(
+            "SELECT id, status, source, affect_id, target_kind, target_id,
+                    valence_bp, arousal_bp, intensity_bp, confidence_bp, provenance,
+                    affect_rationale, summary, proposal_rationale, source_event_id, created_at_ms
+             FROM affect_proposals
+             WHERE id = ?1",
+            [proposal_id.as_str()],
+            row_to_affect_proposal,
+        )
+        .optional()?
+    else {
+        return Ok(None);
+    };
+    proposal.proposed_value.mood_labels = load_proposal_mood_labels(conn, &proposal.id)?;
+    Ok(Some(proposal))
+}
+
+fn load_pending_affect_proposal(
+    conn: &Connection,
+    proposal_id: &AffectProposalId,
+) -> Result<AffectProposal, HistoryStoreError> {
+    let proposal = load_affect_proposal(conn, proposal_id)?.ok_or_else(|| {
+        HistoryStoreError::InvalidValue(format!(
+            "affect proposal not found: {}",
+            proposal_id.as_str()
+        ))
+    })?;
+    if proposal.status != SemanticProposalStatus::Pending {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "affect proposal is not pending: {}",
+            proposal.id.as_str()
+        )));
+    }
+    Ok(proposal)
 }
 
 pub(crate) fn load_affect_proposal_list_projection(
@@ -674,6 +813,24 @@ fn affect_proposal_revision(
     )))
 }
 
+fn affect_proposal_status_revision(
+    proposal: &AffectProposal,
+    event_id: eidetic_core::contracts::ChangeEventId,
+    new_status: SemanticProposalStatus,
+) -> Result<ObjectRevision, HistoryStoreError> {
+    Ok(ObjectRevision::new(
+        ObjectKind::AffectProposal,
+        proposal.id.as_str().to_string(),
+        event_id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "status",
+        Some(FieldValue::Text(encode_string_enum(&proposal.status)?)),
+        Some(FieldValue::Text(encode_string_enum(&new_status)?)),
+    )))
+}
+
 fn row_to_affect_value(row: &Row<'_>) -> Result<AffectValue, rusqlite::Error> {
     let id: String = row.get(0)?;
     let target_kind: String = row.get(1)?;
@@ -881,6 +1038,31 @@ fn affect_proposal_exists(
     .optional()
     .map(|value| value.is_some())
     .map_err(HistoryStoreError::from)
+}
+
+fn update_affect_proposal_status_in_transaction(
+    tx: &Transaction<'_>,
+    proposal_id: &AffectProposalId,
+    old_status: SemanticProposalStatus,
+    new_status: SemanticProposalStatus,
+) -> Result<(), HistoryStoreError> {
+    let updated = tx.execute(
+        "UPDATE affect_proposals
+         SET status = ?1
+         WHERE id = ?2 AND status = ?3",
+        params![
+            encode_string_enum(&new_status)?,
+            proposal_id.as_str(),
+            encode_string_enum(&old_status)?
+        ],
+    )?;
+    if updated != 1 {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "affect proposal status changed before update: {}",
+            proposal_id.as_str()
+        )));
+    }
+    Ok(())
 }
 
 struct SqlAffectDependencyEndpoint {
@@ -1098,7 +1280,6 @@ mod tests {
     use super::*;
     use eidetic_core::contracts::{
         AffectProposalSource, AffectProvenance, AffectTraitKind, AgentWorkflowId, CommandId,
-        SemanticProposalStatus,
     };
 
     #[test]
@@ -1221,24 +1402,7 @@ mod tests {
     #[test]
     fn affect_store_records_and_projects_affect_proposals() {
         let mut conn = Connection::open_in_memory().unwrap();
-        let command = CommandEnvelope::new(CreateAffectProposalCommand {
-            proposal_id: AffectProposalId::new("proposal.affect.scene-weather").unwrap(),
-            source: AffectProposalSource::ManualScriptEdit,
-            proposed_value: AffectValue {
-                id: AffectValueId::new(),
-                target: AffectTarget::Project,
-                valence: Valence::new(-100).unwrap(),
-                arousal: Arousal::new(600).unwrap(),
-                intensity: EmotionalIntensity::new(700).unwrap(),
-                confidence: AffectConfidence::new(850).unwrap(),
-                mood_labels: vec![MoodLabel::new("rainy").unwrap()],
-                provenance: AffectProvenance::ScriptEditDetected,
-                rationale: Some("User changed the scene weather.".to_string()),
-            },
-            summary: "Detected rainier project mood".to_string(),
-            rationale: Some("Manual script edit introduced rain.".to_string()),
-            source_event_id: None,
-        });
+        let command = affect_proposal_command("proposal.affect.scene-weather");
 
         let outcome = record_create_affect_proposal(&mut conn, &command, 200).unwrap();
 
@@ -1258,6 +1422,65 @@ mod tests {
                 .values
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn affect_store_rejects_pending_affect_proposals() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let create = affect_proposal_command("proposal.affect.reject");
+        record_create_affect_proposal(&mut conn, &create, 200).unwrap();
+
+        let outcome = record_reject_affect_proposal(
+            &mut conn,
+            &CommandEnvelope::new(RejectAffectProposalCommand {
+                proposal_id: AffectProposalId::new("proposal.affect.reject").unwrap(),
+                reason: Some("Keep the current mood.".to_string()),
+            }),
+            201,
+        )
+        .unwrap();
+
+        assert_eq!(outcome, RecordChangeOutcome::Recorded);
+        let projection = load_affect_proposal_list_projection(&conn).unwrap();
+        assert_eq!(
+            projection.payload.proposals[0].status,
+            SemanticProposalStatus::Rejected
+        );
+        assert!(
+            load_affect_projection(&conn, AffectTarget::Project)
+                .unwrap()
+                .payload
+                .values
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn affect_store_accepts_pending_affect_proposals_into_canonical_state() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let create = affect_proposal_command("proposal.affect.accept");
+        let affect_id = create.payload.proposed_value.id;
+        record_create_affect_proposal(&mut conn, &create, 200).unwrap();
+
+        let outcome = record_accept_affect_proposal(
+            &mut conn,
+            &CommandEnvelope::new(AcceptAffectProposalCommand {
+                proposal_id: AffectProposalId::new("proposal.affect.accept").unwrap(),
+            }),
+            201,
+        )
+        .unwrap();
+
+        assert_eq!(outcome, RecordChangeOutcome::Recorded);
+        let proposals = load_affect_proposal_list_projection(&conn).unwrap();
+        assert_eq!(
+            proposals.payload.proposals[0].status,
+            SemanticProposalStatus::Accepted
+        );
+        let affect = load_affect_projection(&conn, AffectTarget::Project).unwrap();
+        assert_eq!(affect.payload.values.len(), 1);
+        assert_eq!(affect.payload.values[0].id, affect_id);
+        assert_eq!(affect.payload.values[0].mood_labels[0].as_str(), "rainy");
     }
 
     #[test]
@@ -1307,6 +1530,27 @@ mod tests {
             provenance: AffectProvenance::UserAuthored,
             rationale: Some("Opening mood".to_string()),
         }
+    }
+
+    fn affect_proposal_command(proposal_id: &str) -> CommandEnvelope<CreateAffectProposalCommand> {
+        CommandEnvelope::new(CreateAffectProposalCommand {
+            proposal_id: AffectProposalId::new(proposal_id).unwrap(),
+            source: AffectProposalSource::ManualScriptEdit,
+            proposed_value: AffectValue {
+                id: AffectValueId::new(),
+                target: AffectTarget::Project,
+                valence: Valence::new(-100).unwrap(),
+                arousal: Arousal::new(600).unwrap(),
+                intensity: EmotionalIntensity::new(700).unwrap(),
+                confidence: AffectConfidence::new(850).unwrap(),
+                mood_labels: vec![MoodLabel::new("rainy").unwrap()],
+                provenance: AffectProvenance::ScriptEditDetected,
+                rationale: Some("User changed the scene weather.".to_string()),
+            },
+            summary: "Detected rainier project mood".to_string(),
+            rationale: Some("Manual script edit introduced rain.".to_string()),
+            source_event_id: None,
+        })
     }
 
     fn affect_dependency(affect_id: AffectValueId) -> AffectDependency {

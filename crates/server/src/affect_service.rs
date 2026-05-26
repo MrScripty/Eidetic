@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
 use eidetic_core::contracts::{
-    AffectDependency, AffectProjection, AffectProposalListProjection, AffectTarget, AffectValueId,
-    CommandEnvelope, CreateAffectProposalCommand, DeleteAffectValueCommand, ProjectionEnvelope,
-    RecordAffectDependencyCommand, SetAffectValueCommand,
+    AcceptAffectProposalCommand, AffectDependency, AffectProjection, AffectProposalListProjection,
+    AffectTarget, AffectValueId, CommandEnvelope, CreateAffectProposalCommand,
+    DeleteAffectValueCommand, ProjectionEnvelope, RecordAffectDependencyCommand,
+    RejectAffectProposalCommand, SetAffectValueCommand,
 };
 
 use crate::affect_store;
@@ -123,6 +124,42 @@ pub async fn affect_proposal_projection(
     .await
     .map_err(|error| {
         BackendError::internal(format!("affect proposal projection task failed: {error}"))
+    })?
+}
+
+pub async fn reject_affect_proposal(
+    state: &AppState,
+    command: CommandEnvelope<RejectAffectProposalCommand>,
+) -> Result<ProjectionEnvelope<AffectProposalListProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        affect_store::record_reject_affect_proposal(&mut conn, &command, 0)
+            .map_err(map_history_error)?;
+        affect_store::load_affect_proposal_list_projection(&conn).map_err(map_history_error)
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("affect proposal reject task failed: {error}"))
+    })?
+}
+
+pub async fn accept_affect_proposal(
+    state: &AppState,
+    command: CommandEnvelope<AcceptAffectProposalCommand>,
+) -> Result<ProjectionEnvelope<AffectProposalListProjection>, BackendError> {
+    let path = active_project_path(state)?;
+    tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        affect_store::record_accept_affect_proposal(&mut conn, &command, 0)
+            .map_err(map_history_error)?;
+        affect_store::load_affect_proposal_list_projection(&conn).map_err(map_history_error)
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("affect proposal accept task failed: {error}"))
     })?
 }
 
