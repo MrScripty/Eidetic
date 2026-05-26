@@ -44,6 +44,18 @@ impl DesktopRendererWindowCapability {
     }
 }
 
+pub fn current_desktop_renderer_window_platform() -> DesktopRendererWindowPlatform {
+    if cfg!(target_os = "linux") {
+        DesktopRendererWindowPlatform::Linux
+    } else if cfg!(target_os = "macos") {
+        DesktopRendererWindowPlatform::Macos
+    } else if cfg!(target_os = "windows") {
+        DesktopRendererWindowPlatform::Windows
+    } else {
+        DesktopRendererWindowPlatform::Unsupported
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DesktopRendererWindowLifecycle {

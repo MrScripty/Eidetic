@@ -5,8 +5,14 @@ export interface TimelineRendererStatus {
   renderer_scene_ready: boolean;
   renderer_window_lifecycle: TimelineRendererWindowLifecycle;
   renderer_runner_lifecycle: TimelineRendererRunnerLifecycle;
+  renderer_runner_threading_model: TimelineRendererRunnerThreadingModel;
+  renderer_window_platform: TimelineRendererWindowPlatform;
+  renderer_window_capability: TimelineRendererWindowCapability;
+  renderer_window_capability_reason: TimelineRendererWindowCapabilityReason;
   renderer_window_visible: boolean;
   renderer_window_ready: boolean;
+  renderer_window_verified_support: boolean;
+  renderer_window_visible_supported: boolean;
   renderer_window_focus_supported: boolean;
   renderer_window_message: string;
   track_count: number;
@@ -25,3 +31,21 @@ export type TimelineRendererWindowLifecycle =
   | 'visible';
 
 export type TimelineRendererRunnerLifecycle = 'closed' | 'open_requested' | 'visible';
+
+export type TimelineRendererRunnerThreadingModel = 'worker_thread' | 'main_thread' | 'unsupported';
+
+export type TimelineRendererWindowPlatform = 'linux' | 'macos' | 'windows' | 'unsupported';
+
+export type TimelineRendererWindowCapability =
+  | 'pending_native_runner'
+  | 'platform_unproven'
+  | 'platform_unsupported'
+  | 'runner_error'
+  | 'verified_support';
+
+export type TimelineRendererWindowCapabilityReason =
+  | 'pending_native_runner'
+  | 'platform_unproven'
+  | 'platform_unsupported'
+  | 'runner_error'
+  | 'verified_support';

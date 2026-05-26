@@ -1,13 +1,6 @@
 use super::super::BibleGraphRendererWindowPlatform;
+use crate::renderer_window::current_desktop_renderer_window_platform;
 
 pub fn current_renderer_window_platform() -> BibleGraphRendererWindowPlatform {
-    if cfg!(target_os = "linux") {
-        BibleGraphRendererWindowPlatform::Linux
-    } else if cfg!(target_os = "macos") {
-        BibleGraphRendererWindowPlatform::Macos
-    } else if cfg!(target_os = "windows") {
-        BibleGraphRendererWindowPlatform::Windows
-    } else {
-        BibleGraphRendererWindowPlatform::Unsupported
-    }
+    current_desktop_renderer_window_platform()
 }

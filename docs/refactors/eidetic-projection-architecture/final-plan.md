@@ -3581,6 +3581,10 @@ Implementation order:
   renderer infrastructure. Graph keeps its public aliases and platform strategy
   policy, while timeline can report the same support and capability statuses
   when the visible shared runner is attached.
+- Started: timeline renderer status now reports shared platform, capability,
+  capability reason, threading model, and visible-support fields. The current
+  headless timeline host reports `pending_native_runner` and unsupported
+  threading until a real shared native runner is connected.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

@@ -7,7 +7,10 @@ use eidetic_bevy_timeline::{TimelineRendererApp, TimelineRendererCommand, Timeli
 use eidetic_core::contracts::TimelineRenderProjection;
 
 use crate::renderer_window::{
-    DesktopRendererRunnerLifecycle, DesktopRendererWindowKind, DesktopRendererWindowLifecycle,
+    DesktopRendererRunnerLifecycle, DesktopRendererThreadingModel, DesktopRendererWindowCapability,
+    DesktopRendererWindowCapabilityReason, DesktopRendererWindowKind,
+    DesktopRendererWindowLifecycle, DesktopRendererWindowPlatform,
+    current_desktop_renderer_window_platform,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
@@ -18,8 +21,14 @@ pub struct TimelineHostStatus {
     pub renderer_scene_ready: bool,
     pub renderer_window_lifecycle: DesktopRendererWindowLifecycle,
     pub renderer_runner_lifecycle: DesktopRendererRunnerLifecycle,
+    pub renderer_runner_threading_model: DesktopRendererThreadingModel,
+    pub renderer_window_platform: DesktopRendererWindowPlatform,
+    pub renderer_window_capability: DesktopRendererWindowCapability,
+    pub renderer_window_capability_reason: DesktopRendererWindowCapabilityReason,
     pub renderer_window_visible: bool,
     pub renderer_window_ready: bool,
+    pub renderer_window_verified_support: bool,
+    pub renderer_window_visible_supported: bool,
     pub renderer_window_focus_supported: bool,
     pub renderer_window_message: String,
     pub track_count: usize,
@@ -71,8 +80,14 @@ impl DesktopTimelineHost {
             renderer_scene_ready: false,
             renderer_window_lifecycle: DesktopRendererWindowLifecycle::Closed,
             renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
+            renderer_runner_threading_model: DesktopRendererThreadingModel::Unsupported,
+            renderer_window_platform: current_desktop_renderer_window_platform(),
+            renderer_window_capability: DesktopRendererWindowCapability::RunnerError,
+            renderer_window_capability_reason: DesktopRendererWindowCapabilityReason::RunnerError,
             renderer_window_visible: false,
             renderer_window_ready: false,
+            renderer_window_verified_support: false,
+            renderer_window_visible_supported: false,
             renderer_window_focus_supported: false,
             renderer_window_message: "timeline renderer native window is unavailable".to_string(),
             track_count: 0,
@@ -161,8 +176,15 @@ impl DesktopTimelineHost {
                 false,
             ),
             renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
+            renderer_runner_threading_model: DesktopRendererThreadingModel::Unsupported,
+            renderer_window_platform: current_desktop_renderer_window_platform(),
+            renderer_window_capability: DesktopRendererWindowCapability::PendingNativeRunner,
+            renderer_window_capability_reason:
+                DesktopRendererWindowCapabilityReason::PendingNativeRunner,
             renderer_window_visible: false,
             renderer_window_ready: false,
+            renderer_window_verified_support: false,
+            renderer_window_visible_supported: false,
             renderer_window_focus_supported: false,
             renderer_window_message: timeline_renderer_window_message(self.renderer.is_some()),
             track_count,
@@ -406,6 +428,20 @@ mod tests {
             status.renderer_runner_lifecycle,
             DesktopRendererRunnerLifecycle::Closed
         );
+        assert_eq!(
+            status.renderer_runner_threading_model,
+            DesktopRendererThreadingModel::Unsupported
+        );
+        assert_eq!(
+            status.renderer_window_capability,
+            DesktopRendererWindowCapability::PendingNativeRunner
+        );
+        assert_eq!(
+            status.renderer_window_capability_reason,
+            DesktopRendererWindowCapabilityReason::PendingNativeRunner
+        );
+        assert!(!status.renderer_window_verified_support);
+        assert!(!status.renderer_window_visible_supported);
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
         assert!(!status.renderer_window_focus_supported);
@@ -446,6 +482,10 @@ mod tests {
         assert_eq!(
             status.renderer_runner_lifecycle,
             DesktopRendererRunnerLifecycle::Closed
+        );
+        assert_eq!(
+            status.renderer_window_capability,
+            DesktopRendererWindowCapability::PendingNativeRunner
         );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
@@ -492,6 +532,10 @@ mod tests {
         assert_eq!(
             status.renderer_runner_lifecycle,
             DesktopRendererRunnerLifecycle::Closed
+        );
+        assert_eq!(
+            status.renderer_window_capability,
+            DesktopRendererWindowCapability::PendingNativeRunner
         );
         assert!(!status.renderer_window_focus_supported);
         assert!(!stopped.running);
