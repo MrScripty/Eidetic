@@ -10,6 +10,7 @@ import type {
   TimeRange,
 } from './timelineTypes.js';
 import type { ArcId } from './storyArcTypes.js';
+import type { AffectProvenance, AffectValueId } from './affectTypes.js';
 
 export interface TimelineRenderProjection {
   total_duration_ms: number;
@@ -18,6 +19,7 @@ export interface TimelineRenderProjection {
   clips: TimelineRenderClip[];
   relationships: TimelineRenderRelationship[];
   gaps?: TimelineRenderGap[];
+  affect_overlays?: TimelineRenderAffectSample[];
 }
 
 export interface TimelineRenderStructureSegment {
@@ -61,4 +63,17 @@ export interface TimelineRenderGap {
   time_range: TimeRange;
   preceding_node_id?: NodeId | null;
   following_node_id?: NodeId | null;
+}
+
+export interface TimelineRenderAffectSample {
+  affect_id: AffectValueId;
+  node_id: NodeId;
+  start_ms: number;
+  end_ms: number;
+  valence: number;
+  arousal: number;
+  intensity: number;
+  confidence: number;
+  mood_labels: string[];
+  provenance: AffectProvenance;
 }

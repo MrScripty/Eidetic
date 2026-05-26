@@ -1,5 +1,6 @@
 import type {
   TimelineRenderClip,
+  TimelineRenderAffectSample,
   TimelineRenderGap,
   TimelineRenderProjection,
   TimelineRenderRelationship,
@@ -15,6 +16,7 @@ export interface TimelineRenderModel {
   clips: TimelineRenderModelClip[];
   relationships: TimelineRenderRelationship[];
   gaps: TimelineRenderGap[];
+  affect_overlays: TimelineRenderAffectSample[];
   clip_ids_by_track_id: Record<string, string[]>;
   clip_ids_by_node_id: Record<string, string>;
 }
@@ -95,6 +97,7 @@ export function timelineRenderModelFromProjection(
     clips,
     relationships: projection.relationships.slice(),
     gaps: projection.gaps?.slice() ?? [],
+    affect_overlays: projection.affect_overlays?.slice() ?? [],
     clip_ids_by_track_id: clipIdsByTrackId,
     clip_ids_by_node_id: clipIdsByNodeId,
   };

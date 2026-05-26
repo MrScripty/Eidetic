@@ -202,10 +202,22 @@ pub async fn timeline_render_projection(
     let (project, _) = crate::persistence::load_project(&path)
         .await
         .map_err(BackendError::internal)?;
-
-    Ok(ProjectionEnvelope::initial(
-        TimelineRenderProjection::from_timeline(&project.timeline),
-    ))
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        let mut projection = TimelineRenderProjection::from_timeline(&project.timeline);
+        crate::timeline_affect_overlay::apply_timeline_affect_overlays(
+            &conn,
+            &project.timeline,
+            &mut projection,
+        )
+        .map_err(map_history_error)?;
+        Ok(ProjectionEnvelope::initial(projection))
+    })
+    .await
+    .map_err(|error| {
+        BackendError::internal(format!("timeline render projection task failed: {error}"))
+    })?
 }
 
 pub async fn selected_node_editor_projection(

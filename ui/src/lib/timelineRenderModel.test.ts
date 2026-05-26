@@ -84,6 +84,20 @@ describe('timeline render model', () => {
           following_node_id: 'node.beat.two',
         },
       ],
+      affect_overlays: [
+        {
+          affect_id: 'affect.beat.one',
+          node_id: 'node.beat.one',
+          start_ms: 1_000,
+          end_ms: 3_000,
+          valence: -250,
+          arousal: 650,
+          intensity: 700,
+          confidence: 900,
+          mood_labels: ['uneasy'],
+          provenance: 'user_authored',
+        },
+      ],
     };
 
     const model = timelineRenderModelFromProjection(projection);
@@ -104,6 +118,7 @@ describe('timeline render model', () => {
     expect(model.structure_segments).toEqual(projection.structure_segments);
     expect(model.relationships).toEqual(projection.relationships);
     expect(model.gaps).toEqual(projection.gaps);
+    expect(model.affect_overlays).toEqual(projection.affect_overlays);
     expect(visibleTimelineRenderTracks(model).map((track) => track.track_id)).toEqual([
       'track.scene',
       'track.beat',

@@ -429,9 +429,14 @@ fn timeline_render_projection_from_current_state(
         timeline.relationships = relationships;
     }
 
-    Ok(ProjectionEnvelope::initial(
-        TimelineRenderProjection::from_timeline(&timeline),
-    ))
+    let mut projection = TimelineRenderProjection::from_timeline(&timeline);
+    crate::timeline_affect_overlay::apply_timeline_affect_overlays(
+        conn,
+        &timeline,
+        &mut projection,
+    )?;
+
+    Ok(ProjectionEnvelope::initial(projection))
 }
 
 fn timeline_nodes_are_authoritative(conn: &Connection) -> Result<bool, TimelineCommandError> {

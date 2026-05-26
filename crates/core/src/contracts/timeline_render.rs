@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+use super::{
+    AffectConfidence, AffectProvenance, AffectValueId, Arousal, EmotionalIntensity, MoodLabel,
+    Valence,
+};
 use crate::story::arc::ArcId;
 use crate::timeline::Timeline;
 use crate::timeline::node::{BeatType, ContentStatus, NodeId, StoryLevel};
@@ -23,6 +27,8 @@ pub struct TimelineRenderProjection {
     pub relationships: Vec<TimelineRenderRelationship>,
     #[serde(default)]
     pub gaps: Vec<TimelineRenderGap>,
+    #[serde(default)]
+    pub affect_overlays: Vec<TimelineRenderAffectSample>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,6 +84,21 @@ pub struct TimelineRenderGap {
     pub preceding_node_id: Option<NodeId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub following_node_id: Option<NodeId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineRenderAffectSample {
+    pub affect_id: AffectValueId,
+    pub node_id: NodeId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub valence: Valence,
+    pub arousal: Arousal,
+    pub intensity: EmotionalIntensity,
+    pub confidence: AffectConfidence,
+    #[serde(default)]
+    pub mood_labels: Vec<MoodLabel>,
+    pub provenance: AffectProvenance,
 }
 
 impl TimelineRenderProjection {
@@ -168,6 +189,7 @@ impl TimelineRenderProjection {
             clips,
             relationships,
             gaps,
+            affect_overlays: Vec::new(),
         }
     }
 }
@@ -214,6 +236,7 @@ mod tests {
         assert_eq!(projection.clips[0].arc_ids, vec![arc_id]);
         assert_eq!(projection.relationships.len(), 1);
         assert_eq!(projection.relationships[0].from_node_id, scene_id);
+        assert!(projection.affect_overlays.is_empty());
         assert!(
             projection
                 .gaps

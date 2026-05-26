@@ -3400,6 +3400,9 @@ Implementation order:
   script edits.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
+- Completed: timeline render projections now include backend-derived
+  `affect_overlays` samples for timeline-node affect values, joining durable
+  affect state with current clip ranges for future Svelte/Bevy rendering.
 
 Standards gates:
 

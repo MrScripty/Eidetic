@@ -110,8 +110,8 @@ pub use timeline_command::{
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
 pub use timeline_render::{
-    TimelineRenderClip, TimelineRenderGap, TimelineRenderProjection, TimelineRenderRelationship,
-    TimelineRenderStructureSegment, TimelineRenderTrack,
+    TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderGap, TimelineRenderProjection,
+    TimelineRenderRelationship, TimelineRenderStructureSegment, TimelineRenderTrack,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

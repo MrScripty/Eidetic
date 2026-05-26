@@ -71,6 +71,7 @@ pub(crate) mod sqlite;
 pub mod state;
 pub(crate) mod story_arc_command;
 pub(crate) mod story_arc_store;
+pub(crate) mod timeline_affect_overlay;
 pub(crate) mod timeline_child_plan_apply;
 pub(crate) mod timeline_children_history;
 pub(crate) mod timeline_command;

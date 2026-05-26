@@ -272,6 +272,28 @@ pub(crate) fn load_affect_value(
     Ok(Some(value))
 }
 
+pub(crate) fn load_timeline_node_affect_values(
+    conn: &Connection,
+) -> Result<Vec<AffectValue>, HistoryStoreError> {
+    create_schema(conn)?;
+    let mut statement = conn.prepare(
+        "SELECT id, target_kind, target_id, valence_bp, arousal_bp, intensity_bp,
+                confidence_bp, provenance, rationale
+         FROM affect_values
+         WHERE target_kind = 'timeline_node'
+           AND deleted_event_id IS NULL
+         ORDER BY target_id ASC, id ASC",
+    )?;
+    let rows = statement.query_map([], row_to_affect_value)?;
+    let mut values = Vec::new();
+    for row in rows {
+        let mut value = row?;
+        value.mood_labels = load_mood_labels(conn, value.id)?;
+        values.push(value);
+    }
+    Ok(values)
+}
+
 fn command_to_affect_value(command: &SetAffectValueCommand) -> AffectValue {
     AffectValue {
         id: command.affect_id,
@@ -909,6 +931,40 @@ mod tests {
             record_affect_dependency(&mut conn, &command, 101).unwrap(),
             RecordChangeOutcome::AlreadyRecorded
         );
+    }
+
+    #[test]
+    fn affect_store_loads_timeline_node_affect_values() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let timeline_node_id = NodeId::new();
+        record_set_affect_value(
+            &mut conn,
+            &CommandEnvelope::new(set_command(
+                AffectTarget::TimelineNode {
+                    node_id: timeline_node_id,
+                },
+                "uneasy",
+            )),
+            100,
+        )
+        .unwrap();
+        record_set_affect_value(
+            &mut conn,
+            &CommandEnvelope::new(set_command(AffectTarget::Project, "hopeful")),
+            101,
+        )
+        .unwrap();
+
+        let values = load_timeline_node_affect_values(&conn).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(
+            values[0].target,
+            AffectTarget::TimelineNode {
+                node_id: timeline_node_id
+            }
+        );
+        assert_eq!(values[0].mood_labels[0].as_str(), "uneasy");
     }
 
     fn set_command(target: AffectTarget, mood: &str) -> SetAffectValueCommand {
