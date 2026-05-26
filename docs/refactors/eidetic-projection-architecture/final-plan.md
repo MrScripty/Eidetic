@@ -3554,6 +3554,11 @@ Implementation order:
   window readiness/visibility. Until the visible Bevy window runner lands, the
   backend explicitly reports a ready headless scene with no connected native
   window instead of implying that `running` means visible.
+- Started: timeline renderer lifecycle status and focus command now exist on
+  the same desktop-owned boundary as open/status/close. The current headless
+  host reports `scene_ready_pending_native_runner` and `focus_supported=false`
+  until the visible Bevy runner is connected, giving the next slice a stable
+  contract without adding fallback transports or frontend-owned renderer state.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

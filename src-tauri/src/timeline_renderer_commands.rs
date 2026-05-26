@@ -28,6 +28,13 @@ pub fn timeline_renderer_status(app: tauri::AppHandle) -> Result<TimelineHostSta
 }
 
 #[tauri::command]
+pub fn timeline_renderer_focus(app: tauri::AppHandle) -> Result<TimelineHostStatus, CommandError> {
+    timeline_host(&app)?.focus_renderer().map_err(|error| {
+        CommandError::internal(format!("timeline renderer focus failed: {error:?}"))
+    })
+}
+
+#[tauri::command]
 pub fn timeline_renderer_close(app: tauri::AppHandle) -> Result<TimelineHostStatus, CommandError> {
     timeline_host(&app)?.close_renderer().map_err(|error| {
         CommandError::internal(format!("timeline renderer close failed: {error:?}"))
@@ -49,10 +56,12 @@ mod tests {
     fn timeline_renderer_host_status_starts_closed() {
         let host = DesktopTimelineRendererOwner::start().unwrap();
         let status = host.status().unwrap();
+        let focused = host.focus_renderer().unwrap();
         let stopped = host.stop().unwrap();
 
         assert!(!status.running);
         assert_eq!(status.clip_count, 0);
+        assert!(!focused.renderer_window_focus_supported);
         assert!(!stopped.running);
     }
 }

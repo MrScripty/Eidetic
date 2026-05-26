@@ -14,8 +14,10 @@ pub struct TimelineHostStatus {
     pub running: bool,
     pub renderer_window_open: bool,
     pub renderer_scene_ready: bool,
+    pub renderer_window_lifecycle: TimelineRendererWindowLifecycle,
     pub renderer_window_visible: bool,
     pub renderer_window_ready: bool,
+    pub renderer_window_focus_supported: bool,
     pub renderer_window_message: String,
     pub track_count: usize,
     pub clip_count: usize,
@@ -23,6 +25,14 @@ pub struct TimelineHostStatus {
     pub affect_overlay_count: usize,
     pub queued_command_count: usize,
     pub last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TimelineRendererWindowLifecycle {
+    Closed,
+    SceneReadyPendingNativeRunner,
+    Visible,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,8 +74,10 @@ impl DesktopTimelineHost {
             running: false,
             renderer_window_open: false,
             renderer_scene_ready: false,
+            renderer_window_lifecycle: TimelineRendererWindowLifecycle::Closed,
             renderer_window_visible: false,
             renderer_window_ready: false,
+            renderer_window_focus_supported: false,
             renderer_window_message: "timeline renderer native window is unavailable".to_string(),
             track_count: 0,
             clip_count: 0,
@@ -81,6 +93,10 @@ impl DesktopTimelineHost {
             self.renderer = Some(TimelineRendererApp::new());
         }
         self.last_error = None;
+        self.status()
+    }
+
+    pub fn focus(&mut self) -> TimelineHostStatus {
         self.status()
     }
 
@@ -143,8 +159,10 @@ impl DesktopTimelineHost {
             running: self.renderer.is_some(),
             renderer_window_open: self.renderer.is_some(),
             renderer_scene_ready: self.renderer.is_some(),
+            renderer_window_lifecycle: timeline_renderer_window_lifecycle(self.renderer.is_some()),
             renderer_window_visible: false,
             renderer_window_ready: false,
+            renderer_window_focus_supported: false,
             renderer_window_message: timeline_renderer_window_message(self.renderer.is_some()),
             track_count,
             clip_count,
@@ -169,6 +187,9 @@ enum TimelineHostRequest {
         reply: mpsc::Sender<TimelineHostResult<Vec<TimelineRendererCommand>>>,
     },
     Status {
+        reply: mpsc::Sender<TimelineHostResult<TimelineHostStatus>>,
+    },
+    FocusRenderer {
         reply: mpsc::Sender<TimelineHostResult<TimelineHostStatus>>,
     },
     CloseRenderer {
@@ -247,6 +268,15 @@ impl DesktopTimelineRendererOwner {
         receive_reply(receiver)
     }
 
+    pub fn focus_renderer(&self) -> TimelineHostResult<TimelineHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
+        let (reply, receiver) = mpsc::channel();
+        self.enqueue(TimelineHostRequest::FocusRenderer { reply })?;
+        receive_reply(receiver)
+    }
+
     pub fn stop(&self) -> TimelineHostResult<TimelineHostStatus> {
         if let Some(status) = self.unavailable_status() {
             return Ok(status);
@@ -309,6 +339,9 @@ fn run_timeline_owner(
             TimelineHostRequest::Status { reply } => {
                 let _ = reply.send(Ok(host.status()));
             }
+            TimelineHostRequest::FocusRenderer { reply } => {
+                let _ = reply.send(Ok(host.focus()));
+            }
             TimelineHostRequest::CloseRenderer { reply } => {
                 let _ = reply.send(Ok(host.stop()));
             }
@@ -317,6 +350,14 @@ fn run_timeline_owner(
                 break;
             }
         }
+    }
+}
+
+fn timeline_renderer_window_lifecycle(running: bool) -> TimelineRendererWindowLifecycle {
+    if running {
+        TimelineRendererWindowLifecycle::SceneReadyPendingNativeRunner
+    } else {
+        TimelineRendererWindowLifecycle::Closed
     }
 }
 
@@ -364,8 +405,13 @@ mod tests {
         assert!(status.running);
         assert!(status.renderer_window_open);
         assert!(status.renderer_scene_ready);
+        assert_eq!(
+            status.renderer_window_lifecycle,
+            TimelineRendererWindowLifecycle::SceneReadyPendingNativeRunner
+        );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
+        assert!(!status.renderer_window_focus_supported);
         assert_eq!(
             status.renderer_window_message,
             "timeline renderer scene is ready; native window is not connected"
@@ -396,8 +442,13 @@ mod tests {
         assert!(!status.running);
         assert!(!status.renderer_window_open);
         assert!(!status.renderer_scene_ready);
+        assert_eq!(
+            status.renderer_window_lifecycle,
+            TimelineRendererWindowLifecycle::Closed
+        );
         assert!(!status.renderer_window_visible);
         assert!(!status.renderer_window_ready);
+        assert!(!status.renderer_window_focus_supported);
         assert_eq!(
             status.renderer_window_message,
             "floating timeline renderer window is closed"
@@ -422,6 +473,22 @@ mod tests {
 
         assert!(status.running);
         assert_eq!(status.clip_count, 1);
+        assert!(!stopped.running);
+    }
+
+    #[test]
+    fn timeline_owner_focus_reports_current_lifecycle_without_starting_renderer() {
+        let owner = DesktopTimelineRendererOwner::start().unwrap();
+
+        let status = owner.focus_renderer().unwrap();
+        let stopped = owner.stop().unwrap();
+
+        assert!(!status.running);
+        assert_eq!(
+            status.renderer_window_lifecycle,
+            TimelineRendererWindowLifecycle::Closed
+        );
+        assert!(!status.renderer_window_focus_supported);
         assert!(!stopped.running);
     }
 

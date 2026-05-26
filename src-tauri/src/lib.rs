@@ -113,6 +113,7 @@ pub fn run() {
             graph_renderer_commands::graph_renderer_camera_command,
             graph_renderer_commands::graph_renderer_visual_snapshot,
             timeline_renderer_commands::timeline_renderer_open,
+            timeline_renderer_commands::timeline_renderer_focus,
             timeline_renderer_commands::timeline_renderer_status,
             timeline_renderer_commands::timeline_renderer_close,
             reference_commands::reference_list,

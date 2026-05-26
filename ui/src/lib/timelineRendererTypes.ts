@@ -3,8 +3,10 @@ export interface TimelineRendererStatus {
   running: boolean;
   renderer_window_open: boolean;
   renderer_scene_ready: boolean;
+  renderer_window_lifecycle: TimelineRendererWindowLifecycle;
   renderer_window_visible: boolean;
   renderer_window_ready: boolean;
+  renderer_window_focus_supported: boolean;
   renderer_window_message: string;
   track_count: number;
   clip_count: number;
@@ -15,3 +17,8 @@ export interface TimelineRendererStatus {
 }
 
 export type TimelineRendererWindowKind = 'timeline';
+
+export type TimelineRendererWindowLifecycle =
+  | 'closed'
+  | 'scene_ready_pending_native_runner'
+  | 'visible';
