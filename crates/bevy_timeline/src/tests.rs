@@ -64,6 +64,14 @@ fn controlled_native_window_app_builds_scene_from_initial_projection() {
     assert_eq!(stats.track_count, 1);
     assert_eq!(stats.clip_count, 1);
     assert_eq!(stats.relationship_count, 0);
+
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeClipVisual>();
+    let clips: Vec<_> = visuals.iter(app.world()).collect();
+    assert_eq!(clips.len(), 1);
+    assert_eq!(clips[0].node_id, node_id);
+    assert!(clips[0].width_px > 0.0);
 }
 
 #[cfg(feature = "native_render")]
@@ -84,6 +92,33 @@ fn controlled_native_window_app_applies_projection_updates() {
     let stats = app.world().resource::<TimelineSceneStats>();
     assert_eq!(stats.track_count, 1);
     assert_eq!(stats.clip_count, 1);
+
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeClipVisual>();
+    assert_eq!(visuals.iter(app.world()).count(), 1);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_replaces_projection_derived_clip_visuals() {
+    let node_id = NodeId::new();
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::rebuild_timeline_native_visuals(
+        app.world_mut(),
+        &projection_with_node(node_id),
+    );
+
+    let mut empty_projection = projection_with_node(node_id);
+    empty_projection.clips.clear();
+    crate::native_render::rebuild_timeline_native_visuals(app.world_mut(), &empty_projection);
+
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeClipVisual>();
+    assert_eq!(visuals.iter(app.world()).count(), 0);
 }
 
 #[cfg(feature = "native_render")]

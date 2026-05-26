@@ -3652,6 +3652,11 @@ Implementation order:
   timeline host and, when a floating window is open, enqueue the latest
   projection for the native Bevy app to rebuild disposable ECS scene state
   without reopening the window or adding renderer-owned durable state.
+- Started: the native timeline window now creates projection-derived 2D Bevy
+  clip rectangle visuals with a camera and disposable visual entities rebuilt
+  from backend projections. This is the first visible render geometry slice and
+  intentionally does not add native input handling, labels, arcs, or renderer
+  persistence yet.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

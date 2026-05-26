@@ -5,22 +5,57 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, ClearColor, Color, MessageWriter, Plugin, PluginGroup, Query, Res, Resource, Update,
-    Window,
+    App, Camera2d, ClearColor, Color, Commands, Component, Entity, MessageWriter, Plugin,
+    PluginGroup, Query, Res, Resource, Startup, Transform, Update, Vec2, Vec3, Window, World,
 };
+use bevy::sprite::Sprite;
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
 };
 use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::TimelineRenderProjection;
+use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::track::TrackId;
 
-use crate::scene::{TimelineSceneStats, rebuild_timeline_scene};
+use crate::scene::{TimelineSceneEntity, TimelineSceneStats, rebuild_timeline_scene};
 
 const TIMELINE_NATIVE_PROJECTION_QUEUE_CAPACITY: usize = 8;
+const TIMELINE_NATIVE_CLIP_HEIGHT_PX: f32 = 42.0;
+const TIMELINE_NATIVE_TRACK_GAP_PX: f32 = 16.0;
+const TIMELINE_NATIVE_HORIZONTAL_PADDING_PX: f32 = 48.0;
+const TIMELINE_NATIVE_TOP_PADDING_PX: f32 = 48.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct TimelineNativeRenderConfig {
     pub borderless_window: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Resource)]
+pub struct TimelineNativeRenderLayout {
+    pub width_px: f32,
+    pub height_px: f32,
+    pub clip_height_px: f32,
+    pub track_gap_px: f32,
+    pub horizontal_padding_px: f32,
+    pub top_padding_px: f32,
+}
+
+#[derive(Component)]
+pub struct TimelineNativeVisualEntity;
+
+#[derive(Component)]
+pub struct TimelineNativeCamera;
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct TimelineNativeClipVisual {
+    pub node_id: NodeId,
+    pub track_id: TrackId,
+    pub x_px: f32,
+    pub y_px: f32,
+    pub width_px: f32,
+    pub height_px: f32,
+    pub start_ms: u64,
+    pub end_ms: u64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -71,6 +106,31 @@ impl Default for TimelineNativeRenderConfig {
         Self {
             borderless_window: false,
         }
+    }
+}
+
+impl TimelineNativeRenderLayout {
+    pub fn from_window(width_px: u32, height_px: u32) -> Self {
+        Self {
+            width_px: width_px.max(1) as f32,
+            height_px: height_px.max(1) as f32,
+            clip_height_px: TIMELINE_NATIVE_CLIP_HEIGHT_PX,
+            track_gap_px: TIMELINE_NATIVE_TRACK_GAP_PX,
+            horizontal_padding_px: TIMELINE_NATIVE_HORIZONTAL_PADDING_PX,
+            top_padding_px: TIMELINE_NATIVE_TOP_PADDING_PX,
+        }
+    }
+
+    fn usable_width_px(self) -> f32 {
+        (self.width_px - (self.horizontal_padding_px * 2.0)).max(1.0)
+    }
+
+    fn left_px(self) -> f32 {
+        -(self.width_px / 2.0) + self.horizontal_padding_px
+    }
+
+    fn top_px(self) -> f32 {
+        (self.height_px / 2.0) - self.top_padding_px
     }
 }
 
@@ -192,8 +252,10 @@ pub struct TimelineNativeRenderPlugin;
 impl Plugin for TimelineNativeRenderPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(TimelineNativeRenderConfig::default());
+        app.insert_resource(TimelineNativeRenderLayout::from_window(1280, 360));
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.insert_resource(TimelineSceneStats::default());
+        app.add_systems(Startup, spawn_timeline_native_camera);
         app.add_systems(Update, mark_timeline_native_window_ready);
         app.add_systems(Update, apply_timeline_native_projection_updates);
     }
@@ -235,6 +297,10 @@ pub fn configure_controlled_minimal_timeline_native_window_app(
             }),
     );
     app.add_plugins(TimelineNativeRenderPlugin);
+    app.insert_resource(TimelineNativeRenderLayout::from_window(
+        config.width_px,
+        config.height_px,
+    ));
     app.insert_resource(TimelineNativeWindowControl::from(&control_handle));
     app.add_systems(Update, close_minimal_native_window_when_requested);
     app.add_systems(Update, close_minimal_native_window_from_os_request);
@@ -258,6 +324,7 @@ pub(crate) fn seed_initial_timeline_native_render_scene(
         return;
     };
     rebuild_timeline_scene(app.world_mut(), projection);
+    rebuild_timeline_native_visuals(app.world_mut(), projection);
 }
 
 pub(crate) fn apply_timeline_native_projection_updates(world: &mut bevy::prelude::World) {
@@ -277,6 +344,80 @@ pub(crate) fn apply_timeline_native_projection_updates(world: &mut bevy::prelude
 
     if let Some(projection) = latest_projection {
         rebuild_timeline_scene(world, &projection);
+        rebuild_timeline_native_visuals(world, &projection);
+    }
+}
+
+fn spawn_timeline_native_camera(mut commands: Commands) {
+    commands.spawn((Camera2d, TimelineNativeCamera));
+}
+
+pub(crate) fn rebuild_timeline_native_visuals(
+    world: &mut World,
+    projection: &TimelineRenderProjection,
+) {
+    despawn_existing_timeline_native_visuals(world);
+
+    let layout = world
+        .get_resource::<TimelineNativeRenderLayout>()
+        .copied()
+        .unwrap_or_else(|| TimelineNativeRenderLayout::from_window(1280, 360));
+    let duration_ms = projection.total_duration_ms.max(1);
+    let sorted_tracks = {
+        let mut tracks = projection.tracks.clone();
+        tracks.sort_by_key(|track| track.sort_order);
+        tracks
+    };
+
+    for clip in &projection.clips {
+        let Some(track_index) = sorted_tracks
+            .iter()
+            .position(|track| track.track_id == clip.track_id)
+        else {
+            continue;
+        };
+        let start_ratio = clip.start_ms.min(duration_ms) as f32 / duration_ms as f32;
+        let end_ratio = clip.end_ms.min(duration_ms) as f32 / duration_ms as f32;
+        if end_ratio <= start_ratio {
+            continue;
+        }
+        let x_start = layout.left_px() + (start_ratio * layout.usable_width_px());
+        let x_end = layout.left_px() + (end_ratio * layout.usable_width_px());
+        let width_px = (x_end - x_start).max(1.0);
+        let x_px = x_start + (width_px / 2.0);
+        let y_px =
+            layout.top_px() - (track_index as f32 * (layout.clip_height_px + layout.track_gap_px));
+
+        world.spawn((
+            TimelineSceneEntity,
+            TimelineNativeVisualEntity,
+            TimelineNativeClipVisual {
+                node_id: clip.node_id,
+                track_id: clip.track_id,
+                x_px,
+                y_px,
+                width_px,
+                height_px: layout.clip_height_px,
+                start_ms: clip.start_ms,
+                end_ms: clip.end_ms,
+            },
+            Sprite::from_color(
+                Color::srgb(0.342, 0.655, 0.691),
+                Vec2::new(width_px, layout.clip_height_px),
+            ),
+            Transform::from_translation(Vec3::new(x_px, y_px, 0.0)),
+        ));
+    }
+}
+
+fn despawn_existing_timeline_native_visuals(world: &mut World) {
+    let entities: Vec<Entity> = world
+        .query_filtered::<Entity, bevy::prelude::With<TimelineNativeVisualEntity>>()
+        .iter(world)
+        .collect();
+
+    for entity in entities {
+        let _ = world.despawn(entity);
     }
 }
 
