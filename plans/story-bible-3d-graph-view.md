@@ -535,9 +535,14 @@ viewer/editor, not just a render target.
   - frame active influence/context path,
   - reset camera,
   - navigate to node or neighborhood.
-- Bevy supports mouse navigation for normal use: orbit, pan, and zoom.
-- Keyboard navigation can remain, but the UI must show available actions through
-  controls or concise labels.
+- Bevy owns normal viewport navigation. The 3D viewport must support mouse and
+  keyboard controls for orbit, pan, zoom, reset/fit recovery, and selection
+  traversal without requiring Svelte camera buttons.
+- Svelte should not grow a camera-control toolbar for normal navigation. The
+  exception is cross-surface focus: Ctrl+clicking a node item in the Svelte
+  bible list should send a typed transient renderer camera command to center or
+  frame that node in Bevy. This action may preserve normal node selection, but
+  it must not mutate durable graph facts or backend projection scope.
 - Renderer closed/error state should include a clear action to reopen or recover.
 - Camera commands are transient renderer presentation commands. They may be
   issued by backend workflows, agent harnesses, or optional UI surfaces, but
@@ -554,13 +559,18 @@ viewer/editor, not just a render target.
 
 - Graph workspace provides obvious node creation controls scoped by category or
   selected canonical root.
-- Selected nodes can be edited through the normal backend-owned node detail
-  surface from the graph workspace.
-- Nodes can be removed through a confirmed backend command when deletion support
-  exists. If delete is not yet implemented, the plan must record that blocker
-  instead of presenting delete as available.
+- Graph selection and Bevy selection should route users to the normal
+  backend-owned node/edge detail inspector for durable edits. Do not duplicate
+  full graph editing forms inside Bevy or create parallel Svelte graph-edit
+  surfaces.
+- Nodes can be removed only through a confirmed backend soft-delete command
+  that records history and updates projections. Canonical root deletion must be
+  rejected. The first node-delete implementation should reject deletion when
+  the node has non-deleted children or incident non-deleted edges; cascade
+  delete can be planned later if needed.
 - Edges can be added, edited, and removed through backend commands and refreshed
-  projections.
+  projections. Edge delete should be implemented as a backend soft-delete
+  command with history, not as a local projection patch.
 - Edge add workflows should use selectable source/target nodes or graph
   selections, not require users to manually type opaque node IDs.
 - Creating or editing graph data must update the Bevy graph after the backend
@@ -712,6 +722,8 @@ Before implementing each remaining Milestone 9 slice, confirm:
     graph facts,
   - add/edit edge and add/edit node flows submit backend commands then refresh
     projections,
+  - edge delete and strict node delete submit backend commands, record history,
+    reject invalid deletes, and refresh projections without frontend patches,
   - no optimistic graph-node or graph-edge UI update is visible before backend
     command confirmation,
   - malformed renderer/projection boundary payloads fail with typed errors,
@@ -719,8 +731,12 @@ Before implementing each remaining Milestone 9 slice, confirm:
     contracts,
   - renderer lifecycle tasks stop cleanly and queue overflow behavior is
     bounded and observable,
-  - keyboard-accessible Svelte controls can perform the same selection,
-    inspection, filtering, focus, and open/close actions as the renderer,
+  - keyboard-accessible Svelte controls can perform selection, inspection,
+    filtering, focus, and open/close actions without owning graph facts,
+  - Bevy keyboard and mouse controls can navigate, reset/fit, and recover the
+    graph viewport,
+  - Ctrl+clicking a bible node item in the Svelte side panel sends a typed
+    transient camera command that centers or frames that node in Bevy,
   - backend-issued camera commands can fit the graph, frame selected graph
     entities, reset the camera, and navigate to important graph scopes without
     requiring Svelte camera buttons.
@@ -730,8 +746,10 @@ Before implementing each remaining Milestone 9 slice, confirm:
   - user can add two nodes and one edge from the graph workflow,
   - user can select a node without losing the rest of the graph,
   - user can select an edge and inspect its details,
-  - user can navigate with mouse and visible controls,
-  - user can reset/fit the camera after getting lost,
+  - user can navigate and recover the graph camera with Bevy mouse/keyboard
+    controls,
+  - user can Ctrl+click a bible node item in Svelte and see the Bevy camera
+    center/frame that node,
   - category colors are visually distinguishable.
 
 ## Open Questions
@@ -844,7 +862,8 @@ Current implementation progress:
 - Code review findings to resolve before completion:
   - graph-local add/edit workflows are incomplete and delete commands are not
     available,
-  - visible navigation/recovery controls are incomplete.
+  - Bevy keyboard/mouse navigation recovery and Svelte Ctrl+click-to-frame
+    bridge from bible list items are incomplete.
 - Standards review findings to resolve before implementation completion:
   - prevent frontend/renderer ownership of backend facts or generation-affecting
     selection,
@@ -892,10 +911,13 @@ Current implementation progress:
 13. Add selection, edge selection, highlighting, and detail-panel integration
     without collapsing graph scope on normal selection.
 14. Partially completed: add orbit/pan/zoom, frame selected, reset/fit view,
-    explicit focus neighborhood, clear selection, keyboard navigation, and
-    visible controls for those actions. Native orbit/pan/zoom and backend-owned
-    camera commands exist; the Graph workspace explicit focus control now
-    drives a renderer camera navigation command.
+    explicit focus neighborhood, clear selection, and keyboard navigation.
+    Native orbit/pan/zoom and backend-owned camera commands exist; the Graph
+    workspace explicit focus control now drives a renderer camera navigation
+    command. Remaining work should keep normal navigation inside Bevy through
+    mouse/keyboard controls and add a Svelte bible-list Ctrl+click bridge that
+    frames the clicked node in Bevy through the typed transient camera command
+    boundary.
 15. Completed: add a typed backend-owned camera command API for the Bevy
     viewport.
     Commands must be transient renderer presentation commands, bounded through
@@ -906,8 +928,10 @@ Current implementation progress:
     edge add/edit, using selectable graph/node controls rather than opaque ID
     entry. Graph workspace node creation and selectable edge target creation
     now exist; node/edge detail editing remain through the selected-node
-    inspector. Delete remains blocked until backend delete commands exist and
-    must not be simulated in frontend state.
+    inspector. Remaining delete work must add backend soft-delete commands with
+    history first: edge delete, then strict node delete that rejects canonical
+    roots and nodes with children or incident edges. Delete must not be
+    simulated in frontend state.
 17. Completed: refactor projection construction into query, scope, layout, and
     DTO helpers with targeted tests.
 18. Completed: add renderer-local mesh/material reuse for frequent projection
