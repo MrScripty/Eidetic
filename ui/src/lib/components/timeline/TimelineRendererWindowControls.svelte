@@ -104,14 +104,14 @@
   .timeline-renderer-controls {
     display: flex;
     align-items: center;
+    flex: 0 0 auto;
     gap: 4px;
-    min-width: 0;
-    margin-left: auto;
+    min-width: max-content;
   }
 
   .timeline-renderer-status,
   .timeline-renderer-error {
-    max-width: 150px;
+    max-width: clamp(60px, 14vw, 150px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -128,6 +128,7 @@
   }
 
   .tl-btn {
+    flex: 0 0 auto;
     background: none;
     border: 1px solid transparent;
     color: var(--color-text-secondary);
