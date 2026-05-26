@@ -3540,6 +3540,11 @@ Implementation order:
   disabled until a future visible-window slice performs an explicit dependency
   review. Current Bevy usage remains leaf-scoped with `default-features = false`
   and `features = ["std"]`.
+- Started: the Bevy timeline leaf crate now maps validated viewport pixel
+  coordinates through the current transient viewport into backend-projected
+  tracks and clips. This gives future native pointer handling a tested
+  projection-only hit-test path without introducing renderer-owned timeline
+  layout, DOM/SVG logic, or Bevy render/window features.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

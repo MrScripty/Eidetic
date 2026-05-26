@@ -5,11 +5,13 @@ use eidetic_core::timeline::track::TrackId;
 use serde::Serialize;
 use thiserror::Error;
 
+mod geometry;
 mod playhead;
 mod relationship_curve;
 mod scene;
 mod viewport;
 
+pub use geometry::{TimelineViewportGeometry, TimelineViewportPoint};
 pub use playhead::TimelinePlayhead;
 pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};
 pub use scene::{
@@ -86,6 +88,14 @@ pub enum TimelineRendererError {
     InvalidPlayheadPosition { position_ms: u64, duration_ms: u64 },
     #[error("viewport zoom factor must be finite and greater than zero")]
     InvalidZoomFactor,
+    #[error(
+        "invalid viewport geometry {width_px}px x {height_px}px with {track_height_px}px tracks"
+    )]
+    InvalidViewportGeometry {
+        width_px: u32,
+        height_px: u32,
+        track_height_px: u32,
+    },
 }
 
 #[derive(Resource, Default)]
@@ -283,6 +293,44 @@ impl TimelineRendererApp {
             })
             .max_by_key(|clip| (clip.sort_order, clip.start_ms))
             .map(|clip| clip.node_id))
+    }
+
+    pub fn hit_test_clip_at_point(
+        &self,
+        geometry: TimelineViewportGeometry,
+        point: TimelineViewportPoint,
+    ) -> Result<Option<NodeId>, TimelineRendererError> {
+        if !geometry.validate() {
+            return Err(TimelineRendererError::InvalidViewportGeometry {
+                width_px: geometry.width_px,
+                height_px: geometry.height_px,
+                track_height_px: geometry.track_height_px,
+            });
+        }
+        if point.x_px >= geometry.width_px || point.y_px >= geometry.height_px {
+            return Ok(None);
+        }
+
+        let state = self.app.world().resource::<TimelineRenderState>();
+        let projection = state
+            .projection
+            .as_ref()
+            .ok_or(TimelineRendererError::MissingProjection)?;
+        let track_index = point.y_px / geometry.track_height_px;
+        let mut tracks = projection.tracks.iter().collect::<Vec<_>>();
+        tracks.sort_by_key(|track| (track.sort_order, track.track_id.0));
+        let Some(track) = tracks.get(track_index as usize) else {
+            return Ok(None);
+        };
+
+        let viewport = self.viewport();
+        let width_ms = u128::from(viewport.width_ms());
+        let offset_ms = u128::from(point.x_px) * width_ms / u128::from(geometry.width_px);
+        let time_ms = viewport
+            .start_ms
+            .saturating_add(u64::try_from(offset_ms).unwrap_or(u64::MAX));
+
+        self.hit_test_clip_at_time(track.track_id, time_ms)
     }
 
     pub fn select_clip_at_time(

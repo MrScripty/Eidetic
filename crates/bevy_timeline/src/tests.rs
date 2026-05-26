@@ -231,6 +231,101 @@ fn renderer_app_hit_tests_and_selects_clip_by_track_and_time() {
 }
 
 #[test]
+fn renderer_app_hit_tests_clip_by_viewport_point_without_projection_ownership() {
+    let upper_node_id = NodeId::new();
+    let lower_node_id = NodeId::new();
+    let upper_track_id = TrackId::new();
+    let lower_track_id = TrackId::new();
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection_with_two_tracks(
+        upper_node_id,
+        upper_track_id,
+        lower_node_id,
+        lower_track_id,
+    ));
+
+    assert_eq!(
+        renderer.hit_test_clip_at_point(
+            TimelineViewportGeometry::new(1_000, 80, 40),
+            TimelineViewportPoint::new(300, 10),
+        ),
+        Ok(Some(upper_node_id))
+    );
+    assert_eq!(
+        renderer.hit_test_clip_at_point(
+            TimelineViewportGeometry::new(1_000, 80, 40),
+            TimelineViewportPoint::new(300, 50),
+        ),
+        Ok(Some(lower_node_id))
+    );
+}
+
+#[test]
+fn renderer_app_hit_test_point_uses_current_transient_viewport() {
+    let node_id = NodeId::new();
+    let track_id = TrackId::new();
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection_with_clip(node_id, track_id, 4_000, 6_000));
+    renderer.set_viewport(2_000, 6_000).unwrap();
+
+    assert_eq!(
+        renderer.hit_test_clip_at_point(
+            TimelineViewportGeometry::new(400, 40, 40),
+            TimelineViewportPoint::new(200, 20),
+        ),
+        Ok(Some(node_id))
+    );
+    assert_eq!(
+        renderer.hit_test_clip_at_point(
+            TimelineViewportGeometry::new(400, 40, 40),
+            TimelineViewportPoint::new(100, 20),
+        ),
+        Ok(None)
+    );
+}
+
+#[test]
+fn renderer_app_rejects_invalid_viewport_geometry_for_point_hit_testing() {
+    let node_id = NodeId::new();
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection_with_node(node_id));
+
+    assert_eq!(
+        renderer.hit_test_clip_at_point(
+            TimelineViewportGeometry::new(0, 40, 40),
+            TimelineViewportPoint::new(0, 0),
+        ),
+        Err(TimelineRendererError::InvalidViewportGeometry {
+            width_px: 0,
+            height_px: 40,
+            track_height_px: 40,
+        })
+    );
+}
+
+#[test]
+fn renderer_app_point_hit_testing_misses_outside_geometry_or_tracks() {
+    let node_id = NodeId::new();
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection_with_node(node_id));
+
+    assert_eq!(
+        renderer.hit_test_clip_at_point(
+            TimelineViewportGeometry::new(100, 40, 40),
+            TimelineViewportPoint::new(100, 20),
+        ),
+        Ok(None)
+    );
+    assert_eq!(
+        renderer.hit_test_clip_at_point(
+            TimelineViewportGeometry::new(100, 80, 40),
+            TimelineViewportPoint::new(20, 60),
+        ),
+        Ok(None)
+    );
+}
+
+#[test]
 fn renderer_app_hit_test_misses_empty_time() {
     let node_id = NodeId::new();
     let track_id = TrackId::new();
@@ -493,6 +588,67 @@ fn projection_with_clip(
             beat_type: None,
             arc_ids: Vec::new(),
         }],
+        relationships: Vec::new(),
+        gaps: Vec::new(),
+        affect_overlays: Vec::new(),
+    }
+}
+
+fn projection_with_two_tracks(
+    upper_node_id: NodeId,
+    upper_track_id: TrackId,
+    lower_node_id: NodeId,
+    lower_track_id: TrackId,
+) -> TimelineRenderProjection {
+    TimelineRenderProjection {
+        total_duration_ms: 10_000,
+        structure_segments: Vec::new(),
+        tracks: vec![
+            TimelineRenderTrack {
+                track_id: lower_track_id,
+                level: StoryLevel::Beat,
+                label: "Beats".to_string(),
+                sort_order: 20,
+                collapsed: false,
+            },
+            TimelineRenderTrack {
+                track_id: upper_track_id,
+                level: StoryLevel::Scene,
+                label: "Scenes".to_string(),
+                sort_order: 10,
+                collapsed: false,
+            },
+        ],
+        clips: vec![
+            TimelineRenderClip {
+                node_id: upper_node_id,
+                parent_id: None,
+                track_id: upper_track_id,
+                level: StoryLevel::Scene,
+                name: "Opening scene".to_string(),
+                start_ms: 1_000,
+                end_ms: 4_000,
+                sort_order: 10,
+                locked: false,
+                content_status: ContentStatus::NotesOnly,
+                beat_type: None,
+                arc_ids: Vec::new(),
+            },
+            TimelineRenderClip {
+                node_id: lower_node_id,
+                parent_id: Some(upper_node_id),
+                track_id: lower_track_id,
+                level: StoryLevel::Beat,
+                name: "Reversal".to_string(),
+                start_ms: 2_000,
+                end_ms: 5_000,
+                sort_order: 20,
+                locked: false,
+                content_status: ContentStatus::NotesOnly,
+                beat_type: None,
+                arc_ids: Vec::new(),
+            },
+        ],
         relationships: Vec::new(),
         gaps: Vec::new(),
         affect_overlays: Vec::new(),
