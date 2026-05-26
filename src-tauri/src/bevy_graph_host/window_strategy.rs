@@ -3,12 +3,7 @@ pub use crate::renderer_window::DesktopRendererWindowCapability as BibleGraphRen
 pub use crate::renderer_window::DesktopRendererWindowCapabilityReason as BibleGraphRendererWindowCapabilityReason;
 pub use crate::renderer_window::DesktopRendererWindowLifecycle as BibleGraphRendererWindowLifecycle;
 pub use crate::renderer_window::DesktopRendererWindowPlatform as BibleGraphRendererWindowPlatform;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BibleGraphRendererWindowStrategy {
-    BevyWinitFloatingWindow,
-}
+pub use crate::renderer_window::DesktopRendererWindowStrategy as BibleGraphRendererWindowStrategy;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct BibleGraphRendererWindowStrategyStatus {

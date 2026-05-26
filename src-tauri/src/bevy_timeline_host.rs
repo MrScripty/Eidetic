@@ -9,7 +9,7 @@ use eidetic_core::contracts::TimelineRenderProjection;
 use crate::renderer_window::{
     DesktopRendererRunnerLifecycle, DesktopRendererThreadingModel, DesktopRendererWindowCapability,
     DesktopRendererWindowCapabilityReason, DesktopRendererWindowKind,
-    DesktopRendererWindowLifecycle, DesktopRendererWindowPlatform,
+    DesktopRendererWindowLifecycle, DesktopRendererWindowPlatform, DesktopRendererWindowStrategy,
     current_desktop_renderer_window_platform,
 };
 
@@ -22,6 +22,7 @@ pub struct TimelineHostStatus {
     pub renderer_window_lifecycle: DesktopRendererWindowLifecycle,
     pub renderer_runner_lifecycle: DesktopRendererRunnerLifecycle,
     pub renderer_runner_threading_model: DesktopRendererThreadingModel,
+    pub renderer_window_strategy: DesktopRendererWindowStrategy,
     pub renderer_window_platform: DesktopRendererWindowPlatform,
     pub renderer_window_capability: DesktopRendererWindowCapability,
     pub renderer_window_capability_reason: DesktopRendererWindowCapabilityReason,
@@ -81,6 +82,7 @@ impl DesktopTimelineHost {
             renderer_window_lifecycle: DesktopRendererWindowLifecycle::Closed,
             renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
             renderer_runner_threading_model: DesktopRendererThreadingModel::Unsupported,
+            renderer_window_strategy: DesktopRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: current_desktop_renderer_window_platform(),
             renderer_window_capability: DesktopRendererWindowCapability::RunnerError,
             renderer_window_capability_reason: DesktopRendererWindowCapabilityReason::RunnerError,
@@ -177,6 +179,7 @@ impl DesktopTimelineHost {
             ),
             renderer_runner_lifecycle: DesktopRendererRunnerLifecycle::Closed,
             renderer_runner_threading_model: DesktopRendererThreadingModel::Unsupported,
+            renderer_window_strategy: DesktopRendererWindowStrategy::BevyWinitFloatingWindow,
             renderer_window_platform: current_desktop_renderer_window_platform(),
             renderer_window_capability: DesktopRendererWindowCapability::PendingNativeRunner,
             renderer_window_capability_reason:
@@ -431,6 +434,10 @@ mod tests {
         assert_eq!(
             status.renderer_runner_threading_model,
             DesktopRendererThreadingModel::Unsupported
+        );
+        assert_eq!(
+            status.renderer_window_strategy,
+            DesktopRendererWindowStrategy::BevyWinitFloatingWindow
         );
         assert_eq!(
             status.renderer_window_capability,

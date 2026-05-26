@@ -3585,6 +3585,10 @@ Implementation order:
   capability reason, threading model, and visible-support fields. The current
   headless timeline host reports `pending_native_runner` and unsupported
   threading until a real shared native runner is connected.
+- Started: renderer window strategy vocabulary is now shared desktop renderer
+  infrastructure, and timeline status reports the same
+  `bevy_winit_floating_window` strategy that graph uses for floating native
+  Bevy renderers.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

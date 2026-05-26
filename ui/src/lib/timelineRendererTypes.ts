@@ -6,6 +6,7 @@ export interface TimelineRendererStatus {
   renderer_window_lifecycle: TimelineRendererWindowLifecycle;
   renderer_runner_lifecycle: TimelineRendererRunnerLifecycle;
   renderer_runner_threading_model: TimelineRendererRunnerThreadingModel;
+  renderer_window_strategy: TimelineRendererWindowStrategy;
   renderer_window_platform: TimelineRendererWindowPlatform;
   renderer_window_capability: TimelineRendererWindowCapability;
   renderer_window_capability_reason: TimelineRendererWindowCapabilityReason;
@@ -24,6 +25,8 @@ export interface TimelineRendererStatus {
 }
 
 export type TimelineRendererWindowKind = 'timeline';
+
+export type TimelineRendererWindowStrategy = 'bevy_winit_floating_window';
 
 export type TimelineRendererWindowLifecycle =
   | 'closed'
