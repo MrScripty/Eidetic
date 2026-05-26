@@ -37,6 +37,8 @@ Current scope:
   requested range against the active backend projection.
 - Emit native delete command requests only for nodes present in the active
   backend projection.
+- Emit native split command requests only when the split point is inside the
+  projected clip and replacement node IDs are available.
 
 Dependency review:
 

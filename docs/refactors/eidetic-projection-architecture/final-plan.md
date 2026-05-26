@@ -3687,6 +3687,9 @@ Implementation order:
 - Started: the native timeline window API can now emit validated delete-node
   command requests only for nodes present in the active backend projection,
   preserving the existing desktop command bridge as the mutation boundary.
+- Started: the native timeline window API can now emit validated split-node
+  command requests only for split points inside the projected clip and fresh
+  replacement node IDs, keeping split mutation semantics at the backend bridge.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

@@ -664,6 +664,47 @@ pub fn emit_timeline_native_delete_node_request(
     Ok(())
 }
 
+pub fn emit_timeline_native_split_node_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    node_id: NodeId,
+    at_ms: u64,
+    left_node_id: NodeId,
+    right_node_id: NodeId,
+) -> Result<(), TimelineRendererError> {
+    let Some(clip) = projection.clips.iter().find(|clip| clip.node_id == node_id) else {
+        return Err(TimelineRendererError::UnknownNode { node_id });
+    };
+    if at_ms <= clip.start_ms || at_ms >= clip.end_ms {
+        return Err(TimelineRendererError::InvalidNodeSplit {
+            at_ms,
+            start_ms: clip.start_ms,
+            end_ms: clip.end_ms,
+        });
+    }
+    let output_ids_are_available = left_node_id != right_node_id
+        && !projection
+            .clips
+            .iter()
+            .any(|clip| clip.node_id == left_node_id || clip.node_id == right_node_id);
+    if !output_ids_are_available {
+        return Err(TimelineRendererError::InvalidSplitOutputNodeIds {
+            left_node_id,
+            right_node_id,
+        });
+    }
+
+    let _ = control
+        .command_sender
+        .try_send(TimelineRendererCommand::SplitNode {
+            node_id,
+            at_ms,
+            left_node_id,
+            right_node_id,
+        });
+    Ok(())
+}
+
 fn native_track_height_px() -> u32 {
     (TIMELINE_NATIVE_CLIP_HEIGHT_PX + TIMELINE_NATIVE_TRACK_GAP_PX) as u32
 }

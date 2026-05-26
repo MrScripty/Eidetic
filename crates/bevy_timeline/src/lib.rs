@@ -25,10 +25,10 @@ pub use native_render::{
     TimelineNativeWindowProjectionUpdateError, TimelineNativeWindowRunnerConfig,
     configure_controlled_minimal_timeline_native_window_app,
     configure_minimal_timeline_native_window_app, emit_timeline_native_delete_node_request,
-    emit_timeline_native_node_range_request, nudge_timeline_native_playhead,
-    pan_timeline_native_viewport, run_controlled_minimal_timeline_native_window,
-    run_minimal_timeline_native_window, set_timeline_native_playhead, set_timeline_native_viewport,
-    zoom_timeline_native_viewport,
+    emit_timeline_native_node_range_request, emit_timeline_native_split_node_request,
+    nudge_timeline_native_playhead, pan_timeline_native_viewport,
+    run_controlled_minimal_timeline_native_window, run_minimal_timeline_native_window,
+    set_timeline_native_playhead, set_timeline_native_viewport, zoom_timeline_native_viewport,
 };
 pub use playhead::TimelinePlayhead;
 pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};
