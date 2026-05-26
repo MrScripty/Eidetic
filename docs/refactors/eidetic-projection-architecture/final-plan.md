@@ -3529,6 +3529,11 @@ Implementation order:
   editor focus. The event type is intentionally separate from graph
   `select_node` commands so timeline node IDs cannot be misrouted as bible
   graph node selections.
+- Started: the Bevy timeline leaf crate now records the Bevy 0.18.1 dependency
+  review and has a guard test that keeps render/window/text/UI features
+  disabled until a future visible-window slice performs an explicit dependency
+  review. Current Bevy usage remains leaf-scoped with `default-features = false`
+  and `features = ["std"]`.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

@@ -36,8 +36,15 @@ Dependency review:
 - Browser/WASM interop dependencies are intentionally absent. Eidetic's
   production renderer path is native desktop host integration through Tauri and
   Bevy, not browser canvas or wasm-bindgen.
+- The current normal dependency tree has 110 unique crates. That is acceptable
+  only because Bevy is leaf-scoped and because render/window/text/UI/asset
+  features are still disabled.
+- A guard test fails if `bevy_render`, `bevy_winit`, `bevy_window`,
+  `bevy_text`, or `bevy_ui` is enabled in this crate without an explicit
+  dependency-review slice.
 - Adding Bevy render/window/asset/text/input features requires a new dependency
-  review and a commit that explains the transitive dependency cost.
+  review, a commit that explains the transitive dependency cost, and proof that
+  the feature remains out of `eidetic-core` and `eidetic-server`.
 
 Future scope:
 

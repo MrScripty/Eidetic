@@ -9,6 +9,20 @@ use eidetic_core::timeline::track::TrackId;
 mod split;
 
 #[test]
+fn crate_keeps_bevy_features_leaf_and_minimal() {
+    let manifest = include_str!("../Cargo.toml");
+
+    assert!(manifest.contains("bevy = { version = \"0.18.1\""));
+    assert!(manifest.contains("default-features = false"));
+    assert!(manifest.contains("features = [\"std\"]"));
+    assert!(!manifest.contains("\"bevy_render\""));
+    assert!(!manifest.contains("\"bevy_winit\""));
+    assert!(!manifest.contains("\"bevy_window\""));
+    assert!(!manifest.contains("\"bevy_text\""));
+    assert!(!manifest.contains("\"bevy_ui\""));
+}
+
+#[test]
 fn renderer_app_receives_projection_and_emits_validated_selection_command() {
     let node_id = NodeId::new();
     let mut renderer = TimelineRendererApp::new();
