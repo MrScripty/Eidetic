@@ -3764,6 +3764,11 @@ Implementation order:
   command emission, native lifecycle, and split-command coverage in focused
   submodules. The parent `tests.rs` now owns only the Bevy feature guard and
   shared projection fixtures.
+- Started: desktop timeline renderer command draining and backend mutation
+  mapping have been extracted from the broad desktop event bridge into focused
+  `timeline_renderer_command_bridge.rs`. The bridge still applies selection
+  through backend transient state and durable mutations through
+  `command_service`; no frontend-owned state or alternate transport was added.
 - Started: the desktop binary now has a `--timeline-renderer-smoke` lifecycle
   probe mirroring the graph renderer smoke path. It opens the desktop-owned
   timeline renderer with a minimal backend projection, observes status/focus/

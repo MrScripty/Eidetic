@@ -15,6 +15,7 @@ mod project_commands;
 mod projections;
 mod reference_commands;
 mod renderer_window;
+mod timeline_renderer_command_bridge;
 mod timeline_renderer_commands;
 mod timeline_renderer_platform_strategy;
 pub mod timeline_renderer_supervisor;
