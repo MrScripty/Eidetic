@@ -14,6 +14,7 @@ mod projections;
 mod reference_commands;
 mod renderer_window;
 mod timeline_renderer_commands;
+pub mod timeline_renderer_window_thread;
 
 use bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
 use desktop_events::DesktopEventBridgeOwner;
