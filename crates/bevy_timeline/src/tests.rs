@@ -327,6 +327,56 @@ fn controlled_native_window_emits_validated_clip_selection_commands() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_validated_node_range_command() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    crate::native_render::emit_timeline_native_node_range_request(
+        &window_control,
+        &projection_with_node(node_id),
+        node_id,
+        2_000,
+        5_000,
+    )
+    .unwrap();
+
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SetNodeRange {
+            node_id,
+            start_ms: 2_000,
+            end_ms: 5_000,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_rejects_invalid_node_range_command() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    assert_eq!(
+        crate::native_render::emit_timeline_native_node_range_request(
+            &window_control,
+            &projection_with_node(node_id),
+            node_id,
+            8_000,
+            4_000,
+        ),
+        Err(TimelineRendererError::InvalidNodeRange {
+            start_ms: 8_000,
+            end_ms: 4_000,
+            duration_ms: 10_000,
+        })
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_window_control_handle_records_close_requests() {
     let control = TimelineNativeWindowControlHandle::new();
 

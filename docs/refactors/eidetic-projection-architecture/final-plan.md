@@ -3680,6 +3680,10 @@ Implementation order:
 - Started: native timeline keyboard input can now nudge that transient playhead
   left and right within the backend projection duration, rebuilding disposable
   Bevy visuals without mutating durable timeline data.
+- Started: the native timeline window API can now emit validated node range
+  command requests from the active backend projection, giving later Bevy
+  drag/resize interactions a backend-owned mutation path without introducing
+  renderer-side timeline ownership.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

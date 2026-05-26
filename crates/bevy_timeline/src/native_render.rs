@@ -621,6 +621,34 @@ pub(crate) fn emit_timeline_native_clip_selection(
     Ok(node_id)
 }
 
+pub fn emit_timeline_native_node_range_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    node_id: NodeId,
+    start_ms: u64,
+    end_ms: u64,
+) -> Result<(), TimelineRendererError> {
+    if !projection.clips.iter().any(|clip| clip.node_id == node_id) {
+        return Err(TimelineRendererError::UnknownNode { node_id });
+    }
+    if start_ms >= end_ms || end_ms > projection.total_duration_ms {
+        return Err(TimelineRendererError::InvalidNodeRange {
+            start_ms,
+            end_ms,
+            duration_ms: projection.total_duration_ms,
+        });
+    }
+
+    let _ = control
+        .command_sender
+        .try_send(TimelineRendererCommand::SetNodeRange {
+            node_id,
+            start_ms,
+            end_ms,
+        });
+    Ok(())
+}
+
 fn native_track_height_px() -> u32 {
     (TIMELINE_NATIVE_CLIP_HEIGHT_PX + TIMELINE_NATIVE_TRACK_GAP_PX) as u32
 }
