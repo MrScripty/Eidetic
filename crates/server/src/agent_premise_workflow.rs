@@ -11,12 +11,60 @@ use crate::agent_workflow_harness::{
 };
 use crate::agent_workflow_service::AgentRunHistoryProjection;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ContextRefinementWorkflowKind {
+    Premise,
+    Act,
+    Sequence,
+    Scene,
+    Beat,
+    Shot,
+}
+
+impl ContextRefinementWorkflowKind {
+    fn workflow_id(self) -> &'static str {
+        match self {
+            Self::Premise => "workflow.premise.graph_context",
+            Self::Act => "workflow.act.graph_context",
+            Self::Sequence => "workflow.sequence.graph_context",
+            Self::Scene => "workflow.scene.graph_context",
+            Self::Beat => "workflow.beat.graph_context",
+            Self::Shot => "workflow.shot.graph_context",
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Premise => "Premise graph context",
+            Self::Act => "Act graph context",
+            Self::Sequence => "Sequence graph context",
+            Self::Scene => "Scene graph context",
+            Self::Beat => "Beat graph context",
+            Self::Shot => "Shot graph context",
+        }
+    }
+
+    fn intent(self) -> AgentWorkflowIntent {
+        match self {
+            Self::Premise => AgentWorkflowIntent::DevelopPremiseGraphContext,
+            Self::Act => AgentWorkflowIntent::RefineActContext,
+            Self::Sequence => AgentWorkflowIntent::RefineSequenceContext,
+            Self::Scene => AgentWorkflowIntent::RefineSceneContext,
+            Self::Beat => AgentWorkflowIntent::RefineBeatContext,
+            Self::Shot => AgentWorkflowIntent::RefineShotContext,
+        }
+    }
+}
+
 pub fn premise_graph_context_workflow() -> AgentWorkflowDefinition {
+    context_refinement_workflow(ContextRefinementWorkflowKind::Premise)
+}
+
+pub fn context_refinement_workflow(kind: ContextRefinementWorkflowKind) -> AgentWorkflowDefinition {
     AgentWorkflowDefinition {
-        id: AgentWorkflowId::new("workflow.premise.graph_context")
-            .expect("static workflow id is non-empty"),
-        label: "Premise graph context".to_string(),
-        intent: AgentWorkflowIntent::DevelopPremiseGraphContext,
+        id: AgentWorkflowId::new(kind.workflow_id()).expect("static workflow id is non-empty"),
+        label: kind.label().to_string(),
+        intent: kind.intent(),
         manifest: AgentToolManifest {
             tools: vec![
                 AgentToolDefinition {
@@ -56,7 +104,24 @@ pub fn run_premise_graph_context_workflow<P>(
 where
     P: AgentWorkflowProvider,
 {
-    let workflow = premise_graph_context_workflow();
+    run_context_refinement_workflow(
+        conn,
+        provider,
+        clock,
+        ContextRefinementWorkflowKind::Premise,
+    )
+}
+
+pub fn run_context_refinement_workflow<P>(
+    conn: &mut Connection,
+    provider: &mut P,
+    clock: &mut AgentHarnessClock,
+    kind: ContextRefinementWorkflowKind,
+) -> Result<AgentRunHistoryProjection, AgentHarnessError>
+where
+    P: AgentWorkflowProvider,
+{
+    let workflow = context_refinement_workflow(kind);
     run_agent_workflow_with_connection_tools(
         conn,
         workflow,
@@ -79,6 +144,51 @@ mod tests {
         BibleGraphNodeId, BibleGraphSchemaKey, CommandId,
     };
     use eidetic_core::timeline::node::NodeId;
+
+    #[test]
+    fn context_refinement_workflows_cover_all_story_levels() {
+        let cases = [
+            (
+                ContextRefinementWorkflowKind::Premise,
+                "workflow.premise.graph_context",
+                AgentWorkflowIntent::DevelopPremiseGraphContext,
+            ),
+            (
+                ContextRefinementWorkflowKind::Act,
+                "workflow.act.graph_context",
+                AgentWorkflowIntent::RefineActContext,
+            ),
+            (
+                ContextRefinementWorkflowKind::Sequence,
+                "workflow.sequence.graph_context",
+                AgentWorkflowIntent::RefineSequenceContext,
+            ),
+            (
+                ContextRefinementWorkflowKind::Scene,
+                "workflow.scene.graph_context",
+                AgentWorkflowIntent::RefineSceneContext,
+            ),
+            (
+                ContextRefinementWorkflowKind::Beat,
+                "workflow.beat.graph_context",
+                AgentWorkflowIntent::RefineBeatContext,
+            ),
+            (
+                ContextRefinementWorkflowKind::Shot,
+                "workflow.shot.graph_context",
+                AgentWorkflowIntent::RefineShotContext,
+            ),
+        ];
+
+        for (kind, expected_id, expected_intent) in cases {
+            let workflow = context_refinement_workflow(kind);
+
+            assert_eq!(workflow.id.as_str(), expected_id);
+            assert_eq!(workflow.intent, expected_intent);
+            assert_eq!(workflow.manifest.tools.len(), 3);
+            workflow.validate().unwrap();
+        }
+    }
 
     #[test]
     fn premise_workflow_reads_context_and_records_reviewable_graph_proposal() {

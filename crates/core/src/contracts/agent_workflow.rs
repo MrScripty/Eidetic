@@ -124,6 +124,7 @@ pub enum AgentWorkflowIntent {
     RefineSequenceContext,
     RefineSceneContext,
     RefineBeatContext,
+    RefineShotContext,
     InspectGraphContext,
 }
 

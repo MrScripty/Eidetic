@@ -3265,6 +3265,9 @@ Implementation order:
   run/tool history, and verifies the canonical graph remains proposal-gated.
 - Extend the workflow harness to act, sequence, scene, beat, and shot context
   refinement after the premise slice is verified.
+- Completed: the context-refinement workflow factory now covers premise, act,
+  sequence, scene, beat, and shot levels with typed workflow intents and the
+  same bounded graph-read/proposal manifest used by the verified premise slice.
 
 Standards gates:
 
