@@ -653,6 +653,101 @@ fn controlled_native_window_ignores_selected_nudge_without_projection_selection(
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_selected_start_resize_command_from_projection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+
+    let resized_range = crate::native_command::emit_timeline_native_selected_resize_request(
+        &window_control,
+        &projection,
+        crate::native_command::TimelineNativeResizeEdge::Start,
+        500,
+    )
+    .unwrap();
+
+    assert_eq!(resized_range, Some((node_id, 1_500, 4_000)));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SetNodeRange {
+            node_id,
+            start_ms: 1_500,
+            end_ms: 4_000,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_emits_selected_end_resize_command_from_projection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+
+    let resized_range = crate::native_command::emit_timeline_native_selected_resize_request(
+        &window_control,
+        &projection,
+        crate::native_command::TimelineNativeResizeEdge::End,
+        500,
+    )
+    .unwrap();
+
+    assert_eq!(resized_range, Some((node_id, 1_000, 4_500)));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SetNodeRange {
+            node_id,
+            start_ms: 1_000,
+            end_ms: 4_500,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_clamps_selected_resize_to_projection_bounds() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+
+    let resized_range = crate::native_command::emit_timeline_native_selected_resize_request(
+        &window_control,
+        &projection,
+        crate::native_command::TimelineNativeResizeEdge::End,
+        10_000,
+    )
+    .unwrap();
+
+    assert_eq!(resized_range, Some((node_id, 1_000, 10_000)));
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_ignores_selected_resize_without_projection_selection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    let resized_range = crate::native_command::emit_timeline_native_selected_resize_request(
+        &window_control,
+        &projection_with_node(node_id),
+        crate::native_command::TimelineNativeResizeEdge::End,
+        500,
+    )
+    .unwrap();
+
+    assert_eq!(resized_range, None);
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_delete_node_command() {
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();

@@ -345,6 +345,7 @@ impl Plugin for TimelineNativeRenderPlugin {
         app.add_systems(Update, emit_timeline_native_selected_delete);
         app.add_systems(Update, emit_timeline_native_selected_split);
         app.add_systems(Update, emit_timeline_native_selected_nudge);
+        app.add_systems(Update, emit_timeline_native_selected_resize);
         app.add_systems(Update, navigate_timeline_native_viewport);
         app.add_systems(Update, navigate_timeline_native_playhead);
     }
@@ -654,6 +655,10 @@ fn emit_timeline_native_selected_nudge(
     if !timeline_native_control_modifier_pressed(&keys) {
         return;
     }
+    if timeline_native_shift_modifier_pressed(&keys) || timeline_native_alt_modifier_pressed(&keys)
+    {
+        return;
+    }
     let nudge_left = keys.just_pressed(KeyCode::ArrowLeft);
     let nudge_right = keys.just_pressed(KeyCode::ArrowRight);
     if !nudge_left && !nudge_right {
@@ -673,6 +678,46 @@ fn emit_timeline_native_selected_nudge(
     };
     let _ = crate::native_command::emit_timeline_native_selected_nudge_request(
         &control, projection, delta_ms,
+    );
+}
+
+fn emit_timeline_native_selected_resize(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    control: Option<Res<TimelineNativeWindowControl>>,
+    projection_state: Res<TimelineNativeProjectionState>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    if !timeline_native_control_modifier_pressed(&keys) {
+        return;
+    }
+    let resize_left = keys.just_pressed(KeyCode::ArrowLeft);
+    let resize_right = keys.just_pressed(KeyCode::ArrowRight);
+    if !resize_left && !resize_right {
+        return;
+    }
+    let edge = if timeline_native_shift_modifier_pressed(&keys) {
+        crate::native_command::TimelineNativeResizeEdge::Start
+    } else if timeline_native_alt_modifier_pressed(&keys) {
+        crate::native_command::TimelineNativeResizeEdge::End
+    } else {
+        return;
+    };
+    let Some(control) = control else {
+        return;
+    };
+    let Some(projection) = projection_state.projection.as_ref() else {
+        return;
+    };
+    let resize_step_ms = (projection_state.viewport.width_ms() / 100).max(1) as i64;
+    let delta_ms = if resize_left {
+        -resize_step_ms
+    } else {
+        resize_step_ms
+    };
+    let _ = crate::native_command::emit_timeline_native_selected_resize_request(
+        &control, projection, edge, delta_ms,
     );
 }
 
@@ -710,6 +755,14 @@ fn navigate_timeline_native_viewport(world: &mut World) {
 
 fn timeline_native_control_modifier_pressed(keys: &ButtonInput<KeyCode>) -> bool {
     keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight)
+}
+
+fn timeline_native_shift_modifier_pressed(keys: &ButtonInput<KeyCode>) -> bool {
+    keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight)
+}
+
+fn timeline_native_alt_modifier_pressed(keys: &ButtonInput<KeyCode>) -> bool {
+    keys.pressed(KeyCode::AltLeft) || keys.pressed(KeyCode::AltRight)
 }
 
 fn navigate_timeline_native_playhead(world: &mut World) {

@@ -3739,6 +3739,11 @@ Implementation order:
 - Started: timeline renderer host lifecycle coverage now proves unavailable
   native runner owners report backend-owned unavailable status, drain no
   commands, and stop idempotently without starting a renderer thread.
+- Started: native timeline selected-clip resize can now emit validated node
+  range commands from backend-projected selection. Ctrl+shift+left/right
+  resizes the selected clip start, ctrl+alt+left/right resizes the selected
+  clip end, and all requests are clamped to the active backend projection
+  before entering the backend command bridge.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

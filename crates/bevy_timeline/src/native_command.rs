@@ -7,6 +7,12 @@ use crate::{
     TimelineViewportPoint, hit_test_projection_clip_at_point,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TimelineNativeResizeEdge {
+    Start,
+    End,
+}
+
 pub(crate) fn emit_timeline_native_clip_selection(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,
@@ -85,6 +91,51 @@ pub fn emit_timeline_native_selected_nudge_request(
     Ok(Some((node_id, start_ms, end_ms)))
 }
 
+pub fn emit_timeline_native_selected_resize_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    edge: TimelineNativeResizeEdge,
+    delta_ms: i64,
+) -> Result<Option<(NodeId, u64, u64)>, TimelineRendererError> {
+    let Some(node_id) = projection.selected_node_id else {
+        return Ok(None);
+    };
+    let Some(clip) = projection.clips.iter().find(|clip| clip.node_id == node_id) else {
+        return Err(TimelineRendererError::UnknownNode { node_id });
+    };
+
+    let (start_ms, end_ms) = match edge {
+        TimelineNativeResizeEdge::Start => {
+            if clip.end_ms == 0 {
+                return Err(TimelineRendererError::InvalidNodeRange {
+                    start_ms: clip.start_ms,
+                    end_ms: clip.end_ms,
+                    duration_ms: projection.total_duration_ms,
+                });
+            }
+            (
+                offset_within_bounds(clip.start_ms, delta_ms, 0, clip.end_ms - 1),
+                clip.end_ms,
+            )
+        }
+        TimelineNativeResizeEdge::End => (
+            clip.start_ms,
+            offset_within_bounds(
+                clip.end_ms,
+                delta_ms,
+                clip.start_ms.saturating_add(1),
+                projection.total_duration_ms,
+            ),
+        ),
+    };
+    if start_ms == clip.start_ms && end_ms == clip.end_ms {
+        return Ok(None);
+    }
+
+    emit_timeline_native_node_range_request(control, projection, node_id, start_ms, end_ms)?;
+    Ok(Some((node_id, start_ms, end_ms)))
+}
+
 pub fn emit_timeline_native_delete_node_request(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,
@@ -96,6 +147,14 @@ pub fn emit_timeline_native_delete_node_request(
 
     control.enqueue_command(TimelineRendererCommand::DeleteNode { node_id });
     Ok(())
+}
+
+fn offset_within_bounds(value: u64, delta_ms: i64, min: u64, max: u64) -> u64 {
+    if delta_ms.is_negative() {
+        value.saturating_sub(delta_ms.unsigned_abs()).max(min)
+    } else {
+        value.saturating_add(delta_ms as u64).min(max)
+    }
 }
 
 pub fn emit_timeline_native_selected_delete_request(
