@@ -1,31 +1,32 @@
 <script lang="ts">
   import {
-    bibleGraphFilters,
     categoryColor,
-    filterLabel,
+    type BibleGraphCategoryFilterOption,
     type BibleGraphFilter,
   } from './bibleGraphCategories.js';
 
   let {
     activeFilter,
+    filters,
     onselect,
   }: {
     activeFilter: BibleGraphFilter;
+    filters: BibleGraphCategoryFilterOption[];
     onselect: (filter: BibleGraphFilter) => void;
   } = $props();
 </script>
 
 <div class="filter-pills">
-  {#each bibleGraphFilters as filter}
+  {#each filters as filter}
     <button
       class="pill"
-      class:active={activeFilter === filter}
-      style={activeFilter === filter
-        ? `color: ${categoryColor(filter)}; border-color: ${categoryColor(filter)}`
+      class:active={activeFilter === filter.filter}
+      style={activeFilter === filter.filter
+        ? `color: ${categoryColor(filter.filter)}; border-color: ${categoryColor(filter.filter)}`
         : ''}
-      onclick={() => onselect(filter)}
+      onclick={() => onselect(filter.filter)}
     >
-      {filterLabel(filter)}
+      {filter.label}
     </button>
   {/each}
 </div>

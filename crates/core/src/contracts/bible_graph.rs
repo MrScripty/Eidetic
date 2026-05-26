@@ -109,6 +109,21 @@ impl BibleGraphNodeCategory {
             _ => Self::Other,
         }
     }
+
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Self::Character => "Character",
+            Self::Location => "Location",
+            Self::Prop => "Prop",
+            Self::Culture => "Culture",
+            Self::Theme => "Theme",
+            Self::Event => "Event",
+            Self::Rule => "Rule",
+            Self::Reference => "Reference",
+            Self::Canonical => "Canonical",
+            Self::Other => "Other",
+        }
+    }
 }
 
 impl CanonicalBibleRoot {
@@ -151,6 +166,19 @@ impl CanonicalBibleRoot {
             Self::References => "canonical.root.references",
         })
         .expect("canonical root schema keys are non-empty")
+    }
+
+    pub fn category(&self) -> BibleGraphNodeCategory {
+        match self {
+            Self::Characters => BibleGraphNodeCategory::Character,
+            Self::Places => BibleGraphNodeCategory::Location,
+            Self::Objects => BibleGraphNodeCategory::Prop,
+            Self::Cultures => BibleGraphNodeCategory::Culture,
+            Self::Events => BibleGraphNodeCategory::Event,
+            Self::Themes => BibleGraphNodeCategory::Theme,
+            Self::Rules => BibleGraphNodeCategory::Rule,
+            Self::References => BibleGraphNodeCategory::Reference,
+        }
     }
 }
 

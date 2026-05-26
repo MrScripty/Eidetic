@@ -1,14 +1,13 @@
 import type {
+  BibleGraphCategoryProjection,
   BibleGraphSchemaListProjection,
   BibleGraphSchemaProjection,
 } from '$lib/bibleGraphSchemaTypes.js';
-import type {
-  BibleGraphNode,
-  BibleGraphNodeCategory,
-  BibleGraphNodeId,
-} from '$lib/bibleGraphTypes.js';
+import type { BibleGraphNode, BibleGraphNodeCategory } from '$lib/bibleGraphTypes.js';
 
-export type BibleGraphRootCategory =
+export type BibleGraphRootCategory = BibleGraphNodeCategory;
+export type BibleGraphFilter = BibleGraphRootCategory | 'all';
+export type BibleGraphCategory =
   | 'Character'
   | 'Location'
   | 'Prop'
@@ -16,44 +15,22 @@ export type BibleGraphRootCategory =
   | 'Theme'
   | 'Event'
   | 'Rule'
-  | 'Reference';
-export type BibleGraphFilter = BibleGraphRootCategory | 'All';
-export type BibleGraphCategory = BibleGraphRootCategory | 'Other';
+  | 'Reference'
+  | 'Other';
 
-export const bibleGraphCategories: BibleGraphRootCategory[] = [
-  'Character',
-  'Location',
-  'Prop',
-  'Culture',
-  'Theme',
-  'Event',
-  'Rule',
-  'Reference',
-];
+export interface BibleGraphCategoryFilterOption {
+  filter: BibleGraphFilter;
+  label: string;
+  rootNodeId?: string | null;
+}
 
-export const bibleGraphFilters: BibleGraphFilter[] = ['All', ...bibleGraphCategories];
-
-export const canonicalParents: Record<BibleGraphRootCategory, BibleGraphNodeId> = {
-  Character: 'canonical.characters',
-  Location: 'canonical.places',
-  Prop: 'canonical.objects',
-  Culture: 'canonical.cultures',
-  Theme: 'canonical.themes',
-  Event: 'canonical.events',
-  Rule: 'canonical.rules',
-  Reference: 'canonical.references',
-};
-
-export const canonicalRootSchemaKeys: Record<BibleGraphRootCategory, string> = {
-  Character: 'canonical.root.characters',
-  Location: 'canonical.root.places',
-  Prop: 'canonical.root.objects',
-  Culture: 'canonical.root.cultures',
-  Theme: 'canonical.root.themes',
-  Event: 'canonical.root.events',
-  Rule: 'canonical.root.rules',
-  Reference: 'canonical.root.references',
-};
+export interface BibleGraphCreateCategoryOption {
+  category: BibleGraphRootCategory;
+  label: string;
+  shortLabel: string;
+  createSchemaKey: string;
+  defaultNodeName: string;
+}
 
 const categoriesByBackendCategory: Record<BibleGraphNodeCategory, BibleGraphCategory> = {
   character: 'Character',
@@ -68,20 +45,49 @@ const categoriesByBackendCategory: Record<BibleGraphNodeCategory, BibleGraphCate
   other: 'Other',
 };
 
-const backendCategoriesByRootCategory: Record<BibleGraphRootCategory, BibleGraphNodeCategory> = {
-  Character: 'character',
-  Location: 'location',
-  Prop: 'prop',
-  Culture: 'culture',
-  Theme: 'theme',
-  Event: 'event',
-  Rule: 'rule',
-  Reference: 'reference',
-};
+export function bibleGraphFilterOptions(
+  projection: BibleGraphSchemaListProjection | undefined,
+): BibleGraphCategoryFilterOption[] {
+  return [
+    { filter: 'all', label: 'All', rootNodeId: null },
+    ...(projection?.categories.map((category) => ({
+      filter: category.category,
+      label: category.display_name,
+      rootNodeId: category.root_node_id,
+    })) ?? []),
+  ];
+}
 
-export function filterLabel(filter: BibleGraphFilter): string {
-  if (filter === 'All') return 'All';
-  return filter;
+export function bibleGraphCreateOptions(
+  projection: BibleGraphSchemaListProjection | undefined,
+): BibleGraphCreateCategoryOption[] {
+  return (
+    projection?.categories
+      .filter(
+        (
+          category,
+        ): category is BibleGraphCategoryProjection & {
+          create_schema_key: string;
+          default_node_name: string;
+        } => Boolean(category.create_schema_key && category.default_node_name),
+      )
+      .map((category) => ({
+        category: category.category,
+        label: category.display_name,
+        shortLabel: categoryShortLabel(categoryForRenderNode(category.category)),
+        createSchemaKey: category.create_schema_key,
+        defaultNodeName: category.default_node_name,
+      })) ?? []
+  );
+}
+
+export function filterLabel(
+  filter: BibleGraphFilter,
+  projection: BibleGraphSchemaListProjection | undefined,
+): string {
+  return (
+    bibleGraphFilterOptions(projection).find((option) => option.filter === filter)?.label ?? 'All'
+  );
 }
 
 export function categorySchemaKey(
@@ -102,15 +108,22 @@ export function newNodeName(
   category: BibleGraphRootCategory,
   projection: BibleGraphSchemaListProjection | undefined,
 ): string {
-  return categorySchema(category, projection)?.default_node_name ?? `New ${category}`;
+  return categoryProjection(category, projection)?.default_node_name ?? `New ${category}`;
 }
 
 export function categorySchema(
   category: BibleGraphRootCategory,
   projection: BibleGraphSchemaListProjection | undefined,
 ): BibleGraphSchemaProjection | undefined {
-  const backendCategory = backendCategoriesByRootCategory[category];
-  return projection?.schemas.find((schema) => schema.category === backendCategory);
+  const createSchemaKey = categoryProjection(category, projection)?.create_schema_key;
+  return projection?.schemas.find((schema) => schema.schema_key === createSchemaKey);
+}
+
+export function categoryProjection(
+  category: BibleGraphRootCategory,
+  projection: BibleGraphSchemaListProjection | undefined,
+): BibleGraphCategoryProjection | undefined {
+  return projection?.categories.find((option) => option.category === category);
 }
 
 export function categoryShortLabel(category: BibleGraphCategory): string {
@@ -139,22 +152,30 @@ export function categoryShortLabel(category: BibleGraphCategory): string {
 export function categoryColor(category: BibleGraphFilter | BibleGraphCategory): string {
   switch (category) {
     case 'Character':
+    case 'character':
       return 'var(--color-entity-character)';
     case 'Location':
+    case 'location':
       return 'var(--color-entity-location)';
     case 'Prop':
+    case 'prop':
       return 'var(--color-entity-prop)';
     case 'Culture':
+    case 'culture':
       return 'var(--color-entity-culture)';
     case 'Theme':
+    case 'theme':
       return 'var(--color-entity-theme)';
     case 'Event':
+    case 'event':
       return 'var(--color-entity-event)';
     case 'Rule':
+    case 'rule':
       return 'var(--color-entity-rule)';
     case 'Reference':
+    case 'reference':
       return 'var(--color-entity-reference)';
-    case 'All':
+    case 'all':
       return 'var(--color-text-secondary)';
     default:
       return 'var(--color-text-muted)';
@@ -162,7 +183,7 @@ export function categoryColor(category: BibleGraphFilter | BibleGraphCategory): 
 }
 
 export function nodeCategory(node: BibleGraphNode): BibleGraphCategory {
-  return categoryForSchemaAndParent(node.schema_key, node.parent_id);
+  return categoryForRenderNode(categoryForSchemaAndParent(node.schema_key, node.parent_id));
 }
 
 export function categoryForRenderNode(category: BibleGraphNodeCategory): BibleGraphCategory {
@@ -171,58 +192,58 @@ export function categoryForRenderNode(category: BibleGraphNodeCategory): BibleGr
 
 function categoryForSchemaAndParent(
   schemaKey: string,
-  parentId: BibleGraphNodeId | null | undefined,
-): BibleGraphCategory {
+  parentId: string | null | undefined,
+): BibleGraphNodeCategory {
   switch (schemaKey) {
     case 'canonical.root.characters':
     case 'character':
-      return 'Character';
+      return 'character';
     case 'canonical.root.places':
     case 'location':
-      return 'Location';
+      return 'location';
     case 'canonical.root.objects':
     case 'prop':
     case 'object':
-      return 'Prop';
+      return 'prop';
     case 'canonical.root.cultures':
     case 'culture':
-      return 'Culture';
+      return 'culture';
     case 'canonical.root.themes':
     case 'theme':
-      return 'Theme';
+      return 'theme';
     case 'canonical.root.events':
     case 'event':
-      return 'Event';
+      return 'event';
     case 'canonical.root.rules':
     case 'rule':
-      return 'Rule';
+      return 'rule';
     case 'canonical.root.references':
     case 'reference':
-      return 'Reference';
+      return 'reference';
     default:
       return parentCategory(parentId);
   }
 }
 
-function parentCategory(parentId: BibleGraphNodeId | null | undefined): BibleGraphCategory {
+function parentCategory(parentId: string | null | undefined): BibleGraphNodeCategory {
   switch (parentId) {
     case 'canonical.characters':
-      return 'Character';
+      return 'character';
     case 'canonical.places':
-      return 'Location';
+      return 'location';
     case 'canonical.objects':
-      return 'Prop';
+      return 'prop';
     case 'canonical.cultures':
-      return 'Culture';
+      return 'culture';
     case 'canonical.themes':
-      return 'Theme';
+      return 'theme';
     case 'canonical.events':
-      return 'Event';
+      return 'event';
     case 'canonical.rules':
-      return 'Rule';
+      return 'rule';
     case 'canonical.references':
-      return 'Reference';
+      return 'reference';
     default:
-      return 'Other';
+      return 'other';
   }
 }

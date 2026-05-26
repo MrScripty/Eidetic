@@ -46,8 +46,8 @@
   import BibleGraphAddControls from '../sidebar/bible/BibleGraphAddControls.svelte';
   import BibleGraphCategoryFilters from '../sidebar/bible/BibleGraphCategoryFilters.svelte';
   import {
-    bibleGraphCategories,
-    categorySchemaAvailable,
+    bibleGraphCreateOptions,
+    bibleGraphFilterOptions,
     type BibleGraphFilter,
     type BibleGraphRootCategory,
   } from '../sidebar/bible/bibleGraphCategories.js';
@@ -63,30 +63,29 @@
   const graphSelection = $derived(bibleState.graphSelection);
   let showOutline = $state(false);
   let graphSearchQuery = $state('');
-  let activeFilter: BibleGraphFilter = $state('All');
+  let activeFilter: BibleGraphFilter = $state('all');
   let activeEdgeKinds: BibleGraphEdgeKind[] = $state([]);
   const focusedNeighborhoodNodeId = $derived(bibleState.graphFocusedNeighborhoodNodeId);
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
+  const graphFilterOptions = $derived(bibleGraphFilterOptions(schemaProjection?.payload));
+  const graphCreateOptions = $derived(bibleGraphCreateOptions(schemaProjection?.payload));
+  const activeFilterRootId = $derived(
+    graphFilterOptions.find((option) => option.filter === activeFilter)?.rootNodeId ?? null,
+  );
   const renderGraphRequest = $derived(
     graphWorkspaceProjectionRequest({
       selectedTimelineNodeId: editorState.selectedNodeId,
       focusedNeighborhoodNodeId,
       activeTimelineMs: timelineState.playheadMs,
       activeFilter,
+      activeFilterRootId,
       edgeKinds: activeEdgeKinds,
       search: graphSearchQuery,
     }),
   );
   const edgeItems = $derived(graph ? graphWorkspaceEdgeItems(graph) : []);
   const neighborhoodItems = $derived(graph ? graphWorkspaceNeighborhoodItems(graph) : []);
-  const disabledAddCategories = $derived(
-    new Set(
-      bibleGraphCategories.filter(
-        (category) => !categorySchemaAvailable(category, schemaProjection?.payload),
-      ),
-    ),
-  );
   const hasSideLists = $derived(
     graph
       ? contextLayers.length > 0 ||
@@ -223,6 +222,7 @@
             />
             <BibleGraphCategoryFilters
               {activeFilter}
+              filters={graphFilterOptions}
               onselect={(filter) => (activeFilter = filter)}
             />
             <div class="edge-kind-controls" aria-label="Edge kind filters">
@@ -239,7 +239,7 @@
             </div>
             <BibleGraphAddControls
               {activeFilter}
-              disabledCategories={disabledAddCategories}
+              categories={graphCreateOptions}
               onadd={handleAddGraphNode}
             />
             <button

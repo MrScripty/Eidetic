@@ -23,9 +23,10 @@
   import BibleGraphNodeDetail from './BibleGraphNodeDetail.svelte';
   import BibleRenderGraphOutline from './BibleRenderGraphOutline.svelte';
   import {
-    canonicalParents,
-    bibleGraphCategories,
-    categorySchemaAvailable,
+    bibleGraphCreateOptions,
+    bibleGraphFilterOptions,
+    categoryForRenderNode,
+    categoryProjection,
     nodeCategory,
     type BibleGraphFilter,
     type BibleGraphRootCategory,
@@ -33,7 +34,7 @@
   import { createBibleGraphNodeForCategory } from './bibleGraphNodeCreateFlow.js';
 
   let searchQuery = $state('');
-  let activeFilter: BibleGraphFilter = $state('All');
+  let activeFilter: BibleGraphFilter = $state('all');
   let loadError = $state<string | null>(null);
   let lastRenderGraphRequestKey: string | null = null;
 
@@ -42,18 +43,19 @@
   const renderGraphProjection = $derived(getCachedBibleRenderGraphProjection());
   const selectedGraphNodeId = $derived(selectedBibleGraphNodeId());
   const graphNodes = $derived(nodeListProjection?.payload.nodes ?? []);
-  const disabledAddCategories = $derived(
-    new Set(
-      bibleGraphCategories.filter(
-        (category) => !categorySchemaAvailable(category, schemaProjection?.payload),
-      ),
-    ),
+  const graphFilterOptions = $derived(bibleGraphFilterOptions(schemaProjection?.payload));
+  const graphCreateOptions = $derived(bibleGraphCreateOptions(schemaProjection?.payload));
+  const activeFilterRootId = $derived(
+    activeFilter === 'all'
+      ? null
+      : (categoryProjection(activeFilter, schemaProjection?.payload)?.root_node_id ?? null),
   );
 
   const filteredEntities = $derived(() => {
     let list = graphNodes;
-    if (activeFilter !== 'All') {
-      list = list.filter((node) => nodeCategory(node) === activeFilter);
+    if (activeFilter !== 'all') {
+      const filterCategory = activeFilter as BibleGraphRootCategory;
+      list = list.filter((node) => nodeCategory(node) === categoryForRenderNode(filterCategory));
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -82,7 +84,7 @@
   function activeRenderGraphQuery() {
     return bibleRenderGraphRequestForWorkspaceSelection({
       selectedTimelineNodeId: editorState.selectedNodeId,
-      focusedRootId: activeFilter === 'All' ? null : canonicalParents[activeFilter],
+      focusedRootId: activeFilterRootId,
       search: searchQuery,
     });
   }
@@ -132,13 +134,13 @@
     />
   </div>
 
-  <BibleGraphCategoryFilters {activeFilter} onselect={(filter) => (activeFilter = filter)} />
-
-  <BibleGraphAddControls
+  <BibleGraphCategoryFilters
     {activeFilter}
-    disabledCategories={disabledAddCategories}
-    onadd={handleAdd}
+    filters={graphFilterOptions}
+    onselect={(filter) => (activeFilter = filter)}
   />
+
+  <BibleGraphAddControls {activeFilter} categories={graphCreateOptions} onadd={handleAdd} />
 
   <BibleRenderGraphOutline
     projection={renderGraphProjection?.payload ?? null}

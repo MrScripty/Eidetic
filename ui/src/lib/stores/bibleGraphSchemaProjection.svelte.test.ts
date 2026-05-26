@@ -19,6 +19,16 @@ const getBibleGraphSchemaListProjectionMock = vi.mocked(getBibleGraphSchemaListP
 const projection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
   version: 1,
   payload: {
+    categories: [
+      {
+        category: 'character',
+        display_name: 'Character',
+        root_node_id: 'canonical.characters',
+        root_schema_key: 'canonical.root.characters',
+        create_schema_key: 'character',
+        default_node_name: 'New Character',
+      },
+    ],
     schemas: [
       {
         schema_key: 'character',
@@ -53,6 +63,16 @@ const newerProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
   ...projection,
   version: 3,
   payload: {
+    categories: [
+      {
+        category: 'location',
+        display_name: 'Location',
+        root_node_id: 'canonical.places',
+        root_schema_key: 'canonical.root.places',
+        create_schema_key: 'location',
+        default_node_name: 'New Location',
+      },
+    ],
     schemas: [
       {
         schema_key: 'location',
@@ -83,6 +103,16 @@ const olderProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
   ...projection,
   version: 2,
   payload: {
+    categories: [
+      {
+        category: 'prop',
+        display_name: 'Prop',
+        root_node_id: 'canonical.objects',
+        root_schema_key: 'canonical.root.objects',
+        create_schema_key: 'prop',
+        default_node_name: 'New Prop',
+      },
+    ],
     schemas: [
       {
         schema_key: 'prop',

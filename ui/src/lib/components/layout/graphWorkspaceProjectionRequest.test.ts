@@ -8,7 +8,8 @@ describe('graph workspace projection request', () => {
       graphWorkspaceProjectionRequest({
         selectedTimelineNodeId: 'timeline.scene.beach',
         activeTimelineMs: 42_500,
-        activeFilter: 'Character',
+        activeFilter: 'character',
+        activeFilterRootId: 'canonical.characters',
         search: ' Ada ',
       }),
     ).toMatchObject({
@@ -24,7 +25,7 @@ describe('graph workspace projection request', () => {
       graphWorkspaceProjectionRequest({
         selectedTimelineNodeId: 'timeline.scene.beach',
         activeTimelineMs: 42_500,
-        activeFilter: 'All',
+        activeFilter: 'all',
         search: '',
       }),
     ).not.toHaveProperty('selected_node_id');
@@ -34,7 +35,7 @@ describe('graph workspace projection request', () => {
     expect(
       graphWorkspaceProjectionRequest({
         focusedNeighborhoodNodeId: 'node.character.ada',
-        activeFilter: 'All',
+        activeFilter: 'all',
       }),
     ).toMatchObject({
       selected_node_id: 'node.character.ada',
@@ -44,7 +45,7 @@ describe('graph workspace projection request', () => {
   it('omits focused root and empty search for all-graph projections', () => {
     expect(
       graphWorkspaceProjectionRequest({
-        activeFilter: 'All',
+        activeFilter: 'all',
         search: '   ',
       }),
     ).toEqual({
@@ -57,7 +58,7 @@ describe('graph workspace projection request', () => {
   it('includes edge kind filters when graph controls request them', () => {
     expect(
       graphWorkspaceProjectionRequest({
-        activeFilter: 'All',
+        activeFilter: 'all',
         edgeKinds: ['located_in', 'supports_theme'],
       }),
     ).toMatchObject({

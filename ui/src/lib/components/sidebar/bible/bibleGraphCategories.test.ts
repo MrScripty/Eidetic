@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { BibleGraphNode } from '$lib/bibleGraphTypes.js';
 import {
-  bibleGraphCategories,
-  canonicalParents,
+  bibleGraphCreateOptions,
+  bibleGraphFilterOptions,
   categorySchemaAvailable,
   nodeCategory,
 } from './bibleGraphCategories.js';
@@ -21,7 +21,8 @@ function graphNode(schemaKey: string, parentId: string | null = null): BibleGrap
 
 describe('bible graph categories', () => {
   it('covers every canonical bible root used by backend projections', () => {
-    expect(bibleGraphCategories).toEqual([
+    expect(bibleGraphFilterOptions(projection()).map((option) => option.label)).toEqual([
+      'All',
       'Character',
       'Location',
       'Prop',
@@ -31,7 +32,11 @@ describe('bible graph categories', () => {
       'Rule',
       'Reference',
     ]);
-    expect(Object.values(canonicalParents)).toEqual([
+    expect(
+      bibleGraphFilterOptions(projection())
+        .slice(1)
+        .map((option) => option.rootNodeId),
+    ).toEqual([
       'canonical.characters',
       'canonical.places',
       'canonical.objects',
@@ -52,23 +57,93 @@ describe('bible graph categories', () => {
   });
 
   it('leaves categories without editable schemas unavailable for add controls', () => {
-    const projection = {
-      schemas: [
-        {
-          schema_key: 'character',
-          category: 'character' as const,
-          display_name: 'Character',
-          default_node_name: 'New Character',
-          canonical_parent_id: 'canonical.characters',
-          canonical_root_schema_key: 'canonical.root.characters',
-          parts: [],
-        },
-      ],
-    };
-
-    expect(categorySchemaAvailable('Character', projection)).toBe(true);
-    expect(categorySchemaAvailable('Culture', projection)).toBe(false);
-    expect(categorySchemaAvailable('Rule', projection)).toBe(false);
-    expect(categorySchemaAvailable('Reference', projection)).toBe(false);
+    expect(categorySchemaAvailable('character', projection())).toBe(true);
+    expect(categorySchemaAvailable('culture', projection())).toBe(false);
+    expect(categorySchemaAvailable('rule', projection())).toBe(false);
+    expect(categorySchemaAvailable('reference', projection())).toBe(false);
+    expect(bibleGraphCreateOptions(projection()).map((option) => option.category)).toEqual([
+      'character',
+      'location',
+      'prop',
+      'theme',
+      'event',
+    ]);
   });
 });
+
+function projection() {
+  return {
+    categories: [
+      category('character', 'Character', 'canonical.characters', 'canonical.root.characters', true),
+      category('location', 'Location', 'canonical.places', 'canonical.root.places', true),
+      category('prop', 'Prop', 'canonical.objects', 'canonical.root.objects', true),
+      category('culture', 'Culture', 'canonical.cultures', 'canonical.root.cultures', false),
+      category('theme', 'Theme', 'canonical.themes', 'canonical.root.themes', true),
+      category('event', 'Event', 'canonical.events', 'canonical.root.events', true),
+      category('rule', 'Rule', 'canonical.rules', 'canonical.root.rules', false),
+      category(
+        'reference',
+        'Reference',
+        'canonical.references',
+        'canonical.root.references',
+        false,
+      ),
+    ],
+    schemas: [
+      schema(
+        'character',
+        'character',
+        'Character',
+        'canonical.characters',
+        'canonical.root.characters',
+      ),
+      schema('location', 'location', 'Location', 'canonical.places', 'canonical.root.places'),
+      schema('prop', 'prop', 'Prop', 'canonical.objects', 'canonical.root.objects'),
+      schema('theme', 'theme', 'Theme', 'canonical.themes', 'canonical.root.themes'),
+      schema('event', 'event', 'Event', 'canonical.events', 'canonical.root.events'),
+    ],
+  };
+}
+
+function category(
+  category:
+    | 'character'
+    | 'location'
+    | 'prop'
+    | 'culture'
+    | 'theme'
+    | 'event'
+    | 'rule'
+    | 'reference',
+  display_name: string,
+  root_node_id: string,
+  root_schema_key: string,
+  creatable: boolean,
+) {
+  return {
+    category,
+    display_name,
+    root_node_id,
+    root_schema_key,
+    create_schema_key: creatable ? category : null,
+    default_node_name: creatable ? `New ${display_name}` : null,
+  };
+}
+
+function schema(
+  schema_key: string,
+  category: 'character' | 'location' | 'prop' | 'theme' | 'event',
+  display_name: string,
+  canonical_parent_id: string,
+  canonical_root_schema_key: string,
+) {
+  return {
+    schema_key,
+    category,
+    display_name,
+    default_node_name: `New ${display_name}`,
+    canonical_parent_id,
+    canonical_root_schema_key,
+    parts: [],
+  };
+}

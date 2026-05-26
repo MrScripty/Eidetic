@@ -7,7 +7,17 @@ import type {
 } from './bibleGraphTypes.js';
 
 export interface BibleGraphSchemaListProjection {
+  categories: BibleGraphCategoryProjection[];
   schemas: BibleGraphSchemaProjection[];
+}
+
+export interface BibleGraphCategoryProjection {
+  category: BibleGraphNodeCategory;
+  display_name: string;
+  root_node_id: BibleGraphNodeId;
+  root_schema_key: BibleGraphSchemaKey;
+  create_schema_key?: BibleGraphSchemaKey | null;
+  default_node_name?: string | null;
 }
 
 export interface BibleGraphSchemaProjection {

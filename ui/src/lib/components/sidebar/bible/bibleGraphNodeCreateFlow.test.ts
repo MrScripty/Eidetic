@@ -23,7 +23,7 @@ describe('bible graph node create flow', () => {
       createNode: vi.fn().mockResolvedValue(response),
     });
 
-    await expect(createBibleGraphNodeForCategory('Character', { deps })).resolves.toBe(response);
+    await expect(createBibleGraphNodeForCategory('character', { deps })).resolves.toBe(response);
 
     expect(deps.createNode).toHaveBeenCalledWith({
       parent_id: root.id,
@@ -44,7 +44,7 @@ describe('bible graph node create flow', () => {
       createNode: vi.fn().mockResolvedValue(response),
     });
 
-    await createBibleGraphNodeForCategory('Location', { deps });
+    await createBibleGraphNodeForCategory('location', { deps });
 
     expect(deps.ensureCanonicalRoots).toHaveBeenCalledTimes(1);
     expect(deps.createNode).toHaveBeenCalledWith({
@@ -62,8 +62,8 @@ describe('bible graph node create flow', () => {
       nodes: nodeListEnvelope([]),
     });
 
-    await expect(createBibleGraphNodeForCategory('Theme', { deps })).rejects.toThrow(
-      'Schema unavailable for Theme',
+    await expect(createBibleGraphNodeForCategory('theme', { deps })).rejects.toThrow(
+      'Schema unavailable for theme',
     );
 
     expect(deps.refreshSchemaListProjection).toHaveBeenCalledTimes(1);
@@ -77,7 +77,7 @@ describe('bible graph node create flow', () => {
       roots: rootsResponse([]),
     });
 
-    await expect(createBibleGraphNodeForCategory('Character', { deps })).rejects.toThrow(
+    await expect(createBibleGraphNodeForCategory('character', { deps })).rejects.toThrow(
       'Canonical root unavailable for Character',
     );
 
@@ -112,6 +112,13 @@ function schemaEnvelope(schemaKeys: string[]): ProjectionEnvelope<BibleGraphSche
   return {
     version: 1,
     payload: {
+      categories: [
+        categoryEnvelope('character', schemaKeys.includes('character')),
+        categoryEnvelope('location', schemaKeys.includes('location')),
+        categoryEnvelope('prop', schemaKeys.includes('prop')),
+        categoryEnvelope('theme', schemaKeys.includes('theme')),
+        categoryEnvelope('event', schemaKeys.includes('event')),
+      ],
       schemas: schemaKeys.map((schema_key) => ({
         schema_key,
         category: categoryForSchema(schema_key),
@@ -122,6 +129,21 @@ function schemaEnvelope(schemaKeys: string[]): ProjectionEnvelope<BibleGraphSche
         parts: [],
       })),
     },
+  };
+}
+
+function categoryEnvelope(
+  category: BibleGraphSchemaListProjection['categories'][number]['category'],
+  creatable: boolean,
+): BibleGraphSchemaListProjection['categories'][number] {
+  const displayName = displayNameForSchema(category);
+  return {
+    category,
+    display_name: displayName,
+    root_node_id: canonicalParentForSchema(category),
+    root_schema_key: canonicalRootSchemaForSchema(category),
+    create_schema_key: creatable ? category : null,
+    default_node_name: creatable ? `New ${displayName}` : null,
   };
 }
 

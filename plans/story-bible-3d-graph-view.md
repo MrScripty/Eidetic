@@ -834,12 +834,14 @@ Current implementation progress:
   schema metadata. Graph node creation uses that projection metadata and fails
   closed when canonical roots cannot be confirmed instead of falling back to
   frontend-owned root constants.
+- Completed: schema projections now also include backend-owned category filter
+  options for every canonical bible root. The Bible tab and Graph workspace
+  build filters, focused-root requests, and add controls from those projected
+  options instead of local canonical root tables.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
 - Code review findings to resolve before completion:
-  - frontend category filter controls still need to use backend-projected
-    category/root options instead of local canonical root tables,
   - graph-local add/edit workflows are incomplete and delete commands are not
     available,
   - visible navigation/recovery controls are incomplete.
@@ -881,8 +883,8 @@ Current implementation progress:
    snapshots consume that projected category through one shared color helper.
    Built-in schema projections now expose create metadata, and graph node
    creation consumes that projection instead of local schema/default-name/root
-   fallback constants. Frontend filter option semantics still need to align
-   with backend-projected category/root options.
+   fallback constants. Frontend category filters and focused-root projection
+   requests now consume backend-projected category/root options.
 11. Completed: replace 2D edge mesh placement with tested 3D segment geometry
     shared by rendering and picking.
 12. Completed: update labels and material transforms so MVP graph nodes are

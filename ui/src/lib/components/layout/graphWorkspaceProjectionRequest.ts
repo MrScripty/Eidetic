@@ -3,13 +3,14 @@ import type {
   BibleRenderGraphProjectionRequest,
 } from '$lib/bibleGraphTypes.js';
 import { bibleRenderGraphRequestForWorkspaceSelection } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
-import { canonicalParents, type BibleGraphFilter } from '../sidebar/bible/bibleGraphCategories.js';
+import type { BibleGraphFilter } from '../sidebar/bible/bibleGraphCategories.js';
 
 export interface GraphWorkspaceProjectionSelection {
   selectedTimelineNodeId?: string | null;
   focusedNeighborhoodNodeId?: string | null;
   activeTimelineMs?: number | null;
   activeFilter: BibleGraphFilter;
+  activeFilterRootId?: string | null;
   search?: string | null;
   edgeKinds?: BibleGraphEdgeKind[];
 }
@@ -19,6 +20,7 @@ export function graphWorkspaceProjectionRequest({
   focusedNeighborhoodNodeId,
   activeTimelineMs,
   activeFilter,
+  activeFilterRootId,
   search,
   edgeKinds,
 }: GraphWorkspaceProjectionSelection): BibleRenderGraphProjectionRequest {
@@ -26,7 +28,7 @@ export function graphWorkspaceProjectionRequest({
     selectedTimelineNodeId,
     focusedNeighborhoodNodeId,
     activeTimelineMs,
-    focusedRootId: activeFilter === 'All' ? null : canonicalParents[activeFilter],
+    focusedRootId: activeFilter === 'all' ? null : activeFilterRootId,
     search,
   });
   if (edgeKinds?.length) {

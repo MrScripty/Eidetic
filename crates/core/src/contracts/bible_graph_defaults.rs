@@ -1,7 +1,7 @@
 use super::{
     BibleGraphField, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeCategory,
     BibleGraphNodeId, BibleGraphPart, BibleGraphPartId, BibleGraphPartKey,
-    BibleGraphPartProjection, BibleGraphSchemaKey, ProjectionEnvelope,
+    BibleGraphPartProjection, BibleGraphSchemaKey, CanonicalBibleRoot, ProjectionEnvelope,
 };
 use serde::{Deserialize, Serialize};
 
@@ -32,7 +32,20 @@ pub struct BibleGraphFieldDefault {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BibleGraphSchemaListProjection {
+    pub categories: Vec<BibleGraphCategoryProjection>,
     pub schemas: Vec<BibleGraphSchemaProjection>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphCategoryProjection {
+    pub category: BibleGraphNodeCategory,
+    pub display_name: String,
+    pub root_node_id: BibleGraphNodeId,
+    pub root_schema_key: BibleGraphSchemaKey,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub create_schema_key: Option<BibleGraphSchemaKey>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_node_name: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -124,6 +137,35 @@ pub fn default_part_projections_for_node(node: &BibleGraphNode) -> Vec<BibleGrap
 pub fn builtin_bible_graph_schema_list_projection()
 -> ProjectionEnvelope<BibleGraphSchemaListProjection> {
     ProjectionEnvelope::initial(BibleGraphSchemaListProjection {
+        categories: [
+            CanonicalBibleRoot::Characters,
+            CanonicalBibleRoot::Places,
+            CanonicalBibleRoot::Objects,
+            CanonicalBibleRoot::Cultures,
+            CanonicalBibleRoot::Events,
+            CanonicalBibleRoot::Themes,
+            CanonicalBibleRoot::Rules,
+            CanonicalBibleRoot::References,
+        ]
+        .into_iter()
+        .map(|root| {
+            let category = root.category();
+            let create_schema = BUILTIN_BIBLE_GRAPH_SCHEMAS
+                .iter()
+                .find(|schema| schema.category == category);
+            BibleGraphCategoryProjection {
+                category,
+                display_name: category.display_name().to_string(),
+                root_node_id: root.node_id(),
+                root_schema_key: root.schema_key(),
+                create_schema_key: create_schema.map(|schema| {
+                    BibleGraphSchemaKey::new(schema.schema_key)
+                        .expect("default schema keys are non-empty")
+                }),
+                default_node_name: create_schema.map(|schema| schema.default_node_name.to_string()),
+            }
+        })
+        .collect(),
         schemas: BUILTIN_BIBLE_GRAPH_SCHEMAS
             .iter()
             .map(|schema| BibleGraphSchemaProjection {

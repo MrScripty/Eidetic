@@ -1,40 +1,40 @@
 <script lang="ts">
   import {
-    bibleGraphCategories,
     categoryColor,
-    categoryShortLabel,
+    type BibleGraphCreateCategoryOption,
     type BibleGraphFilter,
     type BibleGraphRootCategory,
   } from './bibleGraphCategories.js';
 
   let {
     activeFilter,
-    disabledCategories,
+    categories,
     onadd,
   }: {
     activeFilter: BibleGraphFilter;
-    disabledCategories: Set<BibleGraphRootCategory>;
+    categories: BibleGraphCreateCategoryOption[];
     onadd: (category: BibleGraphRootCategory) => void;
   } = $props();
+
+  const activeCategory = $derived(
+    activeFilter === 'all'
+      ? undefined
+      : categories.find((category) => category.category === activeFilter),
+  );
 </script>
 
 <div class="add-buttons">
-  {#if activeFilter !== 'All'}
-    <button
-      class="add-btn"
-      disabled={disabledCategories.has(activeFilter)}
-      onclick={() => onadd(activeFilter)}
-    >
-      Add {activeFilter}
+  {#if activeCategory}
+    <button class="add-btn" onclick={() => onadd(activeCategory.category)}>
+      Add {activeCategory.label}
     </button>
   {:else}
     <div class="add-menu">
-      {#each bibleGraphCategories as category}
+      {#each categories as category}
         <button
           class="add-btn-small"
-          disabled={disabledCategories.has(category)}
-          style="color: {categoryColor(category)}"
-          onclick={() => onadd(category)}>Add {categoryShortLabel(category)}</button
+          style="color: {categoryColor(category.category)}"
+          onclick={() => onadd(category.category)}>Add {category.shortLabel}</button
         >
       {/each}
     </div>

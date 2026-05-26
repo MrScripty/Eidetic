@@ -32,10 +32,11 @@ pub use bible_graph::{
     SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
 };
 pub use bible_graph_defaults::{
-    BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphFieldDefault, BibleGraphFieldSchemaProjection,
-    BibleGraphPartDefault, BibleGraphPartSchemaProjection, BibleGraphSchemaDefault,
-    BibleGraphSchemaListProjection, BibleGraphSchemaProjection, builtin_bible_graph_schema,
-    builtin_bible_graph_schema_list_projection, default_part_projections_for_node,
+    BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphCategoryProjection, BibleGraphFieldDefault,
+    BibleGraphFieldSchemaProjection, BibleGraphPartDefault, BibleGraphPartSchemaProjection,
+    BibleGraphSchemaDefault, BibleGraphSchemaListProjection, BibleGraphSchemaProjection,
+    builtin_bible_graph_schema, builtin_bible_graph_schema_list_projection,
+    default_part_projections_for_node,
 };
 pub use bible_render_graph::{
     BibleRenderGraphEdge, BibleRenderGraphInfluence, BibleRenderGraphNeighborhood,
