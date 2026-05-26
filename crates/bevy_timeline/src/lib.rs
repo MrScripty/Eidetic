@@ -13,8 +13,8 @@ mod viewport;
 pub use playhead::TimelinePlayhead;
 pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};
 pub use scene::{
-    TimelineClipEntity, TimelineRelationshipEntity, TimelineSceneStats, TimelineTrackEntity,
-    rebuild_timeline_scene,
+    TimelineAffectOverlayEntity, TimelineClipEntity, TimelineRelationshipEntity,
+    TimelineSceneStats, TimelineTrackEntity, rebuild_timeline_scene,
 };
 pub use viewport::TimelineViewport;
 
@@ -155,6 +155,13 @@ impl TimelineRendererApp {
             .world()
             .resource::<TimelineSceneStats>()
             .relationship_count
+    }
+
+    pub fn scene_affect_overlay_count(&self) -> usize {
+        self.app
+            .world()
+            .resource::<TimelineSceneStats>()
+            .affect_overlay_count
     }
 
     pub fn relationship_curves(

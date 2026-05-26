@@ -1,5 +1,8 @@
 use bevy::prelude::{Component, Entity, Resource, With, World};
-use eidetic_core::contracts::TimelineRenderProjection;
+use eidetic_core::contracts::{
+    AffectConfidence, AffectProvenance, AffectValueId, Arousal, EmotionalIntensity, MoodLabel,
+    TimelineRenderProjection, Valence,
+};
 use eidetic_core::story::arc::ArcId;
 use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
 use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
@@ -40,11 +43,26 @@ pub struct TimelineRelationshipEntity {
     pub relationship_type: RelationshipType,
 }
 
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
+pub struct TimelineAffectOverlayEntity {
+    pub affect_id: AffectValueId,
+    pub node_id: NodeId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub valence: Valence,
+    pub arousal: Arousal,
+    pub intensity: EmotionalIntensity,
+    pub confidence: AffectConfidence,
+    pub mood_labels: Vec<MoodLabel>,
+    pub provenance: AffectProvenance,
+}
+
 #[derive(Resource, Default)]
 pub struct TimelineSceneStats {
     pub track_count: usize,
     pub clip_count: usize,
     pub relationship_count: usize,
+    pub affect_overlay_count: usize,
 }
 
 pub fn rebuild_timeline_scene(world: &mut World, projection: &TimelineRenderProjection) {
@@ -94,11 +112,32 @@ pub fn rebuild_timeline_scene(world: &mut World, projection: &TimelineRenderProj
         ));
     }
 
+    for overlay in &projection.affect_overlays {
+        world.spawn((
+            TimelineSceneEntity,
+            TimelineAffectOverlayEntity {
+                affect_id: overlay.affect_id,
+                node_id: overlay.node_id,
+                start_ms: overlay.start_ms,
+                end_ms: overlay.end_ms,
+                valence: overlay.valence,
+                arousal: overlay.arousal,
+                intensity: overlay.intensity,
+                confidence: overlay.confidence,
+                mood_labels: overlay.mood_labels.clone(),
+                provenance: overlay.provenance.clone(),
+            },
+        ));
+    }
+
     world.resource_mut::<TimelineSceneStats>().track_count = projection.tracks.len();
     world.resource_mut::<TimelineSceneStats>().clip_count = projection.clips.len();
     world
         .resource_mut::<TimelineSceneStats>()
         .relationship_count = projection.relationships.len();
+    world
+        .resource_mut::<TimelineSceneStats>()
+        .affect_overlay_count = projection.affect_overlays.len();
 }
 
 fn despawn_existing_scene(world: &mut World) {

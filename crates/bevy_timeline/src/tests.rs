@@ -1,5 +1,8 @@
 use super::*;
-use eidetic_core::contracts::{TimelineRenderClip, TimelineRenderTrack};
+use eidetic_core::contracts::{
+    AffectConfidence, AffectProvenance, AffectValueId, Arousal, EmotionalIntensity, MoodLabel,
+    TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderTrack, Valence,
+};
 use eidetic_core::timeline::node::{ContentStatus, StoryLevel};
 use eidetic_core::timeline::track::TrackId;
 
@@ -30,6 +33,7 @@ fn renderer_app_rebuilds_scene_entities_from_projection() {
 
     assert_eq!(renderer.scene_counts(), (1, 1));
     assert_eq!(renderer.scene_relationship_count(), 0);
+    assert_eq!(renderer.scene_affect_overlay_count(), 0);
 
     renderer.set_projection(TimelineRenderProjection {
         total_duration_ms: 10_000,
@@ -38,10 +42,12 @@ fn renderer_app_rebuilds_scene_entities_from_projection() {
         clips: Vec::new(),
         relationships: Vec::new(),
         gaps: Vec::new(),
+        affect_overlays: Vec::new(),
     });
 
     assert_eq!(renderer.scene_counts(), (0, 0));
     assert_eq!(renderer.scene_relationship_count(), 0);
+    assert_eq!(renderer.scene_affect_overlay_count(), 0);
 }
 
 #[test]
@@ -61,6 +67,32 @@ fn renderer_app_rebuilds_relationship_entities_from_projection() {
 
     assert_eq!(renderer.scene_counts(), (1, 1));
     assert_eq!(renderer.scene_relationship_count(), 1);
+}
+
+#[test]
+fn renderer_app_rebuilds_affect_overlay_entities_from_projection() {
+    let node_id = NodeId::new();
+    let affect_id = AffectValueId::new();
+    let track_id = TrackId::new();
+    let mut projection = projection_with_clip(node_id, track_id, 1_000, 5_000);
+    projection.affect_overlays = vec![TimelineRenderAffectSample {
+        affect_id,
+        node_id,
+        start_ms: 1_000,
+        end_ms: 5_000,
+        valence: Valence::new(-250).unwrap(),
+        arousal: Arousal::new(700).unwrap(),
+        intensity: EmotionalIntensity::new(800).unwrap(),
+        confidence: AffectConfidence::new(900).unwrap(),
+        mood_labels: vec![MoodLabel::new("tense").unwrap()],
+        provenance: AffectProvenance::UserAuthored,
+    }];
+    let mut renderer = TimelineRendererApp::new();
+
+    renderer.set_projection(projection);
+
+    assert_eq!(renderer.scene_counts(), (1, 1));
+    assert_eq!(renderer.scene_affect_overlay_count(), 1);
 }
 
 #[test]
@@ -449,5 +481,6 @@ fn projection_with_clip(
         }],
         relationships: Vec::new(),
         gaps: Vec::new(),
+        affect_overlays: Vec::new(),
     }
 }

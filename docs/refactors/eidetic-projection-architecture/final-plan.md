@@ -3507,6 +3507,9 @@ Implementation order:
   or affect overlays.
 - Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
+- Started: the Bevy timeline leaf crate now consumes backend
+  `affect_overlays` into disposable ECS scene entities and exposes overlay
+  counts for host smoke tests without persisting renderer-local affect state.
 - Remove the DOM/SVG timeline renderer and its tests only after Bevy and
   Svelte accessibility alternatives cover the target interactions.
 
