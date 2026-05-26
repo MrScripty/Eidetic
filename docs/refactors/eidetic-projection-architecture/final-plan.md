@@ -3759,11 +3759,11 @@ Implementation order:
   `app.rs`. The public crate root now owns only exports, command/error
   contracts, and module wiring, keeping future native interaction work from
   expanding the crate root past the decomposition threshold.
-- Started: headless timeline renderer app tests have been split into focused
-  app behavior and app command modules. Finding: native timeline window tests
-  still live in an oversized parent `tests.rs`; split native visual,
-  transient navigation, command emission, and lifecycle coverage into focused
-  submodules before adding more native-window behavior tests.
+- Resolved: timeline renderer crate tests now keep headless renderer app,
+  headless app command, native visual, native transient navigation, native
+  command emission, native lifecycle, and split-command coverage in focused
+  submodules. The parent `tests.rs` now owns only the Bevy feature guard and
+  shared projection fixtures.
 - Started: the desktop binary now has a `--timeline-renderer-smoke` lifecycle
   probe mirroring the graph renderer smoke path. It opens the desktop-owned
   timeline renderer with a minimal backend projection, observes status/focus/
