@@ -1,3 +1,5 @@
+use eidetic_core::contracts::BibleGraphNodeCategory;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum BibleGraphVisualCategory {
     Character,
@@ -13,27 +15,18 @@ pub(crate) enum BibleGraphVisualCategory {
 }
 
 impl BibleGraphVisualCategory {
-    pub(crate) fn from_schema_key(schema_key: &str) -> Self {
-        if schema_key.contains("character") {
-            Self::Character
-        } else if schema_key.contains("place") || schema_key.contains("location") {
-            Self::Location
-        } else if schema_key.contains("object") || schema_key.contains("prop") {
-            Self::Prop
-        } else if schema_key.contains("culture") {
-            Self::Culture
-        } else if schema_key.contains("event") {
-            Self::Event
-        } else if schema_key.contains("theme") {
-            Self::Theme
-        } else if schema_key.contains("rule") {
-            Self::Rule
-        } else if schema_key.contains("reference") {
-            Self::Reference
-        } else if schema_key.contains("canonical") {
-            Self::Canonical
-        } else {
-            Self::Other
+    pub(crate) fn from_category(category: &BibleGraphNodeCategory) -> Self {
+        match category {
+            BibleGraphNodeCategory::Character => Self::Character,
+            BibleGraphNodeCategory::Location => Self::Location,
+            BibleGraphNodeCategory::Prop => Self::Prop,
+            BibleGraphNodeCategory::Culture => Self::Culture,
+            BibleGraphNodeCategory::Event => Self::Event,
+            BibleGraphNodeCategory::Theme => Self::Theme,
+            BibleGraphNodeCategory::Rule => Self::Rule,
+            BibleGraphNodeCategory::Reference => Self::Reference,
+            BibleGraphNodeCategory::Canonical => Self::Canonical,
+            BibleGraphNodeCategory::Other => Self::Other,
         }
     }
 
@@ -53,6 +46,6 @@ impl BibleGraphVisualCategory {
     }
 }
 
-pub(crate) fn node_fill_color(schema_key: &str) -> &'static str {
-    BibleGraphVisualCategory::from_schema_key(schema_key).fill_color()
+pub(crate) fn node_fill_color(category: &BibleGraphNodeCategory) -> &'static str {
+    BibleGraphVisualCategory::from_category(category).fill_color()
 }

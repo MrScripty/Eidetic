@@ -9,6 +9,17 @@ export type BibleGraphSnapshotFieldId = string;
 export type BibleGraphSchemaKey = string;
 export type BibleGraphPartKey = string;
 export type BibleGraphFieldKey = string;
+export type BibleGraphNodeCategory =
+  | 'character'
+  | 'location'
+  | 'prop'
+  | 'culture'
+  | 'theme'
+  | 'event'
+  | 'rule'
+  | 'reference'
+  | 'canonical'
+  | 'other';
 
 export interface CreateBibleGraphNodeCommand {
   node_id?: BibleGraphNodeId;
@@ -168,6 +179,7 @@ export interface BibleRenderGraphNode {
   node_id: BibleGraphNodeId;
   parent_id?: BibleGraphNodeId | null;
   schema_key: BibleGraphSchemaKey;
+  category: BibleGraphNodeCategory;
   label: string;
   system_owned: boolean;
   sort_order: number;

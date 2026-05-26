@@ -1,8 +1,8 @@
 use super::*;
 use eidetic_core::contracts::{
-    BibleGraphEdgeKind, BibleGraphSchemaKey, BibleRenderGraphEdge, BibleRenderGraphInfluence,
-    BibleRenderGraphNode, BibleRenderGraphPosition, ContextInfluenceKind,
-    ContextInfluenceProvenance,
+    BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphSchemaKey, BibleRenderGraphEdge,
+    BibleRenderGraphInfluence, BibleRenderGraphNode, BibleRenderGraphPosition,
+    ContextInfluenceKind, ContextInfluenceProvenance,
 };
 use eidetic_core::timeline::node::{NodeId, StoryLevel};
 
@@ -268,6 +268,7 @@ fn renderer_app_derives_3d_structural_edges_from_parent_nodes() {
                 node_id: root_id.clone(),
                 parent_id: None,
                 schema_key: BibleGraphSchemaKey::new("canonical.root.characters").unwrap(),
+                category: BibleGraphNodeCategory::Character,
                 label: "Characters".to_string(),
                 system_owned: true,
                 sort_order: 0,
@@ -282,6 +283,7 @@ fn renderer_app_derives_3d_structural_edges_from_parent_nodes() {
                 node_id: child_id.clone(),
                 parent_id: Some(root_id.clone()),
                 schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                category: BibleGraphNodeCategory::Character,
                 label: "Ada".to_string(),
                 system_owned: false,
                 sort_order: 1,
@@ -345,6 +347,7 @@ fn renderer_app_visual_snapshot_preserves_category_colors_under_highlight() {
     let influence_id = ContextInfluenceId::new();
     let mut projection = projection_with_node(node_id.clone());
     projection.nodes[0].schema_key = BibleGraphSchemaKey::new("prop").unwrap();
+    projection.nodes[0].category = BibleGraphNodeCategory::Prop;
     projection.influences.push(BibleRenderGraphInfluence {
         influence_id,
         timeline_node_id: NodeId::new(),
@@ -372,6 +375,7 @@ fn renderer_visual_snapshots_share_category_fill_colors() {
     let mut projection =
         projection_with_node(BibleGraphNodeId::new("node.location.archive").unwrap());
     projection.nodes[0].schema_key = BibleGraphSchemaKey::new("location").unwrap();
+    projection.nodes[0].category = BibleGraphNodeCategory::Location;
 
     let visual_snapshot = build_bible_graph_visual_snapshot(&projection);
     let visual_3d_snapshot = build_bible_graph_visual_3d_snapshot(&projection);
@@ -741,6 +745,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
         node_id: unrelated_id.clone(),
         parent_id: None,
         schema_key: BibleGraphSchemaKey::new("object").unwrap(),
+        category: BibleGraphNodeCategory::Prop,
         label: "Lantern".to_string(),
         system_owned: false,
         sort_order: 2,
@@ -1362,6 +1367,7 @@ fn projection_with_node(node_id: BibleGraphNodeId) -> BibleRenderGraphProjection
             node_id,
             parent_id: None,
             schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+            category: BibleGraphNodeCategory::Character,
             label: "Ada".to_string(),
             system_owned: false,
             sort_order: 0,
@@ -1391,6 +1397,7 @@ fn projection_with_parent_node(child_id: BibleGraphNodeId) -> BibleRenderGraphPr
                 node_id: root_id.clone(),
                 parent_id: None,
                 schema_key: BibleGraphSchemaKey::new("canonical.root.characters").unwrap(),
+                category: BibleGraphNodeCategory::Character,
                 label: "Characters".to_string(),
                 system_owned: true,
                 sort_order: 0,
@@ -1405,6 +1412,7 @@ fn projection_with_parent_node(child_id: BibleGraphNodeId) -> BibleRenderGraphPr
                 node_id: child_id,
                 parent_id: Some(root_id),
                 schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                category: BibleGraphNodeCategory::Character,
                 label: "Ada".to_string(),
                 system_owned: false,
                 sort_order: 1,
@@ -1433,6 +1441,7 @@ fn projection_with_node_count(node_count: usize) -> BibleRenderGraphProjection {
                 node_id: BibleGraphNodeId::new(format!("node.test.{index}")).unwrap(),
                 parent_id: None,
                 schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                category: BibleGraphNodeCategory::Character,
                 label: format!("Node {index}"),
                 system_owned: false,
                 sort_order: u32::try_from(index).unwrap_or(u32::MAX),
@@ -1463,6 +1472,7 @@ fn projection_with_edge(source_id: BibleGraphNodeId) -> BibleRenderGraphProjecti
                 node_id: source_id.clone(),
                 parent_id: None,
                 schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                category: BibleGraphNodeCategory::Character,
                 label: "Ada".to_string(),
                 system_owned: false,
                 sort_order: 0,
@@ -1477,6 +1487,7 @@ fn projection_with_edge(source_id: BibleGraphNodeId) -> BibleRenderGraphProjecti
                 node_id: target_id.clone(),
                 parent_id: None,
                 schema_key: BibleGraphSchemaKey::new("place").unwrap(),
+                category: BibleGraphNodeCategory::Location,
                 label: "Beach".to_string(),
                 system_owned: false,
                 sort_order: 1,

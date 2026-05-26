@@ -1,7 +1,7 @@
 use super::*;
 use crate::contracts::{
-    BibleGraphSchemaKey, ContextEvaluationId, ContextInfluenceId, ContextInfluenceKind,
-    ContextInfluenceProvenance, ContextInfluenceRecord,
+    BibleGraphNodeCategory, BibleGraphSchemaKey, ContextEvaluationId, ContextInfluenceId,
+    ContextInfluenceKind, ContextInfluenceProvenance, ContextInfluenceRecord,
 };
 use crate::timeline::node::{NodeId, StoryLevel};
 
@@ -44,6 +44,14 @@ fn render_graph_projection_is_deterministic_and_indexes_neighbors() {
     let projection = BibleRenderGraphProjection::from_graph(vec![beach, ada, root], vec![edge]);
 
     assert_eq!(projection.nodes[0].node_id.as_str(), "canonical.characters");
+    assert_eq!(
+        projection.nodes[0].category,
+        BibleGraphNodeCategory::Character
+    );
+    assert_eq!(
+        projection.nodes[2].category,
+        BibleGraphNodeCategory::Location
+    );
     assert_eq!(projection.nodes[0].position.z, SYSTEM_NODE_Z);
     assert_eq!(projection.nodes[1].depth, 1);
     assert_eq!(projection.nodes[1].position.x, NODE_COLUMN_SPACING);
@@ -66,6 +74,7 @@ fn render_graph_projection_round_trips() {
             node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
             parent_id: None,
             schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+            category: BibleGraphNodeCategory::Character,
             label: "Ada".to_string(),
             system_owned: false,
             sort_order: 0,

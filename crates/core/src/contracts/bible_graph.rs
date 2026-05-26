@@ -61,6 +61,56 @@ pub enum CanonicalBibleRoot {
     References,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BibleGraphNodeCategory {
+    Character,
+    Location,
+    Prop,
+    Culture,
+    Theme,
+    Event,
+    Rule,
+    Reference,
+    Canonical,
+    Other,
+}
+
+impl BibleGraphNodeCategory {
+    pub fn for_node(node: &BibleGraphNode) -> Self {
+        Self::for_schema_and_parent(node.schema_key.as_str(), node.parent_id.as_ref())
+    }
+
+    pub fn for_schema_and_parent(schema_key: &str, parent_id: Option<&BibleGraphNodeId>) -> Self {
+        match schema_key {
+            "canonical.root.characters" | "character" => Self::Character,
+            "canonical.root.places" | "location" | "place" => Self::Location,
+            "canonical.root.objects" | "object" | "prop" => Self::Prop,
+            "canonical.root.cultures" | "culture" => Self::Culture,
+            "canonical.root.themes" | "theme" => Self::Theme,
+            "canonical.root.events" | "event" => Self::Event,
+            "canonical.root.rules" | "rule" => Self::Rule,
+            "canonical.root.references" | "reference" => Self::Reference,
+            schema if schema.starts_with("canonical.") => Self::Canonical,
+            _ => parent_id.map(Self::for_parent_id).unwrap_or(Self::Other),
+        }
+    }
+
+    fn for_parent_id(parent_id: &BibleGraphNodeId) -> Self {
+        match parent_id.as_str() {
+            "canonical.characters" => Self::Character,
+            "canonical.places" => Self::Location,
+            "canonical.objects" => Self::Prop,
+            "canonical.cultures" => Self::Culture,
+            "canonical.themes" => Self::Theme,
+            "canonical.events" => Self::Event,
+            "canonical.rules" => Self::Rule,
+            "canonical.references" => Self::Reference,
+            _ => Self::Other,
+        }
+    }
+}
+
 impl CanonicalBibleRoot {
     pub fn node_id(&self) -> BibleGraphNodeId {
         BibleGraphNodeId::new(match self {

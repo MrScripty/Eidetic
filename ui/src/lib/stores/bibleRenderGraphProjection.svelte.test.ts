@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getBibleRenderGraphProjection } from '$lib/projectionApi.js';
+import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
+import type { BibleRenderGraphProjection } from '$lib/bibleGraphTypes.js';
 import {
   bibleRenderGraphRequestForTimelineSelection,
   bibleRenderGraphRequestForWorkspaceSelection,
@@ -17,7 +19,7 @@ vi.mock('$lib/projectionApi.js', () => ({
 
 const getBibleRenderGraphProjectionMock = vi.mocked(getBibleRenderGraphProjection);
 
-const projection = {
+const projection: ProjectionEnvelope<BibleRenderGraphProjection> = {
   version: 2,
   change_event_id: 'event-1',
   payload: {
@@ -26,6 +28,7 @@ const projection = {
         node_id: 'node.character.ada',
         parent_id: null,
         schema_key: 'character',
+        category: 'character',
         label: 'Ada',
         system_owned: false,
         sort_order: 0,
@@ -39,7 +42,7 @@ const projection = {
   },
 };
 
-const newerProjection = {
+const newerProjection: ProjectionEnvelope<BibleRenderGraphProjection> = {
   ...projection,
   version: 4,
   change_event_id: 'event-4',
@@ -50,6 +53,7 @@ const newerProjection = {
         node_id: 'node.character.bea',
         parent_id: null,
         schema_key: 'character',
+        category: 'character',
         label: 'Bea',
         system_owned: false,
         sort_order: 0,
@@ -60,7 +64,7 @@ const newerProjection = {
   },
 };
 
-const olderProjection = {
+const olderProjection: ProjectionEnvelope<BibleRenderGraphProjection> = {
   ...projection,
   version: 3,
   change_event_id: 'event-3',
@@ -71,6 +75,7 @@ const olderProjection = {
         node_id: 'node.character.cal',
         parent_id: null,
         schema_key: 'character',
+        category: 'character',
         label: 'Cal',
         system_owned: false,
         sort_order: 0,

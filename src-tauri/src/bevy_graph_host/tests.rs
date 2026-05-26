@@ -3,9 +3,9 @@ use eidetic_bevy_bible_graph::{
     BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
 };
 use eidetic_core::contracts::{
-    BibleGraphEdgeKind, BibleGraphNodeId, BibleRenderGraphEdge, BibleRenderGraphInfluence,
-    BibleRenderGraphNeighborhood, BibleRenderGraphNode, BibleRenderGraphPosition,
-    ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProvenance,
+    BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphNodeId, BibleRenderGraphEdge,
+    BibleRenderGraphInfluence, BibleRenderGraphNeighborhood, BibleRenderGraphNode,
+    BibleRenderGraphPosition, ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProvenance,
 };
 use eidetic_core::timeline::node::StoryLevel;
 use std::sync::mpsc;
@@ -1036,6 +1036,7 @@ fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {
                 node_id: ada_id.clone(),
                 parent_id: None,
                 schema_key: eidetic_core::contracts::BibleGraphSchemaKey::new("character").unwrap(),
+                category: BibleGraphNodeCategory::Character,
                 label: "Ada".to_string(),
                 system_owned: false,
                 sort_order: 0,
@@ -1050,6 +1051,7 @@ fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {
                 node_id: beach_id.clone(),
                 parent_id: None,
                 schema_key: eidetic_core::contracts::BibleGraphSchemaKey::new("location").unwrap(),
+                category: BibleGraphNodeCategory::Location,
                 label: "Beach".to_string(),
                 system_owned: false,
                 sort_order: 1,

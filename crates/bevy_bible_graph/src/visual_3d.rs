@@ -134,7 +134,7 @@ pub fn build_bible_graph_visual_3d_snapshot(
                 label: node.label.clone(),
                 position: node.position,
                 radius: node_radius(node.depth, node.system_owned, highlighted),
-                fill_color: node_fill_color(node.schema_key.as_str()),
+                fill_color: node_fill_color(&node.category),
                 outline_color: if selected {
                     "#f2c94c"
                 } else if highlighted {

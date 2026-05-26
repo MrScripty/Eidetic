@@ -824,12 +824,18 @@ Current implementation progress:
 - Completed: 3D graph labels are now projection-derived for visibility, font
   size, and color, so native text styling follows selected/highlighted graph
   state instead of renderer-local constants.
+- Completed: render graph node projections now carry backend-owned category
+  identity. Core derives the category once from schema/parent context, the
+  TypeScript render graph contract exposes it, and Bevy node color selection
+  consumes that projected category instead of reclassifying schema strings in
+  the renderer.
 - Reopened: the graph is not product-usable yet. Implemented projection and
   renderer plumbing exists, but the current user-facing graph still fails the
   intended node editor/viewer experience.
 - Code review findings to resolve before completion:
-  - category mapping/coloring still needs one cross-boundary source of truth
-    between backend projections and frontend controls,
+  - frontend category creation/filter controls still need to align with the
+    backend schema/category projection contract instead of maintaining
+    independent option semantics,
   - graph-local add/edit workflows are incomplete and delete commands are not
     available,
   - visible navigation/recovery controls are incomplete.
@@ -866,9 +872,11 @@ Current implementation progress:
    refresh, and detail projection must all agree without optimistic updates.
 10. Partially completed: centralize graph category classification/color
    identity for canonical roots, supported schemas, custom schemas, and unknown
-   nodes. Bevy renderer visual snapshots now share one category color helper;
-   frontend controls and backend projection contracts still need a single
-   cross-boundary category projection.
+   nodes. Backend render graph projections now carry a derived category field,
+   the TypeScript render graph contract exposes it, and Bevy renderer visual
+   snapshots consume that projected category through one shared color helper.
+   Frontend category creation/filter option semantics still need to align with
+   the backend schema/category projection contract.
 11. Completed: replace 2D edge mesh placement with tested 3D segment geometry
     shared by rendering and picking.
 12. Completed: update labels and material transforms so MVP graph nodes are

@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::timeline::node::{NodeId, StoryLevel};
 
 use super::{
-    BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNode, BibleGraphNodeId,
-    BibleGraphSchemaKey, ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProvenance,
-    ContextInfluenceRecord,
+    BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNode, BibleGraphNodeCategory,
+    BibleGraphNodeId, BibleGraphSchemaKey, ContextInfluenceId, ContextInfluenceKind,
+    ContextInfluenceProvenance, ContextInfluenceRecord,
     bible_render_graph_filter::{BibleRenderGraphProjectionRequest, included_node_ids_for_request},
 };
 
@@ -42,6 +42,7 @@ pub struct BibleRenderGraphNode {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parent_id: Option<BibleGraphNodeId>,
     pub schema_key: BibleGraphSchemaKey,
+    pub category: BibleGraphNodeCategory,
     pub label: String,
     #[serde(default)]
     pub system_owned: bool,
@@ -150,10 +151,12 @@ impl BibleRenderGraphProjection {
             .map(|node| {
                 let depth = depths.get(&node.id).copied().unwrap_or_default();
                 let row_index = row_indexes.get(&node.id).copied().unwrap_or_default();
+                let category = BibleGraphNodeCategory::for_node(&node);
                 BibleRenderGraphNode {
                     node_id: node.id,
                     parent_id: node.parent_id,
                     schema_key: node.schema_key,
+                    category,
                     label: node.name,
                     system_owned: node.system_owned,
                     sort_order: node.sort_order,

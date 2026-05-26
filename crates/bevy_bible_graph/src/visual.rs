@@ -65,7 +65,7 @@ pub fn build_bible_graph_visual_snapshot(
                 label: node.label.clone(),
                 position: node.position.clone(),
                 radius: node_radius(node.depth, highlighted),
-                fill_color: node_fill_color(node.schema_key.as_str()),
+                fill_color: node_fill_color(&node.category),
                 outline_color: if highlighted { "#f2c94c" } else { "#40576f" },
                 highlighted,
             }
