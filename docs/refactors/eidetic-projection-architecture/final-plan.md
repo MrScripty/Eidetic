@@ -3420,6 +3420,9 @@ Implementation order:
   backend proposal projections and applies create/accept/reject command
   responses without owning proposal state. The remaining slice is a compact
   review surface that renders and invokes those store operations.
+- Completed: the change review panel now renders backend affect proposals with
+  proposed affect values, status, rationale, and accept/reject controls wired
+  through the affect proposal projection store.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived

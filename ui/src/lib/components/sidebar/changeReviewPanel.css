@@ -18,6 +18,14 @@
   letter-spacing: 0.05em;
 }
 
+.change-review-panel h4 {
+  margin: 0 0 6px;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .change-review-panel .refresh-btn {
   font-size: 0.65rem;
   padding: 2px 8px;
@@ -49,6 +57,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.change-review-panel .affect-proposals {
+  margin-bottom: 12px;
 }
 
 .change-review-panel .change-card {
@@ -85,6 +97,47 @@
   color: var(--color-text-primary);
   font-size: 0.76rem;
   line-height: 1.3;
+}
+
+.change-review-panel .affect-value,
+.change-review-panel .affect-rationale {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.change-review-panel .affect-rationale {
+  margin-top: 5px;
+  color: var(--color-text-muted);
+}
+
+.change-review-panel .proposal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.change-review-panel .proposal-actions button {
+  border: 1px solid var(--color-border-default);
+  border-radius: 4px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 0.65rem;
+  padding: 3px 8px;
+}
+
+.change-review-panel .proposal-actions .primary-action {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.change-review-panel .proposal-actions button:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 
 .change-review-panel time {
