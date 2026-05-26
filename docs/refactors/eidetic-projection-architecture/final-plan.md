@@ -3758,6 +3758,10 @@ Implementation order:
   a borderless smoke window even though the current renderer config uses window
   decorations for move/resize/close affordances. The assertion now matches the
   production smoke configuration so broader desktop smoke tests remain useful.
+- Resolved: adding timeline renderer lifecycle smoke pushed `src-tauri/src/lib.rs`
+  back over the decomposition threshold. Desktop startup and renderer lifecycle
+  smoke probes now live in focused `desktop_smoke.rs`, leaving `lib.rs` as the
+  Tauri composition root.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
