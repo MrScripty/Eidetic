@@ -3213,6 +3213,11 @@ Implementation order:
   tool argument DTOs with manifest/budget validation and serialization tests.
 - Add relational SQLite current-state/history storage for agent runs, tool
   calls, tool results, and workflow status.
+- Completed: server now has relational SQLite current-state tables and
+  history-backed store/service functions for agent runs, tool calls, tool
+  results, and run-history loading. Tagged tool arguments/results are stored as
+  audited payload JSON while workflow id, status, tool name/kind, sequence, and
+  timestamps remain queryable columns.
 - Add a mock-provider harness test path so workflow/tool execution can be
   verified without relying on a live LLM.
 - Add read-only graph tools over existing bible graph/context projections.

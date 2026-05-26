@@ -166,6 +166,9 @@ pub enum ObjectKind {
     Projection,
     ContextEvaluation,
     ContextInfluence,
+    AgentRun,
+    AgentToolCall,
+    AgentToolResult,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -177,6 +180,7 @@ pub enum ChangeEventKind {
     AiProposalAccepted,
     AiProposalRejected,
     Propagation,
+    AgentWorkflow,
     Undo,
     Redo,
     Import,
