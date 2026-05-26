@@ -6,12 +6,21 @@ use serde::Serialize;
 use thiserror::Error;
 
 mod geometry;
+#[cfg(feature = "native_render")]
+mod native_render;
 mod playhead;
 mod relationship_curve;
 mod scene;
 mod viewport;
 
 pub use geometry::{TimelineViewportGeometry, TimelineViewportPoint};
+#[cfg(feature = "native_render")]
+pub use native_render::{
+    TimelineNativeRenderConfig, TimelineNativeWindowControl, TimelineNativeWindowControlHandle,
+    TimelineNativeWindowRunnerConfig, configure_controlled_minimal_timeline_native_window_app,
+    configure_minimal_timeline_native_window_app, run_controlled_minimal_timeline_native_window,
+    run_minimal_timeline_native_window,
+};
 pub use playhead::TimelinePlayhead;
 pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};
 pub use scene::{

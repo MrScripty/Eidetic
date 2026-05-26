@@ -24,6 +24,11 @@ Current scope:
 - Emit validated node range command requests for backend-confirmed move/resize.
 - Emit validated split command requests with backend-required replacement node IDs.
 - Expose native Rust renderer state for the desktop host boundary.
+- Expose a feature-gated native window control API for the future desktop host:
+  `TimelineNativeWindowRunnerConfig`, `TimelineNativeWindowControlHandle`,
+  controlled Bevy app configuration, and minimal native window runners. This
+  API owns only renderer-local lifecycle signaling for ready, visible, show,
+  hide, and close state.
 
 Dependency review:
 
@@ -47,6 +52,10 @@ Dependency review:
   `bevy_window`, and `bevy_winit` plus Linux `wayland`/`x11` window backends,
   and is intentionally off by default so projection-only tests and server
   builds do not pay for native rendering.
+- Native renderer-window control is limited to renderer-local lifecycle
+  signaling. `TimelineNativeWindowControlHandle` lets the desktop host request
+  close/show/hide and observe ready/visible state without giving this leaf crate
+  access to Tauri, SQLite, or durable project state.
 - Asset/text/UI/audio features remain out of scope for the timeline renderer
   window until a concrete timeline-rendering requirement proves they are needed.
 - A guard test fails if native render features move into default builds or if

@@ -3605,6 +3605,11 @@ Implementation order:
   by default, excludes text/UI/audio, and keeps render/window dependencies out
   of normal projection-only timeline builds until the visible-window slice uses
   it.
+- Started: the Bevy timeline leaf crate now exposes the first feature-gated
+  native window control API: minimal runner config, controlled app
+  configuration, close/show/hide requests, and ready/visible signaling. This is
+  renderer-local lifecycle plumbing only; timeline projections, commands, and
+  desktop host integration remain separate slices.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
