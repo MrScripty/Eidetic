@@ -856,29 +856,18 @@ Current implementation progress:
   options for every canonical bible root. The Bible tab and Graph workspace
   build filters, focused-root requests, and add controls from those projected
   options instead of local canonical root tables.
-- Reopened: the graph is not product-usable yet. Implemented projection and
-  renderer plumbing exists, but the current user-facing graph still fails the
-  intended node editor/viewer experience.
-- Code review findings to resolve before completion:
-  - graph-local add/edit workflows are incomplete; edge delete now has a
-    backend soft-delete command path and UI affordance, and strict node delete
-    now has a backend/API command path plus a node-detail UI affordance.
-- Standards review findings to resolve before implementation completion:
-  - prevent frontend/renderer ownership of backend facts or generation-affecting
-    selection,
-  - prohibit optimistic graph data updates,
-  - keep graph synchronization event-driven except for the bounded renderer
-    command drain owned by the desktop bridge,
-  - validate and round-trip-test every changed runtime boundary contract,
-  - keep platform-specific behavior inside renderer strategy modules,
-  - keep async shells outside pure graph helpers,
-  - add lifecycle, queue, shutdown, and panic/error verification for renderer
-    background work,
-  - add accessibility and parent-gesture conflict checks for graph controls,
-  - split large mixed-responsibility renderer/projection/component files as part
-    of the relevant implementation slices.
-- Remaining usability gaps are tracked in "Viewer Completion Requirements" and
-  must be completed before Milestone 9 is considered done.
+- Completed: the planned Milestone 9 graph viewer scope is implemented for the
+  current architecture. The graph uses backend-owned projections and commands,
+  the Bevy renderer owns 3D navigation and camera recovery, and Svelte exposes
+  projection-driven add, edit, delete, filter, and selection controls without
+  optimistic graph mutation.
+- Residual follow-up guidance:
+  - keep future graph edits command-backed and backend-confirmed,
+  - keep Svelte controls semantic and keyboard-accessible,
+  - add targeted lifecycle, queue, shutdown, and error tests whenever new
+    renderer command paths are introduced,
+  - track larger renderer/file decomposition or richer graph-edit affordances
+    as new milestones rather than reopening Milestone 9.
 
 1. Define `BibleRenderGraph` DTOs.
 2. Add pure adapter from composable bible graph to render graph.
