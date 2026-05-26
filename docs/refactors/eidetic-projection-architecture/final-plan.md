@@ -3792,6 +3792,13 @@ Implementation order:
 - Add pan/zoom/playhead/selection/move/resize/split/delete/create interactions
   through backend-confirmed commands before adding arcs, relationship curves,
   or affect overlays.
+- Finding: the native renderer has a validated low-level create-node command
+  primitive, but binding create directly to Bevy input would force renderer
+  code to invent durable names, hierarchy defaults, ranges, and beat metadata.
+  Resolve before native create input by adding a backend-owned create intent
+  command, such as create child/sibling from selected projected clip or create
+  in projected gap, where the backend derives default fields and returns the
+  confirmed `TimelineRenderProjection`.
 - Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
 - Started: the Bevy timeline leaf crate now consumes backend
