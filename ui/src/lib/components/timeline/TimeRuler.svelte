@@ -1,6 +1,7 @@
 <script lang="ts">
   import { TIMELINE, formatTime } from '$lib/timelineTypes.js';
-  import { timeToX, xToTime, timelineState } from '$lib/stores/timeline.svelte.js';
+  import { timeToX, xToTime } from '$lib/stores/timeline.svelte.js';
+  import { setTimelinePlayhead } from '$lib/commandApi.js';
 
   let {
     durationMs,
@@ -17,7 +18,7 @@
     const rect = target.getBoundingClientRect();
     const localX = e.clientX - rect.left;
     const timeMs = xToTime(localX + offsetX);
-    timelineState.playheadMs = Math.max(0, Math.min(timeMs, TIMELINE.DURATION_MS));
+    void setTimelinePlayhead(Math.max(0, Math.min(timeMs, TIMELINE.DURATION_MS))).catch(() => {});
   }
 
   /** Generate tick marks at sensible intervals based on zoom level. */

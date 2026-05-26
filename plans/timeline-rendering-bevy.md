@@ -310,8 +310,10 @@ Current implementation progress:
   projections, and the Svelte projection handlers update `timelineState`
   from the backend event instead of deriving graph context from unsynchronized
   Bevy-local state.
-- Open: the temporary DOM timeline still updates its local playhead directly.
-  Do not expand that path. When the DOM timeline is retired or when adding
-  keyboard-accessible Svelte alternatives before retirement, route playhead
-  changes through the same backend-owned transient playhead command/event
-  boundary instead of creating another durable or optimistic source of truth.
+- Completed: the temporary Svelte timeline ruler and playhead now request
+  playhead movement through a typed desktop command. Dragging uses local preview
+  state only; committed `timelineState.playheadMs` updates still come from the
+  backend-owned `timeline_playhead_changed` event.
+- Open: the temporary DOM/SVG timeline still exists as a behavioral reference
+  and accessible command surface until Bevy covers the target interactions. Do
+  not expand it as a parallel renderer or fallback source of timeline truth.

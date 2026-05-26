@@ -1,11 +1,14 @@
 <script lang="ts">
   import { timelineState, timeToX, xToTime } from '$lib/stores/timeline.svelte.js';
   import { TIMELINE } from '$lib/timelineTypes.js';
+  import { setTimelinePlayhead } from '$lib/commandApi.js';
 
   let containerEl: HTMLDivElement | undefined = $state();
   let dragging = $state(false);
+  let dragPreviewMs: number | null = $state(null);
 
-  let xPos = $derived(timeToX(timelineState.playheadMs) - timelineState.scrollX);
+  let displayPlayheadMs = $derived(dragPreviewMs ?? timelineState.playheadMs);
+  let xPos = $derived(timeToX(displayPlayheadMs) - timelineState.scrollX);
   let visible = $derived(xPos >= -12 && xPos <= timelineState.viewportWidth + 12);
 
   function clampTime(ms: number): number {
@@ -16,6 +19,7 @@
     e.preventDefault();
     e.stopPropagation();
     dragging = true;
+    dragPreviewMs = timelineState.playheadMs;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
 
@@ -26,11 +30,16 @@
     if (!parent) return;
     const rect = parent.getBoundingClientRect();
     const localX = e.clientX - rect.left;
-    timelineState.playheadMs = clampTime(xToTime(localX + timelineState.scrollX));
+    dragPreviewMs = clampTime(xToTime(localX + timelineState.scrollX));
   }
 
   function handlePointerUp() {
+    const positionMs = dragPreviewMs;
+    dragPreviewMs = null;
     dragging = false;
+    if (positionMs !== null) {
+      void setTimelinePlayhead(positionMs).catch(() => {});
+    }
   }
 </script>
 

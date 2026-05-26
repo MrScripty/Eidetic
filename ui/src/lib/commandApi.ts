@@ -64,6 +64,7 @@ export {
   createTimelineRelationship,
   deleteTimelineNode,
   deleteTimelineRelationship,
+  setTimelinePlayhead,
   setTimelineNodeLock,
   setTimelineNodeNotes,
   setTimelineNodeRange,

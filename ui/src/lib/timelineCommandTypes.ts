@@ -76,3 +76,7 @@ export interface TimelineCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<TimelineRenderProjection>;
 }
+
+export interface TimelinePlayheadCommandResponse {
+  position_ms: number;
+}

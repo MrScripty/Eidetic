@@ -23,6 +23,7 @@ import {
   setBibleGraphSnapshotField,
   setObjectField,
   setStoryArcMetadata,
+  setTimelinePlayhead,
   setTimelineNodeLock,
   setTimelineNodeNotes,
   setTimelineNodeRange,
@@ -611,6 +612,25 @@ describe('command api helpers', () => {
           right_node_id: 'node.scene.beach.b',
         },
       },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop timeline playhead commands when Tauri transport is available', async () => {
+    const response = { position_ms: 42_500 };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(setTimelinePlayhead(42_500.9)).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_timeline_playhead', {
+      positionMs: 42_500,
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

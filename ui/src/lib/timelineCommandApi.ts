@@ -11,9 +11,16 @@ import type {
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
+  TimelinePlayheadCommandResponse,
 } from './timelineCommandTypes.js';
 import { invokeDesktop } from './desktopTransport.js';
 import { createCommandId } from './commandTransport.js';
+
+export function setTimelinePlayhead(positionMs: number): Promise<TimelinePlayheadCommandResponse> {
+  return invokeDesktop<TimelinePlayheadCommandResponse>('command_timeline_playhead', {
+    positionMs: Math.max(0, Math.trunc(positionMs)),
+  });
+}
 
 export function setTimelineNodeRange(
   payload: SetTimelineNodeRangeCommand,

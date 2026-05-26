@@ -8,6 +8,11 @@ use tauri::Manager;
 
 use crate::error::CommandError;
 
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct TimelinePlayheadCommandResponse {
+    pub position_ms: u64,
+}
+
 #[tauri::command]
 pub async fn command_timeline_create_node(
     app: tauri::AppHandle,
@@ -116,4 +121,29 @@ pub async fn command_timeline_split_node(
     command_service::split_timeline_node(&state, command)
         .await
         .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub fn command_timeline_playhead(
+    app: tauri::AppHandle,
+    position_ms: u64,
+) -> TimelinePlayheadCommandResponse {
+    let state = app.state::<AppState>().inner().clone();
+    state.set_timeline_playhead(position_ms);
+    TimelinePlayheadCommandResponse { position_ms }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TimelinePlayheadCommandResponse;
+
+    #[test]
+    fn timeline_playhead_command_response_serializes_stable_payload() {
+        let value = serde_json::to_value(TimelinePlayheadCommandResponse {
+            position_ms: 42_500,
+        })
+        .unwrap();
+
+        assert_eq!(value, serde_json::json!({ "position_ms": 42500 }));
+    }
 }
