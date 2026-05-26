@@ -377,6 +377,47 @@ fn controlled_native_window_rejects_invalid_node_range_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_validated_delete_node_command() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    crate::native_render::emit_timeline_native_delete_node_request(
+        &window_control,
+        &projection_with_node(node_id),
+        node_id,
+    )
+    .unwrap();
+
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::DeleteNode { node_id }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_rejects_delete_node_command_for_unknown_node() {
+    let known_node_id = NodeId::new();
+    let unknown_node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    assert_eq!(
+        crate::native_render::emit_timeline_native_delete_node_request(
+            &window_control,
+            &projection_with_node(known_node_id),
+            unknown_node_id,
+        ),
+        Err(TimelineRendererError::UnknownNode {
+            node_id: unknown_node_id,
+        })
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_window_control_handle_records_close_requests() {
     let control = TimelineNativeWindowControlHandle::new();
 

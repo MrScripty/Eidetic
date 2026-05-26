@@ -3684,6 +3684,9 @@ Implementation order:
   command requests from the active backend projection, giving later Bevy
   drag/resize interactions a backend-owned mutation path without introducing
   renderer-side timeline ownership.
+- Started: the native timeline window API can now emit validated delete-node
+  command requests only for nodes present in the active backend projection,
+  preserving the existing desktop command bridge as the mutation boundary.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

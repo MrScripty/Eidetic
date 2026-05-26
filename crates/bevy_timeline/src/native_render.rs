@@ -649,6 +649,21 @@ pub fn emit_timeline_native_node_range_request(
     Ok(())
 }
 
+pub fn emit_timeline_native_delete_node_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    node_id: NodeId,
+) -> Result<(), TimelineRendererError> {
+    if !projection.clips.iter().any(|clip| clip.node_id == node_id) {
+        return Err(TimelineRendererError::UnknownNode { node_id });
+    }
+
+    let _ = control
+        .command_sender
+        .try_send(TimelineRendererCommand::DeleteNode { node_id });
+    Ok(())
+}
+
 fn native_track_height_px() -> u32 {
     (TIMELINE_NATIVE_CLIP_HEIGHT_PX + TIMELINE_NATIVE_TRACK_GAP_PX) as u32
 }
