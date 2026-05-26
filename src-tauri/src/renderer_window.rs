@@ -12,6 +12,16 @@ pub enum DesktopRendererWindowStrategy {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub struct DesktopRendererWindowStrategyStatus {
+    pub strategy: DesktopRendererWindowStrategy,
+    pub platform: DesktopRendererWindowPlatform,
+    pub capability: DesktopRendererWindowCapability,
+    pub capability_reason: DesktopRendererWindowCapabilityReason,
+    pub verified_support: bool,
+    pub visible_window_supported: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DesktopRendererWindowPlatform {
     Linux,

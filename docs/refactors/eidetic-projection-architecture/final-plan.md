@@ -3589,6 +3589,9 @@ Implementation order:
   infrastructure, and timeline status reports the same
   `bevy_winit_floating_window` strategy that graph uses for floating native
   Bevy renderers.
+- Started: renderer window strategy status is now shared desktop renderer
+  infrastructure. The graph host keeps its public status alias while the
+  strategy/capability/support tuple is no longer graph-owned vocabulary.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
