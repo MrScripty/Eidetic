@@ -16,6 +16,8 @@ commands and events.
 | `src/bin/native_renderer_smoke.rs` | Diagnostic-only Bevy/winit native graph renderer preflight binary. |
 | `src/ai_commands.rs` | Tauri commands for AI status, config, context-preview, child-plan generation, and streaming script generation service access. |
 | `src/bevy_graph_host/` | Desktop-managed lifecycle owner and focused host adapter for the Bevy bible graph renderer leaf crate. |
+| `src/bevy_timeline_host.rs` | Desktop-managed host adapter for the Bevy timeline renderer leaf crate. |
+| `src/bevy_timeline_host_tests.rs` | Focused unit coverage for the timeline renderer host adapter and owner boundary. |
 | `src/desktop_smoke.rs` | Backend-owned desktop startup and renderer lifecycle smoke probes. |
 | `src/desktop_events.rs` | Backend `ServerEvent` to Tauri event bridge. |
 | `src/export_commands.rs` | Tauri commands for export service access. |

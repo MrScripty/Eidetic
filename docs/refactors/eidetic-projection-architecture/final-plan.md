@@ -3762,6 +3762,10 @@ Implementation order:
   back over the decomposition threshold. Desktop startup and renderer lifecycle
   smoke probes now live in focused `desktop_smoke.rs`, leaving `lib.rs` as the
   Tauri composition root.
+- Resolved: `src-tauri/src/bevy_timeline_host.rs` exceeded the decomposition
+  threshold because host adapter tests lived inline with production lifecycle
+  code. Timeline host and owner coverage now lives in
+  `bevy_timeline_host_tests.rs`, keeping the host adapter focused.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
