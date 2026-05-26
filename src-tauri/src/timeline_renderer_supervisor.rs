@@ -15,7 +15,8 @@ use crate::timeline_renderer_platform_strategy::{
     TimelineRendererPlatformStrategy, TimelineRendererRunnerStartupPlan,
 };
 use crate::timeline_renderer_window_thread::{
-    TimelineRendererWindowThreadHandle, TimelineRendererWindowThreadResult,
+    TimelineRendererWindowProjectionUpdateError, TimelineRendererWindowThreadHandle,
+    TimelineRendererWindowThreadResult,
 };
 
 const TIMELINE_RENDERER_WINDOW_STOP_TIMEOUT: Duration = Duration::from_millis(2_000);
@@ -133,6 +134,21 @@ impl TimelineRendererSupervisor {
                 self.lifecycle = DesktopRendererSupervisorLifecycle::Closed;
                 self.last_error = None;
             }
+        }
+        self.status()
+    }
+
+    pub fn update_projection(
+        &mut self,
+        projection: TimelineRenderProjection,
+    ) -> TimelineRendererRunnerStatus {
+        self.refresh_window_thread();
+        let Some(window_thread) = self.window_thread.as_ref() else {
+            return self.status();
+        };
+        if let Err(error) = window_thread.update_projection(projection) {
+            self.lifecycle = DesktopRendererSupervisorLifecycle::Failed;
+            self.last_error = Some(timeline_projection_update_error_message(error));
         }
         self.status()
     }
@@ -303,6 +319,19 @@ impl TimelineRendererSupervisor {
             window_ready: window_running && self.window_ready,
             focus_supported: false,
             last_error: self.last_error.clone(),
+        }
+    }
+}
+
+fn timeline_projection_update_error_message(
+    error: TimelineRendererWindowProjectionUpdateError,
+) -> String {
+    match error {
+        TimelineRendererWindowProjectionUpdateError::QueueFull => {
+            "timeline renderer projection update queue is full".to_string()
+        }
+        TimelineRendererWindowProjectionUpdateError::WindowClosed => {
+            "timeline renderer window is closed".to_string()
         }
     }
 }

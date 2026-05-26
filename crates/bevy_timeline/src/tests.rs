@@ -68,6 +68,26 @@ fn controlled_native_window_app_builds_scene_from_initial_projection() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_app_applies_projection_updates() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    app.insert_resource(TimelineNativeWindowControl::from(&control));
+
+    control
+        .request_projection_update(projection_with_node(node_id))
+        .unwrap();
+    crate::native_render::apply_timeline_native_projection_updates(app.world_mut());
+
+    let stats = app.world().resource::<TimelineSceneStats>();
+    assert_eq!(stats.track_count, 1);
+    assert_eq!(stats.clip_count, 1);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_window_control_handle_records_close_requests() {
     let control = TimelineNativeWindowControlHandle::new();
 

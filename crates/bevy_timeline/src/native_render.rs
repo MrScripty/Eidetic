@@ -1,6 +1,6 @@
 use std::num::NonZeroU64;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, mpsc};
 use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
@@ -15,6 +15,8 @@ use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::TimelineRenderProjection;
 
 use crate::scene::{TimelineSceneStats, rebuild_timeline_scene};
+
+const TIMELINE_NATIVE_PROJECTION_QUEUE_CAPACITY: usize = 8;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct TimelineNativeRenderConfig {
@@ -44,6 +46,8 @@ pub struct TimelineNativeWindowControlHandle {
     hide_requested: Arc<AtomicBool>,
     visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
+    projection_sender: mpsc::SyncSender<TimelineRenderProjection>,
+    projection_receiver: Arc<Mutex<mpsc::Receiver<TimelineRenderProjection>>>,
 }
 
 #[derive(Debug, Clone, Resource)]
@@ -53,6 +57,13 @@ pub struct TimelineNativeWindowControl {
     hide_requested: Arc<AtomicBool>,
     visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
+    projection_receiver: Arc<Mutex<mpsc::Receiver<TimelineRenderProjection>>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TimelineNativeWindowProjectionUpdateError {
+    QueueFull,
+    WindowClosed,
 }
 
 impl Default for TimelineNativeRenderConfig {
@@ -95,12 +106,16 @@ impl Default for TimelineNativeWindowControlHandle {
 
 impl TimelineNativeWindowControlHandle {
     pub fn new() -> Self {
+        let (projection_sender, projection_receiver) =
+            mpsc::sync_channel(TIMELINE_NATIVE_PROJECTION_QUEUE_CAPACITY);
         Self {
             shutdown_requested: Arc::new(AtomicBool::new(false)),
             show_requested: Arc::new(AtomicBool::new(false)),
             hide_requested: Arc::new(AtomicBool::new(false)),
             visible: Arc::new(AtomicBool::new(false)),
             ready: Arc::new(AtomicBool::new(false)),
+            projection_sender,
+            projection_receiver: Arc::new(Mutex::new(projection_receiver)),
         }
     }
 
@@ -135,6 +150,21 @@ impl TimelineNativeWindowControlHandle {
     pub fn ready(&self) -> bool {
         self.ready.load(Ordering::Acquire)
     }
+
+    pub fn request_projection_update(
+        &self,
+        projection: TimelineRenderProjection,
+    ) -> Result<(), TimelineNativeWindowProjectionUpdateError> {
+        match self.projection_sender.try_send(projection) {
+            Ok(()) => Ok(()),
+            Err(mpsc::TrySendError::Full(_)) => {
+                Err(TimelineNativeWindowProjectionUpdateError::QueueFull)
+            }
+            Err(mpsc::TrySendError::Disconnected(_)) => {
+                Err(TimelineNativeWindowProjectionUpdateError::WindowClosed)
+            }
+        }
+    }
 }
 
 impl From<&TimelineNativeWindowControlHandle> for TimelineNativeWindowControl {
@@ -145,6 +175,7 @@ impl From<&TimelineNativeWindowControlHandle> for TimelineNativeWindowControl {
             hide_requested: Arc::clone(&handle.hide_requested),
             visible: Arc::clone(&handle.visible),
             ready: Arc::clone(&handle.ready),
+            projection_receiver: Arc::clone(&handle.projection_receiver),
         }
     }
 }
@@ -164,6 +195,7 @@ impl Plugin for TimelineNativeRenderPlugin {
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.insert_resource(TimelineSceneStats::default());
         app.add_systems(Update, mark_timeline_native_window_ready);
+        app.add_systems(Update, apply_timeline_native_projection_updates);
     }
 }
 
@@ -226,6 +258,26 @@ pub(crate) fn seed_initial_timeline_native_render_scene(
         return;
     };
     rebuild_timeline_scene(app.world_mut(), projection);
+}
+
+pub(crate) fn apply_timeline_native_projection_updates(world: &mut bevy::prelude::World) {
+    let latest_projection = {
+        let Some(control) = world.get_resource::<TimelineNativeWindowControl>() else {
+            return;
+        };
+        let Ok(receiver) = control.projection_receiver.lock() else {
+            return;
+        };
+        let mut latest_projection = None;
+        while let Ok(projection) = receiver.try_recv() {
+            latest_projection = Some(projection);
+        }
+        latest_projection
+    };
+
+    if let Some(projection) = latest_projection {
+        rebuild_timeline_scene(world, &projection);
+    }
 }
 
 pub fn run_minimal_timeline_native_window(config: TimelineNativeWindowRunnerConfig) {

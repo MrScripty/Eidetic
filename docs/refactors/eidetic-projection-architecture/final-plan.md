@@ -3647,6 +3647,11 @@ Implementation order:
   entities inside the floating window app. This keeps initial visible-window
   content projection-driven while later slices add live projection refresh,
   input systems, and actual render geometry.
+- Started: the native timeline window control path now includes a bounded
+  projection-update queue. Backend projection refreshes update the headless
+  timeline host and, when a floating window is open, enqueue the latest
+  projection for the native Bevy app to rebuild disposable ECS scene state
+  without reopening the window or adding renderer-owned durable state.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

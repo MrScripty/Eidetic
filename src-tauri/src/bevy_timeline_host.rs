@@ -153,11 +153,13 @@ impl DesktopTimelineHost {
                 TimelineRendererError::MissingProjection.to_string(),
             ));
         };
+        let native_projection = projection.clone();
 
         Self::catch_renderer_panic(|| renderer.set_projection(projection)).map_err(|error| {
             self.last_error = Some(error_label(&error));
             error
         })?;
+        self.native_window.update_projection(native_projection);
         self.last_error = None;
         Ok(self.status())
     }

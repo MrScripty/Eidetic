@@ -4,9 +4,10 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use eidetic_bevy_timeline::{
-    TimelineNativeWindowControlHandle, TimelineNativeWindowRunnerConfig,
-    run_controlled_minimal_timeline_native_window,
+    TimelineNativeWindowControlHandle, TimelineNativeWindowProjectionUpdateError,
+    TimelineNativeWindowRunnerConfig, run_controlled_minimal_timeline_native_window,
 };
+use eidetic_core::contracts::TimelineRenderProjection;
 
 #[derive(Debug)]
 pub struct TimelineRendererWindowThreadHandle {
@@ -29,6 +30,12 @@ pub struct TimelineRendererWindowThreadStatus {
 pub enum TimelineRendererWindowThreadResult {
     Completed,
     Panicked,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TimelineRendererWindowProjectionUpdateError {
+    QueueFull,
+    WindowClosed,
 }
 
 impl TimelineRendererWindowThreadHandle {
@@ -76,6 +83,15 @@ impl TimelineRendererWindowThreadHandle {
         self.control_handle.request_hide();
     }
 
+    pub fn update_projection(
+        &self,
+        projection: TimelineRenderProjection,
+    ) -> Result<(), TimelineRendererWindowProjectionUpdateError> {
+        self.control_handle
+            .request_projection_update(projection)
+            .map_err(TimelineRendererWindowProjectionUpdateError::from)
+    }
+
     pub fn status(&mut self) -> TimelineRendererWindowThreadStatus {
         self.refresh_result();
         TimelineRendererWindowThreadStatus {
@@ -119,6 +135,17 @@ impl TimelineRendererWindowThreadHandle {
         }
         if let Ok(result) = self.completion_receiver.try_recv() {
             self.result = Some(result);
+        }
+    }
+}
+
+impl From<TimelineNativeWindowProjectionUpdateError>
+    for TimelineRendererWindowProjectionUpdateError
+{
+    fn from(error: TimelineNativeWindowProjectionUpdateError) -> Self {
+        match error {
+            TimelineNativeWindowProjectionUpdateError::QueueFull => Self::QueueFull,
+            TimelineNativeWindowProjectionUpdateError::WindowClosed => Self::WindowClosed,
         }
     }
 }

@@ -17,7 +17,8 @@ pub use geometry::{TimelineViewportGeometry, TimelineViewportPoint};
 #[cfg(feature = "native_render")]
 pub use native_render::{
     TimelineNativeRenderConfig, TimelineNativeWindowControl, TimelineNativeWindowControlHandle,
-    TimelineNativeWindowRunnerConfig, configure_controlled_minimal_timeline_native_window_app,
+    TimelineNativeWindowProjectionUpdateError, TimelineNativeWindowRunnerConfig,
+    configure_controlled_minimal_timeline_native_window_app,
     configure_minimal_timeline_native_window_app, run_controlled_minimal_timeline_native_window,
     run_minimal_timeline_native_window,
 };
