@@ -71,6 +71,10 @@ fn controlled_native_window_app_builds_scene_from_initial_projection() {
     let clips: Vec<_> = visuals.iter(app.world()).collect();
     assert_eq!(clips.len(), 1);
     assert_eq!(clips[0].node_id, node_id);
+    assert_eq!(clips[0].level, StoryLevel::Scene);
+    assert_eq!(clips[0].content_status, ContentStatus::NotesOnly);
+    assert!(!clips[0].locked);
+    assert_eq!(clips[0].color_rgb, [0.342, 0.655, 0.691]);
     assert!(clips[0].width_px > 0.0);
 }
 
@@ -119,6 +123,47 @@ fn controlled_native_window_replaces_projection_derived_clip_visuals() {
         .world_mut()
         .query::<&crate::native_render::TimelineNativeClipVisual>();
     assert_eq!(visuals.iter(app.world()).count(), 0);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_clip_visuals_use_projection_status_colors() {
+    assert_eq!(
+        crate::native_render::native_clip_color_rgb(
+            StoryLevel::Scene,
+            false,
+            ContentStatus::NotesOnly,
+        ),
+        [0.342, 0.655, 0.691]
+    );
+    assert_eq!(
+        crate::native_render::native_clip_color_rgb(StoryLevel::Beat, false, ContentStatus::Empty),
+        [0.188, 0.227, 0.298]
+    );
+    assert_eq!(
+        crate::native_render::native_clip_color_rgb(
+            StoryLevel::Act,
+            false,
+            ContentStatus::Generating,
+        ),
+        [0.937, 0.706, 0.294]
+    );
+    assert_eq!(
+        crate::native_render::native_clip_color_rgb(
+            StoryLevel::Sequence,
+            false,
+            ContentStatus::HasContent,
+        ),
+        [0.282, 0.686, 0.424]
+    );
+    assert_eq!(
+        crate::native_render::native_clip_color_rgb(
+            StoryLevel::Premise,
+            true,
+            ContentStatus::Empty
+        ),
+        [0.431, 0.455, 0.502]
+    );
 }
 
 #[cfg(feature = "native_render")]

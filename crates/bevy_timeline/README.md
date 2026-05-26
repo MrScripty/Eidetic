@@ -12,6 +12,8 @@ Current scope:
 - Keep Bevy dependencies isolated from domain and server crates.
 - Receive `TimelineRenderProjection` snapshots.
 - Rebuild read-only Bevy ECS entities for tracks, clips, arc tags, and relationships.
+- Preserve projected clip level, lock, content status, and deterministic
+  renderer colors in native clip visuals.
 - Rebuild read-only Bevy ECS entities for backend-projected affect overlays.
 - Own transient pan and zoom viewport state derived from projection duration.
 - Own transient playhead state bounded by projection duration.

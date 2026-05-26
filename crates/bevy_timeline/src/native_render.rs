@@ -15,7 +15,7 @@ use bevy::window::{
 };
 use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::TimelineRenderProjection;
-use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
 use eidetic_core::timeline::track::TrackId;
 
 use crate::scene::{TimelineSceneEntity, TimelineSceneStats, rebuild_timeline_scene};
@@ -64,12 +64,16 @@ pub struct TimelineNativeCamera;
 pub struct TimelineNativeClipVisual {
     pub node_id: NodeId,
     pub track_id: TrackId,
+    pub level: StoryLevel,
     pub x_px: f32,
     pub y_px: f32,
     pub width_px: f32,
     pub height_px: f32,
     pub start_ms: u64,
     pub end_ms: u64,
+    pub locked: bool,
+    pub content_status: ContentStatus,
+    pub color_rgb: [f32; 3],
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -659,6 +663,7 @@ pub(crate) fn rebuild_timeline_native_visuals(
         let x_px = x_start + (width_px / 2.0);
         let y_px =
             layout.top_px() - (track_index as f32 * (layout.clip_height_px + layout.track_gap_px));
+        let color_rgb = native_clip_color_rgb(clip.level, clip.locked, clip.content_status);
 
         world.spawn((
             TimelineSceneEntity,
@@ -666,15 +671,19 @@ pub(crate) fn rebuild_timeline_native_visuals(
             TimelineNativeClipVisual {
                 node_id: clip.node_id,
                 track_id: clip.track_id,
+                level: clip.level,
                 x_px,
                 y_px,
                 width_px,
                 height_px: layout.clip_height_px,
                 start_ms: clip.start_ms,
                 end_ms: clip.end_ms,
+                locked: clip.locked,
+                content_status: clip.content_status,
+                color_rgb,
             },
             Sprite::from_color(
-                Color::srgb(0.342, 0.655, 0.691),
+                Color::srgb(color_rgb[0], color_rgb[1], color_rgb[2]),
                 Vec2::new(width_px, layout.clip_height_px),
             ),
             Transform::from_translation(Vec3::new(x_px, y_px, 0.0)),
@@ -686,6 +695,28 @@ pub(crate) fn rebuild_timeline_native_visuals(
         .map(|state| state.playhead)
     {
         spawn_timeline_native_playhead_visual(world, layout, viewport, playhead);
+    }
+}
+
+pub(crate) fn native_clip_color_rgb(
+    level: StoryLevel,
+    locked: bool,
+    content_status: ContentStatus,
+) -> [f32; 3] {
+    if locked {
+        return [0.431, 0.455, 0.502];
+    }
+    match content_status {
+        ContentStatus::Generating => [0.937, 0.706, 0.294],
+        ContentStatus::HasContent => [0.282, 0.686, 0.424],
+        ContentStatus::NotesOnly => match level {
+            StoryLevel::Premise => [0.576, 0.412, 0.776],
+            StoryLevel::Act => [0.518, 0.553, 0.859],
+            StoryLevel::Sequence => [0.376, 0.592, 0.827],
+            StoryLevel::Scene => [0.342, 0.655, 0.691],
+            StoryLevel::Beat => [0.451, 0.714, 0.455],
+        },
+        ContentStatus::Empty => [0.188, 0.227, 0.298],
     }
 }
 

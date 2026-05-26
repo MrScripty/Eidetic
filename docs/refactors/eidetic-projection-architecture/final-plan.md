@@ -3698,6 +3698,10 @@ Implementation order:
   native window renderer module into a focused `native_command.rs` module. This
   keeps command validation near the renderer command boundary while reducing
   the native window module's lifecycle/visual/input responsibilities.
+- Started: native clip visuals now carry projected story level, lock state,
+  content status, and deterministic renderer colors. The color selection is
+  derived only from the active backend projection and does not introduce
+  renderer-owned timeline semantics.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
