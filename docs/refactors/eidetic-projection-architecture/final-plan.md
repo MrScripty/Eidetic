@@ -3592,6 +3592,10 @@ Implementation order:
 - Started: renderer window strategy status is now shared desktop renderer
   infrastructure. The graph host keeps its public status alias while the
   strategy/capability/support tuple is no longer graph-owned vocabulary.
+- Started: renderer supervisor lifecycle vocabulary is now shared desktop
+  renderer infrastructure. The graph supervisor keeps its public alias while
+  `not_started`, `starting`, `running`, `closing`, `closed`, and `failed`
+  runner-owner states are no longer graph-only names.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

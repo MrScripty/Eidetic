@@ -16,16 +16,7 @@ const NATIVE_RENDERER_WINDOW_STOP_TIMEOUT: Duration = Duration::from_millis(2_00
 type NativeRendererWindowThreadStart =
     fn(BibleGraphNativeWindowRunnerConfig) -> std::io::Result<NativeRendererWindowThreadHandle>;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum NativeRendererSupervisorLifecycle {
-    NotStarted,
-    Starting,
-    Running,
-    Closing,
-    Closed,
-    Failed,
-}
+pub use crate::renderer_window::DesktopRendererSupervisorLifecycle as NativeRendererSupervisorLifecycle;
 
 #[derive(Debug)]
 pub struct NativeRendererSupervisor {
