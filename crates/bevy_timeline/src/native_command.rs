@@ -110,6 +110,27 @@ pub fn emit_timeline_native_split_node_request(
     Ok(())
 }
 
+pub fn emit_timeline_native_selected_split_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    at_ms: u64,
+    left_node_id: NodeId,
+    right_node_id: NodeId,
+) -> Result<Option<NodeId>, TimelineRendererError> {
+    let Some(node_id) = projection.selected_node_id else {
+        return Ok(None);
+    };
+    emit_timeline_native_split_node_request(
+        control,
+        projection,
+        node_id,
+        at_ms,
+        left_node_id,
+        right_node_id,
+    )?;
+    Ok(Some(node_id))
+}
+
 pub fn emit_timeline_native_create_node_request(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,

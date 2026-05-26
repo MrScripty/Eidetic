@@ -691,6 +691,58 @@ fn controlled_native_window_emits_validated_split_node_command() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_selected_split_command_from_projection() {
+    let node_id = NodeId::new();
+    let left_node_id = NodeId::new();
+    let right_node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = Some(node_id);
+
+    let split_node_id = crate::native_command::emit_timeline_native_selected_split_request(
+        &window_control,
+        &projection,
+        2_500,
+        left_node_id,
+        right_node_id,
+    )
+    .unwrap();
+
+    assert_eq!(split_node_id, Some(node_id));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SplitNode {
+            node_id,
+            at_ms: 2_500,
+            left_node_id,
+            right_node_id,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_ignores_selected_split_without_projection_selection() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    let split_node_id = crate::native_command::emit_timeline_native_selected_split_request(
+        &window_control,
+        &projection_with_node(node_id),
+        2_500,
+        NodeId::new(),
+        NodeId::new(),
+    )
+    .unwrap();
+
+    assert_eq!(split_node_id, None);
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_rejects_invalid_split_node_command() {
     let node_id = NodeId::new();
     let left_node_id = NodeId::new();

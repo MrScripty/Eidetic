@@ -3723,6 +3723,11 @@ Implementation order:
   Bevy timeline window reads only projection state, validates the selected clip
   against the active projection, and leaves the actual timeline mutation at the
   backend command bridge.
+- Started: native timeline split interaction can now emit a validated split
+  request for the backend-projected selected clip at the renderer-local
+  playhead. The Bevy window generates fresh replacement node IDs, validates the
+  split against the active projection, and still leaves mutation and projection
+  confirmation at the backend command bridge.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

@@ -49,6 +49,8 @@ Current scope:
   only, without renderer-owned durable selected node state.
 - Emit native split command requests only when the split point is inside the
   projected clip and replacement node IDs are available.
+- Emit native selected-split command requests from backend-projected selection
+  and renderer-local playhead state only.
 - Emit native create command requests only when parent references and requested
   ranges are valid for the active backend projection.
 - Keep native command validation in `native_command.rs` so the native renderer
