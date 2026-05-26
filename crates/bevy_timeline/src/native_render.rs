@@ -15,13 +15,13 @@ use bevy::window::{
 };
 use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::TimelineRenderProjection;
-use eidetic_core::timeline::node::{BeatType, NodeId, StoryLevel};
+use eidetic_core::timeline::node::NodeId;
 use eidetic_core::timeline::track::TrackId;
 
 use crate::scene::{TimelineSceneEntity, TimelineSceneStats, rebuild_timeline_scene};
 use crate::{
     TimelinePlayhead, TimelineRendererCommand, TimelineRendererError, TimelineViewport,
-    TimelineViewportGeometry, TimelineViewportPoint, hit_test_projection_clip_at_point,
+    TimelineViewportGeometry, TimelineViewportPoint,
 };
 
 const TIMELINE_NATIVE_PROJECTION_QUEUE_CAPACITY: usize = 8;
@@ -285,6 +285,10 @@ impl TimelineNativeWindowControl {
         self.shutdown_requested.store(true, Ordering::Release);
         self.visible.store(false, Ordering::Release);
     }
+
+    pub(crate) fn enqueue_command(&self, command: TimelineRendererCommand) {
+        let _ = self.command_sender.try_send(command);
+    }
 }
 
 pub struct TimelineNativeRenderPlugin;
@@ -542,7 +546,7 @@ fn emit_timeline_native_click_selection(
         cursor_position.x.max(0.0) as u32,
         (window.height() - cursor_position.y).max(0.0) as u32,
     );
-    let _ = emit_timeline_native_clip_selection(
+    let _ = crate::native_command::emit_timeline_native_clip_selection(
         &control,
         projection,
         projection_state.viewport,
@@ -603,147 +607,6 @@ fn navigate_timeline_native_playhead(world: &mut World) {
     if nudge_right {
         nudge_timeline_native_playhead(world, nudge_step_ms);
     }
-}
-
-pub(crate) fn emit_timeline_native_clip_selection(
-    control: &TimelineNativeWindowControl,
-    projection: &TimelineRenderProjection,
-    viewport: TimelineViewport,
-    geometry: TimelineViewportGeometry,
-    point: TimelineViewportPoint,
-) -> Result<Option<NodeId>, TimelineRendererError> {
-    let node_id = hit_test_projection_clip_at_point(projection, viewport, geometry, point)?;
-    if let Some(node_id) = node_id {
-        let _ = control
-            .command_sender
-            .try_send(TimelineRendererCommand::SelectNode { node_id });
-    }
-    Ok(node_id)
-}
-
-pub fn emit_timeline_native_node_range_request(
-    control: &TimelineNativeWindowControl,
-    projection: &TimelineRenderProjection,
-    node_id: NodeId,
-    start_ms: u64,
-    end_ms: u64,
-) -> Result<(), TimelineRendererError> {
-    if !projection.clips.iter().any(|clip| clip.node_id == node_id) {
-        return Err(TimelineRendererError::UnknownNode { node_id });
-    }
-    if start_ms >= end_ms || end_ms > projection.total_duration_ms {
-        return Err(TimelineRendererError::InvalidNodeRange {
-            start_ms,
-            end_ms,
-            duration_ms: projection.total_duration_ms,
-        });
-    }
-
-    let _ = control
-        .command_sender
-        .try_send(TimelineRendererCommand::SetNodeRange {
-            node_id,
-            start_ms,
-            end_ms,
-        });
-    Ok(())
-}
-
-pub fn emit_timeline_native_delete_node_request(
-    control: &TimelineNativeWindowControl,
-    projection: &TimelineRenderProjection,
-    node_id: NodeId,
-) -> Result<(), TimelineRendererError> {
-    if !projection.clips.iter().any(|clip| clip.node_id == node_id) {
-        return Err(TimelineRendererError::UnknownNode { node_id });
-    }
-
-    let _ = control
-        .command_sender
-        .try_send(TimelineRendererCommand::DeleteNode { node_id });
-    Ok(())
-}
-
-pub fn emit_timeline_native_split_node_request(
-    control: &TimelineNativeWindowControl,
-    projection: &TimelineRenderProjection,
-    node_id: NodeId,
-    at_ms: u64,
-    left_node_id: NodeId,
-    right_node_id: NodeId,
-) -> Result<(), TimelineRendererError> {
-    let Some(clip) = projection.clips.iter().find(|clip| clip.node_id == node_id) else {
-        return Err(TimelineRendererError::UnknownNode { node_id });
-    };
-    if at_ms <= clip.start_ms || at_ms >= clip.end_ms {
-        return Err(TimelineRendererError::InvalidNodeSplit {
-            at_ms,
-            start_ms: clip.start_ms,
-            end_ms: clip.end_ms,
-        });
-    }
-    let output_ids_are_available = left_node_id != right_node_id
-        && !projection
-            .clips
-            .iter()
-            .any(|clip| clip.node_id == left_node_id || clip.node_id == right_node_id);
-    if !output_ids_are_available {
-        return Err(TimelineRendererError::InvalidSplitOutputNodeIds {
-            left_node_id,
-            right_node_id,
-        });
-    }
-
-    let _ = control
-        .command_sender
-        .try_send(TimelineRendererCommand::SplitNode {
-            node_id,
-            at_ms,
-            left_node_id,
-            right_node_id,
-        });
-    Ok(())
-}
-
-pub fn emit_timeline_native_create_node_request(
-    control: &TimelineNativeWindowControl,
-    projection: &TimelineRenderProjection,
-    node_id: NodeId,
-    parent_id: Option<NodeId>,
-    level: StoryLevel,
-    name: String,
-    start_ms: u64,
-    end_ms: u64,
-    beat_type: Option<BeatType>,
-) -> Result<(), TimelineRendererError> {
-    if let Some(parent_id) = parent_id
-        && !projection
-            .clips
-            .iter()
-            .any(|clip| clip.node_id == parent_id)
-    {
-        return Err(TimelineRendererError::UnknownNode { node_id: parent_id });
-    }
-    if start_ms >= end_ms || end_ms > projection.total_duration_ms {
-        return Err(TimelineRendererError::InvalidNodeRange {
-            start_ms,
-            end_ms,
-            duration_ms: projection.total_duration_ms,
-        });
-    }
-
-    let _ = control
-        .command_sender
-        .try_send(TimelineRendererCommand::CreateNode {
-            node_id,
-            parent_id,
-            level,
-            name,
-            start_ms,
-            end_ms,
-            beat_type,
-        });
-    Ok(())
 }
 
 fn native_track_height_px() -> u32 {

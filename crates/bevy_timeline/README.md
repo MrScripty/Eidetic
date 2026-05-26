@@ -41,6 +41,8 @@ Current scope:
   projected clip and replacement node IDs are available.
 - Emit native create command requests only when parent references and requested
   ranges are valid for the active backend projection.
+- Keep native command validation in `native_command.rs` so the native renderer
+  window module stays focused on lifecycle, input, and visual projection work.
 
 Dependency review:
 

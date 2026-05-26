@@ -3694,6 +3694,10 @@ Implementation order:
   command requests only when parent references and requested ranges are valid
   for the active backend projection, completing the first native command
   primitive set for later Bevy create interactions.
+- Started: native timeline command validation has been extracted from the
+  native window renderer module into a focused `native_command.rs` module. This
+  keeps command validation near the renderer command boundary while reducing
+  the native window module's lifecycle/visual/input responsibilities.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

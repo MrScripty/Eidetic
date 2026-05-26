@@ -8,6 +8,8 @@ use thiserror::Error;
 mod geometry;
 mod hit_test;
 #[cfg(feature = "native_render")]
+mod native_command;
+#[cfg(feature = "native_render")]
 mod native_render;
 mod playhead;
 mod relationship_curve;
@@ -20,13 +22,16 @@ pub use hit_test::{
     hit_test_clip_at_time as hit_test_projection_clip_at_time,
 };
 #[cfg(feature = "native_render")]
+pub use native_command::{
+    emit_timeline_native_create_node_request, emit_timeline_native_delete_node_request,
+    emit_timeline_native_node_range_request, emit_timeline_native_split_node_request,
+};
+#[cfg(feature = "native_render")]
 pub use native_render::{
     TimelineNativeRenderConfig, TimelineNativeWindowControl, TimelineNativeWindowControlHandle,
     TimelineNativeWindowProjectionUpdateError, TimelineNativeWindowRunnerConfig,
     configure_controlled_minimal_timeline_native_window_app,
-    configure_minimal_timeline_native_window_app, emit_timeline_native_create_node_request,
-    emit_timeline_native_delete_node_request, emit_timeline_native_node_range_request,
-    emit_timeline_native_split_node_request, nudge_timeline_native_playhead,
+    configure_minimal_timeline_native_window_app, nudge_timeline_native_playhead,
     pan_timeline_native_viewport, run_controlled_minimal_timeline_native_window,
     run_minimal_timeline_native_window, set_timeline_native_playhead, set_timeline_native_viewport,
     zoom_timeline_native_viewport,
