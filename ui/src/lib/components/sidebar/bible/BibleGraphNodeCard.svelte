@@ -15,11 +15,11 @@
     node: BibleGraphNode;
     category: BibleGraphCategory;
     selected?: boolean;
-    onselect: (id: string) => void;
+    onselect: (id: string, event: MouseEvent) => void;
   } = $props();
 </script>
 
-<button class="node-card" class:selected onclick={() => onselect(node.id)}>
+<button class="node-card" class:selected onclick={(event) => onselect(node.id, event)}>
   <span class="color-dot" style="background: {categoryColor(category)}"></span>
   <span class="node-name">{node.name}</span>
   <span class="category-badge" style="color: {categoryColor(category)}">

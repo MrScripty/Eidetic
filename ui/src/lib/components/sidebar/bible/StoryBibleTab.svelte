@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  import { applyGraphRendererCameraCommand } from '$lib/graphRendererApi.js';
   import {
     ensureCanonicalBibleRootProjections,
     getCachedBibleGraphNodeListProjection,
@@ -77,7 +78,13 @@
     }
   }
 
-  function handleSelect(id: string) {
+  function handleSelect(id: string, event?: MouseEvent) {
+    if (event?.ctrlKey) {
+      void applyGraphRendererCameraCommand({
+        type: 'frame_node',
+        node_id: id,
+      }).catch(() => {});
+    }
     selectBibleGraphNode(selectedGraphNodeId === id ? null : id);
   }
 
