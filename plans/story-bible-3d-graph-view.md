@@ -862,7 +862,7 @@ Current implementation progress:
 - Code review findings to resolve before completion:
   - graph-local add/edit workflows are incomplete; edge delete now has a
     backend soft-delete command path and UI affordance, and strict node delete
-    now has a backend/API command path but no visible UI affordance yet,
+    now has a backend/API command path plus a node-detail UI affordance,
   - Bevy keyboard/mouse navigation recovery and Svelte Ctrl+click-to-frame
     bridge from bible list items are incomplete.
 - Standards review findings to resolve before implementation completion:
@@ -937,9 +937,9 @@ Current implementation progress:
     resolves. Strict node delete now exists as a backend/API command path that
     soft-deletes only non-canonical leaf nodes without active incident edges,
     rejects invalid deletes before writing history, and returns a backend-owned
-    node-list projection. Remaining delete work must expose that node delete in
-    the node detail UI and clear transient selection only after the backend
-    command succeeds. Delete must not be simulated in frontend state.
+    node-list projection. The node detail panel exposes that delete command,
+    refreshes the render graph, and clears transient selection only after the
+    backend command succeeds. Delete must not be simulated in frontend state.
 17. Completed: refactor projection construction into query, scope, layout, and
     DTO helpers with targeted tests.
 18. Completed: add renderer-local mesh/material reuse for frequent projection

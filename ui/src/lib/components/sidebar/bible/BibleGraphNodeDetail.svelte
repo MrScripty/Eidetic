@@ -5,6 +5,7 @@
     BibleRenderGraphNode,
   } from '$lib/bibleGraphTypes.js';
   import {
+    deleteBibleGraphNodeProjection,
     getBibleGraphNodeProjectionError,
     getCachedBibleGraphNodeProjection,
     isBibleGraphNodeProjectionPending,
@@ -20,28 +21,74 @@
   let {
     nodeId,
     onclose,
+    ondeleted,
     edgeTargetNodes,
   }: {
     nodeId: BibleGraphNodeId;
     onclose: () => void;
+    ondeleted?: () => void | Promise<void>;
     edgeTargetNodes: Array<BibleGraphNode | BibleRenderGraphNode>;
   } = $props();
+
+  let deletingNode = $state(false);
+  let deleteError = $state<string | undefined>(undefined);
 
   const key = $derived({ node_id: nodeId });
   const projection = $derived(getCachedBibleGraphNodeProjection(key));
   const pending = $derived(isBibleGraphNodeProjectionPending(key));
   const error = $derived(getBibleGraphNodeProjectionError(key));
   const edgeTargetOptions = $derived(bibleGraphEdgeTargetOptions(edgeTargetNodes, nodeId));
+  const deleteDisabledReason = $derived(() => {
+    if (!projection) return 'Node projection is not loaded';
+    if (projection.payload.node.system_owned) return 'Canonical roots cannot be deleted';
+    if (
+      projection.payload.incoming_edges.length > 0 ||
+      projection.payload.outgoing_edges.length > 0
+    ) {
+      return 'Delete connected edges before deleting this node';
+    }
+    return null;
+  });
 
   $effect(() => {
     void refreshBibleGraphNodeProjection({ node_id: nodeId }).catch(() => {});
   });
+
+  async function handleDeleteNode(): Promise<void> {
+    if (!projection) return;
+    if (deleteDisabledReason() !== null) return;
+    if (!window.confirm(`Delete node "${projection.payload.node.name}"?`)) return;
+
+    deletingNode = true;
+    deleteError = undefined;
+    try {
+      await deleteBibleGraphNodeProjection(projection.payload.node.id);
+      if (ondeleted) {
+        await ondeleted();
+      } else {
+        onclose();
+      }
+    } catch (error) {
+      deleteError = error instanceof Error ? error.message : 'Failed to delete bible graph node';
+    } finally {
+      deletingNode = false;
+    }
+  }
 </script>
 
 <div class="graph-node-detail">
   <div class="detail-header">
     <button class="close-btn" onclick={onclose}>&times; Close</button>
     {#if projection}
+      <button
+        type="button"
+        class="delete-btn"
+        disabled={deletingNode || deleteDisabledReason() !== null}
+        title={deleteDisabledReason() ?? 'Delete node'}
+        onclick={() => void handleDeleteNode()}
+      >
+        {deletingNode ? 'Deleting' : 'Delete'}
+      </button>
       <span class="schema-label">{projection.payload.node.schema_key}</span>
     {/if}
   </div>
@@ -49,6 +96,9 @@
   {#if projection}
     <div class="detail-body">
       <h2>{projection.payload.node.name}</h2>
+      {#if deleteError}
+        <p class="status error">{deleteError}</p>
+      {/if}
       <dl class="metadata">
         <div>
           <dt>ID</dt>
@@ -130,6 +180,26 @@
 
   .close-btn:hover {
     color: var(--color-text-primary);
+  }
+
+  .delete-btn {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  .delete-btn:hover:not(:disabled) {
+    border-color: var(--color-danger, #b74c4c);
+    color: var(--color-danger, #b74c4c);
+  }
+
+  .delete-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 
   .schema-label {
