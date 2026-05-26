@@ -3518,6 +3518,11 @@ Implementation order:
   renderer lifecycle controls backed by the Tauri timeline renderer commands.
   The toolbar stores only the latest returned status projection for display and
   does not own timeline clips, viewport state, or renderer commands.
+- Started: desktop now drains timeline renderer command intents on the backend
+  side and applies durable range/delete mutations through `command_service`.
+  Selection remains transient UI focus, and create/split renderer intents need
+  explicit backend request constructors before they can be enabled in the
+  command bridge without ad hoc JSON construction.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

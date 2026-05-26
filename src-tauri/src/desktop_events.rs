@@ -1,4 +1,9 @@
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
+use eidetic_bevy_timeline::TimelineRendererCommand;
+use eidetic_core::contracts::{
+    CommandEnvelope, DeleteTimelineNodeCommand, SetTimelineNodeRangeCommand,
+};
+use eidetic_server::command_service;
 use eidetic_server::state::{AppState, ServerEvent};
 use serde::Serialize;
 use std::sync::Mutex;
@@ -8,6 +13,7 @@ use tauri::Manager;
 use tokio::sync::broadcast;
 
 use crate::bevy_graph_host::DesktopBibleGraphRendererOwner;
+use crate::bevy_timeline_host::DesktopTimelineRendererOwner;
 use crate::graph_renderer_projection::refresh_active_graph_renderer_projection;
 
 pub const SERVER_EVENT_TOPIC: &str = "eidetic://server-event";
@@ -34,7 +40,8 @@ impl DesktopEventBridgeOwner {
             handles: Mutex::new(vec![
                 spawn_server_event_bridge(app.clone(), state),
                 spawn_graph_renderer_projection_bridge(app.clone(), state),
-                spawn_graph_renderer_command_bridge(app),
+                spawn_graph_renderer_command_bridge(app.clone()),
+                spawn_timeline_renderer_command_bridge(app, state.clone()),
             ]),
         }
     }
@@ -139,6 +146,90 @@ fn spawn_graph_renderer_command_bridge(
     })
 }
 
+fn spawn_timeline_renderer_command_bridge(
+    app: tauri::AppHandle,
+    state: AppState,
+) -> tauri::async_runtime::JoinHandle<()> {
+    tauri::async_runtime::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_millis(100));
+
+        loop {
+            interval.tick().await;
+            let Some(owner) = app.try_state::<DesktopTimelineRendererOwner>() else {
+                continue;
+            };
+            let commands = match owner.drain_commands() {
+                Ok(commands) => commands,
+                Err(error) => {
+                    tracing::warn!("failed to drain timeline renderer commands: {error:?}");
+                    continue;
+                }
+            };
+
+            for command in commands {
+                if let Err(error) = apply_timeline_renderer_command(&state, command.clone()).await {
+                    tracing::warn!(
+                        "failed to apply timeline renderer command {command:?}: {error:?}"
+                    );
+                }
+            }
+        }
+    })
+}
+
+async fn apply_timeline_renderer_command(
+    state: &AppState,
+    command: TimelineRendererCommand,
+) -> Result<(), String> {
+    match timeline_renderer_mutation_command(command) {
+        Some(TimelineRendererMutationCommand::SetNodeRange(command)) => {
+            command_service::set_timeline_node_range(state, command)
+                .await
+                .map(|_| ())
+                .map_err(|error| error.to_string())
+        }
+        Some(TimelineRendererMutationCommand::DeleteNode(command)) => {
+            command_service::delete_timeline_node(state, command)
+                .await
+                .map(|_| ())
+                .map_err(|error| error.to_string())
+        }
+        None => Ok(()),
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum TimelineRendererMutationCommand {
+    SetNodeRange(CommandEnvelope<SetTimelineNodeRangeCommand>),
+    DeleteNode(CommandEnvelope<DeleteTimelineNodeCommand>),
+}
+
+fn timeline_renderer_mutation_command(
+    command: TimelineRendererCommand,
+) -> Option<TimelineRendererMutationCommand> {
+    match command {
+        TimelineRendererCommand::SetNodeRange {
+            node_id,
+            start_ms,
+            end_ms,
+        } => Some(TimelineRendererMutationCommand::SetNodeRange(
+            CommandEnvelope::new(SetTimelineNodeRangeCommand {
+                node_id,
+                start_ms,
+                end_ms,
+            }),
+        )),
+        TimelineRendererCommand::DeleteNode { node_id } => {
+            Some(TimelineRendererMutationCommand::DeleteNode(
+                CommandEnvelope::new(DeleteTimelineNodeCommand { node_id }),
+            ))
+        }
+        TimelineRendererCommand::SelectNode { .. }
+        | TimelineRendererCommand::SplitNode { .. }
+        | TimelineRendererCommand::CreateNode { .. } => None,
+    }
+}
+
 fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
     matches!(
         event,
@@ -161,10 +252,13 @@ async fn refresh_graph_renderer_projection(app: &tauri::AppHandle) {
 mod tests {
     use super::{
         DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload, SERVER_EVENT_TOPIC,
-        should_refresh_graph_renderer_projection,
+        TimelineRendererMutationCommand, should_refresh_graph_renderer_projection,
+        timeline_renderer_mutation_command,
     };
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
-    use eidetic_core::contracts::BibleGraphNodeId;
+    use eidetic_bevy_timeline::TimelineRendererCommand;
+    use eidetic_core::contracts::{BibleGraphNodeId, DeleteTimelineNodeCommand};
+    use eidetic_core::timeline::node::NodeId;
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
     use std::sync::Mutex;
@@ -294,6 +388,46 @@ mod tests {
         assert!(!should_refresh_graph_renderer_projection(
             &ServerEvent::ScriptChanged
         ));
+    }
+
+    #[test]
+    fn maps_timeline_renderer_range_commands_to_backend_commands() {
+        let node_id = NodeId::new();
+
+        let Some(TimelineRendererMutationCommand::SetNodeRange(command)) =
+            timeline_renderer_mutation_command(TimelineRendererCommand::SetNodeRange {
+                node_id,
+                start_ms: 1_000,
+                end_ms: 2_000,
+            })
+        else {
+            panic!("expected set range mutation command");
+        };
+
+        assert_eq!(command.payload.node_id, node_id);
+        assert_eq!(command.payload.start_ms, 1_000);
+        assert_eq!(command.payload.end_ms, 2_000);
+    }
+
+    #[test]
+    fn maps_timeline_renderer_delete_commands_to_backend_commands() {
+        let node_id = NodeId::new();
+
+        assert!(matches!(
+            timeline_renderer_mutation_command(TimelineRendererCommand::DeleteNode { node_id }),
+            Some(TimelineRendererMutationCommand::DeleteNode(command))
+                if command.payload == DeleteTimelineNodeCommand { node_id }
+        ));
+    }
+
+    #[test]
+    fn ignores_timeline_renderer_commands_without_backend_mutation() {
+        let node_id = NodeId::new();
+
+        assert_eq!(
+            timeline_renderer_mutation_command(TimelineRendererCommand::SelectNode { node_id }),
+            None
+        );
     }
 
     #[test]
