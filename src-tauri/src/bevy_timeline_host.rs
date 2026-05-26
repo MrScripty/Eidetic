@@ -455,6 +455,29 @@ mod tests {
         assert!(!stopped.running);
     }
 
+    #[test]
+    fn timeline_owner_unavailable_reports_status_without_renderer_thread() {
+        let owner = DesktopTimelineRendererOwner::unavailable("native runner disabled".to_string());
+
+        let status = owner.status().unwrap();
+        let commands = owner.drain_commands().unwrap();
+        let stopped = owner.stop().unwrap();
+
+        assert!(!status.running);
+        assert!(!status.renderer_window_open);
+        assert_eq!(
+            status.renderer_window_lifecycle,
+            DesktopRendererWindowLifecycle::Closed
+        );
+        assert_eq!(
+            status.renderer_window_message,
+            "timeline renderer native window is unavailable"
+        );
+        assert_eq!(status.last_error.as_deref(), Some("native runner disabled"));
+        assert!(commands.is_empty());
+        assert_eq!(stopped, status);
+    }
+
     fn projection_with_node(node_id: NodeId) -> TimelineRenderProjection {
         let track_id = TrackId::new();
         TimelineRenderProjection {

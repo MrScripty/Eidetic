@@ -3736,6 +3736,9 @@ Implementation order:
   state through focused projection-only helpers and expose explicit accessible
   names on icon buttons. Tests cover status labels and pending/running/focus
   availability without adding frontend renderer ownership.
+- Started: timeline renderer host lifecycle coverage now proves unavailable
+  native runner owners report backend-owned unavailable status, drain no
+  commands, and stop idempotently without starting a renderer thread.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
