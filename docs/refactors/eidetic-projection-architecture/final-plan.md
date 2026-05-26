@@ -3732,6 +3732,10 @@ Implementation order:
   range commands from backend-projected selection. Ctrl+left/right in the Bevy
   timeline window requests a bounded move through the backend command bridge,
   while plain arrow keys remain renderer-local viewport navigation.
+- Started: timeline renderer window controls now derive labels and disabled
+  state through focused projection-only helpers and expose explicit accessible
+  names on icon buttons. Tests cover status labels and pending/running/focus
+  availability without adding frontend renderer ownership.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

@@ -8,20 +8,21 @@
   } from '$lib/timelineRendererApi.js';
   import type { TimelineRendererStatus } from '$lib/timelineRendererTypes.js';
   import { setTimelineRendererWindowStatus } from '$lib/stores/timelineRendererWindow.svelte.js';
+  import {
+    timelineRendererStatusLabel,
+    timelineRendererWindowControlState,
+  } from './timelineRendererWindowControls.js';
 
   let status = $state<TimelineRendererStatus | null>(null);
   let pending = $state(false);
   let error = $state<string | null>(null);
 
   const running = $derived(status?.running ?? false);
-  const statusLabel = $derived(
-    status?.last_error ??
-      (status
-        ? status.renderer_window_ready
-          ? `${status.clip_count} clips`
-          : status.renderer_window_message
-        : 'not checked'),
-  );
+  const statusLabel = $derived(timelineRendererStatusLabel(status));
+  const openControl = $derived(timelineRendererWindowControlState('open', status, pending));
+  const refreshControl = $derived(timelineRendererWindowControlState('refresh', status, pending));
+  const focusControl = $derived(timelineRendererWindowControlState('focus', status, pending));
+  const closeControl = $derived(timelineRendererWindowControlState('close', status, pending));
 
   async function run(action: () => Promise<TimelineRendererStatus>): Promise<void> {
     pending = true;
@@ -49,8 +50,9 @@
   <button
     type="button"
     class="tl-btn"
-    title="Open timeline renderer"
-    disabled={pending}
+    title={openControl.label}
+    aria-label={openControl.label}
+    disabled={openControl.disabled}
     onclick={() => run(openTimelineRenderer)}
   >
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
@@ -61,8 +63,9 @@
   <button
     type="button"
     class="tl-btn"
-    title="Refresh timeline renderer status"
-    disabled={pending}
+    title={refreshControl.label}
+    aria-label={refreshControl.label}
+    disabled={refreshControl.disabled}
     onclick={() => run(getTimelineRendererStatus)}
   >
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
@@ -73,8 +76,9 @@
   <button
     type="button"
     class="tl-btn"
-    title="Focus timeline renderer"
-    disabled={pending || !running || !status?.renderer_window_focus_supported}
+    title={focusControl.label}
+    aria-label={focusControl.label}
+    disabled={focusControl.disabled}
     onclick={() => run(focusTimelineRenderer)}
   >
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
@@ -85,8 +89,9 @@
   <button
     type="button"
     class="tl-btn"
-    title="Close timeline renderer"
-    disabled={pending || !running}
+    title={closeControl.label}
+    aria-label={closeControl.label}
+    disabled={closeControl.disabled}
     onclick={() => run(closeTimelineRenderer)}
   >
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
