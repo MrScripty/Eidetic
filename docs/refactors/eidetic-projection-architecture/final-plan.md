@@ -3240,6 +3240,10 @@ Implementation order:
   canonical graph or timeline state.
 - Add proposal-producing graph tools that write generic reviewable proposal
   records and never mutate canonical graph rows directly.
+- Completed: server graph proposal tools now convert agent node, field, edge,
+  and timeline-context-link proposal calls into generic reviewable proposal
+  records, return proposal-list projections, require explicit edge kinds, and
+  leave canonical graph, timeline, and renderer state untouched.
 - Add active llama.cpp endpoint resolution through Pumas/model-service seams
   before the first live-provider harness slice.
 - Add the provider-independent structured tool loop for llama.cpp/Pumas.

@@ -4,8 +4,8 @@ use uuid::Uuid;
 use crate::timeline::node::NodeId;
 
 use super::{
-    BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey, BibleGraphSchemaKey, CommandId,
-    ContextEvaluationTaskKind,
+    BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
+    BibleGraphSchemaKey, CommandId, ContextEvaluationTaskKind,
 };
 
 const DEFAULT_MAX_TOOL_CALLS: u32 = 32;
@@ -353,6 +353,7 @@ pub enum AgentToolArguments {
         command_id: CommandId,
         from_node_id: BibleGraphNodeId,
         to_node_id: BibleGraphNodeId,
+        edge_kind: BibleGraphEdgeKind,
         label: String,
     },
     ProposeTimelineContextLink {
