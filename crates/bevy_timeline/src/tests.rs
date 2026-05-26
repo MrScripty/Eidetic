@@ -4,6 +4,7 @@ use eidetic_core::contracts::{
     TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderTrack, Valence,
 };
 use eidetic_core::timeline::node::{ContentStatus, StoryLevel};
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use eidetic_core::timeline::track::TrackId;
 
 mod split;
@@ -163,6 +164,62 @@ fn controlled_native_window_clip_visuals_use_projection_status_colors() {
             ContentStatus::Empty
         ),
         [0.431, 0.455, 0.502]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_renders_projection_relationship_visuals() {
+    let upper_node_id = NodeId::new();
+    let lower_node_id = NodeId::new();
+    let upper_track_id = TrackId::new();
+    let lower_track_id = TrackId::new();
+    let relationship_id = RelationshipId::new();
+    let mut projection =
+        projection_with_two_tracks(upper_node_id, upper_track_id, lower_node_id, lower_track_id);
+    projection.relationships = vec![eidetic_core::contracts::TimelineRenderRelationship {
+        relationship_id,
+        from_node_id: upper_node_id,
+        to_node_id: lower_node_id,
+        relationship_type: RelationshipType::Causal,
+    }];
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(&mut app, Some(&projection));
+
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativeRelationshipVisual>();
+    let relationship_visuals: Vec<_> = visuals.iter(app.world()).collect();
+    assert_eq!(relationship_visuals.len(), 1);
+    assert_eq!(relationship_visuals[0].relationship_id, relationship_id);
+    assert_eq!(relationship_visuals[0].from_node_id, upper_node_id);
+    assert_eq!(relationship_visuals[0].to_node_id, lower_node_id);
+    assert_eq!(
+        relationship_visuals[0].relationship_type,
+        RelationshipType::Causal
+    );
+    assert_eq!(relationship_visuals[0].color_rgb, [0.937, 0.384, 0.314]);
+    assert!(relationship_visuals[0].length_px > 1.0);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_relationship_visuals_use_projection_type_colors() {
+    assert_eq!(
+        crate::native_render::native_relationship_color_rgb(&RelationshipType::Causal),
+        [0.937, 0.384, 0.314]
+    );
+    assert_eq!(
+        crate::native_render::native_relationship_color_rgb(&RelationshipType::Thematic),
+        [0.933, 0.831, 0.455]
+    );
+    assert_eq!(
+        crate::native_render::native_relationship_color_rgb(&RelationshipType::Convergence {
+            arc_ids: Vec::new()
+        }),
+        [0.655, 0.463, 0.914]
     );
 }
 

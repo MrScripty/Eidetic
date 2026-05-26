@@ -14,6 +14,8 @@ Current scope:
 - Rebuild read-only Bevy ECS entities for tracks, clips, arc tags, and relationships.
 - Preserve projected clip level, lock, content status, and deterministic
   renderer colors in native clip visuals.
+- Render disposable native relationship connector visuals from backend
+  projection relationships and endpoint clip positions.
 - Rebuild read-only Bevy ECS entities for backend-projected affect overlays.
 - Own transient pan and zoom viewport state derived from projection duration.
 - Own transient playhead state bounded by projection duration.

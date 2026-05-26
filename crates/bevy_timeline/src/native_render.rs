@@ -6,16 +6,17 @@ use std::time::{Duration, Instant};
 use bevy::app::AppExit;
 use bevy::prelude::{
     App, ButtonInput, Camera2d, ClearColor, Color, Commands, Component, Entity, KeyCode,
-    MessageWriter, MouseButton, Plugin, PluginGroup, Query, Res, Resource, Startup, Transform,
-    Update, Vec2, Vec3, Window, World,
+    MessageWriter, MouseButton, Plugin, PluginGroup, Quat, Query, Res, Resource, Startup,
+    Transform, Update, Vec2, Vec3, Window, World,
 };
 use bevy::sprite::Sprite;
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
 };
 use bevy::winit::WinitPlugin;
-use eidetic_core::contracts::TimelineRenderProjection;
+use eidetic_core::contracts::{TimelineRenderProjection, TimelineRenderTrack};
 use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use eidetic_core::timeline::track::TrackId;
 
 use crate::scene::{TimelineSceneEntity, TimelineSceneStats, rebuild_timeline_scene};
@@ -31,6 +32,7 @@ const TIMELINE_NATIVE_TRACK_GAP_PX: f32 = 16.0;
 const TIMELINE_NATIVE_HORIZONTAL_PADDING_PX: f32 = 48.0;
 const TIMELINE_NATIVE_TOP_PADDING_PX: f32 = 48.0;
 const TIMELINE_NATIVE_PLAYHEAD_WIDTH_PX: f32 = 3.0;
+const TIMELINE_NATIVE_RELATIONSHIP_WIDTH_PX: f32 = 2.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct TimelineNativeRenderConfig {
@@ -81,6 +83,18 @@ pub struct TimelineNativePlayheadVisual {
     pub position_ms: u64,
     pub x_px: f32,
     pub height_px: f32,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct TimelineNativeRelationshipVisual {
+    pub relationship_id: RelationshipId,
+    pub from_node_id: NodeId,
+    pub to_node_id: NodeId,
+    pub relationship_type: RelationshipType,
+    pub start_px: [f32; 2],
+    pub end_px: [f32; 2],
+    pub length_px: f32,
+    pub color_rgb: [f32; 3],
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -690,11 +704,110 @@ pub(crate) fn rebuild_timeline_native_visuals(
         ));
     }
 
+    spawn_timeline_native_relationship_visuals(world, projection, layout, viewport, &sorted_tracks);
+
     if let Some(playhead) = world
         .get_resource::<TimelineNativeProjectionState>()
         .map(|state| state.playhead)
     {
         spawn_timeline_native_playhead_visual(world, layout, viewport, playhead);
+    }
+}
+
+fn spawn_timeline_native_relationship_visuals(
+    world: &mut World,
+    projection: &TimelineRenderProjection,
+    layout: TimelineNativeRenderLayout,
+    viewport: TimelineViewport,
+    sorted_tracks: &[TimelineRenderTrack],
+) {
+    for relationship in &projection.relationships {
+        let Some(start_px) = relationship_endpoint_px(
+            projection,
+            sorted_tracks,
+            layout,
+            viewport,
+            relationship.from_node_id,
+        ) else {
+            continue;
+        };
+        let Some(end_px) = relationship_endpoint_px(
+            projection,
+            sorted_tracks,
+            layout,
+            viewport,
+            relationship.to_node_id,
+        ) else {
+            continue;
+        };
+        let delta_x = end_px[0] - start_px[0];
+        let delta_y = end_px[1] - start_px[1];
+        let length_px = (delta_x.mul_add(delta_x, delta_y * delta_y))
+            .sqrt()
+            .max(1.0);
+        let center_x = start_px[0] + (delta_x / 2.0);
+        let center_y = start_px[1] + (delta_y / 2.0);
+        let angle = delta_y.atan2(delta_x);
+        let color_rgb = native_relationship_color_rgb(&relationship.relationship_type);
+
+        world.spawn((
+            TimelineSceneEntity,
+            TimelineNativeVisualEntity,
+            TimelineNativeRelationshipVisual {
+                relationship_id: relationship.relationship_id,
+                from_node_id: relationship.from_node_id,
+                to_node_id: relationship.to_node_id,
+                relationship_type: relationship.relationship_type.clone(),
+                start_px,
+                end_px,
+                length_px,
+                color_rgb,
+            },
+            Sprite::from_color(
+                Color::srgb(color_rgb[0], color_rgb[1], color_rgb[2]),
+                Vec2::new(length_px, TIMELINE_NATIVE_RELATIONSHIP_WIDTH_PX),
+            ),
+            Transform {
+                translation: Vec3::new(center_x, center_y, 0.5),
+                rotation: Quat::from_rotation_z(angle),
+                ..Default::default()
+            },
+        ));
+    }
+}
+
+fn relationship_endpoint_px(
+    projection: &TimelineRenderProjection,
+    sorted_tracks: &[TimelineRenderTrack],
+    layout: TimelineNativeRenderLayout,
+    viewport: TimelineViewport,
+    node_id: NodeId,
+) -> Option<[f32; 2]> {
+    let clip = projection
+        .clips
+        .iter()
+        .find(|clip| clip.node_id == node_id)?;
+    let center_ms = clip
+        .start_ms
+        .saturating_add(clip.end_ms.saturating_sub(clip.start_ms) / 2);
+    if center_ms < viewport.start_ms || center_ms > viewport.end_ms {
+        return None;
+    }
+    let track_index = sorted_tracks
+        .iter()
+        .position(|track| track.track_id == clip.track_id)?;
+    let ratio = center_ms.saturating_sub(viewport.start_ms) as f32 / viewport.width_ms() as f32;
+    let x_px = layout.left_px() + (ratio * layout.usable_width_px());
+    let y_px =
+        layout.top_px() - (track_index as f32 * (layout.clip_height_px + layout.track_gap_px));
+    Some([x_px, y_px])
+}
+
+pub(crate) fn native_relationship_color_rgb(relationship_type: &RelationshipType) -> [f32; 3] {
+    match relationship_type {
+        RelationshipType::Causal => [0.937, 0.384, 0.314],
+        RelationshipType::Convergence { .. } => [0.655, 0.463, 0.914],
+        RelationshipType::Thematic => [0.933, 0.831, 0.455],
     }
 }
 
