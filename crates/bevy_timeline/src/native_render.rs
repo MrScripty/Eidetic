@@ -20,8 +20,8 @@ use eidetic_core::timeline::track::TrackId;
 
 use crate::scene::{TimelineSceneEntity, TimelineSceneStats, rebuild_timeline_scene};
 use crate::{
-    TimelineRendererCommand, TimelineRendererError, TimelineViewport, TimelineViewportGeometry,
-    TimelineViewportPoint, hit_test_projection_clip_at_point,
+    TimelinePlayhead, TimelineRendererCommand, TimelineRendererError, TimelineViewport,
+    TimelineViewportGeometry, TimelineViewportPoint, hit_test_projection_clip_at_point,
 };
 
 const TIMELINE_NATIVE_PROJECTION_QUEUE_CAPACITY: usize = 8;
@@ -30,6 +30,7 @@ const TIMELINE_NATIVE_CLIP_HEIGHT_PX: f32 = 42.0;
 const TIMELINE_NATIVE_TRACK_GAP_PX: f32 = 16.0;
 const TIMELINE_NATIVE_HORIZONTAL_PADDING_PX: f32 = 48.0;
 const TIMELINE_NATIVE_TOP_PADDING_PX: f32 = 48.0;
+const TIMELINE_NATIVE_PLAYHEAD_WIDTH_PX: f32 = 3.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct TimelineNativeRenderConfig {
@@ -50,6 +51,7 @@ pub struct TimelineNativeRenderLayout {
 struct TimelineNativeProjectionState {
     projection: Option<TimelineRenderProjection>,
     viewport: TimelineViewport,
+    playhead: TimelinePlayhead,
 }
 
 #[derive(Component)]
@@ -68,6 +70,13 @@ pub struct TimelineNativeClipVisual {
     pub height_px: f32,
     pub start_ms: u64,
     pub end_ms: u64,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct TimelineNativePlayheadVisual {
+    pub position_ms: u64,
+    pub x_px: f32,
+    pub height_px: f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -387,6 +396,7 @@ pub(crate) fn apply_timeline_native_projection_updates(world: &mut bevy::prelude
 fn set_timeline_native_projection_state(world: &mut World, projection: &TimelineRenderProjection) {
     let mut state = world.resource_mut::<TimelineNativeProjectionState>();
     state.viewport.set_duration(projection.total_duration_ms);
+    state.playhead.set_duration(projection.total_duration_ms);
     state.projection = Some(projection.clone());
 }
 
@@ -440,6 +450,26 @@ pub fn zoom_timeline_native_viewport(
     };
     rebuild_timeline_native_visuals_from_state(world);
     Ok(viewport)
+}
+
+pub fn set_timeline_native_playhead(
+    world: &mut World,
+    position_ms: u64,
+) -> Result<TimelinePlayhead, TimelineRendererError> {
+    let playhead = {
+        let mut state = world.resource_mut::<TimelineNativeProjectionState>();
+        let duration_ms = state.playhead.duration_ms;
+        if position_ms > duration_ms {
+            return Err(TimelineRendererError::InvalidPlayheadPosition {
+                position_ms,
+                duration_ms,
+            });
+        }
+        state.playhead.set_position(position_ms);
+        state.playhead
+    };
+    rebuild_timeline_native_visuals_from_state(world);
+    Ok(playhead)
 }
 
 fn rebuild_timeline_native_visuals_from_state(world: &mut World) {
@@ -614,6 +644,46 @@ pub(crate) fn rebuild_timeline_native_visuals(
             Transform::from_translation(Vec3::new(x_px, y_px, 0.0)),
         ));
     }
+
+    if let Some(playhead) = world
+        .get_resource::<TimelineNativeProjectionState>()
+        .map(|state| state.playhead)
+    {
+        spawn_timeline_native_playhead_visual(world, layout, viewport, playhead);
+    }
+}
+
+fn spawn_timeline_native_playhead_visual(
+    world: &mut World,
+    layout: TimelineNativeRenderLayout,
+    viewport: TimelineViewport,
+    playhead: TimelinePlayhead,
+) {
+    if playhead.position_ms < viewport.start_ms || playhead.position_ms > viewport.end_ms {
+        return;
+    }
+
+    let viewport_width_ms = viewport.width_ms();
+    let position_ratio =
+        playhead.position_ms.saturating_sub(viewport.start_ms) as f32 / viewport_width_ms as f32;
+    let x_px = layout.left_px() + (position_ratio * layout.usable_width_px());
+    let height_px = (layout.height_px - (layout.top_padding_px * 2.0)).max(layout.clip_height_px);
+    let y_px = layout.top_px() - (height_px / 2.0) + (layout.clip_height_px / 2.0);
+
+    world.spawn((
+        TimelineSceneEntity,
+        TimelineNativeVisualEntity,
+        TimelineNativePlayheadVisual {
+            position_ms: playhead.position_ms,
+            x_px,
+            height_px,
+        },
+        Sprite::from_color(
+            Color::srgb(0.937, 0.267, 0.267),
+            Vec2::new(TIMELINE_NATIVE_PLAYHEAD_WIDTH_PX, height_px),
+        ),
+        Transform::from_translation(Vec3::new(x_px, y_px, 1.0)),
+    ));
 }
 
 fn despawn_existing_timeline_native_visuals(world: &mut World) {

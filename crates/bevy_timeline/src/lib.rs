@@ -26,7 +26,7 @@ pub use native_render::{
     configure_controlled_minimal_timeline_native_window_app,
     configure_minimal_timeline_native_window_app, pan_timeline_native_viewport,
     run_controlled_minimal_timeline_native_window, run_minimal_timeline_native_window,
-    set_timeline_native_viewport, zoom_timeline_native_viewport,
+    set_timeline_native_playhead, set_timeline_native_viewport, zoom_timeline_native_viewport,
 };
 pub use playhead::TimelinePlayhead;
 pub use relationship_curve::{TimelineCurvePoint, TimelineRelationshipCurve, relationship_curves};

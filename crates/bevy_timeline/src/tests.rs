@@ -205,6 +205,57 @@ fn controlled_native_window_zooms_transient_viewport_and_rebuilds_visuals() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_renders_transient_playhead_visual() {
+    let node_id = NodeId::new();
+    let projection = projection_with_node(node_id);
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(&mut app, Some(&projection));
+
+    let playhead =
+        crate::native_render::set_timeline_native_playhead(app.world_mut(), 5_000).unwrap();
+
+    assert_eq!(
+        playhead,
+        TimelinePlayhead {
+            position_ms: 5_000,
+            duration_ms: 10_000,
+        }
+    );
+    let mut visuals = app
+        .world_mut()
+        .query::<&crate::native_render::TimelineNativePlayheadVisual>();
+    let playhead_visuals: Vec<_> = visuals.iter(app.world()).collect();
+    assert_eq!(playhead_visuals.len(), 1);
+    assert_eq!(playhead_visuals[0].position_ms, 5_000);
+    assert_eq!(playhead_visuals[0].x_px, 0.0);
+    assert!(playhead_visuals[0].height_px > 0.0);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_rejects_invalid_transient_playhead_position() {
+    let node_id = NodeId::new();
+    let mut app = bevy::prelude::App::new();
+
+    app.add_plugins(crate::native_render::TimelineNativeRenderPlugin);
+    crate::native_render::seed_initial_timeline_native_render_scene(
+        &mut app,
+        Some(&projection_with_node(node_id)),
+    );
+
+    assert_eq!(
+        crate::native_render::set_timeline_native_playhead(app.world_mut(), 12_000),
+        Err(TimelineRendererError::InvalidPlayheadPosition {
+            position_ms: 12_000,
+            duration_ms: 10_000,
+        })
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_clip_selection_commands() {
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();

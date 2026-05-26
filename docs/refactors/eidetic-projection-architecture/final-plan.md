@@ -3673,6 +3673,10 @@ Implementation order:
   transient viewport with Bevy key input and rebuild projection-derived clip
   visuals. The viewport remains renderer-local and disposable; durable timeline
   data still comes only from backend projections.
+- Started: the native timeline window now renders a disposable playhead visual
+  from bounded renderer-local playhead state and the current transient
+  viewport. The playhead visual is rebuilt with projection-derived clip visuals
+  and rejects positions outside the backend projection duration.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

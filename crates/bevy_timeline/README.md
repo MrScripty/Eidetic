@@ -29,6 +29,8 @@ Current scope:
   controlled Bevy app configuration, and minimal native window runners. This
   API owns only renderer-local lifecycle signaling for ready, visible, show,
   hide, and close state.
+- Render a disposable native playhead visual from bounded renderer-local
+  playhead state and the current transient viewport.
 
 Dependency review:
 
