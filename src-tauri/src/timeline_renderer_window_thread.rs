@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use eidetic_bevy_timeline::{
     TimelineNativeWindowControlHandle, TimelineNativeWindowProjectionUpdateError,
-    TimelineNativeWindowRunnerConfig, run_controlled_minimal_timeline_native_window,
+    TimelineNativeWindowRunnerConfig, TimelineRendererCommand,
+    run_controlled_minimal_timeline_native_window,
 };
 use eidetic_core::contracts::TimelineRenderProjection;
 
@@ -90,6 +91,10 @@ impl TimelineRendererWindowThreadHandle {
         self.control_handle
             .request_projection_update(projection)
             .map_err(TimelineRendererWindowProjectionUpdateError::from)
+    }
+
+    pub fn drain_commands(&self) -> Vec<TimelineRendererCommand> {
+        self.control_handle.drain_commands()
     }
 
     pub fn status(&mut self) -> TimelineRendererWindowThreadStatus {

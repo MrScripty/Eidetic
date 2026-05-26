@@ -5,8 +5,9 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::prelude::{
-    App, Camera2d, ClearColor, Color, Commands, Component, Entity, MessageWriter, Plugin,
-    PluginGroup, Query, Res, Resource, Startup, Transform, Update, Vec2, Vec3, Window, World,
+    App, ButtonInput, Camera2d, ClearColor, Color, Commands, Component, Entity, MessageWriter,
+    MouseButton, Plugin, PluginGroup, Query, Res, Resource, Startup, Transform, Update, Vec2, Vec3,
+    Window, World,
 };
 use bevy::sprite::Sprite;
 use bevy::window::{
@@ -18,8 +19,13 @@ use eidetic_core::timeline::node::NodeId;
 use eidetic_core::timeline::track::TrackId;
 
 use crate::scene::{TimelineSceneEntity, TimelineSceneStats, rebuild_timeline_scene};
+use crate::{
+    TimelineRendererCommand, TimelineRendererError, TimelineViewport, TimelineViewportGeometry,
+    TimelineViewportPoint, hit_test_projection_clip_at_point,
+};
 
 const TIMELINE_NATIVE_PROJECTION_QUEUE_CAPACITY: usize = 8;
+const TIMELINE_NATIVE_COMMAND_QUEUE_CAPACITY: usize = 128;
 const TIMELINE_NATIVE_CLIP_HEIGHT_PX: f32 = 42.0;
 const TIMELINE_NATIVE_TRACK_GAP_PX: f32 = 16.0;
 const TIMELINE_NATIVE_HORIZONTAL_PADDING_PX: f32 = 48.0;
@@ -38,6 +44,11 @@ pub struct TimelineNativeRenderLayout {
     pub track_gap_px: f32,
     pub horizontal_padding_px: f32,
     pub top_padding_px: f32,
+}
+
+#[derive(Resource, Default)]
+struct TimelineNativeProjectionState {
+    projection: Option<TimelineRenderProjection>,
 }
 
 #[derive(Component)]
@@ -83,6 +94,8 @@ pub struct TimelineNativeWindowControlHandle {
     ready: Arc<AtomicBool>,
     projection_sender: mpsc::SyncSender<TimelineRenderProjection>,
     projection_receiver: Arc<Mutex<mpsc::Receiver<TimelineRenderProjection>>>,
+    command_sender: mpsc::SyncSender<TimelineRendererCommand>,
+    command_receiver: Arc<Mutex<mpsc::Receiver<TimelineRendererCommand>>>,
 }
 
 #[derive(Debug, Clone, Resource)]
@@ -93,6 +106,7 @@ pub struct TimelineNativeWindowControl {
     visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
     projection_receiver: Arc<Mutex<mpsc::Receiver<TimelineRenderProjection>>>,
+    command_sender: mpsc::SyncSender<TimelineRendererCommand>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -168,6 +182,8 @@ impl TimelineNativeWindowControlHandle {
     pub fn new() -> Self {
         let (projection_sender, projection_receiver) =
             mpsc::sync_channel(TIMELINE_NATIVE_PROJECTION_QUEUE_CAPACITY);
+        let (command_sender, command_receiver) =
+            mpsc::sync_channel(TIMELINE_NATIVE_COMMAND_QUEUE_CAPACITY);
         Self {
             shutdown_requested: Arc::new(AtomicBool::new(false)),
             show_requested: Arc::new(AtomicBool::new(false)),
@@ -176,6 +192,8 @@ impl TimelineNativeWindowControlHandle {
             ready: Arc::new(AtomicBool::new(false)),
             projection_sender,
             projection_receiver: Arc::new(Mutex::new(projection_receiver)),
+            command_sender,
+            command_receiver: Arc::new(Mutex::new(command_receiver)),
         }
     }
 
@@ -225,6 +243,17 @@ impl TimelineNativeWindowControlHandle {
             }
         }
     }
+
+    pub fn drain_commands(&self) -> Vec<TimelineRendererCommand> {
+        let Ok(receiver) = self.command_receiver.lock() else {
+            return Vec::new();
+        };
+        let mut commands = Vec::new();
+        while let Ok(command) = receiver.try_recv() {
+            commands.push(command);
+        }
+        commands
+    }
 }
 
 impl From<&TimelineNativeWindowControlHandle> for TimelineNativeWindowControl {
@@ -236,6 +265,7 @@ impl From<&TimelineNativeWindowControlHandle> for TimelineNativeWindowControl {
             visible: Arc::clone(&handle.visible),
             ready: Arc::clone(&handle.ready),
             projection_receiver: Arc::clone(&handle.projection_receiver),
+            command_sender: handle.command_sender.clone(),
         }
     }
 }
@@ -253,11 +283,13 @@ impl Plugin for TimelineNativeRenderPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(TimelineNativeRenderConfig::default());
         app.insert_resource(TimelineNativeRenderLayout::from_window(1280, 360));
+        app.insert_resource(TimelineNativeProjectionState::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.insert_resource(TimelineSceneStats::default());
         app.add_systems(Startup, spawn_timeline_native_camera);
         app.add_systems(Update, mark_timeline_native_window_ready);
         app.add_systems(Update, apply_timeline_native_projection_updates);
+        app.add_systems(Update, emit_timeline_native_click_selection);
     }
 }
 
@@ -323,6 +355,9 @@ pub(crate) fn seed_initial_timeline_native_render_scene(
     let Some(projection) = projection else {
         return;
     };
+    app.world_mut()
+        .resource_mut::<TimelineNativeProjectionState>()
+        .projection = Some(projection.clone());
     rebuild_timeline_scene(app.world_mut(), projection);
     rebuild_timeline_native_visuals(app.world_mut(), projection);
 }
@@ -343,6 +378,9 @@ pub(crate) fn apply_timeline_native_projection_updates(world: &mut bevy::prelude
     };
 
     if let Some(projection) = latest_projection {
+        world
+            .resource_mut::<TimelineNativeProjectionState>()
+            .projection = Some(projection.clone());
         rebuild_timeline_scene(world, &projection);
         rebuild_timeline_native_visuals(world, &projection);
     }
@@ -350,6 +388,66 @@ pub(crate) fn apply_timeline_native_projection_updates(world: &mut bevy::prelude
 
 fn spawn_timeline_native_camera(mut commands: Commands) {
     commands.spawn((Camera2d, TimelineNativeCamera));
+}
+
+fn emit_timeline_native_click_selection(
+    buttons: Option<Res<ButtonInput<MouseButton>>>,
+    windows: Query<&Window, bevy::prelude::With<PrimaryWindow>>,
+    control: Option<Res<TimelineNativeWindowControl>>,
+    projection_state: Res<TimelineNativeProjectionState>,
+) {
+    let Some(buttons) = buttons else {
+        return;
+    };
+    if !buttons.just_pressed(MouseButton::Left) {
+        return;
+    }
+    let Some(control) = control else {
+        return;
+    };
+    let Ok(window) = windows.single() else {
+        return;
+    };
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
+    let Some(projection) = projection_state.projection.as_ref() else {
+        return;
+    };
+    let geometry = TimelineViewportGeometry::new(
+        window.width().max(1.0) as u32,
+        window.height().max(1.0) as u32,
+        native_track_height_px() as u32,
+    );
+    let point = TimelineViewportPoint::new(
+        cursor_position.x.max(0.0) as u32,
+        (window.height() - cursor_position.y).max(0.0) as u32,
+    );
+    let _ = emit_timeline_native_clip_selection(&control, projection, geometry, point);
+}
+
+pub(crate) fn emit_timeline_native_clip_selection(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    geometry: TimelineViewportGeometry,
+    point: TimelineViewportPoint,
+) -> Result<Option<NodeId>, TimelineRendererError> {
+    let node_id = hit_test_projection_clip_at_point(
+        projection,
+        TimelineViewport::from_duration(projection.total_duration_ms),
+        geometry,
+        point,
+    )?;
+    if let Some(node_id) = node_id {
+        let _ = control
+            .command_sender
+            .try_send(TimelineRendererCommand::SelectNode { node_id });
+    }
+    Ok(node_id)
+}
+
+fn native_track_height_px() -> u32 {
+    (TIMELINE_NATIVE_CLIP_HEIGHT_PX + TIMELINE_NATIVE_TRACK_GAP_PX) as u32
 }
 
 pub(crate) fn rebuild_timeline_native_visuals(

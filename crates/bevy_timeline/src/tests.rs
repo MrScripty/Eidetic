@@ -123,6 +123,29 @@ fn controlled_native_window_replaces_projection_derived_clip_visuals() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_validated_clip_selection_commands() {
+    let node_id = NodeId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    let selected_node_id = crate::native_render::emit_timeline_native_clip_selection(
+        &window_control,
+        &projection_with_node(node_id),
+        TimelineViewportGeometry::new(1_000, 300, 60),
+        TimelineViewportPoint::new(250, 10),
+    )
+    .unwrap();
+
+    assert_eq!(selected_node_id, Some(node_id));
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::SelectNode { node_id }]
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_window_control_handle_records_close_requests() {
     let control = TimelineNativeWindowControlHandle::new();
 

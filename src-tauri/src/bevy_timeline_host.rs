@@ -165,10 +165,13 @@ impl DesktopTimelineHost {
     }
 
     pub fn drain_commands(&mut self) -> Vec<TimelineRendererCommand> {
-        self.renderer
+        let mut commands = self
+            .renderer
             .as_mut()
             .map(TimelineRendererApp::drain_commands)
-            .unwrap_or_default()
+            .unwrap_or_default();
+        commands.extend(self.native_window.drain_commands());
+        commands
     }
 
     pub fn status(&mut self) -> TimelineHostStatus {

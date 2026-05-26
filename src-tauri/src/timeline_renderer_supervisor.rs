@@ -153,6 +153,14 @@ impl TimelineRendererSupervisor {
         self.status()
     }
 
+    pub fn drain_commands(&mut self) -> Vec<eidetic_bevy_timeline::TimelineRendererCommand> {
+        self.refresh_window_thread();
+        self.window_thread
+            .as_ref()
+            .map(TimelineRendererWindowThreadHandle::drain_commands)
+            .unwrap_or_default()
+    }
+
     pub fn close(&mut self) -> TimelineRendererRunnerStatus {
         self.close_window_thread();
         self.status()

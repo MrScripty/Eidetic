@@ -3661,6 +3661,10 @@ Implementation order:
   functions used by the headless renderer app. This avoids duplicating
   clip-picking math when native Bevy input begins emitting validated selection
   commands from the floating window.
+- Started: the native timeline window now has a bounded renderer-command queue
+  and can emit validated `SelectNode` commands from projection-only clip hit
+  tests. The desktop host drains native window commands through the existing
+  backend-owned command bridge instead of adding a frontend-owned input path.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
