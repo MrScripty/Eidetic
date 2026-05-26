@@ -3251,6 +3251,11 @@ Implementation order:
   malformed endpoints, and resolves active Pumas runtime-profile endpoints when
   the workflow requests Pumas-owned selection instead of a fixed port.
 - Add the provider-independent structured tool loop for llama.cpp/Pumas.
+- Completed: server now has a provider-independent structured JSON loop that
+  renders workflow/tool history prompts for text-only providers, parses exactly
+  one typed tool-call or completion object, rejects markdown/non-JSON responses,
+  and enforces a bounded provider-response byte budget before harness
+  validation executes any tool.
 - Add the smallest workflow vertical slice: premise generation reads bounded
   graph context, proposes one bible node or edge, records the tool calls and
   rationale, and exposes the proposal for user review.
