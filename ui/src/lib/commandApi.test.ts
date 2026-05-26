@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyTimelineChildren,
+  createAffectProposal,
   createBibleGraphNode,
   deleteBibleGraphEdge,
   deleteBibleGraphNode,
@@ -133,6 +134,51 @@ describe('command api helpers', () => {
           command_id: 'command-affect-1',
           ...payload,
         },
+      },
+    });
+  });
+
+  it('uses desktop affect proposal create commands when Tauri transport is available', async () => {
+    const response = {
+      version: 2,
+      payload: {
+        proposals: [],
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+
+    const payload = {
+      proposal_id: 'proposal.affect.scene-weather',
+      source: 'manual_script_edit' as const,
+      proposed_value: {
+        id: 'affect-1',
+        target: { type: 'project' as const },
+        valence: -100,
+        arousal: 650,
+        intensity: 700,
+        confidence: 900,
+        mood_labels: ['rainy'],
+        provenance: 'script_edit_detected' as const,
+        rationale: 'User changed weather in generated script.',
+      },
+      summary: 'Detected rainy scene affect',
+      rationale: 'Manual script text changed from sunny to rainy.',
+      source_event_id: null,
+    };
+
+    await expect(createAffectProposal(payload, 'command-affect-proposal-1')).resolves.toEqual(
+      response,
+    );
+
+    expect(invoke).toHaveBeenCalledWith('command_affect_proposal_create', {
+      command: {
+        id: 'command-affect-proposal-1',
+        payload,
       },
     });
   });

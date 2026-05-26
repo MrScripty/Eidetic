@@ -12,6 +12,8 @@ import type {
 } from './bibleGraphTypes.js';
 import type {
   AffectCommandResponse,
+  AffectProposalCommandResponse,
+  CreateAffectProposalCommand,
   SetAffectValueCommand,
   SetAffectValueInput,
 } from './affectTypes.js';
@@ -90,6 +92,20 @@ export function setAffectValue(
   };
 
   return invokeDesktop<AffectCommandResponse>('command_affect_set', { command });
+}
+
+export function createAffectProposal(
+  payload: CreateAffectProposalCommand,
+  commandId = createCommandId(),
+): Promise<AffectProposalCommandResponse> {
+  const command: CommandEnvelope<CreateAffectProposalCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<AffectProposalCommandResponse>('command_affect_proposal_create', {
+    command,
+  });
 }
 
 export function createBibleGraphNode(

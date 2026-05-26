@@ -1,4 +1,8 @@
-import type { AffectProjection, AffectProjectionRequest } from './affectTypes.js';
+import type {
+  AffectProjection,
+  AffectProjectionRequest,
+  AffectProposalListProjection,
+} from './affectTypes.js';
 import type {
   BibleGraphNodeId,
   BibleGraphNodeListProjection,
@@ -56,6 +60,14 @@ export function getAffectProjection({
   return invokeDesktop<ProjectionEnvelope<AffectProjection>>('projection_affect', {
     query: { target },
   });
+}
+
+export function getAffectProposalListProjection(): Promise<
+  ProjectionEnvelope<AffectProposalListProjection>
+> {
+  return invokeDesktop<ProjectionEnvelope<AffectProposalListProjection>>(
+    'projection_affect_proposals',
+  );
 }
 
 export function getBibleGraphNodeProjection({

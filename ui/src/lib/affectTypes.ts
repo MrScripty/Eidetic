@@ -4,6 +4,7 @@ import type { ScriptSegmentId } from './scriptTypes.js';
 import type { NodeId } from './timelineTypes.js';
 
 export type AffectValueId = string;
+export type AffectProposalId = string;
 
 export type AffectTarget =
   | { type: 'project' }
@@ -17,6 +18,9 @@ export type AffectProvenance =
   | 'agent_proposed'
   | 'script_edit_detected'
   | 'imported';
+
+export type AffectProposalSource = 'manual_script_edit' | 'agent_analysis' | 'user_draft';
+export type AffectProposalStatus = 'pending' | 'accepted' | 'rejected';
 
 export interface AffectValue {
   id: AffectValueId;
@@ -35,6 +39,21 @@ export interface AffectProjection {
   values: AffectValue[];
 }
 
+export interface AffectProposal {
+  id: AffectProposalId;
+  status: AffectProposalStatus;
+  source: AffectProposalSource;
+  proposed_value: AffectValue;
+  summary: string;
+  rationale?: string | null;
+  source_event_id?: string | null;
+  created_at_ms: number;
+}
+
+export interface AffectProposalListProjection {
+  proposals: AffectProposal[];
+}
+
 export interface SetAffectValueCommand {
   command_id: string;
   affect_id: AffectValueId;
@@ -50,8 +69,18 @@ export interface SetAffectValueCommand {
 
 export type SetAffectValueInput = Omit<SetAffectValueCommand, 'command_id'>;
 
+export interface CreateAffectProposalCommand {
+  proposal_id: AffectProposalId;
+  source: AffectProposalSource;
+  proposed_value: AffectValue;
+  summary: string;
+  rationale?: string | null;
+  source_event_id?: string | null;
+}
+
 export interface AffectProjectionRequest {
   target: AffectTarget;
 }
 
 export type AffectCommandResponse = ProjectionEnvelope<AffectProjection>;
+export type AffectProposalCommandResponse = ProjectionEnvelope<AffectProposalListProjection>;

@@ -108,6 +108,7 @@ pub fn run() {
             commands::object_script_story::command_story_update,
             commands::object_script_story::command_story_delete,
             commands::affect::command_affect_set,
+            commands::affect::command_affect_proposal_create,
             commands::bible::command_bible_graph_node,
             commands::bible::command_bible_graph_delete_node,
             commands::bible::command_bible_graph_field,
@@ -148,6 +149,7 @@ pub fn run() {
             projections::story_script::projection_story_arc_progression,
             projections::story_script::projection_change_review,
             projections::affect::projection_affect,
+            projections::affect::projection_affect_proposals,
             projections::timeline::projection_timeline_render,
             projections::timeline::projection_selected_node
         ])

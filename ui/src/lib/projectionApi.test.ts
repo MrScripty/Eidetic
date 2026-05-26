@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  getAffectProposalListProjection,
   getAffectProjection,
   getBibleGraphNodeListProjection,
   getBibleGraphNodeProjection,
@@ -88,6 +89,15 @@ describe('projection api helpers', () => {
         target: { type: 'timeline_node', node_id: 'node.scene.beach' },
       },
     });
+  });
+
+  it('uses the desktop affect proposal list projection command', async () => {
+    const response = { version: 2, payload: { proposals: [] } };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(getAffectProposalListProjection()).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('projection_affect_proposals', undefined);
   });
 
   it('uses the desktop bible graph node projection command', async () => {

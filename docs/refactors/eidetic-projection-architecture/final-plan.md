@@ -3406,6 +3406,9 @@ Implementation order:
   projection support that preserves proposed affect values and mood labels
   without mutating canonical affect state. Tauri commands, Svelte projection
   helpers, and acceptance/rejection execution remain the next slices.
+- Started: desktop command/projection adapters and Svelte API helpers now expose
+  backend-owned affect proposal creation and list projections. Review UI wiring
+  and acceptance/rejection execution remain the next slices.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived
