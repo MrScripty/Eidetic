@@ -1,6 +1,7 @@
 mod ai_commands;
 pub mod bevy_graph_host;
 pub mod bevy_timeline_host;
+mod bevy_timeline_owner;
 mod commands;
 mod desktop_events;
 mod error;

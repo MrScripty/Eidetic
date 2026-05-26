@@ -3619,6 +3619,11 @@ Implementation order:
   decomposition threshold. New timeline native-window infrastructure must stay
   in focused modules and the host should be split before visible runner
   integration adds more responsibilities.
+- Started: the desktop timeline renderer owner/request loop has been extracted
+  from `bevy_timeline_host.rs` into a focused owner module while preserving the
+  existing public owner import path. This keeps the leaf timeline host focused
+  on projection ingestion, renderer command draining, and status derivation
+  before visible native-window integration lands.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
