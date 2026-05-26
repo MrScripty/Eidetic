@@ -24,11 +24,18 @@
     display: flex;
     flex-direction: column;
     flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     background: var(--color-bg-primary);
+    overflow: hidden;
   }
 
   .timeline-panel {
     box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     overflow: hidden;
     background: var(--color-bg-primary);
   }

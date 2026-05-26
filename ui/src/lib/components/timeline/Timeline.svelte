@@ -308,6 +308,8 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     height: 100%;
     overflow: hidden;
     user-select: none;
@@ -318,14 +320,20 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    width: 100%;
+    max-width: 100%;
     overflow: hidden;
     min-height: 0;
+    min-width: 0;
   }
 
   .ruler-row,
   .scrollbar-row {
     display: flex;
     flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .label-corner,
@@ -352,12 +360,18 @@
   .content-viewport {
     flex: 1;
     min-height: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     overflow: hidden;
   }
 
   .content-scroll {
     display: flex;
     height: 100%;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-y: auto;
     overflow-x: hidden;
   }
@@ -395,10 +409,13 @@
   .time-column {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
   }
 
   .timeline-content {
     position: relative;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .label-spacer {
