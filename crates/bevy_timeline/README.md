@@ -64,6 +64,12 @@ Current scope:
 - Keep native keyboard and pointer systems in `native_input.rs` so command
   intent handling reads backend projections and transient renderer viewport
   state without accumulating inside the window lifecycle module.
+- Keep native visual components and projection-derived geometry in
+  `native_visual.rs` so clip, relationship, affect, and playhead drawing stays
+  separate from native window lifecycle and control queues.
+- Keep renderer-local window control handles and bounded projection/command
+  queues in `native_window_control.rs` so lifecycle signaling stays separate
+  from scene projection and input systems.
 
 Dependency review:
 

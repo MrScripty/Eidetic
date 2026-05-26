@@ -15,6 +15,10 @@ mod native_input;
 mod native_render;
 #[cfg(feature = "native_render")]
 mod native_style;
+#[cfg(feature = "native_render")]
+mod native_visual;
+#[cfg(feature = "native_render")]
+mod native_window_control;
 mod playhead;
 mod relationship_curve;
 mod scene;

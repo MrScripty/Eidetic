@@ -3749,6 +3749,12 @@ Implementation order:
   active backend projection plus transient renderer viewport/playhead state and
   emit validated command requests, while native window lifecycle and visual
   projection remain in the renderer module.
+- Started: native timeline visual projection has been extracted into focused
+  `native_visual.rs` and renderer-local window control signaling has been
+  extracted into `native_window_control.rs`. The native render module now owns
+  app configuration, projection ingestion, viewport/playhead mutation, and
+  lifecycle systems while visual geometry and bounded control queues remain
+  separate responsibilities.
 - Started: the desktop binary now has a `--timeline-renderer-smoke` lifecycle
   probe mirroring the graph renderer smoke path. It opens the desktop-owned
   timeline renderer with a minimal backend projection, observes status/focus/
