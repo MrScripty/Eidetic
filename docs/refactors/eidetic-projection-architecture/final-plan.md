@@ -3657,6 +3657,10 @@ Implementation order:
   from backend projections. This is the first visible render geometry slice and
   intentionally does not add native input handling, labels, arcs, or renderer
   persistence yet.
+- Started: timeline hit testing is now shared as projection-only helper
+  functions used by the headless renderer app. This avoids duplicating
+  clip-picking math when native Bevy input begins emitting validated selection
+  commands from the floating window.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.

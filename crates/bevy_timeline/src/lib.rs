@@ -6,6 +6,7 @@ use serde::Serialize;
 use thiserror::Error;
 
 mod geometry;
+mod hit_test;
 #[cfg(feature = "native_render")]
 mod native_render;
 mod playhead;
@@ -14,6 +15,10 @@ mod scene;
 mod viewport;
 
 pub use geometry::{TimelineViewportGeometry, TimelineViewportPoint};
+pub use hit_test::{
+    hit_test_clip_at_point as hit_test_projection_clip_at_point,
+    hit_test_clip_at_time as hit_test_projection_clip_at_time,
+};
 #[cfg(feature = "native_render")]
 pub use native_render::{
     TimelineNativeRenderConfig, TimelineNativeWindowControl, TimelineNativeWindowControlHandle,
@@ -295,14 +300,9 @@ impl TimelineRendererApp {
             .as_ref()
             .ok_or(TimelineRendererError::MissingProjection)?;
 
-        Ok(projection
-            .clips
-            .iter()
-            .filter(|clip| {
-                clip.track_id == track_id && clip.start_ms <= time_ms && time_ms < clip.end_ms
-            })
-            .max_by_key(|clip| (clip.sort_order, clip.start_ms))
-            .map(|clip| clip.node_id))
+        Ok(hit_test::hit_test_clip_at_time(
+            projection, track_id, time_ms,
+        ))
     }
 
     pub fn hit_test_clip_at_point(
@@ -310,37 +310,12 @@ impl TimelineRendererApp {
         geometry: TimelineViewportGeometry,
         point: TimelineViewportPoint,
     ) -> Result<Option<NodeId>, TimelineRendererError> {
-        if !geometry.validate() {
-            return Err(TimelineRendererError::InvalidViewportGeometry {
-                width_px: geometry.width_px,
-                height_px: geometry.height_px,
-                track_height_px: geometry.track_height_px,
-            });
-        }
-        if point.x_px >= geometry.width_px || point.y_px >= geometry.height_px {
-            return Ok(None);
-        }
-
         let state = self.app.world().resource::<TimelineRenderState>();
         let projection = state
             .projection
             .as_ref()
             .ok_or(TimelineRendererError::MissingProjection)?;
-        let track_index = point.y_px / geometry.track_height_px;
-        let mut tracks = projection.tracks.iter().collect::<Vec<_>>();
-        tracks.sort_by_key(|track| (track.sort_order, track.track_id.0));
-        let Some(track) = tracks.get(track_index as usize) else {
-            return Ok(None);
-        };
-
-        let viewport = self.viewport();
-        let width_ms = u128::from(viewport.width_ms());
-        let offset_ms = u128::from(point.x_px) * width_ms / u128::from(geometry.width_px);
-        let time_ms = viewport
-            .start_ms
-            .saturating_add(u64::try_from(offset_ms).unwrap_or(u64::MAX));
-
-        self.hit_test_clip_at_time(track.track_id, time_ms)
+        hit_test::hit_test_clip_at_point(projection, self.viewport(), geometry, point)
     }
 
     pub fn select_clip_at_time(
