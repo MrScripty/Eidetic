@@ -21,10 +21,12 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub use affect::{
-    AffectConfidence, AffectContractError, AffectDependency, AffectDependencyEndpoint,
-    AffectDependencyId, AffectProjection, AffectProvenance, AffectTarget, AffectTraitKind,
-    AffectValue, AffectValueId, Arousal, DeleteAffectValueCommand, EmotionalIntensity, MoodLabel,
-    RecordAffectDependencyCommand, SetAffectValueCommand, Valence,
+    AcceptAffectProposalCommand, AffectConfidence, AffectContractError, AffectDependency,
+    AffectDependencyEndpoint, AffectDependencyId, AffectProjection, AffectProposal,
+    AffectProposalId, AffectProposalListProjection, AffectProposalSource, AffectProvenance,
+    AffectTarget, AffectTraitKind, AffectValue, AffectValueId, Arousal,
+    CreateAffectProposalCommand, DeleteAffectValueCommand, EmotionalIntensity, MoodLabel,
+    RecordAffectDependencyCommand, RejectAffectProposalCommand, SetAffectValueCommand, Valence,
 };
 pub use agent_workflow::{
     AgentProposalMode, AgentRun, AgentRunId, AgentRunStatus, AgentToolArguments, AgentToolBudget,

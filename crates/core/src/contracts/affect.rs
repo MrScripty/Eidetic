@@ -5,7 +5,7 @@ use crate::timeline::node::NodeId;
 
 use super::{
     AgentWorkflowId, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey, BibleGraphSnapshotId,
-    CommandId, ScriptSegmentId,
+    ChangeEventId, CommandId, ScriptSegmentId, SemanticProposalStatus,
 };
 
 const VALENCE_MIN: i16 = -1000;
@@ -28,6 +28,38 @@ pub struct AffectDependencyId(pub Uuid);
 impl AffectDependencyId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct AffectProposalId(String);
+
+impl AffectProposalId {
+    pub fn new(value: impl Into<String>) -> Result<Self, AffectContractError> {
+        let value = value.into();
+        if value.trim().is_empty() {
+            return Err(AffectContractError::EmptyProposalId);
+        }
+        Ok(Self(value))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for AffectProposalId {
+    type Error = AffectContractError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
+impl From<AffectProposalId> for String {
+    fn from(value: AffectProposalId) -> Self {
+        value.0
     }
 }
 
@@ -213,6 +245,43 @@ pub struct AffectValue {
     pub rationale: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AffectProposalSource {
+    ManualScriptEdit,
+    AgentAnalysis,
+    UserDraft,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AffectProposal {
+    pub id: AffectProposalId,
+    pub status: SemanticProposalStatus,
+    pub source: AffectProposalSource,
+    pub proposed_value: AffectValue,
+    pub summary: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rationale: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_event_id: Option<ChangeEventId>,
+    pub created_at_ms: u64,
+}
+
+impl AffectProposal {
+    pub fn validate(&self) -> Result<(), AffectContractError> {
+        validate_proposal_text(&self.summary, AffectContractError::EmptyProposalSummary)?;
+        if self
+            .rationale
+            .as_deref()
+            .is_some_and(|value| value.trim().is_empty())
+        {
+            return Err(AffectContractError::EmptyProposalRationale);
+        }
+        self.proposed_value.validate()
+    }
+}
+
 impl AffectValue {
     pub fn validate(&self) -> Result<(), AffectContractError> {
         if self.mood_labels.is_empty() {
@@ -283,9 +352,83 @@ impl RecordAffectDependencyCommand {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct CreateAffectProposalCommand {
+    pub proposal_id: AffectProposalId,
+    pub source: AffectProposalSource,
+    pub proposed_value: AffectValue,
+    pub summary: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rationale: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_event_id: Option<ChangeEventId>,
+}
+
+impl CreateAffectProposalCommand {
+    pub fn validate(&self) -> Result<(), AffectContractError> {
+        validate_proposal_text(&self.summary, AffectContractError::EmptyProposalSummary)?;
+        if self
+            .rationale
+            .as_deref()
+            .is_some_and(|value| value.trim().is_empty())
+        {
+            return Err(AffectContractError::EmptyProposalRationale);
+        }
+        self.proposed_value.validate()
+    }
+
+    pub fn into_proposal(self, created_at_ms: u64) -> AffectProposal {
+        AffectProposal {
+            id: self.proposal_id,
+            status: SemanticProposalStatus::Pending,
+            source: self.source,
+            proposed_value: self.proposed_value,
+            summary: self.summary,
+            rationale: self.rationale,
+            source_event_id: self.source_event_id,
+            created_at_ms,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RejectAffectProposalCommand {
+    pub proposal_id: AffectProposalId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+impl RejectAffectProposalCommand {
+    pub fn validate(&self) -> Result<(), AffectContractError> {
+        if self
+            .reason
+            .as_deref()
+            .is_some_and(|value| value.trim().is_empty())
+        {
+            return Err(AffectContractError::EmptyProposalRationale);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AcceptAffectProposalCommand {
+    pub proposal_id: AffectProposalId,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AffectProjection {
     pub target: AffectTarget,
     pub values: Vec<AffectValue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AffectProposalListProjection {
+    #[serde(default)]
+    pub proposals: Vec<AffectProposal>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -305,6 +448,12 @@ pub enum AffectContractError {
     EmptyRationale,
     #[error("affect dependency reason cannot be empty")]
     EmptyDependencyReason,
+    #[error("affect proposal id cannot be empty")]
+    EmptyProposalId,
+    #[error("affect proposal summary cannot be empty")]
+    EmptyProposalSummary,
+    #[error("affect proposal rationale cannot be empty when provided")]
+    EmptyProposalRationale,
 }
 
 fn validate_i16_range(
@@ -337,6 +486,16 @@ fn validate_u16_range(
             min: i32::from(min),
             max: i32::from(max),
         });
+    }
+    Ok(())
+}
+
+fn validate_proposal_text(
+    value: &str,
+    error: AffectContractError,
+) -> Result<(), AffectContractError> {
+    if value.trim().is_empty() {
+        return Err(error);
     }
     Ok(())
 }
@@ -433,6 +592,75 @@ mod tests {
         assert_eq!(
             invalid.validate(),
             Err(AffectContractError::EmptyDependencyReason)
+        );
+    }
+
+    #[test]
+    fn affect_proposal_command_builds_reviewable_pending_proposal() {
+        let proposed_value = AffectValue {
+            id: AffectValueId::new(),
+            target: AffectTarget::TimelineNode {
+                node_id: NodeId::new(),
+            },
+            valence: Valence::new(-250).unwrap(),
+            arousal: Arousal::new(650).unwrap(),
+            intensity: EmotionalIntensity::new(700).unwrap(),
+            confidence: AffectConfidence::new(900).unwrap(),
+            mood_labels: vec![MoodLabel::new("uneasy").unwrap()],
+            provenance: AffectProvenance::ScriptEditDetected,
+            rationale: Some("Manual edit changed the scene mood.".to_string()),
+        };
+        let command = CreateAffectProposalCommand {
+            proposal_id: AffectProposalId::new("proposal.affect.scene-mood").unwrap(),
+            source: AffectProposalSource::ManualScriptEdit,
+            proposed_value: proposed_value.clone(),
+            summary: "Scene mood became uneasy".to_string(),
+            rationale: Some("The edited action implies a darker tone.".to_string()),
+            source_event_id: Some(ChangeEventId::new()),
+        };
+
+        command.validate().unwrap();
+        let proposal = command.into_proposal(42);
+
+        assert_eq!(proposal.status, SemanticProposalStatus::Pending);
+        assert_eq!(proposal.proposed_value, proposed_value);
+        assert_eq!(proposal.created_at_ms, 42);
+    }
+
+    #[test]
+    fn affect_proposal_commands_reject_empty_review_text() {
+        let proposed_value = AffectValue {
+            id: AffectValueId::new(),
+            target: AffectTarget::Project,
+            valence: Valence::new(0).unwrap(),
+            arousal: Arousal::new(500).unwrap(),
+            intensity: EmotionalIntensity::new(500).unwrap(),
+            confidence: AffectConfidence::new(500).unwrap(),
+            mood_labels: vec![MoodLabel::new("neutral").unwrap()],
+            provenance: AffectProvenance::AgentProposed,
+            rationale: None,
+        };
+        let command = CreateAffectProposalCommand {
+            proposal_id: AffectProposalId::new("proposal.affect.empty-summary").unwrap(),
+            source: AffectProposalSource::AgentAnalysis,
+            proposed_value,
+            summary: " ".to_string(),
+            rationale: None,
+            source_event_id: None,
+        };
+
+        assert_eq!(
+            command.validate(),
+            Err(AffectContractError::EmptyProposalSummary)
+        );
+        assert!(AffectProposalId::new(" ").is_err());
+        assert_eq!(
+            RejectAffectProposalCommand {
+                proposal_id: AffectProposalId::new("proposal.affect.reject").unwrap(),
+                reason: Some(" ".to_string()),
+            }
+            .validate(),
+            Err(AffectContractError::EmptyProposalRationale)
         );
     }
 }

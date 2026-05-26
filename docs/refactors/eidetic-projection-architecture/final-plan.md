@@ -3398,6 +3398,10 @@ Implementation order:
   affect constraints for generation/decomposition with focused prompt coverage.
 - Add proposal/review integration for AI-detected affect changes from manual
   script edits.
+- Started: core now defines typed affect proposal contracts for reviewable
+  pending/accepted/rejected affect changes from manual script edits, agent
+  analysis, or user drafts. Storage, Tauri commands, and acceptance/rejection
+  execution remain the next slices.
 - Add timeline overlay projection output only after affect state and generation
   semantics are backend-owned.
 - Completed: timeline render projections now include backend-derived
