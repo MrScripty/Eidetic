@@ -15,9 +15,14 @@ fn crate_keeps_bevy_features_leaf_and_minimal() {
     assert!(manifest.contains("bevy = { version = \"0.18.1\""));
     assert!(manifest.contains("default-features = false"));
     assert!(manifest.contains("features = [\"std\"]"));
-    assert!(!manifest.contains("\"bevy_render\""));
-    assert!(!manifest.contains("\"bevy_winit\""));
-    assert!(!manifest.contains("\"bevy_window\""));
+    assert!(manifest.contains("[features]"));
+    assert!(manifest.contains("default = []"));
+    assert!(manifest.contains("native_render = ["));
+    assert!(manifest.contains("\"bevy/2d_bevy_render\""));
+    assert!(manifest.contains("\"bevy/bevy_winit\""));
+    assert!(manifest.contains("\"bevy/bevy_window\""));
+    assert!(manifest.contains("\"bevy/wayland\""));
+    assert!(manifest.contains("\"bevy/x11\""));
     assert!(!manifest.contains("\"bevy_text\""));
     assert!(!manifest.contains("\"bevy_ui\""));
 }

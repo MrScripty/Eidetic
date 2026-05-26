@@ -29,9 +29,10 @@ Dependency review:
 
 - Bevy is isolated to this leaf crate and is not a dependency of `eidetic-core`
   or `eidetic-server`.
-- `bevy` is pinned to 0.18.1 and declared with `default-features = false` and only the `std`
-  feature because this crate currently uses ECS/resource types and does not
-  render windows, assets, text, audio, or UI.
+- `bevy` is pinned to 0.18.1 and declared with `default-features = false` and
+  only the `std` feature for default builds because this crate currently uses
+  ECS/resource types and does not render windows, assets, text, audio, or UI
+  unless the explicit native renderer feature is selected.
 - `cargo tree -p eidetic-bevy-timeline --depth 2` shows Bevy remains under this
   leaf crate, with `eidetic-core`, `serde`, `thiserror`, `serde_json`, and
   `uuid` as the only other direct dependency families.
@@ -41,12 +42,18 @@ Dependency review:
 - The current normal dependency tree has 110 unique crates. That is acceptable
   only because Bevy is leaf-scoped and because render/window/text/UI/asset
   features are still disabled.
-- A guard test fails if `bevy_render`, `bevy_winit`, `bevy_window`,
-  `bevy_text`, or `bevy_ui` is enabled in this crate without an explicit
-  dependency-review slice.
-- Adding Bevy render/window/asset/text/input features requires a new dependency
-  review, a commit that explains the transitive dependency cost, and proof that
-  the feature remains out of `eidetic-core` and `eidetic-server`.
+- The `native_render` feature gates the reviewed Bevy render/window stack for
+  future desktop timeline renderer-window work. It enables `2d_bevy_render`,
+  `bevy_window`, and `bevy_winit` plus Linux `wayland`/`x11` window backends,
+  and is intentionally off by default so projection-only tests and server
+  builds do not pay for native rendering.
+- Asset/text/UI/audio features remain out of scope for the timeline renderer
+  window until a concrete timeline-rendering requirement proves they are needed.
+- A guard test fails if native render features move into default builds or if
+  text/UI features are added without a separate dependency-review slice.
+- Adding more Bevy render/window/asset/text/input features requires a new
+  dependency review, a commit that explains the transitive dependency cost, and
+  proof that the feature remains out of `eidetic-core` and `eidetic-server`.
 
 Future scope:
 

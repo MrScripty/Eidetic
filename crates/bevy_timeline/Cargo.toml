@@ -11,6 +11,16 @@ eidetic-core.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 
+[features]
+default = []
+native_render = [
+    "bevy/2d_bevy_render",
+    "bevy/bevy_window",
+    "bevy/bevy_winit",
+    "bevy/wayland",
+    "bevy/x11",
+]
+
 [dev-dependencies]
 serde_json.workspace = true
 uuid.workspace = true

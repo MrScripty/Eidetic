@@ -3600,6 +3600,11 @@ Implementation order:
   and runner-error status constructors. Timeline status uses those shared
   constructors instead of hardcoding capability/support tuples in the timeline
   host.
+- Started: the Bevy timeline leaf crate now has an explicit `native_render`
+  feature gate for the reviewed desktop render/window stack. The feature is off
+  by default, excludes text/UI/audio, and keeps render/window dependencies out
+  of normal projection-only timeline builds until the visible-window slice uses
+  it.
 - Add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
