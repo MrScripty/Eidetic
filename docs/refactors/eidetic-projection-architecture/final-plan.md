@@ -3749,6 +3749,11 @@ Implementation order:
   API before emitting mutation intents. This keeps invalid relationship
   commands out of the renderer queue while leaving relationship semantics and
   persistence at the backend command boundary.
+- Started: native timeline relationship creation now has a Bevy pointer
+  gesture. Ctrl+shift+click on a projected clip emits a thematic relationship
+  request from the backend-projected selected clip to the clicked clip after
+  projection-only endpoint validation; the renderer still does not own
+  relationship persistence or business semantics.
 - Started: native timeline input systems have been extracted into a focused
   `native_input.rs` module. Keyboard and pointer systems still read only the
   active backend projection plus transient renderer viewport/playhead state and

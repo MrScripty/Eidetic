@@ -1,6 +1,7 @@
 use bevy::prelude::{ButtonInput, KeyCode, MouseButton, Query, Res, Window, World};
 use bevy::window::PrimaryWindow;
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 
 use crate::native_render::{
     TimelineNativeProjectionState, TimelineNativeWindowControl, native_track_height_px,
@@ -47,6 +48,63 @@ pub(crate) fn emit_timeline_native_click_selection(
         projection_state.viewport,
         geometry,
         point,
+    );
+}
+
+pub(crate) fn emit_timeline_native_selected_relationship_create(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    buttons: Option<Res<ButtonInput<MouseButton>>>,
+    windows: Query<&Window, bevy::prelude::With<PrimaryWindow>>,
+    control: Option<Res<TimelineNativeWindowControl>>,
+    projection_state: Res<TimelineNativeProjectionState>,
+) {
+    let Some(keys) = keys else {
+        return;
+    };
+    let Some(buttons) = buttons else {
+        return;
+    };
+    if !timeline_native_control_modifier_pressed(&keys)
+        || !timeline_native_shift_modifier_pressed(&keys)
+        || !buttons.just_pressed(MouseButton::Left)
+    {
+        return;
+    }
+    let Some(control) = control else {
+        return;
+    };
+    let Ok(window) = windows.single() else {
+        return;
+    };
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
+    let Some(projection) = projection_state.projection.as_ref() else {
+        return;
+    };
+    let geometry = TimelineViewportGeometry::new(
+        window.width().max(1.0) as u32,
+        window.height().max(1.0) as u32,
+        native_track_height_px(),
+    );
+    let point = TimelineViewportPoint::new(
+        cursor_position.x.max(0.0) as u32,
+        (window.height() - cursor_position.y).max(0.0) as u32,
+    );
+    let Ok(Some(to_node_id)) = crate::hit_test_projection_clip_at_point(
+        projection,
+        projection_state.viewport,
+        geometry,
+        point,
+    ) else {
+        return;
+    };
+    let _ = crate::native_command::emit_timeline_native_selected_create_relationship_request(
+        &control,
+        projection,
+        RelationshipId::new(),
+        to_node_id,
+        RelationshipType::Thematic,
     );
 }
 

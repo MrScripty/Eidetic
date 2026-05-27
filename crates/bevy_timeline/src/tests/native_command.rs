@@ -611,6 +611,67 @@ fn controlled_native_window_rejects_create_relationship_with_same_endpoint() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_emits_selected_create_relationship_command() {
+    let from_node_id = NodeId::new();
+    let to_node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(from_node_id);
+    projection.selected_node_id = Some(from_node_id);
+    let mut to_clip = projection.clips[0].clone();
+    to_clip.node_id = to_node_id;
+    projection.clips.push(to_clip);
+
+    assert_eq!(
+        crate::native_command::emit_timeline_native_selected_create_relationship_request(
+            &window_control,
+            &projection,
+            relationship_id,
+            to_node_id,
+            RelationshipType::Thematic,
+        ),
+        Ok(Some((from_node_id, to_node_id)))
+    );
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::CreateRelationship {
+            relationship_id,
+            from_node_id,
+            to_node_id,
+            relationship_type: RelationshipType::Thematic,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_ignores_selected_create_relationship_without_selection() {
+    let from_node_id = NodeId::new();
+    let to_node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(from_node_id);
+    let mut to_clip = projection.clips[0].clone();
+    to_clip.node_id = to_node_id;
+    projection.clips.push(to_clip);
+
+    assert_eq!(
+        crate::native_command::emit_timeline_native_selected_create_relationship_request(
+            &window_control,
+            &projection,
+            relationship_id,
+            to_node_id,
+            RelationshipType::Thematic,
+        ),
+        Ok(None)
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_playhead_command() {
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();

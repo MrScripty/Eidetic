@@ -102,6 +102,10 @@ impl Plugin for TimelineNativeRenderPlugin {
         app.add_systems(Update, apply_timeline_native_projection_updates);
         app.add_systems(
             Update,
+            crate::native_input::emit_timeline_native_selected_relationship_create,
+        );
+        app.add_systems(
+            Update,
             crate::native_input::emit_timeline_native_click_selection,
         );
         app.add_systems(

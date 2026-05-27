@@ -289,6 +289,27 @@ pub fn emit_timeline_native_create_relationship_request(
     Ok(())
 }
 
+pub fn emit_timeline_native_selected_create_relationship_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    relationship_id: RelationshipId,
+    to_node_id: NodeId,
+    relationship_type: RelationshipType,
+) -> Result<Option<(NodeId, NodeId)>, TimelineRendererError> {
+    let Some(from_node_id) = projection.selected_node_id else {
+        return Ok(None);
+    };
+    emit_timeline_native_create_relationship_request(
+        control,
+        projection,
+        relationship_id,
+        from_node_id,
+        to_node_id,
+        relationship_type,
+    )?;
+    Ok(Some((from_node_id, to_node_id)))
+}
+
 pub fn emit_timeline_native_selected_create_child_from_parent_request(
     control: &TimelineNativeWindowControl,
     projection: &TimelineRenderProjection,
