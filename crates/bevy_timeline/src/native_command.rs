@@ -255,6 +255,12 @@ pub fn emit_timeline_native_create_relationship_request(
     to_node_id: NodeId,
     relationship_type: RelationshipType,
 ) -> Result<(), TimelineRendererError> {
+    if from_node_id == to_node_id {
+        return Err(TimelineRendererError::InvalidRelationshipEndpoints {
+            from_node_id,
+            to_node_id,
+        });
+    }
     if !projection
         .clips
         .iter()

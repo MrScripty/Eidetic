@@ -305,6 +305,13 @@ impl TimelineRendererApp {
         to_node_id: NodeId,
         relationship_type: RelationshipType,
     ) -> Result<(), TimelineRendererError> {
+        if from_node_id == to_node_id {
+            return Err(TimelineRendererError::InvalidRelationshipEndpoints {
+                from_node_id,
+                to_node_id,
+            });
+        }
+
         {
             let state = self.app.world().resource::<TimelineRenderState>();
             let projection = state

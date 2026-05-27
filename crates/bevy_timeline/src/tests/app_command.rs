@@ -126,6 +126,28 @@ fn renderer_app_rejects_create_relationship_command_with_unknown_endpoint() {
 }
 
 #[test]
+fn renderer_app_rejects_create_relationship_command_with_same_endpoint() {
+    let node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection_with_node(node_id));
+
+    assert_eq!(
+        renderer.request_create_relationship(
+            relationship_id,
+            node_id,
+            node_id,
+            RelationshipType::Thematic,
+        ),
+        Err(TimelineRendererError::InvalidRelationshipEndpoints {
+            from_node_id: node_id,
+            to_node_id: node_id,
+        })
+    );
+    assert!(renderer.drain_commands().is_empty());
+}
+
+#[test]
 fn renderer_app_emits_validated_delete_node_command() {
     let node_id = NodeId::new();
     let mut renderer = TimelineRendererApp::new();

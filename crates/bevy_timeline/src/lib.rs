@@ -116,6 +116,11 @@ pub enum TimelineRendererError {
         left_node_id: NodeId,
         right_node_id: NodeId,
     },
+    #[error("relationship endpoints must be distinct node ids")]
+    InvalidRelationshipEndpoints {
+        from_node_id: NodeId,
+        to_node_id: NodeId,
+    },
     #[error("invalid viewport range {start_ms}ms..{end_ms}ms for duration {duration_ms}ms")]
     InvalidViewportRange {
         start_ms: u64,

@@ -3744,6 +3744,11 @@ Implementation order:
   resizes the selected clip start, ctrl+alt+left/right resizes the selected
   clip end, and all requests are clamped to the active backend projection
   before entering the backend command bridge.
+- Started: native timeline relationship creation now rejects same-node
+  endpoints in both the headless renderer app API and native window command
+  API before emitting mutation intents. This keeps invalid relationship
+  commands out of the renderer queue while leaving relationship semantics and
+  persistence at the backend command boundary.
 - Started: native timeline input systems have been extracted into a focused
   `native_input.rs` module. Keyboard and pointer systems still read only the
   active backend projection plus transient renderer viewport/playhead state and

@@ -586,6 +586,31 @@ fn controlled_native_window_rejects_create_relationship_with_unknown_endpoint() 
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_rejects_create_relationship_with_same_endpoint() {
+    let node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    assert_eq!(
+        crate::native_command::emit_timeline_native_create_relationship_request(
+            &window_control,
+            &projection_with_node(node_id),
+            relationship_id,
+            node_id,
+            node_id,
+            RelationshipType::Thematic,
+        ),
+        Err(TimelineRendererError::InvalidRelationshipEndpoints {
+            from_node_id: node_id,
+            to_node_id: node_id,
+        })
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_emits_validated_playhead_command() {
     let node_id = NodeId::new();
     let control = TimelineNativeWindowControlHandle::new();
