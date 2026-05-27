@@ -1,8 +1,8 @@
 use super::*;
 #[cfg(feature = "native_render")]
 use crate::native_render::{
-    BibleGraphNativeMaterial, BibleGraphNativeSelectionOutlineBillboard,
-    BibleGraphNativeSelectionOutlineVisual,
+    BibleGraphNativeLabelOverlayCamera, BibleGraphNativeMaterial,
+    BibleGraphNativeSelectionOutlineBillboard, BibleGraphNativeSelectionOutlineVisual,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphSchemaKey, BibleRenderGraphEdge,
@@ -445,11 +445,25 @@ fn native_render_plugin_records_3d_window_scene_intent() {
         app.world()
             .resource::<BibleGraphNativeRendererWindowStatus>()
             .camera_count,
-        1
+        2
     );
     assert_eq!(
         app.world_mut()
             .query_filtered::<(), With<bevy::prelude::Camera3d>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<bevy::prelude::Camera2d>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeLabelOverlayCamera>>()
             .iter(app.world())
             .count(),
         1
@@ -971,8 +985,9 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
 
 #[cfg(feature = "native_render")]
 #[test]
-fn controlled_native_window_billboards_node_labels_to_camera() {
-    use bevy::prelude::{Plugin, Quat, Transform, Vec3, With};
+fn controlled_native_window_renders_node_labels_on_overlay_layer() {
+    use bevy::camera::visibility::RenderLayers;
+    use bevy::prelude::{Plugin, Transform, Vec2, Vec3, With};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let control = BibleGraphNativeWindowControlHandle::new();
@@ -983,33 +998,24 @@ fn controlled_native_window_billboards_node_labels_to_camera() {
     control.set_projection(projection_with_node(node_id));
     app.update();
 
-    let expected_rotation = Quat::from_rotation_y(0.25);
-    {
-        let world = app.world_mut();
-        let mut camera_transforms =
-            world.query_filtered::<&mut Transform, With<BibleGraphNativeCamera>>();
-        for mut camera_transform in camera_transforms.iter_mut(world) {
-            camera_transform.rotation = expected_rotation;
-        }
-    }
-
-    app.update();
-
-    let label_transforms = {
-        let mut label_transforms = app
+    let label_entities = {
+        let mut label_entities = app
             .world_mut()
-            .query_filtered::<&Transform, With<BibleGraphNativeLabelBillboard>>();
-        label_transforms
-            .iter(app.world())
-            .copied()
-            .collect::<Vec<_>>()
+            .query_filtered::<(&Transform, &RenderLayers), With<BibleGraphNativeLabelBillboard>>();
+        label_entities.iter(app.world()).collect::<Vec<_>>()
     };
+    let overlay_translation = crate::native_render::native_node_label_overlay_translation(
+        Vec2::new(640.0, 360.0),
+        Vec2::new(1280.0, 720.0),
+        34.0,
+    );
 
-    assert_eq!(label_transforms.len(), 1);
-    assert_eq!(label_transforms[0].rotation, expected_rotation);
-    assert!(label_transforms[0].translation.y > 0.0);
-    assert!(label_transforms[0].translation.z > 0.0);
-    assert_ne!(label_transforms[0].translation, Vec3::ZERO);
+    assert_eq!(label_entities.len(), 1);
+    assert!(label_entities[0].1.intersects(&RenderLayers::layer(1)));
+    assert_eq!(label_entities[0].0.rotation, Transform::default().rotation);
+    assert!(overlay_translation.y > 0.0);
+    assert_eq!(overlay_translation.z, 10.0);
+    assert_ne!(overlay_translation, Vec3::ZERO);
 }
 
 #[cfg(feature = "native_render")]
