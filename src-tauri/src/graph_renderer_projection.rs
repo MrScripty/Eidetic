@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 
-use eidetic_core::contracts::{BibleRenderGraphProjection, BibleRenderGraphProjectionRequest};
+use eidetic_core::contracts::{
+    BibleGraphNodeId, BibleRenderGraphProjection, BibleRenderGraphProjectionRequest,
+};
 use eidetic_server::bible_render_graph_projection;
 use eidetic_server::state::AppState;
 use tauri::Manager;
@@ -40,6 +42,15 @@ impl GraphRendererProjectionOwner {
         self.refresh_active(app).await
     }
 
+    pub async fn replace_selected_node_and_refresh(
+        &self,
+        app: &tauri::AppHandle,
+        selected_node_id: Option<BibleGraphNodeId>,
+    ) -> Result<BibleGraphHostStatus, CommandError> {
+        self.replace_selected_node(selected_node_id);
+        self.refresh_active(app).await
+    }
+
     pub async fn refresh_active(
         &self,
         app: &tauri::AppHandle,
@@ -75,6 +86,14 @@ impl GraphRendererProjectionOwner {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
             .request = request;
+    }
+
+    fn replace_selected_node(&self, selected_node_id: Option<BibleGraphNodeId>) {
+        self.state
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .request
+            .selected_node_id = selected_node_id;
     }
 
     fn begin_refresh(&self) -> GraphRendererProjectionRefreshDecision {
@@ -191,6 +210,15 @@ pub async fn update_active_graph_renderer_projection_request(
         .await
 }
 
+pub async fn update_active_graph_renderer_selected_node(
+    app: &tauri::AppHandle,
+    selected_node_id: Option<BibleGraphNodeId>,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    graph_renderer_projection_owner(app)?
+        .replace_selected_node_and_refresh(app, selected_node_id)
+        .await
+}
+
 fn write_graph_renderer_projection(
     app: &tauri::AppHandle,
     projection: BibleRenderGraphProjection,
@@ -256,6 +284,63 @@ mod tests {
         state.replace_request(request.clone());
 
         assert_eq!(state.current_request(), request);
+        state.app_state.shutdown_tasks();
+    }
+
+    #[test]
+    fn graph_renderer_projection_owner_replaces_selected_node_only() {
+        let app_state = tauri::async_runtime::block_on(eidetic_server::state::AppState::new());
+        let state = GraphRendererProjectionOwner::new(app_state);
+        let root_id = BibleGraphNodeId::new("node.story.premise").unwrap();
+        let selected_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+        let request = BibleRenderGraphProjectionRequest {
+            focused_root_id: Some(root_id.clone()),
+            selected_node_id: None,
+            active_timeline_ms: Some(42_000),
+            search: Some("weather".to_string()),
+            neighborhood_depth: 3,
+            max_nodes: 24,
+            max_edges: 48,
+            ..Default::default()
+        };
+
+        state.replace_request(request.clone());
+        state.replace_selected_node(Some(selected_id.clone()));
+
+        let selected_request = state.current_request();
+        assert_eq!(selected_request.selected_node_id, Some(selected_id));
+        assert_eq!(selected_request.focused_root_id, Some(root_id));
+        assert_eq!(
+            selected_request.active_timeline_ms,
+            request.active_timeline_ms
+        );
+        assert_eq!(selected_request.search, request.search);
+        assert_eq!(
+            selected_request.neighborhood_depth,
+            request.neighborhood_depth
+        );
+        assert_eq!(selected_request.max_nodes, request.max_nodes);
+        assert_eq!(selected_request.max_edges, request.max_edges);
+
+        state.replace_selected_node(None);
+
+        let cleared_request = state.current_request();
+        assert_eq!(cleared_request.selected_node_id, None);
+        assert_eq!(
+            cleared_request.focused_root_id,
+            selected_request.focused_root_id
+        );
+        assert_eq!(
+            cleared_request.active_timeline_ms,
+            selected_request.active_timeline_ms
+        );
+        assert_eq!(cleared_request.search, selected_request.search);
+        assert_eq!(
+            cleared_request.neighborhood_depth,
+            selected_request.neighborhood_depth
+        );
+        assert_eq!(cleared_request.max_nodes, selected_request.max_nodes);
+        assert_eq!(cleared_request.max_edges, selected_request.max_edges);
         state.app_state.shutdown_tasks();
     }
 

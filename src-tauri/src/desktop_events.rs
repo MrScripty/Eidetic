@@ -10,7 +10,9 @@ use tokio::sync::broadcast;
 
 use crate::bevy_graph_host::DesktopBibleGraphRendererOwner;
 use crate::bevy_timeline_host::DesktopTimelineRendererOwner;
-use crate::graph_renderer_projection::refresh_active_graph_renderer_projection;
+use crate::graph_renderer_projection::{
+    refresh_active_graph_renderer_projection, update_active_graph_renderer_selected_node,
+};
 use crate::timeline_renderer_command_bridge::spawn_timeline_renderer_command_bridge;
 
 pub const SERVER_EVENT_TOPIC: &str = "eidetic://server-event";
@@ -155,6 +157,13 @@ fn spawn_graph_renderer_command_bridge(
             };
 
             for command in commands {
+                if let Err(error) =
+                    apply_graph_renderer_command_projection_update(&app, &command).await
+                {
+                    tracing::warn!(
+                        "failed to apply graph renderer command projection update: {error:?}"
+                    );
+                }
                 if let Err(error) = app.emit(
                     SERVER_EVENT_TOPIC,
                     DesktopServerEvent {
@@ -166,6 +175,33 @@ fn spawn_graph_renderer_command_bridge(
             }
         }
     })
+}
+
+async fn apply_graph_renderer_command_projection_update(
+    app: &tauri::AppHandle,
+    command: &BibleGraphRendererCommand,
+) -> Result<(), crate::error::CommandError> {
+    if let Some(selected_node_id) = graph_renderer_command_selected_node_update(command) {
+        update_active_graph_renderer_selected_node(app, selected_node_id).await?;
+    }
+
+    Ok(())
+}
+
+fn graph_renderer_command_selected_node_update(
+    command: &BibleGraphRendererCommand,
+) -> Option<Option<eidetic_core::contracts::BibleGraphNodeId>> {
+    match command {
+        BibleGraphRendererCommand::SelectNode { node_id } => Some(Some(node_id.clone())),
+        BibleGraphRendererCommand::ClearSelection => Some(None),
+        BibleGraphRendererCommand::SelectEdge { .. }
+        | BibleGraphRendererCommand::SelectInfluence { .. }
+        | BibleGraphRendererCommand::InspectNode { .. }
+        | BibleGraphRendererCommand::FocusNode { .. }
+        | BibleGraphRendererCommand::NavigateToNode { .. }
+        | BibleGraphRendererCommand::DeleteNode { .. }
+        | BibleGraphRendererCommand::CreateConnectedNode { .. } => None,
+    }
 }
 
 fn should_refresh_graph_renderer_projection(event: &ServerEvent) -> bool {
@@ -234,10 +270,11 @@ async fn refresh_timeline_renderer_projection(app: &tauri::AppHandle) {
 mod tests {
     use super::{
         DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload, SERVER_EVENT_TOPIC,
-        should_refresh_graph_renderer_projection, should_refresh_timeline_renderer_projection,
+        graph_renderer_command_selected_node_update, should_refresh_graph_renderer_projection,
+        should_refresh_timeline_renderer_projection,
     };
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
-    use eidetic_core::contracts::BibleGraphNodeId;
+    use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId};
     use eidetic_core::timeline::node::NodeId;
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
@@ -339,6 +376,34 @@ mod tests {
                     "type": "clear_selection"
                 }
             })
+        );
+    }
+
+    #[test]
+    fn graph_renderer_commands_project_native_node_selection() {
+        let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+
+        assert_eq!(
+            graph_renderer_command_selected_node_update(&BibleGraphRendererCommand::SelectNode {
+                node_id: node_id.clone()
+            }),
+            Some(Some(node_id.clone()))
+        );
+        assert_eq!(
+            graph_renderer_command_selected_node_update(&BibleGraphRendererCommand::ClearSelection),
+            Some(None)
+        );
+        assert_eq!(
+            graph_renderer_command_selected_node_update(&BibleGraphRendererCommand::SelectEdge {
+                edge_id: BibleGraphEdgeId::new("edge.character.ada.knows.character.grace").unwrap()
+            }),
+            None
+        );
+        assert_eq!(
+            graph_renderer_command_selected_node_update(&BibleGraphRendererCommand::FocusNode {
+                node_id
+            }),
+            None
         );
     }
 
