@@ -408,7 +408,7 @@ fn renderer_visual_snapshots_share_category_fill_colors() {
 }
 
 #[test]
-fn renderer_app_3d_visual_snapshot_bounds_unfocused_labels() {
+fn renderer_app_3d_visual_snapshot_keeps_node_labels_visible() {
     let mut projection = projection_with_node_count(16);
     projection.nodes[0].system_owned = true;
     projection.nodes[0].label = "Characters".to_string();
@@ -416,14 +416,7 @@ fn renderer_app_3d_visual_snapshot_bounds_unfocused_labels() {
     let snapshot = build_bible_graph_visual_3d_snapshot(&projection);
 
     assert_eq!(snapshot.nodes.len(), 16);
-    assert!(snapshot.nodes[0].label_visible);
-    assert!(
-        snapshot
-            .nodes
-            .iter()
-            .skip(1)
-            .all(|node| !node.label_visible)
-    );
+    assert!(snapshot.nodes.iter().all(|node| node.label_visible));
 }
 
 #[cfg(feature = "native_render")]
@@ -922,7 +915,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
         node_states
             .iter()
             .any(|(id, selected, highlighted, dimmed, label_visible)| {
-                id == &unrelated_id && !*selected && !*highlighted && *dimmed && !*label_visible
+                id == &unrelated_id && !*selected && !*highlighted && *dimmed && *label_visible
             })
     );
     assert!(
@@ -930,7 +923,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
             .query::<(&BibleGraphNativeNodeLabelVisual, &Visibility)>()
             .iter(app.world())
             .any(|(label, visibility)| {
-                label.node_id == unrelated_id && visibility == &Visibility::Hidden
+                label.node_id == unrelated_id && visibility == &Visibility::Visible
             })
     );
     assert!(
@@ -979,7 +972,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
 #[cfg(feature = "native_render")]
 #[test]
 fn controlled_native_window_billboards_node_labels_to_camera() {
-    use bevy::prelude::{Plugin, Quat, Transform, With};
+    use bevy::prelude::{Plugin, Quat, Transform, Vec3, With};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let control = BibleGraphNativeWindowControlHandle::new();
@@ -1002,17 +995,21 @@ fn controlled_native_window_billboards_node_labels_to_camera() {
 
     app.update();
 
-    let label_rotations = {
+    let label_transforms = {
         let mut label_transforms = app
             .world_mut()
             .query_filtered::<&Transform, With<BibleGraphNativeLabelBillboard>>();
         label_transforms
             .iter(app.world())
-            .map(|transform| transform.rotation)
+            .copied()
             .collect::<Vec<_>>()
     };
 
-    assert_eq!(label_rotations, vec![expected_rotation]);
+    assert_eq!(label_transforms.len(), 1);
+    assert_eq!(label_transforms[0].rotation, expected_rotation);
+    assert!(label_transforms[0].translation.y > 0.0);
+    assert!(label_transforms[0].translation.z > 0.0);
+    assert_ne!(label_transforms[0].translation, Vec3::ZERO);
 }
 
 #[cfg(feature = "native_render")]

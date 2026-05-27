@@ -7,8 +7,6 @@ use serde::Serialize;
 
 use crate::category::node_fill_color;
 
-const MAX_UNFOCUSED_LABEL_COUNT: usize = 12;
-
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct BibleGraphVisual3dSnapshot {
     pub nodes: Vec<BibleGraphVisual3dNode>,
@@ -131,13 +129,6 @@ pub fn build_bible_graph_visual_3d_snapshot(
             let highlighted = selected
                 || highlighted_nodes.contains(&node.node_id)
                 || selected_adjacent_nodes.contains(&node.node_id);
-            let label_visible = node_label_visible(
-                projection.nodes.len(),
-                selected_node_id.is_some(),
-                node.system_owned,
-                selected,
-                highlighted,
-            );
             BibleGraphVisual3dNode {
                 node_id: node.node_id.clone(),
                 label: node.label.clone(),
@@ -154,7 +145,7 @@ pub fn build_bible_graph_visual_3d_snapshot(
                 selected,
                 highlighted,
                 dimmed: selected_node_id.is_some() && !highlighted,
-                label_visible,
+                label_visible: true,
                 label_font_size: node_label_font_size(node.system_owned, selected, highlighted),
                 label_color: node_label_color(selected, highlighted),
             }
@@ -205,19 +196,6 @@ fn node_label_font_size(system_owned: bool, selected: bool, highlighted: bool) -
     } else {
         12.0
     }
-}
-
-fn node_label_visible(
-    node_count: usize,
-    has_selected_node: bool,
-    system_owned: bool,
-    selected: bool,
-    highlighted: bool,
-) -> bool {
-    selected
-        || highlighted
-        || system_owned
-        || (!has_selected_node && node_count <= MAX_UNFOCUSED_LABEL_COUNT)
 }
 
 fn node_label_color(selected: bool, highlighted: bool) -> &'static str {

@@ -171,6 +171,10 @@ pub struct BibleGraphNativeNodeVisual {
 pub struct BibleGraphNativeNodeLabelVisual {
     pub node_id: BibleGraphNodeId,
     pub label: String,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub radius: f32,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -1182,7 +1186,7 @@ pub(crate) fn native_camera_orbit_translation(
 fn billboard_bible_graph_native_labels(
     cameras: Query<&Transform, With<BibleGraphNativeCamera>>,
     mut labels: Query<
-        &mut Transform,
+        (&BibleGraphNativeNodeLabelVisual, &mut Transform),
         (
             With<BibleGraphNativeLabelBillboard>,
             Without<BibleGraphNativeCamera>,
@@ -1193,9 +1197,28 @@ fn billboard_bible_graph_native_labels(
         return;
     };
 
-    for mut label_transform in &mut labels {
-        label_transform.rotation = camera_transform.rotation;
+    for (label, mut label_transform) in &mut labels {
+        *label_transform = native_node_label_billboard_transform(label, camera_transform);
     }
+}
+
+pub(crate) fn native_node_label_billboard_transform(
+    label: &BibleGraphNativeNodeLabelVisual,
+    camera_transform: &Transform,
+) -> Transform {
+    let node_center = Vec3::new(label.x, label.y, label.z);
+    let translation = node_center + native_node_label_camera_offset(label.radius, camera_transform);
+    Transform::from_translation(translation).with_rotation(camera_transform.rotation)
+}
+
+pub(crate) fn native_node_label_camera_offset(
+    node_radius: f32,
+    camera_transform: &Transform,
+) -> Vec3 {
+    let radius = node_radius.max(1.0);
+    let camera_up = *camera_transform.up();
+    let camera_forward = *camera_transform.forward();
+    camera_up * (radius + 14.0) - camera_forward * (radius + 8.0)
 }
 
 fn billboard_bible_graph_native_selection_outlines(
@@ -1451,12 +1474,16 @@ pub fn rebuild_bible_graph_native_visuals(
             BibleGraphNativeNodeLabelVisual {
                 node_id: node_id.clone(),
                 label: node_label.clone(),
+                x: node.position.x,
+                y: node.position.y,
+                z: node.position.z,
+                radius: node.radius,
             },
             Text2d::new(node_label),
             TextFont::from_font_size(node.label_font_size),
             TextColor(native_color_from_hex(node.label_color)),
             TextLayout::new_with_justify(Justify::Center),
-            bevy::sprite::Anchor::TOP_CENTER,
+            bevy::sprite::Anchor::BOTTOM_CENTER,
             BibleGraphNativeLabelBillboard,
             if node.label_visible {
                 Visibility::Visible
