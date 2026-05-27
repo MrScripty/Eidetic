@@ -195,9 +195,10 @@ fn render_graph_projection_selection_does_not_filter_default_graph() {
 #[test]
 fn render_graph_projection_preserves_active_timeline_time_request() {
     let ada = graph_node("node.character.ada", None, "character", "Ada", false, 1);
+    let beach = graph_node("node.place.beach", None, "place", "Beach", false, 2);
 
     let projection = BibleRenderGraphProjection::from_graph_for_request(
-        vec![ada],
+        vec![ada, beach],
         Vec::new(),
         &BibleRenderGraphProjectionRequest {
             active_timeline_ms: Some(12_345),
@@ -207,6 +208,12 @@ fn render_graph_projection_preserves_active_timeline_time_request() {
     );
 
     assert_eq!(projection.active_timeline_ms, Some(12_345));
+    let node_ids: Vec<_> = projection
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(node_ids, vec!["node.character.ada", "node.place.beach"]);
 }
 
 #[test]

@@ -126,10 +126,7 @@ pub(super) fn included_node_ids_for_request(
 }
 
 fn should_load_default_node_ids(request: &BibleRenderGraphProjectionRequest) -> bool {
-    request.focused_root_id.is_none()
-        && request.selected_timeline_node_id.is_none()
-        && request.active_timeline_ms.is_none()
-        && request.search.is_none()
+    request.focused_root_id.is_none() && request.search.is_none()
 }
 
 fn children_by_parent(

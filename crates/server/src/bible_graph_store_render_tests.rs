@@ -330,7 +330,10 @@ fn render_graph_projection_includes_selected_timeline_influences() {
         .iter()
         .map(|node| node.node_id.as_str())
         .collect();
-    assert_eq!(node_ids, vec!["node.character.ada", "node.place.beach"]);
+    assert_eq!(
+        node_ids,
+        vec!["node.character.ada", "node.place.beach", "node.place.tower"]
+    );
     assert_eq!(projection.payload.edges.len(), 1);
     assert_eq!(projection.payload.influences.len(), 1);
     assert_eq!(
@@ -400,6 +403,35 @@ fn render_graph_projection_includes_active_playhead_context_influences() {
             .as_str(),
         "node.character.ada"
     );
+}
+
+#[test]
+fn render_graph_projection_keeps_default_graph_without_active_playhead_influences() {
+    let mut conn = memory_connection();
+    let timeline_node_id = NodeId::new();
+    seed_timeline_node(&mut conn, timeline_node_id, 1_000, 2_000);
+    seed_node(&mut conn, "node.character.ada", "Ada", 10);
+    seed_node(&mut conn, "node.place.beach", "Beach", 20);
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            active_timeline_ms: Some(1_500),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    let node_ids: Vec<_> = projection
+        .payload
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(projection.payload.active_timeline_ms, Some(1_500));
+    assert_eq!(projection.payload.influences.len(), 0);
+    assert_eq!(node_ids, vec!["node.character.ada", "node.place.beach"]);
 }
 
 #[test]
