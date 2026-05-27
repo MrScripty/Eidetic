@@ -25,6 +25,7 @@ struct RenderGraphQueryInput {
 
 struct RenderGraphScope {
     required_node_ids: BTreeSet<BibleGraphNodeId>,
+    candidate_node_ids: BTreeSet<BibleGraphNodeId>,
     influences: Vec<ContextInfluenceRecord>,
 }
 
@@ -65,11 +66,13 @@ fn load_render_graph_scope(
     input: &RenderGraphQueryInput,
 ) -> Result<RenderGraphScope, HistoryStoreError> {
     let request = &input.request;
-    let mut node_ids = BTreeSet::new();
+    let mut required_node_ids = BTreeSet::new();
+    let mut candidate_node_ids = BTreeSet::new();
     let influences = load_selected_context_influences(conn, request)?;
 
     if let Some(root_id) = &request.focused_root_id {
-        node_ids.extend(load_descendant_node_ids(
+        required_node_ids.insert(root_id.clone());
+        candidate_node_ids.extend(load_descendant_node_ids(
             conn,
             root_id,
             request.neighborhood_depth,
@@ -78,31 +81,27 @@ fn load_render_graph_scope(
     }
 
     if let Some(selected_node_id) = &request.selected_node_id {
-        node_ids.extend(load_edge_neighborhood_node_ids(
-            conn,
-            selected_node_id,
-            request.neighborhood_depth,
-            input.max_nodes,
-        )?);
+        required_node_ids.insert(selected_node_id.clone());
     }
 
     if let Some(search) = &request.search {
-        node_ids.extend(load_search_node_ids(conn, search, input.max_nodes)?);
+        candidate_node_ids.extend(load_search_node_ids(conn, search, input.max_nodes)?);
     }
 
-    node_ids.extend(
+    required_node_ids.extend(
         influences
             .iter()
             .filter_map(|record| record.bible_node_id.as_ref().cloned()),
     );
-    node_ids.extend(load_influenced_edge_endpoint_ids(conn, &influences)?);
+    required_node_ids.extend(load_influenced_edge_endpoint_ids(conn, &influences)?);
 
-    if node_ids.is_empty() && should_load_default_node_ids(request) {
-        node_ids.extend(load_default_node_ids(conn, input.max_nodes)?);
+    if should_load_default_node_ids(request) {
+        candidate_node_ids.extend(load_default_node_ids(conn, input.max_nodes)?);
     }
 
     Ok(RenderGraphScope {
-        required_node_ids: node_ids,
+        required_node_ids,
+        candidate_node_ids,
         influences,
     })
 }
@@ -112,10 +111,17 @@ fn load_scoped_render_graph_nodes(
     scope: &RenderGraphScope,
     max_nodes: usize,
 ) -> Result<Vec<BibleGraphNode>, HistoryStoreError> {
-    let ids_with_ancestors = include_ancestors(conn, &scope.required_node_ids)?;
+    let included_node_ids = scope
+        .required_node_ids
+        .iter()
+        .chain(scope.candidate_node_ids.iter())
+        .cloned()
+        .collect();
+    let ids_with_ancestors = include_ancestors(conn, &included_node_ids)?;
     Ok(limit_nodes(
         load_nodes_by_id(conn, &ids_with_ancestors)?,
         &scope.required_node_ids,
+        &scope.candidate_node_ids,
         max_nodes,
     ))
 }
@@ -177,7 +183,8 @@ fn load_active_timeline_node_ids(
 
 fn should_load_default_node_ids(request: &BibleRenderGraphProjectionRequest) -> bool {
     request.focused_root_id.is_none()
-        && request.selected_node_id.is_none()
+        && request.selected_timeline_node_id.is_none()
+        && request.active_timeline_ms.is_none()
         && request.search.is_none()
 }
 
@@ -238,49 +245,6 @@ fn load_descendant_node_ids(
     )?;
     let rows = statement.query_map(
         params![root_id.as_str(), i64::from(depth), max_nodes],
-        |row| row.get::<_, String>(0),
-    )?;
-    rows_to_node_ids(rows)
-}
-
-fn load_edge_neighborhood_node_ids(
-    conn: &Connection,
-    node_id: &BibleGraphNodeId,
-    depth: u32,
-    max_nodes: i64,
-) -> Result<Vec<BibleGraphNodeId>, HistoryStoreError> {
-    let mut statement = conn.prepare(
-        "WITH RECURSIVE neighborhood(id, depth) AS (
-            SELECT id, 0
-            FROM bible_graph_nodes
-            WHERE id = ?1 AND deleted_event_id IS NULL
-            UNION
-            SELECT
-                CASE
-                    WHEN edges.from_node_id = neighborhood.id THEN edges.to_node_id
-                    ELSE edges.from_node_id
-                END,
-                neighborhood.depth + 1
-            FROM neighborhood
-            INNER JOIN bible_graph_edges edges
-                ON edges.deleted_event_id IS NULL
-               AND (edges.from_node_id = neighborhood.id OR edges.to_node_id = neighborhood.id)
-            INNER JOIN bible_graph_nodes next_node
-                ON next_node.deleted_event_id IS NULL
-               AND next_node.id = CASE
-                    WHEN edges.from_node_id = neighborhood.id THEN edges.to_node_id
-                    ELSE edges.from_node_id
-                END
-            WHERE neighborhood.depth < ?2
-         )
-         SELECT DISTINCT nodes.id
-         FROM bible_graph_nodes nodes
-         INNER JOIN neighborhood ON neighborhood.id = nodes.id
-         ORDER BY nodes.sort_order ASC, nodes.name ASC, nodes.id ASC
-         LIMIT ?3",
-    )?;
-    let rows = statement.query_map(
-        params![node_id.as_str(), i64::from(depth), max_nodes],
         |row| row.get::<_, String>(0),
     )?;
     rows_to_node_ids(rows)
@@ -390,32 +354,34 @@ fn load_nodes_by_id(
 fn limit_nodes(
     nodes: Vec<BibleGraphNode>,
     required_node_ids: &BTreeSet<BibleGraphNodeId>,
+    candidate_node_ids: &BTreeSet<BibleGraphNodeId>,
     max_nodes: usize,
 ) -> Vec<BibleGraphNode> {
-    let mut included_node_ids = BTreeSet::new();
-    let mut limited = Vec::new();
+    let mut limited_node_ids = BTreeSet::new();
 
     for node in nodes
         .iter()
         .filter(|node| required_node_ids.contains(&node.id))
     {
-        if limited.len() >= max_nodes {
-            return limited;
-        }
-        included_node_ids.insert(node.id.clone());
-        limited.push(node.clone());
-    }
-
-    for node in nodes {
-        if limited.len() >= max_nodes {
+        if limited_node_ids.len() >= max_nodes {
             break;
         }
-        if included_node_ids.insert(node.id.clone()) {
-            limited.push(node);
-        }
+        limited_node_ids.insert(node.id.clone());
     }
 
-    limited
+    for node in nodes.iter().filter(|node| {
+        required_node_ids.contains(&node.id) || candidate_node_ids.contains(&node.id)
+    }) {
+        if limited_node_ids.len() >= max_nodes {
+            break;
+        }
+        limited_node_ids.insert(node.id.clone());
+    }
+
+    nodes
+        .into_iter()
+        .filter(|node| limited_node_ids.contains(&node.id))
+        .collect()
 }
 
 fn load_node_ids<P>(

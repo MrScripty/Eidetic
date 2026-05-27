@@ -123,7 +123,7 @@ impl BibleRenderGraphProjection {
         let sorted_edges = sorted_graph_edges(edges);
         let mut included_node_ids =
             included_node_ids_for_request(&sorted_nodes, &sorted_edges, &request);
-        if request.selected_timeline_node_id.is_some() {
+        if request.selected_timeline_node_id.is_some() || request.active_timeline_ms.is_some() {
             include_influenced_node_ids(&mut included_node_ids, &sorted_edges, &influences);
         }
         let required_edge_ids = required_edge_ids(&influences);

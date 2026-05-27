@@ -153,7 +153,7 @@ pub fn build_bible_graph_visual_3d_snapshot(
                 },
                 selected,
                 highlighted,
-                dimmed: selected_node_id.is_some() && !selected,
+                dimmed: selected_node_id.is_some() && !highlighted,
                 label_visible,
                 label_font_size: node_label_font_size(node.system_owned, selected, highlighted),
                 label_color: node_label_color(selected, highlighted),

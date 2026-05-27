@@ -357,7 +357,7 @@ fn renderer_app_3d_visual_snapshot_highlights_selected_neighborhood() {
             .nodes
             .iter()
             .filter(|node| !node.selected)
-            .all(|node| node.dimmed)
+            .all(|node| node.highlighted && !node.dimmed)
     );
 }
 

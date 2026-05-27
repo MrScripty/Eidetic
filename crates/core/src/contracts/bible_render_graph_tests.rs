@@ -114,7 +114,7 @@ fn render_graph_projection_round_trips() {
 }
 
 #[test]
-fn render_graph_projection_request_filters_selected_neighborhood() {
+fn render_graph_projection_request_preserves_default_graph_with_selection() {
     let root = graph_node("canonical.characters", None, "root", "Characters", true, 0);
     let ada = graph_node(
         "node.character.ada",
@@ -156,11 +156,40 @@ fn render_graph_projection_request_filters_selected_neighborhood() {
         vec![
             "canonical.characters",
             "node.character.ada",
-            "node.place.beach"
+            "node.place.beach",
+            "node.place.tower"
         ]
     );
-    assert_eq!(projection.edges.len(), 1);
+    assert_eq!(projection.edges.len(), 2);
     assert_eq!(projection.edges[0].edge_id.as_str(), "edge.ada.beach");
+    assert_eq!(projection.edges[1].edge_id.as_str(), "edge.beach.tower");
+}
+
+#[test]
+fn render_graph_projection_selection_does_not_filter_default_graph() {
+    let ada = graph_node("node.character.ada", None, "character", "Ada", false, 1);
+    let beach = graph_node("node.place.beach", None, "place", "Beach", false, 2);
+    let tower = graph_node("node.place.tower", None, "place", "Tower", false, 3);
+
+    let projection = BibleRenderGraphProjection::from_graph_for_request(
+        vec![tower, beach, ada.clone()],
+        Vec::new(),
+        &BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(ada.id),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    );
+
+    let node_ids: Vec<_> = projection
+        .nodes
+        .iter()
+        .map(|node| node.node_id.as_str())
+        .collect();
+    assert_eq!(
+        node_ids,
+        vec!["node.character.ada", "node.place.beach", "node.place.tower"]
+    );
 }
 
 #[test]
@@ -323,7 +352,7 @@ fn render_graph_projection_filters_influences_to_visible_graph() {
         &BibleRenderGraphProjectionRequest {
             selected_node_id: Some(ada.id),
             neighborhood_depth: 1,
-            max_nodes: 10,
+            max_nodes: 2,
             ..BibleRenderGraphProjectionRequest::default()
         },
         vec![hidden_record, visible_record],

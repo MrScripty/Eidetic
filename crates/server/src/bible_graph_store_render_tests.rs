@@ -45,11 +45,18 @@ fn render_graph_projection_envelope_applies_bounded_request() {
         .iter()
         .map(|node| node.node_id.as_str())
         .collect();
-    assert_eq!(node_ids, vec!["node.character.ada", "node.place.beach"]);
-    assert_eq!(projection.payload.edges.len(), 1);
+    assert_eq!(
+        node_ids,
+        vec!["node.character.ada", "node.place.beach", "node.place.tower"]
+    );
+    assert_eq!(projection.payload.edges.len(), 2);
     assert_eq!(
         projection.payload.edges[0].edge_id.as_str(),
         "edge.ada.beach"
+    );
+    assert_eq!(
+        projection.payload.edges[1].edge_id.as_str(),
+        "edge.beach.tower"
     );
 }
 

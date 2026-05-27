@@ -70,7 +70,7 @@ impl BibleRenderGraphProjectionRequest {
 
 pub(super) fn included_node_ids_for_request(
     nodes: &[BibleGraphNode],
-    edges: &[BibleGraphEdge],
+    _edges: &[BibleGraphEdge],
     request: &BibleRenderGraphProjectionRequest,
 ) -> BTreeSet<BibleGraphNodeId> {
     let request = request.normalized();
@@ -80,7 +80,6 @@ pub(super) fn included_node_ids_for_request(
         .map(|node| (node.id.clone(), node.parent_id.clone()))
         .collect();
     let children_by_parent = children_by_parent(nodes);
-    let edge_neighbors = edge_neighbors(edges);
     let mut required = BTreeSet::new();
     let mut candidates = BTreeSet::new();
 
@@ -99,11 +98,6 @@ pub(super) fn included_node_ids_for_request(
         && node_ids.contains(selected_node_id)
     {
         required.insert(selected_node_id.clone());
-        candidates.extend(neighborhood_ids(
-            selected_node_id,
-            &edge_neighbors,
-            request.neighborhood_depth,
-        ));
     }
 
     if let Some(search) = &request.search {
@@ -116,7 +110,7 @@ pub(super) fn included_node_ids_for_request(
         }));
     }
 
-    if required.is_empty() && candidates.is_empty() && should_load_default_node_ids(&request) {
+    if candidates.is_empty() && should_load_default_node_ids(&request) {
         candidates.extend(nodes.iter().map(|node| node.id.clone()));
     }
 
@@ -133,7 +127,8 @@ pub(super) fn included_node_ids_for_request(
 
 fn should_load_default_node_ids(request: &BibleRenderGraphProjectionRequest) -> bool {
     request.focused_root_id.is_none()
-        && request.selected_node_id.is_none()
+        && request.selected_timeline_node_id.is_none()
+        && request.active_timeline_ms.is_none()
         && request.search.is_none()
 }
 
@@ -152,23 +147,6 @@ fn children_by_parent(
     children
 }
 
-fn edge_neighbors(
-    edges: &[BibleGraphEdge],
-) -> BTreeMap<BibleGraphNodeId, BTreeSet<BibleGraphNodeId>> {
-    let mut neighbors = BTreeMap::<BibleGraphNodeId, BTreeSet<BibleGraphNodeId>>::new();
-    for edge in edges {
-        neighbors
-            .entry(edge.from_node_id.clone())
-            .or_default()
-            .insert(edge.to_node_id.clone());
-        neighbors
-            .entry(edge.to_node_id.clone())
-            .or_default()
-            .insert(edge.from_node_id.clone());
-    }
-    neighbors
-}
-
 fn descendant_ids(
     root_id: &BibleGraphNodeId,
     children_by_parent: &BTreeMap<BibleGraphNodeId, BTreeSet<BibleGraphNodeId>>,
@@ -184,28 +162,6 @@ fn descendant_ids(
             }
             if let Some(children) = children_by_parent.get(&node_id) {
                 next.extend(children.iter().cloned());
-            }
-        }
-        frontier = next;
-    }
-    visited
-}
-
-fn neighborhood_ids(
-    node_id: &BibleGraphNodeId,
-    edge_neighbors: &BTreeMap<BibleGraphNodeId, BTreeSet<BibleGraphNodeId>>,
-    depth_limit: u32,
-) -> BTreeSet<BibleGraphNodeId> {
-    let mut visited = BTreeSet::new();
-    let mut frontier = BTreeSet::from([node_id.clone()]);
-    for _ in 0..=depth_limit {
-        let mut next = BTreeSet::new();
-        for current_id in frontier {
-            if !visited.insert(current_id.clone()) {
-                continue;
-            }
-            if let Some(neighbors) = edge_neighbors.get(&current_id) {
-                next.extend(neighbors.iter().cloned());
             }
         }
         frontier = next;
