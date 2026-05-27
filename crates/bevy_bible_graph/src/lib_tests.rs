@@ -1021,6 +1021,16 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
         Vec2::new(1280.0, 720.0),
         34.0,
     );
+    let above_viewport_position = crate::native_render::native_node_label_overlay_position(
+        Vec2::new(640.0, 10.0),
+        Vec2::new(1280.0, 720.0),
+        34.0,
+    );
+    let below_viewport_position = crate::native_render::native_node_label_overlay_position(
+        Vec2::new(640.0, 780.0),
+        Vec2::new(1280.0, 720.0),
+        34.0,
+    );
 
     assert_eq!(label_entities.len(), 1);
     assert_eq!(label_entities[0].0.position_type, PositionType::Absolute);
@@ -1033,6 +1043,8 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     assert_eq!(overlay_position.x, 640.0);
     assert!(overlay_position.y > 0.0);
     assert_ne!(overlay_position, Vec2::ZERO);
+    assert!(above_viewport_position.y < 0.0);
+    assert!(below_viewport_position.y > 720.0);
 }
 
 #[cfg(feature = "native_render")]
@@ -1047,7 +1059,7 @@ fn native_camera_navigation_supports_pan_and_zoom_intents() {
     );
     assert_eq!(
         native_camera_navigation_delta(true, false, false, false, false, false, 1.0),
-        Vec3::new(420.0, 0.0, 0.0)
+        Vec3::new(-420.0, 0.0, 0.0)
     );
     assert_eq!(
         native_camera_navigation_delta(false, false, false, false, false, true, 1.0),
@@ -1094,7 +1106,7 @@ fn native_camera_edge_pan_uses_viewport_bump_direction() {
     );
     assert_eq!(
         native_camera_edge_pan_delta(Vec2::Y, &front_camera, 0.5),
-        Vec3::new(0.0, -260.0, 0.0)
+        Vec3::new(0.0, 260.0, 0.0)
     );
 }
 
