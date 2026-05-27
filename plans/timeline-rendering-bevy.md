@@ -309,7 +309,8 @@ Current implementation progress:
   `timeline_playhead_changed` event, refreshes active graph/timeline renderer
   projections, and the Svelte projection handlers update `timelineState`
   from the backend event instead of deriving graph context from unsynchronized
-  Bevy-local state.
+  Bevy-local state. Renderer-issued playhead commands are clamped against the
+  current backend timeline projection before the event is emitted.
 - Completed: the temporary Svelte timeline ruler and playhead now request
   playhead movement through a typed desktop command. Dragging uses local preview
   state only; committed `timelineState.playheadMs` updates still come from the

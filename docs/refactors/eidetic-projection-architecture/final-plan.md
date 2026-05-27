@@ -3825,7 +3825,9 @@ Implementation order:
   local transient preview while interacting, but committed `playhead_ms` state
   is updated only from the backend `timeline_playhead_changed` event. The
   desktop command clamps requested positions against the backend timeline
-  projection duration instead of trusting frontend duration constants.
+  projection duration instead of trusting frontend duration constants, and the
+  native renderer command bridge applies the same clamp before accepting Bevy
+  `SetPlayhead` requests.
 - Remove the DOM/SVG timeline renderer and its tests only after Bevy and
   Svelte accessibility alternatives cover the target interactions.
 

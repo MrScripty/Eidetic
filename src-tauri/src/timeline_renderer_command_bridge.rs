@@ -3,8 +3,8 @@ use eidetic_core::contracts::{
     CommandEnvelope, CreateTimelineChildFromParentCommand, DeleteTimelineNodeCommand,
     SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
-use eidetic_server::command_service;
 use eidetic_server::state::AppState;
+use eidetic_server::{command_service, projection_service};
 use std::time::Duration;
 use tauri::Manager;
 
@@ -51,11 +51,28 @@ async fn handle_timeline_renderer_command(
         return Ok(());
     }
     if let TimelineRendererCommand::SetPlayhead { position_ms } = command {
-        state.set_timeline_playhead(position_ms);
+        set_timeline_playhead_from_renderer(state, position_ms).await?;
         return Ok(());
     }
 
     apply_timeline_renderer_command(state, command).await
+}
+
+async fn set_timeline_playhead_from_renderer(
+    state: &AppState,
+    position_ms: u64,
+) -> Result<(), String> {
+    let projection = projection_service::timeline_render_projection(state)
+        .await
+        .map_err(|error| error.to_string())?;
+    let position_ms =
+        clamp_timeline_renderer_playhead(position_ms, projection.payload.total_duration_ms);
+    state.set_timeline_playhead(position_ms);
+    Ok(())
+}
+
+fn clamp_timeline_renderer_playhead(position_ms: u64, total_duration_ms: u64) -> u64 {
+    position_ms.min(total_duration_ms)
 }
 
 async fn apply_timeline_renderer_command(
@@ -144,7 +161,10 @@ fn timeline_renderer_mutation_command(
 
 #[cfg(test)]
 mod tests {
-    use super::{TimelineRendererMutationCommand, timeline_renderer_mutation_command};
+    use super::{
+        TimelineRendererMutationCommand, clamp_timeline_renderer_playhead,
+        timeline_renderer_mutation_command,
+    };
     use eidetic_bevy_timeline::TimelineRendererCommand;
     use eidetic_core::contracts::DeleteTimelineNodeCommand;
     use eidetic_core::timeline::node::NodeId;
@@ -234,5 +254,11 @@ mod tests {
             }),
             None
         );
+    }
+
+    #[test]
+    fn clamps_renderer_playhead_commands_to_backend_projection_duration() {
+        assert_eq!(clamp_timeline_renderer_playhead(42_500, 120_000), 42_500);
+        assert_eq!(clamp_timeline_renderer_playhead(240_000, 120_000), 120_000);
     }
 }
