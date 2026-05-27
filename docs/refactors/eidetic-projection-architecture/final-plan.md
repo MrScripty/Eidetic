@@ -2398,6 +2398,10 @@ Verification:
 
 ## Milestone 8: Bible Graph And Context Influence View
 
+Status: Completed for backend-owned graph/context projection delivery and
+floating native renderer ownership. Product-level 3D graph viewer/editor work
+is tracked in Milestone 9 and should not be reopened as Milestone 8 scope.
+
 Current implementation status:
 
 - Completed foundation: `BibleRenderGraph`, context stack, context evaluation,
@@ -2423,16 +2427,13 @@ Current implementation status:
   bounded owner thread, a native runner handle, a supervisor state machine,
   projection refresh coalescing, and typed renderer-window status.
 
-Current open blockers:
+Resolved blockers:
 
 - The projection, context, and floating renderer ownership foundation is in
-  place, but the actual product graph experience is not complete. The current
-  floating Bevy window is a 2D/sprite-based native renderer proof with basic
-  labels, colors, selection, panning, lifecycle, and projection handoff. It is
-  not yet the target 3D graph.
-- A dedicated 3D bible graph experience milestone now follows this milestone
-  before agent harness work. Agent tooling must not depend on the graph being
-  "done" until that milestone provides a usable 3D visual surface.
+  place and no longer blocks graph product work.
+- The previous product-graph blocker moved to Milestone 9, where the native 3D
+  graph viewer/editor scope has since been implemented for the current
+  architecture.
 
 Standards compliance review:
 
@@ -2457,7 +2458,7 @@ Standards compliance review:
   plan first. Shared contracts, status enums, generated schemas, lockfiles, and
   renderer lifecycle integration are serial ownership points.
 
-Remaining tasks:
+Maintenance requirements:
 
 - Keep Tauri/Rust/TypeScript renderer contracts updated together. Any status,
   command, event, or projection wire-shape change must include strict boundary
@@ -2565,7 +2566,7 @@ Context model:
   influence path, or context layer must not be squeezed through
   `selectedGraphNodeId` or broad durable frontend objects.
 
-Implementation order:
+Implementation status:
 
 Completed foundation, do not reimplement unless verification fails:
 
@@ -2660,14 +2661,14 @@ Completed foundation, do not reimplement unless verification fails:
   backend projections, left-click selection emits backend-owned renderer
   commands, and WASD/arrow-key panning moves the Bevy graph camera.
 
-Remaining implementation order:
+Completion notes:
 
-1. Keep Svelte graph filters, details, review, and semantic outline
-   projection-only as secondary controls/accessibility surfaces.
-2. Treat Milestone 8 as implementation-complete only for backend-owned graph
-   projection delivery, context influence projection, and native floating
-   renderer ownership.
-3. Move product graph work into Milestone 9: true 3D scene, 3D layout,
+1. Svelte graph filters, details, review, and semantic outline remain
+   projection-only secondary controls/accessibility surfaces.
+2. Milestone 8 is implementation-complete for backend-owned graph projection
+   delivery, context influence projection, and native floating renderer
+   ownership.
+3. Product graph work moved to Milestone 9: true 3D scene, 3D layout,
    navigation, edge readability, labels, selection highlighting, and usable
    graph editing/inspection workflows.
 
@@ -2964,6 +2965,11 @@ Exit criteria:
 
 ## Milestone 9: Native 3D Bible Graph Experience
 
+Status: Completed for the current native 3D bible graph viewer/editor scope.
+Future graph work, such as richer editing affordances, saved layouts, advanced
+label-density controls, or deeper performance budgets, should be planned as
+new milestones instead of reopening this milestone.
+
 Purpose:
 
 - Turn the renderer foundation from Milestone 8 into a usable 3D spatial graph
@@ -2976,50 +2982,61 @@ Purpose:
   Bevy owns transient camera, hover, animation, selection preview, and local
   layout simulation only.
 
-Tasks:
+Completed tasks:
 
-- Replace the current 2D/sprite renderer proof with a true 3D Bevy graph scene:
+- Replaced the 2D/sprite renderer proof with a true 3D Bevy graph scene:
   `Camera3d`, 3D node meshes, depth-aware positions, 3D edge geometry, lighting,
   and bounds-aware framing.
-- Render structural edges from backend projections so canonical roots and
+- Rendered structural edges from backend projections so canonical roots and
   parent/child relationships are visible even before the user adds semantic
   bible relationships.
-- Render explicit bible graph edges with distinct styles from structural edges:
+- Rendered explicit bible graph edges with distinct styles from structural edges:
   semantic relationship edges, timeline/context edges, influence edges, and
   proposal edges must be visually distinguishable.
-- Add bounded label behavior modeled after the whip-docs graph: labels for
+- Added bounded label behavior modeled after the whip-docs graph: labels for
   selected/focused nodes, nearby nodes, canonical roots, and search matches;
   avoid labeling every distant node by default.
-- Started: the 3D bible graph visual snapshot now derives bounded label
+- Completed: the 3D bible graph visual snapshot now derives bounded label
   visibility from backend projection state. Selected/highlighted/adjacent
   nodes and system-owned canonical roots keep labels, while distant unfocused
   nodes in larger projections are hidden before native Bevy label entities are
   displayed.
-- Add selection highlighting: selected node, incident edges, adjacent nodes,
+- Added selection highlighting: selected node, incident edges, adjacent nodes,
   second-level neighborhood labels, graph-distance dimming, and selected edge/
   influence highlighting.
 - Completed: bible graph category colors are backend-owned contract data.
   `eidetic-core` owns category fill colors, schema/category projections expose
   those colors to Svelte, and the Bevy graph visual snapshots consume the same
   contract palette instead of a renderer-local duplicate.
-- Add usable camera/navigation controls: orbit, pan, zoom, frame selection,
+- Added usable camera/navigation controls: orbit, pan, zoom, frame selection,
   focus selected neighborhood, clear focus, and keyboard graph navigation.
 - Completed: backend-owned camera command intents for reset, fit, frame node,
   frame edge, frame influence, node navigation, and neighborhood navigation now
   route through the Bevy graph app, native runner, floating window control,
   Tauri command boundary, and TypeScript API. These are transient renderer
   presentation commands, not Svelte-owned durable graph facts.
-- Started: native Bevy graph viewport input now follows a Blender-style
+- Completed: native Bevy graph viewport input now follows a Blender-style
   interaction model: middle-button drag orbits around the current view center,
   shift+middle-button drag pans, scroll wheel moves the camera
   forward/backward, period frames the selected node, left click selects
   nodes/edges, delete emits a selected-node delete intent, and insert emits a
   create-connected-node intent. Delete/create still cross the existing backend
   command APIs and wait for refreshed backend projections.
-- Add tested hit testing for nodes and edges using Bevy ray picking or an
+- Completed: native graph labels now render through the Bevy UI/text pipeline
+  with a default font, backend-projected label text/color/visibility, camera-
+  synchronized projection, and unclamped off-screen behavior so labels move
+  with their nodes instead of sticking to viewport edges.
+- Completed: native graph selection now shows a screen-space outline, dims
+  unrelated nodes without hiding them, supports background-click deselection,
+  and keeps selected/adjacent context visible.
+- Completed: native graph camera controls now cover middle-button orbit,
+  shift+middle-button camera-relative pan, scroll zoom, cursor-edge pan,
+  keyboard pan, selected-node framing, and backend-issued camera commands for
+  agent or UI navigation.
+- Added tested hit testing for nodes and edges using Bevy ray picking or an
   equivalent renderer-local selection index. Selection output must still become
   typed backend/desktop renderer commands.
-- Keep Svelte as the durable editor surface for add/edit/remove node fields,
+- Kept Svelte as the durable editor surface for add/edit/remove node fields,
   create/remove edges, inspect details, review proposals, and keyboard
   alternatives. Direct Bevy editing can be added only as backend commands that
   wait for confirmed projections.
@@ -3028,45 +3045,45 @@ Tasks:
   ensures canonical roots, sends a backend create command, refreshes the render
   projection, and selects the confirmed node projection without optimistic
   graph mutation.
-- Add graph workspace controls for view mode, category filter, edge-kind
+- Added graph workspace controls for view mode, category filter, edge-kind
   filter, search, selected-clip/playhead context, frame selected, and focus
   neighborhood. These controls may own local drafts only.
-- Add active-context and playhead/clip highlighting so selecting a timeline
+- Added active-context and playhead/clip highlighting so selecting a timeline
   clip can show which bible nodes, edges, parent contexts, and distilled
   context layers influence that point.
-- Add empty-bible usability: canonical scaffold/category roots are visible,
+- Added empty-bible usability: canonical scaffold/category roots are visible,
   adding the first character/location/object is obvious from Svelte controls,
   and the graph never appears as disconnected unexplained squares.
-- Port the reference architecture conceptually into Rust/Bevy: pure layout
+- Ported the reference architecture conceptually into Rust/Bevy: pure layout
   helpers, selection index, neighborhood/highlight derivation, visibility
   filtering, camera framing helpers, and renderer systems separated from graph
   domain services.
-- Preserve the shared floating renderer host from Milestone 8. Do not add a
+- Preserved the shared floating renderer host from Milestone 8. Do not add a
   second renderer lifecycle, local HTTP/WebSocket transport, WASM bridge,
   WebView child-surface path, split-process renderer sidecar, or frontend-owned
   projection writer.
 
-Implementation order:
+Implementation status:
 
-- Define the render-facing visual model for 3D nodes, structural edges,
+- Completed: define the render-facing visual model for 3D nodes, structural edges,
   semantic edges, labels, selected/highlighted/dimmed states, and camera
   framing before changing Bevy systems.
-- Add pure Rust layout and selection-index helpers adapted from the whip-docs
+- Completed: add pure Rust layout and selection-index helpers adapted from the whip-docs
   concepts, with tests independent of Bevy rendering.
-- Extend backend `BibleRenderGraph` projections only if the current contract
-  lacks renderer-neutral data required for structural edges, edge classes,
-  label priority, or active context highlights. Keep all such fields bounded
-  and validated.
-- Replace the native 2D graph scene with the smallest true 3D slice: canonical
+- Completed: extend backend `BibleRenderGraph` projections where the previous
+  contract lacked renderer-neutral data required for structural edges, edge
+  classes, label priority, and active context highlights. Keep all such fields
+  bounded and validated.
+- Completed: replace the native 2D graph scene with the smallest true 3D slice: canonical
   roots, one user node, one structural edge, one semantic edge, labels for
   focused nodes, orbit/pan/zoom, and node selection.
-- Add neighborhood highlighting, edge selection, framing, focus mode, and
+- Completed: add neighborhood highlighting, edge selection, framing, focus mode, and
   search/filter-driven projection refresh after the basic 3D slice is stable.
-- Add playhead/selected-clip influence highlighting after graph selection and
+- Completed: add playhead/selected-clip influence highlighting after graph selection and
   labels are usable.
-- Keep Svelte detail/edit/review controls available throughout. Bevy visual
+- Completed: keep Svelte detail/edit/review controls available throughout. Bevy visual
   actions must have semantic Svelte command alternatives for accessibility.
-- Update `crates/bevy_bible_graph/README.md`, layout/sidebar READMEs, and this
+- Completed: update `crates/bevy_bible_graph/README.md`, layout/sidebar READMEs, and this
   plan whenever ownership, view modes, renderer commands, or dependency
   features change.
 
@@ -3160,6 +3177,11 @@ Exit criteria:
   on graph/context projections without hiding basic graph usability gaps.
 
 ## Milestone 10: Agent Harness And Graph Tooling
+
+Status: Completed for the backend-owned agent harness and graph tooling
+foundation. Future live-provider workflows, richer acceptance UX, and
+Pantograph integration should be planned as follow-up milestones instead of
+reopening the harness foundation.
 
 Tasks:
 
@@ -3356,6 +3378,11 @@ Exit criteria:
 
 ## Milestone 11: Affect Model And Prompting Semantics
 
+Status: Completed for backend-owned affect contracts, persistence,
+proposal/review flows, prompt integration, and timeline overlay projections.
+Future work should focus on richer analysis, undo/redo review UX, and renderer
+polish as follow-up milestones.
+
 Tasks:
 
 - Add backend-owned affect contracts for valence, arousal, mood labels,
@@ -3484,149 +3511,161 @@ Exit criteria:
 
 ## Milestone 12: Bevy Timeline Renderer
 
-Tasks:
+Status: In progress. The native Bevy timeline has an active floating-window
+host, projection ingestion, projection-derived visuals, renderer-local
+navigation/playhead state, command emission, relationship visuals, affect
+overlay visuals, and lifecycle smoke coverage. The remaining milestone work is
+to finish the product renderer experience and remove the DOM/SVG timeline only
+after Bevy covers the target interactions.
 
-- Upgrade renderer planning and crates to Bevy 0.18.1 with a fresh dependency
+Completed tasks:
+
+- Completed: upgrade renderer planning and crates to Bevy 0.18.1 with a fresh dependency
   review before enabling render/window/input/text features.
-- Add renderer-facing timeline projection DTOs only where the existing
+- Completed: add renderer-facing timeline projection DTOs only where the existing
   backend-owned `TimelineRenderProjection` is insufficient.
-- Add native Bevy timeline host as an isolated leaf renderer managed by the
+- Completed: add native Bevy timeline host as an isolated leaf renderer managed by the
   same floating renderer host pattern used by the bible graph.
-- Add pan, zoom, playhead, selection, hit testing, move, resize, split, arcs,
+- Completed: add pan, zoom, playhead, selection, hit testing, move, resize, split, arcs,
   relationship curves, and affect overlays through backend-confirmed commands
   and projections.
-- Add keyboard-accessible Svelte command alternatives for critical timeline operations.
+- Completed: add keyboard-accessible Svelte command alternatives for critical
+  timeline operations.
+
+Remaining tasks:
+
+- Finish product validation for the visible Bevy timeline renderer.
 - Remove the DOM/SVG timeline renderer after Bevy covers target interactions.
 
 Implementation order:
 
-- Confirm existing backend-owned `TimelineRenderProjection` and timeline
+- Completed: confirm existing backend-owned `TimelineRenderProjection` and timeline
   command contracts cover the native renderer slice. Add renderer-facing DTOs
   only for missing renderer-neutral data, and define them before native host
   work.
-- Remove remaining WASM renderer bridges and wasm-only dependency paths before
+- Completed: remove WASM renderer bridges and wasm-only dependency paths before
   introducing the native Tauri-owned Bevy host as the supported desktop path.
-- Reuse the floating renderer host from Milestone 8 for the timeline renderer
+- Completed: reuse the floating renderer host from Milestone 8 for the timeline renderer
   window. Timeline work may add timeline-specific renderer state, but must not
   add a second lifecycle, focus, input, or command-drain framework.
 - Do not reintroduce embedded viewport, WebView child-surface, WASM, local
   HTTP/WebSocket, or split-process renderer-sidecar paths while replacing the
   timeline. If the Milestone 8 host cannot support timeline needs, re-plan the
   shared floating host contract before adding timeline-specific infrastructure.
-- Add the native Bevy timeline host as a leaf renderer managed in the desktop
+- Completed: add the native Bevy timeline host as a leaf renderer managed in the desktop
   composition root through that shared floating renderer host.
-- Started: desktop now has a narrow `DesktopTimelineHost` boundary around the
+- Completed: desktop now has a narrow `DesktopTimelineHost` boundary around the
   `eidetic-bevy-timeline` leaf renderer. It ingests backend timeline
   projections, reports scene counts/status, and drains renderer command
   requests without owning durable timeline state. Native floating-window
   lifecycle integration remains the next host slice.
-- Started: Tauri now manages a bounded desktop timeline renderer owner and
+- Completed: Tauri now manages a bounded desktop timeline renderer owner and
   exposes open/status/close commands. Opening the renderer seeds the
   thread-owned Bevy host from the backend `TimelineRenderProjection`; no
   UI-local timeline state, HTTP transport, renderer-side persistence, or
   unsafe non-`Send` Bevy state in Tauri managed state is introduced. Native
   visible-window lifecycle remains a follow-up slice.
-- Started: Svelte now has typed helpers for the desktop timeline renderer
+- Completed: Svelte now has typed helpers for the desktop timeline renderer
   open/status/close commands. These helpers only invoke the Tauri-owned
   renderer lifecycle and mirror returned status; they do not introduce
   frontend-owned renderer state or optimistic timeline mutation.
-- Started: the timeline toolbar now exposes compact keyboard-accessible
+- Completed: the timeline toolbar now exposes compact keyboard-accessible
   renderer lifecycle controls backed by the Tauri timeline renderer commands.
   The toolbar stores only the latest returned status projection for display and
   does not own timeline clips, viewport state, or renderer commands.
-- Started: desktop now drains timeline renderer command intents on the backend
+- Completed: desktop now drains timeline renderer command intents on the backend
   side and applies durable range/delete/create/split mutations through
   `command_service`. The create/split gap was resolved by adding explicit
   backend service entry points for core command envelopes, avoiding ad hoc JSON
   construction around private request DTOs. Selection remains transient UI
   focus.
-- Started: timeline renderer selection now emits a distinct
+- Completed: timeline renderer selection now emits a distinct
   `select_timeline_node` desktop event and Svelte applies it only to transient
   editor focus. The event type is intentionally separate from graph
   `select_node` commands so timeline node IDs cannot be misrouted as bible
   graph node selections.
-- Started: desktop now subscribes the open timeline renderer to backend
+- Completed: desktop now subscribes the open timeline renderer to backend
   timeline projection refresh events. Timeline, hierarchy, and context
   influence changes re-seed the thread-owned Bevy host from
   `TimelineRenderProjection` only when the renderer is running, keeping refresh
   ownership in the backend and avoiding stale renderer state after
   command-drain mutations or external timeline changes.
-- Started: the Bevy timeline leaf crate now records the Bevy 0.18.1 dependency
+- Completed: the Bevy timeline leaf crate now records the Bevy 0.18.1 dependency
   review and has a guard test that keeps render/window/text/UI features
   disabled until a future visible-window slice performs an explicit dependency
   review. Current Bevy usage remains leaf-scoped with `default-features = false`
   and `features = ["std"]`.
-- Started: the Bevy timeline leaf crate now maps validated viewport pixel
+- Completed: the Bevy timeline leaf crate now maps validated viewport pixel
   coordinates through the current transient viewport into backend-projected
   tracks and clips. This gives future native pointer handling a tested
   projection-only hit-test path without introducing renderer-owned timeline
   layout, DOM/SVG logic, or Bevy render/window features.
-- Started: Svelte now has a keyboard command surface for selected timeline
+- Completed: Svelte now has a keyboard command surface for selected timeline
   delete, split-at-playhead, nudge, and edge resize operations. The shortcuts
   call the same backend-confirmed command/projection path as the renderer
   command bridge, skip text inputs through the existing shortcut registry, and
   do not mutate durable timeline projections optimistically.
-- Started: timeline renderer status now separates scene readiness from native
+- Completed: timeline renderer status now separates scene readiness from native
   window readiness/visibility. Until the visible Bevy window runner lands, the
   backend explicitly reports a ready headless scene with no connected native
   window instead of implying that `running` means visible.
-- Started: timeline renderer lifecycle status and focus command now exist on
+- Completed: timeline renderer lifecycle status and focus command now exist on
   the same desktop-owned boundary as open/status/close. The current headless
   host reports `scene_ready_pending_native_runner` and `focus_supported=false`
   until the visible Bevy runner is connected, giving the next slice a stable
   contract without adding fallback transports or frontend-owned renderer state.
-- Started: renderer window lifecycle derivation is now shared desktop renderer
+- Completed: renderer window lifecycle derivation is now shared desktop renderer
   infrastructure instead of graph-only status code. Graph and timeline hosts
   both use the same `closed`, `scene_starting`,
   `scene_ready_pending_native_runner`, and `visible` lifecycle semantics while
   keeping graph-specific platform/capability strategy separate.
-- Started: renderer runner lifecycle vocabulary is now shared desktop renderer
+- Completed: renderer runner lifecycle vocabulary is now shared desktop renderer
   infrastructure instead of graph-only native runner code. The existing graph
   runner keeps its public alias while timeline can attach `closed`,
   `open_requested`, and `visible` runner lifecycle status without inventing
   timeline-specific state names.
-- Started: timeline renderer status now includes the shared runner lifecycle
+- Completed: timeline renderer status now includes the shared runner lifecycle
   field and reports `closed` while its scene remains headless. This keeps the
   status contract ready for the visible shared runner without mixing scene
   readiness and native runner readiness.
-- Started: renderer threading model vocabulary is now shared desktop renderer
+- Completed: renderer threading model vocabulary is now shared desktop renderer
   infrastructure instead of graph-only platform strategy code. Timeline native
   runner planning can reuse `worker_thread`, `main_thread`, and `unsupported`
   without duplicating graph-specific aliases.
-- Started: renderer window platform and capability enums are now shared desktop
+- Completed: renderer window platform and capability enums are now shared desktop
   renderer infrastructure. Graph keeps its public aliases and platform strategy
   policy, while timeline can report the same support and capability statuses
   when the visible shared runner is attached.
-- Started: timeline renderer status now reports shared platform, capability,
+- Completed: timeline renderer status now reports shared platform, capability,
   capability reason, threading model, and visible-support fields. The current
   headless timeline host reports `pending_native_runner` and unsupported
   threading until a real shared native runner is connected.
-- Started: renderer window strategy vocabulary is now shared desktop renderer
+- Completed: renderer window strategy vocabulary is now shared desktop renderer
   infrastructure, and timeline status reports the same
   `bevy_winit_floating_window` strategy that graph uses for floating native
   Bevy renderers.
-- Started: renderer window strategy status is now shared desktop renderer
+- Completed: renderer window strategy status is now shared desktop renderer
   infrastructure. The graph host keeps its public status alias while the
   strategy/capability/support tuple is no longer graph-owned vocabulary.
-- Started: renderer supervisor lifecycle vocabulary is now shared desktop
+- Completed: renderer supervisor lifecycle vocabulary is now shared desktop
   renderer infrastructure. The graph supervisor keeps its public alias while
   `not_started`, `starting`, `running`, `closing`, `closed`, and `failed`
   runner-owner states are no longer graph-only names.
-- Started: shared renderer window strategy status now owns pending-native-runner
+- Completed: shared renderer window strategy status now owns pending-native-runner
   and runner-error status constructors. Timeline status uses those shared
   constructors instead of hardcoding capability/support tuples in the timeline
   host.
-- Started: the Bevy timeline leaf crate now has an explicit `native_render`
+- Completed: the Bevy timeline leaf crate now has an explicit `native_render`
   feature gate for the reviewed desktop render/window stack. The feature is off
   by default, excludes text/UI/audio, and keeps render/window dependencies out
   of normal projection-only timeline builds until the visible-window slice uses
   it.
-- Started: the Bevy timeline leaf crate now exposes the first feature-gated
+- Completed: the Bevy timeline leaf crate now exposes the first feature-gated
   native window control API: minimal runner config, controlled app
   configuration, close/show/hide requests, and ready/visible signaling. This is
   renderer-local lifecycle plumbing only; timeline projections, commands, and
   desktop host integration remain separate slices.
-- Started: desktop now has a separate timeline native window thread wrapper
+- Completed: desktop now has a separate timeline native window thread wrapper
   for the feature-gated Bevy timeline window API. It mirrors the graph host's
   panic-safe thread completion, bounded close, ready, visible, and
   close-request reporting without adding projection storage or business logic
@@ -3635,153 +3674,153 @@ Implementation order:
   decomposition threshold. New timeline native-window infrastructure must stay
   in focused modules and the host should be split before visible runner
   integration adds more responsibilities.
-- Started: the desktop timeline renderer owner/request loop has been extracted
+- Completed: the desktop timeline renderer owner/request loop has been extracted
   from `bevy_timeline_host.rs` into a focused owner module while preserving the
   existing public owner import path. This keeps the leaf timeline host focused
   on projection ingestion, renderer command draining, and status derivation
   before visible native-window integration lands.
-- Started: desktop now has a timeline renderer platform strategy and startup
+- Completed: desktop now has a timeline renderer platform strategy and startup
   plan for the native Bevy window path. Linux worker-thread support is treated
   as verified to match the graph renderer host, macOS/Windows remain unproven,
   unsupported platforms stay pending-only, and the strategy produces timeline
   native-window configs without launching the renderer.
-- Started: timeline renderer status now derives platform, capability, support
+- Completed: timeline renderer status now derives platform, capability, support
   flags, and runner threading model from the timeline native-window platform
   strategy while still reporting the native runner as closed/not visible until
   the visible runner is attached.
-- Started: desktop now has a timeline native-window supervisor with injected
+- Completed: desktop now has a timeline native-window supervisor with injected
   thread tests for open, refresh, bounded shutdown, unsupported platforms, and
   panic reporting. It owns only renderer-window lifecycle/status and does not
   store timeline projections, commands, or durable state.
-- Started: the desktop timeline host now attaches that native-window
+- Completed: the desktop timeline host now attaches that native-window
   supervisor at the backend-owned renderer boundary. Explicit open seeds the
   scene and opens the floating Bevy window, projection refresh only re-seeds
   disposable renderer scene state, and close/stop tears down both without
   adding frontend-owned renderer state or a fallback transport.
-- Started: the native timeline window runner can receive the backend-owned
+- Completed: the native timeline window runner can receive the backend-owned
   `TimelineRenderProjection` at open time and build disposable Bevy ECS scene
   entities inside the floating window app. This keeps initial visible-window
   content projection-driven while later slices add live projection refresh,
   input systems, and actual render geometry.
-- Started: the native timeline window control path now includes a bounded
+- Completed: the native timeline window control path now includes a bounded
   projection-update queue. Backend projection refreshes update the headless
   timeline host and, when a floating window is open, enqueue the latest
   projection for the native Bevy app to rebuild disposable ECS scene state
   without reopening the window or adding renderer-owned durable state.
-- Started: the native timeline window now creates projection-derived 2D Bevy
+- Completed: the native timeline window now creates projection-derived 2D Bevy
   clip rectangle visuals with a camera and disposable visual entities rebuilt
   from backend projections. This is the first visible render geometry slice and
   intentionally does not add native input handling, labels, arcs, or renderer
   persistence yet.
-- Started: timeline hit testing is now shared as projection-only helper
+- Completed: timeline hit testing is now shared as projection-only helper
   functions used by the headless renderer app. This avoids duplicating
   clip-picking math when native Bevy input begins emitting validated selection
   commands from the floating window.
-- Started: the native timeline window now has a bounded renderer-command queue
+- Completed: the native timeline window now has a bounded renderer-command queue
   and can emit validated `SelectNode` commands from projection-only clip hit
   tests. The desktop host drains native window commands through the existing
   backend-owned command bridge instead of adding a frontend-owned input path.
-- Started: native timeline visuals now use a transient renderer viewport
+- Completed: native timeline visuals now use a transient renderer viewport
   resource when mapping backend-projected clips into Bevy coordinates, with
   validation for invalid viewport ranges. This prepares native pan/zoom without
   making viewport state durable or frontend-owned.
-- Started: native timeline keyboard navigation can now pan and zoom that
+- Completed: native timeline keyboard navigation can now pan and zoom that
   transient viewport with Bevy key input and rebuild projection-derived clip
   visuals. The viewport remains renderer-local and disposable; durable timeline
   data still comes only from backend projections.
-- Started: the native timeline window now renders a disposable playhead visual
+- Completed: the native timeline window now renders a disposable playhead visual
   from bounded renderer-local playhead state and the current transient
   viewport. The playhead visual is rebuilt with projection-derived clip visuals
   and rejects positions outside the backend projection duration.
-- Started: native timeline keyboard input can now nudge that transient playhead
+- Completed: native timeline keyboard input can now nudge that transient playhead
   left and right within the backend projection duration, rebuilding disposable
   Bevy visuals without mutating durable timeline data.
-- Started: the native timeline window API can now emit validated node range
+- Completed: the native timeline window API can now emit validated node range
   command requests from the active backend projection, giving later Bevy
   drag/resize interactions a backend-owned mutation path without introducing
   renderer-side timeline ownership.
-- Started: the native timeline window API can now emit validated delete-node
+- Completed: the native timeline window API can now emit validated delete-node
   command requests only for nodes present in the active backend projection,
   preserving the existing desktop command bridge as the mutation boundary.
-- Started: the native timeline window API can now emit validated split-node
+- Completed: the native timeline window API can now emit validated split-node
   command requests only for split points inside the projected clip and fresh
   replacement node IDs, keeping split mutation semantics at the backend bridge.
-- Started: the native timeline window API can now emit validated create-node
+- Completed: the native timeline window API can now emit validated create-node
   command requests only when parent references and requested ranges are valid
   for the active backend projection, completing the first native command
   primitive set for later Bevy create interactions.
-- Started: native timeline command validation has been extracted from the
+- Completed: native timeline command validation has been extracted from the
   native window renderer module into a focused `native_command.rs` module. This
   keeps command validation near the renderer command boundary while reducing
   the native window module's lifecycle/visual/input responsibilities.
-- Started: native clip visuals now carry projected story level, lock state,
+- Completed: native clip visuals now carry projected story level, lock state,
   content status, and deterministic renderer colors. The color selection is
   derived only from the active backend projection and does not introduce
   renderer-owned timeline semantics.
-- Started: native timeline visuals now render disposable relationship
+- Completed: native timeline visuals now render disposable relationship
   connectors from backend-projected relationship endpoints and relationship
   types. Connectors are rebuilt from projection snapshots and remain separate
   from durable relationship state.
-- Started: native timeline visuals now render disposable affect overlay bars
+- Completed: native timeline visuals now render disposable affect overlay bars
   from backend-projected affect samples, valence, and intensity. Affect
   rendering remains read-only projection work and does not duplicate affect
   model ownership in Bevy.
-- Started: native timeline styling decisions have been extracted into a
+- Completed: native timeline styling decisions have been extracted into a
   focused `native_style.rs` module so color and size mapping stays separate
   from Bevy window lifecycle, input handling, and visual entity spawning.
-- Started: selected timeline node ownership has moved to backend transient
+- Completed: selected timeline node ownership has moved to backend transient
   state and is included in `TimelineRenderProjection`. Native Bevy selection
   commands now update that backend selection, backend events refresh timeline
   and graph projections, and the native timeline renderer highlights selected
   clips only from the projected selected node ID instead of Svelte-owned focus.
-- Started: native timeline delete interaction can now emit a validated delete
+- Completed: native timeline delete interaction can now emit a validated delete
   request for the backend-projected selected clip. Delete/backspace input in the
   Bevy timeline window reads only projection state, validates the selected clip
   against the active projection, and leaves the actual timeline mutation at the
   backend command bridge.
-- Started: native timeline split interaction can now emit a validated split
+- Completed: native timeline split interaction can now emit a validated split
   request for the backend-projected selected clip at the renderer-local
   playhead. The Bevy window generates fresh replacement node IDs, validates the
   split against the active projection, and still leaves mutation and projection
   confirmation at the backend command bridge.
-- Started: native timeline selected-clip nudge can now emit validated node
+- Completed: native timeline selected-clip nudge can now emit validated node
   range commands from backend-projected selection. Ctrl+left/right in the Bevy
   timeline window requests a bounded move through the backend command bridge,
   while plain arrow keys remain renderer-local viewport navigation.
-- Started: timeline renderer window controls now derive labels and disabled
+- Completed: timeline renderer window controls now derive labels and disabled
   state through focused projection-only helpers and expose explicit accessible
   names on icon buttons. Tests cover status labels and pending/running/focus
   availability without adding frontend renderer ownership.
-- Started: timeline renderer host lifecycle coverage now proves unavailable
+- Completed: timeline renderer host lifecycle coverage now proves unavailable
   native runner owners report backend-owned unavailable status, drain no
   commands, and stop idempotently without starting a renderer thread.
-- Started: native timeline selected-clip resize can now emit validated node
+- Completed: native timeline selected-clip resize can now emit validated node
   range commands from backend-projected selection. Ctrl+shift+left/right
   resizes the selected clip start, ctrl+alt+left/right resizes the selected
   clip end, and all requests are clamped to the active backend projection
   before entering the backend command bridge.
-- Started: native timeline relationship creation now rejects same-node
+- Completed: native timeline relationship creation now rejects same-node
   endpoints in both the headless renderer app API and native window command
   API before emitting mutation intents. This keeps invalid relationship
   commands out of the renderer queue while leaving relationship semantics and
   persistence at the backend command boundary.
-- Started: native timeline relationship creation now has a Bevy pointer
+- Completed: native timeline relationship creation now has a Bevy pointer
   gesture. Ctrl+shift+click on a projected clip emits a thematic relationship
   request from the backend-projected selected clip to the clicked clip after
   projection-only endpoint validation; the renderer still does not own
   relationship persistence or business semantics.
-- Started: native timeline input systems have been extracted into a focused
+- Completed: native timeline input systems have been extracted into a focused
   `native_input.rs` module. Keyboard and pointer systems still read only the
   active backend projection plus transient renderer viewport/playhead state and
   emit validated command requests, while native window lifecycle and visual
   projection remain in the renderer module.
-- Started: native timeline visual projection has been extracted into focused
+- Completed: native timeline visual projection has been extracted into focused
   `native_visual.rs` and renderer-local window control signaling has been
   extracted into `native_window_control.rs`. The native render module now owns
   app configuration, projection ingestion, viewport/playhead mutation, and
   lifecycle systems while visual geometry and bounded control queues remain
   separate responsibilities.
-- Started: the headless timeline renderer app has been extracted into focused
+- Completed: the headless timeline renderer app has been extracted into focused
   `app.rs`. The public crate root now owns only exports, command/error
   contracts, and module wiring, keeping future native interaction work from
   expanding the crate root past the decomposition threshold.
@@ -3790,12 +3829,12 @@ Implementation order:
   command emission, native lifecycle, and split-command coverage in focused
   submodules. The parent `tests.rs` now owns only the Bevy feature guard and
   shared projection fixtures.
-- Started: desktop timeline renderer command draining and backend mutation
+- Completed: desktop timeline renderer command draining and backend mutation
   mapping have been extracted from the broad desktop event bridge into focused
   `timeline_renderer_command_bridge.rs`. The bridge still applies selection
   through backend transient state and durable mutations through
   `command_service`; no frontend-owned state or alternate transport was added.
-- Started: the desktop binary now has a `--timeline-renderer-smoke` lifecycle
+- Completed: the desktop binary now has a `--timeline-renderer-smoke` lifecycle
   probe mirroring the graph renderer smoke path. It opens the desktop-owned
   timeline renderer with a minimal backend projection, observes status/focus/
   close/reopen/project-close/app-shutdown transitions, and serializes backend
@@ -3812,10 +3851,10 @@ Implementation order:
   threshold because host adapter tests lived inline with production lifecycle
   code. Timeline host and owner coverage now lives in
   `bevy_timeline_host_tests.rs`, keeping the host adapter focused.
-- Add the smallest native renderer vertical slice: receive a projection, build
+- Completed: add the smallest native renderer vertical slice: receive a projection, build
   disposable ECS render state, hit-test one clip, emit one validated command,
   and apply the returned backend projection.
-- Add pan/zoom/playhead/selection/move/resize/split/delete/create interactions
+- Completed: add pan/zoom/playhead/selection/move/resize/split/delete/create interactions
   through backend-confirmed commands before adding arcs, relationship curves,
   or affect overlays.
 - Resolved finding: the native renderer has a validated low-level create-node command
@@ -3836,11 +3875,11 @@ Implementation order:
   payload. The Bevy leaf crate validates only that the parent exists in the
   active projection, and the desktop command bridge maps the intent into the
   server command path that derives durable timeline fields.
-- Started: native timeline keyboard input can now emit a backend-owned
+- Completed: native timeline keyboard input can now emit a backend-owned
   child-create intent for the projected selected clip. Ctrl+N in the Bevy
   window requests a new child under the selected timeline node, while durable
   level, name, range, and beat defaults remain derived by `eidetic-server`.
-- Started: native timeline renderer command contracts now include a validated
+- Completed: native timeline renderer command contracts now include a validated
   create-relationship primitive. The Bevy leaf crate validates projected
   endpoints before enqueueing the command, and the desktop command bridge maps
   it to the backend timeline relationship command path. The headless renderer
@@ -3848,12 +3887,12 @@ Implementation order:
   Native input now binds Ctrl+shift+click on a projected clip to create a
   thematic relationship from the backend-projected selected clip to the clicked
   clip.
-- Add affect overlays only after Milestone 11 provides backend-owned affect
+- Completed: add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
-- Started: the Bevy timeline leaf crate now consumes backend
+- Completed: the Bevy timeline leaf crate now consumes backend
   `affect_overlays` into disposable ECS scene entities and exposes overlay
   counts for host smoke tests without persisting renderer-local affect state.
-- Started: native Bevy playhead navigation and the temporary Svelte ruler/
+- Completed: native Bevy playhead navigation and the temporary Svelte ruler/
   playhead controls now route committed playhead changes through the
   backend-owned transient playhead command/event path. Bevy and Svelte may show
   local transient preview while interacting, but committed `playhead_ms` state
