@@ -1006,16 +1006,16 @@ pub(crate) fn native_camera_navigation_delta(
     let mut zoom_direction = 0.0;
 
     if pan_left {
-        pan_direction.x -= 1.0;
-    }
-    if pan_right {
         pan_direction.x += 1.0;
     }
+    if pan_right {
+        pan_direction.x -= 1.0;
+    }
     if pan_up {
-        pan_direction.y += 1.0;
+        pan_direction.y -= 1.0;
     }
     if pan_down {
-        pan_direction.y -= 1.0;
+        pan_direction.y += 1.0;
     }
     if zoom_out {
         zoom_direction += 1.0;
@@ -1082,7 +1082,7 @@ pub(crate) fn native_camera_edge_pan_delta(
     let speed = NATIVE_CAMERA_EDGE_PAN_SPEED * scale * delta_seconds;
     let right = *camera_transform.right();
     let up = *camera_transform.up();
-    right * direction.x * speed + up * direction.y * speed
+    right * -direction.x * speed + up * -direction.y * speed
 }
 
 pub(crate) fn native_camera_reset_transform() -> Transform {

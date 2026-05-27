@@ -1047,7 +1047,7 @@ fn native_camera_navigation_supports_pan_and_zoom_intents() {
     );
     assert_eq!(
         native_camera_navigation_delta(true, false, false, false, false, false, 1.0),
-        Vec3::new(-420.0, 0.0, 0.0)
+        Vec3::new(420.0, 0.0, 0.0)
     );
     assert_eq!(
         native_camera_navigation_delta(false, false, false, false, false, true, 1.0),
@@ -1090,11 +1090,11 @@ fn native_camera_edge_pan_uses_viewport_bump_direction() {
     let front_camera = Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y);
     assert_eq!(
         native_camera_edge_pan_delta(Vec2::X, &front_camera, 1.0),
-        Vec3::new(520.0, 0.0, 0.0)
+        Vec3::new(-520.0, 0.0, 0.0)
     );
     assert_eq!(
         native_camera_edge_pan_delta(Vec2::Y, &front_camera, 0.5),
-        Vec3::new(0.0, 260.0, 0.0)
+        Vec3::new(0.0, -260.0, 0.0)
     );
 }
 
