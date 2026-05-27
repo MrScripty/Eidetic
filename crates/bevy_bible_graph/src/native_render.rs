@@ -1640,8 +1640,10 @@ pub(crate) fn native_standard_material(
     highlighted: bool,
     dimmed: bool,
 ) -> StandardMaterial {
+    let color = native_visual_state_color(color, selected, highlighted, dimmed);
     StandardMaterial {
-        base_color: native_visual_state_color(color, selected, highlighted, dimmed),
+        base_color: color,
+        emissive: color.to_linear(),
         unlit: true,
         ..Default::default()
     }

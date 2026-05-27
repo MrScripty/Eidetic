@@ -629,19 +629,28 @@ fn controlled_native_window_uses_backend_category_material_colors() {
                     .resource::<Assets<StandardMaterial>>()
                     .get(&material_handle.0)
                     .expect("node material should exist");
-                (node.fill_color, material.base_color, material.unlit)
+                (
+                    node.fill_color,
+                    material.base_color,
+                    material.emissive,
+                    material.unlit,
+                )
             })
             .collect::<Vec<_>>()
     };
 
+    let character_color = Color::srgb(100.0 / 255.0, 149.0 / 255.0, 237.0 / 255.0);
+    let location_color = Color::srgb(34.0 / 255.0, 197.0 / 255.0, 94.0 / 255.0);
     assert!(material_colors.contains(&(
         "#6495ed",
-        Color::srgb(100.0 / 255.0, 149.0 / 255.0, 237.0 / 255.0),
+        character_color,
+        character_color.to_linear(),
         true
     )));
     assert!(material_colors.contains(&(
         "#22c55e",
-        Color::srgb(34.0 / 255.0, 197.0 / 255.0, 94.0 / 255.0),
+        location_color,
+        location_color.to_linear(),
         true
     )));
 }
