@@ -421,6 +421,16 @@ fn renderer_app_3d_visual_snapshot_keeps_node_labels_visible() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_render_feature_enables_visible_text_pipeline() {
+    let manifest = include_str!("../Cargo.toml");
+
+    assert!(manifest.contains("\"bevy/bevy_ui\","));
+    assert!(manifest.contains("\"bevy/bevy_ui_render\","));
+    assert!(manifest.contains("\"bevy/default_font\","));
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_render_plugin_records_3d_window_scene_intent() {
     use bevy::prelude::{Plugin, With};
 

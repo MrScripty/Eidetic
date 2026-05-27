@@ -19,8 +19,10 @@ native_render = [
     "bevy/bevy_pbr",
     "bevy/bevy_text",
     "bevy/bevy_ui",
+    "bevy/bevy_ui_render",
     "bevy/bevy_window",
     "bevy/bevy_winit",
+    "bevy/default_font",
     "bevy/wayland",
     "bevy/x11",
 ]
