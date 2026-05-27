@@ -2990,6 +2990,11 @@ Tasks:
 - Add bounded label behavior modeled after the whip-docs graph: labels for
   selected/focused nodes, nearby nodes, canonical roots, and search matches;
   avoid labeling every distant node by default.
+- Started: the 3D bible graph visual snapshot now derives bounded label
+  visibility from backend projection state. Selected/highlighted/adjacent
+  nodes and system-owned canonical roots keep labels, while distant unfocused
+  nodes in larger projections are hidden before native Bevy label entities are
+  displayed.
 - Add selection highlighting: selected node, incident edges, adjacent nodes,
   second-level neighborhood labels, graph-distance dimming, and selected edge/
   influence highlighting.

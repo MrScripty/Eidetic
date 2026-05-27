@@ -387,6 +387,25 @@ fn renderer_visual_snapshots_share_category_fill_colors() {
     );
 }
 
+#[test]
+fn renderer_app_3d_visual_snapshot_bounds_unfocused_labels() {
+    let mut projection = projection_with_node_count(16);
+    projection.nodes[0].system_owned = true;
+    projection.nodes[0].label = "Characters".to_string();
+
+    let snapshot = build_bible_graph_visual_3d_snapshot(&projection);
+
+    assert_eq!(snapshot.nodes.len(), 16);
+    assert!(snapshot.nodes[0].label_visible);
+    assert!(
+        snapshot
+            .nodes
+            .iter()
+            .skip(1)
+            .all(|node| !node.label_visible)
+    );
+}
+
 #[cfg(feature = "native_render")]
 #[test]
 fn native_render_plugin_records_3d_window_scene_intent() {
@@ -788,7 +807,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
         node_states
             .iter()
             .any(|(id, selected, highlighted, dimmed, label_visible)| {
-                id == &unrelated_id && !*selected && !*highlighted && *dimmed && *label_visible
+                id == &unrelated_id && !*selected && !*highlighted && *dimmed && !*label_visible
             })
     );
     assert!(
@@ -796,7 +815,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
             .query::<(&BibleGraphNativeNodeLabelVisual, &Visibility)>()
             .iter(app.world())
             .any(|(label, visibility)| {
-                label.node_id == unrelated_id && visibility == &Visibility::Visible
+                label.node_id == unrelated_id && visibility == &Visibility::Hidden
             })
     );
     assert!(
