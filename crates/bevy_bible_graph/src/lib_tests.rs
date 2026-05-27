@@ -1059,6 +1059,10 @@ fn native_camera_navigation_supports_pan_and_zoom_intents() {
     );
     assert_eq!(
         native_camera_navigation_delta(true, false, false, false, false, false, 1.0),
+        Vec3::new(420.0, 0.0, 0.0)
+    );
+    assert_eq!(
+        native_camera_navigation_delta(false, true, false, false, false, false, 1.0),
         Vec3::new(-420.0, 0.0, 0.0)
     );
     assert_eq!(

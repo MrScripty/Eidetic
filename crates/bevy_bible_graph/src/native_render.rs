@@ -1006,10 +1006,10 @@ pub(crate) fn native_camera_navigation_delta(
     let mut zoom_direction = 0.0;
 
     if pan_left {
-        pan_direction.x -= 1.0;
+        pan_direction.x += 1.0;
     }
     if pan_right {
-        pan_direction.x += 1.0;
+        pan_direction.x -= 1.0;
     }
     if pan_up {
         pan_direction.y += 1.0;
