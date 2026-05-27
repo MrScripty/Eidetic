@@ -1056,7 +1056,15 @@ fn native_camera_edge_pan_uses_viewport_bump_direction() {
     );
     assert_eq!(
         native_camera_edge_pan_direction(Vec2::new(800.0, 600.0), viewport, 40.0),
-        Vec2::new(1.0, 1.0).normalize()
+        Vec2::new(1.0, -1.0).normalize()
+    );
+    assert_eq!(
+        native_camera_edge_pan_direction(Vec2::new(400.0, 0.0), viewport, 40.0),
+        Vec2::Y
+    );
+    assert_eq!(
+        native_camera_edge_pan_direction(Vec2::new(400.0, 600.0), viewport, 40.0),
+        Vec2::NEG_Y
     );
 
     let front_camera = Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y);

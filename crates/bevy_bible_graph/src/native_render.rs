@@ -985,9 +985,9 @@ pub(crate) fn native_camera_edge_pan_direction(
         direction.x += edge_pan_pressure(viewport_size.x - cursor_position.x, margin_x);
     }
     if cursor_position.y <= margin_y {
-        direction.y -= edge_pan_pressure(cursor_position.y, margin_y);
+        direction.y += edge_pan_pressure(cursor_position.y, margin_y);
     } else if cursor_position.y >= viewport_size.y - margin_y {
-        direction.y += edge_pan_pressure(viewport_size.y - cursor_position.y, margin_y);
+        direction.y -= edge_pan_pressure(viewport_size.y - cursor_position.y, margin_y);
     }
 
     direction.clamp_length_max(1.0)
