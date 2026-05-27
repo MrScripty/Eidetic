@@ -571,20 +571,24 @@ fn emit_bible_graph_native_click_selection(
         return;
     };
 
-    if let Some(node_id) = nearest_native_node_on_ray(nodes.iter(), ray) {
-        let _ = push_native_command_to_control(
-            &control,
-            BibleGraphRendererCommand::SelectNode { node_id },
-        );
-        return;
+    let command = bible_graph_native_click_command(nodes.iter(), edges.iter(), ray);
+    let _ = push_native_command_to_control(&control, command);
+}
+
+pub(crate) fn bible_graph_native_click_command<'a>(
+    nodes: impl Iterator<Item = &'a BibleGraphNativeNodeVisual>,
+    edges: impl Iterator<Item = &'a BibleGraphNativeEdgeVisual>,
+    ray: Ray3d,
+) -> BibleGraphRendererCommand {
+    if let Some(node_id) = nearest_native_node_on_ray(nodes, ray) {
+        return BibleGraphRendererCommand::SelectNode { node_id };
     }
 
-    if let Some(edge_id) = nearest_selectable_native_edge_on_ray(edges.iter(), ray) {
-        let _ = push_native_command_to_control(
-            &control,
-            BibleGraphRendererCommand::SelectEdge { edge_id },
-        );
+    if let Some(edge_id) = nearest_selectable_native_edge_on_ray(edges, ray) {
+        return BibleGraphRendererCommand::SelectEdge { edge_id };
     }
+
+    BibleGraphRendererCommand::ClearSelection
 }
 
 fn emit_bible_graph_native_keyboard_commands(

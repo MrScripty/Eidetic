@@ -732,6 +732,62 @@ fn controlled_native_window_uses_3d_ray_node_hit_testing() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_maps_background_click_to_clear_selection() {
+    use crate::native_render::bible_graph_native_click_command;
+    use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_edge(node_id.clone()));
+    app.update();
+
+    let nodes = app
+        .world_mut()
+        .query::<&BibleGraphNativeNodeVisual>()
+        .iter(app.world())
+        .cloned()
+        .collect::<Vec<_>>();
+    let edges = app
+        .world_mut()
+        .query::<&BibleGraphNativeEdgeVisual>()
+        .iter(app.world())
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        bible_graph_native_click_command(
+            nodes.iter(),
+            edges.iter(),
+            Ray3d::new(Vec3::new(0.0, 0.0, 900.0), Dir3::NEG_Z)
+        ),
+        BibleGraphRendererCommand::SelectNode { node_id }
+    );
+    assert_eq!(
+        bible_graph_native_click_command(
+            nodes.iter(),
+            edges.iter(),
+            Ray3d::new(Vec3::new(0.0, 75.0, 900.0), Dir3::NEG_Z)
+        ),
+        BibleGraphRendererCommand::SelectEdge {
+            edge_id: BibleGraphEdgeId::new("edge.ada.beach").unwrap()
+        }
+    );
+    assert_eq!(
+        bible_graph_native_click_command(
+            nodes.iter(),
+            edges.iter(),
+            Ray3d::new(Vec3::new(900.0, 900.0, 900.0), Dir3::NEG_Z)
+        ),
+        BibleGraphRendererCommand::ClearSelection
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_uses_3d_ray_semantic_edge_hit_testing() {
     use crate::native_render::nearest_selectable_native_edge_on_ray;
     use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
