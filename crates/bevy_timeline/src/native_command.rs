@@ -1,5 +1,6 @@
 use eidetic_core::contracts::TimelineRenderProjection;
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 
 use crate::native_render::TimelineNativeWindowControl;
 use crate::{
@@ -243,6 +244,42 @@ pub fn emit_timeline_native_create_child_from_parent_request(
     }
 
     control.enqueue_command(TimelineRendererCommand::CreateChildFromParent { node_id, parent_id });
+    Ok(())
+}
+
+pub fn emit_timeline_native_create_relationship_request(
+    control: &TimelineNativeWindowControl,
+    projection: &TimelineRenderProjection,
+    relationship_id: RelationshipId,
+    from_node_id: NodeId,
+    to_node_id: NodeId,
+    relationship_type: RelationshipType,
+) -> Result<(), TimelineRendererError> {
+    if !projection
+        .clips
+        .iter()
+        .any(|clip| clip.node_id == from_node_id)
+    {
+        return Err(TimelineRendererError::UnknownNode {
+            node_id: from_node_id,
+        });
+    }
+    if !projection
+        .clips
+        .iter()
+        .any(|clip| clip.node_id == to_node_id)
+    {
+        return Err(TimelineRendererError::UnknownNode {
+            node_id: to_node_id,
+        });
+    }
+
+    control.enqueue_command(TimelineRendererCommand::CreateRelationship {
+        relationship_id,
+        from_node_id,
+        to_node_id,
+        relationship_type,
+    });
     Ok(())
 }
 

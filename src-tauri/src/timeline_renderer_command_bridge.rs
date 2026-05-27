@@ -1,7 +1,7 @@
 use eidetic_bevy_timeline::TimelineRendererCommand;
 use eidetic_core::contracts::{
-    CommandEnvelope, CreateTimelineChildFromParentCommand, DeleteTimelineNodeCommand,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    CommandEnvelope, CreateTimelineChildFromParentCommand, CreateTimelineRelationshipCommand,
+    DeleteTimelineNodeCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
 };
 use eidetic_server::state::AppState;
 use eidetic_server::{command_service, projection_service};
@@ -98,6 +98,12 @@ async fn apply_timeline_renderer_command(
                 .map(|_| ())
                 .map_err(|error| error.to_string())
         }
+        Some(TimelineRendererMutationCommand::CreateRelationship(command)) => {
+            command_service::create_timeline_relationship_from_core_command(state, command)
+                .await
+                .map(|_| ())
+                .map_err(|error| error.to_string())
+        }
         Some(TimelineRendererMutationCommand::SplitNode(command)) => {
             command_service::split_timeline_node_from_core_command(state, command)
                 .await
@@ -113,6 +119,7 @@ enum TimelineRendererMutationCommand {
     SetNodeRange(CommandEnvelope<SetTimelineNodeRangeCommand>),
     DeleteNode(CommandEnvelope<DeleteTimelineNodeCommand>),
     CreateChildFromParent(CommandEnvelope<CreateTimelineChildFromParentCommand>),
+    CreateRelationship(CommandEnvelope<CreateTimelineRelationshipCommand>),
     SplitNode(CommandEnvelope<SplitTimelineNodeCommand>),
 }
 
@@ -141,6 +148,19 @@ fn timeline_renderer_mutation_command(
                 CommandEnvelope::new(CreateTimelineChildFromParentCommand { node_id, parent_id }),
             ))
         }
+        TimelineRendererCommand::CreateRelationship {
+            relationship_id,
+            from_node_id,
+            to_node_id,
+            relationship_type,
+        } => Some(TimelineRendererMutationCommand::CreateRelationship(
+            CommandEnvelope::new(CreateTimelineRelationshipCommand {
+                relationship_id,
+                from_node_id,
+                to_node_id,
+                relationship_type,
+            }),
+        )),
         TimelineRendererCommand::SplitNode {
             node_id,
             at_ms,
@@ -168,6 +188,7 @@ mod tests {
     use eidetic_bevy_timeline::TimelineRendererCommand;
     use eidetic_core::contracts::DeleteTimelineNodeCommand;
     use eidetic_core::timeline::node::NodeId;
+    use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 
     #[test]
     fn maps_timeline_renderer_range_commands_to_backend_commands() {
@@ -215,6 +236,29 @@ mod tests {
 
         assert_eq!(command.payload.node_id, node_id);
         assert_eq!(command.payload.parent_id, parent_id);
+    }
+
+    #[test]
+    fn maps_timeline_renderer_create_relationship_commands_to_backend_commands() {
+        let relationship_id = RelationshipId::new();
+        let from_node_id = NodeId::new();
+        let to_node_id = NodeId::new();
+
+        let Some(TimelineRendererMutationCommand::CreateRelationship(command)) =
+            timeline_renderer_mutation_command(TimelineRendererCommand::CreateRelationship {
+                relationship_id,
+                from_node_id,
+                to_node_id,
+                relationship_type: RelationshipType::Causal,
+            })
+        else {
+            panic!("expected create relationship mutation command");
+        };
+
+        assert_eq!(command.payload.relationship_id, relationship_id);
+        assert_eq!(command.payload.from_node_id, from_node_id);
+        assert_eq!(command.payload.to_node_id, to_node_id);
+        assert_eq!(command.payload.relationship_type, RelationshipType::Causal);
     }
 
     #[test]

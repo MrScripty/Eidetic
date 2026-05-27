@@ -301,8 +301,8 @@ Current implementation progress:
 - Completed: the desktop-owned floating Bevy timeline renderer can open, close,
   receive backend-confirmed timeline render projections, render tracks/clips/
   relationships/affect overlays/playhead, and emit validated selection,
-  move/resize, split, delete, and create-child command intents through the
-  Tauri/backend command bridge.
+  move/resize, split, delete, create-child, and create-relationship command
+  intents through the Tauri/backend command bridge.
 - Completed: native Bevy playhead keyboard navigation emits a validated
   transient `SetPlayhead` command through the renderer command queue. The
   desktop bridge records the backend-owned transient playhead, emits a

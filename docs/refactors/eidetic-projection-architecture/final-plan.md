@@ -3814,6 +3814,11 @@ Implementation order:
   child-create intent for the projected selected clip. Ctrl+N in the Bevy
   window requests a new child under the selected timeline node, while durable
   level, name, range, and beat defaults remain derived by `eidetic-server`.
+- Started: native timeline renderer command contracts now include a validated
+  create-relationship primitive. The Bevy leaf crate validates projected
+  endpoints before enqueueing the command, and the desktop command bridge maps
+  it to the backend timeline relationship command path. No Bevy input gesture
+  is bound yet.
 - Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
 - Started: the Bevy timeline leaf crate now consumes backend

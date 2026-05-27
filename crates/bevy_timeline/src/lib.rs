@@ -1,4 +1,5 @@
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use eidetic_core::timeline::track::TrackId;
 use serde::Serialize;
 use thiserror::Error;
@@ -32,8 +33,8 @@ pub use hit_test::{
 #[cfg(feature = "native_render")]
 pub use native_command::{
     emit_timeline_native_create_child_from_parent_request,
-    emit_timeline_native_delete_node_request, emit_timeline_native_node_range_request,
-    emit_timeline_native_split_node_request,
+    emit_timeline_native_create_relationship_request, emit_timeline_native_delete_node_request,
+    emit_timeline_native_node_range_request, emit_timeline_native_split_node_request,
 };
 #[cfg(feature = "native_render")]
 pub use native_render::{
@@ -76,6 +77,12 @@ pub enum TimelineRendererCommand {
     CreateChildFromParent {
         node_id: NodeId,
         parent_id: NodeId,
+    },
+    CreateRelationship {
+        relationship_id: RelationshipId,
+        from_node_id: NodeId,
+        to_node_id: NodeId,
+        relationship_type: RelationshipType,
     },
     SetPlayhead {
         position_ms: u64,

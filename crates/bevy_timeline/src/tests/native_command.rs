@@ -1,4 +1,5 @@
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 
 use crate::{
     TimelineNativeWindowControl, TimelineNativeWindowControlHandle, TimelineRendererCommand,
@@ -520,6 +521,65 @@ fn controlled_native_window_rejects_create_child_intent_with_unknown_parent() {
             parent_id,
         ),
         Err(TimelineRendererError::UnknownNode { node_id: parent_id })
+    );
+    assert!(control.drain_commands().is_empty());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_emits_validated_create_relationship_command() {
+    let from_node_id = NodeId::new();
+    let to_node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+    let mut projection = projection_with_node(from_node_id);
+    let mut to_clip = projection.clips[0].clone();
+    to_clip.node_id = to_node_id;
+    projection.clips.push(to_clip);
+
+    crate::native_command::emit_timeline_native_create_relationship_request(
+        &window_control,
+        &projection,
+        relationship_id,
+        from_node_id,
+        to_node_id,
+        RelationshipType::Thematic,
+    )
+    .unwrap();
+
+    assert_eq!(
+        control.drain_commands(),
+        vec![TimelineRendererCommand::CreateRelationship {
+            relationship_id,
+            from_node_id,
+            to_node_id,
+            relationship_type: RelationshipType::Thematic,
+        }]
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn controlled_native_window_rejects_create_relationship_with_unknown_endpoint() {
+    let from_node_id = NodeId::new();
+    let to_node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let control = TimelineNativeWindowControlHandle::new();
+    let window_control = TimelineNativeWindowControl::from(&control);
+
+    assert_eq!(
+        crate::native_command::emit_timeline_native_create_relationship_request(
+            &window_control,
+            &projection_with_node(from_node_id),
+            relationship_id,
+            from_node_id,
+            to_node_id,
+            RelationshipType::Thematic,
+        ),
+        Err(TimelineRendererError::UnknownNode {
+            node_id: to_node_id,
+        })
     );
     assert!(control.drain_commands().is_empty());
 }
