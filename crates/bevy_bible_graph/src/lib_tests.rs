@@ -606,7 +606,7 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
     );
     assert_eq!(
         app.world_mut()
-            .query_filtered::<(), With<bevy::prelude::Text2d>>()
+            .query_filtered::<(), With<bevy::ui::prelude::Text>>()
             .iter(app.world())
             .count(),
         2
@@ -986,8 +986,8 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
 #[cfg(feature = "native_render")]
 #[test]
 fn controlled_native_window_renders_node_labels_on_overlay_layer() {
-    use bevy::camera::visibility::RenderLayers;
-    use bevy::prelude::{Plugin, Transform, Vec2, Vec3, With};
+    use bevy::prelude::{Plugin, Vec2, With};
+    use bevy::ui::prelude::{Node, PositionType, Text};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let control = BibleGraphNativeWindowControlHandle::new();
@@ -1001,21 +1001,21 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     let label_entities = {
         let mut label_entities = app
             .world_mut()
-            .query_filtered::<(&Transform, &RenderLayers), With<BibleGraphNativeLabelBillboard>>();
+            .query_filtered::<(&Node, &Text), With<BibleGraphNativeLabelBillboard>>();
         label_entities.iter(app.world()).collect::<Vec<_>>()
     };
-    let overlay_translation = crate::native_render::native_node_label_overlay_translation(
+    let overlay_position = crate::native_render::native_node_label_overlay_position(
         Vec2::new(640.0, 360.0),
         Vec2::new(1280.0, 720.0),
         34.0,
     );
 
     assert_eq!(label_entities.len(), 1);
-    assert!(label_entities[0].1.intersects(&RenderLayers::layer(1)));
-    assert_eq!(label_entities[0].0.rotation, Transform::default().rotation);
-    assert!(overlay_translation.y > 0.0);
-    assert_eq!(overlay_translation.z, 10.0);
-    assert_ne!(overlay_translation, Vec3::ZERO);
+    assert_eq!(label_entities[0].0.position_type, PositionType::Absolute);
+    assert_eq!(label_entities[0].1.0, "Ada");
+    assert_eq!(overlay_position.x, 640.0);
+    assert!(overlay_position.y > 0.0);
+    assert_ne!(overlay_position, Vec2::ZERO);
 }
 
 #[cfg(feature = "native_render")]

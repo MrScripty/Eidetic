@@ -18,6 +18,7 @@ native_render = [
     "bevy/bevy_light",
     "bevy/bevy_pbr",
     "bevy/bevy_text",
+    "bevy/bevy_ui",
     "bevy/bevy_window",
     "bevy/bevy_winit",
     "bevy/wayland",

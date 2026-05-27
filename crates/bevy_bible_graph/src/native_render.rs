@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
 use bevy::asset::{Asset, embedded_asset};
-use bevy::camera::visibility::RenderLayers;
 use bevy::color::LinearRgba;
 use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::pbr::{Material, MaterialPlugin};
@@ -14,13 +13,14 @@ use bevy::prelude::{
     App, Assets, ButtonInput, Camera, Camera2d, Camera3d, ClearColor, ClearColorConfig, Color,
     Commands, Component, Cuboid, DefaultPlugins, Entity, GlobalTransform, Handle, Justify, KeyCode,
     Mesh, Mesh3d, MeshMaterial3d, MessageReader, MessageWriter, MouseButton, Plugin, PluginGroup,
-    PointLight, Quat, Query, Ray3d, Res, ResMut, Resource, Sphere, Startup, Text2d, TextColor,
-    TextFont, TextLayout, Time, Torus, Transform, Update, Vec2, Vec3, Visibility, Window, With,
-    Without, World,
+    PointLight, Quat, Query, Ray3d, Res, ResMut, Resource, Sphere, Startup, TextColor, TextFont,
+    TextLayout, Time, Torus, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without,
+    World,
 };
 use bevy::reflect::TypePath;
 use bevy::render::render_resource::AsBindGroup;
 use bevy::shader::ShaderRef;
+use bevy::ui::prelude::{Node, PositionType, Text, Val};
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
 };
@@ -37,7 +37,6 @@ use crate::{
 
 const NATIVE_CAMERA_EDGE_PAN_MARGIN_PX: f32 = 36.0;
 const NATIVE_CAMERA_EDGE_PAN_SPEED: f32 = 520.0;
-const NATIVE_LABEL_RENDER_LAYER: usize = 1;
 const NATIVE_LABEL_SCREEN_OFFSET_PX: f32 = 18.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
@@ -500,7 +499,6 @@ fn spawn_bible_graph_renderer_window_scene(
             clear_color: ClearColorConfig::None,
             ..Default::default()
         },
-        RenderLayers::layer(NATIVE_LABEL_RENDER_LAYER),
         BibleGraphNativeLabelOverlayCamera,
     ));
     commands.spawn((PointLight::default(), Transform::from_xyz(0.0, 0.0, 700.0)));
@@ -1203,11 +1201,7 @@ fn project_bible_graph_native_labels(
     cameras: Query<(&Camera, &GlobalTransform), With<BibleGraphNativeCamera>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut labels: Query<
-        (
-            &BibleGraphNativeNodeLabelVisual,
-            &mut Transform,
-            &mut Visibility,
-        ),
+        (&BibleGraphNativeNodeLabelVisual, &mut Node, &mut Visibility),
         (
             With<BibleGraphNativeLabelBillboard>,
             Without<BibleGraphNativeCamera>,
@@ -1222,7 +1216,7 @@ fn project_bible_graph_native_labels(
     };
 
     let viewport_size = Vec2::new(window.width(), window.height());
-    for (label, mut label_transform, mut visibility) in &mut labels {
+    for (label, mut label_node, mut visibility) in &mut labels {
         let world_position = Vec3::new(label.x, label.y, label.z);
         let Ok(viewport_position) = camera.world_to_viewport(camera_transform, world_position)
         else {
@@ -1230,23 +1224,23 @@ fn project_bible_graph_native_labels(
             continue;
         };
 
-        label_transform.translation =
-            native_node_label_overlay_translation(viewport_position, viewport_size, label.radius);
-        label_transform.rotation = Quat::IDENTITY;
+        let label_position =
+            native_node_label_overlay_position(viewport_position, viewport_size, label.radius);
+        label_node.left = Val::Px(label_position.x);
+        label_node.top = Val::Px(label_position.y);
         *visibility = Visibility::Visible;
     }
 }
 
-pub(crate) fn native_node_label_overlay_translation(
+pub(crate) fn native_node_label_overlay_position(
     viewport_position: Vec2,
     viewport_size: Vec2,
     node_radius: f32,
-) -> Vec3 {
+) -> Vec2 {
     let radius = node_radius.max(1.0);
-    Vec3::new(
-        viewport_position.x - viewport_size.x * 0.5,
-        viewport_size.y * 0.5 - viewport_position.y + radius + NATIVE_LABEL_SCREEN_OFFSET_PX,
-        10.0,
+    Vec2::new(
+        viewport_position.x,
+        (viewport_position.y - radius - NATIVE_LABEL_SCREEN_OFFSET_PX).clamp(0.0, viewport_size.y),
     )
 }
 
@@ -1508,19 +1502,22 @@ pub fn rebuild_bible_graph_native_visuals(
                 z: node.position.z,
                 radius: node.radius,
             },
-            Text2d::new(node_label),
+            Text::new(node_label),
             TextFont::from_font_size(node.label_font_size),
             TextColor(native_color_from_hex(node.label_color)),
             TextLayout::new_with_justify(Justify::Center),
-            bevy::sprite::Anchor::BOTTOM_CENTER,
-            RenderLayers::layer(NATIVE_LABEL_RENDER_LAYER),
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(node.position.x),
+                top: Val::Px(node.position.y),
+                ..Default::default()
+            },
             BibleGraphNativeLabelBillboard,
             if node.label_visible {
                 Visibility::Visible
             } else {
                 Visibility::Hidden
             },
-            Transform::from_translation(Vec3::new(node.position.x, node.position.y, 10.0)),
         );
         if let Some(entity) = existing_node_labels.remove(&node_id) {
             world.entity_mut(entity).insert(label_bundle);
