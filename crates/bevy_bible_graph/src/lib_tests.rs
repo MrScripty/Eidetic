@@ -1,6 +1,9 @@
 use super::*;
 #[cfg(feature = "native_render")]
-use crate::native_render::BibleGraphNativeMaterial;
+use crate::native_render::{
+    BibleGraphNativeMaterial, BibleGraphNativeSelectionOutlineBillboard,
+    BibleGraphNativeSelectionOutlineVisual,
+};
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphSchemaKey, BibleRenderGraphEdge,
     BibleRenderGraphInfluence, BibleRenderGraphNode, BibleRenderGraphPosition,
@@ -349,6 +352,13 @@ fn renderer_app_3d_visual_snapshot_highlights_selected_neighborhood() {
         .expect("selected node should be projected");
     assert_eq!(selected_node.label_font_size, 16.0);
     assert_eq!(selected_node.label_color, "#f6d977");
+    assert!(
+        snapshot
+            .nodes
+            .iter()
+            .filter(|node| !node.selected)
+            .all(|node| node.dimmed)
+    );
 }
 
 #[test]
@@ -801,7 +811,7 @@ fn controlled_native_window_does_not_pick_structural_edges_as_relationships() {
 #[cfg(feature = "native_render")]
 #[test]
 fn controlled_native_window_retains_selection_state_and_label_visibility() {
-    use bevy::prelude::{Plugin, Visibility};
+    use bevy::prelude::{Plugin, Visibility, With};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let unrelated_id = BibleGraphNodeId::new("node.object.lantern").unwrap();
@@ -872,6 +882,41 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
             .query::<&BibleGraphNativeEdgeVisual>()
             .iter(app.world())
             .any(|edge| edge.selected && edge.highlighted && !edge.dimmed)
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeSelectionOutlineVisual>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+    assert!(
+        app.world_mut()
+            .query::<&BibleGraphNativeSelectionOutlineVisual>()
+            .iter(app.world())
+            .any(|outline| {
+                outline.node_id == node_id
+                    && outline.radius > 0.0
+                    && outline.outline_color == "#f2c94c"
+            })
+    );
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeSelectionOutlineBillboard>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+
+    control.set_projection(projection_with_edge(node_id));
+    app.update();
+
+    assert_eq!(
+        app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeSelectionOutlineVisual>>()
+            .iter(app.world())
+            .count(),
+        0
     );
 }
 

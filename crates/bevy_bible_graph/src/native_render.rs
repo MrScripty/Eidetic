@@ -14,7 +14,8 @@ use bevy::prelude::{
     DefaultPlugins, Entity, GlobalTransform, Handle, Justify, KeyCode, Mesh, Mesh3d,
     MeshMaterial3d, MessageReader, MessageWriter, MouseButton, Plugin, PluginGroup, PointLight,
     Quat, Query, Ray3d, Res, ResMut, Resource, Sphere, Startup, Text2d, TextColor, TextFont,
-    TextLayout, Time, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without, World,
+    TextLayout, Time, Torus, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without,
+    World,
 };
 use bevy::reflect::TypePath;
 use bevy::render::render_resource::AsBindGroup;
@@ -101,6 +102,7 @@ pub struct BibleGraphNativeVisualStatus {
 #[derive(Debug, Default, Resource)]
 struct BibleGraphNativeAssetCache {
     node_meshes: HashMap<u32, Handle<Mesh>>,
+    selection_outline_meshes: HashMap<u32, Handle<Mesh>>,
     edge_meshes: HashMap<(u32, u32), Handle<Mesh>>,
     materials: HashMap<BibleGraphNativeMaterialKey, Handle<BibleGraphNativeMaterial>>,
 }
@@ -170,6 +172,16 @@ pub struct BibleGraphNativeNodeLabelVisual {
 
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeLabelBillboard;
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeSelectionOutlineVisual {
+    pub node_id: BibleGraphNodeId,
+    pub radius: f32,
+    pub outline_color: &'static str,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeSelectionOutlineBillboard;
 
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeEdgeVisual {
@@ -382,6 +394,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, emit_bible_graph_native_click_selection);
         app.add_systems(Update, emit_bible_graph_native_keyboard_commands);
         app.add_systems(Update, billboard_bible_graph_native_labels);
+        app.add_systems(Update, billboard_bible_graph_native_selection_outlines);
         app.add_systems(Update, navigate_bible_graph_native_camera);
         app.add_systems(Update, drag_bible_graph_native_camera);
         app.add_systems(Update, scroll_bible_graph_native_camera);
@@ -1093,6 +1106,30 @@ fn billboard_bible_graph_native_labels(
     }
 }
 
+fn billboard_bible_graph_native_selection_outlines(
+    cameras: Query<&Transform, With<BibleGraphNativeCamera>>,
+    mut outlines: Query<
+        &mut Transform,
+        (
+            With<BibleGraphNativeSelectionOutlineBillboard>,
+            Without<BibleGraphNativeCamera>,
+        ),
+    >,
+) {
+    let Ok(camera_transform) = cameras.single() else {
+        return;
+    };
+
+    let rotation = native_selection_outline_billboard_rotation(camera_transform);
+    for mut outline_transform in &mut outlines {
+        outline_transform.rotation = rotation;
+    }
+}
+
+pub(crate) fn native_selection_outline_billboard_rotation(camera_transform: &Transform) -> Quat {
+    Quat::from_rotation_arc(Vec3::Y, -*camera_transform.forward())
+}
+
 pub(crate) fn nearest_native_node_on_ray<'a>(
     nodes: impl Iterator<Item = &'a BibleGraphNativeNodeVisual>,
     ray: Ray3d,
@@ -1275,6 +1312,7 @@ pub fn rebuild_bible_graph_native_visuals(
 
     let mut existing_nodes = existing_native_nodes(world);
     let mut existing_node_labels = existing_native_node_labels(world);
+    let mut existing_selection_outlines = existing_native_selection_outlines(world);
 
     for node in snapshot.nodes {
         let node_id = node.node_id.clone();
@@ -1344,9 +1382,38 @@ pub fn rebuild_bible_graph_native_visuals(
         } else {
             world.spawn(label_bundle);
         }
+
+        if node.selected {
+            let outline_mesh = cached_native_selection_outline_mesh(world, node.radius);
+            let outline_material =
+                cached_native_material(world, node.outline_color, false, false, false);
+            let outline_bundle = (
+                BibleGraphNativeVisualEntity,
+                BibleGraphNativeSelectionOutlineVisual {
+                    node_id: node_id.clone(),
+                    radius: node.radius,
+                    outline_color: node.outline_color,
+                },
+                BibleGraphNativeSelectionOutlineBillboard,
+                Mesh3d(outline_mesh),
+                MeshMaterial3d(outline_material),
+                Transform::from_translation(Vec3::new(
+                    node.position.x,
+                    node.position.y,
+                    node.position.z + 4.0,
+                ))
+                .with_rotation(Quat::from_rotation_arc(Vec3::Y, Vec3::Z)),
+            );
+            if let Some(entity) = existing_selection_outlines.remove(&node_id) {
+                world.entity_mut(entity).insert(outline_bundle);
+            } else {
+                world.spawn(outline_bundle);
+            }
+        }
     }
     despawn_remaining_entities(world, existing_nodes);
     despawn_remaining_entities(world, existing_node_labels);
+    despawn_remaining_entities(world, existing_selection_outlines);
 
     let mut existing_influences = existing_native_influences(world);
 
@@ -1390,6 +1457,29 @@ fn cached_native_node_mesh(world: &mut World, radius: f32) -> Handle<Mesh> {
     world
         .resource_mut::<BibleGraphNativeAssetCache>()
         .node_meshes
+        .insert(key, handle.clone());
+    handle
+}
+
+fn cached_native_selection_outline_mesh(world: &mut World, radius: f32) -> Handle<Mesh> {
+    let inner_radius = (radius + 3.0).max(1.0);
+    let outer_radius = inner_radius + 4.0;
+    let key = quantized_visual_scalar(radius);
+    if let Some(handle) = world
+        .resource::<BibleGraphNativeAssetCache>()
+        .selection_outline_meshes
+        .get(&key)
+        .cloned()
+    {
+        return handle;
+    }
+
+    let handle = world
+        .resource_mut::<Assets<Mesh>>()
+        .add(Torus::new(inner_radius, outer_radius));
+    world
+        .resource_mut::<BibleGraphNativeAssetCache>()
+        .selection_outline_meshes
         .insert(key, handle.clone());
     handle
 }
@@ -1731,6 +1821,14 @@ fn existing_native_node_labels(world: &mut World) -> HashMap<BibleGraphNodeId, E
         .query::<(Entity, &BibleGraphNativeNodeLabelVisual)>()
         .iter(world)
         .map(|(entity, label)| (label.node_id.clone(), entity))
+        .collect()
+}
+
+fn existing_native_selection_outlines(world: &mut World) -> HashMap<BibleGraphNodeId, Entity> {
+    world
+        .query::<(Entity, &BibleGraphNativeSelectionOutlineVisual)>()
+        .iter(world)
+        .map(|(entity, outline)| (outline.node_id.clone(), entity))
         .collect()
 }
 
