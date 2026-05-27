@@ -11,11 +11,11 @@ use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::pbr::{Material, MaterialPlugin};
 use bevy::prelude::{
     App, Assets, ButtonInput, Camera, Camera2d, Camera3d, ClearColor, ClearColorConfig, Color,
-    Commands, Component, Cuboid, DefaultPlugins, Entity, GlobalTransform, Handle, Justify, KeyCode,
-    Mesh, Mesh3d, MeshMaterial3d, MessageReader, MessageWriter, MouseButton, Plugin, PluginGroup,
-    PointLight, Quat, Query, Ray3d, Res, ResMut, Resource, Sphere, Startup, TextColor, TextFont,
-    TextLayout, Time, Torus, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without,
-    World,
+    Commands, Component, Cuboid, DefaultPlugins, Entity, GlobalTransform, Handle,
+    IntoScheduleConfigs, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d, MessageReader,
+    MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Quat, Query, Ray3d, Res, ResMut,
+    Resource, Sphere, Startup, SystemSet, TextColor, TextFont, TextLayout, Time, Torus, Transform,
+    Update, Vec2, Vec3, Visibility, Window, With, Without, World,
 };
 use bevy::reflect::TypePath;
 use bevy::render::render_resource::AsBindGroup;
@@ -185,6 +185,7 @@ pub struct BibleGraphNativeNodeLabelVisual {
     pub y: f32,
     pub z: f32,
     pub radius: f32,
+    pub label_visible: bool,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -224,6 +225,15 @@ pub struct BibleGraphNativeInfluenceVisual {
     pub influence_id: ContextInfluenceId,
     pub bible_node_id: Option<BibleGraphNodeId>,
     pub bible_edge_id: Option<BibleGraphEdgeId>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
+enum BibleGraphNativeRenderSystem {
+    Projection,
+    Input,
+    Camera,
+    Labels,
+    Outlines,
 }
 
 impl Default for BibleGraphNativeRenderConfig {
@@ -405,21 +415,54 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeVisualStatus::default());
         app.insert_resource(BibleGraphNativeAssetCache::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
+        app.configure_sets(
+            Update,
+            (
+                BibleGraphNativeRenderSystem::Projection,
+                BibleGraphNativeRenderSystem::Input,
+                BibleGraphNativeRenderSystem::Camera,
+                BibleGraphNativeRenderSystem::Labels,
+                BibleGraphNativeRenderSystem::Outlines,
+            )
+                .chain(),
+        );
         app.add_systems(Startup, spawn_bible_graph_renderer_window_scene);
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
-        app.add_systems(Update, apply_bible_graph_native_projection);
-        app.add_systems(Update, emit_bible_graph_native_click_selection);
-        app.add_systems(Update, emit_bible_graph_native_keyboard_commands);
-        app.add_systems(Update, project_bible_graph_native_labels);
-        app.add_systems(Update, billboard_bible_graph_native_selection_outlines);
-        app.add_systems(Update, navigate_bible_graph_native_camera);
-        app.add_systems(Update, edge_pan_bible_graph_native_camera);
-        app.add_systems(Update, drag_bible_graph_native_camera);
-        app.add_systems(Update, scroll_bible_graph_native_camera);
-        app.add_systems(Update, orbit_bible_graph_native_camera);
-        app.add_systems(Update, recover_bible_graph_native_camera);
-        app.add_systems(Update, frame_bible_graph_native_camera_on_selected);
-        app.add_systems(Update, apply_bible_graph_native_camera_commands);
+        app.add_systems(
+            Update,
+            apply_bible_graph_native_projection.in_set(BibleGraphNativeRenderSystem::Projection),
+        );
+        app.add_systems(
+            Update,
+            (
+                emit_bible_graph_native_click_selection,
+                emit_bible_graph_native_keyboard_commands,
+            )
+                .in_set(BibleGraphNativeRenderSystem::Input),
+        );
+        app.add_systems(
+            Update,
+            (
+                navigate_bible_graph_native_camera,
+                edge_pan_bible_graph_native_camera,
+                drag_bible_graph_native_camera,
+                scroll_bible_graph_native_camera,
+                orbit_bible_graph_native_camera,
+                recover_bible_graph_native_camera,
+                frame_bible_graph_native_camera_on_selected,
+                apply_bible_graph_native_camera_commands,
+            )
+                .in_set(BibleGraphNativeRenderSystem::Camera),
+        );
+        app.add_systems(
+            Update,
+            project_bible_graph_native_labels.in_set(BibleGraphNativeRenderSystem::Labels),
+        );
+        app.add_systems(
+            Update,
+            billboard_bible_graph_native_selection_outlines
+                .in_set(BibleGraphNativeRenderSystem::Outlines),
+        );
     }
 }
 
@@ -1209,7 +1252,7 @@ pub(crate) fn native_camera_orbit_translation(
 }
 
 fn project_bible_graph_native_labels(
-    cameras: Query<(&Camera, &GlobalTransform), With<BibleGraphNativeCamera>>,
+    cameras: Query<(&Camera, &Transform), With<BibleGraphNativeCamera>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut labels: Query<
         (&BibleGraphNativeNodeLabelVisual, &mut Node, &mut Visibility),
@@ -1227,9 +1270,16 @@ fn project_bible_graph_native_labels(
     };
 
     let viewport_size = Vec2::new(window.width(), window.height());
+    let camera_global_transform = GlobalTransform::from(*camera_transform);
     for (label, mut label_node, mut visibility) in &mut labels {
+        if !label.label_visible {
+            *visibility = Visibility::Hidden;
+            continue;
+        }
+
         let world_position = Vec3::new(label.x, label.y, label.z);
-        let Ok(viewport_position) = camera.world_to_viewport(camera_transform, world_position)
+        let Ok(viewport_position) =
+            camera.world_to_viewport(&camera_global_transform, world_position)
         else {
             *visibility = Visibility::Hidden;
             continue;
@@ -1515,6 +1565,7 @@ pub fn rebuild_bible_graph_native_visuals(
                 y: node.position.y,
                 z: node.position.z,
                 radius: node.radius,
+                label_visible: node.label_visible,
             },
             Text::new(node_label),
             TextFont::from_font_size(node.label_font_size),
@@ -1528,11 +1579,7 @@ pub fn rebuild_bible_graph_native_visuals(
             },
             UiTargetCamera(label_target_camera),
             BibleGraphNativeLabelBillboard,
-            if node.label_visible {
-                Visibility::Visible
-            } else {
-                Visibility::Hidden
-            },
+            Visibility::Hidden,
         );
         if let Some(entity) = existing_node_labels.remove(&node_id) {
             world.entity_mut(entity).insert(label_bundle);
