@@ -937,8 +937,9 @@ fn native_camera_mouse_drag_and_scroll_helpers_match_requested_controls() {
     };
     use bevy::prelude::{Transform, Vec2, Vec3};
 
+    let front_camera = Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y);
     assert_eq!(
-        native_camera_drag_pan_delta(Vec2::new(20.0, -10.0), 900.0),
+        native_camera_drag_pan_delta(Vec2::new(20.0, -10.0), &front_camera),
         Vec3::new(-20.0, -10.0, 0.0)
     );
     assert_eq!(native_camera_scroll_zoom_delta(2.0), -160.0);
@@ -957,6 +958,11 @@ fn native_camera_mouse_drag_and_scroll_helpers_match_requested_controls() {
         native_camera_view_orbit_target(&panned_camera),
         Some(Vec3::new(240.0, -120.0, 0.0))
     );
+
+    let tilted_camera = Transform::from_xyz(0.0, -450.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y);
+    let vertical_pan = native_camera_drag_pan_delta(Vec2::new(0.0, 20.0), &tilted_camera);
+    assert!(vertical_pan.y > 0.0);
+    assert!(vertical_pan.z > 0.0);
 }
 
 #[cfg(feature = "native_render")]

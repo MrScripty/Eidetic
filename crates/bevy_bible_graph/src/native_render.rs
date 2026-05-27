@@ -671,9 +671,8 @@ fn drag_bible_graph_native_camera(
         .is_some_and(|keys| keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight));
 
     if shift_pressed {
-        let camera_z = camera_transform.translation.z;
-        camera_transform.translation += native_camera_drag_pan_delta(total_delta, camera_z);
-        camera_transform.translation.z = camera_transform.translation.z.max(120.0);
+        let pan_delta = native_camera_drag_pan_delta(total_delta, &camera_transform);
+        camera_transform.translation += pan_delta;
         return;
     }
 
@@ -987,9 +986,21 @@ pub(crate) fn native_camera_frame_selected_translation(
     )
 }
 
-pub(crate) fn native_camera_drag_pan_delta(cursor_delta: Vec2, camera_z: f32) -> Vec3 {
-    let scale = (camera_z / 900.0).clamp(0.2, 4.0);
-    Vec3::new(-cursor_delta.x * scale, cursor_delta.y * scale, 0.0)
+pub(crate) fn native_camera_drag_pan_delta(
+    cursor_delta: Vec2,
+    camera_transform: &Transform,
+) -> Vec3 {
+    let scale = native_camera_drag_pan_scale(camera_transform);
+    let right = *camera_transform.right();
+    let up = *camera_transform.up();
+    right * (-cursor_delta.x * scale) + up * (cursor_delta.y * scale)
+}
+
+fn native_camera_drag_pan_scale(camera_transform: &Transform) -> f32 {
+    let view_distance = native_camera_view_orbit_target(camera_transform)
+        .map(|target| camera_transform.translation.distance(target))
+        .unwrap_or_else(|| camera_transform.translation.length());
+    (view_distance / 900.0).clamp(0.2, 4.0)
 }
 
 pub(crate) fn native_camera_scroll_zoom_delta(scroll_y: f32) -> f32 {
