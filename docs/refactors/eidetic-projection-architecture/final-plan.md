@@ -3828,8 +3828,10 @@ Implementation order:
   create-relationship primitive. The Bevy leaf crate validates projected
   endpoints before enqueueing the command, and the desktop command bridge maps
   it to the backend timeline relationship command path. The headless renderer
-  app exposes the same validated primitive for tests and host-side probes. No
-  Bevy input gesture is bound yet.
+  app exposes the same validated primitive for tests and host-side probes.
+  Native input now binds Ctrl+shift+click on a projected clip to create a
+  thematic relationship from the backend-projected selected clip to the clicked
+  clip.
 - Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
 - Started: the Bevy timeline leaf crate now consumes backend
