@@ -5,15 +5,20 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
+use bevy::asset::{Asset, embedded_asset};
+use bevy::color::LinearRgba;
 use bevy::input::mouse::{MouseMotion, MouseWheel};
+use bevy::pbr::{Material, MaterialPlugin};
 use bevy::prelude::{
     App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, Cuboid,
     DefaultPlugins, Entity, GlobalTransform, Handle, Justify, KeyCode, Mesh, Mesh3d,
     MeshMaterial3d, MessageReader, MessageWriter, MouseButton, Plugin, PluginGroup, PointLight,
-    Quat, Query, Ray3d, Res, ResMut, Resource, Sphere, StandardMaterial, Startup, Text2d,
-    TextColor, TextFont, TextLayout, Time, Transform, Update, Vec2, Vec3, Visibility, Window, With,
-    Without, World,
+    Quat, Query, Ray3d, Res, ResMut, Resource, Sphere, Startup, Text2d, TextColor, TextFont,
+    TextLayout, Time, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without, World,
 };
+use bevy::reflect::TypePath;
+use bevy::render::render_resource::AsBindGroup;
+use bevy::shader::ShaderRef;
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
 };
@@ -97,7 +102,19 @@ pub struct BibleGraphNativeVisualStatus {
 struct BibleGraphNativeAssetCache {
     node_meshes: HashMap<u32, Handle<Mesh>>,
     edge_meshes: HashMap<(u32, u32), Handle<Mesh>>,
-    materials: HashMap<BibleGraphNativeMaterialKey, Handle<StandardMaterial>>,
+    materials: HashMap<BibleGraphNativeMaterialKey, Handle<BibleGraphNativeMaterial>>,
+}
+
+#[derive(AsBindGroup, Asset, TypePath, Debug, Clone)]
+pub(crate) struct BibleGraphNativeMaterial {
+    #[uniform(0)]
+    pub(crate) color: LinearRgba,
+}
+
+impl Material for BibleGraphNativeMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "embedded://eidetic_bevy_bible_graph/native_graph_material.wgsl".into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -344,7 +361,15 @@ pub struct BibleGraphNativeRenderPlugin;
 impl Plugin for BibleGraphNativeRenderPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Assets<Mesh>>();
-        app.init_resource::<Assets<StandardMaterial>>();
+        if app
+            .world()
+            .contains_resource::<bevy::asset::io::embedded::EmbeddedAssetRegistry>()
+        {
+            embedded_asset!(app, "native_graph_material.wgsl");
+            app.add_plugins(MaterialPlugin::<BibleGraphNativeMaterial>::default());
+        } else {
+            app.init_resource::<Assets<BibleGraphNativeMaterial>>();
+        }
         app.insert_resource(BibleGraphNativeRenderConfig::default());
         app.insert_resource(BibleGraphNativeRendererWindowScene::default());
         app.insert_resource(BibleGraphNativeRendererWindowStatus::default());
@@ -1407,7 +1432,7 @@ fn cached_native_material(
     selected: bool,
     highlighted: bool,
     dimmed: bool,
-) -> Handle<StandardMaterial> {
+) -> Handle<BibleGraphNativeMaterial> {
     let key = BibleGraphNativeMaterialKey {
         color,
         selected,
@@ -1424,13 +1449,8 @@ fn cached_native_material(
     }
 
     let handle = world
-        .resource_mut::<Assets<StandardMaterial>>()
-        .add(native_standard_material(
-            color,
-            selected,
-            highlighted,
-            dimmed,
-        ));
+        .resource_mut::<Assets<BibleGraphNativeMaterial>>()
+        .add(native_graph_material(color, selected, highlighted, dimmed));
     world
         .resource_mut::<BibleGraphNativeAssetCache>()
         .materials
@@ -1634,18 +1654,15 @@ pub(crate) fn native_visual_state_color(
     Color::srgb(red, green, blue)
 }
 
-pub(crate) fn native_standard_material(
+pub(crate) fn native_graph_material(
     color: &str,
     selected: bool,
     highlighted: bool,
     dimmed: bool,
-) -> StandardMaterial {
+) -> BibleGraphNativeMaterial {
     let color = native_visual_state_color(color, selected, highlighted, dimmed);
-    StandardMaterial {
-        base_color: color,
-        emissive: color.to_linear(),
-        unlit: true,
-        ..Default::default()
+    BibleGraphNativeMaterial {
+        color: color.to_linear(),
     }
 }
 

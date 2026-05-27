@@ -1,4 +1,6 @@
 use super::*;
+#[cfg(feature = "native_render")]
+use crate::native_render::BibleGraphNativeMaterial;
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphSchemaKey, BibleRenderGraphEdge,
     BibleRenderGraphInfluence, BibleRenderGraphNode, BibleRenderGraphPosition,
@@ -580,7 +582,7 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
     );
     assert_eq!(
         app.world_mut()
-            .query_filtered::<(), With<bevy::prelude::MeshMaterial3d<bevy::prelude::StandardMaterial>>>()
+            .query_filtered::<(), With<bevy::prelude::MeshMaterial3d<BibleGraphNativeMaterial>>>()
             .iter(app.world())
             .count(),
         3
@@ -604,7 +606,7 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
 #[cfg(feature = "native_render")]
 #[test]
 fn controlled_native_window_uses_backend_category_material_colors() {
-    use bevy::prelude::{Assets, Color, MeshMaterial3d, Plugin, StandardMaterial};
+    use bevy::prelude::{Assets, Color, MeshMaterial3d, Plugin};
 
     let source_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let control = BibleGraphNativeWindowControlHandle::new();
@@ -620,39 +622,24 @@ fn controlled_native_window_uses_backend_category_material_colors() {
         let world = app.world_mut();
         let mut query = world.query::<(
             &BibleGraphNativeNodeVisual,
-            &MeshMaterial3d<StandardMaterial>,
+            &MeshMaterial3d<BibleGraphNativeMaterial>,
         )>();
         query
             .iter(world)
             .map(|(node, material_handle)| {
                 let material = world
-                    .resource::<Assets<StandardMaterial>>()
+                    .resource::<Assets<BibleGraphNativeMaterial>>()
                     .get(&material_handle.0)
                     .expect("node material should exist");
-                (
-                    node.fill_color,
-                    material.base_color,
-                    material.emissive,
-                    material.unlit,
-                )
+                (node.fill_color, material.color)
             })
             .collect::<Vec<_>>()
     };
 
     let character_color = Color::srgb(100.0 / 255.0, 149.0 / 255.0, 237.0 / 255.0);
     let location_color = Color::srgb(34.0 / 255.0, 197.0 / 255.0, 94.0 / 255.0);
-    assert!(material_colors.contains(&(
-        "#6495ed",
-        character_color,
-        character_color.to_linear(),
-        true
-    )));
-    assert!(material_colors.contains(&(
-        "#22c55e",
-        location_color,
-        location_color.to_linear(),
-        true
-    )));
+    assert!(material_colors.contains(&("#6495ed", character_color.to_linear())));
+    assert!(material_colors.contains(&("#22c55e", location_color.to_linear())));
 }
 
 #[cfg(feature = "native_render")]
@@ -1357,7 +1344,7 @@ fn controlled_native_window_camera_commands_are_bounded_and_drained() {
 #[cfg(feature = "native_render")]
 #[test]
 fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
-    use bevy::prelude::{Assets, Entity, Mesh, Plugin, StandardMaterial};
+    use bevy::prelude::{Assets, Entity, Mesh, Plugin};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let edge_id = BibleGraphEdgeId::new("edge.ada.beach").unwrap();
@@ -1464,7 +1451,7 @@ fn native_visual_rebuild_reuses_keyed_entities_and_removes_stale_entities() {
     fn native_asset_counts(world: &bevy::prelude::World) -> (usize, usize) {
         (
             world.resource::<Assets<Mesh>>().len(),
-            world.resource::<Assets<StandardMaterial>>().len(),
+            world.resource::<Assets<BibleGraphNativeMaterial>>().len(),
         )
     }
 }
