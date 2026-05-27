@@ -20,7 +20,7 @@ use bevy::prelude::{
 use bevy::reflect::TypePath;
 use bevy::render::render_resource::AsBindGroup;
 use bevy::shader::ShaderRef;
-use bevy::ui::prelude::{Node, PositionType, Text, Val};
+use bevy::ui::prelude::{IsDefaultUiCamera, Node, PositionType, Text, UiTargetCamera, Val};
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
 };
@@ -96,6 +96,11 @@ pub struct BibleGraphNativeWindowControl {
 pub struct BibleGraphNativeRendererWindowStatus {
     pub camera_count: usize,
     pub bounds: BibleGraphNativeRendererWindowBounds,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
+pub struct BibleGraphNativeLabelOverlayTarget {
+    pub camera_entity: Entity,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
@@ -492,15 +497,21 @@ fn spawn_bible_graph_renderer_window_scene(
         Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y),
         BibleGraphNativeCamera,
     ));
-    commands.spawn((
-        Camera2d,
-        Camera {
-            order: 1,
-            clear_color: ClearColorConfig::None,
-            ..Default::default()
-        },
-        BibleGraphNativeLabelOverlayCamera,
-    ));
+    let label_camera_entity = commands
+        .spawn((
+            Camera2d,
+            Camera {
+                order: 1,
+                clear_color: ClearColorConfig::None,
+                ..Default::default()
+            },
+            IsDefaultUiCamera,
+            BibleGraphNativeLabelOverlayCamera,
+        ))
+        .id();
+    commands.insert_resource(BibleGraphNativeLabelOverlayTarget {
+        camera_entity: label_camera_entity,
+    });
     commands.spawn((PointLight::default(), Transform::from_xyz(0.0, 0.0, 700.0)));
     status.camera_count = 2;
 }
@@ -1451,6 +1462,9 @@ pub fn rebuild_bible_graph_native_visuals(
     let mut existing_nodes = existing_native_nodes(world);
     let mut existing_node_labels = existing_native_node_labels(world);
     let mut existing_selection_outlines = existing_native_selection_outlines(world);
+    let label_target_camera = world
+        .resource::<BibleGraphNativeLabelOverlayTarget>()
+        .camera_entity;
 
     for node in snapshot.nodes {
         let node_id = node.node_id.clone();
@@ -1512,6 +1526,7 @@ pub fn rebuild_bible_graph_native_visuals(
                 top: Val::Px(node.position.y),
                 ..Default::default()
             },
+            UiTargetCamera(label_target_camera),
             BibleGraphNativeLabelBillboard,
             if node.label_visible {
                 Visibility::Visible

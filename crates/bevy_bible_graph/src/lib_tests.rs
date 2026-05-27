@@ -987,7 +987,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
 #[test]
 fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     use bevy::prelude::{Plugin, Vec2, With};
-    use bevy::ui::prelude::{Node, PositionType, Text};
+    use bevy::ui::prelude::{IsDefaultUiCamera, Node, PositionType, Text, UiTargetCamera};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let control = BibleGraphNativeWindowControlHandle::new();
@@ -1001,7 +1001,7 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     let label_entities = {
         let mut label_entities = app
             .world_mut()
-            .query_filtered::<(&Node, &Text), With<BibleGraphNativeLabelBillboard>>();
+            .query_filtered::<(&Node, &Text, &UiTargetCamera), With<BibleGraphNativeLabelBillboard>>();
         label_entities.iter(app.world()).collect::<Vec<_>>()
     };
     let overlay_position = crate::native_render::native_node_label_overlay_position(
@@ -1013,6 +1013,11 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     assert_eq!(label_entities.len(), 1);
     assert_eq!(label_entities[0].0.position_type, PositionType::Absolute);
     assert_eq!(label_entities[0].1.0, "Ada");
+    assert!(
+        app.world()
+            .get::<IsDefaultUiCamera>(label_entities[0].2.entity())
+            .is_some()
+    );
     assert_eq!(overlay_position.x, 640.0);
     assert!(overlay_position.y > 0.0);
     assert_ne!(overlay_position, Vec2::ZERO);
