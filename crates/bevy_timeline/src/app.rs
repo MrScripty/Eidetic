@@ -1,6 +1,7 @@
 use bevy::prelude::{App, Resource};
 use eidetic_core::contracts::TimelineRenderProjection;
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 use eidetic_core::timeline::track::TrackId;
 
 use crate::{
@@ -294,6 +295,52 @@ impl TimelineRendererApp {
             .resource_mut::<TimelineRendererCommandQueue>()
             .commands
             .push(TimelineRendererCommand::CreateChildFromParent { node_id, parent_id });
+        Ok(())
+    }
+
+    pub fn request_create_relationship(
+        &mut self,
+        relationship_id: RelationshipId,
+        from_node_id: NodeId,
+        to_node_id: NodeId,
+        relationship_type: RelationshipType,
+    ) -> Result<(), TimelineRendererError> {
+        {
+            let state = self.app.world().resource::<TimelineRenderState>();
+            let projection = state
+                .projection
+                .as_ref()
+                .ok_or(TimelineRendererError::MissingProjection)?;
+            if !projection
+                .clips
+                .iter()
+                .any(|clip| clip.node_id == from_node_id)
+            {
+                return Err(TimelineRendererError::UnknownNode {
+                    node_id: from_node_id,
+                });
+            }
+            if !projection
+                .clips
+                .iter()
+                .any(|clip| clip.node_id == to_node_id)
+            {
+                return Err(TimelineRendererError::UnknownNode {
+                    node_id: to_node_id,
+                });
+            }
+        }
+
+        self.app
+            .world_mut()
+            .resource_mut::<TimelineRendererCommandQueue>()
+            .commands
+            .push(TimelineRendererCommand::CreateRelationship {
+                relationship_id,
+                from_node_id,
+                to_node_id,
+                relationship_type,
+            });
         Ok(())
     }
 

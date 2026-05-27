@@ -4,9 +4,13 @@ use eidetic_core::timeline::track::TrackId;
 
 mod app;
 mod app_command;
+#[cfg(feature = "native_render")]
 mod native_command;
+#[cfg(feature = "native_render")]
 mod native_lifecycle;
+#[cfg(feature = "native_render")]
 mod native_navigation;
+#[cfg(feature = "native_render")]
 mod native_visual;
 mod split;
 

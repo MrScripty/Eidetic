@@ -3817,8 +3817,9 @@ Implementation order:
 - Started: native timeline renderer command contracts now include a validated
   create-relationship primitive. The Bevy leaf crate validates projected
   endpoints before enqueueing the command, and the desktop command bridge maps
-  it to the backend timeline relationship command path. No Bevy input gesture
-  is bound yet.
+  it to the backend timeline relationship command path. The headless renderer
+  app exposes the same validated primitive for tests and host-side probes. No
+  Bevy input gesture is bound yet.
 - Add affect overlays only after Milestone 11 provides backend-owned affect
   projections.
 - Started: the Bevy timeline leaf crate now consumes backend

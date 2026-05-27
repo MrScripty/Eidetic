@@ -1,4 +1,5 @@
 use eidetic_core::timeline::node::NodeId;
+use eidetic_core::timeline::relationship::{RelationshipId, RelationshipType};
 
 use crate::{TimelineRendererApp, TimelineRendererCommand, TimelineRendererError};
 
@@ -66,6 +67,60 @@ fn renderer_app_rejects_create_child_intent_with_unknown_parent() {
     assert_eq!(
         renderer.request_create_child_from_parent(node_id, parent_id),
         Err(TimelineRendererError::UnknownNode { node_id: parent_id })
+    );
+    assert!(renderer.drain_commands().is_empty());
+}
+
+#[test]
+fn renderer_app_emits_validated_create_relationship_command() {
+    let from_node_id = NodeId::new();
+    let to_node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let mut projection = projection_with_node(from_node_id);
+    let mut to_clip = projection.clips[0].clone();
+    to_clip.node_id = to_node_id;
+    projection.clips.push(to_clip);
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection);
+
+    assert_eq!(
+        renderer.request_create_relationship(
+            relationship_id,
+            from_node_id,
+            to_node_id,
+            RelationshipType::Thematic,
+        ),
+        Ok(())
+    );
+    assert_eq!(
+        renderer.drain_commands(),
+        vec![TimelineRendererCommand::CreateRelationship {
+            relationship_id,
+            from_node_id,
+            to_node_id,
+            relationship_type: RelationshipType::Thematic,
+        }]
+    );
+}
+
+#[test]
+fn renderer_app_rejects_create_relationship_command_with_unknown_endpoint() {
+    let from_node_id = NodeId::new();
+    let to_node_id = NodeId::new();
+    let relationship_id = RelationshipId::new();
+    let mut renderer = TimelineRendererApp::new();
+    renderer.set_projection(projection_with_node(from_node_id));
+
+    assert_eq!(
+        renderer.request_create_relationship(
+            relationship_id,
+            from_node_id,
+            to_node_id,
+            RelationshipType::Thematic,
+        ),
+        Err(TimelineRendererError::UnknownNode {
+            node_id: to_node_id,
+        })
     );
     assert!(renderer.drain_commands().is_empty());
 }
