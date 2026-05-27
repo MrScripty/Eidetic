@@ -70,6 +70,14 @@ Dependency review:
 - Native camera movement is renderer-local only: keyboard pan and zoom change
   the Bevy camera transform without mutating graph selection, layout, or
   backend-owned project data.
+- Native pointer camera movement is renderer-local only: middle-button drag
+  orbits the camera, ctrl+middle-button drag pans the camera, scroll wheel
+  moves the camera forward/backward, and period frames the selected projected
+  node. These controls do not mutate graph facts or saved layout.
+- Native delete/insert keys emit validated renderer intents for the selected
+  projected node. The desktop/UI bridge handles those intents through existing
+  backend graph command APIs and refreshed backend projections; Bevy does not
+  create or delete durable graph nodes directly.
 - Native renderer-window control is limited to renderer-local lifecycle
   signaling. `BibleGraphNativeWindowControlHandle` lets the desktop host request
   close without giving this leaf crate access to Tauri, SQLite, or durable

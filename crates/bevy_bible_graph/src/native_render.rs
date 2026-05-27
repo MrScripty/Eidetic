@@ -5,12 +5,14 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bevy::app::AppExit;
+use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::prelude::{
     App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, Cuboid,
     DefaultPlugins, Entity, GlobalTransform, Handle, Justify, KeyCode, Mesh, Mesh3d,
-    MeshMaterial3d, MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Query, Ray3d, Res,
-    ResMut, Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor, TextFont, TextLayout,
-    Time, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without, World,
+    MeshMaterial3d, MessageReader, MessageWriter, MouseButton, Plugin, PluginGroup, PointLight,
+    Query, Ray3d, Res, ResMut, Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor,
+    TextFont, TextLayout, Time, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without,
+    World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -356,6 +358,8 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, emit_bible_graph_native_keyboard_commands);
         app.add_systems(Update, billboard_bible_graph_native_labels);
         app.add_systems(Update, navigate_bible_graph_native_camera);
+        app.add_systems(Update, drag_bible_graph_native_camera);
+        app.add_systems(Update, scroll_bible_graph_native_camera);
         app.add_systems(Update, orbit_bible_graph_native_camera);
         app.add_systems(Update, recover_bible_graph_native_camera);
         app.add_systems(Update, frame_bible_graph_native_camera_on_selected);
@@ -547,19 +551,39 @@ fn emit_bible_graph_native_click_selection(
 
 fn emit_bible_graph_native_keyboard_commands(
     keys: Option<Res<ButtonInput<KeyCode>>>,
+    nodes: Query<&BibleGraphNativeNodeVisual>,
     control: Option<Res<BibleGraphNativeWindowControl>>,
 ) {
     let Some(keys) = keys else {
         return;
     };
-    if !keys.just_pressed(KeyCode::Escape) {
-        return;
-    }
     let Some(control) = control else {
         return;
     };
 
-    let _ = push_native_command_to_control(&control, BibleGraphRendererCommand::ClearSelection);
+    if keys.just_pressed(KeyCode::Escape) {
+        let _ = push_native_command_to_control(&control, BibleGraphRendererCommand::ClearSelection);
+    }
+    if keys.just_pressed(KeyCode::Delete) || keys.just_pressed(KeyCode::Backspace) {
+        if let Some(selected_node) = nodes.iter().find(|node| node.selected) {
+            let _ = push_native_command_to_control(
+                &control,
+                BibleGraphRendererCommand::DeleteNode {
+                    node_id: selected_node.node_id.clone(),
+                },
+            );
+        }
+    }
+    if keys.just_pressed(KeyCode::Insert) {
+        if let Some(selected_node) = nodes.iter().find(|node| node.selected) {
+            let _ = push_native_command_to_control(
+                &control,
+                BibleGraphRendererCommand::CreateConnectedNode {
+                    parent_id: selected_node.node_id.clone(),
+                },
+            );
+        }
+    }
 }
 
 fn navigate_bible_graph_native_camera(
@@ -602,7 +626,7 @@ fn frame_bible_graph_native_camera_on_selected(
     let Some(keys) = keys else {
         return;
     };
-    if !keys.just_pressed(KeyCode::KeyF) {
+    if !keys.just_pressed(KeyCode::KeyF) && !keys.just_pressed(KeyCode::Period) {
         return;
     }
     let Some(selected_node) = nodes.iter().find(|node| node.selected) else {
@@ -614,6 +638,77 @@ fn frame_bible_graph_native_camera_on_selected(
 
     camera_transform.translation =
         native_camera_frame_selected_translation(camera_transform.translation, selected_node);
+}
+
+fn drag_bible_graph_native_camera(
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    buttons: Option<Res<ButtonInput<MouseButton>>>,
+    mut motion_events: Option<MessageReader<MouseMotion>>,
+    nodes: Query<&BibleGraphNativeNodeVisual>,
+    mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
+) {
+    let Some(buttons) = buttons else {
+        return;
+    };
+    let Some(mut motion_events) = motion_events.take() else {
+        return;
+    };
+    if !buttons.pressed(MouseButton::Middle) {
+        motion_events.clear();
+        return;
+    }
+    let total_delta = motion_events
+        .read()
+        .fold(Vec2::ZERO, |total, event| total + event.delta);
+    if total_delta == Vec2::ZERO {
+        return;
+    }
+    let Ok(mut camera_transform) = cameras.single_mut() else {
+        return;
+    };
+    let ctrl_pressed = keys.as_ref().is_some_and(|keys| {
+        keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight)
+    });
+
+    if ctrl_pressed {
+        let camera_z = camera_transform.translation.z;
+        camera_transform.translation += native_camera_drag_pan_delta(total_delta, camera_z);
+        camera_transform.translation.z = camera_transform.translation.z.max(120.0);
+        return;
+    }
+
+    let orbit_target = nodes
+        .iter()
+        .find(|node| node.selected)
+        .map(|node| Vec3::new(node.x, node.y, node.z))
+        .unwrap_or(Vec3::ZERO);
+    camera_transform.translation = native_camera_drag_orbit_translation(
+        camera_transform.translation,
+        orbit_target,
+        total_delta,
+    );
+    camera_transform.look_at(orbit_target, Vec3::Y);
+}
+
+fn scroll_bible_graph_native_camera(
+    mut scroll_events: Option<MessageReader<MouseWheel>>,
+    mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
+) {
+    let Some(mut scroll_events) = scroll_events.take() else {
+        return;
+    };
+    let scroll_y = scroll_events
+        .read()
+        .fold(0.0, |total, event| total + event.y);
+    if scroll_y == 0.0 {
+        return;
+    }
+    let Ok(mut camera_transform) = cameras.single_mut() else {
+        return;
+    };
+
+    camera_transform.translation.z =
+        (camera_transform.translation.z + native_camera_scroll_zoom_delta(scroll_y)).max(120.0);
 }
 
 fn recover_bible_graph_native_camera(
@@ -892,6 +987,30 @@ pub(crate) fn native_camera_frame_selected_translation(
         selected_node.x,
         selected_node.y,
         current_translation.z.max(selected_node.z + 220.0),
+    )
+}
+
+pub(crate) fn native_camera_drag_pan_delta(cursor_delta: Vec2, camera_z: f32) -> Vec3 {
+    let scale = (camera_z / 900.0).clamp(0.2, 4.0);
+    Vec3::new(-cursor_delta.x * scale, cursor_delta.y * scale, 0.0)
+}
+
+pub(crate) fn native_camera_scroll_zoom_delta(scroll_y: f32) -> f32 {
+    -scroll_y * 80.0
+}
+
+pub(crate) fn native_camera_drag_orbit_translation(
+    current_translation: Vec3,
+    orbit_target: Vec3,
+    cursor_delta: Vec2,
+) -> Vec3 {
+    let yaw_delta = -cursor_delta.x * 0.01;
+    let pitch_delta = cursor_delta.y * 0.75;
+    let yawed = native_camera_orbit_translation(current_translation, orbit_target, yaw_delta);
+    Vec3::new(
+        yawed.x,
+        (yawed.y + pitch_delta).clamp(orbit_target.y - 900.0, orbit_target.y + 900.0),
+        yawed.z.max(120.0),
     )
 }
 
@@ -1342,6 +1461,25 @@ pub fn emit_bible_graph_native_node_navigation(
 ) -> Result<(), BibleGraphRendererError> {
     validate_native_node(world, &node_id)?;
     push_native_command(world, BibleGraphRendererCommand::NavigateToNode { node_id })
+}
+
+pub fn emit_bible_graph_native_node_delete(
+    world: &mut World,
+    node_id: BibleGraphNodeId,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_node(world, &node_id)?;
+    push_native_command(world, BibleGraphRendererCommand::DeleteNode { node_id })
+}
+
+pub fn emit_bible_graph_native_connected_node_create(
+    world: &mut World,
+    parent_id: BibleGraphNodeId,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_node(world, &parent_id)?;
+    push_native_command(
+        world,
+        BibleGraphRendererCommand::CreateConnectedNode { parent_id },
+    )
 }
 
 pub fn emit_bible_graph_native_edge_selection(

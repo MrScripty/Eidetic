@@ -25,7 +25,8 @@ pub use native_render::{
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
     configure_controlled_minimal_bible_graph_native_window_app,
     configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_clear_selection,
-    emit_bible_graph_native_edge_selection, emit_bible_graph_native_influence_selection,
+    emit_bible_graph_native_connected_node_create, emit_bible_graph_native_edge_selection,
+    emit_bible_graph_native_influence_selection, emit_bible_graph_native_node_delete,
     emit_bible_graph_native_node_focus, emit_bible_graph_native_node_inspection,
     emit_bible_graph_native_node_navigation, emit_bible_graph_native_node_selection,
     run_controlled_minimal_bible_graph_native_window, run_minimal_bible_graph_native_window,
@@ -56,6 +57,8 @@ pub enum BibleGraphRendererCommand {
     InspectNode { node_id: BibleGraphNodeId },
     FocusNode { node_id: BibleGraphNodeId },
     NavigateToNode { node_id: BibleGraphNodeId },
+    DeleteNode { node_id: BibleGraphNodeId },
+    CreateConnectedNode { parent_id: BibleGraphNodeId },
     ClearSelection,
 }
 
@@ -240,6 +243,22 @@ impl BibleGraphRendererApp {
     ) -> Result<(), BibleGraphRendererError> {
         self.validate_node(&node_id)?;
         self.enqueue_command(BibleGraphRendererCommand::NavigateToNode { node_id })
+    }
+
+    pub fn delete_node(
+        &mut self,
+        node_id: BibleGraphNodeId,
+    ) -> Result<(), BibleGraphRendererError> {
+        self.validate_node(&node_id)?;
+        self.enqueue_command(BibleGraphRendererCommand::DeleteNode { node_id })
+    }
+
+    pub fn create_connected_node(
+        &mut self,
+        parent_id: BibleGraphNodeId,
+    ) -> Result<(), BibleGraphRendererError> {
+        self.validate_node(&parent_id)?;
+        self.enqueue_command(BibleGraphRendererCommand::CreateConnectedNode { parent_id })
     }
 
     pub fn select_edge(

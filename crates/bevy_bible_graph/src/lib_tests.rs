@@ -59,13 +59,21 @@ fn renderer_app_emits_validated_focus_and_navigation_commands() {
 
     assert_eq!(renderer.focus_node(node_id.clone()), Ok(()));
     assert_eq!(renderer.navigate_to_node(node_id.clone()), Ok(()));
+    assert_eq!(renderer.delete_node(node_id.clone()), Ok(()));
+    assert_eq!(renderer.create_connected_node(node_id.clone()), Ok(()));
     assert_eq!(
         renderer.drain_commands(),
         vec![
             BibleGraphRendererCommand::FocusNode {
                 node_id: node_id.clone()
             },
-            BibleGraphRendererCommand::NavigateToNode { node_id }
+            BibleGraphRendererCommand::NavigateToNode {
+                node_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::DeleteNode {
+                node_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::CreateConnectedNode { parent_id: node_id }
         ]
     );
 }
@@ -922,6 +930,30 @@ fn native_camera_frame_selected_moves_camera_over_selected_node() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_camera_mouse_drag_and_scroll_helpers_match_requested_controls() {
+    use crate::native_render::{
+        native_camera_drag_orbit_translation, native_camera_drag_pan_delta,
+        native_camera_scroll_zoom_delta,
+    };
+    use bevy::prelude::{Vec2, Vec3};
+
+    assert_eq!(
+        native_camera_drag_pan_delta(Vec2::new(20.0, -10.0), 900.0),
+        Vec3::new(-20.0, -10.0, 0.0)
+    );
+    assert_eq!(native_camera_scroll_zoom_delta(2.0), -160.0);
+
+    let orbit_target = Vec3::ZERO;
+    let current = Vec3::new(0.0, 0.0, 900.0);
+    let next = native_camera_drag_orbit_translation(current, orbit_target, Vec2::new(20.0, 4.0));
+
+    assert!(next.x < 0.0);
+    assert!(next.y > 0.0);
+    assert!(next.z >= 120.0);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_camera_recovery_maps_keyboard_intents_to_camera_commands() {
     use crate::native_render::native_camera_recovery_command;
 
@@ -1132,12 +1164,26 @@ fn controlled_native_window_emits_validated_focus_and_navigation_commands() {
         Ok(())
     );
     assert_eq!(
+        emit_bible_graph_native_node_delete(app.world_mut(), node_id.clone()),
+        Ok(())
+    );
+    assert_eq!(
+        emit_bible_graph_native_connected_node_create(app.world_mut(), node_id.clone()),
+        Ok(())
+    );
+    assert_eq!(
         control.drain_commands(),
         vec![
             BibleGraphRendererCommand::FocusNode {
                 node_id: node_id.clone()
             },
-            BibleGraphRendererCommand::NavigateToNode { node_id }
+            BibleGraphRendererCommand::NavigateToNode {
+                node_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::DeleteNode {
+                node_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::CreateConnectedNode { parent_id: node_id }
         ]
     );
 }

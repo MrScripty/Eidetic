@@ -89,6 +89,8 @@ export type GraphRendererCommand =
   | { type: 'inspect_node'; node_id: BibleGraphNodeId }
   | { type: 'focus_node'; node_id: BibleGraphNodeId }
   | { type: 'navigate_to_node'; node_id: BibleGraphNodeId }
+  | { type: 'delete_node'; node_id: BibleGraphNodeId }
+  | { type: 'create_connected_node'; parent_id: BibleGraphNodeId }
   | { type: 'clear_selection' };
 
 export type GraphRendererCameraCommand =

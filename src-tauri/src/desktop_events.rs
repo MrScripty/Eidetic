@@ -343,6 +343,44 @@ mod tests {
     }
 
     #[test]
+    fn serializes_graph_renderer_graph_mutation_intents_inside_stable_desktop_payload() {
+        let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+        let delete_value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(
+                BibleGraphRendererCommand::DeleteNode {
+                    node_id: node_id.clone(),
+                },
+            ),
+        })
+        .unwrap();
+        let create_value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(
+                BibleGraphRendererCommand::CreateConnectedNode { parent_id: node_id },
+            ),
+        })
+        .unwrap();
+
+        assert_eq!(
+            delete_value,
+            json!({
+                "event": {
+                    "type": "delete_node",
+                    "node_id": "node.character.ada"
+                }
+            })
+        );
+        assert_eq!(
+            create_value,
+            json!({
+                "event": {
+                    "type": "create_connected_node",
+                    "parent_id": "node.character.ada"
+                }
+            })
+        );
+    }
+
+    #[test]
     fn serializes_backend_timeline_selection_events_inside_stable_desktop_payload() {
         let node_id = NodeId::new();
         let event = ServerEvent::TimelineSelectionChanged {
