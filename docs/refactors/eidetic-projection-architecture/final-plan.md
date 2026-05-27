@@ -3005,13 +3005,13 @@ Tasks:
   route through the Bevy graph app, native runner, floating window control,
   Tauri command boundary, and TypeScript API. These are transient renderer
   presentation commands, not Svelte-owned durable graph facts.
-- Started: native Bevy graph viewport input now matches the target interaction
-  model: middle-button drag orbits around the selected node or graph origin,
-  ctrl+middle-button drag pans, scroll wheel moves the camera forward/backward,
-  period frames the selected node, left click selects nodes/edges, delete emits
-  a selected-node delete intent, and insert emits a create-connected-node
-  intent. Delete/create still cross the existing backend command APIs and wait
-  for refreshed backend projections.
+- Started: native Bevy graph viewport input now follows a Blender-style
+  interaction model: middle-button drag orbits around the current view center,
+  shift+middle-button drag pans, scroll wheel moves the camera
+  forward/backward, period frames the selected node, left click selects
+  nodes/edges, delete emits a selected-node delete intent, and insert emits a
+  create-connected-node intent. Delete/create still cross the existing backend
+  command APIs and wait for refreshed backend projections.
 - Add tested hit testing for nodes and edges using Bevy ray picking or an
   equivalent renderer-local selection index. Selection output must still become
   typed backend/desktop renderer commands.

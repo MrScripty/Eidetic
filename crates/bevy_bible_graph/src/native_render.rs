@@ -10,9 +10,9 @@ use bevy::prelude::{
     App, Assets, ButtonInput, Camera, Camera3d, ClearColor, Color, Commands, Component, Cuboid,
     DefaultPlugins, Entity, GlobalTransform, Handle, Justify, KeyCode, Mesh, Mesh3d,
     MeshMaterial3d, MessageReader, MessageWriter, MouseButton, Plugin, PluginGroup, PointLight,
-    Query, Ray3d, Res, ResMut, Resource, Sphere, StandardMaterial, Startup, Text2d, TextColor,
-    TextFont, TextLayout, Time, Transform, Update, Vec2, Vec3, Visibility, Window, With, Without,
-    World,
+    Quat, Query, Ray3d, Res, ResMut, Resource, Sphere, StandardMaterial, Startup, Text2d,
+    TextColor, TextFont, TextLayout, Time, Transform, Update, Vec2, Vec3, Visibility, Window, With,
+    Without, World,
 };
 use bevy::window::{
     ExitCondition, PrimaryWindow, WindowCloseRequested, WindowPlugin, WindowResolution,
@@ -666,28 +666,25 @@ fn drag_bible_graph_native_camera(
     let Ok(mut camera_transform) = cameras.single_mut() else {
         return;
     };
-    let ctrl_pressed = keys.as_ref().is_some_and(|keys| {
-        keys.pressed(KeyCode::ControlLeft) || keys.pressed(KeyCode::ControlRight)
-    });
+    let shift_pressed = keys
+        .as_ref()
+        .is_some_and(|keys| keys.pressed(KeyCode::ShiftLeft) || keys.pressed(KeyCode::ShiftRight));
 
-    if ctrl_pressed {
+    if shift_pressed {
         let camera_z = camera_transform.translation.z;
         camera_transform.translation += native_camera_drag_pan_delta(total_delta, camera_z);
         camera_transform.translation.z = camera_transform.translation.z.max(120.0);
         return;
     }
 
-    let orbit_target = nodes
-        .iter()
-        .find(|node| node.selected)
-        .map(|node| Vec3::new(node.x, node.y, node.z))
-        .unwrap_or(Vec3::ZERO);
-    camera_transform.translation = native_camera_drag_orbit_translation(
-        camera_transform.translation,
-        orbit_target,
-        total_delta,
-    );
-    camera_transform.look_at(orbit_target, Vec3::Y);
+    let orbit_target = native_camera_view_orbit_target(&camera_transform).unwrap_or_else(|| {
+        nodes
+            .iter()
+            .find(|node| node.selected)
+            .map(|node| Vec3::new(node.x, node.y, node.z))
+            .unwrap_or(Vec3::ZERO)
+    });
+    native_camera_drag_orbit_transform(&mut camera_transform, orbit_target, total_delta);
 }
 
 fn scroll_bible_graph_native_camera(
@@ -999,19 +996,31 @@ pub(crate) fn native_camera_scroll_zoom_delta(scroll_y: f32) -> f32 {
     -scroll_y * 80.0
 }
 
-pub(crate) fn native_camera_drag_orbit_translation(
-    current_translation: Vec3,
+pub(crate) fn native_camera_view_orbit_target(camera_transform: &Transform) -> Option<Vec3> {
+    let forward = *camera_transform.forward();
+    if forward.z.abs() <= f32::EPSILON {
+        return None;
+    }
+
+    let distance_to_graph_plane = -camera_transform.translation.z / forward.z;
+    if !distance_to_graph_plane.is_finite() || distance_to_graph_plane <= 0.0 {
+        return None;
+    }
+
+    Some(camera_transform.translation + forward * distance_to_graph_plane)
+}
+
+pub(crate) fn native_camera_drag_orbit_transform(
+    camera_transform: &mut Transform,
     orbit_target: Vec3,
     cursor_delta: Vec2,
-) -> Vec3 {
+) {
     let yaw_delta = -cursor_delta.x * 0.01;
-    let pitch_delta = cursor_delta.y * 0.75;
-    let yawed = native_camera_orbit_translation(current_translation, orbit_target, yaw_delta);
-    Vec3::new(
-        yawed.x,
-        (yawed.y + pitch_delta).clamp(orbit_target.y - 900.0, orbit_target.y + 900.0),
-        yawed.z.max(120.0),
-    )
+    let pitch_delta = -cursor_delta.y * 0.01;
+
+    camera_transform.rotate_around(orbit_target, Quat::from_axis_angle(Vec3::Y, yaw_delta));
+    let right = *camera_transform.right();
+    camera_transform.rotate_around(orbit_target, Quat::from_axis_angle(right, pitch_delta));
 }
 
 pub(crate) fn native_camera_orbit_translation(

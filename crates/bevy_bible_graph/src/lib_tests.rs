@@ -932,10 +932,10 @@ fn native_camera_frame_selected_moves_camera_over_selected_node() {
 #[test]
 fn native_camera_mouse_drag_and_scroll_helpers_match_requested_controls() {
     use crate::native_render::{
-        native_camera_drag_orbit_translation, native_camera_drag_pan_delta,
-        native_camera_scroll_zoom_delta,
+        native_camera_drag_orbit_transform, native_camera_drag_pan_delta,
+        native_camera_scroll_zoom_delta, native_camera_view_orbit_target,
     };
-    use bevy::prelude::{Vec2, Vec3};
+    use bevy::prelude::{Transform, Vec2, Vec3};
 
     assert_eq!(
         native_camera_drag_pan_delta(Vec2::new(20.0, -10.0), 900.0),
@@ -944,12 +944,19 @@ fn native_camera_mouse_drag_and_scroll_helpers_match_requested_controls() {
     assert_eq!(native_camera_scroll_zoom_delta(2.0), -160.0);
 
     let orbit_target = Vec3::ZERO;
-    let current = Vec3::new(0.0, 0.0, 900.0);
-    let next = native_camera_drag_orbit_translation(current, orbit_target, Vec2::new(20.0, 4.0));
+    let mut transform = Transform::from_xyz(0.0, 0.0, 900.0).looking_at(orbit_target, Vec3::Y);
+    native_camera_drag_orbit_transform(&mut transform, orbit_target, Vec2::new(20.0, 4.0));
 
-    assert!(next.x < 0.0);
-    assert!(next.y > 0.0);
-    assert!(next.z >= 120.0);
+    assert!(transform.translation.x < 0.0);
+    assert!(transform.translation.y.abs() > 0.0);
+    assert!(transform.translation.z > 0.0);
+
+    let panned_camera = Transform::from_xyz(240.0, -120.0, 900.0)
+        .looking_at(Vec3::new(240.0, -120.0, 0.0), Vec3::Y);
+    assert_eq!(
+        native_camera_view_orbit_target(&panned_camera),
+        Some(Vec3::new(240.0, -120.0, 0.0))
+    );
 }
 
 #[cfg(feature = "native_render")]

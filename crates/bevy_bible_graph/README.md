@@ -71,9 +71,10 @@ Dependency review:
   the Bevy camera transform without mutating graph selection, layout, or
   backend-owned project data.
 - Native pointer camera movement is renderer-local only: middle-button drag
-  orbits the camera, ctrl+middle-button drag pans the camera, scroll wheel
-  moves the camera forward/backward, and period frames the selected projected
-  node. These controls do not mutate graph facts or saved layout.
+  orbits the camera around the current view center, shift+middle-button drag
+  pans the camera, scroll wheel moves the camera forward/backward, and period
+  frames the selected projected node. These controls do not mutate graph facts
+  or saved layout.
 - Native delete/insert keys emit validated renderer intents for the selected
   projected node. The desktop/UI bridge handles those intents through existing
   backend graph command APIs and refreshed backend projections; Bevy does not
