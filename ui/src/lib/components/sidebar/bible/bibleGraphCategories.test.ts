@@ -4,6 +4,7 @@ import type { BibleGraphNode } from '$lib/bibleGraphTypes.js';
 import {
   bibleGraphCreateOptions,
   bibleGraphFilterOptions,
+  categoryColor,
   categorySchemaAvailable,
   nodeCategory,
 } from './bibleGraphCategories.js';
@@ -69,6 +70,11 @@ describe('bible graph categories', () => {
       'event',
     ]);
   });
+
+  it('uses backend-owned category colors from the schema projection', () => {
+    expect(categoryColor('character', projection())).toBe('#6495ed');
+    expect(categoryColor('Prop', projection())).toBe('#f97316');
+  });
 });
 
 function projection() {
@@ -123,6 +129,7 @@ function category(
   return {
     category,
     display_name,
+    visual_style: { fill_color: fillColorForCategory(category) },
     root_node_id,
     root_schema_key,
     create_schema_key: creatable ? category : null,
@@ -141,9 +148,33 @@ function schema(
     schema_key,
     category,
     display_name,
+    visual_style: { fill_color: fillColorForCategory(category) },
     default_node_name: `New ${display_name}`,
     canonical_parent_id,
     canonical_root_schema_key,
     parts: [],
   };
+}
+
+function fillColorForCategory(category: string): string {
+  switch (category) {
+    case 'character':
+      return '#6495ed';
+    case 'location':
+      return '#22c55e';
+    case 'prop':
+      return '#f97316';
+    case 'culture':
+      return '#14b8a6';
+    case 'theme':
+      return '#a855f7';
+    case 'event':
+      return '#ef4444';
+    case 'rule':
+      return '#eab308';
+    case 'reference':
+      return '#38bdf8';
+    default:
+      return '#34495e';
+  }
 }

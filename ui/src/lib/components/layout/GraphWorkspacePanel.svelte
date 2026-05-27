@@ -223,6 +223,7 @@
             <BibleGraphCategoryFilters
               {activeFilter}
               filters={graphFilterOptions}
+              schemaProjection={schemaProjection?.payload}
               onselect={(filter) => (activeFilter = filter)}
             />
             <div class="edge-kind-controls" aria-label="Edge kind filters">
@@ -240,6 +241,7 @@
             <BibleGraphAddControls
               {activeFilter}
               categories={graphCreateOptions}
+              schemaProjection={schemaProjection?.payload}
               onadd={handleAddGraphNode}
             />
             <button

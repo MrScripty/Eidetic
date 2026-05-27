@@ -149,37 +149,18 @@ export function categoryShortLabel(category: BibleGraphCategory): string {
   }
 }
 
-export function categoryColor(category: BibleGraphFilter | BibleGraphCategory): string {
-  switch (category) {
-    case 'Character':
-    case 'character':
-      return 'var(--color-entity-character)';
-    case 'Location':
-    case 'location':
-      return 'var(--color-entity-location)';
-    case 'Prop':
-    case 'prop':
-      return 'var(--color-entity-prop)';
-    case 'Culture':
-    case 'culture':
-      return 'var(--color-entity-culture)';
-    case 'Theme':
-    case 'theme':
-      return 'var(--color-entity-theme)';
-    case 'Event':
-    case 'event':
-      return 'var(--color-entity-event)';
-    case 'Rule':
-    case 'rule':
-      return 'var(--color-entity-rule)';
-    case 'Reference':
-    case 'reference':
-      return 'var(--color-entity-reference)';
-    case 'all':
-      return 'var(--color-text-secondary)';
-    default:
-      return 'var(--color-text-muted)';
+export function categoryColor(
+  category: BibleGraphFilter | BibleGraphCategory,
+  projection: BibleGraphSchemaListProjection | undefined,
+): string {
+  if (category === 'all') {
+    return 'var(--color-text-secondary)';
   }
+  const rootCategory = rootCategoryForColor(category);
+  return (
+    projection?.categories.find((option) => option.category === rootCategory)?.visual_style
+      .fill_color ?? 'var(--color-text-muted)'
+  );
 }
 
 export function nodeCategory(node: BibleGraphNode): BibleGraphCategory {
@@ -245,5 +226,32 @@ function parentCategory(parentId: string | null | undefined): BibleGraphNodeCate
       return 'reference';
     default:
       return 'other';
+  }
+}
+
+function rootCategoryForColor(
+  category: BibleGraphRootCategory | BibleGraphCategory,
+): BibleGraphRootCategory {
+  switch (category) {
+    case 'Character':
+      return 'character';
+    case 'Location':
+      return 'location';
+    case 'Prop':
+      return 'prop';
+    case 'Culture':
+      return 'culture';
+    case 'Theme':
+      return 'theme';
+    case 'Event':
+      return 'event';
+    case 'Rule':
+      return 'rule';
+    case 'Reference':
+      return 'reference';
+    case 'Other':
+      return 'other';
+    default:
+      return category;
   }
 }

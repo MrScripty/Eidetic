@@ -76,6 +76,11 @@ pub enum BibleGraphNodeCategory {
     Other,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleGraphCategoryVisualStyle {
+    pub fill_color: String,
+}
+
 impl BibleGraphNodeCategory {
     pub fn for_node(node: &BibleGraphNode) -> Self {
         Self::for_schema_and_parent(node.schema_key.as_str(), node.parent_id.as_ref())
@@ -122,6 +127,27 @@ impl BibleGraphNodeCategory {
             Self::Reference => "Reference",
             Self::Canonical => "Canonical",
             Self::Other => "Other",
+        }
+    }
+
+    pub fn fill_color(&self) -> &'static str {
+        match self {
+            Self::Character => "#6495ed",
+            Self::Location => "#22c55e",
+            Self::Prop => "#f97316",
+            Self::Culture => "#14b8a6",
+            Self::Theme => "#a855f7",
+            Self::Event => "#ef4444",
+            Self::Rule => "#eab308",
+            Self::Reference => "#38bdf8",
+            Self::Canonical => "#536f88",
+            Self::Other => "#34495e",
+        }
+    }
+
+    pub fn visual_style(&self) -> BibleGraphCategoryVisualStyle {
+        BibleGraphCategoryVisualStyle {
+            fill_color: self.fill_color().to_string(),
         }
     }
 }

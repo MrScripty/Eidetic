@@ -1640,6 +1640,10 @@ fn native_color_from_hex(color: &str) -> Color {
 }
 
 fn graph_color_components(color: &str) -> (f32, f32, f32) {
+    if let Some(components) = graph_hex_color_components(color) {
+        return components;
+    }
+
     match color {
         "#f2c94c" => (0.949, 0.788, 0.298),
         "#253041" => (0.145, 0.188, 0.255),
@@ -1663,6 +1667,23 @@ fn graph_color_components(color: &str) -> (f32, f32, f32) {
         "#34495e" => (0.204, 0.286, 0.369),
         _ => (0.8, 0.84, 0.9),
     }
+}
+
+fn graph_hex_color_components(color: &str) -> Option<(f32, f32, f32)> {
+    let hex = color.strip_prefix('#')?;
+    if hex.len() != 6 {
+        return None;
+    }
+
+    let red = u8::from_str_radix(&hex[0..2], 16).ok()?;
+    let green = u8::from_str_radix(&hex[2..4], 16).ok()?;
+    let blue = u8::from_str_radix(&hex[4..6], 16).ok()?;
+
+    Some((
+        f32::from(red) / 255.0,
+        f32::from(green) / 255.0,
+        f32::from(blue) / 255.0,
+    ))
 }
 
 fn existing_native_nodes(world: &mut World) -> HashMap<BibleGraphNodeId, Entity> {

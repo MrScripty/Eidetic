@@ -2998,6 +2998,10 @@ Tasks:
 - Add selection highlighting: selected node, incident edges, adjacent nodes,
   second-level neighborhood labels, graph-distance dimming, and selected edge/
   influence highlighting.
+- Completed: bible graph category colors are backend-owned contract data.
+  `eidetic-core` owns category fill colors, schema/category projections expose
+  those colors to Svelte, and the Bevy graph visual snapshots consume the same
+  contract palette instead of a renderer-local duplicate.
 - Add usable camera/navigation controls: orbit, pan, zoom, frame selection,
   focus selected neighborhood, clear focus, and keyboard graph navigation.
 - Completed: backend-owned camera command intents for reset, fit, frame node,

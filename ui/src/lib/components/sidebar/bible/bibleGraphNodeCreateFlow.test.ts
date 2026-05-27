@@ -123,6 +123,7 @@ function schemaEnvelope(schemaKeys: string[]): ProjectionEnvelope<BibleGraphSche
         schema_key,
         category: categoryForSchema(schema_key),
         display_name: displayNameForSchema(schema_key),
+        visual_style: { fill_color: '#6495ed' },
         default_node_name: `New ${displayNameForSchema(schema_key)}`,
         canonical_parent_id: canonicalParentForSchema(schema_key),
         canonical_root_schema_key: canonicalRootSchemaForSchema(schema_key),
@@ -140,6 +141,7 @@ function categoryEnvelope(
   return {
     category,
     display_name: displayName,
+    visual_style: { fill_color: '#6495ed' },
     root_node_id: canonicalParentForSchema(category),
     root_schema_key: canonicalRootSchemaForSchema(category),
     create_schema_key: creatable ? category : null,

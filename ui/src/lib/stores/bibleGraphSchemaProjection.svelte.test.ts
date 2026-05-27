@@ -23,6 +23,7 @@ const projection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
       {
         category: 'character',
         display_name: 'Character',
+        visual_style: { fill_color: '#6495ed' },
         root_node_id: 'canonical.characters',
         root_schema_key: 'canonical.root.characters',
         create_schema_key: 'character',
@@ -34,6 +35,7 @@ const projection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
         schema_key: 'character',
         category: 'character',
         display_name: 'Character',
+        visual_style: { fill_color: '#6495ed' },
         default_node_name: 'New Character',
         canonical_parent_id: 'canonical.characters',
         canonical_root_schema_key: 'canonical.root.characters',
@@ -67,6 +69,7 @@ const newerProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
       {
         category: 'location',
         display_name: 'Location',
+        visual_style: { fill_color: '#22c55e' },
         root_node_id: 'canonical.places',
         root_schema_key: 'canonical.root.places',
         create_schema_key: 'location',
@@ -78,6 +81,7 @@ const newerProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
         schema_key: 'location',
         category: 'location',
         display_name: 'Location',
+        visual_style: { fill_color: '#22c55e' },
         default_node_name: 'New Location',
         canonical_parent_id: 'canonical.places',
         canonical_root_schema_key: 'canonical.root.places',
@@ -107,6 +111,7 @@ const olderProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
       {
         category: 'prop',
         display_name: 'Prop',
+        visual_style: { fill_color: '#f97316' },
         root_node_id: 'canonical.objects',
         root_schema_key: 'canonical.root.objects',
         create_schema_key: 'prop',
@@ -118,6 +123,7 @@ const olderProjection: ProjectionEnvelope<BibleGraphSchemaListProjection> = {
         schema_key: 'prop',
         category: 'prop',
         display_name: 'Prop',
+        visual_style: { fill_color: '#f97316' },
         default_node_name: 'New Prop',
         canonical_parent_id: 'canonical.objects',
         canonical_root_schema_key: 'canonical.root.objects',

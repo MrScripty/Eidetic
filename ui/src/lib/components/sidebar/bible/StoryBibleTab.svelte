@@ -149,10 +149,16 @@
   <BibleGraphCategoryFilters
     {activeFilter}
     filters={graphFilterOptions}
+    schemaProjection={schemaProjection?.payload}
     onselect={(filter) => (activeFilter = filter)}
   />
 
-  <BibleGraphAddControls {activeFilter} categories={graphCreateOptions} onadd={handleAdd} />
+  <BibleGraphAddControls
+    {activeFilter}
+    categories={graphCreateOptions}
+    schemaProjection={schemaProjection?.payload}
+    onadd={handleAdd}
+  />
 
   <BibleRenderGraphOutline
     projection={renderGraphProjection?.payload ?? null}
@@ -171,6 +177,7 @@
         <BibleGraphNodeCard
           node={entity}
           category={nodeCategory(entity)}
+          schemaProjection={schemaProjection?.payload}
           selected={selectedGraphNodeId === entity.id}
           onselect={handleSelect}
         />

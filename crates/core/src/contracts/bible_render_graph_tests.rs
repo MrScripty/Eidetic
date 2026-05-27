@@ -2,6 +2,7 @@ use super::*;
 use crate::contracts::{
     BibleGraphNodeCategory, BibleGraphSchemaKey, ContextEvaluationId, ContextInfluenceId,
     ContextInfluenceKind, ContextInfluenceProvenance, ContextInfluenceRecord,
+    builtin_bible_graph_schema_list_projection,
 };
 use crate::timeline::node::{NodeId, StoryLevel};
 
@@ -61,6 +62,22 @@ fn render_graph_projection_is_deterministic_and_indexes_neighbors() {
         projection.neighborhoods[0].connected_node_ids[0].as_str(),
         "node.place.beach"
     );
+}
+
+#[test]
+fn bible_graph_category_visual_style_is_backend_owned() {
+    assert_eq!(BibleGraphNodeCategory::Character.fill_color(), "#6495ed");
+    assert_eq!(BibleGraphNodeCategory::Location.fill_color(), "#22c55e");
+    assert_eq!(BibleGraphNodeCategory::Prop.fill_color(), "#f97316");
+
+    let schema_projection = builtin_bible_graph_schema_list_projection();
+    let character_category = schema_projection
+        .payload
+        .categories
+        .iter()
+        .find(|category| category.category == BibleGraphNodeCategory::Character)
+        .expect("character category should be projected");
+    assert_eq!(character_category.visual_style.fill_color, "#6495ed");
 }
 
 #[test]

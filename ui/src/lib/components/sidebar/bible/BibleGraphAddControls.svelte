@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
   import {
     categoryColor,
     type BibleGraphCreateCategoryOption,
@@ -9,10 +10,12 @@
   let {
     activeFilter,
     categories,
+    schemaProjection,
     onadd,
   }: {
     activeFilter: BibleGraphFilter;
     categories: BibleGraphCreateCategoryOption[];
+    schemaProjection: BibleGraphSchemaListProjection | undefined;
     onadd: (category: BibleGraphRootCategory) => void;
   } = $props();
 
@@ -33,7 +36,7 @@
       {#each categories as category}
         <button
           class="add-btn-small"
-          style="color: {categoryColor(category.category)}"
+          style="color: {categoryColor(category.category, schemaProjection)}"
           onclick={() => onadd(category.category)}>Add {category.shortLabel}</button
         >
       {/each}

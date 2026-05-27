@@ -256,7 +256,7 @@ fn renderer_app_exposes_projection_derived_visual_snapshot() {
     assert_eq!(snapshot.edges.len(), 1);
     assert_eq!(snapshot.nodes[0].node_id, node_id);
     assert!(snapshot.nodes[0].highlighted);
-    assert_eq!(snapshot.nodes[0].fill_color, "#2f7a6e");
+    assert_eq!(snapshot.nodes[0].fill_color, "#6495ed");
     assert_eq!(snapshot.edges[0].edge_id, edge_id);
     assert!(snapshot.edges[0].highlighted);
     assert_eq!(snapshot.edges[0].stroke_color, "#f2c94c");
@@ -372,7 +372,7 @@ fn renderer_app_visual_snapshot_preserves_category_colors_under_highlight() {
     let snapshot = build_bible_graph_visual_3d_snapshot(&projection);
 
     assert!(snapshot.nodes[0].highlighted);
-    assert_eq!(snapshot.nodes[0].fill_color, "#7a5c8f");
+    assert_eq!(snapshot.nodes[0].fill_color, "#f97316");
     assert!(snapshot.nodes.iter().all(|node| node.label_visible));
     assert_eq!(snapshot.nodes[0].label_font_size, 14.0);
     assert_eq!(snapshot.nodes[0].label_color, "#c9f3f5");
@@ -388,7 +388,7 @@ fn renderer_visual_snapshots_share_category_fill_colors() {
     let visual_snapshot = build_bible_graph_visual_snapshot(&projection);
     let visual_3d_snapshot = build_bible_graph_visual_3d_snapshot(&projection);
 
-    assert_eq!(visual_snapshot.nodes[0].fill_color, "#3f668f");
+    assert_eq!(visual_snapshot.nodes[0].fill_color, "#22c55e");
     assert_eq!(
         visual_snapshot.nodes[0].fill_color,
         visual_3d_snapshot.nodes[0].fill_color
@@ -1071,15 +1071,27 @@ fn native_visual_state_color_brightens_selection_and_dims_unrelated_nodes() {
 
     assert_eq!(
         native_visual_state_color("#1f6f78", true, false, false),
-        Color::srgb(0.342, 0.655, 0.691)
+        Color::srgb(
+            (31.0_f32 / 255.0) + 0.22,
+            (111.0_f32 / 255.0) + 0.22,
+            (120.0_f32 / 255.0) + 0.22
+        )
     );
     assert_eq!(
         native_visual_state_color("#1f6f78", false, true, false),
-        Color::srgb(0.342, 0.655, 0.691)
+        Color::srgb(
+            (31.0_f32 / 255.0) + 0.22,
+            (111.0_f32 / 255.0) + 0.22,
+            (120.0_f32 / 255.0) + 0.22
+        )
     );
     assert_eq!(
         native_visual_state_color("#1f6f78", false, false, true),
-        Color::srgb(0.03904, 0.1392, 0.15071999)
+        Color::srgb(
+            (31.0_f32 / 255.0) * 0.32,
+            (111.0_f32 / 255.0) * 0.32,
+            (120.0_f32 / 255.0) * 0.32
+        )
     );
 }
 

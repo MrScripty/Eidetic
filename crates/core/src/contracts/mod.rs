@@ -40,11 +40,11 @@ pub use ai_context::{
     AiBibleContextSnapshot,
 };
 pub use bible_graph::{
-    BibleGraphContractError, BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphField,
-    BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeCategory,
-    BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPart, BibleGraphPartId,
-    BibleGraphPartKey, BibleGraphPartProjection, BibleGraphSchemaKey, BibleGraphSnapshot,
-    BibleGraphSnapshotField, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
+    BibleGraphCategoryVisualStyle, BibleGraphContractError, BibleGraphEdge, BibleGraphEdgeId,
+    BibleGraphEdgeKind, BibleGraphField, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode,
+    BibleGraphNodeCategory, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPart,
+    BibleGraphPartId, BibleGraphPartKey, BibleGraphPartProjection, BibleGraphSchemaKey,
+    BibleGraphSnapshot, BibleGraphSnapshotField, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
     BibleGraphSnapshotProjection, BibleNodeDetailProjection, CanonicalBibleRoot,
     CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand,
     EnsureCanonicalBibleRootsCommand, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,

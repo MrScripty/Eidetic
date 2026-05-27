@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
   import type { BibleGraphNode } from '$lib/bibleGraphTypes.js';
   import {
     categoryColor,
@@ -9,20 +10,22 @@
   let {
     node,
     category,
+    schemaProjection,
     selected = false,
     onselect,
   }: {
     node: BibleGraphNode;
     category: BibleGraphCategory;
+    schemaProjection: BibleGraphSchemaListProjection | undefined;
     selected?: boolean;
     onselect: (id: string, event: MouseEvent) => void;
   } = $props();
 </script>
 
 <button class="node-card" class:selected onclick={(event) => onselect(node.id, event)}>
-  <span class="color-dot" style="background: {categoryColor(category)}"></span>
+  <span class="color-dot" style="background: {categoryColor(category, schemaProjection)}"></span>
   <span class="node-name">{node.name}</span>
-  <span class="category-badge" style="color: {categoryColor(category)}">
+  <span class="category-badge" style="color: {categoryColor(category, schemaProjection)}">
     {categoryShortLabel(category)}
   </span>
   {#if node.system_owned}

@@ -40,6 +40,7 @@ pub struct BibleGraphSchemaListProjection {
 pub struct BibleGraphCategoryProjection {
     pub category: BibleGraphNodeCategory,
     pub display_name: String,
+    pub visual_style: super::BibleGraphCategoryVisualStyle,
     pub root_node_id: BibleGraphNodeId,
     pub root_schema_key: BibleGraphSchemaKey,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -53,6 +54,7 @@ pub struct BibleGraphSchemaProjection {
     pub schema_key: BibleGraphSchemaKey,
     pub category: BibleGraphNodeCategory,
     pub display_name: String,
+    pub visual_style: super::BibleGraphCategoryVisualStyle,
     pub default_node_name: String,
     pub canonical_parent_id: BibleGraphNodeId,
     pub canonical_root_schema_key: BibleGraphSchemaKey,
@@ -156,6 +158,7 @@ pub fn builtin_bible_graph_schema_list_projection()
             BibleGraphCategoryProjection {
                 category,
                 display_name: category.display_name().to_string(),
+                visual_style: category.visual_style(),
                 root_node_id: root.node_id(),
                 root_schema_key: root.schema_key(),
                 create_schema_key: create_schema.map(|schema| {
@@ -173,6 +176,7 @@ pub fn builtin_bible_graph_schema_list_projection()
                     .expect("default schema keys are non-empty"),
                 category: schema.category.clone(),
                 display_name: schema.display_name.to_string(),
+                visual_style: schema.category.visual_style(),
                 default_node_name: schema.default_node_name.to_string(),
                 canonical_parent_id: BibleGraphNodeId::new(schema.canonical_parent_id)
                     .expect("default canonical parent identifiers are non-empty"),

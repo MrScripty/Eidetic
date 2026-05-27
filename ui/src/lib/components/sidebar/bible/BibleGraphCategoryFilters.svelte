@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
   import {
     categoryColor,
     type BibleGraphCategoryFilterOption,
@@ -8,10 +9,12 @@
   let {
     activeFilter,
     filters,
+    schemaProjection,
     onselect,
   }: {
     activeFilter: BibleGraphFilter;
     filters: BibleGraphCategoryFilterOption[];
+    schemaProjection: BibleGraphSchemaListProjection | undefined;
     onselect: (filter: BibleGraphFilter) => void;
   } = $props();
 </script>
@@ -22,7 +25,7 @@
       class="pill"
       class:active={activeFilter === filter.filter}
       style={activeFilter === filter.filter
-        ? `color: ${categoryColor(filter.filter)}; border-color: ${categoryColor(filter.filter)}`
+        ? `color: ${categoryColor(filter.filter, schemaProjection)}; border-color: ${categoryColor(filter.filter, schemaProjection)}`
         : ''}
       onclick={() => onselect(filter.filter)}
     >
