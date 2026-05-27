@@ -34,6 +34,9 @@ use crate::{
     build_bible_graph_visual_3d_snapshot,
 };
 
+const NATIVE_CAMERA_EDGE_PAN_MARGIN_PX: f32 = 36.0;
+const NATIVE_CAMERA_EDGE_PAN_SPEED: f32 = 520.0;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
     pub borderless_window: bool,
@@ -396,6 +399,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Update, billboard_bible_graph_native_labels);
         app.add_systems(Update, billboard_bible_graph_native_selection_outlines);
         app.add_systems(Update, navigate_bible_graph_native_camera);
+        app.add_systems(Update, edge_pan_bible_graph_native_camera);
         app.add_systems(Update, drag_bible_graph_native_camera);
         app.add_systems(Update, scroll_bible_graph_native_camera);
         app.add_systems(Update, orbit_bible_graph_native_camera);
@@ -658,6 +662,44 @@ fn navigate_bible_graph_native_camera(
 
     camera_transform.translation += translation_delta;
     camera_transform.translation.z = camera_transform.translation.z.max(120.0);
+}
+
+fn edge_pan_bible_graph_native_camera(
+    buttons: Option<Res<ButtonInput<MouseButton>>>,
+    time: Option<Res<Time>>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
+) {
+    if buttons.as_ref().is_some_and(|buttons| {
+        buttons.pressed(MouseButton::Left)
+            || buttons.pressed(MouseButton::Middle)
+            || buttons.pressed(MouseButton::Right)
+    }) {
+        return;
+    }
+    let Some(time) = time else {
+        return;
+    };
+    let Ok(window) = windows.single() else {
+        return;
+    };
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
+    let direction = native_camera_edge_pan_direction(
+        cursor_position,
+        Vec2::new(window.width().max(1.0), window.height().max(1.0)),
+        NATIVE_CAMERA_EDGE_PAN_MARGIN_PX,
+    );
+    if direction == Vec2::ZERO {
+        return;
+    }
+    let Ok(mut camera_transform) = cameras.single_mut() else {
+        return;
+    };
+
+    let pan_delta = native_camera_edge_pan_delta(direction, &camera_transform, time.delta_secs());
+    camera_transform.translation += pan_delta;
 }
 
 fn frame_bible_graph_native_camera_on_selected(
@@ -923,6 +965,52 @@ pub(crate) fn native_camera_navigation_delta(
         pan_delta.y,
         zoom_direction * zoom_speed * delta_seconds,
     )
+}
+
+pub(crate) fn native_camera_edge_pan_direction(
+    cursor_position: Vec2,
+    viewport_size: Vec2,
+    margin_px: f32,
+) -> Vec2 {
+    if viewport_size.x <= 0.0 || viewport_size.y <= 0.0 || margin_px <= 0.0 {
+        return Vec2::ZERO;
+    }
+
+    let margin_x = margin_px.min(viewport_size.x * 0.5);
+    let margin_y = margin_px.min(viewport_size.y * 0.5);
+    let mut direction = Vec2::ZERO;
+    if cursor_position.x <= margin_x {
+        direction.x -= edge_pan_pressure(cursor_position.x, margin_x);
+    } else if cursor_position.x >= viewport_size.x - margin_x {
+        direction.x += edge_pan_pressure(viewport_size.x - cursor_position.x, margin_x);
+    }
+    if cursor_position.y <= margin_y {
+        direction.y -= edge_pan_pressure(cursor_position.y, margin_y);
+    } else if cursor_position.y >= viewport_size.y - margin_y {
+        direction.y += edge_pan_pressure(viewport_size.y - cursor_position.y, margin_y);
+    }
+
+    direction.clamp_length_max(1.0)
+}
+
+fn edge_pan_pressure(distance_from_edge: f32, margin_px: f32) -> f32 {
+    ((margin_px - distance_from_edge.max(0.0)) / margin_px).clamp(0.0, 1.0)
+}
+
+pub(crate) fn native_camera_edge_pan_delta(
+    direction: Vec2,
+    camera_transform: &Transform,
+    delta_seconds: f32,
+) -> Vec3 {
+    if direction == Vec2::ZERO || delta_seconds <= 0.0 {
+        return Vec3::ZERO;
+    }
+
+    let scale = native_camera_drag_pan_scale(camera_transform);
+    let speed = NATIVE_CAMERA_EDGE_PAN_SPEED * scale * delta_seconds;
+    let right = *camera_transform.right();
+    let up = *camera_transform.up();
+    right * direction.x * speed + up * direction.y * speed
 }
 
 pub(crate) fn native_camera_reset_transform() -> Transform {

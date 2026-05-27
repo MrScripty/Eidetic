@@ -1041,6 +1041,37 @@ fn native_camera_navigation_supports_pan_and_zoom_intents() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_camera_edge_pan_uses_viewport_bump_direction() {
+    use crate::native_render::{native_camera_edge_pan_delta, native_camera_edge_pan_direction};
+    use bevy::prelude::{Transform, Vec2, Vec3};
+
+    let viewport = Vec2::new(800.0, 600.0);
+    assert_eq!(
+        native_camera_edge_pan_direction(Vec2::new(400.0, 300.0), viewport, 40.0),
+        Vec2::ZERO
+    );
+    assert_eq!(
+        native_camera_edge_pan_direction(Vec2::new(0.0, 300.0), viewport, 40.0),
+        Vec2::NEG_X
+    );
+    assert_eq!(
+        native_camera_edge_pan_direction(Vec2::new(800.0, 600.0), viewport, 40.0),
+        Vec2::new(1.0, 1.0).normalize()
+    );
+
+    let front_camera = Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y);
+    assert_eq!(
+        native_camera_edge_pan_delta(Vec2::X, &front_camera, 1.0),
+        Vec3::new(520.0, 0.0, 0.0)
+    );
+    assert_eq!(
+        native_camera_edge_pan_delta(Vec2::Y, &front_camera, 0.5),
+        Vec3::new(0.0, 260.0, 0.0)
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_camera_frame_selected_moves_camera_over_selected_node() {
     use crate::native_render::native_camera_frame_selected_translation;
     use bevy::prelude::Vec3;
