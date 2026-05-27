@@ -603,6 +603,51 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_uses_backend_category_material_colors() {
+    use bevy::prelude::{Assets, Color, MeshMaterial3d, Plugin, StandardMaterial};
+
+    let source_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection_with_edge(source_id));
+
+    app.update();
+
+    let material_colors = {
+        let world = app.world_mut();
+        let mut query = world.query::<(
+            &BibleGraphNativeNodeVisual,
+            &MeshMaterial3d<StandardMaterial>,
+        )>();
+        query
+            .iter(world)
+            .map(|(node, material_handle)| {
+                let material = world
+                    .resource::<Assets<StandardMaterial>>()
+                    .get(&material_handle.0)
+                    .expect("node material should exist");
+                (node.fill_color, material.base_color, material.unlit)
+            })
+            .collect::<Vec<_>>()
+    };
+
+    assert!(material_colors.contains(&(
+        "#6495ed",
+        Color::srgb(100.0 / 255.0, 149.0 / 255.0, 237.0 / 255.0),
+        true
+    )));
+    assert!(material_colors.contains(&(
+        "#22c55e",
+        Color::srgb(34.0 / 255.0, 197.0 / 255.0, 94.0 / 255.0),
+        true
+    )));
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_renders_projection_derived_structural_edges() {
     use bevy::prelude::{Plugin, With};
 

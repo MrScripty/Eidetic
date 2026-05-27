@@ -1425,7 +1425,7 @@ fn cached_native_material(
 
     let handle = world
         .resource_mut::<Assets<StandardMaterial>>()
-        .add(native_visual_state_color(
+        .add(native_standard_material(
             color,
             selected,
             highlighted,
@@ -1632,6 +1632,19 @@ pub(crate) fn native_visual_state_color(
         );
     }
     Color::srgb(red, green, blue)
+}
+
+pub(crate) fn native_standard_material(
+    color: &str,
+    selected: bool,
+    highlighted: bool,
+    dimmed: bool,
+) -> StandardMaterial {
+    StandardMaterial {
+        base_color: native_visual_state_color(color, selected, highlighted, dimmed),
+        unlit: true,
+        ..Default::default()
+    }
 }
 
 fn native_color_from_hex(color: &str) -> Color {
