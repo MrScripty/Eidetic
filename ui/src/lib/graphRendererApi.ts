@@ -50,6 +50,18 @@ export function applyGraphRendererTextEditorSettings(
   });
 }
 
+export function loadGraphRendererTextEditorSettings(): Promise<GraphRendererTextEditorSettings> {
+  return invokeDesktop<GraphRendererTextEditorSettings>('graph_renderer_text_editor_settings_load');
+}
+
+export function saveGraphRendererTextEditorSettings(
+  settings: GraphRendererTextEditorSettings,
+): Promise<GraphRendererStatus> {
+  return invokeDesktop<GraphRendererStatus>('graph_renderer_text_editor_settings_save', {
+    settings,
+  });
+}
+
 export function getGraphRendererVisualSnapshot(): Promise<GraphRendererVisualSnapshot> {
   return invokeDesktop<GraphRendererVisualSnapshot>('graph_renderer_visual_snapshot');
 }

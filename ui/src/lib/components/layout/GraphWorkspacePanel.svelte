@@ -20,6 +20,8 @@
   import {
     applyGraphRendererCameraCommand,
     applyGraphRendererTextEditorSettings,
+    loadGraphRendererTextEditorSettings,
+    saveGraphRendererTextEditorSettings,
   } from '$lib/graphRendererApi.js';
   import { ensureCanonicalBibleRootProjections } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import {
@@ -76,11 +78,13 @@
   let textEditorOutlineTransparency = $state(0.05);
   let textEditorFontSizePx = $state(15);
   let textEditorFontBrightness = $state(0.88);
+  let textEditorBackgroundColor = $state('#ffffff');
   let textEditorBackgroundBrightness = $state(0.075);
   let textEditorBackgroundTransparency = $state(0.08);
   let selectedNodeOutlineWidthPx = $state(4);
   let selectedNodeOutlineBrightness = $state(1);
   let selectedNodeOutlineColor = $state('#f2c94c');
+  let textEditorSettingsSaving = $state(false);
   const focusedNeighborhoodNodeId = $derived(bibleState.graphFocusedNeighborhoodNodeId);
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
@@ -112,6 +116,7 @@
   );
 
   onMount(() => {
+    void loadTextEditorSettings();
     void refreshBibleGraphSchemaListProjection().catch((error) => {
       graphLoadError = error instanceof Error ? error.message : 'Failed to load graph schemas';
     });
@@ -214,7 +219,36 @@
   }
 
   function applyTextEditorSettings(): void {
-    void applyGraphRendererTextEditorSettings({
+    void applyGraphRendererTextEditorSettings(currentTextEditorSettings()).catch((error) => {
+      graphLoadError =
+        error instanceof Error ? error.message : 'Failed to update graph renderer settings';
+    });
+  }
+
+  async function loadTextEditorSettings(): Promise<void> {
+    try {
+      const settings = await loadGraphRendererTextEditorSettings();
+      setTextEditorSettings(settings);
+      await applyGraphRendererTextEditorSettings(settings);
+    } catch (error) {
+      graphLoadError = error instanceof Error ? error.message : 'Failed to load graph settings';
+    }
+  }
+
+  async function saveTextEditorSettings(): Promise<void> {
+    try {
+      textEditorSettingsSaving = true;
+      graphLoadError = null;
+      await saveGraphRendererTextEditorSettings(currentTextEditorSettings());
+    } catch (error) {
+      graphLoadError = error instanceof Error ? error.message : 'Failed to save graph settings';
+    } finally {
+      textEditorSettingsSaving = false;
+    }
+  }
+
+  function currentTextEditorSettings() {
+    return {
       padding_px: textEditorPaddingPx,
       corner_radius_px: textEditorCornerRadiusPx,
       editor_outline_width_px: textEditorOutlineWidthPx,
@@ -222,15 +256,29 @@
       editor_outline_transparency: textEditorOutlineTransparency,
       font_size_px: textEditorFontSizePx,
       font_brightness: textEditorFontBrightness,
+      editor_background_color: textEditorBackgroundColor,
       editor_background_brightness: textEditorBackgroundBrightness,
       editor_background_transparency: textEditorBackgroundTransparency,
       selected_node_outline_width_px: selectedNodeOutlineWidthPx,
       selected_node_outline_brightness: selectedNodeOutlineBrightness,
       selected_node_outline_color: selectedNodeOutlineColor,
-    }).catch((error) => {
-      graphLoadError =
-        error instanceof Error ? error.message : 'Failed to update graph renderer settings';
-    });
+    };
+  }
+
+  function setTextEditorSettings(settings: ReturnType<typeof currentTextEditorSettings>): void {
+    textEditorPaddingPx = settings.padding_px;
+    textEditorCornerRadiusPx = settings.corner_radius_px;
+    textEditorOutlineWidthPx = settings.editor_outline_width_px;
+    textEditorOutlineBrightness = settings.editor_outline_brightness;
+    textEditorOutlineTransparency = settings.editor_outline_transparency;
+    textEditorFontSizePx = settings.font_size_px;
+    textEditorFontBrightness = settings.font_brightness;
+    textEditorBackgroundColor = settings.editor_background_color;
+    textEditorBackgroundBrightness = settings.editor_background_brightness;
+    textEditorBackgroundTransparency = settings.editor_background_transparency;
+    selectedNodeOutlineWidthPx = settings.selected_node_outline_width_px;
+    selectedNodeOutlineBrightness = settings.selected_node_outline_brightness;
+    selectedNodeOutlineColor = settings.selected_node_outline_color;
   }
 </script>
 
@@ -338,6 +386,15 @@
               </div>
             {:else}
               <div class="graph-settings" aria-label="Graph renderer settings">
+                <div class="graph-settings-actions">
+                  <button
+                    type="button"
+                    disabled={textEditorSettingsSaving}
+                    onclick={saveTextEditorSettings}
+                  >
+                    {textEditorSettingsSaving ? 'Saving...' : 'Save settings'}
+                  </button>
+                </div>
                 <label>
                   <span>Padding</span>
                   <input
@@ -421,6 +478,15 @@
                     oninput={applyTextEditorSettings}
                   />
                   <output>{Math.round(textEditorFontBrightness * 100)}%</output>
+                </label>
+                <label>
+                  <span>Background color</span>
+                  <input
+                    type="color"
+                    bind:value={textEditorBackgroundColor}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{textEditorBackgroundColor}</output>
                 </label>
                 <label>
                   <span>Background light</span>
@@ -624,6 +690,33 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: 5px;
     background: var(--color-bg-surface);
+  }
+
+  .graph-settings-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .graph-settings-actions button {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    padding: 6px 9px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    font-size: 0.76rem;
+    cursor: pointer;
+  }
+
+  .graph-settings-actions button:hover,
+  .graph-settings-actions button:focus-visible {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .graph-settings-actions button:disabled {
+    cursor: default;
+    opacity: 0.65;
   }
 
   .graph-settings label {

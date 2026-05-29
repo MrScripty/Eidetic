@@ -128,6 +128,7 @@ pub struct BibleGraphNativeTextEditorSettings {
     pub editor_outline_transparency: f32,
     pub font_size_px: f32,
     pub font_brightness: f32,
+    pub editor_background_color: String,
     pub editor_background_brightness: f32,
     pub editor_background_transparency: f32,
     pub selected_node_outline_width_px: f32,
@@ -145,6 +146,7 @@ impl Default for BibleGraphNativeTextEditorSettings {
             editor_outline_transparency: 0.05,
             font_size_px: NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX,
             font_brightness: 0.88,
+            editor_background_color: "#ffffff".to_string(),
             editor_background_brightness: 0.075,
             editor_background_transparency: 0.08,
             selected_node_outline_width_px: 4.0,
@@ -1971,9 +1973,15 @@ fn native_text_editor_border_color(settings: &BibleGraphNativeTextEditorSettings
 fn native_text_editor_background_color(
     settings: &BibleGraphNativeTextEditorSettings,
 ) -> BackgroundColor {
+    let (red, green, blue) = graph_color_components(&settings.editor_background_color);
     let brightness = settings.editor_background_brightness.clamp(0.0, 1.0);
     let alpha = 1.0 - settings.editor_background_transparency.clamp(0.0, 1.0);
-    BackgroundColor(Color::srgba(brightness, brightness, brightness, alpha))
+    BackgroundColor(Color::srgba(
+        red * brightness,
+        green * brightness,
+        blue * brightness,
+        alpha,
+    ))
 }
 
 fn native_text_editor_font_color(settings: &BibleGraphNativeTextEditorSettings) -> TextColor {
@@ -1996,13 +2004,13 @@ pub(crate) fn native_node_label_overlay_position(
 pub(crate) fn bible_graph_native_text_editor_caret_position(
     text: &str,
     cursor_byte_index: usize,
-    scroll_y: f32,
+    _scroll_y: f32,
 ) -> Vec2 {
     let (line_index, column_index) =
         bible_graph_native_text_editor_line_column(text, cursor_byte_index);
     Vec2::new(
         column_index as f32 * NATIVE_NODE_TEXT_EDITOR_CHARACTER_WIDTH_PX,
-        (line_index as f32 * NATIVE_NODE_TEXT_EDITOR_LINE_HEIGHT_PX) - scroll_y,
+        line_index as f32 * NATIVE_NODE_TEXT_EDITOR_LINE_HEIGHT_PX,
     )
 }
 

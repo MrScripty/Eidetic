@@ -1,3 +1,7 @@
+use std::fs;
+use std::io::ErrorKind;
+use std::path::PathBuf;
+
 use eidetic_bevy_bible_graph::{
     BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings, BibleGraphVisualSnapshot,
 };
@@ -10,6 +14,8 @@ use crate::error::CommandError;
 use crate::graph_renderer_projection::{
     GraphRendererProjectionOwner, update_active_graph_renderer_projection_request,
 };
+
+const GRAPH_RENDERER_SETTINGS_FILE_NAME: &str = "graph-renderer-settings.json";
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct OpenGraphRendererRequest {
@@ -122,6 +128,89 @@ pub fn graph_renderer_text_editor_settings(
         })
 }
 
+#[tauri::command]
+pub fn graph_renderer_text_editor_settings_load(
+    app: tauri::AppHandle,
+) -> Result<BibleGraphNativeTextEditorSettings, CommandError> {
+    load_graph_renderer_text_editor_settings(&app)
+}
+
+#[tauri::command]
+pub fn graph_renderer_text_editor_settings_save(
+    app: tauri::AppHandle,
+    settings: BibleGraphNativeTextEditorSettings,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    validate_text_editor_settings(&settings)?;
+    save_graph_renderer_text_editor_settings(&app, &settings)?;
+    graph_renderer_owner(&app)?
+        .apply_text_editor_settings(settings)
+        .map_err(|error| {
+            CommandError::internal(format!(
+                "graph renderer text editor settings save failed: {error:?}"
+            ))
+        })
+}
+
+pub(crate) fn load_graph_renderer_text_editor_settings(
+    app: &tauri::AppHandle,
+) -> Result<BibleGraphNativeTextEditorSettings, CommandError> {
+    let path = graph_renderer_settings_path(app)?;
+    match fs::read_to_string(&path) {
+        Ok(contents) => {
+            let settings = serde_json::from_str::<BibleGraphNativeTextEditorSettings>(&contents)
+                .map_err(|error| {
+                    CommandError::internal(format!(
+                        "graph renderer settings file is invalid: {error}"
+                    ))
+                })?;
+            validate_text_editor_settings(&settings)?;
+            Ok(settings)
+        }
+        Err(error) if error.kind() == ErrorKind::NotFound => {
+            Ok(BibleGraphNativeTextEditorSettings::default())
+        }
+        Err(error) => Err(CommandError::internal(format!(
+            "failed to read graph renderer settings: {error}"
+        ))),
+    }
+}
+
+fn save_graph_renderer_text_editor_settings(
+    app: &tauri::AppHandle,
+    settings: &BibleGraphNativeTextEditorSettings,
+) -> Result<(), CommandError> {
+    let path = graph_renderer_settings_path(app)?;
+    let Some(parent) = path.parent() else {
+        return Err(CommandError::internal(
+            "graph renderer settings path has no parent directory",
+        ));
+    };
+    fs::create_dir_all(parent).map_err(|error| {
+        CommandError::internal(format!(
+            "failed to create graph renderer settings directory: {error}"
+        ))
+    })?;
+    let contents = serde_json::to_string_pretty(settings).map_err(|error| {
+        CommandError::internal(format!(
+            "failed to serialize graph renderer settings: {error}"
+        ))
+    })?;
+    fs::write(&path, contents).map_err(|error| {
+        CommandError::internal(format!("failed to write graph renderer settings: {error}"))
+    })
+}
+
+fn graph_renderer_settings_path(app: &tauri::AppHandle) -> Result<PathBuf, CommandError> {
+    app.path()
+        .app_config_dir()
+        .map(|directory| directory.join(GRAPH_RENDERER_SETTINGS_FILE_NAME))
+        .map_err(|error| {
+            CommandError::internal(format!(
+                "failed to resolve graph renderer settings directory: {error}"
+            ))
+        })
+}
+
 fn apply_renderer_window_size_hint(
     app: &tauri::AppHandle,
     size_hint: Option<RendererWindowSizeHint>,
@@ -192,6 +281,10 @@ fn validate_text_editor_settings(
             "graph renderer text editor font brightness must be between 0 and 1",
         ));
     }
+    validate_graph_renderer_hex_color(
+        &settings.editor_background_color,
+        "graph renderer text editor background color must be a hex color",
+    )?;
     if !(0.0..=1.0).contains(&settings.editor_background_brightness) {
         return Err(CommandError::bad_request(
             "graph renderer text editor background brightness must be between 0 and 1",
@@ -212,21 +305,23 @@ fn validate_text_editor_settings(
             "graph renderer selected node outline brightness must be between 0 and 1",
         ));
     }
-    validate_graph_renderer_hex_color(&settings.selected_node_outline_color)?;
+    validate_graph_renderer_hex_color(
+        &settings.selected_node_outline_color,
+        "graph renderer selected node outline color must be a hex color",
+    )?;
 
     Ok(())
 }
 
-fn validate_graph_renderer_hex_color(color: &str) -> Result<(), CommandError> {
+fn validate_graph_renderer_hex_color(
+    color: &str,
+    message: &'static str,
+) -> Result<(), CommandError> {
     let Some(hex) = color.strip_prefix('#') else {
-        return Err(CommandError::bad_request(
-            "graph renderer selected node outline color must be a hex color",
-        ));
+        return Err(CommandError::bad_request(message));
     };
     if hex.len() != 6 || !hex.chars().all(|character| character.is_ascii_hexdigit()) {
-        return Err(CommandError::bad_request(
-            "graph renderer selected node outline color must be a hex color",
-        ));
+        return Err(CommandError::bad_request(message));
     }
 
     Ok(())

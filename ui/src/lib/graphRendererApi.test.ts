@@ -7,7 +7,9 @@ import {
   focusGraphRenderer,
   getGraphRendererStatus,
   getGraphRendererVisualSnapshot,
+  loadGraphRendererTextEditorSettings,
   openGraphRenderer,
+  saveGraphRendererTextEditorSettings,
   updateGraphRendererProjectionRequest,
 } from './graphRendererApi.js';
 
@@ -292,6 +294,7 @@ describe('graph renderer api helpers', () => {
       editor_outline_transparency: 0.05,
       font_size_px: 16,
       font_brightness: 0.9,
+      editor_background_color: '#ffffff',
       editor_background_brightness: 0.1,
       editor_background_transparency: 0.08,
       selected_node_outline_width_px: 6,
@@ -303,5 +306,65 @@ describe('graph renderer api helpers', () => {
     await expect(applyGraphRendererTextEditorSettings(settings)).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('graph_renderer_text_editor_settings', { settings });
+  });
+
+  it('loads and saves persisted desktop graph renderer text editor settings', async () => {
+    const settings = {
+      padding_px: 17,
+      corner_radius_px: 4,
+      editor_outline_width_px: 1,
+      editor_outline_brightness: 0.12,
+      editor_outline_transparency: 0.05,
+      font_size_px: 15,
+      font_brightness: 0.88,
+      editor_background_color: '#ffffff',
+      editor_background_brightness: 0.075,
+      editor_background_transparency: 0.08,
+      selected_node_outline_width_px: 4,
+      selected_node_outline_brightness: 1,
+      selected_node_outline_color: '#f2c94c',
+    };
+    const response = {
+      renderer_window_kind: 'bible_graph',
+      running: true,
+      renderer_window_open: true,
+      renderer_scene_ready: true,
+      renderer_window_visible: true,
+      renderer_window_strategy: 'bevy_winit_floating_window',
+      renderer_window_platform: 'linux',
+      renderer_runner_lifecycle: 'visible',
+      renderer_supervisor_lifecycle: 'running',
+      renderer_runner_threading_model: 'worker_thread',
+      renderer_window_capability: 'platform_verified',
+      renderer_window_capability_reason: 'platform_verified',
+      renderer_window_lifecycle: 'visible',
+      renderer_window_ready: true,
+      renderer_window_verified_support: true,
+      renderer_window_visible_supported: true,
+      renderer_window_focus_supported: false,
+      renderer_window_message: 'graph renderer window is visible',
+      node_count: 0,
+      edge_count: 0,
+      native_visual_node_count: 0,
+      native_visual_edge_count: 0,
+      renderer_window_width_px: 1280,
+      renderer_window_height_px: 720,
+      influence_count: 0,
+      last_error: null,
+    };
+    const invoke = installDesktopInvoke(settings);
+
+    await expect(loadGraphRendererTextEditorSettings()).resolves.toEqual(settings);
+    invoke.mockResolvedValue(response);
+    await expect(saveGraphRendererTextEditorSettings(settings)).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      1,
+      'graph_renderer_text_editor_settings_load',
+      undefined,
+    );
+    expect(invoke).toHaveBeenNthCalledWith(2, 'graph_renderer_text_editor_settings_save', {
+      settings,
+    });
   });
 });

@@ -36,13 +36,22 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let app_state = tauri::async_runtime::block_on(AppState::new());
-            app.manage(
-                DesktopBibleGraphRendererOwner::start().unwrap_or_else(|error| {
-                    DesktopBibleGraphRendererOwner::unavailable(format!(
-                        "failed to start Bevy bible graph renderer owner: {error:?}"
-                    ))
-                }),
-            );
+            let graph_owner = DesktopBibleGraphRendererOwner::start().unwrap_or_else(|error| {
+                DesktopBibleGraphRendererOwner::unavailable(format!(
+                    "failed to start Bevy bible graph renderer owner: {error:?}"
+                ))
+            });
+            let graph_settings =
+                graph_renderer_commands::load_graph_renderer_text_editor_settings(app.handle())
+                    .map_err(|error| {
+                        format!("failed to load Bevy bible graph renderer settings: {error:?}")
+                    })?;
+            graph_owner
+                .apply_text_editor_settings(graph_settings)
+                .map_err(|error| {
+                    format!("failed to apply Bevy bible graph renderer settings: {error:?}")
+                })?;
+            app.manage(graph_owner);
             app.manage(GraphRendererProjectionOwner::new(app_state.clone()));
             app.manage(
                 bevy_timeline_host::DesktopTimelineRendererOwner::start().unwrap_or_else(|error| {
@@ -98,6 +107,8 @@ pub fn run() {
             graph_renderer_commands::graph_renderer_update_projection_request,
             graph_renderer_commands::graph_renderer_camera_command,
             graph_renderer_commands::graph_renderer_text_editor_settings,
+            graph_renderer_commands::graph_renderer_text_editor_settings_load,
+            graph_renderer_commands::graph_renderer_text_editor_settings_save,
             graph_renderer_commands::graph_renderer_visual_snapshot,
             timeline_renderer_commands::timeline_renderer_open,
             timeline_renderer_commands::timeline_renderer_focus,

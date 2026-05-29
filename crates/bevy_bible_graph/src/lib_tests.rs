@@ -1130,6 +1130,7 @@ fn controlled_native_window_applies_text_editor_style_settings() {
         editor_outline_transparency: 0.2,
         font_size_px: 18.0,
         font_brightness: 0.7,
+        editor_background_color: "#4080ff".to_string(),
         editor_background_brightness: 0.11,
         editor_background_transparency: 0.15,
         selected_node_outline_width_px: 9.0,
@@ -1174,7 +1175,15 @@ fn controlled_native_window_applies_text_editor_style_settings() {
     assert_eq!(panel_border, Val::Px(3.0));
     assert_eq!(panel_radius, Val::Px(11.0));
     assert_eq!(border_color, Color::srgba(0.82, 0.82, 0.82, 0.8));
-    assert_eq!(background_color, Color::srgba(0.11, 0.11, 0.11, 0.85));
+    assert_eq!(
+        background_color,
+        Color::srgba(
+            (0x40 as f32 / 255.0) * 0.11,
+            (0x80 as f32 / 255.0) * 0.11,
+            0.11,
+            0.85,
+        )
+    );
     assert_eq!(font_size, 18.0);
     assert_eq!(text_color, Color::srgb(0.7, 0.7, 0.7));
     assert_eq!(selection_outline_width, 9.0);
@@ -1266,7 +1275,7 @@ fn native_node_text_editor_cursor_helpers_preserve_lines_and_columns() {
             notes_index,
             12.0,
         ),
-        Vec2::new(51.0, 8.0)
+        Vec2::new(51.0, 20.0)
     );
 }
 

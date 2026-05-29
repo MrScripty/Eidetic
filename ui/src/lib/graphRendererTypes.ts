@@ -23,6 +23,7 @@ export interface GraphRendererTextEditorSettings {
   editor_outline_transparency: number;
   font_size_px: number;
   font_brightness: number;
+  editor_background_color: string;
   editor_background_brightness: number;
   editor_background_transparency: number;
   selected_node_outline_width_px: number;
