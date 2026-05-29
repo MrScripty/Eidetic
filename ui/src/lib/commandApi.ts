@@ -1,5 +1,6 @@
 import type {
   BibleGraphNodeCommandResponse,
+  BibleGraphNodeId,
   BibleGraphNodeListCommandResponse,
   BibleGraphRootsCommandResponse,
   CreateBibleGraphNodeCommand,
@@ -150,6 +151,14 @@ export function createBibleGraphNode(
   };
 
   return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_node', { command });
+}
+
+export function createConnectedBibleGraphNode(
+  parentId: BibleGraphNodeId,
+): Promise<BibleGraphNodeCommandResponse> {
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_connected_node', {
+    parentId,
+  });
 }
 
 export function deleteBibleGraphNode(

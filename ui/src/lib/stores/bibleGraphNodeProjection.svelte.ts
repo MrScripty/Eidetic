@@ -1,4 +1,5 @@
 import {
+  createConnectedBibleGraphNode,
   createBibleGraphNode,
   deleteBibleGraphEdge,
   deleteBibleGraphNode,
@@ -193,6 +194,33 @@ export async function createBibleGraphNodeProjection(
     bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
       error,
       'Failed to create bible graph node',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.pending[keyString] = false;
+  }
+}
+
+export async function createConnectedBibleGraphNodeProjection(
+  parentId: BibleGraphNodeId,
+): Promise<BibleGraphNodeCommandResponse> {
+  const key = { node_id: parentId };
+  const keyString = cacheKey(key);
+  bibleGraphNodeProjectionState.pending[keyString] = true;
+  bibleGraphNodeProjectionState.errors[keyString] = undefined;
+
+  try {
+    const response = await createConnectedBibleGraphNode(parentId);
+    const confirmedKeyString = cacheKey({ node_id: response.projection.payload.node.id });
+    const accepted = cacheNodeProjection(confirmedKeyString, response.projection);
+    if (accepted && shouldInvalidateNodeListForNodeProjection(response.projection)) {
+      bibleGraphNodeProjectionState.nodeList = null;
+    }
+    return response;
+  } catch (error) {
+    bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
+      error,
+      'Failed to create connected bible graph node',
     );
     throw error;
   } finally {

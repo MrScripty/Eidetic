@@ -8,6 +8,7 @@ import type {
 } from '$lib/bibleGraphTypes.js';
 import {
   createBibleGraphNodeProjection,
+  createConnectedBibleGraphNodeProjection,
   ensureCanonicalBibleRootProjections,
   getCachedBibleGraphNodeListProjection,
   refreshBibleGraphNodeListProjection,
@@ -31,6 +32,7 @@ export interface BibleGraphNodeCreateFlowDependencies {
   refreshNodeListProjection: () => Promise<ProjectionEnvelope<BibleGraphNodeListProjection>>;
   ensureCanonicalRoots: () => Promise<BibleGraphRootsCommandResponse>;
   createNode: (payload: CreateBibleGraphNodeCommand) => Promise<BibleGraphNodeCommandResponse>;
+  createConnectedNode: (parentId: string) => Promise<BibleGraphNodeCommandResponse>;
 }
 
 export interface BibleGraphNodeCreateFlowOptions {
@@ -45,6 +47,7 @@ const defaultDeps: BibleGraphNodeCreateFlowDependencies = {
   refreshNodeListProjection: refreshBibleGraphNodeListProjection,
   ensureCanonicalRoots: ensureCanonicalBibleRootProjections,
   createNode: createBibleGraphNodeProjection,
+  createConnectedNode: createConnectedBibleGraphNodeProjection,
 };
 
 export async function createBibleGraphNodeForCategory(
@@ -66,6 +69,14 @@ export async function createBibleGraphNodeForCategory(
     name: newNodeName(category, schemaProjection),
     sort_order: nextSortOrderForParent(parentId, graphNodes),
   });
+}
+
+export async function createConnectedBibleGraphChildNode(
+  parentId: string,
+  options: BibleGraphNodeCreateFlowOptions = {},
+): Promise<BibleGraphNodeCommandResponse> {
+  const deps = options.deps ?? defaultDeps;
+  return deps.createConnectedNode(parentId);
 }
 
 async function schemaListForCategory(

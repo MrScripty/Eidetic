@@ -9,8 +9,10 @@
     getBibleGraphNodeProjectionError,
     getCachedBibleGraphNodeProjection,
     isBibleGraphNodeProjectionPending,
+    refreshBibleGraphNodeListProjection,
     refreshBibleGraphNodeProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+  import { createConnectedBibleGraphChildNode } from './bibleGraphNodeCreateFlow.js';
   import BibleGraphEdgeEditor from './BibleGraphEdgeEditor.svelte';
   import { bibleGraphEdgeTargetOptions } from './bibleGraphEdgeTargetOptions.js';
   import BibleGraphEdgeList from './BibleGraphEdgeList.svelte';
@@ -21,23 +23,45 @@
   let {
     nodeId,
     onclose,
+    onselect,
     ondeleted,
+    oncreated,
+    graphNodes = undefined,
     edgeTargetNodes,
   }: {
     nodeId: BibleGraphNodeId;
     onclose: () => void;
+    onselect?: (nodeId: BibleGraphNodeId) => void;
     ondeleted?: () => void | Promise<void>;
+    oncreated?: (nodeId: BibleGraphNodeId) => void | Promise<void>;
+    graphNodes?: BibleGraphNode[];
     edgeTargetNodes: Array<BibleGraphNode | BibleRenderGraphNode>;
   } = $props();
 
   let deletingNode = $state(false);
+  let creatingChild = $state(false);
   let deleteError = $state<string | undefined>(undefined);
+  let createError = $state<string | undefined>(undefined);
 
   const key = $derived({ node_id: nodeId });
   const projection = $derived(getCachedBibleGraphNodeProjection(key));
   const pending = $derived(isBibleGraphNodeProjectionPending(key));
   const error = $derived(getBibleGraphNodeProjectionError(key));
   const edgeTargetOptions = $derived(bibleGraphEdgeTargetOptions(edgeTargetNodes, nodeId));
+  const childNodes = $derived(
+    graphNodes
+      ? graphNodes
+          .filter((node) => node.parent_id === nodeId)
+          .sort(
+            (left, right) =>
+              left.sort_order - right.sort_order || left.name.localeCompare(right.name),
+          )
+      : [],
+  );
+  const childCreateDisabledReason = $derived(() => {
+    if (!projection) return 'Node projection is not loaded';
+    return null;
+  });
   const deleteDisabledReason = $derived(() => {
     if (!projection) return 'Node projection is not loaded';
     if (projection.payload.node.system_owned) return 'Canonical roots cannot be deleted';
@@ -53,6 +77,26 @@
   $effect(() => {
     void refreshBibleGraphNodeProjection({ node_id: nodeId }).catch(() => {});
   });
+
+  async function handleCreateChild(): Promise<void> {
+    if (!projection) return;
+    if (childCreateDisabledReason() !== null) return;
+
+    creatingChild = true;
+    createError = undefined;
+    try {
+      const response = await createConnectedBibleGraphChildNode(projection.payload.node.id);
+      await refreshBibleGraphNodeListProjection();
+      await refreshBibleGraphNodeProjection({ node_id: projection.payload.node.id });
+      if (oncreated) {
+        await oncreated(response.projection.payload.node.id);
+      }
+    } catch (error) {
+      createError = error instanceof Error ? error.message : 'Failed to create bible graph child';
+    } finally {
+      creatingChild = false;
+    }
+  }
 
   async function handleDeleteNode(): Promise<void> {
     if (!projection) return;
@@ -82,6 +126,15 @@
     {#if projection}
       <button
         type="button"
+        class="child-add-btn"
+        disabled={creatingChild || childCreateDisabledReason() !== null}
+        title={childCreateDisabledReason() ?? 'Add child node'}
+        onclick={() => void handleCreateChild()}
+      >
+        {creatingChild ? 'Adding' : 'Add Child'}
+      </button>
+      <button
+        type="button"
         class="delete-btn"
         disabled={deletingNode || deleteDisabledReason() !== null}
         title={deleteDisabledReason() ?? 'Delete node'}
@@ -99,6 +152,9 @@
       {#if deleteError}
         <p class="status error">{deleteError}</p>
       {/if}
+      {#if createError}
+        <p class="status error">{createError}</p>
+      {/if}
       <dl class="metadata">
         <div>
           <dt>ID</dt>
@@ -111,6 +167,23 @@
           </div>
         {/if}
       </dl>
+
+      <section class="child-section">
+        <h3>Children</h3>
+        {#if childNodes.length > 0}
+          <ul class="child-list">
+            {#each childNodes as childNode (childNode.id)}
+              <li>
+                <button type="button" onclick={() => onselect?.(childNode.id)}>
+                  {childNode.name}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="muted">No child nodes</p>
+        {/if}
+      </section>
 
       {#each projection.payload.parts as partProjection (partProjection.part.id)}
         <BibleGraphPartFields nodeId={projection.payload.node.id} {partProjection} />
@@ -182,6 +255,7 @@
     color: var(--color-text-primary);
   }
 
+  .child-add-btn,
   .delete-btn {
     border: 1px solid var(--color-border-subtle);
     border-radius: 4px;
@@ -192,11 +266,17 @@
     padding: 4px 8px;
   }
 
+  .child-add-btn:hover:not(:disabled) {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
   .delete-btn:hover:not(:disabled) {
     border-color: var(--color-danger, #b74c4c);
     color: var(--color-danger, #b74c4c);
   }
 
+  .child-add-btn:disabled,
   .delete-btn:disabled {
     cursor: not-allowed;
     opacity: 0.55;
@@ -231,6 +311,45 @@
     display: grid;
     gap: 8px;
     margin: 12px 0 0;
+  }
+
+  .child-section {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .child-section h3 {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .child-list {
+    display: grid;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .child-list button {
+    width: 100%;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 6px 8px;
+    text-align: left;
+  }
+
+  .child-list button:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
   }
 
   .metadata div {

@@ -8,6 +8,7 @@ import type {
 import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import type { BibleGraphSchemaListProjection } from '$lib/bibleGraphSchemaTypes.js';
 import {
+  createConnectedBibleGraphChildNode,
   createBibleGraphNodeForCategory,
   type BibleGraphNodeCreateFlowDependencies,
 } from './bibleGraphNodeCreateFlow.js';
@@ -83,6 +84,38 @@ describe('bible graph node create flow', () => {
 
     expect(deps.createNode).not.toHaveBeenCalled();
   });
+
+  it('creates connected child nodes through the backend command path', async () => {
+    const ada = node('node.character.ada', 'canonical.characters', 'character', 'Ada');
+    const existingDetail = node('node.detail.voice', ada.id, 'detail', 'Voice');
+    const response = responseFor(node('node.detail.new', ada.id, 'detail', 'New Detail'));
+    const deps = depsFor({
+      schemas: schemaEnvelope([]),
+      nodes: nodeListEnvelope([ada, existingDetail]),
+      createConnectedNode: vi.fn().mockResolvedValue(response),
+    });
+
+    await expect(createConnectedBibleGraphChildNode(ada.id, { deps })).resolves.toBe(response);
+
+    expect(deps.createConnectedNode).toHaveBeenCalledWith(ada.id);
+  });
+
+  it('leaves connected child parent validation to the backend', async () => {
+    const response = responseFor(
+      node('node.detail.new', 'node.character.missing', 'detail', 'New Detail'),
+    );
+    const deps = depsFor({
+      schemas: schemaEnvelope([]),
+      nodes: nodeListEnvelope([]),
+      createConnectedNode: vi.fn().mockResolvedValue(response),
+    });
+
+    await expect(
+      createConnectedBibleGraphChildNode('node.character.missing', { deps }),
+    ).resolves.toBe(response);
+
+    expect(deps.createConnectedNode).toHaveBeenCalledWith('node.character.missing');
+  });
 });
 
 function depsFor({
@@ -91,12 +124,14 @@ function depsFor({
   nodes,
   roots = rootsResponse([]),
   createNode = vi.fn(),
+  createConnectedNode = vi.fn(),
 }: {
   schemas: ProjectionEnvelope<BibleGraphSchemaListProjection>;
   refreshedSchemas?: ProjectionEnvelope<BibleGraphSchemaListProjection>;
   nodes: ProjectionEnvelope<{ nodes: BibleGraphNode[] }>;
   roots?: BibleGraphRootsCommandResponse;
   createNode?: BibleGraphNodeCreateFlowDependencies['createNode'];
+  createConnectedNode?: BibleGraphNodeCreateFlowDependencies['createConnectedNode'];
 }): BibleGraphNodeCreateFlowDependencies {
   return {
     getCachedSchemaListProjection: vi.fn(() => schemas),
@@ -105,6 +140,7 @@ function depsFor({
     refreshNodeListProjection: vi.fn(async () => nodes),
     ensureCanonicalRoots: vi.fn(async () => roots),
     createNode,
+    createConnectedNode,
   };
 }
 
@@ -142,8 +178,8 @@ function categoryEnvelope(
     category,
     display_name: displayName,
     visual_style: { fill_color: '#6495ed' },
-    root_node_id: canonicalParentForSchema(category),
-    root_schema_key: canonicalRootSchemaForSchema(category),
+    root_node_id: canonicalParentForSchema(category) ?? 'canonical.references',
+    root_schema_key: canonicalRootSchemaForSchema(category) ?? 'canonical.root.references',
     create_schema_key: creatable ? category : null,
     default_node_name: creatable ? `New ${displayName}` : null,
   };
@@ -163,6 +199,8 @@ function categoryForSchema(
       return 'theme';
     case 'event':
       return 'event';
+    case 'detail':
+      return 'detail';
     default:
       return 'other';
   }
@@ -180,12 +218,14 @@ function displayNameForSchema(schemaKey: string): string {
       return 'Theme';
     case 'event':
       return 'Event';
+    case 'detail':
+      return 'Detail';
     default:
       return 'Other';
   }
 }
 
-function canonicalParentForSchema(schemaKey: string): string {
+function canonicalParentForSchema(schemaKey: string): string | null {
   switch (schemaKey) {
     case 'character':
       return 'canonical.characters';
@@ -197,12 +237,14 @@ function canonicalParentForSchema(schemaKey: string): string {
       return 'canonical.themes';
     case 'event':
       return 'canonical.events';
+    case 'detail':
+      return null;
     default:
       return 'canonical.references';
   }
 }
 
-function canonicalRootSchemaForSchema(schemaKey: string): string {
+function canonicalRootSchemaForSchema(schemaKey: string): string | null {
   switch (schemaKey) {
     case 'character':
       return 'canonical.root.characters';
@@ -214,6 +256,8 @@ function canonicalRootSchemaForSchema(schemaKey: string): string {
       return 'canonical.root.themes';
     case 'event':
       return 'canonical.root.events';
+    case 'detail':
+      return null;
     default:
       return 'canonical.root.references';
   }

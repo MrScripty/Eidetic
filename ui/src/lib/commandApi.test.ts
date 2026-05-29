@@ -5,6 +5,7 @@ import {
   applyTimelineChildren,
   createAffectProposal,
   createBibleGraphNode,
+  createConnectedBibleGraphNode,
   deleteBibleGraphEdge,
   deleteBibleGraphNode,
   createStoryArc,
@@ -891,6 +892,44 @@ describe('command api helpers', () => {
           sort_order: 3,
         },
       },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop connected bible graph node create command when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 3,
+        payload: {
+          node: {
+            id: 'node.detail.voice',
+            parent_id: 'node.character.ada',
+            schema_key: 'detail',
+            name: 'New Detail',
+            system_owned: false,
+            sort_order: 1,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(createConnectedBibleGraphNode('node.character.ada')).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_connected_node', {
+      parentId: 'node.character.ada',
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

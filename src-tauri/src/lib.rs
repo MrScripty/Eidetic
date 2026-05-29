@@ -116,6 +116,7 @@ pub fn run() {
             commands::affect::command_affect_proposal_reject,
             commands::affect::command_affect_proposal_accept,
             commands::bible::command_bible_graph_node,
+            commands::bible::command_bible_graph_connected_node,
             commands::bible::command_bible_graph_delete_node,
             commands::bible::command_bible_graph_field,
             commands::bible::command_bible_graph_edge,
