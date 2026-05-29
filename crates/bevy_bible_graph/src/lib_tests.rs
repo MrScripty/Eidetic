@@ -1101,14 +1101,14 @@ fn controlled_native_window_renders_selected_node_text_editor_from_projection() 
     );
     assert_eq!(editor_entries[0].1, "Ada keeps a coded notebook.");
     assert_eq!(caret_count, 1);
-    assert_eq!(panel_node.padding.left, Val::Px(16.0));
-    assert_eq!(panel_node.border_radius.top_left, Val::Px(6.0));
+    assert_eq!(panel_node.padding.left, Val::Px(17.0));
+    assert_eq!(panel_node.border_radius.top_left, Val::Px(4.0));
 }
 
 #[cfg(feature = "native_render")]
 #[test]
 fn controlled_native_window_applies_text_editor_style_settings() {
-    use bevy::prelude::{Color, Plugin, Val, With};
+    use bevy::prelude::{BackgroundColor, Color, Plugin, TextColor, TextFont, Val, With};
     use bevy::ui::prelude::{BorderColor, Node};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
@@ -1125,20 +1125,60 @@ fn controlled_native_window_applies_text_editor_style_settings() {
     control.set_text_editor_settings(BibleGraphNativeTextEditorSettings {
         padding_px: 28.0,
         corner_radius_px: 11.0,
-        outline_width_px: 3.0,
-        outline_brightness: 0.82,
+        editor_outline_width_px: 3.0,
+        editor_outline_brightness: 0.82,
+        editor_outline_transparency: 0.2,
+        font_size_px: 18.0,
+        font_brightness: 0.7,
+        editor_background_brightness: 0.11,
+        editor_background_transparency: 0.15,
+        selected_node_outline_width_px: 9.0,
+        selected_node_outline_brightness: 0.65,
+        selected_node_outline_color: "#6fc2c9".to_string(),
     });
     app.update();
 
-    let mut panel_nodes = app
-        .world_mut()
-        .query_filtered::<(&Node, &BorderColor), With<BibleGraphNativeNodeTextEditorVisual>>();
-    let (panel_node, border_color) = panel_nodes.single(app.world()).unwrap();
+    let (panel_padding, panel_border, panel_radius, border_color, background_color) = {
+        let mut panel_nodes = app.world_mut().query_filtered::<
+            (&Node, &BorderColor, &BackgroundColor),
+            With<BibleGraphNativeNodeTextEditorVisual>,
+        >();
+        let (panel_node, border_color, background_color) = panel_nodes.single(app.world()).unwrap();
+        (
+            panel_node.padding.left,
+            panel_node.border.left,
+            panel_node.border_radius.top_left,
+            border_color.left,
+            background_color.0,
+        )
+    };
+    let (font_size, text_color) = {
+        let mut text_nodes = app
+            .world_mut()
+            .query_filtered::<(&TextFont, &TextColor), With<BibleGraphNativeNodeTextEditorText>>();
+        let (font, text_color) = text_nodes.single(app.world()).unwrap();
+        (font.font_size, text_color.0)
+    };
+    let (selection_outline_width, selection_outline_color) = {
+        let mut selection_outlines = app
+            .world_mut()
+            .query::<&BibleGraphNativeSelectionOutlineVisual>();
+        let selection_outline = selection_outlines.single(app.world()).unwrap();
+        (
+            selection_outline.outline_width_px,
+            selection_outline.outline_color.clone(),
+        )
+    };
 
-    assert_eq!(panel_node.padding.left, Val::Px(28.0));
-    assert_eq!(panel_node.border.left, Val::Px(3.0));
-    assert_eq!(panel_node.border_radius.top_left, Val::Px(11.0));
-    assert_eq!(border_color.left, Color::srgba(0.82, 0.82, 0.82, 0.95));
+    assert_eq!(panel_padding, Val::Px(28.0));
+    assert_eq!(panel_border, Val::Px(3.0));
+    assert_eq!(panel_radius, Val::Px(11.0));
+    assert_eq!(border_color, Color::srgba(0.82, 0.82, 0.82, 0.8));
+    assert_eq!(background_color, Color::srgba(0.11, 0.11, 0.11, 0.85));
+    assert_eq!(font_size, 18.0);
+    assert_eq!(text_color, Color::srgb(0.7, 0.7, 0.7));
+    assert_eq!(selection_outline_width, 9.0);
+    assert_eq!(selection_outline_color, "#6fc2c9");
 }
 
 #[cfg(feature = "native_render")]

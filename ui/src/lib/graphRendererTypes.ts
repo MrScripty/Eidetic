@@ -18,8 +18,16 @@ export interface GraphRendererWindowSizeHint {
 export interface GraphRendererTextEditorSettings {
   padding_px: number;
   corner_radius_px: number;
-  outline_width_px: number;
-  outline_brightness: number;
+  editor_outline_width_px: number;
+  editor_outline_brightness: number;
+  editor_outline_transparency: number;
+  font_size_px: number;
+  font_brightness: number;
+  editor_background_brightness: number;
+  editor_background_transparency: number;
+  selected_node_outline_width_px: number;
+  selected_node_outline_brightness: number;
+  selected_node_outline_color: string;
 }
 
 export interface GraphRendererStatus {

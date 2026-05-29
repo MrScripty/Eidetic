@@ -148,7 +148,7 @@ impl NativeRendererSupervisor {
         self.lifecycle = NativeRendererSupervisorLifecycle::Starting;
         match (self.window_thread_start)(config) {
             Ok(window_thread) => {
-                window_thread.set_text_editor_settings(self.text_editor_settings);
+                window_thread.set_text_editor_settings(self.text_editor_settings.clone());
                 self.window_thread = Some(window_thread);
                 self.window_ready = false;
                 self.lifecycle = NativeRendererSupervisorLifecycle::Running;
@@ -271,7 +271,7 @@ impl NativeRendererRunner for NativeRendererSupervisor {
         &mut self,
         settings: BibleGraphNativeTextEditorSettings,
     ) -> NativeRendererRunnerStatus {
-        self.text_editor_settings = settings;
+        self.text_editor_settings = settings.clone();
         if let Some(window_thread) = self.window_thread.as_ref() {
             window_thread.set_text_editor_settings(settings);
         }

@@ -15,9 +15,9 @@ use bevy::prelude::{
     App, Assets, BorderRadius, ButtonInput, Camera, Camera2d, Camera3d, ClearColor,
     ClearColorConfig, Color, Commands, Component, Cuboid, DefaultPlugins, Entity, GlobalTransform,
     Handle, IntoScheduleConfigs, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d, MessageReader,
-    MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Quat, Query, Ray3d, Res, ResMut,
-    Resource, Sphere, Startup, SystemSet, TextColor, TextFont, TextLayout, Time, Torus, Transform,
-    Update, Vec2, Vec3, Visibility, Window, With, Without, World,
+    MessageWriter, MouseButton, Mut, Plugin, PluginGroup, PointLight, Quat, Query, Ray3d, Res,
+    ResMut, Resource, Sphere, Startup, SystemSet, TextColor, TextFont, TextLayout, Time, Torus,
+    Transform, Update, Vec2, Vec3, Visibility, Window, With, Without, World,
 };
 use bevy::reflect::TypePath;
 use bevy::render::render_resource::AsBindGroup;
@@ -119,26 +119,42 @@ pub struct BibleGraphNativeRendererWindowStatus {
     pub bounds: BibleGraphNativeRendererWindowBounds,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BibleGraphNativeTextEditorSettings {
     pub padding_px: f32,
     pub corner_radius_px: f32,
-    pub outline_width_px: f32,
-    pub outline_brightness: f32,
+    pub editor_outline_width_px: f32,
+    pub editor_outline_brightness: f32,
+    pub editor_outline_transparency: f32,
+    pub font_size_px: f32,
+    pub font_brightness: f32,
+    pub editor_background_brightness: f32,
+    pub editor_background_transparency: f32,
+    pub selected_node_outline_width_px: f32,
+    pub selected_node_outline_brightness: f32,
+    pub selected_node_outline_color: String,
 }
 
 impl Default for BibleGraphNativeTextEditorSettings {
     fn default() -> Self {
         Self {
-            padding_px: 16.0,
-            corner_radius_px: 6.0,
-            outline_width_px: 1.0,
-            outline_brightness: 0.58,
+            padding_px: 17.0,
+            corner_radius_px: 4.0,
+            editor_outline_width_px: 1.0,
+            editor_outline_brightness: 0.12,
+            editor_outline_transparency: 0.05,
+            font_size_px: NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX,
+            font_brightness: 0.88,
+            editor_background_brightness: 0.075,
+            editor_background_transparency: 0.08,
+            selected_node_outline_width_px: 4.0,
+            selected_node_outline_brightness: 1.0,
+            selected_node_outline_color: "#f2c94c".to_string(),
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Resource)]
+#[derive(Debug, Clone, PartialEq, Resource)]
 struct BibleGraphNativeTextEditorSettingsState {
     settings: BibleGraphNativeTextEditorSettings,
     version: u64,
@@ -167,7 +183,7 @@ pub struct BibleGraphNativeVisualStatus {
 #[derive(Debug, Default, Resource)]
 struct BibleGraphNativeAssetCache {
     node_meshes: HashMap<u32, Handle<Mesh>>,
-    selection_outline_meshes: HashMap<u32, Handle<Mesh>>,
+    selection_outline_meshes: HashMap<(u32, u32), Handle<Mesh>>,
     edge_meshes: HashMap<(u32, u32), Handle<Mesh>>,
     materials: HashMap<BibleGraphNativeMaterialKey, Handle<BibleGraphNativeMaterial>>,
 }
@@ -186,10 +202,11 @@ impl Material for BibleGraphNativeMaterial {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct BibleGraphNativeMaterialKey {
-    color: &'static str,
+    color: String,
     selected: bool,
     highlighted: bool,
     dimmed: bool,
+    brightness: u32,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -269,7 +286,8 @@ pub struct BibleGraphNativeLabelBillboard;
 pub struct BibleGraphNativeSelectionOutlineVisual {
     pub node_id: BibleGraphNodeId,
     pub radius: f32,
-    pub outline_color: &'static str,
+    pub outline_width_px: f32,
+    pub outline_color: String,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -1837,7 +1855,19 @@ fn emit_bible_graph_native_node_text_editor_updates(
 fn apply_bible_graph_native_text_editor_settings(
     control: Option<Res<BibleGraphNativeWindowControl>>,
     mut state: ResMut<BibleGraphNativeTextEditorSettingsState>,
-    mut editors: Query<(&mut Node, &mut BorderColor), With<BibleGraphNativeNodeTextEditorVisual>>,
+    mut editors: Query<
+        (&mut Node, &mut BorderColor, &mut BackgroundColor),
+        With<BibleGraphNativeNodeTextEditorVisual>,
+    >,
+    mut texts: Query<(&mut TextFont, &mut TextColor), With<BibleGraphNativeNodeTextEditorText>>,
+    mut selection_outlines: Query<(
+        &mut BibleGraphNativeSelectionOutlineVisual,
+        &mut Mesh3d,
+        &mut MeshMaterial3d<BibleGraphNativeMaterial>,
+    )>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<BibleGraphNativeMaterial>>,
+    mut asset_cache: ResMut<BibleGraphNativeAssetCache>,
 ) {
     let Some(control) = control else {
         return;
@@ -1846,16 +1876,43 @@ fn apply_bible_graph_native_text_editor_settings(
     if version == state.version {
         return;
     }
-    let settings = *control
+    let settings = control
         .text_editor_settings
         .lock()
-        .unwrap_or_else(|error| error.into_inner());
-    state.settings = settings;
+        .unwrap_or_else(|error| error.into_inner())
+        .clone();
+    state.settings = settings.clone();
     state.version = version;
 
-    for (mut node, mut border_color) in &mut editors {
-        apply_bible_graph_native_text_editor_node_settings(&mut node, settings);
-        *border_color = native_text_editor_border_color(settings);
+    for (mut node, mut border_color, mut background_color) in &mut editors {
+        apply_bible_graph_native_text_editor_node_settings(&mut node, &settings);
+        *border_color = native_text_editor_border_color(&settings);
+        *background_color = native_text_editor_background_color(&settings);
+    }
+
+    for (mut font, mut color) in &mut texts {
+        font.font_size = settings.font_size_px.max(1.0);
+        *color = native_text_editor_font_color(&settings);
+    }
+
+    for (mut outline, mut mesh, mut material) in &mut selection_outlines {
+        outline.outline_width_px = settings.selected_node_outline_width_px.max(1.0);
+        outline.outline_color = settings.selected_node_outline_color.clone();
+        *mesh = Mesh3d(cached_native_selection_outline_mesh_from_assets(
+            &mut meshes,
+            &mut asset_cache,
+            outline.radius,
+            settings.selected_node_outline_width_px,
+        ));
+        *material = MeshMaterial3d(cached_native_material_from_assets(
+            &mut materials,
+            &mut asset_cache,
+            &settings.selected_node_outline_color,
+            false,
+            false,
+            false,
+            settings.selected_node_outline_brightness,
+        ));
     }
 }
 
@@ -1898,16 +1955,30 @@ fn apply_bible_graph_native_node_text_editor_caret(
 
 fn apply_bible_graph_native_text_editor_node_settings(
     node: &mut Node,
-    settings: BibleGraphNativeTextEditorSettings,
+    settings: &BibleGraphNativeTextEditorSettings,
 ) {
     node.padding = UiRect::all(Val::Px(settings.padding_px.max(0.0)));
-    node.border = UiRect::all(Val::Px(settings.outline_width_px.max(0.0)));
+    node.border = UiRect::all(Val::Px(settings.editor_outline_width_px.max(0.0)));
     node.border_radius = BorderRadius::all(Val::Px(settings.corner_radius_px.max(0.0)));
 }
 
-fn native_text_editor_border_color(settings: BibleGraphNativeTextEditorSettings) -> BorderColor {
-    let brightness = settings.outline_brightness.clamp(0.0, 1.0);
-    BorderColor::all(Color::srgba(brightness, brightness, brightness, 0.95))
+fn native_text_editor_border_color(settings: &BibleGraphNativeTextEditorSettings) -> BorderColor {
+    let brightness = settings.editor_outline_brightness.clamp(0.0, 1.0);
+    let alpha = 1.0 - settings.editor_outline_transparency.clamp(0.0, 1.0);
+    BorderColor::all(Color::srgba(brightness, brightness, brightness, alpha))
+}
+
+fn native_text_editor_background_color(
+    settings: &BibleGraphNativeTextEditorSettings,
+) -> BackgroundColor {
+    let brightness = settings.editor_background_brightness.clamp(0.0, 1.0);
+    let alpha = 1.0 - settings.editor_background_transparency.clamp(0.0, 1.0);
+    BackgroundColor(Color::srgba(brightness, brightness, brightness, alpha))
+}
+
+fn native_text_editor_font_color(settings: &BibleGraphNativeTextEditorSettings) -> TextColor {
+    let brightness = settings.font_brightness.clamp(0.0, 1.0);
+    TextColor(Color::srgb(brightness, brightness, brightness))
 }
 
 pub(crate) fn native_node_label_overlay_position(
@@ -2236,6 +2307,7 @@ pub fn rebuild_bible_graph_native_visuals(
             edge.selected,
             edge.highlighted,
             edge.dimmed,
+            1.0,
         );
         let bundle = (
             BibleGraphNativeVisualEntity,
@@ -2285,6 +2357,7 @@ pub fn rebuild_bible_graph_native_visuals(
             node.selected,
             node.highlighted,
             node.dimmed,
+            1.0,
         );
         let bundle = (
             BibleGraphNativeVisualEntity,
@@ -2347,15 +2420,30 @@ pub fn rebuild_bible_graph_native_visuals(
         }
 
         if node.selected {
-            let outline_mesh = cached_native_selection_outline_mesh(world, node.radius);
-            let outline_material =
-                cached_native_material(world, node.outline_color, false, false, false);
+            let outline_settings = world
+                .get_resource::<BibleGraphNativeTextEditorSettingsState>()
+                .map(|state| state.settings.clone())
+                .unwrap_or_default();
+            let outline_mesh = cached_native_selection_outline_mesh(
+                world,
+                node.radius,
+                outline_settings.selected_node_outline_width_px,
+            );
+            let outline_material = cached_native_material(
+                world,
+                &outline_settings.selected_node_outline_color,
+                false,
+                false,
+                false,
+                outline_settings.selected_node_outline_brightness,
+            );
             let outline_bundle = (
                 BibleGraphNativeVisualEntity,
                 BibleGraphNativeSelectionOutlineVisual {
                     node_id: node_id.clone(),
                     radius: node.radius,
-                    outline_color: node.outline_color,
+                    outline_width_px: outline_settings.selected_node_outline_width_px,
+                    outline_color: outline_settings.selected_node_outline_color,
                 },
                 BibleGraphNativeSelectionOutlineBillboard,
                 Mesh3d(outline_mesh),
@@ -2426,7 +2514,7 @@ fn rebuild_bible_graph_native_node_text_editor(
     let label_camera_entity = label_target.camera_entity;
     let text_editor_settings = world
         .get_resource::<BibleGraphNativeTextEditorSettingsState>()
-        .map(|state| state.settings)
+        .map(|state| state.settings.clone())
         .unwrap_or_default();
     let text = selected_node.text_content.clone().unwrap_or_default();
     let mut editor_node = Node {
@@ -2438,7 +2526,7 @@ fn rebuild_bible_graph_native_node_text_editor(
         overflow: Overflow::scroll_y(),
         ..Default::default()
     };
-    apply_bible_graph_native_text_editor_node_settings(&mut editor_node, text_editor_settings);
+    apply_bible_graph_native_text_editor_node_settings(&mut editor_node, &text_editor_settings);
 
     let editor_entity = world
         .spawn((
@@ -2451,8 +2539,8 @@ fn rebuild_bible_graph_native_node_text_editor(
                 dirty_since_seconds: None,
             },
             editor_node,
-            BackgroundColor(Color::srgba(0.06, 0.075, 0.095, 0.92)),
-            native_text_editor_border_color(text_editor_settings),
+            native_text_editor_background_color(&text_editor_settings),
+            native_text_editor_border_color(&text_editor_settings),
             ScrollPosition::default(),
             UiTargetCamera(label_camera_entity),
         ))
@@ -2469,8 +2557,8 @@ fn rebuild_bible_graph_native_node_text_editor(
                 ..Default::default()
             },
             Text::new(text),
-            TextFont::from_font_size(NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX),
-            TextColor(Color::srgb(0.86, 0.9, 0.92)),
+            TextFont::from_font_size(text_editor_settings.font_size_px.max(1.0)),
+            native_text_editor_font_color(&text_editor_settings),
             TextLayout::new_with_justify(Justify::Left),
             UiTargetCamera(label_camera_entity),
         ))
@@ -2521,24 +2609,42 @@ fn cached_native_node_mesh(world: &mut World, radius: f32) -> Handle<Mesh> {
     handle
 }
 
-fn cached_native_selection_outline_mesh(world: &mut World, radius: f32) -> Handle<Mesh> {
+fn cached_native_selection_outline_mesh(
+    world: &mut World,
+    radius: f32,
+    width_px: f32,
+) -> Handle<Mesh> {
+    world.resource_scope(|world, mut asset_cache: Mut<BibleGraphNativeAssetCache>| {
+        world.resource_scope(|_, mut meshes: Mut<Assets<Mesh>>| {
+            cached_native_selection_outline_mesh_from_assets(
+                &mut meshes,
+                &mut asset_cache,
+                radius,
+                width_px,
+            )
+        })
+    })
+}
+
+fn cached_native_selection_outline_mesh_from_assets(
+    meshes: &mut Assets<Mesh>,
+    asset_cache: &mut BibleGraphNativeAssetCache,
+    radius: f32,
+    width_px: f32,
+) -> Handle<Mesh> {
+    let width_px = width_px.max(1.0);
     let inner_radius = (radius + 3.0).max(1.0);
-    let outer_radius = inner_radius + 4.0;
-    let key = quantized_visual_scalar(radius);
-    if let Some(handle) = world
-        .resource::<BibleGraphNativeAssetCache>()
-        .selection_outline_meshes
-        .get(&key)
-        .cloned()
-    {
+    let outer_radius = inner_radius + width_px;
+    let key = (
+        quantized_visual_scalar(radius),
+        quantized_visual_scalar(width_px),
+    );
+    if let Some(handle) = asset_cache.selection_outline_meshes.get(&key).cloned() {
         return handle;
     }
 
-    let handle = world
-        .resource_mut::<Assets<Mesh>>()
-        .add(Torus::new(inner_radius, outer_radius));
-    world
-        .resource_mut::<BibleGraphNativeAssetCache>()
+    let handle = meshes.add(Torus::new(inner_radius, outer_radius));
+    asset_cache
         .selection_outline_meshes
         .insert(key, handle.clone());
     handle
@@ -2578,33 +2684,55 @@ fn cached_native_edge_mesh(
 
 fn cached_native_material(
     world: &mut World,
-    color: &'static str,
+    color: &str,
     selected: bool,
     highlighted: bool,
     dimmed: bool,
+    brightness: f32,
+) -> Handle<BibleGraphNativeMaterial> {
+    world.resource_scope(|world, mut asset_cache: Mut<BibleGraphNativeAssetCache>| {
+        world.resource_scope(|_, mut materials: Mut<Assets<BibleGraphNativeMaterial>>| {
+            cached_native_material_from_assets(
+                &mut materials,
+                &mut asset_cache,
+                color,
+                selected,
+                highlighted,
+                dimmed,
+                brightness,
+            )
+        })
+    })
+}
+
+fn cached_native_material_from_assets(
+    materials: &mut Assets<BibleGraphNativeMaterial>,
+    asset_cache: &mut BibleGraphNativeAssetCache,
+    color: &str,
+    selected: bool,
+    highlighted: bool,
+    dimmed: bool,
+    brightness: f32,
 ) -> Handle<BibleGraphNativeMaterial> {
     let key = BibleGraphNativeMaterialKey {
+        color: color.to_string(),
+        selected,
+        highlighted,
+        dimmed,
+        brightness: quantized_visual_scalar(brightness.clamp(0.0, 1.0)),
+    };
+    if let Some(handle) = asset_cache.materials.get(&key).cloned() {
+        return handle;
+    }
+
+    let handle = materials.add(native_graph_material(
         color,
         selected,
         highlighted,
         dimmed,
-    };
-    if let Some(handle) = world
-        .resource::<BibleGraphNativeAssetCache>()
-        .materials
-        .get(&key)
-        .cloned()
-    {
-        return handle;
-    }
-
-    let handle = world
-        .resource_mut::<Assets<BibleGraphNativeMaterial>>()
-        .add(native_graph_material(color, selected, highlighted, dimmed));
-    world
-        .resource_mut::<BibleGraphNativeAssetCache>()
-        .materials
-        .insert(key, handle.clone());
+        brightness,
+    ));
+    asset_cache.materials.insert(key, handle.clone());
     handle
 }
 
@@ -2821,10 +2949,26 @@ pub(crate) fn native_graph_material(
     selected: bool,
     highlighted: bool,
     dimmed: bool,
+    brightness: f32,
 ) -> BibleGraphNativeMaterial {
     let color = native_visual_state_color(color, selected, highlighted, dimmed);
+    let brightness = brightness.clamp(0.0, 1.0);
+    let color = Color::srgb(
+        graph_color_component(color, 0) * brightness,
+        graph_color_component(color, 1) * brightness,
+        graph_color_component(color, 2) * brightness,
+    );
     BibleGraphNativeMaterial {
         color: color.to_linear(),
+    }
+}
+
+fn graph_color_component(color: Color, index: usize) -> f32 {
+    let color = color.to_srgba();
+    match index {
+        0 => color.red,
+        1 => color.green,
+        _ => color.blue,
     }
 }
 

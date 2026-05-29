@@ -112,7 +112,7 @@ pub fn graph_renderer_text_editor_settings(
     app: tauri::AppHandle,
     settings: BibleGraphNativeTextEditorSettings,
 ) -> Result<BibleGraphHostStatus, CommandError> {
-    validate_text_editor_settings(settings)?;
+    validate_text_editor_settings(&settings)?;
     graph_renderer_owner(&app)?
         .apply_text_editor_settings(settings)
         .map_err(|error| {
@@ -155,7 +155,7 @@ fn validate_renderer_window_size_hint(
 }
 
 fn validate_text_editor_settings(
-    settings: BibleGraphNativeTextEditorSettings,
+    settings: &BibleGraphNativeTextEditorSettings,
 ) -> Result<(), CommandError> {
     if !(0.0..=48.0).contains(&settings.padding_px) {
         return Err(CommandError::bad_request(
@@ -167,14 +167,65 @@ fn validate_text_editor_settings(
             "graph renderer text editor corner radius must be between 0 and 16 pixels",
         ));
     }
-    if !(0.0..=8.0).contains(&settings.outline_width_px) {
+    if !(0.0..=8.0).contains(&settings.editor_outline_width_px) {
         return Err(CommandError::bad_request(
             "graph renderer text editor outline width must be between 0 and 8 pixels",
         ));
     }
-    if !(0.0..=1.0).contains(&settings.outline_brightness) {
+    if !(0.0..=1.0).contains(&settings.editor_outline_brightness) {
         return Err(CommandError::bad_request(
             "graph renderer text editor outline brightness must be between 0 and 1",
+        ));
+    }
+    if !(0.0..=1.0).contains(&settings.editor_outline_transparency) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor outline transparency must be between 0 and 1",
+        ));
+    }
+    if !(8.0..=40.0).contains(&settings.font_size_px) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor font size must be between 8 and 40 pixels",
+        ));
+    }
+    if !(0.0..=1.0).contains(&settings.font_brightness) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor font brightness must be between 0 and 1",
+        ));
+    }
+    if !(0.0..=1.0).contains(&settings.editor_background_brightness) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor background brightness must be between 0 and 1",
+        ));
+    }
+    if !(0.0..=1.0).contains(&settings.editor_background_transparency) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor background transparency must be between 0 and 1",
+        ));
+    }
+    if !(1.0..=24.0).contains(&settings.selected_node_outline_width_px) {
+        return Err(CommandError::bad_request(
+            "graph renderer selected node outline width must be between 1 and 24 pixels",
+        ));
+    }
+    if !(0.0..=1.0).contains(&settings.selected_node_outline_brightness) {
+        return Err(CommandError::bad_request(
+            "graph renderer selected node outline brightness must be between 0 and 1",
+        ));
+    }
+    validate_graph_renderer_hex_color(&settings.selected_node_outline_color)?;
+
+    Ok(())
+}
+
+fn validate_graph_renderer_hex_color(color: &str) -> Result<(), CommandError> {
+    let Some(hex) = color.strip_prefix('#') else {
+        return Err(CommandError::bad_request(
+            "graph renderer selected node outline color must be a hex color",
+        ));
+    };
+    if hex.len() != 6 || !hex.chars().all(|character| character.is_ascii_hexdigit()) {
+        return Err(CommandError::bad_request(
+            "graph renderer selected node outline color must be a hex color",
         ));
     }
 
@@ -242,7 +293,7 @@ mod tests {
 
     #[test]
     fn text_editor_settings_reject_out_of_range_values() {
-        let error = validate_text_editor_settings(BibleGraphNativeTextEditorSettings {
+        let error = validate_text_editor_settings(&BibleGraphNativeTextEditorSettings {
             padding_px: 80.0,
             ..BibleGraphNativeTextEditorSettings::default()
         })

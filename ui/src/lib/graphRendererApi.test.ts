@@ -287,8 +287,16 @@ describe('graph renderer api helpers', () => {
     const settings = {
       padding_px: 20,
       corner_radius_px: 8,
-      outline_width_px: 2,
-      outline_brightness: 0.75,
+      editor_outline_width_px: 2,
+      editor_outline_brightness: 0.75,
+      editor_outline_transparency: 0.05,
+      font_size_px: 16,
+      font_brightness: 0.9,
+      editor_background_brightness: 0.1,
+      editor_background_transparency: 0.08,
+      selected_node_outline_width_px: 6,
+      selected_node_outline_brightness: 1,
+      selected_node_outline_color: '#f2c94c',
     };
     const invoke = installDesktopInvoke(response);
 

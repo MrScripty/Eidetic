@@ -69,10 +69,18 @@
   let activeFilter: BibleGraphFilter = $state('all');
   let activeEdgeKinds: BibleGraphEdgeKind[] = $state([]);
   let activeGraphPanelTab: 'graph' | 'settings' = $state('graph');
-  let textEditorPaddingPx = $state(16);
-  let textEditorCornerRadiusPx = $state(6);
+  let textEditorPaddingPx = $state(17);
+  let textEditorCornerRadiusPx = $state(4);
   let textEditorOutlineWidthPx = $state(1);
-  let textEditorOutlineBrightness = $state(0.58);
+  let textEditorOutlineBrightness = $state(0.12);
+  let textEditorOutlineTransparency = $state(0.05);
+  let textEditorFontSizePx = $state(15);
+  let textEditorFontBrightness = $state(0.88);
+  let textEditorBackgroundBrightness = $state(0.075);
+  let textEditorBackgroundTransparency = $state(0.08);
+  let selectedNodeOutlineWidthPx = $state(4);
+  let selectedNodeOutlineBrightness = $state(1);
+  let selectedNodeOutlineColor = $state('#f2c94c');
   const focusedNeighborhoodNodeId = $derived(bibleState.graphFocusedNeighborhoodNodeId);
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
@@ -209,8 +217,16 @@
     void applyGraphRendererTextEditorSettings({
       padding_px: textEditorPaddingPx,
       corner_radius_px: textEditorCornerRadiusPx,
-      outline_width_px: textEditorOutlineWidthPx,
-      outline_brightness: textEditorOutlineBrightness,
+      editor_outline_width_px: textEditorOutlineWidthPx,
+      editor_outline_brightness: textEditorOutlineBrightness,
+      editor_outline_transparency: textEditorOutlineTransparency,
+      font_size_px: textEditorFontSizePx,
+      font_brightness: textEditorFontBrightness,
+      editor_background_brightness: textEditorBackgroundBrightness,
+      editor_background_transparency: textEditorBackgroundTransparency,
+      selected_node_outline_width_px: selectedNodeOutlineWidthPx,
+      selected_node_outline_brightness: selectedNodeOutlineBrightness,
+      selected_node_outline_color: selectedNodeOutlineColor,
     }).catch((error) => {
       graphLoadError =
         error instanceof Error ? error.message : 'Failed to update graph renderer settings';
@@ -347,7 +363,7 @@
                   <output>{textEditorCornerRadiusPx}px</output>
                 </label>
                 <label>
-                  <span>Outline</span>
+                  <span>Editor outline</span>
                   <input
                     type="range"
                     min="0"
@@ -359,7 +375,7 @@
                   <output>{textEditorOutlineWidthPx}px</output>
                 </label>
                 <label>
-                  <span>Brightness</span>
+                  <span>Editor outline light</span>
                   <input
                     type="range"
                     min="0"
@@ -369,6 +385,99 @@
                     oninput={applyTextEditorSettings}
                   />
                   <output>{Math.round(textEditorOutlineBrightness * 100)}%</output>
+                </label>
+                <label>
+                  <span>Editor outline transparency</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    bind:value={textEditorOutlineTransparency}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{Math.round(textEditorOutlineTransparency * 100)}%</output>
+                </label>
+                <label>
+                  <span>Font size</span>
+                  <input
+                    type="range"
+                    min="10"
+                    max="28"
+                    step="1"
+                    bind:value={textEditorFontSizePx}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{textEditorFontSizePx}px</output>
+                </label>
+                <label>
+                  <span>Font light</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    bind:value={textEditorFontBrightness}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{Math.round(textEditorFontBrightness * 100)}%</output>
+                </label>
+                <label>
+                  <span>Background light</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    bind:value={textEditorBackgroundBrightness}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{Math.round(textEditorBackgroundBrightness * 100)}%</output>
+                </label>
+                <label>
+                  <span>Background transparency</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    bind:value={textEditorBackgroundTransparency}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{Math.round(textEditorBackgroundTransparency * 100)}%</output>
+                </label>
+                <label>
+                  <span>Selected outline</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="18"
+                    step="1"
+                    bind:value={selectedNodeOutlineWidthPx}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{selectedNodeOutlineWidthPx}px</output>
+                </label>
+                <label>
+                  <span>Selected light</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    bind:value={selectedNodeOutlineBrightness}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{Math.round(selectedNodeOutlineBrightness * 100)}%</output>
+                </label>
+                <label>
+                  <span>Selected color</span>
+                  <input
+                    type="color"
+                    bind:value={selectedNodeOutlineColor}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{selectedNodeOutlineColor}</output>
                 </label>
               </div>
             {/if}
@@ -519,7 +628,7 @@
 
   .graph-settings label {
     display: grid;
-    grid-template-columns: 74px minmax(120px, 1fr) 44px;
+    grid-template-columns: minmax(120px, 0.48fr) minmax(120px, 1fr) minmax(48px, auto);
     align-items: center;
     gap: 8px;
     color: var(--color-text-secondary);
