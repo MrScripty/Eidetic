@@ -5,6 +5,7 @@ use crate::contracts::{
     builtin_bible_graph_schema_list_projection,
 };
 use crate::timeline::node::{NodeId, StoryLevel};
+use std::collections::BTreeMap;
 
 #[test]
 fn render_graph_projection_is_deterministic_and_indexes_neighbors() {
@@ -62,6 +63,75 @@ fn render_graph_projection_is_deterministic_and_indexes_neighbors() {
         projection.neighborhoods[0].connected_node_ids[0].as_str(),
         "node.place.beach"
     );
+}
+
+#[test]
+fn render_graph_projection_centers_parents_over_visible_child_subtrees() {
+    let character_root = graph_node(
+        "canonical.characters",
+        None,
+        "canonical.root.characters",
+        "Characters",
+        true,
+        0,
+    );
+    let place_root = graph_node(
+        "canonical.places",
+        None,
+        "canonical.root.places",
+        "Places",
+        true,
+        1,
+    );
+    let ada = graph_node(
+        "node.character.ada",
+        Some("canonical.characters"),
+        "character",
+        "Ada",
+        false,
+        10,
+    );
+    let grace = graph_node(
+        "node.character.grace",
+        Some("canonical.characters"),
+        "character",
+        "Grace",
+        false,
+        20,
+    );
+    let harbor = graph_node(
+        "node.location.harbor",
+        Some("canonical.places"),
+        "location",
+        "Harbor",
+        false,
+        10,
+    );
+    let tower = graph_node(
+        "node.location.tower",
+        Some("canonical.places"),
+        "location",
+        "Tower",
+        false,
+        20,
+    );
+
+    let projection = BibleRenderGraphProjection::from_graph(
+        vec![tower, grace, harbor, ada, place_root, character_root],
+        Vec::new(),
+    );
+    let positions: BTreeMap<_, _> = projection
+        .nodes
+        .iter()
+        .map(|node| (node.node_id.as_str(), node.position))
+        .collect();
+
+    assert_eq!(positions["node.character.ada"].y, 0.0);
+    assert_eq!(positions["node.character.grace"].y, NODE_ROW_SPACING);
+    assert_eq!(positions["canonical.characters"].y, NODE_ROW_SPACING / 2.0);
+    assert_eq!(positions["node.location.harbor"].y, NODE_ROW_SPACING * 2.0);
+    assert_eq!(positions["node.location.tower"].y, NODE_ROW_SPACING * 3.0);
+    assert_eq!(positions["canonical.places"].y, NODE_ROW_SPACING * 2.5);
 }
 
 #[test]

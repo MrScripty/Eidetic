@@ -145,34 +145,37 @@ impl BibleRenderGraphProjection {
         );
 
         let depths = node_depths(&filtered_nodes);
-        let row_indexes = row_indexes_by_depth(&filtered_nodes, &depths);
-        let render_nodes: Vec<_> = filtered_nodes
-            .into_iter()
-            .map(|node| {
-                let depth = depths.get(&node.id).copied().unwrap_or_default();
-                let row_index = row_indexes.get(&node.id).copied().unwrap_or_default();
-                let category = BibleGraphNodeCategory::for_node(&node);
-                BibleRenderGraphNode {
-                    node_id: node.id,
-                    parent_id: node.parent_id,
-                    schema_key: node.schema_key,
-                    category,
-                    label: node.name,
-                    system_owned: node.system_owned,
-                    sort_order: node.sort_order,
-                    depth,
-                    position: BibleRenderGraphPosition {
-                        x: depth as f32 * NODE_COLUMN_SPACING,
-                        y: row_index as f32 * NODE_ROW_SPACING,
-                        z: if node.system_owned {
-                            SYSTEM_NODE_Z
-                        } else {
-                            USER_NODE_Z
+        let layout_positions = layout_positions(&filtered_nodes, &depths);
+        let render_nodes: Vec<_> =
+            filtered_nodes
+                .into_iter()
+                .map(|node| {
+                    let depth = depths.get(&node.id).copied().unwrap_or_default();
+                    let position = layout_positions.get(&node.id).copied().unwrap_or(
+                        BibleRenderGraphPosition {
+                            x: depth as f32 * NODE_COLUMN_SPACING,
+                            y: 0.0,
+                            z: if node.system_owned {
+                                SYSTEM_NODE_Z
+                            } else {
+                                USER_NODE_Z
+                            },
                         },
-                    },
-                }
-            })
-            .collect();
+                    );
+                    let category = BibleGraphNodeCategory::for_node(&node);
+                    BibleRenderGraphNode {
+                        node_id: node.id,
+                        parent_id: node.parent_id,
+                        schema_key: node.schema_key,
+                        category,
+                        label: node.name,
+                        system_owned: node.system_owned,
+                        sort_order: node.sort_order,
+                        depth,
+                        position,
+                    }
+                })
+                .collect();
 
         let render_edges = render_edges(filtered_edges);
         let neighborhoods = neighborhoods_for_edges(&render_edges);
@@ -327,19 +330,122 @@ fn depth_for_node(
     depth
 }
 
-fn row_indexes_by_depth(
+fn layout_positions(
     nodes: &[BibleGraphNode],
     depths: &BTreeMap<BibleGraphNodeId, u32>,
-) -> BTreeMap<BibleGraphNodeId, u32> {
-    let mut row_counts = BTreeMap::<u32, u32>::new();
-    let mut rows = BTreeMap::new();
+) -> BTreeMap<BibleGraphNodeId, BibleRenderGraphPosition> {
+    let node_ids: BTreeSet<_> = nodes.iter().map(|node| node.id.clone()).collect();
+    let mut node_by_id = BTreeMap::new();
+    let mut children_by_parent = BTreeMap::<BibleGraphNodeId, Vec<BibleGraphNodeId>>::new();
+    let mut roots = Vec::new();
+
     for node in nodes {
-        let depth = depths.get(&node.id).copied().unwrap_or_default();
-        let row = row_counts.entry(depth).or_default();
-        rows.insert(node.id.clone(), *row);
-        *row = row.saturating_add(1);
+        node_by_id.insert(node.id.clone(), node);
+        match node.parent_id.as_ref() {
+            Some(parent_id) if node_ids.contains(parent_id) => children_by_parent
+                .entry(parent_id.clone())
+                .or_default()
+                .push(node.id.clone()),
+            _ => roots.push(node.id.clone()),
+        }
     }
-    rows
+
+    let mut next_row = 0_u32;
+    let mut positions = BTreeMap::new();
+    let mut visiting = BTreeSet::new();
+
+    for root_id in roots {
+        assign_layout_subtree(
+            &root_id,
+            &node_by_id,
+            &children_by_parent,
+            depths,
+            &mut next_row,
+            &mut positions,
+            &mut visiting,
+        );
+    }
+    for node in nodes {
+        if !positions.contains_key(&node.id) {
+            assign_layout_subtree(
+                &node.id,
+                &node_by_id,
+                &children_by_parent,
+                depths,
+                &mut next_row,
+                &mut positions,
+                &mut visiting,
+            );
+        }
+    }
+
+    positions
+}
+
+fn assign_layout_subtree(
+    node_id: &BibleGraphNodeId,
+    node_by_id: &BTreeMap<BibleGraphNodeId, &BibleGraphNode>,
+    children_by_parent: &BTreeMap<BibleGraphNodeId, Vec<BibleGraphNodeId>>,
+    depths: &BTreeMap<BibleGraphNodeId, u32>,
+    next_row: &mut u32,
+    positions: &mut BTreeMap<BibleGraphNodeId, BibleRenderGraphPosition>,
+    visiting: &mut BTreeSet<BibleGraphNodeId>,
+) -> f32 {
+    if let Some(position) = positions.get(node_id) {
+        return position.y;
+    }
+    let Some(node) = node_by_id.get(node_id) else {
+        return 0.0;
+    };
+    if !visiting.insert(node_id.clone()) {
+        return leaf_layout_y(next_row);
+    }
+
+    let child_rows: Vec<_> = children_by_parent
+        .get(node_id)
+        .into_iter()
+        .flat_map(|children| children.iter())
+        .map(|child_id| {
+            assign_layout_subtree(
+                child_id,
+                node_by_id,
+                children_by_parent,
+                depths,
+                next_row,
+                positions,
+                visiting,
+            )
+        })
+        .collect();
+    let y = if child_rows.is_empty() {
+        leaf_layout_y(next_row)
+    } else {
+        let first = child_rows.first().copied().unwrap_or_default();
+        let last = child_rows.last().copied().unwrap_or(first);
+        (first + last) / 2.0
+    };
+    visiting.remove(node_id);
+
+    let depth = depths.get(node_id).copied().unwrap_or_default();
+    positions.insert(
+        node_id.clone(),
+        BibleRenderGraphPosition {
+            x: depth as f32 * NODE_COLUMN_SPACING,
+            y,
+            z: if node.system_owned {
+                SYSTEM_NODE_Z
+            } else {
+                USER_NODE_Z
+            },
+        },
+    );
+    y
+}
+
+fn leaf_layout_y(next_row: &mut u32) -> f32 {
+    let y = *next_row as f32 * NODE_ROW_SPACING;
+    *next_row = next_row.saturating_add(1);
+    y
 }
 
 fn neighborhoods_for_edges(edges: &[BibleRenderGraphEdge]) -> Vec<BibleRenderGraphNeighborhood> {
