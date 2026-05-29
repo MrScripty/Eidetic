@@ -1071,9 +1071,15 @@ fn controlled_native_window_renders_selected_node_text_editor_from_projection() 
 
     let editor_entries: Vec<_> = app
         .world_mut()
-        .query::<(&BibleGraphNativeNodeTextEditorVisual, &Text)>()
+        .query::<(&BibleGraphNativeNodeTextEditorText, &Text)>()
         .iter(app.world())
         .map(|(editor, text)| (editor.clone(), text.0.clone()))
+        .collect();
+    let visual_entries: Vec<_> = app
+        .world_mut()
+        .query::<&BibleGraphNativeNodeTextEditorVisual>()
+        .iter(app.world())
+        .cloned()
         .collect();
     let caret_count = app
         .world_mut()
@@ -1087,8 +1093,10 @@ fn controlled_native_window_renders_selected_node_text_editor_from_projection() 
 
     assert_eq!(editor_entries.len(), 1);
     assert_eq!(editor_entries[0].0.node_id, node_id);
+    assert_eq!(visual_entries.len(), 1);
+    assert_eq!(visual_entries[0].node_id, node_id);
     assert_eq!(
-        editor_entries[0].0.cursor_byte_index,
+        visual_entries[0].cursor_byte_index,
         editor_entries[0].1.len()
     );
     assert_eq!(editor_entries[0].1, "Ada keeps a coded notebook.");

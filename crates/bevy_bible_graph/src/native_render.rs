@@ -1001,7 +1001,8 @@ fn handle_bible_graph_native_title_edit_input(
 fn handle_bible_graph_native_node_text_editor_input(
     mut key_events: Option<MessageReader<KeyboardInput>>,
     title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
-    mut editors: Query<(&mut BibleGraphNativeNodeTextEditorVisual, &mut Text)>,
+    mut editors: Query<&mut BibleGraphNativeNodeTextEditorVisual>,
+    mut texts: Query<&mut Text, With<BibleGraphNativeNodeTextEditorText>>,
 ) {
     if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
         return;
@@ -1009,7 +1010,10 @@ fn handle_bible_graph_native_node_text_editor_input(
     let Some(mut key_events) = key_events.take() else {
         return;
     };
-    let Ok((mut editor, mut text)) = editors.single_mut() else {
+    let Ok(mut editor) = editors.single_mut() else {
+        return;
+    };
+    let Ok(mut text) = texts.single_mut() else {
         return;
     };
 
@@ -1071,11 +1075,8 @@ fn handle_bible_graph_native_node_text_editor_click(
     buttons: Option<Res<ButtonInput<MouseButton>>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     text_editor_settings: Option<Res<BibleGraphNativeTextEditorSettingsState>>,
-    mut editors: Query<(
-        &mut BibleGraphNativeNodeTextEditorVisual,
-        &Text,
-        &ScrollPosition,
-    )>,
+    mut editors: Query<(&mut BibleGraphNativeNodeTextEditorVisual, &ScrollPosition)>,
+    texts: Query<&Text, With<BibleGraphNativeNodeTextEditorText>>,
 ) {
     let Some(buttons) = buttons else {
         return;
@@ -1089,7 +1090,10 @@ fn handle_bible_graph_native_node_text_editor_click(
     let Some(cursor_position) = window.cursor_position() else {
         return;
     };
-    let Ok((mut editor, text, scroll_position)) = editors.single_mut() else {
+    let Ok((mut editor, scroll_position)) = editors.single_mut() else {
+        return;
+    };
+    let Ok(text) = texts.single() else {
         return;
     };
     let Some(local_position) = bible_graph_native_text_editor_local_position(
@@ -1786,7 +1790,8 @@ fn apply_bible_graph_native_title_edit_overlay(
 fn emit_bible_graph_native_node_text_editor_updates(
     time: Option<Res<Time>>,
     control: Option<Res<BibleGraphNativeWindowControl>>,
-    mut editors: Query<(&mut BibleGraphNativeNodeTextEditorVisual, &Text)>,
+    mut editors: Query<&mut BibleGraphNativeNodeTextEditorVisual>,
+    texts: Query<&Text, With<BibleGraphNativeNodeTextEditorText>>,
 ) {
     let Some(time) = time else {
         return;
@@ -1796,7 +1801,11 @@ fn emit_bible_graph_native_node_text_editor_updates(
     };
     let now_seconds = time.elapsed_secs_f64();
 
-    for (mut editor, editable_text) in &mut editors {
+    let Ok(editable_text) = texts.single() else {
+        return;
+    };
+
+    for mut editor in &mut editors {
         let current_text = editable_text.0.clone();
         if current_text != editor.last_seen_text {
             editor.last_seen_text = current_text;
@@ -1851,20 +1860,25 @@ fn apply_bible_graph_native_text_editor_settings(
 }
 
 fn apply_bible_graph_native_node_text_editor_caret(
-    editors: Query<(
-        &BibleGraphNativeNodeTextEditorVisual,
-        &Text,
-        &ScrollPosition,
-    )>,
+    editors: Query<(&BibleGraphNativeNodeTextEditorVisual, &ScrollPosition)>,
+    texts: Query<&Text, With<BibleGraphNativeNodeTextEditorText>>,
+    text_editor_settings: Option<Res<BibleGraphNativeTextEditorSettingsState>>,
     mut carets: Query<(
         &BibleGraphNativeNodeTextEditorCaret,
         &mut Node,
         &mut Visibility,
     )>,
 ) {
-    let Ok((editor, text, scroll_position)) = editors.single() else {
+    let Ok((editor, scroll_position)) = editors.single() else {
         return;
     };
+    let Ok(text) = texts.single() else {
+        return;
+    };
+    let padding_px = text_editor_settings
+        .as_deref()
+        .map(|state| state.settings.padding_px)
+        .unwrap_or(BibleGraphNativeTextEditorSettings::default().padding_px);
     let caret_position = bible_graph_native_text_editor_caret_position(
         &text.0,
         editor.cursor_byte_index,
@@ -1876,8 +1890,8 @@ fn apply_bible_graph_native_node_text_editor_caret(
             *visibility = Visibility::Hidden;
             continue;
         }
-        node.left = Val::Px(caret_position.x);
-        node.top = Val::Px(caret_position.y);
+        node.left = Val::Px(padding_px + caret_position.x);
+        node.top = Val::Px(padding_px + caret_position.y);
         *visibility = Visibility::Visible;
     }
 }
@@ -2436,17 +2450,28 @@ fn rebuild_bible_graph_native_node_text_editor(
                 last_sent_text: text.clone(),
                 dirty_since_seconds: None,
             },
+            editor_node,
+            BackgroundColor(Color::srgba(0.06, 0.075, 0.095, 0.92)),
+            native_text_editor_border_color(text_editor_settings),
+            ScrollPosition::default(),
+            UiTargetCamera(label_camera_entity),
+        ))
+        .id();
+
+    let text_entity = world
+        .spawn((
+            BibleGraphNativeVisualEntity,
             BibleGraphNativeNodeTextEditorText {
                 node_id: selected_node.node_id.clone(),
             },
-            editor_node,
+            Node {
+                width: Val::Percent(100.0),
+                ..Default::default()
+            },
             Text::new(text),
             TextFont::from_font_size(NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX),
             TextColor(Color::srgb(0.86, 0.9, 0.92)),
             TextLayout::new_with_justify(Justify::Left),
-            BackgroundColor(Color::srgba(0.06, 0.075, 0.095, 0.92)),
-            native_text_editor_border_color(text_editor_settings),
-            ScrollPosition::default(),
             UiTargetCamera(label_camera_entity),
         ))
         .id();
@@ -2470,6 +2495,7 @@ fn rebuild_bible_graph_native_node_text_editor(
             UiTargetCamera(label_camera_entity),
         ))
         .id();
+    world.entity_mut(editor_entity).add_child(text_entity);
     world.entity_mut(editor_entity).add_child(caret_entity);
 }
 
@@ -2879,6 +2905,12 @@ fn existing_native_node_text_editor_entities(world: &mut World) -> Vec<Entity> {
     entities.extend(
         world
             .query::<(Entity, &BibleGraphNativeNodeTextEditorCaret)>()
+            .iter(world)
+            .map(|(entity, _)| entity),
+    );
+    entities.extend(
+        world
+            .query::<(Entity, &BibleGraphNativeNodeTextEditorText)>()
             .iter(world)
             .map(|(entity, _)| entity),
     );
