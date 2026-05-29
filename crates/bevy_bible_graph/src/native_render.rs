@@ -259,6 +259,7 @@ pub struct BibleGraphNativeNodeLabelVisual {
     pub y: f32,
     pub z: f32,
     pub radius: f32,
+    pub label_font_size: f32,
     pub label_visible: bool,
 }
 
@@ -1747,7 +1748,12 @@ fn project_bible_graph_native_labels(
     cameras: Query<(&Camera, &Transform), With<BibleGraphNativeCamera>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut labels: Query<
-        (&BibleGraphNativeNodeLabelVisual, &mut Node, &mut Visibility),
+        (
+            &BibleGraphNativeNodeLabelVisual,
+            &mut Node,
+            &mut TextFont,
+            &mut Visibility,
+        ),
         (
             With<BibleGraphNativeLabelBillboard>,
             Without<BibleGraphNativeCamera>,
@@ -1763,7 +1769,7 @@ fn project_bible_graph_native_labels(
 
     let viewport_size = Vec2::new(window.width(), window.height());
     let camera_global_transform = GlobalTransform::from(*camera_transform);
-    for (label, mut label_node, mut visibility) in &mut labels {
+    for (label, mut label_node, mut label_font, mut visibility) in &mut labels {
         if !label.label_visible {
             *visibility = Visibility::Hidden;
             continue;
@@ -1777,10 +1783,21 @@ fn project_bible_graph_native_labels(
             continue;
         };
 
+        let projected_radius = native_node_label_projected_radius(
+            camera,
+            &camera_global_transform,
+            camera_transform,
+            world_position,
+            label.radius,
+        )
+        .unwrap_or(label.radius)
+        .max(1.0);
         let label_position =
-            native_node_label_overlay_position(viewport_position, viewport_size, label.radius);
+            native_node_label_overlay_position(viewport_position, viewport_size, projected_radius);
         label_node.left = Val::Px(label_position.x);
         label_node.top = Val::Px(label_position.y);
+        label_font.font_size =
+            native_node_label_projected_font_size(projected_radius, label.label_font_size);
         *visibility = Visibility::Visible;
     }
 }
@@ -1992,13 +2009,38 @@ fn native_text_editor_font_color(settings: &BibleGraphNativeTextEditorSettings) 
 pub(crate) fn native_node_label_overlay_position(
     viewport_position: Vec2,
     _viewport_size: Vec2,
-    node_radius: f32,
+    projected_node_radius: f32,
 ) -> Vec2 {
-    let radius = node_radius.max(1.0);
+    let radius = projected_node_radius.max(1.0);
     Vec2::new(
         viewport_position.x,
         viewport_position.y - radius - NATIVE_LABEL_SCREEN_OFFSET_PX,
     )
+}
+
+fn native_node_label_projected_radius(
+    camera: &Camera,
+    camera_global_transform: &GlobalTransform,
+    camera_transform: &Transform,
+    world_position: Vec3,
+    node_radius: f32,
+) -> Option<f32> {
+    let radius_sample = world_position + *camera_transform.right() * node_radius.max(1.0);
+    let center = camera
+        .world_to_viewport(camera_global_transform, world_position)
+        .ok()?;
+    let edge = camera
+        .world_to_viewport(camera_global_transform, radius_sample)
+        .ok()?;
+    Some(center.distance(edge))
+}
+
+pub(crate) fn native_node_label_projected_font_size(
+    projected_node_radius: f32,
+    base_font_size: f32,
+) -> f32 {
+    let scaled_size = projected_node_radius.max(1.0) * 0.44;
+    scaled_size.clamp(5.0, base_font_size.max(5.0) * 1.8)
 }
 
 pub(crate) fn bible_graph_native_text_editor_caret_position(
@@ -2405,6 +2447,7 @@ pub fn rebuild_bible_graph_native_visuals(
                 y: node.position.y,
                 z: node.position.z,
                 radius: node.radius,
+                label_font_size: node.label_font_size,
                 label_visible: node.label_visible,
             },
             Text::new(node_label),

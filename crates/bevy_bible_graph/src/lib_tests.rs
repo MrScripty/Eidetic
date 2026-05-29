@@ -1240,6 +1240,14 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     assert_ne!(overlay_position, Vec2::ZERO);
     assert!(above_viewport_position.y < 0.0);
     assert!(below_viewport_position.y > 720.0);
+    assert_eq!(
+        crate::native_render::native_node_label_projected_font_size(32.0, 14.0),
+        14.08
+    );
+    assert_eq!(
+        crate::native_render::native_node_label_projected_font_size(4.0, 14.0),
+        5.0
+    );
 }
 
 #[cfg(feature = "native_render")]
