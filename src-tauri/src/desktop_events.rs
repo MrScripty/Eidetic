@@ -1,5 +1,7 @@
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
-use eidetic_core::contracts::{CommandEnvelope, DeleteBibleGraphNodeCommand};
+use eidetic_core::contracts::{
+    CommandEnvelope, DeleteBibleGraphNodeCommand, SetBibleGraphNodeNameCommand,
+};
 use eidetic_server::command_service;
 use eidetic_server::projection_service;
 use eidetic_server::state::{AppState, ServerEvent};
@@ -228,6 +230,12 @@ async fn apply_graph_renderer_mutation_command(
                 .map_err(|error| format!("{error:?}"))?;
             Ok(Some(BibleGraphRendererCommand::SelectNode { node_id }))
         }
+        Some(GraphRendererMutationCommand::SetNodeName(command)) => {
+            command_service::set_bible_graph_node_name(state, command)
+                .await
+                .map_err(|error| error.to_string())?;
+            Ok(None)
+        }
         None => Ok(None),
     }
 }
@@ -248,6 +256,7 @@ fn should_emit_graph_renderer_command(command: &BibleGraphRendererCommand) -> bo
         command,
         BibleGraphRendererCommand::DeleteNode { .. }
             | BibleGraphRendererCommand::CreateConnectedNode { .. }
+            | BibleGraphRendererCommand::SetNodeName { .. }
     )
 }
 
@@ -257,6 +266,7 @@ enum GraphRendererMutationCommand {
     CreateConnectedNode {
         parent_id: eidetic_core::contracts::BibleGraphNodeId,
     },
+    SetNodeName(CommandEnvelope<SetBibleGraphNodeNameCommand>),
 }
 
 fn graph_renderer_mutation_command(
@@ -270,6 +280,11 @@ fn graph_renderer_mutation_command(
         }
         BibleGraphRendererCommand::CreateConnectedNode { parent_id } => {
             Some(GraphRendererMutationCommand::CreateConnectedNode { parent_id })
+        }
+        BibleGraphRendererCommand::SetNodeName { node_id, name } => {
+            Some(GraphRendererMutationCommand::SetNodeName(
+                CommandEnvelope::new(SetBibleGraphNodeNameCommand { node_id, name }),
+            ))
         }
         BibleGraphRendererCommand::SelectNode { .. }
         | BibleGraphRendererCommand::SelectEdge { .. }
@@ -293,7 +308,8 @@ fn graph_renderer_command_selected_node_update(
         | BibleGraphRendererCommand::FocusNode { .. }
         | BibleGraphRendererCommand::NavigateToNode { .. }
         | BibleGraphRendererCommand::DeleteNode { .. }
-        | BibleGraphRendererCommand::CreateConnectedNode { .. } => None,
+        | BibleGraphRendererCommand::CreateConnectedNode { .. }
+        | BibleGraphRendererCommand::SetNodeName { .. } => None,
     }
 }
 
@@ -371,6 +387,7 @@ mod tests {
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
     use eidetic_core::contracts::{
         BibleGraphEdgeId, BibleGraphNodeId, DeleteBibleGraphNodeCommand,
+        SetBibleGraphNodeNameCommand,
     };
     use eidetic_core::timeline::node::NodeId;
     use eidetic_server::state::ServerEvent;
@@ -513,21 +530,34 @@ mod tests {
         let create_command = BibleGraphRendererCommand::CreateConnectedNode {
             parent_id: node_id.clone(),
         };
+        let rename_command = BibleGraphRendererCommand::SetNodeName {
+            node_id: node_id.clone(),
+            name: "Ada Revised".to_string(),
+        };
 
         assert!(matches!(
             graph_renderer_mutation_command(delete_command.clone()),
             Some(GraphRendererMutationCommand::DeleteNode(command))
-                if command.payload == DeleteBibleGraphNodeCommand {
+                if command.payload == (DeleteBibleGraphNodeCommand {
                     node_id: node_id.clone()
-                }
+                })
         ));
         assert!(matches!(
             graph_renderer_mutation_command(create_command.clone()),
             Some(GraphRendererMutationCommand::CreateConnectedNode { parent_id })
                 if parent_id == node_id
         ));
+        assert!(matches!(
+            graph_renderer_mutation_command(rename_command.clone()),
+            Some(GraphRendererMutationCommand::SetNodeName(command))
+                if command.payload == (SetBibleGraphNodeNameCommand {
+                    node_id: node_id.clone(),
+                    name: "Ada Revised".to_string()
+                })
+        ));
         assert!(!should_emit_graph_renderer_command(&delete_command));
         assert!(!should_emit_graph_renderer_command(&create_command));
+        assert!(!should_emit_graph_renderer_command(&rename_command));
         assert!(should_emit_graph_renderer_command(
             &BibleGraphRendererCommand::SelectNode { node_id }
         ));
@@ -546,7 +576,18 @@ mod tests {
         .unwrap();
         let create_value = serde_json::to_value(DesktopServerEvent {
             event: DesktopServerEventPayload::GraphRendererCommand(
-                BibleGraphRendererCommand::CreateConnectedNode { parent_id: node_id },
+                BibleGraphRendererCommand::CreateConnectedNode {
+                    parent_id: node_id.clone(),
+                },
+            ),
+        })
+        .unwrap();
+        let rename_value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(
+                BibleGraphRendererCommand::SetNodeName {
+                    node_id,
+                    name: "Ada Revised".to_string(),
+                },
             ),
         })
         .unwrap();
@@ -566,6 +607,16 @@ mod tests {
                 "event": {
                     "type": "create_connected_node",
                     "parent_id": "node.character.ada"
+                }
+            })
+        );
+        assert_eq!(
+            rename_value,
+            json!({
+                "event": {
+                    "type": "set_node_name",
+                    "node_id": "node.character.ada",
+                    "name": "Ada Revised"
                 }
             })
         );

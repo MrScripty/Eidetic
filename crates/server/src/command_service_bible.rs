@@ -6,8 +6,8 @@ use eidetic_core::contracts::{
     BibleGraphSnapshotFieldId, BibleGraphSnapshotId, BibleNodeDetailProjection, CommandEnvelope,
     CommandId, CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand,
     DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldValue, ProjectionEnvelope,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    builtin_bible_graph_schema_list_projection,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphNodeNameCommand,
+    SetBibleGraphSnapshotFieldCommand, builtin_bible_graph_schema_list_projection,
 };
 use serde::{Deserialize, Serialize};
 
@@ -217,6 +217,24 @@ pub async fn set_bible_graph_field(
             .await
             .map_err(|error| {
                 BackendError::internal(format!("bible graph field task failed: {error}"))
+            })??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    Ok(response)
+}
+
+pub async fn set_bible_graph_node_name(
+    state: &AppState,
+    command: CommandEnvelope<SetBibleGraphNodeNameCommand>,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let response =
+        tokio::task::spawn_blocking(move || set_bible_graph_node_name_at_path(path, command))
+            .await
+            .map_err(|error| {
+                BackendError::internal(format!(
+                    "bible graph node name command task failed: {error}"
+                ))
             })??;
 
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
@@ -477,6 +495,21 @@ fn set_bible_graph_field_at_path(
     })
 }
 
+fn set_bible_graph_node_name_at_path(
+    path: PathBuf,
+    command: CommandEnvelope<SetBibleGraphNodeNameCommand>,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        bible_graph_command::apply_set_bible_graph_node_name(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+    Ok(BibleGraphNodeCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn set_bible_graph_edge_at_path(
     path: PathBuf,
     command: CommandEnvelope<SetBibleGraphEdgeCommand>,
@@ -537,6 +570,7 @@ mod tests {
     use super::create_connected_bible_node_command;
     use eidetic_core::contracts::{
         CanonicalBibleRoot, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
+        SetBibleGraphNodeNameCommand,
     };
     use rusqlite::Connection;
 
@@ -618,5 +652,33 @@ mod tests {
         assert_eq!(detail.payload.parent_id, Some(character.payload.node_id));
         assert_eq!(detail.payload.schema_key.as_str(), "detail");
         assert_eq!(detail.payload.name, "New Detail");
+    }
+
+    #[test]
+    fn set_node_name_command_updates_node_projection() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        crate::bible_graph_command::apply_ensure_canonical_bible_roots(
+            &mut conn,
+            &CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+            0,
+        )
+        .unwrap();
+        let character =
+            create_connected_bible_node_command(&conn, CanonicalBibleRoot::Characters.node_id())
+                .unwrap();
+        crate::bible_graph_command::apply_create_bible_graph_node(&mut conn, &character, 0)
+            .unwrap();
+
+        let (_, projection) = crate::bible_graph_command::apply_set_bible_graph_node_name(
+            &mut conn,
+            &CommandEnvelope::new(SetBibleGraphNodeNameCommand {
+                node_id: character.payload.node_id,
+                name: "Ada".to_string(),
+            }),
+            0,
+        )
+        .unwrap();
+
+        assert_eq!(projection.payload.node.name, "Ada");
     }
 }

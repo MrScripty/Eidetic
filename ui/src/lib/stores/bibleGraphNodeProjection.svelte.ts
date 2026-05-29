@@ -4,6 +4,7 @@ import {
   deleteBibleGraphEdge,
   deleteBibleGraphNode,
   ensureCanonicalBibleRoots,
+  setBibleGraphNodeName,
   setBibleGraphEdge,
   setBibleGraphField,
   setBibleGraphSnapshotField,
@@ -22,6 +23,7 @@ import type {
   CreateBibleGraphNodeCommand,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
+  SetBibleGraphNodeNameCommand,
   SetBibleGraphSnapshotFieldCommand,
 } from '../bibleGraphTypes.js';
 import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
@@ -253,6 +255,33 @@ export async function deleteBibleGraphNodeProjection(
   } finally {
     bibleGraphNodeProjectionState.pending[keyString] = false;
     bibleGraphNodeProjectionState.nodeListPending = false;
+  }
+}
+
+export async function setBibleGraphNodeNameProjection(
+  payload: SetBibleGraphNodeNameCommand,
+  commandId?: CommandId,
+): Promise<BibleGraphNodeCommandResponse> {
+  const key = { node_id: payload.node_id };
+  const keyString = cacheKey(key);
+  bibleGraphNodeProjectionState.pending[keyString] = true;
+  bibleGraphNodeProjectionState.errors[keyString] = undefined;
+
+  try {
+    const response = await setBibleGraphNodeName(payload, commandId);
+    const accepted = cacheNodeProjection(keyString, response.projection);
+    if (accepted && shouldInvalidateNodeListForNodeProjection(response.projection)) {
+      bibleGraphNodeProjectionState.nodeList = null;
+    }
+    return response;
+  } catch (error) {
+    bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
+      error,
+      'Failed to rename bible graph node',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.pending[keyString] = false;
   }
 }
 

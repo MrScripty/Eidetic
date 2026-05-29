@@ -14,7 +14,7 @@ This directory contains the story-bible UI backed by backend-owned bible graph p
 | `BibleGraphEdgeEditor.svelte`      | Projection-backed edge creation form that writes through graph edge commands.  |
 | `BibleGraphEdgeList.svelte`        | Read-only incoming/outgoing edge list for graph node detail projections.       |
 | `BibleGraphNodeCard.svelte`        | List-card summary for backend-owned bible graph nodes.                         |
-| `BibleGraphNodeDetail.svelte`      | Read-only detail panel for backend-owned bible graph node projections.         |
+| `BibleGraphNodeDetail.svelte`      | Detail panel for backend-owned bible graph node projections and commands.      |
 | `BibleGraphPartFields.svelte`      | Projection-backed bible graph field editor that writes through graph commands. |
 | `BibleRenderGraphOutline.svelte`   | Keyboard-accessible graph-node outline from bible render graph projections.    |
 | `bibleGraphCategories.ts`          | Category/root mapping helpers for graph-node list and creation UI.             |

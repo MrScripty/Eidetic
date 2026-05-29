@@ -28,8 +28,9 @@ pub use native_render::{
     emit_bible_graph_native_connected_node_create, emit_bible_graph_native_edge_selection,
     emit_bible_graph_native_influence_selection, emit_bible_graph_native_node_delete,
     emit_bible_graph_native_node_focus, emit_bible_graph_native_node_inspection,
-    emit_bible_graph_native_node_navigation, emit_bible_graph_native_node_selection,
-    run_controlled_minimal_bible_graph_native_window, run_minimal_bible_graph_native_window,
+    emit_bible_graph_native_node_name_set, emit_bible_graph_native_node_navigation,
+    emit_bible_graph_native_node_selection, run_controlled_minimal_bible_graph_native_window,
+    run_minimal_bible_graph_native_window,
 };
 pub use scene::{
     BibleGraphEdgeEntity, BibleGraphInfluenceEntity, BibleGraphNodeEntity, BibleGraphSceneStats,
@@ -51,14 +52,34 @@ pub const BIBLE_GRAPH_FULL_REBUILD_EDGE_LIMIT: usize = 1_000;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum BibleGraphRendererCommand {
-    SelectNode { node_id: BibleGraphNodeId },
-    SelectEdge { edge_id: BibleGraphEdgeId },
-    SelectInfluence { influence_id: ContextInfluenceId },
-    InspectNode { node_id: BibleGraphNodeId },
-    FocusNode { node_id: BibleGraphNodeId },
-    NavigateToNode { node_id: BibleGraphNodeId },
-    DeleteNode { node_id: BibleGraphNodeId },
-    CreateConnectedNode { parent_id: BibleGraphNodeId },
+    SelectNode {
+        node_id: BibleGraphNodeId,
+    },
+    SelectEdge {
+        edge_id: BibleGraphEdgeId,
+    },
+    SelectInfluence {
+        influence_id: ContextInfluenceId,
+    },
+    InspectNode {
+        node_id: BibleGraphNodeId,
+    },
+    FocusNode {
+        node_id: BibleGraphNodeId,
+    },
+    NavigateToNode {
+        node_id: BibleGraphNodeId,
+    },
+    DeleteNode {
+        node_id: BibleGraphNodeId,
+    },
+    CreateConnectedNode {
+        parent_id: BibleGraphNodeId,
+    },
+    SetNodeName {
+        node_id: BibleGraphNodeId,
+        name: String,
+    },
     ClearSelection,
 }
 
@@ -259,6 +280,15 @@ impl BibleGraphRendererApp {
     ) -> Result<(), BibleGraphRendererError> {
         self.validate_node(&parent_id)?;
         self.enqueue_command(BibleGraphRendererCommand::CreateConnectedNode { parent_id })
+    }
+
+    pub fn set_node_name(
+        &mut self,
+        node_id: BibleGraphNodeId,
+        name: String,
+    ) -> Result<(), BibleGraphRendererError> {
+        self.validate_node(&node_id)?;
+        self.enqueue_command(BibleGraphRendererCommand::SetNodeName { node_id, name })
     }
 
     pub fn select_edge(

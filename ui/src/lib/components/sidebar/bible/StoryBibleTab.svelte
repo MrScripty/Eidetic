@@ -110,6 +110,10 @@
     selectBibleGraphNode(nodeId);
   }
 
+  async function handleNodeRenamed(): Promise<void> {
+    await refreshActiveRenderGraphProjection();
+  }
+
   async function loadBibleGraphNodes(): Promise<void> {
     try {
       loadError = null;
@@ -203,6 +207,7 @@
         onselect={(nodeId) => selectBibleGraphNode(nodeId)}
         ondeleted={handleNodeDeleted}
         oncreated={handleNodeCreated}
+        onrenamed={handleNodeRenamed}
         {graphNodes}
         edgeTargetNodes={graphNodes}
       />

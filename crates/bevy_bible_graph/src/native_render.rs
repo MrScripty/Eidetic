@@ -7,6 +7,8 @@ use std::time::{Duration, Instant};
 use bevy::app::AppExit;
 use bevy::asset::{Asset, embedded_asset};
 use bevy::color::LinearRgba;
+use bevy::input::ButtonState;
+use bevy::input::keyboard::KeyboardInput;
 use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::pbr::{Material, MaterialPlugin};
 use bevy::prelude::{
@@ -38,6 +40,7 @@ use crate::{
 const NATIVE_CAMERA_EDGE_PAN_MARGIN_PX: f32 = 36.0;
 const NATIVE_CAMERA_EDGE_PAN_SPEED: f32 = 520.0;
 const NATIVE_LABEL_SCREEN_OFFSET_PX: f32 = 18.0;
+const NATIVE_NODE_TITLE_DOUBLE_CLICK_SECONDS: f64 = 0.45;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
@@ -227,6 +230,24 @@ pub struct BibleGraphNativeInfluenceVisual {
     pub bible_edge_id: Option<BibleGraphEdgeId>,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Resource)]
+pub(crate) struct BibleGraphNativeNodeTitleEdit {
+    active: Option<BibleGraphNativeNodeTitleEditState>,
+    last_click: Option<BibleGraphNativeNodeClick>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct BibleGraphNativeNodeTitleEditState {
+    node_id: BibleGraphNodeId,
+    value: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct BibleGraphNativeNodeClick {
+    node_id: BibleGraphNodeId,
+    at_seconds: f64,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
 enum BibleGraphNativeRenderSystem {
     Projection,
@@ -414,6 +435,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeRendererWindowStatus::default());
         app.insert_resource(BibleGraphNativeVisualStatus::default());
         app.insert_resource(BibleGraphNativeAssetCache::default());
+        app.insert_resource(BibleGraphNativeNodeTitleEdit::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.configure_sets(
             Update,
@@ -436,8 +458,10 @@ impl Plugin for BibleGraphNativeRenderPlugin {
             Update,
             (
                 emit_bible_graph_native_click_selection,
+                handle_bible_graph_native_title_edit_input,
                 emit_bible_graph_native_keyboard_commands,
             )
+                .chain()
                 .in_set(BibleGraphNativeRenderSystem::Input),
         );
         app.add_systems(
@@ -456,7 +480,12 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         );
         app.add_systems(
             Update,
-            project_bible_graph_native_labels.in_set(BibleGraphNativeRenderSystem::Labels),
+            (
+                project_bible_graph_native_labels,
+                apply_bible_graph_native_title_edit_overlay,
+            )
+                .chain()
+                .in_set(BibleGraphNativeRenderSystem::Labels),
         );
         app.add_systems(
             Update,
@@ -619,10 +648,13 @@ fn apply_minimal_native_window_visibility_requests(
 
 fn emit_bible_graph_native_click_selection(
     buttons: Option<Res<ButtonInput<MouseButton>>>,
+    time: Option<Res<Time>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     cameras: Query<(&Camera, &GlobalTransform), With<BibleGraphNativeCamera>>,
     nodes: Query<&BibleGraphNativeNodeVisual>,
     edges: Query<&BibleGraphNativeEdgeVisual>,
+    labels: Query<&BibleGraphNativeNodeLabelVisual>,
+    mut title_edit: ResMut<BibleGraphNativeNodeTitleEdit>,
     control: Option<Res<BibleGraphNativeWindowControl>>,
 ) {
     let Some(buttons) = buttons else {
@@ -648,6 +680,24 @@ fn emit_bible_graph_native_click_selection(
     };
 
     let command = bible_graph_native_click_command(nodes.iter(), edges.iter(), ray);
+    if let BibleGraphRendererCommand::SelectNode { node_id } = &command {
+        let Some(time) = time else {
+            return;
+        };
+        let label = labels
+            .iter()
+            .find(|label| &label.node_id == node_id)
+            .map(|label| label.label.clone())
+            .unwrap_or_else(|| node_id.as_str().to_string());
+        bible_graph_native_title_edit_register_node_click(
+            &mut *title_edit,
+            node_id.clone(),
+            label,
+            time.elapsed_secs_f64(),
+        );
+    } else {
+        bible_graph_native_title_edit_cancel(&mut *title_edit);
+    }
     let _ = push_native_command_to_control(&control, command);
 }
 
@@ -667,14 +717,96 @@ pub(crate) fn bible_graph_native_click_command<'a>(
     BibleGraphRendererCommand::ClearSelection
 }
 
+pub(crate) fn bible_graph_native_title_edit_register_node_click(
+    title_edit: &mut BibleGraphNativeNodeTitleEdit,
+    node_id: BibleGraphNodeId,
+    label: String,
+    at_seconds: f64,
+) {
+    let double_click = title_edit.last_click.as_ref().is_some_and(|last_click| {
+        let elapsed_seconds = at_seconds - last_click.at_seconds;
+        last_click.node_id == node_id
+            && (0.0..=NATIVE_NODE_TITLE_DOUBLE_CLICK_SECONDS).contains(&elapsed_seconds)
+    });
+
+    if double_click {
+        title_edit.active = Some(BibleGraphNativeNodeTitleEditState {
+            node_id,
+            value: label,
+        });
+        title_edit.last_click = None;
+        return;
+    }
+
+    title_edit.active = None;
+    title_edit.last_click = Some(BibleGraphNativeNodeClick {
+        node_id,
+        at_seconds,
+    });
+}
+
+pub(crate) fn bible_graph_native_title_edit_append_text(
+    title_edit: &mut BibleGraphNativeNodeTitleEdit,
+    text: &str,
+) {
+    let Some(active) = title_edit.active.as_mut() else {
+        return;
+    };
+
+    active
+        .value
+        .extend(text.chars().filter(|character| !character.is_control()));
+}
+
+pub(crate) fn bible_graph_native_title_edit_backspace(
+    title_edit: &mut BibleGraphNativeNodeTitleEdit,
+) {
+    let Some(active) = title_edit.active.as_mut() else {
+        return;
+    };
+
+    active.value.pop();
+}
+
+pub(crate) fn bible_graph_native_title_edit_commit(
+    title_edit: &mut BibleGraphNativeNodeTitleEdit,
+) -> Option<BibleGraphRendererCommand> {
+    let active = title_edit.active.take()?;
+    title_edit.last_click = None;
+    let name = active.value.trim().to_string();
+    if name.is_empty() {
+        return None;
+    }
+
+    Some(BibleGraphRendererCommand::SetNodeName {
+        node_id: active.node_id,
+        name,
+    })
+}
+
+pub(crate) fn bible_graph_native_title_edit_cancel(title_edit: &mut BibleGraphNativeNodeTitleEdit) {
+    title_edit.active = None;
+    title_edit.last_click = None;
+}
+
+fn bible_graph_native_title_edit_is_active(
+    title_edit: Option<&BibleGraphNativeNodeTitleEdit>,
+) -> bool {
+    title_edit.is_some_and(|title_edit| title_edit.active.is_some())
+}
+
 fn emit_bible_graph_native_keyboard_commands(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     nodes: Query<&BibleGraphNativeNodeVisual>,
+    title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
     control: Option<Res<BibleGraphNativeWindowControl>>,
 ) {
     let Some(keys) = keys else {
         return;
     };
+    if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
+        return;
+    }
     let Some(control) = control else {
         return;
     };
@@ -704,14 +836,61 @@ fn emit_bible_graph_native_keyboard_commands(
     }
 }
 
+fn handle_bible_graph_native_title_edit_input(
+    mut key_events: Option<MessageReader<KeyboardInput>>,
+    mut title_edit: ResMut<BibleGraphNativeNodeTitleEdit>,
+    control: Option<Res<BibleGraphNativeWindowControl>>,
+) {
+    if !bible_graph_native_title_edit_is_active(Some(&*title_edit)) {
+        return;
+    }
+    let Some(mut key_events) = key_events.take() else {
+        return;
+    };
+
+    for event in key_events.read() {
+        if event.state != ButtonState::Pressed {
+            continue;
+        }
+
+        match event.key_code {
+            KeyCode::Escape => {
+                bible_graph_native_title_edit_cancel(&mut *title_edit);
+                continue;
+            }
+            KeyCode::Enter | KeyCode::NumpadEnter => {
+                if let Some(command) = bible_graph_native_title_edit_commit(&mut *title_edit)
+                    && let Some(control) = control.as_deref()
+                {
+                    let _ = push_native_command_to_control(control, command);
+                }
+                continue;
+            }
+            KeyCode::Backspace => {
+                bible_graph_native_title_edit_backspace(&mut *title_edit);
+                continue;
+            }
+            _ => {}
+        }
+
+        if let Some(text) = event.text.as_deref() {
+            bible_graph_native_title_edit_append_text(&mut *title_edit, text);
+        }
+    }
+}
+
 fn navigate_bible_graph_native_camera(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     time: Option<Res<Time>>,
+    title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
     mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
 ) {
     let Some(keys) = keys else {
         return;
     };
+    if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
+        return;
+    }
     let Some(time) = time else {
         return;
     };
@@ -739,9 +918,13 @@ fn navigate_bible_graph_native_camera(
 fn edge_pan_bible_graph_native_camera(
     buttons: Option<Res<ButtonInput<MouseButton>>>,
     time: Option<Res<Time>>,
+    title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
 ) {
+    if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
+        return;
+    }
     if buttons.as_ref().is_some_and(|buttons| {
         buttons.pressed(MouseButton::Left)
             || buttons.pressed(MouseButton::Middle)
@@ -777,11 +960,15 @@ fn edge_pan_bible_graph_native_camera(
 fn frame_bible_graph_native_camera_on_selected(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     nodes: Query<&BibleGraphNativeNodeVisual>,
+    title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
     mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
 ) {
     let Some(keys) = keys else {
         return;
     };
+    if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
+        return;
+    }
     if !keys.just_pressed(KeyCode::KeyF) && !keys.just_pressed(KeyCode::Period) {
         return;
     }
@@ -866,11 +1053,15 @@ fn scroll_bible_graph_native_camera(
 fn recover_bible_graph_native_camera(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     nodes: Query<&BibleGraphNativeNodeVisual>,
+    title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
     mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
 ) {
     let Some(keys) = keys else {
         return;
     };
+    if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
+        return;
+    }
     let Some(command) = native_camera_recovery_command(
         keys.just_pressed(KeyCode::KeyR),
         keys.just_pressed(KeyCode::Digit0) || keys.just_pressed(KeyCode::Numpad0),
@@ -964,11 +1155,15 @@ fn orbit_bible_graph_native_camera(
     keys: Option<Res<ButtonInput<KeyCode>>>,
     time: Option<Res<Time>>,
     nodes: Query<&BibleGraphNativeNodeVisual>,
+    title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
     mut cameras: Query<&mut Transform, With<BibleGraphNativeCamera>>,
 ) {
     let Some(keys) = keys else {
         return;
     };
+    if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
+        return;
+    }
     let Some(time) = time else {
         return;
     };
@@ -1290,6 +1485,28 @@ fn project_bible_graph_native_labels(
         label_node.left = Val::Px(label_position.x);
         label_node.top = Val::Px(label_position.y);
         *visibility = Visibility::Visible;
+    }
+}
+
+fn apply_bible_graph_native_title_edit_overlay(
+    title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
+    mut labels: Query<(&BibleGraphNativeNodeLabelVisual, &mut Text)>,
+) {
+    let active = title_edit.as_deref().and_then(|title_edit| {
+        title_edit
+            .active
+            .as_ref()
+            .map(|active| (&active.node_id, active.value.as_str()))
+    });
+
+    for (label, mut text) in &mut labels {
+        let next_text = active
+            .filter(|(node_id, _)| *node_id == &label.node_id)
+            .map(|(_, value)| format!("{value}|"))
+            .unwrap_or_else(|| label.label.clone());
+        if text.0 != next_text {
+            text.0 = next_text;
+        }
     }
 }
 
@@ -1813,6 +2030,18 @@ pub fn emit_bible_graph_native_connected_node_create(
     push_native_command(
         world,
         BibleGraphRendererCommand::CreateConnectedNode { parent_id },
+    )
+}
+
+pub fn emit_bible_graph_native_node_name_set(
+    world: &mut World,
+    node_id: BibleGraphNodeId,
+    name: String,
+) -> Result<(), BibleGraphRendererError> {
+    validate_native_node(world, &node_id)?;
+    push_native_command(
+        world,
+        BibleGraphRendererCommand::SetNodeName { node_id, name },
     )
 }
 

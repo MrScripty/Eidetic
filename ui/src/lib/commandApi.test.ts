@@ -21,6 +21,7 @@ import {
   setAffectValue,
   setBibleGraphEdge,
   setBibleGraphField,
+  setBibleGraphNodeName,
   setBibleGraphSnapshotField,
   setObjectField,
   setStoryArcMetadata,
@@ -997,6 +998,58 @@ describe('command api helpers', () => {
         id: 'command-delete-node-1',
         payload: {
           node_id: 'node.character.ada',
+        },
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses desktop bible graph node name command when Tauri transport is available', async () => {
+    const response = {
+      outcome: 'recorded',
+      projection: {
+        version: 4,
+        payload: {
+          node: {
+            id: 'node.character.ada',
+            parent_id: 'canonical.characters',
+            schema_key: 'character',
+            name: 'Ada Revised',
+            system_owned: false,
+            sort_order: 0,
+          },
+          parts: [],
+          incoming_edges: [],
+          outgoing_edges: [],
+          snapshots: [],
+        },
+      },
+    };
+    const invoke = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('window', {
+      __TAURI__: {
+        core: { invoke },
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      setBibleGraphNodeName(
+        {
+          node_id: 'node.character.ada',
+          name: 'Ada Revised',
+        },
+        'command-node-name-1',
+      ),
+    ).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_node_name', {
+      command: {
+        id: 'command-node-name-1',
+        payload: {
+          node_id: 'node.character.ada',
+          name: 'Ada Revised',
         },
       },
     });

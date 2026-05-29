@@ -7,6 +7,7 @@ import {
   ensureCanonicalBibleRoots,
   setBibleGraphEdge,
   setBibleGraphField,
+  setBibleGraphNodeName,
   setBibleGraphSnapshotField,
 } from '$lib/commandApi.js';
 import {
@@ -29,6 +30,7 @@ import {
   deleteBibleGraphNodeProjection,
   setBibleGraphEdgeProjection,
   setBibleGraphFieldProjection,
+  setBibleGraphNodeNameProjection,
   setBibleGraphSnapshotFieldProjection,
 } from './bibleGraphNodeProjection.svelte.js';
 
@@ -39,6 +41,7 @@ vi.mock('$lib/commandApi.js', () => ({
   ensureCanonicalBibleRoots: vi.fn(),
   setBibleGraphEdge: vi.fn(),
   setBibleGraphField: vi.fn(),
+  setBibleGraphNodeName: vi.fn(),
   setBibleGraphSnapshotField: vi.fn(),
 }));
 
@@ -53,6 +56,7 @@ const deleteBibleGraphNodeMock = vi.mocked(deleteBibleGraphNode);
 const ensureCanonicalBibleRootsMock = vi.mocked(ensureCanonicalBibleRoots);
 const setBibleGraphEdgeMock = vi.mocked(setBibleGraphEdge);
 const setBibleGraphFieldMock = vi.mocked(setBibleGraphField);
+const setBibleGraphNodeNameMock = vi.mocked(setBibleGraphNodeName);
 const setBibleGraphSnapshotFieldMock = vi.mocked(setBibleGraphSnapshotField);
 const getBibleGraphNodeProjectionMock = vi.mocked(getBibleGraphNodeProjection);
 const getBibleGraphNodeListProjectionMock = vi.mocked(getBibleGraphNodeListProjection);
@@ -256,6 +260,7 @@ beforeEach(() => {
   ensureCanonicalBibleRootsMock.mockReset();
   setBibleGraphEdgeMock.mockReset();
   setBibleGraphFieldMock.mockReset();
+  setBibleGraphNodeNameMock.mockReset();
   setBibleGraphSnapshotFieldMock.mockReset();
   getBibleGraphNodeProjectionMock.mockReset();
   getBibleGraphNodeListProjectionMock.mockReset();
@@ -458,6 +463,40 @@ describe('bible graph node projection command cache writes', () => {
     );
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(fieldProjection);
     expect(getCachedBibleGraphNodeListProjection()).toEqual(listProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
+  it('stores node name command projections and invalidates cached node lists', async () => {
+    getBibleGraphNodeListProjectionMock.mockResolvedValue(listProjection);
+    await refreshBibleGraphNodeListProjection();
+    setBibleGraphNodeNameMock.mockResolvedValue({
+      outcome: 'recorded',
+      projection: newerProjection,
+    });
+
+    await expect(
+      setBibleGraphNodeNameProjection(
+        {
+          node_id: 'node.character/ada one',
+          name: 'Ada newer',
+        },
+        'command-node-name-1',
+      ),
+    ).resolves.toEqual({
+      outcome: 'recorded',
+      projection: newerProjection,
+    });
+
+    expect(setBibleGraphNodeNameMock).toHaveBeenCalledWith(
+      {
+        node_id: 'node.character/ada one',
+        name: 'Ada newer',
+      },
+      'command-node-name-1',
+    );
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    expect(getCachedBibleGraphNodeListProjection()).toBeNull();
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
     expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
   });

@@ -9,6 +9,7 @@ import type {
   EnsureCanonicalBibleRootsCommand,
   SetBibleGraphEdgeCommand,
   SetBibleGraphFieldCommand,
+  SetBibleGraphNodeNameCommand,
   SetBibleGraphSnapshotFieldCommand,
 } from './bibleGraphTypes.js';
 import type {
@@ -171,6 +172,20 @@ export function deleteBibleGraphNode(
   };
 
   return invokeDesktop<BibleGraphNodeListCommandResponse>('command_bible_graph_delete_node', {
+    command,
+  });
+}
+
+export function setBibleGraphNodeName(
+  payload: SetBibleGraphNodeNameCommand,
+  commandId = createCommandId(),
+): Promise<BibleGraphNodeCommandResponse> {
+  const command: CommandEnvelope<SetBibleGraphNodeNameCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_node_name', {
     command,
   });
 }

@@ -48,7 +48,7 @@ pub use bible_graph::{
     BibleGraphSnapshotProjection, BibleNodeDetailProjection, CanonicalBibleRoot,
     CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand,
     EnsureCanonicalBibleRootsCommand, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
-    SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
+    SetBibleGraphNodeNameCommand, SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
 };
 pub use bible_graph_defaults::{
     BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphCategoryProjection, BibleGraphFieldDefault,

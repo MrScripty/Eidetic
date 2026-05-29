@@ -28,6 +28,7 @@
       onclose={clearBibleGraphSelection}
       onselect={selectBibleGraphNode}
       oncreated={selectBibleGraphNode}
+      onrenamed={selectBibleGraphNode}
       {graphNodes}
       edgeTargetNodes={renderGraph?.nodes ?? []}
     />

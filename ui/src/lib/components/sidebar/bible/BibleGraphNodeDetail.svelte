@@ -11,6 +11,7 @@
     isBibleGraphNodeProjectionPending,
     refreshBibleGraphNodeListProjection,
     refreshBibleGraphNodeProjection,
+    setBibleGraphNodeNameProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import { createConnectedBibleGraphChildNode } from './bibleGraphNodeCreateFlow.js';
   import BibleGraphEdgeEditor from './BibleGraphEdgeEditor.svelte';
@@ -26,6 +27,7 @@
     onselect,
     ondeleted,
     oncreated,
+    onrenamed,
     graphNodes = undefined,
     edgeTargetNodes,
   }: {
@@ -34,14 +36,20 @@
     onselect?: (nodeId: BibleGraphNodeId) => void;
     ondeleted?: () => void | Promise<void>;
     oncreated?: (nodeId: BibleGraphNodeId) => void | Promise<void>;
+    onrenamed?: (nodeId: BibleGraphNodeId) => void | Promise<void>;
     graphNodes?: BibleGraphNode[];
     edgeTargetNodes: Array<BibleGraphNode | BibleRenderGraphNode>;
   } = $props();
 
   let deletingNode = $state(false);
   let creatingChild = $state(false);
+  let renamingNode = $state(false);
+  let editingName = $state(false);
+  let nameDraft = $state('');
+  let nameInput = $state<HTMLInputElement | undefined>(undefined);
   let deleteError = $state<string | undefined>(undefined);
   let createError = $state<string | undefined>(undefined);
+  let renameError = $state<string | undefined>(undefined);
 
   const key = $derived({ node_id: nodeId });
   const projection = $derived(getCachedBibleGraphNodeProjection(key));
@@ -62,6 +70,11 @@
     if (!projection) return 'Node projection is not loaded';
     return null;
   });
+  const renameDisabledReason = $derived(() => {
+    if (!projection) return 'Node projection is not loaded';
+    if (projection.payload.node.system_owned) return 'Canonical roots cannot be renamed';
+    return null;
+  });
   const deleteDisabledReason = $derived(() => {
     if (!projection) return 'Node projection is not loaded';
     if (projection.payload.node.system_owned) return 'Canonical roots cannot be deleted';
@@ -77,6 +90,71 @@
   $effect(() => {
     void refreshBibleGraphNodeProjection({ node_id: nodeId }).catch(() => {});
   });
+
+  $effect(() => {
+    if (!editingName && projection) {
+      nameDraft = projection.payload.node.name;
+    }
+  });
+
+  $effect(() => {
+    if (editingName && nameInput) {
+      nameInput.focus();
+      nameInput.select();
+    }
+  });
+
+  function startNameEdit(): void {
+    if (!projection) return;
+    if (renameDisabledReason() !== null) return;
+    nameDraft = projection.payload.node.name;
+    renameError = undefined;
+    editingName = true;
+  }
+
+  function cancelNameEdit(): void {
+    nameDraft = projection?.payload.node.name ?? '';
+    renameError = undefined;
+    editingName = false;
+  }
+
+  async function handleRenameNode(): Promise<void> {
+    if (!projection) return;
+    if (renameDisabledReason() !== null) return;
+    const name = nameDraft.trim();
+    if (name.length === 0) {
+      renameError = 'Name is required';
+      return;
+    }
+    if (name === projection.payload.node.name) {
+      editingName = false;
+      return;
+    }
+
+    renamingNode = true;
+    renameError = undefined;
+    try {
+      const response = await setBibleGraphNodeNameProjection({
+        node_id: projection.payload.node.id,
+        name,
+      });
+      await refreshBibleGraphNodeListProjection();
+      editingName = false;
+      nameDraft = response.projection.payload.node.name;
+      if (onrenamed) {
+        await onrenamed(response.projection.payload.node.id);
+      }
+    } catch (error) {
+      renameError = error instanceof Error ? error.message : 'Failed to rename bible graph node';
+    } finally {
+      renamingNode = false;
+    }
+  }
+
+  function handleNameFormSubmit(event: SubmitEvent): void {
+    event.preventDefault();
+    void handleRenameNode();
+  }
 
   async function handleCreateChild(): Promise<void> {
     if (!projection) return;
@@ -148,12 +226,47 @@
 
   {#if projection}
     <div class="detail-body">
-      <h2>{projection.payload.node.name}</h2>
+      <form class="name-editor" onsubmit={handleNameFormSubmit}>
+        {#if editingName}
+          <input
+            bind:this={nameInput}
+            aria-label="Node name"
+            bind:value={nameDraft}
+            disabled={renamingNode}
+            onkeydown={(event) => {
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                cancelNameEdit();
+              }
+            }}
+          />
+          <div class="name-actions">
+            <button type="submit" disabled={renamingNode}>
+              {renamingNode ? 'Saving' : 'Save'}
+            </button>
+            <button type="button" disabled={renamingNode} onclick={cancelNameEdit}>Cancel</button>
+          </div>
+        {:else}
+          <button
+            type="button"
+            class="title-button"
+            disabled={renameDisabledReason() !== null}
+            title={renameDisabledReason() ?? 'Rename node'}
+            ondblclick={startNameEdit}
+            onclick={startNameEdit}
+          >
+            {projection.payload.node.name}
+          </button>
+        {/if}
+      </form>
       {#if deleteError}
         <p class="status error">{deleteError}</p>
       {/if}
       {#if createError}
         <p class="status error">{createError}</p>
+      {/if}
+      {#if renameError}
+        <p class="status error">{renameError}</p>
       {/if}
       <dl class="metadata">
         <div>
@@ -296,15 +409,62 @@
     padding: 12px;
   }
 
-  h2,
   p {
     margin: 0;
   }
 
-  h2 {
+  .name-editor {
+    display: grid;
+    gap: 8px;
+  }
+
+  .title-button {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
     color: var(--color-text-primary);
     font-size: 1rem;
     font-weight: 600;
+    padding: 4px 0;
+    text-align: left;
+  }
+
+  .title-button:hover:not(:disabled) {
+    border-color: var(--color-border-subtle);
+    color: var(--color-accent);
+    cursor: text;
+  }
+
+  .title-button:disabled {
+    opacity: 0.75;
+  }
+
+  .name-editor input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 6px 8px;
+  }
+
+  .name-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .name-actions button {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 4px 8px;
   }
 
   .metadata {

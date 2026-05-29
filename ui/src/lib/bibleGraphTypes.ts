@@ -34,6 +34,11 @@ export interface DeleteBibleGraphNodeCommand {
   node_id: BibleGraphNodeId;
 }
 
+export interface SetBibleGraphNodeNameCommand {
+  node_id: BibleGraphNodeId;
+  name: string;
+}
+
 export interface SetBibleGraphFieldCommand {
   node_id: BibleGraphNodeId;
   part_id: BibleGraphPartId;

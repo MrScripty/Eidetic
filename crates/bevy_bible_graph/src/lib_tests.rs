@@ -67,6 +67,10 @@ fn renderer_app_emits_validated_focus_and_navigation_commands() {
     assert_eq!(renderer.delete_node(node_id.clone()), Ok(()));
     assert_eq!(renderer.create_connected_node(node_id.clone()), Ok(()));
     assert_eq!(
+        renderer.set_node_name(node_id.clone(), "Ada Revised".to_string()),
+        Ok(())
+    );
+    assert_eq!(
         renderer.drain_commands(),
         vec![
             BibleGraphRendererCommand::FocusNode {
@@ -78,7 +82,13 @@ fn renderer_app_emits_validated_focus_and_navigation_commands() {
             BibleGraphRendererCommand::DeleteNode {
                 node_id: node_id.clone()
             },
-            BibleGraphRendererCommand::CreateConnectedNode { parent_id: node_id }
+            BibleGraphRendererCommand::CreateConnectedNode {
+                parent_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::SetNodeName {
+                node_id,
+                name: "Ada Revised".to_string()
+            }
         ]
     );
 }
@@ -805,6 +815,49 @@ fn controlled_native_window_maps_background_click_to_clear_selection() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_title_edit_double_click_commits_backend_rename_intent() {
+    use crate::native_render::{
+        BibleGraphNativeNodeTitleEdit, bible_graph_native_title_edit_append_text,
+        bible_graph_native_title_edit_commit, bible_graph_native_title_edit_register_node_click,
+    };
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let mut title_edit = BibleGraphNativeNodeTitleEdit::default();
+
+    bible_graph_native_title_edit_register_node_click(
+        &mut title_edit,
+        node_id.clone(),
+        "Ada".to_string(),
+        1.0,
+    );
+    bible_graph_native_title_edit_append_text(&mut title_edit, " ignored");
+    assert_eq!(bible_graph_native_title_edit_commit(&mut title_edit), None);
+
+    bible_graph_native_title_edit_register_node_click(
+        &mut title_edit,
+        node_id.clone(),
+        "Ada".to_string(),
+        2.0,
+    );
+    bible_graph_native_title_edit_register_node_click(
+        &mut title_edit,
+        node_id.clone(),
+        "Ada".to_string(),
+        2.2,
+    );
+    bible_graph_native_title_edit_append_text(&mut title_edit, " Revised");
+
+    assert_eq!(
+        bible_graph_native_title_edit_commit(&mut title_edit),
+        Some(BibleGraphRendererCommand::SetNodeName {
+            node_id,
+            name: "Ada Revised".to_string()
+        })
+    );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_uses_3d_ray_semantic_edge_hit_testing() {
     use crate::native_render::nearest_selectable_native_edge_on_ray;
     use bevy::prelude::{Dir3, Plugin, Ray3d, Vec3};
@@ -1414,6 +1467,14 @@ fn controlled_native_window_emits_validated_focus_and_navigation_commands() {
         Ok(())
     );
     assert_eq!(
+        emit_bible_graph_native_node_name_set(
+            app.world_mut(),
+            node_id.clone(),
+            "Ada Revised".to_string()
+        ),
+        Ok(())
+    );
+    assert_eq!(
         control.drain_commands(),
         vec![
             BibleGraphRendererCommand::FocusNode {
@@ -1425,7 +1486,13 @@ fn controlled_native_window_emits_validated_focus_and_navigation_commands() {
             BibleGraphRendererCommand::DeleteNode {
                 node_id: node_id.clone()
             },
-            BibleGraphRendererCommand::CreateConnectedNode { parent_id: node_id }
+            BibleGraphRendererCommand::CreateConnectedNode {
+                parent_id: node_id.clone()
+            },
+            BibleGraphRendererCommand::SetNodeName {
+                node_id,
+                name: "Ada Revised".to_string()
+            }
         ]
     );
 }

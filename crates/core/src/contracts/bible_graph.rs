@@ -242,6 +242,12 @@ pub struct DeleteBibleGraphNodeCommand {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SetBibleGraphNodeNameCommand {
+    pub node_id: BibleGraphNodeId,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnsureCanonicalBibleRootsCommand {}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

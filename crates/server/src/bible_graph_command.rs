@@ -3,8 +3,8 @@ use eidetic_core::contracts::{
     ChangeEvent, ChangeEventKind, CommandEnvelope, CreateBibleGraphNodeCommand,
     DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
     FieldDelta, FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    builtin_bible_graph_schema,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphNodeNameCommand,
+    SetBibleGraphSnapshotFieldCommand, builtin_bible_graph_schema,
 };
 use rusqlite::Connection;
 
@@ -99,6 +99,79 @@ pub(crate) fn apply_delete_bible_graph_node(
         |tx| bible_graph_store::delete_node_in_transaction(tx, &command.payload.node_id, event.id),
     )?;
     let projection = bible_graph_store::load_node_list_projection_envelope(conn)?;
+
+    Ok((outcome, projection))
+}
+
+pub(crate) fn apply_set_bible_graph_node_name(
+    conn: &mut Connection,
+    command: &CommandEnvelope<SetBibleGraphNodeNameCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<BibleNodeDetailProjection>,
+    ),
+    BibleGraphCommandError,
+> {
+    validate_node_name_command(&command.payload)?;
+    bible_graph_store::create_schema(conn)?;
+
+    let before =
+        bible_graph_store::load_node(conn, &command.payload.node_id)?.ok_or_else(|| {
+            BibleGraphCommandError::InvalidCommand(format!(
+                "bible graph node does not exist: {}",
+                command.payload.node_id.as_str()
+            ))
+        })?;
+    if before.system_owned || before.schema_key.as_str().starts_with("canonical.") {
+        return Err(BibleGraphCommandError::InvalidCommand(format!(
+            "canonical bible graph node cannot be renamed: {}",
+            before.id.as_str()
+        )));
+    }
+
+    let trimmed_name = command.payload.name.trim();
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("rename bible graph node {}", before.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::BibleNode,
+        command.payload.node_id.as_str(),
+        event.id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "name",
+        Some(FieldValue::Text(before.name)),
+        Some(FieldValue::Text(trimmed_name.to_string())),
+    ));
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "bible_graph.set_node_name",
+        &event,
+        &[revision],
+        |tx| {
+            bible_graph_store::set_node_name_in_transaction(
+                tx,
+                &command.payload.node_id,
+                trimmed_name,
+            )
+        },
+    )?;
+    let projection =
+        bible_graph_store::load_node_detail_projection_envelope(conn, &command.payload.node_id)?
+            .ok_or_else(|| {
+                BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(format!(
+                    "bible graph node projection missing after name update: {}",
+                    command.payload.node_id.as_str()
+                )))
+            })?;
 
     Ok((outcome, projection))
 }
@@ -402,6 +475,17 @@ pub(crate) fn apply_set_bible_graph_snapshot_field(
 }
 
 fn validate_command(command: &CreateBibleGraphNodeCommand) -> Result<(), BibleGraphCommandError> {
+    if command.name.trim().is_empty() {
+        return Err(BibleGraphCommandError::InvalidCommand(
+            "name is required".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_node_name_command(
+    command: &SetBibleGraphNodeNameCommand,
+) -> Result<(), BibleGraphCommandError> {
     if command.name.trim().is_empty() {
         return Err(BibleGraphCommandError::InvalidCommand(
             "name is required".to_string(),

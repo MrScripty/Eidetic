@@ -88,6 +88,26 @@ pub(crate) fn delete_node_in_transaction(
     Ok(())
 }
 
+pub(crate) fn set_node_name_in_transaction(
+    tx: &Transaction<'_>,
+    node_id: &BibleGraphNodeId,
+    name: &str,
+) -> Result<(), HistoryStoreError> {
+    let changed = tx.execute(
+        "UPDATE bible_graph_nodes
+         SET name = ?2
+         WHERE id = ?1 AND deleted_event_id IS NULL",
+        params![node_id.as_str(), name],
+    )?;
+    if changed == 0 {
+        return Err(HistoryStoreError::InvalidValue(format!(
+            "bible graph node does not exist: {}",
+            node_id.as_str()
+        )));
+    }
+    Ok(())
+}
+
 pub(crate) fn set_field_in_transaction(
     tx: &Transaction<'_>,
     command: &SetBibleGraphFieldCommand,
