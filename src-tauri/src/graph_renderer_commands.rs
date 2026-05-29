@@ -295,6 +295,11 @@ fn validate_text_editor_settings(
             "graph renderer text editor background transparency must be between 0 and 1",
         ));
     }
+    if !(0.25..=3.0).contains(&settings.label_size_scale) {
+        return Err(CommandError::bad_request(
+            "graph renderer label size scale must be between 0.25 and 3",
+        ));
+    }
     if !(1.0..=24.0).contains(&settings.selected_node_outline_width_px) {
         return Err(CommandError::bad_request(
             "graph renderer selected node outline width must be between 1 and 24 pixels",

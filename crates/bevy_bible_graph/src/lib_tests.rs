@@ -1133,6 +1133,7 @@ fn controlled_native_window_applies_text_editor_style_settings() {
         editor_background_color: "#4080ff".to_string(),
         editor_background_brightness: 0.11,
         editor_background_transparency: 0.15,
+        label_size_scale: 1.4,
         selected_node_outline_width_px: 9.0,
         selected_node_outline_brightness: 0.65,
         selected_node_outline_color: "#6fc2c9".to_string(),
@@ -1241,11 +1242,16 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     assert!(above_viewport_position.y < 0.0);
     assert!(below_viewport_position.y > 720.0);
     assert_eq!(
-        crate::native_render::native_node_label_projected_font_size(32.0, 14.0),
+        crate::native_render::native_node_label_projected_font_size(32.0, 14.0, 1.0),
         14.08
     );
+    assert!(
+        (crate::native_render::native_node_label_projected_font_size(32.0, 14.0, 1.5) - 21.12)
+            .abs()
+            < 0.001
+    );
     assert_eq!(
-        crate::native_render::native_node_label_projected_font_size(4.0, 14.0),
+        crate::native_render::native_node_label_projected_font_size(4.0, 14.0, 1.0),
         5.0
     );
 }
@@ -1299,11 +1305,11 @@ fn native_camera_navigation_supports_pan_and_zoom_intents() {
     );
     assert_eq!(
         native_camera_navigation_delta(true, false, false, false, false, false, 1.0),
-        Vec3::new(420.0, 0.0, 0.0)
+        Vec3::new(-420.0, 0.0, 0.0)
     );
     assert_eq!(
         native_camera_navigation_delta(false, true, false, false, false, false, 1.0),
-        Vec3::new(-420.0, 0.0, 0.0)
+        Vec3::new(420.0, 0.0, 0.0)
     );
     assert_eq!(
         native_camera_navigation_delta(false, false, false, false, false, true, 1.0),
@@ -1346,7 +1352,7 @@ fn native_camera_edge_pan_uses_viewport_bump_direction() {
     let front_camera = Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y);
     assert_eq!(
         native_camera_edge_pan_delta(Vec2::X, &front_camera, 1.0),
-        Vec3::new(-520.0, 0.0, 0.0)
+        Vec3::new(520.0, 0.0, 0.0)
     );
     assert_eq!(
         native_camera_edge_pan_delta(Vec2::Y, &front_camera, 0.5),

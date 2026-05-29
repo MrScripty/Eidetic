@@ -131,6 +131,7 @@ pub struct BibleGraphNativeTextEditorSettings {
     pub editor_background_color: String,
     pub editor_background_brightness: f32,
     pub editor_background_transparency: f32,
+    pub label_size_scale: f32,
     pub selected_node_outline_width_px: f32,
     pub selected_node_outline_brightness: f32,
     pub selected_node_outline_color: String,
@@ -149,6 +150,7 @@ impl Default for BibleGraphNativeTextEditorSettings {
             editor_background_color: "#ffffff".to_string(),
             editor_background_brightness: 0.075,
             editor_background_transparency: 0.08,
+            label_size_scale: 1.0,
             selected_node_outline_width_px: 4.0,
             selected_node_outline_brightness: 1.0,
             selected_node_outline_color: "#f2c94c".to_string(),
@@ -1499,10 +1501,10 @@ pub(crate) fn native_camera_navigation_delta(
     let mut zoom_direction = 0.0;
 
     if pan_left {
-        pan_direction.x += 1.0;
+        pan_direction.x -= 1.0;
     }
     if pan_right {
-        pan_direction.x -= 1.0;
+        pan_direction.x += 1.0;
     }
     if pan_up {
         pan_direction.y += 1.0;
@@ -1575,7 +1577,7 @@ pub(crate) fn native_camera_edge_pan_delta(
     let speed = NATIVE_CAMERA_EDGE_PAN_SPEED * scale * delta_seconds;
     let right = *camera_transform.right();
     let up = *camera_transform.up();
-    right * -direction.x * speed + up * direction.y * speed
+    right * direction.x * speed + up * direction.y * speed
 }
 
 pub(crate) fn native_camera_reset_transform() -> Transform {
@@ -1747,6 +1749,7 @@ pub(crate) fn native_camera_orbit_translation(
 fn project_bible_graph_native_labels(
     cameras: Query<(&Camera, &Transform), With<BibleGraphNativeCamera>>,
     windows: Query<&Window, With<PrimaryWindow>>,
+    text_editor_settings: Option<Res<BibleGraphNativeTextEditorSettingsState>>,
     mut labels: Query<
         (
             &BibleGraphNativeNodeLabelVisual,
@@ -1769,6 +1772,7 @@ fn project_bible_graph_native_labels(
 
     let viewport_size = Vec2::new(window.width(), window.height());
     let camera_global_transform = GlobalTransform::from(*camera_transform);
+    let label_size_scale = label_size_scale_from_settings(text_editor_settings.as_deref());
     for (label, mut label_node, mut label_font, mut visibility) in &mut labels {
         if !label.label_visible {
             *visibility = Visibility::Hidden;
@@ -1796,10 +1800,22 @@ fn project_bible_graph_native_labels(
             native_node_label_overlay_position(viewport_position, viewport_size, projected_radius);
         label_node.left = Val::Px(label_position.x);
         label_node.top = Val::Px(label_position.y);
-        label_font.font_size =
-            native_node_label_projected_font_size(projected_radius, label.label_font_size);
+        label_font.font_size = native_node_label_projected_font_size(
+            projected_radius,
+            label.label_font_size,
+            label_size_scale,
+        );
         *visibility = Visibility::Visible;
     }
+}
+
+fn label_size_scale_from_settings(
+    text_editor_settings: Option<&BibleGraphNativeTextEditorSettingsState>,
+) -> f32 {
+    text_editor_settings
+        .map(|state| state.settings.label_size_scale)
+        .unwrap_or(BibleGraphNativeTextEditorSettings::default().label_size_scale)
+        .clamp(0.25, 3.0)
 }
 
 fn apply_bible_graph_native_title_edit_overlay(
@@ -2038,8 +2054,9 @@ fn native_node_label_projected_radius(
 pub(crate) fn native_node_label_projected_font_size(
     projected_node_radius: f32,
     base_font_size: f32,
+    label_size_scale: f32,
 ) -> f32 {
-    let scaled_size = projected_node_radius.max(1.0) * 0.44;
+    let scaled_size = projected_node_radius.max(1.0) * 0.44 * label_size_scale.clamp(0.25, 3.0);
     scaled_size.clamp(5.0, base_font_size.max(5.0) * 1.8)
 }
 

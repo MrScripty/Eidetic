@@ -81,6 +81,7 @@
   let textEditorBackgroundColor = $state('#ffffff');
   let textEditorBackgroundBrightness = $state(0.075);
   let textEditorBackgroundTransparency = $state(0.08);
+  let labelSizeScale = $state(1);
   let selectedNodeOutlineWidthPx = $state(4);
   let selectedNodeOutlineBrightness = $state(1);
   let selectedNodeOutlineColor = $state('#f2c94c');
@@ -259,6 +260,7 @@
       editor_background_color: textEditorBackgroundColor,
       editor_background_brightness: textEditorBackgroundBrightness,
       editor_background_transparency: textEditorBackgroundTransparency,
+      label_size_scale: labelSizeScale,
       selected_node_outline_width_px: selectedNodeOutlineWidthPx,
       selected_node_outline_brightness: selectedNodeOutlineBrightness,
       selected_node_outline_color: selectedNodeOutlineColor,
@@ -276,6 +278,7 @@
     textEditorBackgroundColor = settings.editor_background_color;
     textEditorBackgroundBrightness = settings.editor_background_brightness;
     textEditorBackgroundTransparency = settings.editor_background_transparency;
+    labelSizeScale = settings.label_size_scale;
     selectedNodeOutlineWidthPx = settings.selected_node_outline_width_px;
     selectedNodeOutlineBrightness = settings.selected_node_outline_brightness;
     selectedNodeOutlineColor = settings.selected_node_outline_color;
@@ -511,6 +514,18 @@
                     oninput={applyTextEditorSettings}
                   />
                   <output>{Math.round(textEditorBackgroundTransparency * 100)}%</output>
+                </label>
+                <label>
+                  <span>Label size</span>
+                  <input
+                    type="range"
+                    min="0.25"
+                    max="3"
+                    step="0.05"
+                    bind:value={labelSizeScale}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{Math.round(labelSizeScale * 100)}%</output>
                 </label>
                 <label>
                   <span>Selected outline</span>
