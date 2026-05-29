@@ -31,33 +31,41 @@ The target model should be composable rather than only a larger fixed enum. User
 
 ## Proposed Data Model
 
-The story bible should become a typed graph with composable parts:
+The story bible should become a weakly typed graph with composable nodes:
 
 ```text
 StoryBible
-  schemas
-  canon
+  canonical roots
   nodes
   edges
+  snapshots
+  assets
 ```
 
 Core concepts:
 
 - `BibleNode`: a thing in the story/world.
-- `BiblePart`: a structured facet attached to a node.
+- `BibleNode` children: traits, details, notes, sub-details, and arbitrary
+  user-created facets attached to any node.
 - `BibleEdge`: a relationship between nodes.
-- `BibleSchema`: a reusable template describing the default parts for a node type.
-- `BibleSnapshot`: a time-specific state or override for a node, part, or edge.
+- `BibleSchema`: a weak category/template hint for default names, colors,
+  creation behavior, and AI prompting. Schemas do not limit what children a node
+  may have.
+- `BibleSnapshot`: a time-specific state or override for a node or edge.
 
 In short:
 
 ```text
-Nodes are things.
-Parts are structured facets of things.
+Nodes are things, traits, and details.
 Edges are relationships between things.
-Snapshots are time-specific versions of nodes, parts, or edges.
-Schemas describe what parts a type usually has.
+Snapshots are time-specific versions of nodes or edges.
+Schemas describe what a type usually means, not what it may contain.
 ```
+
+Fixed field/part records should be phased out as canonical worldbuilding state.
+Canonical character traits such as motivation, appearance, voice, and backstory
+should be represented as ordinary child nodes when they are useful, not as
+required fields on a character record.
 
 ## Canonical Graph
 
@@ -172,31 +180,34 @@ Empire of Lume
 
 Parent/child structure should be easy to browse and edit, but the bible should not be limited to trees. Richer relationships belong in edges.
 
-## Bible Parts
+## Bible Detail Nodes
 
-Parts let the system read and write only the specific facet it needs.
+Detail nodes let the system read and write only the specific facet it needs
+while keeping the bible graph open-ended.
 
 Example shape:
 
 ```text
-BiblePart
+BibleNode
   id
-  node_id
-  kind
-  data
-  updated_at
+  parent_id
+  schema_key: detail | custom schema key
+  title
+  body/content
+  sort_order
 ```
 
 Examples:
 
 ```text
 Character node: Sarah
-  Identity
-  Traits
-  Voice
-  Goals
-  Secrets
-  CurrentState
+  Identity              <- detail node
+  Traits                <- detail node
+    Stubborn            <- nested detail node
+  Voice                 <- detail node
+  Goals                 <- detail node
+  Secrets               <- detail node
+  CurrentState          <- detail node
 
 Culture node: Glass Coast
   Values
@@ -217,13 +228,15 @@ Organization node: Ministry of Weather
 This enables precise operations such as:
 
 ```text
-read Sarah.Voice
-write Sarah.CurrentState
-add Glass Coast.Rituals
-read Ministry of Weather.Hierarchy
+read node Sarah > Voice
+write node Sarah > CurrentState
+add node Glass Coast > Rituals
+read node Ministry of Weather > Hierarchy
 ```
 
-The UI and AI should not need to fetch or rewrite a whole bible entry when only one part is relevant.
+The UI and AI should not need to fetch or rewrite a whole bible entry when only
+one detail node is relevant. Users may add arbitrary detail nodes at any depth;
+canonical traits are optional scaffold nodes, not hard fields.
 
 ## Bible Edges
 

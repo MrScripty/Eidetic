@@ -64,7 +64,7 @@ export async function createBibleGraphNodeForCategory(
     parent_id: parentId,
     schema_key: schema.schema_key,
     name: newNodeName(category, schemaProjection),
-    sort_order: nextSortOrderForParent(schema.canonical_parent_id, graphNodes),
+    sort_order: nextSortOrderForParent(parentId, graphNodes),
   });
 }
 
@@ -94,6 +94,9 @@ async function parentIdForCategory(
   graphNodes: BibleGraphNode[],
   deps: BibleGraphNodeCreateFlowDependencies,
 ): Promise<string> {
+  if (!schema.canonical_root_schema_key) {
+    throw new Error(`Canonical root unavailable for ${schema.display_name}`);
+  }
   const existingRoot = graphNodes.find(
     (node) => node.schema_key === schema.canonical_root_schema_key,
   );

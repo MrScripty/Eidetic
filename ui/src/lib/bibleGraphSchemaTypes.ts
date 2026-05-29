@@ -31,8 +31,8 @@ export interface BibleGraphSchemaProjection {
   display_name: string;
   visual_style: BibleGraphCategoryVisualStyle;
   default_node_name: string;
-  canonical_parent_id: BibleGraphNodeId;
-  canonical_root_schema_key: BibleGraphSchemaKey;
+  canonical_parent_id?: BibleGraphNodeId | null;
+  canonical_root_schema_key?: BibleGraphSchemaKey | null;
   parts: BibleGraphPartSchemaProjection[];
 }
 

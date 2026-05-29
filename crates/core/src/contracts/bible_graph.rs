@@ -72,6 +72,7 @@ pub enum BibleGraphNodeCategory {
     Event,
     Rule,
     Reference,
+    Detail,
     Canonical,
     Other,
 }
@@ -96,6 +97,7 @@ impl BibleGraphNodeCategory {
             "canonical.root.events" | "event" => Self::Event,
             "canonical.root.rules" | "rule" => Self::Rule,
             "canonical.root.references" | "reference" => Self::Reference,
+            "detail" => Self::Detail,
             schema if schema.starts_with("canonical.") => Self::Canonical,
             _ => parent_id.map(Self::for_parent_id).unwrap_or(Self::Other),
         }
@@ -125,6 +127,7 @@ impl BibleGraphNodeCategory {
             Self::Event => "Event",
             Self::Rule => "Rule",
             Self::Reference => "Reference",
+            Self::Detail => "Detail",
             Self::Canonical => "Canonical",
             Self::Other => "Other",
         }
@@ -140,6 +143,7 @@ impl BibleGraphNodeCategory {
             Self::Event => "#ef4444",
             Self::Rule => "#eab308",
             Self::Reference => "#38bdf8",
+            Self::Detail => "#94a3b8",
             Self::Canonical => "#536f88",
             Self::Other => "#34495e",
         }

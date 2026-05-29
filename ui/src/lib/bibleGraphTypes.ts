@@ -18,6 +18,7 @@ export type BibleGraphNodeCategory =
   | 'event'
   | 'rule'
   | 'reference'
+  | 'detail'
   | 'canonical'
   | 'other';
 

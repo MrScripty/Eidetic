@@ -11,8 +11,8 @@ pub struct BibleGraphSchemaDefault {
     pub category: BibleGraphNodeCategory,
     pub display_name: &'static str,
     pub default_node_name: &'static str,
-    pub canonical_parent_id: &'static str,
-    pub canonical_root_schema_key: &'static str,
+    pub canonical_parent_id: Option<&'static str>,
+    pub canonical_root_schema_key: Option<&'static str>,
     pub parts: &'static [BibleGraphPartDefault],
 }
 
@@ -56,8 +56,10 @@ pub struct BibleGraphSchemaProjection {
     pub display_name: String,
     pub visual_style: super::BibleGraphCategoryVisualStyle,
     pub default_node_name: String,
-    pub canonical_parent_id: BibleGraphNodeId,
-    pub canonical_root_schema_key: BibleGraphSchemaKey,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub canonical_parent_id: Option<BibleGraphNodeId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub canonical_root_schema_key: Option<BibleGraphSchemaKey>,
     pub parts: Vec<BibleGraphPartSchemaProjection>,
 }
 
@@ -178,12 +180,14 @@ pub fn builtin_bible_graph_schema_list_projection()
                 display_name: schema.display_name.to_string(),
                 visual_style: schema.category.visual_style(),
                 default_node_name: schema.default_node_name.to_string(),
-                canonical_parent_id: BibleGraphNodeId::new(schema.canonical_parent_id)
-                    .expect("default canonical parent identifiers are non-empty"),
-                canonical_root_schema_key: BibleGraphSchemaKey::new(
-                    schema.canonical_root_schema_key,
-                )
-                .expect("default canonical root schema keys are non-empty"),
+                canonical_parent_id: schema.canonical_parent_id.map(|parent_id| {
+                    BibleGraphNodeId::new(parent_id)
+                        .expect("default canonical parent identifiers are non-empty")
+                }),
+                canonical_root_schema_key: schema.canonical_root_schema_key.map(|schema_key| {
+                    BibleGraphSchemaKey::new(schema_key)
+                        .expect("default canonical root schema keys are non-empty")
+                }),
                 parts: schema
                     .parts
                     .iter()
@@ -231,8 +235,8 @@ pub const BUILTIN_BIBLE_GRAPH_SCHEMAS: &[BibleGraphSchemaDefault] = &[
         category: BibleGraphNodeCategory::Character,
         display_name: "Character",
         default_node_name: "New Character",
-        canonical_parent_id: "canonical.characters",
-        canonical_root_schema_key: "canonical.root.characters",
+        canonical_parent_id: Some("canonical.characters"),
+        canonical_root_schema_key: Some("canonical.root.characters"),
         parts: &[
             BibleGraphPartDefault {
                 part_key: "profile",
@@ -275,8 +279,8 @@ pub const BUILTIN_BIBLE_GRAPH_SCHEMAS: &[BibleGraphSchemaDefault] = &[
         category: BibleGraphNodeCategory::Location,
         display_name: "Location",
         default_node_name: "New Location",
-        canonical_parent_id: "canonical.places",
-        canonical_root_schema_key: "canonical.root.places",
+        canonical_parent_id: Some("canonical.places"),
+        canonical_root_schema_key: Some("canonical.root.places"),
         parts: &[BibleGraphPartDefault {
             part_key: "environment",
             name: "Environment",
@@ -298,8 +302,8 @@ pub const BUILTIN_BIBLE_GRAPH_SCHEMAS: &[BibleGraphSchemaDefault] = &[
         category: BibleGraphNodeCategory::Prop,
         display_name: "Prop",
         default_node_name: "New Prop",
-        canonical_parent_id: "canonical.objects",
-        canonical_root_schema_key: "canonical.root.objects",
+        canonical_parent_id: Some("canonical.objects"),
+        canonical_root_schema_key: Some("canonical.root.objects"),
         parts: &[BibleGraphPartDefault {
             part_key: "identity",
             name: "Identity",
@@ -321,8 +325,8 @@ pub const BUILTIN_BIBLE_GRAPH_SCHEMAS: &[BibleGraphSchemaDefault] = &[
         category: BibleGraphNodeCategory::Theme,
         display_name: "Theme",
         default_node_name: "New Theme",
-        canonical_parent_id: "canonical.themes",
-        canonical_root_schema_key: "canonical.root.themes",
+        canonical_parent_id: Some("canonical.themes"),
+        canonical_root_schema_key: Some("canonical.root.themes"),
         parts: &[BibleGraphPartDefault {
             part_key: "meaning",
             name: "Meaning",
@@ -344,8 +348,8 @@ pub const BUILTIN_BIBLE_GRAPH_SCHEMAS: &[BibleGraphSchemaDefault] = &[
         category: BibleGraphNodeCategory::Event,
         display_name: "Event",
         default_node_name: "New Event",
-        canonical_parent_id: "canonical.events",
-        canonical_root_schema_key: "canonical.root.events",
+        canonical_parent_id: Some("canonical.events"),
+        canonical_root_schema_key: Some("canonical.root.events"),
         parts: &[BibleGraphPartDefault {
             part_key: "story",
             name: "Story",
@@ -362,6 +366,42 @@ pub const BUILTIN_BIBLE_GRAPH_SCHEMAS: &[BibleGraphSchemaDefault] = &[
             ],
         }],
     },
+    BibleGraphSchemaDefault {
+        schema_key: "culture",
+        category: BibleGraphNodeCategory::Culture,
+        display_name: "Culture",
+        default_node_name: "New Culture",
+        canonical_parent_id: Some("canonical.cultures"),
+        canonical_root_schema_key: Some("canonical.root.cultures"),
+        parts: &[],
+    },
+    BibleGraphSchemaDefault {
+        schema_key: "rule",
+        category: BibleGraphNodeCategory::Rule,
+        display_name: "Rule",
+        default_node_name: "New Rule",
+        canonical_parent_id: Some("canonical.rules"),
+        canonical_root_schema_key: Some("canonical.root.rules"),
+        parts: &[],
+    },
+    BibleGraphSchemaDefault {
+        schema_key: "reference",
+        category: BibleGraphNodeCategory::Reference,
+        display_name: "Reference",
+        default_node_name: "New Reference",
+        canonical_parent_id: Some("canonical.references"),
+        canonical_root_schema_key: Some("canonical.root.references"),
+        parts: &[],
+    },
+    BibleGraphSchemaDefault {
+        schema_key: "detail",
+        category: BibleGraphNodeCategory::Detail,
+        display_name: "Detail",
+        default_node_name: "New Detail",
+        canonical_parent_id: None,
+        canonical_root_schema_key: None,
+        parts: &[],
+    },
 ];
 
 #[cfg(test)]
@@ -377,11 +417,34 @@ mod tests {
             .map(|schema| schema.schema_key)
             .collect();
 
-        assert_eq!(schemas, ["character", "location", "prop", "theme", "event"]);
+        assert_eq!(
+            schemas,
+            [
+                "character",
+                "location",
+                "prop",
+                "theme",
+                "event",
+                "culture",
+                "rule",
+                "reference",
+                "detail"
+            ]
+        );
         assert!(
             BUILTIN_BIBLE_GRAPH_SCHEMAS
                 .iter()
-                .all(|schema| !schema.parts.is_empty())
+                .filter(|schema| schema.category != BibleGraphNodeCategory::Detail)
+                .all(|schema| schema.canonical_parent_id.is_some()
+                    && schema.canonical_root_schema_key.is_some())
+        );
+        assert!(
+            BUILTIN_BIBLE_GRAPH_SCHEMAS
+                .iter()
+                .find(|schema| schema.schema_key == "detail")
+                .is_some_and(|schema| schema.canonical_parent_id.is_none()
+                    && schema.canonical_root_schema_key.is_none()
+                    && schema.parts.is_empty())
         );
     }
 

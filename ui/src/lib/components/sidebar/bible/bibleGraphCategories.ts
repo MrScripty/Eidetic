@@ -16,6 +16,7 @@ export type BibleGraphCategory =
   | 'Event'
   | 'Rule'
   | 'Reference'
+  | 'Detail'
   | 'Other';
 
 export interface BibleGraphCategoryFilterOption {
@@ -41,6 +42,7 @@ const categoriesByBackendCategory: Record<BibleGraphNodeCategory, BibleGraphCate
   event: 'Event',
   rule: 'Rule',
   reference: 'Reference',
+  detail: 'Detail',
   canonical: 'Other',
   other: 'Other',
 };
@@ -144,6 +146,8 @@ export function categoryShortLabel(category: BibleGraphCategory): string {
       return 'RUL';
     case 'Reference':
       return 'REF';
+    case 'Detail':
+      return 'DTL';
     case 'Other':
       return 'OTH';
   }
@@ -201,6 +205,8 @@ function categoryForSchemaAndParent(
     case 'canonical.root.references':
     case 'reference':
       return 'reference';
+    case 'detail':
+      return 'detail';
     default:
       return parentCategory(parentId);
   }
@@ -249,6 +255,8 @@ function rootCategoryForColor(
       return 'rule';
     case 'Reference':
       return 'reference';
+    case 'Detail':
+      return 'detail';
     case 'Other':
       return 'other';
     default:

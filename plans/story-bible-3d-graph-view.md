@@ -321,14 +321,18 @@ StoryBible
   assets
 ```
 
-The view should not require every `BiblePart` to become a visible node. Parts usually appear as detail content for a selected node. A part should become a visible graph node only when it represents a meaningful world object or relationship target.
+The target bible model treats traits and details as ordinary `BibleNode`
+children, not as fixed fields hidden inside a selected node. Canonical traits
+may be offered as scaffold/template nodes, but users can add arbitrary child
+nodes at any depth. Legacy `BiblePart`/field projections are transitional detail
+surfaces and should not be the long-term canonical worldbuilding model.
 
 Default projection:
 
 - `BibleNode` records become visible nodes.
 - `BibleEdge` records become visible edges.
 - canonical roots become anchor nodes.
-- selected node parts appear in detail/sidebar UI.
+- selected node children/details appear in the graph and detail/sidebar UI.
 - asset references appear as badges, thumbnails, or optional linked nodes.
 
 ## Relationship To Timeline

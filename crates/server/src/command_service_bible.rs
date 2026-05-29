@@ -383,7 +383,7 @@ fn create_connected_bible_node_command(
                 parent_id.as_str()
             ))
         })?;
-    let category = BibleGraphNodeCategory::for_node(&parent);
+    let category = category_for_connected_child(&parent);
     let schema = builtin_bible_graph_schema_list_projection()
         .payload
         .schemas
@@ -417,6 +417,16 @@ fn create_connected_bible_node_command(
             sort_order,
         },
     })
+}
+
+fn category_for_connected_child(
+    parent: &eidetic_core::contracts::BibleGraphNode,
+) -> BibleGraphNodeCategory {
+    if parent.system_owned && parent.schema_key.as_str().starts_with("canonical.") {
+        BibleGraphNodeCategory::for_node(parent)
+    } else {
+        BibleGraphNodeCategory::Detail
+    }
 }
 
 fn delete_bible_graph_node_at_path(
@@ -561,7 +571,7 @@ mod tests {
     }
 
     #[test]
-    fn connected_node_command_rejects_roots_without_creatable_schema() {
+    fn connected_node_command_supports_all_canonical_root_categories() {
         let mut conn = Connection::open_in_memory().unwrap();
         crate::bible_graph_command::apply_ensure_canonical_bible_roots(
             &mut conn,
@@ -570,13 +580,43 @@ mod tests {
         )
         .unwrap();
 
-        let error =
+        let culture =
             create_connected_bible_node_command(&conn, CanonicalBibleRoot::Cultures.node_id())
-                .unwrap_err();
+                .unwrap();
+        let rule = create_connected_bible_node_command(&conn, CanonicalBibleRoot::Rules.node_id())
+            .unwrap();
+        let reference =
+            create_connected_bible_node_command(&conn, CanonicalBibleRoot::References.node_id())
+                .unwrap();
 
-        assert_eq!(
-            error.message(),
-            "no creatable bible graph schema for Culture"
-        );
+        assert_eq!(culture.payload.schema_key.as_str(), "culture");
+        assert_eq!(culture.payload.name, "New Culture");
+        assert_eq!(rule.payload.schema_key.as_str(), "rule");
+        assert_eq!(rule.payload.name, "New Rule");
+        assert_eq!(reference.payload.schema_key.as_str(), "reference");
+        assert_eq!(reference.payload.name, "New Reference");
+    }
+
+    #[test]
+    fn connected_node_command_creates_detail_under_non_root_nodes() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        crate::bible_graph_command::apply_ensure_canonical_bible_roots(
+            &mut conn,
+            &CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+            0,
+        )
+        .unwrap();
+
+        let character =
+            create_connected_bible_node_command(&conn, CanonicalBibleRoot::Characters.node_id())
+                .unwrap();
+        crate::bible_graph_command::apply_create_bible_graph_node(&mut conn, &character, 0)
+            .unwrap();
+        let detail =
+            create_connected_bible_node_command(&conn, character.payload.node_id.clone()).unwrap();
+
+        assert_eq!(detail.payload.parent_id, Some(character.payload.node_id));
+        assert_eq!(detail.payload.schema_key.as_str(), "detail");
+        assert_eq!(detail.payload.name, "New Detail");
     }
 }
