@@ -59,8 +59,6 @@ describe('graph renderer command application', () => {
       inspectNode: vi.fn(),
       focusNode: vi.fn(),
       navigateToNode: vi.fn(),
-      deleteNode: vi.fn(),
-      createConnectedNode: vi.fn(),
       clearSelection: vi.fn(),
     };
 
@@ -86,8 +84,6 @@ describe('graph renderer command application', () => {
     expect(target.inspectNode).toHaveBeenCalledWith('node.location.beach');
     expect(target.focusNode).toHaveBeenCalledWith('node.location.beach');
     expect(target.navigateToNode).toHaveBeenCalledWith('node.character.ada');
-    expect(target.deleteNode).toHaveBeenCalledWith('node.character.ada');
-    expect(target.createConnectedNode).toHaveBeenCalledWith('node.character.ada');
     expect(target.clearSelection).toHaveBeenCalledOnce();
   });
 

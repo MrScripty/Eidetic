@@ -22,9 +22,9 @@ pub use crate::command_service_bible::{
     BibleGraphNodeCommandResponse, BibleGraphNodeListCommandResponse,
     BibleGraphRootsCommandResponse, CreateBibleGraphNodeRequestCommand,
     SetBibleGraphEdgeRequestCommand, SetBibleGraphSnapshotFieldRequestCommand,
-    create_bible_graph_node, delete_bible_graph_edge, delete_bible_graph_node,
-    ensure_canonical_bible_roots, set_bible_graph_edge, set_bible_graph_field,
-    set_bible_graph_snapshot_field,
+    create_bible_graph_node, create_connected_bible_graph_node, delete_bible_graph_edge,
+    delete_bible_graph_node, ensure_canonical_bible_roots, set_bible_graph_edge,
+    set_bible_graph_field, set_bible_graph_snapshot_field,
 };
 pub use crate::command_service_semantic::{
     BibleReferenceProposalCommandResponse, PropagationProposalCommandResponse,

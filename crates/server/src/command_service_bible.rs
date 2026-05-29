@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 
 use eidetic_core::contracts::{
-    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, BibleGraphNodeListProjection,
-    BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
-    BibleNodeDetailProjection, CommandEnvelope, CommandId, CreateBibleGraphNodeCommand,
-    DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
-    FieldValue, ProjectionEnvelope, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
-    SetBibleGraphSnapshotFieldCommand,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphNodeId,
+    BibleGraphNodeListProjection, BibleGraphPartKey, BibleGraphSchemaKey,
+    BibleGraphSnapshotFieldId, BibleGraphSnapshotId, BibleNodeDetailProjection, CommandEnvelope,
+    CommandId, CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand,
+    DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldValue, ProjectionEnvelope,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
+    builtin_bible_graph_schema_list_projection,
 };
 use serde::{Deserialize, Serialize};
 
@@ -22,6 +23,12 @@ use crate::state::{AppState, ServerEvent};
 pub struct BibleGraphNodeCommandResponse {
     outcome: RecordChangeOutcome,
     projection: ProjectionEnvelope<BibleNodeDetailProjection>,
+}
+
+impl BibleGraphNodeCommandResponse {
+    pub fn node_id(&self) -> &BibleGraphNodeId {
+        &self.projection.payload.node.id
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -281,6 +288,24 @@ pub async fn create_bible_graph_node(
     Ok(response)
 }
 
+pub async fn create_connected_bible_graph_node(
+    state: &AppState,
+    parent_id: BibleGraphNodeId,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let response =
+        tokio::task::spawn_blocking(move || create_connected_bible_node_at_path(path, parent_id))
+            .await
+            .map_err(|error| {
+                BackendError::internal(format!(
+                    "connected bible graph node create task failed: {error}"
+                ))
+            })??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    Ok(response)
+}
+
 pub async fn delete_bible_graph_node(
     state: &AppState,
     command: CommandEnvelope<DeleteBibleGraphNodeCommand>,
@@ -325,6 +350,72 @@ fn create_bible_node_at_path(
     Ok(BibleGraphNodeCommandResponse {
         outcome,
         projection,
+    })
+}
+
+fn create_connected_bible_node_at_path(
+    path: PathBuf,
+    parent_id: BibleGraphNodeId,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    let command = create_connected_bible_node_command(&conn, parent_id)?;
+    let (outcome, projection) =
+        bible_graph_command::apply_create_bible_graph_node(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+
+    Ok(BibleGraphNodeCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
+fn create_connected_bible_node_command(
+    conn: &rusqlite::Connection,
+    parent_id: BibleGraphNodeId,
+) -> Result<CommandEnvelope<CreateBibleGraphNodeCommand>, BackendError> {
+    crate::bible_graph_store::create_schema(conn).map_err(map_history_error)?;
+    let parent = crate::bible_graph_store::load_node(conn, &parent_id)
+        .map_err(map_history_error)?
+        .ok_or_else(|| {
+            BackendError::bad_request(format!(
+                "bible graph parent node does not exist: {}",
+                parent_id.as_str()
+            ))
+        })?;
+    let category = BibleGraphNodeCategory::for_node(&parent);
+    let schema = builtin_bible_graph_schema_list_projection()
+        .payload
+        .schemas
+        .into_iter()
+        .find(|schema| schema.category == category)
+        .ok_or_else(|| {
+            BackendError::bad_request(format!(
+                "no creatable bible graph schema for {}",
+                category.display_name()
+            ))
+        })?;
+    let sort_order = crate::bible_graph_store::active_child_count(conn, &parent_id)
+        .map_err(map_history_error)?
+        .try_into()
+        .unwrap_or(u32::MAX);
+    let command_id = CommandId::new();
+    let node_id = BibleGraphNodeId::new(format!(
+        "node.{}.{}",
+        schema.schema_key.as_str(),
+        derived_command_uuid(command_id, b"bible.node")
+    ))
+    .map_err(|error| BackendError::bad_request(error.to_string()))?;
+
+    Ok(CommandEnvelope {
+        id: command_id,
+        payload: CreateBibleGraphNodeCommand {
+            node_id,
+            parent_id: Some(parent_id),
+            schema_key: schema.schema_key,
+            name: schema.default_node_name,
+            sort_order,
+        },
     })
 }
 
@@ -428,5 +519,64 @@ fn map_bible_graph_error(error: BibleGraphCommandError) -> BackendError {
     match error {
         BibleGraphCommandError::InvalidCommand(message) => BackendError::bad_request(message),
         BibleGraphCommandError::Store(error) => map_history_error(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::create_connected_bible_node_command;
+    use eidetic_core::contracts::{
+        CanonicalBibleRoot, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
+    };
+    use rusqlite::Connection;
+
+    #[test]
+    fn connected_node_command_uses_parent_category_schema_and_next_sort_order() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        crate::bible_graph_command::apply_ensure_canonical_bible_roots(
+            &mut conn,
+            &CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+            0,
+        )
+        .unwrap();
+
+        let parent_id = CanonicalBibleRoot::Characters.node_id();
+        let first = create_connected_bible_node_command(&conn, parent_id.clone()).unwrap();
+        crate::bible_graph_command::apply_create_bible_graph_node(&mut conn, &first, 0).unwrap();
+        let second = create_connected_bible_node_command(&conn, parent_id.clone()).unwrap();
+
+        assert!(
+            first
+                .payload
+                .node_id
+                .as_str()
+                .starts_with("node.character.")
+        );
+        assert_eq!(first.payload.parent_id, Some(parent_id.clone()));
+        assert_eq!(first.payload.schema_key.as_str(), "character");
+        assert_eq!(first.payload.name, "New Character");
+        assert_eq!(first.payload.sort_order, 0);
+        assert_eq!(second.payload.parent_id, Some(parent_id));
+        assert_eq!(second.payload.sort_order, 1);
+    }
+
+    #[test]
+    fn connected_node_command_rejects_roots_without_creatable_schema() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        crate::bible_graph_command::apply_ensure_canonical_bible_roots(
+            &mut conn,
+            &CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+            0,
+        )
+        .unwrap();
+
+        let error =
+            create_connected_bible_node_command(&conn, CanonicalBibleRoot::Cultures.node_id())
+                .unwrap_err();
+
+        assert_eq!(
+            error.message(),
+            "no creatable bible graph schema for Culture"
+        );
     }
 }

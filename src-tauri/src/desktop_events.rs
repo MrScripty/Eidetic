@@ -1,4 +1,6 @@
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
+use eidetic_core::contracts::{CommandEnvelope, DeleteBibleGraphNodeCommand};
+use eidetic_server::command_service;
 use eidetic_server::projection_service;
 use eidetic_server::state::{AppState, ServerEvent};
 use serde::Serialize;
@@ -40,7 +42,7 @@ impl DesktopEventBridgeOwner {
                 spawn_server_event_bridge(app.clone(), state),
                 spawn_graph_renderer_projection_bridge(app.clone(), state),
                 spawn_timeline_renderer_projection_bridge(app.clone(), state),
-                spawn_graph_renderer_command_bridge(app.clone()),
+                spawn_graph_renderer_command_bridge(app.clone(), state.clone()),
                 spawn_timeline_renderer_command_bridge(app, state.clone()),
             ]),
         }
@@ -139,6 +141,7 @@ fn spawn_timeline_renderer_projection_bridge(
 
 fn spawn_graph_renderer_command_bridge(
     app: tauri::AppHandle,
+    state: AppState,
 ) -> tauri::async_runtime::JoinHandle<()> {
     tauri::async_runtime::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_millis(100));
@@ -157,24 +160,36 @@ fn spawn_graph_renderer_command_bridge(
             };
 
             for command in commands {
-                if let Err(error) =
-                    apply_graph_renderer_command_projection_update(&app, &command).await
-                {
-                    tracing::warn!(
-                        "failed to apply graph renderer command projection update: {error:?}"
-                    );
+                let follow_up_command =
+                    match handle_graph_renderer_command(&app, &state, command.clone()).await {
+                        Ok(follow_up_command) => follow_up_command,
+                        Err(error) => {
+                            tracing::warn!(
+                                "failed to apply graph renderer command {command:?}: {error}"
+                            );
+                            None
+                        }
+                    };
+                if should_emit_graph_renderer_command(&command) {
+                    emit_graph_renderer_command(&app, command);
                 }
-                if let Err(error) = app.emit(
-                    SERVER_EVENT_TOPIC,
-                    DesktopServerEvent {
-                        event: DesktopServerEventPayload::GraphRendererCommand(command),
-                    },
-                ) {
-                    tracing::warn!("failed to emit graph renderer command: {error}");
+                if let Some(follow_up_command) = follow_up_command {
+                    emit_graph_renderer_command(&app, follow_up_command);
                 }
             }
         }
     })
+}
+
+async fn handle_graph_renderer_command(
+    app: &tauri::AppHandle,
+    state: &AppState,
+    command: BibleGraphRendererCommand,
+) -> Result<Option<BibleGraphRendererCommand>, String> {
+    apply_graph_renderer_command_projection_update(app, &command)
+        .await
+        .map_err(|error| format!("{error:?}"))?;
+    apply_graph_renderer_mutation_command(app, state, command).await
 }
 
 async fn apply_graph_renderer_command_projection_update(
@@ -186,6 +201,84 @@ async fn apply_graph_renderer_command_projection_update(
     }
 
     Ok(())
+}
+
+async fn apply_graph_renderer_mutation_command(
+    app: &tauri::AppHandle,
+    state: &AppState,
+    command: BibleGraphRendererCommand,
+) -> Result<Option<BibleGraphRendererCommand>, String> {
+    match graph_renderer_mutation_command(command) {
+        Some(GraphRendererMutationCommand::DeleteNode(command)) => {
+            command_service::delete_bible_graph_node(state, command)
+                .await
+                .map_err(|error| error.to_string())?;
+            update_active_graph_renderer_selected_node(app, None)
+                .await
+                .map_err(|error| format!("{error:?}"))?;
+            Ok(Some(BibleGraphRendererCommand::ClearSelection))
+        }
+        Some(GraphRendererMutationCommand::CreateConnectedNode { parent_id }) => {
+            let response = command_service::create_connected_bible_graph_node(state, parent_id)
+                .await
+                .map_err(|error| error.to_string())?;
+            let node_id = response.node_id().clone();
+            update_active_graph_renderer_selected_node(app, Some(node_id.clone()))
+                .await
+                .map_err(|error| format!("{error:?}"))?;
+            Ok(Some(BibleGraphRendererCommand::SelectNode { node_id }))
+        }
+        None => Ok(None),
+    }
+}
+
+fn emit_graph_renderer_command(app: &tauri::AppHandle, command: BibleGraphRendererCommand) {
+    if let Err(error) = app.emit(
+        SERVER_EVENT_TOPIC,
+        DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(command),
+        },
+    ) {
+        tracing::warn!("failed to emit graph renderer command: {error}");
+    }
+}
+
+fn should_emit_graph_renderer_command(command: &BibleGraphRendererCommand) -> bool {
+    !matches!(
+        command,
+        BibleGraphRendererCommand::DeleteNode { .. }
+            | BibleGraphRendererCommand::CreateConnectedNode { .. }
+    )
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum GraphRendererMutationCommand {
+    DeleteNode(CommandEnvelope<DeleteBibleGraphNodeCommand>),
+    CreateConnectedNode {
+        parent_id: eidetic_core::contracts::BibleGraphNodeId,
+    },
+}
+
+fn graph_renderer_mutation_command(
+    command: BibleGraphRendererCommand,
+) -> Option<GraphRendererMutationCommand> {
+    match command {
+        BibleGraphRendererCommand::DeleteNode { node_id } => {
+            Some(GraphRendererMutationCommand::DeleteNode(
+                CommandEnvelope::new(DeleteBibleGraphNodeCommand { node_id }),
+            ))
+        }
+        BibleGraphRendererCommand::CreateConnectedNode { parent_id } => {
+            Some(GraphRendererMutationCommand::CreateConnectedNode { parent_id })
+        }
+        BibleGraphRendererCommand::SelectNode { .. }
+        | BibleGraphRendererCommand::SelectEdge { .. }
+        | BibleGraphRendererCommand::SelectInfluence { .. }
+        | BibleGraphRendererCommand::InspectNode { .. }
+        | BibleGraphRendererCommand::FocusNode { .. }
+        | BibleGraphRendererCommand::NavigateToNode { .. }
+        | BibleGraphRendererCommand::ClearSelection => None,
+    }
 }
 
 fn graph_renderer_command_selected_node_update(
@@ -269,12 +362,16 @@ async fn refresh_timeline_renderer_projection(app: &tauri::AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::{
-        DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload, SERVER_EVENT_TOPIC,
-        graph_renderer_command_selected_node_update, should_refresh_graph_renderer_projection,
+        DesktopEventBridgeOwner, DesktopServerEvent, DesktopServerEventPayload,
+        GraphRendererMutationCommand, SERVER_EVENT_TOPIC,
+        graph_renderer_command_selected_node_update, graph_renderer_mutation_command,
+        should_emit_graph_renderer_command, should_refresh_graph_renderer_projection,
         should_refresh_timeline_renderer_projection,
     };
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
-    use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId};
+    use eidetic_core::contracts::{
+        BibleGraphEdgeId, BibleGraphNodeId, DeleteBibleGraphNodeCommand,
+    };
     use eidetic_core::timeline::node::NodeId;
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
@@ -405,6 +502,35 @@ mod tests {
             }),
             None
         );
+    }
+
+    #[test]
+    fn graph_renderer_mutations_are_backend_owned_and_not_forwarded_to_svelte() {
+        let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+        let delete_command = BibleGraphRendererCommand::DeleteNode {
+            node_id: node_id.clone(),
+        };
+        let create_command = BibleGraphRendererCommand::CreateConnectedNode {
+            parent_id: node_id.clone(),
+        };
+
+        assert!(matches!(
+            graph_renderer_mutation_command(delete_command.clone()),
+            Some(GraphRendererMutationCommand::DeleteNode(command))
+                if command.payload == DeleteBibleGraphNodeCommand {
+                    node_id: node_id.clone()
+                }
+        ));
+        assert!(matches!(
+            graph_renderer_mutation_command(create_command.clone()),
+            Some(GraphRendererMutationCommand::CreateConnectedNode { parent_id })
+                if parent_id == node_id
+        ));
+        assert!(!should_emit_graph_renderer_command(&delete_command));
+        assert!(!should_emit_graph_renderer_command(&create_command));
+        assert!(should_emit_graph_renderer_command(
+            &BibleGraphRendererCommand::SelectNode { node_id }
+        ));
     }
 
     #[test]
