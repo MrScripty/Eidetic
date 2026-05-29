@@ -18,7 +18,8 @@ mod native_render;
 pub use native_render::{
     BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeInfluenceVisual,
     BibleGraphNativeLabelBillboard, BibleGraphNativeLabelOverlayCamera,
-    BibleGraphNativeNodeLabelVisual, BibleGraphNativeNodeTextEditorVisual,
+    BibleGraphNativeNodeLabelVisual, BibleGraphNativeNodeTextEditorCaret,
+    BibleGraphNativeNodeTextEditorText, BibleGraphNativeNodeTextEditorVisual,
     BibleGraphNativeNodeVisual, BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
     BibleGraphNativeRendererWindowBounds, BibleGraphNativeRendererWindowScene,
     BibleGraphNativeRendererWindowStatus, BibleGraphNativeVisualEntity,

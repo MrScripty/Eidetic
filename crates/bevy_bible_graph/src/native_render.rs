@@ -12,9 +12,9 @@ use bevy::input::keyboard::KeyboardInput;
 use bevy::input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel};
 use bevy::pbr::{Material, MaterialPlugin};
 use bevy::prelude::{
-    App, Assets, ButtonInput, Camera, Camera2d, Camera3d, ClearColor, ClearColorConfig, Color,
-    Commands, Component, Cuboid, DefaultPlugins, Entity, GlobalTransform, Handle,
-    IntoScheduleConfigs, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d, MessageReader,
+    App, Assets, BorderRadius, ButtonInput, Camera, Camera2d, Camera3d, ClearColor,
+    ClearColorConfig, Color, Commands, Component, Cuboid, DefaultPlugins, Entity, GlobalTransform,
+    Handle, IntoScheduleConfigs, Justify, KeyCode, Mesh, Mesh3d, MeshMaterial3d, MessageReader,
     MessageWriter, MouseButton, Plugin, PluginGroup, PointLight, Quat, Query, Ray3d, Res, ResMut,
     Resource, Sphere, Startup, SystemSet, TextColor, TextFont, TextLayout, Time, Torus, Transform,
     Update, Vec2, Vec3, Visibility, Window, With, Without, World,
@@ -45,6 +45,16 @@ const NATIVE_CAMERA_EDGE_PAN_SPEED: f32 = 520.0;
 const NATIVE_LABEL_SCREEN_OFFSET_PX: f32 = 18.0;
 const NATIVE_NODE_TITLE_DOUBLE_CLICK_SECONDS: f64 = 0.45;
 const NATIVE_NODE_TEXT_SAVE_DEBOUNCE_SECONDS: f64 = 0.8;
+const NATIVE_NODE_TEXT_EDITOR_TOP_PX: f32 = 64.0;
+const NATIVE_NODE_TEXT_EDITOR_RIGHT_PX: f32 = 16.0;
+const NATIVE_NODE_TEXT_EDITOR_WIDTH_PX: f32 = 340.0;
+const NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO: f32 = 0.72;
+const NATIVE_NODE_TEXT_EDITOR_PADDING_PX: f32 = 16.0;
+const NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX: f32 = 15.0;
+const NATIVE_NODE_TEXT_EDITOR_LINE_HEIGHT_PX: f32 = 20.0;
+const NATIVE_NODE_TEXT_EDITOR_CHARACTER_WIDTH_PX: f32 = 8.5;
+const NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX: f32 = 2.0;
+const NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX: f32 = 18.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
@@ -198,9 +208,20 @@ pub struct BibleGraphNativeNodeLabelVisual {
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeNodeTextEditorVisual {
     pub node_id: BibleGraphNodeId,
+    pub cursor_byte_index: usize,
     pub last_seen_text: String,
     pub last_sent_text: String,
     pub dirty_since_seconds: Option<f64>,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeNodeTextEditorText {
+    pub node_id: BibleGraphNodeId,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeNodeTextEditorCaret {
+    pub node_id: BibleGraphNodeId,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -471,6 +492,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
             (
                 emit_bible_graph_native_click_selection,
                 handle_bible_graph_native_title_edit_input,
+                handle_bible_graph_native_node_text_editor_click,
                 handle_bible_graph_native_node_text_editor_input,
                 scroll_bible_graph_native_node_text_editor,
                 emit_bible_graph_native_keyboard_commands,
@@ -497,6 +519,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
             (
                 project_bible_graph_native_labels,
                 apply_bible_graph_native_title_edit_overlay,
+                apply_bible_graph_native_node_text_editor_caret,
                 emit_bible_graph_native_node_text_editor_updates,
             )
                 .chain()
@@ -669,6 +692,7 @@ fn emit_bible_graph_native_click_selection(
     nodes: Query<&BibleGraphNativeNodeVisual>,
     edges: Query<&BibleGraphNativeEdgeVisual>,
     labels: Query<&BibleGraphNativeNodeLabelVisual>,
+    editors: Query<&ScrollPosition, With<BibleGraphNativeNodeTextEditorVisual>>,
     mut title_edit: ResMut<BibleGraphNativeNodeTitleEdit>,
     control: Option<Res<BibleGraphNativeWindowControl>>,
 ) {
@@ -687,6 +711,16 @@ fn emit_bible_graph_native_click_selection(
     let Some(cursor_position) = window.cursor_position() else {
         return;
     };
+    if editors.iter().any(|scroll_position| {
+        bible_graph_native_text_editor_local_position(
+            cursor_position,
+            Vec2::new(window.width(), window.height()),
+            scroll_position.0.y,
+        )
+        .is_some()
+    }) {
+        return;
+    }
     let Ok((camera, camera_transform)) = cameras.single() else {
         return;
     };
@@ -907,7 +941,7 @@ fn handle_bible_graph_native_title_edit_input(
 fn handle_bible_graph_native_node_text_editor_input(
     mut key_events: Option<MessageReader<KeyboardInput>>,
     title_edit: Option<Res<BibleGraphNativeNodeTitleEdit>>,
-    mut editors: Query<&mut Text, With<BibleGraphNativeNodeTextEditorVisual>>,
+    mut editors: Query<(&mut BibleGraphNativeNodeTextEditorVisual, &mut Text)>,
 ) {
     if bible_graph_native_title_edit_is_active(title_edit.as_deref()) {
         return;
@@ -915,7 +949,7 @@ fn handle_bible_graph_native_node_text_editor_input(
     let Some(mut key_events) = key_events.take() else {
         return;
     };
-    let Ok(mut text) = editors.single_mut() else {
+    let Ok((mut editor, mut text)) = editors.single_mut() else {
         return;
     };
 
@@ -925,19 +959,87 @@ fn handle_bible_graph_native_node_text_editor_input(
         }
 
         match event.key_code {
-            KeyCode::Enter | KeyCode::NumpadEnter => text.0.push('\n'),
+            KeyCode::Enter | KeyCode::NumpadEnter => {
+                let cursor_index = editor.cursor_byte_index;
+                text.0.insert(cursor_index, '\n');
+                editor.cursor_byte_index = cursor_index + '\n'.len_utf8();
+            }
             KeyCode::Backspace => {
-                text.0.pop();
+                editor.cursor_byte_index = bible_graph_native_text_editor_delete_backward(
+                    &mut text.0,
+                    editor.cursor_byte_index,
+                );
+            }
+            KeyCode::ArrowLeft => {
+                editor.cursor_byte_index =
+                    bible_graph_native_text_editor_move_left(&text.0, editor.cursor_byte_index);
+            }
+            KeyCode::ArrowRight => {
+                editor.cursor_byte_index =
+                    bible_graph_native_text_editor_move_right(&text.0, editor.cursor_byte_index);
+            }
+            KeyCode::ArrowUp => {
+                editor.cursor_byte_index = bible_graph_native_text_editor_move_vertical(
+                    &text.0,
+                    editor.cursor_byte_index,
+                    -1,
+                );
+            }
+            KeyCode::ArrowDown => {
+                editor.cursor_byte_index = bible_graph_native_text_editor_move_vertical(
+                    &text.0,
+                    editor.cursor_byte_index,
+                    1,
+                );
             }
             _ => {
                 if let Some(input_text) = event.text.as_deref() {
-                    text.0.extend(input_text.chars().filter(|character| {
+                    for character in input_text.chars().filter(|character| {
                         *character == '\n' || *character == '\t' || !character.is_control()
-                    }));
+                    }) {
+                        let cursor_index = editor.cursor_byte_index;
+                        text.0.insert(cursor_index, character);
+                        editor.cursor_byte_index = cursor_index + character.len_utf8();
+                    }
                 }
             }
         }
     }
+}
+
+fn handle_bible_graph_native_node_text_editor_click(
+    buttons: Option<Res<ButtonInput<MouseButton>>>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    mut editors: Query<(
+        &mut BibleGraphNativeNodeTextEditorVisual,
+        &Text,
+        &ScrollPosition,
+    )>,
+) {
+    let Some(buttons) = buttons else {
+        return;
+    };
+    if !buttons.just_pressed(MouseButton::Left) {
+        return;
+    }
+    let Ok(window) = windows.single() else {
+        return;
+    };
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
+    let Ok((mut editor, text, scroll_position)) = editors.single_mut() else {
+        return;
+    };
+    let Some(local_position) = bible_graph_native_text_editor_local_position(
+        cursor_position,
+        Vec2::new(window.width(), window.height()),
+        scroll_position.0.y,
+    ) else {
+        return;
+    };
+    editor.cursor_byte_index =
+        bible_graph_native_text_editor_index_from_position(&text.0, local_position);
 }
 
 fn scroll_bible_graph_native_node_text_editor(
@@ -1658,6 +1760,38 @@ fn emit_bible_graph_native_node_text_editor_updates(
     }
 }
 
+fn apply_bible_graph_native_node_text_editor_caret(
+    editors: Query<(
+        &BibleGraphNativeNodeTextEditorVisual,
+        &Text,
+        &ScrollPosition,
+    )>,
+    mut carets: Query<(
+        &BibleGraphNativeNodeTextEditorCaret,
+        &mut Node,
+        &mut Visibility,
+    )>,
+) {
+    let Ok((editor, text, scroll_position)) = editors.single() else {
+        return;
+    };
+    let caret_position = bible_graph_native_text_editor_caret_position(
+        &text.0,
+        editor.cursor_byte_index,
+        scroll_position.0.y,
+    );
+
+    for (caret, mut node, mut visibility) in &mut carets {
+        if caret.node_id != editor.node_id {
+            *visibility = Visibility::Hidden;
+            continue;
+        }
+        node.left = Val::Px(caret_position.x);
+        node.top = Val::Px(caret_position.y);
+        *visibility = Visibility::Visible;
+    }
+}
+
 pub(crate) fn native_node_label_overlay_position(
     viewport_position: Vec2,
     _viewport_size: Vec2,
@@ -1668,6 +1802,147 @@ pub(crate) fn native_node_label_overlay_position(
         viewport_position.x,
         viewport_position.y - radius - NATIVE_LABEL_SCREEN_OFFSET_PX,
     )
+}
+
+pub(crate) fn bible_graph_native_text_editor_caret_position(
+    text: &str,
+    cursor_byte_index: usize,
+    scroll_y: f32,
+) -> Vec2 {
+    let (line_index, column_index) =
+        bible_graph_native_text_editor_line_column(text, cursor_byte_index);
+    Vec2::new(
+        column_index as f32 * NATIVE_NODE_TEXT_EDITOR_CHARACTER_WIDTH_PX,
+        (line_index as f32 * NATIVE_NODE_TEXT_EDITOR_LINE_HEIGHT_PX) - scroll_y,
+    )
+}
+
+pub(crate) fn bible_graph_native_text_editor_index_from_position(
+    text: &str,
+    local_position: Vec2,
+) -> usize {
+    let target_line = (local_position.y / NATIVE_NODE_TEXT_EDITOR_LINE_HEIGHT_PX)
+        .floor()
+        .max(0.0) as usize;
+    let target_column = (local_position.x / NATIVE_NODE_TEXT_EDITOR_CHARACTER_WIDTH_PX)
+        .round()
+        .max(0.0) as usize;
+    bible_graph_native_text_editor_index_for_line_column(text, target_line, target_column)
+}
+
+fn bible_graph_native_text_editor_local_position(
+    cursor_position: Vec2,
+    viewport_size: Vec2,
+    scroll_y: f32,
+) -> Option<Vec2> {
+    let editor_height = viewport_size.y * NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO;
+    let editor_left =
+        viewport_size.x - NATIVE_NODE_TEXT_EDITOR_RIGHT_PX - NATIVE_NODE_TEXT_EDITOR_WIDTH_PX;
+    let editor_right = viewport_size.x - NATIVE_NODE_TEXT_EDITOR_RIGHT_PX;
+    let editor_top = NATIVE_NODE_TEXT_EDITOR_TOP_PX;
+    let editor_bottom = editor_top + editor_height;
+
+    if cursor_position.x < editor_left
+        || cursor_position.x > editor_right
+        || cursor_position.y < editor_top
+        || cursor_position.y > editor_bottom
+    {
+        return None;
+    }
+
+    Some(Vec2::new(
+        (cursor_position.x - editor_left - NATIVE_NODE_TEXT_EDITOR_PADDING_PX).max(0.0),
+        (cursor_position.y - editor_top - NATIVE_NODE_TEXT_EDITOR_PADDING_PX + scroll_y).max(0.0),
+    ))
+}
+
+fn bible_graph_native_text_editor_delete_backward(
+    text: &mut String,
+    cursor_byte_index: usize,
+) -> usize {
+    if cursor_byte_index == 0 {
+        return 0;
+    }
+    let delete_from = bible_graph_native_text_editor_move_left(text, cursor_byte_index);
+    text.replace_range(delete_from..cursor_byte_index, "");
+    delete_from
+}
+
+fn bible_graph_native_text_editor_move_left(text: &str, cursor_byte_index: usize) -> usize {
+    text[..cursor_byte_index.min(text.len())]
+        .char_indices()
+        .last()
+        .map(|(index, _)| index)
+        .unwrap_or(0)
+}
+
+fn bible_graph_native_text_editor_move_right(text: &str, cursor_byte_index: usize) -> usize {
+    let cursor_byte_index = cursor_byte_index.min(text.len());
+    if cursor_byte_index >= text.len() {
+        return text.len();
+    }
+    text[cursor_byte_index..]
+        .chars()
+        .next()
+        .map(|character| cursor_byte_index + character.len_utf8())
+        .unwrap_or(text.len())
+}
+
+fn bible_graph_native_text_editor_move_vertical(
+    text: &str,
+    cursor_byte_index: usize,
+    direction: isize,
+) -> usize {
+    let (line_index, column_index) =
+        bible_graph_native_text_editor_line_column(text, cursor_byte_index);
+    let target_line = if direction < 0 {
+        line_index.saturating_sub(1)
+    } else {
+        line_index.saturating_add(1)
+    };
+    bible_graph_native_text_editor_index_for_line_column(text, target_line, column_index)
+}
+
+fn bible_graph_native_text_editor_line_column(
+    text: &str,
+    cursor_byte_index: usize,
+) -> (usize, usize) {
+    let cursor_byte_index = cursor_byte_index.min(text.len());
+    let mut line_index = 0;
+    let mut column_index = 0;
+    for character in text[..cursor_byte_index].chars() {
+        if character == '\n' {
+            line_index += 1;
+            column_index = 0;
+        } else {
+            column_index += 1;
+        }
+    }
+    (line_index, column_index)
+}
+
+fn bible_graph_native_text_editor_index_for_line_column(
+    text: &str,
+    target_line: usize,
+    target_column: usize,
+) -> usize {
+    let mut line_index = 0;
+    let mut column_index = 0;
+    for (byte_index, character) in text.char_indices() {
+        if line_index == target_line && column_index >= target_column {
+            return byte_index;
+        }
+        if character == '\n' {
+            if line_index == target_line {
+                return byte_index;
+            }
+            line_index += 1;
+            column_index = 0;
+        } else {
+            column_index += 1;
+        }
+    }
+    text.len()
 }
 
 fn billboard_bible_graph_native_selection_outlines(
@@ -2013,8 +2288,8 @@ fn rebuild_bible_graph_native_node_text_editor(
     world: &mut World,
     projection: &BibleRenderGraphProjection,
 ) {
-    let existing_editors = existing_native_node_text_editors(world);
-    despawn_remaining_entities(world, existing_editors);
+    let existing_editors = existing_native_node_text_editor_entities(world);
+    despawn_entities(world, existing_editors);
 
     let Some(selected_node_id) = projection.selected_node_id.as_ref() else {
         return;
@@ -2029,36 +2304,65 @@ fn rebuild_bible_graph_native_node_text_editor(
     let Some(label_target) = world.get_resource::<BibleGraphNativeLabelOverlayTarget>() else {
         return;
     };
+    let label_camera_entity = label_target.camera_entity;
     let text = selected_node.text_content.clone().unwrap_or_default();
 
-    world.spawn((
-        BibleGraphNativeVisualEntity,
-        BibleGraphNativeNodeTextEditorVisual {
-            node_id: selected_node.node_id.clone(),
-            last_seen_text: text.clone(),
-            last_sent_text: text.clone(),
-            dirty_since_seconds: None,
-        },
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(64.0),
-            right: Val::Px(16.0),
-            width: Val::Px(340.0),
-            height: Val::Percent(72.0),
-            padding: UiRect::all(Val::Px(12.0)),
-            border: UiRect::all(Val::Px(1.0)),
-            overflow: Overflow::scroll_y(),
-            ..Default::default()
-        },
-        Text::new(text),
-        TextFont::from_font_size(15.0),
-        TextColor(Color::srgb(0.86, 0.9, 0.92)),
-        TextLayout::new_with_justify(Justify::Left),
-        BackgroundColor(Color::srgba(0.06, 0.075, 0.095, 0.92)),
-        BorderColor::all(Color::srgba(0.36, 0.48, 0.58, 0.85)),
-        ScrollPosition::default(),
-        UiTargetCamera(label_target.camera_entity),
-    ));
+    let editor_entity = world
+        .spawn((
+            BibleGraphNativeVisualEntity,
+            BibleGraphNativeNodeTextEditorVisual {
+                node_id: selected_node.node_id.clone(),
+                cursor_byte_index: text.len(),
+                last_seen_text: text.clone(),
+                last_sent_text: text.clone(),
+                dirty_since_seconds: None,
+            },
+            BibleGraphNativeNodeTextEditorText {
+                node_id: selected_node.node_id.clone(),
+            },
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(NATIVE_NODE_TEXT_EDITOR_TOP_PX),
+                right: Val::Px(NATIVE_NODE_TEXT_EDITOR_RIGHT_PX),
+                width: Val::Px(NATIVE_NODE_TEXT_EDITOR_WIDTH_PX),
+                height: Val::Percent(NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO * 100.0),
+                padding: UiRect::all(Val::Px(NATIVE_NODE_TEXT_EDITOR_PADDING_PX)),
+                border: UiRect::all(Val::Px(1.0)),
+                overflow: Overflow::scroll_y(),
+                border_radius: BorderRadius::all(Val::Px(6.0)),
+                ..Default::default()
+            },
+            Text::new(text),
+            TextFont::from_font_size(NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX),
+            TextColor(Color::srgb(0.86, 0.9, 0.92)),
+            TextLayout::new_with_justify(Justify::Left),
+            BackgroundColor(Color::srgba(0.06, 0.075, 0.095, 0.92)),
+            BorderColor::all(Color::srgba(0.36, 0.48, 0.58, 0.85)),
+            ScrollPosition::default(),
+            UiTargetCamera(label_camera_entity),
+        ))
+        .id();
+
+    let caret_entity = world
+        .spawn((
+            BibleGraphNativeVisualEntity,
+            BibleGraphNativeNodeTextEditorCaret {
+                node_id: selected_node.node_id.clone(),
+            },
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(0.0),
+                top: Val::Px(0.0),
+                width: Val::Px(NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX),
+                height: Val::Px(NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX),
+                ..Default::default()
+            },
+            BackgroundColor(Color::srgb(0.94, 0.78, 0.35)),
+            Visibility::Visible,
+            UiTargetCamera(label_camera_entity),
+        ))
+        .id();
+    world.entity_mut(editor_entity).add_child(caret_entity);
 }
 
 fn cached_native_node_mesh(world: &mut World, radius: f32) -> Handle<Mesh> {
@@ -2458,12 +2762,19 @@ fn existing_native_node_labels(world: &mut World) -> HashMap<BibleGraphNodeId, E
         .collect()
 }
 
-fn existing_native_node_text_editors(world: &mut World) -> HashMap<BibleGraphNodeId, Entity> {
-    world
+fn existing_native_node_text_editor_entities(world: &mut World) -> Vec<Entity> {
+    let mut entities = world
         .query::<(Entity, &BibleGraphNativeNodeTextEditorVisual)>()
         .iter(world)
-        .map(|(entity, editor)| (editor.node_id.clone(), entity))
-        .collect()
+        .map(|(entity, _)| entity)
+        .collect::<Vec<_>>();
+    entities.extend(
+        world
+            .query::<(Entity, &BibleGraphNativeNodeTextEditorCaret)>()
+            .iter(world)
+            .map(|(entity, _)| entity),
+    );
+    entities
 }
 
 fn existing_native_selection_outlines(world: &mut World) -> HashMap<BibleGraphNodeId, Entity> {
@@ -2492,6 +2803,12 @@ fn existing_native_influences(world: &mut World) -> HashMap<ContextInfluenceId, 
 
 fn despawn_remaining_entities<T>(world: &mut World, existing_entities: HashMap<T, Entity>) {
     for entity in existing_entities.into_values() {
+        let _ = world.despawn(entity);
+    }
+}
+
+fn despawn_entities(world: &mut World, existing_entities: Vec<Entity>) {
+    for entity in existing_entities {
         let _ = world.despawn(entity);
     }
 }

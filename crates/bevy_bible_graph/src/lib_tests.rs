@@ -1054,8 +1054,8 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
 #[cfg(feature = "native_render")]
 #[test]
 fn controlled_native_window_renders_selected_node_text_editor_from_projection() {
-    use bevy::prelude::Plugin;
-    use bevy::ui::prelude::Text;
+    use bevy::prelude::{Plugin, Val, With};
+    use bevy::ui::prelude::{Node, Text};
 
     let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
     let control = BibleGraphNativeWindowControlHandle::new();
@@ -1069,14 +1069,32 @@ fn controlled_native_window_renders_selected_node_text_editor_from_projection() 
     control.set_projection(projection);
     app.update();
 
-    let mut editors = app
+    let editor_entries: Vec<_> = app
         .world_mut()
-        .query::<(&BibleGraphNativeNodeTextEditorVisual, &Text)>();
-    let editor_entries: Vec<_> = editors.iter(app.world()).collect();
+        .query::<(&BibleGraphNativeNodeTextEditorVisual, &Text)>()
+        .iter(app.world())
+        .map(|(editor, text)| (editor.clone(), text.0.clone()))
+        .collect();
+    let caret_count = app
+        .world_mut()
+        .query::<&BibleGraphNativeNodeTextEditorCaret>()
+        .iter(app.world())
+        .count();
+    let mut panel_nodes = app
+        .world_mut()
+        .query_filtered::<&Node, With<BibleGraphNativeNodeTextEditorVisual>>();
+    let panel_node = panel_nodes.single(app.world()).unwrap();
 
     assert_eq!(editor_entries.len(), 1);
     assert_eq!(editor_entries[0].0.node_id, node_id);
-    assert_eq!(editor_entries[0].1.0, "Ada keeps a coded notebook.");
+    assert_eq!(
+        editor_entries[0].0.cursor_byte_index,
+        editor_entries[0].1.len()
+    );
+    assert_eq!(editor_entries[0].1, "Ada keeps a coded notebook.");
+    assert_eq!(caret_count, 1);
+    assert_eq!(panel_node.padding.left, Val::Px(16.0));
+    assert_eq!(panel_node.border_radius.top_left, Val::Px(6.0));
 }
 
 #[cfg(feature = "native_render")]
@@ -1129,6 +1147,43 @@ fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     assert_ne!(overlay_position, Vec2::ZERO);
     assert!(above_viewport_position.y < 0.0);
     assert!(below_viewport_position.y > 720.0);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn native_node_text_editor_cursor_helpers_preserve_lines_and_columns() {
+    use bevy::prelude::Vec2;
+
+    let text = "Ada\nkeeps notes";
+    let keeps_index = text.find("keeps").unwrap();
+    let notes_index = text.find("notes").unwrap();
+
+    assert_eq!(
+        crate::native_render::bible_graph_native_text_editor_index_from_position(
+            text,
+            Vec2::new(0.0, 20.0),
+        ),
+        keeps_index
+    );
+    assert_eq!(
+        crate::native_render::bible_graph_native_text_editor_index_from_position(
+            text,
+            Vec2::new(50.0, 20.0),
+        ),
+        notes_index
+    );
+    assert_eq!(
+        crate::native_render::bible_graph_native_text_editor_caret_position(text, notes_index, 0.0),
+        Vec2::new(51.0, 20.0)
+    );
+    assert_eq!(
+        crate::native_render::bible_graph_native_text_editor_caret_position(
+            text,
+            notes_index,
+            12.0,
+        ),
+        Vec2::new(51.0, 8.0)
+    );
 }
 
 #[cfg(feature = "native_render")]
