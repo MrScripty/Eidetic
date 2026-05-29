@@ -44,6 +44,8 @@ pub struct BibleRenderGraphNode {
     pub schema_key: BibleGraphSchemaKey,
     pub category: BibleGraphNodeCategory,
     pub label: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text_content: Option<String>,
     #[serde(default)]
     pub system_owned: bool,
     #[serde(default)]
@@ -118,6 +120,22 @@ impl BibleRenderGraphProjection {
         request: &BibleRenderGraphProjectionRequest,
         influences: Vec<ContextInfluenceRecord>,
     ) -> Self {
+        Self::from_graph_for_request_with_influences_and_texts(
+            nodes,
+            edges,
+            request,
+            influences,
+            BTreeMap::new(),
+        )
+    }
+
+    pub fn from_graph_for_request_with_influences_and_texts(
+        nodes: Vec<BibleGraphNode>,
+        edges: Vec<BibleGraphEdge>,
+        request: &BibleRenderGraphProjectionRequest,
+        influences: Vec<ContextInfluenceRecord>,
+        text_content_by_node_id: BTreeMap<BibleGraphNodeId, String>,
+    ) -> Self {
         let request = request.normalized();
         let sorted_nodes = sorted_nodes(nodes);
         let sorted_edges = sorted_graph_edges(edges);
@@ -150,6 +168,7 @@ impl BibleRenderGraphProjection {
             filtered_nodes
                 .into_iter()
                 .map(|node| {
+                    let node_id = node.id.clone();
                     let depth = depths.get(&node.id).copied().unwrap_or_default();
                     let position = layout_positions.get(&node.id).copied().unwrap_or(
                         BibleRenderGraphPosition {
@@ -169,6 +188,7 @@ impl BibleRenderGraphProjection {
                         schema_key: node.schema_key,
                         category,
                         label: node.name,
+                        text_content: text_content_by_node_id.get(&node_id).cloned(),
                         system_owned: node.system_owned,
                         sort_order: node.sort_order,
                         depth,

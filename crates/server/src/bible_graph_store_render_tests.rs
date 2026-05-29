@@ -3,6 +3,7 @@ use eidetic_core::contracts::{
     BibleRenderGraphProjectionRequest, ContextEvaluation, ContextEvaluationId,
     ContextEvaluationTaskKind, ContextInfluenceId, ContextInfluenceKind,
     ContextInfluenceProvenance, ContextInfluenceRecord, RecordContextEvaluationCommand,
+    SetBibleGraphNodeTextCommand,
 };
 use eidetic_core::timeline::node::{NodeId, StoryLevel, StoryNode};
 use eidetic_core::timeline::timing::TimeRange;
@@ -90,6 +91,38 @@ fn render_graph_projection_limits_default_query() {
     assert_eq!(node_ids.len(), 7);
     assert_eq!(node_ids[0], "node.test.00");
     assert_eq!(node_ids[6], "node.test.06");
+}
+
+#[test]
+fn render_graph_projection_includes_backend_node_text_content() {
+    let mut conn = memory_connection();
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    seed_node(&mut conn, node_id.as_str(), "Ada", 10);
+    crate::bible_graph_command::apply_set_bible_graph_node_text(
+        &mut conn,
+        &CommandEnvelope::new(SetBibleGraphNodeTextCommand {
+            node_id: node_id.clone(),
+            text: "Ada keeps a coded notebook.".to_string(),
+        }),
+        0,
+    )
+    .unwrap();
+
+    let projection = load_render_graph_projection_envelope(
+        &conn,
+        &BibleRenderGraphProjectionRequest {
+            selected_node_id: Some(node_id),
+            max_nodes: 10,
+            ..BibleRenderGraphProjectionRequest::default()
+        },
+    )
+    .unwrap();
+
+    assert_eq!(projection.payload.nodes.len(), 1);
+    assert_eq!(
+        projection.payload.nodes[0].text_content.as_deref(),
+        Some("Ada keeps a coded notebook.")
+    );
 }
 
 #[test]

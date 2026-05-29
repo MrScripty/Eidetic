@@ -1,6 +1,7 @@
 use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
 use eidetic_core::contracts::{
     CommandEnvelope, DeleteBibleGraphNodeCommand, SetBibleGraphNodeNameCommand,
+    SetBibleGraphNodeTextCommand,
 };
 use eidetic_server::command_service;
 use eidetic_server::projection_service;
@@ -236,6 +237,12 @@ async fn apply_graph_renderer_mutation_command(
                 .map_err(|error| error.to_string())?;
             Ok(None)
         }
+        Some(GraphRendererMutationCommand::SetNodeText(command)) => {
+            command_service::set_bible_graph_node_text(state, command)
+                .await
+                .map_err(|error| error.to_string())?;
+            Ok(None)
+        }
         None => Ok(None),
     }
 }
@@ -257,6 +264,7 @@ fn should_emit_graph_renderer_command(command: &BibleGraphRendererCommand) -> bo
         BibleGraphRendererCommand::DeleteNode { .. }
             | BibleGraphRendererCommand::CreateConnectedNode { .. }
             | BibleGraphRendererCommand::SetNodeName { .. }
+            | BibleGraphRendererCommand::SetNodeText { .. }
     )
 }
 
@@ -267,6 +275,7 @@ enum GraphRendererMutationCommand {
         parent_id: eidetic_core::contracts::BibleGraphNodeId,
     },
     SetNodeName(CommandEnvelope<SetBibleGraphNodeNameCommand>),
+    SetNodeText(CommandEnvelope<SetBibleGraphNodeTextCommand>),
 }
 
 fn graph_renderer_mutation_command(
@@ -284,6 +293,11 @@ fn graph_renderer_mutation_command(
         BibleGraphRendererCommand::SetNodeName { node_id, name } => {
             Some(GraphRendererMutationCommand::SetNodeName(
                 CommandEnvelope::new(SetBibleGraphNodeNameCommand { node_id, name }),
+            ))
+        }
+        BibleGraphRendererCommand::SetNodeText { node_id, text } => {
+            Some(GraphRendererMutationCommand::SetNodeText(
+                CommandEnvelope::new(SetBibleGraphNodeTextCommand { node_id, text }),
             ))
         }
         BibleGraphRendererCommand::SelectNode { .. }
@@ -309,7 +323,8 @@ fn graph_renderer_command_selected_node_update(
         | BibleGraphRendererCommand::NavigateToNode { .. }
         | BibleGraphRendererCommand::DeleteNode { .. }
         | BibleGraphRendererCommand::CreateConnectedNode { .. }
-        | BibleGraphRendererCommand::SetNodeName { .. } => None,
+        | BibleGraphRendererCommand::SetNodeName { .. }
+        | BibleGraphRendererCommand::SetNodeText { .. } => None,
     }
 }
 
@@ -387,7 +402,7 @@ mod tests {
     use eidetic_bevy_bible_graph::BibleGraphRendererCommand;
     use eidetic_core::contracts::{
         BibleGraphEdgeId, BibleGraphNodeId, DeleteBibleGraphNodeCommand,
-        SetBibleGraphNodeNameCommand,
+        SetBibleGraphNodeNameCommand, SetBibleGraphNodeTextCommand,
     };
     use eidetic_core::timeline::node::NodeId;
     use eidetic_server::state::ServerEvent;
@@ -534,6 +549,10 @@ mod tests {
             node_id: node_id.clone(),
             name: "Ada Revised".to_string(),
         };
+        let text_command = BibleGraphRendererCommand::SetNodeText {
+            node_id: node_id.clone(),
+            text: "Ada keeps a coded notebook.".to_string(),
+        };
 
         assert!(matches!(
             graph_renderer_mutation_command(delete_command.clone()),
@@ -555,9 +574,18 @@ mod tests {
                     name: "Ada Revised".to_string()
                 })
         ));
+        assert!(matches!(
+            graph_renderer_mutation_command(text_command.clone()),
+            Some(GraphRendererMutationCommand::SetNodeText(command))
+                if command.payload == (SetBibleGraphNodeTextCommand {
+                    node_id: node_id.clone(),
+                    text: "Ada keeps a coded notebook.".to_string()
+                })
+        ));
         assert!(!should_emit_graph_renderer_command(&delete_command));
         assert!(!should_emit_graph_renderer_command(&create_command));
         assert!(!should_emit_graph_renderer_command(&rename_command));
+        assert!(!should_emit_graph_renderer_command(&text_command));
         assert!(should_emit_graph_renderer_command(
             &BibleGraphRendererCommand::SelectNode { node_id }
         ));
@@ -585,8 +613,17 @@ mod tests {
         let rename_value = serde_json::to_value(DesktopServerEvent {
             event: DesktopServerEventPayload::GraphRendererCommand(
                 BibleGraphRendererCommand::SetNodeName {
-                    node_id,
+                    node_id: node_id.clone(),
                     name: "Ada Revised".to_string(),
+                },
+            ),
+        })
+        .unwrap();
+        let text_value = serde_json::to_value(DesktopServerEvent {
+            event: DesktopServerEventPayload::GraphRendererCommand(
+                BibleGraphRendererCommand::SetNodeText {
+                    node_id,
+                    text: "Ada keeps a coded notebook.".to_string(),
                 },
             ),
         })
@@ -617,6 +654,16 @@ mod tests {
                     "type": "set_node_name",
                     "node_id": "node.character.ada",
                     "name": "Ada Revised"
+                }
+            })
+        );
+        assert_eq!(
+            text_value,
+            json!({
+                "event": {
+                    "type": "set_node_text",
+                    "node_id": "node.character.ada",
+                    "text": "Ada keeps a coded notebook."
                 }
             })
         );

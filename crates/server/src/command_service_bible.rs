@@ -7,7 +7,8 @@ use eidetic_core::contracts::{
     CommandId, CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand,
     DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldValue, ProjectionEnvelope,
     SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphNodeNameCommand,
-    SetBibleGraphSnapshotFieldCommand, builtin_bible_graph_schema_list_projection,
+    SetBibleGraphNodeTextCommand, SetBibleGraphSnapshotFieldCommand,
+    builtin_bible_graph_schema_list_projection,
 };
 use serde::{Deserialize, Serialize};
 
@@ -234,6 +235,24 @@ pub async fn set_bible_graph_node_name(
             .map_err(|error| {
                 BackendError::internal(format!(
                     "bible graph node name command task failed: {error}"
+                ))
+            })??;
+
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    Ok(response)
+}
+
+pub async fn set_bible_graph_node_text(
+    state: &AppState,
+    command: CommandEnvelope<SetBibleGraphNodeTextCommand>,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let response =
+        tokio::task::spawn_blocking(move || set_bible_graph_node_text_at_path(path, command))
+            .await
+            .map_err(|error| {
+                BackendError::internal(format!(
+                    "bible graph node text command task failed: {error}"
                 ))
             })??;
 
@@ -510,6 +529,21 @@ fn set_bible_graph_node_name_at_path(
     })
 }
 
+fn set_bible_graph_node_text_at_path(
+    path: PathBuf,
+    command: CommandEnvelope<SetBibleGraphNodeTextCommand>,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let mut conn = crate::sqlite::open_write_connection(&path)
+        .map_err(|e| BackendError::internal(e.to_string()))?;
+    let (outcome, projection) =
+        bible_graph_command::apply_set_bible_graph_node_text(&mut conn, &command, 0)
+            .map_err(map_bible_graph_error)?;
+    Ok(BibleGraphNodeCommandResponse {
+        outcome,
+        projection,
+    })
+}
+
 fn set_bible_graph_edge_at_path(
     path: PathBuf,
     command: CommandEnvelope<SetBibleGraphEdgeCommand>,
@@ -569,8 +603,9 @@ fn map_bible_graph_error(error: BibleGraphCommandError) -> BackendError {
 mod tests {
     use super::create_connected_bible_node_command;
     use eidetic_core::contracts::{
-        CanonicalBibleRoot, CommandEnvelope, EnsureCanonicalBibleRootsCommand,
-        SetBibleGraphNodeNameCommand,
+        BIBLE_GRAPH_NODE_TEXT_FIELD_KEY, BIBLE_GRAPH_NODE_TEXT_PART_KEY, CanonicalBibleRoot,
+        CommandEnvelope, EnsureCanonicalBibleRootsCommand, FieldValue,
+        SetBibleGraphNodeNameCommand, SetBibleGraphNodeTextCommand,
     };
     use rusqlite::Connection;
 
@@ -680,5 +715,47 @@ mod tests {
         .unwrap();
 
         assert_eq!(projection.payload.node.name, "Ada");
+    }
+
+    #[test]
+    fn set_node_text_command_updates_backend_owned_node_content() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        crate::bible_graph_command::apply_ensure_canonical_bible_roots(
+            &mut conn,
+            &CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+            0,
+        )
+        .unwrap();
+        let character =
+            create_connected_bible_node_command(&conn, CanonicalBibleRoot::Characters.node_id())
+                .unwrap();
+        crate::bible_graph_command::apply_create_bible_graph_node(&mut conn, &character, 0)
+            .unwrap();
+
+        let (_, projection) = crate::bible_graph_command::apply_set_bible_graph_node_text(
+            &mut conn,
+            &CommandEnvelope::new(SetBibleGraphNodeTextCommand {
+                node_id: character.payload.node_id,
+                text: "Ada keeps a coded notebook.".to_string(),
+            }),
+            0,
+        )
+        .unwrap();
+
+        let content_part = projection
+            .payload
+            .parts
+            .iter()
+            .find(|part| part.part.part_key.as_str() == BIBLE_GRAPH_NODE_TEXT_PART_KEY)
+            .expect("node text content part should be projected");
+        let text_field = content_part
+            .fields
+            .iter()
+            .find(|field| field.field_key.as_str() == BIBLE_GRAPH_NODE_TEXT_FIELD_KEY)
+            .expect("node text field should be projected");
+        assert_eq!(
+            text_field.value,
+            Some(FieldValue::Text("Ada keeps a coded notebook.".to_string()))
+        );
     }
 }

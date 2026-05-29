@@ -92,6 +92,7 @@ export type GraphRendererCommand =
   | { type: 'delete_node'; node_id: BibleGraphNodeId }
   | { type: 'create_connected_node'; parent_id: BibleGraphNodeId }
   | { type: 'set_node_name'; node_id: BibleGraphNodeId; name: string }
+  | { type: 'set_node_text'; node_id: BibleGraphNodeId; text: string }
   | { type: 'clear_selection' };
 
 export type GraphRendererCameraCommand =

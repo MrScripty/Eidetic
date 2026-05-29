@@ -163,6 +163,7 @@ fn render_graph_projection_round_trips() {
             schema_key: BibleGraphSchemaKey::new("character").unwrap(),
             category: BibleGraphNodeCategory::Character,
             label: "Ada".to_string(),
+            text_content: None,
             system_owned: false,
             sort_order: 0,
             depth: 0,

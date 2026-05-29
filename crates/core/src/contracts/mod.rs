@@ -40,15 +40,18 @@ pub use ai_context::{
     AiBibleContextSnapshot,
 };
 pub use bible_graph::{
-    BibleGraphCategoryVisualStyle, BibleGraphContractError, BibleGraphEdge, BibleGraphEdgeId,
-    BibleGraphEdgeKind, BibleGraphField, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNode,
-    BibleGraphNodeCategory, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPart,
-    BibleGraphPartId, BibleGraphPartKey, BibleGraphPartProjection, BibleGraphSchemaKey,
-    BibleGraphSnapshot, BibleGraphSnapshotField, BibleGraphSnapshotFieldId, BibleGraphSnapshotId,
-    BibleGraphSnapshotProjection, BibleNodeDetailProjection, CanonicalBibleRoot,
-    CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand,
-    EnsureCanonicalBibleRootsCommand, SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand,
-    SetBibleGraphNodeNameCommand, SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
+    BIBLE_GRAPH_NODE_TEXT_FIELD_KEY, BIBLE_GRAPH_NODE_TEXT_FIELD_SORT_ORDER,
+    BIBLE_GRAPH_NODE_TEXT_PART_KEY, BIBLE_GRAPH_NODE_TEXT_PART_NAME,
+    BIBLE_GRAPH_NODE_TEXT_PART_SORT_ORDER, BibleGraphCategoryVisualStyle, BibleGraphContractError,
+    BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphField, BibleGraphFieldId,
+    BibleGraphFieldKey, BibleGraphNode, BibleGraphNodeCategory, BibleGraphNodeId,
+    BibleGraphNodeListProjection, BibleGraphPart, BibleGraphPartId, BibleGraphPartKey,
+    BibleGraphPartProjection, BibleGraphSchemaKey, BibleGraphSnapshot, BibleGraphSnapshotField,
+    BibleGraphSnapshotFieldId, BibleGraphSnapshotId, BibleGraphSnapshotProjection,
+    BibleNodeDetailProjection, CanonicalBibleRoot, CreateBibleGraphNodeCommand,
+    DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
+    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphNodeNameCommand,
+    SetBibleGraphNodeTextCommand, SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
 };
 pub use bible_graph_defaults::{
     BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphCategoryProjection, BibleGraphFieldDefault,

@@ -1,9 +1,12 @@
+use std::collections::BTreeMap;
+
 use eidetic_core::contracts::{
-    BibleGraphNode, BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPartProjection,
-    BibleGraphSchemaKey, BibleNodeDetailProjection, BibleRenderGraphProjection,
-    BibleRenderGraphProjectionRequest, ChangeEventId, ObjectKind, ProjectionEnvelope,
-    ProjectionVersion, SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand,
-    canonical_bible_root_nodes, default_part_projections_for_node,
+    BIBLE_GRAPH_NODE_TEXT_FIELD_KEY, BIBLE_GRAPH_NODE_TEXT_PART_KEY, BibleGraphNode,
+    BibleGraphNodeId, BibleGraphNodeListProjection, BibleGraphPartProjection, BibleGraphSchemaKey,
+    BibleNodeDetailProjection, BibleRenderGraphProjection, BibleRenderGraphProjectionRequest,
+    ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion, SetBibleGraphFieldCommand,
+    SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
+    default_part_projections_for_node,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
@@ -313,17 +316,66 @@ pub(crate) fn load_node_list_projection_envelope(
     }
 }
 
+fn load_node_text_content_by_ids(
+    conn: &Connection,
+    node_ids: &[BibleGraphNodeId],
+) -> Result<BTreeMap<BibleGraphNodeId, String>, HistoryStoreError> {
+    let mut content = BTreeMap::new();
+    if node_ids.is_empty() {
+        return Ok(content);
+    }
+
+    let mut statement = conn.prepare(
+        "SELECT parts.node_id, fields.text_value
+         FROM bible_graph_parts parts
+         INNER JOIN bible_graph_fields fields ON fields.part_id = parts.id
+         WHERE parts.deleted_event_id IS NULL
+           AND fields.deleted_event_id IS NULL
+           AND parts.part_key = ?1
+           AND fields.field_key = ?2
+           AND fields.value_type = 'text'
+           AND parts.node_id = ?3",
+    )?;
+    for node_id in node_ids {
+        let text = statement
+            .query_row(
+                params![
+                    BIBLE_GRAPH_NODE_TEXT_PART_KEY,
+                    BIBLE_GRAPH_NODE_TEXT_FIELD_KEY,
+                    node_id.as_str()
+                ],
+                |row| row.get::<_, Option<String>>(1),
+            )
+            .optional()?
+            .flatten();
+        if let Some(text) = text {
+            content.insert(node_id.clone(), text);
+        }
+    }
+
+    Ok(content)
+}
+
 pub(crate) fn load_render_graph_projection(
     conn: &Connection,
     request: &BibleRenderGraphProjectionRequest,
 ) -> Result<BibleRenderGraphProjection, HistoryStoreError> {
     let graph = crate::bible_render_graph_query::load_bounded_render_graph(conn, request)?;
+    let text_content_by_node_id = load_node_text_content_by_ids(
+        conn,
+        &graph
+            .nodes
+            .iter()
+            .map(|node| node.id.clone())
+            .collect::<Vec<_>>(),
+    )?;
     Ok(
-        BibleRenderGraphProjection::from_graph_for_request_with_influences(
+        BibleRenderGraphProjection::from_graph_for_request_with_influences_and_texts(
             graph.nodes,
             graph.edges,
             request,
             graph.influences,
+            text_content_by_node_id,
         ),
     )
 }

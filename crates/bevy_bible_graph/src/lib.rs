@@ -18,10 +18,11 @@ mod native_render;
 pub use native_render::{
     BibleGraphNativeCamera, BibleGraphNativeEdgeVisual, BibleGraphNativeInfluenceVisual,
     BibleGraphNativeLabelBillboard, BibleGraphNativeLabelOverlayCamera,
-    BibleGraphNativeNodeLabelVisual, BibleGraphNativeNodeVisual, BibleGraphNativeRenderConfig,
-    BibleGraphNativeRenderPlugin, BibleGraphNativeRendererWindowBounds,
-    BibleGraphNativeRendererWindowScene, BibleGraphNativeRendererWindowStatus,
-    BibleGraphNativeVisualEntity, BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
+    BibleGraphNativeNodeLabelVisual, BibleGraphNativeNodeTextEditorVisual,
+    BibleGraphNativeNodeVisual, BibleGraphNativeRenderConfig, BibleGraphNativeRenderPlugin,
+    BibleGraphNativeRendererWindowBounds, BibleGraphNativeRendererWindowScene,
+    BibleGraphNativeRendererWindowStatus, BibleGraphNativeVisualEntity,
+    BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
     configure_controlled_minimal_bible_graph_native_window_app,
     configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_clear_selection,
@@ -79,6 +80,10 @@ pub enum BibleGraphRendererCommand {
     SetNodeName {
         node_id: BibleGraphNodeId,
         name: String,
+    },
+    SetNodeText {
+        node_id: BibleGraphNodeId,
+        text: String,
     },
     ClearSelection,
 }

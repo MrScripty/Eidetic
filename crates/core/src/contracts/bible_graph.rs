@@ -48,6 +48,12 @@ non_empty_string_id!(BibleGraphSchemaKey);
 non_empty_string_id!(BibleGraphPartKey);
 non_empty_string_id!(BibleGraphFieldKey);
 
+pub const BIBLE_GRAPH_NODE_TEXT_PART_KEY: &str = "content";
+pub const BIBLE_GRAPH_NODE_TEXT_PART_NAME: &str = "Content";
+pub const BIBLE_GRAPH_NODE_TEXT_FIELD_KEY: &str = "text";
+pub const BIBLE_GRAPH_NODE_TEXT_PART_SORT_ORDER: u32 = 1_000;
+pub const BIBLE_GRAPH_NODE_TEXT_FIELD_SORT_ORDER: u32 = 10;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CanonicalBibleRoot {
@@ -248,6 +254,12 @@ pub struct SetBibleGraphNodeNameCommand {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SetBibleGraphNodeTextCommand {
+    pub node_id: BibleGraphNodeId,
+    pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnsureCanonicalBibleRootsCommand {}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -325,6 +337,29 @@ impl SetBibleGraphEdgeCommand {
             label: self.label,
             directed: self.directed,
             sort_order: self.sort_order,
+        }
+    }
+}
+
+impl SetBibleGraphNodeTextCommand {
+    pub fn into_field_command(self) -> SetBibleGraphFieldCommand {
+        SetBibleGraphFieldCommand {
+            part_id: BibleGraphPartId::new(format!("part.{}.content", self.node_id.as_str()))
+                .expect("node text part identifiers are non-empty"),
+            field_id: BibleGraphFieldId::new(format!(
+                "field.{}.content.text",
+                self.node_id.as_str()
+            ))
+            .expect("node text field identifiers are non-empty"),
+            node_id: self.node_id,
+            part_key: BibleGraphPartKey::new(BIBLE_GRAPH_NODE_TEXT_PART_KEY)
+                .expect("node text part key is non-empty"),
+            part_name: BIBLE_GRAPH_NODE_TEXT_PART_NAME.to_string(),
+            part_sort_order: BIBLE_GRAPH_NODE_TEXT_PART_SORT_ORDER,
+            field_key: BibleGraphFieldKey::new(BIBLE_GRAPH_NODE_TEXT_FIELD_KEY)
+                .expect("node text field key is non-empty"),
+            value: Some(FieldValue::Text(self.text)),
+            field_sort_order: BIBLE_GRAPH_NODE_TEXT_FIELD_SORT_ORDER,
         }
     }
 }

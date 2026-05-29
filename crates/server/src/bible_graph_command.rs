@@ -4,7 +4,7 @@ use eidetic_core::contracts::{
     DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
     FieldDelta, FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation,
     SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphNodeNameCommand,
-    SetBibleGraphSnapshotFieldCommand, builtin_bible_graph_schema,
+    SetBibleGraphNodeTextCommand, SetBibleGraphSnapshotFieldCommand, builtin_bible_graph_schema,
 };
 use rusqlite::Connection;
 
@@ -169,6 +169,75 @@ pub(crate) fn apply_set_bible_graph_node_name(
             .ok_or_else(|| {
                 BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(format!(
                     "bible graph node projection missing after name update: {}",
+                    command.payload.node_id.as_str()
+                )))
+            })?;
+
+    Ok((outcome, projection))
+}
+
+pub(crate) fn apply_set_bible_graph_node_text(
+    conn: &mut Connection,
+    command: &CommandEnvelope<SetBibleGraphNodeTextCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<BibleNodeDetailProjection>,
+    ),
+    BibleGraphCommandError,
+> {
+    let field_command = CommandEnvelope {
+        id: command.id,
+        payload: command.payload.clone().into_field_command(),
+    };
+    validate_field_command(&field_command.payload)?;
+    bible_graph_store::create_schema(conn)?;
+
+    let before = bible_graph_store::load_node_detail_projection(conn, &command.payload.node_id)?
+        .ok_or_else(|| {
+            BibleGraphCommandError::InvalidCommand(format!(
+                "bible graph node does not exist: {}",
+                command.payload.node_id.as_str()
+            ))
+        })?;
+    let old_value = before
+        .parts
+        .iter()
+        .flat_map(|part| part.fields.iter())
+        .find(|field| field.id == field_command.payload.field_id)
+        .and_then(|field| field.value.clone());
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("set bible graph node text {}", before.node.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::BiblePartField,
+        field_command.payload.field_id.as_str(),
+        event.id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "value",
+        old_value,
+        field_command.payload.value.clone(),
+    ));
+
+    let outcome = history_store::record_change_with(
+        conn,
+        command,
+        "bible_graph.set_node_text",
+        &event,
+        &[revision],
+        |tx| bible_graph_store::set_field_in_transaction(tx, &field_command.payload, event.id),
+    )?;
+    let projection =
+        bible_graph_store::load_node_detail_projection_envelope(conn, &command.payload.node_id)?
+            .ok_or_else(|| {
+                BibleGraphCommandError::Store(HistoryStoreError::InvalidValue(format!(
+                    "bible graph node projection missing after text update: {}",
                     command.payload.node_id.as_str()
                 )))
             })?;
