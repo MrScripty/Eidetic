@@ -1099,6 +1099,42 @@ fn controlled_native_window_renders_selected_node_text_editor_from_projection() 
 
 #[cfg(feature = "native_render")]
 #[test]
+fn controlled_native_window_applies_text_editor_style_settings() {
+    use bevy::prelude::{Color, Plugin, Val, With};
+    use bevy::ui::prelude::{BorderColor, Node};
+
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut app = bevy::prelude::App::new();
+    let mut projection = projection_with_node(node_id);
+    projection.selected_node_id = projection.nodes.first().map(|node| node.node_id.clone());
+
+    BibleGraphNativeRenderPlugin.build(&mut app);
+    app.insert_resource(BibleGraphNativeWindowControl::from(&control));
+    control.set_projection(projection);
+    app.update();
+
+    control.set_text_editor_settings(BibleGraphNativeTextEditorSettings {
+        padding_px: 28.0,
+        corner_radius_px: 11.0,
+        outline_width_px: 3.0,
+        outline_brightness: 0.82,
+    });
+    app.update();
+
+    let mut panel_nodes = app
+        .world_mut()
+        .query_filtered::<(&Node, &BorderColor), With<BibleGraphNativeNodeTextEditorVisual>>();
+    let (panel_node, border_color) = panel_nodes.single(app.world()).unwrap();
+
+    assert_eq!(panel_node.padding.left, Val::Px(28.0));
+    assert_eq!(panel_node.border.left, Val::Px(3.0));
+    assert_eq!(panel_node.border_radius.top_left, Val::Px(11.0));
+    assert_eq!(border_color.left, Color::srgba(0.82, 0.82, 0.82, 0.95));
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn controlled_native_window_renders_node_labels_on_overlay_layer() {
     use bevy::prelude::{Plugin, Vec2, With};
     use bevy::ui::prelude::{IsDefaultUiCamera, Node, PositionType, Text, UiTargetCamera};

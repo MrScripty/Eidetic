@@ -1,4 +1,6 @@
-use eidetic_bevy_bible_graph::{BibleGraphCameraCommand, BibleGraphVisualSnapshot};
+use eidetic_bevy_bible_graph::{
+    BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings, BibleGraphVisualSnapshot,
+};
 use eidetic_core::contracts::BibleRenderGraphProjectionRequest;
 use serde::Deserialize;
 use tauri::Manager;
@@ -105,6 +107,21 @@ pub fn graph_renderer_camera_command(
         })
 }
 
+#[tauri::command]
+pub fn graph_renderer_text_editor_settings(
+    app: tauri::AppHandle,
+    settings: BibleGraphNativeTextEditorSettings,
+) -> Result<BibleGraphHostStatus, CommandError> {
+    validate_text_editor_settings(settings)?;
+    graph_renderer_owner(&app)?
+        .apply_text_editor_settings(settings)
+        .map_err(|error| {
+            CommandError::internal(format!(
+                "graph renderer text editor settings failed: {error:?}"
+            ))
+        })
+}
+
 fn apply_renderer_window_size_hint(
     app: &tauri::AppHandle,
     size_hint: Option<RendererWindowSizeHint>,
@@ -137,14 +154,42 @@ fn validate_renderer_window_size_hint(
     Ok(())
 }
 
+fn validate_text_editor_settings(
+    settings: BibleGraphNativeTextEditorSettings,
+) -> Result<(), CommandError> {
+    if !(0.0..=48.0).contains(&settings.padding_px) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor padding must be between 0 and 48 pixels",
+        ));
+    }
+    if !(0.0..=16.0).contains(&settings.corner_radius_px) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor corner radius must be between 0 and 16 pixels",
+        ));
+    }
+    if !(0.0..=8.0).contains(&settings.outline_width_px) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor outline width must be between 0 and 8 pixels",
+        ));
+    }
+    if !(0.0..=1.0).contains(&settings.outline_brightness) {
+        return Err(CommandError::bad_request(
+            "graph renderer text editor outline brightness must be between 0 and 1",
+        ));
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
-    use eidetic_bevy_bible_graph::BibleGraphCameraCommand;
+    use eidetic_bevy_bible_graph::{BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings};
     use eidetic_core::contracts::BibleGraphNodeId;
     use serde_json::json;
 
     use super::{
         OpenGraphRendererRequest, RendererWindowSizeHint, validate_renderer_window_size_hint,
+        validate_text_editor_settings,
     };
 
     #[test]
@@ -192,6 +237,23 @@ mod tests {
             BibleGraphCameraCommand::FrameNode {
                 node_id: BibleGraphNodeId::new("node.character.ada").unwrap()
             }
+        );
+    }
+
+    #[test]
+    fn text_editor_settings_reject_out_of_range_values() {
+        let error = validate_text_editor_settings(BibleGraphNativeTextEditorSettings {
+            padding_px: 80.0,
+            ..BibleGraphNativeTextEditorSettings::default()
+        })
+        .unwrap_err();
+
+        assert_eq!(
+            serde_json::to_value(error).unwrap(),
+            json!({
+                "kind": "bad_request",
+                "message": "graph renderer text editor padding must be between 0 and 48 pixels"
+            })
         );
     }
 }

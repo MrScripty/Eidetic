@@ -15,6 +15,13 @@ export interface GraphRendererWindowSizeHint {
   height_px: number;
 }
 
+export interface GraphRendererTextEditorSettings {
+  padding_px: number;
+  corner_radius_px: number;
+  outline_width_px: number;
+  outline_brightness: number;
+}
+
 export interface GraphRendererStatus {
   renderer_window_kind: GraphRendererWindowKind;
   running: boolean;

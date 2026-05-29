@@ -3,6 +3,7 @@ import type { BibleRenderGraphProjectionRequest } from './bibleGraphTypes.js';
 import type {
   GraphRendererCameraCommand,
   GraphRendererStatus,
+  GraphRendererTextEditorSettings,
   GraphRendererVisualSnapshot,
   OpenGraphRendererRequest,
 } from './graphRendererTypes.js';
@@ -38,6 +39,14 @@ export function applyGraphRendererCameraCommand(
 ): Promise<GraphRendererStatus> {
   return invokeDesktop<GraphRendererStatus>('graph_renderer_camera_command', {
     command,
+  });
+}
+
+export function applyGraphRendererTextEditorSettings(
+  settings: GraphRendererTextEditorSettings,
+): Promise<GraphRendererStatus> {
+  return invokeDesktop<GraphRendererStatus>('graph_renderer_text_editor_settings', {
+    settings,
   });
 }
 

@@ -4,7 +4,8 @@ use std::time::Duration;
 
 use eidetic_bevy_bible_graph::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
-    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand, BibleGraphVisualSnapshot,
+    BibleGraphNativeTextEditorSettings, BibleGraphNativeWindowRunnerConfig,
+    BibleGraphRendererCommand, BibleGraphVisualSnapshot,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -54,6 +55,10 @@ enum BibleGraphHostRequest {
     },
     ApplyCameraCommand {
         command: BibleGraphCameraCommand,
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
+    ApplyTextEditorSettings {
+        settings: BibleGraphNativeTextEditorSettings,
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
     },
     DrainCommands {
@@ -218,6 +223,18 @@ impl DesktopBibleGraphRendererOwner {
         receive_reply(receiver)
     }
 
+    pub fn apply_text_editor_settings(
+        &self,
+        settings: BibleGraphNativeTextEditorSettings,
+    ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
+        let (reply, receiver) = mpsc::channel();
+        self.enqueue(BibleGraphHostRequest::ApplyTextEditorSettings { settings, reply })?;
+        receive_reply(receiver)
+    }
+
     pub fn drain_commands(&self) -> BibleGraphHostResult<Vec<BibleGraphRendererCommand>> {
         if self.unavailable_status().is_some() {
             return Ok(Vec::new());
@@ -359,6 +376,9 @@ fn run_renderer_owner(
             BibleGraphHostRequest::ApplyCameraCommand { command, reply } => {
                 let _ = reply.send(host.apply_camera_command(command));
             }
+            BibleGraphHostRequest::ApplyTextEditorSettings { settings, reply } => {
+                let _ = reply.send(host.apply_text_editor_settings(settings));
+            }
             BibleGraphHostRequest::DrainCommands { reply } => {
                 let _ = reply.send(Ok(host.drain_commands()));
             }
@@ -396,6 +416,9 @@ fn run_failed_renderer_owner(
                 let _ = reply.send(Err(error.clone()));
             }
             BibleGraphHostRequest::ApplyCameraCommand { reply, .. } => {
+                let _ = reply.send(Ok(status.clone()));
+            }
+            BibleGraphHostRequest::ApplyTextEditorSettings { reply, .. } => {
                 let _ = reply.send(Ok(status.clone()));
             }
             BibleGraphHostRequest::DrainCommands { reply } => {

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::num::NonZeroU64;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -33,6 +33,7 @@ use bevy::winit::WinitPlugin;
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
@@ -49,7 +50,6 @@ const NATIVE_NODE_TEXT_EDITOR_TOP_PX: f32 = 64.0;
 const NATIVE_NODE_TEXT_EDITOR_RIGHT_PX: f32 = 16.0;
 const NATIVE_NODE_TEXT_EDITOR_WIDTH_PX: f32 = 340.0;
 const NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO: f32 = 0.72;
-const NATIVE_NODE_TEXT_EDITOR_PADDING_PX: f32 = 16.0;
 const NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX: f32 = 15.0;
 const NATIVE_NODE_TEXT_EDITOR_LINE_HEIGHT_PX: f32 = 20.0;
 const NATIVE_NODE_TEXT_EDITOR_CHARACTER_WIDTH_PX: f32 = 8.5;
@@ -94,6 +94,8 @@ pub struct BibleGraphNativeWindowControlHandle {
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
     commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
     camera_commands: Arc<Mutex<Vec<BibleGraphCameraCommand>>>,
+    text_editor_settings: Arc<Mutex<BibleGraphNativeTextEditorSettings>>,
+    text_editor_settings_version: Arc<AtomicU64>,
 }
 
 #[derive(Debug, Clone, Resource)]
@@ -107,12 +109,48 @@ pub struct BibleGraphNativeWindowControl {
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
     commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
     camera_commands: Arc<Mutex<Vec<BibleGraphCameraCommand>>>,
+    text_editor_settings: Arc<Mutex<BibleGraphNativeTextEditorSettings>>,
+    text_editor_settings_version: Arc<AtomicU64>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRendererWindowStatus {
     pub camera_count: usize,
     pub bounds: BibleGraphNativeRendererWindowBounds,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct BibleGraphNativeTextEditorSettings {
+    pub padding_px: f32,
+    pub corner_radius_px: f32,
+    pub outline_width_px: f32,
+    pub outline_brightness: f32,
+}
+
+impl Default for BibleGraphNativeTextEditorSettings {
+    fn default() -> Self {
+        Self {
+            padding_px: 16.0,
+            corner_radius_px: 6.0,
+            outline_width_px: 1.0,
+            outline_brightness: 0.58,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Resource)]
+struct BibleGraphNativeTextEditorSettingsState {
+    settings: BibleGraphNativeTextEditorSettings,
+    version: u64,
+}
+
+impl Default for BibleGraphNativeTextEditorSettingsState {
+    fn default() -> Self {
+        Self {
+            settings: BibleGraphNativeTextEditorSettings::default(),
+            version: 0,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
@@ -334,6 +372,10 @@ impl BibleGraphNativeWindowControlHandle {
             native_visual_counts: Arc::new(Mutex::new(BibleGraphNativeVisualStatus::default())),
             commands: Arc::new(Mutex::new(Vec::new())),
             camera_commands: Arc::new(Mutex::new(Vec::new())),
+            text_editor_settings: Arc::new(Mutex::new(
+                BibleGraphNativeTextEditorSettings::default(),
+            )),
+            text_editor_settings_version: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -374,6 +416,15 @@ impl BibleGraphNativeWindowControlHandle {
             .projection
             .lock()
             .unwrap_or_else(|error| error.into_inner()) = Some(projection);
+    }
+
+    pub fn set_text_editor_settings(&self, settings: BibleGraphNativeTextEditorSettings) {
+        *self
+            .text_editor_settings
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = settings;
+        self.text_editor_settings_version
+            .fetch_add(1, Ordering::AcqRel);
     }
 
     pub fn native_visual_counts(&self) -> BibleGraphNativeVisualStatus {
@@ -429,6 +480,8 @@ impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowContro
             native_visual_counts: Arc::clone(&handle.native_visual_counts),
             commands: Arc::clone(&handle.commands),
             camera_commands: Arc::clone(&handle.camera_commands),
+            text_editor_settings: Arc::clone(&handle.text_editor_settings),
+            text_editor_settings_version: Arc::clone(&handle.text_editor_settings_version),
         }
     }
 }
@@ -469,6 +522,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeVisualStatus::default());
         app.insert_resource(BibleGraphNativeAssetCache::default());
         app.insert_resource(BibleGraphNativeNodeTitleEdit::default());
+        app.insert_resource(BibleGraphNativeTextEditorSettingsState::default());
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.configure_sets(
             Update,
@@ -519,6 +573,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
             (
                 project_bible_graph_native_labels,
                 apply_bible_graph_native_title_edit_overlay,
+                apply_bible_graph_native_text_editor_settings,
                 apply_bible_graph_native_node_text_editor_caret,
                 emit_bible_graph_native_node_text_editor_updates,
             )
@@ -693,6 +748,7 @@ fn emit_bible_graph_native_click_selection(
     edges: Query<&BibleGraphNativeEdgeVisual>,
     labels: Query<&BibleGraphNativeNodeLabelVisual>,
     editors: Query<&ScrollPosition, With<BibleGraphNativeNodeTextEditorVisual>>,
+    text_editor_settings: Option<Res<BibleGraphNativeTextEditorSettingsState>>,
     mut title_edit: ResMut<BibleGraphNativeNodeTitleEdit>,
     control: Option<Res<BibleGraphNativeWindowControl>>,
 ) {
@@ -716,6 +772,10 @@ fn emit_bible_graph_native_click_selection(
             cursor_position,
             Vec2::new(window.width(), window.height()),
             scroll_position.0.y,
+            text_editor_settings
+                .as_deref()
+                .map(|state| state.settings.padding_px)
+                .unwrap_or(BibleGraphNativeTextEditorSettings::default().padding_px),
         )
         .is_some()
     }) {
@@ -1010,6 +1070,7 @@ fn handle_bible_graph_native_node_text_editor_input(
 fn handle_bible_graph_native_node_text_editor_click(
     buttons: Option<Res<ButtonInput<MouseButton>>>,
     windows: Query<&Window, With<PrimaryWindow>>,
+    text_editor_settings: Option<Res<BibleGraphNativeTextEditorSettingsState>>,
     mut editors: Query<(
         &mut BibleGraphNativeNodeTextEditorVisual,
         &Text,
@@ -1035,6 +1096,10 @@ fn handle_bible_graph_native_node_text_editor_click(
         cursor_position,
         Vec2::new(window.width(), window.height()),
         scroll_position.0.y,
+        text_editor_settings
+            .as_deref()
+            .map(|state| state.settings.padding_px)
+            .unwrap_or(BibleGraphNativeTextEditorSettings::default().padding_px),
     ) else {
         return;
     };
@@ -1760,6 +1825,31 @@ fn emit_bible_graph_native_node_text_editor_updates(
     }
 }
 
+fn apply_bible_graph_native_text_editor_settings(
+    control: Option<Res<BibleGraphNativeWindowControl>>,
+    mut state: ResMut<BibleGraphNativeTextEditorSettingsState>,
+    mut editors: Query<(&mut Node, &mut BorderColor), With<BibleGraphNativeNodeTextEditorVisual>>,
+) {
+    let Some(control) = control else {
+        return;
+    };
+    let version = control.text_editor_settings_version.load(Ordering::Acquire);
+    if version == state.version {
+        return;
+    }
+    let settings = *control
+        .text_editor_settings
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    state.settings = settings;
+    state.version = version;
+
+    for (mut node, mut border_color) in &mut editors {
+        apply_bible_graph_native_text_editor_node_settings(&mut node, settings);
+        *border_color = native_text_editor_border_color(settings);
+    }
+}
+
 fn apply_bible_graph_native_node_text_editor_caret(
     editors: Query<(
         &BibleGraphNativeNodeTextEditorVisual,
@@ -1790,6 +1880,20 @@ fn apply_bible_graph_native_node_text_editor_caret(
         node.top = Val::Px(caret_position.y);
         *visibility = Visibility::Visible;
     }
+}
+
+fn apply_bible_graph_native_text_editor_node_settings(
+    node: &mut Node,
+    settings: BibleGraphNativeTextEditorSettings,
+) {
+    node.padding = UiRect::all(Val::Px(settings.padding_px.max(0.0)));
+    node.border = UiRect::all(Val::Px(settings.outline_width_px.max(0.0)));
+    node.border_radius = BorderRadius::all(Val::Px(settings.corner_radius_px.max(0.0)));
+}
+
+fn native_text_editor_border_color(settings: BibleGraphNativeTextEditorSettings) -> BorderColor {
+    let brightness = settings.outline_brightness.clamp(0.0, 1.0);
+    BorderColor::all(Color::srgba(brightness, brightness, brightness, 0.95))
 }
 
 pub(crate) fn native_node_label_overlay_position(
@@ -1834,6 +1938,7 @@ fn bible_graph_native_text_editor_local_position(
     cursor_position: Vec2,
     viewport_size: Vec2,
     scroll_y: f32,
+    padding_px: f32,
 ) -> Option<Vec2> {
     let editor_height = viewport_size.y * NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO;
     let editor_left =
@@ -1851,8 +1956,8 @@ fn bible_graph_native_text_editor_local_position(
     }
 
     Some(Vec2::new(
-        (cursor_position.x - editor_left - NATIVE_NODE_TEXT_EDITOR_PADDING_PX).max(0.0),
-        (cursor_position.y - editor_top - NATIVE_NODE_TEXT_EDITOR_PADDING_PX + scroll_y).max(0.0),
+        (cursor_position.x - editor_left - padding_px.max(0.0)).max(0.0),
+        (cursor_position.y - editor_top - padding_px.max(0.0) + scroll_y).max(0.0),
     ))
 }
 
@@ -2305,7 +2410,21 @@ fn rebuild_bible_graph_native_node_text_editor(
         return;
     };
     let label_camera_entity = label_target.camera_entity;
+    let text_editor_settings = world
+        .get_resource::<BibleGraphNativeTextEditorSettingsState>()
+        .map(|state| state.settings)
+        .unwrap_or_default();
     let text = selected_node.text_content.clone().unwrap_or_default();
+    let mut editor_node = Node {
+        position_type: PositionType::Absolute,
+        top: Val::Px(NATIVE_NODE_TEXT_EDITOR_TOP_PX),
+        right: Val::Px(NATIVE_NODE_TEXT_EDITOR_RIGHT_PX),
+        width: Val::Px(NATIVE_NODE_TEXT_EDITOR_WIDTH_PX),
+        height: Val::Percent(NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO * 100.0),
+        overflow: Overflow::scroll_y(),
+        ..Default::default()
+    };
+    apply_bible_graph_native_text_editor_node_settings(&mut editor_node, text_editor_settings);
 
     let editor_entity = world
         .spawn((
@@ -2320,24 +2439,13 @@ fn rebuild_bible_graph_native_node_text_editor(
             BibleGraphNativeNodeTextEditorText {
                 node_id: selected_node.node_id.clone(),
             },
-            Node {
-                position_type: PositionType::Absolute,
-                top: Val::Px(NATIVE_NODE_TEXT_EDITOR_TOP_PX),
-                right: Val::Px(NATIVE_NODE_TEXT_EDITOR_RIGHT_PX),
-                width: Val::Px(NATIVE_NODE_TEXT_EDITOR_WIDTH_PX),
-                height: Val::Percent(NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO * 100.0),
-                padding: UiRect::all(Val::Px(NATIVE_NODE_TEXT_EDITOR_PADDING_PX)),
-                border: UiRect::all(Val::Px(1.0)),
-                overflow: Overflow::scroll_y(),
-                border_radius: BorderRadius::all(Val::Px(6.0)),
-                ..Default::default()
-            },
+            editor_node,
             Text::new(text),
             TextFont::from_font_size(NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX),
             TextColor(Color::srgb(0.86, 0.9, 0.92)),
             TextLayout::new_with_justify(Justify::Left),
             BackgroundColor(Color::srgba(0.06, 0.075, 0.095, 0.92)),
-            BorderColor::all(Color::srgba(0.36, 0.48, 0.58, 0.85)),
+            native_text_editor_border_color(text_editor_settings),
             ScrollPosition::default(),
             UiTargetCamera(label_camera_entity),
         ))

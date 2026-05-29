@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyGraphRendererCameraCommand,
+  applyGraphRendererTextEditorSettings,
   closeGraphRenderer,
   focusGraphRenderer,
   getGraphRendererStatus,
@@ -252,5 +253,47 @@ describe('graph renderer api helpers', () => {
     await expect(applyGraphRendererCameraCommand(command)).resolves.toEqual(response);
 
     expect(invoke).toHaveBeenCalledWith('graph_renderer_camera_command', { command });
+  });
+
+  it('sends text editor settings to the desktop graph renderer', async () => {
+    const response = {
+      renderer_window_kind: 'bible_graph',
+      running: true,
+      renderer_window_open: true,
+      renderer_scene_ready: true,
+      renderer_window_visible: true,
+      renderer_window_strategy: 'bevy_winit_floating_window',
+      renderer_window_platform: 'linux',
+      renderer_runner_lifecycle: 'visible',
+      renderer_supervisor_lifecycle: 'running',
+      renderer_runner_threading_model: 'worker_thread',
+      renderer_window_capability: 'verified_support',
+      renderer_window_capability_reason: 'verified_support',
+      renderer_window_lifecycle: 'visible',
+      renderer_window_ready: true,
+      renderer_window_verified_support: true,
+      renderer_window_visible_supported: true,
+      renderer_window_focus_supported: false,
+      renderer_window_message: 'graph renderer native window is ready',
+      node_count: 2,
+      edge_count: 1,
+      native_visual_node_count: 2,
+      native_visual_edge_count: 1,
+      renderer_window_width_px: 1280,
+      renderer_window_height_px: 720,
+      influence_count: 1,
+      last_error: null,
+    };
+    const settings = {
+      padding_px: 20,
+      corner_radius_px: 8,
+      outline_width_px: 2,
+      outline_brightness: 0.75,
+    };
+    const invoke = installDesktopInvoke(response);
+
+    await expect(applyGraphRendererTextEditorSettings(settings)).resolves.toEqual(response);
+
+    expect(invoke).toHaveBeenCalledWith('graph_renderer_text_editor_settings', { settings });
   });
 });

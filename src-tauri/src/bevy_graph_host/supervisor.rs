@@ -5,8 +5,8 @@ use super::{
     NativeRendererWindowThreadResult,
 };
 use eidetic_bevy_bible_graph::{
-    BibleGraphCameraCommand, BibleGraphNativeVisualStatus, BibleGraphNativeWindowRunnerConfig,
-    BibleGraphRendererCommand,
+    BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings, BibleGraphNativeVisualStatus,
+    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
 };
 use eidetic_core::contracts::BibleRenderGraphProjection;
 use std::time::Duration;
@@ -26,6 +26,7 @@ pub struct NativeRendererSupervisor {
     window_thread: Option<NativeRendererWindowThreadHandle>,
     window_ready: bool,
     native_visual_counts: BibleGraphNativeVisualStatus,
+    text_editor_settings: BibleGraphNativeTextEditorSettings,
     lifecycle: NativeRendererSupervisorLifecycle,
     last_error: Option<String>,
 }
@@ -49,6 +50,7 @@ impl NativeRendererSupervisor {
             window_thread: None,
             window_ready: false,
             native_visual_counts: BibleGraphNativeVisualStatus::default(),
+            text_editor_settings: BibleGraphNativeTextEditorSettings::default(),
             lifecycle: NativeRendererSupervisorLifecycle::NotStarted,
             last_error: None,
         }
@@ -62,6 +64,7 @@ impl NativeRendererSupervisor {
             window_thread: None,
             window_ready: false,
             native_visual_counts: BibleGraphNativeVisualStatus::default(),
+            text_editor_settings: BibleGraphNativeTextEditorSettings::default(),
             lifecycle: NativeRendererSupervisorLifecycle::Failed,
             last_error: Some(message),
         }
@@ -145,6 +148,7 @@ impl NativeRendererSupervisor {
         self.lifecycle = NativeRendererSupervisorLifecycle::Starting;
         match (self.window_thread_start)(config) {
             Ok(window_thread) => {
+                window_thread.set_text_editor_settings(self.text_editor_settings);
                 self.window_thread = Some(window_thread);
                 self.window_ready = false;
                 self.lifecycle = NativeRendererSupervisorLifecycle::Running;
@@ -259,6 +263,17 @@ impl NativeRendererRunner for NativeRendererSupervisor {
         {
             self.lifecycle = NativeRendererSupervisorLifecycle::Failed;
             self.last_error = Some(format!("native renderer camera command failed: {error}"));
+        }
+        self.refresh_status()
+    }
+
+    fn apply_text_editor_settings(
+        &mut self,
+        settings: BibleGraphNativeTextEditorSettings,
+    ) -> NativeRendererRunnerStatus {
+        self.text_editor_settings = settings;
+        if let Some(window_thread) = self.window_thread.as_ref() {
+            window_thread.set_text_editor_settings(settings);
         }
         self.refresh_status()
     }

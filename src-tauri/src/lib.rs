@@ -97,6 +97,7 @@ pub fn run() {
             graph_renderer_commands::graph_renderer_status,
             graph_renderer_commands::graph_renderer_update_projection_request,
             graph_renderer_commands::graph_renderer_camera_command,
+            graph_renderer_commands::graph_renderer_text_editor_settings,
             graph_renderer_commands::graph_renderer_visual_snapshot,
             timeline_renderer_commands::timeline_renderer_open,
             timeline_renderer_commands::timeline_renderer_focus,

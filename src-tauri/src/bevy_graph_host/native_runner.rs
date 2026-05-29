@@ -10,7 +10,8 @@ use super::{
 };
 pub use crate::renderer_window::DesktopRendererRunnerLifecycle as NativeRendererRunnerLifecycle;
 use eidetic_bevy_bible_graph::{
-    BibleGraphCameraCommand, BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
+    BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings,
+    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
 };
 use eidetic_core::contracts::BibleRenderGraphProjection;
 
@@ -48,6 +49,10 @@ pub trait NativeRendererRunner {
         &mut self,
         command: BibleGraphCameraCommand,
     ) -> NativeRendererRunnerStatus;
+    fn apply_text_editor_settings(
+        &mut self,
+        settings: BibleGraphNativeTextEditorSettings,
+    ) -> NativeRendererRunnerStatus;
     fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand>;
     fn status(&self) -> NativeRendererRunnerStatus;
 }
@@ -68,6 +73,10 @@ enum NativeRendererRunnerRequest {
     },
     ApplyCameraCommand {
         command: BibleGraphCameraCommand,
+        reply: mpsc::Sender<NativeRendererRunnerStatus>,
+    },
+    ApplyTextEditorSettings {
+        settings: BibleGraphNativeTextEditorSettings,
         reply: mpsc::Sender<NativeRendererRunnerStatus>,
     },
     DrainCommands {
@@ -200,6 +209,15 @@ impl NativeRendererRunner for NativeRendererRunnerHandle {
         self.request(|reply| NativeRendererRunnerRequest::ApplyCameraCommand { command, reply })
     }
 
+    fn apply_text_editor_settings(
+        &mut self,
+        settings: BibleGraphNativeTextEditorSettings,
+    ) -> NativeRendererRunnerStatus {
+        self.request(
+            |reply| NativeRendererRunnerRequest::ApplyTextEditorSettings { settings, reply },
+        )
+    }
+
     fn drain_commands(&mut self) -> Vec<BibleGraphRendererCommand> {
         let (reply, receiver) = mpsc::channel();
         if self
@@ -255,6 +273,9 @@ fn run_native_renderer_runner(
             }
             NativeRendererRunnerRequest::ApplyCameraCommand { command, reply } => {
                 let _ = reply.send(runner.apply_camera_command(command));
+            }
+            NativeRendererRunnerRequest::ApplyTextEditorSettings { settings, reply } => {
+                let _ = reply.send(runner.apply_text_editor_settings(settings));
             }
             NativeRendererRunnerRequest::DrainCommands { reply } => {
                 let _ = reply.send(runner.drain_commands());

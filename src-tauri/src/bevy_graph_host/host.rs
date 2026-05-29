@@ -1,8 +1,8 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use eidetic_bevy_bible_graph::{
-    BibleGraphCameraCommand, BibleGraphRendererApp, BibleGraphRendererCommand,
-    BibleGraphRendererError, BibleGraphVisualSnapshot,
+    BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings, BibleGraphRendererApp,
+    BibleGraphRendererCommand, BibleGraphRendererError, BibleGraphVisualSnapshot,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -76,6 +76,16 @@ impl DesktopNativeRendererRunner {
     ) -> NativeRendererRunnerStatus {
         match self {
             Self::Managed(runner) => runner.apply_camera_command(command),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
+
+    fn apply_text_editor_settings(
+        &mut self,
+        settings: BibleGraphNativeTextEditorSettings,
+    ) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.apply_text_editor_settings(settings),
             Self::Unavailable(status) => status.clone(),
         }
     }
@@ -230,6 +240,14 @@ impl DesktopBibleGraphHost {
         self.start()?;
         self.with_renderer_mut(|renderer| renderer.apply_camera_command(command.clone()))?;
         self.native_runner.apply_camera_command(command);
+        Ok(self.status())
+    }
+
+    pub fn apply_text_editor_settings(
+        &mut self,
+        settings: BibleGraphNativeTextEditorSettings,
+    ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
+        self.native_runner.apply_text_editor_settings(settings);
         Ok(self.status())
     }
 

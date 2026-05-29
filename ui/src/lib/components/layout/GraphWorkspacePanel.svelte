@@ -17,7 +17,10 @@
     getCachedBibleRenderGraphProjection,
     refreshBibleRenderGraphProjection,
   } from '$lib/stores/bibleRenderGraphProjection.svelte.js';
-  import { applyGraphRendererCameraCommand } from '$lib/graphRendererApi.js';
+  import {
+    applyGraphRendererCameraCommand,
+    applyGraphRendererTextEditorSettings,
+  } from '$lib/graphRendererApi.js';
   import { ensureCanonicalBibleRootProjections } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import {
     getCachedBibleGraphSchemaListProjection,
@@ -65,6 +68,11 @@
   let graphSearchQuery = $state('');
   let activeFilter: BibleGraphFilter = $state('all');
   let activeEdgeKinds: BibleGraphEdgeKind[] = $state([]);
+  let activeGraphPanelTab: 'graph' | 'settings' = $state('graph');
+  let textEditorPaddingPx = $state(16);
+  let textEditorCornerRadiusPx = $state(6);
+  let textEditorOutlineWidthPx = $state(1);
+  let textEditorOutlineBrightness = $state(0.58);
   const focusedNeighborhoodNodeId = $derived(bibleState.graphFocusedNeighborhoodNodeId);
   let initialGraphScaffoldLoaded = $state(false);
   let graphLoadError = $state<string | null>(null);
@@ -196,6 +204,18 @@
       graphSelection.kind === 'neighborhood' && graphSelection.nodeId === id ? null : id,
     );
   }
+
+  function applyTextEditorSettings(): void {
+    void applyGraphRendererTextEditorSettings({
+      padding_px: textEditorPaddingPx,
+      corner_radius_px: textEditorCornerRadiusPx,
+      outline_width_px: textEditorOutlineWidthPx,
+      outline_brightness: textEditorOutlineBrightness,
+    }).catch((error) => {
+      graphLoadError =
+        error instanceof Error ? error.message : 'Failed to update graph renderer settings';
+    });
+  }
 </script>
 
 <section class="graph-workspace" aria-label="Bible graph workspace">
@@ -213,68 +233,145 @@
       <div class="graph-renderer-shell">
         <GraphRendererWindowControls graphProjectionRequest={renderGraphRequest} />
         <div class="graph-renderer-primary" aria-label="Bevy graph renderer workspace">
-          <div class="graph-controls" aria-label="Graph projection controls">
-            <input
-              class="search-input"
-              type="text"
-              placeholder="Search graph..."
-              bind:value={graphSearchQuery}
-            />
-            <BibleGraphCategoryFilters
-              {activeFilter}
-              filters={graphFilterOptions}
-              schemaProjection={schemaProjection?.payload}
-              onselect={(filter) => (activeFilter = filter)}
-            />
-            <div class="edge-kind-controls" aria-label="Edge kind filters">
-              {#each graphWorkspaceEdgeKindFilters as filter (filter.label)}
+          <div class="graph-control-panel">
+            <div class="graph-control-tabs" role="tablist" aria-label="Graph workspace panels">
+              <button
+                type="button"
+                role="tab"
+                class:active={activeGraphPanelTab === 'graph'}
+                aria-selected={activeGraphPanelTab === 'graph'}
+                onclick={() => (activeGraphPanelTab = 'graph')}
+              >
+                Graph
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class:active={activeGraphPanelTab === 'settings'}
+                aria-selected={activeGraphPanelTab === 'settings'}
+                onclick={() => (activeGraphPanelTab = 'settings')}
+              >
+                Settings
+              </button>
+            </div>
+
+            {#if activeGraphPanelTab === 'graph'}
+              <div class="graph-controls" aria-label="Graph projection controls">
+                <input
+                  class="search-input"
+                  type="text"
+                  placeholder="Search graph..."
+                  bind:value={graphSearchQuery}
+                />
+                <BibleGraphCategoryFilters
+                  {activeFilter}
+                  filters={graphFilterOptions}
+                  schemaProjection={schemaProjection?.payload}
+                  onselect={(filter) => (activeFilter = filter)}
+                />
+                <div class="edge-kind-controls" aria-label="Edge kind filters">
+                  {#each graphWorkspaceEdgeKindFilters as filter (filter.label)}
+                    <button
+                      type="button"
+                      class:active={activeEdgeKinds.includes(filter.kind)}
+                      aria-pressed={activeEdgeKinds.includes(filter.kind)}
+                      onclick={() => toggleEdgeKindFilter(filter.kind)}
+                    >
+                      {filter.label}
+                    </button>
+                  {/each}
+                </div>
+                <BibleGraphAddControls
+                  {activeFilter}
+                  categories={graphCreateOptions}
+                  schemaProjection={schemaProjection?.payload}
+                  onadd={handleAddGraphNode}
+                />
                 <button
                   type="button"
-                  class:active={activeEdgeKinds.includes(filter.kind)}
-                  aria-pressed={activeEdgeKinds.includes(filter.kind)}
-                  onclick={() => toggleEdgeKindFilter(filter.kind)}
+                  class="outline-toggle"
+                  aria-expanded={showOutline}
+                  onclick={() => {
+                    showOutline = !showOutline;
+                  }}
                 >
-                  {filter.label}
+                  {showOutline ? 'Hide outline' : 'Show outline'}
                 </button>
-              {/each}
-            </div>
-            <BibleGraphAddControls
-              {activeFilter}
-              categories={graphCreateOptions}
-              schemaProjection={schemaProjection?.payload}
-              onadd={handleAddGraphNode}
-            />
-            <button
-              type="button"
-              class="outline-toggle"
-              aria-expanded={showOutline}
-              onclick={() => {
-                showOutline = !showOutline;
-              }}
-            >
-              {showOutline ? 'Hide outline' : 'Show outline'}
-            </button>
-            <button
-              type="button"
-              disabled={!selectedGraphNodeId || focusedNeighborhoodNodeId === selectedGraphNodeId}
-              onclick={focusSelectedNeighborhood}
-            >
-              Focus neighborhood
-            </button>
-            <button
-              type="button"
-              disabled={!focusedNeighborhoodNodeId}
-              onclick={clearFocusedNeighborhood}
-            >
-              Clear focus
-            </button>
-            <button
-              type="button"
-              disabled={graphSelection.kind === 'none' && !focusedNeighborhoodNodeId}
-              onclick={clearGraphSelectionAndFocus}
-            >
-              Clear selection
-            </button>
+                <button
+                  type="button"
+                  disabled={!selectedGraphNodeId ||
+                    focusedNeighborhoodNodeId === selectedGraphNodeId}
+                  onclick={focusSelectedNeighborhood}
+                >
+                  Focus neighborhood
+                </button>
+                <button
+                  type="button"
+                  disabled={!focusedNeighborhoodNodeId}
+                  onclick={clearFocusedNeighborhood}
+                >
+                  Clear focus
+                </button>
+                <button
+                  type="button"
+                  disabled={graphSelection.kind === 'none' && !focusedNeighborhoodNodeId}
+                  onclick={clearGraphSelectionAndFocus}
+                >
+                  Clear selection
+                </button>
+              </div>
+            {:else}
+              <div class="graph-settings" aria-label="Graph renderer settings">
+                <label>
+                  <span>Padding</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="48"
+                    step="1"
+                    bind:value={textEditorPaddingPx}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{textEditorPaddingPx}px</output>
+                </label>
+                <label>
+                  <span>Rounding</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="16"
+                    step="1"
+                    bind:value={textEditorCornerRadiusPx}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{textEditorCornerRadiusPx}px</output>
+                </label>
+                <label>
+                  <span>Outline</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="8"
+                    step="1"
+                    bind:value={textEditorOutlineWidthPx}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{textEditorOutlineWidthPx}px</output>
+                </label>
+                <label>
+                  <span>Brightness</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    bind:value={textEditorOutlineBrightness}
+                    oninput={applyTextEditorSettings}
+                  />
+                  <output>{Math.round(textEditorOutlineBrightness * 100)}%</output>
+                </label>
+              </div>
+            {/if}
           </div>
         </div>
         {#if showOutline}
@@ -364,6 +461,39 @@
     background: var(--color-bg-primary);
   }
 
+  .graph-control-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    max-width: min(100%, 760px);
+  }
+
+  .graph-control-tabs {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 5px;
+    background: var(--color-bg-surface);
+  }
+
+  .graph-control-tabs button {
+    border: 0;
+    border-radius: 3px;
+    padding: 5px 8px;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+
+  .graph-control-tabs button.active {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
   .graph-controls {
     display: flex;
     align-items: center;
@@ -374,6 +504,37 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: 5px;
     background: var(--color-bg-surface);
+  }
+
+  .graph-settings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 8px 12px;
+    width: min(100%, 620px);
+    padding: 9px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 5px;
+    background: var(--color-bg-surface);
+  }
+
+  .graph-settings label {
+    display: grid;
+    grid-template-columns: 74px minmax(120px, 1fr) 44px;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-secondary);
+    font-size: 0.74rem;
+  }
+
+  .graph-settings input[type='range'] {
+    width: 100%;
+    accent-color: var(--color-accent);
+  }
+
+  .graph-settings output {
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
   }
 
   .graph-controls :global(.add-buttons) {
