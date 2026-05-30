@@ -162,6 +162,7 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
 
+    #[cfg(unix)]
     #[test]
     fn validate_project_path_rejects_symlink_escape() {
         let root = temp_dir("rejects-symlink-root");

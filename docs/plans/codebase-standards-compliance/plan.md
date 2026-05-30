@@ -225,7 +225,7 @@ runtime assumptions.
 
 **Tasks:**
 
-- [ ] Gate Unix-only tests or move platform-specific behavior behind a platform
+- [x] Gate Unix-only tests or move platform-specific behavior behind a platform
   module.
 - [ ] Add Windows compile/test coverage in CI.
 - [ ] Add explicit cancellation channels or tokens for background tasks.
@@ -239,7 +239,8 @@ runtime assumptions.
 - Task lifecycle tests cover cancellation and shutdown behavior.
 - Logs expose background task panics or join failures.
 
-**Status:** Not started.
+**Status:** In progress. Unix-specific symlink coverage is gated so Windows
+test targets can compile. Async lifecycle work remains.
 
 ### Milestone 6: Frontend Accessibility and Type Safety
 
@@ -350,6 +351,9 @@ reasoning boundaries, not size.
   Linux/Windows Rust checks, frontend lint/format/typecheck/tests, and decision
   traceability. CI provisions Pumas through the repository script before Cargo
   jobs run.
+- 2026-05-30: Gated the symlink escape validation test with `#[cfg(unix)]`
+  because it uses `std::os::unix::fs::symlink`; Windows path validation remains
+  covered by lexical escape and child-path tests.
 
 ## Commit Cadence Notes
 
