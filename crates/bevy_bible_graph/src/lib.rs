@@ -28,7 +28,8 @@ pub use native_render::{
     BibleGraphNativeRendererWindowStatus, BibleGraphNativeTextEditorSettings,
     BibleGraphNativeVisualEntity, BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
-    BibleGraphNativeWorkspaceTimelineRoot, BibleGraphNativeWorkspaceTimelineVisualState,
+    BibleGraphNativeWorkspaceTimelineClipVisual, BibleGraphNativeWorkspaceTimelineRoot,
+    BibleGraphNativeWorkspaceTimelineVisualEntity, BibleGraphNativeWorkspaceTimelineVisualState,
     configure_controlled_minimal_bible_graph_native_window_app,
     configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_clear_selection,
     emit_bible_graph_native_connected_node_create, emit_bible_graph_native_edge_selection,
@@ -36,6 +37,7 @@ pub use native_render::{
     emit_bible_graph_native_node_focus, emit_bible_graph_native_node_inspection,
     emit_bible_graph_native_node_name_set, emit_bible_graph_native_node_navigation,
     emit_bible_graph_native_node_selection, native_workspace_timeline_panel_transform,
+    rebuild_bible_graph_native_workspace_timeline_visuals,
     run_controlled_minimal_bible_graph_native_window, run_minimal_bible_graph_native_window,
 };
 pub use scene::{

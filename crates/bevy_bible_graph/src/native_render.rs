@@ -39,9 +39,9 @@ use crate::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_DEPTH,
     BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_HEIGHT, BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_WIDTH,
     BibleGraphCameraCommand, BibleGraphRendererCommand, BibleGraphRendererError,
-    BibleGraphVisual3dEdgeClass, BibleGraphWorkspaceTimelinePresentation,
-    BibleGraphWorkspaceTimelinePresentationMode, BibleGraphWorkspaceTimelineVisualSnapshot,
-    build_bible_graph_visual_3d_snapshot,
+    BibleGraphVisual3dEdgeClass, BibleGraphWorkspaceTimelineClipVisual,
+    BibleGraphWorkspaceTimelinePresentation, BibleGraphWorkspaceTimelinePresentationMode,
+    BibleGraphWorkspaceTimelineVisualSnapshot, build_bible_graph_visual_3d_snapshot,
     native_text_editor::{
         NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX, NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX,
         NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX, NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO,
@@ -257,6 +257,14 @@ pub struct BibleGraphNativeLabelOverlayCamera;
 
 #[derive(Component)]
 pub struct BibleGraphNativeWorkspaceTimelineRoot;
+
+#[derive(Component)]
+pub struct BibleGraphNativeWorkspaceTimelineVisualEntity;
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeWorkspaceTimelineClipVisual {
+    pub clip: BibleGraphWorkspaceTimelineClipVisual,
+}
 
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeVisualEntity;
@@ -2306,15 +2314,79 @@ fn apply_bible_graph_native_projection(world: &mut World) {
         .unwrap_or_else(|error| error.into_inner()) = status;
 }
 
-fn apply_bible_graph_native_workspace_timeline_visual_snapshot(
-    control: Option<Res<BibleGraphNativeWindowControl>>,
-    mut state: ResMut<BibleGraphNativeWorkspaceTimelineVisualState>,
-) {
-    let Some(control) = control else {
+fn apply_bible_graph_native_workspace_timeline_visual_snapshot(world: &mut World) {
+    let Some(control) = world
+        .get_resource::<BibleGraphNativeWindowControl>()
+        .cloned()
+    else {
         return;
     };
     if let Some(snapshot) = control.take_workspace_timeline_visual_snapshot() {
+        rebuild_bible_graph_native_workspace_timeline_visuals(world, &snapshot);
+        let mut state = world.resource_mut::<BibleGraphNativeWorkspaceTimelineVisualState>();
         state.snapshot = Some(snapshot);
+    }
+}
+
+pub fn rebuild_bible_graph_native_workspace_timeline_visuals(
+    world: &mut World,
+    snapshot: &BibleGraphWorkspaceTimelineVisualSnapshot,
+) {
+    if !world.contains_resource::<Assets<Mesh>>()
+        || !world.contains_resource::<Assets<BibleGraphNativeMaterial>>()
+    {
+        return;
+    }
+
+    let existing = world
+        .query_filtered::<Entity, With<BibleGraphNativeWorkspaceTimelineVisualEntity>>()
+        .iter(world)
+        .collect::<Vec<_>>();
+    for entity in existing {
+        world.entity_mut(entity).despawn();
+    }
+
+    let Some(root_entity) = world
+        .query_filtered::<Entity, With<BibleGraphNativeWorkspaceTimelineRoot>>()
+        .iter(world)
+        .next()
+    else {
+        return;
+    };
+
+    let mut child_entities = Vec::new();
+    for clip in &snapshot.clips {
+        let mesh =
+            world
+                .resource_mut::<Assets<Mesh>>()
+                .add(Cuboid::new(clip.width, clip.height, 1.5));
+        let material = world
+            .resource_mut::<Assets<BibleGraphNativeMaterial>>()
+            .add(BibleGraphNativeMaterial {
+                color: LinearRgba::new(
+                    clip.color_rgb[0],
+                    clip.color_rgb[1],
+                    clip.color_rgb[2],
+                    0.96,
+                ),
+            });
+        let entity = world
+            .spawn((
+                BibleGraphNativeWorkspaceTimelineVisualEntity,
+                BibleGraphNativeWorkspaceTimelineClipVisual { clip: clip.clone() },
+                Mesh3d(mesh),
+                MeshMaterial3d(material),
+                Transform::from_xyz(
+                    clip.x,
+                    clip.y,
+                    (BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_DEPTH / 2.0) + 1.0,
+                ),
+            ))
+            .id();
+        child_entities.push(entity);
+    }
+    for child_entity in child_entities {
+        world.entity_mut(root_entity).add_child(child_entity);
     }
 }
 

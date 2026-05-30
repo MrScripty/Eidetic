@@ -684,6 +684,37 @@ fn native_window_control_handle_carries_workspace_timeline_visual_snapshot() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_workspace_timeline_visuals_spawn_projection_derived_clip_meshes() {
+    let mut app = bevy::prelude::App::new();
+    app.add_plugins(BibleGraphNativeRenderPlugin);
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer
+        .set_workspace_projection(BibleGraphWorkspaceProjection {
+            graph: projection_with_node(BibleGraphNodeId::new("node.character.ada").unwrap()),
+            timeline: Some(timeline_projection_with_clip()),
+        })
+        .unwrap();
+    app.world_mut().spawn((
+        BibleGraphNativeWorkspaceTimelineRoot,
+        bevy::prelude::Transform::default(),
+    ));
+
+    rebuild_bible_graph_native_workspace_timeline_visuals(
+        app.world_mut(),
+        &renderer.workspace_timeline_visual_snapshot(),
+    );
+
+    let mut clips = app
+        .world_mut()
+        .query::<&BibleGraphNativeWorkspaceTimelineClipVisual>();
+    let clip_visuals = clips.iter(app.world()).collect::<Vec<_>>();
+    assert_eq!(clip_visuals.len(), 1);
+    assert_eq!(clip_visuals[0].clip.label, "Opening Scene");
+    assert!(clip_visuals[0].clip.selected);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_window_control_resource_tracks_handle_state_without_display() {
     let control = BibleGraphNativeWindowControlHandle::new();
     let window_control = BibleGraphNativeWindowControl::from(&control);
