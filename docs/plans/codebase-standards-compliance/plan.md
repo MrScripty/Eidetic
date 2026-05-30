@@ -179,20 +179,20 @@ filler.
 
 **Tasks:**
 
-- [ ] Move root-level plan artifacts into `docs/plans/<slug>/`.
-- [ ] Add required README files to source directories that lack them.
-- [ ] Include purpose, constraints, decisions, invariants, dependencies, and
+- [x] Move root-level plan artifacts into `docs/plans/<slug>/`.
+- [x] Add required README files to source directories that lack them.
+- [x] Include purpose, constraints, decisions, invariants, dependencies, and
   revisit triggers in each README.
-- [ ] Add API consumer or structured producer contract sections where modules
+- [x] Add API consumer or structured producer contract sections where modules
   expose host-facing behavior or structured outputs.
-- [ ] Remove or document empty source directories.
+- [x] Remove or document empty source directories.
 
 **Verification:**
 
 - Decision traceability script passes.
 - README content describes design rationale, not just file inventory.
 
-**Status:** Not started.
+**Status:** Complete.
 
 ### Milestone 4: Dependency and Release Governance
 
@@ -312,6 +312,10 @@ reasoning boundaries, not size.
   traceability script. CI/hook wiring is intentionally deferred until the
   missing module README coverage from Milestone 3 is complete; otherwise the
   new gate would fail the current branch before its documentation slice lands.
+- 2026-05-30: Documentation layout updated by moving root/legacy plan artifacts
+  under `docs/plans/<slug>/plan.md`, adding missing source-directory READMEs,
+  and documenting reserved empty source directories instead of adding
+  placeholder code.
 
 ## Commit Cadence Notes
 

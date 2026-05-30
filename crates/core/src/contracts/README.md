@@ -49,7 +49,7 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Bible graph schemas require richer typed field constraints than the current field value primitives.
 
 ## Dependencies
-**Internal:** None.
+**Internal:** This is the lowest-level contract boundary in `eidetic-core`.
 **External:** `serde`, `uuid`.
 
 ## Related ADRs

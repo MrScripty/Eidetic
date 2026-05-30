@@ -86,6 +86,14 @@ commands/events and service-level tests covered backend behavior.
 ## Related ADRs
 - `ADR-001` decomposition baseline for oversized server modules.
 
+## Usage Examples
+```rust
+use eidetic_server::project_service;
+
+let result = project_service::list_projects();
+assert!(result.is_ok());
+```
+
 ## API Consumer Contract
 - Tauri command/event adapters consume backend services directly instead of
   calling Axum handlers.

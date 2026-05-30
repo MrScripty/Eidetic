@@ -33,7 +33,7 @@ Keep screenplay-specific helpers together so prompt, editor, and export code reu
 
 ## Dependencies
 **Internal:** `crates/core/src/timeline`.
-**External:** None beyond shared crate dependencies.
+**External:** Uses only shared crate dependencies already owned by `eidetic-core`.
 
 ## Related ADRs
 - `ADR-001` decomposition baseline for oversized modules.

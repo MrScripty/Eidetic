@@ -11,12 +11,12 @@ bible graph and timeline.
 - Active implementation plan:
   `docs/refactors/eidetic-projection-architecture/final-plan.md`
 - Supporting planning notes:
-  - `plans/story-tracks.md`
-  - `plans/story-bible-worldbuilding.md`
-  - `plans/script-generation-model.md`
-  - `plans/story-bible-3d-graph-view.md`
-  - `plans/timeline-rendering-bevy.md`
-  - `plans/architecture-blast-radius.md`
+  - `docs/plans/story-tracks/plan.md`
+  - `docs/plans/story-bible-worldbuilding/plan.md`
+  - `docs/plans/script-generation-model/plan.md`
+  - `docs/plans/story-bible-3d-graph-view/plan.md`
+  - `docs/plans/timeline-rendering-bevy/plan.md`
+  - `docs/plans/architecture-blast-radius/plan.md`
 
 ## Current Direction
 
