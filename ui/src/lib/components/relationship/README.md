@@ -47,8 +47,8 @@ owners until a shared relationship workflow is justified.
 
 ## Dependencies
 
-**Internal:** None at runtime because no source files exist.
-**External:** None at runtime because no source files exist.
+**Internal:** No runtime dependency while the directory has no source files.
+**External:** No runtime dependency while the directory has no source files.
 
 ## Related ADRs
 
