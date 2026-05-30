@@ -24,6 +24,7 @@
   <div class="workspace-controls" role="group" aria-label="Workspace mode">
     {#each workspaceModes as option (option.mode)}
       <button
+        type="button"
         class="mode-btn"
         class:active={workspaceMode === option.mode}
         aria-pressed={workspaceMode === option.mode}
@@ -35,8 +36,12 @@
   </div>
 
   <div class="toolbar-actions">
-    <button class="toolbar-btn" title="Save (Ctrl+S)" onclick={onsave}>&#128190;</button>
-    <button class="toolbar-btn" title="Export PDF (Ctrl+Shift+E)" onclick={onexport}>PDF</button>
+    <button type="button" class="toolbar-btn" title="Save (Ctrl+S)" onclick={onsave}
+      >&#128190;</button
+    >
+    <button type="button" class="toolbar-btn" title="Export PDF (Ctrl+Shift+E)" onclick={onexport}
+      >PDF</button
+    >
   </div>
 </div>
 

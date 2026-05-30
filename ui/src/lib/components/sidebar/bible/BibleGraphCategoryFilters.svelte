@@ -22,6 +22,7 @@
 <div class="filter-pills">
   {#each filters as filter}
     <button
+      type="button"
       class="pill"
       class:active={activeFilter === filter.filter}
       style={activeFilter === filter.filter

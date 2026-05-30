@@ -96,11 +96,12 @@
           <p class="tagline">AI-driven script writing for 30-minute TV episodes</p>
         </div>
         <div class="actions">
-          <button class="action-btn" onclick={() => (view = 'new')}>
+          <button type="button" class="action-btn" onclick={() => (view = 'new')}>
             <span class="action-icon">+</span>
             <span class="action-label">New Project</span>
           </button>
           <button
+            type="button"
             class="action-btn"
             onclick={() => {
               view = 'open';
@@ -112,30 +113,36 @@
           </button>
         </div>
       {:else if view === 'new'}
-        <button class="back-btn" onclick={() => (view = 'home')}>&larr; Back</button>
+        <button type="button" class="back-btn" onclick={() => (view = 'home')}>&larr; Back</button>
         <h2 class="heading">Choose a Template</h2>
         <div class="template-list">
           {#each templates as tmpl}
-            <button class="template-card" disabled={busy} onclick={() => handleNewProject(tmpl.id)}>
+            <button
+              type="button"
+              class="template-card"
+              disabled={busy}
+              onclick={() => handleNewProject(tmpl.id)}
+            >
               <span class="template-name">{tmpl.label}</span>
               <span class="template-desc">{tmpl.desc}</span>
             </button>
           {/each}
         </div>
       {:else if view === 'open'}
-        <button class="back-btn" onclick={() => (view = 'home')}>&larr; Back</button>
+        <button type="button" class="back-btn" onclick={() => (view = 'home')}>&larr; Back</button>
         <h2 class="heading">Open Project</h2>
         {#if loadingProjects}
           <p class="status-text">Loading projects...</p>
         {:else if loadError}
           <p class="error-text">{loadError}</p>
-          <button class="retry-btn" onclick={fetchProjects}>Retry</button>
+          <button type="button" class="retry-btn" onclick={fetchProjects}>Retry</button>
         {:else if projects.length === 0}
           <p class="status-text">No saved projects found.</p>
         {:else}
           <div class="project-list">
             {#each projects as proj}
               <button
+                type="button"
                 class="project-item"
                 disabled={busy}
                 onclick={() => handleLoadProject(proj.path)}

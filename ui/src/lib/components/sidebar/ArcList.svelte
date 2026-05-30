@@ -28,7 +28,7 @@
   <ul class="entity-list">
     {#each arcs as arc (arc.id)}
       <li class="entity-item">
-        <button class="entity-btn" onclick={() => onselect(arc.id)}>
+        <button type="button" class="entity-btn" onclick={() => onselect(arc.id)}>
           <span class="color-dot" style="background: {colorToHex(arc.color)}"></span>
           <span class="entity-name">{arc.name}</span>
           <span class="entity-type">
@@ -41,7 +41,7 @@
       <li class="empty-state">No arcs yet</li>
     {/if}
   </ul>
-  <button class="add-btn" onclick={handleAdd}>+ Add Arc</button>
+  <button type="button" class="add-btn" onclick={handleAdd}>+ Add Arc</button>
 </div>
 
 <style>

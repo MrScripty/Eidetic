@@ -25,6 +25,7 @@
       {#each items as item (item.node_id)}
         <li>
           <button
+            type="button"
             class:selected={item.selected}
             class:active={item.active}
             style:--graph-indent={`${Math.min(item.depth, 6) * 10}px`}

@@ -28,13 +28,14 @@
 
 <div class="add-buttons">
   {#if activeCategory}
-    <button class="add-btn" onclick={() => onadd(activeCategory.category)}>
+    <button type="button" class="add-btn" onclick={() => onadd(activeCategory.category)}>
       Add {activeCategory.label}
     </button>
   {:else}
     <div class="add-menu">
       {#each categories as category}
         <button
+          type="button"
           class="add-btn-small"
           style="color: {categoryColor(category.category, schemaProjection)}"
           onclick={() => onadd(category.category)}>Add {category.shortLabel}</button

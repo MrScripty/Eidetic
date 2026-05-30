@@ -24,30 +24,57 @@
 <aside class="sidebar" style="width: {PANEL.SIDEBAR_WIDTH_PX}px">
   <div class="sidebar-header">
     <div class="tabs">
-      <button class="tab" class:active={activeTab === 'arcs'} onclick={() => switchTab('arcs')}>
+      <button
+        type="button"
+        class="tab"
+        class:active={activeTab === 'arcs'}
+        onclick={() => switchTab('arcs')}
+      >
         Arcs
       </button>
-      <button class="tab" class:active={activeTab === 'bible'} onclick={() => switchTab('bible')}>
+      <button
+        type="button"
+        class="tab"
+        class:active={activeTab === 'bible'}
+        onclick={() => switchTab('bible')}
+      >
         Bible
       </button>
-      <button class="tab" class:active={activeTab === 'review'} onclick={() => switchTab('review')}>
+      <button
+        type="button"
+        class="tab"
+        class:active={activeTab === 'review'}
+        onclick={() => switchTab('review')}
+      >
         Review
       </button>
-      <button class="tab" class:active={activeTab === 'ai'} onclick={() => switchTab('ai')}>
+      <button
+        type="button"
+        class="tab"
+        class:active={activeTab === 'ai'}
+        onclick={() => switchTab('ai')}
+      >
         AI
       </button>
-      <button class="tab" class:active={activeTab === 'refs'} onclick={() => switchTab('refs')}>
+      <button
+        type="button"
+        class="tab"
+        class:active={activeTab === 'refs'}
+        onclick={() => switchTab('refs')}
+      >
         Refs
       </button>
     </div>
-    <button class="close-btn" onclick={onclose}>&times;</button>
+    <button type="button" class="close-btn" onclick={onclose}>&times;</button>
   </div>
 
   <div class="sidebar-content">
     {#if activeTab === 'arcs'}
       {#if showProgression}
         <ProgressionPanel />
-        <button class="toggle-view" onclick={() => (showProgression = false)}>Back to Arcs</button>
+        <button type="button" class="toggle-view" onclick={() => (showProgression = false)}
+          >Back to Arcs</button
+        >
       {:else if selectedArcId}
         {@const arc = arcs.find((a) => a.id === selectedArcId)}
         {#if arc}
@@ -57,7 +84,9 @@
         {/if}
       {:else}
         <ArcList onselect={(id) => (selectedArcId = id)} />
-        <button class="toggle-view" onclick={() => (showProgression = true)}>Analysis</button>
+        <button type="button" class="toggle-view" onclick={() => (showProgression = true)}
+          >Analysis</button
+        >
       {/if}
     {:else if activeTab === 'bible'}
       <StoryBibleTab />

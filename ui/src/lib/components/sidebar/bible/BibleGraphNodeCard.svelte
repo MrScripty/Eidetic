@@ -22,7 +22,12 @@
   } = $props();
 </script>
 
-<button class="node-card" class:selected onclick={(event) => onselect(node.id, event)}>
+<button
+  type="button"
+  class="node-card"
+  class:selected
+  onclick={(event) => onselect(node.id, event)}
+>
   <span class="color-dot" style="background: {categoryColor(category, schemaProjection)}"></span>
   <span class="node-name">{node.name}</span>
   <span class="category-badge" style="color: {categoryColor(category, schemaProjection)}">

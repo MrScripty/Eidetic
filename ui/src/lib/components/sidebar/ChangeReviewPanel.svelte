@@ -96,6 +96,7 @@
   <div class="panel-header">
     <h3>Change Review</h3>
     <button
+      type="button"
       class="refresh-btn"
       onclick={() => refreshAll().catch(() => {})}
       disabled={changeReviewProjectionState.pending || affectProposalProjectionState.pending}

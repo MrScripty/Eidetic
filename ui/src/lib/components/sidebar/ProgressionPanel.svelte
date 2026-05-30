@@ -24,7 +24,7 @@
 <div class="progression-panel">
   <div class="progression-header">
     <h3>Arc Analysis</h3>
-    <button class="refresh-btn" onclick={refresh} disabled={loading}>
+    <button type="button" class="refresh-btn" onclick={refresh} disabled={loading}>
       {loading ? '...' : 'Refresh'}
     </button>
   </div>

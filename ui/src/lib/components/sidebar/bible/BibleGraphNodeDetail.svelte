@@ -200,7 +200,7 @@
 
 <div class="graph-node-detail">
   <div class="detail-header">
-    <button class="close-btn" onclick={onclose}>&times; Close</button>
+    <button type="button" class="close-btn" onclick={onclose}>&times; Close</button>
     {#if projection}
       <button
         type="button"

@@ -254,7 +254,9 @@
   {/if}
 
   {#if !sidebarOpen && projectState.current}
-    <button class="sidebar-toggle" onclick={() => (sidebarOpen = true)}> &#9776; </button>
+    <button type="button" class="sidebar-toggle" onclick={() => (sidebarOpen = true)}>
+      &#9776;
+    </button>
   {/if}
 
   {#if projectState.current}

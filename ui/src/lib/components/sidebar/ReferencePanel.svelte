@@ -51,7 +51,9 @@
       <option value="custom">Custom</option>
     </select>
     <textarea bind:value={content} placeholder="Paste reference text..." rows="4"></textarea>
-    <button onclick={handleUpload} disabled={!name.trim() || !content.trim()}>Upload</button>
+    <button type="button" onclick={handleUpload} disabled={!name.trim() || !content.trim()}
+      >Upload</button
+    >
   </div>
 
   <div class="ref-list">
@@ -59,7 +61,9 @@
       <div class="ref-item">
         <span class="ref-name">{ref.name}</span>
         <span class="ref-type">{typeof ref.doc_type === 'string' ? ref.doc_type : 'custom'}</span>
-        <button class="ref-delete" onclick={() => handleDelete(ref.id)}>&#x2715;</button>
+        <button type="button" class="ref-delete" onclick={() => handleDelete(ref.id)}
+          >&#x2715;</button
+        >
       </div>
     {/each}
     {#if refs.length === 0}

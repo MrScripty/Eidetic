@@ -54,8 +54,8 @@
 
 <div class="arc-detail">
   <div class="detail-header">
-    <button class="back-btn" onclick={onback}>&larr; Back</button>
-    <button class="delete-btn" onclick={handleDelete}>Delete</button>
+    <button type="button" class="back-btn" onclick={onback}>&larr; Back</button>
+    <button type="button" class="delete-btn" onclick={handleDelete}>Delete</button>
   </div>
 
   <div class="detail-body">
