@@ -132,6 +132,7 @@ pub struct BibleGraphNativeTextEditorSettings {
     pub editor_background_color: String,
     pub editor_background_brightness: f32,
     pub editor_background_transparency: f32,
+    #[serde(default = "default_native_label_size_scale")]
     pub label_size_scale: f32,
     pub selected_node_outline_width_px: f32,
     pub selected_node_outline_brightness: f32,
@@ -157,6 +158,10 @@ impl Default for BibleGraphNativeTextEditorSettings {
             selected_node_outline_color: "#f2c94c".to_string(),
         }
     }
+}
+
+fn default_native_label_size_scale() -> f32 {
+    1.0
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Resource)]

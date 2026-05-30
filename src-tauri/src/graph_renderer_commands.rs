@@ -407,6 +407,29 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn text_editor_settings_default_missing_label_size_scale() {
+        let settings: BibleGraphNativeTextEditorSettings = serde_json::from_value(json!({
+            "padding_px": 17.0,
+            "corner_radius_px": 4.0,
+            "editor_outline_width_px": 1.0,
+            "editor_outline_brightness": 0.1,
+            "editor_outline_transparency": 0.61,
+            "font_size_px": 11.0,
+            "font_brightness": 0.88,
+            "editor_background_color": "#ffffff",
+            "editor_background_brightness": 0.08,
+            "editor_background_transparency": 0.0,
+            "selected_node_outline_width_px": 3.0,
+            "selected_node_outline_brightness": 1.0,
+            "selected_node_outline_color": "#f6f5f4"
+        }))
+        .unwrap();
+
+        assert_eq!(settings.label_size_scale, 1.0);
+        validate_text_editor_settings(&settings).unwrap();
+    }
 }
 
 #[tauri::command]
