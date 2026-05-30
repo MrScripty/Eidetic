@@ -3932,6 +3932,11 @@ Implementation order:
   the combined workspace projection and report timeline projection metadata in
   renderer status while preserving the existing graph lifecycle, command drain,
   and projection update paths.
+- Completed: graph renderer projection delivery now loads the backend-owned
+  timeline render projection alongside the bible graph projection and writes a
+  combined workspace projection through the graph/workspace host. Svelte still
+  requests graph focus/filter state only; it does not push independent
+  renderer projections.
 - Remove the separate native timeline renderer host only after the unified
   workspace renderer covers timeline projection, interaction, and command
   behavior.

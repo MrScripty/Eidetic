@@ -1,10 +1,9 @@
 use std::sync::Mutex;
 
-use eidetic_core::contracts::{
-    BibleGraphNodeId, BibleRenderGraphProjection, BibleRenderGraphProjectionRequest,
-};
-use eidetic_server::bible_render_graph_projection;
+use eidetic_bevy_bible_graph::BibleGraphWorkspaceProjection;
+use eidetic_core::contracts::{BibleGraphNodeId, BibleRenderGraphProjectionRequest};
 use eidetic_server::state::AppState;
+use eidetic_server::{bible_render_graph_projection, projection_service};
 use tauri::Manager;
 
 use crate::bevy_graph_host::{BibleGraphHostStatus, DesktopBibleGraphRendererOwner};
@@ -29,8 +28,12 @@ impl GraphRendererProjectionOwner {
         request: BibleRenderGraphProjectionRequest,
     ) -> Result<BibleGraphHostStatus, CommandError> {
         self.replace_request(request.clone());
-        let projection = self.load_projection(request).await?;
-        write_graph_renderer_projection(app, projection, GraphRendererProjectionWriteMode::Seed)
+        let projection = self.load_workspace_projection(request).await?;
+        write_graph_renderer_workspace_projection(
+            app,
+            projection,
+            GraphRendererProjectionWriteMode::Seed,
+        )
     }
 
     pub async fn replace_request_and_refresh(
@@ -126,23 +129,29 @@ impl GraphRendererProjectionOwner {
             return Ok(status);
         }
 
-        let projection = self.load_projection(request).await?;
-        write_graph_renderer_projection(
+        let projection = self.load_workspace_projection(request).await?;
+        write_graph_renderer_workspace_projection(
             app,
             projection,
             GraphRendererProjectionWriteMode::UpdateOpen,
         )
     }
 
-    async fn load_projection(
+    async fn load_workspace_projection(
         &self,
         request: BibleRenderGraphProjectionRequest,
-    ) -> Result<BibleRenderGraphProjection, CommandError> {
-        let envelope =
+    ) -> Result<BibleGraphWorkspaceProjection, CommandError> {
+        let graph_envelope =
             bible_render_graph_projection::bible_render_graph_projection(&self.app_state, request)
                 .await
                 .map_err(CommandError::from)?;
-        Ok(envelope.payload)
+        let timeline_envelope = projection_service::timeline_render_projection(&self.app_state)
+            .await
+            .map_err(CommandError::from)?;
+        Ok(BibleGraphWorkspaceProjection {
+            graph: graph_envelope.payload,
+            timeline: Some(timeline_envelope.payload),
+        })
     }
 }
 
@@ -219,17 +228,17 @@ pub async fn update_active_graph_renderer_selected_node(
         .await
 }
 
-fn write_graph_renderer_projection(
+fn write_graph_renderer_workspace_projection(
     app: &tauri::AppHandle,
-    projection: BibleRenderGraphProjection,
+    projection: BibleGraphWorkspaceProjection,
     mode: GraphRendererProjectionWriteMode,
 ) -> Result<BibleGraphHostStatus, CommandError> {
     let result = match mode {
         GraphRendererProjectionWriteMode::Seed => {
-            graph_renderer_owner(app)?.set_projection(projection)
+            graph_renderer_owner(app)?.set_workspace_projection(projection)
         }
         GraphRendererProjectionWriteMode::UpdateOpen => {
-            graph_renderer_owner(app)?.update_projection_if_open(projection)
+            graph_renderer_owner(app)?.update_workspace_projection_if_open(projection)
         }
     };
 

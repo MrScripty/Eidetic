@@ -372,3 +372,6 @@ Current implementation progress:
 - Completed: the graph renderer crate has a first workspace projection boundary
   that can receive graph projection data and optional timeline projection
   metadata without changing current graph behavior.
+- Completed: desktop graph renderer projection delivery now seeds and refreshes
+  the workspace renderer with backend-owned graph and timeline projections
+  together.
