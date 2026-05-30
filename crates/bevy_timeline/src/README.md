@@ -34,6 +34,14 @@ projections and emit validated timeline commands.
 Keep timeline renderer behavior in a dedicated Bevy crate with a headless app
 facade for tests and native window helpers for the Tauri host.
 
+### Complection Review
+
+`tests/native_command.rs` remains a single scenario suite because the repeated
+fixture setup validates one boundary: native command intents must be constrained
+by the active backend projection. Splitting the tests by operation type would
+not let a reader ignore a different invariant; the shared fixture construction
+is the invariant under review.
+
 ## Alternatives Rejected
 
 - Moving timeline rendering into backend services: rejected because rendering

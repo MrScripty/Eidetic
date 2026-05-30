@@ -1291,25 +1291,29 @@ fn native_node_text_editor_cursor_helpers_preserve_lines_and_columns() {
     let notes_index = text.find("notes").unwrap();
 
     assert_eq!(
-        crate::native_render::bible_graph_native_text_editor_index_from_position(
+        crate::native_text_editor::bible_graph_native_text_editor_index_from_position(
             text,
             Vec2::new(0.0, 20.0),
         ),
         keeps_index
     );
     assert_eq!(
-        crate::native_render::bible_graph_native_text_editor_index_from_position(
+        crate::native_text_editor::bible_graph_native_text_editor_index_from_position(
             text,
             Vec2::new(50.0, 20.0),
         ),
         notes_index
     );
     assert_eq!(
-        crate::native_render::bible_graph_native_text_editor_caret_position(text, notes_index, 0.0),
+        crate::native_text_editor::bible_graph_native_text_editor_caret_position(
+            text,
+            notes_index,
+            0.0,
+        ),
         Vec2::new(51.0, 20.0)
     );
     assert_eq!(
-        crate::native_render::bible_graph_native_text_editor_caret_position(
+        crate::native_text_editor::bible_graph_native_text_editor_caret_position(
             text,
             notes_index,
             12.0,

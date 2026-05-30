@@ -13,6 +13,8 @@ mod visual_3d;
 
 #[cfg(feature = "native_render")]
 mod native_render;
+#[cfg(feature = "native_render")]
+mod native_text_editor;
 
 #[cfg(feature = "native_render")]
 pub use native_render::{

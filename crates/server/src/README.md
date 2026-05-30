@@ -23,6 +23,7 @@ domain model in `eidetic-core`.
 | `agent_premise_workflow.rs` | First premise graph-context workflow slice over backend graph reads, reviewable proposals, and harness history. |
 | `export_service.rs` | Host-neutral PDF export behavior consumed by Tauri commands. |
 | `reference_service.rs` | Host-neutral reference document list/upload/delete behavior consumed by Tauri commands. |
+| `affect_store.rs` | SQLite affect value, dependency, and proposal persistence with revision-history writes. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
@@ -60,12 +61,28 @@ crate. Milestone 7 removed the standalone listener, static host, WebSocket host,
 Axum route adapters, and route tests after the desktop frontend moved to Tauri
 commands/events and service-level tests covered backend behavior.
 
+### Complection Review
+
+`affect_store.rs` is dense but currently coherent: schema setup, command
+recording, row mapping, revision generation, target encoding, and proposal
+status transitions all protect the same SQLite transaction invariant. A reader
+changing affect persistence must reason about the persisted row shape and the
+history revisions together.
+
+The next useful boundary is not a line-count split. If affect targets or
+proposal lifecycle rules grow independently, extract target/endpoint encoding
+or proposal status transitions behind a small store-local contract. Until then,
+splitting SQL fragments, row mapping, and revisions into separate files would
+increase coupling by hiding the transaction invariant.
+
 ## Alternatives Rejected
 - Embedding persistence and host logic in `eidetic-core`: rejected because it would make the core crate host-specific.
 - Splitting persistence and Yjs modules during the standards pass: rejected because contract correctness took priority over structural churn.
 - Embedding Axum in the Tauri desktop runtime: rejected by Milestone 7 because
   production desktop transport uses Tauri command/event contracts, not a
   loopback HTTP/WebSocket server.
+- Splitting `affect_store.rs` solely by size: rejected because the current
+  coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
 - New backend behavior must be added behind service APIs before being exposed

@@ -36,6 +36,16 @@ The UI needs one place where backend-backed shapes, local UI constants, and shar
 
 Keep shared UI contracts, stores, and feature components under `ui/src/lib` and route layout-sensitive constants through `types.ts` so rendering code uses one source of truth for timeline sizing and related chrome.
 
+### Complection Review
+
+Large frontend test files such as `commandApi.test.ts` and
+`stores/timelineRenderProjection.svelte.test.ts` stay grouped by boundary
+contract rather than operation count. `commandApi.test.ts` verifies browser-side
+command envelopes, transport errors, and projection returns through one command
+helper surface. `timelineRenderProjection.svelte.test.ts` verifies the store's
+refresh/cache/error behavior around one backend projection. Splitting either by
+raw size would separate scenarios that share the same contract fixtures.
+
 ## Alternatives Rejected
 
 - Putting timeline geometry constants directly inside individual Svelte components: rejected because it would make synchronized layout changes error-prone.

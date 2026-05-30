@@ -281,17 +281,17 @@ reasoning boundaries, not size.
 
 **Tasks:**
 
-- [ ] Review `crates/bevy_bible_graph/src/native_render.rs` by concern:
+- [x] Review `crates/bevy_bible_graph/src/native_render.rs` by concern:
   app/window lifecycle, camera navigation, hit testing, text editor behavior,
   projection rebuild, material cache, and command emission.
-- [ ] Review `crates/server/src/affect_store.rs` by concern:
+- [x] Review `crates/server/src/affect_store.rs` by concern:
   schema setup, transaction invariants, row mapping, revision generation, and
   enum/target encoding.
-- [ ] Review large test files for fixture builders or scenario grouping that
+- [x] Review large test files for fixture builders or scenario grouping that
   would clarify invariants.
-- [ ] Extract only when the new boundary lets readers ignore an independent
+- [x] Extract only when the new boundary lets readers ignore an independent
   concern safely.
-- [ ] Record keep-together decisions in the relevant module README when a large
+- [x] Record keep-together decisions in the relevant module README when a large
   file remains coherent.
 
 **Verification:**
@@ -300,7 +300,10 @@ reasoning boundaries, not size.
 - No extraction is justified solely by line count.
 - Existing behavior tests continue to pass.
 
-**Status:** Not started.
+**Status:** Complete. Extracted graph native text editor cursor/geometry
+helpers because they are pure behavior with focused tests. Kept the remaining
+dense renderer, affect store, and large test suites together where their
+coupling is an explicit renderer, transaction, or contract-test invariant.
 
 ## Execution Notes
 
@@ -374,6 +377,14 @@ reasoning boundaries, not size.
 - 2026-05-30: Added labels for reference material form controls, accessible
   names for icon-only shell/sidebar/toast/reference actions, and explicit return
   types for exported store and server event handler APIs.
+- 2026-05-30: Enabled `noImplicitReturns`, `noUnusedParameters`, and
+  `svelte/valid-compile`. Deferred `exactOptionalPropertyTypes` after the trial
+  exposed third-party Vite/Rollup declaration incompatibility and repo-owned
+  optional state models that currently assign explicit `undefined`.
+- 2026-05-30: Completed dense-file complection review. Extracted graph native
+  text editor cursor/geometry helpers to a focused module and recorded
+  keep-together decisions for remaining native renderer behavior,
+  `affect_store.rs`, and large contract test suites.
 
 ## Commit Cadence Notes
 
@@ -394,22 +405,36 @@ reasoning boundaries, not size.
 
 ### Completed
 
-- Plan drafted.
+- All milestones completed.
+- CI, hooks, release/dependency governance, documentation traceability,
+  cross-platform gates, async shutdown, frontend accessibility/type-safety, and
+  dense-file complection review are represented in code, tooling, or module
+  READMEs.
 
 ### Deviations
 
-- None.
+- `exactOptionalPropertyTypes` was considered but not enabled because the trial
+  found dependency declaration incompatibility and a separate optional-state
+  normalization task.
 
 ### Follow-Ups
 
-- Execute milestones in order, starting with hard verification failures.
+- Track the remaining low-severity `cookie` advisory until SvelteKit provides a
+  compatible non-breaking update path.
+- Normalize optional frontend store state before retrying
+  `exactOptionalPropertyTypes`.
 
 ### Verification Summary
 
-- Not yet run for implementation; this is a planning artifact.
+- Slice-level verification passed throughout implementation. Final full
+  verification is tracked in the closing commit and should include Rust
+  fmt/clippy/check, launcher tests, frontend lint/format/typecheck/tests,
+  decision traceability, and dependency checks.
 
 ### Traceability Links
 
-- Module README updated: N/A.
+- Module README updated: `crates/bevy_bible_graph/src/README.md`,
+  `crates/server/src/README.md`, `crates/bevy_timeline/src/README.md`,
+  `ui/src/lib/README.md`, plus source README coverage from Milestone 3.
 - ADR added/updated: N/A.
 - PR notes completed per `templates/PULL_REQUEST_TEMPLATE.md`: N/A.
