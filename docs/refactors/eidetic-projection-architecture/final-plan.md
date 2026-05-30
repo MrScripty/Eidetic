@@ -3937,6 +3937,11 @@ Implementation order:
   combined workspace projection through the graph/workspace host. Svelte still
   requests graph focus/filter state only; it does not push independent
   renderer projections.
+- Completed: the graph renderer crate now has renderer-local timeline
+  presentation mode state for camera-anchored panel, world-anchored timeline,
+  and bounded transition progress. This keeps the future flat-panel-to-3D-NLE
+  animation model explicit before adding timeline meshes to the workspace
+  scene.
 - Remove the separate native timeline renderer host only after the unified
   workspace renderer covers timeline projection, interaction, and command
   behavior.

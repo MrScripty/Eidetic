@@ -20,6 +20,51 @@ pub struct BibleGraphWorkspaceTimelineSceneStats {
     pub total_duration_ms: u64,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BibleGraphWorkspaceTimelineAnchor {
+    #[default]
+    CameraAnchoredPanel,
+    WorldAnchoredTimeline,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum BibleGraphWorkspaceTimelinePresentationMode {
+    CameraAnchoredPanel,
+    WorldAnchoredTimeline,
+    Transitioning {
+        from: BibleGraphWorkspaceTimelineAnchor,
+        to: BibleGraphWorkspaceTimelineAnchor,
+        progress: f32,
+    },
+}
+
+impl Default for BibleGraphWorkspaceTimelinePresentationMode {
+    fn default() -> Self {
+        Self::CameraAnchoredPanel
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Resource)]
+pub struct BibleGraphWorkspaceTimelinePresentation {
+    pub mode: BibleGraphWorkspaceTimelinePresentationMode,
+    pub camera_distance: f32,
+    pub viewport_offset_x: f32,
+    pub viewport_offset_y: f32,
+}
+
+impl Default for BibleGraphWorkspaceTimelinePresentation {
+    fn default() -> Self {
+        Self {
+            mode: BibleGraphWorkspaceTimelinePresentationMode::CameraAnchoredPanel,
+            camera_distance: 420.0,
+            viewport_offset_x: 0.0,
+            viewport_offset_y: -0.62,
+        }
+    }
+}
+
 #[derive(Resource, Default)]
 struct BibleGraphWorkspaceTimelineState {
     projection: Option<TimelineRenderProjection>,
@@ -28,6 +73,7 @@ struct BibleGraphWorkspaceTimelineState {
 
 pub(crate) fn insert_workspace_resources(app: &mut bevy::prelude::App) {
     app.insert_resource(BibleGraphWorkspaceTimelineState::default());
+    app.insert_resource(BibleGraphWorkspaceTimelinePresentation::default());
 }
 
 impl BibleGraphRendererApp {
@@ -55,6 +101,25 @@ impl BibleGraphRendererApp {
             .is_some()
     }
 
+    pub fn workspace_timeline_presentation(&self) -> BibleGraphWorkspaceTimelinePresentation {
+        *self
+            .app
+            .world()
+            .resource::<BibleGraphWorkspaceTimelinePresentation>()
+    }
+
+    pub fn set_workspace_timeline_presentation_mode(
+        &mut self,
+        mode: BibleGraphWorkspaceTimelinePresentationMode,
+    ) -> Result<(), BibleGraphRendererError> {
+        validate_timeline_presentation_mode(mode)?;
+        self.app
+            .world_mut()
+            .resource_mut::<BibleGraphWorkspaceTimelinePresentation>()
+            .mode = mode;
+        Ok(())
+    }
+
     fn set_workspace_timeline_projection(&mut self, projection: Option<TimelineRenderProjection>) {
         let scene_stats = projection
             .as_ref()
@@ -66,6 +131,19 @@ impl BibleGraphRendererApp {
             .resource_mut::<BibleGraphWorkspaceTimelineState>();
         timeline_state.projection = projection;
         timeline_state.scene_stats = scene_stats;
+    }
+}
+
+fn validate_timeline_presentation_mode(
+    mode: BibleGraphWorkspaceTimelinePresentationMode,
+) -> Result<(), BibleGraphRendererError> {
+    match mode {
+        BibleGraphWorkspaceTimelinePresentationMode::Transitioning { progress, .. }
+            if !(0.0..=1.0).contains(&progress) =>
+        {
+            Err(BibleGraphRendererError::InvalidTimelinePresentationProgress)
+        }
+        _ => Ok(()),
     }
 }
 

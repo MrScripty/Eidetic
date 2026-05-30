@@ -375,3 +375,6 @@ Current implementation progress:
 - Completed: desktop graph renderer projection delivery now seeds and refreshes
   the workspace renderer with backend-owned graph and timeline projections
   together.
+- Completed: workspace timeline presentation state now models camera-anchored,
+  world-anchored, and transitioning modes inside the renderer crate without
+  making that state durable or frontend-owned.

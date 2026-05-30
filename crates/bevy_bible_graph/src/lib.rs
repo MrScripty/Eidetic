@@ -50,6 +50,10 @@ pub use visual_3d::{
     BibleGraphVisual3dSnapshot, build_bible_graph_visual_3d_snapshot,
 };
 pub use workspace::{BibleGraphWorkspaceProjection, BibleGraphWorkspaceTimelineSceneStats};
+pub use workspace::{
+    BibleGraphWorkspaceTimelineAnchor, BibleGraphWorkspaceTimelinePresentation,
+    BibleGraphWorkspaceTimelinePresentationMode,
+};
 
 pub const BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;
 pub const BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT: usize = 500;
@@ -126,6 +130,8 @@ pub enum BibleGraphRendererError {
     },
     #[error("bible graph renderer command queue is full")]
     CommandQueueFull,
+    #[error("workspace timeline transition progress must be between 0.0 and 1.0")]
+    InvalidTimelinePresentationProgress,
 }
 
 #[derive(Resource, Default)]

@@ -63,6 +63,45 @@ fn renderer_app_receives_workspace_projection_without_replacing_graph_behavior()
 }
 
 #[test]
+fn renderer_app_tracks_workspace_timeline_presentation_mode() {
+    let mut renderer = BibleGraphRendererApp::new();
+
+    assert_eq!(
+        renderer.workspace_timeline_presentation(),
+        BibleGraphWorkspaceTimelinePresentation::default()
+    );
+
+    renderer
+        .set_workspace_timeline_presentation_mode(
+            BibleGraphWorkspaceTimelinePresentationMode::Transitioning {
+                from: BibleGraphWorkspaceTimelineAnchor::CameraAnchoredPanel,
+                to: BibleGraphWorkspaceTimelineAnchor::WorldAnchoredTimeline,
+                progress: 0.5,
+            },
+        )
+        .unwrap();
+
+    assert_eq!(
+        renderer.workspace_timeline_presentation().mode,
+        BibleGraphWorkspaceTimelinePresentationMode::Transitioning {
+            from: BibleGraphWorkspaceTimelineAnchor::CameraAnchoredPanel,
+            to: BibleGraphWorkspaceTimelineAnchor::WorldAnchoredTimeline,
+            progress: 0.5,
+        }
+    );
+    assert_eq!(
+        renderer.set_workspace_timeline_presentation_mode(
+            BibleGraphWorkspaceTimelinePresentationMode::Transitioning {
+                from: BibleGraphWorkspaceTimelineAnchor::CameraAnchoredPanel,
+                to: BibleGraphWorkspaceTimelineAnchor::WorldAnchoredTimeline,
+                progress: 1.25,
+            },
+        ),
+        Err(BibleGraphRendererError::InvalidTimelinePresentationProgress)
+    );
+}
+
+#[test]
 fn renderer_app_uses_bounded_command_queue() {
     assert_eq!(BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, 128);
 
