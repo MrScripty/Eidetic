@@ -378,3 +378,6 @@ Current implementation progress:
 - Completed: workspace timeline presentation state now models camera-anchored,
   world-anchored, and transitioning modes inside the renderer crate without
   making that state durable or frontend-owned.
+- Completed: the native graph/workspace scene now includes a 3D timeline root
+  panel that tracks the graph camera in camera-anchored mode. It is the visual
+  root for later timeline tracks/clips, not a DOM/Svelte overlay.

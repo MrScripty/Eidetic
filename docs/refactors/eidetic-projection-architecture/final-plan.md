@@ -3942,6 +3942,11 @@ Implementation order:
   and bounded transition progress. This keeps the future flat-panel-to-3D-NLE
   animation model explicit before adding timeline meshes to the workspace
   scene.
+- Completed: the native graph/workspace Bevy scene now spawns a real 3D
+  timeline root panel and updates its transform from the graph camera when the
+  renderer is in camera-anchored presentation mode. This is a placeholder
+  scene root only; timeline tracks, clips, hit testing, and commands still need
+  to move into the workspace renderer.
 - Remove the separate native timeline renderer host only after the unified
   workspace renderer covers timeline projection, interaction, and command
   behavior.

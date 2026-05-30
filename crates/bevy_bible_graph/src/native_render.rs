@@ -38,6 +38,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
     BibleGraphRendererCommand, BibleGraphRendererError, BibleGraphVisual3dEdgeClass,
+    BibleGraphWorkspaceTimelinePresentation, BibleGraphWorkspaceTimelinePresentationMode,
     build_bible_graph_visual_3d_snapshot,
     native_text_editor::{
         NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX, NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX,
@@ -56,6 +57,9 @@ const NATIVE_CAMERA_EDGE_PAN_SPEED: f32 = 520.0;
 const NATIVE_LABEL_SCREEN_OFFSET_PX: f32 = 18.0;
 const NATIVE_NODE_TITLE_DOUBLE_CLICK_SECONDS: f64 = 0.45;
 const NATIVE_NODE_TEXT_SAVE_DEBOUNCE_SECONDS: f64 = 0.8;
+const NATIVE_WORKSPACE_TIMELINE_PANEL_WIDTH: f32 = 760.0;
+const NATIVE_WORKSPACE_TIMELINE_PANEL_HEIGHT: f32 = 150.0;
+const NATIVE_WORKSPACE_TIMELINE_PANEL_DEPTH: f32 = 4.0;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
@@ -242,6 +246,9 @@ pub struct BibleGraphNativeCamera;
 
 #[derive(Component)]
 pub struct BibleGraphNativeLabelOverlayCamera;
+
+#[derive(Component)]
+pub struct BibleGraphNativeWorkspaceTimelineRoot;
 
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeVisualEntity;
@@ -546,6 +553,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeAssetCache::default());
         app.insert_resource(BibleGraphNativeNodeTitleEdit::default());
         app.insert_resource(BibleGraphNativeTextEditorSettingsState::default());
+        app.init_resource::<BibleGraphWorkspaceTimelinePresentation>();
         app.insert_resource(ClearColor(Color::srgb(0.067, 0.082, 0.114)));
         app.configure_sets(
             Update,
@@ -588,6 +596,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
                 recover_bible_graph_native_camera,
                 frame_bible_graph_native_camera_on_selected,
                 apply_bible_graph_native_camera_commands,
+                position_bible_graph_native_workspace_timeline_panel,
             )
                 .in_set(BibleGraphNativeRenderSystem::Camera),
         );
@@ -679,6 +688,8 @@ pub fn run_controlled_minimal_bible_graph_native_window(
 fn spawn_bible_graph_renderer_window_scene(
     mut commands: Commands,
     mut status: ResMut<BibleGraphNativeRendererWindowStatus>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<BibleGraphNativeMaterial>>,
 ) {
     commands.spawn((
         Camera3d::default(),
@@ -701,7 +712,66 @@ fn spawn_bible_graph_renderer_window_scene(
         camera_entity: label_camera_entity,
     });
     commands.spawn((PointLight::default(), Transform::from_xyz(0.0, 0.0, 700.0)));
+    commands.spawn((
+        BibleGraphNativeWorkspaceTimelineRoot,
+        Mesh3d(meshes.add(Cuboid::new(
+            NATIVE_WORKSPACE_TIMELINE_PANEL_WIDTH,
+            NATIVE_WORKSPACE_TIMELINE_PANEL_HEIGHT,
+            NATIVE_WORKSPACE_TIMELINE_PANEL_DEPTH,
+        ))),
+        MeshMaterial3d(materials.add(BibleGraphNativeMaterial {
+            color: LinearRgba::new(0.08, 0.1, 0.14, 0.92),
+        })),
+        Transform::from_xyz(0.0, -280.0, 120.0),
+    ));
     status.camera_count = 2;
+}
+
+fn position_bible_graph_native_workspace_timeline_panel(
+    presentation: Res<BibleGraphWorkspaceTimelinePresentation>,
+    cameras: Query<&Transform, With<BibleGraphNativeCamera>>,
+    mut panels: Query<
+        &mut Transform,
+        (
+            With<BibleGraphNativeWorkspaceTimelineRoot>,
+            Without<BibleGraphNativeCamera>,
+        ),
+    >,
+) {
+    let Ok(camera_transform) = cameras.single() else {
+        return;
+    };
+    let Some(panel_transform) =
+        native_workspace_timeline_panel_transform(camera_transform, &presentation)
+    else {
+        return;
+    };
+
+    for mut transform in &mut panels {
+        *transform = panel_transform;
+    }
+}
+
+pub fn native_workspace_timeline_panel_transform(
+    camera_transform: &Transform,
+    presentation: &BibleGraphWorkspaceTimelinePresentation,
+) -> Option<Transform> {
+    if matches!(
+        presentation.mode,
+        BibleGraphWorkspaceTimelinePresentationMode::WorldAnchoredTimeline
+    ) {
+        return None;
+    }
+
+    let forward = camera_transform.rotation * Vec3::NEG_Z;
+    let right = camera_transform.rotation * Vec3::X;
+    let up = camera_transform.rotation * Vec3::Y;
+    let translation = camera_transform.translation
+        + forward * presentation.camera_distance
+        + right * (presentation.viewport_offset_x * presentation.camera_distance)
+        + up * (presentation.viewport_offset_y * presentation.camera_distance);
+
+    Some(Transform::from_translation(translation).looking_at(camera_transform.translation, up))
 }
 
 fn mark_bible_graph_native_window_ready(control: Option<Res<BibleGraphNativeWindowControl>>) {

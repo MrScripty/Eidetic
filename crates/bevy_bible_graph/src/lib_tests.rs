@@ -571,11 +571,39 @@ fn native_render_plugin_records_3d_window_scene_intent() {
     );
     assert_eq!(
         app.world_mut()
+            .query_filtered::<(), With<BibleGraphNativeWorkspaceTimelineRoot>>()
+            .iter(app.world())
+            .count(),
+        1
+    );
+    assert_eq!(
+        app.world_mut()
             .query_filtered::<(), With<bevy::prelude::PointLight>>()
             .iter(app.world())
             .count(),
         1
     );
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+fn native_workspace_timeline_panel_tracks_camera_anchor_pose() {
+    let camera_transform = bevy::prelude::Transform::from_xyz(0.0, 0.0, 900.0)
+        .looking_at(bevy::prelude::Vec3::ZERO, bevy::prelude::Vec3::Y);
+    let presentation = BibleGraphWorkspaceTimelinePresentation::default();
+
+    let panel_transform =
+        native_workspace_timeline_panel_transform(&camera_transform, &presentation).unwrap();
+
+    assert!((panel_transform.translation.x - 0.0).abs() < 0.01);
+    assert!((panel_transform.translation.y + 260.4).abs() < 0.01);
+    assert!((panel_transform.translation.z - 480.0).abs() < 0.01);
+
+    let world_mode = BibleGraphWorkspaceTimelinePresentation {
+        mode: BibleGraphWorkspaceTimelinePresentationMode::WorldAnchoredTimeline,
+        ..presentation
+    };
+    assert!(native_workspace_timeline_panel_transform(&camera_transform, &world_mode).is_none());
 }
 
 #[cfg(feature = "native_render")]
@@ -714,14 +742,14 @@ fn controlled_native_window_app_rebuilds_projection_visuals_from_control() {
             .query_filtered::<(), With<bevy::prelude::Mesh3d>>()
             .iter(app.world())
             .count(),
-        3
+        4
     );
     assert_eq!(
         app.world_mut()
             .query_filtered::<(), With<bevy::prelude::MeshMaterial3d<BibleGraphNativeMaterial>>>()
             .iter(app.world())
             .count(),
-        3
+        4
     );
     assert_eq!(
         app.world_mut()
@@ -812,7 +840,7 @@ fn controlled_native_window_renders_projection_derived_structural_edges() {
             .query_filtered::<(), With<bevy::prelude::Mesh3d>>()
             .iter(app.world())
             .count(),
-        3
+        4
     );
 }
 
