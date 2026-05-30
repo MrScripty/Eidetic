@@ -337,7 +337,12 @@ Default projection:
 
 ## Relationship To Timeline
 
-The 3D bible graph should be separate from the Bevy timeline renderer, but both should share the same story model.
+The 3D bible graph and timeline should share one Bevy workspace renderer. The
+graph is world-space 3D content. The timeline is also real 3D scene geometry,
+but its default presentation is a camera-anchored flat panel that faces the
+camera and appears above the graph. This preserves the future path for the
+timeline to animate into a world-relative 3D NLE surface where graph nodes,
+edges, clips, and clip-contained objects can spatially relate to each other.
 
 Possible cross-links:
 
@@ -366,10 +371,10 @@ Specific graph-view requirements:
 - Persisted graph facts, relationships, snapshots, asset refs, and user-adjusted layout data must be saved only through backend commands.
 - Direct graph editing in Bevy, if added, must emit commands and wait for backend-confirmed projection updates.
 - Renderer bridge payloads must be validated at every boundary and use explicit contract shapes.
-- The floating Bevy graph window is a renderer-only projection surface. It may
-  own camera, hover, animation, local layout simulation, and disposable ECS
-  resources, but not durable graph facts, history, selection that affects
-  generation, or persistence.
+- The floating Bevy workspace window is a renderer-only projection surface. It
+  may own camera, hover, animation, local layout simulation, timeline
+  presentation mode, and disposable ECS resources, but not durable graph facts,
+  timeline facts, history, selection that affects generation, or persistence.
 - Floating renderer lifecycle must have one desktop owner, bounded command
   queues, deterministic shutdown, panic reporting, checked dimension handling,
   and typed status for unsupported platform capabilities.
@@ -758,9 +763,6 @@ Before implementing each remaining Milestone 9 slice, confirm:
 
 ## Open Questions
 
-- Should the Bevy 3D graph and Bevy timeline share one floating renderer host
-  with separate windows, or remain separate renderer owners behind the same
-  command/projection contract?
 - Should the graph use real force simulation, deterministic layout, or both?
 - Should user-adjusted node positions be persisted?
 - Should the graph support custom visual themes per project?

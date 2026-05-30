@@ -24,7 +24,12 @@ Use Svelte for the surrounding application shell, panels, forms, and
 inspectors, but move the main NLE/timeline visual surface to a realtime
 renderer.
 
-Bevy is the target renderer for the main timeline visual surface.
+Bevy is the target renderer for the main timeline visual surface. The timeline
+should not be implemented as a 2D overlay outside the scene. It should be real
+3D Bevy geometry inside the same workspace renderer as the bible graph. Its
+initial presentation mode can make it look like a flat panel by anchoring it to
+the camera, but the same entities must be able to animate into a world-relative
+3D NLE surface later.
 
 Hard requirements:
 
@@ -61,7 +66,7 @@ Svelte should own:
 
 Bevy should own:
 
-- main timeline visual surface,
+- main timeline visual surface as 3D scene geometry,
 - track and clip rendering,
 - realtime interaction hit-testing,
 - drag/resize/trim/split interactions,
@@ -71,6 +76,11 @@ Bevy should own:
 - dense markers and annotations,
 - zoom/pan camera behavior,
 - realtime visual effects and previews.
+
+The target Bevy app is a workspace renderer rather than a separate graph window
+plus separate timeline window. The graph scene, timeline scene, shared camera,
+presentation controller, and input router live under one native renderer
+lifecycle while continuing to consume backend-owned projections.
 
 The server/core remains authoritative for project state. Bevy renders a
 projection, then dispatches command intents through the backend-owned desktop
@@ -84,8 +94,11 @@ The Bevy scene should render a projection of timeline state, not replace the dom
 Possible ECS components:
 
 ```text
+WorkspaceRenderer
+WorkspaceCamera
+TimelinePresentationMode
+TimelineRoot
 TimelineViewport
-TimelineCamera
 TrackEntity
 ClipEntity
 ClipTimeRange
@@ -98,6 +111,22 @@ Marker
 OverlayLayer
 HitTarget
 ```
+
+`TimelinePresentationMode` should explicitly support:
+
+```text
+CameraAnchoredPanel
+WorldAnchoredTimeline
+Transitioning { from, to, progress }
+```
+
+In `CameraAnchoredPanel`, the timeline root transform is derived from the active
+camera each frame so the timeline appears as a stable flat panel in the view.
+In `WorldAnchoredTimeline`, the timeline root uses a normal world transform so
+future graph/timeline visualizations can draw 3D edges to clips and place
+objects inside clips. `Transitioning` interpolates the same timeline root and
+material/depth policy between those modes; it must not swap to a different
+renderer or duplicate timeline entities.
 
 The underlying data remains:
 
@@ -178,18 +207,22 @@ Production target:
 - Tauri owns the standalone desktop application shell.
 - Svelte remains the WebView UI shell for non-renderer panels and accessible
   command alternatives.
-- Bevy runs as an app-managed floating native renderer window, not as a browser/
-  WASM canvas, not as a WebView-embedded child surface, and not as a renderer
-  sidecar that owns business logic.
+- Bevy runs as an app-managed floating native workspace renderer window, not as
+  a browser/WASM canvas, not as a WebView-embedded child surface, and not as a
+  renderer sidecar that owns business logic.
+- The workspace renderer contains both the bible graph scene and the timeline
+  scene. The timeline is rendered as real 3D geometry with a camera-anchored
+  panel presentation mode first, not as a Svelte overlay, DOM layer, or separate
+  timeline window.
 - The floating renderer host is owned by the desktop runtime/composition root.
   Svelte may launch, focus, close, and display status for the renderer window,
   but must not own renderer lifecycle, durable timeline state, command queues,
   or projection subscriptions.
-- The timeline renderer must reuse the desktop-owned native renderer runner
-  proven for the bible graph. The runner boundary separates Tauri command/reply
-  handling from the long-lived Bevy/winit event loop through bounded channels,
-  so an open renderer window cannot block status, focus, close, or projection
-  request commands.
+- The timeline scene must reuse the desktop-owned native renderer runner proven
+  for the bible graph by moving into the shared workspace renderer. The runner
+  boundary separates Tauri command/reply handling from the long-lived
+  Bevy/winit event loop through bounded channels, so an open renderer window
+  cannot block status, focus, close, or projection request commands.
 - The desktop renderer host owns the active projection subscription. Svelte may
   request workspace/focus/filter changes and render accessible alternatives,
   but it must not push independent timeline or graph projections into Bevy in
@@ -200,6 +233,8 @@ Rejected production paths:
 - Bevy compiled to WASM and rendered into a Svelte canvas.
 - Native Bevy child surfaces embedded/inset inside the Tauri WebView.
 - Split-process native Bevy renderer IPC as the production renderer path.
+- A separate production Bevy timeline window after the unified workspace
+  renderer covers timeline rendering.
 
 ## Interaction Contract
 
@@ -256,8 +291,6 @@ Specific renderer requirements:
 
 ## Open Questions
 
-- Should the graph and timeline use separate floating renderer windows, or a
-  shared floating renderer window with graph/timeline modes?
 - How should text rendering be handled for dense clip labels?
 - Should timeline hit-testing live entirely in Bevy?
 - How should Bevy receive state updates: full snapshots, diffs, or command/event streams?
@@ -283,18 +316,30 @@ Recommended path:
    as a second writer.
 6. Define any missing renderer-facing timeline projection DTOs around context
    chunks, overlays, and script-generation coverage.
-7. Prototype a native Bevy timeline renderer window with read-only tracks/context
-   chunks.
-8. Add pan/zoom/playhead behavior.
-9. Add selection and hit-testing.
-10. Add move/resize/split command dispatch for context chunks.
-11. Add relationship curves and arc overlays.
-12. Add script coverage/staleness overlays.
-13. Add advanced overlays such as valence/arousal after backend-owned affect
+7. Define the unified workspace renderer contract that combines bible graph,
+   timeline, active context, playhead, and selection projections without moving
+   durable state into Bevy.
+8. Move timeline scene rendering into the workspace renderer as real 3D
+   geometry under a `TimelineRoot`.
+9. Add the camera-anchored panel presentation mode so the 3D timeline initially
+   appears as a stable flat panel facing the camera.
+10. Add the world-anchored timeline presentation mode and transition controller
+   so the same timeline entities can animate into a world-relative 3D NLE.
+11. Route workspace input through a priority hit-test router where timeline
+   panel hits are handled before graph-world hits when the panel is visually on
+   top.
+12. Preserve existing pan/zoom/playhead, selection, hit-testing, move/resize/
+   split/delete/create, relationship, and affect command paths through
+   backend-confirmed projections.
+13. Add script coverage/staleness overlays.
+14. Add advanced overlays such as valence/arousal after backend-owned affect
     contracts exist.
-14. Add keyboard-accessible Svelte command alternatives for timeline operations
+15. Add keyboard-accessible Svelte command alternatives for timeline operations
     that cannot be directly represented in the Bevy viewport.
-15. Remove the DOM/SVG timeline renderer once the Bevy renderer is active.
+16. Remove the separate timeline renderer host once the workspace renderer
+    covers timeline rendering.
+17. Remove the DOM/SVG timeline renderer once the workspace renderer is active
+    and accessibility alternatives are covered.
 
 Current implementation progress:
 
@@ -320,3 +365,7 @@ Current implementation progress:
 - Open: the temporary DOM/SVG timeline still exists as a behavioral reference
   and accessible command surface until Bevy covers the target interactions. Do
   not expand it as a parallel renderer or fallback source of timeline truth.
+- Open: the existing separate native timeline renderer should be treated as
+  transitional implementation work. The target product renderer is the unified
+  Bevy workspace renderer with the timeline scene inside the graph/workspace
+  window.

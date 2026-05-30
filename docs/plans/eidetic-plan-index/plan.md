@@ -3,8 +3,8 @@
 This file is an index for the active planning documents. The old browser-first
 Axum/WebSocket/WASM plan has been retired. Eidetic is now planned as a
 standalone Tauri desktop application with backend-owned SQLite state, Svelte as
-a projection consumer, and app-managed floating Bevy renderer windows for the
-bible graph and timeline.
+a projection consumer, and an app-managed floating Bevy workspace renderer for
+the bible graph and timeline.
 
 ## Source Of Truth
 
@@ -24,8 +24,12 @@ bible graph and timeline.
   of truth.
 - Svelte owns projection caches, local drafts, focus, filters, and accessible
   command surfaces only.
-- Bevy graph and timeline crates are leaf renderers. They consume versioned
-  backend projections and emit validated command requests only.
+- Bevy rendering is moving toward one workspace renderer. The bible graph is
+  world-space 3D content, and the timeline is real 3D scene geometry that can
+  initially present as a camera-anchored flat panel before animating into a
+  world-relative 3D NLE surface.
+- Bevy renderer crates consume versioned backend projections and emit validated
+  command requests only.
 - Tauri is the desktop composition root. It owns command/event transport,
   renderer window lifecycle, startup/shutdown, and task ownership.
 - The production application does not use Axum, local HTTP/WebSocket runtime
@@ -45,10 +49,11 @@ bible graph and timeline.
   foundation.
 - Milestone 11: Completed for affect model contracts, persistence,
   proposals, prompt integration, and timeline overlay projections.
-- Milestone 12: In progress. This is the remaining major active milestone:
-  finish the Bevy timeline renderer, keep Svelte accessibility alternatives,
-  then remove the DOM/SVG timeline only after Bevy covers the target
-  interactions.
+- Milestone 12: In progress, but replanned around a unified Bevy workspace
+  renderer. The next work is to fold timeline rendering into the graph/workspace
+  renderer as camera-anchored 3D timeline geometry, keep Svelte accessibility
+  alternatives, then remove separate timeline renderer and DOM/SVG timeline
+  paths only after the workspace renderer covers the target interactions.
 
 ## Retired Direction
 

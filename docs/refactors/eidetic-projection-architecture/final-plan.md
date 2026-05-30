@@ -3509,14 +3509,20 @@ Exit criteria:
 - Undo/redo and before/after review can trace affect changes and their
   downstream influence.
 
-## Milestone 12: Bevy Timeline Renderer
+## Milestone 12: Unified Bevy Workspace Timeline Renderer
 
-Status: In progress. The native Bevy timeline has an active floating-window
-host, projection ingestion, projection-derived visuals, renderer-local
-navigation/playhead state, command emission, relationship visuals, affect
-overlay visuals, and lifecycle smoke coverage. The remaining milestone work is
-to finish the product renderer experience and remove the DOM/SVG timeline only
-after Bevy covers the target interactions.
+Status: In progress and replanned. The native Bevy timeline has a transitional
+separate floating-window host, projection ingestion, projection-derived visuals,
+renderer-local navigation/playhead state, command emission, relationship
+visuals, affect overlay visuals, and lifecycle smoke coverage. The target
+product direction is now a unified Bevy workspace renderer: the bible graph and
+timeline render in one native Bevy window, the graph remains world-space 3D
+content, and the timeline is real 3D scene geometry with a camera-anchored flat
+panel presentation mode that can later animate into a world-relative 3D NLE.
+The remaining milestone work is to move timeline rendering into that workspace
+renderer, validate the product experience, retire the separate timeline
+renderer host, and remove the DOM/SVG timeline only after the workspace renderer
+covers the target interactions.
 
 Completed tasks:
 
@@ -3534,8 +3540,22 @@ Completed tasks:
 
 Remaining tasks:
 
-- Finish product validation for the visible Bevy timeline renderer.
-- Remove the DOM/SVG timeline renderer after Bevy covers target interactions.
+- Define the unified workspace renderer projection and host boundary for graph,
+  timeline, active context, playhead, and selection data.
+- Move timeline scene rendering into the graph/workspace Bevy renderer as real
+  3D geometry under a timeline root entity.
+- Add camera-anchored panel presentation so the timeline initially appears as a
+  stable flat panel facing the camera while still living in the 3D scene.
+- Add world-anchored timeline presentation and a transition controller so the
+  same timeline entities can animate into a world-relative 3D NLE surface.
+- Route workspace input through a shared hit-test/input router that gives the
+  timeline panel priority when it is visually on top, then falls through to
+  graph-world interactions.
+- Finish product validation for the visible unified Bevy workspace renderer.
+- Remove the separate native timeline renderer host after the workspace
+  renderer covers timeline interactions.
+- Remove the DOM/SVG timeline renderer after the workspace renderer covers
+  target interactions and Svelte accessibility alternatives remain available.
 
 Implementation order:
 
@@ -3545,9 +3565,11 @@ Implementation order:
   work.
 - Completed: remove WASM renderer bridges and wasm-only dependency paths before
   introducing the native Tauri-owned Bevy host as the supported desktop path.
-- Completed: reuse the floating renderer host from Milestone 8 for the timeline renderer
-  window. Timeline work may add timeline-specific renderer state, but must not
-  add a second lifecycle, focus, input, or command-drain framework.
+- Completed: reuse the floating renderer host from Milestone 8 for the
+  transitional timeline renderer window. Replanned: the product target is now
+  one workspace renderer window that contains both graph and timeline scenes.
+  Timeline work may add timeline-specific renderer state, but must not add a
+  second lifecycle, focus, input, or command-drain framework.
 - Do not reintroduce embedded viewport, WebView child-surface, WASM, local
   HTTP/WebSocket, or split-process renderer-sidecar paths while replacing the
   timeline. If the Milestone 8 host cannot support timeline needs, re-plan the
@@ -3901,22 +3923,29 @@ Implementation order:
   projection duration instead of trusting frontend duration constants, and the
   native renderer command bridge applies the same clamp before accepting Bevy
   `SetPlayhead` requests.
-- Remove the DOM/SVG timeline renderer and its tests only after Bevy and
-  Svelte accessibility alternatives cover the target interactions.
+- Remove the separate native timeline renderer host only after the unified
+  workspace renderer covers timeline projection, interaction, and command
+  behavior.
+- Remove the DOM/SVG timeline renderer and its tests only after the unified
+  workspace renderer and Svelte accessibility alternatives cover the target
+  interactions.
 
 Standards gates:
 
-- The native Bevy timeline host is managed through the shared floating renderer
-  host, has tracked tasks/subscriptions, bounded command queues,
+- The native Bevy workspace renderer is managed through the shared floating
+  renderer host, has tracked tasks/subscriptions, bounded command queues,
   shutdown/cancellation coverage, and no local HTTP/WebSocket/WASM transport
   fallback.
-- Timeline renderer lifecycle, status, command draining, and projection
+- Workspace renderer lifecycle, status, command draining, and projection
   subscription must remain backend/desktop-host owned. Svelte may expose
-  controls and status but must not store durable timeline renderer state or
-  mutate timeline projections optimistically.
+  controls and status but must not store durable graph/timeline renderer state
+  or mutate projections optimistically.
 - Bevy consumes projection snapshots and produces command requests only.
-  Timeline selection, clip data, arcs, relationships, affect overlays, and
-  saved layout decisions stay backend-owned.
+  Graph selection that affects generation, timeline selection, clip data, arcs,
+  relationships, affect overlays, and saved layout decisions stay backend-owned.
+- The timeline scene is real 3D geometry in the workspace renderer. Camera-
+  anchored panel mode is a presentation transform/depth policy, not a DOM,
+  Svelte, or second-renderer overlay.
 - Renderer input payloads and dimensions are validated with checked arithmetic
   before allocation or hit-test math. Malformed renderer commands are rejected
   at the backend boundary before timeline mutation.
