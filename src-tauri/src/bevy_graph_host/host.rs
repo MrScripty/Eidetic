@@ -184,7 +184,9 @@ impl DesktopBibleGraphHost {
         projection: BibleGraphWorkspaceProjection,
     ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
         self.start()?;
+        let graph_projection = projection.graph.clone();
         self.with_renderer_mut(|renderer| renderer.set_workspace_projection(projection))?;
+        self.native_runner.set_projection(graph_projection);
         Ok(self.status())
     }
 
@@ -218,6 +220,7 @@ impl DesktopBibleGraphHost {
             return Ok(self.status());
         };
 
+        let graph_projection = projection.graph.clone();
         let result = Self::catch_renderer_panic(|| renderer.set_workspace_projection(projection))?
             .map_err(|error| {
                 let message = error.to_string();
@@ -226,6 +229,7 @@ impl DesktopBibleGraphHost {
             });
         if result.is_ok() {
             self.last_error = None;
+            self.native_runner.set_projection(graph_projection);
         }
         result?;
         Ok(self.status())

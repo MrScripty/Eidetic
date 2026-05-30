@@ -447,8 +447,8 @@ fn native_renderer_window_thread_can_request_bounded_close() {
             .minimal_window_runner_config()
             .unwrap(),
         move |_config, control| {
-            started_sender.send(()).unwrap();
             control.mark_ready();
+            started_sender.send(()).unwrap();
             while !control.close_requested() {
                 std::thread::sleep(Duration::from_millis(1));
             }
