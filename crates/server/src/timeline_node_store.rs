@@ -31,6 +31,19 @@ CREATE TABLE IF NOT EXISTS node_arcs (
 );
 "#;
 
+type StoryNodeRow = (
+    String,
+    Option<String>,
+    String,
+    i32,
+    i64,
+    i64,
+    String,
+    String,
+    Option<String>,
+    i32,
+);
+
 pub(crate) fn upsert_nodes_in_transaction(
     tx: &Transaction<'_>,
     nodes: &[StoryNode],
@@ -247,20 +260,7 @@ pub(crate) fn load_node_arcs(conn: &Connection) -> Result<Vec<NodeArc>, HistoryS
     Ok(node_arcs)
 }
 
-fn story_node_from_row(
-    row: (
-        String,
-        Option<String>,
-        String,
-        i32,
-        i64,
-        i64,
-        String,
-        String,
-        Option<String>,
-        i32,
-    ),
-) -> Result<StoryNode, HistoryStoreError> {
+fn story_node_from_row(row: StoryNodeRow) -> Result<StoryNode, HistoryStoreError> {
     let (
         id,
         parent_id,

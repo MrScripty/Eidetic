@@ -388,7 +388,7 @@ fn insert_node(conn: &Connection, node: &StoryNode) -> Result<(), String> {
     let beat_type_json = node
         .beat_type
         .as_ref()
-        .map(|bt| serde_json::to_string(bt))
+        .map(serde_json::to_string)
         .transpose()
         .map_err(|e| format!("serialize beat_type: {e}"))?;
     let parent_id = node.parent_id.map(|id| id.0.to_string());

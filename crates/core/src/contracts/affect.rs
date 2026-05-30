@@ -22,12 +22,24 @@ impl AffectValueId {
     }
 }
 
+impl Default for AffectValueId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AffectDependencyId(pub Uuid);
 
 impl AffectDependencyId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl Default for AffectDependencyId {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

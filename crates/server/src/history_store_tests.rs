@@ -62,7 +62,7 @@ fn record_change_persists_event_and_sparse_revision_fields() {
         &command,
         "test.update_weather",
         &event,
-        &[revision.clone()],
+        std::slice::from_ref(&revision),
     )
     .unwrap();
     assert_eq!(outcome, RecordChangeOutcome::Recorded);
@@ -87,7 +87,7 @@ fn duplicate_command_id_is_idempotent() {
         &command,
         "test.update_weather",
         &event,
-        &[revision.clone()],
+        std::slice::from_ref(&revision),
     )
     .unwrap();
     let second = record_change(
@@ -117,7 +117,7 @@ fn duplicate_command_id_rejects_different_payload() {
         &command,
         "test.update_weather",
         &event,
-        &[revision.clone()],
+        std::slice::from_ref(&revision),
     )
     .unwrap();
 

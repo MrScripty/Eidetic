@@ -11,6 +11,12 @@ impl ArcId {
     }
 }
 
+impl Default for ArcId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A named story arc (A-plot, B-plot, etc.) that threads through the narrative.
 ///
 /// Arcs are hierarchical tags — any story node at any level can be tagged with

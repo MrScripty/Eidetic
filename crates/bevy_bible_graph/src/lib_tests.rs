@@ -1005,7 +1005,7 @@ fn controlled_native_window_retains_selection_state_and_label_visibility() {
             .any(|(label, visibility)| {
                 label.node_id == unrelated_id
                     && label.label_visible
-                    && visibility == &Visibility::Hidden
+                    && visibility == Visibility::Hidden
             })
     );
     assert!(

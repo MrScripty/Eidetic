@@ -128,6 +128,12 @@ impl CommandId {
     }
 }
 
+impl Default for CommandId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ChangeEventId(pub Uuid);
 
@@ -137,12 +143,24 @@ impl ChangeEventId {
     }
 }
 
+impl Default for ChangeEventId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ObjectRevisionId(pub Uuid);
 
 impl ObjectRevisionId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl Default for ObjectRevisionId {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

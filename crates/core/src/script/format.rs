@@ -152,7 +152,7 @@ fn wrapped_line_count(text: &str, max_chars: usize) -> usize {
         return 1;
     }
     let chars = text.len();
-    (chars + max_chars - 1) / max_chars
+    chars.div_ceil(max_chars)
 }
 
 /// Check if a line is a scene heading (starts with INT. or EXT.).

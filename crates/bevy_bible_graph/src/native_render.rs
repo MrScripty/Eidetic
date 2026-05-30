@@ -56,7 +56,7 @@ const NATIVE_NODE_TEXT_EDITOR_CHARACTER_WIDTH_PX: f32 = 8.5;
 const NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX: f32 = 2.0;
 const NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX: f32 = 18.0;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
     pub borderless_window: bool,
 }
@@ -158,25 +158,27 @@ impl Default for BibleGraphNativeTextEditorSettings {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Resource)]
+#[derive(Debug, Clone, Default, PartialEq, Resource)]
 struct BibleGraphNativeTextEditorSettingsState {
     settings: BibleGraphNativeTextEditorSettings,
     version: u64,
-}
-
-impl Default for BibleGraphNativeTextEditorSettingsState {
-    fn default() -> Self {
-        Self {
-            settings: BibleGraphNativeTextEditorSettings::default(),
-            version: 0,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeLabelOverlayTarget {
     pub camera_entity: Entity,
 }
+
+type BibleGraphNativeLabelProjectionItem<'a> = (
+    &'a BibleGraphNativeNodeLabelVisual,
+    &'a mut Node,
+    &'a mut TextFont,
+    &'a mut Visibility,
+);
+type BibleGraphNativeLabelProjectionFilter = (
+    With<BibleGraphNativeLabelBillboard>,
+    Without<BibleGraphNativeCamera>,
+);
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeVisualStatus {
@@ -349,14 +351,6 @@ enum BibleGraphNativeRenderSystem {
     Camera,
     Labels,
     Outlines,
-}
-
-impl Default for BibleGraphNativeRenderConfig {
-    fn default() -> Self {
-        Self {
-            borderless_window: false,
-        }
-    }
 }
 
 impl BibleGraphNativeWindowRunnerConfig {
@@ -762,6 +756,7 @@ fn apply_minimal_native_window_visibility_requests(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn emit_bible_graph_native_click_selection(
     buttons: Option<Res<ButtonInput<MouseButton>>>,
     time: Option<Res<Time>>,
@@ -822,13 +817,13 @@ fn emit_bible_graph_native_click_selection(
             .map(|label| label.label.clone())
             .unwrap_or_else(|| node_id.as_str().to_string());
         bible_graph_native_title_edit_register_node_click(
-            &mut *title_edit,
+            &mut title_edit,
             node_id.clone(),
             label,
             time.elapsed_secs_f64(),
         );
     } else {
-        bible_graph_native_title_edit_cancel(&mut *title_edit);
+        bible_graph_native_title_edit_cancel(&mut title_edit);
     }
     let _ = push_native_command_to_control(&control, command);
 }
@@ -997,11 +992,11 @@ fn handle_bible_graph_native_title_edit_input(
 
         match event.key_code {
             KeyCode::Escape => {
-                bible_graph_native_title_edit_cancel(&mut *title_edit);
+                bible_graph_native_title_edit_cancel(&mut title_edit);
                 continue;
             }
             KeyCode::Enter | KeyCode::NumpadEnter => {
-                if let Some(command) = bible_graph_native_title_edit_commit(&mut *title_edit)
+                if let Some(command) = bible_graph_native_title_edit_commit(&mut title_edit)
                     && let Some(control) = control.as_deref()
                 {
                     let _ = push_native_command_to_control(control, command);
@@ -1009,14 +1004,14 @@ fn handle_bible_graph_native_title_edit_input(
                 continue;
             }
             KeyCode::Backspace => {
-                bible_graph_native_title_edit_backspace(&mut *title_edit);
+                bible_graph_native_title_edit_backspace(&mut title_edit);
                 continue;
             }
             _ => {}
         }
 
         if let Some(text) = event.text.as_deref() {
-            bible_graph_native_title_edit_append_text(&mut *title_edit, text);
+            bible_graph_native_title_edit_append_text(&mut title_edit, text);
         }
     }
 }
@@ -1750,18 +1745,7 @@ fn project_bible_graph_native_labels(
     cameras: Query<(&Camera, &Transform), With<BibleGraphNativeCamera>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     text_editor_settings: Option<Res<BibleGraphNativeTextEditorSettingsState>>,
-    mut labels: Query<
-        (
-            &BibleGraphNativeNodeLabelVisual,
-            &mut Node,
-            &mut TextFont,
-            &mut Visibility,
-        ),
-        (
-            With<BibleGraphNativeLabelBillboard>,
-            Without<BibleGraphNativeCamera>,
-        ),
-    >,
+    mut labels: Query<BibleGraphNativeLabelProjectionItem, BibleGraphNativeLabelProjectionFilter>,
 ) {
     let Ok((camera, camera_transform)) = cameras.single() else {
         return;
@@ -1887,6 +1871,7 @@ fn emit_bible_graph_native_node_text_editor_updates(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn apply_bible_graph_native_text_editor_settings(
     control: Option<Res<BibleGraphNativeWindowControl>>,
     mut state: ResMut<BibleGraphNativeTextEditorSettingsState>,

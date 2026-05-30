@@ -11,6 +11,12 @@ impl ReferenceId {
     }
 }
 
+impl Default for ReferenceId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Type of reference material.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReferenceType {

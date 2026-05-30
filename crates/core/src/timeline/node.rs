@@ -18,6 +18,12 @@ impl NodeId {
     }
 }
 
+impl Default for NodeId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Temporary alias during migration — old code referencing ClipId still works.
 pub type ClipId = NodeId;
 

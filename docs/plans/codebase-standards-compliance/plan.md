@@ -130,7 +130,7 @@ environment-dependent failures.
 
 **Tasks:**
 
-- [ ] Fix current clippy failures.
+- [x] Fix current clippy failures.
 - [ ] Decide how headless environments should run native Bevy window tests.
 - [ ] Make `./launcher.sh --test` pass in a headless environment or split
   display-required smoke tests behind an explicit command.
@@ -146,7 +146,8 @@ environment-dependent failures.
 - `cargo check --workspace --all-targets`
 - `./launcher.sh --test`
 
-**Status:** Not started.
+**Status:** In progress. Clippy baseline is complete; headless test behavior
+still needs a dedicated slice.
 
 ### Milestone 2: Add CI and Traceability Gates
 
@@ -297,6 +298,10 @@ reasoning boundaries, not size.
 
 - 2026-05-30: Initial plan created from standards audit. Large-file findings are
   reframed as complection review candidates rather than line-count violations.
+- 2026-05-30: Rust clippy baseline completed. The cleanup exposed additional
+  warnings after `eidetic-core` passed, including Bevy ECS system signature
+  lint noise, copy/clone idioms, a timeline startup enum with a large config
+  variant, and several server-side iterator/type-complexity issues.
 
 ## Commit Cadence Notes
 

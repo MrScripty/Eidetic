@@ -22,12 +22,24 @@ impl AgentRunId {
     }
 }
 
+impl Default for AgentRunId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct AgentToolCallId(pub Uuid);
 
 impl AgentToolCallId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl Default for AgentToolCallId {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

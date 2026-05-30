@@ -304,9 +304,7 @@ pub(crate) fn navigate_timeline_native_playhead(world: &mut World) {
             return;
         };
         let projection = projection_state.projection.clone();
-        let control = world
-            .get_resource::<TimelineNativeWindowControl>()
-            .map(|control| control.clone());
+        let control = world.get_resource::<TimelineNativeWindowControl>().cloned();
         (projection_state.viewport.width_ms(), projection, control)
     };
     let Some(projection) = projection else {

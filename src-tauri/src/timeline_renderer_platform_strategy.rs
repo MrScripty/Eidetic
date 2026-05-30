@@ -19,7 +19,7 @@ pub(crate) enum TimelineRendererPlatformStrategy {
 pub(crate) enum TimelineRendererRunnerStartupPlan {
     MinimalWindowProofCandidate {
         threading_model: DesktopRendererThreadingModel,
-        config: TimelineNativeWindowRunnerConfig,
+        config: Box<TimelineNativeWindowRunnerConfig>,
     },
     PendingOnly {
         threading_model: DesktopRendererThreadingModel,
@@ -74,7 +74,7 @@ impl TimelineRendererPlatformStrategy {
         match self.minimal_window_runner_config() {
             Some(config) => TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate {
                 threading_model: self.threading_model(),
-                config,
+                config: Box::new(config),
             },
             None => TimelineRendererRunnerStartupPlan::PendingOnly {
                 threading_model: self.threading_model(),

@@ -28,7 +28,7 @@ pub use crate::native_window_control::{
 use crate::scene::{TimelineSceneStats, rebuild_timeline_scene};
 use crate::{TimelinePlayhead, TimelineRendererError, TimelineViewport};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Resource)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct TimelineNativeRenderConfig {
     pub borderless_window: bool,
 }
@@ -54,14 +54,6 @@ pub struct TimelineNativeWindowRunnerConfig {
 #[derive(Debug, Resource)]
 struct TimelineNativeAutoClose {
     close_at: Instant,
-}
-
-impl Default for TimelineNativeRenderConfig {
-    fn default() -> Self {
-        Self {
-            borderless_window: false,
-        }
-    }
 }
 
 impl TimelineNativeWindowRunnerConfig {

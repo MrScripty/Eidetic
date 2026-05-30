@@ -112,7 +112,7 @@ impl TimelineRendererSupervisor {
     pub fn open(&mut self) -> TimelineRendererRunnerStatus {
         match self.startup_plan.clone() {
             TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate { config, .. } => {
-                return self.open_minimal_window(config);
+                return self.open_minimal_window(*config);
             }
             TimelineRendererRunnerStartupPlan::PendingOnly { .. } => {
                 self.lifecycle = DesktopRendererSupervisorLifecycle::Closed;
@@ -128,7 +128,7 @@ impl TimelineRendererSupervisor {
     ) -> TimelineRendererRunnerStatus {
         match self.startup_plan.clone() {
             TimelineRendererRunnerStartupPlan::MinimalWindowProofCandidate { config, .. } => {
-                return self.open_minimal_window(config.with_initial_projection(projection));
+                return self.open_minimal_window((*config).with_initial_projection(projection));
             }
             TimelineRendererRunnerStartupPlan::PendingOnly { .. } => {
                 self.lifecycle = DesktopRendererSupervisorLifecycle::Closed;

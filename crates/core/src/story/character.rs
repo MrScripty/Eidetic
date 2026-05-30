@@ -13,6 +13,12 @@ impl CharacterId {
     }
 }
 
+impl Default for CharacterId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A character — referenced by beat clips and relationships.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Character {

@@ -1226,10 +1226,7 @@ fn target_label(target: &AffectTarget) -> Result<String, HistoryStoreError> {
     })
 }
 
-fn required_target_id<'a>(
-    target_id: Option<&'a str>,
-    column: usize,
-) -> Result<&'a str, rusqlite::Error> {
+fn required_target_id(target_id: Option<&str>, column: usize) -> Result<&str, rusqlite::Error> {
     target_id.filter(|value| !value.is_empty()).ok_or_else(|| {
         conversion_error(
             column,

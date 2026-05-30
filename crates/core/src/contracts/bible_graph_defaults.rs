@@ -176,7 +176,7 @@ pub fn builtin_bible_graph_schema_list_projection()
             .map(|schema| BibleGraphSchemaProjection {
                 schema_key: BibleGraphSchemaKey::new(schema.schema_key)
                     .expect("default schema keys are non-empty"),
-                category: schema.category.clone(),
+                category: schema.category,
                 display_name: schema.display_name.to_string(),
                 visual_style: schema.category.visual_style(),
                 default_node_name: schema.default_node_name.to_string(),

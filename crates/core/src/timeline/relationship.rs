@@ -14,6 +14,12 @@ impl RelationshipId {
     }
 }
 
+impl Default for RelationshipId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A visual connection drawn between two story nodes, rendered as
 /// hierarchical edge-bundled curves on the timeline.
 ///

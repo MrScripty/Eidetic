@@ -105,7 +105,7 @@ where
             run.status = AgentRunStatus::Completed;
             run.completed_at_ms = Some(clock.tick());
             record_run(conn, run.clone())?;
-            return Ok(load_history(conn, run.id)?);
+            return load_history(conn, run.id);
         };
         workflow
             .manifest

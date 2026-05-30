@@ -52,7 +52,7 @@ pub fn build_bible_graph_visual_snapshot(
     let node_positions: BTreeMap<BibleGraphNodeId, BibleRenderGraphPosition> = projection
         .nodes
         .iter()
-        .map(|node| (node.node_id.clone(), node.position.clone()))
+        .map(|node| (node.node_id.clone(), node.position))
         .collect();
 
     let nodes = projection
@@ -63,7 +63,7 @@ pub fn build_bible_graph_visual_snapshot(
             BibleGraphVisualNode {
                 node_id: node.node_id.clone(),
                 label: node.label.clone(),
-                position: node.position.clone(),
+                position: node.position,
                 radius: node_radius(node.depth, highlighted),
                 fill_color: node_fill_color(&node.category),
                 outline_color: if highlighted { "#f2c94c" } else { "#40576f" },
@@ -76,8 +76,8 @@ pub fn build_bible_graph_visual_snapshot(
         .edges
         .iter()
         .filter_map(|edge| {
-            let from_position = node_positions.get(&edge.from_node_id)?.clone();
-            let to_position = node_positions.get(&edge.to_node_id)?.clone();
+            let from_position = *node_positions.get(&edge.from_node_id)?;
+            let to_position = *node_positions.get(&edge.to_node_id)?;
             let highlighted = highlighted_edges.contains(&edge.edge_id);
             Some(BibleGraphVisualEdge {
                 edge_id: edge.edge_id.clone(),

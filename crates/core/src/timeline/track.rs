@@ -13,6 +13,12 @@ impl TrackId {
     }
 }
 
+impl Default for TrackId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A track on the timeline, representing one hierarchy level.
 ///
 /// Each story level (Act, Sequence, Scene, Beat) gets its own track.

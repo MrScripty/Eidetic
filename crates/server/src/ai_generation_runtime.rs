@@ -342,8 +342,7 @@ async fn generate_scene_recap(state: &AppState, node_uuid: Uuid, script: &str) {
         };
         let preceding_recap = siblings
             .iter()
-            .filter(|s| s.time_range.end_ms <= node.time_range.start_ms)
-            .last()
+            .rfind(|s| s.time_range.end_ms <= node.time_range.start_ms)
             .and_then(|s| s.content.scene_recap.clone());
         (project_path, preceding_recap)
     };
