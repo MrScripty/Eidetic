@@ -157,8 +157,8 @@ repository policy.
 
 - [ ] Add `.github/workflows/ci.yml` with Linux and Windows jobs.
 - [ ] Configure matrix jobs with fail-fast disabled.
-- [ ] Add PR template from the standards template.
-- [ ] Add decision-traceability script under `scripts/`.
+- [x] Add PR template from the standards template.
+- [x] Add decision-traceability script under `scripts/`.
 - [ ] Wire decision traceability, lint, format, typecheck, and tests into CI.
 - [ ] Keep local `lefthook.yml` aligned with CI-critical gates.
 
@@ -169,7 +169,8 @@ repository policy.
   for changed source directories.
 - `lefthook install` produces the expected hooks.
 
-**Status:** Not started.
+**Status:** In progress. PR template and traceability script are present;
+CI and hook wiring are deferred until README coverage is complete.
 
 ### Milestone 3: Documentation Layout and Module READMEs
 
@@ -307,6 +308,10 @@ reasoning boundaries, not size.
 - 2026-05-30: Development `--run` now uses `exec` for the desktop app process.
   To preserve direct signal delivery, the Vite dev server must already be
   running instead of being supervised by `launcher.sh`.
+- 2026-05-30: Added the PR template and a multi-source-root decision
+  traceability script. CI/hook wiring is intentionally deferred until the
+  missing module README coverage from Milestone 3 is complete; otherwise the
+  new gate would fail the current branch before its documentation slice lands.
 
 ## Commit Cadence Notes
 
