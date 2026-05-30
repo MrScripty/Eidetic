@@ -198,7 +198,7 @@
     e.stopPropagation();
     contextMenu = { x: e.clientX, y: e.clientY };
 
-    function dismissMenu(ev: MouseEvent) {
+    function dismissMenu() {
       contextMenu = null;
       document.removeEventListener('click', dismissMenu);
     }
@@ -210,7 +210,7 @@
     ondelete();
   }
 
-  function handleSplit(e: MouseEvent) {
+  function handleSplit() {
     const mid = Math.round((node.time_range.start_ms + node.time_range.end_ms) / 2);
     contextMenu = null;
     onsplit(mid);

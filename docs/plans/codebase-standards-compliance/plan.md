@@ -253,8 +253,17 @@ runtime assumptions.
 - [x] Re-enable `no-explicit-any` or limit exceptions to narrow documented
   cases.
 - [x] Add explicit return types for exported TypeScript APIs.
-- [ ] Consider stricter TypeScript compiler options such as
+- [x] Consider stricter TypeScript compiler options such as
   `noUnusedParameters`, `noImplicitReturns`, and `exactOptionalPropertyTypes`.
+
+**Discovered Issues:**
+
+- `exactOptionalPropertyTypes` is not ready to enable. The trial exposed a
+  third-party Vite/Rollup declaration incompatibility plus repo-owned optional
+  state models that assign explicit `undefined` to optional fields. Adopted
+  `noImplicitReturns` and `noUnusedParameters`; defer exact optional typing
+  until store state shapes are normalized and dependency declarations are
+  compatible.
 
 **Verification:**
 
@@ -264,8 +273,8 @@ runtime assumptions.
 - Frontend tests cover any behavior touched while adding accessible names.
 
 **Status:** In progress. Button type enforcement, explicit-any linting,
-targeted accessible names, and exported store/event return types are complete.
-Stricter compiler options remain under review.
+targeted accessible names, exported store/event return types, and validated
+strict compiler options are complete.
 
 ### Milestone 7: Complection Review of Dense Files
 
