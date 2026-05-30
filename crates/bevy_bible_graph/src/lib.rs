@@ -50,7 +50,12 @@ pub use visual_3d::{
     BibleGraphVisual3dEdge, BibleGraphVisual3dEdgeClass, BibleGraphVisual3dNode,
     BibleGraphVisual3dSnapshot, build_bible_graph_visual_3d_snapshot,
 };
-pub use workspace::{BibleGraphWorkspaceProjection, BibleGraphWorkspaceTimelineSceneStats};
+pub use workspace::{
+    BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_DEPTH, BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_HEIGHT,
+    BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_WIDTH, BibleGraphWorkspaceProjection,
+    BibleGraphWorkspaceTimelineClipVisual, BibleGraphWorkspaceTimelineSceneStats,
+    BibleGraphWorkspaceTimelineTrackVisual, BibleGraphWorkspaceTimelineVisualSnapshot,
+};
 pub use workspace::{
     BibleGraphWorkspaceTimelineAnchor, BibleGraphWorkspaceTimelinePresentation,
     BibleGraphWorkspaceTimelinePresentationMode,

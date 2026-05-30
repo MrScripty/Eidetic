@@ -60,6 +60,22 @@ fn renderer_app_receives_workspace_projection_without_replacing_graph_behavior()
             total_duration_ms: 120_000,
         }
     );
+    let visual_snapshot = renderer.workspace_timeline_visual_snapshot();
+    assert_eq!(
+        visual_snapshot.panel_width,
+        BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_WIDTH
+    );
+    assert_eq!(
+        visual_snapshot.panel_height,
+        BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_HEIGHT
+    );
+    assert_eq!(visual_snapshot.tracks.len(), 1);
+    assert_eq!(visual_snapshot.tracks[0].label, "Scenes");
+    assert_eq!(visual_snapshot.clips.len(), 1);
+    assert_eq!(visual_snapshot.clips[0].label, "Opening Scene");
+    assert!(visual_snapshot.clips[0].selected);
+    assert_eq!(visual_snapshot.clips[0].color_rgb, [0.957, 0.769, 0.188]);
+    assert!(visual_snapshot.clips[0].width > 300.0);
 }
 
 #[test]

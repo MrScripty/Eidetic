@@ -36,10 +36,11 @@ use eidetic_core::contracts::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
-    BibleGraphRendererCommand, BibleGraphRendererError, BibleGraphVisual3dEdgeClass,
-    BibleGraphWorkspaceTimelinePresentation, BibleGraphWorkspaceTimelinePresentationMode,
-    build_bible_graph_visual_3d_snapshot,
+    BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_DEPTH,
+    BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_HEIGHT, BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_WIDTH,
+    BibleGraphCameraCommand, BibleGraphRendererCommand, BibleGraphRendererError,
+    BibleGraphVisual3dEdgeClass, BibleGraphWorkspaceTimelinePresentation,
+    BibleGraphWorkspaceTimelinePresentationMode, build_bible_graph_visual_3d_snapshot,
     native_text_editor::{
         NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX, NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX,
         NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX, NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO,
@@ -57,9 +58,6 @@ const NATIVE_CAMERA_EDGE_PAN_SPEED: f32 = 520.0;
 const NATIVE_LABEL_SCREEN_OFFSET_PX: f32 = 18.0;
 const NATIVE_NODE_TITLE_DOUBLE_CLICK_SECONDS: f64 = 0.45;
 const NATIVE_NODE_TEXT_SAVE_DEBOUNCE_SECONDS: f64 = 0.8;
-const NATIVE_WORKSPACE_TIMELINE_PANEL_WIDTH: f32 = 760.0;
-const NATIVE_WORKSPACE_TIMELINE_PANEL_HEIGHT: f32 = 150.0;
-const NATIVE_WORKSPACE_TIMELINE_PANEL_DEPTH: f32 = 4.0;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Resource)]
 pub struct BibleGraphNativeRenderConfig {
@@ -715,9 +713,9 @@ fn spawn_bible_graph_renderer_window_scene(
     commands.spawn((
         BibleGraphNativeWorkspaceTimelineRoot,
         Mesh3d(meshes.add(Cuboid::new(
-            NATIVE_WORKSPACE_TIMELINE_PANEL_WIDTH,
-            NATIVE_WORKSPACE_TIMELINE_PANEL_HEIGHT,
-            NATIVE_WORKSPACE_TIMELINE_PANEL_DEPTH,
+            BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_WIDTH,
+            BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_HEIGHT,
+            BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_DEPTH,
         ))),
         MeshMaterial3d(materials.add(BibleGraphNativeMaterial {
             color: LinearRgba::new(0.08, 0.1, 0.14, 0.92),
