@@ -426,10 +426,17 @@ coupling is an explicit renderer, transaction, or contract-test invariant.
 
 ### Verification Summary
 
-- Slice-level verification passed throughout implementation. Final full
-  verification is tracked in the closing commit and should include Rust
-  fmt/clippy/check, launcher tests, frontend lint/format/typecheck/tests,
-  decision traceability, and dependency checks.
+- Final verification passed on 2026-05-30:
+  `cargo fmt --all -- --check`,
+  `cargo clippy --workspace --all-targets --all-features -- -D warnings`,
+  `cargo check --workspace --all-targets`, `./launcher.sh --test`,
+  `scripts/check-decision-traceability.sh`, `cd ui && npm run lint`,
+  `cd ui && npm run format:check`, `cd ui && npm run typecheck`,
+  `cd ui && npm run test`, and `scripts/check-dependencies.sh`.
+- `scripts/check-dependencies.sh` required network access for npm audit. The
+  final run completed after escalation and still reports the tracked
+  low-severity `cookie` advisory; optional local Rust audit tools remain
+  warnings unless CI sets `EIDETIC_REQUIRE_DEPENDENCY_TOOLS=1`.
 
 ### Traceability Links
 
