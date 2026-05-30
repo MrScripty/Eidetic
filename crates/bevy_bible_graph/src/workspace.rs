@@ -102,7 +102,7 @@ impl Default for BibleGraphWorkspaceTimelinePresentation {
             mode: BibleGraphWorkspaceTimelinePresentationMode::CameraAnchoredPanel,
             camera_distance: 420.0,
             viewport_offset_x: 0.0,
-            viewport_offset_y: -0.62,
+            viewport_offset_y: -0.22,
         }
     }
 }

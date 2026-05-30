@@ -384,6 +384,7 @@ enum BibleGraphNativeRenderSystem {
     Projection,
     Input,
     Camera,
+    TimelinePresentation,
     Labels,
     Outlines,
 }
@@ -616,6 +617,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
                 BibleGraphNativeRenderSystem::Projection,
                 BibleGraphNativeRenderSystem::Input,
                 BibleGraphNativeRenderSystem::Camera,
+                BibleGraphNativeRenderSystem::TimelinePresentation,
                 BibleGraphNativeRenderSystem::Labels,
                 BibleGraphNativeRenderSystem::Outlines,
             )
@@ -656,9 +658,13 @@ impl Plugin for BibleGraphNativeRenderPlugin {
                 recover_bible_graph_native_camera,
                 frame_bible_graph_native_camera_on_selected,
                 apply_bible_graph_native_camera_commands,
-                position_bible_graph_native_workspace_timeline_panel,
             )
                 .in_set(BibleGraphNativeRenderSystem::Camera),
+        );
+        app.add_systems(
+            Update,
+            position_bible_graph_native_workspace_timeline_panel
+                .in_set(BibleGraphNativeRenderSystem::TimelinePresentation),
         );
         app.add_systems(
             Update,

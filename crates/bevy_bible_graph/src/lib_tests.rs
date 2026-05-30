@@ -612,7 +612,7 @@ fn native_workspace_timeline_panel_tracks_camera_anchor_pose() {
         native_workspace_timeline_panel_transform(&camera_transform, &presentation).unwrap();
 
     assert!((panel_transform.translation.x - 0.0).abs() < 0.01);
-    assert!((panel_transform.translation.y + 260.4).abs() < 0.01);
+    assert!((panel_transform.translation.y + 92.4).abs() < 0.01);
     assert!((panel_transform.translation.z - 480.0).abs() < 0.01);
 
     let world_mode = BibleGraphWorkspaceTimelinePresentation {
