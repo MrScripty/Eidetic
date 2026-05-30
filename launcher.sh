@@ -271,6 +271,15 @@ stop_ui_dev_server() {
   fi
 }
 
+require_ui_dev_server() {
+  if ui_dev_server_ready "$UI_DEV_URL"; then
+    log "[ui] using existing Vite dev server at $UI_DEV_URL"
+    return
+  fi
+
+  die "UI dev server is not reachable at ${UI_DEV_URL}. Start it with: cd ui && npm run dev -- --host ${UI_DEV_HOST} --strictPort"
+}
+
 ensure_ui_assets() {
   [[ -f "$UI_BUILD_DIR/index.html" ]] || die "UI assets are missing. Run ./${SCRIPT_NAME} --build or --build-release first."
 }
@@ -307,13 +316,9 @@ run_dev() {
   ensure_dependencies cargo node npm ui_deps
   prepare_persistent_state "dev"
   clear_dev_webview_cache
-  start_ui_dev_server
-  trap stop_ui_dev_server EXIT INT TERM
+  require_ui_dev_server
 
-  cargo run -p "$APP_BIN" --bin "$APP_BIN" -- "${run_args[@]}"
-
-  trap - EXIT INT TERM
-  stop_ui_dev_server
+  exec cargo run -p "$APP_BIN" --bin "$APP_BIN" -- "${run_args[@]}"
 }
 
 run_release() {

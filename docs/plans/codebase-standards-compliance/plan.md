@@ -136,7 +136,7 @@ environment-dependent failures.
   display-required smoke tests behind an explicit command.
 - [x] Align `launcher.sh` hook checks with the configured `lefthook.yml` hook
   names.
-- [ ] Make `--run` behavior comply with launcher lifecycle requirements or
+- [x] Make `--run` behavior comply with launcher lifecycle requirements or
   document why the wrapper must own the UI dev server child process.
 
 **Verification:**
@@ -146,8 +146,7 @@ environment-dependent failures.
 - `cargo check --workspace --all-targets`
 - `./launcher.sh --test`
 
-**Status:** In progress. Clippy baseline, headless default tests, and hook-name
-alignment are complete. `--run` exec behavior remains open.
+**Status:** Complete.
 
 ### Milestone 2: Add CI and Traceability Gates
 
@@ -304,9 +303,10 @@ reasoning boundaries, not size.
   variant, and several server-side iterator/type-complexity issues.
 - 2026-05-30: Headless `./launcher.sh --test` completed by splitting native
   Bevy/Winit display creation checks into ignored smoke tests while keeping
-  pure control/resource behavior covered in default tests. This uncovered a
-  remaining launcher standards gap: development `--run` supervises a Vite child
-  server and therefore does not currently `exec` the app process.
+  pure control/resource behavior covered in default tests.
+- 2026-05-30: Development `--run` now uses `exec` for the desktop app process.
+  To preserve direct signal delivery, the Vite dev server must already be
+  running instead of being supervised by `launcher.sh`.
 
 ## Commit Cadence Notes
 
