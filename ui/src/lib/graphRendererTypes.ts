@@ -58,6 +58,11 @@ export interface GraphRendererStatus {
   renderer_window_width_px: number;
   renderer_window_height_px: number;
   influence_count: number;
+  workspace_timeline_track_count: number;
+  workspace_timeline_clip_count: number;
+  workspace_timeline_relationship_count: number;
+  workspace_timeline_affect_overlay_count: number;
+  workspace_timeline_total_duration_ms: number;
   last_error: string | null;
 }
 

@@ -3,6 +3,7 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use eidetic_bevy_bible_graph::{
     BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings, BibleGraphRendererApp,
     BibleGraphRendererCommand, BibleGraphRendererError, BibleGraphVisualSnapshot,
+    BibleGraphWorkspaceProjection,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -178,6 +179,15 @@ impl DesktopBibleGraphHost {
         Ok(self.status())
     }
 
+    pub fn set_workspace_projection(
+        &mut self,
+        projection: BibleGraphWorkspaceProjection,
+    ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
+        self.start()?;
+        self.with_renderer_mut(|renderer| renderer.set_workspace_projection(projection))?;
+        Ok(self.status())
+    }
+
     pub fn update_projection_if_open(
         &mut self,
         projection: BibleRenderGraphProjection,
@@ -195,6 +205,27 @@ impl DesktopBibleGraphHost {
         if result.is_ok() {
             self.last_error = None;
             self.native_runner.set_projection(projection);
+        }
+        result?;
+        Ok(self.status())
+    }
+
+    pub fn update_workspace_projection_if_open(
+        &mut self,
+        projection: BibleGraphWorkspaceProjection,
+    ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
+        let Some(renderer) = self.renderer.as_mut() else {
+            return Ok(self.status());
+        };
+
+        let result = Self::catch_renderer_panic(|| renderer.set_workspace_projection(projection))?
+            .map_err(|error| {
+                let message = error.to_string();
+                self.last_error = Some(message.clone());
+                BibleGraphHostError::Renderer(message)
+            });
+        if result.is_ok() {
+            self.last_error = None;
         }
         result?;
         Ok(self.status())
@@ -305,6 +336,9 @@ impl DesktopBibleGraphHost {
             native_runner.native_visual_node_count,
             native_runner.native_visual_edge_count,
         );
+        let workspace_timeline_stats = renderer
+            .map(BibleGraphRendererApp::workspace_timeline_scene_stats)
+            .unwrap_or_default();
         let renderer_window_bounds = renderer
             .map(BibleGraphRendererApp::renderer_window_bounds)
             .unwrap_or_default();
@@ -346,6 +380,11 @@ impl DesktopBibleGraphHost {
             renderer_window_width_px: renderer_window_bounds.width_px,
             renderer_window_height_px: renderer_window_bounds.height_px,
             influence_count,
+            workspace_timeline_track_count: workspace_timeline_stats.track_count,
+            workspace_timeline_clip_count: workspace_timeline_stats.clip_count,
+            workspace_timeline_relationship_count: workspace_timeline_stats.relationship_count,
+            workspace_timeline_affect_overlay_count: workspace_timeline_stats.affect_overlay_count,
+            workspace_timeline_total_duration_ms: workspace_timeline_stats.total_duration_ms,
             last_error,
         }
     }

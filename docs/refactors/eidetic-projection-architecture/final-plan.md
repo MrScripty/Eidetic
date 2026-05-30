@@ -3928,6 +3928,10 @@ Implementation order:
   projection metadata without replacing graph projection behavior or making
   timeline state durable in Bevy. This is the first migration slice toward the
   unified workspace renderer.
+- Completed: the desktop graph renderer host and owner thread can now accept
+  the combined workspace projection and report timeline projection metadata in
+  renderer status while preserving the existing graph lifecycle, command drain,
+  and projection update paths.
 - Remove the separate native timeline renderer host only after the unified
   workspace renderer covers timeline projection, interaction, and command
   behavior.

@@ -3,7 +3,7 @@
 ## Purpose
 
 This directory owns the desktop host for the native Bevy story-bible graph
-renderer.
+renderer as it migrates toward the unified Bevy workspace renderer.
 
 ## Contents
 
@@ -30,7 +30,10 @@ coupling Bevy runtime policy into the backend server crate or Svelte UI.
 ## Decision
 
 Keep the graph renderer host in a dedicated Tauri-side module that bridges
-backend projections into native renderer ownership.
+backend projections into native renderer ownership. During the workspace
+renderer migration, this host can accept a combined graph/timeline workspace
+projection while preserving the existing graph renderer lifecycle and command
+drain boundary.
 
 ## Alternatives Rejected
 
@@ -43,7 +46,8 @@ backend projections into native renderer ownership.
 
 - The owner/supervisor owns all renderer thread lifecycle transitions.
 - Platform strategy decisions stay outside graph projection logic.
-- Backend projection DTOs remain the source of rendered graph state.
+- Backend projection DTOs remain the source of rendered graph and timeline
+  workspace state.
 
 ## Revisit Triggers
 

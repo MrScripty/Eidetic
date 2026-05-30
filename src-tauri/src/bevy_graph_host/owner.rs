@@ -5,7 +5,7 @@ use std::time::Duration;
 use eidetic_bevy_bible_graph::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
     BibleGraphNativeTextEditorSettings, BibleGraphNativeWindowRunnerConfig,
-    BibleGraphRendererCommand, BibleGraphVisualSnapshot,
+    BibleGraphRendererCommand, BibleGraphVisualSnapshot, BibleGraphWorkspaceProjection,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -28,8 +28,16 @@ enum BibleGraphHostRequest {
         projection: BibleRenderGraphProjection,
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
     },
+    SetWorkspaceProjection {
+        projection: BibleGraphWorkspaceProjection,
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
     UpdateProjectionIfOpen {
         projection: BibleRenderGraphProjection,
+        reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
+    },
+    UpdateWorkspaceProjectionIfOpen {
+        projection: BibleGraphWorkspaceProjection,
         reply: mpsc::Sender<BibleGraphHostResult<BibleGraphHostStatus>>,
     },
     SetRendererWindowBounds {
@@ -151,6 +159,18 @@ impl DesktopBibleGraphRendererOwner {
         receive_reply(receiver)
     }
 
+    pub fn set_workspace_projection(
+        &self,
+        projection: BibleGraphWorkspaceProjection,
+    ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
+        let (reply, receiver) = mpsc::channel();
+        self.enqueue(BibleGraphHostRequest::SetWorkspaceProjection { projection, reply })?;
+        receive_reply(receiver)
+    }
+
     pub fn update_projection_if_open(
         &self,
         projection: BibleRenderGraphProjection,
@@ -160,6 +180,18 @@ impl DesktopBibleGraphRendererOwner {
         }
         let (reply, receiver) = mpsc::channel();
         self.enqueue(BibleGraphHostRequest::UpdateProjectionIfOpen { projection, reply })?;
+        receive_reply(receiver)
+    }
+
+    pub fn update_workspace_projection_if_open(
+        &self,
+        projection: BibleGraphWorkspaceProjection,
+    ) -> BibleGraphHostResult<BibleGraphHostStatus> {
+        if let Some(status) = self.unavailable_status() {
+            return Ok(status);
+        }
+        let (reply, receiver) = mpsc::channel();
+        self.enqueue(BibleGraphHostRequest::UpdateWorkspaceProjectionIfOpen { projection, reply })?;
         receive_reply(receiver)
     }
 
@@ -348,8 +380,14 @@ fn run_renderer_owner(
             BibleGraphHostRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(host.set_projection(projection));
             }
+            BibleGraphHostRequest::SetWorkspaceProjection { projection, reply } => {
+                let _ = reply.send(host.set_workspace_projection(projection));
+            }
             BibleGraphHostRequest::UpdateProjectionIfOpen { projection, reply } => {
                 let _ = reply.send(host.update_projection_if_open(projection));
+            }
+            BibleGraphHostRequest::UpdateWorkspaceProjectionIfOpen { projection, reply } => {
+                let _ = reply.send(host.update_workspace_projection_if_open(projection));
             }
             BibleGraphHostRequest::SetRendererWindowBounds {
                 width_px,
@@ -429,7 +467,9 @@ fn run_failed_renderer_owner(
             }
             BibleGraphHostRequest::Start { reply }
             | BibleGraphHostRequest::SetProjection { reply, .. }
+            | BibleGraphHostRequest::SetWorkspaceProjection { reply, .. }
             | BibleGraphHostRequest::UpdateProjectionIfOpen { reply, .. }
+            | BibleGraphHostRequest::UpdateWorkspaceProjectionIfOpen { reply, .. }
             | BibleGraphHostRequest::SetRendererWindowBounds { reply, .. }
             | BibleGraphHostRequest::Status { reply }
             | BibleGraphHostRequest::FocusRenderer { reply }

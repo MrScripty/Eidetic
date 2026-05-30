@@ -42,6 +42,11 @@ function statusFor(
     renderer_window_width_px: 0,
     renderer_window_height_px: 0,
     influence_count: 0,
+    workspace_timeline_track_count: 0,
+    workspace_timeline_clip_count: 0,
+    workspace_timeline_relationship_count: 0,
+    workspace_timeline_affect_overlay_count: 0,
+    workspace_timeline_total_duration_ms: 0,
     last_error: null,
   };
 }

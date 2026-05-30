@@ -63,6 +63,11 @@ pub struct BibleGraphHostStatus {
     pub renderer_window_width_px: u32,
     pub renderer_window_height_px: u32,
     pub influence_count: usize,
+    pub workspace_timeline_track_count: usize,
+    pub workspace_timeline_clip_count: usize,
+    pub workspace_timeline_relationship_count: usize,
+    pub workspace_timeline_affect_overlay_count: usize,
+    pub workspace_timeline_total_duration_ms: u64,
     pub last_error: Option<String>,
 }
 

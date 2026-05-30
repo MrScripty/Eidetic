@@ -1,13 +1,15 @@
 use eidetic_bevy_bible_graph::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
-    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
+    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand, BibleGraphWorkspaceProjection,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphNodeId, BibleRenderGraphEdge,
     BibleRenderGraphInfluence, BibleRenderGraphNeighborhood, BibleRenderGraphNode,
     BibleRenderGraphPosition, ContextInfluenceId, ContextInfluenceKind, ContextInfluenceProvenance,
+    TimelineRenderClip, TimelineRenderProjection, TimelineRenderTrack,
 };
-use eidetic_core::timeline::node::StoryLevel;
+use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
+use eidetic_core::timeline::track::TrackId;
 use std::sync::mpsc;
 use std::time::Duration;
 use uuid::Uuid;
@@ -563,7 +565,34 @@ fn host_applies_projection_and_reports_scene_counts() {
     assert_eq!(status.renderer_window_width_px, 0);
     assert_eq!(status.renderer_window_height_px, 0);
     assert_eq!(status.influence_count, 1);
+    assert_eq!(status.workspace_timeline_track_count, 0);
+    assert_eq!(status.workspace_timeline_clip_count, 0);
+    assert_eq!(status.workspace_timeline_relationship_count, 0);
+    assert_eq!(status.workspace_timeline_affect_overlay_count, 0);
+    assert_eq!(status.workspace_timeline_total_duration_ms, 0);
     assert_eq!(status.last_error, None);
+}
+
+#[test]
+fn host_applies_workspace_projection_and_reports_timeline_scene_metadata() {
+    let mut host = test_bible_graph_host();
+
+    let status = host
+        .set_workspace_projection(BibleGraphWorkspaceProjection {
+            graph: sample_projection(),
+            timeline: Some(sample_timeline_projection()),
+        })
+        .unwrap();
+
+    assert!(status.running);
+    assert!(status.renderer_window_open);
+    assert_eq!(status.node_count, 2);
+    assert_eq!(status.edge_count, 1);
+    assert_eq!(status.workspace_timeline_track_count, 1);
+    assert_eq!(status.workspace_timeline_clip_count, 1);
+    assert_eq!(status.workspace_timeline_relationship_count, 0);
+    assert_eq!(status.workspace_timeline_affect_overlay_count, 0);
+    assert_eq!(status.workspace_timeline_total_duration_ms, 180_000);
 }
 
 #[test]
@@ -713,6 +742,11 @@ fn host_stop_drops_renderer_state() {
             renderer_window_width_px: 0,
             renderer_window_height_px: 0,
             influence_count: 0,
+            workspace_timeline_track_count: 0,
+            workspace_timeline_clip_count: 0,
+            workspace_timeline_relationship_count: 0,
+            workspace_timeline_affect_overlay_count: 0,
+            workspace_timeline_total_duration_ms: 0,
             last_error: None,
         }
     );
@@ -797,6 +831,26 @@ fn owner_projection_update_does_not_start_closed_renderer() {
     assert!(!status.renderer_window_open);
     assert_eq!(status.node_count, 0);
     assert_eq!(status.edge_count, 0);
+    owner.stop().unwrap();
+}
+
+#[test]
+fn owner_routes_workspace_projection_to_renderer_thread() {
+    let owner = test_bible_graph_owner();
+
+    let status = owner
+        .set_workspace_projection(BibleGraphWorkspaceProjection {
+            graph: sample_projection(),
+            timeline: Some(sample_timeline_projection()),
+        })
+        .unwrap();
+
+    assert!(status.running);
+    assert!(status.renderer_window_open);
+    assert_eq!(status.node_count, 2);
+    assert_eq!(status.workspace_timeline_track_count, 1);
+    assert_eq!(status.workspace_timeline_clip_count, 1);
+    assert_eq!(status.workspace_timeline_total_duration_ms, 180_000);
     owner.stop().unwrap();
 }
 
@@ -1091,5 +1145,39 @@ fn sample_projection() -> eidetic_core::contracts::BibleRenderGraphProjection {
             bible_edge_id: Some(edge_id),
             sort_order: 0,
         }],
+    }
+}
+
+fn sample_timeline_projection() -> TimelineRenderProjection {
+    let track_id = TrackId::new();
+    let node_id = NodeId::new();
+    TimelineRenderProjection {
+        total_duration_ms: 180_000,
+        selected_node_id: Some(node_id),
+        structure_segments: Vec::new(),
+        tracks: vec![TimelineRenderTrack {
+            track_id,
+            level: StoryLevel::Scene,
+            label: "Scenes".to_string(),
+            sort_order: 3,
+            collapsed: false,
+        }],
+        clips: vec![TimelineRenderClip {
+            node_id,
+            parent_id: None,
+            track_id,
+            level: StoryLevel::Scene,
+            name: "Opening Scene".to_string(),
+            start_ms: 0,
+            end_ms: 60_000,
+            sort_order: 0,
+            locked: false,
+            content_status: ContentStatus::NotesOnly,
+            beat_type: None,
+            arc_ids: Vec::new(),
+        }],
+        relationships: Vec::new(),
+        gaps: Vec::new(),
+        affect_overlays: Vec::new(),
     }
 }

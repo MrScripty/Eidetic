@@ -57,6 +57,11 @@ describe('graph renderer api helpers', () => {
       renderer_window_width_px: 1280,
       renderer_window_height_px: 720,
       influence_count: 1,
+      workspace_timeline_track_count: 0,
+      workspace_timeline_clip_count: 0,
+      workspace_timeline_relationship_count: 0,
+      workspace_timeline_affect_overlay_count: 0,
+      workspace_timeline_total_duration_ms: 0,
       last_error: null,
     };
     const invoke = installDesktopInvoke(response);
@@ -94,6 +99,11 @@ describe('graph renderer api helpers', () => {
       renderer_window_width_px: 0,
       renderer_window_height_px: 0,
       influence_count: 1,
+      workspace_timeline_track_count: 0,
+      workspace_timeline_clip_count: 0,
+      workspace_timeline_relationship_count: 0,
+      workspace_timeline_affect_overlay_count: 0,
+      workspace_timeline_total_duration_ms: 0,
       last_error: null,
     };
     const request = {
@@ -142,6 +152,11 @@ describe('graph renderer api helpers', () => {
       renderer_window_width_px: 0,
       renderer_window_height_px: 0,
       influence_count: 1,
+      workspace_timeline_track_count: 0,
+      workspace_timeline_clip_count: 0,
+      workspace_timeline_relationship_count: 0,
+      workspace_timeline_affect_overlay_count: 0,
+      workspace_timeline_total_duration_ms: 0,
       last_error: null,
     };
     const request = {
@@ -247,6 +262,11 @@ describe('graph renderer api helpers', () => {
       renderer_window_width_px: 1280,
       renderer_window_height_px: 720,
       influence_count: 1,
+      workspace_timeline_track_count: 0,
+      workspace_timeline_clip_count: 0,
+      workspace_timeline_relationship_count: 0,
+      workspace_timeline_affect_overlay_count: 0,
+      workspace_timeline_total_duration_ms: 0,
       last_error: null,
     };
     const command = { type: 'frame_node' as const, node_id: 'node.character.ada' };
@@ -284,6 +304,11 @@ describe('graph renderer api helpers', () => {
       renderer_window_width_px: 1280,
       renderer_window_height_px: 720,
       influence_count: 1,
+      workspace_timeline_track_count: 0,
+      workspace_timeline_clip_count: 0,
+      workspace_timeline_relationship_count: 0,
+      workspace_timeline_affect_overlay_count: 0,
+      workspace_timeline_total_duration_ms: 0,
       last_error: null,
     };
     const settings = {
