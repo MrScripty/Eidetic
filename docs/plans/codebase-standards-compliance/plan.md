@@ -206,8 +206,8 @@ filler.
 - [x] Add `publish = false` to non-publishable crates.
 - [x] Replace broad dependency features such as `tokio/full` with narrower
   feature sets where practical.
-- [ ] Document or control the external `pumas-library` path dependency.
-- [ ] Add vulnerability, license, unused dependency, and duplicate dependency
+- [x] Document or control the external `pumas-library` path dependency.
+- [x] Add vulnerability, license, unused dependency, and duplicate dependency
   checks.
 - [ ] Add release workflow expectations for tag-triggered builds, smoke tests,
   checksums, and SBOM output.
@@ -219,8 +219,8 @@ filler.
 - Package metadata passes release-standard review.
 
 **Status:** In progress. Toolchain pins, changelog baseline, internal crate
-publish metadata, and narrower Tokio features are present. External dependency
-control, audit tooling, and release workflow remain.
+publish metadata, narrower Tokio features, external Pumas provisioning, and
+dependency audit commands are present. Release workflow remains.
 
 ### Milestone 5: Cross-Platform and Async Lifecycle
 
@@ -330,6 +330,21 @@ reasoning boundaries, not size.
   Node version pins, `CHANGELOG.md`, `publish = false` for internal crates, and
   narrowed Tokio features to the runtime, sync, time, macros, and fs features
   used by the workspace.
+- 2026-05-30: Added dependency governance docs, controlled Pumas checkout
+  preparation, and `scripts/check-dependencies.sh`. Local runs warn when
+  optional Rust audit tools are missing; CI should set
+  `EIDETIC_REQUIRE_DEPENDENCY_TOOLS=1` after bootstrapping `cargo audit`,
+  `cargo deny`, and `cargo machete`.
+- 2026-05-30: `npm audit --audit-level=high` found vulnerable frontend
+  dependencies in SvelteKit, Svelte, Vite, Rollup, flatted, and related
+  transitive packages. The audit reports compatible fixes via `npm audit fix`,
+  so the dependency gate cannot be treated as green until the UI lockfile is
+  updated and frontend checks are rerun.
+- 2026-05-30: `npm audit fix` updated compatible frontend packages and cleared
+  the high/moderate advisories. npm still reports low-severity `cookie`
+  advisories through `@sveltejs/kit`; the suggested `--force` path would install
+  `@sveltejs/kit@0.0.30`, so the remaining low advisory is tracked instead of
+  taking a breaking downgrade.
 
 ## Commit Cadence Notes
 
