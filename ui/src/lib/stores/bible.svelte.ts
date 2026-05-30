@@ -17,40 +17,40 @@ export const bibleState = $state<{
   graphFocusedNeighborhoodNodeId: null,
 });
 
-export function selectBibleGraphNode(id: BibleGraphNodeId | null) {
+export function selectBibleGraphNode(id: BibleGraphNodeId | null): void {
   bibleState.graphSelection = id ? { kind: 'node', nodeId: id } : { kind: 'none' };
 }
 
-export function selectBibleGraphEdge(id: BibleGraphEdgeId | null) {
+export function selectBibleGraphEdge(id: BibleGraphEdgeId | null): void {
   bibleState.graphSelection = id ? { kind: 'edge', edgeId: id } : { kind: 'none' };
 }
 
-export function selectBibleGraphInfluence(id: string | null) {
+export function selectBibleGraphInfluence(id: string | null): void {
   bibleState.graphSelection = id ? { kind: 'influence', influenceId: id } : { kind: 'none' };
 }
 
-export function selectBibleGraphContextLayer(timelineNodeId: string | null) {
+export function selectBibleGraphContextLayer(timelineNodeId: string | null): void {
   bibleState.graphSelection = timelineNodeId
     ? { kind: 'context_layer', timelineNodeId }
     : { kind: 'none' };
 }
 
-export function selectBibleGraphNeighborhood(id: BibleGraphNodeId | null) {
+export function selectBibleGraphNeighborhood(id: BibleGraphNodeId | null): void {
   bibleState.graphSelection = id ? { kind: 'neighborhood', nodeId: id } : { kind: 'none' };
 }
 
-export function focusBibleGraphNeighborhood(id: BibleGraphNodeId | null) {
+export function focusBibleGraphNeighborhood(id: BibleGraphNodeId | null): void {
   bibleState.graphFocusedNeighborhoodNodeId = id;
   if (id) {
     bibleState.graphSelection = { kind: 'neighborhood', nodeId: id };
   }
 }
 
-export function clearBibleGraphFocusedNeighborhood() {
+export function clearBibleGraphFocusedNeighborhood(): void {
   bibleState.graphFocusedNeighborhoodNodeId = null;
 }
 
-export function clearBibleGraphSelection() {
+export function clearBibleGraphSelection(): void {
   bibleState.graphSelection = { kind: 'none' };
 }
 

@@ -7,8 +7,11 @@
     {#each notifications.items as toast (toast.id)}
       <div class="toast toast-{toast.type}" role="alert">
         <span class="toast-message">{toast.message}</span>
-        <button type="button" class="toast-dismiss" onclick={() => dismiss(toast.id)}
-          >&#x2715;</button
+        <button
+          type="button"
+          class="toast-dismiss"
+          aria-label="Dismiss notification"
+          onclick={() => dismiss(toast.id)}>&#x2715;</button
         >
       </div>
     {/each}

@@ -42,15 +42,24 @@
   <h3>Reference Materials</h3>
 
   <div class="ref-form">
-    <input type="text" bind:value={name} placeholder="Document name" />
-    <select bind:value={docType}>
-      <option value="StyleGuide">Style Guide</option>
-      <option value="CharacterBible">Character Bible</option>
-      <option value="WorldBuilding">World Building</option>
-      <option value="PreviousEpisode">Previous Episode</option>
-      <option value="custom">Custom</option>
-    </select>
-    <textarea bind:value={content} placeholder="Paste reference text..." rows="4"></textarea>
+    <label>
+      <span>Document name</span>
+      <input type="text" bind:value={name} placeholder="Document name" />
+    </label>
+    <label>
+      <span>Document type</span>
+      <select bind:value={docType}>
+        <option value="StyleGuide">Style Guide</option>
+        <option value="CharacterBible">Character Bible</option>
+        <option value="WorldBuilding">World Building</option>
+        <option value="PreviousEpisode">Previous Episode</option>
+        <option value="custom">Custom</option>
+      </select>
+    </label>
+    <label>
+      <span>Reference text</span>
+      <textarea bind:value={content} placeholder="Paste reference text..." rows="4"></textarea>
+    </label>
     <button type="button" onclick={handleUpload} disabled={!name.trim() || !content.trim()}
       >Upload</button
     >
@@ -61,8 +70,11 @@
       <div class="ref-item">
         <span class="ref-name">{ref.name}</span>
         <span class="ref-type">{typeof ref.doc_type === 'string' ? ref.doc_type : 'custom'}</span>
-        <button type="button" class="ref-delete" onclick={() => handleDelete(ref.id)}
-          >&#x2715;</button
+        <button
+          type="button"
+          class="ref-delete"
+          aria-label={`Delete ${ref.name}`}
+          onclick={() => handleDelete(ref.id)}>&#x2715;</button
         >
       </div>
     {/each}

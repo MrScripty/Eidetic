@@ -54,7 +54,7 @@ export function resetEditorState(): void {
 }
 
 /** Reset streaming state and begin a new generation for a single node. */
-export function startGeneration(nodeId: string) {
+export function startGeneration(nodeId: string): void {
   editorState.streamingNodeId = nodeId;
   editorState.streamingText = '';
   editorState.streamingTokenCount = 0;
@@ -64,7 +64,7 @@ export function startGeneration(nodeId: string) {
 }
 
 /** Start batch generation tracking for all children of a parent node. */
-export function startBatchGeneration(parentNodeId: string) {
+export function startBatchGeneration(parentNodeId: string): void {
   editorState.batchParentNodeId = parentNodeId;
   editorState.batchTotalCount = 0;
   editorState.batchCompletedCount = 0;
@@ -76,7 +76,7 @@ export function startBatchGeneration(parentNodeId: string) {
 }
 
 /** Update the expected batch total count (called after API response). */
-export function setBatchTotalCount(count: number) {
+export function setBatchTotalCount(count: number): void {
   editorState.batchTotalCount = count;
   if (editorState.batchCompletedCount >= count && count > 0) {
     editorState.batchParentNodeId = null;
@@ -84,7 +84,7 @@ export function setBatchTotalCount(count: number) {
 }
 
 /** Append a streaming token if it matches the active generation. */
-export function appendStreamingToken(nodeId: string, token: string, count: number) {
+export function appendStreamingToken(nodeId: string, token: string, count: number): void {
   if (editorState.streamingNodeId === nodeId) {
     editorState.streamingText += token;
     editorState.streamingTokenCount = count;
@@ -97,7 +97,7 @@ export function appendStreamingToken(nodeId: string, token: string, count: numbe
 }
 
 /** Finalize a completed generation. */
-export function completeGeneration(nodeId: string) {
+export function completeGeneration(nodeId: string): void {
   if (editorState.streamingNodeId === nodeId) {
     editorState.streamingNodeId = null;
     editorState.streamingText = '';
@@ -114,7 +114,7 @@ export function completeGeneration(nodeId: string) {
 }
 
 /** Store the AI generation context (formatted prompts). */
-export function setGenerationContext(nodeId: string, system: string, user: string) {
+export function setGenerationContext(nodeId: string, system: string, user: string): void {
   if (editorState.batchParentNodeId != null && editorState.streamingNodeId !== nodeId) {
     editorState.streamingNodeId = nodeId;
     editorState.streamingText = '';
@@ -127,7 +127,7 @@ export function setGenerationContext(nodeId: string, system: string, user: strin
 }
 
 /** Record a generation error. */
-export function setGenerationError(nodeId: string, error: string) {
+export function setGenerationError(nodeId: string, error: string): void {
   if (editorState.streamingNodeId === nodeId) {
     editorState.generationError = error;
     editorState.streamingNodeId = null;

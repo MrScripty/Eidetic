@@ -36,8 +36,12 @@
   </div>
 
   <div class="toolbar-actions">
-    <button type="button" class="toolbar-btn" title="Save (Ctrl+S)" onclick={onsave}
-      >&#128190;</button
+    <button
+      type="button"
+      class="toolbar-btn"
+      title="Save (Ctrl+S)"
+      onclick={onsave}
+      aria-label="Save">&#128190;</button
     >
     <button type="button" class="toolbar-btn" title="Export PDF (Ctrl+Shift+E)" onclick={onexport}
       >PDF</button

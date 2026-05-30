@@ -254,7 +254,12 @@
   {/if}
 
   {#if !sidebarOpen && projectState.current}
-    <button type="button" class="sidebar-toggle" onclick={() => (sidebarOpen = true)}>
+    <button
+      type="button"
+      class="sidebar-toggle"
+      aria-label="Open sidebar"
+      onclick={() => (sidebarOpen = true)}
+    >
       &#9776;
     </button>
   {/if}

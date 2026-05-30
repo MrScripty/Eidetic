@@ -11,7 +11,7 @@ export const notifications = $state<{ items: Notification[] }>({ items: [] });
 
 let counter = 0;
 
-export function notify(type: NotificationType, message: string, duration = 3000) {
+export function notify(type: NotificationType, message: string, duration = 3000): void {
   const id = `n-${++counter}`;
   notifications.items = [...notifications.items, { id, type, message, duration }];
   if (duration > 0) {
@@ -19,6 +19,6 @@ export function notify(type: NotificationType, message: string, duration = 3000)
   }
 }
 
-export function dismiss(id: string) {
+export function dismiss(id: string): void {
   notifications.items = notifications.items.filter((n) => n.id !== id);
 }

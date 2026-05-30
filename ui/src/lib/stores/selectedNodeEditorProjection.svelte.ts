@@ -62,7 +62,7 @@ export async function refreshSelectedNodeEditorProjection(
   }
 }
 
-export function clearSelectedNodeEditorProjection() {
+export function clearSelectedNodeEditorProjection(): void {
   latestRequestId += 1;
   selectedNodeEditorProjectionState.selectedNodeId = null;
   selectedNodeEditorProjectionState.projection = null;

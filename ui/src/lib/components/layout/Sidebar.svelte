@@ -65,7 +65,9 @@
         Refs
       </button>
     </div>
-    <button type="button" class="close-btn" onclick={onclose}>&times;</button>
+    <button type="button" class="close-btn" aria-label="Close sidebar" onclick={onclose}
+      >&times;</button
+    >
   </div>
 
   <div class="sidebar-content">

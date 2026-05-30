@@ -75,7 +75,7 @@ function refreshChangeReview() {
 }
 
 /** Register backend event handlers that update Svelte stores. */
-export function setupServerEventHandlers(events: ServerEventClient) {
+export function setupServerEventHandlers(events: ServerEventClient): () => void {
   const unsubscribers = [
     events.on('timeline_changed', async () => {
       await refreshTimelineRender();

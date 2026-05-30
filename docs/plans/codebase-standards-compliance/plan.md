@@ -249,10 +249,10 @@ runtime assumptions.
 
 - [ ] Add or enable Svelte-compatible accessibility lint rules.
 - [x] Add `type="button"` to non-submit buttons.
-- [ ] Add labels or accessible names to form controls and icon-only controls.
+- [x] Add labels or accessible names to form controls and icon-only controls.
 - [x] Re-enable `no-explicit-any` or limit exceptions to narrow documented
   cases.
-- [ ] Add explicit return types for exported TypeScript APIs.
+- [x] Add explicit return types for exported TypeScript APIs.
 - [ ] Consider stricter TypeScript compiler options such as
   `noUnusedParameters`, `noImplicitReturns`, and `exactOptionalPropertyTypes`.
 
@@ -263,8 +263,9 @@ runtime assumptions.
 - `cd ui && npm run typecheck`
 - Frontend tests cover any behavior touched while adding accessible names.
 
-**Status:** In progress. Frontend button type enforcement and explicit-any
-linting are enabled. Accessible names and exported API return types remain.
+**Status:** In progress. Button type enforcement, explicit-any linting,
+targeted accessible names, and exported store/event return types are complete.
+Stricter compiler options remain under review.
 
 ### Milestone 7: Complection Review of Dense Files
 
@@ -363,6 +364,9 @@ reasoning boundaries, not size.
   select on shutdown so bridge stop is bounded instead of abort-only.
 - 2026-05-30: Frontend button elements now declare explicit button type outside
   form submit cases, and ESLint enforces `@typescript-eslint/no-explicit-any`.
+- 2026-05-30: Added labels for reference material form controls, accessible
+  names for icon-only shell/sidebar/toast/reference actions, and explicit return
+  types for exported store and server event handler APIs.
 
 ## Commit Cadence Notes
 
