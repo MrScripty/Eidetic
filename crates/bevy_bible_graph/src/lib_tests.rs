@@ -662,6 +662,28 @@ fn native_window_control_handle_records_close_requests() {
 
 #[cfg(feature = "native_render")]
 #[test]
+fn native_window_control_handle_carries_workspace_timeline_visual_snapshot() {
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer
+        .set_workspace_projection(BibleGraphWorkspaceProjection {
+            graph: projection_with_node(BibleGraphNodeId::new("node.character.ada").unwrap()),
+            timeline: Some(timeline_projection_with_clip()),
+        })
+        .unwrap();
+    let snapshot = renderer.workspace_timeline_visual_snapshot();
+
+    control.set_workspace_timeline_visual_snapshot(snapshot.clone());
+
+    assert_eq!(
+        control.take_workspace_timeline_visual_snapshot(),
+        Some(snapshot)
+    );
+    assert_eq!(control.take_workspace_timeline_visual_snapshot(), None);
+}
+
+#[cfg(feature = "native_render")]
+#[test]
 fn native_window_control_resource_tracks_handle_state_without_display() {
     let control = BibleGraphNativeWindowControlHandle::new();
     let window_control = BibleGraphNativeWindowControl::from(&control);

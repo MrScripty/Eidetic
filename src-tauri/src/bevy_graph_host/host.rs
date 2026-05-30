@@ -3,7 +3,7 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use eidetic_bevy_bible_graph::{
     BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings, BibleGraphRendererApp,
     BibleGraphRendererCommand, BibleGraphRendererError, BibleGraphVisualSnapshot,
-    BibleGraphWorkspaceProjection,
+    BibleGraphWorkspaceProjection, BibleGraphWorkspaceTimelineVisualSnapshot,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeId, BibleGraphNodeId, BibleRenderGraphProjection, ContextInfluenceId,
@@ -67,6 +67,16 @@ impl DesktopNativeRendererRunner {
     ) -> NativeRendererRunnerStatus {
         match self {
             Self::Managed(runner) => runner.set_projection(projection),
+            Self::Unavailable(status) => status.clone(),
+        }
+    }
+
+    fn set_workspace_timeline_visual_snapshot(
+        &mut self,
+        snapshot: BibleGraphWorkspaceTimelineVisualSnapshot,
+    ) -> NativeRendererRunnerStatus {
+        match self {
+            Self::Managed(runner) => runner.set_workspace_timeline_visual_snapshot(snapshot),
             Self::Unavailable(status) => status.clone(),
         }
     }
@@ -185,8 +195,13 @@ impl DesktopBibleGraphHost {
     ) -> Result<BibleGraphHostStatus, BibleGraphHostError> {
         self.start()?;
         let graph_projection = projection.graph.clone();
-        self.with_renderer_mut(|renderer| renderer.set_workspace_projection(projection))?;
+        let timeline_visual_snapshot = self.with_renderer_mut(|renderer| {
+            renderer.set_workspace_projection(projection)?;
+            Ok(renderer.workspace_timeline_visual_snapshot())
+        })?;
         self.native_runner.set_projection(graph_projection);
+        self.native_runner
+            .set_workspace_timeline_visual_snapshot(timeline_visual_snapshot);
         Ok(self.status())
     }
 
@@ -221,17 +236,27 @@ impl DesktopBibleGraphHost {
         };
 
         let graph_projection = projection.graph.clone();
-        let result = Self::catch_renderer_panic(|| renderer.set_workspace_projection(projection))?
-            .map_err(|error| {
-                let message = error.to_string();
-                self.last_error = Some(message.clone());
-                BibleGraphHostError::Renderer(message)
-            });
-        if result.is_ok() {
-            self.last_error = None;
-            self.native_runner.set_projection(graph_projection);
+        let renderer_result: Result<
+            BibleGraphWorkspaceTimelineVisualSnapshot,
+            BibleGraphRendererError,
+        > = Self::catch_renderer_panic(|| {
+            renderer.set_workspace_projection(projection)?;
+            Ok(renderer.workspace_timeline_visual_snapshot())
+        })?;
+        let result = renderer_result.map_err(|error| {
+            let message = error.to_string();
+            self.last_error = Some(message.clone());
+            BibleGraphHostError::Renderer(message)
+        });
+        match result {
+            Ok(timeline_visual_snapshot) => {
+                self.last_error = None;
+                self.native_runner.set_projection(graph_projection);
+                self.native_runner
+                    .set_workspace_timeline_visual_snapshot(timeline_visual_snapshot);
+            }
+            Err(error) => return Err(error),
         }
-        result?;
         Ok(self.status())
     }
 

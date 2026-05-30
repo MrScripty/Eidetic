@@ -12,6 +12,7 @@ pub use crate::renderer_window::DesktopRendererRunnerLifecycle as NativeRenderer
 use eidetic_bevy_bible_graph::{
     BibleGraphCameraCommand, BibleGraphNativeTextEditorSettings,
     BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand,
+    BibleGraphWorkspaceTimelineVisualSnapshot,
 };
 use eidetic_core::contracts::BibleRenderGraphProjection;
 
@@ -45,6 +46,10 @@ pub trait NativeRendererRunner {
         &mut self,
         projection: BibleRenderGraphProjection,
     ) -> NativeRendererRunnerStatus;
+    fn set_workspace_timeline_visual_snapshot(
+        &mut self,
+        snapshot: BibleGraphWorkspaceTimelineVisualSnapshot,
+    ) -> NativeRendererRunnerStatus;
     fn apply_camera_command(
         &mut self,
         command: BibleGraphCameraCommand,
@@ -69,6 +74,10 @@ enum NativeRendererRunnerRequest {
     },
     SetProjection {
         projection: BibleRenderGraphProjection,
+        reply: mpsc::Sender<NativeRendererRunnerStatus>,
+    },
+    SetWorkspaceTimelineVisualSnapshot {
+        snapshot: BibleGraphWorkspaceTimelineVisualSnapshot,
         reply: mpsc::Sender<NativeRendererRunnerStatus>,
     },
     ApplyCameraCommand {
@@ -202,6 +211,18 @@ impl NativeRendererRunner for NativeRendererRunnerHandle {
         self.request(|reply| NativeRendererRunnerRequest::SetProjection { projection, reply })
     }
 
+    fn set_workspace_timeline_visual_snapshot(
+        &mut self,
+        snapshot: BibleGraphWorkspaceTimelineVisualSnapshot,
+    ) -> NativeRendererRunnerStatus {
+        self.request(
+            |reply| NativeRendererRunnerRequest::SetWorkspaceTimelineVisualSnapshot {
+                snapshot,
+                reply,
+            },
+        )
+    }
+
     fn apply_camera_command(
         &mut self,
         command: BibleGraphCameraCommand,
@@ -270,6 +291,9 @@ fn run_native_renderer_runner(
             }
             NativeRendererRunnerRequest::SetProjection { projection, reply } => {
                 let _ = reply.send(runner.set_projection(projection));
+            }
+            NativeRendererRunnerRequest::SetWorkspaceTimelineVisualSnapshot { snapshot, reply } => {
+                let _ = reply.send(runner.set_workspace_timeline_visual_snapshot(snapshot));
             }
             NativeRendererRunnerRequest::ApplyCameraCommand { command, reply } => {
                 let _ = reply.send(runner.apply_camera_command(command));

@@ -40,7 +40,8 @@ use crate::{
     BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_HEIGHT, BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_WIDTH,
     BibleGraphCameraCommand, BibleGraphRendererCommand, BibleGraphRendererError,
     BibleGraphVisual3dEdgeClass, BibleGraphWorkspaceTimelinePresentation,
-    BibleGraphWorkspaceTimelinePresentationMode, build_bible_graph_visual_3d_snapshot,
+    BibleGraphWorkspaceTimelinePresentationMode, BibleGraphWorkspaceTimelineVisualSnapshot,
+    build_bible_graph_visual_3d_snapshot,
     native_text_editor::{
         NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX, NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX,
         NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX, NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO,
@@ -94,6 +95,8 @@ pub struct BibleGraphNativeWindowControlHandle {
     visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
     projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
+    workspace_timeline_visual_snapshot:
+        Arc<Mutex<Option<BibleGraphWorkspaceTimelineVisualSnapshot>>>,
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
     commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
     camera_commands: Arc<Mutex<Vec<BibleGraphCameraCommand>>>,
@@ -109,6 +112,8 @@ pub struct BibleGraphNativeWindowControl {
     visible: Arc<AtomicBool>,
     ready: Arc<AtomicBool>,
     projection: Arc<Mutex<Option<BibleRenderGraphProjection>>>,
+    workspace_timeline_visual_snapshot:
+        Arc<Mutex<Option<BibleGraphWorkspaceTimelineVisualSnapshot>>>,
     native_visual_counts: Arc<Mutex<BibleGraphNativeVisualStatus>>,
     commands: Arc<Mutex<Vec<BibleGraphRendererCommand>>>,
     camera_commands: Arc<Mutex<Vec<BibleGraphCameraCommand>>>,
@@ -120,6 +125,11 @@ pub struct BibleGraphNativeWindowControl {
 pub struct BibleGraphNativeRendererWindowStatus {
     pub camera_count: usize,
     pub bounds: BibleGraphNativeRendererWindowBounds,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Resource)]
+pub struct BibleGraphNativeWorkspaceTimelineVisualState {
+    pub snapshot: Option<BibleGraphWorkspaceTimelineVisualSnapshot>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -397,6 +407,7 @@ impl BibleGraphNativeWindowControlHandle {
             visible: Arc::new(AtomicBool::new(false)),
             ready: Arc::new(AtomicBool::new(false)),
             projection: Arc::new(Mutex::new(None)),
+            workspace_timeline_visual_snapshot: Arc::new(Mutex::new(None)),
             native_visual_counts: Arc::new(Mutex::new(BibleGraphNativeVisualStatus::default())),
             commands: Arc::new(Mutex::new(Vec::new())),
             camera_commands: Arc::new(Mutex::new(Vec::new())),
@@ -444,6 +455,25 @@ impl BibleGraphNativeWindowControlHandle {
             .projection
             .lock()
             .unwrap_or_else(|error| error.into_inner()) = Some(projection);
+    }
+
+    pub fn set_workspace_timeline_visual_snapshot(
+        &self,
+        snapshot: BibleGraphWorkspaceTimelineVisualSnapshot,
+    ) {
+        *self
+            .workspace_timeline_visual_snapshot
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = Some(snapshot);
+    }
+
+    pub fn take_workspace_timeline_visual_snapshot(
+        &self,
+    ) -> Option<BibleGraphWorkspaceTimelineVisualSnapshot> {
+        self.workspace_timeline_visual_snapshot
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .take()
     }
 
     pub fn set_text_editor_settings(&self, settings: BibleGraphNativeTextEditorSettings) {
@@ -505,6 +535,9 @@ impl From<&BibleGraphNativeWindowControlHandle> for BibleGraphNativeWindowContro
             visible: Arc::clone(&handle.visible),
             ready: Arc::clone(&handle.ready),
             projection: Arc::clone(&handle.projection),
+            workspace_timeline_visual_snapshot: Arc::clone(
+                &handle.workspace_timeline_visual_snapshot,
+            ),
             native_visual_counts: Arc::clone(&handle.native_visual_counts),
             commands: Arc::clone(&handle.commands),
             camera_commands: Arc::clone(&handle.camera_commands),
@@ -518,6 +551,15 @@ impl BibleGraphNativeWindowControl {
     pub fn request_close_from_os_window(&self) {
         self.shutdown_requested.store(true, Ordering::Release);
         self.visible.store(false, Ordering::Release);
+    }
+
+    fn take_workspace_timeline_visual_snapshot(
+        &self,
+    ) -> Option<BibleGraphWorkspaceTimelineVisualSnapshot> {
+        self.workspace_timeline_visual_snapshot
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .take()
     }
 
     fn drain_camera_commands(&self) -> Vec<BibleGraphCameraCommand> {
@@ -548,6 +590,7 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.insert_resource(BibleGraphNativeRendererWindowScene::default());
         app.insert_resource(BibleGraphNativeRendererWindowStatus::default());
         app.insert_resource(BibleGraphNativeVisualStatus::default());
+        app.insert_resource(BibleGraphNativeWorkspaceTimelineVisualState::default());
         app.insert_resource(BibleGraphNativeAssetCache::default());
         app.insert_resource(BibleGraphNativeNodeTitleEdit::default());
         app.insert_resource(BibleGraphNativeTextEditorSettingsState::default());
@@ -568,7 +611,12 @@ impl Plugin for BibleGraphNativeRenderPlugin {
         app.add_systems(Startup, mark_bible_graph_native_window_ready);
         app.add_systems(
             Update,
-            apply_bible_graph_native_projection.in_set(BibleGraphNativeRenderSystem::Projection),
+            (
+                apply_bible_graph_native_projection,
+                apply_bible_graph_native_workspace_timeline_visual_snapshot,
+            )
+                .chain()
+                .in_set(BibleGraphNativeRenderSystem::Projection),
         );
         app.add_systems(
             Update,
@@ -2256,6 +2304,18 @@ fn apply_bible_graph_native_projection(world: &mut World) {
         .native_visual_counts
         .lock()
         .unwrap_or_else(|error| error.into_inner()) = status;
+}
+
+fn apply_bible_graph_native_workspace_timeline_visual_snapshot(
+    control: Option<Res<BibleGraphNativeWindowControl>>,
+    mut state: ResMut<BibleGraphNativeWorkspaceTimelineVisualState>,
+) {
+    let Some(control) = control else {
+        return;
+    };
+    if let Some(snapshot) = control.take_workspace_timeline_visual_snapshot() {
+        state.snapshot = Some(snapshot);
+    }
 }
 
 pub fn rebuild_bible_graph_native_visuals(

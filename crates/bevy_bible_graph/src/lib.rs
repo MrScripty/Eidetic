@@ -28,7 +28,7 @@ pub use native_render::{
     BibleGraphNativeRendererWindowStatus, BibleGraphNativeTextEditorSettings,
     BibleGraphNativeVisualEntity, BibleGraphNativeVisualStatus, BibleGraphNativeWindowControl,
     BibleGraphNativeWindowControlHandle, BibleGraphNativeWindowRunnerConfig,
-    BibleGraphNativeWorkspaceTimelineRoot,
+    BibleGraphNativeWorkspaceTimelineRoot, BibleGraphNativeWorkspaceTimelineVisualState,
     configure_controlled_minimal_bible_graph_native_window_app,
     configure_minimal_bible_graph_native_window_app, emit_bible_graph_native_clear_selection,
     emit_bible_graph_native_connected_node_create, emit_bible_graph_native_edge_selection,
