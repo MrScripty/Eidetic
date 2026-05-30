@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  EIDETIC_FETCH_PUMAS: "1"
+  EIDETIC_REQUIRE_DEPENDENCY_TOOLS: "1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary: target/release/eidetic-desktop
+            artifact: eidetic-desktop
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: target/release/eidetic-desktop.exe
+            artifact: eidetic-desktop.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.92.0
+          components: clippy,rustfmt
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install UI dependencies
+        working-directory: ui
+        run: npm ci
+
+      - name: Install dependency audit tools
+        run: |
+          cargo install cargo-audit --locked
+          cargo install cargo-deny --locked
+          cargo install cargo-machete --locked
+
+      - name: Prepare Pumas dependency
+        run: scripts/prepare-pumas-dependency.sh
+
+      - name: Dependency checks
+        run: scripts/check-dependencies.sh
+
+      - name: Build release
+        run: ./launcher.sh --build-release
+
+      - name: Release smoke
+        run: ./launcher.sh --release-smoke
+
+      - name: Stage artifact
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p release-artifacts
+          cp "${{ matrix.binary }}" "release-artifacts/eidetic-${version}-${{ matrix.target }}${{ runner.os == 'Windows' && '.exe' || '' }}"
+
+      - name: Generate target SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: release-artifacts/eidetic-${{ github.ref_name }}-${{ matrix.target }}-sbom.cdx.json
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: release-artifacts/*
+          if-no-files-found: error
+
+  draft-release:
+    name: Draft GitHub Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Generate checksums
+        working-directory: release-artifacts
+        run: sha256sum * > checksums-sha256.txt
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
+          generate_release_notes: true
+          files: release-artifacts/*

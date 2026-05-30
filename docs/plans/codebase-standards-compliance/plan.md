@@ -209,7 +209,7 @@ filler.
 - [x] Document or control the external `pumas-library` path dependency.
 - [x] Add vulnerability, license, unused dependency, and duplicate dependency
   checks.
-- [ ] Add release workflow expectations for tag-triggered builds, smoke tests,
+- [x] Add release workflow expectations for tag-triggered builds, smoke tests,
   checksums, and SBOM output.
 
 **Verification:**
@@ -218,9 +218,7 @@ filler.
 - Release workflow can build artifacts in a dry run or documented equivalent.
 - Package metadata passes release-standard review.
 
-**Status:** In progress. Toolchain pins, changelog baseline, internal crate
-publish metadata, narrower Tokio features, external Pumas provisioning, and
-dependency audit commands are present. Release workflow remains.
+**Status:** Complete.
 
 ### Milestone 5: Cross-Platform and Async Lifecycle
 
@@ -345,6 +343,11 @@ reasoning boundaries, not size.
   advisories through `@sveltejs/kit`; the suggested `--force` path would install
   `@sveltejs/kit@0.0.30`, so the remaining low advisory is tracked instead of
   taking a breaking downgrade.
+- 2026-05-30: Added `.github/workflows/release.yml` for `v*` tags. The workflow
+  provisions pinned Rust/Node toolchains, prepares Pumas, runs dependency
+  checks, builds Linux/Windows release binaries, runs release smoke, uploads
+  target-named artifacts, generates CycloneDX SBOMs and SHA256 checksums, and
+  creates a draft GitHub Release.
 
 ## Commit Cadence Notes
 
