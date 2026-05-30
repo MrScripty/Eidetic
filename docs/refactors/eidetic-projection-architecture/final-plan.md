@@ -3923,6 +3923,11 @@ Implementation order:
   projection duration instead of trusting frontend duration constants, and the
   native renderer command bridge applies the same clamp before accepting Bevy
   `SetPlayhead` requests.
+- Completed: the graph renderer crate now has a workspace projection boundary
+  that accepts the backend graph projection plus optional timeline render
+  projection metadata without replacing graph projection behavior or making
+  timeline state durable in Bevy. This is the first migration slice toward the
+  unified workspace renderer.
 - Remove the separate native timeline renderer host only after the unified
   workspace renderer covers timeline projection, interaction, and command
   behavior.

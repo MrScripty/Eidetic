@@ -13,6 +13,7 @@ optional Winit window integration.
 | `lib.rs` | Renderer app facade and public exports. |
 | `visual.rs` | Projection-to-visual DTO mapping. |
 | `visual_3d.rs` | 3D visual snapshot helpers. |
+| `workspace.rs` | Combined graph/timeline workspace projection state for the unified renderer migration. |
 | `scene.rs` | Bevy scene rebuild logic. |
 | `native_render.rs` | Native window, input, camera, text editor, and command systems. |
 | `native_text_editor.rs` | Pure native text editor cursor and viewport geometry helpers. |

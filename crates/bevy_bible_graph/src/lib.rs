@@ -10,6 +10,7 @@ mod category;
 mod scene;
 mod visual;
 mod visual_3d;
+mod workspace;
 
 #[cfg(feature = "native_render")]
 mod native_render;
@@ -48,6 +49,7 @@ pub use visual_3d::{
     BibleGraphVisual3dEdge, BibleGraphVisual3dEdgeClass, BibleGraphVisual3dNode,
     BibleGraphVisual3dSnapshot, build_bible_graph_visual_3d_snapshot,
 };
+pub use workspace::{BibleGraphWorkspaceProjection, BibleGraphWorkspaceTimelineSceneStats};
 
 pub const BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY: usize = 128;
 pub const BIBLE_GRAPH_FULL_REBUILD_NODE_LIMIT: usize = 500;
@@ -152,6 +154,7 @@ impl BibleGraphRendererApp {
         app.insert_resource(BibleGraphRenderState::default());
         app.insert_resource(BibleGraphRendererCommandQueue::default());
         app.insert_resource(BibleGraphSceneStats::default());
+        workspace::insert_workspace_resources(&mut app);
         Self { app }
     }
 

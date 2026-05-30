@@ -7,9 +7,11 @@ use crate::native_render::{
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphSchemaKey, BibleRenderGraphEdge,
     BibleRenderGraphInfluence, BibleRenderGraphNode, BibleRenderGraphPosition,
-    ContextInfluenceKind, ContextInfluenceProvenance,
+    ContextInfluenceKind, ContextInfluenceProvenance, TimelineRenderClip, TimelineRenderProjection,
+    TimelineRenderTrack,
 };
-use eidetic_core::timeline::node::{NodeId, StoryLevel};
+use eidetic_core::timeline::node::{ContentStatus, NodeId, StoryLevel};
+use eidetic_core::timeline::track::TrackId;
 
 #[test]
 fn renderer_app_receives_projection_and_emits_validated_selection_command() {
@@ -27,6 +29,37 @@ fn renderer_app_receives_projection_and_emits_validated_selection_command() {
         vec![BibleGraphRendererCommand::SelectNode { node_id }]
     );
     assert!(renderer.drain_commands().is_empty());
+}
+
+#[test]
+fn renderer_app_receives_workspace_projection_without_replacing_graph_behavior() {
+    let node_id = BibleGraphNodeId::new("node.character.ada").unwrap();
+    let mut renderer = BibleGraphRendererApp::new();
+
+    renderer
+        .set_workspace_projection(BibleGraphWorkspaceProjection {
+            graph: projection_with_node(node_id.clone()),
+            timeline: Some(timeline_projection_with_clip()),
+        })
+        .unwrap();
+
+    assert_eq!(renderer.projection_node_count(), 1);
+    assert_eq!(renderer.select_node(node_id.clone()), Ok(()));
+    assert_eq!(
+        renderer.drain_commands(),
+        vec![BibleGraphRendererCommand::SelectNode { node_id }]
+    );
+    assert!(renderer.workspace_has_timeline_projection());
+    assert_eq!(
+        renderer.workspace_timeline_scene_stats(),
+        BibleGraphWorkspaceTimelineSceneStats {
+            track_count: 1,
+            clip_count: 1,
+            relationship_count: 0,
+            affect_overlay_count: 0,
+            total_duration_ms: 120_000,
+        }
+    );
 }
 
 #[test]
@@ -2168,4 +2201,38 @@ fn projection_with_influence(
         sort_order: 1,
     }];
     projection
+}
+
+fn timeline_projection_with_clip() -> TimelineRenderProjection {
+    let track_id = TrackId::new();
+    let node_id = NodeId::new();
+    TimelineRenderProjection {
+        total_duration_ms: 120_000,
+        selected_node_id: Some(node_id),
+        structure_segments: Vec::new(),
+        tracks: vec![TimelineRenderTrack {
+            track_id,
+            level: StoryLevel::Scene,
+            label: "Scenes".to_string(),
+            sort_order: 3,
+            collapsed: false,
+        }],
+        clips: vec![TimelineRenderClip {
+            node_id,
+            parent_id: None,
+            track_id,
+            level: StoryLevel::Scene,
+            name: "Opening Scene".to_string(),
+            start_ms: 0,
+            end_ms: 60_000,
+            sort_order: 0,
+            locked: false,
+            content_status: ContentStatus::NotesOnly,
+            beat_type: None,
+            arc_ids: Vec::new(),
+        }],
+        relationships: Vec::new(),
+        gaps: Vec::new(),
+        affect_overlays: Vec::new(),
+    }
 }

@@ -369,3 +369,6 @@ Current implementation progress:
   transitional implementation work. The target product renderer is the unified
   Bevy workspace renderer with the timeline scene inside the graph/workspace
   window.
+- Completed: the graph renderer crate has a first workspace projection boundary
+  that can receive graph projection data and optional timeline projection
+  metadata without changing current graph behavior.
