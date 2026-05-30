@@ -11,7 +11,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::Emitter;
 use tauri::Manager;
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, watch};
 
 use crate::bevy_graph_host::DesktopBibleGraphRendererOwner;
 use crate::bevy_timeline_host::DesktopTimelineRendererOwner;
@@ -35,27 +35,38 @@ enum DesktopServerEventPayload {
 }
 
 pub struct DesktopEventBridgeOwner {
+    shutdown_tx: Mutex<Option<watch::Sender<bool>>>,
     handles: Mutex<Vec<tauri::async_runtime::JoinHandle<()>>>,
 }
 
 impl DesktopEventBridgeOwner {
     pub fn spawn(app: tauri::AppHandle, state: &AppState) -> Self {
+        let (shutdown_tx, shutdown_rx) = watch::channel(false);
         Self {
+            shutdown_tx: Mutex::new(Some(shutdown_tx)),
             handles: Mutex::new(vec![
-                spawn_server_event_bridge(app.clone(), state),
-                spawn_graph_renderer_projection_bridge(app.clone(), state),
-                spawn_timeline_renderer_projection_bridge(app.clone(), state),
-                spawn_graph_renderer_command_bridge(app.clone(), state.clone()),
-                spawn_timeline_renderer_command_bridge(app, state.clone()),
+                spawn_server_event_bridge(app.clone(), state, shutdown_rx.clone()),
+                spawn_graph_renderer_projection_bridge(app.clone(), state, shutdown_rx.clone()),
+                spawn_timeline_renderer_projection_bridge(app.clone(), state, shutdown_rx.clone()),
+                spawn_graph_renderer_command_bridge(
+                    app.clone(),
+                    state.clone(),
+                    shutdown_rx.clone(),
+                ),
+                spawn_timeline_renderer_command_bridge(app, state.clone(), shutdown_rx),
             ]),
         }
     }
 
     pub fn stop(&self) {
-        if let Ok(mut handles) = self.handles.lock() {
-            for handle in handles.drain(..) {
-                handle.abort();
+        if let Ok(mut shutdown_tx) = self.shutdown_tx.lock() {
+            if let Some(shutdown_tx) = shutdown_tx.take() {
+                let _ = shutdown_tx.send(true);
             }
+        }
+
+        if let Ok(mut handles) = self.handles.lock() {
+            handles.clear();
         }
     }
 }
@@ -69,26 +80,32 @@ impl Drop for DesktopEventBridgeOwner {
 fn spawn_server_event_bridge(
     app: tauri::AppHandle,
     state: &AppState,
+    mut shutdown: watch::Receiver<bool>,
 ) -> tauri::async_runtime::JoinHandle<()> {
     let mut events = state.events_tx.subscribe();
 
     tauri::async_runtime::spawn(async move {
         loop {
-            match events.recv().await {
-                Ok(event) => {
-                    if let Err(error) = app.emit(
-                        SERVER_EVENT_TOPIC,
-                        DesktopServerEvent {
-                            event: DesktopServerEventPayload::Backend(event),
-                        },
-                    ) {
-                        tracing::warn!("failed to emit desktop server event: {error}");
+            tokio::select! {
+                _ = shutdown.changed() => break,
+                event = events.recv() => {
+                    match event {
+                        Ok(event) => {
+                            if let Err(error) = app.emit(
+                                SERVER_EVENT_TOPIC,
+                                DesktopServerEvent {
+                                    event: DesktopServerEventPayload::Backend(event),
+                                },
+                            ) {
+                                tracing::warn!("failed to emit desktop server event: {error}");
+                            }
+                        }
+                        Err(broadcast::error::RecvError::Lagged(skipped)) => {
+                            tracing::warn!("desktop server event bridge skipped {skipped} events");
+                        }
+                        Err(broadcast::error::RecvError::Closed) => break,
                     }
                 }
-                Err(broadcast::error::RecvError::Lagged(skipped)) => {
-                    tracing::warn!("desktop server event bridge skipped {skipped} events");
-                }
-                Err(broadcast::error::RecvError::Closed) => break,
             }
         }
     })
@@ -97,22 +114,28 @@ fn spawn_server_event_bridge(
 fn spawn_graph_renderer_projection_bridge(
     app: tauri::AppHandle,
     state: &AppState,
+    mut shutdown: watch::Receiver<bool>,
 ) -> tauri::async_runtime::JoinHandle<()> {
     let mut events = state.events_tx.subscribe();
 
     tauri::async_runtime::spawn(async move {
         loop {
-            match events.recv().await {
-                Ok(event) => {
-                    if should_refresh_graph_renderer_projection(&event) {
-                        refresh_graph_renderer_projection(&app).await;
+            tokio::select! {
+                _ = shutdown.changed() => break,
+                event = events.recv() => {
+                    match event {
+                        Ok(event) => {
+                            if should_refresh_graph_renderer_projection(&event) {
+                                refresh_graph_renderer_projection(&app).await;
+                            }
+                        }
+                        Err(broadcast::error::RecvError::Lagged(skipped)) => {
+                            tracing::warn!("graph renderer projection bridge skipped {skipped} events");
+                            refresh_graph_renderer_projection(&app).await;
+                        }
+                        Err(broadcast::error::RecvError::Closed) => break,
                     }
                 }
-                Err(broadcast::error::RecvError::Lagged(skipped)) => {
-                    tracing::warn!("graph renderer projection bridge skipped {skipped} events");
-                    refresh_graph_renderer_projection(&app).await;
-                }
-                Err(broadcast::error::RecvError::Closed) => break,
             }
         }
     })
@@ -121,22 +144,28 @@ fn spawn_graph_renderer_projection_bridge(
 fn spawn_timeline_renderer_projection_bridge(
     app: tauri::AppHandle,
     state: &AppState,
+    mut shutdown: watch::Receiver<bool>,
 ) -> tauri::async_runtime::JoinHandle<()> {
     let mut events = state.events_tx.subscribe();
 
     tauri::async_runtime::spawn(async move {
         loop {
-            match events.recv().await {
-                Ok(event) => {
-                    if should_refresh_timeline_renderer_projection(&event) {
-                        refresh_timeline_renderer_projection(&app).await;
+            tokio::select! {
+                _ = shutdown.changed() => break,
+                event = events.recv() => {
+                    match event {
+                        Ok(event) => {
+                            if should_refresh_timeline_renderer_projection(&event) {
+                                refresh_timeline_renderer_projection(&app).await;
+                            }
+                        }
+                        Err(broadcast::error::RecvError::Lagged(skipped)) => {
+                            tracing::warn!("timeline renderer projection bridge skipped {skipped} events");
+                            refresh_timeline_renderer_projection(&app).await;
+                        }
+                        Err(broadcast::error::RecvError::Closed) => break,
                     }
                 }
-                Err(broadcast::error::RecvError::Lagged(skipped)) => {
-                    tracing::warn!("timeline renderer projection bridge skipped {skipped} events");
-                    refresh_timeline_renderer_projection(&app).await;
-                }
-                Err(broadcast::error::RecvError::Closed) => break,
             }
         }
     })
@@ -145,12 +174,16 @@ fn spawn_timeline_renderer_projection_bridge(
 fn spawn_graph_renderer_command_bridge(
     app: tauri::AppHandle,
     state: AppState,
+    mut shutdown: watch::Receiver<bool>,
 ) -> tauri::async_runtime::JoinHandle<()> {
     tauri::async_runtime::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_millis(100));
 
         loop {
-            interval.tick().await;
+            tokio::select! {
+                _ = shutdown.changed() => break,
+                _ = interval.tick() => {}
+            }
             let Some(owner) = app.try_state::<DesktopBibleGraphRendererOwner>() else {
                 continue;
             };
@@ -408,6 +441,7 @@ mod tests {
     use eidetic_server::state::ServerEvent;
     use serde_json::json;
     use std::sync::Mutex;
+    use tokio::sync::watch;
 
     #[test]
     fn serializes_backend_events_inside_stable_desktop_payload() {
@@ -786,7 +820,9 @@ mod tests {
 
     #[test]
     fn desktop_event_bridge_owner_stop_is_idempotent_without_handles() {
+        let (shutdown_tx, _shutdown_rx) = watch::channel(false);
         let owner = DesktopEventBridgeOwner {
+            shutdown_tx: Mutex::new(Some(shutdown_tx)),
             handles: Mutex::new(Vec::new()),
         };
 

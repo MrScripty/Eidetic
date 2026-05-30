@@ -7,18 +7,23 @@ use eidetic_server::state::AppState;
 use eidetic_server::{command_service, projection_service};
 use std::time::Duration;
 use tauri::Manager;
+use tokio::sync::watch;
 
 use crate::bevy_timeline_host::DesktopTimelineRendererOwner;
 
 pub(crate) fn spawn_timeline_renderer_command_bridge(
     app: tauri::AppHandle,
     state: AppState,
+    mut shutdown: watch::Receiver<bool>,
 ) -> tauri::async_runtime::JoinHandle<()> {
     tauri::async_runtime::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_millis(100));
 
         loop {
-            interval.tick().await;
+            tokio::select! {
+                _ = shutdown.changed() => break,
+                _ = interval.tick() => {}
+            }
             let Some(owner) = app.try_state::<DesktopTimelineRendererOwner>() else {
                 continue;
             };

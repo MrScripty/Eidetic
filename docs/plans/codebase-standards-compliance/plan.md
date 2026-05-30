@@ -228,10 +228,10 @@ runtime assumptions.
 - [x] Gate Unix-only tests or move platform-specific behavior behind a platform
   module.
 - [ ] Add Windows compile/test coverage in CI.
-- [ ] Add explicit cancellation channels or tokens for background tasks.
+- [x] Add explicit cancellation channels or tokens for background tasks.
 - [x] Replace abort-only cleanup with shutdown paths that await task completion
   or inspect join errors.
-- [ ] Bound polling loops and document lifecycle ownership for Tauri bridges.
+- [x] Bound polling loops and document lifecycle ownership for Tauri bridges.
 
 **Verification:**
 
@@ -239,9 +239,7 @@ runtime assumptions.
 - Task lifecycle tests cover cancellation and shutdown behavior.
 - Logs expose background task panics or join failures.
 
-**Status:** In progress. Unix-specific symlink coverage is gated so Windows
-test targets can compile. Backend task shutdown now aborts, awaits, and logs
-join errors; cancellation channels and bounded renderer polling remain.
+**Status:** Complete.
 
 ### Milestone 6: Frontend Accessibility and Type Safety
 
@@ -359,6 +357,9 @@ reasoning boundaries, not size.
   backend tasks, awaits their join handles, and logs cancellation or panic join
   errors. Desktop window teardown now schedules this awaited shutdown path
   instead of dropping join handles immediately.
+- 2026-05-30: Added explicit watch-channel cancellation for desktop event and
+  renderer command bridges. Broadcast receivers and 100ms polling loops now
+  select on shutdown so bridge stop is bounded instead of abort-only.
 
 ## Commit Cadence Notes
 
