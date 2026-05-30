@@ -155,11 +155,11 @@ repository policy.
 
 **Tasks:**
 
-- [ ] Add `.github/workflows/ci.yml` with Linux and Windows jobs.
-- [ ] Configure matrix jobs with fail-fast disabled.
+- [x] Add `.github/workflows/ci.yml` with Linux and Windows jobs.
+- [x] Configure matrix jobs with fail-fast disabled.
 - [x] Add PR template from the standards template.
 - [x] Add decision-traceability script under `scripts/`.
-- [ ] Wire decision traceability, lint, format, typecheck, and tests into CI.
+- [x] Wire decision traceability, lint, format, typecheck, and tests into CI.
 - [x] Keep local `lefthook.yml` aligned with CI-critical gates.
 
 **Verification:**
@@ -169,9 +169,7 @@ repository policy.
   for changed source directories.
 - `lefthook install` produces the expected hooks.
 
-**Status:** In progress. PR template, traceability script, and local hook
-wiring are present. CI wiring is blocked until the external `pumas-library`
-path dependency is reproducible on hosted runners.
+**Status:** Complete.
 
 ### Milestone 3: Documentation Layout and Module READMEs
 
@@ -348,6 +346,10 @@ reasoning boundaries, not size.
   checks, builds Linux/Windows release binaries, runs release smoke, uploads
   target-named artifacts, generates CycloneDX SBOMs and SHA256 checksums, and
   creates a draft GitHub Release.
+- 2026-05-30: Added `.github/workflows/ci.yml` with fail-fast-disabled
+  Linux/Windows Rust checks, frontend lint/format/typecheck/tests, and decision
+  traceability. CI provisions Pumas through the repository script before Cargo
+  jobs run.
 
 ## Commit Cadence Notes
 
