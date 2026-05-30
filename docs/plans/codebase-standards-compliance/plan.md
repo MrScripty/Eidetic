@@ -229,7 +229,7 @@ runtime assumptions.
   module.
 - [ ] Add Windows compile/test coverage in CI.
 - [ ] Add explicit cancellation channels or tokens for background tasks.
-- [ ] Replace abort-only cleanup with shutdown paths that await task completion
+- [x] Replace abort-only cleanup with shutdown paths that await task completion
   or inspect join errors.
 - [ ] Bound polling loops and document lifecycle ownership for Tauri bridges.
 
@@ -240,7 +240,8 @@ runtime assumptions.
 - Logs expose background task panics or join failures.
 
 **Status:** In progress. Unix-specific symlink coverage is gated so Windows
-test targets can compile. Async lifecycle work remains.
+test targets can compile. Backend task shutdown now aborts, awaits, and logs
+join errors; cancellation channels and bounded renderer polling remain.
 
 ### Milestone 6: Frontend Accessibility and Type Safety
 
@@ -354,6 +355,10 @@ reasoning boundaries, not size.
 - 2026-05-30: Gated the symlink escape validation test with `#[cfg(unix)]`
   because it uses `std::os::unix::fs::symlink`; Windows path validation remains
   covered by lexical escape and child-path tests.
+- 2026-05-30: Added `BackendTaskSupervisor::shutdown_all`, which aborts owned
+  backend tasks, awaits their join handles, and logs cancellation or panic join
+  errors. Desktop window teardown now schedules this awaited shutdown path
+  instead of dropping join handles immediately.
 
 ## Commit Cadence Notes
 

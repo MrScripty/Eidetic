@@ -80,8 +80,10 @@ pub fn run() {
                 {
                     let _ = timeline_owner.stop();
                 }
-                let state = window.state::<AppState>();
-                state.shutdown_tasks();
+                let task_supervisor = window.state::<AppState>().task_supervisor.clone();
+                tauri::async_runtime::spawn(async move {
+                    task_supervisor.shutdown_all().await;
+                });
             }
         })
         .invoke_handler(tauri::generate_handler![

@@ -732,6 +732,6 @@ mod tests {
         assert_eq!(snapshot.content, "Hello from task");
 
         drop(doc_tx);
-        supervisor.abort_all();
+        supervisor.shutdown_all().await;
     }
 }

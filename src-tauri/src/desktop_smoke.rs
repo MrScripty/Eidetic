@@ -55,7 +55,7 @@ pub fn smoke_report() -> DesktopSmokeReport {
         active_backend_tasks: app_state.task_supervisor.active_task_count(),
         model_library_configured: app_state.model_library.is_some(),
     };
-    app_state.shutdown_tasks();
+    tauri::async_runtime::block_on(app_state.shutdown_tasks_async());
     report
 }
 

@@ -205,6 +205,10 @@ impl AppState {
         self.task_supervisor.abort_all();
     }
 
+    pub async fn shutdown_tasks_async(&self) {
+        self.task_supervisor.shutdown_all().await;
+    }
+
     /// Initialize the Pumas model library from env or sibling directory.
     ///
     /// Looks for `PUMAS_MODELS_DIR` env var first, then tries a sibling

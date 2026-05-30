@@ -27,8 +27,30 @@ impl BackendTaskSupervisor {
         self.tasks.lock().push(BackendTask { name, handle });
     }
 
+    pub async fn shutdown_all(&self) {
+        let tasks = self.take_tasks();
+        for task in tasks {
+            tracing::info!("shutting down backend task: {}", task.name);
+            task.handle.abort();
+            match task.handle.await {
+                Ok(()) => {
+                    tracing::debug!("backend task completed during shutdown: {}", task.name);
+                }
+                Err(error) if error.is_cancelled() => {
+                    tracing::debug!("backend task cancelled during shutdown: {}", task.name);
+                }
+                Err(error) => {
+                    tracing::error!(
+                        "backend task failed during shutdown: {}: {error}",
+                        task.name
+                    );
+                }
+            }
+        }
+    }
+
     pub fn abort_all(&self) {
-        let tasks = std::mem::take(&mut *self.tasks.lock());
+        let tasks = self.take_tasks();
         for task in tasks {
             tracing::info!("aborting backend task: {}", task.name);
             task.handle.abort();
@@ -39,6 +61,10 @@ impl BackendTaskSupervisor {
         let mut tasks = self.tasks.lock();
         tasks.retain(|task| !task.handle.is_finished());
         tasks.len()
+    }
+
+    fn take_tasks(&self) -> Vec<BackendTask> {
+        std::mem::take(&mut *self.tasks.lock())
     }
 }
 
@@ -55,7 +81,7 @@ mod tests {
     use super::BackendTaskSupervisor;
 
     #[tokio::test]
-    async fn supervisor_tracks_and_aborts_spawned_tasks() {
+    async fn supervisor_tracks_and_shuts_down_spawned_tasks() {
         let supervisor = BackendTaskSupervisor::default();
         let (tx, rx) = tokio::sync::oneshot::channel::<()>();
 
@@ -64,9 +90,23 @@ mod tests {
         });
 
         assert_eq!(supervisor.active_task_count(), 1);
-        supervisor.abort_all();
+        supervisor.shutdown_all().await;
         drop(tx);
         tokio::task::yield_now().await;
+
+        assert_eq!(supervisor.active_task_count(), 0);
+    }
+
+    #[tokio::test]
+    async fn supervisor_shutdown_observes_task_panics() {
+        let supervisor = BackendTaskSupervisor::default();
+
+        supervisor.spawn("test-panic", async move {
+            panic!("intentional backend task panic");
+        });
+
+        tokio::task::yield_now().await;
+        supervisor.shutdown_all().await;
 
         assert_eq!(supervisor.active_task_count(), 0);
     }
