@@ -247,7 +247,7 @@ runtime assumptions.
 
 **Tasks:**
 
-- [ ] Add or enable Svelte-compatible accessibility lint rules.
+- [x] Add or enable Svelte-compatible accessibility lint rules.
 - [x] Add `type="button"` to non-submit buttons.
 - [x] Add labels or accessible names to form controls and icon-only controls.
 - [x] Re-enable `no-explicit-any` or limit exceptions to narrow documented
@@ -272,9 +272,7 @@ runtime assumptions.
 - `cd ui && npm run typecheck`
 - Frontend tests cover any behavior touched while adding accessible names.
 
-**Status:** In progress. Button type enforcement, explicit-any linting,
-targeted accessible names, exported store/event return types, and validated
-strict compiler options are complete.
+**Status:** Complete.
 
 ### Milestone 7: Complection Review of Dense Files
 

@@ -55,6 +55,7 @@ export default tseslint.config(
       'svelte/prefer-svelte-reactivity': 'off',
       'svelte/prefer-writable-derived': 'off',
       'svelte/require-each-key': 'off',
+      'svelte/valid-compile': 'error',
     },
   },
   prettier,
