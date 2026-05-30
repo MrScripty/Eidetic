@@ -3947,6 +3947,26 @@ Implementation order:
   renderer is in camera-anchored presentation mode. This is a placeholder
   scene root only; timeline tracks, clips, hit testing, and commands still need
   to move into the workspace renderer.
+- Completed: workspace projection writes now keep the visible native Bevy graph
+  window synchronized by forwarding the graph half of the accepted workspace
+  projection to the native runner. A validation race in the injected native
+  window test harness was fixed by signaling readiness only after the control
+  handle is marked ready.
+- Completed: the graph renderer crate now derives a read-only workspace
+  timeline visual snapshot from backend `TimelineRenderProjection`, including
+  panel dimensions, sorted track rows, clip geometry, labels, selection state,
+  and deterministic clip colors. The snapshot is disposable renderer data and
+  does not introduce a second timeline source of truth.
+- Completed: the native graph renderer boundary now carries that workspace
+  timeline visual snapshot to the floating Bevy window alongside graph
+  projection updates, preserving the backend-owned projection pipeline while
+  preparing the unified workspace scene to draw timeline geometry.
+- Completed: the native graph/workspace Bevy scene now renders the first
+  projection-derived timeline clip meshes as child geometry under the
+  camera-anchored timeline panel root. The mesh entities are disposable render
+  projections; labels, hit testing, track chrome, relationships, affect
+  overlays, and command interactions remain to be moved into the workspace
+  renderer.
 - Remove the separate native timeline renderer host only after the unified
   workspace renderer covers timeline projection, interaction, and command
   behavior.
