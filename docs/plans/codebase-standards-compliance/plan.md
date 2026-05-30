@@ -160,7 +160,7 @@ repository policy.
 - [x] Add PR template from the standards template.
 - [x] Add decision-traceability script under `scripts/`.
 - [ ] Wire decision traceability, lint, format, typecheck, and tests into CI.
-- [ ] Keep local `lefthook.yml` aligned with CI-critical gates.
+- [x] Keep local `lefthook.yml` aligned with CI-critical gates.
 
 **Verification:**
 
@@ -169,8 +169,9 @@ repository policy.
   for changed source directories.
 - `lefthook install` produces the expected hooks.
 
-**Status:** In progress. PR template and traceability script are present;
-CI and hook wiring are deferred until README coverage is complete.
+**Status:** In progress. PR template, traceability script, and local hook
+wiring are present. CI wiring is blocked until the external `pumas-library`
+path dependency is reproducible on hosted runners.
 
 ### Milestone 3: Documentation Layout and Module READMEs
 
@@ -316,6 +317,13 @@ reasoning boundaries, not size.
   under `docs/plans/<slug>/plan.md`, adding missing source-directory READMEs,
   and documenting reserved empty source directories instead of adding
   placeholder code.
+- 2026-05-30: Branch-level decision traceability now passes. CI wiring is still
+  blocked by the local `pumas-library` path dependency, which points outside
+  this repository and must be controlled before GitHub-hosted Cargo jobs can be
+  reliable.
+- 2026-05-30: `lefthook.yml` now runs the decision traceability script during
+  pre-commit so local source changes are checked against README/ADR updates
+  before CI wiring is added.
 
 ## Commit Cadence Notes
 
