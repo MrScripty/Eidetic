@@ -3967,6 +3967,10 @@ Implementation order:
   projections; labels, hit testing, track chrome, relationships, affect
   overlays, and command interactions remain to be moved into the workspace
   renderer.
+- Completed: the native graph/workspace Bevy scene now renders
+  projection-derived timeline track row chrome under the same camera-anchored
+  timeline panel root, giving clip meshes their first visible track structure
+  without making Bevy own timeline data.
 - Remove the separate native timeline renderer host only after the unified
   workspace renderer covers timeline projection, interaction, and command
   behavior.
