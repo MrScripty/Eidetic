@@ -234,8 +234,54 @@ server.listen(Number(port), host, () => {
 ' "$UI_DEV_HOST" "$UI_DEV_PORT"
 }
 
+stale_project_ui_dev_server_pids() {
+  local pid
+  local args
+  local cwd
+
+  while IFS=' ' read -r pid args; do
+    [[ -n "${pid:-}" ]] || continue
+    [[ -n "${args:-}" ]] || continue
+    if [[ "$args" != *"$UI_DIR/node_modules/.bin/vite dev --port ${UI_DEV_PORT}"* ]]; then
+      continue
+    fi
+
+    if command -v pwdx >/dev/null 2>&1; then
+      cwd="$(pwdx "$pid" 2>/dev/null || true)"
+      cwd="${cwd#*: }"
+      [[ "$cwd" == "$UI_DIR" ]] || continue
+    fi
+
+    printf '%s\n' "$pid"
+  done < <(ps -ww -eo pid=,args=)
+}
+
+stop_stale_project_ui_dev_servers() {
+  local pid
+  local stopped=0
+
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    log "[ui] stopping stale Vite dev server on port ${UI_DEV_PORT}: pid $pid"
+    kill "$pid" >/dev/null 2>&1 || true
+    stopped=1
+  done < <(stale_project_ui_dev_server_pids)
+
+  if [[ "$stopped" -eq 1 ]]; then
+    sleep 0.5
+  fi
+}
+
 start_ui_dev_server() {
   ensure_dependencies node npm ui_deps
+
+  if ui_dev_server_ready "$UI_DEV_URL"; then
+    log "[ui] reusing existing Vite dev server at $UI_DEV_URL"
+    UI_DEV_PID=""
+    return
+  fi
+
+  stop_stale_project_ui_dev_servers
 
   if ui_dev_server_ready "$UI_DEV_URL"; then
     log "[ui] reusing existing Vite dev server at $UI_DEV_URL"
@@ -269,15 +315,6 @@ stop_ui_dev_server() {
     kill "$UI_DEV_PID" >/dev/null 2>&1 || true
     wait "$UI_DEV_PID" >/dev/null 2>&1 || true
   fi
-}
-
-require_ui_dev_server() {
-  if ui_dev_server_ready "$UI_DEV_URL"; then
-    log "[ui] using existing Vite dev server at $UI_DEV_URL"
-    return
-  fi
-
-  die "UI dev server is not reachable at ${UI_DEV_URL}. Start it with: cd ui && npm run dev -- --host ${UI_DEV_HOST} --strictPort"
 }
 
 ensure_ui_assets() {
@@ -316,9 +353,13 @@ run_dev() {
   ensure_dependencies cargo node npm ui_deps
   prepare_persistent_state "dev"
   clear_dev_webview_cache
-  require_ui_dev_server
+  start_ui_dev_server
+  trap stop_ui_dev_server EXIT INT TERM
 
-  exec cargo run -p "$APP_BIN" --bin "$APP_BIN" -- "${run_args[@]}"
+  cargo run -p "$APP_BIN" --bin "$APP_BIN" -- "${run_args[@]}"
+
+  trap - EXIT INT TERM
+  stop_ui_dev_server
 }
 
 run_release() {
