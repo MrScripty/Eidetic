@@ -131,10 +131,10 @@ environment-dependent failures.
 **Tasks:**
 
 - [x] Fix current clippy failures.
-- [ ] Decide how headless environments should run native Bevy window tests.
-- [ ] Make `./launcher.sh --test` pass in a headless environment or split
+- [x] Decide how headless environments should run native Bevy window tests.
+- [x] Make `./launcher.sh --test` pass in a headless environment or split
   display-required smoke tests behind an explicit command.
-- [ ] Align `launcher.sh` hook checks with the configured `lefthook.yml` hook
+- [x] Align `launcher.sh` hook checks with the configured `lefthook.yml` hook
   names.
 - [ ] Make `--run` behavior comply with launcher lifecycle requirements or
   document why the wrapper must own the UI dev server child process.
@@ -146,8 +146,8 @@ environment-dependent failures.
 - `cargo check --workspace --all-targets`
 - `./launcher.sh --test`
 
-**Status:** In progress. Clippy baseline is complete; headless test behavior
-still needs a dedicated slice.
+**Status:** In progress. Clippy baseline, headless default tests, and hook-name
+alignment are complete. `--run` exec behavior remains open.
 
 ### Milestone 2: Add CI and Traceability Gates
 
@@ -302,6 +302,11 @@ reasoning boundaries, not size.
   warnings after `eidetic-core` passed, including Bevy ECS system signature
   lint noise, copy/clone idioms, a timeline startup enum with a large config
   variant, and several server-side iterator/type-complexity issues.
+- 2026-05-30: Headless `./launcher.sh --test` completed by splitting native
+  Bevy/Winit display creation checks into ignored smoke tests while keeping
+  pure control/resource behavior covered in default tests. This uncovered a
+  remaining launcher standards gap: development `--run` supervises a Vite child
+  server and therefore does not currently `exec` the app process.
 
 ## Commit Cadence Notes
 

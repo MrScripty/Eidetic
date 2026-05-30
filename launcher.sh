@@ -86,7 +86,7 @@ install_ui_deps() {
 
 check_git_hooks() {
   [[ -x "$PROJECT_ROOT/.git/hooks/pre-commit" ]] \
-    && [[ -x "$PROJECT_ROOT/.git/hooks/prepare-commit-msg" ]] \
+    && [[ -x "$PROJECT_ROOT/.git/hooks/commit-msg" ]] \
     && [[ -e "$PROJECT_ROOT/node_modules/lefthook/bin/index.js" ]]
 }
 

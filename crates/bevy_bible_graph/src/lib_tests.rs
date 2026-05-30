@@ -546,7 +546,32 @@ fn native_window_control_handle_records_close_requests() {
 
 #[cfg(feature = "native_render")]
 #[test]
-fn controlled_native_window_app_installs_close_control_resource() {
+fn native_window_control_resource_tracks_handle_state_without_display() {
+    let control = BibleGraphNativeWindowControlHandle::new();
+    let window_control = BibleGraphNativeWindowControl::from(&control);
+    let mut app = bevy::prelude::App::new();
+
+    assert!(
+        !app.world()
+            .contains_resource::<BibleGraphNativeWindowControl>(),
+    );
+    app.insert_resource(window_control);
+    assert!(
+        app.world()
+            .contains_resource::<BibleGraphNativeWindowControl>()
+    );
+    assert!(!control.close_requested());
+    assert!(!control.ready());
+
+    control.request_close();
+
+    assert!(control.close_requested());
+}
+
+#[cfg(feature = "native_render")]
+#[test]
+#[ignore = "requires a native display for Bevy/Winit window creation"]
+fn controlled_native_window_app_installs_close_control_resource_with_display() {
     let control = BibleGraphNativeWindowControlHandle::new();
     let mut app = bevy::prelude::App::new();
 
