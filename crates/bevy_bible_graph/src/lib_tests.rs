@@ -711,6 +711,12 @@ fn native_workspace_timeline_visuals_spawn_projection_derived_clip_meshes() {
     assert_eq!(clip_visuals.len(), 1);
     assert_eq!(clip_visuals[0].clip.label, "Opening Scene");
     assert!(clip_visuals[0].clip.selected);
+    let mut tracks = app
+        .world_mut()
+        .query::<&BibleGraphNativeWorkspaceTimelineTrackVisual>();
+    let track_visuals = tracks.iter(app.world()).collect::<Vec<_>>();
+    assert_eq!(track_visuals.len(), 1);
+    assert_eq!(track_visuals[0].track.label, "Scenes");
 }
 
 #[cfg(feature = "native_render")]

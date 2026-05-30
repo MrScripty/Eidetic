@@ -41,7 +41,8 @@ use crate::{
     BibleGraphCameraCommand, BibleGraphRendererCommand, BibleGraphRendererError,
     BibleGraphVisual3dEdgeClass, BibleGraphWorkspaceTimelineClipVisual,
     BibleGraphWorkspaceTimelinePresentation, BibleGraphWorkspaceTimelinePresentationMode,
-    BibleGraphWorkspaceTimelineVisualSnapshot, build_bible_graph_visual_3d_snapshot,
+    BibleGraphWorkspaceTimelineTrackVisual, BibleGraphWorkspaceTimelineVisualSnapshot,
+    build_bible_graph_visual_3d_snapshot,
     native_text_editor::{
         NATIVE_NODE_TEXT_EDITOR_CARET_HEIGHT_PX, NATIVE_NODE_TEXT_EDITOR_CARET_WIDTH_PX,
         NATIVE_NODE_TEXT_EDITOR_FONT_SIZE_PX, NATIVE_NODE_TEXT_EDITOR_HEIGHT_RATIO,
@@ -264,6 +265,11 @@ pub struct BibleGraphNativeWorkspaceTimelineVisualEntity;
 #[derive(Component, Debug, Clone, PartialEq)]
 pub struct BibleGraphNativeWorkspaceTimelineClipVisual {
     pub clip: BibleGraphWorkspaceTimelineClipVisual,
+}
+
+#[derive(Component, Debug, Clone, PartialEq)]
+pub struct BibleGraphNativeWorkspaceTimelineTrackVisual {
+    pub track: BibleGraphWorkspaceTimelineTrackVisual,
 }
 
 #[derive(Component, Debug, Clone, PartialEq)]
@@ -2355,6 +2361,34 @@ pub fn rebuild_bible_graph_native_workspace_timeline_visuals(
     };
 
     let mut child_entities = Vec::new();
+    let track_width = (snapshot.panel_width - 48.0).max(1.0);
+    for track in &snapshot.tracks {
+        let mesh = world
+            .resource_mut::<Assets<Mesh>>()
+            .add(Cuboid::new(track_width, 1.5, 1.0));
+        let material = world
+            .resource_mut::<Assets<BibleGraphNativeMaterial>>()
+            .add(BibleGraphNativeMaterial {
+                color: LinearRgba::new(0.22, 0.28, 0.38, 0.72),
+            });
+        let entity = world
+            .spawn((
+                BibleGraphNativeWorkspaceTimelineVisualEntity,
+                BibleGraphNativeWorkspaceTimelineTrackVisual {
+                    track: track.clone(),
+                },
+                Mesh3d(mesh),
+                MeshMaterial3d(material),
+                Transform::from_xyz(
+                    0.0,
+                    track.y,
+                    (BIBLE_GRAPH_WORKSPACE_TIMELINE_PANEL_DEPTH / 2.0) + 0.35,
+                ),
+            ))
+            .id();
+        child_entities.push(entity);
+    }
+
     for clip in &snapshot.clips {
         let mesh =
             world
