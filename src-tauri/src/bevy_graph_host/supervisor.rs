@@ -27,6 +27,8 @@ pub struct NativeRendererSupervisor {
     window_thread: Option<NativeRendererWindowThreadHandle>,
     window_ready: bool,
     native_visual_counts: BibleGraphNativeVisualStatus,
+    latest_projection: Option<BibleRenderGraphProjection>,
+    latest_workspace_timeline_visual_snapshot: Option<BibleGraphWorkspaceTimelineVisualSnapshot>,
     text_editor_settings: BibleGraphNativeTextEditorSettings,
     lifecycle: NativeRendererSupervisorLifecycle,
     last_error: Option<String>,
@@ -51,6 +53,8 @@ impl NativeRendererSupervisor {
             window_thread: None,
             window_ready: false,
             native_visual_counts: BibleGraphNativeVisualStatus::default(),
+            latest_projection: None,
+            latest_workspace_timeline_visual_snapshot: None,
             text_editor_settings: BibleGraphNativeTextEditorSettings::default(),
             lifecycle: NativeRendererSupervisorLifecycle::NotStarted,
             last_error: None,
@@ -65,6 +69,8 @@ impl NativeRendererSupervisor {
             window_thread: None,
             window_ready: false,
             native_visual_counts: BibleGraphNativeVisualStatus::default(),
+            latest_projection: None,
+            latest_workspace_timeline_visual_snapshot: None,
             text_editor_settings: BibleGraphNativeTextEditorSettings::default(),
             lifecycle: NativeRendererSupervisorLifecycle::Failed,
             last_error: Some(message),
@@ -78,6 +84,20 @@ impl NativeRendererSupervisor {
 
     pub fn lifecycle(&self) -> NativeRendererSupervisorLifecycle {
         self.lifecycle
+    }
+
+    #[cfg(test)]
+    pub(crate) fn latest_projection_node_count(&self) -> Option<usize> {
+        self.latest_projection
+            .as_ref()
+            .map(|projection| projection.nodes.len())
+    }
+
+    #[cfg(test)]
+    pub(crate) fn latest_workspace_timeline_visual_clip_count(&self) -> Option<usize> {
+        self.latest_workspace_timeline_visual_snapshot
+            .as_ref()
+            .map(|snapshot| snapshot.clips.len())
     }
 
     fn runner_lifecycle(&self) -> NativeRendererRunnerLifecycle {
@@ -150,6 +170,12 @@ impl NativeRendererSupervisor {
         match (self.window_thread_start)(config) {
             Ok(window_thread) => {
                 window_thread.set_text_editor_settings(self.text_editor_settings.clone());
+                if let Some(projection) = self.latest_projection.clone() {
+                    window_thread.set_projection(projection);
+                }
+                if let Some(snapshot) = self.latest_workspace_timeline_visual_snapshot.clone() {
+                    window_thread.set_workspace_timeline_visual_snapshot(snapshot);
+                }
                 self.window_thread = Some(window_thread);
                 self.window_ready = false;
                 self.lifecycle = NativeRendererSupervisorLifecycle::Running;
@@ -249,6 +275,7 @@ impl NativeRendererRunner for NativeRendererSupervisor {
         &mut self,
         projection: BibleRenderGraphProjection,
     ) -> NativeRendererRunnerStatus {
+        self.latest_projection = Some(projection.clone());
         if let Some(window_thread) = self.window_thread.as_ref() {
             window_thread.set_projection(projection);
         }
@@ -259,6 +286,7 @@ impl NativeRendererRunner for NativeRendererSupervisor {
         &mut self,
         snapshot: BibleGraphWorkspaceTimelineVisualSnapshot,
     ) -> NativeRendererRunnerStatus {
+        self.latest_workspace_timeline_visual_snapshot = Some(snapshot.clone());
         if let Some(window_thread) = self.window_thread.as_ref() {
             window_thread.set_workspace_timeline_visual_snapshot(snapshot);
         }

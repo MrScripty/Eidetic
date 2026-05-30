@@ -1,6 +1,7 @@
 use eidetic_bevy_bible_graph::{
     BIBLE_GRAPH_RENDERER_COMMAND_QUEUE_CAPACITY, BibleGraphCameraCommand,
-    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererCommand, BibleGraphWorkspaceProjection,
+    BibleGraphNativeWindowRunnerConfig, BibleGraphRendererApp, BibleGraphRendererCommand,
+    BibleGraphWorkspaceProjection,
 };
 use eidetic_core::contracts::{
     BibleGraphEdgeKind, BibleGraphNodeCategory, BibleGraphNodeId, BibleRenderGraphEdge,
@@ -296,6 +297,44 @@ fn native_renderer_supervisor_starts_injected_window_thread() {
     );
     assert!(!closed.window_visible);
     assert_eq!(closed.last_error, None);
+}
+
+#[test]
+fn native_renderer_supervisor_seeds_latest_workspace_projection_on_late_open() {
+    let mut runner = NativeRendererSupervisor::for_strategy_with_window_thread_start(
+        NativeRendererPlatformStrategy::LinuxWorkerThreadVerified,
+        start_test_window_thread,
+    );
+    let graph_projection = sample_projection();
+    let mut renderer = BibleGraphRendererApp::new();
+    renderer
+        .set_workspace_projection(BibleGraphWorkspaceProjection {
+            graph: graph_projection.clone(),
+            timeline: Some(sample_timeline_projection()),
+        })
+        .unwrap();
+    let timeline_snapshot = renderer.workspace_timeline_visual_snapshot();
+
+    let pending_graph = runner.set_projection(graph_projection);
+    let pending_timeline = runner.set_workspace_timeline_visual_snapshot(timeline_snapshot.clone());
+    let opened = runner.open();
+
+    assert_eq!(
+        pending_graph.lifecycle,
+        NativeRendererRunnerLifecycle::Closed
+    );
+    assert_eq!(
+        pending_timeline.lifecycle,
+        NativeRendererRunnerLifecycle::Closed
+    );
+    assert_eq!(runner.latest_projection_node_count(), Some(2));
+    assert_eq!(
+        runner.latest_workspace_timeline_visual_clip_count(),
+        Some(1)
+    );
+    assert_eq!(opened.lifecycle, NativeRendererRunnerLifecycle::Visible);
+    assert!(opened.window_visible);
+    runner.close();
 }
 
 #[test]
