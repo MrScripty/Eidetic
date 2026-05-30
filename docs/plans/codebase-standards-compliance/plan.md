@@ -201,10 +201,10 @@ filler.
 
 **Tasks:**
 
-- [ ] Add `rust-toolchain.toml` and a Node version pin.
-- [ ] Add `CHANGELOG.md` with an `Unreleased` section.
-- [ ] Add `publish = false` to non-publishable crates.
-- [ ] Replace broad dependency features such as `tokio/full` with narrower
+- [x] Add `rust-toolchain.toml` and a Node version pin.
+- [x] Add `CHANGELOG.md` with an `Unreleased` section.
+- [x] Add `publish = false` to non-publishable crates.
+- [x] Replace broad dependency features such as `tokio/full` with narrower
   feature sets where practical.
 - [ ] Document or control the external `pumas-library` path dependency.
 - [ ] Add vulnerability, license, unused dependency, and duplicate dependency
@@ -218,7 +218,9 @@ filler.
 - Release workflow can build artifacts in a dry run or documented equivalent.
 - Package metadata passes release-standard review.
 
-**Status:** Not started.
+**Status:** In progress. Toolchain pins, changelog baseline, internal crate
+publish metadata, and narrower Tokio features are present. External dependency
+control, audit tooling, and release workflow remain.
 
 ### Milestone 5: Cross-Platform and Async Lifecycle
 
@@ -324,6 +326,10 @@ reasoning boundaries, not size.
 - 2026-05-30: `lefthook.yml` now runs the decision traceability script during
   pre-commit so local source changes are checked against README/ADR updates
   before CI wiring is added.
+- 2026-05-30: Dependency/release metadata slice added `rust-toolchain.toml`,
+  Node version pins, `CHANGELOG.md`, `publish = false` for internal crates, and
+  narrowed Tokio features to the runtime, sync, time, macros, and fs features
+  used by the workspace.
 
 ## Commit Cadence Notes
 
