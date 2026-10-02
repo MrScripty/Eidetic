@@ -43,6 +43,8 @@ pub struct AiContextPreview {
 #[derive(Debug, Clone, Deserialize)]
 pub struct AiGenerateChildrenRequest {
     pub node_id: Uuid,
+    #[serde(default)]
+    pub story_time_ms: Option<u64>,
 }
 
 pub async fn get_ai_status(state: &AppState) -> AiStatus {
@@ -71,11 +73,20 @@ pub async fn preview_ai_context(
     state: &AppState,
     node_uuid: Uuid,
 ) -> Result<AiContextPreview, BackendError> {
+    preview_ai_context_at_story_time(state, node_uuid, None).await
+}
+
+pub async fn preview_ai_context_at_story_time(
+    state: &AppState,
+    node_uuid: Uuid,
+    story_time_ms: Option<u64>,
+) -> Result<AiContextPreview, BackendError> {
     let node_id = NodeId(node_uuid);
     let (project, project_path) = active_sqlite_project(state).await?;
     let mut request = build_generate_request(&project, node_id)
         .map_err(|error| BackendError::BadRequest(error.to_string()))?;
-    attach_ai_generation_context(&mut request, project_path, node_id).await?;
+    attach_ai_generation_context_at_story_time(&mut request, project_path, node_id, story_time_ms)
+        .await?;
     let prompt = build_chat_prompt(&request);
 
     Ok(AiContextPreview {
@@ -103,7 +114,13 @@ pub async fn generate_children(
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
         (request, project_path)
     };
-    attach_ai_generation_context_to_children(&mut request, project_path, node_id).await?;
+    attach_ai_generation_context_to_children(
+        &mut request,
+        project_path,
+        node_id,
+        body.story_time_ms,
+    )
+    .await?;
 
     let config = state.ai_config.lock().clone();
     let backend = Backend::from_config(&config);
@@ -180,7 +197,17 @@ pub(crate) async fn attach_ai_generation_context(
     path: PathBuf,
     node_id: NodeId,
 ) -> Result<(), BackendError> {
-    request.bible_context = Some(load_ai_bible_context_projection(path.clone(), node_id).await?);
+    attach_ai_generation_context_at_story_time(request, path, node_id, None).await
+}
+
+pub(crate) async fn attach_ai_generation_context_at_story_time(
+    request: &mut eidetic_core::ai::backend::GenerateRequest,
+    path: PathBuf,
+    node_id: NodeId,
+    story_time_ms: Option<u64>,
+) -> Result<(), BackendError> {
+    request.bible_context =
+        Some(load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?);
     request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(())
 }
@@ -188,13 +215,18 @@ pub(crate) async fn attach_ai_generation_context(
 async fn load_ai_bible_context_projection(
     path: PathBuf,
     node_id: NodeId,
+    story_time_ms: Option<u64>,
 ) -> Result<ProjectionEnvelope<AiBibleContextProjection>, BackendError> {
     tokio::task::spawn_blocking(move || {
         let conn = crate::sqlite::open_write_connection(&path).map_err(|error| {
             BackendError::Internal(format!("open AI bible context database failed: {error}"))
         })?;
-        crate::ai_context_projection::load_ai_bible_context_projection(&conn, node_id)
-            .map_err(|error| BackendError::Internal(error.to_string()))
+        crate::ai_context_projection::load_ai_bible_context_projection(
+            &conn,
+            node_id,
+            story_time_ms,
+        )
+        .map_err(|error| BackendError::Internal(error.to_string()))
     })
     .await
     .map_err(|error| {
@@ -206,8 +238,10 @@ async fn attach_ai_generation_context_to_children(
     request: &mut GenerateChildrenRequest,
     path: PathBuf,
     node_id: NodeId,
+    story_time_ms: Option<u64>,
 ) -> Result<(), BackendError> {
-    request.bible_context = Some(load_ai_bible_context_projection(path.clone(), node_id).await?);
+    request.bible_context =
+        Some(load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?);
     request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(())
 }
@@ -335,6 +369,7 @@ mod tests {
             &state,
             AiGenerateChildrenRequest {
                 node_id: Uuid::new_v4(),
+                story_time_ms: None,
             },
         )
         .await

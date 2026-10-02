@@ -11,6 +11,7 @@ entry points over backend services.
 | File/Folder | Description |
 | ----------- | ----------- |
 | `main.rs` | Desktop application entry point and Tauri builder wiring. |
+| `ai_commands.rs` | AI command transport including explicit optional fictional-time context preview. |
 | `commands/` | Tauri command adapters over backend service APIs. |
 | `projections/` | Tauri projection readers over backend projection services. |
 | `bevy_graph_host/` | Native story-bible graph renderer host and lifecycle owner. |
@@ -42,6 +43,8 @@ crates own project state and command semantics.
   authoritative.
 
 ## Invariants
+- AI context preview transports optional `story_time_ms` to backend resolution;
+  it never derives fictional time from playhead or selected-clip coordinates.
 
 - Commands validate and delegate; they do not fork backend business rules.
 - Projection adapters return backend-owned read models.

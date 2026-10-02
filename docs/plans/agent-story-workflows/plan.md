@@ -1,9 +1,9 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Verify and independently review the existing agent execution boundary.
-**Next slice:** Independent review of M1 exact diff and verification evidence before
-starting temporal projection changes.
+**Current phase:** Deterministic fictional-time context (bounded M2a).
+**Next slice:** Verify and independently review M2a explicit time-scoped generation
+context, then repair independently diagnosed hosted CI blockers.
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
 
@@ -60,8 +60,8 @@ Acceptance claims (all pending unless the ledger records scoped evidence):
 
 | Milestone | State | Write set | Gate |
 | --- | --- | --- | --- |
-| M1: Reliable existing harness lifecycle | Verifying | server harness and focused tests; this plan/index | Provider/contract/tool failures persisted; rejected calls never execute; prior successful calls preserved |
-| M2: Explicit temporal fact projection | Planned | core time contracts; snapshot/query commands; context/prompt/tests | Future facts excluded; same-time conflicts explicit; sparse facts inherited; flashback and edit-history distinctions tested |
+| M1: Reliable existing harness lifecycle | Accepted (bounded backend scope) | server harness and focused tests; this plan/index | Provider/contract/tool failures persisted; rejected calls never execute; prior successful calls preserved |
+| M2: Explicit temporal fact projection | Active (M2a) | core time contracts; snapshot/query commands; context/prompt/tests | Future facts excluded; same-time conflicts explicit; sparse facts inherited; flashback and edit-history distinctions tested |
 | M3: Pumas embeddings and inference | Planned | adapters/configuration; derived index; provider integration/tests | Actual pinned Pumas APIs; model/dimension/revision invalidation; unavailable model and malformed outputs fail visibly |
 | M4: Shared manual/agent timeline editing | Planned | timeline command contracts/services; agent tools; Tauri/UI bindings/tests | Create/move/cut/resize/delete parity, containment/lock validation, replay, undo, stale proposals |
 | M5: Conversational authoring and acceptance | Planned | agent service/UI; native interaction gaps; documentation | Multi-act screenplay walkthrough and complete applicable repository verification |
@@ -102,6 +102,37 @@ Applicable: this objective composes durable memory, inference, editing and UI.
    inference availability are inherent. Keep them in typed contracts, command
    validation and lifecycle adapters. Do not duplicate those rules in prompts,
    UI stores, or a second agent-specific story database.
+
+## M2a scope and compatibility
+
+- Exact write set: core AI-context contract/export/README; server context loader,
+  temporal resolver/tests, prompt builder, generation/context services and README;
+  Tauri AI adapter/README; UI AI API helpers/tests/README; these plan records.
+- Resolve current canonical snapshots per field using explicit caller-provided
+  fictional milliseconds. Existing snapshot coordinates are retained without
+  migration; no implicit relationship to clip screen position is introduced.
+- Requests lacking time remain supported, but potentially time-varying fields
+  are now explicitly withheld. At an explicit time, untimed values provide the
+  baseline before the first assertion, sparse snapshots inherit prior fields,
+  and a null assertion withholds its field until a later assertion. This is a
+  conservative read-side compatibility rule, not a rewrite of stored values.
+- Latest equal-time conflicting assertions return a conflict before inference.
+  Identical assertions coalesce deterministically; later facts can supersede an
+  earlier conflict. Future and overridden values do not reach the prompt. A
+  known future-only field without a baseline remains explicitly unknown before
+  its first assertion, even when other fields on the same node resolve.
+- This temporal slice resolves fields only. Graph edges remain untimed and
+  prompts state that limitation. Effective assertion provenance currently carries
+  label/time, not unique assertion identity; stronger provenance is still open.
+- This slice exposes service/Tauri/client-helper input, not a persistent clip
+  world-time editor or world-calendar/POV/branch model. Existing editor buttons
+  still omit time and receive explicit unknowns. Batch generation remains
+  unscoped rather than assigning one fictional time to every scene.
+- Acceptance: core/server regressions prove prompt fact exclusion, sparse
+  inheritance, conflict handling, clear semantics, and input-order independence;
+  frontend IPC tests prove explicit values/zero pass through, absent input remains
+  absent and invalid/lossy numeric inputs never invoke Tauri. Native desktop
+  runtime and persistent per-clip mapping remain later M2/M5 acceptance.
 
 ## Constraints, blockers and re-plan triggers
 

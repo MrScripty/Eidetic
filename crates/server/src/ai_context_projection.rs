@@ -2,9 +2,9 @@ use std::collections::BTreeSet;
 
 use eidetic_core::contracts::{
     AiBibleContextEdge, AiBibleContextField, AiBibleContextNode, AiBibleContextProjection,
-    AiBibleContextSnapshot, BibleGraphEdge, BibleGraphEdgeId, BibleGraphNode,
-    BibleGraphPartProjection, BibleGraphSnapshotProjection, BibleRenderGraphProjectionRequest,
-    ChangeEventId, ObjectKind, ProjectionEnvelope, ProjectionVersion,
+    BibleGraphEdge, BibleGraphEdgeId, BibleGraphNode, BibleGraphPartProjection,
+    BibleRenderGraphProjectionRequest, ChangeEventId, ObjectKind, ProjectionEnvelope,
+    ProjectionVersion,
 };
 use eidetic_core::timeline::node::NodeId;
 use rusqlite::{Connection, OptionalExtension, params};
@@ -15,6 +15,7 @@ use crate::history_store::{HistoryStoreError, RevisionSummary};
 pub(crate) fn load_ai_bible_context_projection(
     conn: &Connection,
     target_node_id: NodeId,
+    story_time_ms: Option<u64>,
 ) -> Result<ProjectionEnvelope<AiBibleContextProjection>, HistoryStoreError> {
     bible_graph_store::create_schema(conn)?;
 
@@ -32,10 +33,11 @@ pub(crate) fn load_ai_bible_context_projection(
         .nodes
         .into_iter()
         .filter(|node| !node.system_owned)
-        .map(|node| load_context_node(conn, node, &visible_edge_ids))
+        .map(|node| load_context_node(conn, node, &visible_edge_ids, story_time_ms))
         .collect::<Result<Vec<_>, _>>()?;
     let projection = AiBibleContextProjection {
         target_node_id,
+        story_time_ms,
         nodes,
     };
     let summary = load_revision_summary(conn)?;
@@ -54,6 +56,7 @@ fn load_context_node(
     conn: &Connection,
     node: BibleGraphNode,
     visible_edge_ids: &BTreeSet<BibleGraphEdgeId>,
+    story_time_ms: Option<u64>,
 ) -> Result<AiBibleContextNode, HistoryStoreError> {
     let Some(detail) = bible_graph_store::load_node_detail_projection(conn, &node.id)? else {
         return Err(HistoryStoreError::InvalidValue(format!(
@@ -62,13 +65,19 @@ fn load_context_node(
         )));
     };
 
+    let resolved = crate::ai_temporal_context::resolve_fields(
+        context_fields(detail.parts),
+        detail.snapshots,
+        story_time_ms,
+    )?;
     Ok(AiBibleContextNode {
         node_id: node.id,
         parent_id: node.parent_id,
         schema_key: node.schema_key,
         name: node.name,
-        fields: context_fields(detail.parts),
-        snapshots: context_snapshots(detail.snapshots),
+        fields: resolved.fields,
+        snapshots: resolved.snapshots,
+        unresolved_timed_fields: resolved.unresolved_fields,
         incoming_edges: context_edges(detail.incoming_edges, visible_edge_ids),
         outgoing_edges: context_edges(detail.outgoing_edges, visible_edge_ids),
     })
@@ -90,36 +99,6 @@ fn context_fields(parts: Vec<BibleGraphPartProjection>) -> Vec<AiBibleContextFie
         }
     }
     fields
-}
-
-fn context_snapshots(snapshots: Vec<BibleGraphSnapshotProjection>) -> Vec<AiBibleContextSnapshot> {
-    snapshots
-        .into_iter()
-        .filter_map(|projection| {
-            let fields = projection
-                .fields
-                .into_iter()
-                .filter_map(|field| {
-                    field.value.map(|value| AiBibleContextField {
-                        part_key: field.part_key,
-                        part_name: field.part_name,
-                        field_key: field.field_key,
-                        value,
-                    })
-                })
-                .collect::<Vec<_>>();
-
-            if fields.is_empty() {
-                return None;
-            }
-
-            Some(AiBibleContextSnapshot {
-                label: projection.snapshot.label,
-                at_ms: projection.snapshot.at_ms,
-                fields,
-            })
-        })
-        .collect()
 }
 
 fn context_edges(

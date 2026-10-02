@@ -4,13 +4,17 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::ai_generation_runtime::{mark_node_generating, run_generation};
-use crate::ai_service::{active_sqlite_project, attach_ai_generation_context};
+use crate::ai_service::{
+    active_sqlite_project, attach_ai_generation_context, attach_ai_generation_context_at_story_time,
+};
 use crate::backend_error::BackendError;
 use crate::state::{AppState, ServerEvent};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AiGenerateRequest {
     pub node_id: Uuid,
+    #[serde(default)]
+    pub story_time_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -57,7 +61,13 @@ pub async fn start_generation(
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
         (request, project_path)
     };
-    attach_ai_generation_context(&mut request, project_path.clone(), node_id).await?;
+    attach_ai_generation_context_at_story_time(
+        &mut request,
+        project_path.clone(),
+        node_id,
+        body.story_time_ms,
+    )
+    .await?;
 
     state.generating.lock().insert(body.node_id);
     mark_node_generating(state, project_path.clone(), node_id, body.node_id).await;
@@ -171,6 +181,7 @@ mod tests {
             &state,
             AiGenerateRequest {
                 node_id: Uuid::new_v4(),
+                story_time_ms: None,
             },
         )
         .await

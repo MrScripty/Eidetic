@@ -139,6 +139,41 @@ describe('api request handling', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('passes explicit fictional time through preview and generation without inferring it', async () => {
+    const invoke = vi.fn().mockResolvedValue({});
+    vi.stubGlobal('window', { __TAURI__: { core: { invoke } } });
+    await getAiContext('node-a', 0);
+    await generateContent('node-a', 1234);
+    await generateChildren('node-a', 2345);
+    expect(invoke).toHaveBeenNthCalledWith(1, 'ai_context_preview', {
+      nodeId: 'node-a',
+      storyTimeMs: 0,
+    });
+    expect(invoke).toHaveBeenNthCalledWith(2, 'ai_generate_content', {
+      request: { node_id: 'node-a', story_time_ms: 1234 },
+    });
+    expect(invoke).toHaveBeenNthCalledWith(3, 'ai_generate_children', {
+      request: { node_id: 'node-a', story_time_ms: 2345 },
+    });
+  });
+
+  it('rejects invalid or lossy fictional time before invoking the desktop', () => {
+    const invoke = vi.fn();
+    vi.stubGlobal('window', { __TAURI__: { core: { invoke } } });
+    for (const time of [
+      -1,
+      0.5,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      Number.MAX_SAFE_INTEGER + 1,
+    ]) {
+      expect(() => getAiContext('node-a', time)).toThrow(RangeError);
+      expect(() => generateContent('node-a', time)).toThrow(RangeError);
+      expect(() => generateChildren('node-a', time)).toThrow(RangeError);
+    }
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
   it('uses the desktop child generation command when Tauri transport is available', async () => {
     const invoke = vi.fn().mockResolvedValue({
       id: 'child_plan.test',

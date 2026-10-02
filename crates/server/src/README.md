@@ -14,6 +14,8 @@ domain model in `eidetic-core`.
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by Tauri commands. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
+| `ai_temporal_context.rs` | Deterministic per-field fictional-time resolution before prompt construction; excludes future assertions and rejects same-time conflicts. |
+| `ai_temporal_context_tests.rs` | Sparse inheritance, ordering, conflict, duplicate and cleared-value temporal regressions. |
 | `ai_generation_service.rs` | Host-neutral streaming script generation and batch generation orchestration consumed by Tauri commands. |
 | `ai_generation_runtime.rs` | Supervised AI generation runtime for streaming, status persistence, script block writes, and recap generation. |
 | `affect_service.rs` | Host-neutral affect command/projection behavior over backend-owned affect storage. |
@@ -87,6 +89,17 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Generation and preview accept an optional explicit fictional `story_time_ms`.
+  Snapshot fields resolve independently at or before it. Conflicting values at
+  the latest effective timestamp stop context construction. A cleared value is
+  withheld as unknown until a later assertion. With no time scope, every field
+  that has timed assertions is withheld, including its otherwise untimed default.
+  These read-side rules do not rewrite canonical facts or edit history. Batch
+  generation still has no clip-specific world-time mapping and withholds timed
+  fields; a shared parent time is not silently assigned to child scenes.
+  Future-only fields with no baseline retain an unknown marker before their
+  first assertion. Temporal resolution applies to fields, not edges, and
+  effective provenance is label/time rather than unique assertion identity.
 - Agent intent is recorded before tool execution. Failed or cancelled runs have
   terminal history; failures never trigger automatic tool retries. Cooperative
   cancellation does not roll back commands already committed. If persistence

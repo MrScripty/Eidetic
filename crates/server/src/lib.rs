@@ -10,6 +10,7 @@ pub(crate) mod ai_affect_context_prompt;
 pub(crate) mod ai_backends;
 pub(crate) mod ai_bible_context_prompt;
 pub(crate) mod ai_context_projection;
+pub(crate) mod ai_temporal_context;
 pub(crate) mod ai_generation_runtime;
 pub mod ai_generation_service;
 pub mod ai_service;

@@ -13,3 +13,11 @@
   Pumas; the in-memory vector store has no model/revision identity checks.
 - **Open, M3/M5:** Confirm installed runtime/model and reproducible Pumas source
   path before live inference and complete application acceptance.
+- **Implemented, M2a; independent review pending:** Explicit per-request fictional
+  time resolves sparse canonical fields before prompts; omitted time withholds
+  affected fields. Persistent clip/world-time authoring and batch mapping remain
+  open. Original canonical values/history remain unchanged.
+- **Open, CI remediation:** M1 hosted Linux renderer lint, Windows `wgpu-hal`
+  Direct3D12 dependency mismatch and traceability runner without `rg` block
+  qualification. Baseline analysis and repairs are tracked separately; missing
+  `rg` is not evidence of missing README headings.
