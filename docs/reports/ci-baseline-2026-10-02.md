@@ -55,3 +55,22 @@ Independent review accepted this narrow repair with no blocking findings on
 2026-10-02. Native hosted compilation remains required; local dependency
 resolution and source review do not replace that gate. Reviewed patch SHA-256:
 `9409a921b766f649c5d64fa4e4cebed8d0277334b3f91bb17a3bc498137e191d`.
+
+## Subsequent Windows resource gate
+
+At repair head `deff093a9ddbd04cbabd0dfe49a4a512226f0bcb`, Windows passed the
+previous wgpu-hal type mismatch and reached Tauri's build script, which requires
+`icons/icon.ico`. Main and the repair both contained only the existing 1×1 PNG
+placeholder, despite an empty bundle icon list. Added an ICO container around
+that existing placeholder. Independent review found its inherited PNG IDAT CRC
+was invalid: Pillow accepted the image but Tauri's actual ico 0.5.0 decoder
+rejected it. Repaired only the four checksum bytes in icon.png and regenerated
+the ICO from that corrected PNG, preserving all image data and identical RGBA
+pixels. The strict ico 0.5.0 entry decoder is now required for local verification.
+This is packaging repair, not new artwork or a release-quality icon claim.
+Hosted Windows compilation must still qualify the repaired input.
+
+Independent review accepted the corrected packaging on 2026-10-02, verifying
+all chunk checksums, unchanged image data and RGBA pixels, and successful decode
+with ico 0.5.0. Accepted patch SHA-256:
+`90bd8a7330b0c4a1c22bf428f1834f782a3ca8ecb3d2399bff91672b6b3ebc9b`.
