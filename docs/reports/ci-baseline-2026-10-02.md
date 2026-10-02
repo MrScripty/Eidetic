@@ -74,3 +74,16 @@ Independent review accepted the corrected packaging on 2026-10-02, verifying
 all chunk checksums, unchanged image data and RGBA pixels, and successful decode
 with ico 0.5.0. Accepted patch SHA-256:
 `90bd8a7330b0c4a1c22bf428f1834f782a3ca8ecb3d2399bff91672b6b3ebc9b`.
+
+## Stacked feature pull requests
+
+The CI workflow previously accepted pull requests targeting only main, so a
+reviewable temporal slice targeting its prerequisite feature branch received no
+checks. Include feat/** pull-request base branches in the same workflow. The
+push trigger remains main-only and every existing job and read-only permission
+stays unchanged. This adds no secrets, privileged events, or check bypasses.
+Checks for the combined feature tree must still pass before it can merge.
+
+Independent review accepted the exact stacked-trigger patch on 2026-10-02:
+`a3c78e684d94fabd8a496feed7117882801786b36fafcf2105737e5240b7ec0d`.
+Structural YAML comparison verified only the pull-request base filter changes.
