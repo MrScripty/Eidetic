@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if ! command -v rg >/dev/null 2>&1; then
+  echo "Decision traceability requires ripgrep (rg); install it before running this check." >&2
+  exit 1
+fi
+
 ADR_DIR="${ADR_DIR:-docs/adr}"
 BASE_REF="${TRACEABILITY_BASE_REF:-origin/main}"
 SOURCE_ROOTS="${TRACEABILITY_SOURCE_ROOTS:-crates/core/src crates/server/src crates/bevy_bible_graph/src crates/bevy_timeline/src src-tauri/src ui/src}"

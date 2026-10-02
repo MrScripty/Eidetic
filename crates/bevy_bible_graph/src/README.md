@@ -65,6 +65,11 @@ share one canonical set of graph fixtures.
   would not create an independent ownership boundary.
 
 ## Invariants
+- The workspace timeline presentation enum derives `Default` with
+  `CameraAnchoredPanel` explicitly designated; its initial mode and serialized
+  representation are unchanged. Native Windows allocation must share the same
+  `windows` crate types at the wgpu-hal/gpu-allocator boundary; unrelated
+  dependencies may retain their own compatible Windows binding versions.
 
 - Renderer commands are validated against the active projection.
 - Headless tests must not require display creation.

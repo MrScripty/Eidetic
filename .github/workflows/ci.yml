@@ -105,5 +105,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install traceability dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
+
       - name: Check decision traceability
         run: scripts/check-decision-traceability.sh
