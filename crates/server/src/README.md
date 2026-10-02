@@ -20,6 +20,8 @@ domain model in `eidetic-core`.
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by Tauri commands. |
 | `model_endpoint_resolver.rs` | Backend-owned llama.cpp OpenAI endpoint policy and Pumas runtime-profile resolution for live provider workflows. |
 | `agent_structured_tool_provider.rs` | Provider-independent structured JSON tool loop for text-only model providers. |
+| `agent_workflow_harness.rs` | Bounded agent execution with persisted intent, terminal outcomes and cooperative cancellation. |
+| `agent_workflow_harness_tests.rs` | Provider, manifest, executor, cancellation and exact-budget lifecycle regressions against SQLite history. |
 | `agent_premise_workflow.rs` | First premise graph-context workflow slice over backend graph reads, reviewable proposals, and harness history. |
 | `export_service.rs` | Host-neutral PDF export behavior consumed by Tauri commands. |
 | `reference_service.rs` | Host-neutral reference document list/upload/delete behavior consumed by Tauri commands. |
@@ -85,6 +87,13 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Agent intent is recorded before tool execution. Failed or cancelled runs have
+  terminal history; failures never trigger automatic tool retries. Cooperative
+  cancellation does not roll back commands already committed. If persistence
+  itself fails at a terminal call, result or run write, the harness preserves the
+  typed execution outcome alongside the persistence error. A cancelled execution
+  stays Cancelled when its run can still be recorded; it does not become Failed
+  because a call/result write failed. No failed persistence write is retried.
 - New backend behavior must be added behind service APIs before being exposed
   through Tauri adapters.
 - Saved project compatibility is preserved across persistence changes.
