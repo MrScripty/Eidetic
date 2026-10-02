@@ -147,7 +147,12 @@ mod tests {
     fn validate_project_path_accepts_child_path() {
         let root = temp_dir("accepts-child");
         let resolved = validate_project_path("episode/project.db", &root).unwrap();
-        assert_eq!(resolved, root.join("episode/project.db"));
+        let expected = root
+            .canonicalize()
+            .unwrap()
+            .join("episode")
+            .join("project.db");
+        assert_eq!(resolved, expected);
         fs::remove_dir_all(root).unwrap();
     }
 

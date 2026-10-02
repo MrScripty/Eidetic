@@ -224,6 +224,7 @@ mod tests {
         assert_eq!(command_created_at_ms, 42_000);
         assert_eq!(event_created_at_ms, 42_000);
 
+        conn.close().unwrap();
         std::fs::remove_file(path).unwrap();
     }
 
