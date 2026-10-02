@@ -142,3 +142,12 @@ assert!(result.is_ok());
 ## Structured Producer Contract
 - This directory produces persisted SQLite project data, Y.Doc blobs, and JSON payloads consumed by the UI.
 - Refactor-era schema and payload changes are allowed to break old project data only when the projection architecture plan explicitly owns that deletion.
+
+## Portable Test Resource Contracts
+
+SQLite tests must close inspection connections before removing database files,
+so cleanup verifies the same resource lifetime on Windows and Unix. Project-path
+validation returns children under the canonical root when that root exists;
+tests compare exact paths built from that canonical root and native components.
+A missing root continues to use lexical normalization. Timestamp equality and
+path escape-rejection assertions remain required.
