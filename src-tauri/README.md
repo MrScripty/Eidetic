@@ -91,3 +91,12 @@ commands and events.
 - This crate produces no durable project state. It composes backend services,
   packages UI assets, and emits/returns transport DTOs derived from backend
   service outputs.
+
+## Windows Icon Packaging
+
+`icons/icon.ico` packages the existing `icons/icon.png` placeholder without
+changing its pixels. The PNG IDAT checksum is repaired so strict decoders accept
+the existing image data. Tauri's Windows resource build requires an
+ICO even though the current bundle icon list is empty. This fixes build inputs;
+it is not a new icon design or release-quality branding claim. Replace both
+formats together when an application icon is approved.
