@@ -87,3 +87,20 @@ Checks for the combined feature tree must still pass before it can merge.
 Independent review accepted the exact stacked-trigger patch on 2026-10-02:
 `a3c78e684d94fabd8a496feed7117882801786b36fafcf2105737e5240b7ec0d`.
 Structural YAML comparison verified only the pull-request base filter changes.
+
+## Windows test resource and path expectations
+
+At head 78b2ecd800df80a20b8362173d0e694c3e26da1d, Windows clippy passed
+and server tests reached 229 passes with two failures. The context-evaluation
+timestamp test deleted its SQLite file while its inspection connection remained
+open, which Windows disallows. Explicitly close the connection and assert that
+closure succeeds before asserting successful file removal. Both exact timestamp
+assertions remain unchanged. The accepted-child-path test expected a raw temp
+root, while the service correctly returns a canonical root. Build the exact
+expected child path from the canonical root and native path components; this
+handles Windows verbatim paths, short user-directory aliases and separators.
+Production path validation and its escape-rejection assertions are unchanged.
+
+Independent review accepted the two-test repair on 2026-10-02. Actual-source
+Linux verification passed all 232 server tests; formatting and traceability
+checks passed. Windows confirmation remains required on the published head.
