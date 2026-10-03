@@ -106,3 +106,38 @@ Post-merge push CI run 37091158926 completed successfully on 2026-10-03.
 Forward integration retains the independently accepted M2a source; only plan
 status prose required reconciliation. Field-only temporal scope, label/time
 provenance, and later Pumas/timeline integration limitations still apply.
+
+## 2026-10-03 — M3a reference retrieval custody
+
+Reverified main at `3757edf6e4050aa211cb6ac7d9f991167c2af74e`. M1/M2a are merged;
+this slice implements the source-bound retrieval prerequisite described in the
+plan. Added exact-source publication tickets, project index invalidation,
+query-scope fencing, configured representation identity checks and validated
+vector ranking. Persistent canon is unchanged. Tests exercise deletion after
+inference starts by delivering a completed vector after the real deletion service.
+Qualification and independent review are pending until recorded below.
+
+Root review identified a late scope-capture hole: a queued generation could bind
+to a reopened project's new index if its database path stayed the same. The
+repair captures retrieval epoch before project snapshot I/O in single/batch
+admission and carries it to attach. Project activation publishes path alongside
+project/index under the project guard. Caller-level tests deliver delayed query
+results after reopen/deletion and clear preexisting context on every rejection.
+This fences optional retrieval only; the existing broader streaming-generation
+persistence/cancellation lifecycle remains outside this slice.
+
+Local qualification on Rust 1.92.0: core/server all-target clippy with
+`-D warnings` passed against these actual source files in the bounded verification
+workspace and unchanged Pumas `8444b50df28c3e2bd8db58fb3645fa4dd8664b27`.
+Changed-source rustfmt, staged whitespace and decision traceability passed.
+Local tests did **not** execute: the first attempt encountered unavailable ORT
+binary download; a retry with the already-installed official ONNX 1.24.2 library
+was SIGKILLed compiling Pumas under shared-memory pressure. No local test pass is
+claimed. Exact-head hosted workspace/frontend tests and independent re-review
+remain pending. Native desktop, actual model inference, saved-reference reindexing
+and immutable model-revision identity are unverified/out of scope.
+
+Independent root source re-review accepted the bounded retrieval correction on
+2026-10-03, including admission epoch propagation, coherent activation and the
+caller-level regression coverage. Publication is cleared; hosted execution is
+still a separate pending gate. Broader generation persistence is not covered.
