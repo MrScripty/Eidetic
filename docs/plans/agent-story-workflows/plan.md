@@ -1,9 +1,10 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Deterministic fictional-time context (bounded M2a).
-**Next slice:** Verify and independently review M2a explicit time-scoped generation
-context, then repair independently diagnosed hosted CI blockers.
+**Current phase:** M2a field-level story-time projection accepted by independent review.
+**Next gate:** Qualify the current temporal projection head with hosted CI and
+CodeRabbit review; M1 and its CI repairs are merged into main.
+
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
 

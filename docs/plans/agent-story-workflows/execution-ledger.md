@@ -100,3 +100,9 @@ and four context projection tests. Reviewed full patch SHA-256:
 `9ed558ba73056e72b297b37648680a0c5fb060f9a6901fc9398c80337de289e4`.
 This acceptance covers field resolution only; hosted qualification and the later
 Pumas, graph relationship timing, and timeline workflow slices remain open.
+
+M1 merged into main at `72b8485025701fc18220c6522562e874704b6286`.
+Post-merge push CI run 37091158926 completed successfully on 2026-10-03.
+Forward integration retains the independently accepted M2a source; only plan
+status prose required reconciliation. Field-only temporal scope, label/time
+provenance, and later Pumas/timeline integration limitations still apply.
