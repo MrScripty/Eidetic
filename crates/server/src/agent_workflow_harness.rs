@@ -92,53 +92,136 @@ where
     };
     record_run(conn, run.clone())?;
 
+    let outcome = execute_run(conn, &workflow, &run, provider, &mut execute_tool, clock);
+    run.completed_at_ms = Some(clock.tick());
+    match &outcome {
+        Ok(()) => run.status = AgentRunStatus::Completed,
+        Err(error) if error.is_cancelled() => {
+            run.status = AgentRunStatus::Cancelled;
+            run.error = Some(error.to_string());
+        }
+        Err(error) => {
+            run.status = AgentRunStatus::Failed;
+            run.error = Some(error.to_string());
+        }
+    }
+    let run_id = run.id;
+    if let Err(error) = record_run(conn, run) {
+        return Err(AgentHarnessError::Finalization {
+            execution_error: outcome.err().map(Box::new),
+            persistence_error: error.to_string(),
+        });
+    }
+    outcome?;
+    load_history(conn, run_id)
+}
+
+fn execute_run<P, F>(
+    conn: &mut Connection,
+    workflow: &AgentWorkflowDefinition,
+    run: &AgentRun,
+    provider: &mut P,
+    execute_tool: &mut F,
+    clock: &mut AgentHarnessClock,
+) -> Result<(), AgentHarnessError>
+where
+    P: AgentWorkflowProvider,
+    F: FnMut(
+        &mut Connection,
+        &AgentToolRequest,
+    ) -> Result<AgentToolResultPayload, AgentHarnessError>,
+{
     let mut completed_calls = Vec::new();
     let mut completed_results = Vec::new();
-    for sequence in 1..=workflow.budget.max_tool_calls {
+    // A provider may finish after using exactly its tool budget. The final
+    // provider turn may declare completion but may not execute another tool.
+    for completed in 0..=workflow.budget.max_tool_calls {
         let turn = AgentProviderTurn {
-            workflow: &workflow,
-            run: &run,
+            workflow,
+            run,
             completed_calls: &completed_calls,
             completed_results: &completed_results,
         };
         let Some(request) = provider.next_tool_request(turn)? else {
-            run.status = AgentRunStatus::Completed;
-            run.completed_at_ms = Some(clock.tick());
-            record_run(conn, run.clone())?;
-            return load_history(conn, run.id);
+            return Ok(());
         };
-        workflow
-            .manifest
-            .validate_call(&request, &workflow.budget)?;
-
-        let payload = execute_tool(conn, &request)?;
-        let call = AgentToolCall {
+        if completed == workflow.budget.max_tool_calls {
+            return Err(AgentHarnessError::BudgetExceeded {
+                max_tool_calls: workflow.budget.max_tool_calls,
+            });
+        }
+        let mut call = AgentToolCall {
             id: AgentToolCallId::new(),
             run_id: run.id,
-            sequence,
+            sequence: completed + 1,
             request,
-            status: AgentToolCallStatus::Completed,
+            status: AgentToolCallStatus::Running,
             created_at_ms: clock.tick(),
+        };
+        if let Err(error) = workflow
+            .manifest
+            .validate_call(&call.request, &workflow.budget)
+        {
+            call.status = AgentToolCallStatus::Rejected;
+            let result = AgentToolResult {
+                call_id: call.id,
+                status: AgentToolResultStatus::Rejected,
+                payload: AgentToolResultPayload::Rejection {
+                    reason: error.to_string(),
+                },
+                completed_at_ms: clock.tick(),
+            };
+            return persist_tool_outcome(conn, &call, &result, Err(error.into()));
+        }
+        // Persist intent before entering an executor that may change the story.
+        // Do not automatically retry a failed/incomplete tool attempt.
+        record_tool_call(conn, call.clone())?;
+        let outcome = execute_tool(conn, &call.request);
+        let (status, payload) = match &outcome {
+            Ok(payload) => {
+                call.status = AgentToolCallStatus::Completed;
+                (AgentToolResultStatus::Succeeded, payload.clone())
+            }
+            Err(error) => {
+                call.status = AgentToolCallStatus::Failed;
+                (
+                    AgentToolResultStatus::Failed,
+                    AgentToolResultPayload::Error {
+                        message: error.to_string(),
+                    },
+                )
+            }
         };
         let result = AgentToolResult {
             call_id: call.id,
-            status: AgentToolResultStatus::Succeeded,
+            status,
             payload,
             completed_at_ms: clock.tick(),
         };
-        record_tool_call(conn, call.clone())?;
-        record_tool_result(conn, result.clone())?;
+        persist_tool_outcome(conn, &call, &result, outcome.map(|_| ()))?;
         completed_calls.push(call);
         completed_results.push(result);
     }
+    unreachable!("last provider turn either completes or exceeds the tool budget")
+}
 
-    run.status = AgentRunStatus::Failed;
-    run.completed_at_ms = Some(clock.tick());
-    run.error = Some("agent workflow exceeded max tool calls".to_string());
-    record_run(conn, run)?;
-    Err(AgentHarnessError::BudgetExceeded {
-        max_tool_calls: workflow.budget.max_tool_calls,
-    })
+// Keep execution and history-write failures distinct. In particular, a failed
+// terminal history write must not turn cooperative cancellation into failure.
+fn persist_tool_outcome(
+    conn: &mut Connection,
+    call: &AgentToolCall,
+    result: &AgentToolResult,
+    outcome: Result<(), AgentHarnessError>,
+) -> Result<(), AgentHarnessError> {
+    let persistence = record_tool_call(conn, call.clone())
+        .and_then(|()| record_tool_result(conn, result.clone()));
+    match persistence {
+        Ok(()) => outcome,
+        Err(error) => Err(AgentHarnessError::Finalization {
+            execution_error: outcome.err().map(Box::new),
+            persistence_error: error.to_string(),
+        }),
+    }
 }
 
 fn record_run(conn: &mut Connection, run: AgentRun) -> Result<(), AgentHarnessError> {
@@ -193,6 +276,30 @@ pub enum AgentHarnessError {
     Tool(String),
     #[error("{0}")]
     Provider(String),
+    /// Cooperative cancellation from the provider or executor. It never
+    /// implies rollback of a tool that has already committed a command.
+    #[error("agent workflow cancelled")]
+    Cancelled,
+    #[error(
+        "failed to persist terminal agent history: {persistence_error}; execution error: {execution_error:?}"
+    )]
+    Finalization {
+        execution_error: Option<Box<AgentHarnessError>>,
+        persistence_error: String,
+    },
+}
+
+impl AgentHarnessError {
+    fn is_cancelled(&self) -> bool {
+        match self {
+            Self::Cancelled => true,
+            Self::Finalization {
+                execution_error: Some(error),
+                ..
+            } => error.is_cancelled(),
+            _ => false,
+        }
+    }
 }
 
 impl From<HistoryStoreError> for AgentHarnessError {
@@ -202,163 +309,5 @@ impl From<HistoryStoreError> for AgentHarnessError {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use eidetic_core::contracts::{
-        AgentToolArguments, AgentToolBudget, AgentToolDefinition, AgentToolKind, AgentToolManifest,
-        AgentToolName, AgentWorkflowId, AgentWorkflowIntent, AgentWorkflowPolicy, BibleGraphNodeId,
-    };
-
-    #[test]
-    fn mock_provider_harness_records_validated_tool_history() {
-        let mut conn = Connection::open_in_memory().unwrap();
-        let tool_name = AgentToolName::new("read_bible_node").unwrap();
-        let workflow = workflow_with_tool(tool_name.clone(), AgentToolKind::GraphRead, 4);
-        let request = AgentToolRequest {
-            tool_name,
-            arguments: AgentToolArguments::ReadBibleNode {
-                node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
-            },
-        };
-        let mut provider = MockProvider {
-            requests: vec![request],
-        };
-        let mut tools = MockTools;
-        let mut clock = AgentHarnessClock::new(10);
-
-        let history =
-            run_mockable_agent_workflow(&mut conn, workflow, &mut provider, &mut tools, &mut clock)
-                .unwrap();
-
-        assert_eq!(history.run.status, AgentRunStatus::Completed);
-        assert_eq!(history.calls.len(), 1);
-        assert_eq!(history.calls[0].status, AgentToolCallStatus::Completed);
-        assert_eq!(history.results.len(), 1);
-        assert_eq!(history.results[0].status, AgentToolResultStatus::Succeeded);
-        assert_eq!(
-            history.results[0].payload,
-            AgentToolResultPayload::Text {
-                text: "mock tool result".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn mock_provider_harness_rejects_disallowed_tool_calls_before_execution() {
-        let mut conn = Connection::open_in_memory().unwrap();
-        let workflow = workflow_with_tool(
-            AgentToolName::new("read_bible_node").unwrap(),
-            AgentToolKind::GraphRead,
-            4,
-        );
-        let request = AgentToolRequest {
-            tool_name: AgentToolName::new("propose_bible_node").unwrap(),
-            arguments: AgentToolArguments::ProposeBibleNode {
-                command_id: eidetic_core::contracts::CommandId::new(),
-                parent_id: BibleGraphNodeId::new("canon.characters").unwrap(),
-                schema_key: eidetic_core::contracts::BibleGraphSchemaKey::new(
-                    "canonical.character",
-                )
-                .unwrap(),
-                title: "Ada".to_string(),
-                summary: "Premise character".to_string(),
-            },
-        };
-        let mut provider = MockProvider {
-            requests: vec![request],
-        };
-        let mut tools = MockTools;
-        let mut clock = AgentHarnessClock::new(10);
-
-        let error =
-            run_mockable_agent_workflow(&mut conn, workflow, &mut provider, &mut tools, &mut clock)
-                .unwrap_err();
-
-        assert!(matches!(
-            error,
-            AgentHarnessError::Contract(
-                eidetic_core::contracts::AgentWorkflowContractError::ToolNotAllowed { .. }
-            )
-        ));
-    }
-
-    #[test]
-    fn mock_provider_harness_fails_closed_on_tool_budget_exhaustion() {
-        let mut conn = Connection::open_in_memory().unwrap();
-        let tool_name = AgentToolName::new("read_bible_node").unwrap();
-        let workflow = workflow_with_tool(tool_name.clone(), AgentToolKind::GraphRead, 1);
-        let request = AgentToolRequest {
-            tool_name,
-            arguments: AgentToolArguments::ReadBibleNode {
-                node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
-            },
-        };
-        let mut provider = MockProvider {
-            requests: vec![request.clone(), request],
-        };
-        let mut tools = MockTools;
-        let mut clock = AgentHarnessClock::new(10);
-
-        let error =
-            run_mockable_agent_workflow(&mut conn, workflow, &mut provider, &mut tools, &mut clock)
-                .unwrap_err();
-
-        assert!(matches!(
-            error,
-            AgentHarnessError::BudgetExceeded { max_tool_calls: 1 }
-        ));
-    }
-
-    fn workflow_with_tool(
-        tool_name: AgentToolName,
-        kind: AgentToolKind,
-        max_tool_calls: u32,
-    ) -> AgentWorkflowDefinition {
-        AgentWorkflowDefinition {
-            id: AgentWorkflowId::new("workflow.premise.graph").unwrap(),
-            label: "Premise graph".to_string(),
-            intent: AgentWorkflowIntent::DevelopPremiseGraphContext,
-            manifest: AgentToolManifest {
-                tools: vec![AgentToolDefinition {
-                    name: tool_name,
-                    kind,
-                    description: "Mock tool".to_string(),
-                }],
-            },
-            budget: AgentToolBudget {
-                max_tool_calls,
-                ..AgentToolBudget::default()
-            },
-            policy: AgentWorkflowPolicy::default(),
-        }
-    }
-
-    struct MockProvider {
-        requests: Vec<AgentToolRequest>,
-    }
-
-    impl AgentWorkflowProvider for MockProvider {
-        fn next_tool_request(
-            &mut self,
-            _turn: AgentProviderTurn<'_>,
-        ) -> Result<Option<AgentToolRequest>, AgentHarnessError> {
-            if self.requests.is_empty() {
-                return Ok(None);
-            }
-            Ok(Some(self.requests.remove(0)))
-        }
-    }
-
-    struct MockTools;
-
-    impl AgentWorkflowToolExecutor for MockTools {
-        fn execute_tool(
-            &mut self,
-            _request: &AgentToolRequest,
-        ) -> Result<AgentToolResultPayload, AgentHarnessError> {
-            Ok(AgentToolResultPayload::Text {
-                text: "mock tool result".to_string(),
-            })
-        }
-    }
-}
+#[path = "agent_workflow_harness_tests.rs"]
+mod tests;

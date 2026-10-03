@@ -8,6 +8,10 @@ the bible graph and timeline.
 
 ## Source Of Truth
 
+- Active story/agent product development:
+  `docs/plans/agent-story-workflows/plan.md`. This extends the established
+  projection architecture; it does not reopen completed foundation milestones.
+
 - Active implementation plan:
   `docs/refactors/eidetic-projection-architecture/final-plan.md`
 - Supporting planning notes:
