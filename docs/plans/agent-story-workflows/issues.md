@@ -1,10 +1,10 @@
 # Issues
 
-- **Implemented, M1; independent review pending:** Provider, manifest and executor
+- **Implemented, M1; independent narrow re-review accepted:** Provider, manifest and executor
   failures now persist terminal outcomes; tool intent precedes execution.
   Initial eight-test checkpoint passed; review added three fault-injection
   regressions preserving execution outcomes through call/result write failures.
-  Narrow re-review pending. Cooperative cancellation is supported at
+  All 11 harness tests passed independent re-review. Cooperative cancellation is supported at
   provider/executor boundaries; process-crash recovery and UI cancellation
   transport remain later integration work.
 - **Open, M2:** AI context includes all populated timed snapshots and does not

@@ -1,9 +1,9 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Verify and independently review the existing agent execution boundary.
-**Next slice:** Independent review of M1 exact diff and verification evidence before
-starting temporal projection changes.
+**Current phase:** M1 execution-boundary implementation and independent narrow re-review accepted.
+**Next gate:** Qualify the current published M1 head with hosted checks and review,
+then qualify the separately stacked temporal projection slice in PR #3.
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
 
