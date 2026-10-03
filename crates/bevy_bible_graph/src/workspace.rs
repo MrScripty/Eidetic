@@ -70,9 +70,10 @@ pub enum BibleGraphWorkspaceTimelineAnchor {
     WorldAnchoredTimeline,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum BibleGraphWorkspaceTimelinePresentationMode {
+    #[default]
     CameraAnchoredPanel,
     WorldAnchoredTimeline,
     Transitioning {
@@ -80,12 +81,6 @@ pub enum BibleGraphWorkspaceTimelinePresentationMode {
         to: BibleGraphWorkspaceTimelineAnchor,
         progress: f32,
     },
-}
-
-impl Default for BibleGraphWorkspaceTimelinePresentationMode {
-    fn default() -> Self {
-        Self::CameraAnchoredPanel
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Resource)]
