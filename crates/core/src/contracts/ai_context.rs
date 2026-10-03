@@ -10,6 +10,9 @@ use super::{
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AiBibleContextProjection {
     pub target_node_id: NodeId,
+    /// Explicit fictional time; never inferred from narrative placement or edit time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub story_time_ms: Option<u64>,
     #[serde(default)]
     pub nodes: Vec<AiBibleContextNode>,
 }
@@ -25,10 +28,19 @@ pub struct AiBibleContextNode {
     pub fields: Vec<AiBibleContextField>,
     #[serde(default)]
     pub snapshots: Vec<AiBibleContextSnapshot>,
+    /// Timed fields omitted because their effective value is not established.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unresolved_timed_fields: Vec<AiBibleContextFieldRef>,
     #[serde(default)]
     pub incoming_edges: Vec<AiBibleContextEdge>,
     #[serde(default)]
     pub outgoing_edges: Vec<AiBibleContextEdge>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AiBibleContextFieldRef {
+    pub part_key: BibleGraphPartKey,
+    pub field_key: BibleGraphFieldKey,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -66,6 +78,7 @@ mod tests {
         let target_node_id = NodeId::new();
         let projection = AiBibleContextProjection {
             target_node_id,
+            story_time_ms: None,
             nodes: vec![AiBibleContextNode {
                 node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
                 parent_id: None,
@@ -78,6 +91,7 @@ mod tests {
                     value: FieldValue::Text("Reluctant detective".to_string()),
                 }],
                 snapshots: Vec::new(),
+                unresolved_timed_fields: Vec::new(),
                 incoming_edges: Vec::new(),
                 outgoing_edges: Vec::new(),
             }],

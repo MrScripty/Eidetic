@@ -36,8 +36,8 @@ pub use agent_workflow::{
     AgentWorkflowIntent, AgentWorkflowPolicy,
 };
 pub use ai_context::{
-    AiBibleContextEdge, AiBibleContextField, AiBibleContextNode, AiBibleContextProjection,
-    AiBibleContextSnapshot,
+    AiBibleContextEdge, AiBibleContextField, AiBibleContextFieldRef, AiBibleContextNode,
+    AiBibleContextProjection, AiBibleContextSnapshot,
 };
 pub use bible_graph::{
     BIBLE_GRAPH_NODE_TEXT_FIELD_KEY, BIBLE_GRAPH_NODE_TEXT_FIELD_SORT_ORDER,

@@ -27,9 +27,10 @@ pub fn ai_config_update(app: tauri::AppHandle, updates: AiConfigUpdate) -> AiCon
 pub async fn ai_context_preview(
     app: tauri::AppHandle,
     node_id: Uuid,
+    story_time_ms: Option<u64>,
 ) -> Result<AiContextPreview, CommandError> {
     let state = app.state::<AppState>().inner().clone();
-    ai_service::preview_ai_context(&state, node_id)
+    ai_service::preview_ai_context_at_story_time(&state, node_id, story_time_ms)
         .await
         .map_err(CommandError::from)
 }

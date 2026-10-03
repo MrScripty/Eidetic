@@ -8,6 +8,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 |-------------|-------------|
 | `mod.rs` | Public contract types, validated IDs, typed values, change history records, and projection envelopes. |
 | `agent_workflow.rs` | Backend-owned agent workflow, scoped tool manifest, tool request/result, budget, run, and policy contracts for graph-aware harness work. |
+| `ai_context.rs` | Generation context with explicit fictional-time scope, effective sparse snapshot facts and unresolved timed-field references. |
 | `affect.rs` | Backend-owned affect contracts for valence, arousal, mood, intensity, confidence, provenance, and scoped targets. |
 | `bible_graph.rs` | Canonical story-bible graph contracts, expected root nodes, typed graph parts/fields/edges, and node-detail projection shapes. |
 | `bible_graph_defaults.rs` | Built-in story-bible schema defaults used to project expected empty parts and fields for known graph schemas. |
@@ -19,6 +20,9 @@ This directory defines host-agnostic command, event, revision, and projection co
 The new architecture needs stable types for backend-owned commands, event history, sparse object revisions, and read projections before persistence, routes, Svelte, or Bevy can implement their slices safely.
 
 ## Constraints
+- Fictional `story_time_ms` is an explicit query coordinate, never derived from
+  screen-time clip placement or authoring revision timestamps. Absent query time
+  is representable and must not imply zero or the playhead.
 - Contracts must remain independent from HTTP, SQLite, Svelte, Bevy, Y.Doc, and AI backend implementations; renderer DTOs describe data shape only and do not depend on renderer crates.
 - Public wire shapes must be serializable and round-trip testable.
 - Canonical queryable facts must remain typed instead of hidden inside arbitrary JSON.

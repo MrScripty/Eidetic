@@ -14,7 +14,7 @@ fn ai_context_projection_loads_graph_facts_for_prompting() {
     let mut conn = Connection::open_in_memory().unwrap();
     seed_graph(&mut conn);
 
-    let projection = load_ai_bible_context_projection(&conn, NodeId::new()).unwrap();
+    let projection = load_ai_bible_context_projection(&conn, NodeId::new(), Some(1_000)).unwrap();
 
     assert_eq!(projection.version.0, 6);
     assert_eq!(projection.payload.nodes.len(), 2);
@@ -25,10 +25,11 @@ fn ai_context_projection_loads_graph_facts_for_prompting() {
         .find(|node| node.node_id.as_str() == "node.character.ada")
         .expect("ada context node");
     assert_eq!(ada.name, "Ada");
-    assert_eq!(ada.fields[0].field_key.as_str(), "tagline");
+    assert!(ada.fields.is_empty());
+    assert_eq!(ada.snapshots[0].fields[0].field_key.as_str(), "tagline");
     assert_eq!(
-        ada.fields[0].value,
-        FieldValue::Text("Reluctant detective".to_string())
+        ada.snapshots[0].fields[0].value,
+        FieldValue::Text("Rain-soaked".to_string())
     );
     assert_eq!(ada.snapshots[0].label, "Opening");
     assert_eq!(
@@ -49,7 +50,7 @@ fn ai_context_projection_uses_bounded_render_graph_defaults() {
         );
     }
 
-    let projection = load_ai_bible_context_projection(&conn, NodeId::new()).unwrap();
+    let projection = load_ai_bible_context_projection(&conn, NodeId::new(), None).unwrap();
 
     assert_eq!(projection.payload.nodes.len(), 200);
     assert_eq!(
@@ -60,6 +61,65 @@ fn ai_context_projection_uses_bounded_render_graph_defaults() {
         projection.payload.nodes[199].node_id.as_str(),
         "node.place.199"
     );
+}
+
+#[test]
+fn prompt_withholds_unmapped_time_and_does_not_leak_future_facts() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    seed_graph(&mut conn);
+    let id = NodeId::new();
+    let unknown = load_ai_bible_context_projection(&conn, id, None).unwrap();
+    let mut prompt = String::new();
+    crate::ai_bible_context_prompt::append_bible_context(&mut prompt, &unknown);
+    assert!(prompt.contains("Unresolved timed field: profile.tagline"));
+    assert!(!prompt.contains("Rain-soaked"));
+    assert!(!prompt.contains("Reluctant detective"));
+
+    let before = load_ai_bible_context_projection(&conn, id, Some(999)).unwrap();
+    prompt.clear();
+    crate::ai_bible_context_prompt::append_bible_context(&mut prompt, &before);
+    assert!(prompt.contains("Reluctant detective"));
+    assert!(!prompt.contains("Rain-soaked"));
+    let at = load_ai_bible_context_projection(&conn, id, Some(1_000)).unwrap();
+    prompt.clear();
+    crate::ai_bible_context_prompt::append_bible_context(&mut prompt, &at);
+    assert!(prompt.contains("Rain-soaked"));
+    assert!(!prompt.contains("Reluctant detective"));
+    assert!(prompt.contains("fictional story time 1000ms"));
+    assert_eq!(before.version, at.version);
+    assert_ne!(before.payload.story_time_ms, at.payload.story_time_ms);
+}
+
+#[test]
+fn mixed_node_prompt_retains_future_only_field_as_unknown() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    seed_graph(&mut conn);
+    crate::bible_graph_command::apply_set_bible_graph_snapshot_field(
+        &mut conn,
+        &CommandEnvelope::new(SetBibleGraphSnapshotFieldCommand {
+            snapshot_id: BibleGraphSnapshotId::new("snapshot.future.motivation").unwrap(),
+            node_id: BibleGraphNodeId::new("node.character.ada").unwrap(),
+            at_ms: 2_000,
+            label: "Future motivation".into(),
+            snapshot_sort_order: 20,
+            field_id: BibleGraphSnapshotFieldId::new("snapshot-field.future.motivation").unwrap(),
+            part_key: BibleGraphPartKey::new("profile").unwrap(),
+            part_name: "Profile".into(),
+            field_key: BibleGraphFieldKey::new("motivation").unwrap(),
+            value: Some(FieldValue::Text("future revenge".into())),
+            field_sort_order: 20,
+        }),
+        600,
+    )
+    .unwrap();
+    let projection = load_ai_bible_context_projection(&conn, NodeId::new(), Some(1_000)).unwrap();
+    let mut prompt = String::new();
+    crate::ai_bible_context_prompt::append_bible_context(&mut prompt, &projection);
+    assert!(prompt.contains("Rain-soaked"));
+    assert!(prompt.contains("Unresolved timed field: profile.motivation"));
+    assert!(!prompt.contains("future revenge"));
+    assert!(!prompt.contains("Future motivation"));
+    assert!(prompt.contains("Graph relationships are untimed"));
 }
 
 fn seed_graph(conn: &mut Connection) {

@@ -10,8 +10,18 @@ pub(crate) fn append_bible_context(
         return;
     }
 
-    user.push_str("STORY BIBLE CONTEXT — Established graph facts.\n");
-    user.push_str("These facts are backend-owned continuity data; do not contradict them:\n\n");
+    user.push_str("STORY BIBLE CONTEXT — Graph fields and relationships.\n");
+    user.push_str(
+        "Effective field values below are backend-owned continuity data; do not contradict them.\n",
+    );
+    user.push_str("Graph relationships are untimed; their validity at the requested story time is not established here.\n\n");
+    if let Some(at_ms) = context.payload.story_time_ms {
+        user.push_str(&format!(
+            "Field values resolved at fictional story time {at_ms}ms, independent of screen time.\n\n"
+        ));
+    } else {
+        user.push_str("Fictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n");
+    }
 
     for node in &context.payload.nodes {
         user.push_str(&format!(
@@ -27,12 +37,20 @@ pub(crate) fn append_bible_context(
 
         for snapshot in &node.snapshots {
             user.push_str(&format!(
-                "  Snapshot: {} @ {}ms\n",
+                "  Effective fact from {} at story time {}ms:\n",
                 snapshot.label, snapshot.at_ms
             ));
             for field in &snapshot.fields {
                 append_field(user, "    ", field);
             }
+        }
+
+        for field in &node.unresolved_timed_fields {
+            user.push_str(&format!(
+                "  Unresolved timed field: {}.{}; do not assume a canonical value.\n",
+                field.part_key.as_str(),
+                field.field_key.as_str(),
+            ));
         }
 
         for edge in &node.outgoing_edges {

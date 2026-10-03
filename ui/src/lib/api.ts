@@ -44,9 +44,12 @@ export function deleteReference(id: string): Promise<{ deleted: boolean }> {
 
 // --- AI ---
 
-export function generateContent(nodeId: string): Promise<{ status: string; node_id: string }> {
+export function generateContent(
+  nodeId: string,
+  storyTimeMs?: number,
+): Promise<{ status: string; node_id: string }> {
   return invokeDesktop<{ status: string; node_id: string }>('ai_generate_content', {
-    request: { node_id: nodeId },
+    request: { node_id: nodeId, ...storyTimeRequest(storyTimeMs) },
   });
 }
 
@@ -58,16 +61,30 @@ export function updateAiConfig(updates: Partial<AiConfig>): Promise<AiConfig> {
   return invokeDesktop<AiConfig>('ai_config_update', { updates });
 }
 
-export function getAiContext(nodeId: string): Promise<{ system: string; user: string }> {
+export function getAiContext(
+  nodeId: string,
+  storyTimeMs?: number,
+): Promise<{ system: string; user: string }> {
+  const time = storyTimeRequest(storyTimeMs);
   return invokeDesktop<{ system: string; user: string }>('ai_context_preview', {
     nodeId,
+    ...(time.story_time_ms === undefined ? {} : { storyTimeMs: time.story_time_ms }),
   });
 }
 
-export function generateChildren(nodeId: string): Promise<ChildPlan> {
+export function generateChildren(nodeId: string, storyTimeMs?: number): Promise<ChildPlan> {
   return invokeDesktop<ChildPlan>('ai_generate_children', {
-    request: { node_id: nodeId },
+    request: { node_id: nodeId, ...storyTimeRequest(storyTimeMs) },
   });
+}
+
+// This coordinate is explicit fictional time, not the timeline playhead.
+function storyTimeRequest(storyTimeMs?: number): { story_time_ms?: number } {
+  if (storyTimeMs === undefined) return {};
+  if (!Number.isSafeInteger(storyTimeMs) || storyTimeMs < 0) {
+    throw new RangeError('Story time must be a non-negative safe integer in milliseconds');
+  }
+  return { story_time_ms: storyTimeMs };
 }
 
 export function generateBatch(

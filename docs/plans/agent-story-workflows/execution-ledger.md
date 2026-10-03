@@ -54,3 +54,55 @@ findings and independently reran all 11 harness tests. Reviewed full patch
 SHA-256: `0dd5db0a2be738cc6202b031a5dbbf6dc8f345da3036c458d92e7dc93a0c0e27`.
 This acceptance covers M1 only. Hosted checks and broader product acceptance
 remain separate gates.
+
+## 2026-10-02 — M2a explicit fictional-time context checkpoint
+
+Local branch `feat/story-time-context` starts from reviewed M1 commit
+`52a856048a06c5b036a17677b58901e497914446` (draft PR #1). Added explicit optional
+fictional-time inputs to generation, child planning and preview transport;
+resolved sparse snapshots per field before prompts. Future/overridden values are
+excluded; equal-time conflicts fail closed; omitted time and cleared facts are
+explicit unknowns. No persisted canonical data or timeline positions are changed.
+
+Verification: all 103 core and 245 server tests passed; core/server all-target
+clippy `-D warnings` passed. Frontend Svelte check reports zero errors/warnings;
+all 284 frontend tests across 57 files passed (including 13 API tests); scoped
+ESLint/Prettier, Rust formatting, whitespace and decision traceability passed.
+This verifies service and client-helper behavior, not a new human time-input UI,
+Tauri runtime launch, persistent world-time mapping or feature-length outcome.
+Independent slice review remains pending.
+
+M2a independent review found a future-only field could disappear rather than
+remain explicitly unknown before its first assertion. The repair retains its
+identity without including future values, removes the unknown marker when an
+eligible assertion exists, and preserves an existing baseline. New mixed-field
+resolver and database-to-prompt regressions cover the boundary. Prompt wording
+now explicitly distinguishes resolved fields from untimed graph edges; provenance
+remains label/time, not unique assertion identity. Final repaired verification
+is tracked separately from the earlier passing checkpoint.
+
+Hosted M1 checks at exact head `52a856048a06c5b036a17677b58901e497914446`:
+Frontend succeeded. Linux stopped on renderer `derivable_impls`; Windows stopped
+on `wgpu-hal` Direct3D12 type mismatches; traceability lacked `rg` and therefore
+misreported missing headings. These gates remain failed, not waived. Baseline
+comparison and focused remediation are separate from this temporal slice.
+
+Repaired M2a final verification: 103 core and 248 server tests passed; all-target
+core/server clippy with `-D warnings` and scoped formatting passed. Six temporal
+unit tests also passed in an actual-source focused verifier. The full test binary
+initially received SIGKILL under shared RAM pressure; moving only its generated
+target from tmpfs to disk-backed storage and using one build job allowed the
+final complete suite to run. A new integration fixture was corrected to use a
+schema-valid character motivation field; production schema validation was not
+relaxed. Independent re-review accepted the bounded repair on 2026-10-02 and
+independently reran 103 core and 248 server tests, including six temporal resolver
+and four context projection tests. Reviewed full patch SHA-256:
+`9ed558ba73056e72b297b37648680a0c5fb060f9a6901fc9398c80337de289e4`.
+This acceptance covers field resolution only; hosted qualification and the later
+Pumas, graph relationship timing, and timeline workflow slices remain open.
+
+M1 merged into main at `72b8485025701fc18220c6522562e874704b6286`.
+Post-merge push CI run 37091158926 completed successfully on 2026-10-03.
+Forward integration retains the independently accepted M2a source; only plan
+status prose required reconciliation. Field-only temporal scope, label/time
+provenance, and later Pumas/timeline integration limitations still apply.

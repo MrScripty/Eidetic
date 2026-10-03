@@ -27,6 +27,9 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 The UI needs one place where backend-backed shapes, local UI constants, and shared rendering behavior stay consistent. Without a common `lib/` boundary, the app would drift into per-component contract copies and fragile ad hoc wiring.
 
 ## Constraints
+- AI preview/content/child-plan helpers accept explicit optional fictional time.
+  Omitted time preserves the existing IPC shape; supplied values must be
+  non-negative safe integer milliseconds. No helper infers time from UI state.
 
 - Backend responses remain the source of truth for project content.
 - Timeline rendering depends on stable shared geometry constants across multiple components.

@@ -13,6 +13,7 @@ pub(crate) mod ai_context_projection;
 pub(crate) mod ai_generation_runtime;
 pub mod ai_generation_service;
 pub mod ai_service;
+pub(crate) mod ai_temporal_context;
 pub mod backend_error;
 pub mod backend_task;
 pub(crate) mod bible_graph_command;
