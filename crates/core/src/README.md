@@ -7,6 +7,7 @@ This directory contains the pure Rust domain layer for Eidetic: project aggregat
 | File/Folder | Description |
 |-------------|-------------|
 | `lib.rs` | Public crate surface and module wiring for the core library. |
+| `error.rs` | Domain failures, including `TimeRangeOverflow` for descendant resize results that cannot fit the millisecond range representation. |
 | `contracts/` | Host-agnostic command, event, revision, and projection contracts for backend-owned state. |
 | `timeline/` | Timeline nodes, tracks, relationships, structure, and timing rules. |
 | `story/` | Story arcs and progression analysis. |
@@ -23,6 +24,11 @@ The application needs a reusable domain layer that can serve the desktop backend
 
 ## Decision
 Keep narrative behavior, data structures, and AI-facing domain helpers in one host-agnostic crate and push transport/persistence concerns into the server crate.
+
+Timeline resize validates the source and all proposed descendant ranges before
+publishing mutations. Exact integer scaling returns `TimeRangeOverflow` when a
+computed range is unrepresentable; invalid or overflowing proposals leave the
+original timeline unchanged. This does not change crossing-child or split policy.
 
 ## Alternatives Rejected
 - Folding domain logic into `crates/server/`: rejected because it would couple core behavior to one host.
