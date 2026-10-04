@@ -53,8 +53,7 @@ pub async fn create_project(
     )?;
     let json = serde_json::to_value(&project).map_err(|e| BackendError::internal(e.to_string()))?;
     populate_ydoc_from_project(state, &project).await;
-    *state.project.lock() = Some(project);
-    state.project_database.set_active_path(save_path);
+    replace_active_project(state, project, save_path);
     state.trigger_save();
     Ok(json)
 }
@@ -141,7 +140,6 @@ pub async fn load_project(
         populate_ydoc_from_project(state, &project).await;
     }
 
-    *state.project.lock() = Some(project);
     let save_path = if path
         .extension()
         .is_some_and(|extension| extension == "json")
@@ -150,9 +148,22 @@ pub async fn load_project(
     } else {
         path
     };
-    state.project_database.set_active_path(save_path);
+    replace_active_project(state, project, save_path);
     state.trigger_save();
     Ok(json)
+}
+
+/// Publish the project mirror, derived-index lifetime and database identity under
+/// the same project guard used by reference publication and retrieval.
+pub(crate) fn replace_active_project(
+    state: &AppState,
+    project: eidetic_core::Project,
+    path: std::path::PathBuf,
+) {
+    let mut active = state.project.lock();
+    state.vector_store.lock().reset();
+    state.project_database.set_active_path(path);
+    *active = Some(project);
 }
 
 pub async fn list_projects() -> serde_json::Value {

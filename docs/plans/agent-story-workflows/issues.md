@@ -21,3 +21,10 @@
   icon/test portability, and traceability runner repairs are merged into main.
   Main post-merge CI passed at `72b8485025701fc18220c6522562e874704b6286`.
   The composed M2a head still requires its own hosted checks and bot review.
+- **Implemented, M3a; qualification pending:** Late embeddings cannot republish
+  deleted/replaced sources, stale queries cannot cross index lifetimes, and
+  configured endpoint/model/dimension mismatches are excluded from ranking.
+  Exact source snapshots are checked on publication and retrieval. Immutable
+  weight/revision identity, Pumas transport and re-indexing saved references
+  remain open. Strict returned-model validation can make nonconforming embedding
+  endpoints unavailable; it does not silently assume their identity.

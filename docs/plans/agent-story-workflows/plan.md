@@ -1,9 +1,9 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** M2a field-level story-time projection accepted by independent review.
-**Next gate:** Qualify the current temporal projection head with hosted CI and
-CodeRabbit review; M1 and its CI repairs are merged into main.
+**Current phase:** M3a source-bound reference retrieval; M1/M2a merged.
+**Next gate:** Qualify retrieval custody regressions and exact-head hosted CI,
+then independently review. Pumas runtime/revision integration remains open.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -157,3 +157,58 @@ Applicable: this objective composes durable memory, inference, editing and UI.
 - [Issues](issues.md)
 - Existing architecture: `docs/refactors/eidetic-projection-architecture/final-plan.md`
 - Existing screenplay model: `docs/plans/script-generation-model/plan.md`
+
+## M3a: source-bound reference retrieval
+
+This bounded prerequisite starts from merged main `3757edf6e4050aa211cb6ac7d9f991167c2af74e`.
+It does not complete M3's Pumas runtime or immutable model-revision acceptance.
+
+- **Observed failure:** Upload embeds asynchronously, while deletion removes only
+  currently present vectors. A late completion could resurrect deleted content.
+  The index was also retained across project replacement, and incompatible vector
+  dimensions were ranked as zero rather than excluded.
+- **Ownership:** The existing disposable `VectorStore` owns index lifetime and
+  document publication tickets. The project remains the canonical reference
+  source. No new persistent store, framework, configuration format or dependency.
+- **Source binding:** Register an exact source snapshot before embedding. A ticket
+  binds project-index lifetime, document ID and indexing revision. Deletion,
+  replacement and project create/load invalidate earlier tickets. Insertion and
+  search compare the current canonical source's ID, name, content and type.
+- **Concurrency:** Project and index locks are always acquired in that order;
+  publication and deletion hold both in the same synchronous critical section.
+  No guard crosses model I/O. Single/batch admission captures the index epoch
+  before project snapshot I/O and carries it into queued generation. Create/load
+  publish path, project and index under the project guard. An in-flight query
+  cannot select from a replacement index, including reopening the same path.
+  Every attach attempt first clears prior retrieval context.
+- **Representation checks:** The transitional HTTP adapter requires exactly one
+  indexed result for its one input and an exact returned model match. Nonempty,
+  finite, nonzero vectors are validated before use. Endpoint/model/dimension
+  mismatches are filtered before ranking. Float64 accumulation avoids finite
+  float32 overflow/underflow; ties use stable chunk IDs.
+- **Honest boundaries:** A configured model name does not attest immutable weights
+  or revision. Aliased model replacements remain a Pumas M3 integration concern.
+  Missing/mismatched model metadata fails closed instead of silently accepting an
+  unidentified embedding. HTTP transport remains transitional; no live model,
+  Pumas inference, UI status surface or restart re-indexing is claimed here.
+- **Failure:** Upload remains successful if canonical storage succeeds and model
+  inference fails. The task logs indexed/failed/discarded counts, rather than
+  claiming embedding success after all chunks failed. Generation can proceed
+  without optional retrieval; query embedding failure is explicitly logged.
+- **Write set:** Server embedding adapter, vector store/tests, reference service,
+  project replacement boundaries, generation admission/RAG attachment and caller
+  tests, source README and plan records.
+- **Verification:** Regression tests cover late completion after deletion,
+  source change, index replacement, stale query scope, model/endpoint/dimension
+  mismatches, malformed outputs, numeric extremes and deterministic top-k. Run
+  focused core/server tests and clippy locally; hosted workspace and frontend
+  checks must qualify the exact submitted head. Desktop/live-model checks remain
+  unrun unless recorded separately.
+
+Design sources: *Knowledge Graphs and Agentic Memory*, chapter 6 (candidate
+retrieval and representation-space compatibility) and chapter 11 (exact
+source/version binding and explicit unavailable states); Coding-Standards
+`CORE-STANDARDS.md` (derived artifacts, lifecycle and authority boundaries) and
+`docs/plans/agent-interface-efficiency/plan.md` (preserve exact source authority
+while simplifying transport). The present slice follows those principles without
+claiming to expose a completed agent retrieval workflow.

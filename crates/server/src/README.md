@@ -26,7 +26,11 @@ domain model in `eidetic-core`.
 | `agent_workflow_harness_tests.rs` | Provider, manifest, executor, cancellation and exact-budget lifecycle regressions against SQLite history. |
 | `agent_premise_workflow.rs` | First premise graph-context workflow slice over backend graph reads, reviewable proposals, and harness history. |
 | `export_service.rs` | Host-neutral PDF export behavior consumed by Tauri commands. |
-| `reference_service.rs` | Host-neutral reference document list/upload/delete behavior consumed by Tauri commands. |
+| `reference_service.rs` | Canonical reference list/upload/delete and source-bound asynchronous embedding publication. |
+| `embeddings.rs` | Transitional HTTP embedding adapter validating returned model, input index and finite nonzero vectors. |
+| `vector_store.rs` | Disposable exact-source index with publication tickets, representation-space filtering and stable ranking. |
+| `vector_store_tests.rs` | Source custody, stale lifecycle, incompatible representation and numeric ranking regressions. |
+| `reference_retrieval_tests.rs` | Actual RAG attach-boundary regression coverage for queued/reopened sessions and late query results. |
 | `affect_store.rs` | SQLite affect value, dependency, and proposal persistence with revision-history writes. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
@@ -60,6 +64,10 @@ updates.
 - `persistence.rs` and `ydoc.rs` are above decomposition thresholds tracked in `ADR-001`.
 
 ## Decision
+The M3a retrieval slice in `docs/plans/agent-story-workflows/plan.md` retains the
+existing index and canonical project owner. It binds derived vectors to exact
+source and configured representation identity, invalidates asynchronous work at
+replacement/deletion boundaries, and treats mismatches as unavailable retrieval.
 Keep backend services, persistence, and realtime coordination in the server
 crate. Milestone 7 removed the standalone listener, static host, WebSocket host,
 Axum route adapters, and route tests after the desktop frontend moved to Tauri
@@ -89,6 +97,17 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Reference embeddings are disposable derived state. Exact source snapshots and
+  project-index/document tickets fence async publication; project create/load and
+  reference deletion invalidate pending work. Admission binds single and batch
+  requests before project snapshot I/O; reopening the same path cannot rebind
+  queued retrieval. Create/load publish path, project and index under the project
+  guard. Source checks happen again before
+  ranking under project-then-index lock order. No lock crosses model I/O.
+- Only nonempty finite nonzero vectors with matching configured endpoint/model
+  and dimension are ranked. Returned HTTP model identity must match the request.
+  This does not attest immutable model weights; Pumas revision-aware embeddings,
+  live runtime qualification and saved-reference re-indexing remain M3 work.
 - Generation and preview accept an optional explicit fictional `story_time_ms`.
   Snapshot fields resolve independently at or before it. Conflicting values at
   the latest effective timestamp stop context construction. A cleared value is

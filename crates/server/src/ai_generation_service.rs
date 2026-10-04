@@ -39,6 +39,9 @@ pub async fn start_generation(
     state: &AppState,
     body: AiGenerateRequest,
 ) -> Result<AiGenerateResponse, BackendError> {
+    // Capture before any project-snapshot await. A replacement during admission
+    // may conservatively disable retrieval, never rebind an old request.
+    let retrieval_scope = state.vector_store.lock().scope();
     let node_id = NodeId(body.node_id);
     let (mut request, project_path) = {
         let (project, project_path) = active_sqlite_project(state).await?;
@@ -75,7 +78,14 @@ pub async fn start_generation(
     let state_clone = state.clone();
     let node_uuid = body.node_id;
     state.task_supervisor.spawn("ai-generation", async move {
-        run_generation(state_clone, project_path, node_uuid, request).await;
+        run_generation(
+            state_clone,
+            project_path,
+            node_uuid,
+            request,
+            retrieval_scope,
+        )
+        .await;
     });
 
     Ok(AiGenerateResponse {
@@ -88,6 +98,7 @@ pub async fn start_generation_batch(
     state: &AppState,
     body: AiGenerateBatchRequest,
 ) -> Result<AiGenerateBatchResponse, BackendError> {
+    let retrieval_scope = state.vector_store.lock().scope();
     let parent_id = NodeId(body.parent_node_id);
     let child_ids: Vec<Uuid> = {
         let (project, _) = active_sqlite_project(state).await?;
@@ -109,7 +120,7 @@ pub async fn start_generation_batch(
         .task_supervisor
         .spawn("ai-generation-batch", async move {
             for child_uuid in &child_ids {
-                generate_child_in_batch(state_clone.clone(), *child_uuid).await;
+                generate_child_in_batch(state_clone.clone(), *child_uuid, retrieval_scope).await;
             }
         });
 
@@ -120,7 +131,7 @@ pub async fn start_generation_batch(
     })
 }
 
-async fn generate_child_in_batch(state: AppState, child_uuid: Uuid) {
+async fn generate_child_in_batch(state: AppState, child_uuid: Uuid, retrieval_scope: Uuid) {
     let child_id = NodeId(child_uuid);
     let (mut request, project_path) = {
         let (project, project_path) = match active_sqlite_project(&state).await {
@@ -164,7 +175,7 @@ async fn generate_child_in_batch(state: AppState, child_uuid: Uuid) {
 
     state.generating.lock().insert(child_uuid);
     mark_node_generating(&state, project_path.clone(), child_id, child_uuid).await;
-    run_generation(state, project_path, child_uuid, request).await;
+    run_generation(state, project_path, child_uuid, request, retrieval_scope).await;
 }
 
 #[cfg(test)]

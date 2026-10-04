@@ -10,7 +10,7 @@ use futures::StreamExt;
 use uuid::Uuid;
 
 use crate::ai_backends::Backend;
-use crate::embeddings::EmbeddingClient;
+use crate::embeddings::{Embedding, EmbeddingClient};
 use crate::prompt_format::build_chat_prompt;
 use crate::script_document_command;
 use crate::state::{AppState, ServerEvent};
@@ -47,12 +47,20 @@ pub(crate) async fn run_generation(
     project_path: PathBuf,
     node_uuid: Uuid,
     mut request: GenerateRequest,
+    retrieval_scope: Uuid,
 ) {
     let node_id = NodeId(node_uuid);
     let config = state.ai_config.lock().clone();
     let backend = Backend::from_config(&config);
 
-    attach_rag_context(&state, &config, &mut request).await;
+    attach_rag_context(
+        &state,
+        &config,
+        &project_path,
+        retrieval_scope,
+        &mut request,
+    )
+    .await;
     let prompt = build_chat_prompt(&request);
 
     let _ = state.events_tx.send(ServerEvent::GenerationContext {
@@ -82,26 +90,65 @@ pub(crate) async fn run_generation(
 async fn attach_rag_context(
     state: &AppState,
     config: &crate::state::AiConfig,
+    project_path: &std::path::Path,
+    scope: Uuid,
     request: &mut GenerateRequest,
 ) {
-    if state.vector_store.lock().is_empty() {
-        return;
+    request.rag_context.clear();
+    {
+        let store = state.vector_store.lock();
+        if scope != store.scope() || store.is_empty() {
+            return;
+        }
     }
-    let query = &request.target_node.content.notes;
     let embed_client =
         EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
-    if let Ok(query_embedding) = embed_client.embed(query).await {
-        let store = state.vector_store.lock();
-        let results = store.search(&query_embedding, crate::state::constants::RAG_TOP_K);
-        request.rag_context = results
-            .into_iter()
-            .map(|(chunk, score)| RagChunk {
-                source: chunk.document_name.clone(),
-                content: chunk.content.clone(),
-                relevance_score: score,
-            })
-            .collect();
+    match embed_client.embed(&request.target_node.content.notes).await {
+        Ok(query_embedding) => {
+            attach_rag_embedding(state, project_path, scope, &query_embedding, request)
+        }
+        Err(_) => tracing::warn!("Reference retrieval unavailable: query embedding failed"),
     }
+}
+
+/// Final publication boundary after external model I/O. The request carries the
+/// epoch captured at admission, rather than choosing a new epoch when scheduled.
+fn attach_rag_embedding(
+    state: &AppState,
+    project_path: &std::path::Path,
+    scope: Uuid,
+    query_embedding: &Embedding,
+    request: &mut GenerateRequest,
+) {
+    request.rag_context.clear();
+    let config = state.ai_config.lock().clone();
+    let current_client =
+        EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
+    if query_embedding.identity != current_client.identity() {
+        return;
+    }
+    let guard = state.project.lock();
+    let Some(project) = guard.as_ref() else {
+        return;
+    };
+    if state.project_database.active_path().as_deref() != Some(project_path) {
+        return;
+    }
+    let store = state.vector_store.lock();
+    request.rag_context = store
+        .search(
+            scope,
+            &project.references,
+            query_embedding,
+            crate::state::constants::RAG_TOP_K,
+        )
+        .into_iter()
+        .map(|(chunk, score)| RagChunk {
+            source: chunk.document_name.clone(),
+            content: chunk.content.clone(),
+            relevance_score: score,
+        })
+        .collect();
 }
 
 async fn stream_generated_text(
@@ -439,3 +486,7 @@ mod tests {
         assert_eq!(command.payload.span_provenance, AiGenerated);
     }
 }
+
+#[cfg(test)]
+#[path = "reference_retrieval_tests.rs"]
+mod reference_retrieval_tests;
