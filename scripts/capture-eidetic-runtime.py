@@ -279,7 +279,11 @@ def main():
         checkpoint("open project chooser")
         open_project_chooser(application, window)
         checkpoint("open sample project")
-        click_button(application, fixture["project_name"], window, prefix=True)
+        # list_projects exposes the saved directory name, not the project title.
+        # Derive that exact chooser label from the service-returned database path.
+        chooser_label = database.parent.name
+        evidence["sample_chooser_label"] = chooser_label
+        click_button(application, chooser_label, window, prefix=True)
         checkpoint("wait for project timeline")
         wait_for("project timeline", lambda: find(
             application, lambda node: fixture["scene_name"] in (node.name or "")))
