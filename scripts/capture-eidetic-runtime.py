@@ -4,6 +4,7 @@
 Fail closed if the app, accessibility tree, canonical edit, or capture is absent.
 Never inject JavaScript, replace IPC, disable a sandbox, or capture a browser preview.
 """
+import faulthandler
 import hashlib
 import json
 import os
@@ -15,7 +16,7 @@ import subprocess
 import time
 
 import pyatspi
-from gi.repository import Atspi, GLib
+from gi.repository import Atspi
 
 
 SOURCE = "550650cdc794b15352013d9914eec337e5ac022d"
@@ -31,16 +32,8 @@ def command(*args):
     return subprocess.check_output(args, text=True, timeout=15).strip()
 
 
-def dispatch_accessibility_events():
-    context = GLib.MainContext.default()
-    for _ in range(50):
-        if not context.iteration(False):
-            break
-
-
 def wait_for(description, check):
     while time.monotonic() < DEADLINE:
-        dispatch_accessibility_events()
         found = check()
         if found:
             return found
@@ -66,6 +59,7 @@ def visible(node):
 
 
 def find(root, predicate):
+    root.clear_cache()
     for node in walk(root):
         if visible(node) and predicate(node):
             return node
@@ -170,7 +164,15 @@ def main():
     }
     process = None
     application = None
+    faulthandler.dump_traceback_later(90)
+
+    def checkpoint(stage):
+        evidence["stage"] = stage
+        (output / "capture-evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
+        print(f"Capture checkpoint: {stage}", flush=True)
+
     try:
+        checkpoint("create real backend sample")
         fixture = json.loads(subprocess.check_output(
             [str(repo / "target/debug/examples/runtime_capture_fixture")],
             env=environment, text=True, timeout=20,
@@ -179,6 +181,7 @@ def main():
         before = canonical_block(database)
         if not before or before[0] != fixture["text"]:
             raise RuntimeError("Fixture canonical text missing before launch")
+        checkpoint("launch native application")
         with raw_log.open("w") as stream:
             process = subprocess.Popen(
                 ["./launcher.sh", "--run"], env=environment,
@@ -201,20 +204,23 @@ def main():
         window, pid = wait_for("native Eidetic window owned by launcher", app_window)
         evidence["window_pid"] = pid
         evidence["application_binary_sha256"] = file_hash(Path(f"/proc/{pid}/exe"))
+        checkpoint("locate native accessibility application")
         application = wait_for(
             "accessibility application for native window PID",
             lambda: next((app for app in pyatspi.Registry.getDesktop(0)
                           if app.get_process_id() == pid), None),
         )
-        # Poll live data after Svelte replaces controls; do not retain old child lists.
-        application.set_cache_mask(Atspi.Cache.NONE)
-        evidence["accessibility_mode"] = "uncached queries with bounded GLib event dispatch"
+        evidence["accessibility_mode"] = "explicit cache refresh before tree searches"
+        checkpoint("open project chooser")
         click_button(application, "Open Project")
+        checkpoint("open sample project")
         click_button(application, fixture["project_name"], prefix=True)
+        checkpoint("wait for project timeline")
         wait_for("project timeline", lambda: find(
             application, lambda node: fixture["scene_name"] in (node.name or "")))
         block = wait_for("screenplay block", lambda: find(
             application, lambda node: node.name == "Screenplay block"))
+        checkpoint("begin manual screenplay edit")
         click_button(block, "Edit")
         textarea = wait_for("screenplay text editor", lambda: find(
             application, lambda node: node.getState().contains(pyatspi.STATE_EDITABLE)
@@ -223,11 +229,14 @@ def main():
         component = textarea.queryComponent()
         if not component.grabFocus():
             raise RuntimeError("Screenplay editor refused keyboard focus")
+        checkpoint("type manual screenplay edit")
         command("xdotool", "key", "--clearmodifiers", "ctrl+a")
         subprocess.run(["xdotool", "type", "--clearmodifiers", "--delay", "1", EDITED_TEXT],
                        check=True, timeout=15)
         wait_for("typed screenplay draft", lambda: text_of(textarea) == EDITED_TEXT)
+        checkpoint("save manual screenplay edit")
         click_button(block, "Save")
+        checkpoint("verify canonical manual edit")
         wait_for("canonical manual edit committed", lambda: committed_edit(database, before))
         wait_for("edited text displayed", lambda: find(
             application, lambda node: "Mara pockets the timetable" in text_of(node)))
@@ -236,6 +245,7 @@ def main():
         if process.poll() is not None:
             raise RuntimeError("Native app exited before its window could be captured")
         screenshot = output / "eidetic-native.png"
+        checkpoint("capture actual native window")
         subprocess.run(["import", "-window", window, str(screenshot)], check=True, timeout=10)
         if not 10000 < screenshot.stat().st_size < 5 * 1024**2:
             screenshot.unlink()
@@ -257,6 +267,7 @@ def main():
                 evidence["accessibility_snapshot_error"] = type(snapshot_error).__name__
         raise
     finally:
+        faulthandler.cancel_dump_traceback_later()
         if process is not None:
             try:
                 os.killpg(process.pid, signal.SIGTERM)
