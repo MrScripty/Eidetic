@@ -41,6 +41,8 @@ backend services or command services.
   backend state.
 
 ## Invariants
+- `command_script_block_edit` forwards text and expected block revision to the
+  backend service; canonical metadata, locks and history remain backend-owned.
 
 - A command adapter must not write persistence directly.
 - Errors crossing the Tauri boundary must be deliberate and stable enough for

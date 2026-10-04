@@ -41,6 +41,7 @@ import type {
 import type {
   ScriptDocumentCommandResponse,
   SetScriptBlockCommand,
+  EditScriptBlockCommand,
   SetScriptLockCommand,
 } from './scriptTypes.js';
 import type {
@@ -393,6 +394,14 @@ export function setScriptLock(
   };
 
   return invokeDesktop<ScriptDocumentCommandResponse>('command_script_lock', { command });
+}
+
+export function editScriptBlock(
+  payload: EditScriptBlockCommand,
+  commandId = createCommandId(),
+): Promise<ScriptDocumentCommandResponse> {
+  const command: CommandEnvelope<EditScriptBlockCommand> = { id: commandId, payload };
+  return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block_edit', { command });
 }
 
 export function createStoryArc(

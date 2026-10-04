@@ -332,6 +332,7 @@ fn regenerated_segment_patch() -> ScriptPatch {
                 sort_order: 1,
             },
             blocks: vec![ScriptBlockProjection {
+                revision_event_id: None,
                 block: ScriptBlock {
                     id: ScriptBlockId::new("script.block.regenerated-action").unwrap(),
                     segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),

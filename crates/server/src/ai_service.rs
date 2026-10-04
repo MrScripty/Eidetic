@@ -10,6 +10,10 @@ use eidetic_core::timeline::node::NodeId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[cfg(test)]
+#[path = "manual_script_workflow_tests.rs"]
+mod manual_script_workflow_tests;
+
 use crate::ai_backends::Backend;
 use crate::backend_error::BackendError;
 use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
@@ -206,6 +210,17 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     node_id: NodeId,
     story_time_ms: Option<u64>,
 ) -> Result<(), BackendError> {
+    let range = request.target_node.time_range;
+    let script_path = path.clone();
+    let blocks = tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&script_path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        crate::ai_script_context::load_script_context(&conn, node_id, range.start_ms, range.end_ms)
+            .map_err(|error| BackendError::internal(error.to_string()))
+    })
+    .await
+    .map_err(|error| BackendError::internal(format!("script context task failed: {error}")))??;
+    crate::ai_script_context::attach_script_context(request, blocks);
     request.bible_context =
         Some(load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?);
     request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);

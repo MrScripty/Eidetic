@@ -44,6 +44,9 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Canonical bible roots are system-owned graph nodes, not enum-only branches in application logic.
 - Built-in bible graph defaults are projected read models until a user command persists an actual field value.
 - Script documents own generated screenplay artifacts; timeline nodes are referenced only as source context.
+- Manual edits carry a block write-event expectation and text, rather than
+  client-reconstructed document/segment metadata. Script context carries separate
+  block and segment write identities, preserving authored evidence and placement.
 - Agent workflows receive typed manifests, budgets, policies, and backend tool requests/results; they do not receive app, renderer, or frontend state.
 - Affect values use validated integer basis-point domain types for valence,
   arousal, intensity, and confidence so invalid floats cannot cross contract

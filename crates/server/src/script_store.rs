@@ -298,19 +298,22 @@ fn load_blocks(
     segment_id: &ScriptSegmentId,
 ) -> Result<Vec<ScriptBlockProjection>, HistoryStoreError> {
     let mut statement = conn.prepare(
-        "SELECT id, segment_id, block_kind, text, sort_order
+        "SELECT id, segment_id, block_kind, text, sort_order, updated_event_id
          FROM script_blocks
          WHERE segment_id = ?1 AND deleted_event_id IS NULL
          ORDER BY sort_order ASC, id ASC",
     )?;
-    let rows = statement.query_map([segment_id.as_str()], row_to_block)?;
+    let rows = statement.query_map([segment_id.as_str()], |row| {
+        Ok((row_to_block(row)?, row.get::<_, String>(5)?))
+    })?;
 
     let mut blocks = Vec::new();
     for row in rows {
-        let block = row?;
+        let (block, revision) = row?;
         let spans = load_spans(conn, &block.id)?;
         let locks = load_locks_for_block(conn, &block.id)?;
         blocks.push(ScriptBlockProjection {
+            revision_event_id: Some(ChangeEventId(parse_uuid(&revision)?)),
             block,
             spans,
             locks,

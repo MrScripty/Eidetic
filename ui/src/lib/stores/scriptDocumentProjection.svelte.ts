@@ -1,4 +1,4 @@
-import { setScriptBlock, setScriptLock } from '$lib/commandApi.js';
+import { editScriptBlock, setScriptBlock, setScriptLock } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
 import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 import { shouldReplaceProjection } from './projectionCacheGuards.js';
@@ -8,6 +8,7 @@ import type {
   ScriptDocumentCommandResponse,
   SetScriptBlockCommand,
   SetScriptLockCommand,
+  EditScriptBlockCommand,
 } from '../scriptTypes.js';
 
 export interface ScriptDocumentProjectionKey {
@@ -20,10 +21,12 @@ export const scriptDocumentProjectionState = $state<{
   projections: Record<string, ProjectionEnvelope<ScriptDocumentProjection>>;
   pending: Record<string, boolean>;
   errors: Record<string, string | undefined>;
+  contextRevision: number;
 }>({
   projections: {},
   pending: {},
   errors: {},
+  contextRevision: 0,
 });
 
 function projectionKey({ document_id }: ScriptDocumentProjectionKey): string {
@@ -146,4 +149,22 @@ export function clearScriptDocumentProjection(key: ScriptDocumentProjectionKey):
   delete scriptDocumentProjectionState.projections[cacheKey];
   delete scriptDocumentProjectionState.pending[cacheKey];
   delete scriptDocumentProjectionState.errors[cacheKey];
+}
+
+export function invalidateScriptContext(): void {
+  scriptDocumentProjectionState.contextRevision += 1;
+}
+
+export async function applyScriptBlockEditCommand(
+  payload: EditScriptBlockCommand,
+  commandId?: CommandId,
+): Promise<ScriptDocumentCommandResponse> {
+  const response = await runScriptProjectionRequest(
+    projectionKey({ document_id: payload.document_id }),
+    () => editScriptBlock(payload, commandId),
+    (result) => result.projection,
+    'Failed to save script block',
+  );
+  invalidateScriptContext();
+  return response;
 }

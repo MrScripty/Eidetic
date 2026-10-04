@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setupServerEventHandlers } from './serverEventHandlers.js';
 import type { ServerMessage } from '$lib/serverEventTypes.js';
-import { refreshScriptDocumentProjection } from './scriptDocumentProjection.svelte.js';
+import {
+  invalidateScriptContext,
+  refreshScriptDocumentProjection,
+} from './scriptDocumentProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
@@ -15,6 +18,7 @@ vi.mock('./timelineRenderProjection.svelte.js', () => ({
 }));
 
 vi.mock('./scriptDocumentProjection.svelte.js', () => ({
+  invalidateScriptContext: vi.fn(),
   MAIN_SCRIPT_DOCUMENT_ID: 'script.document.main',
   refreshScriptDocumentProjection: vi.fn(),
 }));
@@ -69,6 +73,8 @@ const completeGenerationMock = vi.mocked(completeGeneration);
 const applyGraphRendererCommandMock = vi.mocked(applyGraphRendererCommand);
 
 class MockServerEventClient {
+  connect = vi.fn();
+  disconnect = vi.fn();
   readonly handlers = new Map<ServerMessage['type'], (data: ServerMessage) => void>();
 
   on<T extends ServerMessage['type']>(
@@ -266,4 +272,12 @@ describe('backend event projection handlers', () => {
       });
     });
   });
+});
+
+it('invalidates cached prompt context when canonical screenplay changes', async () => {
+  const events = new MockServerEventClient();
+  const dispose = setupServerEventHandlers(events);
+  events.emit({ type: 'script_changed' });
+  expect(invalidateScriptContext).toHaveBeenCalled();
+  dispose();
 });

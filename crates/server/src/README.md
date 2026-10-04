@@ -14,6 +14,10 @@ domain model in `eidetic-core`.
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
+| `ai_script_context.rs` | Canonical screenplay evidence for shared preview/generation context, carrying exact block and segment write identities. |
+| `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
+| `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
+| `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |
 | `ai_temporal_context.rs` | Deterministic per-field fictional-time resolution before prompt construction; excludes future assertions and rejects same-time conflicts. |
 | `ai_temporal_context_tests.rs` | Sparse inheritance, ordering, conflict, duplicate and cleared-value temporal regressions. |
 | `ai_generation_service.rs` | Host-neutral streaming script generation and batch generation orchestration consumed by Tauri commands. |
@@ -106,6 +110,16 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Manual script edits change only canonical block text and its user-edited span.
+  Clients supply an expected block write-event identity; the transaction checks
+  it and current locks before mutation. Failure rolls back command/history rows.
+  Replay preserves intervening edits. Document/segment metadata stays backend-owned.
+- Preview and single/batch script generation hydrate the same main-document
+  screenplay context: target/intersecting segments plus up to two preceding and
+  two following segments in presentation order. Every block carries its source
+  segment/block IDs and their exact write events. These coordinates do not resolve
+  fictional time. Legacy node script text and unbound recaps are omitted from this
+  path. This slice does not infer or accept world updates or mark dependent scripts stale.
 - Timeline command admission captures the database path and fallback project
   mirror under the project guard before loading persisted state. Failed loads
   cannot read a later session's mirror; derived create-child commands reuse the

@@ -29,6 +29,7 @@
   import { beatContentStatusLabel } from './beatEditorStatus.js';
   import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
   import './beatEditor.css';
+  import { scriptDocumentProjectionState } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
   const debouncedNotesSave = createDebouncedNodeNotesSave({
     delayMs: 500,
@@ -46,6 +47,8 @@
   let nodeContext: { system: string; user: string } | null = $state(null);
   let contextLoading = $state(false);
   let contextNodeId: string | null = $state(null);
+  let contextRequestId = 0;
+  let contextRevision = -1;
 
   let isGenerating = $derived(
     (editorState.streamingNodeId != null &&
@@ -213,27 +216,35 @@
   $effect(() => {
     const nodeId = editorState.selectedNodeId;
     const notes = selectedProjectionNode?.notes;
+    const revision = scriptDocumentProjectionState.contextRevision;
     if (!nodeId || !notes?.trim()) {
+      contextRequestId += 1;
       nodeContext = null;
       contextNodeId = null;
       return;
     }
-    if (nodeId === contextNodeId && nodeContext) return;
+    if (nodeId === contextNodeId && revision === contextRevision) return;
+    contextRevision = revision;
     loadContext(nodeId);
   });
 
   function loadContext(nodeId: string) {
+    const requestId = ++contextRequestId;
+    nodeContext = null;
     contextLoading = true;
     contextNodeId = nodeId;
     getAiContext(nodeId)
       .then((context) => {
-        if (editorState.selectedNodeId === nodeId) nodeContext = context;
+        if (editorState.selectedNodeId === nodeId && requestId === contextRequestId)
+          nodeContext = context;
       })
       .catch(() => {
-        if (editorState.selectedNodeId === nodeId) nodeContext = null;
+        if (editorState.selectedNodeId === nodeId && requestId === contextRequestId)
+          nodeContext = null;
       })
       .finally(() => {
-        if (editorState.selectedNodeId === nodeId) contextLoading = false;
+        if (editorState.selectedNodeId === nodeId && requestId === contextRequestId)
+          contextLoading = false;
       });
   }
 

@@ -83,11 +83,11 @@ pub use propagation_proposal::{
     UpdatePropagationProposalCommand,
 };
 pub use script_document::{
-    ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,
-    ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptLock, ScriptLockId,
-    ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
-    ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
-    SetScriptLockCommand,
+    EditScriptBlockCommand, ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection,
+    ScriptContextBlock, ScriptContractError, ScriptDocument, ScriptDocumentId,
+    ScriptDocumentProjection, ScriptLock, ScriptLockId, ScriptPatch, ScriptPatchId, ScriptSegment,
+    ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan, ScriptSpanId,
+    ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
 };
 pub use selected_node_editor::{
     SelectedNodeEditorAdjacentParents, SelectedNodeEditorNode, SelectedNodeEditorProjection,

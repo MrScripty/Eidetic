@@ -72,6 +72,7 @@ export interface ScriptSegmentProjection {
 
 export interface ScriptBlockProjection {
   block: ScriptBlock;
+  revision_event_id?: string | null;
   spans: ScriptSpan[];
   locks: ScriptLock[];
 }
@@ -102,6 +103,13 @@ export interface SetScriptLockCommand {
   lock_id: ScriptLockId;
   span_id: ScriptSpanId;
   reason: string;
+}
+
+export interface EditScriptBlockCommand {
+  document_id: ScriptDocumentId;
+  block_id: ScriptBlockId;
+  expected_revision_event_id: string;
+  text: string;
 }
 
 export interface ScriptDocumentCommandResponse {

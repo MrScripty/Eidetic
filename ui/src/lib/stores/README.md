@@ -96,6 +96,9 @@ continues.
 - Centralizing every UI field in one store file: rejected because it would collapse unrelated lifecycles into one mutable surface.
 
 ## Invariants
+- Manual screenplay saves publish canonical projections and invalidate prompt
+  context. Script-change events also invalidate context, including external
+  edits; refused saves preserve the committed projection/context revision.
 
 - Shared polling and backend event flows retain explicit ownership and cleanup semantics.
 - Stores remain the source of transient UI coordination; components react to them.

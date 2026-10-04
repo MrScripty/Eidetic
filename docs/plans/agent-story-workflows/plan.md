@@ -10,6 +10,7 @@ agent write exposure. Pumas runtime/revision integration remains open.
 
 ## Objective and acceptance
 
+
 Writers can develop a feature-length screenplay by conversing with Eidetic's
 agent, manually editing contextual timeline clips and the bible, or combining
 both. The agent uses the graph as structured memory. The optional 3D graph is
@@ -34,6 +35,45 @@ Acceptance claims (all pending unless the ledger records scoped evidence):
 5. A multi-act, feature-length manual/agent screenplay walkthrough demonstrates
    continuity and separate screenplay output, recovery and undo, repeated and
    interrupted interactions, with graph visualization closed as well as open.
+
+## Manual screenplay authoring: first bounded memory slice
+
+The owner prioritizes manual screenplay edits, timeline-driven story changes and
+propagation into agent memory. Recovery/project switching work is parked. This
+slice starts from exact accepted integration `9f44a974bc7830e721237b3ccb295095c1bed5f6`
+(tree `ea1c975c59c33535304cf226df99f008ce1900bc`).
+
+- **Authoring path:** Edit an existing screenplay block in Script, explicitly
+  save its exact text, and keep a refused draft available for correction or
+  discard/reload. Commands contain document/block IDs, expected block write event
+  and text; the backend preserves existing kind, ordering and segment metadata.
+- **Canonical write:** Sparse block/span revisions retain the old/new author
+  text. The write transaction rechecks current block identity and protected spans.
+  Stale/ABA and lock failures do not leave command/history or partial text writes;
+  replay does not overwrite an intervening edit.
+- **Memory read:** Preview and generation share exact main-document screenplay
+  reads for target/intersecting and two adjacent segments on each side. Context
+  carries block and segment IDs plus separate write events. Presentation ranges
+  choose continuity evidence; they do not infer fictional validity. Canonical
+  authored text replaces unversioned node-script/recap evidence in this path.
+- **Projection propagation:** Command responses and script events refresh the
+  screenplay/history and invalidate the selected prompt preview. Earlier same-node
+  preview responses cannot replace newer requests.
+- **Acceptance:** Two linked scenes demonstrate type/save, exact text on reopen,
+  old/new history, fresh script projection and fresh prompt evidence without a
+  model. Essential stale/ABA, locked refusal and actual consumer regressions apply.
+- **Deferred:** Creation of new blocks/documents, inferred semantic extraction,
+  world-update acceptance, dependency impact/stale marking, timeline semantics,
+  embeddings/evaluator changes and recovery are separate follow-ups.
+
+Design source: Puma, *Knowledge Graphs and Agentic Memory: Evidence Time Retrieval
+and Scale*, research edition 2 October 2026, chapters 4–6, 11 and the Eidetic case
+in chapter 13. The manuscript is a separate Library research deliverable; its
+Eidetic audit targets `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`. The accepted
+source already includes the later fictional-time resolver. Reuse canonical
+SQLite/history/projections; neither a graph database nor embedding relevance
+replaces authored evidence or acceptance policy.
+
 
 ## Binding decisions and ownership
 

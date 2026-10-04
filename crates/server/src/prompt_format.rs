@@ -200,6 +200,20 @@ fn build_user_message(request: &GenerateRequest) -> String {
     }
 
     // User-written anchors.
+    if let Some(blocks) = &request.script_context {
+        user.push_str(
+            "CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n",
+        );
+        for block in blocks {
+            user.push_str(&format!(
+                "--- document={} segment={} block={} block_revision={} segment_revision={} presentation={}..{}ms ---\n{}\n\n",
+                block.document_id.as_str(), block.segment_id.as_str(), block.block_id.as_str(),
+                block.revision_event_id.0, block.segment_revision_event_id.0,
+                block.start_ms, block.end_ms, block.text,
+            ));
+        }
+    }
+
     if !request.user_written_anchors.is_empty() {
         user.push_str("USER-WRITTEN ANCHORS (must appear verbatim in your output):\n");
         for anchor in &request.user_written_anchors {

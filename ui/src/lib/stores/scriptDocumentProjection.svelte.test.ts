@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setScriptBlock, setScriptLock } from '$lib/commandApi.js';
+import { editScriptBlock, setScriptBlock, setScriptLock } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
 import {
   applyScriptBlockCommand,
+  applyScriptBlockEditCommand,
   applyScriptLockCommand,
   clearScriptDocumentProjection,
   getCachedScriptDocumentProjection,
@@ -14,6 +15,7 @@ import {
 } from './scriptDocumentProjection.svelte.js';
 
 vi.mock('$lib/commandApi.js', () => ({
+  editScriptBlock: vi.fn(),
   setScriptBlock: vi.fn(),
   setScriptLock: vi.fn(),
 }));
@@ -339,4 +341,42 @@ describe('script document projection store', () => {
     expect(isScriptDocumentProjectionPending(key)).toBe(false);
     expect(getScriptDocumentProjectionError(key)).toBeUndefined();
   });
+});
+
+it('saves only text and its expected revision, publishes projection and invalidates prompt context', async () => {
+  const payload = {
+    document_id: key.document_id,
+    block_id: 'script.block.action-1',
+    expected_revision_event_id: 'event-script-1',
+    text: '  Ada leaves under clear skies.\n\nBEN\nWait.  ',
+  };
+  vi.mocked(editScriptBlock).mockResolvedValue({
+    outcome: 'recorded',
+    projection: newerProjection,
+  });
+  const revision = scriptDocumentProjectionState.contextRevision;
+  await applyScriptBlockEditCommand(payload, 'manual-edit-1');
+  expect(editScriptBlock).toHaveBeenCalledWith(payload, 'manual-edit-1');
+  expect(getCachedScriptDocumentProjection(key)).toEqual(newerProjection);
+  expect(scriptDocumentProjectionState.contextRevision).toBe(revision + 1);
+});
+
+it('keeps the last committed projection and context revision when an edit is refused', async () => {
+  getScriptDocumentProjectionMock.mockResolvedValue(projection);
+  await refreshScriptDocumentProjection(key);
+  vi.mocked(editScriptBlock).mockRejectedValue(
+    new Error('script block changed; reload before saving'),
+  );
+  const revision = scriptDocumentProjectionState.contextRevision;
+  await expect(
+    applyScriptBlockEditCommand({
+      document_id: key.document_id,
+      block_id: 'script.block.action-1',
+      expected_revision_event_id: 'old-event',
+      text: 'Unsaved draft',
+    }),
+  ).rejects.toThrow('changed');
+  expect(getCachedScriptDocumentProjection(key)).toEqual(projection);
+  expect(scriptDocumentProjectionState.contextRevision).toBe(revision);
+  expect(getScriptDocumentProjectionError(key)).toContain('changed');
 });

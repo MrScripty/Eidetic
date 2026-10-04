@@ -1304,3 +1304,19 @@ describe('command api helpers', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+it('sends a manual screenplay edit through the registered desktop command', async () => {
+  const invoke = vi.fn().mockResolvedValue({ outcome: 'recorded' });
+  vi.stubGlobal('window', { __TAURI__: { core: { invoke } } });
+  const { editScriptBlock } = await import('./commandApi.js');
+  const payload = {
+    document_id: 'script.document.main',
+    block_id: 'block.first',
+    expected_revision_event_id: 'event.first',
+    text: 'Exact author text\n',
+  };
+  await editScriptBlock(payload, 'manual-command');
+  expect(invoke).toHaveBeenCalledWith('command_script_block_edit', {
+    command: { id: 'manual-command', payload },
+  });
+});

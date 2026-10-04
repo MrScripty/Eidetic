@@ -13,6 +13,7 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `BeatPlanningActions.svelte` | Parent-node child-planning action controls. |
 | `AiPromptPreview.svelte` | Raw AI prompt context preview. |
 | `ScriptPanel.svelte` | Container for script-editing surfaces. |
+| `ScriptBlockEditor.svelte` | Focused manual screenplay edit/save/cancel surface, preserving failed drafts and submitting the captured block revision. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
 
 ## Problem
@@ -32,6 +33,10 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 ## Invariants
 - Timeline selection remains the single source of truth for the active editor node.
 - AI generation state remains transient frontend state; durable script text is read from script document projections.
+- Manual screenplay drafts remain local until canonical save succeeds. Refused
+  edits retain the draft and expose explicit discard/reload. Script revision
+  invalidation refreshes prompt preview; earlier preview responses cannot replace
+  a newer request for the same selected node.
 - Future decomposition preserves current user-facing editor workflows.
 
 ## Revisit Triggers

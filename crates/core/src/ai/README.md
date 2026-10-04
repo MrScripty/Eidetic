@@ -26,6 +26,9 @@ Keep prompt request assembly in core, where it can reuse timeline/story rules di
 - Building prompts in the UI: rejected because backend-owned project state belongs with the domain model.
 
 ## Invariants
+- GenerateRequest can carry backend-hydrated canonical screenplay evidence with
+  exact source block/segment IDs and write events. Core request construction alone
+  leaves this field unset; backend preview and generation share its hydration.
 - Prompt helpers consume domain types rather than raw JSON fragments.
 - Backend adapters treat these request shapes as the canonical source for generation inputs.
 

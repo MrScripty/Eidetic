@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, DeleteStoryArcCommand, SetObjectFieldCommand, SetScriptBlockCommand,
-    SetScriptLockCommand, SetStoryArcMetadataCommand,
+    CommandEnvelope, DeleteStoryArcCommand, EditScriptBlockCommand, SetObjectFieldCommand,
+    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
 };
 use eidetic_server::command_service::{self, CreateStoryArcRequestCommand};
 use eidetic_server::state::AppState;
@@ -37,6 +37,17 @@ pub async fn command_script_lock(
 ) -> Result<command_service::ScriptDocumentCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     command_service::set_script_lock(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn command_script_block_edit(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<EditScriptBlockCommand>,
+) -> Result<command_service::ScriptDocumentCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::edit_script_block(&state, command)
         .await
         .map_err(CommandError::from)
 }

@@ -230,6 +230,7 @@ mod tests {
                     .into_iter()
                     .enumerate()
                     .map(|(index, (block_kind, text))| ScriptBlockProjection {
+                        revision_event_id: None,
                         block: ScriptBlock {
                             id: ScriptBlockId::new(format!("script.block.{index}")).unwrap(),
                             segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),

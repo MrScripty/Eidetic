@@ -109,6 +109,10 @@ pub struct GenerateRequest {
     /// Backend-owned affect constraints relevant to this request, when available.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub affect_context: Option<ProjectionEnvelope<AffectProjection>>,
+    /// Exact authored screenplay evidence, supplied by canonical backend reads.
+    /// Some(empty) means the backend queried the canonical source and found none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context: Option<Vec<crate::contracts::ScriptContextBlock>>,
 }
 
 /// Adjacent node content for context.

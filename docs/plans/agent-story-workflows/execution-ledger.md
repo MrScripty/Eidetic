@@ -503,3 +503,33 @@ still a separate pending gate. Broader generation persistence is not covered.
   Provide the verified candidate bundle, ancestry/blob audit, gate logs and a
   repository-template draft description for parent publication/native retesting.
   No external PR, review/bot request, main merge or merged PR6 update is claimed.
+
+### 2026-10-04: Manual screenplay editing and canonical agent context candidate
+
+- Recovered the original accepted integration from the two available exact
+  parents and the owner-supplied commit bytes. Both tree
+  `ea1c975c59c33535304cf226df99f008ce1900bc` and commit
+  `9f44a974bc7830e721237b3ccb295095c1bed5f6` matched before feature work.
+- Isolated candidate branch `feat/manual-screenplay-memory`: focused block
+  edit/save UI, text-only canonical command with expected write identity and
+  transaction-local lock checks, sparse old/new text history, source-bound
+  screenplay context shared by prompt preview and generation, prompt invalidation.
+- Executed 22 tests in an isolated Rust harness importing the actual repository
+  SQLite/history/script-command/context/prompt modules, including four new
+  manual-authoring regressions. It links no Pumas/ONNX runtime and is not the
+  full server test suite. The saved/reopened exact Unicode/whitespace text,
+  distinct segment/block write identities, old/new history, stale/ABA refusal,
+  replay preservation, late-added locks and bounded/deleted context cases pass.
+- Core suite: 113 passed. Frontend suite: 338 passed. Svelte check, lint,
+  formatting and production build pass after correcting the new event test's
+  mock interface. Server test compilation and Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1`; these are compilation evidence only.
+- Native AppState regression calls the real manual edit service, preview and
+  shared generation-admission helper with a stale mirror and no model/provider
+  call. It compiles but remains unexecuted here because no ONNX library is
+  available. The desktop crate offline check stopped at uncached
+  `ab_glyph v0.2.32`; no dependency/network retry was attempted. Native desktop
+  command registration, runtime tests and user-flow qualification remain pending.
+- Recovery proposal and accepted async repairs remain separate/preserved. No
+  inferred-world acceptance, timeline semantics, remote upload, PR merge,
+  external review request or network-policy change was performed.

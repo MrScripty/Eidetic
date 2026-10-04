@@ -138,6 +138,9 @@ pub struct ScriptSegmentProjection {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScriptBlockProjection {
     pub block: ScriptBlock,
+    /// Exact canonical write identity; absent only on unpersisted projections.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision_event_id: Option<super::ChangeEventId>,
     #[serde(default)]
     pub spans: Vec<ScriptSpan>,
     #[serde(default)]
@@ -177,6 +180,29 @@ pub struct SetScriptBlockCommand {
 
 fn default_script_span_provenance() -> ScriptSpanProvenance {
     ScriptSpanProvenance::UserEdited
+}
+
+/// A manual edit preserves the canonical block's kind, placement and ownership.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EditScriptBlockCommand {
+    pub document_id: ScriptDocumentId,
+    pub block_id: ScriptBlockId,
+    pub expected_revision_event_id: super::ChangeEventId,
+    pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScriptContextBlock {
+    pub document_id: ScriptDocumentId,
+    pub segment_id: ScriptSegmentId,
+    pub block_id: ScriptBlockId,
+    pub source_node_id: Option<String>,
+    pub revision_event_id: super::ChangeEventId,
+    pub segment_revision_event_id: super::ChangeEventId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub text: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -226,6 +252,7 @@ mod tests {
                     sort_order: 1,
                 },
                 blocks: vec![ScriptBlockProjection {
+                    revision_event_id: None,
                     block: ScriptBlock {
                         id: ScriptBlockId::new("script.block.heading-1").unwrap(),
                         segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
