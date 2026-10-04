@@ -122,8 +122,9 @@ pub async fn save_project(
         });
         let path = validation::validate_project_path(&requested_path, &project_root)?;
 
-        let source_path = state.project_database.active_path();
-        if source_path.as_ref() != Some(&path)
+        let source_identity = state.project_database.active_path_identity(&project_root)?;
+        let same_destination = source_identity.as_ref() == Some(&path);
+        if !same_destination
             && path.try_exists().map_err(|error| {
                 BackendError::internal(format!("cannot inspect Save As destination: {error}"))
             })?
@@ -146,7 +147,7 @@ pub async fn save_project(
             active.timeline = project.timeline;
             active.arcs = project.arcs;
         }
-        if state.project_database.active_path().as_ref() != Some(&path) {
+        if !same_destination {
             *state.project_session_id.lock() = uuid::Uuid::new_v4();
         }
         state.project_database.set_active_path(path.clone());

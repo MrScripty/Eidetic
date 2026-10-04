@@ -57,6 +57,9 @@ impl Fixture {
         let directory = crate::persistence::default_project_dir()
             .join(format!("custody-test-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&directory).unwrap();
+        // Match the canonical paths that public lifecycle validation publishes.
+        // Keep every custody/history/session assertion below exact and intact.
+        let directory = directory.canonicalize().unwrap();
         let path_a = directory.join("A.db");
         let path_b = directory.join("B.db");
         let project_a = Template::MultiCam.build_project("A");
@@ -795,5 +798,180 @@ async fn normal_runtime_repeated_commands_bound_completed_supervisor_records() {
         "normal command 63"
     );
     assert_eq!(history(&fixture.path_a)[0].len(), 65);
+    fixture.finish().await;
+}
+
+// Exercise the actual public services with a legacy stored spelling, rather than
+// only comparing path strings. All writes still go through the validated target.
+async fn assert_same_project_aliases_preserve_custody(fixture: Fixture, spellings: Vec<PathBuf>) {
+    let before = history(&fixture.path_a);
+    let session_id = *fixture.state.project_session_id.lock();
+    for source in &spellings {
+        for destination in &spellings {
+            fixture
+                .state
+                .project_database
+                .set_active_path(source.clone());
+            let saved = save_project(
+                &fixture.state,
+                SaveProjectRequest {
+                    path: Some(destination.display().to_string()),
+                },
+            )
+            .await
+            .unwrap();
+            assert_eq!(saved["saved"], fixture.path_a.display().to_string());
+            assert_eq!(
+                fixture.state.project_database.active_path(),
+                Some(fixture.path_a.clone())
+            );
+            assert_eq!(*fixture.state.project_session_id.lock(), session_id);
+            assert_eq!(history(&fixture.path_a), before);
+            assert_eq!(
+                ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+                    .await
+                    .unwrap()
+                    .notes,
+                "A existing revision"
+            );
+        }
+    }
+    // A spelling-only save must not invalidate a command already queued for the
+    // same session. A real Save As/reopen still changes the session below.
+    fixture
+        .state
+        .project_database
+        .set_active_path(spellings[0].clone());
+    let held = fixture.state.project_session_gate.lock().await;
+    let mut save = Box::pin(save_project(
+        &fixture.state,
+        SaveProjectRequest {
+            path: Some(fixture.path_a.display().to_string()),
+        },
+    ));
+    assert_pending(save.as_mut());
+    let mut edit = Box::pin(set_timeline_node_notes(
+        &fixture.state,
+        CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            node_id: fixture.node,
+            notes: "alias-admitted edit".into(),
+        }),
+    ));
+    assert_pending(edit.as_mut());
+    drop(held);
+    let (saved, edited) = futures::join!(save, edit);
+    saved.unwrap();
+    edited.unwrap();
+    assert_eq!(*fixture.state.project_session_id.lock(), session_id);
+    let edited_history = history(&fixture.path_a);
+    assert_eq!(edited_history[0].len(), before[0].len() + 1);
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "alias-admitted edit"
+    );
+
+    let destination = fixture.directory.join("identity-save-as.db");
+    save_project(
+        &fixture.state,
+        SaveProjectRequest {
+            path: Some(destination.display().to_string()),
+        },
+    )
+    .await
+    .unwrap();
+    assert_ne!(*fixture.state.project_session_id.lock(), session_id);
+    assert_eq!(history(&fixture.path_a), edited_history);
+    assert!(history(&destination)[0].is_empty());
+    let (saved_project, saved_blob) = crate::persistence::load_project(&destination)
+        .await
+        .unwrap();
+    assert_eq!(
+        saved_project
+            .timeline
+            .node(fixture.node)
+            .unwrap()
+            .content
+            .notes,
+        "alias-admitted edit"
+    );
+    assert!(saved_blob.is_some());
+    let save_as_session = *fixture.state.project_session_id.lock();
+    load_project(
+        &fixture.state,
+        LoadProjectRequest {
+            path: spellings[0].display().to_string(),
+        },
+    )
+    .await
+    .unwrap();
+    assert_ne!(*fixture.state.project_session_id.lock(), save_as_session);
+    assert_eq!(
+        fixture.state.project_database.active_path(),
+        Some(fixture.path_a.clone())
+    );
+    assert_eq!(history(&fixture.path_a), edited_history);
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "alias-admitted edit"
+    );
+    fixture.finish().await;
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn same_project_symlink_save_preserves_session_queued_edits_and_reopen_history() {
+    let fixture = Fixture::new().await;
+    let alias = fixture.directory.join("A-alias.db");
+    std::os::unix::fs::symlink(&fixture.path_a, &alias).unwrap();
+    let spellings = vec![alias, fixture.path_a.clone()];
+    assert_same_project_aliases_preserve_custody(fixture, spellings).await;
+}
+
+#[cfg(windows)]
+#[tokio::test]
+async fn same_project_windows_alias_save_preserves_session_queued_edits_and_reopen_history() {
+    let fixture = Fixture::new().await;
+    let spellings = crate::validation::tests::windows_path_spellings(&fixture.path_a);
+    assert_same_project_aliases_preserve_custody(fixture, spellings).await;
+}
+
+#[tokio::test]
+async fn save_as_hardlink_destination_keeps_existing_database_and_history_untouched() {
+    let fixture = Fixture::new().await;
+    let before = history(&fixture.path_a);
+    let session_id = *fixture.state.project_session_id.lock();
+    let hardlink = fixture.directory.join("A-hardlink.db");
+    std::fs::hard_link(&fixture.path_a, &hardlink).unwrap();
+    // A hard link has a different canonical name and therefore a different WAL
+    // namespace. It is an existing destination, not a spelling-only save.
+    let error = save_project(
+        &fixture.state,
+        SaveProjectRequest {
+            path: Some(hardlink.display().to_string()),
+        },
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(error.message(), "Save As destination already exists");
+    assert!(matches!(error, BackendError::Conflict(_)));
+    assert_eq!(*fixture.state.project_session_id.lock(), session_id);
+    assert_eq!(
+        fixture.state.project_database.active_path(),
+        Some(fixture.path_a.clone())
+    );
+    assert_eq!(history(&fixture.path_a), before);
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "A existing revision"
+    );
     fixture.finish().await;
 }

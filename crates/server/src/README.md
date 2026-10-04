@@ -206,8 +206,15 @@ increase coupling by hiding the transaction invariant.
   over its stale mirror, and copies that snapshot with the current document blob.
   Serialization/write/read failures prevent active-session publication. Autosave
   skips writes when serialization fails, preserving the last stored document.
-  A different existing Save As destination returns a conflict to avoid combining
-  its timeline/history with the source. Save As copies a current-state snapshot,
+  Save compares the active owner's freshly validated canonical identity with
+  the validated destination before classifying an existing target or rotating
+  its session. Normal/verbatim/8.3 and contained symbolic-link spellings of one
+  project remain a same-database save; queued edits retain their session. Active
+  publication keeps the canonical security path. A different existing Save As
+  destination returns a conflict to avoid combining its timeline/history with
+  the source. Hard links retain distinct canonical names/WAL namespaces and are
+  refused as existing destinations, not reopened as spelling aliases. Save As
+  copies a current-state snapshot,
   not source command history, affect stores or external collaboration sessions.
 - Y.Doc load restores into a fresh document rather than merging project lifetimes.
   Empty/fallback population starts fresh; invalid blobs preserve the current doc

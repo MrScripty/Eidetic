@@ -4188,7 +4188,15 @@ The refactor is complete when:
   alias exists; only the alias-specific subcase is conditional. Only symlink
   privilege error 1314 makes the linked-escape subcase unavailable; every other
   creation error fails. Linux source tests and compilation checks do not replace
-  actual Windows CI execution for this follow-up.
+  actual Windows CI execution for this follow-up. Windows CI `37225653940`
+  then exposed Save As comparing a canonical destination with an unnormalized
+  active-path spelling. The active database owner now resolves containment-
+  checked identity for lifecycle comparison; same-project spellings neither
+  trigger an existing-destination conflict nor rotate the session. Distinct
+  existing destinations, including hard links with different canonical/WAL
+  names, remain conflicts. Real public-service tests cover spelling-only saves,
+  queued edits, Save As, reopen, document text and exact source history; original
+  custody assertions remain intact with fixture paths admitted canonically.
   Custody teardown closes SQLite
   inspection handles before deleting files. Hosted Windows execution remains a
   separate qualification requirement from cloud source-module tests.

@@ -179,7 +179,7 @@ fn normalize_path(path: PathBuf) -> PathBuf {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::{validate_name, validate_project_path};
     use std::fs;
     use std::path::PathBuf;
@@ -299,7 +299,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    fn short_path(path: &std::path::Path) -> PathBuf {
+    pub(crate) fn short_path(path: &std::path::Path) -> PathBuf {
         use std::os::windows::ffi::{OsStrExt, OsStringExt};
         #[link(name = "kernel32")]
         unsafe extern "system" {
@@ -325,6 +325,26 @@ mod tests {
         );
         output.truncate(length as usize);
         PathBuf::from(std::ffi::OsString::from_wide(&output))
+    }
+
+    #[cfg(windows)]
+    pub(crate) fn windows_path_spellings(path: &std::path::Path) -> Vec<PathBuf> {
+        let canonical = path.canonicalize().unwrap();
+        let text = canonical.to_str().unwrap();
+        let normal = if let Some(unc) = text.strip_prefix(r"\\?\UNC\") {
+            PathBuf::from(format!(r"\\{unc}"))
+        } else {
+            PathBuf::from(text.strip_prefix(r"\\?\").unwrap_or(text))
+        };
+        let alias = short_path(&canonical);
+        assert_eq!(alias.canonicalize().unwrap(), canonical);
+        let mut spellings = vec![normal, canonical.clone()];
+        if alias != canonical && alias.to_string_lossy().contains('~') {
+            spellings.push(alias);
+        } else {
+            eprintln!("8.3-specific identity subcase unavailable: {alias:?}");
+        }
+        spellings
     }
 
     #[cfg(windows)]
