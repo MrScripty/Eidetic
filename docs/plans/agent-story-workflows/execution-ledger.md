@@ -297,3 +297,54 @@ still a separate pending gate. Broader generation persistence is not covered.
   tests, then full server/native gates. Check seeded history, explicit conflicts,
   document-channel errors and publication ordering. Other producers and wire-level
   pre-admission intent tokens remain out of scope. No merge readiness is claimed.
+
+### 2026-10-04: Transition persistence repair after independent native review
+
+- Frozen `de4c186b` remains the comparison source. The parent reports 107 core,
+  286 server and 11 focused custody tests passing there, but two deterministic
+  transition regressions failing: an earlier real A document blob becomes stale
+  after committed notes and immediate A→B→A reopening; Save As uses stale mirror
+  notes instead of committed source timeline notes. These are parent/native
+  observations, not cloud server execution.
+- Source comparison against `898cb310` confirms missing outgoing flush and mirror
+  Save As predate the custody repair. Fresh replacement in `de4c186b` exposes the
+  stale stored-document boundary; passing gate tests did not qualify persistence.
+- Repair branch `fix/timeline-transition-persistence` follows `de4c186b`: create/load
+  explicitly serialize and persist the outgoing session before document replacement.
+  Save As flushes and reloads that source database, then saves its authoritative
+  timeline/arcs with the current blob to a new destination. Active mirror refresh
+  touches SQLite-owned timeline/arcs only. Existing different Save As destinations
+  return a conflict to avoid retaining unrelated destination timeline/history.
+- Required document serialization errors propagate instead of saving without a
+  blob; autosave logs and skips that write, preserving the earlier saved document.
+  Outgoing read/write errors prevent publication of a new active session. Direct
+  flush completion is awaited; no debounce/save-signal completion is inferred.
+- Admitted timeline/lifecycle work moves its gate into a supervised task through
+  blocking persistence and publication. Caller cancellation preserves that task;
+  admission waits are still cancellable. Backend shutdown aborts tasks. Other
+  producers, process crashes and external collaboration remain unqualified.
+- Eight additional native tests compile but are **unrun in cloud**: seven transition
+  tests cover earlier-blob reopen, authoritative Save As, serialization/write errors,
+  existing destination conflicts and cancelled transition/notes callers; one autosave
+  test checks that serialization failure preserves its stored blob. The current
+  focused suite has 15 timeline/autosave tests plus four document custody tests.
+- An isolated harness copies the exact new ownership helper and imports production
+  Y.Doc, backend supervisor and error modules with a minimal state wrapper and no
+  Pumas/ONNX dependency. Its two cancellation cases fail with the old caller-owned
+  gate pattern; all three cases pass with the repair, including error forwarding.
+  This is component evidence and does not qualify actual AppState/server runtime.
+- `ORT_SKIP_DOWNLOAD=1` offline server/test compilation and strict Clippy pass;
+  native transition and full server retesting remain with the parent.
+- Supported one-shot materialization of the combined native regressions
+  `libfile_ab530ad64488819185e6f6bda07380a7` (SHA-256
+  `5e7696dc0da6567d5a5d9f303f71081211870e25a2f214dd409dfe7b8d0a892b`)
+  and rebased admission history patch `libfile_5d551b86f78481919f1d977a3a7a1c53`
+  (SHA-256 `c75d31d18b18466e88c72b0d05b411b06afe041ba254d52a01ce86a695a256e1`)
+  failed with `download failed` on `oaisdmntpreastus2.blob.core.windows.net`, with
+  no exposed HTTP status. No retry/bypass; exact raw patch text requested. Neither
+  patch is incorporated or claimed qualified in this successor. Initially-empty
+  admission history qualification does not establish arbitrary imported history.
+- Separate resize documentation successor `608e22bb` follows frozen `c81d6e877`.
+  Its core README records `TimeRangeOverflow` and atomic validation; traceability
+  passes across the complete `e208f4ce..608e22bb` resize change. The parent reports
+  113 core tests/Clippy passing for frozen resize source; no implementation changed.

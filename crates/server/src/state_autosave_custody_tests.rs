@@ -111,3 +111,49 @@ async fn autosave_custody_holds_snapshot_and_document_until_persistence_finishes
     supervisor.shutdown_all().await;
     std::fs::remove_dir_all(directory).unwrap();
 }
+
+#[tokio::test]
+async fn autosave_serialization_failure_preserves_saved_document_blob() {
+    let directory =
+        std::env::temp_dir().join(format!("eidetic-autosave-error-{}", uuid::Uuid::new_v4()));
+    let path = directory.join("A.db");
+    let project = Template::MultiCam.build_project("A");
+    let node = project.timeline.nodes[0].id;
+    let supervisor = BackendTaskSupervisor::default();
+    let (real_doc, _) = ydoc::spawn_doc_manager(&supervisor);
+    real_doc
+        .send(DocCommand::WriteNodeContent {
+            node_id: node,
+            field: ContentField::Notes,
+            text: "saved document".into(),
+            author: "test:A".into(),
+        })
+        .await
+        .unwrap();
+    let blob = ydoc::serialize_doc(&real_doc).await.unwrap();
+    crate::persistence::save_project(&project, &path, Some(blob.clone()))
+        .await
+        .unwrap();
+    let (doc_tx, doc_rx) = tokio::sync::mpsc::channel(1);
+    drop(doc_rx);
+    let (save_tx, save_rx) = tokio::sync::mpsc::channel(1);
+    let job = tokio::spawn(auto_save_task(
+        save_rx,
+        Arc::new(Mutex::new(Some(project))),
+        Arc::new(Mutex::new(Some(path.clone()))),
+        doc_tx,
+        Arc::new(tokio::sync::Mutex::new(())),
+    ));
+    save_tx.send(()).await.unwrap();
+    drop(save_tx);
+    tokio::time::timeout(Duration::from_secs(10), job)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        crate::persistence::load_project(&path).await.unwrap().1,
+        Some(blob)
+    );
+    supervisor.shutdown_all().await;
+    std::fs::remove_dir_all(directory).unwrap();
+}

@@ -387,3 +387,371 @@ async fn failed_postcommit_document_send_reports_committed_failure() {
     assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
     fixture.finish().await;
 }
+
+#[tokio::test]
+async fn transition_reopen_keeps_committed_notes_in_sqlite_and_document() {
+    let fixture = Fixture::new().await;
+    // A real earlier blob is necessary: a blob-less fixture takes a fallback
+    // path and cannot reproduce the stale saved-document failure.
+    save_project(&fixture.state, SaveProjectRequest { path: None })
+        .await
+        .unwrap();
+    set_timeline_node_notes(
+        &fixture.state,
+        CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            node_id: fixture.node,
+            notes: "A edit after earlier blob".into(),
+        }),
+    )
+    .await
+    .unwrap();
+    let history_a = history(&fixture.path_a);
+    load_project(
+        &fixture.state,
+        LoadProjectRequest {
+            path: fixture.path_b.display().to_string(),
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(history(&fixture.path_a), history_a);
+    let (saved_a, blob_a) = crate::persistence::load_project(&fixture.path_a)
+        .await
+        .unwrap();
+    assert!(blob_a.is_some());
+    assert_eq!(
+        saved_a.timeline.node(fixture.node).unwrap().content.notes,
+        "A edit after earlier blob"
+    );
+    load_project(
+        &fixture.state,
+        LoadProjectRequest {
+            path: fixture.path_a.display().to_string(),
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "A edit after earlier blob"
+    );
+    assert_eq!(history(&fixture.path_a), history_a);
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn transition_save_as_copies_committed_source_timeline_and_document() {
+    let fixture = Fixture::new().await;
+    save_project(&fixture.state, SaveProjectRequest { path: None })
+        .await
+        .unwrap();
+    set_timeline_node_notes(
+        &fixture.state,
+        CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            node_id: fixture.node,
+            notes: "committed source notes".into(),
+        }),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        fixture
+            .state
+            .project
+            .lock()
+            .as_ref()
+            .unwrap()
+            .timeline
+            .node(fixture.node)
+            .unwrap()
+            .content
+            .notes,
+        "A existing revision"
+    );
+    let history_a = history(&fixture.path_a);
+    let path_c = fixture.directory.join("C.db");
+    save_project(
+        &fixture.state,
+        SaveProjectRequest {
+            path: Some(path_c.display().to_string()),
+        },
+    )
+    .await
+    .unwrap();
+    let (saved_c, blob_c) = crate::persistence::load_project(&path_c).await.unwrap();
+    assert_eq!(
+        saved_c.timeline.node(fixture.node).unwrap().content.notes,
+        "committed source notes"
+    );
+    assert_eq!(
+        fixture
+            .state
+            .project
+            .lock()
+            .as_ref()
+            .unwrap()
+            .timeline
+            .node(fixture.node)
+            .unwrap()
+            .content
+            .notes,
+        "committed source notes"
+    );
+    assert_eq!(history(&fixture.path_a), history_a);
+    // Save As copies the current project snapshot, not its command history.
+    assert!(history(&path_c)[0].is_empty());
+    ydoc::load_doc(&fixture.state.doc_tx, blob_c.unwrap())
+        .await
+        .unwrap();
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "committed source notes"
+    );
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn transition_serialization_failure_keeps_active_state_and_saved_blob() {
+    let fixture = Fixture::new().await;
+    save_project(&fixture.state, SaveProjectRequest { path: None })
+        .await
+        .unwrap();
+    let (_, before_blob) = crate::persistence::load_project(&fixture.path_a)
+        .await
+        .unwrap();
+    let before_history = history(&fixture.path_a);
+    let path_c = fixture.directory.join("C.db");
+    fixture.state.task_supervisor.shutdown_all().await;
+    let load_error = load_project(
+        &fixture.state,
+        LoadProjectRequest {
+            path: fixture.path_b.display().to_string(),
+        },
+    )
+    .await
+    .unwrap_err();
+    let save_error = save_project(
+        &fixture.state,
+        SaveProjectRequest {
+            path: Some(path_c.display().to_string()),
+        },
+    )
+    .await
+    .unwrap_err();
+    assert!(load_error.to_string().contains("serialization"));
+    assert!(save_error.to_string().contains("serialization"));
+    assert!(!path_c.exists());
+    assert_eq!(fixture.state.project.lock().as_ref().unwrap().name, "A");
+    assert_eq!(
+        fixture.state.project_database.active_path(),
+        Some(fixture.path_a.clone())
+    );
+    assert_eq!(
+        crate::persistence::load_project(&fixture.path_a)
+            .await
+            .unwrap()
+            .1,
+        before_blob
+    );
+    assert_eq!(history(&fixture.path_a), before_history);
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn transition_source_persistence_failure_does_not_replace_document() {
+    let fixture = Fixture::new().await;
+    // A directory cannot be opened as SQLite. Serialization succeeds, but the
+    // failed outgoing write must leave the live document and session in place.
+    fixture
+        .state
+        .project_database
+        .set_active_path(fixture.directory.clone());
+    let session_id = *fixture.state.project_session_id.lock();
+    let error = load_project(
+        &fixture.state,
+        LoadProjectRequest {
+            path: fixture.path_b.display().to_string(),
+        },
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(error, BackendError::Internal(_)));
+    assert_eq!(*fixture.state.project_session_id.lock(), session_id);
+    assert_eq!(fixture.state.project.lock().as_ref().unwrap().name, "A");
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "A existing revision"
+    );
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn transition_cancelled_caller_keeps_flush_and_replacement_in_its_gate() {
+    let mut fixture = Fixture::new().await;
+    let real_doc = fixture.state.doc_tx.clone();
+    let blob_a = ydoc::serialize_doc(&real_doc).await.unwrap();
+    let (proxy, mut receiver) = tokio::sync::mpsc::channel(1);
+    fixture.state.doc_tx = proxy;
+    let worker = fixture.state.clone();
+    let path_b = fixture.path_b.display().to_string();
+    let request =
+        tokio::spawn(
+            async move { load_project(&worker, LoadProjectRequest { path: path_b }).await },
+        );
+    let command = tokio::time::timeout(std::time::Duration::from_secs(10), receiver.recv())
+        .await
+        .unwrap()
+        .unwrap();
+    let DocCommand::Serialize { reply } = command else {
+        panic!("expected outgoing serialization");
+    };
+    request.abort();
+    assert!(request.await.unwrap_err().is_cancelled());
+    assert_eq!(fixture.state.project.lock().as_ref().unwrap().name, "A");
+    assert!(fixture.state.project_session_gate.try_lock().is_err());
+    reply.send(blob_a).unwrap();
+    let forwarding = tokio::spawn(async move {
+        while let Some(command) = receiver.recv().await {
+            real_doc.send(command).await.unwrap();
+        }
+    });
+    let gate = tokio::time::timeout(
+        std::time::Duration::from_secs(10),
+        fixture.state.project_session_gate.lock(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(fixture.state.project.lock().as_ref().unwrap().name, "B");
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "B existing revision"
+    );
+    drop(gate);
+    fixture.finish().await;
+    forwarding.abort();
+    let _ = forwarding.await;
+}
+
+#[tokio::test]
+async fn transition_save_as_existing_destination_returns_conflict_without_mixing_histories() {
+    let fixture = Fixture::new().await;
+    let history_a = history(&fixture.path_a);
+    let history_b = history(&fixture.path_b);
+    let error = save_project(
+        &fixture.state,
+        SaveProjectRequest {
+            path: Some(fixture.path_b.display().to_string()),
+        },
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(error, BackendError::Conflict(_)));
+    assert_eq!(
+        fixture.state.project_database.active_path(),
+        Some(fixture.path_a.clone())
+    );
+    assert_eq!(history(&fixture.path_a), history_a);
+    assert_eq!(history(&fixture.path_b), history_b);
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn transition_cancelled_notes_caller_still_publishes_and_flushes_source_document() {
+    let mut fixture = Fixture::new().await;
+    let real_doc = fixture.state.doc_tx.clone();
+    let (proxy, mut receiver) = tokio::sync::mpsc::channel(1);
+    fixture.state.doc_tx = proxy.clone();
+    let (reply, serialized) = tokio::sync::oneshot::channel();
+    proxy.send(DocCommand::Serialize { reply }).await.unwrap();
+    let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        node_id: fixture.node,
+        notes: "A edit survives cancelled response".into(),
+    });
+    let command_id = command.id.0.to_string();
+    let worker = fixture.state.clone();
+    let request = tokio::spawn(async move { set_timeline_node_notes(&worker, command).await });
+    let path = fixture.path_a.clone();
+    tokio::time::timeout(std::time::Duration::from_secs(10), async {
+        loop {
+            let path = path.clone();
+            let id = command_id.clone();
+            let recorded = tokio::task::spawn_blocking(move || {
+                let conn = crate::sqlite::open_write_connection(&path).unwrap();
+                conn.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM commands WHERE id = ?1)",
+                    [id],
+                    |row| row.get::<_, bool>(0),
+                )
+                .unwrap()
+            })
+            .await
+            .unwrap();
+            if recorded {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+        }
+    })
+    .await
+    .unwrap();
+    request.abort();
+    assert!(request.await.unwrap_err().is_cancelled());
+    assert!(fixture.state.project_session_gate.try_lock().is_err());
+    let mut load = Box::pin(load_project(
+        &fixture.state,
+        LoadProjectRequest {
+            path: fixture.path_b.display().to_string(),
+        },
+    ));
+    assert_pending(load.as_mut());
+    let forwarding = tokio::spawn(async move {
+        while let Some(command) = receiver.recv().await {
+            real_doc.send(command).await.unwrap();
+        }
+    });
+    serialized.await.unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(10), load)
+        .await
+        .unwrap()
+        .unwrap();
+    let (saved_a, blob_a) = crate::persistence::load_project(&fixture.path_a)
+        .await
+        .unwrap();
+    assert_eq!(
+        saved_a.timeline.node(fixture.node).unwrap().content.notes,
+        "A edit survives cancelled response"
+    );
+    let supervisor = crate::backend_task::BackendTaskSupervisor::default();
+    let (check_doc, _) = ydoc::spawn_doc_manager(&supervisor);
+    ydoc::load_doc(&check_doc, blob_a.unwrap()).await.unwrap();
+    assert_eq!(
+        ydoc::read_content(&check_doc, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "A edit survives cancelled response"
+    );
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "B existing revision"
+    );
+    supervisor.shutdown_all().await;
+    fixture.finish().await;
+    forwarding.abort();
+    let _ = forwarding.await;
+}

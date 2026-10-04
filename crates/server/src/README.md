@@ -12,7 +12,7 @@ domain model in `eidetic-core`.
 | `backend_task.rs` | Backend task supervisor for explicit desktop lifecycle ownership. |
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
-| `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by Tauri commands. |
+| `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
 | `ai_temporal_context.rs` | Deterministic per-field fictional-time resolution before prompt construction; excludes future assertions and rejects same-time conflicts. |
 | `ai_temporal_context_tests.rs` | Sparse inheritance, ordering, conflict, duplicate and cleared-value temporal regressions. |
@@ -113,6 +113,18 @@ increase coupling by hiding the transaction invariant.
   replacement/reopen or save-as invalidates queued requests explicitly. Admitted
   work retains its gate through document enqueue, event and save publication.
   Autosave keeps mirror, path and serialized document in that gate through I/O.
+- Admitted timeline/lifecycle work moves its owned gate into a supervised task;
+  caller cancellation does not release it during blocking persistence or document
+  publication. Waiting for admission stays cancellable. Backend shutdown aborts
+  these tasks; this is not crash recovery or a guarantee for other producers.
+- Create/load flush the outgoing session directly before replacing its document.
+  Save As flushes/reloads the source database, preserving committed timeline/arcs
+  over its stale mirror, and copies that snapshot with the current document blob.
+  Serialization/write/read failures prevent active-session publication. Autosave
+  skips writes when serialization fails, preserving the last stored document.
+  A different existing Save As destination returns a conflict to avoid combining
+  its timeline/history with the source. Save As copies a current-state snapshot,
+  not source command history, affect stores or external collaboration sessions.
 - Y.Doc load restores into a fresh document rather than merging project lifetimes.
   Empty/fallback population starts fresh; invalid blobs preserve the current doc
   until an explicit fallback. Closed channels return errors. A document-channel

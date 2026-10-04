@@ -341,6 +341,17 @@ claiming to expose a completed agent retrieval workflow.
   and save-as renew identity, returning a conflict for obsolete queued requests.
   Restore saved documents into a fresh CRDT store, reset before fallback population,
   and reattach update observation. Invalid-load/channel errors remain explicit.
+- **Transition repair:** Explicitly flush the outgoing mirror/path/document under
+  that gate before create/load replaces it. For Save As, flush and recover the
+  committed source snapshot before writing a new destination; retain current-state
+  copy semantics without copying command history or affect stores. Reject different
+  existing destinations rather than mixing database ownership. Required document
+  serialization and persistence failures keep the active session in place; autosave
+  serialization failure skips its write and preserves the stored blob.
+- **Caller cancellation:** After admission, supervised work owns the gate through
+  blocking persistence and publication even if its caller disconnects. Admission
+  waits remain cancellable. Shutdown can abort work; crash recovery and unrelated
+  producers remain outside this guarantee.
 - **Publication:** Await bounded document sends under the gate before emitting
   timeline events/save signals. If the manager closes after SQL commit, return
   an explicit committed-publication error; SQL history remains durable/idempotent.
@@ -352,6 +363,9 @@ claiming to expose a completed agent retrieval workflow.
   state preservation and live update observation. Native tests must qualify seeded
   A/B history preservation, post-commit document/event ordering with a full channel,
   queued same-path reopen/save-as rejection and snapshot ownership during autosave.
+  Transition tests must include an earlier real document blob before committing
+  new notes, immediate A-to-B-to-A reopen, Save As from a stale mirror, outgoing
+  serialization/persistence errors and cancellation at blocked publication/flush.
 - **Limits:** Source and isolated document component checks do not qualify complete
   server behavior. Native tests are delegated. Other producers and frontend intent
   tokens before backend admission remain open; no completed M4/merge claim.

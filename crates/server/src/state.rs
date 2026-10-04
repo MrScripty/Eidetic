@@ -290,6 +290,36 @@ impl AppState {
     }
 }
 
+/// Once admitted, session work outlives a disconnected/cancelled caller. The
+/// owned gate stays with the work through blocking persistence and publication.
+/// Waiting for admission is still cancellable; backend shutdown aborts the task.
+pub(crate) async fn complete_project_session_work<T>(
+    state: &AppState,
+    session: tokio::sync::OwnedMutexGuard<()>,
+    work: impl std::future::Future<Output = Result<T, crate::backend_error::BackendError>>
+    + Send
+    + 'static,
+) -> Result<T, crate::backend_error::BackendError>
+where
+    T: Send + 'static,
+{
+    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+    state
+        .task_supervisor
+        .spawn("project-session-work", async move {
+            let result = work.await;
+            drop(session);
+            if let Err(Err(error)) = reply_tx.send(result) {
+                tracing::error!("project session work failed after caller cancellation: {error}");
+            }
+        });
+    reply_rx.await.map_err(|_| {
+        crate::backend_error::BackendError::internal(
+            "project session task stopped before completion",
+        )
+    })?
+}
+
 /// Background task that debounces save signals and writes to disk.
 async fn auto_save_task(
     mut rx: tokio::sync::mpsc::Receiver<()>,
@@ -323,9 +353,12 @@ async fn auto_save_task(
         };
 
         // Serialize Y.Doc state alongside structural data.
-        let ydoc_state = ydoc::serialize_doc(&doc_tx).await;
+        let Some(ydoc_state) = ydoc::serialize_doc(&doc_tx).await else {
+            tracing::error!("auto-save failed: document serialization unavailable");
+            continue;
+        };
 
-        if let Err(e) = persistence::save_project(&proj_json, &path, ydoc_state).await {
+        if let Err(e) = persistence::save_project(&proj_json, &path, Some(ydoc_state)).await {
             tracing::error!("auto-save failed: {e}");
         }
     }
