@@ -318,7 +318,9 @@ claiming to expose a completed agent retrieval workflow.
   path/project to the existing create-node executor without re-admission. Scope
   is the timeline service, deterministic admission tests and documentation.
 - **Gate:** Failed-load fallback retains admitted project identity after a switch;
-  a queued create-child with shared node IDs writes A and leaves active B unchanged.
+  a queued create-child with shared node IDs writes A while preserving B's persisted
+  nodes and active database/mirror identity. This does not establish isolation of
+  B's shared Y.Doc, event stream or autosave from old-command post-commit effects.
   Compile/check and strict Clippy here; actual native tests are delegated to dot.
 - **Evidence limit:** A dependency-free harness executes the extracted admission
   function with deferred/failing I/O. It is function-level evidence, not server

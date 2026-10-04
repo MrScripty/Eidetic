@@ -258,3 +258,8 @@ still a separate pending gate. Broader generation persistence is not covered.
   full server/native gates on this source. Verify A/B current-state and history
   effects. Post-commit event/Y.Doc/autosave and save-path publication custody are
   explicitly not repaired by this admission-only change.
+
+- Independent review clarified the admission gate wording: its tests establish
+  B's persisted database nodes and active mirror/path identity only. Shared
+  Y.Doc, events and autosave are not isolated by that repair. This documentation
+  correction is a successor; `898cb310` stays frozen for independent review.
