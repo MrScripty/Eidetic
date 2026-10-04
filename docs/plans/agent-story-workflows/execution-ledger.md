@@ -191,3 +191,43 @@ still a separate pending gate. Broader generation persistence is not covered.
   Added real broad-save/reopen ordering regression; final tests and clippy passed.
   Documented that SQLite row order is local append-only storage, not a portable
   revision clock; future history rebuild/compaction needs an explicit contract.
+
+### 2026-10-04: PR6 WAL interleaving and interrupted-write qualification
+
+- Selected isolated task branch `test/pr6-wal-rollback` from exact PR6 head
+  `03b47adc95b673daef5ccf3a1e17316bcf28143a`; verified qualified PR5
+  `a2a2ff47a2a4d90da2498b0a16b371125fd147d2` is its ancestor. Environment
+  initially selected main `3757edf6e4050aa211cb6ac7d9f991167c2af74e`.
+  Pumas remains `8444b50df28c3e2bd8db58fb3645fa4dd8664b27`; no dependency,
+  credentials, permission or network configuration changes.
+- Added three real-project SQLite regressions: an overlapping WAL reader and
+  writer with exact `SQLITE_BUSY_SNAPSHOT` promotion rejection; two-connection
+  stale range rejection followed by reviewed reload, explicit resubmission and
+  identity-preserving replay; and descendant-write interruption using both
+  SQLite `ABORT` and `ROLLBACK`. Faults occur after all pending history and an
+  ancestor update exist. Assertions cover current-state rollback, retention of
+  a previously committed event, no leaked command/revision/field rows, reopen,
+  separate Y.Doc bytes and reuse/replay of the failed command identity.
+- The held-reader test exercises the guard/store transaction boundary directly;
+  the stale and interruption tests call the shared range history writer. These
+  deterministic interleavings do not claim service scheduling, process-kill,
+  power-loss, native desktop or model inference qualification.
+- Passed: `cargo test --locked -p eidetic-core` (103 tests); UI `npm run test`
+  (284 tests / 57 files), `npm run check` (zero errors/warnings), `npm run lint`
+  and `npm run format:check`; workspace rustfmt, whitespace and decision
+  traceability checks.
+- Passed compile-only qualification with the upstream-supported download skip:
+  `ORT_SKIP_DOWNLOAD=1 cargo check --locked -p eidetic-server --tests` and
+  `ORT_SKIP_DOWNLOAD=1 cargo clippy --locked -p eidetic-core -p eidetic-server
+  --all-targets -- -D warnings`. This deliberately does not link or execute
+  native ONNX Runtime, and is not a server test pass.
+- Normal `cargo test --locked -p eidetic-server --lib
+  timeline_command_history::range_tests` was blocked at ort-sys's ONNX 1.24.2
+  download: `cdn.pyke.io` CONNECT proxy returned 403. New server tests remain
+  unexecuted in this environment pending the parent's approved network update.
+  Rerun that command, then the core/server all-target tests on the final head.
+- No production defect was demonstrated; changes are tests and documentation
+  only. Locks retain AI content-regeneration semantics. Split-note duplication,
+  crossing-child cut policy, and long-lived proposal identity/revision
+  preconditions remain separate design work. No merge, PR metadata change,
+  external review request or CodeRabbit invocation was made.

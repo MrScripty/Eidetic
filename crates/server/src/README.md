@@ -35,7 +35,7 @@ domain model in `eidetic-core`.
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
 | `timeline_command_guard.rs` | Transaction-local timeline snapshot validation shared by all timeline history writers. |
-| `timeline_range_history_tests.rs` | Descendant range delta, replay ordering, no-op and atomic stale-edit regressions. |
+| `timeline_range_history_tests.rs` | Descendant range delta, replay ordering, WAL interleaving and interrupted-transaction rollback regressions. |
 | `timeline_command_guard_tests.rs` | Stale edit, atomic rollback, replay and refresh regressions across shared timeline commands. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |
@@ -217,3 +217,12 @@ save preserves history, load reopens it, and PDF export does not rebuild it.
 There is no supported history import/compaction path in the audited source.
 This is not a portable/global revision clock; future event-reinserting or
 reordering maintenance requires an explicit ordering contract before adoption.
+
+Range-history regressions also exercise two connections to a real saved WAL
+project: a held reader snapshot cannot upgrade after another writer commits,
+and a stale command cannot overwrite that commit. Temporary test-only triggers
+interrupt descendant updates after history and ancestor writes, covering both
+statement abort with transaction-drop rollback and SQLite transaction rollback.
+Reopen checks retain prior history and Y.Doc bytes; failed attempts leave command
+identities available for explicit resubmission. These are deterministic database
+interleavings and injected SQL failures, not process-kill or power-loss tests.

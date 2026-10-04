@@ -257,3 +257,203 @@ fn event_rows(conn: &Connection) -> Vec<(i64, String)> {
         .collect::<Result<_, _>>()
         .unwrap()
 }
+
+fn history_counts(conn: &Connection) -> Vec<i64> {
+    [
+        "commands",
+        "change_events",
+        "object_revisions",
+        "object_revision_fields",
+    ]
+    .into_iter()
+    .map(|table| {
+        conn.query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+            row.get(0)
+        })
+        .unwrap()
+    })
+    .collect()
+}
+
+fn node_rows(conn: &Connection) -> serde_json::Value {
+    serde_json::to_value(timeline_node_store::load_nodes(conn).unwrap()).unwrap()
+}
+
+#[tokio::test]
+async fn wal_reader_cannot_promote_a_validated_snapshot_after_another_writer_commits() {
+    let (_, project, ids) = fixture();
+    let path =
+        std::env::temp_dir().join(format!("eidetic-wal-snapshot-{}.db", uuid::Uuid::new_v4()));
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .unwrap();
+    let mut reader = crate::sqlite::open_write_connection(&path).unwrap();
+    let mut writer = crate::sqlite::open_write_connection(&path).unwrap();
+    let mode: String = reader
+        .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(mode, "wal");
+
+    // Deterministic overlap: keep a validated read transaction alive while the
+    // other connection commits. WAL permits this without sleeps or a scheduler race.
+    let tx = reader.transaction().unwrap();
+    crate::timeline_command_guard::validate_current_timeline(&tx, &project.timeline).unwrap();
+    let before = node_rows(&tx);
+    let edit = command(ids[1], 100, 500);
+    record_set_timeline_node_range_history(&mut writer, &project, &edit, 10).unwrap();
+    assert_eq!(
+        node_rows(&tx),
+        before,
+        "reader retains its old WAL snapshot"
+    );
+    assert_eq!(history_counts(&tx), vec![0, 0, 0, 0]);
+    let committed = node_rows(&writer);
+    assert_ne!(committed, before);
+    assert_eq!(history_counts(&writer), vec![1, 1, 4, 8]);
+
+    // Snapshot equality alone cannot see the intervening commit; SQLite must
+    // refuse to upgrade this transaction to a writer (SQLITE_BUSY_SNAPSHOT).
+    crate::timeline_command_guard::validate_current_timeline(&tx, &project.timeline).unwrap();
+    let error =
+        timeline_node_store::upsert_nodes_in_transaction(&tx, &project.timeline.nodes).unwrap_err();
+    match error {
+        history_store::HistoryStoreError::Sqlite(rusqlite::Error::SqliteFailure(error, _)) => {
+            assert_eq!(error.extended_code, rusqlite::ffi::SQLITE_BUSY_SNAPSHOT);
+        }
+        error => panic!("expected WAL snapshot conflict, got {error}"),
+    }
+    tx.rollback().unwrap();
+    assert_eq!(node_rows(&reader), committed);
+    assert_eq!(history_counts(&reader), vec![1, 1, 4, 8]);
+    drop(reader);
+    drop(writer);
+    std::fs::remove_file(path).unwrap();
+}
+
+#[tokio::test]
+async fn wal_stale_edit_rejects_then_reload_and_replay_preserve_committed_history() {
+    let (_, project, ids) = fixture();
+    let path = std::env::temp_dir().join(format!("eidetic-wal-edit-{}.db", uuid::Uuid::new_v4()));
+    let ydoc = vec![0, 1, 2, 3];
+    crate::persistence::save_project(&project, &path, Some(ydoc.clone()))
+        .await
+        .unwrap();
+    let (stale, _) = crate::persistence::load_project(&path).await.unwrap();
+    let mut first = crate::sqlite::open_write_connection(&path).unwrap();
+    let mut second = crate::sqlite::open_write_connection(&path).unwrap();
+    let parent_edit = command(ids[1], 100, 500);
+    record_set_timeline_node_range_history(&mut first, &project, &parent_edit, 10).unwrap();
+    let child_edit = command(ids[3], 180, 260);
+    let committed = node_rows(&first);
+    let error =
+        record_set_timeline_node_range_history(&mut second, &stale, &child_edit, 5).unwrap_err();
+    assert!(error.to_string().contains("timeline changed"), "{error}");
+    assert_eq!(node_rows(&second), committed);
+    assert_eq!(history_counts(&second), vec![1, 1, 4, 8]);
+
+    let (fresh, _) = crate::persistence::load_project(&path).await.unwrap();
+    record_set_timeline_node_range_history(&mut second, &fresh, &child_edit, 5).unwrap();
+    let counts = history_counts(&second);
+    let events = event_rows(&second);
+    // Replaying the same identity and payload remains valid after a later edit.
+    assert_eq!(
+        record_set_timeline_node_range_history(&mut first, &stale, &parent_edit, 20).unwrap(),
+        RecordChangeOutcome::AlreadyRecorded
+    );
+    assert_eq!(history_counts(&first), counts);
+    assert_eq!(event_rows(&first), events);
+    let projection = revision_projection::load_object_field_projection(
+        &first,
+        ObjectKind::TimelineNode,
+        &ids[3].0.to_string(),
+    )
+    .unwrap();
+    assert_eq!(projection.fields["end_ms"], FieldValue::Integer(260));
+    drop(first);
+    drop(second);
+    let (reopened, blob) = crate::persistence::load_project(&path).await.unwrap();
+    assert_eq!(
+        reopened.timeline.node(ids[3]).unwrap().time_range,
+        TimeRange::new(180, 260).unwrap()
+    );
+    assert_eq!(blob, Some(ydoc));
+    std::fs::remove_file(path).unwrap();
+}
+
+#[tokio::test]
+async fn interrupted_descendant_write_rolls_back_history_and_current_state_on_reopen() {
+    for action in ["ABORT", "ROLLBACK"] {
+        let (_, project, ids) = fixture();
+        let path =
+            std::env::temp_dir().join(format!("eidetic-interrupted-{}.db", uuid::Uuid::new_v4()));
+        let ydoc = vec![0, 1, 2, 3];
+        crate::persistence::save_project(&project, &path, Some(ydoc.clone()))
+            .await
+            .unwrap();
+        let mut writer = crate::sqlite::open_write_connection(&path).unwrap();
+        let observer = crate::sqlite::open_write_connection(&path).unwrap();
+        // Retain an existing event so rollback must preserve committed history,
+        // not merely leave an initially empty history table empty.
+        record_set_timeline_node_range_history(
+            &mut writer,
+            &project,
+            &command(ids[5], 900, 1_000),
+            0,
+        )
+        .unwrap();
+        let baseline_events = event_rows(&observer);
+        let before = node_rows(&observer);
+        // Interrupt only after all history and an earlier ancestor row have
+        // been written. ABORT leaves rollback to Transaction::drop; ROLLBACK
+        // makes SQLite end the transaction itself. Neither may leak a prefix.
+        writer
+            .execute_batch(&format!(
+                "CREATE TEMP TRIGGER interrupt_descendant AFTER UPDATE ON nodes
+             WHEN NEW.id = '{}' AND NEW.end_ms = 275
+               AND (SELECT end_ms FROM nodes WHERE id = '{}') = 500
+               AND (SELECT count(*) FROM object_revisions) = 5
+               AND (SELECT count(*) FROM object_revision_fields) = 10
+             BEGIN SELECT RAISE({action}, 'injected descendant interruption'); END;",
+                ids[3].0, ids[1].0,
+            ))
+            .unwrap();
+        let edit = command(ids[1], 100, 500);
+        let error =
+            record_set_timeline_node_range_history(&mut writer, &project, &edit, 1).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("injected descendant interruption"),
+            "{error}"
+        );
+        assert!(writer.is_autocommit());
+        assert_eq!(node_rows(&writer), before);
+        assert_eq!(node_rows(&observer), before);
+        assert_eq!(history_counts(&writer), vec![1, 1, 1, 2]);
+        assert_eq!(history_counts(&observer), vec![1, 1, 1, 2]);
+        assert_eq!(event_rows(&observer), baseline_events);
+        drop(writer);
+        drop(observer);
+
+        let (reopened, blob) = crate::persistence::load_project(&path).await.unwrap();
+        assert_eq!(blob, Some(ydoc));
+        let mut conn = crate::sqlite::open_write_connection(&path).unwrap();
+        assert_eq!(node_rows(&conn), before);
+        assert_eq!(history_counts(&conn), vec![1, 1, 1, 2]);
+        assert_eq!(event_rows(&conn), baseline_events);
+        // Failed attempts do not reserve an idempotency key. Explicitly submit
+        // the reviewed command after reopening, then prove its replay is inert.
+        assert_eq!(
+            record_set_timeline_node_range_history(&mut conn, &reopened, &edit, 2).unwrap(),
+            RecordChangeOutcome::Recorded
+        );
+        assert_eq!(history_counts(&conn), vec![2, 2, 5, 10]);
+        assert_eq!(
+            record_set_timeline_node_range_history(&mut conn, &reopened, &edit, 3).unwrap(),
+            RecordChangeOutcome::AlreadyRecorded
+        );
+        assert_eq!(history_counts(&conn), vec![2, 2, 5, 10]);
+        drop(conn);
+        std::fs::remove_file(path).unwrap();
+    }
+}
