@@ -18,6 +18,8 @@ domain model in `eidetic-core`.
 | `ai_temporal_context_tests.rs` | Sparse inheritance, ordering, conflict, duplicate and cleared-value temporal regressions. |
 | `ai_generation_service.rs` | Host-neutral streaming script generation and batch generation orchestration consumed by Tauri commands. |
 | `ai_generation_runtime.rs` | Supervised AI generation runtime for streaming, status persistence, script block writes, and recap generation. |
+| `ai_generation_stream_tests.rs` | Provider-independent stream error, successful EOF, empty output and progress regressions. |
+| `ai_generation_runtime_tests.rs` | Native AppState/SQLite regressions for stream-failure events, preserved script revisions and generation cleanup. |
 | `affect_service.rs` | Host-neutral affect command/projection behavior over backend-owned affect storage. |
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by Tauri commands. |
 | `model_endpoint_resolver.rs` | Backend-owned llama.cpp OpenAI endpoint policy and Pumas runtime-profile resolution for live provider workflows. |
@@ -162,6 +164,13 @@ increase coupling by hiding the transaction invariant.
   Future-only fields with no baseline retain an unknown marker before their
   first assertion. Temporal resolution applies to fields, not edges, and
   effective provenance is label/time rather than unique assertion identity.
+- A generation stream error is terminal even after progress tokens were emitted.
+  Its accumulated prefix never reaches successful script persistence or completion
+  events. Existing failure cleanup reports the provider error and releases the
+  generating marker; prior script blocks and their revision history remain intact.
+  Only successful EOF with nonempty text can reach the success path. Successful
+  empty EOF remains the distinct "AI produced no output" outcome. This does not
+  qualify project-switch custody, successful persistence atomicity or live models.
 - Agent intent is recorded before tool execution. Failed or cancelled runs have
   terminal history; failures never trigger automatic tool retries. Cooperative
   cancellation does not roll back commands already committed. If persistence

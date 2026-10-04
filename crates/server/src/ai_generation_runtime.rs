@@ -78,7 +78,32 @@ pub(crate) async fn run_generation(
         }
     };
 
-    let full_text = stream_generated_text(&state, node_uuid, stream).await;
+    finish_generation_stream(state, project_path, node_uuid, stream).await;
+}
+
+async fn finish_generation_stream(
+    state: AppState,
+    project_path: PathBuf,
+    node_uuid: Uuid,
+    stream: eidetic_core::ai::backend::GenerateStream,
+) {
+    let node_id = NodeId(node_uuid);
+    let full_text = match stream_generated_text(stream, |token, tokens_generated| {
+        let _ = state.events_tx.send(ServerEvent::GenerationProgress {
+            node_id: node_uuid,
+            token,
+            tokens_generated,
+        });
+    })
+    .await
+    {
+        Ok(text) => text,
+        Err(error) => {
+            handle_generation_failure(&state, project_path, node_id, node_uuid, error.to_string())
+                .await;
+            return;
+        }
+    };
     if full_text.is_empty() {
         handle_empty_generation(&state, project_path, node_id, node_uuid).await;
         return;
@@ -152,31 +177,19 @@ fn attach_rag_embedding(
 }
 
 async fn stream_generated_text(
-    state: &AppState,
-    node_uuid: Uuid,
     mut stream: eidetic_core::ai::backend::GenerateStream,
-) -> String {
+    mut on_token: impl FnMut(String, usize),
+) -> Result<String, eidetic_core::Error> {
     let mut full_text = String::new();
     let mut tokens_generated: usize = 0;
 
     while let Some(item) = stream.next().await {
-        match item {
-            Ok(token) => {
-                full_text.push_str(&token);
-                tokens_generated += 1;
-                let _ = state.events_tx.send(ServerEvent::GenerationProgress {
-                    node_id: node_uuid,
-                    token,
-                    tokens_generated,
-                });
-            }
-            Err(e) => {
-                tracing::warn!("Stream error during generation for node {node_uuid}: {e}");
-                break;
-            }
-        }
+        let token = item?;
+        full_text.push_str(&token);
+        tokens_generated += 1;
+        on_token(token, tokens_generated);
     }
-    full_text
+    Ok(full_text)
 }
 
 async fn handle_generation_failure(
@@ -486,6 +499,14 @@ mod tests {
         assert_eq!(command.payload.span_provenance, AiGenerated);
     }
 }
+
+#[cfg(test)]
+#[path = "ai_generation_stream_tests.rs"]
+mod stream_tests;
+
+#[cfg(test)]
+#[path = "ai_generation_runtime_tests.rs"]
+mod runtime_tests;
 
 #[cfg(test)]
 #[path = "reference_retrieval_tests.rs"]
