@@ -304,9 +304,14 @@ ancestor containment, including new files below that ancestor; Windows aliases
 must also preserve the absolute drive/UNC-share boundary. A short spelling such
 as `RUNNER~1` must be accepted when its resolved ancestor remains in the same
 canonical storage root. Sibling paths, traversal escapes and linked escapes must
-still be rejected. Windows tests obtain genuine aliases through `GetShortPathNameW`
-and test existing/new paths, relative-path results, links and volume boundaries;
-the original validator assertions remain unchanged. Custody fixtures close their
+still be rejected. The returned path joins the canonical existing ancestor with
+its unresolved suffix, so retargeting an accepted alias after validation cannot
+redirect an existing-file open or a new-file write through that alias. Windows
+tests obtain aliases through `GetShortPathNameW`; only the 8.3-specific subcase
+is unavailable when the API successfully returns a long name. Only symlink
+creation error `ERROR_PRIVILEGE_NOT_HELD` (1314) makes the linked-escape subcase
+unavailable. General existing/new-path, relative, traversal, sibling and
+volume-boundary checks remain active in either case. Other fixture errors fail. Custody fixtures close their
 inspection connections before
 teardown instead of relying on Unix open-file unlink behavior.
 

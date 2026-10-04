@@ -87,7 +87,16 @@ pub fn validate_project_path(input: &str, root: &Path) -> Result<PathBuf, Backen
         ));
     }
 
-    Ok(candidate)
+    // Return the checked target, so later opens do not follow a mutable alias
+    // again. New paths retain only the unresolved suffix beneath that target.
+    let unresolved_suffix = candidate.strip_prefix(existing_ancestor).map_err(|e| {
+        BackendError::internal(format!("failed to resolve project path suffix: {e}"))
+    })?;
+    if unresolved_suffix.as_os_str().is_empty() {
+        Ok(canonical_ancestor)
+    } else {
+        Ok(canonical_ancestor.join(unresolved_suffix))
+    }
 }
 
 fn path_is_within(candidate: &Path, root: &Path) -> bool {
@@ -325,56 +334,103 @@ mod tests {
         let canonical_root = root.canonicalize().unwrap();
         let alias = short_path(&canonical_root);
         assert_eq!(alias.canonicalize().unwrap(), canonical_root);
-        assert!(
-            alias.to_string_lossy().contains('~'),
-            "Windows short-alias fixture requires an actual 8.3 name: {alias:?}"
-        );
-        assert!(!super::path_is_within(&alias, &canonical_root));
-        fs::write(root.join("existing.db"), []).unwrap();
-        for storage_root in [&canonical_root, &alias] {
-            for path in [
-                alias.join("existing.db"),
-                alias.join("new.db"),
-                alias.join("new-directory/project.db"),
-            ] {
-                assert_eq!(
-                    validate_project_path(path.to_str().unwrap(), storage_root).unwrap(),
-                    path
-                );
+        // A successful API call can return the unchanged long name when the
+        // volume has no 8.3 alias. Keep all general containment checks active.
+        let mut spellings = vec![&root, &canonical_root];
+        if alias != canonical_root && alias.to_string_lossy().contains('~') {
+            assert!(!super::path_is_within(&alias, &canonical_root));
+            spellings.push(&alias);
+        } else {
+            eprintln!("8.3-specific subcase unavailable: {alias:?}");
+        }
+        fs::write(root.join("existing.db"), b"original").unwrap();
+        for storage_root in &spellings {
+            for spelling in &spellings {
+                for file in ["existing.db", "new.db", "new-directory/project.db"] {
+                    assert_eq!(
+                        validate_project_path(spelling.join(file).to_str().unwrap(), storage_root)
+                            .unwrap(),
+                        canonical_root.join(file)
+                    );
+                }
             }
+            assert_eq!(
+                validate_project_path("relative/project.db", storage_root).unwrap(),
+                canonical_root.join("relative/project.db")
+            );
+            assert!(validate_project_path("../escape.db", storage_root).is_err());
         }
-        assert_eq!(
-            validate_project_path("relative/project.db", &alias).unwrap(),
-            canonical_root.join("relative/project.db")
-        );
-        for path in [
-            alias.join("../escape.db"),
-            root.with_file_name(format!(
-                "{}-sibling",
-                root.file_name().unwrap().to_str().unwrap()
-            ))
-            .join("project.db"),
-        ] {
-            assert!(validate_project_path(path.to_str().unwrap(), &canonical_root).is_err());
-        }
-        let outside = temp_dir("windows-short-alias-outside");
-        fs::write(outside.join("existing.db"), []).unwrap();
-        let link = root.join("escape");
-        std::os::windows::fs::symlink_dir(&outside, &link).unwrap();
-        for spelling in [&alias, &canonical_root] {
-            for file in ["existing.db", "new-directory/project.db"] {
-                let error = validate_project_path(
-                    spelling.join("escape").join(file).to_str().unwrap(),
+        for spelling in &spellings {
+            assert!(
+                validate_project_path(
+                    spelling.join("../escape.db").to_str().unwrap(),
                     &canonical_root,
                 )
-                .unwrap_err();
-                assert_eq!(
-                    error.message(),
-                    "path resolves outside the project storage root"
-                );
-            }
+                .is_err()
+            );
         }
-        fs::remove_dir(link).unwrap();
+        assert!(
+            validate_project_path(
+                root.with_file_name(format!(
+                    "{}-sibling",
+                    root.file_name().unwrap().to_str().unwrap()
+                ))
+                .join("project.db")
+                .to_str()
+                .unwrap(),
+                &canonical_root,
+            )
+            .is_err()
+        );
+        let outside = temp_dir("windows-short-alias-outside");
+        fs::write(outside.join("existing.db"), b"outside").unwrap();
+        let link = root.join("escape");
+        match std::os::windows::fs::symlink_dir(&outside, &link) {
+            Ok(()) => {
+                for spelling in &spellings {
+                    for file in ["existing.db", "new-directory/project.db"] {
+                        let error = validate_project_path(
+                            spelling.join("escape").join(file).to_str().unwrap(),
+                            &canonical_root,
+                        )
+                        .unwrap_err();
+                        assert_eq!(
+                            error.message(),
+                            "path resolves outside the project storage root"
+                        );
+                    }
+                }
+                fs::remove_dir(&link).unwrap();
+                std::os::windows::fs::symlink_dir(&canonical_root, &link).unwrap();
+                let existing = validate_project_path(
+                    link.join("existing.db").to_str().unwrap(),
+                    &canonical_root,
+                )
+                .unwrap();
+                let new_file = validate_project_path(
+                    link.join("new-directory/project.db").to_str().unwrap(),
+                    &canonical_root,
+                )
+                .unwrap();
+                fs::remove_dir(&link).unwrap();
+                std::os::windows::fs::symlink_dir(&outside, &link).unwrap();
+                assert_eq!(fs::read(link.join("existing.db")).unwrap(), b"outside");
+                assert_eq!(fs::read(existing).unwrap(), b"original");
+                fs::create_dir_all(new_file.parent().unwrap()).unwrap();
+                fs::write(new_file, b"new project").unwrap();
+                assert_eq!(
+                    fs::read(root.join("new-directory/project.db")).unwrap(),
+                    b"new project"
+                );
+                assert!(!outside.join("new-directory").exists());
+                fs::remove_dir(link).unwrap();
+            }
+            // ERROR_PRIVILEGE_NOT_HELD; every other creation failure is a bug.
+            Err(error) if error.raw_os_error() == Some(1314) => {
+                eprintln!("symlink-specific subcase unavailable: {error}");
+            }
+            Err(error) => panic!("failed to create linked-escape fixture: {error}"),
+        }
         fs::remove_dir_all(root).unwrap();
         fs::remove_dir_all(outside).unwrap();
     }
@@ -424,7 +480,10 @@ mod tests {
             for path in [alias.join("existing.db"), alias.join("new.db")] {
                 assert_eq!(
                     validate_project_path(path.to_str().unwrap(), storage_root).unwrap(),
-                    path
+                    physical
+                        .canonicalize()
+                        .unwrap()
+                        .join(path.file_name().unwrap())
                 );
             }
         }
@@ -452,6 +511,51 @@ mod tests {
                 "path resolves outside the project storage root"
             );
         }
+        fs::remove_dir_all(parent).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn validated_paths_stay_in_root_after_alias_retargeting() {
+        let parent = temp_dir("alias-retarget");
+        let physical = parent.join("physical");
+        let outside = parent.join("outside");
+        fs::create_dir(&physical).unwrap();
+        fs::create_dir(&outside).unwrap();
+        fs::write(physical.join("existing.db"), b"original").unwrap();
+        fs::write(outside.join("existing.db"), b"outside").unwrap();
+        let alias = parent.join("alias");
+        std::os::unix::fs::symlink(&physical, &alias).unwrap();
+        let existing =
+            validate_project_path(alias.join("existing.db").to_str().unwrap(), &physical).unwrap();
+        let new_file = validate_project_path(
+            alias.join("new-directory/project.db").to_str().unwrap(),
+            &alias,
+        )
+        .unwrap();
+
+        fs::remove_file(&alias).unwrap();
+        std::os::unix::fs::symlink(&outside, &alias).unwrap();
+        assert_eq!(fs::read(alias.join("existing.db")).unwrap(), b"outside");
+        assert_eq!(fs::read(&existing).unwrap(), b"original");
+        fs::create_dir_all(new_file.parent().unwrap()).unwrap();
+        fs::write(&new_file, b"new project").unwrap();
+        assert_eq!(
+            fs::read(physical.join("new-directory/project.db")).unwrap(),
+            b"new project"
+        );
+        assert!(!outside.join("new-directory").exists());
+        assert_eq!(
+            existing,
+            physical.canonicalize().unwrap().join("existing.db")
+        );
+        assert_eq!(
+            new_file,
+            physical
+                .canonicalize()
+                .unwrap()
+                .join("new-directory/project.db")
+        );
         fs::remove_dir_all(parent).unwrap();
     }
 

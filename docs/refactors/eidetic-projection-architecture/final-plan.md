@@ -4179,7 +4179,16 @@ The refactor is complete when:
   Windows CI `37218329383` confirmed that `RUNNER~1` expands to `runneradmin` at
   the lexical gate even though the canonical ancestor remains in the storage
   root. Genuine Windows short-alias, linked-escape and drive/share regressions
-  accompany the repair; the original test cases and assertions remain intact.
+  accompany the repair; the original containment cases remain intact. PR7
+  review follow-up returns the canonical existing ancestor joined with the
+  unresolved suffix, removing mutable alias spellings from subsequent opens.
+  A real filesystem regression retargets an accepted alias after validation and
+  verifies existing reads and nested new-file writes remain in the original
+  root. Windows fixtures keep general containment checks active when no 8.3
+  alias exists; only the alias-specific subcase is conditional. Only symlink
+  privilege error 1314 makes the linked-escape subcase unavailable; every other
+  creation error fails. Linux source tests and compilation checks do not replace
+  actual Windows CI execution for this follow-up.
   Custody teardown closes SQLite
   inspection handles before deleting files. Hosted Windows execution remains a
   separate qualification requirement from cloud source-module tests.
