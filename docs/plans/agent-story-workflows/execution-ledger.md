@@ -168,3 +168,26 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Strict core/server all-target clippy passed with `-D warnings`; workspace
   rustfmt check, whitespace check and decision traceability passed. Publication
   and exact-head hosted/native qualification remain pending parent coordination.
+
+
+### 2026-10-04: M4b descendant range history
+
+- Separate local milestone above M4a; records the target and all actually changed
+  descendants atomically, leaving unchanged/unrelated clips without new revisions.
+- Corrected per-object history ordering across events. Regression reproduces
+  parent-resize then direct-child-edit with reversed caller timestamps.
+- Actual source all-target tests passed: **103 core + 273 server**, including
+  five new range-history regressions. Strict core/server all-target clippy passed
+  with `-D warnings`; unchanged Pumas and official ORT1.24.2 as above.
+- Source re-review, publication and exact-head hosted qualification pending.
+  No native interaction, full undo or agent editing acceptance is claimed.
+
+- Follow-on source audit clarified existing node locks prevent AI regeneration,
+  not manual geometry edits. No structural locking change was made or inferred
+  from the earlier open M4 lock-policy note.
+
+- Audited persistence, project database ownership, PDF export and history write
+  sites: supported paths append history and do not reinsert or reorder events.
+  Added real broad-save/reopen ordering regression; final tests and clippy passed.
+  Documented that SQLite row order is local append-only storage, not a portable
+  revision clock; future history rebuild/compaction needs an explicit contract.

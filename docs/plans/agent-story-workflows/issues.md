@@ -34,10 +34,15 @@
   intervening edit cannot be overwritten by a stale whole-collection upsert.
   Rejections roll back history/current state; exact replay remains supported.
   This does not yet provide immutable expected-revision proposal checks.
-- **Open, M4:** `resize_node` proportionally changes descendant ranges, while
-  `record_set_timeline_node_range_history` records only the target's range.
-  Descendant history must be complete before claiming faithful undo/review.
-- **Open, M4:** Core range/delete/split operations do not reject locked subtrees.
-  Splits assign children by midpoint and can leave a child outside its new
-  parent's range. Define and enforce containment/cut policy at the shared core
+- **Implemented locally, M4b; review pending:** Parent resize history includes
+  all changed descendant ranges. Per-object history reads committed events before
+  event-local revision order, preserving later direct child edits. This repairs
+  history inputs, not a completed undo experience.
+- **Open, M4:** Splits assign children by midpoint and can leave a child outside
+  its new parent's range. Define containment/cut policy at the shared core
   boundary before exposing agent timeline mutations.
+- **Clarified, M4:** `StoryNode.locked` means AI cannot regenerate that node's
+  content; generation admission enforces it. It is not an existing structural
+  edit lock. Do not silently make manual move/cut/delete reject this flag.
+  Agent structural-write authority and any future geometry-lock policy must be
+  explicit and preserve current content-lock meaning.

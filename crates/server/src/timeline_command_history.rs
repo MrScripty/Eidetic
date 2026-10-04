@@ -1,6 +1,6 @@
 use eidetic_core::Project;
 use eidetic_core::contracts::{
-    ChangeEvent, ChangeEventKind, CommandEnvelope, CreateTimelineNodeCommand,
+    ChangeEvent, ChangeEventId, ChangeEventKind, CommandEnvelope, CreateTimelineNodeCommand,
     CreateTimelineRelationshipCommand, DeleteTimelineRelationshipCommand, FieldDelta, FieldValue,
     ObjectKind, ObjectRevision, RevisionOperation, SetTimelineNodeLockCommand,
     SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
@@ -42,34 +42,46 @@ pub(crate) fn record_set_timeline_node_range_history(
         format!("set timeline node range {}", node.name),
     )
     .with_created_at_ms(created_at_ms);
-    let revision = ObjectRevision::new(
-        ObjectKind::TimelineNode,
-        command.payload.node_id.0.to_string(),
-        event.id,
-        RevisionOperation::Update,
-    )
-    .with_field(FieldDelta::new(
-        "start_ms",
-        Some(FieldValue::Integer(node.time_range.start_ms as i64)),
-        Some(FieldValue::Integer(command.payload.start_ms as i64)),
-    ))
-    .with_field(FieldDelta::new(
-        "end_ms",
-        Some(FieldValue::Integer(node.time_range.end_ms as i64)),
-        Some(FieldValue::Integer(command.payload.end_ms as i64)),
-    ));
+    let mut revisions = vec![range_revision(node, next_timeline.node(node.id)?, event.id)];
+    let mut descendants = project.timeline.descendants_of(node.id);
+    descendants.sort_unstable_by_key(|descendant| descendant.id.0);
+    for old in descendants {
+        let new = next_timeline.node(old.id)?;
+        if old.time_range != new.time_range {
+            revisions.push(range_revision(old, new, event.id));
+        }
+    }
 
     Ok(history_store::record_change_with(
         conn,
         command,
         "timeline.node_range",
         &event,
-        &[revision],
+        &revisions,
         |tx| {
             crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
             timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)
         },
     )?)
+}
+
+fn range_revision(old: &StoryNode, new: &StoryNode, event_id: ChangeEventId) -> ObjectRevision {
+    ObjectRevision::new(
+        ObjectKind::TimelineNode,
+        old.id.0.to_string(),
+        event_id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "start_ms",
+        Some(FieldValue::Integer(old.time_range.start_ms as i64)),
+        Some(FieldValue::Integer(new.time_range.start_ms as i64)),
+    ))
+    .with_field(FieldDelta::new(
+        "end_ms",
+        Some(FieldValue::Integer(old.time_range.end_ms as i64)),
+        Some(FieldValue::Integer(new.time_range.end_ms as i64)),
+    ))
 }
 
 pub(crate) fn record_set_timeline_node_lock_history(
@@ -499,3 +511,7 @@ fn validate_create_timeline_node(
 
     Ok(range)
 }
+
+#[cfg(test)]
+#[path = "timeline_range_history_tests.rs"]
+mod range_tests;

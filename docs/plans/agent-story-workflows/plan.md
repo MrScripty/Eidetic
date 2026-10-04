@@ -244,3 +244,51 @@ claiming to expose a completed agent retrieval workflow.
 - **Initial save:** A command arriving before the first durable project save
   receives an explicit conflict and leaves no rows/history behind. It must wait
   for save and reload; this slice does not alter project creation lifecycle.
+
+
+## M4b: complete descendant range revision history
+
+- **Observed defect:** A range edit proportionally resizes descendants but records
+  only the target. Adding those missing revisions also exposes that per-object
+  history was sorted by per-event `sort_order` alone, which can replay an older
+  descendant delta after a later direct edit.
+- **Write set/owner:** Server range-history writer, existing per-object history
+  reader, focused tests and these source/plan records. No public API, dependency,
+  schema, geometry semantics, inference or renderer changes.
+- **Decision:** Record target plus actually changed descendants in the same event
+  and transaction, preserving full old/new range pairs. Sort descendant output
+  by stable node identity. Read revisions by committed event insertion order,
+  then within-event order; do not assume caller clocks are monotonic.
+- **Alternatives:** Recording only the target loses reconstructible history.
+  Using the event-local revision index as a global clock is incorrect. A second
+  history store, event migration or broad timeline rewrite is unnecessary.
+- **Gate:** Multi-level descendant values match persisted nodes; unrelated/no-op
+  descendants remain sparse; replay is idempotent; stale commands leave no partial
+  descendant revisions; parent resize followed by direct child edit replays to
+  the current range even with non-monotonic caller timestamps.
+- **Limits:** Native UI, complete undo application, subtree locks, containment/
+  split policy, immutable proposal preconditions and agent mutation tools remain
+  open. This slice stays separate from M4a publication/review.
+
+
+### Lock semantics clarified during M4 review
+
+`StoryNode.locked` is a content-regeneration lock, as documented by its core
+contract and enforced by single/batch generation admission. Absence of structural
+move/cut/delete rejection is not a violation of that contract. A future structural
+edit lock or agent capability policy must be specified separately; this work must
+not silently disable existing manual editing under a content lock.
+
+
+### M4b ordering boundary
+
+The current writer appends `change_events`/`object_revisions`; broad save clears
+and reinserts only current-state tables and leaves history untouched. Project
+load opens the same database; PDF export does not copy history. No supported
+history export/import, event reinsert, VACUUM or history compaction path was found
+in the source audit. A real broad-save/reopen regression preserves event row
+identities/order and the final child projection. Row order is a local append-only
+storage boundary, not a portable or global revision clock. Any future history
+rebuild, logical export/import or maintenance that can reorder events must add
+an explicit persisted sequence or preserve verified event order before using
+this reader; this slice makes no guarantee for arbitrary external DB rewrites.
