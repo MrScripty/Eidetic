@@ -64,11 +64,19 @@ def find(root, predicate):
     return None
 
 
+def button_label_matches(name, label, prefix=False):
+    name = " ".join((name or "").split())
+    # The real splash button includes its folder-icon span in the accessible name.
+    if label == "Open Project":
+        name = name.removeprefix("\U0001f4c2").strip()
+    return name == label or prefix and name.startswith(label)
+
+
 def click_button(root, label, prefix=False):
     node = wait_for(
         f"visible button {label}",
         lambda: find(root, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
-                     and (node.name == label or prefix and node.name.startswith(label))),
+                     and button_label_matches(node.name, label, prefix)),
     )
     action = node.queryAction()
     for index in range(action.nActions):
@@ -119,6 +127,16 @@ def sanitized_log(raw, replacements):
     return "\n".join(result[-100:])[-20000:] + "\n"
 
 
+def accessibility_snapshot(root):
+    result = []
+    for node in walk(root):
+        result.append({"role": node.getRoleName(), "name": (node.name or "")[:160],
+                       "showing": visible(node)})
+        if len(result) == 80:
+            break
+    return result
+
+
 def main():
     repo = Path.cwd()
     output = Path(os.environ["EIDETIC_CAPTURE_DIR"])
@@ -143,6 +161,7 @@ def main():
         "content_origin": "local sample created through public backend services; no AI call",
     }
     process = None
+    application = None
     try:
         fixture = json.loads(subprocess.check_output(
             [str(repo / "target/debug/examples/runtime_capture_fixture")],
@@ -172,6 +191,8 @@ def main():
             return None
 
         window, pid = wait_for("native Eidetic window owned by launcher", app_window)
+        evidence["window_pid"] = pid
+        evidence["application_binary_sha256"] = file_hash(Path(f"/proc/{pid}/exe"))
         application = wait_for(
             "accessibility application for native window PID",
             lambda: next((app for app in pyatspi.Registry.getDesktop(0)
@@ -218,6 +239,11 @@ def main():
         })
     except Exception as error:
         evidence["failure"] = type(error).__name__ + ": " + str(error)[:1000]
+        if application is not None:
+            try:
+                evidence["accessibility_snapshot"] = accessibility_snapshot(application)
+            except Exception as snapshot_error:
+                evidence["accessibility_snapshot_error"] = type(snapshot_error).__name__
         raise
     finally:
         if process is not None:
