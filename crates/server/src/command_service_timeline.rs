@@ -50,23 +50,24 @@ pub async fn create_timeline_child_from_parent_core_command(
     state: &AppState,
     command: CommandEnvelope<CreateTimelineChildFromParentCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let command =
         crate::timeline_create_intent::derive_create_child_timeline_node_command(&project, command)
             .map_err(map_timeline_command_error)?;
-    create_timeline_node_at_admission(state, path, project, command).await
+    create_timeline_node_at_admission(state, _session, path, project, command).await
 }
 
 pub async fn create_timeline_node_from_core_command(
     state: &AppState,
     command: CommandEnvelope<CreateTimelineNodeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
-    create_timeline_node_at_admission(state, path, project, command).await
+    let (_session, path, project) = timeline_command_project(state).await?;
+    create_timeline_node_at_admission(state, _session, path, project, command).await
 }
 
 async fn create_timeline_node_at_admission(
     state: &AppState,
+    _session: tokio::sync::OwnedMutexGuard<()>,
     path: std::path::PathBuf,
     project: eidetic_core::Project,
     command: CommandEnvelope<CreateTimelineNodeCommand>,
@@ -92,9 +93,15 @@ async fn create_timeline_node_at_admission(
     })??;
 
     if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
-            node_id: created_node_id,
-        });
+        state
+            .doc_tx
+            .send(DocCommand::EnsureNode {
+                node_id: created_node_id,
+            })
+            .await
+            .map_err(|_| {
+                BackendError::internal("timeline command committed but doc manager channel closed")
+            })?;
         let _ = state.events_tx.send(ServerEvent::TimelineChanged);
         let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
         state.trigger_save();
@@ -106,7 +113,7 @@ pub async fn set_timeline_node_range(
     state: &AppState,
     command: CommandEnvelope<SetTimelineNodeRangeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -138,7 +145,7 @@ pub async fn set_timeline_node_lock(
     state: &AppState,
     command: CommandEnvelope<SetTimelineNodeLockCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let node_id = command.payload.node_id;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
@@ -174,7 +181,7 @@ pub async fn set_timeline_node_notes(
     state: &AppState,
     command: CommandEnvelope<SetTimelineNodeNotesCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let node_id = command.payload.node_id;
     let notes = command.payload.notes.clone();
     let response = tokio::task::spawn_blocking(move || {
@@ -198,12 +205,18 @@ pub async fn set_timeline_node_notes(
     })??;
 
     if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
-            node_id,
-            field: crate::ydoc::ContentField::Notes,
-            text: notes,
-            author: "human:command".into(),
-        });
+        state
+            .doc_tx
+            .send(DocCommand::WriteNodeContent {
+                node_id,
+                field: crate::ydoc::ContentField::Notes,
+                text: notes,
+                author: "human:command".into(),
+            })
+            .await
+            .map_err(|_| {
+                BackendError::internal("timeline command committed but doc manager channel closed")
+            })?;
         let _ = state.events_tx.send(ServerEvent::TimelineChanged);
         let _ = state
             .events_tx
@@ -217,7 +230,7 @@ pub async fn delete_timeline_node(
     state: &AppState,
     command: CommandEnvelope<DeleteTimelineNodeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let removed_node_id = command.payload.node_id;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
@@ -239,9 +252,15 @@ pub async fn delete_timeline_node(
     })??;
 
     if response.outcome == RecordChangeOutcome::Recorded {
-        let _ = state.doc_tx.try_send(DocCommand::RemoveNode {
-            node_id: removed_node_id,
-        });
+        state
+            .doc_tx
+            .send(DocCommand::RemoveNode {
+                node_id: removed_node_id,
+            })
+            .await
+            .map_err(|_| {
+                BackendError::internal("timeline command committed but doc manager channel closed")
+            })?;
         let _ = state.events_tx.send(ServerEvent::TimelineChanged);
         let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
         state.trigger_save();
@@ -253,7 +272,7 @@ pub async fn delete_timeline_relationship(
     state: &AppState,
     command: CommandEnvelope<DeleteTimelineRelationshipCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -295,7 +314,7 @@ pub async fn create_timeline_relationship_from_core_command(
     state: &AppState,
     command: CommandEnvelope<CreateTimelineRelationshipCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -331,7 +350,7 @@ pub async fn apply_timeline_children(
 ) -> Result<TimelineCommandResponse, BackendError> {
     command.validate()?;
     let command = command.into_core_command();
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let children = command.payload.children.clone();
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
@@ -358,16 +377,32 @@ pub async fn apply_timeline_children(
     if response.outcome == RecordChangeOutcome::Recorded {
         let has_bible_references = children_have_bible_references(&children);
         for child in children {
-            let _ = state.doc_tx.try_send(DocCommand::EnsureNode {
-                node_id: child.node_id,
-            });
-            if !child.outline.is_empty() {
-                let _ = state.doc_tx.try_send(DocCommand::WriteNodeContent {
+            state
+                .doc_tx
+                .send(DocCommand::EnsureNode {
                     node_id: child.node_id,
-                    field: crate::ydoc::ContentField::Notes,
-                    text: child.outline,
-                    author: "human:command".into(),
-                });
+                })
+                .await
+                .map_err(|_| {
+                    BackendError::internal(
+                        "timeline command committed but doc manager channel closed",
+                    )
+                })?;
+            if !child.outline.is_empty() {
+                state
+                    .doc_tx
+                    .send(DocCommand::WriteNodeContent {
+                        node_id: child.node_id,
+                        field: crate::ydoc::ContentField::Notes,
+                        text: child.outline,
+                        author: "human:command".into(),
+                    })
+                    .await
+                    .map_err(|_| {
+                        BackendError::internal(
+                            "timeline command committed but doc manager channel closed",
+                        )
+                    })?;
             }
         }
         let _ = state.events_tx.send(ServerEvent::TimelineChanged);
@@ -409,7 +444,7 @@ pub async fn split_timeline_node_from_core_command(
     state: &AppState,
     command: CommandEnvelope<SplitTimelineNodeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let (path, project) = timeline_command_project(state).await?;
+    let (_session, path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -441,21 +476,34 @@ pub async fn split_timeline_node_from_core_command(
 /// command to whichever project becomes active while its database is loading.
 async fn timeline_command_project(
     state: &AppState,
-) -> Result<(std::path::PathBuf, eidetic_core::Project), BackendError> {
-    let (path, fallback) = {
+) -> Result<
+    (
+        tokio::sync::OwnedMutexGuard<()>,
+        std::path::PathBuf,
+        eidetic_core::Project,
+    ),
+    BackendError,
+> {
+    let (path, fallback, session_id) = {
         let guard = state.project.lock();
         let project = guard.as_ref().ok_or_else(BackendError::no_project)?;
         let path = state
             .project_database
             .active_path()
             .ok_or_else(BackendError::no_project)?;
-        (path, project.clone())
+        (path, project.clone(), *state.project_session_id.lock())
     };
+    let session = state.project_session_gate.clone().lock_owned().await;
+    if *state.project_session_id.lock() != session_id {
+        return Err(BackendError::conflict(
+            "active project changed before timeline command admission",
+        ));
+    }
     let project = match crate::persistence::load_project(&path).await {
         Ok((project, _)) => project,
         Err(_) => fallback,
     };
-    Ok((path, project))
+    Ok((session, path, project))
 }
 
 fn timeline_render_projection_from_current_state(

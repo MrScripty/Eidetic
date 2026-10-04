@@ -33,8 +33,10 @@ domain model in `eidetic-core`.
 | `reference_retrieval_tests.rs` | Actual RAG attach-boundary regression coverage for queued/reopened sessions and late query results. |
 | `affect_store.rs` | SQLite affect value, dependency, and proposal persistence with revision-history writes. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
-| `command_service_timeline.rs` | Timeline command services with database path and fallback mirror captured together at admission. |
+| `command_service_timeline.rs` | Timeline command services with source admission and an owned session gate through document/event/save publication. |
 | `timeline_command_admission_tests.rs` | Deterministic blocked-load tests for fallback and create-child database ownership across project replacement. |
+| `timeline_postcommit_custody_tests.rs` | Queued session/save-as conflicts, bounded document-channel publication, errors and seeded A/B history regressions. |
+| `state_autosave_custody_tests.rs` | Autosave memento ownership across mirror/path/document serialization and persistence. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
 | `timeline_command_guard.rs` | Transaction-local timeline snapshot validation shared by all timeline history writers. |
 | `timeline_range_history_tests.rs` | Descendant range delta, replay ordering, no-op and atomic stale-edit regressions. |
@@ -106,7 +108,19 @@ increase coupling by hiding the transaction invariant.
   mirror under the project guard before loading persisted state. Failed loads
   cannot read a later session's mirror; derived create-child commands reuse the
   original admission instead of resolving the active database a second time.
-  Post-commit event, Y.Doc and save publication custody remains separate work.
+- Participating timeline commands, project create/load/save and autosave share an
+  async session gate. Timeline requests capture a session identity before waiting;
+  replacement/reopen or save-as invalidates queued requests explicitly. Admitted
+  work retains its gate through document enqueue, event and save publication.
+  Autosave keeps mirror, path and serialized document in that gate through I/O.
+- Y.Doc load restores into a fresh document rather than merging project lifetimes.
+  Empty/fallback population starts fresh; invalid blobs preserve the current doc
+  until an explicit fallback. Closed channels return errors. A document-channel
+  failure after SQLite commit reports that the command is already committed;
+  it does not claim SQL rollback or silently drop a full-channel write.
+- This custody gate is scoped to participating timeline/lifecycle operations.
+  Other producers, pre-admission frontend intent tokens, model/generation custody
+  and external collaborative client resynchronization are not qualified here.
 - Reference embeddings are disposable derived state. Exact source snapshots and
   project-index/document tickets fence async publication; project create/load and
   reference deletion invalidate pending work. Admission binds single and batch

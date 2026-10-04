@@ -263,3 +263,37 @@ still a separate pending gate. Broader generation persistence is not covered.
   B's persisted database nodes and active mirror/path identity only. Shared
   Y.Doc, events and autosave are not isolated by that repair. This documentation
   correction is a successor; `898cb310` stays frozen for independent review.
+
+### 2026-10-04: Timeline post-commit and document custody successor
+
+- Branch `fix/timeline-postcommit-session-custody` follows frozen `898cb310`.
+  Documentation-only commit `2991846` narrows the admission claim before this
+  implementation. PR6 and the separately qualified gap/frontend/keyboard/resize
+  branches are untouched.
+- A harness executing the actual original post-commit notes body with the real
+  Y.Doc actor demonstrated late A notes entering B, a timeline event and a save
+  signal. Separate actor tests reproduced merge/empty-load retention: two new
+  custody tests fail on baseline, while invalid-load/subscription tests pass.
+- Added the participating session gate and queued-request identity check; project
+  replacement/reopen and save-as invalidate queued admissions. Document, event and
+  save publication stay under the admitted gate. Autosave holds the same gate
+  from mirror/path snapshot through document serialization and persistence.
+- Y.Doc replacement now restores fresh state, preserving invalid-load errors and
+  update observation. Fallback resets first. Timeline document sends await capacity
+  and report closed-channel errors, identifying failures after a durable SQL commit.
+- **10 actual isolated Y.Doc tests pass**, importing production Y.Doc/supervisor
+  modules with Tokio/Yrs/core dependencies and no ONNX/Pumas dependency. This is
+  component runtime evidence, not a full server test pass.
+- Skipped-ORT offline server/test compilation and strict Clippy pass. Seven new
+  native scheduling/lifecycle tests are **unrun here**: six timeline tests plus one
+  autosave test. They seed A/B histories and compare concrete rows; they do not
+  claim arbitrary imported-history preservation or end-to-end client isolation.
+- Dot's admission history patch `libfile_dd23e13015a8819185780824faaa4f5a`
+  could not be materialized: supported Library transfer reported `download failed`
+  on `oaisdmntpreastus2.blob.core.windows.net`, without a status. No retry/bypass;
+  raw patch transfer requested. Its reported 275-server-test qualification applies
+  to the earlier admission source, not this successor. Patch incorporation pending.
+- Native handoff: run timeline post-commit, autosave, admission and Y.Doc custody
+  tests, then full server/native gates. Check seeded history, explicit conflicts,
+  document-channel errors and publication ordering. Other producers and wire-level
+  pre-admission intent tokens remain out of scope. No merge readiness is claimed.

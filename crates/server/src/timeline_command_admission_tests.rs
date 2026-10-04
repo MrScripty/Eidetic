@@ -89,7 +89,7 @@ fn failed_database_load_uses_admitted_mirror_after_project_replacement() {
         );
         pause.resume().await;
 
-        let (path, admitted) = admission.await.unwrap();
+        let (_session, path, admitted) = admission.await.unwrap();
         assert_eq!(path, path_a);
         assert_eq!(admitted.name, "A");
         assert_eq!(

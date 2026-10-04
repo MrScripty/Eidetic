@@ -329,6 +329,33 @@ claiming to expose a completed agent retrieval workflow.
   expected frontend session tokens to the wire, cancel admitted writes, fence
   post-commit events/Y.Doc/autosave, or fix concurrent save-path publication.
 
+## M4 follow-on: admitted timeline post-commit and document custody
+
+- **Observed defects:** An admitted A command can publish document writes, events
+  and save signals after B becomes active. Autosave captures mirror/path before
+  awaiting document serialization, allowing mixed-session mementos. The documented
+  Y.Doc replacement instead merges updates; empty/fallback loads retain old data.
+- **Decision:** One async gate spans admitted timeline work and its post-commit
+  effects, project create/load/save and autosave snapshots through persistence.
+  Capture session identity before a timeline request waits; reopen/replacement
+  and save-as renew identity, returning a conflict for obsolete queued requests.
+  Restore saved documents into a fresh CRDT store, reset before fallback population,
+  and reattach update observation. Invalid-load/channel errors remain explicit.
+- **Publication:** Await bounded document sends under the gate before emitting
+  timeline events/save signals. If the manager closes after SQL commit, return
+  an explicit committed-publication error; SQL history remains durable/idempotent.
+  This does not implement a distributed transaction or automatic rollback of
+  already committed SQL when its document publication fails.
+- **Write set:** Timeline services, project lifecycle, state/autosave, Y.Doc manager,
+  admission signature adaptation, focused component/native tests and records.
+- **Gate:** Component tests verify true document replacement, empty reset, invalid
+  state preservation and live update observation. Native tests must qualify seeded
+  A/B history preservation, post-commit document/event ordering with a full channel,
+  queued same-path reopen/save-as rejection and snapshot ownership during autosave.
+- **Limits:** Source and isolated document component checks do not qualify complete
+  server behavior. Native tests are delegated. Other producers and frontend intent
+  tokens before backend admission remain open; no completed M4/merge claim.
+
 
 ### Lock semantics clarified during M4 review
 

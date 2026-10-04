@@ -36,6 +36,7 @@ pub async fn create_project(
     request: CreateProjectRequest,
 ) -> Result<serde_json::Value, BackendError> {
     validation::validate_name(&request.name, "project name")?;
+    let _session = state.project_session_gate.lock().await;
 
     let template = match request.template.as_str() {
         "single_cam" => Template::SingleCam,
@@ -52,7 +53,7 @@ pub async fn create_project(
         &project_root,
     )?;
     let json = serde_json::to_value(&project).map_err(|e| BackendError::internal(e.to_string()))?;
-    populate_ydoc_from_project(state, &project).await;
+    populate_ydoc_from_project(state, &project).await?;
     replace_active_project(state, project, save_path);
     state.trigger_save();
     Ok(json)
@@ -94,6 +95,7 @@ pub async fn save_project(
     state: &AppState,
     request: SaveProjectRequest,
 ) -> Result<serde_json::Value, BackendError> {
+    let _session = state.project_session_gate.lock().await;
     let project = state.project.lock().clone();
     let Some(project) = project else {
         return Err(BackendError::no_project());
@@ -115,6 +117,11 @@ pub async fn save_project(
         .await
         .map_err(BackendError::internal)?;
 
+    // Save-as changes the database identity even when the mirror/node IDs match.
+    let _project = state.project.lock();
+    if state.project_database.active_path().as_ref() != Some(&path) {
+        *state.project_session_id.lock() = uuid::Uuid::new_v4();
+    }
     state.project_database.set_active_path(path.clone());
     Ok(serde_json::json!({ "saved": path.display().to_string() }))
 }
@@ -126,6 +133,7 @@ pub async fn load_project(
     let project_root = persistence::default_project_dir();
     let path = validation::validate_project_path(&request.path, &project_root)?;
 
+    let _session = state.project_session_gate.lock().await;
     let (project, ydoc_state) = persistence::load_project(&path)
         .await
         .map_err(BackendError::bad_request)?;
@@ -134,10 +142,10 @@ pub async fn load_project(
     if let Some(blob) = ydoc_state {
         if let Err(error) = crate::ydoc::load_doc(&state.doc_tx, blob).await {
             tracing::warn!("failed to load Y.Doc state, populating from project: {error}");
-            populate_ydoc_from_project(state, &project).await;
+            populate_ydoc_from_project(state, &project).await?;
         }
     } else {
-        populate_ydoc_from_project(state, &project).await;
+        populate_ydoc_from_project(state, &project).await?;
     }
 
     let save_path = if path
@@ -155,6 +163,8 @@ pub async fn load_project(
 
 /// Publish the project mirror, derived-index lifetime and database identity under
 /// the same project guard used by reference publication and retrieval.
+/// Production transitions hold `project_session_gate` across document replacement
+/// and this publication; direct calls also support synchronous test setup.
 pub(crate) fn replace_active_project(
     state: &AppState,
     project: eidetic_core::Project,
@@ -162,6 +172,7 @@ pub(crate) fn replace_active_project(
 ) {
     let mut active = state.project.lock();
     state.vector_store.lock().reset();
+    *state.project_session_id.lock() = uuid::Uuid::new_v4();
     state.project_database.set_active_path(path);
     *active = Some(project);
 }
@@ -172,15 +183,22 @@ pub async fn list_projects() -> serde_json::Value {
     serde_json::to_value(&entries).unwrap_or_else(|_| serde_json::json!([]))
 }
 
-async fn populate_ydoc_from_project(state: &AppState, project: &eidetic_core::Project) {
+async fn populate_ydoc_from_project(
+    state: &AppState,
+    project: &eidetic_core::Project,
+) -> Result<(), BackendError> {
+    crate::ydoc::load_doc(&state.doc_tx, Vec::new())
+        .await
+        .map_err(BackendError::internal)?;
     for node in &project.timeline.nodes {
-        let _ = state
+        state
             .doc_tx
             .send(DocCommand::EnsureNode { node_id: node.id })
-            .await;
+            .await
+            .map_err(|_| BackendError::internal("doc manager channel closed"))?;
 
         if !node.content.notes.is_empty() {
-            let _ = state
+            state
                 .doc_tx
                 .send(DocCommand::WriteNodeContent {
                     node_id: node.id,
@@ -188,11 +206,12 @@ async fn populate_ydoc_from_project(state: &AppState, project: &eidetic_core::Pr
                     text: node.content.notes.clone(),
                     author: "system:load".into(),
                 })
-                .await;
+                .await
+                .map_err(|_| BackendError::internal("doc manager channel closed"))?;
         }
 
         if !node.content.content.is_empty() {
-            let _ = state
+            state
                 .doc_tx
                 .send(DocCommand::WriteNodeContent {
                     node_id: node.id,
@@ -200,9 +219,11 @@ async fn populate_ydoc_from_project(state: &AppState, project: &eidetic_core::Pr
                     text: node.content.content.clone(),
                     author: "system:load".into(),
                 })
-                .await;
+                .await
+                .map_err(|_| BackendError::internal("doc manager channel closed"))?;
         }
     }
+    Ok(())
 }
 
 #[cfg(test)]

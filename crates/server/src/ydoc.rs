@@ -147,37 +147,9 @@ async fn run_doc_manager(
     mut rx: mpsc::Receiver<DocCommand>,
     update_tx: broadcast::Sender<DocUpdate>,
 ) {
-    // Use client_id = 0 for the server's own doc.
-    let doc = Doc::with_options(Options {
-        client_id: 0,
-        skip_gc: false,
-        ..Options::default()
-    });
-
-    // Pre-create the root maps so they exist for all operations.
-    {
-        let mut txn = doc.transact_mut();
-        let _ = txn.get_or_insert_map("nodes");
-        let _ = txn.get_or_insert_map("project_text");
-    }
-
-    // Subscribe to doc updates for broadcasting to document update subscribers.
-    // We capture updates via observe_update_v1 and forward them.
-    // However, since the doc is owned by this task and we process commands
-    // sequentially, we track which command triggered the update to set the
-    // correct origin_client.
+    let mut doc = new_server_doc();
     let pending_origin = Arc::new(std::sync::Mutex::new(0u64));
-    let pending_origin_clone = pending_origin.clone();
-    let update_tx_clone = update_tx.clone();
-
-    let _update_sub = doc
-        .observe_update_v1(move |_txn, event| {
-            let origin = *pending_origin_clone.lock().unwrap();
-            let _ = update_tx_clone.send(DocUpdate {
-                origin_client: origin,
-                data: event.update.clone(),
-            });
-        })
+    let mut _update_sub = subscribe_doc_updates(&doc, pending_origin.clone(), update_tx.clone())
         .expect("failed to subscribe to doc updates");
 
     tracing::info!("Y.Doc manager started");
@@ -248,7 +220,21 @@ async fn run_doc_manager(
             }
 
             DocCommand::Load { state, reply } => {
-                let result = load_doc_state(&doc, &state);
+                // Restore into a fresh document first. Invalid state leaves the
+                // current document and its update subscription untouched.
+                let replacement = load_doc_state(&state).and_then(|doc| {
+                    let subscription =
+                        subscribe_doc_updates(&doc, pending_origin.clone(), update_tx.clone())?;
+                    Ok((doc, subscription))
+                });
+                let result = match replacement {
+                    Ok((replacement, subscription)) => {
+                        doc = replacement;
+                        _update_sub = subscription;
+                        Ok(())
+                    }
+                    Err(error) => Err(error),
+                };
                 let _ = reply.send(result);
             }
         }
@@ -451,16 +437,46 @@ async fn apply_client_update(doc: &Doc, update_bytes: &[u8]) -> Result<(), Strin
     Ok(())
 }
 
-/// Load full doc state from a persistence blob. Replaces current doc content.
-fn load_doc_state(doc: &Doc, state: &[u8]) -> Result<(), String> {
-    if state.is_empty() {
-        return Ok(());
+fn new_server_doc() -> Doc {
+    let doc = Doc::with_options(Options {
+        client_id: 0,
+        skip_gc: false,
+        ..Options::default()
+    });
+    {
+        let mut txn = doc.transact_mut();
+        let _ = txn.get_or_insert_map("nodes");
+        let _ = txn.get_or_insert_map("project_text");
     }
-    let update = Update::decode_v1(state).map_err(|e| format!("decode error: {e}"))?;
-    doc.transact_mut()
-        .apply_update(update)
-        .map_err(|e| format!("apply error: {e}"))?;
-    Ok(())
+    doc
+}
+
+fn subscribe_doc_updates(
+    doc: &Doc,
+    pending_origin: Arc<std::sync::Mutex<u64>>,
+    update_tx: broadcast::Sender<DocUpdate>,
+) -> Result<yrs::Subscription, String> {
+    doc.observe_update_v1(move |_txn, event| {
+        let origin = *pending_origin.lock().unwrap();
+        let _ = update_tx.send(DocUpdate {
+            origin_client: origin,
+            data: event.update.clone(),
+        });
+    })
+    .map_err(|error| format!("failed to subscribe to doc updates: {error}"))
+}
+
+/// Restore a persistence blob into a fresh doc. Empty state means an empty doc;
+/// updates from different project lifetimes must never merge in one CRDT store.
+fn load_doc_state(state: &[u8]) -> Result<Doc, String> {
+    let doc = new_server_doc();
+    if !state.is_empty() {
+        let update = Update::decode_v1(state).map_err(|e| format!("decode error: {e}"))?;
+        doc.transact_mut()
+            .apply_update(update)
+            .map_err(|e| format!("apply error: {e}"))?;
+    }
+    Ok(doc)
 }
 
 // ──────────────────────────────────────────────
@@ -536,6 +552,120 @@ pub async fn load_doc(doc_tx: &mpsc::Sender<DocCommand>, state: Vec<u8>) -> Resu
 mod tests {
     use super::*;
     use uuid::Uuid;
+
+    async fn saved_content(node_id: NodeId, text: &str) -> Vec<u8> {
+        let supervisor = BackendTaskSupervisor::default();
+        let (doc_tx, _) = spawn_doc_manager(&supervisor);
+        doc_tx
+            .send(DocCommand::WriteNodeContent {
+                node_id,
+                field: ContentField::Content,
+                text: text.into(),
+                author: "test:save".into(),
+            })
+            .await
+            .unwrap();
+        let state = serialize_doc(&doc_tx).await.unwrap();
+        supervisor.shutdown_all().await;
+        state
+    }
+
+    #[tokio::test]
+    async fn custody_load_replaces_previous_project_content() {
+        let supervisor = BackendTaskSupervisor::default();
+        let (doc_tx, _) = spawn_doc_manager(&supervisor);
+        let node_a = NodeId::new();
+        let node_b = NodeId::new();
+        doc_tx
+            .send(DocCommand::WriteNodeContent {
+                node_id: node_a,
+                field: ContentField::Content,
+                text: "Project A".into(),
+                author: "test:A".into(),
+            })
+            .await
+            .unwrap();
+        let state_b = saved_content(node_b, "Project B").await;
+        load_doc(&doc_tx, state_b).await.unwrap();
+        assert_eq!(read_content(&doc_tx, node_a).await.unwrap().content, "");
+        assert_eq!(
+            read_content(&doc_tx, node_b).await.unwrap().content,
+            "Project B"
+        );
+        supervisor.shutdown_all().await;
+    }
+
+    #[tokio::test]
+    async fn custody_empty_load_clears_previous_project_content() {
+        let supervisor = BackendTaskSupervisor::default();
+        let (doc_tx, _) = spawn_doc_manager(&supervisor);
+        let node = NodeId::new();
+        for field in [ContentField::Notes, ContentField::Content] {
+            doc_tx
+                .send(DocCommand::WriteNodeContent {
+                    node_id: node,
+                    field,
+                    text: "Project A".into(),
+                    author: "test:A".into(),
+                })
+                .await
+                .unwrap();
+        }
+        load_doc(&doc_tx, Vec::new()).await.unwrap();
+        let snapshot = read_content(&doc_tx, node).await.unwrap();
+        assert_eq!(snapshot.notes, "");
+        assert_eq!(snapshot.content, "");
+        supervisor.shutdown_all().await;
+    }
+
+    #[tokio::test]
+    async fn custody_invalid_load_returns_error_and_preserves_current_doc() {
+        let supervisor = BackendTaskSupervisor::default();
+        let (doc_tx, _) = spawn_doc_manager(&supervisor);
+        let node = NodeId::new();
+        doc_tx
+            .send(DocCommand::WriteNodeContent {
+                node_id: node,
+                field: ContentField::Content,
+                text: "Current project".into(),
+                author: "test:current".into(),
+            })
+            .await
+            .unwrap();
+        assert!(load_doc(&doc_tx, vec![255]).await.is_err());
+        assert_eq!(
+            read_content(&doc_tx, node).await.unwrap().content,
+            "Current project"
+        );
+        supervisor.shutdown_all().await;
+    }
+
+    #[tokio::test]
+    async fn custody_replacement_keeps_update_subscription_active() {
+        let supervisor = BackendTaskSupervisor::default();
+        let (doc_tx, updates) = spawn_doc_manager(&supervisor);
+        let mut receiver = updates.subscribe();
+        let node = NodeId::new();
+        load_doc(&doc_tx, saved_content(node, "Saved").await)
+            .await
+            .unwrap();
+        while receiver.try_recv().is_ok() {}
+        doc_tx
+            .send(DocCommand::WriteNodeContent {
+                node_id: node,
+                field: ContentField::Content,
+                text: "New edit".into(),
+                author: "test:edit".into(),
+            })
+            .await
+            .unwrap();
+        assert_eq!(
+            read_content(&doc_tx, node).await.unwrap().content,
+            "New edit"
+        );
+        assert!(!receiver.try_recv().unwrap().data.is_empty());
+        supervisor.shutdown_all().await;
+    }
 
     /// Create a Doc and run basic write/read operations synchronously.
     #[test]
@@ -624,11 +754,7 @@ mod tests {
         drop(txn);
 
         // Restore into a fresh doc.
-        let doc2 = Doc::with_options(Options {
-            client_id: 1,
-            ..Options::default()
-        });
-        load_doc_state(&doc2, &state).unwrap();
+        let doc2 = load_doc_state(&state).unwrap();
 
         let snapshot = read_node_snapshot(&doc2, &node_id);
         assert_eq!(snapshot.content, "Persist me");

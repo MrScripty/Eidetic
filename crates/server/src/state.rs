@@ -113,6 +113,10 @@ impl Default for AiConfig {
 pub struct AppState {
     /// Loaded project mirror for structural data that has not moved to SQLite stores yet.
     pub project: Arc<Mutex<Option<Project>>>,
+    /// Serializes timeline work with project/document transitions and save snapshots.
+    pub(crate) project_session_gate: Arc<tokio::sync::Mutex<()>>,
+    /// Renewed on replacement or save-as, including reopening identical node IDs.
+    pub(crate) project_session_id: Arc<Mutex<uuid::Uuid>>,
     pub events_tx: broadcast::Sender<ServerEvent>,
     /// Channel to the Y.Doc manager task (single source of truth for text content).
     pub doc_tx: tokio::sync::mpsc::Sender<DocCommand>,
@@ -147,6 +151,7 @@ impl AppState {
         let (save_tx, save_rx) = tokio::sync::mpsc::channel(16);
 
         let project = Arc::new(Mutex::new(None));
+        let project_session_gate = Arc::new(tokio::sync::Mutex::new(()));
         let project_path = Arc::new(Mutex::new(None::<PathBuf>));
         let project_database = ProjectDatabase::new(project_path.clone());
         let task_supervisor = BackendTaskSupervisor::default();
@@ -162,7 +167,13 @@ impl AppState {
         let save_doc_tx = doc_tx.clone();
         task_supervisor.spawn(
             "auto-save",
-            auto_save_task(save_rx, save_project, save_path, save_doc_tx),
+            auto_save_task(
+                save_rx,
+                save_project,
+                save_path,
+                save_doc_tx,
+                project_session_gate.clone(),
+            ),
         );
 
         // Initialize the Pumas model library (optional — best-effort).
@@ -170,6 +181,8 @@ impl AppState {
 
         Self {
             project,
+            project_session_gate,
+            project_session_id: Arc::new(Mutex::new(uuid::Uuid::new_v4())),
             events_tx,
             doc_tx,
             doc_update_tx,
@@ -283,6 +296,7 @@ async fn auto_save_task(
     project: Arc<Mutex<Option<Project>>>,
     project_path: Arc<Mutex<Option<PathBuf>>>,
     doc_tx: tokio::sync::mpsc::Sender<ydoc::DocCommand>,
+    project_session_gate: Arc<tokio::sync::Mutex<()>>,
 ) {
     loop {
         // Wait for the first save signal.
@@ -293,6 +307,10 @@ async fn auto_save_task(
         // Debounce: wait 2 seconds, draining any additional signals.
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         while rx.try_recv().is_ok() {}
+
+        // Keep mirror, path and serialized document in one participating session
+        // until persistence completes; a project switch must not mix these inputs.
+        let _session = project_session_gate.lock().await;
 
         // Perform the save.
         let (proj_json, path) = {
@@ -312,3 +330,7 @@ async fn auto_save_task(
         }
     }
 }
+
+#[cfg(test)]
+#[path = "state_autosave_custody_tests.rs"]
+mod autosave_custody_tests;
