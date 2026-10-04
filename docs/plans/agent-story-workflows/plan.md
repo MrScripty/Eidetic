@@ -270,6 +270,23 @@ claiming to expose a completed agent retrieval workflow.
   split policy, immutable proposal preconditions and agent mutation tools remain
   open. This slice stays separate from M4a publication/review.
 
+## M4 follow-on: correct gap projection after overlapping edits
+
+- **Observed defect:** A shorter clip inside a longer clip moves the core gap
+  cursor backwards, exposing occupied time as a gap after a manual range edit.
+- **Owner/write set:** Existing core `Timeline::find_gaps`, focused core and
+  renderer-projection tests, source READMEs and plan records. This follows the
+  existing contract that a gap contains no story node and core owns invariants.
+- **Decision:** Track the furthest occupied endpoint and its node identity;
+  order equal-start ranges by end then node identity for stable gap neighbors.
+  Keep the existing minimum-duration filter and level isolation.
+- **Gate:** Nested, overlapping and touching clips yield only unoccupied gaps;
+  boundary identities survive storage reordering; a resize is reflected correctly
+  in the renderer projection; core and frontend gates pass without inference.
+- **Limits:** Native visual acceptance is delegated separately. This changes no
+  split/containment product policy, structural locks, mutation history, agent
+  authority or undo behavior and does not complete M4.
+
 
 ### Lock semantics clarified during M4 review
 

@@ -191,3 +191,23 @@ still a separate pending gate. Broader generation persistence is not covered.
   Added real broad-save/reopen ordering regression; final tests and clippy passed.
   Documented that SQLite row order is local append-only storage, not a portable
   revision clock; future history rebuild/compaction needs an explicit contract.
+
+### 2026-10-04: Core gap projection after overlapping edits
+
+- Isolated branch `fix/timeline-overlap-gap-projection` starts at exact PR6
+  `03b47adc95b673daef5ccf3a1e17316bcf28143a`, preserving PR5 ancestry.
+  The test-only WAL successor `48dd8408923c6667591e918333c6ccd2380dbd86`
+  is not included; its runtime qualification is delegated separately.
+- Fixed core gap discovery so contained clips cannot move the occupied endpoint
+  backwards. Equal-time boundaries use stable node identity ordering. No server,
+  frontend, dependency, geometry mutation or product-policy change.
+- All four new regressions fail with the original gap implementation (103 pass,
+  four fail), then pass with the fix: **107 core tests**. Includes a public resize
+  followed by renderer projection and checks for thresholds, level isolation,
+  nested/overlapping/touching clips and reordered storage.
+- Passed strict core all-target Clippy, **284 frontend tests**, Svelte check
+  (zero errors/warnings), frontend lint, formatting and production build,
+  workspace Rust formatting, decision traceability and whitespace checks.
+- Server/native tests were not run for this slice. Dot qualification should
+  run the server/native gates and visually confirm the gap overlay after an
+  overlapping resize. No full-workspace, native UI or completed M4 claim.
