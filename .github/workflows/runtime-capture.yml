@@ -25,7 +25,6 @@ jobs:
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
       EIDETIC_CAPTURE_SOURCE: 550650cdc794b15352013d9914eec337e5ac022d
-      EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,6 +86,8 @@ jobs:
           cargo build --locked -p eidetic-server --example runtime_capture_fixture
       - name: Open real Tauri app, edit screenplay, and capture its window
         timeout-minutes: 3
+        env:
+          EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
         run: |
           xvfb-run -a -s '-screen 0 1440x960x24 -nolisten tcp' \
             dbus-run-session -- /usr/bin/python3 scripts/capture-eidetic-runtime.py
