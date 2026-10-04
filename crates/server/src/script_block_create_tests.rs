@@ -34,7 +34,7 @@ pub(crate) fn story_project() -> (eidetic_core::Project, NodeId, NodeId) {
     (project, scenes[0], scenes[1])
 }
 
-fn fixture() -> (Connection, eidetic_core::Project, CreateScriptBlockCommand) {
+pub(super) fn fixture() -> (Connection, eidetic_core::Project, CreateScriptBlockCommand) {
     let (project, node, _) = story_project();
     let mut conn = Connection::open_in_memory().unwrap();
     conn.execute_batch("PRAGMA foreign_keys = ON; CREATE TABLE project (id INTEGER PRIMARY KEY, name TEXT NOT NULL, premise TEXT NOT NULL DEFAULT '', total_duration_ms INTEGER); INSERT INTO project VALUES (1, 'Manual first scene', '', 10000);").unwrap();
@@ -139,7 +139,7 @@ fn first_manual_block_persists_exact_text_authorship_and_neighbor_memory_on_reop
 }
 
 #[test]
-fn appends_preserve_existing_block_locks_and_segment_revision_metadata() {
+fn appends_preserve_existing_block_locks_and_segment_metadata() {
     let (mut conn, _, payload) = fixture();
     let first = CommandEnvelope::new(payload.clone());
     let (_, before) = apply_create_script_block(&mut conn, &first, 10).unwrap();
@@ -188,14 +188,37 @@ fn appends_preserve_existing_block_locks_and_segment_revision_metadata() {
         after.payload.segments[0].blocks[1].block.block_kind,
         ScriptBlockKind::Dialogue
     );
-    assert_eq!(
-        conn.query_row("SELECT updated_event_id FROM script_segments", [], |row| {
-            row.get::<_, String>(0)
+    let membership_event: String = conn
+        .query_row("SELECT updated_event_id FROM script_segments", [], |row| {
+            row.get(0)
         })
-        .unwrap(),
-        placement_event
+        .unwrap();
+    assert_ne!(membership_event, placement_event);
+    assert_eq!(count(&conn, "object_revisions"), 8); // first 4, lock 1, append 3
+    let membership = crate::history_store::load_revisions_for_object(
+        &conn,
+        ObjectKind::ScriptSegment,
+        before.payload.segments[0].segment.id.as_str(),
+    )
+    .unwrap();
+    let revision = membership.last().unwrap();
+    assert_eq!(revision.change_event_id.0.to_string(), membership_event);
+    assert_eq!(revision.operation, RevisionOperation::Update);
+    assert_eq!(revision.fields.len(), 1);
+    assert_eq!(
+        revision.fields[0],
+        FieldDelta::new(
+            format!(
+                "block.{}",
+                after.payload.segments[0].blocks[1].block.id.as_str()
+            ),
+            None,
+            Some(FieldValue::ObjectRef {
+                kind: ObjectKind::ScriptBlock,
+                id: after.payload.segments[0].blocks[1].block.id.as_str().into()
+            })
+        )
     );
-    assert_eq!(count(&conn, "object_revisions"), 7); // first 4, lock 1, append 2
 }
 
 #[test]
@@ -241,7 +264,7 @@ fn manual_append_preserves_an_existing_generated_block_and_its_provenance() {
         after.payload.segments[0].blocks[1].spans[0].provenance,
         ScriptSpanProvenance::UserEdited
     );
-    assert_eq!(count(&conn, "object_revisions"), 6);
+    assert_eq!(count(&conn, "object_revisions"), 7);
 }
 
 #[test]

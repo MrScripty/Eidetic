@@ -775,3 +775,36 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Automatic bible extraction, model quality and project switching are deferred.
   This milestone closes manual screenplay creation and feeds existing canonical
   memory/placement contracts. Parent owns independent review, PR and merge.
+
+
+## Manual append propagation correction
+
+- Independent review held `bab69018a0b8c5346a98e95bb09c9372e73361db` acceptance:
+  A1 was consumed by generated B, then appending A2 changed canonical prompt
+  context without changing B's dependency revisions or exposing Needs review.
+  Executed a new actual-source regression on that frozen production source and
+  reproduced the failure at the downstream review assertion. The earlier 219
+  source tests passed but did not qualify consumed-source append propagation.
+- Created isolated `fix/screenplay-append-impact` directly from that published
+  source. A segment dependency now changes when manual creation adds a member:
+  each new block gets an exact sparse `block.<block-id>` reference delta on its
+  segment, and an existing segment's write identity advances in the same writer
+  transaction. New-segment creation includes that delta in its create revision.
+  Exact text, prior block revisions/provenance/locks, segment status and placement
+  fields remain intact. No schema, lineage algorithm or UI change is introduced.
+- Executed **223 actual-source module tests**, including four new regressions:
+  consumed A1 + appended A2 exposes B review; preview retains exact A1/A2 and
+  explicit acceptance updates B alone, clears review and binds A2 so its later
+  edit retriggers review; unrelated C remains unaffected. An intervening A3
+  refuses old acceptance with no partial history, and A2 replay preserves current
+  membership identity. Injected block insertion failure rolls back the segment
+  identity, text and all history. Captured A1/A2 membership evidence remains valid
+  when its source retimes during generation, while B reports changed placement.
+- Existing exact save/reopen, protected text, writer admission and retiming tests
+  remain active; expected append revision counts now include the new segment
+  revision. Strict server all-target/all-feature Clippy and normal commit hooks
+  pass. Clippy uses `ORT_SKIP_DOWNLOAD=1`, compile-only. The harness executes real
+  SQLite/source modules with a configuration-only provider fixture shim; no native
+  AppState, graphical or live-model execution claim is made. Prior ORT CDN HTTP403
+  and native/graphical dependency limitations remain; no retries or workarounds.
+- Parent owns exact-head native qualification, independent review, PR and merge.

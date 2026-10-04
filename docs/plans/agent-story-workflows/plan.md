@@ -85,7 +85,8 @@ preserved. Earlier milestone sections retain their historical qualification.
 - **Authoring:** Select a timeline clip, choose Write screenplay, type exact text
   and block kind, then save. Create the main document and its source-bound segment
   only when absent; subsequent commands append independent blocks. Existing text,
-  locks, segment status and placement revision metadata remain unchanged.
+  locks, segment status and placement fields remain unchanged. Appends advance
+  the segment dependency revision with sparse new-block membership history.
 - **Authority:** SQLite owns source admission, deterministic command-derived
   block/span identities and append order. Recheck current placement/order under
   the writer lock; refusals roll back history and text. Capture project ownership
@@ -95,8 +96,11 @@ preserved. Earlier milestone sections retain their historical qualification.
   offer explicit current-placement refresh only for the original source.
 - **Memory:** Reuse canonical screenplay reads and revision invalidation. New text
   survives reopen, appears in neighboring prompt context and follows ordinary
-  source range changes without changing authored text revisions. No model call
-  is required for this workflow.
+  source range changes without changing authored text revisions. A generated
+  descendant that consumed this segment exposes Needs review after an append.
+  Its normal preview captures all new members; explicit acceptance refreshes
+  actual lineage, and later edits to those members trigger review again. No model
+  call is required to create canonical text or derive the review cause.
 - **Qualification:** Execute actual SQLite source modules, core contracts and
   frontend logic/rendering fixtures here. Native AppState and graphical desktop
   execution remain distinct gates; skipped-ORT compilation is compile evidence.

@@ -1,8 +1,8 @@
 use eidetic_core::contracts::{
     ChangeEvent, ChangeEventKind, CommandEnvelope, CreateScriptBlockCommand, FieldDelta,
-    FieldValue, ProjectionEnvelope, RevisionOperation, ScriptBlock, ScriptBlockId, ScriptDocument,
-    ScriptDocumentProjection, ScriptSegment, ScriptSegmentId, ScriptSegmentStatus,
-    ScriptSpanProvenance,
+    FieldValue, ObjectKind, ObjectRevision, ProjectionEnvelope, RevisionOperation, ScriptBlock,
+    ScriptBlockId, ScriptDocument, ScriptDocumentProjection, ScriptSegment, ScriptSegmentId,
+    ScriptSegmentStatus, ScriptSpanProvenance,
 };
 use rusqlite::Connection;
 
@@ -72,13 +72,27 @@ pub(crate) fn apply_create_script_block(
             event.id,
         ));
     }
-    if planned.create_segment {
-        revisions.push(script_document_command::segment_revision(
-            &planned.segment,
-            None,
+    // A segment dependency covers its consumed block set as well as placement.
+    // Record this new member sparsely so downstream generations can see an
+    // append without rewriting any existing block or placement field.
+    let segment_revision = if planned.create_segment {
+        script_document_command::segment_revision(&planned.segment, None, event.id)
+    } else {
+        ObjectRevision::new(
+            ObjectKind::ScriptSegment,
+            planned.segment.id.as_str(),
             event.id,
-        ));
-    }
+            RevisionOperation::Update,
+        )
+    };
+    revisions.push(segment_revision.with_field(FieldDelta::new(
+        format!("block.{}", block.id.as_str()),
+        None,
+        Some(FieldValue::ObjectRef {
+            kind: ObjectKind::ScriptBlock,
+            id: block.id.as_str().into(),
+        }),
+    )));
     revisions.push(
         script_document_command::block_revision(&block, None, event.id)
             .with_field(FieldDelta::new(
@@ -134,6 +148,12 @@ pub(crate) fn apply_create_script_block(
             }
             if planned.create_segment {
                 script_store::upsert_segment_in_transaction(tx, &planned.segment, event.id)?;
+            } else {
+                // Advance only the dependency identity for changed membership.
+                tx.execute(
+                    "UPDATE script_segments SET updated_event_id = ?1 WHERE id = ?2",
+                    rusqlite::params![event.id.0.to_string(), planned.segment.id.as_str()],
+                )?;
             }
             script_store::upsert_block_in_transaction(tx, &block, event.id)?;
             script_store::upsert_span_in_transaction(tx, &span, event.id)
@@ -230,3 +250,7 @@ fn invalid(message: &str) -> ScriptDocumentCommandError {
 #[cfg(test)]
 #[path = "script_block_create_tests.rs"]
 pub(crate) mod tests;
+
+#[cfg(test)]
+#[path = "script_block_create_impact_tests.rs"]
+mod impact_tests;
