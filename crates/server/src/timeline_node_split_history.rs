@@ -99,6 +99,7 @@ pub(crate) fn record_split_timeline_node_history(
         &event,
         &revisions,
         |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
             timeline_node_store::delete_nodes_in_transaction(tx, &[command.payload.node_id])?;
             timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
             timeline_node_store::replace_node_arcs_in_transaction(tx, &next_timeline.node_arcs)?;
