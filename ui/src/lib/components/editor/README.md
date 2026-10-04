@@ -14,7 +14,9 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `BeatNotesPanel.svelte` | Notes editor, generation status, and prompt preview container. |
 | `BeatPlanningActions.svelte` | Parent-node child-planning action controls. |
 | `AiPromptPreview.svelte` | Raw AI prompt context preview. |
-| `ScriptPanel.svelte` | Container for script-editing surfaces. |
+| `ScriptPanel.svelte` | Container for script-editing surfaces with same-node canonical placement refresh and explicit failed-read recovery. |
+| `scriptCreationSource.ts` | Creation-source range agreement and bounded selected-projection refresh after retiming. |
+| `scriptCreationSource.svelte.test.ts` | Actual frontend range command, same-node placement retry, delayed reads/resize, version/error and clear guards with invoke/SSR fixtures. |
 | `ScriptBlockComposer.svelte` | Selected-context first-block and append writing surface. |
 | `scriptBlockCreationDraft.svelte.ts` | Transient captured-context draft, retry identity and explicit placement refresh controller. |
 | `ScriptBlockComposer.ssr.test.ts` | Rendering and authoring discoverability fixtures. |
@@ -42,6 +44,12 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+- Timeline range changes refresh the selected-node projection even when its ID
+  stays the same. Creation/recovery consumes a source only when its range agrees
+  with the canonical timeline clip. A late pre-move read or second resize cannot
+  expose stale recovery times; existing request/version guards retain ownership.
+  Read completion is untracked by the range effect to avoid self-retrying loops.
+  A failed read retains the draft and exposes explicit Refresh selected clip.
 - Script exposes Write screenplay even before a document exists. The session-owned
   composer draft captures its selected clip and document when writing begins, preserves
   exact refused drafts, and never retargets them on selection change. A placement

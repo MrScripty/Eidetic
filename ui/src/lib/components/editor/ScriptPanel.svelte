@@ -1,6 +1,7 @@
 <script lang="ts">
   import ScriptBlockEditor from './ScriptBlockEditor.svelte';
   import ScriptBlockComposer from './ScriptBlockComposer.svelte';
+  import { getScriptCreationSource, refreshRetimedScriptSource } from './scriptCreationSource.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import {
     selectedNodeEditorProjectionState,
@@ -17,12 +18,10 @@
     refreshScriptDocumentProjection,
   } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
-  const source = $derived(
-    selectedNodeEditorProjectionState.projection?.payload.node?.node_id ===
-      editorState.selectedNodeId
-      ? selectedNodeEditorProjectionState.projection.payload.node
-      : null,
-  );
+  const source = $derived(getScriptCreationSource());
+  $effect(() => {
+    void refreshRetimedScriptSource().catch(() => {});
+  });
   $effect(() => {
     const nodeId = editorState.selectedNodeId;
     if (
@@ -56,6 +55,17 @@
 
   <div class="script-panel-body">
     <ScriptBlockComposer {source} />
+    {#if !source && selectedNodeEditorProjectionState.error && selectedNodeEditorProjectionState.selectedNodeId === editorState.selectedNodeId}
+      <p role="alert">{selectedNodeEditorProjectionState.error}</p>
+      <button
+        type="button"
+        disabled={selectedNodeEditorProjectionState.pending}
+        onclick={() =>
+          editorState.selectedNodeId &&
+          void refreshSelectedNodeEditorProjection(editorState.selectedNodeId).catch(() => {})}
+        >Refresh selected clip</button
+      >
+    {/if}
     {#if blockCount > 0}
       {#each projection?.payload.segments ?? [] as segment (segment.segment.id)}
         {#if segment.impact}<ScriptImpactNotice impact={segment.impact} />{/if}

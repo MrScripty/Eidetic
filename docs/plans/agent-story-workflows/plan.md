@@ -100,7 +100,9 @@ preserved. Earlier milestone sections retain their historical qualification.
   old responses/callers. Editing, discard,
   restart and placement refresh stay disabled while that result is unknown.
   The definite native pre-recording placement refusal unlocks editing and
-  explicit current-placement refresh for the original source.
+  explicit current-placement refresh for the original source. Same-node move or
+  resize refreshes selected-node evidence from the canonical timeline range;
+  recovery waits for agreement and retains explicit read-error recovery.
 - **Memory:** Reuse canonical screenplay reads and revision invalidation. New text
   survives reopen, appears in neighboring prompt context and follows ordinary
   source range changes without changing authored text revisions. A generated

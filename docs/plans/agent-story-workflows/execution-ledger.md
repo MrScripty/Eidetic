@@ -879,3 +879,37 @@ still a separate pending gate. Broader generation persistence is not covered.
   hooks pass. The previously denied normal ORT download (`cdn.pyke.io`, HTTP403)
   was not retried; no policy or sandbox change. Parent retains exact-head hosted
   native/graphical qualification, independent review, PR and merge ownership.
+
+
+## PR8 same-node placement refresh correction
+
+- Read official review `5408774586` on exact head
+  `dd815f51d674f07514759c1d74f119be7b50bd9c`. Executed a new regression on
+  that frozen production source: the actual frontend range-command/store path
+  retimes selected A without changing its ID, its old selected-node projection
+  persists, and a definite creation placement refusal still renders Use current
+  placement and save with stale times. Baseline fails at the stale recovery
+  visibility assertion (one failure/four skipped), before any new helper is used.
+- Isolated `fix/pr8-current-placement` refreshes selected-node evidence when
+  the canonical timeline clip range changes. It supersedes pending pre-move
+  reads through the existing request/version guards. Creation and recovery
+  consume source data only when its range agrees with that canonical clip; no
+  optimistic range patching or draft retargeting. A failed read exposes explicit
+  Refresh selected clip and retains exact text/captured intent. Read completion
+  is untracked by the range effect, preventing a self-retrying read loop.
+- Execute **371 frontend tests / 67 files**, including **five new regressions**:
+  actual same-ID range change, definite refusal, fresh selected evidence and
+  exact Unicode/newline recovery payload; late pre-move response; second resize
+  racing the first read; read failure/older-version response; and existing clear/
+  selection guards plus unchanged/absent clip no-fetch behavior. Actual frontend
+  commands/stores/controller and SSR source rendering are exercised; native invoke
+  receipts are fixtures and the client range-effect body is executed explicitly.
+  This is not graphical drag/resize or native transport observation.
+- Frontend typecheck reports zero errors/warnings; static build and normal hooks
+  pass. No Rust, schema or guard-store change, generic framework, native server/
+  GUI or live-model claim. Prior normal ORT `cdn.pyke.io` HTTP403 was not retried;
+  no network/sandbox changes or alternate acquisition. Parent owns PR/review/merge.
+- Preserve separate edit-continuity milestone local
+  `94c24298c66245aa90b76f2472c793b0ce327899` (tree
+  `f846de1c0f75903a1db8e1ff181f5da4b5f270c9`) and its logs/source harness.
+  The PR8 repair branch includes none of that independent feature's changes.
