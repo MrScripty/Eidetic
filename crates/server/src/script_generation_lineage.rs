@@ -102,28 +102,16 @@ pub(crate) fn record_in_transaction(
             SELECT 1 FROM object_revisions r JOIN object_revision_fields f ON f.revision_id = r.id
             WHERE r.object_kind = 'script_block' AND r.object_id = ?1 AND r.change_event_id = ?2
                 AND f.field_key = 'segment_id' AND f.new_ref_id = ?4
-        ) AND (
-            SELECT COUNT(*) FROM object_revisions r JOIN object_revision_fields f ON f.revision_id = r.id
-            WHERE r.object_kind = 'script_segment' AND r.object_id = ?4 AND r.change_event_id = ?5
-                AND ((f.field_key = 'document_id' AND f.new_ref_id = ?6)
-                    OR (f.field_key = 'source_node_id' AND f.new_ref_id IS ?7)
-                    OR (f.field_key = 'start_ms' AND f.new_type = 'integer' AND f.new_integer = ?8)
-                    OR (f.field_key = 'end_ms' AND f.new_type = 'integer' AND f.new_integer = ?9))
-        ) = 4",
+        )",
             params![
                 input.block_id.as_str(),
                 input.revision_event_id.0.to_string(),
                 input.text,
                 input.segment_id.as_str(),
-                input.segment_revision_event_id.0.to_string(),
-                input.document_id.as_str(),
-                input.source_node_id,
-                input.start_ms,
-                input.end_ms
             ],
             |row| row.get(0),
         )?;
-        if !valid {
+        if !valid || !historical_segment_matches(tx, input)? {
             return Err(HistoryStoreError::InvalidValue(
                 "generation input does not match canonical revision history".into(),
             ));
@@ -135,6 +123,48 @@ pub(crate) fn record_in_transaction(
         semantic_dependency_store::insert_dependency_in_transaction(tx, dependency, event)?;
     }
     Ok(())
+}
+
+fn historical_segment_matches(
+    conn: &Connection,
+    input: &eidetic_core::contracts::ScriptContextBlock,
+) -> Result<bool, HistoryStoreError> {
+    use eidetic_core::contracts::{FieldValue, ObjectKind};
+    let Some(projection) = crate::revision_projection::load_object_field_projection_at_event(
+        conn,
+        ObjectKind::ScriptSegment,
+        input.segment_id.as_str(),
+        input.segment_revision_event_id,
+    )?
+    else {
+        return Ok(false);
+    };
+    let fields = &projection.fields;
+    Ok(!projection.deleted
+        && fields.get("document_id")
+            == Some(&FieldValue::ObjectRef {
+                kind: ObjectKind::ScriptDocument,
+                id: input.document_id.as_str().to_owned(),
+            })
+        && fields.get("source_node_id")
+            == input
+                .source_node_id
+                .as_ref()
+                .map(|id| FieldValue::ObjectRef {
+                    kind: ObjectKind::TimelineNode,
+                    id: id.clone(),
+                })
+                .as_ref()
+        && fields.get("start_ms")
+            == Some(&FieldValue::Integer(
+                i64::try_from(input.start_ms).map_err(|_| {
+                    HistoryStoreError::InvalidValue("start_ms exceeds storage range".into())
+                })?,
+            ))
+        && fields.get("end_ms")
+            == Some(&FieldValue::Integer(i64::try_from(input.end_ms).map_err(
+                |_| HistoryStoreError::InvalidValue("end_ms exceeds storage range".into()),
+            )?)))
 }
 
 #[cfg(test)]

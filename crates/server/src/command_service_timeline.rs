@@ -149,6 +149,7 @@ pub async fn set_timeline_node_range(
 
         if response.outcome == RecordChangeOutcome::Recorded {
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScriptChanged);
             state.trigger_save();
         }
         Ok(response)

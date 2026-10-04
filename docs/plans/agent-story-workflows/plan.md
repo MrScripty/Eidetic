@@ -565,3 +565,26 @@ this reader; this slice makes no guarantee for arbitrary external DB rewrites.
 - This is provider transport correctness, not model quality. Ordinary timeline
   placement work remains a separate feature; no graph backend, recovery behavior,
   model call, publication or merge belongs to this repair.
+
+## Ordinary timeline range edits propagate screenplay placement
+
+- Concrete gap: move/resize commands recorded timeline ranges only. Canonical
+  screenplay/context retained old placement and dependent scenes never acquired
+  a consumed-placement review cause; the service published only timeline refresh.
+- On a separate descendant of accepted transport checkpoint `11c437f`, synchronize
+  live source-bound segment ranges for the edited node and changed descendants
+  inside the same writer transaction. Read segment state under the acquired
+  writer lock; record exact sparse placement deltas with the timeline event.
+  Preserve authored text, block revisions, span/lock state and other metadata.
+- Publish the existing script event after commit. The existing handler reloads
+  script/review projections and invalidates cached prompt context. Existing
+  consumption bindings derive Needs review; preview/reject/accept remain explicit.
+- Historical generation validation reconstructs sparse segment fields at the
+  exact captured event, preserving historical evidence after intervening edits.
+  No new schema/backend or automatic screenplay/world rewrite is needed.
+- Deterministic two-scene fixtures cover moving A after B, changed context order,
+  placement-only impact, retime/ABA, replay after authoring, descendant resize,
+  atomic rollback and fresh explicit proposal acceptance. Native qualification
+  must exercise the public range service's success/replay/rollback publication.
+- Keep fictional time explicitly optional and independent from screen placement.
+  Track reparenting/hierarchy changes and project recovery are outside this slice.

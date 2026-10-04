@@ -23,6 +23,9 @@ domain model in `eidetic-core`.
 | `script_impact_review_guard_tests.rs` | Resolved-world context, explicit fictional time and late span/content regeneration lock guards. |
 | `script_impact_review_service.rs` | Desktop-facing preview service using the configured provider without committing screenplay output. |
 | `script_impact_review_service_tests.rs` | Native AppState preview regressions for truncated HTTP refusal and complete split-SSE proposal text. |
+| `timeline_script_placement.rs` | Transaction-local range synchronization and sparse placement history for live source-bound screenplay segments. |
+| `timeline_script_placement_tests.rs` | Deterministic two-scene reorder/context/impact, explicit review, historical-input, replay/ABA and placement rollback fixtures. |
+| `timeline_script_placement_service_tests.rs` | Native public range-service publication, replay and rollback regression. |
 | `script_impact_prompt.rs` | Targeted screenplay prompt from captured canonical inputs and resolved graph context, with strict complete-stream collection. |
 | `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
@@ -120,6 +123,20 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Ordinary range edits move/resize live source-bound screenplay segments with
+  the source node and any resized descendants in the same history transaction.
+  Changed placement gets the timeline event identity and exact sparse old/new
+  fields; authored text, spans/locks, block revisions, status and document
+  metadata remain unchanged. Deleted/unbound segments do not participate.
+- The range service publishes `ScriptChanged` after a recorded commit so the
+  existing frontend refreshes screenplay/review and invalidates prompt context.
+  Failed commands and idempotent replay publish no events. Placement causes are
+  derived through existing consumed segment revisions; updating dependent text
+  still requires a bound proposal and explicit acceptance.
+- Sparse segment inputs are validated by replaying historical fields through
+  the captured event, using existing append-only event order. Later writes or
+  deletion never silently rebind generation to current placement. Presentation
+  placement never supplies the graph's optional fictional time.
 - A Needs review preview targets the generated output block of a proven current
   cause. Capture target text/placement events, current screenplay inputs, cause
   and resolved graph context in one read snapshot. Include a moved source even

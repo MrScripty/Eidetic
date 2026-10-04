@@ -672,3 +672,48 @@ still a separate pending gate. Broader generation persistence is not covered.
   to execute with real local ORT and loopback proxy exclusion.
 - Ordinary timeline placement remains inspection-only and separate. No model
   call, provider quality claim, project recovery, GitHub publication or merge.
+
+## Timeline range-to-screenplay placement slice
+
+- Parent independently accepted frozen transport repair `11c437f`: both original
+  unchanged real-service probes passed, along with **114 core / 341 server**
+  native tests. Keep that milestone frozen; this feature is a separate descendant.
+- Confirmed ordinary UI move/resize/keyboard range commands reach the timeline
+  range service, whose old writer changed timeline nodes only. Canonical segment
+  ranges/context and consumed placement bindings retained the earlier placement,
+  and the old publication emitted no script event.
+- Synchronize every live segment bound to the edited node or changed descendant
+  to its new source range, under the same acquired writer transaction. Add only
+  changed placement fields with exact old/new values and the same event identity.
+  Preserve authored text, block revisions, spans/locks, status and other metadata.
+  Deleted segments/documents and unbound segments do not participate; unchanged
+  ranges add no segment revision. Existing timeline snapshot/replay guards remain.
+- Extract the shared transaction-local revision inserter so derived segment
+  revisions can be planned under the writer lock. Historical input validation
+  replays sparse segment fields through the exact captured event using the
+  existing append-only ordering boundary; later writes are never consumed
+  accidentally. No schema version or new graph backend is introduced.
+- After recorded commit, publish existing `ScriptChanged` beside `TimelineChanged`.
+  Existing frontend handling invalidates prompt context and refreshes screenplay
+  and history/review. Failure and identical replay publish neither event.
+- Executed **203 isolated actual-source-module tests**, including **six new**
+  deterministic two-scene fixtures: moving A after B reorders canonical context
+  and gives B only a consumed-placement cause; explicit reject preserves all
+  canon; fresh accept updates B alone and refreshes lineage. Retime/placement ABA
+  refuses old preview; replay preserves later authoring; parent resize updates
+  both scenes; injected segment failure rolls back nodes/script/history; sparse
+  end-only placement validates captured historical input after a later move and
+  rejects forged evidence. Optional fictional time remains explicit (`42`) and
+  never comes from presentation placement.
+- The harness includes actual persistence and existing range/guard tests, including
+  real SQLite WAL promotion, stale writer/reload/replay, interrupted descendant
+  rollback/reopen and broad-save event-order regressions. It links no Pumas/ORT
+  and does not execute AppState; this is not the full server suite.
+- **344 frontend tests passed**. Full server test compilation and strict all-target
+  Clippy pass offline with `ORT_SKIP_DOWNLOAD=1`, which is compile-only evidence.
+  Added native public range-service success/replay/rollback publication regression
+  `native_range_edit_publishes_script_change_only_after_atomic_success_and_not_replay`;
+  its execution and complete server qualification are delegated to native review.
+- Preserve milestones and publication hold. No graphical/model-quality claim,
+  ONNX retry, policy workaround, project recovery, hierarchy reparenting, external
+  review request, GitHub publication or merge.
