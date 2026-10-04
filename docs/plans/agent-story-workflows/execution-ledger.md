@@ -446,3 +446,19 @@ still a separate pending gate. Broader generation persistence is not covered.
   Source/format/traceability and repository hooks are checked for this successor.
   Parent owns native supervisor/focused/full server retesting and integration;
   no native runtime, merge readiness, merge or external review claim is made.
+
+### 2026-10-04: Atomic proportional resize validation
+
+- Isolated sequential branch `fix/timeline-resize-validation` follows tested gap
+  head `e208f4ce74521dbdfd30759118c2edc181f9ef29`. Parent cleared the shared
+  file for the resize method; frozen gap/custody/admission branches are unchanged.
+- Real core execution reproduced accepted zero-duration children and arithmetic
+  panic on a valid large range. New resize tests against the original method:
+  four fail, two pass. They also expose large no-op millisecond rounding.
+- Resize now validates source/proposed ranges before publishing any mutation,
+  using checked integer scaling. Collapse or arithmetic failure returns a typed
+  error; valid ranges preserve exact integer endpoints and existing clamp rules.
+- **113 core tests** and strict core all-target Clippy pass. No native server test
+  evidence is claimed. Dot should run timeline range-history/rollback regressions
+  and native gates with the new core behavior, especially rejection of collapse.
+- Crossing-child/split semantics remain unresolved and are not selected here.

@@ -21,6 +21,9 @@ pub enum Error {
     #[error("time range is invalid (start {start_ms}ms >= end {end_ms}ms)")]
     InvalidTimeRange { start_ms: u64, end_ms: u64 },
 
+    #[error("time range arithmetic exceeds representable milliseconds")]
+    TimeRangeOverflow,
+
     #[error("node exceeds timeline duration ({node_end_ms}ms > {timeline_ms}ms)")]
     NodeExceedsTimeline { node_end_ms: u64, timeline_ms: u64 },
 
