@@ -21,7 +21,9 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `scriptBlockCreationDraft.svelte.test.ts` | Refused/ambiguous save, exact text and captured-context frontend fixtures. |
 | `scriptBlockCreationRetry.svelte.test.ts` | Lost acknowledgement, exact retry, guarded discard/retarget and definite native placement refusal through actual frontend command/store functions with an invoke fixture. |
 | `ScriptBlockComposer.retry.ssr.test.ts` | Uncertain-save read-only controls, exact retry action and definite-refusal recovery rendering fixtures. |
-| `ScriptBlockEditor.svelte` | Focused manual screenplay edit/save/cancel surface, preserving failed drafts and submitting the captured block revision. |
+| `ScriptBlockEditor.svelte` | Session-owned per-block edit/save/cancel surface with exact uncertain retry and explicit reload. |
+| `scriptBlockEditDraft.svelte.ts` | Captured-revision text draft, immutable pending edit and definite-refusal recovery controller. |
+| `scriptBlockEditLifetime.ssr.test.ts` | Fresh workspace consumers, independent Unicode drafts, delayed acknowledgement, exact command replay, refusal/reload and retired-session fixture regressions. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
 | `scriptImpactNotice.ts` | Human-readable labels for the typed input review causes. |
@@ -42,6 +44,11 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+- Existing-block edits survive Script/Graph/Split navigation with exact text and
+  their captured block revision. Canonical updates and selection changes never
+  reset a live draft. Uncertain saves expose Retry same save and disable editing,
+  cancel and reload until reconciliation or a known definite native refusal.
+  Reload failures keep the draft; successful explicit reload discards it.
 - Script exposes Write screenplay even before a document exists. The session-owned
   composer draft captures its selected clip and document when writing begins, preserves
   exact refused drafts, and never retargets them on selection change. A placement
@@ -57,7 +64,7 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Block creation and existing-block editing share canonical projection updates.
 - Review targets the block identified by the generation impact. Display current
   and exact proposed text; accept/reject explicitly and refresh the canonical
-  script projection afterward. Manual editor drafts remain local and intact.
+  script projection afterward. Manual editor drafts remain session-owned and intact.
   A refusal keeps the proposal available for rejection or a fresh preview.
 - Timeline selection remains the single source of truth for the active editor node.
 - AI generation state remains transient frontend state; durable script text is read from script document projections.

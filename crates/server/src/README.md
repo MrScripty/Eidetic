@@ -30,7 +30,7 @@ domain model in `eidetic-core`.
 | `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
 | `script_block_create.rs` | Manual first-block creation and non-destructive appends with backend identities and transaction-local placement/order validation. |
 | `script_block_create_tests.rs` | Exact persistence/context, locks, replay, refusal, writer rollback and retiming SQLite regressions. |
-| `script_block_create_impact_tests.rs` | Consumed-source append review/explicit acceptance, refreshed new-block lineage, later-append refusal, replay, rollback and historical retiming regressions. |
+| `script_block_create_impact_tests.rs` | Consumed-source append review/explicit acceptance, refreshed new-block lineage, later-append refusal, replay, rollback and historical retiming regressions; reconciled manual edit preserves newer text and downstream review. |
 | `script_block_create_service_tests.rs` | Native AppState save/reopen/preview/retime and queued project replacement regressions; empty canonical schema is initialized before queuing because refusal precedes database access. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
 | `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
@@ -132,6 +132,10 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Replayed manual text edits return the current canonical projection without
+  overwriting an intervening author edit or adding history. Canonical context and
+  downstream consumed-source review retain the latest text/revision, independent
+  of whether the client received its earlier save acknowledgement.
 - Manual block creation admits the original project session before waiting,
   retains its gate through commit/event publication, and rechecks source placement
   and append ordering inside the history writer transaction. New user-authored

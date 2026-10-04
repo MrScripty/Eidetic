@@ -1,8 +1,9 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Manual first-block creation and screenplay appends, following
-merged PR7 and verified main `27680cb52c2b8bdfcdc478bb7f35801aa2d8e072`.
+**Current phase:** Existing-block edit continuity and screenplay-to-timeline
+manual navigation, on separate descendants of independently accepted PR8 source
+`dd815f51d674f07514759c1d74f119be7b50bd9c`. PR8 remains frozen for CI/review.
 **Next gate:** Qualify the exact new creation checkpoint through native AppState
 and graphical type/save/reopen. Pumas runtime/revision integration remains open.
 
@@ -113,6 +114,24 @@ preserved. Earlier milestone sections retain their historical qualification.
   execution remain distinct gates; skipped-ORT compilation is compile evidence.
 - **Deferred:** Automatic semantic extraction into the bible, live-model quality,
   broader authoring operations and project switching remain separate work.
+
+## Manual edit continuity and source navigation: bounded follow-ups
+
+- Existing-block edit drafts belong to the active project session, keyed by
+  document/block. Script/Graph/Split removal, selection changes and projection
+  refresh retain exact text and captured revisions. Uncertain saves reconcile
+  immutable payload/IDs through existing revision/replay/lock authority.
+- Known definite native stale/locked refusals retain editable drafts. Explicit
+  discard/reload clears only after a successful canonical read. Drafts are
+  transient; application restart and project-switch recovery remain deferred.
+- Execute late-acknowledgement/navigation and exact-text frontend fixtures, plus
+  actual SQLite reconciliation/context/downstream-review evidence. Distinguish
+  these from native GUI and live-model evidence. Freeze this milestone, then
+  continue the independent navigation follow-up without awaiting review.
+- Source navigation displays existing source clip identity/name/range from the
+  canonical timeline projection and selects that clip through existing editor
+  state. Missing or unbound sources remain explicit. Navigation must retain live
+  drafts and must not infer fictional time, rewrite placement or issue writes.
 
 ## Screenplay generation lineage and Needs review: bounded descendant
 

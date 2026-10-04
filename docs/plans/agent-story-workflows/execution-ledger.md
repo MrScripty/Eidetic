@@ -879,3 +879,41 @@ still a separate pending gate. Broader generation persistence is not covered.
   hooks pass. The previously denied normal ORT download (`cdn.pyke.io`, HTTP403)
   was not retried; no policy or sandbox change. Parent retains exact-head hosted
   native/graphical qualification, independent review, PR and merge ownership.
+
+
+## Existing screenplay edit continuity milestone
+
+- Continue the owner-prioritized manual authoring/story-memory work on isolated
+  `feat/screenplay-edit-continuity`, directly from accepted PR8 source
+  `dd815f51d674f07514759c1d74f119be7b50bd9c`. Existing block editors owned
+  drafts in their components and allocated a fresh command ID on every save,
+  unlike the already repaired creation path. This is a source-level finding.
+- Per-document/block project-session owners now retain exact Unicode/whitespace
+  text and captured base revisions through Script/Graph/Split replacement,
+  selection changes and canonical refresh. Save snapshots its payload/ID once.
+  An ambiguous acknowledgement permits exact retry only; known native stale or
+  locked-span transaction refusal restores editing/discard. Explicit reload
+  discards only after a successful read. Session activation resets the owners;
+  old retained callers cannot submit another edit into the replacement session.
+- Execute **375 frontend tests / 67 files**, including **nine new regressions**
+  for independent exact drafts, actual workspace SSR consumers, delayed failure
+  while Script is absent, immutable retry through actual command/store/invoke
+  helpers, canonical cache/context refresh, native stale/locked provenance,
+  lookalike refusal, failed reload and late old-controller completion. Invoke
+  receipts are fixtures; these are state-lifetime tests, not DOM or native GUI.
+- Execute **225 actual-source module tests** using the bounded configuration-only
+  shim and actual SQLite/history/context/impact modules, no AppState or ORT. One
+  new linked A/B/unrelated-C regression commits a manual edit, preserves B's real
+  consumed-source review before any acknowledgement, commits later exact Unicode
+  author text, then replays the original request without new rows or overwriting
+  that text. Memory and targeted preview capture the latest revision/text; source
+  placement and generated B/unrelated C remain unchanged. Production Rust is
+  unchanged. The prior fixture-prefix proof remains included in the 225 count.
+- Frontend check (zero errors/warnings), build and normal hooks pass. Freeze this
+  milestone and continue the independent source-navigation slice; parent owns
+  native/GUI/live-model qualification, independent review and merges. PR8 history
+  remains preserved. Project-switch recovery stays deferred; no ORT retry,
+  alternate acquisition, policy/sandbox change or external review request.
+- During final verification the parent supplied PR8 review 5408774586's separate
+  same-node retiming/current-placement gap. Preserve this feature checkpoint and
+  prioritize its bounded repair on another branch from exact PR8 head.
