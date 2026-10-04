@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Drive the actual Tauri window through desktop accessibility and keyboard input.
+"""Drive the actual Tauri window through accessibility geometry and X11 input.
 
 Fail closed if the app, accessibility tree, canonical edit, or capture is absent.
 Never inject JavaScript, replace IPC, disable a sandbox, or capture a browser preview.
@@ -74,18 +74,33 @@ def button_label_matches(name, label, prefix=False):
     return name == label or prefix and name.startswith(label)
 
 
-def click_button(root, label, prefix=False):
+def control_click_point(rect, geometry):
+    x, y, width, height = rect
+    left, top = geometry["X"], geometry["Y"]
+    if (width <= 0 or height <= 0 or x < left or y < top
+            or x + width > left + geometry["WIDTH"]
+            or y + height > top + geometry["HEIGHT"]):
+        raise RuntimeError("Control bounds are outside the verified native window")
+    return x + width // 2, y + height // 2
+
+
+def click_control(node, window):
+    rect = node.queryComponent().getExtents(pyatspi.XY_SCREEN)
+    geometry = dict(line.split("=", 1) for line in command(
+        "xdotool", "getwindowgeometry", "--shell", window).splitlines())
+    point = control_click_point(rect, {key: int(value) for key, value in geometry.items()})
+    command("xdotool", "windowfocus", "--sync", window)
+    command("xdotool", "mousemove", "--sync", str(point[0]), str(point[1]))
+    command("xdotool", "click", "1")
+
+
+def click_button(root, label, window, prefix=False):
     node = wait_for(
         f"visible button {label}",
         lambda: find(root, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
                      and button_label_matches(node.name, label, prefix)),
     )
-    action = node.queryAction()
-    for index in range(action.nActions):
-        if action.getName(index) in ("click", "press", "activate"):
-            if action.doAction(index):
-                return
-    raise RuntimeError(f"No supported accessibility action for {label}")
+    click_control(node, window)
 
 
 def text_of(node):
@@ -112,6 +127,14 @@ def committed_edit(path, before):
 def file_hash(path):
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def capture_native_window(window, path):
+    subprocess.run(["import", "-window", window, str(path)], check=True, timeout=10)
+    if not 10000 < path.stat().st_size < 5 * 1024**2:
+        path.unlink()
+        raise RuntimeError("Screenshot size outside expected artifact bounds")
+    return file_hash(path)
 
 
 def sanitized_log(raw, replacements):
@@ -159,7 +182,7 @@ def main():
         "qualification_sha": command("git", "rev-parse", "HEAD"),
         "application_binary_sha256": file_hash(repo / "target/debug/eidetic-desktop"),
         "utc_capture_attempt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "interaction_route": "AT-SPI buttons and X11 keyboard on real Tauri app",
+        "interaction_route": "AT-SPI control geometry and X11 mouse/keyboard on real Tauri app",
         "content_origin": "local sample created through public backend services; no AI call",
     }
     process = None
@@ -211,31 +234,36 @@ def main():
                           if app.get_process_id() == pid), None),
         )
         evidence["accessibility_mode"] = "explicit cache refresh before tree searches"
+        checkpoint("capture native home screen before editing")
+        wait_for("visible native home screen", lambda: find(
+            application, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
+            and button_label_matches(node.name, "Open Project")))
+        time.sleep(0.5)
+        evidence["unedited_screenshot_sha256"] = capture_native_window(
+            window, output / "eidetic-native-unedited.png")
+        evidence["unedited_screenshot_stage"] = "native home screen before opening sample or editing"
         checkpoint("open project chooser")
-        click_button(application, "Open Project")
+        click_button(application, "Open Project", window)
         checkpoint("open sample project")
-        click_button(application, fixture["project_name"], prefix=True)
+        click_button(application, fixture["project_name"], window, prefix=True)
         checkpoint("wait for project timeline")
         wait_for("project timeline", lambda: find(
             application, lambda node: fixture["scene_name"] in (node.name or "")))
         block = wait_for("screenplay block", lambda: find(
             application, lambda node: node.name == "Screenplay block"))
         checkpoint("begin manual screenplay edit")
-        click_button(block, "Edit")
+        click_button(block, "Edit", window)
         textarea = wait_for("screenplay text editor", lambda: find(
             application, lambda node: node.getState().contains(pyatspi.STATE_EDITABLE)
             and text_of(node) == fixture["text"]))
-        command("xdotool", "windowfocus", "--sync", window)
-        component = textarea.queryComponent()
-        if not component.grabFocus():
-            raise RuntimeError("Screenplay editor refused keyboard focus")
+        click_control(textarea, window)
         checkpoint("type manual screenplay edit")
         command("xdotool", "key", "--clearmodifiers", "ctrl+a")
         subprocess.run(["xdotool", "type", "--clearmodifiers", "--delay", "1", EDITED_TEXT],
                        check=True, timeout=15)
         wait_for("typed screenplay draft", lambda: text_of(textarea) == EDITED_TEXT)
         checkpoint("save manual screenplay edit")
-        click_button(block, "Save")
+        click_button(block, "Save", window)
         checkpoint("verify canonical manual edit")
         wait_for("canonical manual edit committed", lambda: committed_edit(database, before))
         wait_for("edited text displayed", lambda: find(
@@ -246,17 +274,14 @@ def main():
             raise RuntimeError("Native app exited before its window could be captured")
         screenshot = output / "eidetic-native.png"
         checkpoint("capture actual native window")
-        subprocess.run(["import", "-window", window, str(screenshot)], check=True, timeout=10)
-        if not 10000 < screenshot.stat().st_size < 5 * 1024**2:
-            screenshot.unlink()
-            raise RuntimeError("Screenshot size outside expected artifact bounds")
+        screenshot_hash = capture_native_window(window, screenshot)
         evidence.update({
             "status": "captured",
             "window_pid": pid,
             "manual_edit_committed": True,
             "initial_revision_event_id": before[1],
             "edited_revision_event_id": canonical_block(database)[1],
-            "screenshot_sha256": file_hash(screenshot),
+            "screenshot_sha256": screenshot_hash,
         })
     except Exception as error:
         evidence["failure"] = type(error).__name__ + ": " + str(error)[:1000]

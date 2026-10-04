@@ -100,5 +100,6 @@ jobs:
           if-no-files-found: warn
           path: |
             ${{ runner.temp }}/eidetic-capture-artifact/eidetic-native.png
+            ${{ runner.temp }}/eidetic-capture-artifact/eidetic-native-unedited.png
             ${{ runner.temp }}/eidetic-capture-artifact/app-sanitized.log
             ${{ runner.temp }}/eidetic-capture-artifact/capture-evidence.json

@@ -24,7 +24,7 @@ browser mock, JavaScript injection, sandbox override, sysctl, or container is us
 The example creates a Single-Cam project using public project services, saves it,
 and seeds an imported screenplay block through the public canonical script
 command. It calls no AI provider. The driver opens that saved project through
-the actual splash-screen UI, uses desktop accessibility and keyboard input to
+the actual splash-screen UI, uses accessibility control geometry and X11 mouse/keyboard input to
 edit and save the screenplay, and requires a new committed canonical revision
 plus visible edited text and timeline content before capturing the native
 window. Missing accessibility, app startup, UI controls, persistence, or capture
@@ -39,14 +39,17 @@ fails the job. The picture still needs human visual inspection after execution.
 - Resource floors: 2 GiB available memory and 6 GiB free disk before native build.
 - Job limit: 30 minutes; native build step 20 minutes; capture step 3 minutes.
 - Capture driver has a 110-second polling deadline and bounded subprocess waits.
-- Upload allowlist: native PNG (under 5 MiB), sanitized launch-log tail (20 KiB),
+- Upload allowlist: edited native PNG and unedited native-home PNG (each under 5 MiB), sanitized launch-log tail (20 KiB),
   and evidence JSON only, retained for 3 days. No DB, environment dump, raw log,
   binary, dependency tree, or credentials are uploaded.
 
 The evidence names the application source and qualification commit, hashes the
 binary and screenshot, and records the persisted before/after edit revisions.
-The original screenshot request remains unfulfilled until this job actually
-runs successfully and the resulting picture is inspected. This cloud executor
+Before navigation, the driver preserves the real native home window as
+`eidetic-native-unedited.png`. If editing fails, this is evidence of the running
+application only, labeled as unedited; it proves no project opening or saved edit.
+The full manual-edit proof requires a successful job and inspected edited image.
+This cloud executor
 cannot run the native capture: standard package installation fails on its dpkg
 lock permission, WebKit/Xvfb are unavailable, and required ORT 1.24.2 is absent.
 
