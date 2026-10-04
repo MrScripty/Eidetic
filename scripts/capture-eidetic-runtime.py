@@ -15,7 +15,7 @@ import subprocess
 import time
 
 import pyatspi
-from gi.repository import Atspi
+from gi.repository import Atspi, GLib
 
 
 SOURCE = "550650cdc794b15352013d9914eec337e5ac022d"
@@ -31,8 +31,16 @@ def command(*args):
     return subprocess.check_output(args, text=True, timeout=15).strip()
 
 
+def dispatch_accessibility_events():
+    context = GLib.MainContext.default()
+    for _ in range(50):
+        if not context.iteration(False):
+            break
+
+
 def wait_for(description, check):
     while time.monotonic() < DEADLINE:
+        dispatch_accessibility_events()
         found = check()
         if found:
             return found
@@ -198,6 +206,9 @@ def main():
             lambda: next((app for app in pyatspi.Registry.getDesktop(0)
                           if app.get_process_id() == pid), None),
         )
+        # Poll live data after Svelte replaces controls; do not retain old child lists.
+        application.set_cache_mask(Atspi.Cache.NONE)
+        evidence["accessibility_mode"] = "uncached queries with bounded GLib event dispatch"
         click_button(application, "Open Project")
         click_button(application, fixture["project_name"], prefix=True)
         wait_for("project timeline", lambda: find(
