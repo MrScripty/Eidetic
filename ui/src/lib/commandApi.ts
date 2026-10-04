@@ -33,6 +33,7 @@ import type {
 } from './contextInfluenceTypes.js';
 import type {
   AcceptPropagationProposalCommand,
+  RequestScriptImpactProposalCommand,
   CreatePropagationProposalCommand,
   PropagationProposalCommandResponse,
   RejectPropagationProposalCommand,
@@ -41,6 +42,7 @@ import type {
 import type {
   ScriptDocumentCommandResponse,
   SetScriptBlockCommand,
+  EditScriptBlockCommand,
   SetScriptLockCommand,
 } from './scriptTypes.js';
 import type {
@@ -329,6 +331,18 @@ export function createPropagationProposal(
   });
 }
 
+export function requestScriptImpactProposal(
+  payload: RequestScriptImpactProposalCommand,
+  commandId?: string,
+): Promise<PropagationProposalCommandResponse> {
+  return invokeDesktop<PropagationProposalCommandResponse>(
+    'command_script_impact_proposal_preview',
+    {
+      command: { id: commandId ?? createCommandId(), payload },
+    },
+  );
+}
+
 export function rejectPropagationProposal(
   payload: RejectPropagationProposalCommand,
   commandId = createCommandId(),
@@ -393,6 +407,14 @@ export function setScriptLock(
   };
 
   return invokeDesktop<ScriptDocumentCommandResponse>('command_script_lock', { command });
+}
+
+export function editScriptBlock(
+  payload: EditScriptBlockCommand,
+  commandId = createCommandId(),
+): Promise<ScriptDocumentCommandResponse> {
+  const command: CommandEnvelope<EditScriptBlockCommand> = { id: commandId, payload };
+  return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block_edit', { command });
 }
 
 export function createStoryArc(

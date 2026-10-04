@@ -20,8 +20,8 @@
     nudgeSelectedTimelineNode,
     resizeSelectedTimelineNodeEnd,
     resizeSelectedTimelineNodeStart,
+    runTimelineShortcut,
     splitSelectedTimelineNodeAtPlayhead,
-    type TimelineKeyboardCommandResult,
   } from '$lib/stores/timelineKeyboardCommands.js';
   import { setWorkspaceMode, workspaceModeState } from '$lib/stores/workspaceMode.svelte.js';
 
@@ -179,20 +179,6 @@
       notify('success', 'PDF exported');
     } catch (e) {
       notify('error', `Export failed: ${e instanceof Error ? e.message : 'unknown error'}`);
-    }
-  }
-
-  async function runTimelineShortcut(
-    action: () => Promise<TimelineKeyboardCommandResult>,
-    failureLabel: string,
-  ) {
-    try {
-      await action();
-    } catch (error) {
-      notify(
-        'error',
-        `${failureLabel}: ${error instanceof Error ? error.message : 'unknown error'}`,
-      );
     }
   }
 

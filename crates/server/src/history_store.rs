@@ -162,29 +162,40 @@ where
     )?;
 
     for (revision_index, revision) in revisions.iter().enumerate() {
-        tx.execute(
-            "INSERT INTO object_revisions (
-                id, object_kind, object_id, change_event_id, base_revision_id, operation, sort_order
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            params![
-                revision.id.0.to_string(),
-                encode_string_enum(&revision.object_kind)?,
-                revision.object_id,
-                revision.change_event_id.0.to_string(),
-                revision.base_revision_id.map(|id| id.0.to_string()),
-                encode_string_enum(&revision.operation)?,
-                revision_index as i64
-            ],
-        )?;
-
-        for (field_index, field) in revision.fields.iter().enumerate() {
-            insert_field_delta(&tx, revision.id, field_index, field)?;
-        }
+        insert_revision_in_transaction(&tx, revision, revision_index)?;
     }
 
     apply_current_state(&tx)?;
     tx.commit()?;
     Ok(RecordChangeOutcome::Recorded)
+}
+
+// Allows transaction-local derived placement revisions to share the command's
+// event without taking an unsafe pre-transaction snapshot of script segments.
+pub(crate) fn insert_revision_in_transaction(
+    tx: &Transaction<'_>,
+    revision: &ObjectRevision,
+    revision_index: usize,
+) -> Result<(), HistoryStoreError> {
+    tx.execute(
+        "INSERT INTO object_revisions (
+                id, object_kind, object_id, change_event_id, base_revision_id, operation, sort_order
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        params![
+            revision.id.0.to_string(),
+            encode_string_enum(&revision.object_kind)?,
+            revision.object_id,
+            revision.change_event_id.0.to_string(),
+            revision.base_revision_id.map(|id| id.0.to_string()),
+            encode_string_enum(&revision.operation)?,
+            revision_index as i64
+        ],
+    )?;
+
+    for (field_index, field) in revision.fields.iter().enumerate() {
+        insert_field_delta(tx, revision.id, field_index, field)?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]

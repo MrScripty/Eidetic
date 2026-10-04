@@ -277,3 +277,461 @@ still a separate pending gate. Broader generation persistence is not covered.
   frontend gates, preserve the gap branch, and provide verified source transfer.
   No callable native Goal-setting tool is available; durable Goal activation is
   not claimed. Runtime model/reasoning selection is not exposed to this task.
+
+### 2026-10-04: Keyboard timeline caller continuation custody
+
+- Isolated branch `fix/timeline-keyboard-continuation-custody` follows
+  `abae7ca83f41470f392ec8b81cf6f61513a415b7`; both independently qualified
+  gap/cache branches remain unchanged.
+- Four deferred delete/split regressions fail against the original keyboard
+  adapter (four existing tests still pass). They reproduce clearing an intervening
+  selection and clearing the same node ID after an editor-session reset.
+- Editor reset now advances a lifetime generation. Successful delete/split clear
+  only their still-selected target in that generation. The shell uses the keyboard
+  adapter's guarded failure notifier, preserving current-session failure messages
+  while suppressing old-session notifications.
+- **318 frontend tests** pass, including eight added continuation tests covering
+  both destructive actions, rejection preserving selection and notification
+  ownership. Typecheck (zero errors/warnings), lint, formatting, build, decision
+  traceability and whitespace checks pass. Native qualification remains delegated.
+- This handles keyboard caller effects only. Backend admission, other manual
+  callers, generation lifecycle and renderer custody remain separately scoped;
+  no cut/child-content semantics are changed.
+
+### 2026-10-04: Backend timeline command admission custody
+
+- Isolated branch `fix/timeline-command-admission-custody` follows
+  `abae7ca83f41470f392ec8b81cf6f61513a415b7`, separate from the keyboard
+  continuation change. Frozen gap/cache branches are unchanged.
+- An offline dependency-free harness executing the extracted production admission
+  function with deferred/failing persistence reproduced returning B's mirror for
+  captured path A after replacement. With the fix it returns path A and mirror A.
+  This uses real core project types but mocked I/O/state: it is not server runtime
+  evidence. Create-child now forwards its captured admission to create-node work.
+- Added two deterministic native regressions using a one-thread blocking pool:
+  failed-load fallback remains bound to A, and queued child creation with copied
+  node IDs writes A rather than active B. These tests are **not executed here**.
+- `ORT_SKIP_DOWNLOAD=1 cargo check --offline --locked -p eidetic-server --tests`
+  and strict server/test Clippy passed. These prove compilation/lint only; they
+  do not supply or exercise ONNX. No denied download was repeated.
+- Dot handoff: run `cargo test -p eidetic-server admission_tests`, then applicable
+  full server/native gates on this source. Verify A/B current-state and history
+  effects. Post-commit event/Y.Doc/autosave and save-path publication custody are
+  explicitly not repaired by this admission-only change.
+
+- Independent review clarified the admission gate wording: its tests establish
+  B's persisted database nodes and active mirror/path identity only. Shared
+  Y.Doc, events and autosave are not isolated by that repair. This documentation
+  correction is a successor; `898cb310` stays frozen for independent review.
+
+### 2026-10-04: Timeline post-commit and document custody successor
+
+- Branch `fix/timeline-postcommit-session-custody` follows frozen `898cb310`.
+  Documentation-only commit `2991846` narrows the admission claim before this
+  implementation. PR6 and the separately qualified gap/frontend/keyboard/resize
+  branches are untouched.
+- A harness executing the actual original post-commit notes body with the real
+  Y.Doc actor demonstrated late A notes entering B, a timeline event and a save
+  signal. Separate actor tests reproduced merge/empty-load retention: two new
+  custody tests fail on baseline, while invalid-load/subscription tests pass.
+- Added the participating session gate and queued-request identity check; project
+  replacement/reopen and save-as invalidate queued admissions. Document, event and
+  save publication stay under the admitted gate. Autosave holds the same gate
+  from mirror/path snapshot through document serialization and persistence.
+- Y.Doc replacement now restores fresh state, preserving invalid-load errors and
+  update observation. Fallback resets first. Timeline document sends await capacity
+  and report closed-channel errors, identifying failures after a durable SQL commit.
+- **10 actual isolated Y.Doc tests pass**, importing production Y.Doc/supervisor
+  modules with Tokio/Yrs/core dependencies and no ONNX/Pumas dependency. This is
+  component runtime evidence, not a full server test pass.
+- Skipped-ORT offline server/test compilation and strict Clippy pass. Seven new
+  native scheduling/lifecycle tests are **unrun here**: six timeline tests plus one
+  autosave test. They seed A/B histories and compare concrete rows; they do not
+  claim arbitrary imported-history preservation or end-to-end client isolation.
+- Dot's admission history patch `libfile_dd23e13015a8819185780824faaa4f5a`
+  could not be materialized: supported Library transfer reported `download failed`
+  on `oaisdmntpreastus2.blob.core.windows.net`, without a status. No retry/bypass;
+  raw patch transfer requested. Its reported 275-server-test qualification applies
+  to the earlier admission source, not this successor. Patch incorporation pending.
+- Native handoff: run timeline post-commit, autosave, admission and Y.Doc custody
+  tests, then full server/native gates. Check seeded history, explicit conflicts,
+  document-channel errors and publication ordering. Other producers and wire-level
+  pre-admission intent tokens remain out of scope. No merge readiness is claimed.
+
+### 2026-10-04: Transition persistence repair after independent native review
+
+- Frozen `de4c186b` remains the comparison source. The parent reports 107 core,
+  286 server and 11 focused custody tests passing there, but two deterministic
+  transition regressions failing: an earlier real A document blob becomes stale
+  after committed notes and immediate A→B→A reopening; Save As uses stale mirror
+  notes instead of committed source timeline notes. These are parent/native
+  observations, not cloud server execution.
+- Source comparison against `898cb310` confirms missing outgoing flush and mirror
+  Save As predate the custody repair. Fresh replacement in `de4c186b` exposes the
+  stale stored-document boundary; passing gate tests did not qualify persistence.
+- Repair branch `fix/timeline-transition-persistence` follows `de4c186b`: create/load
+  explicitly serialize and persist the outgoing session before document replacement.
+  Save As flushes and reloads that source database, then saves its authoritative
+  timeline/arcs with the current blob to a new destination. Active mirror refresh
+  touches SQLite-owned timeline/arcs only. Existing different Save As destinations
+  return a conflict to avoid retaining unrelated destination timeline/history.
+- Required document serialization errors propagate instead of saving without a
+  blob; autosave logs and skips that write, preserving the earlier saved document.
+  Outgoing read/write errors prevent publication of a new active session. Direct
+  flush completion is awaited; no debounce/save-signal completion is inferred.
+- Admitted timeline/lifecycle work moves its gate into a supervised task through
+  blocking persistence and publication. Caller cancellation preserves that task;
+  admission waits are still cancellable. Backend shutdown aborts tasks. Other
+  producers, process crashes and external collaboration remain unqualified.
+- Eight additional native tests compile but are **unrun in cloud**: seven transition
+  tests cover earlier-blob reopen, authoritative Save As, serialization/write errors,
+  existing destination conflicts and cancelled transition/notes callers; one autosave
+  test checks that serialization failure preserves its stored blob. The current
+  focused suite has 15 timeline/autosave tests plus four document custody tests.
+- An isolated harness copies the exact new ownership helper and imports production
+  Y.Doc, backend supervisor and error modules with a minimal state wrapper and no
+  Pumas/ONNX dependency. Its two cancellation cases fail with the old caller-owned
+  gate pattern; all three cases pass with the repair, including error forwarding.
+  This is component evidence and does not qualify actual AppState/server runtime.
+- `ORT_SKIP_DOWNLOAD=1` offline server/test compilation and strict Clippy pass;
+  native transition and full server retesting remain with the parent.
+- Supported one-shot materialization of the combined native regressions
+  `libfile_ab530ad64488819185e6f6bda07380a7` (SHA-256
+  `5e7696dc0da6567d5a5d9f303f71081211870e25a2f214dd409dfe7b8d0a892b`)
+  and rebased admission history patch `libfile_5d551b86f78481919f1d977a3a7a1c53`
+  (SHA-256 `c75d31d18b18466e88c72b0d05b411b06afe041ba254d52a01ce86a695a256e1`)
+  failed with `download failed` on `oaisdmntpreastus2.blob.core.windows.net`, with
+  no exposed HTTP status. No retry/bypass; exact raw patch text requested. Neither
+  patch is incorporated or claimed qualified in this successor. Initially-empty
+  admission history qualification does not establish arbitrary imported history.
+- Separate resize documentation successor `608e22bb` follows frozen `c81d6e877`.
+  Its core README records `TimeRangeOverflow` and atomic validation; traceability
+  passes across the complete `e208f4ce..608e22bb` resize change. The parent reports
+  113 core tests/Clippy passing for frozen resize source; no implementation changed.
+
+### 2026-10-04: Bounded supervisor records during normal editing
+
+- Frozen persistence source `393786a93d1c973c40ce3d0148a8f770d6cc9c9b` remains
+  unchanged. Parent/native qualification reports both exact earlier transition
+  failure proofs passing unchanged, 107 core / 294 server tests, all 19 focused
+  custody cases and strict Clippy/format/traceability. A separate test-only worktree
+  adds unchanged transition proofs and enhanced initially-empty A/B history checks:
+  296 server tests/Clippy pass. These are parent reports, not cloud execution, and
+  the test-only patches are not silently imported into this source.
+- Native source review identified completed `BackendTaskSupervisor` handles growing
+  with each command unless desktop smoke calls `active_task_count`. This successor
+  changes normal `spawn` to reap finished handles and poll their join results;
+  successful/cancelled completions are observed and named panics are logged.
+  Smoke counting uses the same observer rather than silently dropping results.
+- Registration and reaping share the registry lock. Every unfinished handle remains
+  owned for admitted completion, caller cancellation retention and shutdown joining.
+  Existing `shutdown_all` abort/join and explicit `abort_all` behavior are unchanged.
+  The last completed tail can remain until the next spawn/count/shutdown; cleanup
+  does not require smoke introspection and total edit history no longer accumulates.
+- Three new production-module supervisor tests all fail against `393786a` with only
+  a passive test accessor added: repeated spawn records accumulate, finished records
+  obscure the running-work bound, and normal admission does not report reaped panic
+  results. With the repair, all three pass, including joined teardown of retained
+  running work and captured named panic diagnostics.
+- **18 isolated component tests pass** with production supervisor/Y.Doc/error
+  modules plus the unchanged ownership helper and a minimal state wrapper. They
+  include the five supervisor tests, ten Y.Doc tests and three cancellation/error
+  helper cases. No ONNX/Pumas dependency is present. This is component runtime
+  evidence, not actual AppState/server qualification.
+- Added a native normal-runtime regression: 64 actual notes commands, passive
+  registry observation, correct final SQLite/document notes and 65 seeded+new
+  command records. It never calls `active_task_count` or any pruning observer.
+  This regression compiles but remains **unrun in cloud**.
+- `ORT_SKIP_DOWNLOAD=1` offline server/test compilation and strict Clippy pass.
+  Source/format/traceability and repository hooks are checked for this successor.
+  Parent owns native supervisor/focused/full server retesting and integration;
+  no native runtime, merge readiness, merge or external review claim is made.
+
+### 2026-10-04: Atomic proportional resize validation
+
+- Isolated sequential branch `fix/timeline-resize-validation` follows tested gap
+  head `e208f4ce74521dbdfd30759118c2edc181f9ef29`. Parent cleared the shared
+  file for the resize method; frozen gap/custody/admission branches are unchanged.
+- Real core execution reproduced accepted zero-duration children and arithmetic
+  panic on a valid large range. New resize tests against the original method:
+  four fail, two pass. They also expose large no-op millisecond rounding.
+- Resize now validates source/proposed ranges before publishing any mutation,
+  using checked integer scaling. Collapse or arithmetic failure returns a typed
+  error; valid ranges preserve exact integer endpoints and existing clamp rules.
+- **113 core tests** and strict core all-target Clippy pass. No native server test
+  evidence is claimed. Dot should run timeline range-history/rollback regressions
+  and native gates with the new core behavior, especially rejection of collapse.
+- Crossing-child/split semantics remain unresolved and are not selected here.
+
+### 2026-10-04: Accepted follow-up integration candidate on merged PR6
+
+- Branch `fix/integrate-accepted-timeline-repairs` starts at exact main
+  `a6bd4c1830dd1a500a9ededbcc8056bd358ccda7`, the merged PR6 head. Local candidate
+  merge parents retain accepted keyboard `01befb0505714fce94ec1b1c1b0b86ce238945f1`,
+  server custody through `ea404b9623320db7020abb1b376143a4063ff186` (tree
+  `a61d64a634460717dd85100c802a51dbfc81666c`) and resize documentation/code through
+  `608e22bb10aab9affa385aa5f784e3d41b8df75f`. Frozen source refs and main are not
+  rewritten. This is local candidate composition, not a merge to main.
+- Main already contains rebased gap/cache implementations; their production blobs
+  match the accepted originals. They were not reapplied. Main's WAL/interleaving/
+  rollback test file is retained byte-for-byte; its original qualification records
+  remain a verbatim ledger prefix. Actual merge conflicts were documentation only.
+  Follow-up records/plan sections are included once; runtime Rust and frontend
+  source required no conflict edits or new feature decisions.
+- Whole-repository Rust audit covers **248 files**: the candidate is exactly main
+  plus accepted server/resize blobs. There is no Rust beyond accepted composition.
+  Rust manifest SHA-256:
+  `7552b3e97961de12a6cf87d6b4754ff2fd5f661133cdd19f9306894b75785283`.
+  Keyboard production/test files match `01befb0` exactly. Dependency manifests,
+  lockfiles and main projection-cache source/tests are unchanged. Evidence records
+  the final candidate commit/tree and per-file source/blob identities externally.
+- Combined cloud gates pass: **113 core tests**, strict core all-target Clippy,
+  **318 frontend tests** (58 files), zero-error/warning typecheck, lint, formatting
+  and production build. Server/test compilation and strict Clippy pass offline
+  with `ORT_SKIP_DOWNLOAD=1`. No server/native tests executed here; compilation
+  remains distinct from ORT runtime evidence.
+- Parent reports native acceptance of exact `ea404b9`: 107 core / 298 server tests,
+  strict Clippy/fmt/traceability; test-only unchanged reopen/Save As/history proofs
+  pass 300 server tests/Clippy, including normal 64-command retention. Resize
+  `608e22bb` retains previously native-tested code and accepted traceability.
+  These accepted slices do not substitute for parent qualification of this combined
+  tree, including resized descendants through server history/rollback paths.
+- Source publication needs preserved Git objects. GitHub read-only lookup returns
+  422 (`No commit found for SHA`) for `ea404b9`; the remote candidate branch is
+  absent. The checkout pre-push hook runs native `./launcher.sh --test`, which is
+  assigned to the parent. No hook/network bypass or repeated CDN attempt is made.
+  Provide the verified candidate bundle, ancestry/blob audit, gate logs and a
+  repository-template draft description for parent publication/native retesting.
+  No external PR, review/bot request, main merge or merged PR6 update is claimed.
+
+### 2026-10-04: Manual screenplay editing and canonical agent context candidate
+
+- Recovered the original accepted integration from the two available exact
+  parents and the owner-supplied commit bytes. Both tree
+  `ea1c975c59c33535304cf226df99f008ce1900bc` and commit
+  `9f44a974bc7830e721237b3ccb295095c1bed5f6` matched before feature work.
+- Isolated candidate branch `feat/manual-screenplay-memory`: focused block
+  edit/save UI, text-only canonical command with expected write identity and
+  transaction-local lock checks, sparse old/new text history, source-bound
+  screenplay context shared by prompt preview and generation, prompt invalidation.
+- Executed 22 tests in an isolated Rust harness importing the actual repository
+  SQLite/history/script-command/context/prompt modules, including four new
+  manual-authoring regressions. It links no Pumas/ONNX runtime and is not the
+  full server test suite. The saved/reopened exact Unicode/whitespace text,
+  distinct segment/block write identities, old/new history, stale/ABA refusal,
+  replay preservation, late-added locks and bounded/deleted context cases pass.
+- Core suite: 113 passed. Frontend suite: 338 passed. Svelte check, lint,
+  formatting and production build pass after correcting the new event test's
+  mock interface. Server test compilation and Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1`; these are compilation evidence only.
+- Native AppState regression calls the real manual edit service, preview and
+  shared generation-admission helper with a stale mirror and no model/provider
+  call. It compiles but remains unexecuted here because no ONNX library is
+  available. The desktop crate offline check stopped at uncached
+  `ab_glyph v0.2.32`; no dependency/network retry was attempted. Native desktop
+  command registration, runtime tests and user-flow qualification remain pending.
+- Recovery proposal and accepted async repairs remain separate/preserved. No
+  inferred-world acceptance, timeline semantics, remote upload, PR merge,
+  external review request or network-policy change was performed.
+
+### 2026-10-04: Captured screenplay lineage and Needs review candidate
+
+- Parent independently qualified frozen first feature `9fe7a4a5`: 113 core,
+  314 server and 338 frontend tests, desktop compile/smoke, concurrent edit winner,
+  project reload, preview and late-lock service fixtures passed. Exact whitespace,
+  newlines, Unicode and separate revisions were retained. Parent accepts its
+  source/native-service behavior; graphical typing/save/reopen remains unqualified
+  due the extracted runtime's hardcoded WebKitNetworkProcess path. No workaround
+  was attempted. This report does not qualify the descendant below.
+- Isolated descendant branch `feat/script-input-impact` retains that frozen
+  parent. Successful output now carries the exact screenplay inputs supplied to
+  generation into the same SQLite transaction as output/history and existing
+  DerivesFrom dependencies. Additive generation and revision-binding tables retain
+  old unbound dependencies. Historical text, document, placement, source identity
+  and separate block/segment write events are validated; conflicting input
+  revisions are refused. Model-time edits are never silently rebound to latest.
+- Derived script impact compares the latest successful generation's bound
+  inputs with current source writes. Changed/deleted causes retain consumed
+  event identities and historical excerpts; old lineage remains auditable after
+  explicit refreshed generation. Own previous drafts retain audit bindings and
+  their intentional replacement does not self-invalidate. Unknown input history
+  differs from a known empty input set. Authored text, locks, canonical segment
+  status and explicit proposal acceptance remain unchanged by review projection.
+- Executed **34 isolated source-module tests**, including eight lineage fixtures:
+  A-to-B/unrelated-C; source edits during generation; replay/signature conflict;
+  deletion and explicit refreshed binding; SQL failure after output/history rows
+  with complete rollback; fabricated evidence; unavailable versus empty lineage;
+  conflicting revisions. This harness imports the actual SQLite/history/script/
+  dependency/context/projection modules; it links no Pumas/ONNX runtime and is
+  explicitly not the full server suite. Contract round trips exercise bound
+  dependency and deleted-source impact shapes while preserving absent fields.
+- Core suite: **113 passed**, strict core Clippy passed. Frontend suite:
+  **339 passed**; typecheck (zero errors/warnings), lint, formatting and production
+  build passed. New frontend fixture preserves deleted-source impact and exact
+  authored output through cache refresh while refusing older clean responses.
+- Server tests compile and strict all-target Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1`. New native persistence fixture and three failed/empty
+  stream fixtures (now carrying real captured inputs and checking unchanged
+  lineage counts) compile but were **not executed here**. Parent must qualify
+  the full native server and graphical flow for this exact descendant. Earlier
+  CDN `cdn.pyke.io` HTTP 403 remains preserved; no artifact retry or bypass.
+- Both authored output and generation lineage roll back on failed atomic writes.
+  This is SQLite transaction evidence, not process-kill/power-loss qualification.
+  New review UI is read-only; broader propagation, timeline semantics, project
+  switching/recovery and inferred world updates remain outside this slice.
+- No GitHub publication, merge, external review request, network-policy change
+  or model-provider call was performed. Publication hold remains unchanged.
+  Commit milestone and verified source/evidence package are delivered separately
+  through Library for parent review and native qualification.
+
+### 2026-10-04: Targeted screenplay propagation review checkpoint
+
+- Preserve frozen `0b687a8168c3499cfbcc356f814958d7ee11859b`. Parent reports its
+  independent acceptance with 113 core / 323 server / 339 frontend, checks/build
+  and real deletion-after-capture and placement-only probes. Source restored
+  clean. Graphical Needs review remains unqualified under the WebKit blocker.
+- Inspected existing proposal contracts/store/review/accept commands and desktop
+  transport before implementation. Missing feature: connect a proven Needs review
+  cause to a targeted pending propagation proposal, with stale acceptance refusal.
+  Existing screenplay acceptance validated locks but carried no preview revisions.
+  Continue on isolated descendant `feat/script-impact-review`, without changing
+  frozen acceptance, publication hold or parked project-switch/recovery work.
+- Preview captures a proven cause, generated output block, current target text/
+  placement writes, canonical screenplay inputs and resolved graph evidence in
+  one snapshot. A moved source is explicitly included outside normal continuity
+  bounds. Deleted-source evidence remains explainable. Optional output identity
+  makes the preview target the actual affected generated block, protecting other
+  blocks in the same segment from falsely resolving that output's impact.
+- Reuse the configured provider, canonical screenplay formatter and current
+  graph/fictional-time resolver. The targeted prompt consumes only captured
+  screenplay and resolved graph evidence. No unbound timeline prose, recaps,
+  world inference or presentation-derived fictional time is supplied. UI query
+  time is absent; typed requests also support explicit fictional time. No live
+  model/provider call was made during qualification; quality remains unqualified.
+- Strict provider stream completion refuses partial/error/empty drafts. Successful
+  preview commits only an existing pending propagation proposal and its additive
+  typed evidence binding. Original request replay skips provider invocation.
+  Generic retarget/amend commands refuse bound previews; request a fresh preview.
+- Explicit acceptance revalidates source/target/placement writes, current cause,
+  graph evidence and pending proposal contents inside the SQLite writer transaction.
+  Recheck protected spans and the canonical source node's content-regeneration
+  lock. Target block/span, proposal status, sparse history and refreshed actual
+  input lineage commit together. Preserve source edits, unrelated C, other blocks
+  and document/segment metadata. Rejection records status without discarding
+  authored text or clearing the cause; stale refusal keeps the proposal pending.
+- Executed **137 isolated actual source-module tests**, including **12 new**
+  targeted review/provider fixtures. Linked-scene accept/reject, source/target ABA,
+  edits during provider I/O, invented cause/wrong block, full acceptance rollback,
+  replay/retarget refusal, graph-time/stale world context, late span/node locks,
+  deleted-source explanation and failed/empty provider output all pass. The harness
+  now includes existing bible/temporal/propagation regressions and still links no
+  Pumas/ORT. It is explicitly not the full server suite.
+- Core: **114 passed**, strict all-target core Clippy passed. Frontend:
+  **344 passed**; zero-error/warning Svelte check, lint, formatting and production
+  build passed. New transport/store fixtures preserve review state on failed
+  preview and do not send acceptance. SSR fixtures render exact whitespace/newline/
+  Unicode proposal text, safely escaped markup, explicit controls and refusal to
+  preview an unidentified output. SSR does not qualify graphical clicks.
+- Server tests compile and strict all-target server Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1`; compilation remains distinct from native execution.
+  Tauri registration/adapter and the AppState preview service require parent native
+  qualification on the exact checkpoint. Known uncached desktop dependency and
+  graphical runtime limitations were not bypassed. No ONNX retry or policy change.
+- Commit hooks and decision traceability use the frozen lineage parent as the
+  feature comparison base. Deliver the preserved-ancestry bundle, patch, exact
+  identities and verification evidence through Library. No GitHub publication,
+  cancelled-upload retry, external review request or merge is performed.
+
+## Provider stream integrity repair after native targeted-preview review
+
+- Independent native review of frozen `a372d4f` demonstrated two real transport
+  failures: a truncated declared HTTP body persisted an unfinished proposal, and
+  a split SSE event lost its first text while reporting success. Keep that
+  checkpoint frozen; repair both existing adapters on a separate descendant.
+- Replace stateless per-chunk parsing with shared byte-preserving SSE framing.
+  Propagate HTTP body, provider error-frame, UTF-8 and JSON errors; require the
+  completion marker and clean HTTP EOF. Keep first-choice event order and fixed
+  production provider configuration. Full collection also propagates errors.
+- Executed **143 isolated actual-source-module tests**, including **five new
+  loopback HTTP transport tests** covering both adapters. Split JSON/Unicode,
+  ordered tokens, clean termination, truncated bodies before/after `[DONE]`,
+  missing completion, provider/malformed/invalid-UTF-8 events, and full collection
+  pass. Actual adapter-to-preview-to-SQLite fixtures preserve authored text and
+  history on failure, and record the complete clean text as a pending proposal.
+  The harness uses a configuration-only shim, no Pumas/ORT or AppState runtime.
+- Added two AppState public-service regressions, selected by
+  `independent_real_service`: incomplete HTTP creates no proposal/history/event;
+  complete split SSE persists full pending text and preserves authored canon.
+  These compile here, but require native execution. Full server test compilation
+  and strict all-target Clippy pass offline with `ORT_SKIP_DOWNLOAD=1`; neither
+  constitutes server runtime evidence. No ONNX retry or policy workaround.
+- The supplied native repro Library package could not be downloaded by the
+  supported consumer helper in this environment. Its Library identity remains
+  `libfile_ee025b5c35048191a43d70fe0ba8121e`; native review retains the original
+  failures. The repair includes equivalent public-service probes for the parent
+  to execute with real local ORT and loopback proxy exclusion.
+- Ordinary timeline placement remains inspection-only and separate. No model
+  call, provider quality claim, project recovery, GitHub publication or merge.
+
+## Timeline range-to-screenplay placement slice
+
+- Parent independently accepted frozen transport repair `11c437f`: both original
+  unchanged real-service probes passed, along with **114 core / 341 server**
+  native tests. Keep that milestone frozen; this feature is a separate descendant.
+- Confirmed ordinary UI move/resize/keyboard range commands reach the timeline
+  range service, whose old writer changed timeline nodes only. Canonical segment
+  ranges/context and consumed placement bindings retained the earlier placement,
+  and the old publication emitted no script event.
+- Synchronize every live segment bound to the edited node or changed descendant
+  to its new source range, under the same acquired writer transaction. Add only
+  changed placement fields with exact old/new values and the same event identity.
+  Preserve authored text, block revisions, spans/locks, status and other metadata.
+  Deleted segments/documents and unbound segments do not participate; unchanged
+  ranges add no segment revision. Existing timeline snapshot/replay guards remain.
+- Extract the shared transaction-local revision inserter so derived segment
+  revisions can be planned under the writer lock. Historical input validation
+  replays sparse segment fields through the exact captured event using the
+  existing append-only ordering boundary; later writes are never consumed
+  accidentally. No schema version or new graph backend is introduced.
+- After recorded commit, publish existing `ScriptChanged` beside `TimelineChanged`.
+  Existing frontend handling invalidates prompt context and refreshes screenplay
+  and history/review. Failure and identical replay publish neither event.
+- Executed **203 isolated actual-source-module tests**, including **six new**
+  deterministic two-scene fixtures: moving A after B reorders canonical context
+  and gives B only a consumed-placement cause; explicit reject preserves all
+  canon; fresh accept updates B alone and refreshes lineage. Retime/placement ABA
+  refuses old preview; replay preserves later authoring; parent resize updates
+  both scenes; injected segment failure rolls back nodes/script/history; sparse
+  end-only placement validates captured historical input after a later move and
+  rejects forged evidence. Optional fictional time remains explicit (`42`) and
+  never comes from presentation placement.
+- The harness includes actual persistence and existing range/guard tests, including
+  real SQLite WAL promotion, stale writer/reload/replay, interrupted descendant
+  rollback/reopen and broad-save event-order regressions. It links no Pumas/ORT
+  and does not execute AppState; this is not the full server suite.
+- **344 frontend tests passed**. Full server test compilation and strict all-target
+  Clippy pass offline with `ORT_SKIP_DOWNLOAD=1`, which is compile-only evidence.
+  Added native public range-service success/replay/rollback publication regression
+  `native_range_edit_publishes_script_change_only_after_atomic_success_and_not_replay`;
+  its execution and complete server qualification are delegated to native review.
+- Preserve milestones and publication hold. No graphical/model-quality claim,
+  ONNX retry, policy workaround, project recovery, hierarchy reparenting, external
+  review request, GitHub publication or merge.
+
+## Native timeline service fixture metadata correction
+
+- Native review of frozen `dfd9406` passed **114 core / 347 server** tests; the
+  remaining range-service test failed during fixture setup because its copied
+  node-bearing database lacked the required `episode_structure` row. No
+  production placement defect was established; six placement fixtures passed.
+- Initialize the canonical episode table and row 1 from the fixture project's
+  template name and serialized structure segments before `VACUUM INTO`. Keep
+  production persistence unchanged and every original service/event/replay/
+  rollback assertion byte-identical. The native reviewer reported this exact
+  correction passes with the original assertions.
+- Locally executed the corrected source setup prefix through actual SQLite,
+  project save and reopen; canonical episode metadata and two-scene screenplay
+  lineage are retained. Server tests compile and strict Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1` (compile only); exact descendant native execution remains
+  with the same reviewer. No AppState substitute, HTTP bridge, graphical claim,
+  model call, publication or merge.

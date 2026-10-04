@@ -35,6 +35,10 @@ This directory contains the shared reactive frontend state used to coordinate th
 
 `timelineProjectionLifecycle.test.ts` covers deferred refresh/command responses
 across session clears and concurrent requests.
+`scriptDocumentProjectionLifecycle.test.ts` covers the same boundary for script
+reads, block edits and locks: a cleared document's requests must not publish into
+its next cache lifetime, and one completed request must not hide another pending
+request.
 
 Multiple UI surfaces need shared state and event coordination without turning the route tree into a prop-drilling graph.
 
@@ -92,9 +96,21 @@ continues.
 - Centralizing every UI field in one store file: rejected because it would collapse unrelated lifecycles into one mutable surface.
 
 ## Invariants
+- Targeted preview responses populate the existing propagation proposal store.
+  Failed/stale previews retain prior review state and expose the refusal. Explicit
+  accept/reject commands remain separate from preview creation.
+- Script projection refresh retains backend generation impact and exact authored
+  output together. Version guards prevent older clean responses from hiding a
+  newer Needs review cause, including explainable deleted-source evidence.
+- Manual screenplay saves publish canonical projections and invalidate prompt
+  context. Script-change events also invalidate context, including external
+  edits; refused saves preserve the committed projection/context revision.
 
 - Shared polling and backend event flows retain explicit ownership and cleanup semantics.
 - Stores remain the source of transient UI coordination; components react to them.
+- Editor reset advances its session generation. Keyboard delete/split completions
+  may clear selection only in their original session while the command's target
+  is still selected. Shortcut failures notify only their original session.
 - Projection stores cache backend envelopes and must not patch broad durable entity state optimistically.
 - Clearing the timeline projection cache starts a new generation. Earlier
   refreshes/commands still settle for their callers but cannot publish projection,
@@ -102,6 +118,13 @@ continues.
   versions govern replacement, pending counts all outstanding requests, and only
   the latest-started request can report an error. This is cache ownership, not
   backend project custody or cancellation of in-flight writes/caller effects.
+- Clearing a script document cache removes its lifetime identity. Earlier reads,
+  block commands and lock commands still return their original results or reject
+  for their callers, but cannot publish projection, error or pending state into
+  the replacement lifetime. Within each document lifetime, envelope versions
+  govern replacement, pending counts every outstanding request, and only the
+  latest-started request can report an error. Clearing another document has no
+  effect. This does not cancel backend writes or guard caller continuations.
 - Backend contract changes are reflected here before individual components fork around them.
 
 ## Revisit Triggers

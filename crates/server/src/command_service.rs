@@ -1,7 +1,8 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, CreateStoryArcCommand, DeleteStoryArcCommand, ProjectionEnvelope,
-    ScriptDocumentProjection, SetObjectFieldCommand, SetScriptBlockCommand, SetScriptLockCommand,
-    SetStoryArcMetadataCommand, StoryArcListProjection,
+    CommandEnvelope, CommandId, CreateStoryArcCommand, DeleteStoryArcCommand,
+    EditScriptBlockCommand, ProjectionEnvelope, ScriptDocumentProjection, SetObjectFieldCommand,
+    SetScriptBlockCommand, SetScriptLockCommand, SetStoryArcMetadataCommand,
+    StoryArcListProjection,
 };
 use eidetic_core::story::arc::ArcId;
 use serde::{Deserialize, Serialize};
@@ -129,6 +130,37 @@ pub async fn set_script_block(
         })??;
 
     let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+    Ok(response)
+}
+
+pub async fn edit_script_block(
+    state: &AppState,
+    command: CommandEnvelope<EditScriptBlockCommand>,
+) -> Result<ScriptDocumentCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let response = tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        let created_at_ms = u64::try_from(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_err(|error| BackendError::internal(error.to_string()))?
+                .as_millis(),
+        )
+        .map_err(|error| BackendError::internal(error.to_string()))?;
+        let (outcome, projection) =
+            crate::script_block_edit::apply_edit_script_block(&mut conn, &command, created_at_ms)
+                .map_err(map_script_document_error)?;
+        Ok::<_, BackendError>(ScriptDocumentCommandResponse {
+            outcome,
+            projection,
+        })
+    })
+    .await
+    .map_err(|error| BackendError::internal(format!("script edit task failed: {error}")))??;
+    if response.outcome == RecordChangeOutcome::Recorded {
+        let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+    }
     Ok(response)
 }
 

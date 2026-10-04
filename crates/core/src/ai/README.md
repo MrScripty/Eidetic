@@ -26,6 +26,9 @@ Keep prompt request assembly in core, where it can reuse timeline/story rules di
 - Building prompts in the UI: rejected because backend-owned project state belongs with the domain model.
 
 ## Invariants
+- GenerateRequest can carry backend-hydrated canonical screenplay evidence with
+  exact source block/segment IDs and write events. Core request construction alone
+  leaves this field unset; backend preview and generation share its hydration.
 - Prompt helpers consume domain types rather than raw JSON fragments.
 - Backend adapters treat these request shapes as the canonical source for generation inputs.
 
@@ -36,6 +39,9 @@ Keep prompt request assembly in core, where it can reuse timeline/story rules di
 ## Dependencies
 **Internal:** `crates/core/src/story`, `crates/core/src/timeline`, `crates/core/src/project`.
 **External:** None beyond shared crate dependencies.
+
+- Reason: request types use shared `serde`/`futures` traits; provider transport lives in server adapters.
+- Revisit trigger: core AI helpers require a provider SDK or another module-specific external dependency.
 
 ## Related ADRs
 - `ADR-001` decomposition baseline for oversized prompt-related modules.

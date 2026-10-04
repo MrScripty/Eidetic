@@ -1,5 +1,6 @@
 pub(crate) mod llamacpp;
 pub(crate) mod openrouter;
+mod sse;
 
 use serde::Serialize;
 
@@ -45,13 +46,7 @@ impl Backend {
         let mut stream = self.generate(prompt, config).await?;
         let mut full = String::new();
         while let Some(item) = stream.next().await {
-            match item {
-                Ok(token) => full.push_str(&token),
-                Err(e) => {
-                    tracing::warn!("Stream error during full generation: {e}");
-                    break;
-                }
-            }
+            full.push_str(&item?);
         }
         Ok(full)
     }
@@ -85,3 +80,6 @@ pub(crate) struct BackendStatus {
     pub backend_type: BackendType,
     pub message: String,
 }
+
+#[cfg(test)]
+pub(crate) mod transport_tests;

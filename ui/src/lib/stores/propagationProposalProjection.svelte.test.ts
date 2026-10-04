@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   acceptPropagationProposal,
+  requestScriptImpactProposal,
   createPropagationProposal,
   rejectPropagationProposal,
   updatePropagationProposal,
@@ -9,6 +10,7 @@ import {
 import { getPropagationProposalListProjection } from '$lib/projectionApi.js';
 import {
   applyAcceptPropagationProposalCommand,
+  applyRequestScriptImpactProposalCommand,
   applyCreatePropagationProposalCommand,
   applyRejectPropagationProposalCommand,
   applyUpdatePropagationProposalCommand,
@@ -20,6 +22,7 @@ import {
 
 vi.mock('$lib/commandApi.js', () => ({
   acceptPropagationProposal: vi.fn(),
+  requestScriptImpactProposal: vi.fn(),
   createPropagationProposal: vi.fn(),
   rejectPropagationProposal: vi.fn(),
   updatePropagationProposal: vi.fn(),
@@ -119,9 +122,51 @@ beforeEach(() => {
   rejectPropagationProposalMock.mockReset();
   updatePropagationProposalMock.mockReset();
   getPropagationProposalListProjectionMock.mockReset();
+  vi.mocked(requestScriptImpactProposal).mockReset();
 });
 
 describe('propagation proposal projection store', () => {
+  it('previews a bound screenplay proposal without accepting or rejecting it', async () => {
+    const payload = {
+      proposal_id: 'review.B',
+      document_id: 'script.document.main',
+      segment_id: 'segment.B',
+      block_id: 'block.B',
+      expected_block_revision_event_id: 'B-current',
+      generation_event_id: 'B-generation',
+      dependency_id: 'B.input-A',
+      story_time_ms: null,
+    };
+    vi.mocked(requestScriptImpactProposal).mockResolvedValue({ outcome: 'recorded', projection });
+    await applyRequestScriptImpactProposalCommand(payload, 'preview-B');
+    expect(requestScriptImpactProposal).toHaveBeenCalledWith(payload, 'preview-B');
+    expect(getCachedPropagationProposalListProjection()).toEqual(projection);
+    expect(acceptPropagationProposalMock).not.toHaveBeenCalled();
+    expect(rejectPropagationProposalMock).not.toHaveBeenCalled();
+    expect(propagationProposalProjectionState.pending).toBe(false);
+  });
+
+  it('keeps existing review proposals when a stale or failed preview is refused', async () => {
+    getPropagationProposalListProjectionMock.mockResolvedValue(projection);
+    await refreshPropagationProposalListProjection();
+    vi.mocked(requestScriptImpactProposal).mockRejectedValue(
+      new Error('screenplay proposal is stale; request a fresh preview'),
+    );
+    await expect(
+      applyRequestScriptImpactProposalCommand({
+        proposal_id: 'review.B',
+        document_id: 'script.document.main',
+        segment_id: 'segment.B',
+        block_id: 'block.B',
+        expected_block_revision_event_id: 'B-old',
+        generation_event_id: 'B-generation',
+        dependency_id: 'B.input-A',
+      }),
+    ).rejects.toThrow('stale');
+    expect(getCachedPropagationProposalListProjection()).toEqual(projection);
+    expect(propagationProposalProjectionState.pending).toBe(false);
+    expect(acceptPropagationProposalMock).not.toHaveBeenCalled();
+  });
   it('stores backend propagation proposal projections', async () => {
     getPropagationProposalListProjectionMock.mockResolvedValue(projection);
 

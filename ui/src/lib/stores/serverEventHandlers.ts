@@ -1,4 +1,5 @@
 import type { ServerEventClient } from '$lib/serverEventClient.js';
+import { invalidateScriptContext } from './scriptDocumentProjection.svelte.js';
 import {
   appendStreamingToken,
   completeGeneration,
@@ -127,6 +128,7 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('script_changed', async () => {
+      invalidateScriptContext();
       await Promise.all([refreshMainScriptDocument(), refreshChangeReview()]);
     }),
 

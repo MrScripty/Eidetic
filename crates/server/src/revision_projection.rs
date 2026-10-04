@@ -25,6 +25,21 @@ pub(crate) fn load_object_field_projection(
     Ok(build_projection(object_kind, object_id, &revisions))
 }
 
+/// Resolve only the historical evidence bound by the captured event. Later
+/// edits/deletion must not alter or invalidate evidence consumed by generation.
+pub(crate) fn load_object_field_projection_at_event(
+    conn: &Connection,
+    object_kind: ObjectKind,
+    object_id: &str,
+    event_id: eidetic_core::contracts::ChangeEventId,
+) -> Result<Option<ObjectFieldProjection>, HistoryStoreError> {
+    let revisions = history_store::load_revisions_for_object(conn, object_kind.clone(), object_id)?;
+    Ok(revisions
+        .iter()
+        .rposition(|revision| revision.change_event_id == event_id)
+        .map(|index| build_projection(object_kind, object_id, &revisions[..=index])))
+}
+
 pub(crate) fn load_object_field_projection_envelope(
     conn: &Connection,
     object_kind: ObjectKind,

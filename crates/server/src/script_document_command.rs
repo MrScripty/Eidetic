@@ -20,42 +20,119 @@ pub(crate) fn apply_set_script_block(
     ),
     ScriptDocumentCommandError,
 > {
-    validate_block_command(&command.payload)?;
+    apply_script_block(conn, command, &command.payload, None, created_at_ms)
+}
+
+pub(crate) fn apply_generated_script_block(
+    conn: &mut Connection,
+    command: &CommandEnvelope<eidetic_core::contracts::GenerateScriptBlockCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<ScriptDocumentProjection>,
+    ),
+    ScriptDocumentCommandError,
+> {
+    script_store::create_schema(conn)?;
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "script.generate_block")?
+    {
+        let projection = script_store::load_document_projection_envelope(
+            conn,
+            &command.payload.block.document_id,
+        )?
+        .ok_or_else(|| {
+            ScriptDocumentCommandError::InvalidCommand("generated document missing".into())
+        })?;
+        return Ok((outcome, projection));
+    }
+    apply_script_block(
+        conn,
+        command,
+        &command.payload.block,
+        Some(&command.payload),
+        created_at_ms,
+    )
+}
+
+fn apply_script_block<T: serde::Serialize>(
+    conn: &mut Connection,
+    command: &CommandEnvelope<T>,
+    payload: &SetScriptBlockCommand,
+    generation: Option<&eidetic_core::contracts::GenerateScriptBlockCommand>,
+    created_at_ms: u64,
+) -> Result<
+    (
+        RecordChangeOutcome,
+        ProjectionEnvelope<ScriptDocumentProjection>,
+    ),
+    ScriptDocumentCommandError,
+> {
+    validate_block_command(payload)?;
     script_store::create_schema(conn)?;
 
-    let before = script_store::load_document_projection(conn, &command.payload.document_id)?;
-    validate_locked_spans(before.as_ref(), &command.payload)?;
+    let before = script_store::load_document_projection(conn, &payload.document_id)?;
+    validate_locked_spans(before.as_ref(), payload)?;
     let old_text = before
         .as_ref()
-        .and_then(|projection| find_block_text(projection, &command.payload.block_id));
-    let document = command_document(&command.payload);
-    let segment = command_segment(&command.payload);
-    let block = command_block(&command.payload);
-    let span = generated_span_for_block(&block, command.payload.span_provenance.clone())?;
+        .and_then(|projection| find_block_text(projection, &payload.block_id));
+    let document = command_document(payload);
+    let segment = command_segment(payload);
+    let block = command_block(payload);
+    let span = generated_span_for_block(&block, payload.span_provenance.clone())?;
     let event = ChangeEvent::new(
         command.id,
         ChangeEventKind::UserEdit,
-        format!("set script block {}", command.payload.block_id.as_str()),
+        format!("set script block {}", payload.block_id.as_str()),
     )
     .with_created_at_ms(created_at_ms);
-    let revisions = vec![
+    let mut revisions = vec![
         document_revision(&document, before.is_some(), event.id),
         segment_revision(&segment, before.as_ref(), event.id),
         block_revision(&block, old_text, event.id),
         span_revision(&span, event.id),
     ];
 
+    let dependencies = generation
+        .map(|generation| {
+            crate::script_generation_lineage::dependencies(generation, event.id, created_at_ms)
+        })
+        .transpose()?
+        .unwrap_or_default();
+    for dependency in &dependencies {
+        revisions.push(crate::semantic_dependency_store::dependency_revision(
+            dependency, event.id,
+        )?);
+    }
     let outcome = history_store::record_change_with(
         conn,
         command,
-        "script.set_block",
+        if generation.is_some() {
+            "script.generate_block"
+        } else {
+            "script.set_block"
+        },
         &event,
         &revisions,
         |tx| {
+            if generation.is_some() {
+                let current = script_store::load_document_projection(tx, &payload.document_id)?;
+                validate_locked_spans(current.as_ref(), payload)
+                    .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
+            }
             script_store::upsert_document_in_transaction(tx, &document, event.id)?;
             script_store::upsert_segment_in_transaction(tx, &segment, event.id)?;
             script_store::upsert_block_in_transaction(tx, &block, event.id)?;
             script_store::upsert_span_in_transaction(tx, &span, event.id)?;
+            if let Some(generation) = generation {
+                crate::script_generation_lineage::record_in_transaction(
+                    tx,
+                    generation,
+                    event.id,
+                    &dependencies,
+                )?;
+            }
             Ok(())
         },
     )?;

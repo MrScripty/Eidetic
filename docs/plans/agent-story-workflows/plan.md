@@ -10,6 +10,7 @@ agent write exposure. Pumas runtime/revision integration remains open.
 
 ## Objective and acceptance
 
+
 Writers can develop a feature-length screenplay by conversing with Eidetic's
 agent, manually editing contextual timeline clips and the bible, or combining
 both. The agent uses the graph as structured memory. The optional 3D graph is
@@ -34,6 +35,112 @@ Acceptance claims (all pending unless the ledger records scoped evidence):
 5. A multi-act, feature-length manual/agent screenplay walkthrough demonstrates
    continuity and separate screenplay output, recovery and undo, repeated and
    interrupted interactions, with graph visualization closed as well as open.
+
+## Manual screenplay authoring: first bounded memory slice
+
+The owner prioritizes manual screenplay edits, timeline-driven story changes and
+propagation into agent memory. Recovery/project switching work is parked. This
+slice starts from exact accepted integration `9f44a974bc7830e721237b3ccb295095c1bed5f6`
+(tree `ea1c975c59c33535304cf226df99f008ce1900bc`).
+
+- **Authoring path:** Edit an existing screenplay block in Script, explicitly
+  save its exact text, and keep a refused draft available for correction or
+  discard/reload. Commands contain document/block IDs, expected block write event
+  and text; the backend preserves existing kind, ordering and segment metadata.
+- **Canonical write:** Sparse block/span revisions retain the old/new author
+  text. The write transaction rechecks current block identity and protected spans.
+  Stale/ABA and lock failures do not leave command/history or partial text writes;
+  replay does not overwrite an intervening edit.
+- **Memory read:** Preview and generation share exact main-document screenplay
+  reads for target/intersecting and two adjacent segments on each side. Context
+  carries block and segment IDs plus separate write events. Presentation ranges
+  choose continuity evidence; they do not infer fictional validity. Canonical
+  authored text replaces unversioned node-script/recap evidence in this path.
+- **Projection propagation:** Command responses and script events refresh the
+  screenplay/history and invalidate the selected prompt preview. Earlier same-node
+  preview responses cannot replace newer requests.
+- **Acceptance:** Two linked scenes demonstrate type/save, exact text on reopen,
+  old/new history, fresh script projection and fresh prompt evidence without a
+  model. Essential stale/ABA, locked refusal and actual consumer regressions apply.
+- **Deferred:** Creation of new blocks/documents, inferred semantic extraction,
+  world-update acceptance, broader dependency impact, timeline semantics,
+  embeddings/evaluator changes and recovery are separate follow-ups.
+
+Design source: Puma, *Knowledge Graphs and Agentic Memory: Evidence Time Retrieval
+and Scale*, research edition 2 October 2026, chapters 4–6, 11 and the Eidetic case
+in chapter 13. The manuscript is a separate Library research deliverable; its
+Eidetic audit targets `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`. The accepted
+source already includes the later fictional-time resolver. Reuse canonical
+SQLite/history/projections; neither a graph database nor embedding relevance
+replaces authored evidence or acceptance policy.
+
+## Screenplay generation lineage and Needs review: bounded descendant
+
+Continue on a separate descendant of frozen manual-authoring `9fe7a4a5`.
+The parent has independently accepted that first feature's source/native-service
+behavior (113 core, 314 server, 338 frontend and desktop compile/smoke), with
+graphical typing/save/reopen explicitly unqualified due the extracted runtime's
+hardcoded WebKitNetworkProcess path. This second milestone still requires
+independent qualification; the GitHub publication hold remains unchanged.
+
+- Persist successful output and its actual captured screenplay revision lineage
+  atomically in existing SQLite/history/semantic dependency storage. Each input
+  binds separate block-text and segment-placement revisions to the output event.
+  Validate historical evidence even when source edits/deletion happen during model
+  execution; never rebind to a later source revision at output commit.
+- Failed/empty streams create no output or lineage. Replay signs the complete
+  captured context, does not duplicate rows and does not replace later outputs.
+  Additive generation/binding tables preserve older unbound dependencies. Known
+  empty inputs and unavailable history remain distinct.
+- Derive Needs review for the latest successful generation by comparing bound
+  consumed revisions with current inputs. Include changed/deleted causes and
+  historical source excerpts. Preserve prior lineage after explicit regeneration;
+  a refreshed binding supersedes its old impact. Keep own prior-draft inputs for
+  audit while ignoring their intentional replacement as external impact.
+- Render review causes beside exact screenplay text. Preserve authored content,
+  locks, canonical segment status and explicit proposal acceptance. No automatic
+  cascade, world-fact inference, acceptance/dismissal, graph-database migration,
+  timeline semantic change or project-switch work belongs to this milestone.
+- Required fixtures: A-to-B and unrelated C; failed generation; source edits
+  during generation; replay; deleted-source explainability; refreshed binding.
+  Verify actual SQLite source modules here and native integration independently.
+  Skipped-ORT compilation cannot qualify server runtime behavior.
+
+
+## Targeted review proposal: bounded follow-up
+
+Frozen lineage `0b687a8168c3499cfbcc356f814958d7ee11859b` has parent-reported
+independent source/native-service acceptance: 113 core, 323 server, 339 frontend,
+checks/build and additional deletion-before-commit and placement-only probes.
+Graphical Needs review remains unqualified under the existing WebKit blocker.
+Continue separately on `feat/script-impact-review`; publication hold stays intact.
+
+The actual missing feature is a bridge from a proven review cause to a targeted
+pending propagation proposal and its explicit accept/reject flow. Existing
+proposal storage/review commands are reused; older generic proposals remain
+unbound. This slice adds a preview service/provider boundary, additive captured
+evidence binding, transaction-local stale/lock guards and a Script review surface.
+
+- Target the output block identified by the generation's impact. Capture current
+  authored screenplay context and resolved graph evidence at explicit optional
+  fictional time; reuse current SQLite, semantic lineage and temporal resolver.
+  Include a proven moved source outside the default continuity window. No world
+  extraction, database migration or presentation-to-fictional-time inference.
+- Preview creates a proposal without changing canonical text. Strict stream
+  completion refuses partial/error/empty output. A persisted request replays
+  without another provider call. Prompt sources are completely represented by
+  the stored binding, without unbound timeline prose or recaps.
+- Explicit acceptance rechecks target/source revisions, cause, pending proposal,
+  resolved graph evidence and locks inside the writer transaction. Commit only
+  the selected block/span, proposal status, sparse history and actual refreshed
+  lineage. Preserve source edits, unrelated C, other blocks and segment metadata.
+- Rejection records review status and retains authored text and the review cause.
+  Refused stale/ABA or locked acceptance leaves a pending proposal available for
+  rejection. Retargeting/amending a bound preview requires a fresh preview.
+- Qualify deterministic linked scenes and the existing provider boundary here;
+  independently qualify native service/desktop behavior on the exact checkpoint.
+  No real-model quality, native GUI, full server runtime or recovery claims arise
+  from isolated module tests or skipped-ORT compilation.
 
 ## Binding decisions and ownership
 
@@ -308,6 +415,105 @@ claiming to expose a completed agent retrieval workflow.
   native acceptance, split policy and complete M4. Dot owns runtime qualification.
 
 
+## M4 follow-on: validate proportional resize atomically
+
+- **Observed defects:** A contraction can accept a zero-duration descendant.
+  Floating-point scaling can also change exact no-op milliseconds or panic on
+  unchecked addition for a valid large range, after already changing the target.
+- **Decision/write set:** Stage all descendant ranges and validate their positive
+  duration before mutation. Use checked integer offset scaling with exact
+  floor-to-millisecond division. Keep existing start saturation/end clamping.
+  Scope is core resize, arithmetic error, regressions and documentation.
+- **Gate:** Collapsed/malformed ranges reject without partial mutation or panic;
+  valid large endpoints, large no-ops, multiple levels, unrelated nodes and a
+  one-millisecond positive target remain correct. Core tests/Clippy must pass.
+- **Limits:** No new crossing-child containment, cut-content, hierarchy, locking
+  or undo policy. Server history/native gates remain a separate dot handoff.
+
+## M4 follow-on: keyboard timeline caller continuation custody
+
+- **Observed defect:** Delete/split clear selection after awaiting the command,
+  even if another clip is selected or a reopened session reused the same ID.
+  The shell's shortcut failure handler can notify an unrelated new session.
+- **Decision/write set:** Advance an editor-session generation on editor reset;
+  delete/split clear only the still-selected target in their captured generation.
+  Keep shortcut failure notification in the keyboard adapter under that same
+  session check. Scope is editor store, keyboard adapter/tests and shell binding.
+- **Gate:** Deferred delete/split preserve intervening selections and same-ID
+  reopened sessions; rejection retains selection; current-session failures remain
+  visible and old-session failures are suppressed. Run frontend gates.
+- **Limits:** Backend writes, other command callers and renderer sessions remain
+  separate custody work. This adds no split-content or containment policy.
+
+## M4 follow-on: bind backend timeline command admission
+
+- **Observed defects:** Path capture precedes asynchronous project loading, whose
+  failure fallback reads the then-active mirror. Create-child derives intent from
+  the admitted project but calls create-node admission again, potentially writing
+  a different database when node IDs are preserved across a copied/reopened project.
+- **Decision/write set:** Capture path and fallback mirror under the project
+  guard before I/O for all timeline writers. Forward create-child's captured
+  path/project to the existing create-node executor without re-admission. Scope
+  is the timeline service, deterministic admission tests and documentation.
+- **Gate:** Failed-load fallback retains admitted project identity after a switch;
+  a queued create-child with shared node IDs writes A while preserving B's persisted
+  nodes and active database/mirror identity. This does not establish isolation of
+  B's shared Y.Doc, event stream or autosave from old-command post-commit effects.
+  Compile/check and strict Clippy here; actual native tests are delegated to dot.
+- **Evidence limit:** A dependency-free harness executes the extracted admission
+  function with deferred/failing I/O. It is function-level evidence, not server
+  runtime qualification. Skipped-ORT compilation is never native test evidence.
+- **Remaining custody:** This binds the source once admitted. It does not add
+  expected frontend session tokens to the wire, cancel admitted writes, fence
+  post-commit events/Y.Doc/autosave, or fix concurrent save-path publication.
+
+## M4 follow-on: admitted timeline post-commit and document custody
+
+- **Observed defects:** An admitted A command can publish document writes, events
+  and save signals after B becomes active. Autosave captures mirror/path before
+  awaiting document serialization, allowing mixed-session mementos. The documented
+  Y.Doc replacement instead merges updates; empty/fallback loads retain old data.
+- **Decision:** One async gate spans admitted timeline work and its post-commit
+  effects, project create/load/save and autosave snapshots through persistence.
+  Capture session identity before a timeline request waits; reopen/replacement
+  and save-as renew identity, returning a conflict for obsolete queued requests.
+  Restore saved documents into a fresh CRDT store, reset before fallback population,
+  and reattach update observation. Invalid-load/channel errors remain explicit.
+- **Transition repair:** Explicitly flush the outgoing mirror/path/document under
+  that gate before create/load replaces it. For Save As, flush and recover the
+  committed source snapshot before writing a new destination; retain current-state
+  copy semantics without copying command history or affect stores. Reject different
+  existing destinations rather than mixing database ownership. Required document
+  serialization and persistence failures keep the active session in place; autosave
+  serialization failure skips its write and preserves the stored blob.
+- **Caller cancellation:** After admission, supervised work owns the gate through
+  blocking persistence and publication even if its caller disconnects. Admission
+  waits remain cancellable. Shutdown can abort work; crash recovery and unrelated
+  producers remain outside this guarantee.
+- **Task records:** Normal task admission reaps completed handles and observes
+  their join outcomes, preserving named failure reporting. Retain unfinished
+  handles for admitted completion and shutdown joining. Completed tail records
+  can remain until the next spawn/count/shutdown; repeated edits must not grow
+  the registry with historical commands. Validate repeated real commands using
+  passive registry measurement, without smoke-counter-driven pruning.
+- **Publication:** Await bounded document sends under the gate before emitting
+  timeline events/save signals. If the manager closes after SQL commit, return
+  an explicit committed-publication error; SQL history remains durable/idempotent.
+  This does not implement a distributed transaction or automatic rollback of
+  already committed SQL when its document publication fails.
+- **Write set:** Timeline services, project lifecycle, state/autosave, Y.Doc manager,
+  admission signature adaptation, focused component/native tests and records.
+- **Gate:** Component tests verify true document replacement, empty reset, invalid
+  state preservation and live update observation. Native tests must qualify seeded
+  A/B history preservation, post-commit document/event ordering with a full channel,
+  queued same-path reopen/save-as rejection and snapshot ownership during autosave.
+  Transition tests must include an earlier real document blob before committing
+  new notes, immediate A-to-B-to-A reopen, Save As from a stale mirror, outgoing
+  serialization/persistence errors and cancellation at blocked publication/flush.
+- **Limits:** Source and isolated document component checks do not qualify complete
+  server behavior. Native tests are delegated. Other producers and frontend intent
+  tokens before backend admission remain open; no completed M4/merge claim.
+
 ### Lock semantics clarified during M4 review
 
 `StoryNode.locked` is a content-regeneration lock, as documented by its core
@@ -329,3 +535,56 @@ storage boundary, not a portable or global revision clock. Any future history
 rebuild, logical export/import or maintenance that can reorder events must add
 an explicit persisted sequence or preserve verified event order before using
 this reader; this slice makes no guarantee for arbitrary external DB rewrites.
+
+## Accepted follow-up integration qualification
+
+- Compose accepted keyboard continuation, participating server custody/task-record
+  lifecycle and atomic resize lineages on merged PR6 main `a6bd4c1`. Preserve exact
+  source ancestry and main-only WAL tests; keep already merged gap/cache behavior.
+- Gate the composition with per-file accepted-source identities, core/frontend
+  tests and strict Clippy/format/typecheck/build/traceability, plus server compilation.
+  No additional Rust implementation changes or features belong to this candidate.
+- Parent qualifies native server/runtime behavior on the exact combined tree,
+  especially resize through history/rollback and project transitions. Cloud
+  skipped-ORT compilation does not fulfill that gate. Publish through the normal
+  native-qualified source route; use a verified bundle when preserved-ancestry
+  publication is unavailable. Keep main and merged PR6 unchanged during preparation.
+
+## Targeted preview transport integrity repair
+
+- Keep the targeted-review checkpoint `a372d4f` frozen. Repair its independently
+  demonstrated partial-success and split-event data loss on a separate descendant.
+- Both configured text adapters use a stateful SSE reader that buffers byte/line
+  fragments, preserves event order and Unicode, requires completion plus clean
+  HTTP EOF, and surfaces malformed/provider/transport errors. Full collection
+  must propagate errors rather than returning a prefix.
+- Exercise actual loopback HTTP for both adapters and the canonical preview/
+  proposal boundary. Native AppState tests additionally qualify the public preview
+  service: failure produces no proposal/history/event; clean split SSE produces
+  the entire pending proposal with authored screenplay preserved.
+- This is provider transport correctness, not model quality. Ordinary timeline
+  placement work remains a separate feature; no graph backend, recovery behavior,
+  model call, publication or merge belongs to this repair.
+
+## Ordinary timeline range edits propagate screenplay placement
+
+- Concrete gap: move/resize commands recorded timeline ranges only. Canonical
+  screenplay/context retained old placement and dependent scenes never acquired
+  a consumed-placement review cause; the service published only timeline refresh.
+- On a separate descendant of accepted transport checkpoint `11c437f`, synchronize
+  live source-bound segment ranges for the edited node and changed descendants
+  inside the same writer transaction. Read segment state under the acquired
+  writer lock; record exact sparse placement deltas with the timeline event.
+  Preserve authored text, block revisions, span/lock state and other metadata.
+- Publish the existing script event after commit. The existing handler reloads
+  script/review projections and invalidates cached prompt context. Existing
+  consumption bindings derive Needs review; preview/reject/accept remain explicit.
+- Historical generation validation reconstructs sparse segment fields at the
+  exact captured event, preserving historical evidence after intervening edits.
+  No new schema/backend or automatic screenplay/world rewrite is needed.
+- Deterministic two-scene fixtures cover moving A after B, changed context order,
+  placement-only impact, retime/ABA, replay after authoring, descendant resize,
+  atomic rollback and fresh explicit proposal acceptance. Native qualification
+  must exercise the public range service's success/replay/rollback publication.
+- Keep fictional time explicitly optional and independent from screen placement.
+  Track reparenting/hierarchy changes and project recovery are outside this slice.

@@ -2,8 +2,9 @@ use std::path::PathBuf;
 
 use eidetic_core::ai::backend::{GenerateRequest, RagChunk};
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptSegmentId,
-    ScriptSegmentStatus, ScriptSpanProvenance, SetScriptBlockCommand,
+    CommandEnvelope, CommandId, GenerateScriptBlockCommand, ScriptBlockId, ScriptBlockKind,
+    ScriptContextBlock, ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus,
+    ScriptSpanProvenance, SetScriptBlockCommand,
 };
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
 use futures::StreamExt;
@@ -78,13 +79,54 @@ pub(crate) async fn run_generation(
         }
     };
 
-    let full_text = stream_generated_text(&state, node_uuid, stream).await;
+    finish_generation_stream(
+        state,
+        project_path,
+        node_uuid,
+        stream,
+        request.script_context,
+    )
+    .await;
+}
+
+async fn finish_generation_stream(
+    state: AppState,
+    project_path: PathBuf,
+    node_uuid: Uuid,
+    stream: eidetic_core::ai::backend::GenerateStream,
+    script_inputs: Option<Vec<ScriptContextBlock>>,
+) {
+    let node_id = NodeId(node_uuid);
+    let full_text = match stream_generated_text(stream, |token, tokens_generated| {
+        let _ = state.events_tx.send(ServerEvent::GenerationProgress {
+            node_id: node_uuid,
+            token,
+            tokens_generated,
+        });
+    })
+    .await
+    {
+        Ok(text) => text,
+        Err(error) => {
+            handle_generation_failure(&state, project_path, node_id, node_uuid, error.to_string())
+                .await;
+            return;
+        }
+    };
     if full_text.is_empty() {
         handle_empty_generation(&state, project_path, node_id, node_uuid).await;
         return;
     }
 
-    persist_successful_generation(state, project_path, node_id, node_uuid, full_text).await;
+    persist_successful_generation(
+        state,
+        project_path,
+        node_id,
+        node_uuid,
+        full_text,
+        script_inputs,
+    )
+    .await;
 }
 
 async fn attach_rag_context(
@@ -152,31 +194,19 @@ fn attach_rag_embedding(
 }
 
 async fn stream_generated_text(
-    state: &AppState,
-    node_uuid: Uuid,
     mut stream: eidetic_core::ai::backend::GenerateStream,
-) -> String {
+    mut on_token: impl FnMut(String, usize),
+) -> Result<String, eidetic_core::Error> {
     let mut full_text = String::new();
     let mut tokens_generated: usize = 0;
 
     while let Some(item) = stream.next().await {
-        match item {
-            Ok(token) => {
-                full_text.push_str(&token);
-                tokens_generated += 1;
-                let _ = state.events_tx.send(ServerEvent::GenerationProgress {
-                    node_id: node_uuid,
-                    token,
-                    tokens_generated,
-                });
-            }
-            Err(e) => {
-                tracing::warn!("Stream error during generation for node {node_uuid}: {e}");
-                break;
-            }
-        }
+        let token = item?;
+        full_text.push_str(&token);
+        tokens_generated += 1;
+        on_token(token, tokens_generated);
     }
-    full_text
+    Ok(full_text)
 }
 
 async fn handle_generation_failure(
@@ -227,6 +257,7 @@ async fn persist_successful_generation(
     node_id: NodeId,
     node_uuid: Uuid,
     full_text: String,
+    script_inputs: Option<Vec<ScriptContextBlock>>,
 ) {
     if let Err(error) =
         persist_node_content_status(project_path.clone(), node_id, ContentStatus::HasContent).await
@@ -237,8 +268,14 @@ async fn persist_successful_generation(
         Some(metadata) => metadata,
         None => return,
     };
-    if let Err(error) =
-        persist_generated_script_block(project_path, node_uuid, metadata, full_text.clone()).await
+    if let Err(error) = persist_generated_script_block(
+        project_path,
+        node_uuid,
+        metadata,
+        full_text.clone(),
+        script_inputs,
+    )
+    .await
     {
         tracing::error!("Failed to persist generated script for node {node_uuid}: {error}");
         let _ = state.events_tx.send(ServerEvent::GenerationError {
@@ -311,14 +348,25 @@ async fn persist_generated_script_block(
     node_uuid: Uuid,
     metadata: GeneratedScriptMetadata,
     full_text: String,
+    script_inputs: Option<Vec<ScriptContextBlock>>,
 ) -> Result<(), String> {
     tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&project_path)
             .map_err(|error| error.to_string())?;
         let command =
             generated_script_block_command(Uuid::new_v4(), node_uuid, metadata, full_text)?;
-        script_document_command::apply_set_script_block(&mut conn, &command, 0)
-            .map_err(|error| error.to_string())?;
+        script_document_command::apply_generated_script_block(
+            &mut conn,
+            &CommandEnvelope {
+                id: command.id,
+                payload: GenerateScriptBlockCommand {
+                    block: command.payload,
+                    script_inputs,
+                },
+            },
+            0,
+        )
+        .map_err(|error| error.to_string())?;
         Ok(())
     })
     .await
@@ -486,6 +534,14 @@ mod tests {
         assert_eq!(command.payload.span_provenance, AiGenerated);
     }
 }
+
+#[cfg(test)]
+#[path = "ai_generation_stream_tests.rs"]
+mod stream_tests;
+
+#[cfg(test)]
+#[path = "ai_generation_runtime_tests.rs"]
+mod runtime_tests;
 
 #[cfg(test)]
 #[path = "reference_retrieval_tests.rs"]

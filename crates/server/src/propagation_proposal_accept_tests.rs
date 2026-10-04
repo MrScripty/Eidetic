@@ -322,6 +322,7 @@ fn regenerated_segment_patch() -> ScriptPatch {
         id: ScriptPatchId::new("script.patch.regenerate-beat-1").unwrap(),
         document_id: ScriptDocumentId::new("script.document.main").unwrap(),
         segments: vec![ScriptSegmentProjection {
+            impact: None,
             segment: ScriptSegment {
                 id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
                 document_id: ScriptDocumentId::new("script.document.main").unwrap(),
@@ -332,6 +333,7 @@ fn regenerated_segment_patch() -> ScriptPatch {
                 sort_order: 1,
             },
             blocks: vec![ScriptBlockProjection {
+                revision_event_id: None,
                 block: ScriptBlock {
                     id: ScriptBlockId::new("script.block.regenerated-action").unwrap(),
                     segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),

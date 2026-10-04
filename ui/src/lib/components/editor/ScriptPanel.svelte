@@ -1,6 +1,8 @@
 <script lang="ts">
-  import ScriptView from './ScriptView.svelte';
-  import { scriptDocumentBlockCount, scriptDocumentText } from '$lib/scriptDocumentFormat.js';
+  import ScriptBlockEditor from './ScriptBlockEditor.svelte';
+  import ScriptImpactNotice from './ScriptImpactNotice.svelte';
+  import ScriptImpactReview from './ScriptImpactReview.svelte';
+  import { scriptDocumentBlockCount } from '$lib/scriptDocumentFormat.js';
   import {
     getCachedScriptDocumentProjection,
     getScriptDocumentProjectionError,
@@ -13,7 +15,6 @@
   let projection = $derived(getCachedScriptDocumentProjection(scriptDocumentKey));
   let pending = $derived(isScriptDocumentProjectionPending(scriptDocumentKey));
   let error = $derived(getScriptDocumentProjectionError(scriptDocumentKey));
-  let text = $derived(projection ? scriptDocumentText(projection.payload) : '');
   let blockCount = $derived(projection ? scriptDocumentBlockCount(projection.payload) : 0);
 
   $effect(() => {
@@ -30,8 +31,14 @@
   </div>
 
   <div class="script-panel-body">
-    {#if text}
-      <ScriptView {text} />
+    {#if blockCount > 0}
+      {#each projection?.payload.segments ?? [] as segment (segment.segment.id)}
+        {#if segment.impact}<ScriptImpactNotice impact={segment.impact} />{/if}
+        <ScriptImpactReview documentId={MAIN_SCRIPT_DOCUMENT_ID} {segment} />
+        {#each segment.blocks as block (block.block.id)}
+          <ScriptBlockEditor documentId={MAIN_SCRIPT_DOCUMENT_ID} {block} />
+        {/each}
+      {/each}
     {:else if pending}
       <p class="script-empty">Loading script document.</p>
     {:else if error}

@@ -28,7 +28,9 @@
   import BeatPlanningActions from './BeatPlanningActions.svelte';
   import { beatContentStatusLabel } from './beatEditorStatus.js';
   import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
+  import { createContextRequestLifecycle } from './contextRequestLifecycle.js';
   import './beatEditor.css';
+  import { scriptDocumentProjectionState } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
   const debouncedNotesSave = createDebouncedNodeNotesSave({
     delayMs: 500,
@@ -45,7 +47,12 @@
   let planning = $state(false);
   let nodeContext: { system: string; user: string } | null = $state(null);
   let contextLoading = $state(false);
-  let contextNodeId: string | null = $state(null);
+  const contextRequests = createContextRequestLifecycle({
+    selectedNodeId: () => editorState.selectedNodeId,
+    fetchContext: getAiContext,
+    setContext: (context) => (nodeContext = context),
+    setLoading: (loading) => (contextLoading = loading),
+  });
 
   let isGenerating = $derived(
     (editorState.streamingNodeId != null &&
@@ -213,28 +220,12 @@
   $effect(() => {
     const nodeId = editorState.selectedNodeId;
     const notes = selectedProjectionNode?.notes;
-    if (!nodeId || !notes?.trim()) {
-      nodeContext = null;
-      contextNodeId = null;
-      return;
-    }
-    if (nodeId === contextNodeId && nodeContext) return;
-    loadContext(nodeId);
+    const revision = scriptDocumentProjectionState.contextRevision;
+    contextRequests.update(nodeId, notes, revision);
   });
 
   function loadContext(nodeId: string) {
-    contextLoading = true;
-    contextNodeId = nodeId;
-    getAiContext(nodeId)
-      .then((context) => {
-        if (editorState.selectedNodeId === nodeId) nodeContext = context;
-      })
-      .catch(() => {
-        if (editorState.selectedNodeId === nodeId) nodeContext = null;
-      })
-      .finally(() => {
-        if (editorState.selectedNodeId === nodeId) contextLoading = false;
-      });
+    void contextRequests.load(nodeId);
   }
 
   function refreshContext() {
@@ -250,6 +241,7 @@
 
   onDestroy(() => {
     debouncedNotesSave.dispose();
+    contextRequests.invalidate();
   });
 
   async function handleToggleLock() {

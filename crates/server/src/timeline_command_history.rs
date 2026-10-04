@@ -43,15 +43,21 @@ pub(crate) fn record_set_timeline_node_range_history(
     )
     .with_created_at_ms(created_at_ms);
     let mut revisions = vec![range_revision(node, next_timeline.node(node.id)?, event.id)];
+    let mut placement_ranges = Vec::new();
+    if node.time_range != next_timeline.node(node.id)?.time_range {
+        placement_ranges.push((node.id, next_timeline.node(node.id)?.time_range));
+    }
     let mut descendants = project.timeline.descendants_of(node.id);
     descendants.sort_unstable_by_key(|descendant| descendant.id.0);
     for old in descendants {
         let new = next_timeline.node(old.id)?;
         if old.time_range != new.time_range {
             revisions.push(range_revision(old, new, event.id));
+            placement_ranges.push((new.id, new.time_range));
         }
     }
 
+    crate::script_store::create_schema(conn)?;
     Ok(history_store::record_change_with(
         conn,
         command,
@@ -60,7 +66,13 @@ pub(crate) fn record_set_timeline_node_range_history(
         &revisions,
         |tx| {
             crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
-            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
+            crate::timeline_script_placement::sync_in_transaction(
+                tx,
+                &placement_ranges,
+                event.id,
+                revisions.len(),
+            )
         },
     )?)
 }

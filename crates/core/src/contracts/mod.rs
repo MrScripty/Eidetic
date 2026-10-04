@@ -10,6 +10,7 @@ mod context_influence;
 mod graph_proposal;
 mod propagation_proposal;
 mod script_document;
+mod script_impact_review;
 mod selected_node_editor;
 mod semantic_dependency;
 mod semantic_proposal;
@@ -83,12 +84,14 @@ pub use propagation_proposal::{
     UpdatePropagationProposalCommand,
 };
 pub use script_document::{
-    ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContractError,
-    ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptLock, ScriptLockId,
-    ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
-    ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
-    SetScriptLockCommand,
+    EditScriptBlockCommand, GenerateScriptBlockCommand, ScriptBlock, ScriptBlockId,
+    ScriptBlockKind, ScriptBlockProjection, ScriptContextBlock, ScriptContractError,
+    ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptImpactCause,
+    ScriptImpactProjection, ScriptImpactReason, ScriptLock, ScriptLockId, ScriptPatch,
+    ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus,
+    ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
 };
+pub use script_impact_review::{RequestScriptImpactProposalCommand, ScriptImpactProposalBinding};
 pub use selected_node_editor::{
     SelectedNodeEditorAdjacentParents, SelectedNodeEditorNode, SelectedNodeEditorProjection,
     SelectedNodeEditorSummary,
@@ -96,7 +99,7 @@ pub use selected_node_editor::{
 pub use semantic_dependency::{
     RecordSemanticDependencyCommand, SemanticDependency, SemanticDependencyContractError,
     SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyKind,
-    SemanticDependencyProjection,
+    SemanticDependencyProjection, SemanticDependencyRevisionBinding,
 };
 pub use semantic_proposal::{
     AcceptBibleReferenceProposalCommand, BibleReferenceKind, BibleReferenceProposal,

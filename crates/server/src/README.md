@@ -9,15 +9,34 @@ domain model in `eidetic-core`.
 | File/Folder | Description |
 |-------------|-------------|
 | `lib.rs` | Backend runtime module root consumed by binaries, tests, and future desktop bindings. |
-| `backend_task.rs` | Backend task supervisor for explicit desktop lifecycle ownership. |
+| `backend_task.rs` | Backend task supervisor that reaps observed completions during normal admission and owns unfinished work through shutdown. |
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
-| `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by Tauri commands. |
+| `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
+| `ai_script_context.rs` | Canonical screenplay evidence for shared preview/generation context, carrying exact block and segment write identities. |
+| `script_generation_lineage.rs` | Atomic successful-generation records and existing semantic dependencies bound to consumed screenplay revisions. |
+| `script_generation_lineage_tests.rs` | A-to-B/unrelated-C, edits during generation, atomic rollback, replay, source deletion, refreshed and unavailable binding regressions. |
+| `script_impact_projection.rs` | Derived Needs review causes against the latest successful generation, retaining historical source excerpts after deletion. |
+| `script_impact_review.rs` | Proven-cause capture, revision-bound propagation proposal recording and atomic targeted acceptance with refreshed lineage. |
+| `script_impact_review_tests.rs` | Linked-scene preview/reject/accept, stale/ABA, graph-time, lock, replay, target-scope and rollback fixtures. |
+| `script_impact_review_guard_tests.rs` | Resolved-world context, explicit fictional time and late span/content regeneration lock guards. |
+| `script_impact_review_service.rs` | Desktop-facing preview service using the configured provider without committing screenplay output. |
+| `script_impact_review_service_tests.rs` | Native AppState preview regressions for truncated HTTP refusal and complete split-SSE proposal text. |
+| `timeline_script_placement.rs` | Transaction-local range synchronization and sparse placement history for live source-bound screenplay segments. |
+| `timeline_script_placement_tests.rs` | Deterministic two-scene reorder/context/impact, explicit review, historical-input, replay/ABA and placement rollback fixtures. |
+| `timeline_script_placement_service_tests.rs` | Native public range-service publication, replay and rollback regression with canonical episode metadata initialized before copying its fixture database. |
+| `script_impact_prompt.rs` | Targeted screenplay prompt from captured canonical inputs and resolved graph context, with strict complete-stream collection. |
+| `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
+| `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
+| `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
+| `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |
 | `ai_temporal_context.rs` | Deterministic per-field fictional-time resolution before prompt construction; excludes future assertions and rejects same-time conflicts. |
 | `ai_temporal_context_tests.rs` | Sparse inheritance, ordering, conflict, duplicate and cleared-value temporal regressions. |
 | `ai_generation_service.rs` | Host-neutral streaming script generation and batch generation orchestration consumed by Tauri commands. |
 | `ai_generation_runtime.rs` | Supervised AI generation runtime for streaming, status persistence, script block writes, and recap generation. |
+| `ai_generation_stream_tests.rs` | Provider-independent stream error, successful EOF, empty output and progress regressions. |
+| `ai_generation_runtime_tests.rs` | Native AppState/SQLite regressions for failed-stream lineage preservation, generation cleanup and captured-input persistence after an intervening edit. |
 | `affect_service.rs` | Host-neutral affect command/projection behavior over backend-owned affect storage. |
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by Tauri commands. |
 | `model_endpoint_resolver.rs` | Backend-owned llama.cpp OpenAI endpoint policy and Pumas runtime-profile resolution for live provider workflows. |
@@ -33,6 +52,10 @@ domain model in `eidetic-core`.
 | `reference_retrieval_tests.rs` | Actual RAG attach-boundary regression coverage for queued/reopened sessions and late query results. |
 | `affect_store.rs` | SQLite affect value, dependency, and proposal persistence with revision-history writes. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
+| `command_service_timeline.rs` | Timeline command services with source admission and an owned session gate through document/event/save publication. |
+| `timeline_command_admission_tests.rs` | Deterministic blocked-load tests for fallback and create-child database ownership across project replacement. |
+| `timeline_postcommit_custody_tests.rs` | Queued session/save-as conflicts, bounded document-channel publication, errors and seeded A/B history regressions. |
+| `state_autosave_custody_tests.rs` | Autosave memento ownership across mirror/path/document serialization and persistence. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
 | `timeline_command_guard.rs` | Transaction-local timeline snapshot validation shared by all timeline history writers. |
 | `timeline_range_history_tests.rs` | Descendant range delta, replay ordering, WAL interleaving and interrupted-transaction rollback regressions. |
@@ -100,6 +123,107 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Ordinary range edits move/resize live source-bound screenplay segments with
+  the source node and any resized descendants in the same history transaction.
+  Changed placement gets the timeline event identity and exact sparse old/new
+  fields; authored text, spans/locks, block revisions, status and document
+  metadata remain unchanged. Deleted/unbound segments do not participate.
+- The range service publishes `ScriptChanged` after a recorded commit so the
+  existing frontend refreshes screenplay/review and invalidates prompt context.
+  Failed commands and idempotent replay publish no events. Placement causes are
+  derived through existing consumed segment revisions; updating dependent text
+  still requires a bound proposal and explicit acceptance.
+- Sparse segment inputs are validated by replaying historical fields through
+  the captured event, using existing append-only event order. Later writes or
+  deletion never silently rebind generation to current placement. Presentation
+  placement never supplies the graph's optional fictional time.
+- A Needs review preview targets the generated output block of a proven current
+  cause. Capture target text/placement events, current screenplay inputs, cause
+  and resolved graph context in one read snapshot. Include a moved source even
+  outside the ordinary continuity window; retain deleted-source explanation.
+- The targeted prompt consumes only its captured screenplay and resolved graph
+  evidence. It shares screenplay formatting and the existing temporal resolver;
+  it neither includes unbound timeline prose nor treats placement as fictional
+  time. The UI supplies no fictional time, so timed world facts remain unresolved;
+  the typed request also supports an explicit query coordinate.
+- Preview persists an existing propagation proposal plus additive typed binding
+  storage, not screenplay changes. Partial failed/empty streams create no draft.
+  Request replay returns existing review state without another provider call.
+- Bound acceptance rechecks source/target revisions, cause, graph evidence,
+  pending proposal contents, span locks and the source node's regeneration lock
+  after acquiring the SQLite writer lock. Accepted text/span, proposal status,
+  sparse history and refreshed actual-input lineage commit atomically. Preserve
+  document/segment metadata, other blocks and the writer's source edit.
+- Bound previews cannot be amended/retargeted through the generic update command;
+  reject and request a fresh preview. Stale refusal leaves the pending proposal
+  and authored text available. Rejection changes only proposal review history.
+  Inferred world assertions remain separate proposals; this flow writes no facts.
+- Successful generated output, generation record, revision-bound semantic
+  dependencies and sparse history commit in one SQLite transaction. Stream
+  failure/empty output creates no generation lineage. Validate captured historical
+  text and placement without rebinding to current inputs after model I/O.
+- Generation replay covers the complete input evidence and cannot overwrite a
+  later output or duplicate lineage. Additive tables preserve unbound legacy edges.
+- Script projection payload, review causes and version share one read snapshot.
+  Only the latest successful generation's bindings define review causes; old
+  bindings remain audit history. Intentional replacement of the consumer's own
+  prior draft does not flag itself. Missing input history is explicitly unavailable.
+- Review impact preserves authored text, locks, canonical segment status and
+  explicit proposal acceptance. It neither infers semantic relationships beyond
+  actual supplied screenplay context nor recursively marks unrelated segments.
+- Manual script edits change only canonical block text and its user-edited span.
+  Clients supply an expected block write-event identity; the transaction checks
+  it and current locks before mutation. Failure rolls back command/history rows.
+  Replay preserves intervening edits. Document/segment metadata stays backend-owned.
+- Preview and single/batch script generation hydrate the same main-document
+  screenplay context: target/intersecting segments plus up to two preceding and
+  two following segments in presentation order. Every block carries its source
+  segment/block IDs and their exact write events. These coordinates do not resolve
+  fictional time. Legacy node script text and unbound recaps are omitted from this
+  path. This slice does not infer or accept world updates or mark dependent scripts stale.
+- Timeline command admission captures the database path and fallback project
+  mirror under the project guard before loading persisted state. Failed loads
+  cannot read a later session's mirror; derived create-child commands reuse the
+  original admission instead of resolving the active database a second time.
+- Participating timeline commands, project create/load/save and autosave share an
+  async session gate. Timeline requests capture a session identity before waiting;
+  replacement/reopen or save-as invalidates queued requests explicitly. Admitted
+  work retains its gate through document enqueue, event and save publication.
+  Autosave keeps mirror, path and serialized document in that gate through I/O.
+- Admitted timeline/lifecycle work moves its owned gate into a supervised task;
+  caller cancellation does not release it during blocking persistence or document
+  publication. Waiting for admission stays cancellable. Backend shutdown aborts
+  these tasks; this is not crash recovery or a guarantee for other producers.
+- Normal supervisor spawn reaps finished task handles and observes their join
+  results, including named panic reporting, before records accumulate across
+  command history. Unfinished handles remain owned; shutdown still aborts and joins
+  them. A completed tail may remain until the next spawn/count/shutdown, so record
+  retention follows outstanding work and recent completions rather than total edits.
+  Smoke inspection is not required to run cleanup. Passive test measurements do
+  not prune the registry.
+- Create/load flush the outgoing session directly before replacing its document.
+  Save As flushes/reloads the source database, preserving committed timeline/arcs
+  over its stale mirror, and copies that snapshot with the current document blob.
+  Serialization/write/read failures prevent active-session publication. Autosave
+  skips writes when serialization fails, preserving the last stored document.
+  Save compares the active owner's freshly validated canonical identity with
+  the validated destination before classifying an existing target or rotating
+  its session. Normal/verbatim/8.3 and contained symbolic-link spellings of one
+  project remain a same-database save; queued edits retain their session. Active
+  publication keeps the canonical security path. A different existing Save As
+  destination returns a conflict to avoid combining its timeline/history with
+  the source. Hard links retain distinct canonical names/WAL namespaces and are
+  refused as existing destinations, not reopened as spelling aliases. Save As
+  copies a current-state snapshot,
+  not source command history, affect stores or external collaboration sessions.
+- Y.Doc load restores into a fresh document rather than merging project lifetimes.
+  Empty/fallback population starts fresh; invalid blobs preserve the current doc
+  until an explicit fallback. Closed channels return errors. A document-channel
+  failure after SQLite commit reports that the command is already committed;
+  it does not claim SQL rollback or silently drop a full-channel write.
+- This custody gate is scoped to participating timeline/lifecycle operations.
+  Other producers, pre-admission frontend intent tokens, model/generation custody
+  and external collaborative client resynchronization are not qualified here.
 - Reference embeddings are disposable derived state. Exact source snapshots and
   project-index/document tickets fence async publication; project create/load and
   reference deletion invalidate pending work. Admission binds single and batch
@@ -122,6 +246,13 @@ increase coupling by hiding the transaction invariant.
   Future-only fields with no baseline retain an unknown marker before their
   first assertion. Temporal resolution applies to fields, not edges, and
   effective provenance is label/time rather than unique assertion identity.
+- A generation stream error is terminal even after progress tokens were emitted.
+  Its accumulated prefix never reaches successful script persistence or completion
+  events. Existing failure cleanup reports the provider error and releases the
+  generating marker; prior script blocks and their revision history remain intact.
+  Only successful EOF with nonempty text can reach the success path. Successful
+  empty EOF remains the distinct "AI produced no output" outcome. This does not
+  qualify project-switch custody, successful persistence atomicity or live models.
 - Agent intent is recorded before tool execution. Failed or cancelled runs have
   terminal history; failures never trigger automatic tool retries. Cooperative
   cancellation does not roll back commands already committed. If persistence
@@ -169,10 +300,27 @@ assert!(result.is_ok());
 
 SQLite tests must close inspection connections before removing database files,
 so cleanup verifies the same resource lifetime on Windows and Unix. Project-path
-validation returns children under the canonical root when that root exists;
+validation resolves relative children under the canonical root when it exists;
 tests compare exact paths built from that canonical root and native components.
 A missing root continues to use lexical normalization. Timestamp equality and
-path escape-rejection assertions remain required.
+path escape-rejection assertions remain required. On Windows, ordinary and
+canonical verbatim drive/UNC prefixes compare equivalently within the same
+drive/share. Relative paths and missing roots retain lexical directory-component
+containment. Existing absolute root aliases use canonical nearest-existing-
+ancestor containment, including new files below that ancestor; Windows aliases
+must also preserve the absolute drive/UNC-share boundary. A short spelling such
+as `RUNNER~1` must be accepted when its resolved ancestor remains in the same
+canonical storage root. Sibling paths, traversal escapes and linked escapes must
+still be rejected. The returned path joins the canonical existing ancestor with
+its unresolved suffix, so retargeting an accepted alias after validation cannot
+redirect an existing-file open or a new-file write through that alias. Windows
+tests obtain aliases through `GetShortPathNameW`; only the 8.3-specific subcase
+is unavailable when the API successfully returns a long name. Only symlink
+creation error `ERROR_PRIVILEGE_NOT_HELD` (1314) makes the linked-escape subcase
+unavailable. General existing/new-path, relative, traversal, sibling and
+volume-boundary checks remain active in either case. Other fixture errors fail. Custody fixtures close their
+inspection connections before
+teardown instead of relying on Unix open-file unlink behavior.
 
 ### Shared timeline snapshot custody (M4a)
 

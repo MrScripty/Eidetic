@@ -217,6 +217,7 @@ mod tests {
                 sort_order: 0,
             },
             segments: vec![ScriptSegmentProjection {
+                impact: None,
                 segment: ScriptSegment {
                     id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
                     document_id: ScriptDocumentId::new("script.document.main").unwrap(),
@@ -230,6 +231,7 @@ mod tests {
                     .into_iter()
                     .enumerate()
                     .map(|(index, (block_kind, text))| ScriptBlockProjection {
+                        revision_event_id: None,
                         block: ScriptBlock {
                             id: ScriptBlockId::new(format!("script.block.{index}")).unwrap(),
                             segment_id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),

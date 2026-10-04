@@ -257,6 +257,20 @@ pub(crate) fn load_document_projection_envelope(
     conn: &Connection,
     document_id: &ScriptDocumentId,
 ) -> Result<Option<ProjectionEnvelope<ScriptDocumentProjection>>, HistoryStoreError> {
+    create_schema(conn)?;
+    if conn.is_autocommit() {
+        let tx = conn.unchecked_transaction()?;
+        let projection = load_document_projection_envelope_in_snapshot(&tx, document_id)?;
+        tx.commit()?;
+        return Ok(projection);
+    }
+    load_document_projection_envelope_in_snapshot(conn, document_id)
+}
+
+fn load_document_projection_envelope_in_snapshot(
+    conn: &Connection,
+    document_id: &ScriptDocumentId,
+) -> Result<Option<ProjectionEnvelope<ScriptDocumentProjection>>, HistoryStoreError> {
     let Some(projection) = load_document_projection(conn, document_id)? else {
         return Ok(None);
     };
@@ -288,7 +302,12 @@ fn load_segments(
     for row in rows {
         let segment = row?;
         let blocks = load_blocks(conn, &segment.id)?;
-        segments.push(ScriptSegmentProjection { segment, blocks });
+        let impact = crate::script_impact_projection::load_impact(conn, &segment.id)?;
+        segments.push(ScriptSegmentProjection {
+            segment,
+            blocks,
+            impact,
+        });
     }
     Ok(segments)
 }
@@ -298,19 +317,22 @@ fn load_blocks(
     segment_id: &ScriptSegmentId,
 ) -> Result<Vec<ScriptBlockProjection>, HistoryStoreError> {
     let mut statement = conn.prepare(
-        "SELECT id, segment_id, block_kind, text, sort_order
+        "SELECT id, segment_id, block_kind, text, sort_order, updated_event_id
          FROM script_blocks
          WHERE segment_id = ?1 AND deleted_event_id IS NULL
          ORDER BY sort_order ASC, id ASC",
     )?;
-    let rows = statement.query_map([segment_id.as_str()], row_to_block)?;
+    let rows = statement.query_map([segment_id.as_str()], |row| {
+        Ok((row_to_block(row)?, row.get::<_, String>(5)?))
+    })?;
 
     let mut blocks = Vec::new();
     for row in rows {
-        let block = row?;
+        let (block, revision) = row?;
         let spans = load_spans(conn, &block.id)?;
         let locks = load_locks_for_block(conn, &block.id)?;
         blocks.push(ScriptBlockProjection {
+            revision_event_id: Some(ChangeEventId(parse_uuid(&revision)?)),
             block,
             spans,
             locks,

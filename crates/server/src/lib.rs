@@ -12,6 +12,7 @@ pub(crate) mod ai_bible_context_prompt;
 pub(crate) mod ai_context_projection;
 pub(crate) mod ai_generation_runtime;
 pub mod ai_generation_service;
+pub(crate) mod ai_script_context;
 pub mod ai_service;
 pub(crate) mod ai_temporal_context;
 pub mod backend_error;
@@ -60,7 +61,13 @@ pub(crate) mod propagation_proposal_target;
 pub(crate) mod propagation_proposal_update;
 pub mod reference_service;
 pub(crate) mod revision_projection;
+pub(crate) mod script_block_edit;
 pub(crate) mod script_document_command;
+pub(crate) mod script_generation_lineage;
+pub(crate) mod script_impact_projection;
+pub(crate) mod script_impact_prompt;
+pub(crate) mod script_impact_review;
+pub mod script_impact_review_service;
 pub(crate) mod script_segment_replace;
 pub(crate) mod script_store;
 pub(crate) mod script_store_codec;
@@ -87,3 +94,11 @@ pub(crate) mod timeline_relationship_store;
 pub mod validation;
 pub(crate) mod vector_store;
 pub mod ydoc;
+
+#[cfg(test)]
+mod timeline_postcommit_custody_tests;
+
+mod timeline_script_placement;
+
+#[cfg(test)]
+mod timeline_script_placement_service_tests;

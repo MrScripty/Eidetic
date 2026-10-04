@@ -85,6 +85,14 @@ pub struct SemanticDependency {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confidence: Option<f32>,
     pub created_at_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision_binding: Option<SemanticDependencyRevisionBinding>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SemanticDependencyRevisionBinding {
+    pub source_revision_event_id: super::ChangeEventId,
+    pub target_revision_event_id: super::ChangeEventId,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -115,7 +123,8 @@ mod tests {
 
     #[test]
     fn semantic_dependency_round_trips_bible_field_endpoint() {
-        let dependency = SemanticDependency {
+        let mut dependency = SemanticDependency {
+            revision_binding: None,
             id: SemanticDependencyId::new("dependency.weather.scene").unwrap(),
             source: SemanticDependencyEndpoint::ScriptSegment {
                 segment_id: ScriptSegmentId::new("script.segment.scene-1").unwrap(),
@@ -136,5 +145,15 @@ mod tests {
         let decoded: SemanticDependency = serde_json::from_str(&encoded).unwrap();
 
         assert_eq!(decoded, dependency);
+
+        dependency.revision_binding = Some(SemanticDependencyRevisionBinding {
+            source_revision_event_id: super::super::ChangeEventId(uuid::Uuid::new_v4()),
+            target_revision_event_id: super::super::ChangeEventId(uuid::Uuid::new_v4()),
+        });
+        let encoded = serde_json::to_value(&dependency).unwrap();
+        assert_eq!(
+            serde_json::from_value::<SemanticDependency>(encoded).unwrap(),
+            dependency
+        );
     }
 }

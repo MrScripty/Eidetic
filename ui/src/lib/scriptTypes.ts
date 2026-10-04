@@ -67,11 +67,41 @@ export interface ScriptPatch {
 
 export interface ScriptSegmentProjection {
   segment: ScriptSegment;
+  impact?: ScriptImpactProjection | null;
   blocks: ScriptBlockProjection[];
+}
+
+export interface ScriptImpactProjection {
+  generation_event_id: string;
+  output_block_id?: string | null;
+  lineage_available: boolean;
+  needs_review: boolean;
+  causes: ScriptImpactCause[];
+}
+
+export interface ScriptImpactCause {
+  dependency_id: string;
+  input:
+    | { kind: 'timeline_node'; node_id: string }
+    | { kind: 'bible_node'; node_id: string }
+    | {
+        kind: 'bible_field';
+        node_id: string;
+        part_key: string;
+        field_key: string;
+        field_id?: string | null;
+      }
+    | { kind: 'script_block'; block_id: string }
+    | { kind: 'script_segment'; segment_id: string };
+  consumed_revision_event_id: string;
+  current_revision_event_id: string | null;
+  reason: 'changed' | 'deleted';
+  input_excerpt: string | null;
 }
 
 export interface ScriptBlockProjection {
   block: ScriptBlock;
+  revision_event_id?: string | null;
   spans: ScriptSpan[];
   locks: ScriptLock[];
 }
@@ -102,6 +132,13 @@ export interface SetScriptLockCommand {
   lock_id: ScriptLockId;
   span_id: ScriptSpanId;
   reason: string;
+}
+
+export interface EditScriptBlockCommand {
+  document_id: ScriptDocumentId;
+  block_id: ScriptBlockId;
+  expected_revision_event_id: string;
+  text: string;
 }
 
 export interface ScriptDocumentCommandResponse {

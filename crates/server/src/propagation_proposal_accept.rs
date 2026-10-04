@@ -33,6 +33,14 @@ pub(crate) fn record_accept_propagation_proposal(
         return Ok(outcome);
     }
     let proposal = load_pending_proposal(conn, &command.payload.proposal_id)?;
+    if proposal.script_review_binding.is_some() {
+        return crate::script_impact_review::accept_bound_proposal(
+            conn,
+            command,
+            &proposal,
+            created_at_ms,
+        );
+    }
     let accepted_target = accepted_target(conn, &proposal)?;
 
     let event = ChangeEvent::new(

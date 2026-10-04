@@ -4168,6 +4168,38 @@ The refactor is complete when:
 
 - Backend-owned SQLite command/event/revision state is the only persistent source of truth.
 - Timeline nodes own context only, not final screenplay text.
+- PR7 review qualification: bound SSE lines/events/diagnostics before retaining
+  provider data, scan each chunk once, and stream tokens without an event queue.
+  Preserve UTF-8, completion, and failed-preview atomicity. Invalidating prompt
+  context clears loading as well as stale responses. Windows project paths must
+  compare ordinary/canonical prefix forms within the same drive/UNC share while
+  retaining lexical containment for relative paths and missing roots. Existing
+  absolute aliases must pass canonical nearest-existing-ancestor containment,
+  including new files below that ancestor, and preserve drive/share boundaries.
+  Windows CI `37218329383` confirmed that `RUNNER~1` expands to `runneradmin` at
+  the lexical gate even though the canonical ancestor remains in the storage
+  root. Genuine Windows short-alias, linked-escape and drive/share regressions
+  accompany the repair; the original containment cases remain intact. PR7
+  review follow-up returns the canonical existing ancestor joined with the
+  unresolved suffix, removing mutable alias spellings from subsequent opens.
+  A real filesystem regression retargets an accepted alias after validation and
+  verifies existing reads and nested new-file writes remain in the original
+  root. Windows fixtures keep general containment checks active when no 8.3
+  alias exists; only the alias-specific subcase is conditional. Only symlink
+  privilege error 1314 makes the linked-escape subcase unavailable; every other
+  creation error fails. Linux source tests and compilation checks do not replace
+  actual Windows CI execution for this follow-up. Windows CI `37225653940`
+  then exposed Save As comparing a canonical destination with an unnormalized
+  active-path spelling. The active database owner now resolves containment-
+  checked identity for lifecycle comparison; same-project spellings neither
+  trigger an existing-destination conflict nor rotate the session. Distinct
+  existing destinations, including hard links with different canonical/WAL
+  names, remain conflicts. Real public-service tests cover spelling-only saves,
+  queued edits, Save As, reopen, document text and exact source history; original
+  custody assertions remain intact with fixture paths admitted canonically.
+  Custody teardown closes SQLite
+  inspection handles before deleting files. Hosted Windows execution remains a
+  separate qualification requirement from cloud source-module tests.
 - Script documents own the generated screenplay artifact.
 - Bible graph rows own world/story/production facts.
 - Accepted changes are traceable through events, object revisions, and semantic dependencies.

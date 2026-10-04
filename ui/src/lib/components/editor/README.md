@@ -7,12 +7,18 @@ This directory contains the main beat and script viewing workflow, including AI 
 | File/Folder | Description |
 |-------------|-------------|
 | `BeatEditor.svelte` | Primary node editing surface for notes, generation, and context panels. |
+| `contextRequestLifecycle.ts` | Prompt request invalidation, loading cleanup and stale-response guards. |
+| `contextRequestLifecycle.test.ts` | Empty notes/selection invalidation and delayed response ordering. |
 | `BeatChildContext.svelte` | Context panel for child nodes, including parent, siblings, and adjacent parent-level nodes. |
 | `BeatEditorHeader.svelte` | Header controls for lock state and AI generation. |
 | `BeatNotesPanel.svelte` | Notes editor, generation status, and prompt preview container. |
 | `BeatPlanningActions.svelte` | Parent-node child-planning action controls. |
 | `AiPromptPreview.svelte` | Raw AI prompt context preview. |
 | `ScriptPanel.svelte` | Container for script-editing surfaces. |
+| `ScriptBlockEditor.svelte` | Focused manual screenplay edit/save/cancel surface, preserving failed drafts and submitting the captured block revision. |
+| `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
+| `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
+| `scriptImpactNotice.ts` | Human-readable labels for the typed input review causes. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
 
 ## Problem
@@ -30,8 +36,22 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+- Review targets the block identified by the generation impact. Display current
+  and exact proposed text; accept/reject explicitly and refresh the canonical
+  script projection afterward. Manual editor drafts remain local and intact.
+  A refusal keeps the proposal available for rejection or a fresh preview.
 - Timeline selection remains the single source of truth for the active editor node.
 - AI generation state remains transient frontend state; durable script text is read from script document projections.
+- Needs review is supplied by the backend projection and rendered alongside
+  authored text. It provides no automatic edit, proposal acceptance or dismissal
+  command. Deleted-source excerpts retain consumed evidence for human review.
+- Manual screenplay drafts remain local until canonical save succeeds. Refused
+  edits retain the draft and expose explicit discard/reload. Script revision
+  invalidation refreshes prompt preview; earlier preview responses cannot replace
+  a newer request for the same selected node.
+- Clearing notes or selection invalidates the pending context request and clears
+  loading immediately. Older successes, failures and finally callbacks cannot
+  restore stale context or clear the loading state of a newer request.
 - Future decomposition preserves current user-facing editor workflows.
 
 ## Revisit Triggers

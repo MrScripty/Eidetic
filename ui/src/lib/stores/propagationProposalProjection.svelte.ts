@@ -1,5 +1,6 @@
 import {
   acceptPropagationProposal,
+  requestScriptImpactProposal,
   createPropagationProposal,
   rejectPropagationProposal,
   updatePropagationProposal,
@@ -14,6 +15,7 @@ import type {
   PropagationProposalListProjection,
   RejectPropagationProposalCommand,
   UpdatePropagationProposalCommand,
+  RequestScriptImpactProposalCommand,
 } from '$lib/propagationProposalTypes.js';
 
 export const propagationProposalProjectionState = $state<{
@@ -153,4 +155,25 @@ export function clearPropagationProposalListProjection(): void {
   propagationProposalProjectionState.projection = null;
   propagationProposalProjectionState.pending = false;
   propagationProposalProjectionState.error = undefined;
+}
+
+export async function applyRequestScriptImpactProposalCommand(
+  payload: RequestScriptImpactProposalCommand,
+  commandId?: CommandId,
+): Promise<PropagationProposalCommandResponse> {
+  propagationProposalProjectionState.pending = true;
+  propagationProposalProjectionState.error = undefined;
+  try {
+    const response = await requestScriptImpactProposal(payload, commandId);
+    cacheProjection(response.projection);
+    return response;
+  } catch (error) {
+    propagationProposalProjectionState.error = errorMessage(
+      error,
+      'Failed to preview screenplay update',
+    );
+    throw error;
+  } finally {
+    propagationProposalProjectionState.pending = false;
+  }
 }

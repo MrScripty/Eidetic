@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use parking_lot::Mutex;
@@ -21,6 +21,20 @@ impl ProjectDatabase {
 
     pub fn active_path(&self) -> Option<PathBuf> {
         self.active_path.lock().clone()
+    }
+
+    /// Resolve the stored spelling through the same containment boundary as a
+    /// requested path before comparing lifecycle identities. This is a fresh
+    /// resolution, not a cached alias or an unvalidated display-path comparison.
+    pub(crate) fn active_path_identity(
+        &self,
+        root: &Path,
+    ) -> Result<Option<PathBuf>, crate::backend_error::BackendError> {
+        self.active_path()
+            .map(|path| {
+                crate::validation::validate_project_path(path.to_string_lossy().as_ref(), root)
+            })
+            .transpose()
     }
 
     pub fn set_active_path(&self, path: PathBuf) {
@@ -66,5 +80,89 @@ mod tests {
         let error = database.open_active_write_connection().unwrap_err();
 
         assert!(matches!(error, ProjectDatabaseError::NoActiveProject));
+    }
+}
+
+#[cfg(test)]
+mod identity_tests {
+    use super::*;
+    use std::fs;
+
+    fn fixture() -> (ProjectDatabase, PathBuf) {
+        let root =
+            std::env::temp_dir().join(format!("eidetic-project-identity-{}", uuid::Uuid::new_v4()));
+        fs::create_dir_all(&root).unwrap();
+        (ProjectDatabase::new(Arc::new(Mutex::new(None))), root)
+    }
+
+    #[test]
+    fn absent_active_path_has_no_identity() {
+        let (database, root) = fixture();
+        assert_eq!(database.active_path_identity(&root).unwrap(), None);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn existing_and_new_active_paths_resolve_to_the_checked_root() {
+        let (database, root) = fixture();
+        fs::write(root.join("existing.db"), []).unwrap();
+        for file in ["existing.db", "nested/new.db"] {
+            database.set_active_path(root.join(file));
+            assert_eq!(
+                database.active_path_identity(&root).unwrap(),
+                Some(root.canonicalize().unwrap().join(file))
+            );
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn existing_outside_active_path_is_rejected() {
+        let (database, root) = fixture();
+        let outside = root.with_extension("outside.db");
+        fs::write(&outside, []).unwrap();
+        database.set_active_path(outside.clone());
+        assert!(database.active_path_identity(&root).is_err());
+        fs::remove_file(outside).unwrap();
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn active_symlink_spelling_and_canonical_destination_have_one_identity() {
+        let (database, root) = fixture();
+        let path = root.join("project.db");
+        fs::write(&path, []).unwrap();
+        let alias = root.join("alias.db");
+        std::os::unix::fs::symlink(&path, &alias).unwrap();
+        database.set_active_path(alias.clone());
+        assert_ne!(
+            database.active_path().unwrap(),
+            path.canonicalize().unwrap()
+        );
+        assert_eq!(
+            database.active_path_identity(&root).unwrap(),
+            Some(path.canonicalize().unwrap())
+        );
+        // Resolving identity must not publish an owner/session change itself.
+        assert_eq!(database.active_path(), Some(alias));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn active_normal_verbatim_and_short_spellings_have_one_identity() {
+        let (database, root) = fixture();
+        let path = root.join("project.db");
+        fs::write(&path, []).unwrap();
+        let expected = path.canonicalize().unwrap();
+        for spelling in crate::validation::tests::windows_path_spellings(&path) {
+            database.set_active_path(spelling);
+            assert_eq!(
+                database.active_path_identity(&root).unwrap(),
+                Some(expected.clone())
+            );
+        }
+        fs::remove_dir_all(root).unwrap();
     }
 }

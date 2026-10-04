@@ -1,15 +1,16 @@
 #[cfg(test)]
 use eidetic_core::contracts::{
-    ChangeEvent, ChangeEventKind, CommandEnvelope, FieldDelta, FieldValue, ObjectRevision,
-    RecordSemanticDependencyCommand, RevisionOperation,
+    ChangeEvent, ChangeEventKind, CommandEnvelope, RecordSemanticDependencyCommand,
 };
+use eidetic_core::contracts::{FieldDelta, FieldValue, ObjectRevision, RevisionOperation};
 use eidetic_core::contracts::{
     ObjectKind, ProjectionEnvelope, ProjectionVersion, SemanticDependency,
     SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyProjection,
+    SemanticDependencyRevisionBinding,
 };
-use rusqlite::{Connection, Row, params};
 #[cfg(test)]
-use rusqlite::{OptionalExtension, Transaction};
+use rusqlite::OptionalExtension;
+use rusqlite::{Connection, Row, Transaction, params};
 
 #[cfg(test)]
 use crate::history_store::RecordChangeOutcome;
@@ -41,6 +42,11 @@ CREATE INDEX IF NOT EXISTS idx_semantic_dependencies_target
     ON semantic_dependencies(target_kind, target_id);
 CREATE INDEX IF NOT EXISTS idx_semantic_dependencies_target_field
     ON semantic_dependencies(target_kind, target_id, target_part_key, target_field_key);
+CREATE TABLE IF NOT EXISTS semantic_dependency_revisions (
+    dependency_id TEXT PRIMARY KEY REFERENCES semantic_dependencies(id),
+    source_revision_event_id TEXT NOT NULL REFERENCES change_events(id),
+    target_revision_event_id TEXT NOT NULL REFERENCES change_events(id)
+);
 "#;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -159,8 +165,7 @@ fn dependency_exists(
     .map_err(SemanticDependencyStoreError::from)
 }
 
-#[cfg(test)]
-fn insert_dependency_in_transaction(
+pub(crate) fn insert_dependency_in_transaction(
     tx: &Transaction<'_>,
     dependency: &SemanticDependency,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -195,6 +200,11 @@ fn insert_dependency_in_transaction(
             event_id.0.to_string(),
         ],
     )?;
+    if let Some(binding) = &dependency.revision_binding {
+        tx.execute("INSERT INTO semantic_dependency_revisions
+            (dependency_id, source_revision_event_id, target_revision_event_id) VALUES (?1, ?2, ?3)",
+            params![dependency.id.as_str(), binding.source_revision_event_id.0.to_string(), binding.target_revision_event_id.0.to_string()])?;
+    }
     Ok(())
 }
 
@@ -211,8 +221,10 @@ fn load_dependencies(
             id,
             source_kind, source_id, source_part_key, source_field_key, source_field_id,
             target_kind, target_id, target_part_key, target_field_key, target_field_id,
-            dependency_kind, rationale, confidence, created_at_ms
+            dependency_kind, rationale, confidence, created_at_ms,
+            revisions.source_revision_event_id, revisions.target_revision_event_id
          FROM semantic_dependencies
+         LEFT JOIN semantic_dependency_revisions revisions ON revisions.dependency_id = semantic_dependencies.id
          WHERE deleted_event_id IS NULL
            AND {prefix}_kind = ?1
            AND {prefix}_id = ?2
@@ -265,11 +277,23 @@ fn row_to_dependency(row: &Row<'_>) -> Result<SemanticDependency, SemanticDepend
                 "invalid created_at_ms for semantic dependency: {e}"
             ))
         })?,
+        revision_binding: row
+            .get::<_, Option<String>>(15)?
+            .map(|source| {
+                Ok::<_, SemanticDependencyStoreError>(SemanticDependencyRevisionBinding {
+                    source_revision_event_id: eidetic_core::contracts::ChangeEventId(parse_uuid(
+                        &source,
+                    )?),
+                    target_revision_event_id: eidetic_core::contracts::ChangeEventId(parse_uuid(
+                        &row.get::<_, String>(16)?,
+                    )?),
+                })
+            })
+            .transpose()?,
     })
 }
 
-#[cfg(test)]
-fn dependency_revision(
+pub(crate) fn dependency_revision(
     dependency: &SemanticDependency,
     event_id: eidetic_core::contracts::ChangeEventId,
 ) -> Result<ObjectRevision, HistoryStoreError> {
@@ -294,6 +318,25 @@ fn dependency_revision(
         None,
         Some(FieldValue::Text(endpoint_label(&dependency.target))),
     ));
+    let revision = if let Some(binding) = &dependency.revision_binding {
+        revision
+            .with_field(FieldDelta::new(
+                "source_revision_event_id",
+                None,
+                Some(FieldValue::Text(
+                    binding.source_revision_event_id.0.to_string(),
+                )),
+            ))
+            .with_field(FieldDelta::new(
+                "target_revision_event_id",
+                None,
+                Some(FieldValue::Text(
+                    binding.target_revision_event_id.0.to_string(),
+                )),
+            ))
+    } else {
+        revision
+    };
     let revision = match dependency.rationale.as_ref() {
         Some(rationale) => revision.with_field(FieldDelta::new(
             "rationale",
@@ -312,7 +355,6 @@ fn dependency_revision(
     })
 }
 
-#[cfg(test)]
 fn endpoint_label(endpoint: &SemanticDependencyEndpoint) -> String {
     let sql = SqlEndpoint::from_endpoint(endpoint);
     match (sql.part_key, sql.field_key) {
@@ -333,7 +375,6 @@ struct SqlEndpoint {
 }
 
 impl SqlEndpoint {
-    #[cfg(test)]
     fn from_endpoint(endpoint: &SemanticDependencyEndpoint) -> Self {
         match endpoint {
             SemanticDependencyEndpoint::TimelineNode { node_id } => Self {
@@ -415,7 +456,6 @@ impl SqlEndpoint {
     }
 }
 
-#[cfg(test)]
 fn encode_string_enum<T>(value: &T) -> Result<String, HistoryStoreError>
 where
     T: serde::Serialize,
