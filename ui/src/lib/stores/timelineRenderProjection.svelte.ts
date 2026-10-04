@@ -40,6 +40,11 @@ export const timelineRenderProjectionState = $state<{
   error: undefined,
 });
 
+// A clear starts a new cache lifetime even when the same project is reopened.
+let cacheGeneration = 0;
+let activeRequests = 0;
+let latestRequestId = 0;
+
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
@@ -61,226 +66,148 @@ export function getCachedTimelineRenderModel(): TimelineRenderModel | null {
   return projection ? timelineRenderModelFromProjection(projection.payload) : null;
 }
 
-export async function refreshTimelineRenderProjection(): Promise<
-  ProjectionEnvelope<TimelineRenderProjection>
-> {
+async function runTimelineProjectionRequest<T>(
+  request: () => Promise<T>,
+  projectionOf: (result: T) => ProjectionEnvelope<TimelineRenderProjection>,
+  failureMessage: string,
+): Promise<T> {
+  const generation = cacheGeneration;
+  const requestId = ++latestRequestId;
+  activeRequests += 1;
   timelineRenderProjectionState.pending = true;
   timelineRenderProjectionState.error = undefined;
 
   try {
-    const projection = await getTimelineRenderProjection();
-    replaceTimelineRenderProjectionIfFresh(projection);
-    return projection;
+    const result = await request();
+    if (generation === cacheGeneration) {
+      replaceTimelineRenderProjectionIfFresh(projectionOf(result));
+    }
+    return result;
   } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to load timeline render projection',
-    );
+    if (generation === cacheGeneration && requestId === latestRequestId) {
+      timelineRenderProjectionState.error = errorMessage(error, failureMessage);
+    }
     throw error;
   } finally {
-    timelineRenderProjectionState.pending = false;
+    if (generation === cacheGeneration) {
+      activeRequests -= 1;
+      timelineRenderProjectionState.pending = activeRequests > 0;
+    }
   }
+}
+
+export async function refreshTimelineRenderProjection(): Promise<
+  ProjectionEnvelope<TimelineRenderProjection>
+> {
+  return runTimelineProjectionRequest(
+    () => getTimelineRenderProjection(),
+    (result) => result,
+    'Failed to load timeline render projection',
+  );
 }
 
 export async function applyTimelineNodeRangeCommand(
   payload: SetTimelineNodeRangeCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await setTimelineNodeRange(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline node range command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => setTimelineNodeRange(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline node range command',
+  );
 }
 
 export async function applyCreateTimelineNodeCommand(
   payload: CreateTimelineNodeCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await createTimelineNode(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline create node command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => createTimelineNode(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline create node command',
+  );
 }
 
 export async function applyTimelineChildrenCommand(
   payload: ApplyTimelineChildrenCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await applyTimelineChildren(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline children command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => applyTimelineChildren(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline children command',
+  );
 }
 
 export async function applyCreateTimelineRelationshipCommand(
   payload: CreateTimelineRelationshipCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await createTimelineRelationship(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline create relationship command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => createTimelineRelationship(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline create relationship command',
+  );
 }
 
 export async function applyDeleteTimelineRelationshipCommand(
   payload: DeleteTimelineRelationshipCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await deleteTimelineRelationship(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline delete relationship command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => deleteTimelineRelationship(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline delete relationship command',
+  );
 }
 
 export async function applyTimelineNodeLockCommand(
   payload: SetTimelineNodeLockCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await setTimelineNodeLock(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline node lock command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => setTimelineNodeLock(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline node lock command',
+  );
 }
 
 export async function applyTimelineNodeNotesCommand(
   payload: SetTimelineNodeNotesCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await setTimelineNodeNotes(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline node notes command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => setTimelineNodeNotes(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline node notes command',
+  );
 }
 
 export async function applySplitTimelineNodeCommand(
   payload: SplitTimelineNodeCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await splitTimelineNode(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline split node command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => splitTimelineNode(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline split node command',
+  );
 }
 
 export async function applyDeleteTimelineNodeCommand(
   payload: DeleteTimelineNodeCommand,
   commandId?: CommandId,
 ): Promise<TimelineCommandResponse> {
-  timelineRenderProjectionState.pending = true;
-  timelineRenderProjectionState.error = undefined;
-
-  try {
-    const response = await deleteTimelineNode(payload, commandId);
-    replaceTimelineRenderProjectionIfFresh(response.projection);
-    return response;
-  } catch (error) {
-    timelineRenderProjectionState.error = errorMessage(
-      error,
-      'Failed to apply timeline delete node command',
-    );
-    throw error;
-  } finally {
-    timelineRenderProjectionState.pending = false;
-  }
+  return runTimelineProjectionRequest(
+    () => deleteTimelineNode(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline delete node command',
+  );
 }
 
 export function clearTimelineRenderProjection(): void {
+  cacheGeneration += 1;
+  activeRequests = 0;
   timelineRenderProjectionState.projection = null;
   timelineRenderProjectionState.pending = false;
   timelineRenderProjectionState.error = undefined;
