@@ -99,6 +99,7 @@ fn rejects_out_of_range_confidence() {
 fn dependency_command(id: &str) -> CommandEnvelope<RecordSemanticDependencyCommand> {
     CommandEnvelope::new(RecordSemanticDependencyCommand {
         dependency: SemanticDependency {
+            revision_binding: None,
             id: SemanticDependencyId::new(id).unwrap(),
             source: SemanticDependencyEndpoint::ScriptSegment {
                 segment_id: ScriptSegmentId::new("script.segment.scene-1").unwrap(),

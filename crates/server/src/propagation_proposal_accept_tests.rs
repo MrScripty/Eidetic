@@ -322,6 +322,7 @@ fn regenerated_segment_patch() -> ScriptPatch {
         id: ScriptPatchId::new("script.patch.regenerate-beat-1").unwrap(),
         document_id: ScriptDocumentId::new("script.document.main").unwrap(),
         segments: vec![ScriptSegmentProjection {
+            impact: None,
             segment: ScriptSegment {
                 id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
                 document_id: ScriptDocumentId::new("script.document.main").unwrap(),

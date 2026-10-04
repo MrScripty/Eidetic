@@ -83,11 +83,12 @@ pub use propagation_proposal::{
     UpdatePropagationProposalCommand,
 };
 pub use script_document::{
-    EditScriptBlockCommand, ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection,
-    ScriptContextBlock, ScriptContractError, ScriptDocument, ScriptDocumentId,
-    ScriptDocumentProjection, ScriptLock, ScriptLockId, ScriptPatch, ScriptPatchId, ScriptSegment,
-    ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan, ScriptSpanId,
-    ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
+    EditScriptBlockCommand, GenerateScriptBlockCommand, ScriptBlock, ScriptBlockId,
+    ScriptBlockKind, ScriptBlockProjection, ScriptContextBlock, ScriptContractError,
+    ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptImpactCause,
+    ScriptImpactProjection, ScriptImpactReason, ScriptLock, ScriptLockId, ScriptPatch,
+    ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus,
+    ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
 };
 pub use selected_node_editor::{
     SelectedNodeEditorAdjacentParents, SelectedNodeEditorNode, SelectedNodeEditorProjection,
@@ -96,7 +97,7 @@ pub use selected_node_editor::{
 pub use semantic_dependency::{
     RecordSemanticDependencyCommand, SemanticDependency, SemanticDependencyContractError,
     SemanticDependencyEndpoint, SemanticDependencyId, SemanticDependencyKind,
-    SemanticDependencyProjection,
+    SemanticDependencyProjection, SemanticDependencyRevisionBinding,
 };
 pub use semantic_proposal::{
     AcceptBibleReferenceProposalCommand, BibleReferenceKind, BibleReferenceProposal,

@@ -63,7 +63,7 @@ slice starts from exact accepted integration `9f44a974bc7830e721237b3ccb295095c1
   old/new history, fresh script projection and fresh prompt evidence without a
   model. Essential stale/ABA, locked refusal and actual consumer regressions apply.
 - **Deferred:** Creation of new blocks/documents, inferred semantic extraction,
-  world-update acceptance, dependency impact/stale marking, timeline semantics,
+  world-update acceptance, broader dependency impact, timeline semantics,
   embeddings/evaluator changes and recovery are separate follow-ups.
 
 Design source: Puma, *Knowledge Graphs and Agentic Memory: Evidence Time Retrieval
@@ -73,6 +73,38 @@ Eidetic audit targets `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`. The accepted
 source already includes the later fictional-time resolver. Reuse canonical
 SQLite/history/projections; neither a graph database nor embedding relevance
 replaces authored evidence or acceptance policy.
+
+## Screenplay generation lineage and Needs review: bounded descendant
+
+Continue on a separate descendant of frozen manual-authoring `9fe7a4a5`.
+The parent has independently accepted that first feature's source/native-service
+behavior (113 core, 314 server, 338 frontend and desktop compile/smoke), with
+graphical typing/save/reopen explicitly unqualified due the extracted runtime's
+hardcoded WebKitNetworkProcess path. This second milestone still requires
+independent qualification; the GitHub publication hold remains unchanged.
+
+- Persist successful output and its actual captured screenplay revision lineage
+  atomically in existing SQLite/history/semantic dependency storage. Each input
+  binds separate block-text and segment-placement revisions to the output event.
+  Validate historical evidence even when source edits/deletion happen during model
+  execution; never rebind to a later source revision at output commit.
+- Failed/empty streams create no output or lineage. Replay signs the complete
+  captured context, does not duplicate rows and does not replace later outputs.
+  Additive generation/binding tables preserve older unbound dependencies. Known
+  empty inputs and unavailable history remain distinct.
+- Derive Needs review for the latest successful generation by comparing bound
+  consumed revisions with current inputs. Include changed/deleted causes and
+  historical source excerpts. Preserve prior lineage after explicit regeneration;
+  a refreshed binding supersedes its old impact. Keep own prior-draft inputs for
+  audit while ignoring their intentional replacement as external impact.
+- Render review causes beside exact screenplay text. Preserve authored content,
+  locks, canonical segment status and explicit proposal acceptance. No automatic
+  cascade, world-fact inference, acceptance/dismissal, graph-database migration,
+  timeline semantic change or project-switch work belongs to this milestone.
+- Required fixtures: A-to-B and unrelated C; failed generation; source edits
+  during generation; replay; deleted-source explainability; refreshed binding.
+  Verify actual SQLite source modules here and native integration independently.
+  Skipped-ORT compilation cannot qualify server runtime behavior.
 
 
 ## Binding decisions and ownership

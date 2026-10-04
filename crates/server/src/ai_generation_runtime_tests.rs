@@ -38,6 +38,7 @@ async fn fixture() -> Fixture {
             end_ms: node.time_range.end_ms,
         },
         "Previously approved screenplay".to_string(),
+        None,
     )
     .await
     .unwrap();
@@ -69,6 +70,13 @@ async fn assert_failed_stream(
 ) {
     let fixture = fixture().await;
     let before = script(&fixture);
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    let inputs =
+        crate::ai_script_context::load_script_context(&conn, fixture.node_id, 0, u64::MAX / 2)
+            .unwrap();
+    assert!(!inputs.is_empty());
+    let lineage_before = lineage_counts(&conn);
+    drop(conn);
     fixture.state.generating.lock().insert(fixture.node_id.0);
     mark_node_generating(
         &fixture.state,
@@ -83,6 +91,7 @@ async fn assert_failed_stream(
         fixture.path.clone(),
         fixture.node_id.0,
         Box::pin(stream::iter(items)),
+        Some(inputs),
     )
     .await;
 
@@ -91,6 +100,9 @@ async fn assert_failed_stream(
         before,
         "prior script and script revision history must remain unchanged"
     );
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    assert_eq!(lineage_counts(&conn), lineage_before);
+    drop(conn);
     assert!(!fixture.state.generating.lock().contains(&fixture.node_id.0));
     assert_ne!(
         fixture
@@ -144,6 +156,17 @@ async fn assert_failed_stream(
     assert_eq!(errors, vec![expected_error]);
 }
 
+fn lineage_counts(conn: &rusqlite::Connection) -> (i64, i64, i64) {
+    conn.query_row(
+        "SELECT (SELECT COUNT(*) FROM script_generations),
+                (SELECT COUNT(*) FROM semantic_dependencies),
+                (SELECT COUNT(*) FROM semantic_dependency_revisions)",
+        [],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    )
+    .unwrap()
+}
+
 #[tokio::test]
 async fn partial_stream_error_preserves_prior_script_and_releases_generation() {
     assert_failed_stream(
@@ -170,4 +193,78 @@ async fn immediate_stream_error_preserves_prior_script_and_releases_generation()
 #[tokio::test]
 async fn empty_eof_remains_no_output_and_releases_generation() {
     assert_failed_stream(vec![], vec![], "AI produced no output").await;
+}
+
+#[tokio::test]
+async fn successful_persistence_keeps_captured_input_lineage_after_an_intervening_edit() {
+    let fixture = fixture().await;
+    let source_node = Uuid::new_v4();
+    let source_command = generated_script_block_command(
+        Uuid::new_v4(),
+        source_node,
+        GeneratedScriptMetadata {
+            project_name: "Source evidence".into(),
+            start_ms: 0,
+            end_ms: 1000,
+        },
+        "  Consumed A — 雨\n\n".into(),
+    )
+    .unwrap();
+    let mut conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    script_document_command::apply_set_script_block(&mut conn, &source_command, 10).unwrap();
+    let captured =
+        crate::ai_script_context::load_script_context(&conn, NodeId(source_node), 0, 1000)
+            .unwrap()
+            .into_iter()
+            .find(|input| input.block_id == source_command.payload.block_id)
+            .unwrap();
+    crate::script_block_edit::apply_edit_script_block(
+        &mut conn,
+        &CommandEnvelope::new(eidetic_core::contracts::EditScriptBlockCommand {
+            document_id: captured.document_id.clone(),
+            block_id: captured.block_id.clone(),
+            expected_revision_event_id: captured.revision_event_id,
+            text: "A changed while generation ran".into(),
+        }),
+        20,
+    )
+    .unwrap();
+    drop(conn);
+    persist_generated_script_block(
+        fixture.path.clone(),
+        fixture.node_id.0,
+        GeneratedScriptMetadata {
+            project_name: "Stream failure".into(),
+            start_ms: 1000,
+            end_ms: 2000,
+        },
+        "  B from captured A\n\n".into(),
+        Some(vec![captured.clone()]),
+    )
+    .await
+    .unwrap();
+    let document = script(&fixture);
+    let output = document
+        .payload
+        .segments
+        .iter()
+        .find(|segment| {
+            segment.segment.source_node_id.as_deref()
+                == Some(fixture.node_id.0.to_string().as_str())
+        })
+        .unwrap();
+    assert_eq!(output.blocks[0].block.text, "  B from captured A\n\n");
+    let impact = output.impact.as_ref().unwrap();
+    assert!(impact.needs_review);
+    assert_eq!(impact.causes.len(), 1);
+    assert_eq!(
+        impact.causes[0].consumed_revision_event_id,
+        captured.revision_event_id
+    );
+    assert_eq!(
+        impact.causes[0].input_excerpt.as_deref(),
+        Some(captured.text.as_str())
+    );
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    assert_eq!(lineage_counts(&conn), (2, 2, 2));
 }

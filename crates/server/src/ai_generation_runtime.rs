@@ -2,8 +2,9 @@ use std::path::PathBuf;
 
 use eidetic_core::ai::backend::{GenerateRequest, RagChunk};
 use eidetic_core::contracts::{
-    CommandEnvelope, CommandId, ScriptBlockId, ScriptBlockKind, ScriptDocumentId, ScriptSegmentId,
-    ScriptSegmentStatus, ScriptSpanProvenance, SetScriptBlockCommand,
+    CommandEnvelope, CommandId, GenerateScriptBlockCommand, ScriptBlockId, ScriptBlockKind,
+    ScriptContextBlock, ScriptDocumentId, ScriptSegmentId, ScriptSegmentStatus,
+    ScriptSpanProvenance, SetScriptBlockCommand,
 };
 use eidetic_core::timeline::node::{ContentStatus, NodeId};
 use futures::StreamExt;
@@ -78,7 +79,14 @@ pub(crate) async fn run_generation(
         }
     };
 
-    finish_generation_stream(state, project_path, node_uuid, stream).await;
+    finish_generation_stream(
+        state,
+        project_path,
+        node_uuid,
+        stream,
+        request.script_context,
+    )
+    .await;
 }
 
 async fn finish_generation_stream(
@@ -86,6 +94,7 @@ async fn finish_generation_stream(
     project_path: PathBuf,
     node_uuid: Uuid,
     stream: eidetic_core::ai::backend::GenerateStream,
+    script_inputs: Option<Vec<ScriptContextBlock>>,
 ) {
     let node_id = NodeId(node_uuid);
     let full_text = match stream_generated_text(stream, |token, tokens_generated| {
@@ -109,7 +118,15 @@ async fn finish_generation_stream(
         return;
     }
 
-    persist_successful_generation(state, project_path, node_id, node_uuid, full_text).await;
+    persist_successful_generation(
+        state,
+        project_path,
+        node_id,
+        node_uuid,
+        full_text,
+        script_inputs,
+    )
+    .await;
 }
 
 async fn attach_rag_context(
@@ -240,6 +257,7 @@ async fn persist_successful_generation(
     node_id: NodeId,
     node_uuid: Uuid,
     full_text: String,
+    script_inputs: Option<Vec<ScriptContextBlock>>,
 ) {
     if let Err(error) =
         persist_node_content_status(project_path.clone(), node_id, ContentStatus::HasContent).await
@@ -250,8 +268,14 @@ async fn persist_successful_generation(
         Some(metadata) => metadata,
         None => return,
     };
-    if let Err(error) =
-        persist_generated_script_block(project_path, node_uuid, metadata, full_text.clone()).await
+    if let Err(error) = persist_generated_script_block(
+        project_path,
+        node_uuid,
+        metadata,
+        full_text.clone(),
+        script_inputs,
+    )
+    .await
     {
         tracing::error!("Failed to persist generated script for node {node_uuid}: {error}");
         let _ = state.events_tx.send(ServerEvent::GenerationError {
@@ -324,14 +348,25 @@ async fn persist_generated_script_block(
     node_uuid: Uuid,
     metadata: GeneratedScriptMetadata,
     full_text: String,
+    script_inputs: Option<Vec<ScriptContextBlock>>,
 ) -> Result<(), String> {
     tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&project_path)
             .map_err(|error| error.to_string())?;
         let command =
             generated_script_block_command(Uuid::new_v4(), node_uuid, metadata, full_text)?;
-        script_document_command::apply_set_script_block(&mut conn, &command, 0)
-            .map_err(|error| error.to_string())?;
+        script_document_command::apply_generated_script_block(
+            &mut conn,
+            &CommandEnvelope {
+                id: command.id,
+                payload: GenerateScriptBlockCommand {
+                    block: command.payload,
+                    script_inputs,
+                },
+            },
+            0,
+        )
+        .map_err(|error| error.to_string())?;
         Ok(())
     })
     .await

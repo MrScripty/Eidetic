@@ -131,6 +131,8 @@ pub struct ScriptPatch {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScriptSegmentProjection {
     pub segment: ScriptSegment,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub impact: Option<ScriptImpactProjection>,
     #[serde(default)]
     pub blocks: Vec<ScriptBlockProjection>,
 }
@@ -205,6 +207,38 @@ pub struct ScriptContextBlock {
     pub text: String,
 }
 
+/// Internal generation commit: its captured evidence is part of the replay signature.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GenerateScriptBlockCommand {
+    pub block: SetScriptBlockCommand,
+    pub script_inputs: Option<Vec<ScriptContextBlock>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScriptImpactProjection {
+    pub generation_event_id: super::ChangeEventId,
+    pub lineage_available: bool,
+    pub needs_review: bool,
+    pub causes: Vec<ScriptImpactCause>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScriptImpactCause {
+    pub dependency_id: super::SemanticDependencyId,
+    pub input: super::SemanticDependencyEndpoint,
+    pub consumed_revision_event_id: super::ChangeEventId,
+    pub current_revision_event_id: Option<super::ChangeEventId>,
+    pub reason: ScriptImpactReason,
+    pub input_excerpt: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ScriptImpactReason {
+    Changed,
+    Deleted,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SetScriptLockCommand {
@@ -235,13 +269,14 @@ mod tests {
 
     #[test]
     fn script_document_projection_round_trips() {
-        let projection = ScriptDocumentProjection {
+        let mut projection = ScriptDocumentProjection {
             document: ScriptDocument {
                 id: ScriptDocumentId::new("script.document.main").unwrap(),
                 title: "Pilot".to_string(),
                 sort_order: 0,
             },
             segments: vec![ScriptSegmentProjection {
+                impact: None,
                 segment: ScriptSegment {
                     id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
                     document_id: ScriptDocumentId::new("script.document.main").unwrap(),
@@ -280,6 +315,32 @@ mod tests {
         let round_trip: ScriptDocumentProjection = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, projection);
+
+        projection.segments[0].impact = Some(ScriptImpactProjection {
+            generation_event_id: super::super::ChangeEventId(uuid::Uuid::new_v4()),
+            lineage_available: true,
+            needs_review: true,
+            causes: vec![ScriptImpactCause {
+                dependency_id: super::super::SemanticDependencyId::new("generation.input").unwrap(),
+                input: super::super::SemanticDependencyEndpoint::ScriptBlock {
+                    block_id: ScriptBlockId::new("deleted.source").unwrap(),
+                },
+                consumed_revision_event_id: super::super::ChangeEventId(uuid::Uuid::new_v4()),
+                current_revision_event_id: None,
+                reason: ScriptImpactReason::Deleted,
+                input_excerpt: Some("  Source — 雨\n\n".into()),
+            }],
+        });
+        let json = serde_json::to_value(&projection).unwrap();
+        assert_eq!(
+            json["segments"][0]["impact"]["causes"][0]["reason"],
+            "deleted"
+        );
+        assert!(json["segments"][0]["impact"]["causes"][0]["current_revision_event_id"].is_null());
+        assert_eq!(
+            serde_json::from_value::<ScriptDocumentProjection>(json).unwrap(),
+            projection
+        );
     }
 
     #[test]

@@ -66,5 +66,6 @@ CREATE INDEX IF NOT EXISTS idx_script_locks_span
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {
     history_store::create_schema(conn)?;
     conn.execute_batch(SCRIPT_SCHEMA_SQL)?;
+    crate::script_generation_lineage::create_schema(conn)?;
     Ok(())
 }

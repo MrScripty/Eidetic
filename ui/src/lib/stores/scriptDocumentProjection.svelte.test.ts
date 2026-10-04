@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { editScriptBlock, setScriptBlock, setScriptLock } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
+import type { ScriptImpactProjection } from '$lib/scriptTypes.js';
 import {
   applyScriptBlockCommand,
   applyScriptBlockEditCommand,
@@ -160,6 +161,39 @@ beforeEach(() => {
 });
 
 describe('script document projection store', () => {
+  it('refreshes review impact without changing authored output and refuses stale clean results', async () => {
+    const impact: ScriptImpactProjection = {
+      generation_event_id: 'generation-B',
+      lineage_available: true,
+      needs_review: true,
+      causes: [
+        {
+          dependency_id: 'generation-B.input-A',
+          input: { kind: 'script_block', block_id: 'source-A' },
+          consumed_revision_event_id: 'A-before',
+          current_revision_event_id: null,
+          reason: 'deleted',
+          input_excerpt: '  Consumed A — 雨\n\n',
+        },
+      ],
+    };
+    const reviewed = {
+      ...newerProjection,
+      payload: {
+        ...newerProjection.payload,
+        segments: newerProjection.payload.segments.map((segment) => ({ ...segment, impact })),
+      },
+    };
+    getScriptDocumentProjectionMock.mockResolvedValueOnce(reviewed);
+    await refreshScriptDocumentProjection(key);
+    getScriptDocumentProjectionMock.mockResolvedValueOnce(olderProjection);
+    await refreshScriptDocumentProjection(key);
+    const cached = getCachedScriptDocumentProjection(key);
+    expect(cached?.payload.segments[0]?.impact).toEqual(impact);
+    expect(cached?.payload.segments[0]?.blocks).toEqual(
+      newerProjection.payload.segments[0]?.blocks,
+    );
+  });
   it('stores backend projection reads and clears pending state', async () => {
     getScriptDocumentProjectionMock.mockResolvedValue(projection);
 

@@ -15,6 +15,9 @@ domain model in `eidetic-core`.
 | `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
 | `ai_script_context.rs` | Canonical screenplay evidence for shared preview/generation context, carrying exact block and segment write identities. |
+| `script_generation_lineage.rs` | Atomic successful-generation records and existing semantic dependencies bound to consumed screenplay revisions. |
+| `script_generation_lineage_tests.rs` | A-to-B/unrelated-C, edits during generation, atomic rollback, replay, source deletion, refreshed and unavailable binding regressions. |
+| `script_impact_projection.rs` | Derived Needs review causes against the latest successful generation, retaining historical source excerpts after deletion. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
 | `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
 | `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |
@@ -23,7 +26,7 @@ domain model in `eidetic-core`.
 | `ai_generation_service.rs` | Host-neutral streaming script generation and batch generation orchestration consumed by Tauri commands. |
 | `ai_generation_runtime.rs` | Supervised AI generation runtime for streaming, status persistence, script block writes, and recap generation. |
 | `ai_generation_stream_tests.rs` | Provider-independent stream error, successful EOF, empty output and progress regressions. |
-| `ai_generation_runtime_tests.rs` | Native AppState/SQLite regressions for stream-failure events, preserved script revisions and generation cleanup. |
+| `ai_generation_runtime_tests.rs` | Native AppState/SQLite regressions for failed-stream lineage preservation, generation cleanup and captured-input persistence after an intervening edit. |
 | `affect_service.rs` | Host-neutral affect command/projection behavior over backend-owned affect storage. |
 | `model_service.rs` | Host-neutral Pumas model-list behavior consumed by Tauri commands. |
 | `model_endpoint_resolver.rs` | Backend-owned llama.cpp OpenAI endpoint policy and Pumas runtime-profile resolution for live provider workflows. |
@@ -110,6 +113,19 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Successful generated output, generation record, revision-bound semantic
+  dependencies and sparse history commit in one SQLite transaction. Stream
+  failure/empty output creates no generation lineage. Validate captured historical
+  text and placement without rebinding to current inputs after model I/O.
+- Generation replay covers the complete input evidence and cannot overwrite a
+  later output or duplicate lineage. Additive tables preserve unbound legacy edges.
+- Script projection payload, review causes and version share one read snapshot.
+  Only the latest successful generation's bindings define review causes; old
+  bindings remain audit history. Intentional replacement of the consumer's own
+  prior draft does not flag itself. Missing input history is explicitly unavailable.
+- Review impact preserves authored text, locks, canonical segment status and
+  explicit proposal acceptance. It neither infers semantic relationships beyond
+  actual supplied screenplay context nor recursively marks unrelated segments.
 - Manual script edits change only canonical block text and its user-edited span.
   Clients supply an expected block write-event identity; the transaction checks
   it and current locks before mutation. Failure rolls back command/history rows.

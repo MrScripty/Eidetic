@@ -257,6 +257,20 @@ pub(crate) fn load_document_projection_envelope(
     conn: &Connection,
     document_id: &ScriptDocumentId,
 ) -> Result<Option<ProjectionEnvelope<ScriptDocumentProjection>>, HistoryStoreError> {
+    create_schema(conn)?;
+    if conn.is_autocommit() {
+        let tx = conn.unchecked_transaction()?;
+        let projection = load_document_projection_envelope_in_snapshot(&tx, document_id)?;
+        tx.commit()?;
+        return Ok(projection);
+    }
+    load_document_projection_envelope_in_snapshot(conn, document_id)
+}
+
+fn load_document_projection_envelope_in_snapshot(
+    conn: &Connection,
+    document_id: &ScriptDocumentId,
+) -> Result<Option<ProjectionEnvelope<ScriptDocumentProjection>>, HistoryStoreError> {
     let Some(projection) = load_document_projection(conn, document_id)? else {
         return Ok(None);
     };
@@ -288,7 +302,12 @@ fn load_segments(
     for row in rows {
         let segment = row?;
         let blocks = load_blocks(conn, &segment.id)?;
-        segments.push(ScriptSegmentProjection { segment, blocks });
+        let impact = crate::script_impact_projection::load_impact(conn, &segment.id)?;
+        segments.push(ScriptSegmentProjection {
+            segment,
+            blocks,
+            impact,
+        });
     }
     Ok(segments)
 }

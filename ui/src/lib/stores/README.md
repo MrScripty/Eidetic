@@ -96,6 +96,9 @@ continues.
 - Centralizing every UI field in one store file: rejected because it would collapse unrelated lifecycles into one mutable surface.
 
 ## Invariants
+- Script projection refresh retains backend generation impact and exact authored
+  output together. Version guards prevent older clean responses from hiding a
+  newer Needs review cause, including explainable deleted-source evidence.
 - Manual screenplay saves publish canonical projections and invalidate prompt
   context. Script-change events also invalidate context, including external
   edits; refused saves preserve the committed projection/context revision.

@@ -217,6 +217,7 @@ mod tests {
                 sort_order: 0,
             },
             segments: vec![ScriptSegmentProjection {
+                impact: None,
                 segment: ScriptSegment {
                     id: ScriptSegmentId::new("script.segment.beat-1").unwrap(),
                     document_id: ScriptDocumentId::new("script.document.main").unwrap(),

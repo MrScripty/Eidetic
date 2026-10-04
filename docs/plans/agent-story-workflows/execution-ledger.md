@@ -533,3 +533,53 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Recovery proposal and accepted async repairs remain separate/preserved. No
   inferred-world acceptance, timeline semantics, remote upload, PR merge,
   external review request or network-policy change was performed.
+
+### 2026-10-04: Captured screenplay lineage and Needs review candidate
+
+- Parent independently qualified frozen first feature `9fe7a4a5`: 113 core,
+  314 server and 338 frontend tests, desktop compile/smoke, concurrent edit winner,
+  project reload, preview and late-lock service fixtures passed. Exact whitespace,
+  newlines, Unicode and separate revisions were retained. Parent accepts its
+  source/native-service behavior; graphical typing/save/reopen remains unqualified
+  due the extracted runtime's hardcoded WebKitNetworkProcess path. No workaround
+  was attempted. This report does not qualify the descendant below.
+- Isolated descendant branch `feat/script-input-impact` retains that frozen
+  parent. Successful output now carries the exact screenplay inputs supplied to
+  generation into the same SQLite transaction as output/history and existing
+  DerivesFrom dependencies. Additive generation and revision-binding tables retain
+  old unbound dependencies. Historical text, document, placement, source identity
+  and separate block/segment write events are validated; conflicting input
+  revisions are refused. Model-time edits are never silently rebound to latest.
+- Derived script impact compares the latest successful generation's bound
+  inputs with current source writes. Changed/deleted causes retain consumed
+  event identities and historical excerpts; old lineage remains auditable after
+  explicit refreshed generation. Own previous drafts retain audit bindings and
+  their intentional replacement does not self-invalidate. Unknown input history
+  differs from a known empty input set. Authored text, locks, canonical segment
+  status and explicit proposal acceptance remain unchanged by review projection.
+- Executed **34 isolated source-module tests**, including eight lineage fixtures:
+  A-to-B/unrelated-C; source edits during generation; replay/signature conflict;
+  deletion and explicit refreshed binding; SQL failure after output/history rows
+  with complete rollback; fabricated evidence; unavailable versus empty lineage;
+  conflicting revisions. This harness imports the actual SQLite/history/script/
+  dependency/context/projection modules; it links no Pumas/ONNX runtime and is
+  explicitly not the full server suite. Contract round trips exercise bound
+  dependency and deleted-source impact shapes while preserving absent fields.
+- Core suite: **113 passed**, strict core Clippy passed. Frontend suite:
+  **339 passed**; typecheck (zero errors/warnings), lint, formatting and production
+  build passed. New frontend fixture preserves deleted-source impact and exact
+  authored output through cache refresh while refusing older clean responses.
+- Server tests compile and strict all-target Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1`. New native persistence fixture and three failed/empty
+  stream fixtures (now carrying real captured inputs and checking unchanged
+  lineage counts) compile but were **not executed here**. Parent must qualify
+  the full native server and graphical flow for this exact descendant. Earlier
+  CDN `cdn.pyke.io` HTTP 403 remains preserved; no artifact retry or bypass.
+- Both authored output and generation lineage roll back on failed atomic writes.
+  This is SQLite transaction evidence, not process-kill/power-loss qualification.
+  New review UI is read-only; broader propagation, timeline semantics, project
+  switching/recovery and inferred world updates remain outside this slice.
+- No GitHub publication, merge, external review request, network-policy change
+  or model-provider call was performed. Publication hold remains unchanged.
+  Commit milestone and verified source/evidence package are delivered separately
+  through Library for parent review and native qualification.

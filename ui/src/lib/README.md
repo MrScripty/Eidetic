@@ -55,6 +55,8 @@ raw size would separate scenarios that share the same contract fixtures.
 - Splitting each store next to every consumer component: rejected because the timeline/editor shell shares state across multiple panels.
 
 ## Invariants
+- Script impact wire types mirror revision-bound changed/deleted source causes;
+  optional impact preserves compatibility with unbound older projections.
 
 - Backend-owned project data enters the UI through typed Tauri IPC contracts instead of free-form objects.
 - Shared timeline geometry values are defined once and reused by all dependent components.
