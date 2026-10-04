@@ -10,6 +10,7 @@ This directory contains the shared reactive frontend state used to coordinate th
 | ----------------------------------------- | ------------------------------------------------------------------------------------ |
 | `editor.svelte.ts`                        | Editor-local UI state and generation-progress helpers.                               |
 | `timeline.svelte.ts`                      | Timeline viewport, playhead, tool, and drag interaction state.                       |
+| `timelineRenderProjection.svelte.ts`      | Timeline cache and command bridge with cache-generation ownership and version ordering. |
 | `project.svelte.ts`                       | Active project session metadata.                                                     |
 | `bibleGraphNodeProjection.svelte.ts`      | Focused cache/action layer for backend-owned bible graph node and field projections. |
 | `bible.svelte.ts`                         | Typed transient graph selection state.                                               |
@@ -31,6 +32,9 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `serverEventHandlers.ts`                  | Backend event handlers that fan Tauri server events into stores.                     |
 
 ## Problem
+
+`timelineProjectionLifecycle.test.ts` covers deferred refresh/command responses
+across session clears and concurrent requests.
 
 Multiple UI surfaces need shared state and event coordination without turning the route tree into a prop-drilling graph.
 
@@ -92,6 +96,12 @@ continues.
 - Shared polling and backend event flows retain explicit ownership and cleanup semantics.
 - Stores remain the source of transient UI coordination; components react to them.
 - Projection stores cache backend envelopes and must not patch broad durable entity state optimistically.
+- Clearing the timeline projection cache starts a new generation. Earlier
+  refreshes/commands still settle for their callers but cannot publish projection,
+  error or pending state into that generation. Within a generation, envelope
+  versions govern replacement, pending counts all outstanding requests, and only
+  the latest-started request can report an error. This is cache ownership, not
+  backend project custody or cancellation of in-flight writes/caller effects.
 - Backend contract changes are reflected here before individual components fork around them.
 
 ## Revisit Triggers

@@ -4,6 +4,9 @@ pub mod structure;
 pub mod timing;
 pub mod track;
 
+#[cfg(test)]
+mod gap_tests;
+
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
@@ -474,7 +477,9 @@ impl Timeline {
 
     /// Find gaps at a given level where no nodes exist.
     pub fn find_gaps(&self, level: StoryLevel, min_duration_ms: u64) -> Vec<TimelineGap> {
-        let nodes = self.nodes_at_level(level);
+        let mut nodes = self.nodes_at_level(level);
+        // Keep boundary identities deterministic when clips share a start time.
+        nodes.sort_by_key(|node| (node.time_range.start_ms, node.time_range.end_ms, node.id.0));
         let mut gaps = Vec::new();
         let mut cursor = 0u64;
         let mut prev_node_id: Option<NodeId> = None;
@@ -493,8 +498,11 @@ impl Timeline {
                     }
                 }
             }
-            cursor = node.time_range.end_ms;
-            prev_node_id = Some(node.id);
+            // A contained clip must not move the occupied boundary backwards.
+            if node.time_range.end_ms > cursor {
+                cursor = node.time_range.end_ms;
+                prev_node_id = Some(node.id);
+            }
         }
 
         // Gap between last node and timeline end.

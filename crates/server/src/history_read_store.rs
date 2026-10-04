@@ -13,11 +13,16 @@ pub(crate) fn load_revisions_for_object(
     object_kind: ObjectKind,
     object_id: &str,
 ) -> Result<Vec<ObjectRevision>, HistoryStoreError> {
+    // sort_order is local to one event, not a global object revision sequence.
+    // Match the store's committed event order before applying within-event order;
+    // caller timestamps may repeat or go backwards. This uses the existing
+    // append-only database row order, not a portable/global revision clock.
     let mut statement = conn.prepare(
-        "SELECT id, change_event_id, base_revision_id, operation
-         FROM object_revisions
-         WHERE object_kind = ?1 AND object_id = ?2
-         ORDER BY sort_order ASC",
+        "SELECT revisions.id, revisions.change_event_id, revisions.base_revision_id, revisions.operation
+         FROM object_revisions AS revisions
+         JOIN change_events AS events ON events.id = revisions.change_event_id
+         WHERE revisions.object_kind = ?1 AND revisions.object_id = ?2
+         ORDER BY events.rowid ASC, revisions.sort_order ASC, revisions.rowid ASC",
     )?;
     let rows = statement.query_map(
         params![encode_string_enum(&object_kind)?, object_id],

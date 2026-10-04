@@ -35,6 +35,7 @@ domain model in `eidetic-core`.
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
 | `timeline_command_guard.rs` | Transaction-local timeline snapshot validation shared by all timeline history writers. |
+| `timeline_range_history_tests.rs` | Descendant range delta, replay ordering, WAL interleaving and interrupted-transaction rollback regressions. |
 | `timeline_command_guard_tests.rs` | Stale edit, atomic rollback, replay and refresh regressions across shared timeline commands. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |
@@ -198,3 +199,30 @@ possibly stale in-memory mirror.
 Commands before the initial durable project save return an explicit conflict;
 no fallback mirror is used to initialize current state inside a timeline edit.
 The user can retry after persistence and reload.
+
+### Complete parent-resize history (M4b)
+
+A parent move/resize can change every descendant's range. The range command now
+records the target and each actually changed descendant in one event/transaction,
+including exact old/new start and end fields. Unchanged descendants and unrelated
+clips get no new revision; the existing explicit no-op target record is retained.
+Per-object history reads order committed events first, then within-event revisions.
+Previously ordering only by per-event `sort_order` replayed a later direct child
+edit before an earlier descendant edit. Caller timestamps are not a substitute
+for committed event order. This repairs review/projection inputs; it does not
+introduce or claim a completed undo UI, locked-subtree policy or agent write tool.
+
+History ordering relies on the current append-only SQLite event table. Broad
+save preserves history, load reopens it, and PDF export does not rebuild it.
+There is no supported history import/compaction path in the audited source.
+This is not a portable/global revision clock; future event-reinserting or
+reordering maintenance requires an explicit ordering contract before adoption.
+
+Range-history regressions also exercise two connections to a real saved WAL
+project: a held reader snapshot cannot upgrade after another writer commits,
+and a stale command cannot overwrite that commit. Temporary test-only triggers
+interrupt descendant updates after history and ancestor writes, covering both
+statement abort with transaction-drop rollback and SQLite transaction rollback.
+Reopen checks retain prior history and Y.Doc bytes; failed attempts leave command
+identities available for explicit resubmission. These are deterministic database
+interleavings and injected SQL failures, not process-kill or power-loss tests.

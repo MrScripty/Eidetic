@@ -244,3 +244,88 @@ claiming to expose a completed agent retrieval workflow.
 - **Initial save:** A command arriving before the first durable project save
   receives an explicit conflict and leaves no rows/history behind. It must wait
   for save and reload; this slice does not alter project creation lifecycle.
+
+
+## M4b: complete descendant range revision history
+
+- **Observed defect:** A range edit proportionally resizes descendants but records
+  only the target. Adding those missing revisions also exposes that per-object
+  history was sorted by per-event `sort_order` alone, which can replay an older
+  descendant delta after a later direct edit.
+- **Write set/owner:** Server range-history writer, existing per-object history
+  reader, focused tests and these source/plan records. No public API, dependency,
+  schema, geometry semantics, inference or renderer changes.
+- **Decision:** Record target plus actually changed descendants in the same event
+  and transaction, preserving full old/new range pairs. Sort descendant output
+  by stable node identity. Read revisions by committed event insertion order,
+  then within-event order; do not assume caller clocks are monotonic.
+- **Alternatives:** Recording only the target loses reconstructible history.
+  Using the event-local revision index as a global clock is incorrect. A second
+  history store, event migration or broad timeline rewrite is unnecessary.
+- **Gate:** Multi-level descendant values match persisted nodes; unrelated/no-op
+  descendants remain sparse; replay is idempotent; stale commands leave no partial
+  descendant revisions; parent resize followed by direct child edit replays to
+  the current range even with non-monotonic caller timestamps.
+- **Limits:** Native UI, complete undo application, subtree locks, containment/
+  split policy, immutable proposal preconditions and agent mutation tools remain
+  open. This slice stays separate from M4a publication/review.
+
+## M4 follow-on: correct gap projection after overlapping edits
+
+- **Observed defect:** A shorter clip inside a longer clip moves the core gap
+  cursor backwards, exposing occupied time as a gap after a manual range edit.
+- **Owner/write set:** Existing core `Timeline::find_gaps`, focused core and
+  renderer-projection tests, source READMEs and plan records. This follows the
+  existing contract that a gap contains no story node and core owns invariants.
+- **Decision:** Track the furthest occupied endpoint and its node identity;
+  order equal-start ranges by end then node identity for stable gap neighbors.
+  Keep the existing minimum-duration filter and level isolation.
+- **Gate:** Nested, overlapping and touching clips yield only unoccupied gaps;
+  boundary identities survive storage reordering; a resize is reflected correctly
+  in the renderer projection; core and frontend gates pass without inference.
+- **Limits:** Native visual acceptance is delegated separately. This changes no
+  split/containment product policy, structural locks, mutation history, agent
+  authority or undo behavior and does not complete M4.
+
+## M4 follow-on: timeline projection cache session custody
+
+- **Observed defect:** Project activation clears projection caches, but an old
+  timeline refresh or command can complete afterward. Version-only comparison
+  admits the old project's higher-version projection into the new session;
+  obsolete failures/finalizers also overwrite its error/pending state.
+- **Owner/write set:** Timeline frontend projection store, deterministic deferred
+  tests, store README and plan records. Preserve public API and command results.
+- **Decision:** Each request captures the cache generation. Clear advances that
+  generation; only its own requests may publish state. Within the generation,
+  versions govern projection replacement, outstanding requests own pending as a
+  count, and the latest-started request owns the shared error field.
+- **Gate:** Deferred refresh and all command paths cannot cross clear/new-load
+  boundaries on success or failure; obsolete completion cannot end current
+  pending work; overlapping commands/refreshes retain version ordering and
+  pending/error ownership. Run frontend tests, typecheck, lint, format and build.
+- **Limits:** This does not bind backend commands to a project session, cancel
+  writes, suppress caller continuations, fix other projection stores, or resolve
+  native acceptance, split policy and complete M4. Dot owns runtime qualification.
+
+
+### Lock semantics clarified during M4 review
+
+`StoryNode.locked` is a content-regeneration lock, as documented by its core
+contract and enforced by single/batch generation admission. Absence of structural
+move/cut/delete rejection is not a violation of that contract. A future structural
+edit lock or agent capability policy must be specified separately; this work must
+not silently disable existing manual editing under a content lock.
+
+
+### M4b ordering boundary
+
+The current writer appends `change_events`/`object_revisions`; broad save clears
+and reinserts only current-state tables and leaves history untouched. Project
+load opens the same database; PDF export does not copy history. No supported
+history export/import, event reinsert, VACUUM or history compaction path was found
+in the source audit. A real broad-save/reopen regression preserves event row
+identities/order and the final child projection. Row order is a local append-only
+storage boundary, not a portable or global revision clock. Any future history
+rebuild, logical export/import or maintenance that can reorder events must add
+an explicit persisted sequence or preserve verified event order before using
+this reader; this slice makes no guarantee for arbitrary external DB rewrites.

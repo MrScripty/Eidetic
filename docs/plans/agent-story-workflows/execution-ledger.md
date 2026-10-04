@@ -168,3 +168,112 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Strict core/server all-target clippy passed with `-D warnings`; workspace
   rustfmt check, whitespace check and decision traceability passed. Publication
   and exact-head hosted/native qualification remain pending parent coordination.
+
+
+### 2026-10-04: M4b descendant range history
+
+- Separate local milestone above M4a; records the target and all actually changed
+  descendants atomically, leaving unchanged/unrelated clips without new revisions.
+- Corrected per-object history ordering across events. Regression reproduces
+  parent-resize then direct-child-edit with reversed caller timestamps.
+- Actual source all-target tests passed: **103 core + 273 server**, including
+  five new range-history regressions. Strict core/server all-target clippy passed
+  with `-D warnings`; unchanged Pumas and official ORT1.24.2 as above.
+- Source re-review, publication and exact-head hosted qualification pending.
+  No native interaction, full undo or agent editing acceptance is claimed.
+
+- Follow-on source audit clarified existing node locks prevent AI regeneration,
+  not manual geometry edits. No structural locking change was made or inferred
+  from the earlier open M4 lock-policy note.
+
+- Audited persistence, project database ownership, PDF export and history write
+  sites: supported paths append history and do not reinsert or reorder events.
+  Added real broad-save/reopen ordering regression; final tests and clippy passed.
+  Documented that SQLite row order is local append-only storage, not a portable
+  revision clock; future history rebuild/compaction needs an explicit contract.
+
+### 2026-10-04: PR6 WAL interleaving and interrupted-write qualification
+
+- Selected isolated task branch `test/pr6-wal-rollback` from exact PR6 head
+  `03b47adc95b673daef5ccf3a1e17316bcf28143a`; verified qualified PR5
+  `a2a2ff47a2a4d90da2498b0a16b371125fd147d2` is its ancestor. Environment
+  initially selected main `3757edf6e4050aa211cb6ac7d9f991167c2af74e`.
+  Pumas remains `8444b50df28c3e2bd8db58fb3645fa4dd8664b27`; no dependency,
+  credentials, permission or network configuration changes.
+- Added three real-project SQLite regressions: an overlapping WAL reader and
+  writer with exact `SQLITE_BUSY_SNAPSHOT` promotion rejection; two-connection
+  stale range rejection followed by reviewed reload, explicit resubmission and
+  identity-preserving replay; and descendant-write interruption using both
+  SQLite `ABORT` and `ROLLBACK`. Faults occur after all pending history and an
+  ancestor update exist. Assertions cover current-state rollback, retention of
+  a previously committed event, no leaked command/revision/field rows, reopen,
+  separate Y.Doc bytes and reuse/replay of the failed command identity.
+- The held-reader test exercises the guard/store transaction boundary directly;
+  the stale and interruption tests call the shared range history writer. These
+  deterministic interleavings do not claim service scheduling, process-kill,
+  power-loss, native desktop or model inference qualification.
+- Passed: `cargo test --locked -p eidetic-core` (103 tests); UI `npm run test`
+  (284 tests / 57 files), `npm run check` (zero errors/warnings), `npm run lint`
+  and `npm run format:check`; workspace rustfmt, whitespace and decision
+  traceability checks.
+- Passed compile-only qualification with the upstream-supported download skip:
+  `ORT_SKIP_DOWNLOAD=1 cargo check --locked -p eidetic-server --tests` and
+  `ORT_SKIP_DOWNLOAD=1 cargo clippy --locked -p eidetic-core -p eidetic-server
+  --all-targets -- -D warnings`. This deliberately does not link or execute
+  native ONNX Runtime, and is not a server test pass.
+- Normal `cargo test --locked -p eidetic-server --lib
+  timeline_command_history::range_tests` was blocked at ort-sys's ONNX 1.24.2
+  download: `cdn.pyke.io` CONNECT proxy returned 403. New server tests remain
+  unexecuted in this environment pending the parent's approved network update.
+  Rerun that command, then the core/server all-target tests on the final head.
+- No production defect was demonstrated; changes are tests and documentation
+  only. Locks retain AI content-regeneration semantics. Split-note duplication,
+  crossing-child cut policy, and long-lived proposal identity/revision
+  preconditions remain separate design work. No merge, PR metadata change,
+  external review request or CodeRabbit invocation was made.
+
+### 2026-10-04: Core gap projection after overlapping edits
+
+- Isolated branch `fix/timeline-overlap-gap-projection` starts at exact PR6
+  `03b47adc95b673daef5ccf3a1e17316bcf28143a`, preserving PR5 ancestry.
+  The test-only WAL successor `48dd8408923c6667591e918333c6ccd2380dbd86`
+  is not included; its runtime qualification is delegated separately.
+- Fixed core gap discovery so contained clips cannot move the occupied endpoint
+  backwards. Equal-time boundaries use stable node identity ordering. No server,
+  frontend, dependency, geometry mutation or product-policy change.
+- All four new regressions fail with the original gap implementation (103 pass,
+  four fail), then pass with the fix: **107 core tests**. Includes a public resize
+  followed by renderer projection and checks for thresholds, level isolation,
+  nested/overlapping/touching clips and reordered storage.
+- Passed strict core all-target Clippy, **284 frontend tests**, Svelte check
+  (zero errors/warnings), frontend lint, formatting and production build,
+  workspace Rust formatting, decision traceability and whitespace checks.
+- Server/native tests were not run for this slice. Dot qualification should
+  run the server/native gates and visually confirm the gap overlay after an
+  overlapping resize. No full-workspace, native UI or completed M4 claim.
+
+### 2026-10-04: Timeline projection cache session custody
+
+- Isolated branch `fix/timeline-projection-session-custody` starts at
+  `e208f4ce74521dbdfd30759118c2edc181f9ef29`; the separate gap-projection
+  branch remains unchanged for dot review. No WAL successor changes are included.
+- Reproduced an old project refresh replacing a new project's cache using the
+  actual frontend module with deferred transport responses. A cache generation
+  now owns all refresh/command state updates; clear invalidates old completions.
+  Within a generation, pending counts outstanding work, versions order cache
+  replacement, and the latest-started request owns shared error state.
+- All **26** deferred lifecycle tests fail against the original store and pass
+  with the fix. They cover all nine command bridges, refreshes, clear/new loads,
+  obsolete errors/finalizers and same-session command/refresh concurrency.
+- Final **310 frontend tests** pass. Svelte check reports zero errors/warnings;
+  lint, formatting, production build, decision traceability and whitespace
+  checks pass. An initial full-suite documentation audit failure was corrected
+  by keeping test-file documentation outside the store-module inventory table.
+- The required pre-push gate runs native workspace tests; publication is handed
+  off as a verified bundle without retrying blocked downloads or bypassing hooks.
+  Backend session custody, caller continuations, other projection stores and
+  native interaction validation remain outside this frontend cache milestone.
+- Completion contract: finish this cache repair, prove deferred behavior and
+  frontend gates, preserve the gap branch, and provide verified source transfer.
+  No callable native Goal-setting tool is available; durable Goal activation is
+  not claimed. Runtime model/reasoning selection is not exposed to this task.
