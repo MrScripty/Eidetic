@@ -35,6 +35,10 @@ This directory contains the shared reactive frontend state used to coordinate th
 
 `timelineProjectionLifecycle.test.ts` covers deferred refresh/command responses
 across session clears and concurrent requests.
+`scriptDocumentProjectionLifecycle.test.ts` covers the same boundary for script
+reads, block edits and locks: a cleared document's requests must not publish into
+its next cache lifetime, and one completed request must not hide another pending
+request.
 
 Multiple UI surfaces need shared state and event coordination without turning the route tree into a prop-drilling graph.
 
@@ -105,6 +109,13 @@ continues.
   versions govern replacement, pending counts all outstanding requests, and only
   the latest-started request can report an error. This is cache ownership, not
   backend project custody or cancellation of in-flight writes/caller effects.
+- Clearing a script document cache removes its lifetime identity. Earlier reads,
+  block commands and lock commands still return their original results or reject
+  for their callers, but cannot publish projection, error or pending state into
+  the replacement lifetime. Within each document lifetime, envelope versions
+  govern replacement, pending counts every outstanding request, and only the
+  latest-started request can report an error. Clearing another document has no
+  effect. This does not cancel backend writes or guard caller continuations.
 - Backend contract changes are reflected here before individual components fork around them.
 
 ## Revisit Triggers
