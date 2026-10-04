@@ -7,6 +7,9 @@ pub mod track;
 #[cfg(test)]
 mod gap_tests;
 
+#[cfg(test)]
+mod resize_tests;
+
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
@@ -256,35 +259,37 @@ impl Timeline {
 
         let node = self.node(node_id)?;
         let old_range = node.time_range;
+        old_range.validate()?;
         let old_duration = old_range.end_ms - old_range.start_ms;
         let new_duration = new_range.end_ms - new_range.start_ms;
 
-        // Collect descendant IDs before mutating.
-        let descendant_ids: Vec<NodeId> =
-            self.descendants_of(node_id).iter().map(|n| n.id).collect();
+        // Integer division preserves floor-to-millisecond proportional scaling
+        // without f64 rounding or unchecked addition at the u64 boundary.
+        let scale = |time_ms: u64| -> Result<u64> {
+            let offset = u128::from(time_ms.saturating_sub(old_range.start_ms))
+                .checked_mul(u128::from(new_duration))
+                .ok_or(Error::TimeRangeOverflow)?
+                / u128::from(old_duration);
+            let offset = u64::try_from(offset).map_err(|_| Error::TimeRangeOverflow)?;
+            new_range
+                .start_ms
+                .checked_add(offset)
+                .ok_or(Error::TimeRangeOverflow)
+        };
 
-        // Update the node itself.
+        // Validate the entire edit before publishing any changed range. A
+        // contraction that collapses even one descendant must be atomic.
+        let mut resized = Vec::new();
+        for descendant in self.descendants_of(node_id) {
+            descendant.time_range.validate()?;
+            let start_ms = scale(descendant.time_range.start_ms)?.max(new_range.start_ms);
+            let end_ms = scale(descendant.time_range.end_ms)?.min(new_range.end_ms);
+            resized.push((descendant.id, TimeRange::new(start_ms, end_ms)?));
+        }
+
         self.node_mut(node_id)?.time_range = new_range;
-
-        // Proportionally adjust all descendants.
-        if old_duration > 0 {
-            for desc_id in descendant_ids {
-                if let Ok(desc) = self.node_mut(desc_id) {
-                    let start_ratio = (desc.time_range.start_ms.saturating_sub(old_range.start_ms))
-                        as f64
-                        / old_duration as f64;
-                    let end_ratio = (desc.time_range.end_ms.saturating_sub(old_range.start_ms))
-                        as f64
-                        / old_duration as f64;
-
-                    desc.time_range.start_ms = (new_range.start_ms
-                        + (start_ratio * new_duration as f64) as u64)
-                        .max(new_range.start_ms);
-                    desc.time_range.end_ms = (new_range.start_ms
-                        + (end_ratio * new_duration as f64) as u64)
-                        .min(new_range.end_ms);
-                }
-            }
+        for (id, range) in resized {
+            self.node_mut(id)?.time_range = range;
         }
 
         Ok(())

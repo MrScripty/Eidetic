@@ -287,6 +287,21 @@ claiming to expose a completed agent retrieval workflow.
   split/containment product policy, structural locks, mutation history, agent
   authority or undo behavior and does not complete M4.
 
+## M4 follow-on: validate proportional resize atomically
+
+- **Observed defects:** A contraction can accept a zero-duration descendant.
+  Floating-point scaling can also change exact no-op milliseconds or panic on
+  unchecked addition for a valid large range, after already changing the target.
+- **Decision/write set:** Stage all descendant ranges and validate their positive
+  duration before mutation. Use checked integer offset scaling with exact
+  floor-to-millisecond division. Keep existing start saturation/end clamping.
+  Scope is core resize, arithmetic error, regressions and documentation.
+- **Gate:** Collapsed/malformed ranges reject without partial mutation or panic;
+  valid large endpoints, large no-ops, multiple levels, unrelated nodes and a
+  one-millisecond positive target remain correct. Core tests/Clippy must pass.
+- **Limits:** No new crossing-child containment, cut-content, hierarchy, locking
+  or undo policy. Server history/native gates remain a separate dot handoff.
+
 
 ### Lock semantics clarified during M4 review
 
