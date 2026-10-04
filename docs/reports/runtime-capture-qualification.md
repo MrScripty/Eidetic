@@ -46,8 +46,10 @@ fails the job. The picture still needs human visual inspection after execution.
 The evidence names the application source and qualification commit, hashes the
 binary and screenshot, and records the persisted before/after edit revisions.
 Before navigation, the driver preserves the real native home window as
-`eidetic-native-unedited.png`. If editing fails, this is evidence of the running
-application only, labeled as unedited; it proves no project opening or saved edit.
+`eidetic-native-unedited.png`. Once the imported sample text is visible, the driver
+updates that fallback image to the loaded native project before editing. The
+evidence JSON identifies the exact fallback stage and image hash. If editing
+fails, the fallback proves only that stage, with no saved manual-edit claim.
 The full manual-edit proof requires a successful job and inspected edited image.
 This cloud executor
 cannot run the native capture: standard package installation fails on its dpkg

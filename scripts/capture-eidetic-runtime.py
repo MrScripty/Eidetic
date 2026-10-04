@@ -284,11 +284,19 @@ def main():
         chooser_label = database.parent.name
         evidence["sample_chooser_label"] = chooser_label
         click_button(application, chooser_label, window, prefix=True)
-        checkpoint("wait for project timeline")
-        wait_for("project timeline", lambda: find(
-            application, lambda node: fixture["scene_name"] in (node.name or "")))
+        checkpoint("capture loaded sample before editing")
         block = wait_for("screenplay block", lambda: find(
             application, lambda node: node.name == "Screenplay block"))
+        wait_for("imported sample text displayed", lambda: find(
+            block, lambda node: "Mara sets two cups beside a folded timetable." in text_of(node)))
+        time.sleep(1)
+        evidence["unedited_screenshot_sha256"] = capture_native_window(
+            window, output / "eidetic-native-unedited.png")
+        evidence["unedited_screenshot_stage"] = "native sample project before screenplay edit"
+        checkpoint("wait for project timeline")
+        # Plain clip-name spans expose their text separately from accessible names.
+        wait_for("project timeline scene text", lambda: find(
+            application, lambda node: fixture["scene_name"] in text_of(node)))
         checkpoint("begin manual screenplay edit")
         click_button(block, "Edit", window)
         textarea = wait_for("screenplay text editor", lambda: find(
