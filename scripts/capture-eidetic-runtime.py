@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import signal
 import sqlite3
+import struct
 import subprocess
 import time
 
@@ -148,11 +149,25 @@ def file_hash(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def validate_capture_png(path):
+    size = path.stat().st_size
+    if size > 5 * 1024**2:
+        path.unlink()
+        raise RuntimeError(f"Native PNG exceeds the 5 MiB upload bound: {size} bytes")
+    with path.open("rb") as stream:
+        header = stream.read(24)
+    if (len(header) != 24
+            or header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR"):
+        raise RuntimeError(f"Invalid or oversized native PNG: {size} bytes")
+    width, height = struct.unpack(">II", header[16:24])
+    if not (1024 <= width <= 4096 and 720 <= height <= 4096):
+        raise RuntimeError(f"Native PNG dimensions outside main-window bounds: {width}x{height}")
+    return width, height
+
+
 def capture_native_window(window, path):
     subprocess.run(["import", "-window", window, str(path)], check=True, timeout=10)
-    if not 10000 < path.stat().st_size < 5 * 1024**2:
-        path.unlink()
-        raise RuntimeError("Screenshot size outside expected artifact bounds")
+    validate_capture_png(path)
     return file_hash(path)
 
 
@@ -257,7 +272,7 @@ def main():
         wait_for("visible native home screen", lambda: find(
             application, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
             and button_label_matches(node.name, "Open Project")))
-        time.sleep(0.5)
+        time.sleep(2)
         evidence["unedited_screenshot_sha256"] = capture_native_window(
             window, output / "eidetic-native-unedited.png")
         evidence["unedited_screenshot_stage"] = "native home screen before opening sample or editing"
