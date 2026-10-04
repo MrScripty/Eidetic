@@ -142,6 +142,9 @@ async fn real_adapters_refuse_truncated_body_missing_done_and_error_frames() {
             ),
             (b"data: malformed\n\n".to_vec(), 0),
             (b"data: \xff\n\n".to_vec(), 0),
+            (b"data: {\"choices\": []}".to_vec(), 0),
+            (b"data: {\ndata: \"choices\": []}\n".to_vec(), 0),
+            (b"data: [DONE]\n\ndata: unfinished".to_vec(), 0),
         ] {
             let (url, server) = serve(vec![prefix.clone(), tail], extra_length);
             let mut stream = generate(provider, url, prompt()).await.unwrap();
@@ -193,6 +196,62 @@ async fn real_adapter_failure_preserves_authored_text_and_creates_no_proposal_or
             crate::propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
                 .unwrap();
         assert!(projection.payload.proposals.is_empty());
+    }
+}
+
+#[tokio::test]
+async fn oversized_real_provider_streams_preserve_canonical_text_and_history() {
+    let oversized_line = vec![b'x'; super::sse::MAX_LINE_BYTES + 1];
+    let mut oversized_event = Vec::new();
+    for _ in 0..=super::sse::MAX_EVENT_BYTES / (64 * 1024) {
+        oversized_event.extend_from_slice(b"data: ");
+        oversized_event.extend(vec![b' '; 64 * 1024]);
+        oversized_event.push(b'\n');
+    }
+    for provider in [Provider::LlamaCpp, Provider::OpenRouter] {
+        for body in [&oversized_line, &oversized_event] {
+            let (mut conn, _, _, b, _) = crate::script_impact_review::tests::fixture();
+            let command = crate::script_impact_review::tests::request(&conn, &b);
+            let binding = crate::script_impact_review::capture(&conn, &command.payload).unwrap();
+            let before =
+                crate::script_store::load_document_projection(&conn, &b.document_id).unwrap();
+            let history: i64 = conn
+                .query_row("SELECT COUNT(*) FROM change_events", [], |row| row.get(0))
+                .unwrap();
+            let (url, server) = serve(vec![event("partial"), body.clone()], 0);
+            let result = crate::script_impact_prompt::preview_with_provider(&binding, |prompt| {
+                generate(provider, url, prompt)
+            })
+            .await;
+            match result {
+                Ok(text) => {
+                    crate::script_impact_review::record_proposal(
+                        &mut conn, &command, binding, text, 30,
+                    )
+                    .unwrap();
+                    panic!("oversized provider stream was allowed to persist a proposal");
+                }
+                Err(error) => assert!(error.to_string().contains("exceeds size limit")),
+            }
+            server.join().unwrap();
+            assert_eq!(
+                before,
+                crate::script_store::load_document_projection(&conn, &b.document_id).unwrap()
+            );
+            assert_eq!(
+                history,
+                conn.query_row("SELECT COUNT(*) FROM change_events", [], |row| row
+                    .get::<_, i64>(0))
+                    .unwrap()
+            );
+            assert!(
+                crate::propagation_proposal_store::load_propagation_proposal_list_projection(&conn)
+                    .unwrap()
+                    .payload
+                    .proposals
+                    .is_empty()
+            );
+        }
     }
 }
 

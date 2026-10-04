@@ -10,6 +10,7 @@ This directory implements server-side adapters that translate core AI requests i
 | `llamacpp.rs` | Local Pumas llama.cpp OpenAI-compatible adapter. |
 | `openrouter.rs` | OpenRouter HTTP adapter. |
 | `sse.rs` | Shared stateful SSE framing, completion validation and transport error propagation. |
+| `sse_tests.rs` | Buffer boundaries, fragmented framing, malformed input and bounded provider diagnostics. |
 | `transport_tests.rs` | Actual loopback HTTP fixtures for both adapters, including split events and incomplete bodies. |
 
 ## Problem
@@ -35,6 +36,12 @@ Keep provider adapters behind a shared module boundary so routes can depend on o
 - Full-response collection returns the stream error instead of a partial draft.
   OpenRouter's production endpoint stays fixed; a private endpoint seam supports
   real loopback transport tests without an external model call.
+- Lines retain at most 256 KiB and events at most 1 MiB, including multi-line
+  separators. Limits are checked before appending. Each incoming chunk byte is
+  scanned once, and tokens are yielded without accumulating an event queue.
+  Provider error details are formatted through a 1 KiB UTF-8-safe bound before
+  they can become generation error events. Successful completion still requires
+  the terminator and a complete HTTP body; size failures persist no preview.
 
 ## Revisit Triggers
 - Another provider introduces streaming or capability semantics that no longer fit the current adapter shape.

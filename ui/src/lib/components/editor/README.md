@@ -7,6 +7,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 | File/Folder | Description |
 |-------------|-------------|
 | `BeatEditor.svelte` | Primary node editing surface for notes, generation, and context panels. |
+| `contextRequestLifecycle.ts` | Prompt request invalidation, loading cleanup and stale-response guards. |
+| `contextRequestLifecycle.test.ts` | Empty notes/selection invalidation and delayed response ordering. |
 | `BeatChildContext.svelte` | Context panel for child nodes, including parent, siblings, and adjacent parent-level nodes. |
 | `BeatEditorHeader.svelte` | Header controls for lock state and AI generation. |
 | `BeatNotesPanel.svelte` | Notes editor, generation status, and prompt preview container. |
@@ -47,6 +49,9 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
   edits retain the draft and expose explicit discard/reload. Script revision
   invalidation refreshes prompt preview; earlier preview responses cannot replace
   a newer request for the same selected node.
+- Clearing notes or selection invalidates the pending context request and clears
+  loading immediately. Older successes, failures and finally callbacks cannot
+  restore stale context or clear the loading state of a newer request.
 - Future decomposition preserves current user-facing editor workflows.
 
 ## Revisit Triggers

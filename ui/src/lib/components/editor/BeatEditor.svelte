@@ -28,6 +28,7 @@
   import BeatPlanningActions from './BeatPlanningActions.svelte';
   import { beatContentStatusLabel } from './beatEditorStatus.js';
   import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
+  import { createContextRequestLifecycle } from './contextRequestLifecycle.js';
   import './beatEditor.css';
   import { scriptDocumentProjectionState } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
@@ -46,9 +47,12 @@
   let planning = $state(false);
   let nodeContext: { system: string; user: string } | null = $state(null);
   let contextLoading = $state(false);
-  let contextNodeId: string | null = $state(null);
-  let contextRequestId = 0;
-  let contextRevision = -1;
+  const contextRequests = createContextRequestLifecycle({
+    selectedNodeId: () => editorState.selectedNodeId,
+    fetchContext: getAiContext,
+    setContext: (context) => (nodeContext = context),
+    setLoading: (loading) => (contextLoading = loading),
+  });
 
   let isGenerating = $derived(
     (editorState.streamingNodeId != null &&
@@ -217,35 +221,11 @@
     const nodeId = editorState.selectedNodeId;
     const notes = selectedProjectionNode?.notes;
     const revision = scriptDocumentProjectionState.contextRevision;
-    if (!nodeId || !notes?.trim()) {
-      contextRequestId += 1;
-      nodeContext = null;
-      contextNodeId = null;
-      return;
-    }
-    if (nodeId === contextNodeId && revision === contextRevision) return;
-    contextRevision = revision;
-    loadContext(nodeId);
+    contextRequests.update(nodeId, notes, revision);
   });
 
   function loadContext(nodeId: string) {
-    const requestId = ++contextRequestId;
-    nodeContext = null;
-    contextLoading = true;
-    contextNodeId = nodeId;
-    getAiContext(nodeId)
-      .then((context) => {
-        if (editorState.selectedNodeId === nodeId && requestId === contextRequestId)
-          nodeContext = context;
-      })
-      .catch(() => {
-        if (editorState.selectedNodeId === nodeId && requestId === contextRequestId)
-          nodeContext = null;
-      })
-      .finally(() => {
-        if (editorState.selectedNodeId === nodeId && requestId === contextRequestId)
-          contextLoading = false;
-      });
+    void contextRequests.load(nodeId);
   }
 
   function refreshContext() {
@@ -261,6 +241,7 @@
 
   onDestroy(() => {
     debouncedNotesSave.dispose();
+    contextRequests.invalidate();
   });
 
   async function handleToggleLock() {

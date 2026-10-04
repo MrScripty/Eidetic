@@ -385,6 +385,8 @@ async fn failed_postcommit_document_send_reports_committed_failure() {
     )
     .unwrap();
     assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
+    // Windows keeps an open SQLite file handle from being removed at teardown.
+    drop(conn);
     fixture.finish().await;
 }
 

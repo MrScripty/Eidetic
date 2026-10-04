@@ -4168,6 +4168,14 @@ The refactor is complete when:
 
 - Backend-owned SQLite command/event/revision state is the only persistent source of truth.
 - Timeline nodes own context only, not final screenplay text.
+- PR7 review qualification: bound SSE lines/events/diagnostics before retaining
+  provider data, scan each chunk once, and stream tokens without an event queue.
+  Preserve UTF-8, completion, and failed-preview atomicity. Invalidating prompt
+  context clears loading as well as stale responses. Windows project paths must
+  compare ordinary/canonical prefix forms within the same drive/UNC share while
+  retaining lexical and resolved containment; custody teardown closes SQLite
+  inspection handles before deleting files. Hosted Windows execution remains a
+  separate qualification requirement from cloud source-module tests.
 - Script documents own the generated screenplay artifact.
 - Bible graph rows own world/story/production facts.
 - Accepted changes are traceable through events, object revisions, and semantic dependencies.
