@@ -9,7 +9,7 @@ domain model in `eidetic-core`.
 | File/Folder | Description |
 |-------------|-------------|
 | `lib.rs` | Backend runtime module root consumed by binaries, tests, and future desktop bindings. |
-| `backend_task.rs` | Backend task supervisor for explicit desktop lifecycle ownership. |
+| `backend_task.rs` | Backend task supervisor that reaps observed completions during normal admission and owns unfinished work through shutdown. |
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
@@ -117,6 +117,13 @@ increase coupling by hiding the transaction invariant.
   caller cancellation does not release it during blocking persistence or document
   publication. Waiting for admission stays cancellable. Backend shutdown aborts
   these tasks; this is not crash recovery or a guarantee for other producers.
+- Normal supervisor spawn reaps finished task handles and observes their join
+  results, including named panic reporting, before records accumulate across
+  command history. Unfinished handles remain owned; shutdown still aborts and joins
+  them. A completed tail may remain until the next spawn/count/shutdown, so record
+  retention follows outstanding work and recent completions rather than total edits.
+  Smoke inspection is not required to run cleanup. Passive test measurements do
+  not prune the registry.
 - Create/load flush the outgoing session directly before replacing its document.
   Save As flushes/reloads the source database, preserving committed timeline/arcs
   over its stale mirror, and copies that snapshot with the current document blob.

@@ -348,3 +348,41 @@ still a separate pending gate. Broader generation persistence is not covered.
   Its core README records `TimeRangeOverflow` and atomic validation; traceability
   passes across the complete `e208f4ce..608e22bb` resize change. The parent reports
   113 core tests/Clippy passing for frozen resize source; no implementation changed.
+
+### 2026-10-04: Bounded supervisor records during normal editing
+
+- Frozen persistence source `393786a93d1c973c40ce3d0148a8f770d6cc9c9b` remains
+  unchanged. Parent/native qualification reports both exact earlier transition
+  failure proofs passing unchanged, 107 core / 294 server tests, all 19 focused
+  custody cases and strict Clippy/format/traceability. A separate test-only worktree
+  adds unchanged transition proofs and enhanced initially-empty A/B history checks:
+  296 server tests/Clippy pass. These are parent reports, not cloud execution, and
+  the test-only patches are not silently imported into this source.
+- Native source review identified completed `BackendTaskSupervisor` handles growing
+  with each command unless desktop smoke calls `active_task_count`. This successor
+  changes normal `spawn` to reap finished handles and poll their join results;
+  successful/cancelled completions are observed and named panics are logged.
+  Smoke counting uses the same observer rather than silently dropping results.
+- Registration and reaping share the registry lock. Every unfinished handle remains
+  owned for admitted completion, caller cancellation retention and shutdown joining.
+  Existing `shutdown_all` abort/join and explicit `abort_all` behavior are unchanged.
+  The last completed tail can remain until the next spawn/count/shutdown; cleanup
+  does not require smoke introspection and total edit history no longer accumulates.
+- Three new production-module supervisor tests all fail against `393786a` with only
+  a passive test accessor added: repeated spawn records accumulate, finished records
+  obscure the running-work bound, and normal admission does not report reaped panic
+  results. With the repair, all three pass, including joined teardown of retained
+  running work and captured named panic diagnostics.
+- **18 isolated component tests pass** with production supervisor/Y.Doc/error
+  modules plus the unchanged ownership helper and a minimal state wrapper. They
+  include the five supervisor tests, ten Y.Doc tests and three cancellation/error
+  helper cases. No ONNX/Pumas dependency is present. This is component runtime
+  evidence, not actual AppState/server qualification.
+- Added a native normal-runtime regression: 64 actual notes commands, passive
+  registry observation, correct final SQLite/document notes and 65 seeded+new
+  command records. It never calls `active_task_count` or any pruning observer.
+  This regression compiles but remains **unrun in cloud**.
+- `ORT_SKIP_DOWNLOAD=1` offline server/test compilation and strict Clippy pass.
+  Source/format/traceability and repository hooks are checked for this successor.
+  Parent owns native supervisor/focused/full server retesting and integration;
+  no native runtime, merge readiness, merge or external review claim is made.

@@ -755,3 +755,43 @@ async fn transition_cancelled_notes_caller_still_publishes_and_flushes_source_do
     forwarding.abort();
     let _ = forwarding.await;
 }
+
+#[tokio::test]
+async fn normal_runtime_repeated_commands_bound_completed_supervisor_records() {
+    let fixture = Fixture::new().await;
+    let baseline = fixture.state.task_supervisor.retained_task_count();
+    // This observer only reads the registry; it never invokes the desktop smoke
+    // counter or drives cleanup. Each real command must reap earlier completions.
+    for index in 0..64 {
+        set_timeline_node_notes(
+            &fixture.state,
+            CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                node_id: fixture.node,
+                notes: format!("normal command {index}"),
+            }),
+        )
+        .await
+        .unwrap();
+        tokio::task::yield_now().await;
+        assert!(
+            fixture.state.task_supervisor.retained_task_count() <= baseline + 2,
+            "normal command completion records accumulated at iteration {index}"
+        );
+    }
+    let (saved, _) = crate::persistence::load_project(&fixture.path_a)
+        .await
+        .unwrap();
+    assert_eq!(
+        saved.timeline.node(fixture.node).unwrap().content.notes,
+        "normal command 63"
+    );
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "normal command 63"
+    );
+    assert_eq!(history(&fixture.path_a)[0].len(), 65);
+    fixture.finish().await;
+}

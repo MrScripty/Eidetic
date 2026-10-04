@@ -1,8 +1,9 @@
 use std::future::Future;
 use std::sync::Arc;
 
+use futures::FutureExt;
 use parking_lot::Mutex;
-use tokio::task::JoinHandle;
+use tokio::task::{JoinError, JoinHandle};
 
 #[derive(Clone, Default)]
 pub struct BackendTaskSupervisor {
@@ -19,12 +20,20 @@ impl BackendTaskSupervisor {
     where
         F: Future<Output = ()> + Send + 'static,
     {
-        let handle = tokio::spawn(async move {
-            tracing::debug!("backend task started: {name}");
-            future.await;
-            tracing::debug!("backend task stopped: {name}");
-        });
-        self.tasks.lock().push(BackendTask { name, handle });
+        let completed = {
+            let mut tasks = self.tasks.lock();
+            // Normal command admission reclaims completed records. Retain every
+            // unfinished handle so cancellation and shutdown still own its work.
+            let completed = take_completed_tasks(&mut tasks);
+            let handle = tokio::spawn(async move {
+                tracing::debug!("backend task started: {name}");
+                future.await;
+                tracing::debug!("backend task stopped: {name}");
+            });
+            tasks.push(BackendTask { name, handle });
+            completed
+        };
+        observe_completed_tasks(completed);
     }
 
     pub async fn shutdown_all(&self) {
@@ -58,13 +67,54 @@ impl BackendTaskSupervisor {
     }
 
     pub fn active_task_count(&self) -> usize {
-        let mut tasks = self.tasks.lock();
-        tasks.retain(|task| !task.handle.is_finished());
-        tasks.len()
+        let (completed, count) = {
+            let mut tasks = self.tasks.lock();
+            let completed = take_completed_tasks(&mut tasks);
+            (completed, tasks.len())
+        };
+        observe_completed_tasks(completed);
+        count
+    }
+
+    /// Passive test observation: does not reap records or drive runtime cleanup.
+    #[cfg(test)]
+    pub(crate) fn retained_task_count(&self) -> usize {
+        self.tasks.lock().len()
     }
 
     fn take_tasks(&self) -> Vec<BackendTask> {
         std::mem::take(&mut *self.tasks.lock())
+    }
+}
+
+type CompletedTask = (&'static str, Result<(), JoinError>);
+
+fn take_completed_tasks(tasks: &mut Vec<BackendTask>) -> Vec<CompletedTask> {
+    let mut completed = Vec::new();
+    tasks.retain_mut(|task| {
+        if !task.handle.is_finished() {
+            return true;
+        }
+        match (&mut task.handle).now_or_never() {
+            Some(result) => {
+                completed.push((task.name, result));
+                false
+            }
+            None => true,
+        }
+    });
+    completed
+}
+
+fn observe_completed_tasks(completed: Vec<CompletedTask>) {
+    for (name, result) in completed {
+        match result {
+            Ok(()) => tracing::debug!("reaped completed backend task: {name}"),
+            Err(error) if error.is_cancelled() => {
+                tracing::debug!("reaped cancelled backend task: {name}");
+            }
+            Err(error) => tracing::error!("reaped failed backend task: {name}: {error}"),
+        }
     }
 }
 
@@ -109,5 +159,124 @@ mod tests {
         supervisor.shutdown_all().await;
 
         assert_eq!(supervisor.active_task_count(), 0);
+    }
+}
+
+#[cfg(test)]
+mod lifecycle_tests {
+    use std::io::Write;
+    use std::sync::Arc;
+
+    use parking_lot::Mutex;
+    use tokio::sync::oneshot;
+
+    use super::BackendTaskSupervisor;
+
+    async fn wait_until_finished(supervisor: &BackendTaskSupervisor, name: &str) {
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                let finished = supervisor
+                    .tasks
+                    .lock()
+                    .iter()
+                    .find(|task| task.name == name)
+                    .unwrap()
+                    .handle
+                    .is_finished();
+                if finished {
+                    break;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn repeated_spawn_reclaims_finished_records_without_active_task_counter() {
+        let supervisor = BackendTaskSupervisor::default();
+        for _ in 0..64 {
+            supervisor.spawn("short-operation", async {});
+            wait_until_finished(&supervisor, "short-operation").await;
+            assert_eq!(supervisor.retained_task_count(), 1);
+        }
+        supervisor.shutdown_all().await;
+        assert_eq!(supervisor.retained_task_count(), 0);
+    }
+
+    struct NotifyOnDrop(Option<oneshot::Sender<()>>);
+    impl Drop for NotifyOnDrop {
+        fn drop(&mut self) {
+            if let Some(sender) = self.0.take() {
+                let _ = sender.send(());
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn normal_reaping_keeps_running_work_owned_until_shutdown_joins_cleanup() {
+        let supervisor = BackendTaskSupervisor::default();
+        let (started, running) = oneshot::channel();
+        let (cleanup, mut cleaned) = oneshot::channel();
+        supervisor.spawn("running-operation", async move {
+            let _cleanup = NotifyOnDrop(Some(cleanup));
+            started.send(()).unwrap();
+            std::future::pending::<()>().await;
+        });
+        running.await.unwrap();
+        for _ in 0..32 {
+            supervisor.spawn("short-operation", async {});
+            wait_until_finished(&supervisor, "short-operation").await;
+            assert_eq!(supervisor.retained_task_count(), 2);
+            assert!(matches!(
+                cleaned.try_recv(),
+                Err(oneshot::error::TryRecvError::Empty)
+            ));
+        }
+        supervisor.shutdown_all().await;
+        // shutdown_all must await running task teardown, not just detach it.
+        assert!(matches!(cleaned.try_recv(), Ok(())));
+        assert_eq!(supervisor.retained_task_count(), 0);
+    }
+
+    #[derive(Clone)]
+    struct LogBuffer(Arc<Mutex<Vec<u8>>>);
+    impl Write for LogBuffer {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn normal_reaping_observes_and_reports_completed_panics() {
+        let supervisor = BackendTaskSupervisor::default();
+        supervisor.spawn("named-failed-operation", async {
+            panic!("expected panic proof");
+        });
+        wait_until_finished(&supervisor, "named-failed-operation").await;
+        let buffer = LogBuffer(Arc::new(Mutex::new(Vec::new())));
+        let writer = buffer.clone();
+        let subscriber = tracing_subscriber::fmt()
+            .without_time()
+            .with_ansi(false)
+            .with_max_level(tracing::Level::ERROR)
+            .with_writer(move || writer.clone())
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            supervisor.spawn("next-operation", std::future::pending());
+        });
+        let output = String::from_utf8(buffer.0.lock().clone()).unwrap();
+        assert!(
+            output.contains("reaped failed backend task: named-failed-operation"),
+            "{output}"
+        );
+        assert!(output.contains("expected panic proof"), "{output}");
+        assert_eq!(supervisor.retained_task_count(), 1);
+        supervisor.shutdown_all().await;
     }
 }

@@ -352,6 +352,12 @@ claiming to expose a completed agent retrieval workflow.
   blocking persistence and publication even if its caller disconnects. Admission
   waits remain cancellable. Shutdown can abort work; crash recovery and unrelated
   producers remain outside this guarantee.
+- **Task records:** Normal task admission reaps completed handles and observes
+  their join outcomes, preserving named failure reporting. Retain unfinished
+  handles for admitted completion and shutdown joining. Completed tail records
+  can remain until the next spawn/count/shutdown; repeated edits must not grow
+  the registry with historical commands. Validate repeated real commands using
+  passive registry measurement, without smoke-counter-driven pruning.
 - **Publication:** Await bounded document sends under the gate before emitting
   timeline events/save signals. If the manager closes after SQL commit, return
   an explicit committed-publication error; SQL history remains durable/idempotent.
