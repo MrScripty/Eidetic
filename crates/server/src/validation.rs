@@ -191,12 +191,23 @@ mod tests {
         let root = temp_dir("absolute-files");
         let existing = root.join("existing.db");
         fs::write(&existing, []).unwrap();
-        for path in [
-            existing,
-            root.join("new.db"),
-            root.canonicalize().unwrap().join("canonical.db"),
+        for (kind, path) in [
+            ("existing absolute", existing),
+            ("new absolute", root.join("new.db")),
+            (
+                "new canonical",
+                root.canonicalize().unwrap().join("canonical.db"),
+            ),
         ] {
-            assert!(validate_project_path(path.to_str().unwrap(), &root).is_ok());
+            let result = validate_project_path(path.to_str().unwrap(), &root);
+            assert!(
+                result.is_ok(),
+                "case={kind}, candidate={path:?}, supplied_root={root:?}, canonical_root={:?}, \
+                 existing_ancestor={:?}, canonical_ancestor={:?}, result={result:?}",
+                root.canonicalize(),
+                super::nearest_existing_ancestor(&path),
+                super::nearest_existing_ancestor(&path).map(std::fs::canonicalize),
+            );
         }
         let outside = root
             .with_file_name(format!(
