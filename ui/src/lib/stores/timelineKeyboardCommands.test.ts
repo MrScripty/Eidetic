@@ -7,16 +7,20 @@ import {
   refreshTimelineRenderProjection,
 } from './timelineRenderProjection.svelte.js';
 import { clearSelectedNodeEditorProjection } from './selectedNodeEditorProjection.svelte.js';
+import { notify } from './notifications.svelte.js';
 import {
   TIMELINE_KEYBOARD_STEP_MS,
   deleteSelectedTimelineNodeFromKeyboard,
   nudgeSelectedTimelineNode,
   resizeSelectedTimelineNodeEnd,
   resizeSelectedTimelineNodeStart,
+  runTimelineShortcut,
   splitSelectedTimelineNodeAtPlayhead,
 } from './timelineKeyboardCommands.js';
 import type { ProjectionEnvelope } from '../projectionTypes.js';
 import type { TimelineRenderProjection } from '../timelineRenderTypes.js';
+
+vi.mock('./notifications.svelte.js', () => ({ notify: vi.fn() }));
 
 const timelineProjection: ProjectionEnvelope<TimelineRenderProjection> = {
   version: 7,
@@ -92,6 +96,7 @@ function stubDesktopInvoke() {
 }
 
 beforeEach(async () => {
+  vi.mocked(notify).mockClear();
   resetEditorState();
   clearTimelineRenderProjection();
   clearSelectedNodeEditorProjection();
@@ -109,6 +114,97 @@ afterEach(() => {
 });
 
 describe('timeline keyboard commands', () => {
+  const destructiveCommands = [
+    { name: 'delete', run: deleteSelectedTimelineNodeFromKeyboard },
+    { name: 'split', run: splitSelectedTimelineNodeAtPlayhead },
+  ];
+
+  it.each(destructiveCommands)('keeps the selection when $name is rejected', async ({ run }) => {
+    editorState.selectedNodeId = 'node.scene.beach';
+    editorState.selectedLevel = 'Scene';
+    timelineState.playheadMs = 15_000;
+    invoke.mockRejectedValueOnce(new Error('conflict'));
+    await expect(run()).rejects.toThrow('conflict');
+    expect(editorState.selectedNodeId).toBe('node.scene.beach');
+    expect(editorState.selectedLevel).toBe('Scene');
+    expect(invoke).not.toHaveBeenCalledWith('projection_selected_node', expect.anything());
+  });
+
+  it.each([false, true])(
+    'owns shortcut error notifications across session reset=%s',
+    async (reset) => {
+      editorState.selectedNodeId = 'node.scene.beach';
+      editorState.selectedLevel = 'Scene';
+      let reject!: (error: Error) => void;
+      invoke.mockImplementationOnce(
+        () =>
+          new Promise((_, fail) => {
+            reject = fail;
+          }),
+      );
+      const request = runTimelineShortcut(deleteSelectedTimelineNodeFromKeyboard, 'Delete failed');
+      if (reset) resetEditorState();
+      reject(new Error('conflict'));
+      await request;
+      if (reset) {
+        expect(notify).not.toHaveBeenCalled();
+      } else {
+        expect(notify).toHaveBeenCalledWith('error', 'Delete failed: conflict');
+      }
+    },
+  );
+
+  it.each(destructiveCommands)(
+    'does not clear a different selection after delayed $name',
+    async ({ run }) => {
+      editorState.selectedNodeId = 'node.scene.beach';
+      editorState.selectedLevel = 'Scene';
+      timelineState.playheadMs = 15_000;
+      let resolve!: (response: unknown) => void;
+      invoke.mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            resolve = done;
+          }),
+      );
+      const request = run();
+      editorState.selectedNodeId = 'node.scene.other';
+      editorState.selectedLevel = 'Beat';
+      resolve({ outcome: 'recorded', projection: emptyTimelineProjection });
+      await request;
+      expect(editorState.selectedNodeId).toBe('node.scene.other');
+      expect(editorState.selectedLevel).toBe('Beat');
+      expect(invoke).not.toHaveBeenCalledWith('projection_selected_node', expect.anything());
+    },
+  );
+
+  it.each(destructiveCommands)(
+    'does not clear a reopened session selection with the same ID after delayed $name',
+    async ({ run }) => {
+      editorState.selectedNodeId = 'node.scene.beach';
+      editorState.selectedLevel = 'Scene';
+      timelineState.playheadMs = 15_000;
+      let resolve!: (response: unknown) => void;
+      invoke.mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            resolve = done;
+          }),
+      );
+      const request = run();
+      resetEditorState();
+      clearTimelineRenderProjection();
+      clearSelectedNodeEditorProjection();
+      editorState.selectedNodeId = 'node.scene.beach';
+      editorState.selectedLevel = 'Scene';
+      resolve({ outcome: 'recorded', projection: emptyTimelineProjection });
+      await request;
+      expect(editorState.selectedNodeId).toBe('node.scene.beach');
+      expect(editorState.selectedLevel).toBe('Scene');
+      expect(invoke).not.toHaveBeenCalledWith('projection_selected_node', expect.anything());
+    },
+  );
+
   it('deletes the selected node through the backend-confirmed command path', async () => {
     editorState.selectedNodeId = 'node.scene.beach';
     editorState.selectedLevel = 'Scene';

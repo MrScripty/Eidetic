@@ -307,6 +307,22 @@ claiming to expose a completed agent retrieval workflow.
   writes, suppress caller continuations, fix other projection stores, or resolve
   native acceptance, split policy and complete M4. Dot owns runtime qualification.
 
+
+## M4 follow-on: keyboard timeline caller continuation custody
+
+- **Observed defect:** Delete/split clear selection after awaiting the command,
+  even if another clip is selected or a reopened session reused the same ID.
+  The shell's shortcut failure handler can notify an unrelated new session.
+- **Decision/write set:** Advance an editor-session generation on editor reset;
+  delete/split clear only the still-selected target in their captured generation.
+  Keep shortcut failure notification in the keyboard adapter under that same
+  session check. Scope is editor store, keyboard adapter/tests and shell binding.
+- **Gate:** Deferred delete/split preserve intervening selections and same-ID
+  reopened sessions; rejection retains selection; current-session failures remain
+  visible and old-session failures are suppressed. Run frontend gates.
+- **Limits:** Backend writes, other command callers and renderer sessions remain
+  separate custody work. This adds no split-content or containment policy.
+
 ## M4 follow-on: bind backend timeline command admission
 
 - **Observed defects:** Path capture precedes asynchronous project loading, whose
@@ -376,3 +392,24 @@ claiming to expose a completed agent retrieval workflow.
   server behavior. Native tests are delegated. Other producers and frontend intent
   tokens before backend admission remain open; no completed M4/merge claim.
 
+### Lock semantics clarified during M4 review
+
+`StoryNode.locked` is a content-regeneration lock, as documented by its core
+contract and enforced by single/batch generation admission. Absence of structural
+move/cut/delete rejection is not a violation of that contract. A future structural
+edit lock or agent capability policy must be specified separately; this work must
+not silently disable existing manual editing under a content lock.
+
+
+### M4b ordering boundary
+
+The current writer appends `change_events`/`object_revisions`; broad save clears
+and reinserts only current-state tables and leaves history untouched. Project
+load opens the same database; PDF export does not copy history. No supported
+history export/import, event reinsert, VACUUM or history compaction path was found
+in the source audit. A real broad-save/reopen regression preserves event row
+identities/order and the final child projection. Row order is a local append-only
+storage boundary, not a portable or global revision clock. Any future history
+rebuild, logical export/import or maintenance that can reorder events must add
+an explicit persisted sequence or preserve verified event order before using
+this reader; this slice makes no guarantee for arbitrary external DB rewrites.

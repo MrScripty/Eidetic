@@ -95,6 +95,9 @@ continues.
 
 - Shared polling and backend event flows retain explicit ownership and cleanup semantics.
 - Stores remain the source of transient UI coordination; components react to them.
+- Editor reset advances its session generation. Keyboard delete/split completions
+  may clear selection only in their original session while the command's target
+  is still selected. Shortcut failures notify only their original session.
 - Projection stores cache backend envelopes and must not patch broad durable entity state optimistically.
 - Clearing the timeline projection cache starts a new generation. Earlier
   refreshes/commands still settle for their callers but cannot publish projection,
