@@ -15,6 +15,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `bible_render_graph.rs` | Disposable Bevy-facing story-bible graph projection DTOs, deterministic layout helpers, and neighborhood indexes derived from canonical graph rows. |
 | `graph_proposal.rs` | Generic reviewable graph proposal contracts for agent-proposed bible nodes, fields, edges, and timeline-context links. |
 | `script_document.rs` | Canonical script document, segment, block, span, lock, patch, and script projection contracts. |
+| `timeline_render.rs` | Timeline renderer projections, including core-derived gaps filtered by the renderer's minimum duration. |
 
 ## Problem
 The new architecture needs stable types for backend-owned commands, event history, sparse object revisions, and read projections before persistence, routes, Svelte, or Bevy can implement their slices safely.
@@ -36,6 +37,8 @@ Start with small core contract modules that own IDs, object kinds, field values,
 
 ## Invariants
 - Contracts remain deterministic and host-agnostic.
+- Timeline render gaps come from core occupied-range queries; overlapping edits
+  must not project occupied time as empty space.
 - Long-lived boundary types have explicit serde shapes.
 - Object revisions describe field-level deltas and do not require whole-object snapshots.
 - Canonical bible roots are system-owned graph nodes, not enum-only branches in application logic.

@@ -231,3 +231,49 @@ still a separate pending gate. Broader generation persistence is not covered.
   crossing-child cut policy, and long-lived proposal identity/revision
   preconditions remain separate design work. No merge, PR metadata change,
   external review request or CodeRabbit invocation was made.
+
+### 2026-10-04: Core gap projection after overlapping edits
+
+- Isolated branch `fix/timeline-overlap-gap-projection` starts at exact PR6
+  `03b47adc95b673daef5ccf3a1e17316bcf28143a`, preserving PR5 ancestry.
+  The test-only WAL successor `48dd8408923c6667591e918333c6ccd2380dbd86`
+  is not included; its runtime qualification is delegated separately.
+- Fixed core gap discovery so contained clips cannot move the occupied endpoint
+  backwards. Equal-time boundaries use stable node identity ordering. No server,
+  frontend, dependency, geometry mutation or product-policy change.
+- All four new regressions fail with the original gap implementation (103 pass,
+  four fail), then pass with the fix: **107 core tests**. Includes a public resize
+  followed by renderer projection and checks for thresholds, level isolation,
+  nested/overlapping/touching clips and reordered storage.
+- Passed strict core all-target Clippy, **284 frontend tests**, Svelte check
+  (zero errors/warnings), frontend lint, formatting and production build,
+  workspace Rust formatting, decision traceability and whitespace checks.
+- Server/native tests were not run for this slice. Dot qualification should
+  run the server/native gates and visually confirm the gap overlay after an
+  overlapping resize. No full-workspace, native UI or completed M4 claim.
+
+### 2026-10-04: Timeline projection cache session custody
+
+- Isolated branch `fix/timeline-projection-session-custody` starts at
+  `e208f4ce74521dbdfd30759118c2edc181f9ef29`; the separate gap-projection
+  branch remains unchanged for dot review. No WAL successor changes are included.
+- Reproduced an old project refresh replacing a new project's cache using the
+  actual frontend module with deferred transport responses. A cache generation
+  now owns all refresh/command state updates; clear invalidates old completions.
+  Within a generation, pending counts outstanding work, versions order cache
+  replacement, and the latest-started request owns shared error state.
+- All **26** deferred lifecycle tests fail against the original store and pass
+  with the fix. They cover all nine command bridges, refreshes, clear/new loads,
+  obsolete errors/finalizers and same-session command/refresh concurrency.
+- Final **310 frontend tests** pass. Svelte check reports zero errors/warnings;
+  lint, formatting, production build, decision traceability and whitespace
+  checks pass. An initial full-suite documentation audit failure was corrected
+  by keeping test-file documentation outside the store-module inventory table.
+- The required pre-push gate runs native workspace tests; publication is handed
+  off as a verified bundle without retrying blocked downloads or bypassing hooks.
+  Backend session custody, caller continuations, other projection stores and
+  native interaction validation remain outside this frontend cache milestone.
+- Completion contract: finish this cache repair, prove deferred behavior and
+  frontend gates, preserve the gap branch, and provide verified source transfer.
+  No callable native Goal-setting tool is available; durable Goal activation is
+  not claimed. Runtime model/reasoning selection is not exposed to this task.

@@ -207,6 +207,37 @@ mod tests {
     use crate::timeline::timing::TimeRange;
 
     #[test]
+    fn resized_overlap_does_not_project_occupied_time_as_a_gap() {
+        let mut timeline = Timeline::new(120_000, EpisodeStructure::standard_30_min());
+        let first = StoryNode::new(
+            "First",
+            StoryLevel::Scene,
+            TimeRange::new(0, 20_000).unwrap(),
+        );
+        let first_id = first.id;
+        timeline.nodes.push(first);
+        timeline.nodes.push(StoryNode::new(
+            "Second",
+            StoryLevel::Scene,
+            TimeRange::new(30_000, 40_000).unwrap(),
+        ));
+        timeline
+            .resize_node(first_id, TimeRange::new(0, 90_000).unwrap())
+            .unwrap();
+
+        let projection = TimelineRenderProjection::from_timeline(&timeline);
+        let gaps: Vec<_> = projection
+            .gaps
+            .iter()
+            .filter(|gap| gap.level == StoryLevel::Scene)
+            .collect();
+        assert_eq!(gaps.len(), 1);
+        assert_eq!(gaps[0].time_range, TimeRange::new(90_000, 120_000).unwrap());
+        assert_eq!(gaps[0].preceding_node_id, Some(first_id));
+        assert_eq!(gaps[0].following_node_id, None);
+    }
+
+    #[test]
     fn timeline_render_projection_maps_tracks_clips_arcs_and_relationships() {
         let mut timeline = Timeline::new(100_000, EpisodeStructure::standard_30_min());
         let mut scene = StoryNode::new(

@@ -7,6 +7,7 @@ This directory defines the timeline data model that underpins Eidetic’s clip-b
 | File/Folder | Description |
 |-------------|-------------|
 | `mod.rs` | Timeline aggregate behavior and traversal helpers. |
+| `gap_tests.rs` | Occupied-range union, threshold, level isolation, and stable gap-boundary regressions. |
 | `node.rs` | Story node identity, hierarchy, and content-bearing types. |
 | `track.rs` | Track metadata and ordering. |
 | `relationship.rs` | Inter-node relationship types and IDs. |
@@ -31,6 +32,10 @@ Keep the timeline model centralized here, with a documented future split of aggr
 - Time-range validation remains authoritative in this boundary.
 - Track/node ordering semantics stay stable for persistence and frontend rendering.
 - Hierarchy traversal continues to flow through timeline helpers rather than duplicated callers.
+- Gaps are the complement of occupied ranges at one story level. Nested and
+  overlapping clips cannot move the occupied endpoint backwards. Gap neighbors
+  identify nodes at the actual boundaries; equal-time ties use range then node
+  identity order so storage order cannot change the result.
 
 ## Revisit Triggers
 - A feature adds another major behavior layer to `mod.rs`.
