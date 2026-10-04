@@ -30,6 +30,14 @@ function projectionKey({ document_id }: ScriptDocumentProjectionKey): string {
   return encodeURIComponent(document_id);
 }
 
+interface CacheLifetime {
+  activeRequests: number;
+  latestRequestId: number;
+}
+
+// Object identity separates lifetimes even when the same document is reopened.
+const cacheLifetimes = Object.create(null) as Record<string, CacheLifetime | undefined>;
+
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
@@ -61,51 +69,62 @@ export function getScriptDocumentProjectionError(
   return scriptDocumentProjectionState.errors[projectionKey(key)];
 }
 
-export async function refreshScriptDocumentProjection(
-  key: ScriptDocumentProjectionKey,
-): Promise<ProjectionEnvelope<ScriptDocumentProjection>> {
-  const cacheKey = projectionKey(key);
+async function runScriptProjectionRequest<T>(
+  cacheKey: string,
+  request: () => Promise<T>,
+  projectionOf: (result: T) => ProjectionEnvelope<ScriptDocumentProjection>,
+  failureMessage: string,
+): Promise<T> {
+  let lifetime = cacheLifetimes[cacheKey];
+  if (!lifetime) {
+    lifetime = { activeRequests: 0, latestRequestId: 0 };
+    cacheLifetimes[cacheKey] = lifetime;
+  }
+  const requestId = ++lifetime.latestRequestId;
+  lifetime.activeRequests += 1;
   scriptDocumentProjectionState.pending[cacheKey] = true;
   scriptDocumentProjectionState.errors[cacheKey] = undefined;
 
   try {
-    const projection = await getScriptDocumentProjection(key);
-    cacheProjection(cacheKey, projection);
-    return projection;
+    const result = await request();
+    if (cacheLifetimes[cacheKey] === lifetime) {
+      cacheProjection(cacheKey, projectionOf(result));
+    }
+    return result;
   } catch (error) {
-    scriptDocumentProjectionState.errors[cacheKey] = errorMessage(
-      error,
-      'Failed to load script document',
-    );
+    if (cacheLifetimes[cacheKey] === lifetime && requestId === lifetime.latestRequestId) {
+      scriptDocumentProjectionState.errors[cacheKey] = errorMessage(error, failureMessage);
+    }
     throw error;
   } finally {
-    scriptDocumentProjectionState.pending[cacheKey] = false;
+    if (cacheLifetimes[cacheKey] === lifetime) {
+      lifetime.activeRequests -= 1;
+      scriptDocumentProjectionState.pending[cacheKey] = lifetime.activeRequests > 0;
+    }
   }
+}
+
+export async function refreshScriptDocumentProjection(
+  key: ScriptDocumentProjectionKey,
+): Promise<ProjectionEnvelope<ScriptDocumentProjection>> {
+  return runScriptProjectionRequest(
+    projectionKey(key),
+    () => getScriptDocumentProjection(key),
+    (result) => result,
+    'Failed to load script document',
+  );
 }
 
 export async function applyScriptBlockCommand(
   payload: SetScriptBlockCommand,
   commandId?: CommandId,
 ): Promise<ScriptDocumentCommandResponse> {
-  const cacheKey = projectionKey({
-    document_id: payload.document_id,
-  });
-  scriptDocumentProjectionState.pending[cacheKey] = true;
-  scriptDocumentProjectionState.errors[cacheKey] = undefined;
-
-  try {
-    const response = await setScriptBlock(payload, commandId);
-    cacheProjection(cacheKey, response.projection);
-    return response;
-  } catch (error) {
-    scriptDocumentProjectionState.errors[cacheKey] = errorMessage(
-      error,
-      'Failed to apply script block command',
-    );
-    throw error;
-  } finally {
-    scriptDocumentProjectionState.pending[cacheKey] = false;
-  }
+  return runScriptProjectionRequest(
+    projectionKey({ document_id: payload.document_id }),
+    () => setScriptBlock(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply script block command',
+  );
 }
 
 export async function applyScriptLockCommand(
@@ -113,29 +132,17 @@ export async function applyScriptLockCommand(
   documentId: ScriptDocumentId,
   commandId?: CommandId,
 ): Promise<ScriptDocumentCommandResponse> {
-  const cacheKey = projectionKey({
-    document_id: documentId,
-  });
-  scriptDocumentProjectionState.pending[cacheKey] = true;
-  scriptDocumentProjectionState.errors[cacheKey] = undefined;
-
-  try {
-    const response = await setScriptLock(payload, commandId);
-    cacheProjection(cacheKey, response.projection);
-    return response;
-  } catch (error) {
-    scriptDocumentProjectionState.errors[cacheKey] = errorMessage(
-      error,
-      'Failed to apply script lock command',
-    );
-    throw error;
-  } finally {
-    scriptDocumentProjectionState.pending[cacheKey] = false;
-  }
+  return runScriptProjectionRequest(
+    projectionKey({ document_id: documentId }),
+    () => setScriptLock(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply script lock command',
+  );
 }
 
 export function clearScriptDocumentProjection(key: ScriptDocumentProjectionKey): void {
   const cacheKey = projectionKey(key);
+  delete cacheLifetimes[cacheKey];
   delete scriptDocumentProjectionState.projections[cacheKey];
   delete scriptDocumentProjectionState.pending[cacheKey];
   delete scriptDocumentProjectionState.errors[cacheKey];
