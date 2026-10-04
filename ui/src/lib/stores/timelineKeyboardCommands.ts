@@ -1,4 +1,5 @@
-import { editorState } from './editor.svelte.js';
+import { editorState, getEditorSessionGeneration } from './editor.svelte.js';
+import { notify } from './notifications.svelte.js';
 import { timelineState } from './timeline.svelte.js';
 import {
   applyDeleteTimelineNodeCommand,
@@ -12,6 +13,30 @@ import type { TimelineRenderClip } from '../timelineRenderTypes.js';
 export const TIMELINE_KEYBOARD_STEP_MS = 1_000;
 
 export type TimelineKeyboardCommandResult = 'applied' | 'unavailable';
+
+export async function runTimelineShortcut(
+  action: () => Promise<TimelineKeyboardCommandResult>,
+  failureLabel: string,
+): Promise<void> {
+  const generation = getEditorSessionGeneration();
+  try {
+    await action();
+  } catch (error) {
+    if (generation === getEditorSessionGeneration()) {
+      notify(
+        'error',
+        `${failureLabel}: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
+    }
+  }
+}
+
+function clearSelectionIfOwned(nodeId: string, generation: number): void {
+  if (generation !== getEditorSessionGeneration() || editorState.selectedNodeId !== nodeId) return;
+  editorState.selectedNodeId = null;
+  editorState.selectedLevel = null;
+  void refreshSelectedNodeEditorProjection(null).catch(() => {});
+}
 
 function selectedTimelineClip(): TimelineRenderClip | null {
   const selectedNodeId = editorState.selectedNodeId;
@@ -28,10 +53,10 @@ export async function deleteSelectedTimelineNodeFromKeyboard(): Promise<Timeline
   const clip = selectedTimelineClip();
   if (!clip) return 'unavailable';
 
+  const generation = getEditorSessionGeneration();
+
   await applyDeleteTimelineNodeCommand({ node_id: clip.node_id });
-  editorState.selectedNodeId = null;
-  editorState.selectedLevel = null;
-  void refreshSelectedNodeEditorProjection(null).catch(() => {});
+  clearSelectionIfOwned(clip.node_id, generation);
   return 'applied';
 }
 
@@ -41,13 +66,13 @@ export async function splitSelectedTimelineNodeAtPlayhead(): Promise<TimelineKey
   const atMs = Math.round(timelineState.playheadMs);
   if (atMs <= clip.start_ms || atMs >= clip.end_ms) return 'unavailable';
 
+  const generation = getEditorSessionGeneration();
+
   await applySplitTimelineNodeCommand({
     node_id: clip.node_id,
     at_ms: atMs,
   });
-  editorState.selectedNodeId = null;
-  editorState.selectedLevel = null;
-  void refreshSelectedNodeEditorProjection(null).catch(() => {});
+  clearSelectionIfOwned(clip.node_id, generation);
   return 'applied';
 }
 

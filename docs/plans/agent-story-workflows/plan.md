@@ -307,6 +307,21 @@ claiming to expose a completed agent retrieval workflow.
   writes, suppress caller continuations, fix other projection stores, or resolve
   native acceptance, split policy and complete M4. Dot owns runtime qualification.
 
+## M4 follow-on: keyboard timeline caller continuation custody
+
+- **Observed defect:** Delete/split clear selection after awaiting the command,
+  even if another clip is selected or a reopened session reused the same ID.
+  The shell's shortcut failure handler can notify an unrelated new session.
+- **Decision/write set:** Advance an editor-session generation on editor reset;
+  delete/split clear only the still-selected target in their captured generation.
+  Keep shortcut failure notification in the keyboard adapter under that same
+  session check. Scope is editor store, keyboard adapter/tests and shell binding.
+- **Gate:** Deferred delete/split preserve intervening selections and same-ID
+  reopened sessions; rejection retains selection; current-session failures remain
+  visible and old-session failures are suppressed. Run frontend gates.
+- **Limits:** Backend writes, other command callers and renderer sessions remain
+  separate custody work. This adds no split-content or containment policy.
+
 
 ### Lock semantics clarified during M4 review
 

@@ -33,6 +33,8 @@ The app shell has to coordinate multiple panels with different layout rules. The
 - The bottom timeline panel must keep a fixed height based on shared timeline geometry.
 - The upper workspace must remain scrollable/resizable without pushing the timeline off the window edge.
 - Layout code already lives in large Svelte components, so new shell behavior should stay isolated where possible.
+- Timeline shortcut continuations use the keyboard adapter's editor-session
+  ownership check before publishing errors into the active shell.
 
 ## Decision
 

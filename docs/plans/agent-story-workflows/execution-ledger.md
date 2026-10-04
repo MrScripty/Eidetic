@@ -237,3 +237,23 @@ still a separate pending gate. Broader generation persistence is not covered.
   frontend gates, preserve the gap branch, and provide verified source transfer.
   No callable native Goal-setting tool is available; durable Goal activation is
   not claimed. Runtime model/reasoning selection is not exposed to this task.
+
+### 2026-10-04: Keyboard timeline caller continuation custody
+
+- Isolated branch `fix/timeline-keyboard-continuation-custody` follows
+  `abae7ca83f41470f392ec8b81cf6f61513a415b7`; both independently qualified
+  gap/cache branches remain unchanged.
+- Four deferred delete/split regressions fail against the original keyboard
+  adapter (four existing tests still pass). They reproduce clearing an intervening
+  selection and clearing the same node ID after an editor-session reset.
+- Editor reset now advances a lifetime generation. Successful delete/split clear
+  only their still-selected target in that generation. The shell uses the keyboard
+  adapter's guarded failure notifier, preserving current-session failure messages
+  while suppressing old-session notifications.
+- **318 frontend tests** pass, including eight added continuation tests covering
+  both destructive actions, rejection preserving selection and notification
+  ownership. Typecheck (zero errors/warnings), lint, formatting, build, decision
+  traceability and whitespace checks pass. Native qualification remains delegated.
+- This handles keyboard caller effects only. Backend admission, other manual
+  callers, generation lifecycle and renderer custody remain separately scoped;
+  no cut/child-content semantics are changed.

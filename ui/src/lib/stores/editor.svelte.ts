@@ -39,7 +39,15 @@ export const editorState = $state<{
   batchCompletedCount: 0,
 });
 
+let editorSessionGeneration = 0;
+
+/** Captures the editor lifetime, including reopening the same project/node IDs. */
+export function getEditorSessionGeneration(): number {
+  return editorSessionGeneration;
+}
+
 export function resetEditorState(): void {
+  editorSessionGeneration += 1;
   editorState.selectedNodeId = null;
   editorState.selectedLevel = null;
   editorState.streamingNodeId = null;
