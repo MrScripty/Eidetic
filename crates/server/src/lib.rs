@@ -76,6 +76,7 @@ pub(crate) mod timeline_affect_overlay;
 pub(crate) mod timeline_child_plan_apply;
 pub(crate) mod timeline_children_history;
 pub(crate) mod timeline_command;
+pub(crate) mod timeline_command_guard;
 pub(crate) mod timeline_command_history;
 pub(crate) mod timeline_command_history_codec;
 pub(crate) mod timeline_create_intent;

@@ -1,9 +1,9 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** M3a source-bound reference retrieval; M1/M2a merged.
-**Next gate:** Qualify retrieval custody regressions and exact-head hosted CI,
-then independently review. Pumas runtime/revision integration remains open.
+**Current phase:** M4a shared timeline write-conflict boundary; M1/M2a merged.
+**Next gate:** Qualify and independently review shared timeline custody before
+agent write exposure. Pumas runtime/revision integration remains open.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -64,7 +64,7 @@ Acceptance claims (all pending unless the ledger records scoped evidence):
 | M1: Reliable existing harness lifecycle | Accepted (bounded backend scope) | server harness and focused tests; this plan/index | Provider/contract/tool failures persisted; rejected calls never execute; prior successful calls preserved |
 | M2: Explicit temporal fact projection | Active (M2a) | core time contracts; snapshot/query commands; context/prompt/tests | Future facts excluded; same-time conflicts explicit; sparse facts inherited; flashback and edit-history distinctions tested |
 | M3: Pumas embeddings and inference | Planned | adapters/configuration; derived index; provider integration/tests | Actual pinned Pumas APIs; model/dimension/revision invalidation; unavailable model and malformed outputs fail visibly |
-| M4: Shared manual/agent timeline editing | Planned | timeline command contracts/services; agent tools; Tauri/UI bindings/tests | Create/move/cut/resize/delete parity, containment/lock validation, replay, undo, stale proposals |
+| M4: Shared manual/agent timeline editing | Active (M4a) | timeline command contracts/services; agent tools; Tauri/UI bindings/tests | Create/move/cut/resize/delete parity, containment/lock validation, replay, undo, stale proposals |
 | M5: Conversational authoring and acceptance | Planned | agent service/UI; native interaction gaps; documentation | Multi-act screenplay walkthrough and complete applicable repository verification |
 
 ## Composed-design review
@@ -212,3 +212,35 @@ source/version binding and explicit unavailable states); Coding-Standards
 `docs/plans/agent-interface-efficiency/plan.md` (preserve exact source authority
 while simplifying transport). The present slice follows those principles without
 claiming to expose a completed agent retrieval workflow.
+
+
+## M4a: shared timeline write-conflict boundary
+
+- **Observed defect:** Services load a project before `spawn_blocking`; timeline
+  history writers then upsert full node collections from that snapshot. An
+  intervening manual edit can be overwritten by a later command even on another
+  clip. A deleted row can be resurrected by an old collection.
+- **Owner and write set:** Existing server timeline history writers plus one
+  shared transaction-local validator, regressions, source README and this ledger.
+  No transport contract, schema, dependency identity or retrieval code changes.
+- **Boundary:** Compare persisted nodes, node-arc memberships, relationships and
+  total duration to the planned snapshot in the write transaction. Comparison
+  ignores only outer collection order. Reject mismatches as conflicts, atomically
+  rolling back the command, event and revisions. Preserve exact replay behavior.
+- **Alternatives:** Blind whole-snapshot overwrites violate backend ownership.
+  Retrying without a refreshed/reviewed intent could apply an unwanted operation.
+  A new agent-only store or writer would duplicate authority. Per-object revision
+  preconditions remain the next protocol slice rather than being faked by an
+  in-memory token or timestamp.
+- **Limits:** This is state-equality conflict detection, not immutable proposal
+  revision custody; edit-and-revert is not detected. Whole-timeline validation is
+  conservative until writers become narrower. Agent read/propose/accept tools,
+  lock/containment parity, undo, session-change custody, native UI acceptance,
+  Pumas live inference and generation/stream persistence are still open.
+- **Regression intent:** All nine writers reject a stale snapshot, rejected
+  writes leave no history, deletion/membership/duration changes conflict, replay
+  remains idempotent, and a refreshed snapshot preserves the prior edit.
+
+- **Initial save:** A command arriving before the first durable project save
+  receives an explicit conflict and leaves no rows/history behind. It must wait
+  for save and reload; this slice does not alter project creation lifecycle.

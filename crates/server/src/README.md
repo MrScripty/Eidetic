@@ -34,6 +34,8 @@ domain model in `eidetic-core`.
 | `affect_store.rs` | SQLite affect value, dependency, and proposal persistence with revision-history writes. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
+| `timeline_command_guard.rs` | Transaction-local timeline snapshot validation shared by all timeline history writers. |
+| `timeline_command_guard_tests.rs` | Stale edit, atomic rollback, replay and refresh regressions across shared timeline commands. |
 | `history_store.rs` | SQLite command, event, object revision, and field delta persistence for projection-owned state. |
 | `history_store_tests.rs` | Focused history-store transaction, idempotency, and round-trip tests. |
 | `bible_graph_schema.rs` | SQLite schema setup for story-bible graph node, part, and field current-state rows. |
@@ -170,3 +172,29 @@ validation returns children under the canonical root when that root exists;
 tests compare exact paths built from that canonical root and native components.
 A missing root continues to use lexical normalization. Timestamp equality and
 path escape-rejection assertions remain required.
+
+### Shared timeline snapshot custody (M4a)
+
+Timeline command services plan edits from a persisted project snapshot before
+entering a blocking write task. All nine timeline history writers now validate
+that snapshot against current SQLite nodes, node-arc membership, relationships
+and total duration inside the same transaction that records the command/event/
+revisions. Collection ordering is ignored; every serialized row field is compared.
+A mismatch returns a conflict and rolls back history as well as current state.
+The caller must reload and review the operation rather than blindly retrying.
+A matching command-ID/payload replay remains idempotent even after later edits.
+
+This deliberately conservative prerequisite rejects unrelated timeline edits
+because existing writers upsert whole collections. It does not introduce a
+second store, new schema, agent write authority, or automatic proposal acceptance.
+It does not yet bind a long-lived proposal to an immutable revision: an
+edit-and-revert can have equal current state, and command payloads still lack an
+expected revision. Project-session custody across navigation, lock/subtree
+semantics, agent tool/UI parity, undo, and generation/stream persistence remain
+separate acceptance gates in the active story-workflow plan. The guard requires
+an initialized canonical project database; it never seeds missing rows from a
+possibly stale in-memory mirror.
+
+Commands before the initial durable project save return an explicit conflict;
+no fallback mirror is used to initialize current state inside a timeline edit.
+The user can retry after persistence and reload.

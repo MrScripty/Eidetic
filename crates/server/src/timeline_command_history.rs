@@ -65,7 +65,10 @@ pub(crate) fn record_set_timeline_node_range_history(
         "timeline.node_range",
         &event,
         &[revision],
-        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes),
+        |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)
+        },
     )?)
 }
 
@@ -108,7 +111,10 @@ pub(crate) fn record_set_timeline_node_lock_history(
         "timeline.node_lock",
         &event,
         &[revision],
-        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes),
+        |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)
+        },
     )?)
 }
 
@@ -167,7 +173,10 @@ pub(crate) fn record_set_timeline_node_notes_history(
         "timeline.node_notes",
         &event,
         &[revision],
-        |tx| timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes),
+        |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)
+        },
     )?)
 }
 
@@ -247,7 +256,10 @@ pub(crate) fn record_create_timeline_relationship_history(
         "timeline.relationship_create",
         &event,
         &[revision],
-        |tx| timeline_relationship_store::upsert_relationship_in_transaction(tx, &relationship),
+        |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            timeline_relationship_store::upsert_relationship_in_transaction(tx, &relationship)
+        },
     )?)
 }
 
@@ -311,6 +323,7 @@ pub(crate) fn record_delete_timeline_relationship_history(
         &event,
         &[revision],
         |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
             timeline_relationship_store::delete_relationship_in_transaction(
                 tx,
                 command.payload.relationship_id,
@@ -419,6 +432,7 @@ pub(crate) fn record_create_timeline_node_history(
         &event,
         &[revision],
         |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
             timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
             timeline_node_store::replace_node_arcs_in_transaction(tx, &next_timeline.node_arcs)
         },

@@ -141,3 +141,30 @@ Independent root source re-review accepted the bounded retrieval correction on
 2026-10-03, including admission epoch propagation, coherent activation and the
 caller-level regression coverage. Publication is cleared; hosted execution is
 still a separate pending gate. Broader generation persistence is not covered.
+
+
+### 2026-10-04: M4a recovery and shared timeline write guard
+
+- Recovered PR4 head `c04711ba61e55be3348a18347db4f70b9d547fa5` into an
+  isolated checkout; no unpublished M4 implementation was found. Pumas stays at
+  the repository's unchanged pin `8444b50df28c3e2bd8db58fb3645fa4dd8664b27`.
+- Added transaction-local snapshot checks to all nine timeline history writers
+  and focused regression tests. This is the state-custody prerequisite described
+  above, not completed M4 or immutable long-lived proposal revision checking.
+- Verification pending. Rust formatter executed successfully. The initial server
+  test attempt reached dependency downloads, then its execution review was
+  cancelled; no compile/test success is claimed. Publication remains on hold.
+
+- Recovery validation resumed with unchanged dependency pins. The default ORT
+  CDN download failed with `io: connection refused`; the matching official
+  `onnxruntime==1.24.2` PyPI wheel supplied the native runtime through ort-sys's
+  supported `ORT_LIB_LOCATION`/dynamic-link configuration. Wheel SHA256:
+  `09aa6f8d766b4afc3cfba68dd10be39586b49f9462fbd1386c5d5644239461ca`.
+- Final code passed `cargo test -p eidetic-core -p eidetic-server --all-targets`:
+  **103 core + 268 server tests**. Includes nine new guard regressions and
+  real project save/load, separate Y.Doc bytes, pre-initial-save rejection,
+  stale writer rollback, refresh, replay and structural command acceptance.
+  No native renderer, live inference or whole-workspace pass is inferred.
+- Strict core/server all-target clippy passed with `-D warnings`; workspace
+  rustfmt check, whitespace check and decision traceability passed. Publication
+  and exact-head hosted/native qualification remain pending parent coordination.
