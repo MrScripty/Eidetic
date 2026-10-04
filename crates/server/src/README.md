@@ -31,7 +31,7 @@ domain model in `eidetic-core`.
 | `script_block_create.rs` | Manual first-block creation and non-destructive appends with backend identities and transaction-local placement/order validation. |
 | `script_block_create_tests.rs` | Exact persistence/context, locks, replay, refusal, writer rollback and retiming SQLite regressions. |
 | `script_block_create_impact_tests.rs` | Consumed-source append review/explicit acceptance, refreshed new-block lineage, later-append refusal, replay, rollback and historical retiming regressions. |
-| `script_block_create_service_tests.rs` | Native AppState save/reopen/preview/retime and queued project replacement regressions. |
+| `script_block_create_service_tests.rs` | Native AppState save/reopen/preview/retime and queued project replacement regressions; empty canonical schema is initialized before queuing because refusal precedes database access. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
 | `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
 | `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |

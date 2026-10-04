@@ -17,7 +17,11 @@ const source: SelectedNodeEditorNode = {
 it('keeps exact refused text and its original context until placement is explicitly refreshed', async () => {
   const save = vi
     .fn()
-    .mockRejectedValueOnce(new Error('timeline placement changed'))
+    .mockRejectedValueOnce(
+      new Error('timeline placement changed; use its current placement and try again', {
+        cause: { kind: 'bad_request' },
+      }),
+    )
     .mockResolvedValueOnce({});
   const composer = createScriptBlockCreationDraft({
     documentId: () => 'script.document.main',
@@ -29,7 +33,9 @@ it('keeps exact refused text and its original context until placement is explici
   await composer.save();
   expect(composer.state.text).toBe('  Mara sees 雨.\n\n');
   expect(composer.state.writing).toBe(true);
-  expect(composer.state.error).toBe('timeline placement changed');
+  expect(composer.state.error).toBe(
+    'timeline placement changed; use its current placement and try again',
+  );
   expect(save).toHaveBeenCalledWith(
     {
       document_id: 'script.document.main',

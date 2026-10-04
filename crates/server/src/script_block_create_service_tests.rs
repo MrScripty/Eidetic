@@ -127,6 +127,11 @@ async fn queued_manual_creation_refuses_project_replacement_without_writing_scri
     crate::persistence::save_project(&project, &path, None)
         .await
         .unwrap();
+    // A queued request is refused before opening the database. Initialize the
+    // empty canonical script schema as fixture setup, not as a command effect.
+    let setup = sqlite::open_write_connection(&path).unwrap();
+    script_store::create_schema(&setup).unwrap();
+    drop(setup);
     let state = AppState::new().await;
     project_service::replace_active_project(&state, project.clone(), path.clone());
     let held = state.project_session_gate.lock().await;

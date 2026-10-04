@@ -55,6 +55,10 @@ raw size would separate scenarios that share the same contract fixtures.
 - Splitting each store next to every consumer component: rejected because the timeline/editor shell shares state across multiple panels.
 
 ## Invariants
+- Desktop invocation preserves the original native error as `Error.cause` while
+  keeping its user-facing message. Creation retry can recognize its specific
+  pre-recording placement refusal without guessing certainty from message text
+  or treating other command/transport failures as definitely uncommitted.
 - Manual creation wire types carry captured source placement, kind and exact
   text. The command API forwards a stable draft command ID through native invoke;
   persistent block/span IDs and ordering come from the backend response.

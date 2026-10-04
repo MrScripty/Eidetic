@@ -19,6 +19,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `scriptBlockCreationDraft.svelte.ts` | Transient captured-context draft, retry identity and explicit placement refresh controller. |
 | `ScriptBlockComposer.ssr.test.ts` | Rendering and authoring discoverability fixtures. |
 | `scriptBlockCreationDraft.svelte.test.ts` | Refused/ambiguous save, exact text and captured-context frontend fixtures. |
+| `scriptBlockCreationRetry.svelte.test.ts` | Lost acknowledgement, exact retry, guarded discard/retarget and definite native placement refusal through actual frontend command/store functions with an invoke fixture. |
+| `ScriptBlockComposer.retry.ssr.test.ts` | Uncertain-save read-only controls, exact retry action and definite-refusal recovery rendering fixtures. |
 | `ScriptBlockEditor.svelte` | Focused manual screenplay edit/save/cancel surface, preserving failed drafts and submitting the captured block revision. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
@@ -44,9 +46,14 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
   composer captures its selected clip and document when writing begins, preserves
   exact refused drafts, and never retargets them on selection change. A placement
   refresh requires an explicit action for the original clip.
-- Creation retries keep the same command ID, preventing duplicate blocks after an
-  ambiguous acknowledgement. The backend refuses changed already-recorded payloads.
-  Block creation and existing-block editing share canonical projection updates.
+- Within the local composer, an uncertain save retains its submitted payload and
+  command ID. Exact retry reconciles that request; editing text/kind, discard,
+  restart and placement refresh remain disabled until acknowledgement or the
+  known native placement-changed refusal. Mutable draft fields never replace the
+  submission during retry. Native `bad_request` provenance and the exact known
+  pre-recording message are required for placement recovery; lookalike text,
+  internal errors and untyped failures remain uncertain.
+- Block creation and existing-block editing share canonical projection updates.
 - Review targets the block identified by the generation impact. Display current
   and exact proposed text; accept/reject explicitly and refresh the canonical
   script projection afterward. Manual editor drafts remain local and intact.

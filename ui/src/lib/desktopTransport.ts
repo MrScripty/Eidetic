@@ -74,7 +74,7 @@ export async function invokeDesktop<T>(
   } catch (error) {
     const commandError = error as DesktopCommandError;
     if (typeof commandError?.message === 'string') {
-      throw new Error(commandError.message);
+      throw new Error(commandError.message, { cause: error });
     }
     if (typeof error === 'string') {
       throw new Error(error);

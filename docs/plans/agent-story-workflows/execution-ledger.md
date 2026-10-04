@@ -808,3 +808,40 @@ still a separate pending gate. Broader generation persistence is not covered.
   AppState, graphical or live-model execution claim is made. Prior ORT CDN HTTP403
   and native/graphical dependency limitations remain; no retries or workarounds.
 - Parent owns exact-head native qualification, independent review, PR and merge.
+
+
+## PR8 uncertain-save retry and queued fixture schema repairs
+
+- Read official review `5408583844`, comment `4179636372`, on exact head
+  `35ad9d595a9b77b77b0678971fb2fceb382b9aac`. Added executable frontend regressions
+  and reproduced both failures before repair: changed text/kind reused the old
+  command ID after a simulated committed-but-lost acknowledgement, and uncertain
+  cancel/restart replaced the original ID. The tests drive actual controller,
+  store, command and desktop-invoke helpers; native receipts are fixture data.
+- On isolated `fix/pr8-authoring-retry`, capture the submitted payload/ID once and
+  retry that exact snapshot until its outcome is reconciled. While uncertain,
+  text/kind/discard/restart/placement controls remain disabled, and mutable draft
+  fields cannot change the retried command. Exact retry reconciles a recorded
+  receipt without appending another block. The existing native error shape is
+  preserved in `Error.cause`; only `bad_request` plus the exact known pre-recording
+  placement message unlocks editing/current-placement recovery. Lookalike text,
+  internal errors and untyped failures remain uncertain. A later exact retry
+  receiving the definite placement refusal safely restores recovery.
+- Parent-local handoff/log paths are absent here. Retrieved official Linux job
+  `111546267404` and Windows job `111546267415` logs from run `37239871656`: both
+  check out PR merge `0758062` for head `35ad9d5`, report **378 server passed / one
+  failed**, and fail the queued creation fixture's diagnostic read at line 165
+  with `no such table: script_documents`. The refused queued command correctly
+  returns before schema creation. Initialize the empty canonical script schema
+  in fixture setup before AppState/queueing; preserve every original assertion
+  and all production Rust service/storage code.
+- Executed **363 frontend tests**, including four new retry/command-path and two
+  rendered-control fixtures. Executed **223 existing actual-source module tests
+  plus one verification of the exact copied fixture setup prefix** against real
+  saved/reopened SQLite (224 total). This prefix verifies canonical tables are
+  empty and the selected source node remains stored; it does not invoke AppState.
+  Frontend build/checks, strict server all-target/all-feature Clippy and normal
+  commit hooks pass. Server Clippy uses `ORT_SKIP_DOWNLOAD=1`, compilation only.
+- New-head native AppState/Linux/Windows CI remains pending hosted execution.
+  No graphical or live-model claim, normal ORT download retry, policy/sandbox
+  change, external review request or merge. Parent owns PR/review/qualification.

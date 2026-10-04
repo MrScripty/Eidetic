@@ -92,8 +92,11 @@ preserved. Earlier milestone sections retain their historical qualification.
   the writer lock; refusals roll back history and text. Capture project ownership
   before waiting and retain its gate through completion and publication.
 - **Drafts:** Capture context/document and a stable request identity at begin;
-  selection changes do not retarget pending text. Preserve failed drafts and
-  offer explicit current-placement refresh only for the original source.
+  selection changes do not retarget pending text. An uncertain acknowledgement
+  retains the exact submitted payload/ID for reconciliation; editing, discard,
+  restart and placement refresh stay disabled while that result is unknown.
+  The definite native pre-recording placement refusal unlocks editing and
+  explicit current-placement refresh for the original source.
 - **Memory:** Reuse canonical screenplay reads and revision invalidation. New text
   survives reopen, appears in neighboring prompt context and follows ordinary
   source range changes without changing authored text revisions. A generated
