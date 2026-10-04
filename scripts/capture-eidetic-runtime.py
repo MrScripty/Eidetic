@@ -5,6 +5,7 @@ Fail closed if the app, accessibility tree, canonical edit, or capture is absent
 Never inject JavaScript, replace IPC, disable a sandbox, or capture a browser preview.
 """
 import faulthandler
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -165,8 +166,11 @@ def validate_capture_png(path):
     return width, height
 
 
-def capture_native_window(window, path):
-    subprocess.run(["import", "-window", window, str(path)], check=True, timeout=10)
+def capture_native_window(window, path, screen_read=False):
+    arguments = ["import", "-window", window]
+    if screen_read:
+        arguments.append("-screen")
+    subprocess.run([*arguments, str(path)], check=True, timeout=10)
     validate_capture_png(path)
     return file_hash(path)
 
@@ -210,6 +214,10 @@ def main():
         environment[f"XDG_{suffix}_HOME"] = str(directory)
     environment.update({"NO_AT_BRIDGE": "0", "GTK_MODULES": "atk-bridge"})
     Atspi.set_timeout(1500, 1500)
+    mode = os.environ.get("EIDETIC_CAPTURE_MODE", "manual-edit")
+    if mode not in {"manual-edit", "render-diagnostic"}:
+        raise RuntimeError("Unsupported native capture mode")
+    started = time.monotonic()
     evidence = {
         "status": "failed",
         "application_source_sha": SOURCE,
@@ -218,6 +226,7 @@ def main():
         "utc_capture_attempt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "interaction_route": "AT-SPI control geometry and X11 mouse/keyboard on real Tauri app",
         "content_origin": "local sample created through public backend services; no AI call",
+        "capture_mode": mode,
     }
     process = None
     application = None
@@ -225,8 +234,34 @@ def main():
 
     def checkpoint(stage):
         evidence["stage"] = stage
+        evidence.setdefault("checkpoints", []).append({
+            "stage": stage,
+            "utc": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+            "elapsed_seconds": round(time.monotonic() - started, 3),
+        })
         (output / "capture-evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
         print(f"Capture checkpoint: {stage}", flush=True)
+
+    def observe_window(window, pid, path, screen_read=False):
+        actual_pid = int(command("xdotool", "getwindowpid", window))
+        if (process is None or process.poll() is not None or actual_pid != pid
+                or os.getpgid(actual_pid) != process.pid):
+            raise RuntimeError("Native capture window ownership changed")
+        record = {
+            "file": path.name,
+            "window_id": int(window),
+            "window_pid": actual_pid,
+            "title": command("xdotool", "getwindowname", window),
+            "geometry": dict(line.split("=", 1) for line in command(
+                "xdotool", "getwindowgeometry", "--shell", window).splitlines()),
+            "read_route": "screen" if screen_read else "window",
+            "utc_started": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        }
+        digest = capture_native_window(window, path, screen_read)
+        record.update(sha256=digest, utc_finished=datetime.now(timezone.utc).isoformat(
+            timespec="milliseconds"))
+        evidence.setdefault("captures", []).append(record)
+        return digest
 
     try:
         checkpoint("create real backend sample")
@@ -259,6 +294,7 @@ def main():
             return None
 
         window, pid = wait_for("native Eidetic window owned by launcher", app_window)
+        evidence["window_id"] = int(window)
         evidence["window_pid"] = pid
         evidence["application_binary_sha256"] = file_hash(Path(f"/proc/{pid}/exe"))
         checkpoint("locate native accessibility application")
@@ -273,8 +309,8 @@ def main():
             application, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
             and button_label_matches(node.name, "Open Project")))
         time.sleep(2)
-        evidence["unedited_screenshot_sha256"] = capture_native_window(
-            window, output / "eidetic-native-unedited.png")
+        evidence["unedited_screenshot_sha256"] = observe_window(
+            window, pid, output / "eidetic-native-unedited.png")
         evidence["unedited_screenshot_stage"] = "native home screen before opening sample or editing"
         checkpoint("open project chooser")
         open_project_chooser(application, window)
@@ -290,13 +326,31 @@ def main():
         wait_for("imported sample text displayed", lambda: find(
             block, lambda node: "Mara sets two cups beside a folded timetable." in text_of(node)))
         time.sleep(1)
-        evidence["unedited_screenshot_sha256"] = capture_native_window(
-            window, output / "eidetic-native-unedited.png")
+        evidence["unedited_screenshot_sha256"] = observe_window(
+            window, pid, output / "eidetic-native-unedited.png")
         evidence["unedited_screenshot_stage"] = "native sample project before screenplay edit"
         checkpoint("wait for project timeline")
         # Plain clip-name spans expose their text separately from accessible names.
         wait_for("project timeline scene text", lambda: find(
             application, lambda node: fixture["scene_name"] in text_of(node)))
+        if mode == "render-diagnostic":
+            checkpoint("observe sample rendering without screenplay editing")
+            # Compare the same owned window's drawable and visible screen after
+            # an explicit dwell. Accessibility readiness alone is not visual proof.
+            time.sleep(10)
+            evidence["render_dwell_seconds"] = 10
+            evidence["diagnostic_accessibility_snapshot"] = accessibility_snapshot(application)
+            evidence["unedited_screenshot_sha256"] = observe_window(
+                window, pid, output / "eidetic-native-unedited.png")
+            evidence["screen_read_screenshot_sha256"] = observe_window(
+                window, pid, output / "eidetic-native.png", screen_read=True)
+            evidence.update({
+                "status": "render_diagnostic_captured",
+                "unedited_screenshot_stage": "sample render diagnostic after ten-second dwell",
+                "manual_edit_committed": False,
+                "visual_status": "requires inspection of both PNGs; no visible-editor claim",
+            })
+            return
         checkpoint("begin manual screenplay edit")
         click_button(block, "Edit", window)
         textarea = wait_for("screenplay text editor", lambda: find(
@@ -320,7 +374,7 @@ def main():
             raise RuntimeError("Native app exited before its window could be captured")
         screenshot = output / "eidetic-native.png"
         checkpoint("capture actual native window")
-        screenshot_hash = capture_native_window(window, screenshot)
+        screenshot_hash = observe_window(window, pid, screenshot)
         evidence.update({
             "status": "captured",
             "window_pid": pid,

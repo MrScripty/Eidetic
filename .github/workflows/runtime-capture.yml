@@ -84,10 +84,11 @@ jobs:
           # No skipped download, alternate ORT source, or sandbox overrides.
           cargo build --locked -p eidetic-desktop --bin eidetic-desktop
           cargo build --locked -p eidetic-server --example runtime_capture_fixture
-      - name: Open real Tauri app, edit screenplay, and capture its window
+      - name: Inspect real native sample rendering without editing
         timeout-minutes: 3
         env:
           EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
+          EIDETIC_CAPTURE_MODE: render-diagnostic
         run: |
           xvfb-run -a -s '-screen 0 1440x960x24 -nolisten tcp' \
             dbus-run-session -- /usr/bin/python3 scripts/capture-eidetic-runtime.py

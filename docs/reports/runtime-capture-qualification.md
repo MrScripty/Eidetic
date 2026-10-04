@@ -1,5 +1,38 @@
 # Native runtime screenshot qualification proposal
 
+## Focused render diagnostic
+
+The proposed next run opens the real saved sample and performs no screenplay
+editing. Run `37217399156` clicked the sample at `16:44:26.403Z`, captured its
+fallback PNG by `16:44:27.931Z`, began editing at `16:44:28.163Z`, and failed its
+typed-draft check at `16:45:57.576Z`. The PNG visibly contains the chooser; the
+later accessibility snapshot contains the editor. These different observation
+times do not establish persistent stale rendering or a wrong-window capture.
+The previous evidence recorded PID `18990` but omitted the X11 window ID.
+
+The workflow now selects `render-diagnostic` mode. After sample text and timeline
+scene text appear in accessibility, it leaves the app untouched for ten seconds,
+then captures the same verified native window by both `import -window ID` and
+`import -window ID -screen`. ImageMagick documents `-screen` as reading from the
+root screen instead of the selected window's drawable, while retaining the
+selected window region: <https://imagemagick.org/command-line-options/#screen>.
+Both PNGs retain their existing upload paths and bounds. Evidence records each
+capture's exact window ID, PID, geometry, UTC start/end, read route, hash, and the
+contemporaneous accessibility snapshot. Neither file is labeled an edited image;
+the diagnostic status explicitly records no committed manual edit and requires
+visual inspection. This does not change rendering, GPU, sandbox, or app settings.
+
+If both delayed images show the editor, the earlier chooser image was not proof
+of a persistent render failure. If only the screen-read image shows the editor,
+the capture read route is implicated. If both remain on the chooser while the
+contemporaneous accessibility snapshot shows the editor, visible rendering needs
+further app QA. Window IDs and rechecked ownership identify selection changes.
+
+The capture artifact uploads no binary or Cargo target. The matching application
+source CI run `37205131249` has no artifacts either, so neither completed run
+offers a reusable native build for this diagnostic. No further hosted build has
+been started for this unpublished proposal.
+
 This isolated branch adds only a hosted capture workflow, a local sample-data
 example, its desktop driver, and this note. It does not change application code.
 The reviewed application source is `550650cdc794b15352013d9914eec337e5ac022d`,
