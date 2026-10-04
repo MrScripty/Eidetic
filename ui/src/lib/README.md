@@ -55,6 +55,9 @@ raw size would separate scenarios that share the same contract fixtures.
 - Splitting each store next to every consumer component: rejected because the timeline/editor shell shares state across multiple panels.
 
 ## Invariants
+- Manual creation wire types carry captured source placement, kind and exact
+  text. The command API forwards a stable draft command ID through native invoke;
+  persistent block/span IDs and ordering come from the backend response.
 - Targeted screenplay previews transport the proven dependency, generation and
   expected output-block revision. They return propagation review projections;
   they do not send an acceptance command or alter authored screenplay text.

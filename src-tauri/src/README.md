@@ -43,6 +43,9 @@ crates own project state and command semantics.
   authoritative.
 
 ## Invariants
+- The desktop builder registers `command_script_block_create` alongside existing
+  edit commands so an empty screenplay can be authored through the same native
+  invoke/event boundary.
 - The desktop builder registers the targeted screenplay impact preview command
   alongside the existing propagation review commands; no extra transport or
   automatic acceptance path is introduced.

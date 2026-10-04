@@ -38,6 +38,9 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Defining contracts in TypeScript first: rejected because backend-owned state and validation must be authoritative.
 
 ## Invariants
+- Manual block creation carries main-document identity, selected source node,
+  captured placement, block kind and exact text. IDs and append ordering are
+  backend-owned; unknown client-owned fields are refused.
 - Contracts remain deterministic and host-agnostic.
 - Timeline render gaps come from core occupied-range queries; overlapping edits
   must not project occupied time as empty space.

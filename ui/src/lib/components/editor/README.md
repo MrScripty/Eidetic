@@ -15,6 +15,10 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `BeatPlanningActions.svelte` | Parent-node child-planning action controls. |
 | `AiPromptPreview.svelte` | Raw AI prompt context preview. |
 | `ScriptPanel.svelte` | Container for script-editing surfaces. |
+| `ScriptBlockComposer.svelte` | Selected-context first-block and append writing surface. |
+| `scriptBlockCreationDraft.svelte.ts` | Transient captured-context draft, retry identity and explicit placement refresh controller. |
+| `ScriptBlockComposer.ssr.test.ts` | Rendering and authoring discoverability fixtures. |
+| `scriptBlockCreationDraft.svelte.test.ts` | Refused/ambiguous save, exact text and captured-context frontend fixtures. |
 | `ScriptBlockEditor.svelte` | Focused manual screenplay edit/save/cancel surface, preserving failed drafts and submitting the captured block revision. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
@@ -36,6 +40,13 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+- Script exposes Write screenplay even before a document exists. The local
+  composer captures its selected clip and document when writing begins, preserves
+  exact refused drafts, and never retargets them on selection change. A placement
+  refresh requires an explicit action for the original clip.
+- Creation retries keep the same command ID, preventing duplicate blocks after an
+  ambiguous acknowledgement. The backend refuses changed already-recorded payloads.
+  Block creation and existing-block editing share canonical projection updates.
 - Review targets the block identified by the generation impact. Display current
   and exact proposed text; accept/reject explicitly and refresh the canonical
   script projection afterward. Manual editor drafts remain local and intact.

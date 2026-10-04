@@ -4200,7 +4200,13 @@ The refactor is complete when:
   Custody teardown closes SQLite
   inspection handles before deleting files. Hosted Windows execution remains a
   separate qualification requirement from cloud source-module tests.
-- Script documents own the generated screenplay artifact.
+- Script documents own generated and manually authored screenplay artifacts.
+  Manual first-block creation and append commands own IDs/order in SQLite, capture
+  source placement, recheck under the history writer lock and preserve existing
+  blocks/locks/segment metadata. The Script composer uses transient drafts and
+  canonical response replacement; exact new text shares prompt memory and range
+  synchronization. Native AppState and graphical execution require qualification
+  separate from source-module tests and skipped-ORT compilation.
 - Bible graph rows own world/story/production facts.
 - Accepted changes are traceable through events, object revisions, and semantic dependencies.
 - Undo/redo works through event revisions after restart.

@@ -735,3 +735,43 @@ still a separate pending gate. Broader generation persistence is not covered.
   `ORT_SKIP_DOWNLOAD=1` (compile only); exact descendant native execution remains
   with the same reviewer. No AppState substitute, HTTP bridge, graphical claim,
   model call, publication or merge.
+
+
+## Manual first-block creation and screenplay appends
+
+- Started a fresh `feat/screenplay-story-memory` worktree from verified merged main
+  `27680cb52c2b8bdfcdc478bb7f35801aa2d8e072`; the parent reports its postmerge CI
+  passed. Preserved prior path/custody qualification artifacts and branches.
+- Confirmed Script could edit existing blocks but offered no writing action for
+  an empty document. Added Write screenplay for the selected timeline context,
+  kind selection, exact-text save, cancel and explicit placement refresh. Draft
+  document/context/request identity is captured before typing and retained on
+  refusal; selection changes cannot silently retarget text.
+- Added a host-neutral creation command, thin registered Tauri adapter and cache
+  action. SQLite creates main document/source segment only when absent, assigns
+  command-derived block/span identities and appends after existing blocks. User
+  provenance, sparse history and current projection are committed together.
+  Existing blocks, protected spans, segment status and placement revision remain
+  intact. Writer-local source/order revalidation rolls back partial history/text.
+  Source-session admission precedes queueing, and the session gate is supervised
+  through commit/event completion. Identical replay publishes no extra event.
+- Executed **115 core tests**, **357 frontend tests**, and **219 actual-source
+  SQLite/module tests**, including **seven new creation regressions** for exact
+  save/reopen and neighboring memory; locks/metadata; existing generated text;
+  replay after later edits; stale/deleted/empty requests; writer-trigger rollback;
+  and retiming without authored revision changes. The standalone module harness
+  uses a configuration-only shim for provider fixture tests, no AppState or ORT.
+  Frontend draft, invoke, cache and SSR tests use fixtures; they are not graphical
+  typing or native transport execution. No live-model calls were made.
+- Frontend checks/build and strict core/server all-target/all-feature Clippy pass.
+  Server compilation uses `ORT_SKIP_DOWNLOAD=1`, strictly compile-only evidence.
+  Two new real AppState tests cover create/edit/save/reopen/preview/retime and
+  queued source replacement; they compile but require exact-head native execution.
+- Normal Chromium aborted because its installed SUID sandbox helper is incorrectly
+  configured. GTK3/WebKit2GTK4.1 development packages are absent, so graphical and
+  desktop build/runtime qualification remain pending. No sandbox settings were
+  changed. The environment's earlier normal exact ORT download was denied by
+  `cdn.pyke.io` with HTTP 403; no retry, alternate fetch or network-policy change.
+- Automatic bible extraction, model quality and project switching are deferred.
+  This milestone closes manual screenplay creation and feeds existing canonical
+  memory/placement contracts. Parent owns independent review, PR and merge.

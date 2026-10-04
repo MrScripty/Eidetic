@@ -1,5 +1,11 @@
 <script lang="ts">
   import ScriptBlockEditor from './ScriptBlockEditor.svelte';
+  import ScriptBlockComposer from './ScriptBlockComposer.svelte';
+  import { editorState } from '$lib/stores/editor.svelte.js';
+  import {
+    selectedNodeEditorProjectionState,
+    refreshSelectedNodeEditorProjection,
+  } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import ScriptImpactNotice from './ScriptImpactNotice.svelte';
   import ScriptImpactReview from './ScriptImpactReview.svelte';
   import { scriptDocumentBlockCount } from '$lib/scriptDocumentFormat.js';
@@ -10,6 +16,24 @@
     MAIN_SCRIPT_DOCUMENT_ID,
     refreshScriptDocumentProjection,
   } from '$lib/stores/scriptDocumentProjection.svelte.js';
+
+  const source = $derived(
+    selectedNodeEditorProjectionState.projection?.payload.node?.node_id ===
+      editorState.selectedNodeId
+      ? selectedNodeEditorProjectionState.projection.payload.node
+      : null,
+  );
+  $effect(() => {
+    const nodeId = editorState.selectedNodeId;
+    if (
+      nodeId &&
+      !selectedNodeEditorProjectionState.pending &&
+      (selectedNodeEditorProjectionState.selectedNodeId !== nodeId ||
+        (!selectedNodeEditorProjectionState.projection && !selectedNodeEditorProjectionState.error))
+    ) {
+      void refreshSelectedNodeEditorProjection(nodeId).catch(() => {});
+    }
+  });
 
   const scriptDocumentKey = { document_id: MAIN_SCRIPT_DOCUMENT_ID };
   let projection = $derived(getCachedScriptDocumentProjection(scriptDocumentKey));
@@ -31,6 +55,7 @@
   </div>
 
   <div class="script-panel-body">
+    <ScriptBlockComposer documentId={MAIN_SCRIPT_DOCUMENT_ID} {source} />
     {#if blockCount > 0}
       {#each projection?.payload.segments ?? [] as segment (segment.segment.id)}
         {#if segment.impact}<ScriptImpactNotice impact={segment.impact} />{/if}

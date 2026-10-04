@@ -28,6 +28,9 @@ domain model in `eidetic-core`.
 | `timeline_script_placement_service_tests.rs` | Native public range-service publication, replay and rollback regression with canonical episode metadata initialized before copying its fixture database. |
 | `script_impact_prompt.rs` | Targeted screenplay prompt from captured canonical inputs and resolved graph context, with strict complete-stream collection. |
 | `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
+| `script_block_create.rs` | Manual first-block creation and non-destructive appends with backend identities and transaction-local placement/order validation. |
+| `script_block_create_tests.rs` | Exact persistence/context, locks, replay, refusal, writer rollback and retiming SQLite regressions. |
+| `script_block_create_service_tests.rs` | Native AppState save/reopen/preview/retime and queued project replacement regressions. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
 | `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
 | `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |
@@ -123,6 +126,13 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Manual block creation admits the original project session before waiting,
+  retains its gate through commit/event publication, and rechecks source placement
+  and append ordering inside the history writer transaction. New user-authored
+  blocks join the existing canonical prompt-memory and range-write paths.
+- Creation preserves existing blocks, protected spans, segment status and write
+  identities. A node regeneration lock does not prevent adding independent human
+  text. Replay returns current projection without another write or event.
 - Ordinary range edits move/resize live source-bound screenplay segments with
   the source node and any resized descendants in the same history transaction.
   Changed placement gets the timeline event identity and exact sparse old/new

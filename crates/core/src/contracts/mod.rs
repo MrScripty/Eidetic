@@ -84,8 +84,8 @@ pub use propagation_proposal::{
     UpdatePropagationProposalCommand,
 };
 pub use script_document::{
-    EditScriptBlockCommand, GenerateScriptBlockCommand, ScriptBlock, ScriptBlockId,
-    ScriptBlockKind, ScriptBlockProjection, ScriptContextBlock, ScriptContractError,
+    CreateScriptBlockCommand, EditScriptBlockCommand, GenerateScriptBlockCommand, ScriptBlock,
+    ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContextBlock, ScriptContractError,
     ScriptDocument, ScriptDocumentId, ScriptDocumentProjection, ScriptImpactCause,
     ScriptImpactProjection, ScriptImpactReason, ScriptLock, ScriptLockId, ScriptPatch,
     ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus,

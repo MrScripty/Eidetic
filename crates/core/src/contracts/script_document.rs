@@ -184,6 +184,19 @@ fn default_script_span_provenance() -> ScriptSpanProvenance {
     ScriptSpanProvenance::UserEdited
 }
 
+/// Append user-authored screenplay to a captured timeline context. The backend
+/// assigns persistent block/segment IDs and ordering from canonical state.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CreateScriptBlockCommand {
+    pub document_id: ScriptDocumentId,
+    pub source_node_id: crate::timeline::node::NodeId,
+    pub expected_start_ms: u64,
+    pub expected_end_ms: u64,
+    pub block_kind: ScriptBlockKind,
+    pub text: String,
+}
+
 /// A manual edit preserves the canonical block's kind, placement and ownership.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -383,5 +396,29 @@ mod tests {
         let round_trip: SetScriptLockCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
+    }
+}
+
+#[cfg(test)]
+mod creation_contract_tests {
+    use super::*;
+
+    #[test]
+    fn manual_creation_round_trip_preserves_intent_and_refuses_client_owned_ids() {
+        let command = CreateScriptBlockCommand {
+            document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+            source_node_id: crate::timeline::node::NodeId(uuid::Uuid::from_u128(42)),
+            expected_start_ms: 1000,
+            expected_end_ms: 2000,
+            block_kind: ScriptBlockKind::SceneHeading,
+            text: "  INT. CAFE — 雨\n\n".into(),
+        };
+        let mut json = serde_json::to_value(&command).unwrap();
+        assert_eq!(
+            serde_json::from_value::<CreateScriptBlockCommand>(json.clone()).unwrap(),
+            command
+        );
+        json["block_id"] = serde_json::json!("client.chosen.block");
+        assert!(serde_json::from_value::<CreateScriptBlockCommand>(json).is_err());
     }
 }

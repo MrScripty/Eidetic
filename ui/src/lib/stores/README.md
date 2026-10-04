@@ -96,6 +96,9 @@ continues.
 - Centralizing every UI field in one store file: rejected because it would collapse unrelated lifecycles into one mutable surface.
 
 ## Invariants
+- Successful manual block creation replaces the screenplay cache from its
+  canonical response and invalidates prompt memory. Refusal leaves cache and
+  context revision unchanged; existing lifetime/version guards reject late data.
 - Targeted preview responses populate the existing propagation proposal store.
   Failed/stale previews retain prior review state and expose the refusal. Explicit
   accept/reject commands remain separate from preview creation.

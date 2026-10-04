@@ -133,6 +133,62 @@ pub async fn set_script_block(
     Ok(response)
 }
 
+pub async fn create_script_block(
+    state: &AppState,
+    command: CommandEnvelope<eidetic_core::contracts::CreateScriptBlockCommand>,
+) -> Result<ScriptDocumentCommandResponse, BackendError> {
+    // Capture the request's project before waiting; a queued draft must never
+    // be rebound to whichever project becomes active while it waits.
+    let (path, session_id) = {
+        let active = state.project.lock();
+        active.as_ref().ok_or_else(BackendError::no_project)?;
+        let path = state
+            .project_database
+            .active_path()
+            .ok_or_else(BackendError::no_project)?;
+        (path, *state.project_session_id.lock())
+    };
+    let session = state.project_session_gate.clone().lock_owned().await;
+    if *state.project_session_id.lock() != session_id {
+        return Err(BackendError::conflict(
+            "active project changed before screenplay creation",
+        ));
+    }
+    let worker = state.clone();
+    crate::state::complete_project_session_work(state, session, async move {
+        let response = tokio::task::spawn_blocking(move || {
+            let mut conn = crate::sqlite::open_write_connection(&path)
+                .map_err(|error| BackendError::internal(error.to_string()))?;
+            let created_at_ms = u64::try_from(
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map_err(|error| BackendError::internal(error.to_string()))?
+                    .as_millis(),
+            )
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+            let (outcome, projection) = crate::script_block_create::apply_create_script_block(
+                &mut conn,
+                &command,
+                created_at_ms,
+            )
+            .map_err(map_script_document_error)?;
+            Ok::<_, BackendError>(ScriptDocumentCommandResponse {
+                outcome,
+                projection,
+            })
+        })
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("screenplay creation task failed: {error}"))
+        })??;
+        if response.outcome == RecordChangeOutcome::Recorded {
+            let _ = worker.events_tx.send(ServerEvent::ScriptChanged);
+        }
+        Ok(response)
+    })
+    .await
+}
+
 pub async fn edit_script_block(
     state: &AppState,
     command: CommandEnvelope<EditScriptBlockCommand>,
@@ -357,3 +413,7 @@ fn map_story_arc_command_error(error: StoryArcCommandError) -> BackendError {
         StoryArcCommandError::History(error) => map_history_error(error),
     }
 }
+
+#[cfg(test)]
+#[path = "script_block_create_service_tests.rs"]
+mod script_block_create_service_tests;

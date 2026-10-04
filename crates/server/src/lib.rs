@@ -61,6 +61,7 @@ pub(crate) mod propagation_proposal_target;
 pub(crate) mod propagation_proposal_update;
 pub mod reference_service;
 pub(crate) mod revision_projection;
+pub(crate) mod script_block_create;
 pub(crate) mod script_block_edit;
 pub(crate) mod script_document_command;
 pub(crate) mod script_generation_lineage;

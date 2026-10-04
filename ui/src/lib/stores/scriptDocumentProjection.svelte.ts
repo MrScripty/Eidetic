@@ -1,4 +1,9 @@
-import { editScriptBlock, setScriptBlock, setScriptLock } from '$lib/commandApi.js';
+import {
+  createScriptBlock,
+  editScriptBlock,
+  setScriptBlock,
+  setScriptLock,
+} from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
 import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 import { shouldReplaceProjection } from './projectionCacheGuards.js';
@@ -9,6 +14,7 @@ import type {
   SetScriptBlockCommand,
   SetScriptLockCommand,
   EditScriptBlockCommand,
+  CreateScriptBlockCommand,
 } from '../scriptTypes.js';
 
 export interface ScriptDocumentProjectionKey {
@@ -164,6 +170,20 @@ export async function applyScriptBlockEditCommand(
     () => editScriptBlock(payload, commandId),
     (result) => result.projection,
     'Failed to save script block',
+  );
+  invalidateScriptContext();
+  return response;
+}
+
+export async function applyScriptBlockCreationCommand(
+  payload: CreateScriptBlockCommand,
+  commandId?: CommandId,
+): Promise<ScriptDocumentCommandResponse> {
+  const response = await runScriptProjectionRequest(
+    projectionKey({ document_id: payload.document_id }),
+    () => createScriptBlock(payload, commandId),
+    (result) => result.projection,
+    'Failed to write screenplay block',
   );
   invalidateScriptContext();
   return response;

@@ -41,6 +41,9 @@ backend services or command services.
   backend state.
 
 ## Invariants
+- `command_script_block_create` forwards captured source placement, kind and
+  exact text to the host-neutral creation service; IDs, append ordering, history
+  and project-session admission remain backend-owned.
 - `command_script_impact_proposal_preview` delegates proven-cause capture and
   provider drafting to the backend. It creates a pending propagation proposal;
   existing accept/reject commands exclusively own the writer's review decision.

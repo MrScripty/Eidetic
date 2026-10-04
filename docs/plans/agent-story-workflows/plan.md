@@ -1,9 +1,10 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** M4a shared timeline write-conflict boundary; M1/M2a merged.
-**Next gate:** Qualify and independently review shared timeline custody before
-agent write exposure. Pumas runtime/revision integration remains open.
+**Current phase:** Manual first-block creation and screenplay appends, following
+merged PR7 and verified main `27680cb52c2b8bdfcdc478bb7f35801aa2d8e072`.
+**Next gate:** Qualify the exact new creation checkpoint through native AppState
+and graphical type/save/reopen. Pumas runtime/revision integration remains open.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -73,6 +74,34 @@ Eidetic audit targets `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`. The accepted
 source already includes the later fictional-time resolver. Reuse canonical
 SQLite/history/projections; neither a graph database nor embedding relevance
 replaces authored evidence or acceptance policy.
+
+## Manual creation: bounded follow-up
+
+On `feat/screenplay-story-memory`, close the empty-screenplay writing gap from
+verified merged main `27680cb52c2b8bdfcdc478bb7f35801aa2d8e072`. Existing manual
+editing, generation lineage, explicit review and range-to-script placement are
+preserved. Earlier milestone sections retain their historical qualification.
+
+- **Authoring:** Select a timeline clip, choose Write screenplay, type exact text
+  and block kind, then save. Create the main document and its source-bound segment
+  only when absent; subsequent commands append independent blocks. Existing text,
+  locks, segment status and placement revision metadata remain unchanged.
+- **Authority:** SQLite owns source admission, deterministic command-derived
+  block/span identities and append order. Recheck current placement/order under
+  the writer lock; refusals roll back history and text. Capture project ownership
+  before waiting and retain its gate through completion and publication.
+- **Drafts:** Capture context/document and a stable request identity at begin;
+  selection changes do not retarget pending text. Preserve failed drafts and
+  offer explicit current-placement refresh only for the original source.
+- **Memory:** Reuse canonical screenplay reads and revision invalidation. New text
+  survives reopen, appears in neighboring prompt context and follows ordinary
+  source range changes without changing authored text revisions. No model call
+  is required for this workflow.
+- **Qualification:** Execute actual SQLite source modules, core contracts and
+  frontend logic/rendering fixtures here. Native AppState and graphical desktop
+  execution remain distinct gates; skipped-ORT compilation is compile evidence.
+- **Deferred:** Automatic semantic extraction into the bible, live-model quality,
+  broader authoring operations and project switching remain separate work.
 
 ## Screenplay generation lineage and Needs review: bounded descendant
 
