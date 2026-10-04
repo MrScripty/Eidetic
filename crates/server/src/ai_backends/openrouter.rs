@@ -1,4 +1,3 @@
-use futures::stream::{self, StreamExt};
 use reqwest::Client;
 
 use crate::prompt_format::ChatPrompt;
@@ -26,6 +25,17 @@ impl OpenRouterBackend {
         prompt: &ChatPrompt,
         config: &AiConfig,
     ) -> Result<GenerateStream, Error> {
+        self.generate_at_url(prompt, config, OPENROUTER_URL).await
+    }
+
+    // The endpoint seam lets loopback tests exercise the actual HTTP adapter.
+    // Production generation always uses the fixed OpenRouter endpoint above.
+    pub(super) async fn generate_at_url(
+        &self,
+        prompt: &ChatPrompt,
+        config: &AiConfig,
+        url: &str,
+    ) -> Result<GenerateStream, Error> {
         let api_key = config
             .api_key
             .as_deref()
@@ -45,7 +55,7 @@ impl OpenRouterBackend {
 
         let response = self
             .client
-            .post(OPENROUTER_URL)
+            .post(url)
             .header("Authorization", format!("Bearer {api_key}"))
             .header("HTTP-Referer", "https://eidetic.app")
             .header("X-Title", "Eidetic")
@@ -62,46 +72,7 @@ impl OpenRouterBackend {
             )));
         }
 
-        // Parse SSE stream: lines like `data: {"choices":[{"delta":{"content":"token"}}]}`
-        let byte_stream = response.bytes_stream();
-        let token_stream = byte_stream
-            .map(|chunk| match chunk {
-                Ok(bytes) => {
-                    let text = String::from_utf8_lossy(&bytes);
-                    let mut tokens = Vec::new();
-                    for line in text.lines() {
-                        let line = line.trim();
-                        if line == "data: [DONE]" {
-                            break;
-                        }
-                        let Some(json_str) = line.strip_prefix("data: ") else {
-                            continue;
-                        };
-                        if let Ok(value) = serde_json::from_str::<serde_json::Value>(json_str) {
-                            if let Some(content) = value
-                                .get("choices")
-                                .and_then(|c| c.get(0))
-                                .and_then(|c| c.get("delta"))
-                                .and_then(|d| d.get("content"))
-                                .and_then(|c| c.as_str())
-                            {
-                                if !content.is_empty() {
-                                    tokens.push(content.to_owned());
-                                }
-                            }
-                        }
-                    }
-                    tokens
-                }
-                Err(e) => {
-                    tracing::warn!("OpenRouter stream chunk error: {e}");
-                    vec![]
-                }
-            })
-            .flat_map(stream::iter)
-            .map(Ok);
-
-        Ok(Box::pin(token_stream))
+        Ok(super::sse::tokens(response, "OpenRouter"))
     }
 
     /// Non-streaming generation with JSON mode enabled.

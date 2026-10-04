@@ -22,6 +22,7 @@ domain model in `eidetic-core`.
 | `script_impact_review_tests.rs` | Linked-scene preview/reject/accept, stale/ABA, graph-time, lock, replay, target-scope and rollback fixtures. |
 | `script_impact_review_guard_tests.rs` | Resolved-world context, explicit fictional time and late span/content regeneration lock guards. |
 | `script_impact_review_service.rs` | Desktop-facing preview service using the configured provider without committing screenplay output. |
+| `script_impact_review_service_tests.rs` | Native AppState preview regressions for truncated HTTP refusal and complete split-SSE proposal text. |
 | `script_impact_prompt.rs` | Targeted screenplay prompt from captured canonical inputs and resolved graph context, with strict complete-stream collection. |
 | `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |

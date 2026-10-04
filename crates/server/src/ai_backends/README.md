@@ -9,6 +9,8 @@ This directory implements server-side adapters that translate core AI requests i
 | `mod.rs` | Shared backend trait and adapter selection. |
 | `llamacpp.rs` | Local Pumas llama.cpp OpenAI-compatible adapter. |
 | `openrouter.rs` | OpenRouter HTTP adapter. |
+| `sse.rs` | Shared stateful SSE framing, completion validation and transport error propagation. |
+| `transport_tests.rs` | Actual loopback HTTP fixtures for both adapters, including split events and incomplete bodies. |
 
 ## Problem
 The server needs one abstraction for multiple text-generation providers without leaking provider-specific details into route handlers.
@@ -26,6 +28,13 @@ Keep provider adapters behind a shared module boundary so routes can depend on o
 ## Invariants
 - Backend adapters consume core request types rather than ad hoc JSON.
 - Provider-specific configuration stays behind this boundary.
+- Streaming tokens retain event order and UTF-8 bytes across network chunks.
+  JSON SSE data events must parse successfully; provider error events and body
+  read failures become stream errors. A successful stream requires `[DONE]`
+  and clean HTTP EOF, including a complete declared body after the marker.
+- Full-response collection returns the stream error instead of a partial draft.
+  OpenRouter's production endpoint stays fixed; a private endpoint seam supports
+  real loopback transport tests without an external model call.
 
 ## Revisit Triggers
 - Another provider introduces streaming or capability semantics that no longer fit the current adapter shape.

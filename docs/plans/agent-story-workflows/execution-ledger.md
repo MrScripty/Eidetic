@@ -641,3 +641,34 @@ still a separate pending gate. Broader generation persistence is not covered.
   feature comparison base. Deliver the preserved-ancestry bundle, patch, exact
   identities and verification evidence through Library. No GitHub publication,
   cancelled-upload retry, external review request or merge is performed.
+
+## Provider stream integrity repair after native targeted-preview review
+
+- Independent native review of frozen `a372d4f` demonstrated two real transport
+  failures: a truncated declared HTTP body persisted an unfinished proposal, and
+  a split SSE event lost its first text while reporting success. Keep that
+  checkpoint frozen; repair both existing adapters on a separate descendant.
+- Replace stateless per-chunk parsing with shared byte-preserving SSE framing.
+  Propagate HTTP body, provider error-frame, UTF-8 and JSON errors; require the
+  completion marker and clean HTTP EOF. Keep first-choice event order and fixed
+  production provider configuration. Full collection also propagates errors.
+- Executed **143 isolated actual-source-module tests**, including **five new
+  loopback HTTP transport tests** covering both adapters. Split JSON/Unicode,
+  ordered tokens, clean termination, truncated bodies before/after `[DONE]`,
+  missing completion, provider/malformed/invalid-UTF-8 events, and full collection
+  pass. Actual adapter-to-preview-to-SQLite fixtures preserve authored text and
+  history on failure, and record the complete clean text as a pending proposal.
+  The harness uses a configuration-only shim, no Pumas/ORT or AppState runtime.
+- Added two AppState public-service regressions, selected by
+  `independent_real_service`: incomplete HTTP creates no proposal/history/event;
+  complete split SSE persists full pending text and preserves authored canon.
+  These compile here, but require native execution. Full server test compilation
+  and strict all-target Clippy pass offline with `ORT_SKIP_DOWNLOAD=1`; neither
+  constitutes server runtime evidence. No ONNX retry or policy workaround.
+- The supplied native repro Library package could not be downloaded by the
+  supported consumer helper in this environment. Its Library identity remains
+  `libfile_ee025b5c35048191a43d70fe0ba8121e`; native review retains the original
+  failures. The repair includes equivalent public-service probes for the parent
+  to execute with real local ORT and loopback proxy exclusion.
+- Ordinary timeline placement remains inspection-only and separate. No model
+  call, provider quality claim, project recovery, GitHub publication or merge.

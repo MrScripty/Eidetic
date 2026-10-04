@@ -549,3 +549,19 @@ this reader; this slice makes no guarantee for arbitrary external DB rewrites.
   skipped-ORT compilation does not fulfill that gate. Publish through the normal
   native-qualified source route; use a verified bundle when preserved-ancestry
   publication is unavailable. Keep main and merged PR6 unchanged during preparation.
+
+## Targeted preview transport integrity repair
+
+- Keep the targeted-review checkpoint `a372d4f` frozen. Repair its independently
+  demonstrated partial-success and split-event data loss on a separate descendant.
+- Both configured text adapters use a stateful SSE reader that buffers byte/line
+  fragments, preserves event order and Unicode, requires completion plus clean
+  HTTP EOF, and surfaces malformed/provider/transport errors. Full collection
+  must propagate errors rather than returning a prefix.
+- Exercise actual loopback HTTP for both adapters and the canonical preview/
+  proposal boundary. Native AppState tests additionally qualify the public preview
+  service: failure produces no proposal/history/event; clean split SSE produces
+  the entire pending proposal with authored screenplay preserved.
+- This is provider transport correctness, not model quality. Ordinary timeline
+  placement work remains a separate feature; no graph backend, recovery behavior,
+  model call, publication or merge belongs to this repair.

@@ -1,4 +1,3 @@
-use futures::stream::{self, StreamExt};
 use reqwest::{Client, RequestBuilder};
 
 use crate::prompt_format::ChatPrompt;
@@ -53,19 +52,7 @@ impl LlamaCppBackend {
             )));
         }
 
-        let byte_stream = response.bytes_stream();
-        let token_stream = byte_stream
-            .map(|chunk| match chunk {
-                Ok(bytes) => parse_sse_tokens(&String::from_utf8_lossy(&bytes)),
-                Err(e) => {
-                    tracing::warn!("llama.cpp stream chunk error: {e}");
-                    vec![]
-                }
-            })
-            .flat_map(stream::iter)
-            .map(Ok);
-
-        Ok(Box::pin(token_stream))
+        Ok(super::sse::tokens(response, "llama.cpp"))
     }
 
     pub async fn generate_json(
@@ -202,42 +189,11 @@ fn first_model_id(body: &serde_json::Value) -> Option<String> {
         .map(str::to_owned)
 }
 
-fn parse_sse_tokens(text: &str) -> Vec<String> {
-    let mut tokens = Vec::new();
-
-    for line in text.lines() {
-        let line = line.trim();
-        if line == "data: [DONE]" {
-            break;
-        }
-
-        let Some(json_str) = line.strip_prefix("data: ") else {
-            continue;
-        };
-
-        if let Ok(value) = serde_json::from_str::<serde_json::Value>(json_str) {
-            if let Some(content) = value
-                .get("choices")
-                .and_then(|c| c.get(0))
-                .and_then(|c| c.get("delta"))
-                .and_then(|d| d.get("content"))
-                .and_then(|c| c.as_str())
-            {
-                if !content.is_empty() {
-                    tokens.push(content.to_owned());
-                }
-            }
-        }
-    }
-
-    tokens
-}
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
 
-    use super::{first_model_id, parse_sse_tokens};
+    use super::first_model_id;
 
     #[test]
     fn first_model_id_reads_openai_compatible_model_list() {
@@ -248,16 +204,5 @@ mod tests {
         });
 
         assert_eq!(first_model_id(&body), Some("local-model".to_owned()));
-    }
-
-    #[test]
-    fn parse_sse_tokens_reads_streaming_delta_content() {
-        let tokens = parse_sse_tokens(
-            "data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\
-             data: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n\
-             data: [DONE]\n",
-        );
-
-        assert_eq!(tokens, vec!["Hel".to_owned(), "lo".to_owned()]);
     }
 }

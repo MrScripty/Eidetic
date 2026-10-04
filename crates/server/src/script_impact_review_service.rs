@@ -99,3 +99,7 @@ fn invalid(error: impl std::fmt::Display) -> BackendError {
 fn internal(error: impl std::fmt::Display) -> BackendError {
     BackendError::internal(error.to_string())
 }
+
+#[cfg(test)]
+#[path = "script_impact_review_service_tests.rs"]
+mod tests;
