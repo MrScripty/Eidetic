@@ -293,13 +293,21 @@ assert!(result.is_ok());
 
 SQLite tests must close inspection connections before removing database files,
 so cleanup verifies the same resource lifetime on Windows and Unix. Project-path
-validation returns children under the canonical root when that root exists;
+validation resolves relative children under the canonical root when it exists;
 tests compare exact paths built from that canonical root and native components.
 A missing root continues to use lexical normalization. Timestamp equality and
 path escape-rejection assertions remain required. On Windows, ordinary and
 canonical verbatim drive/UNC prefixes compare equivalently within the same
-drive/share; directory-component containment and canonical-ancestor checks are
-both retained. Custody fixtures close their inspection connections before
+drive/share. Relative paths and missing roots retain lexical directory-component
+containment. Existing absolute root aliases use canonical nearest-existing-
+ancestor containment, including new files below that ancestor; Windows aliases
+must also preserve the absolute drive/UNC-share boundary. A short spelling such
+as `RUNNER~1` must be accepted when its resolved ancestor remains in the same
+canonical storage root. Sibling paths, traversal escapes and linked escapes must
+still be rejected. Windows tests obtain genuine aliases through `GetShortPathNameW`
+and test existing/new paths, relative-path results, links and volume boundaries;
+the original validator assertions remain unchanged. Custody fixtures close their
+inspection connections before
 teardown instead of relying on Unix open-file unlink behavior.
 
 ### Shared timeline snapshot custody (M4a)

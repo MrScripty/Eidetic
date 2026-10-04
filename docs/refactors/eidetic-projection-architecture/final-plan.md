@@ -4173,7 +4173,14 @@ The refactor is complete when:
   Preserve UTF-8, completion, and failed-preview atomicity. Invalidating prompt
   context clears loading as well as stale responses. Windows project paths must
   compare ordinary/canonical prefix forms within the same drive/UNC share while
-  retaining lexical and resolved containment; custody teardown closes SQLite
+  retaining lexical containment for relative paths and missing roots. Existing
+  absolute aliases must pass canonical nearest-existing-ancestor containment,
+  including new files below that ancestor, and preserve drive/share boundaries.
+  Windows CI `37218329383` confirmed that `RUNNER~1` expands to `runneradmin` at
+  the lexical gate even though the canonical ancestor remains in the storage
+  root. Genuine Windows short-alias, linked-escape and drive/share regressions
+  accompany the repair; the original test cases and assertions remain intact.
+  Custody teardown closes SQLite
   inspection handles before deleting files. Hosted Windows execution remains a
   separate qualification requirement from cloud source-module tests.
 - Script documents own the generated screenplay artifact.
