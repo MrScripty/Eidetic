@@ -462,3 +462,44 @@ still a separate pending gate. Broader generation persistence is not covered.
   evidence is claimed. Dot should run timeline range-history/rollback regressions
   and native gates with the new core behavior, especially rejection of collapse.
 - Crossing-child/split semantics remain unresolved and are not selected here.
+
+### 2026-10-04: Accepted follow-up integration candidate on merged PR6
+
+- Branch `fix/integrate-accepted-timeline-repairs` starts at exact main
+  `a6bd4c1830dd1a500a9ededbcc8056bd358ccda7`, the merged PR6 head. Local candidate
+  merge parents retain accepted keyboard `01befb0505714fce94ec1b1c1b0b86ce238945f1`,
+  server custody through `ea404b9623320db7020abb1b376143a4063ff186` (tree
+  `a61d64a634460717dd85100c802a51dbfc81666c`) and resize documentation/code through
+  `608e22bb10aab9affa385aa5f784e3d41b8df75f`. Frozen source refs and main are not
+  rewritten. This is local candidate composition, not a merge to main.
+- Main already contains rebased gap/cache implementations; their production blobs
+  match the accepted originals. They were not reapplied. Main's WAL/interleaving/
+  rollback test file is retained byte-for-byte; its original qualification records
+  remain a verbatim ledger prefix. Actual merge conflicts were documentation only.
+  Follow-up records/plan sections are included once; runtime Rust and frontend
+  source required no conflict edits or new feature decisions.
+- Whole-repository Rust audit covers **248 files**: the candidate is exactly main
+  plus accepted server/resize blobs. There is no Rust beyond accepted composition.
+  Rust manifest SHA-256:
+  `7552b3e97961de12a6cf87d6b4754ff2fd5f661133cdd19f9306894b75785283`.
+  Keyboard production/test files match `01befb0` exactly. Dependency manifests,
+  lockfiles and main projection-cache source/tests are unchanged. Evidence records
+  the final candidate commit/tree and per-file source/blob identities externally.
+- Combined cloud gates pass: **113 core tests**, strict core all-target Clippy,
+  **318 frontend tests** (58 files), zero-error/warning typecheck, lint, formatting
+  and production build. Server/test compilation and strict Clippy pass offline
+  with `ORT_SKIP_DOWNLOAD=1`. No server/native tests executed here; compilation
+  remains distinct from ORT runtime evidence.
+- Parent reports native acceptance of exact `ea404b9`: 107 core / 298 server tests,
+  strict Clippy/fmt/traceability; test-only unchanged reopen/Save As/history proofs
+  pass 300 server tests/Clippy, including normal 64-command retention. Resize
+  `608e22bb` retains previously native-tested code and accepted traceability.
+  These accepted slices do not substitute for parent qualification of this combined
+  tree, including resized descendants through server history/rollback paths.
+- Source publication needs preserved Git objects. GitHub read-only lookup returns
+  422 (`No commit found for SHA`) for `ea404b9`; the remote candidate branch is
+  absent. The checkout pre-push hook runs native `./launcher.sh --test`, which is
+  assigned to the parent. No hook/network bypass or repeated CDN attempt is made.
+  Provide the verified candidate bundle, ancestry/blob audit, gate logs and a
+  repository-template draft description for parent publication/native retesting.
+  No external PR, review/bot request, main merge or merged PR6 update is claimed.

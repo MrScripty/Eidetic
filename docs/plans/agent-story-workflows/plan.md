@@ -428,3 +428,17 @@ storage boundary, not a portable or global revision clock. Any future history
 rebuild, logical export/import or maintenance that can reorder events must add
 an explicit persisted sequence or preserve verified event order before using
 this reader; this slice makes no guarantee for arbitrary external DB rewrites.
+
+## Accepted follow-up integration qualification
+
+- Compose accepted keyboard continuation, participating server custody/task-record
+  lifecycle and atomic resize lineages on merged PR6 main `a6bd4c1`. Preserve exact
+  source ancestry and main-only WAL tests; keep already merged gap/cache behavior.
+- Gate the composition with per-file accepted-source identities, core/frontend
+  tests and strict Clippy/format/typecheck/build/traceability, plus server compilation.
+  No additional Rust implementation changes or features belong to this candidate.
+- Parent qualifies native server/runtime behavior on the exact combined tree,
+  especially resize through history/rollback and project transitions. Cloud
+  skipped-ORT compilation does not fulfill that gate. Publish through the normal
+  native-qualified source route; use a verified bundle when preserved-ancestry
+  publication is unavailable. Keep main and merged PR6 unchanged during preparation.
