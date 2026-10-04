@@ -32,7 +32,6 @@ beforeEach(() => {
 function body(): string {
   return render(ScriptBlockComposer, {
     props: {
-      documentId: 'script.document.main',
       source: {
         node_id: 'scene.cafe',
         name: 'Cafe',

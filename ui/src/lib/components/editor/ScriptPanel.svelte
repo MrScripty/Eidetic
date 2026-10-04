@@ -55,7 +55,7 @@
   </div>
 
   <div class="script-panel-body">
-    <ScriptBlockComposer documentId={MAIN_SCRIPT_DOCUMENT_ID} {source} />
+    <ScriptBlockComposer {source} />
     {#if blockCount > 0}
       {#each projection?.payload.segments ?? [] as segment (segment.segment.id)}
         {#if segment.impact}<ScriptImpactNotice impact={segment.impact} />{/if}

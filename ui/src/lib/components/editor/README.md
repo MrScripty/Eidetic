@@ -42,12 +42,13 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
-- Script exposes Write screenplay even before a document exists. The local
-  composer captures its selected clip and document when writing begins, preserves
+- Script exposes Write screenplay even before a document exists. The session-owned
+  composer draft captures its selected clip and document when writing begins, preserves
   exact refused drafts, and never retargets them on selection change. A placement
   refresh requires an explicit action for the original clip.
-- Within the local composer, an uncertain save retains its submitted payload and
-  command ID. Exact retry reconciles that request; editing text/kind, discard,
+- The composer consumes the project-session creation draft. Script view removal
+  and replacement retain an uncertain save's exact submitted payload and command
+  ID; project activation resets its owner. Exact retry reconciles that request; editing text/kind, discard,
   restart and placement refresh remain disabled until acknowledgement or the
   known native placement-changed refusal. Mutable draft fields never replace the
   submission during retry. Native `bad_request` provenance and the exact known

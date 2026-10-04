@@ -24,6 +24,7 @@ import {
   refreshChangeReviewProjection,
 } from './changeReviewProjection.svelte.js';
 import { resetEditorState } from './editor.svelte.js';
+import { resetSessionScriptBlockCreationDraft } from './scriptBlockCreationSession.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import {
   clearPropagationProposalListProjection,
@@ -47,6 +48,7 @@ import { clearSelectedNodeEditorProjection } from './selectedNodeEditorProjectio
 export interface ProjectSessionLifecycle {
   clearProjectionRefreshQueue: () => void;
   resetEditorState: () => void;
+  resetScriptBlockCreationDraft: () => void;
   clearBibleSelection: () => void;
   clearProjectionCaches: () => void;
   setActiveProject: (project: Project) => void;
@@ -58,6 +60,7 @@ const mainScriptDocumentKey = { document_id: MAIN_SCRIPT_DOCUMENT_ID };
 const defaultProjectSessionLifecycle: ProjectSessionLifecycle = {
   clearProjectionRefreshQueue,
   resetEditorState,
+  resetScriptBlockCreationDraft: resetSessionScriptBlockCreationDraft,
   clearBibleSelection: () => selectBibleGraphNode(null),
   clearProjectionCaches() {
     clearTimelineRenderProjection();
@@ -96,6 +99,7 @@ export async function activateProjectSession(
 ): Promise<void> {
   lifecycle.clearProjectionRefreshQueue();
   lifecycle.resetEditorState();
+  lifecycle.resetScriptBlockCreationDraft();
   lifecycle.clearBibleSelection();
   lifecycle.clearProjectionCaches();
   lifecycle.setActiveProject(project);

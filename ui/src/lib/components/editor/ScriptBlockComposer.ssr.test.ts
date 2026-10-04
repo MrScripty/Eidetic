@@ -4,7 +4,7 @@ import ScriptBlockComposer from './ScriptBlockComposer.svelte';
 
 it('makes manual writing discoverable in an empty screenplay and requires timeline selection', () => {
   const { body } = render(ScriptBlockComposer, {
-    props: { documentId: 'script.document.main', source: null },
+    props: { source: null },
   });
   expect(body).toContain('Write screenplay');
   expect(body).toContain('disabled');
@@ -14,7 +14,6 @@ it('makes manual writing discoverable in an empty screenplay and requires timeli
 it('offers authoring for the selected context with safely rendered names', () => {
   const { body } = render(ScriptBlockComposer, {
     props: {
-      documentId: 'script.document.main',
       source: {
         node_id: 'scene.cafe',
         name: '<Cafe> — 雨',

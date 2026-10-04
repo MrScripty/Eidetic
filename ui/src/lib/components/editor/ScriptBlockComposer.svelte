@@ -1,15 +1,10 @@
 <script lang="ts">
   import type { SelectedNodeEditorNode } from '$lib/selectedNodeEditorTypes.js';
-  import { applyScriptBlockCreationCommand } from '$lib/stores/scriptDocumentProjection.svelte.js';
-  import { createScriptBlockCreationDraft } from './scriptBlockCreationDraft.svelte.js';
+  import { getSessionScriptBlockCreationDraft } from '$lib/stores/scriptBlockCreationSession.svelte.js';
 
-  let { documentId, source }: { documentId: string; source: SelectedNodeEditorNode | null } =
-    $props();
-  const composer = createScriptBlockCreationDraft({
-    documentId: () => documentId,
-    save: applyScriptBlockCreationCommand,
-  });
-  const draft = composer.state;
+  let { source }: { source: SelectedNodeEditorNode | null } = $props();
+  let composer = $derived(getSessionScriptBlockCreationDraft());
+  let draft = $derived(composer.state);
 </script>
 
 <section class="composer" aria-label="Write screenplay">

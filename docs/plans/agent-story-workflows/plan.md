@@ -93,7 +93,11 @@ preserved. Earlier milestone sections retain their historical qualification.
   before waiting and retain its gate through completion and publication.
 - **Drafts:** Capture context/document and a stable request identity at begin;
   selection changes do not retarget pending text. An uncertain acknowledgement
-  retains the exact submitted payload/ID for reconciliation; editing, discard,
+  retains the exact submitted payload/ID in the active project-session owner
+  through Script/Graph/Split navigation and Script consumer replacement, including
+  delayed acknowledgement failure while Script is absent. Returning Script exposes
+  exact retry; actual project activation replaces the draft owner and excludes
+  old responses/callers. Editing, discard,
   restart and placement refresh stay disabled while that result is unknown.
   The definite native pre-recording placement refusal unlocks editing and
   explicit current-placement refresh for the original source.

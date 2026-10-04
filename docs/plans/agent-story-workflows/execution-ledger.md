@@ -845,3 +845,37 @@ still a separate pending gate. Broader generation persistence is not covered.
 - New-head native AppState/Linux/Windows CI remains pending hosted execution.
   No graphical or live-model claim, normal ORT download retry, policy/sandbox
   change, external review request or merge. Parent owns PR/review/qualification.
+
+
+## PR8 creation draft lifetime correction
+
+- Independent source review held published retry repair
+  `23fc2379feca5467cc7d70fb0e7b4b8a0be359f9`: Script/Graph/Split navigation
+  removes the Script panel, so its component-owned immutable pending submission
+  could disappear despite correct local retry logic. Executed the fresh Script
+  consumer regression against that exact frozen production head; returning Script
+  failed to render Retry same save or the original uncertain draft. This is an
+  executed state-lifetime/SSR reproduction, not a graphical observation.
+- Isolated `fix/pr8-draft-lifetime` moves the existing creation controller into
+  a small active-project-session owner. The Script composer consumes it and
+  reacts to project-session replacement. Mode changes remain unrestricted;
+  text, captured source and exact submitted payload/ID survive view removal,
+  including a delayed acknowledgement failure while Script is absent. Existing
+  exact retry and definite-placement-refusal behavior remain unchanged.
+- Existing project activation resets this owner alongside transient editor
+  state. An old retained consumer cannot submit into the new project; old
+  completion only updates its retired draft and existing projection lifetime
+  guards reject its publication. No application-restart persistence, backend
+  write cancellation, generic draft framework or Rust change is introduced.
+- Executed **366 frontend tests** across **66 files**, including three new
+  actual-controller/command-path lifetime regressions: fresh Script consumers
+  restore the exact uncertain submission after Graph/Split; an in-flight save
+  loses acknowledgement while absent and later retries the identical command;
+  real project activation replaces the owner and isolates late response/retry.
+  Native receipts and invoke are fixtures. These qualify equivalent consumer
+  state lifetime through real workspace SSR rendering, not DOM unmount events,
+  graphical navigation, native transport, live models or full server runtime.
+- Frontend typecheck (zero errors/warnings), static build, and normal commit
+  hooks pass. The previously denied normal ORT download (`cdn.pyke.io`, HTTP403)
+  was not retried; no policy or sandbox change. Parent retains exact-head hosted
+  native/graphical qualification, independent review, PR and merge ownership.
