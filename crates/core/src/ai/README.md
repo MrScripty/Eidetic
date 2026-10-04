@@ -40,6 +40,9 @@ Keep prompt request assembly in core, where it can reuse timeline/story rules di
 **Internal:** `crates/core/src/story`, `crates/core/src/timeline`, `crates/core/src/project`.
 **External:** None beyond shared crate dependencies.
 
+- Reason: request types use shared `serde`/`futures` traits; provider transport lives in server adapters.
+- Revisit trigger: core AI helpers require a provider SDK or another module-specific external dependency.
+
 ## Related ADRs
 - `ADR-001` decomposition baseline for oversized prompt-related modules.
 
