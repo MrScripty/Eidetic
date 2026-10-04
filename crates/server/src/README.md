@@ -25,7 +25,7 @@ domain model in `eidetic-core`.
 | `script_impact_review_service_tests.rs` | Native AppState preview regressions for truncated HTTP refusal and complete split-SSE proposal text. |
 | `timeline_script_placement.rs` | Transaction-local range synchronization and sparse placement history for live source-bound screenplay segments. |
 | `timeline_script_placement_tests.rs` | Deterministic two-scene reorder/context/impact, explicit review, historical-input, replay/ABA and placement rollback fixtures. |
-| `timeline_script_placement_service_tests.rs` | Native public range-service publication, replay and rollback regression. |
+| `timeline_script_placement_service_tests.rs` | Native public range-service publication, replay and rollback regression with canonical episode metadata initialized before copying its fixture database. |
 | `script_impact_prompt.rs` | Targeted screenplay prompt from captured canonical inputs and resolved graph context, with strict complete-stream collection. |
 | `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |

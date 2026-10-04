@@ -717,3 +717,21 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Preserve milestones and publication hold. No graphical/model-quality claim,
   ONNX retry, policy workaround, project recovery, hierarchy reparenting, external
   review request, GitHub publication or merge.
+
+## Native timeline service fixture metadata correction
+
+- Native review of frozen `dfd9406` passed **114 core / 347 server** tests; the
+  remaining range-service test failed during fixture setup because its copied
+  node-bearing database lacked the required `episode_structure` row. No
+  production placement defect was established; six placement fixtures passed.
+- Initialize the canonical episode table and row 1 from the fixture project's
+  template name and serialized structure segments before `VACUUM INTO`. Keep
+  production persistence unchanged and every original service/event/replay/
+  rollback assertion byte-identical. The native reviewer reported this exact
+  correction passes with the original assertions.
+- Locally executed the corrected source setup prefix through actual SQLite,
+  project save and reopen; canonical episode metadata and two-scene screenplay
+  lineage are retained. Server tests compile and strict Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1` (compile only); exact descendant native execution remains
+  with the same reviewer. No AppState substitute, HTTP bridge, graphical claim,
+  model call, publication or merge.

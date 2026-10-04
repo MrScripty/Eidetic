@@ -10,6 +10,22 @@ async fn native_range_edit_publishes_script_change_only_after_atomic_success_and
             std::env::temp_dir().join(format!("eidetic-range-script-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir(&directory).unwrap();
         let path = directory.join("project.db");
+        // Existing node rows make this a canonical persisted timeline. Include
+        // its required metadata before copying the source fixture to disk.
+        source
+            .execute_batch(
+                "CREATE TABLE episode_structure (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                template_name TEXT NOT NULL,
+                segments_json TEXT NOT NULL
+            );",
+            )
+            .unwrap();
+        source.execute(
+            "INSERT INTO episode_structure (id, template_name, segments_json) VALUES (1, ?1, ?2)",
+            rusqlite::params![project.timeline.structure.template_name,
+                serde_json::to_string(&project.timeline.structure.segments).unwrap()],
+        ).unwrap();
         source
             .execute("VACUUM INTO ?1", [path.to_str().unwrap()])
             .unwrap();
