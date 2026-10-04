@@ -350,6 +350,23 @@ def main():
                 "manual_edit_committed": False,
                 "visual_status": "requires inspection of both PNGs; no visible-editor claim",
             })
+            checkpoint("open actual Bible sidebar without screenplay editing")
+            click_button(application, "Bible", window)
+            wait_for("Bible category controls", lambda: find(
+                application, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
+                and (node.name or "").strip().casefold() == "all"))
+            time.sleep(10)
+            evidence["bible_dwell_seconds"] = 10
+            evidence["bible_accessibility_snapshot"] = accessibility_snapshot(application)
+            evidence["sample_screen_read_screenshot_sha256"] = evidence["screen_read_screenshot_sha256"]
+            bible_hash = observe_window(window, pid, output / "eidetic-native.png", screen_read=True)
+            evidence.update({
+                "status": "bible_panel_captured",
+                "screen_read_screenshot_sha256": bible_hash,
+                "bible_screenshot_sha256": bible_hash,
+                "native_screenshot_stage": "Bible sidebar after ten-second dwell; no screenplay edit",
+                "visual_status": "requires inspection; Bible content may be empty or canonical roots only",
+            })
             return
         checkpoint("begin manual screenplay edit")
         click_button(block, "Edit", window)

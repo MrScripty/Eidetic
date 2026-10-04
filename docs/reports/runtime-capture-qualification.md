@@ -1,5 +1,23 @@
 # Native runtime screenshot qualification proposal
 
+## Additional native Bible panel capture
+
+After the known working sample-render diagnostic, the driver clicks the actual
+Bible sidebar tab through its existing native pointer route, waits for the Bible
+category controls, and leaves that view untouched for ten seconds. The preserved
+`eidetic-native-unedited.png` remains the script/timeline workspace. The second
+allowlisted image, `eidetic-native.png`, becomes the actual Bible sidebar view,
+with its hash and capture stage recorded separately. Its visible content requires
+inspection and may contain an empty panel or canonical roots rather than story
+entities. No sample story content is invented for the Bible, and no screenplay
+editing or AI generation occurs. The app's existing sidebar may initialize its
+canonical Bible roots through the normal backend command route.
+
+The same native window ownership, timing records, PNG/log bounds, three-minute
+GUI step and reviewed application-source guard remain in force. This additional
+capture uses one normal job building the same pinned application source; it
+does not change application code or any display/security/network settings.
+
 ## Focused render diagnostic
 
 The proposed next run opens the real saved sample and performs no screenplay
