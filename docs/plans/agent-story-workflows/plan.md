@@ -307,25 +307,72 @@ claiming to expose a completed agent retrieval workflow.
   writes, suppress caller continuations, fix other projection stores, or resolve
   native acceptance, split policy and complete M4. Dot owns runtime qualification.
 
+## M4 follow-on: bind backend timeline command admission
 
-### Lock semantics clarified during M4 review
+- **Observed defects:** Path capture precedes asynchronous project loading, whose
+  failure fallback reads the then-active mirror. Create-child derives intent from
+  the admitted project but calls create-node admission again, potentially writing
+  a different database when node IDs are preserved across a copied/reopened project.
+- **Decision/write set:** Capture path and fallback mirror under the project
+  guard before I/O for all timeline writers. Forward create-child's captured
+  path/project to the existing create-node executor without re-admission. Scope
+  is the timeline service, deterministic admission tests and documentation.
+- **Gate:** Failed-load fallback retains admitted project identity after a switch;
+  a queued create-child with shared node IDs writes A while preserving B's persisted
+  nodes and active database/mirror identity. This does not establish isolation of
+  B's shared Y.Doc, event stream or autosave from old-command post-commit effects.
+  Compile/check and strict Clippy here; actual native tests are delegated to dot.
+- **Evidence limit:** A dependency-free harness executes the extracted admission
+  function with deferred/failing I/O. It is function-level evidence, not server
+  runtime qualification. Skipped-ORT compilation is never native test evidence.
+- **Remaining custody:** This binds the source once admitted. It does not add
+  expected frontend session tokens to the wire, cancel admitted writes, fence
+  post-commit events/Y.Doc/autosave, or fix concurrent save-path publication.
 
-`StoryNode.locked` is a content-regeneration lock, as documented by its core
-contract and enforced by single/batch generation admission. Absence of structural
-move/cut/delete rejection is not a violation of that contract. A future structural
-edit lock or agent capability policy must be specified separately; this work must
-not silently disable existing manual editing under a content lock.
+## M4 follow-on: admitted timeline post-commit and document custody
 
+- **Observed defects:** An admitted A command can publish document writes, events
+  and save signals after B becomes active. Autosave captures mirror/path before
+  awaiting document serialization, allowing mixed-session mementos. The documented
+  Y.Doc replacement instead merges updates; empty/fallback loads retain old data.
+- **Decision:** One async gate spans admitted timeline work and its post-commit
+  effects, project create/load/save and autosave snapshots through persistence.
+  Capture session identity before a timeline request waits; reopen/replacement
+  and save-as renew identity, returning a conflict for obsolete queued requests.
+  Restore saved documents into a fresh CRDT store, reset before fallback population,
+  and reattach update observation. Invalid-load/channel errors remain explicit.
+- **Transition repair:** Explicitly flush the outgoing mirror/path/document under
+  that gate before create/load replaces it. For Save As, flush and recover the
+  committed source snapshot before writing a new destination; retain current-state
+  copy semantics without copying command history or affect stores. Reject different
+  existing destinations rather than mixing database ownership. Required document
+  serialization and persistence failures keep the active session in place; autosave
+  serialization failure skips its write and preserves the stored blob.
+- **Caller cancellation:** After admission, supervised work owns the gate through
+  blocking persistence and publication even if its caller disconnects. Admission
+  waits remain cancellable. Shutdown can abort work; crash recovery and unrelated
+  producers remain outside this guarantee.
+- **Task records:** Normal task admission reaps completed handles and observes
+  their join outcomes, preserving named failure reporting. Retain unfinished
+  handles for admitted completion and shutdown joining. Completed tail records
+  can remain until the next spawn/count/shutdown; repeated edits must not grow
+  the registry with historical commands. Validate repeated real commands using
+  passive registry measurement, without smoke-counter-driven pruning.
+- **Publication:** Await bounded document sends under the gate before emitting
+  timeline events/save signals. If the manager closes after SQL commit, return
+  an explicit committed-publication error; SQL history remains durable/idempotent.
+  This does not implement a distributed transaction or automatic rollback of
+  already committed SQL when its document publication fails.
+- **Write set:** Timeline services, project lifecycle, state/autosave, Y.Doc manager,
+  admission signature adaptation, focused component/native tests and records.
+- **Gate:** Component tests verify true document replacement, empty reset, invalid
+  state preservation and live update observation. Native tests must qualify seeded
+  A/B history preservation, post-commit document/event ordering with a full channel,
+  queued same-path reopen/save-as rejection and snapshot ownership during autosave.
+  Transition tests must include an earlier real document blob before committing
+  new notes, immediate A-to-B-to-A reopen, Save As from a stale mirror, outgoing
+  serialization/persistence errors and cancellation at blocked publication/flush.
+- **Limits:** Source and isolated document component checks do not qualify complete
+  server behavior. Native tests are delegated. Other producers and frontend intent
+  tokens before backend admission remain open; no completed M4/merge claim.
 
-### M4b ordering boundary
-
-The current writer appends `change_events`/`object_revisions`; broad save clears
-and reinserts only current-state tables and leaves history untouched. Project
-load opens the same database; PDF export does not copy history. No supported
-history export/import, event reinsert, VACUUM or history compaction path was found
-in the source audit. A real broad-save/reopen regression preserves event row
-identities/order and the final child projection. Row order is a local append-only
-storage boundary, not a portable or global revision clock. Any future history
-rebuild, logical export/import or maintenance that can reorder events must add
-an explicit persisted sequence or preserve verified event order before using
-this reader; this slice makes no guarantee for arbitrary external DB rewrites.

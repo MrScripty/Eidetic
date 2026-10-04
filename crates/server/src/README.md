@@ -9,10 +9,10 @@ domain model in `eidetic-core`.
 | File/Folder | Description |
 |-------------|-------------|
 | `lib.rs` | Backend runtime module root consumed by binaries, tests, and future desktop bindings. |
-| `backend_task.rs` | Backend task supervisor for explicit desktop lifecycle ownership. |
+| `backend_task.rs` | Backend task supervisor that reaps observed completions during normal admission and owns unfinished work through shutdown. |
 | `sqlite.rs` | Shared SQLite connection setup for write-capable project database access. |
 | `persistence.rs` | SQLite project persistence and project listing. |
-| `project_service.rs` | Host-neutral project create, load, save, update, and list behavior consumed by Tauri commands. |
+| `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
 | `ai_temporal_context.rs` | Deterministic per-field fictional-time resolution before prompt construction; excludes future assertions and rejects same-time conflicts. |
 | `ai_temporal_context_tests.rs` | Sparse inheritance, ordering, conflict, duplicate and cleared-value temporal regressions. |
@@ -33,6 +33,10 @@ domain model in `eidetic-core`.
 | `reference_retrieval_tests.rs` | Actual RAG attach-boundary regression coverage for queued/reopened sessions and late query results. |
 | `affect_store.rs` | SQLite affect value, dependency, and proposal persistence with revision-history writes. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
+| `command_service_timeline.rs` | Timeline command services with source admission and an owned session gate through document/event/save publication. |
+| `timeline_command_admission_tests.rs` | Deterministic blocked-load tests for fallback and create-child database ownership across project replacement. |
+| `timeline_postcommit_custody_tests.rs` | Queued session/save-as conflicts, bounded document-channel publication, errors and seeded A/B history regressions. |
+| `state_autosave_custody_tests.rs` | Autosave memento ownership across mirror/path/document serialization and persistence. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
 | `timeline_command_guard.rs` | Transaction-local timeline snapshot validation shared by all timeline history writers. |
 | `timeline_range_history_tests.rs` | Descendant range delta, replay ordering, WAL interleaving and interrupted-transaction rollback regressions. |
@@ -100,6 +104,42 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Timeline command admission captures the database path and fallback project
+  mirror under the project guard before loading persisted state. Failed loads
+  cannot read a later session's mirror; derived create-child commands reuse the
+  original admission instead of resolving the active database a second time.
+- Participating timeline commands, project create/load/save and autosave share an
+  async session gate. Timeline requests capture a session identity before waiting;
+  replacement/reopen or save-as invalidates queued requests explicitly. Admitted
+  work retains its gate through document enqueue, event and save publication.
+  Autosave keeps mirror, path and serialized document in that gate through I/O.
+- Admitted timeline/lifecycle work moves its owned gate into a supervised task;
+  caller cancellation does not release it during blocking persistence or document
+  publication. Waiting for admission stays cancellable. Backend shutdown aborts
+  these tasks; this is not crash recovery or a guarantee for other producers.
+- Normal supervisor spawn reaps finished task handles and observes their join
+  results, including named panic reporting, before records accumulate across
+  command history. Unfinished handles remain owned; shutdown still aborts and joins
+  them. A completed tail may remain until the next spawn/count/shutdown, so record
+  retention follows outstanding work and recent completions rather than total edits.
+  Smoke inspection is not required to run cleanup. Passive test measurements do
+  not prune the registry.
+- Create/load flush the outgoing session directly before replacing its document.
+  Save As flushes/reloads the source database, preserving committed timeline/arcs
+  over its stale mirror, and copies that snapshot with the current document blob.
+  Serialization/write/read failures prevent active-session publication. Autosave
+  skips writes when serialization fails, preserving the last stored document.
+  A different existing Save As destination returns a conflict to avoid combining
+  its timeline/history with the source. Save As copies a current-state snapshot,
+  not source command history, affect stores or external collaboration sessions.
+- Y.Doc load restores into a fresh document rather than merging project lifetimes.
+  Empty/fallback population starts fresh; invalid blobs preserve the current doc
+  until an explicit fallback. Closed channels return errors. A document-channel
+  failure after SQLite commit reports that the command is already committed;
+  it does not claim SQL rollback or silently drop a full-channel write.
+- This custody gate is scoped to participating timeline/lifecycle operations.
+  Other producers, pre-admission frontend intent tokens, model/generation custody
+  and external collaborative client resynchronization are not qualified here.
 - Reference embeddings are disposable derived state. Exact source snapshots and
   project-index/document tickets fence async publication; project create/load and
   reference deletion invalidate pending work. Admission binds single and batch
