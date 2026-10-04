@@ -237,3 +237,24 @@ still a separate pending gate. Broader generation persistence is not covered.
   frontend gates, preserve the gap branch, and provide verified source transfer.
   No callable native Goal-setting tool is available; durable Goal activation is
   not claimed. Runtime model/reasoning selection is not exposed to this task.
+
+### 2026-10-04: Backend timeline command admission custody
+
+- Isolated branch `fix/timeline-command-admission-custody` follows
+  `abae7ca83f41470f392ec8b81cf6f61513a415b7`, separate from the keyboard
+  continuation change. Frozen gap/cache branches are unchanged.
+- An offline dependency-free harness executing the extracted production admission
+  function with deferred/failing persistence reproduced returning B's mirror for
+  captured path A after replacement. With the fix it returns path A and mirror A.
+  This uses real core project types but mocked I/O/state: it is not server runtime
+  evidence. Create-child now forwards its captured admission to create-node work.
+- Added two deterministic native regressions using a one-thread blocking pool:
+  failed-load fallback remains bound to A, and queued child creation with copied
+  node IDs writes A rather than active B. These tests are **not executed here**.
+- `ORT_SKIP_DOWNLOAD=1 cargo check --offline --locked -p eidetic-server --tests`
+  and strict server/test Clippy passed. These prove compilation/lint only; they
+  do not supply or exercise ONNX. No denied download was repeated.
+- Dot handoff: run `cargo test -p eidetic-server admission_tests`, then applicable
+  full server/native gates on this source. Verify A/B current-state and history
+  effects. Post-commit event/Y.Doc/autosave and save-path publication custody are
+  explicitly not repaired by this admission-only change.

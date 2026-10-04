@@ -10,7 +10,7 @@ use rusqlite::Connection;
 use serde::Serialize;
 
 use crate::backend_error::BackendError;
-use crate::command_service_support::{active_project_path, map_history_error};
+use crate::command_service_support::map_history_error;
 use crate::history_store::{self, RecordChangeOutcome};
 use crate::state::{AppState, ServerEvent};
 use crate::timeline_command::{self, TimelineCommandError};
@@ -50,21 +50,28 @@ pub async fn create_timeline_child_from_parent_core_command(
     state: &AppState,
     command: CommandEnvelope<CreateTimelineChildFromParentCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
-    let project = timeline_command_project(state, &path).await?;
+    let (path, project) = timeline_command_project(state).await?;
     let command =
         crate::timeline_create_intent::derive_create_child_timeline_node_command(&project, command)
             .map_err(map_timeline_command_error)?;
-    create_timeline_node_from_core_command(state, command).await
+    create_timeline_node_at_admission(state, path, project, command).await
 }
 
 pub async fn create_timeline_node_from_core_command(
     state: &AppState,
     command: CommandEnvelope<CreateTimelineNodeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
+    let (path, project) = timeline_command_project(state).await?;
+    create_timeline_node_at_admission(state, path, project, command).await
+}
+
+async fn create_timeline_node_at_admission(
+    state: &AppState,
+    path: std::path::PathBuf,
+    project: eidetic_core::Project,
+    command: CommandEnvelope<CreateTimelineNodeCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
     let created_node_id = command.payload.node_id;
-    let project = timeline_command_project(state, &path).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -99,8 +106,7 @@ pub async fn set_timeline_node_range(
     state: &AppState,
     command: CommandEnvelope<SetTimelineNodeRangeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
-    let project = timeline_command_project(state, &path).await?;
+    let (path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -132,9 +138,8 @@ pub async fn set_timeline_node_lock(
     state: &AppState,
     command: CommandEnvelope<SetTimelineNodeLockCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
+    let (path, project) = timeline_command_project(state).await?;
     let node_id = command.payload.node_id;
-    let project = timeline_command_project(state, &path).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -169,10 +174,9 @@ pub async fn set_timeline_node_notes(
     state: &AppState,
     command: CommandEnvelope<SetTimelineNodeNotesCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
+    let (path, project) = timeline_command_project(state).await?;
     let node_id = command.payload.node_id;
     let notes = command.payload.notes.clone();
-    let project = timeline_command_project(state, &path).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -213,9 +217,8 @@ pub async fn delete_timeline_node(
     state: &AppState,
     command: CommandEnvelope<DeleteTimelineNodeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
+    let (path, project) = timeline_command_project(state).await?;
     let removed_node_id = command.payload.node_id;
-    let project = timeline_command_project(state, &path).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -250,8 +253,7 @@ pub async fn delete_timeline_relationship(
     state: &AppState,
     command: CommandEnvelope<DeleteTimelineRelationshipCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
-    let project = timeline_command_project(state, &path).await?;
+    let (path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -293,8 +295,7 @@ pub async fn create_timeline_relationship_from_core_command(
     state: &AppState,
     command: CommandEnvelope<CreateTimelineRelationshipCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
-    let project = timeline_command_project(state, &path).await?;
+    let (path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -330,9 +331,8 @@ pub async fn apply_timeline_children(
 ) -> Result<TimelineCommandResponse, BackendError> {
     command.validate()?;
     let command = command.into_core_command();
-    let path = active_project_path(state)?;
+    let (path, project) = timeline_command_project(state).await?;
     let children = command.payload.children.clone();
-    let project = timeline_command_project(state, &path).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -409,8 +409,7 @@ pub async fn split_timeline_node_from_core_command(
     state: &AppState,
     command: CommandEnvelope<SplitTimelineNodeCommand>,
 ) -> Result<TimelineCommandResponse, BackendError> {
-    let path = active_project_path(state)?;
-    let project = timeline_command_project(state, &path).await?;
+    let (path, project) = timeline_command_project(state).await?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
             .map_err(|e| BackendError::internal(e.to_string()))?;
@@ -438,21 +437,25 @@ pub async fn split_timeline_node_from_core_command(
     Ok(response)
 }
 
+/// Admit path and fallback mirror together before I/O; never rebind a queued
+/// command to whichever project becomes active while its database is loading.
 async fn timeline_command_project(
     state: &AppState,
-    path: &std::path::Path,
-) -> Result<eidetic_core::Project, BackendError> {
-    if state.project.lock().is_none() {
-        return Err(BackendError::no_project());
-    }
-    match crate::persistence::load_project(path).await {
-        Ok((project, _)) => Ok(project),
-        Err(_) => state
-            .project
-            .lock()
-            .clone()
-            .ok_or_else(BackendError::no_project),
-    }
+) -> Result<(std::path::PathBuf, eidetic_core::Project), BackendError> {
+    let (path, fallback) = {
+        let guard = state.project.lock();
+        let project = guard.as_ref().ok_or_else(BackendError::no_project)?;
+        let path = state
+            .project_database
+            .active_path()
+            .ok_or_else(BackendError::no_project)?;
+        (path, project.clone())
+    };
+    let project = match crate::persistence::load_project(&path).await {
+        Ok((project, _)) => project,
+        Err(_) => fallback,
+    };
+    Ok((path, project))
 }
 
 fn timeline_render_projection_from_current_state(
@@ -505,3 +508,7 @@ fn map_timeline_command_error(error: TimelineCommandError) -> BackendError {
         TimelineCommandError::History(error) => map_history_error(error),
     }
 }
+
+#[cfg(test)]
+#[path = "timeline_command_admission_tests.rs"]
+mod admission_tests;

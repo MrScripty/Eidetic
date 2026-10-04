@@ -307,6 +307,26 @@ claiming to expose a completed agent retrieval workflow.
   writes, suppress caller continuations, fix other projection stores, or resolve
   native acceptance, split policy and complete M4. Dot owns runtime qualification.
 
+## M4 follow-on: bind backend timeline command admission
+
+- **Observed defects:** Path capture precedes asynchronous project loading, whose
+  failure fallback reads the then-active mirror. Create-child derives intent from
+  the admitted project but calls create-node admission again, potentially writing
+  a different database when node IDs are preserved across a copied/reopened project.
+- **Decision/write set:** Capture path and fallback mirror under the project
+  guard before I/O for all timeline writers. Forward create-child's captured
+  path/project to the existing create-node executor without re-admission. Scope
+  is the timeline service, deterministic admission tests and documentation.
+- **Gate:** Failed-load fallback retains admitted project identity after a switch;
+  a queued create-child with shared node IDs writes A and leaves active B unchanged.
+  Compile/check and strict Clippy here; actual native tests are delegated to dot.
+- **Evidence limit:** A dependency-free harness executes the extracted admission
+  function with deferred/failing I/O. It is function-level evidence, not server
+  runtime qualification. Skipped-ORT compilation is never native test evidence.
+- **Remaining custody:** This binds the source once admitted. It does not add
+  expected frontend session tokens to the wire, cancel admitted writes, fence
+  post-commit events/Y.Doc/autosave, or fix concurrent save-path publication.
+
 
 ### Lock semantics clarified during M4 review
 

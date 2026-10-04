@@ -33,6 +33,8 @@ domain model in `eidetic-core`.
 | `reference_retrieval_tests.rs` | Actual RAG attach-boundary regression coverage for queued/reopened sessions and late query results. |
 | `affect_store.rs` | SQLite affect value, dependency, and proposal persistence with revision-history writes. |
 | `command_service.rs` | Host-neutral command handlers consumed by Tauri command adapters. |
+| `command_service_timeline.rs` | Timeline command services with database path and fallback mirror captured together at admission. |
+| `timeline_command_admission_tests.rs` | Deterministic blocked-load tests for fallback and create-child database ownership across project replacement. |
 | `projection_service.rs` | Host-neutral projection readers consumed by Tauri command adapters. |
 | `timeline_command_guard.rs` | Transaction-local timeline snapshot validation shared by all timeline history writers. |
 | `timeline_range_history_tests.rs` | Descendant range delta, replay ordering, no-op and atomic stale-edit regressions. |
@@ -100,6 +102,11 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- Timeline command admission captures the database path and fallback project
+  mirror under the project guard before loading persisted state. Failed loads
+  cannot read a later session's mirror; derived create-child commands reuse the
+  original admission instead of resolving the active database a second time.
+  Post-commit event, Y.Doc and save publication custody remains separate work.
 - Reference embeddings are disposable derived state. Exact source snapshots and
   project-index/document tickets fence async publication; project create/load and
   reference deletion invalidate pending work. Admission binds single and batch
