@@ -89,6 +89,8 @@ def click_control(node, window):
     geometry = dict(line.split("=", 1) for line in command(
         "xdotool", "getwindowgeometry", "--shell", window).splitlines())
     point = control_click_point(rect, {key: int(value) for key, value in geometry.items()})
+    print(f"Native pointer input: control={(node.name or '')[:100]!r}, bounds={tuple(rect)}, point={point}",
+          flush=True)
     command("xdotool", "windowfocus", "--sync", window)
     command("xdotool", "mousemove", "--sync", str(point[0]), str(point[1]))
     command("xdotool", "click", "1")
@@ -101,6 +103,23 @@ def click_button(root, label, window, prefix=False):
                      and button_label_matches(node.name, label, prefix)),
     )
     click_control(node, window)
+
+
+def open_project_chooser(application, window):
+    def chooser_ready():
+        if find(application, lambda node: node.getRole() == pyatspi.ROLE_HEADING
+                and node.name == "Open Project"):
+            return True
+        # Vite first renders HTML, then loads/hydrates the client controls.
+        # A click before hydration has no handler, so retry only the home button
+        # until the actual chooser transition is visible, within the same deadline.
+        button = find(application, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
+                      and button_label_matches(node.name, "Open Project"))
+        if button:
+            click_control(button, window)
+        time.sleep(0.75)
+        return False
+    wait_for("native project chooser transition", chooser_ready)
 
 
 def text_of(node):
@@ -243,7 +262,7 @@ def main():
             window, output / "eidetic-native-unedited.png")
         evidence["unedited_screenshot_stage"] = "native home screen before opening sample or editing"
         checkpoint("open project chooser")
-        click_button(application, "Open Project", window)
+        open_project_chooser(application, window)
         checkpoint("open sample project")
         click_button(application, fixture["project_name"], window, prefix=True)
         checkpoint("wait for project timeline")
