@@ -287,6 +287,26 @@ claiming to expose a completed agent retrieval workflow.
   split/containment product policy, structural locks, mutation history, agent
   authority or undo behavior and does not complete M4.
 
+## M4 follow-on: timeline projection cache session custody
+
+- **Observed defect:** Project activation clears projection caches, but an old
+  timeline refresh or command can complete afterward. Version-only comparison
+  admits the old project's higher-version projection into the new session;
+  obsolete failures/finalizers also overwrite its error/pending state.
+- **Owner/write set:** Timeline frontend projection store, deterministic deferred
+  tests, store README and plan records. Preserve public API and command results.
+- **Decision:** Each request captures the cache generation. Clear advances that
+  generation; only its own requests may publish state. Within the generation,
+  versions govern projection replacement, outstanding requests own pending as a
+  count, and the latest-started request owns the shared error field.
+- **Gate:** Deferred refresh and all command paths cannot cross clear/new-load
+  boundaries on success or failure; obsolete completion cannot end current
+  pending work; overlapping commands/refreshes retain version ordering and
+  pending/error ownership. Run frontend tests, typecheck, lint, format and build.
+- **Limits:** This does not bind backend commands to a project session, cancel
+  writes, suppress caller continuations, fix other projection stores, or resolve
+  native acceptance, split policy and complete M4. Dot owns runtime qualification.
+
 
 ### Lock semantics clarified during M4 review
 
