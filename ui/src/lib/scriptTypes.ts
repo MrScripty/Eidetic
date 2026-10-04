@@ -73,6 +73,7 @@ export interface ScriptSegmentProjection {
 
 export interface ScriptImpactProjection {
   generation_event_id: string;
+  output_block_id?: string | null;
   lineage_available: boolean;
   needs_review: boolean;
   causes: ScriptImpactCause[];

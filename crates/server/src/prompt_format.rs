@@ -22,6 +22,23 @@ pub(crate) fn build_chat_prompt(request: &GenerateRequest) -> ChatPrompt {
     }
 }
 
+pub(crate) fn append_script_context(
+    user: &mut String,
+    blocks: &[eidetic_core::contracts::ScriptContextBlock],
+) {
+    user.push_str(
+        "CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n",
+    );
+    for block in blocks {
+        user.push_str(&format!(
+            "--- document={} segment={} block={} block_revision={} segment_revision={} presentation={}..{}ms ---\n{}\n\n",
+            block.document_id.as_str(), block.segment_id.as_str(), block.block_id.as_str(),
+            block.revision_event_id.0, block.segment_revision_event_id.0,
+            block.start_ms, block.end_ms, block.text,
+        ));
+    }
+}
+
 fn build_system_message(request: &GenerateRequest) -> String {
     let level = request.target_node.level;
 
@@ -201,17 +218,7 @@ fn build_user_message(request: &GenerateRequest) -> String {
 
     // User-written anchors.
     if let Some(blocks) = &request.script_context {
-        user.push_str(
-            "CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n",
-        );
-        for block in blocks {
-            user.push_str(&format!(
-                "--- document={} segment={} block={} block_revision={} segment_revision={} presentation={}..{}ms ---\n{}\n\n",
-                block.document_id.as_str(), block.segment_id.as_str(), block.block_id.as_str(),
-                block.revision_event_id.0, block.segment_revision_event_id.0,
-                block.start_ms, block.end_ms, block.text,
-            ));
-        }
+        append_script_context(&mut user, blocks);
     }
 
     if !request.user_written_anchors.is_empty() {

@@ -15,13 +15,19 @@ pub(crate) fn load_impact(
 ) -> Result<Option<ScriptImpactProjection>, HistoryStoreError> {
     let generation = conn
         .query_row(
-            "SELECT event_id, inputs_known FROM script_generations
+            "SELECT event_id, inputs_known, block_id FROM script_generations
         WHERE segment_id = ?1 ORDER BY rowid DESC LIMIT 1",
             [segment.as_str()],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, bool>(1)?)),
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, bool>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            },
         )
         .optional()?;
-    let Some((event, lineage_available)) = generation else {
+    let Some((event, lineage_available, block)) = generation else {
         return Ok(None);
     };
     let generation_event_id = parse_event(&event)?;
@@ -97,6 +103,10 @@ pub(crate) fn load_impact(
     }
     Ok(Some(ScriptImpactProjection {
         generation_event_id,
+        output_block_id: Some(
+            eidetic_core::contracts::ScriptBlockId::new(block)
+                .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?,
+        ),
         lineage_available,
         needs_review: !causes.is_empty(),
         causes,

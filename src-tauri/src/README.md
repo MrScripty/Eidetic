@@ -43,6 +43,9 @@ crates own project state and command semantics.
   authoritative.
 
 ## Invariants
+- The desktop builder registers the targeted screenplay impact preview command
+  alongside the existing propagation review commands; no extra transport or
+  automatic acceptance path is introduced.
 - AI context preview transports optional `story_time_ms` to backend resolution;
   it never derives fictional time from playhead or selected-clip coordinates.
 

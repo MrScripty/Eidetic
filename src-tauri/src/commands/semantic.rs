@@ -2,11 +2,25 @@ use eidetic_core::contracts::{
     AcceptBibleReferenceProposalCommand, AcceptPropagationProposalCommand, CommandEnvelope,
     CreateBibleReferenceProposalCommand, CreatePropagationProposalCommand,
     RejectBibleReferenceProposalCommand, RejectPropagationProposalCommand,
-    UpdatePropagationProposalCommand,
+    RequestScriptImpactProposalCommand, UpdatePropagationProposalCommand,
 };
 use eidetic_server::command_service;
 use eidetic_server::state::AppState;
 use tauri::Manager;
+
+#[tauri::command]
+pub async fn command_script_impact_proposal_preview(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<RequestScriptImpactProposalCommand>,
+) -> Result<
+    eidetic_server::script_impact_review_service::ScriptImpactProposalCommandResponse,
+    CommandError,
+> {
+    let state = app.state::<AppState>().inner().clone();
+    eidetic_server::script_impact_review_service::request_script_impact_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
 
 use crate::error::CommandError;
 

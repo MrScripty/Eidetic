@@ -48,6 +48,10 @@ CREATE INDEX IF NOT EXISTS idx_propagation_proposals_target
     ON propagation_proposals(target_kind, target_id, target_part_key, target_field_key);
 CREATE INDEX IF NOT EXISTS idx_propagation_proposals_source_dependency
     ON propagation_proposals(source_dependency_id);
+CREATE TABLE IF NOT EXISTS script_impact_proposal_bindings (
+    proposal_id TEXT PRIMARY KEY REFERENCES propagation_proposals(id),
+    binding_json TEXT NOT NULL
+);
 "#;
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), PropagationProposalStoreError> {
@@ -106,7 +110,8 @@ pub(crate) fn load_propagation_proposals(
             proposed_value_number, proposed_value_bool, proposed_value_ref_kind,
             proposed_value_ref_id, proposed_value_asset_ref, proposed_text,
             proposed_script_patch_json,
-            source_dependency_id, source_event_id, rationale, created_at_ms
+            source_dependency_id, source_event_id, rationale, created_at_ms,
+            (SELECT binding_json FROM script_impact_proposal_bindings WHERE proposal_id = propagation_proposals.id)
          FROM propagation_proposals
          ORDER BY created_at_ms ASC, id ASC",
     )?;
@@ -131,7 +136,8 @@ pub(crate) fn load_propagation_proposal(
             proposed_value_number, proposed_value_bool, proposed_value_ref_kind,
             proposed_value_ref_id, proposed_value_asset_ref, proposed_text,
             proposed_script_patch_json,
-            source_dependency_id, source_event_id, rationale, created_at_ms
+            source_dependency_id, source_event_id, rationale, created_at_ms,
+            (SELECT binding_json FROM script_impact_proposal_bindings WHERE proposal_id = propagation_proposals.id)
          FROM propagation_proposals
          WHERE id = ?1",
         [proposal_id.as_str()],
@@ -243,7 +249,7 @@ fn proposal_exists(
     .map_err(PropagationProposalStoreError::from)
 }
 
-fn insert_proposal_in_transaction(
+pub(crate) fn insert_proposal_in_transaction(
     tx: &Transaction<'_>,
     proposal: &PropagationProposal,
     event_id: eidetic_core::contracts::ChangeEventId,
@@ -296,6 +302,10 @@ fn insert_proposal_in_transaction(
             event_id.0.to_string(),
         ],
     )?;
+    if let Some(binding) = &proposal.script_review_binding {
+        tx.execute("INSERT INTO script_impact_proposal_bindings (proposal_id, binding_json) VALUES (?1, ?2)",
+            params![proposal.id.as_str(), serde_json::to_string(binding)?])?;
+    }
     Ok(())
 }
 
@@ -350,10 +360,15 @@ fn row_to_proposal(row: &Row<'_>) -> Result<PropagationProposal, rusqlite::Error
             .map_err(|e| conversion_failure(row, 21, e))?,
         rationale: row.get(22)?,
         created_at_ms: u64::try_from(created_at_ms).map_err(|e| conversion_failure(row, 23, e))?,
+        script_review_binding: row
+            .get::<_, Option<String>>(24)?
+            .map(|binding| serde_json::from_str(&binding))
+            .transpose()
+            .map_err(|e| conversion_failure(row, 24, e))?,
     })
 }
 
-fn propagation_proposal_revision(
+pub(crate) fn propagation_proposal_revision(
     proposal: &PropagationProposal,
     event_id: eidetic_core::contracts::ChangeEventId,
 ) -> Result<ObjectRevision, HistoryStoreError> {
@@ -388,6 +403,15 @@ fn propagation_proposal_revision(
         None,
         Some(FieldValue::Text(encode_string_enum(&proposal.status)?)),
     ));
+    let revision = if let Some(binding) = &proposal.script_review_binding {
+        revision.with_field(FieldDelta::new(
+            "script_review_binding",
+            None,
+            Some(FieldValue::Text(serde_json::to_string(binding)?)),
+        ))
+    } else {
+        revision
+    };
     let revision = match proposal.proposed_value.as_ref() {
         Some(value) => {
             revision.with_field(FieldDelta::new("proposed_value", None, Some(value.clone())))

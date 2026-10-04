@@ -583,3 +583,61 @@ still a separate pending gate. Broader generation persistence is not covered.
   or model-provider call was performed. Publication hold remains unchanged.
   Commit milestone and verified source/evidence package are delivered separately
   through Library for parent review and native qualification.
+
+### 2026-10-04: Targeted screenplay propagation review checkpoint
+
+- Preserve frozen `0b687a8168c3499cfbcc356f814958d7ee11859b`. Parent reports its
+  independent acceptance with 113 core / 323 server / 339 frontend, checks/build
+  and real deletion-after-capture and placement-only probes. Source restored
+  clean. Graphical Needs review remains unqualified under the WebKit blocker.
+- Inspected existing proposal contracts/store/review/accept commands and desktop
+  transport before implementation. Missing feature: connect a proven Needs review
+  cause to a targeted pending propagation proposal, with stale acceptance refusal.
+  Existing screenplay acceptance validated locks but carried no preview revisions.
+  Continue on isolated descendant `feat/script-impact-review`, without changing
+  frozen acceptance, publication hold or parked project-switch/recovery work.
+- Preview captures a proven cause, generated output block, current target text/
+  placement writes, canonical screenplay inputs and resolved graph evidence in
+  one snapshot. A moved source is explicitly included outside normal continuity
+  bounds. Deleted-source evidence remains explainable. Optional output identity
+  makes the preview target the actual affected generated block, protecting other
+  blocks in the same segment from falsely resolving that output's impact.
+- Reuse the configured provider, canonical screenplay formatter and current
+  graph/fictional-time resolver. The targeted prompt consumes only captured
+  screenplay and resolved graph evidence. No unbound timeline prose, recaps,
+  world inference or presentation-derived fictional time is supplied. UI query
+  time is absent; typed requests also support explicit fictional time. No live
+  model/provider call was made during qualification; quality remains unqualified.
+- Strict provider stream completion refuses partial/error/empty drafts. Successful
+  preview commits only an existing pending propagation proposal and its additive
+  typed evidence binding. Original request replay skips provider invocation.
+  Generic retarget/amend commands refuse bound previews; request a fresh preview.
+- Explicit acceptance revalidates source/target/placement writes, current cause,
+  graph evidence and pending proposal contents inside the SQLite writer transaction.
+  Recheck protected spans and the canonical source node's content-regeneration
+  lock. Target block/span, proposal status, sparse history and refreshed actual
+  input lineage commit together. Preserve source edits, unrelated C, other blocks
+  and document/segment metadata. Rejection records status without discarding
+  authored text or clearing the cause; stale refusal keeps the proposal pending.
+- Executed **137 isolated actual source-module tests**, including **12 new**
+  targeted review/provider fixtures. Linked-scene accept/reject, source/target ABA,
+  edits during provider I/O, invented cause/wrong block, full acceptance rollback,
+  replay/retarget refusal, graph-time/stale world context, late span/node locks,
+  deleted-source explanation and failed/empty provider output all pass. The harness
+  now includes existing bible/temporal/propagation regressions and still links no
+  Pumas/ORT. It is explicitly not the full server suite.
+- Core: **114 passed**, strict all-target core Clippy passed. Frontend:
+  **344 passed**; zero-error/warning Svelte check, lint, formatting and production
+  build passed. New transport/store fixtures preserve review state on failed
+  preview and do not send acceptance. SSR fixtures render exact whitespace/newline/
+  Unicode proposal text, safely escaped markup, explicit controls and refusal to
+  preview an unidentified output. SSR does not qualify graphical clicks.
+- Server tests compile and strict all-target server Clippy pass offline with
+  `ORT_SKIP_DOWNLOAD=1`; compilation remains distinct from native execution.
+  Tauri registration/adapter and the AppState preview service require parent native
+  qualification on the exact checkpoint. Known uncached desktop dependency and
+  graphical runtime limitations were not bypassed. No ONNX retry or policy change.
+- Commit hooks and decision traceability use the frozen lineage parent as the
+  feature comparison base. Deliver the preserved-ancestry bundle, patch, exact
+  identities and verification evidence through Library. No GitHub publication,
+  cancelled-upload retry, external review request or merge is performed.

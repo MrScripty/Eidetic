@@ -15,6 +15,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `bible_render_graph.rs` | Disposable Bevy-facing story-bible graph projection DTOs, deterministic layout helpers, and neighborhood indexes derived from canonical graph rows. |
 | `graph_proposal.rs` | Generic reviewable graph proposal contracts for agent-proposed bible nodes, fields, edges, and timeline-context links. |
 | `script_document.rs` | Canonical script document, segment, block, span, lock, patch, and script projection contracts. |
+| `script_impact_review.rs` | Explicit targeted preview request and captured screenplay/world-context evidence for revision-bound propagation proposals. |
 | `semantic_dependency.rs` | Typed semantic relationships with optional source/target revision bindings for generation lineage. |
 | `timeline_render.rs` | Timeline renderer projections, including core-derived gaps filtered by the renderer's minimum duration. |
 
@@ -53,6 +54,12 @@ Start with small core contract modules that own IDs, object kinds, field values,
   and consumed input event. Missing lineage differs from a known empty input set.
 - Needs review is a derived read projection with changed/deleted input causes;
   it does not change canonical segment status or authorize proposal acceptance.
+- Impact identifies its generated output block; a targeted preview cannot resolve
+  that impact by updating another block. Optional output identity preserves older
+  wire reads. Review bindings retain explicit fictional query time through the
+  existing resolved bible projection, separately from presentation placement.
+- A preview request authorizes proposal creation only. Accept/reject remain
+  separate commands, and rejection must preserve the writer's canonical edit.
 - Agent workflows receive typed manifests, budgets, policies, and backend tool requests/results; they do not receive app, renderer, or frontend state.
 - Affect values use validated integer basis-point domain types for valence,
   arousal, intensity, and confidence so invalid floats cannot cross contract

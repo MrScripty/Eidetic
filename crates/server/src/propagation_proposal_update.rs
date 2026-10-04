@@ -25,6 +25,11 @@ pub(crate) fn record_update_propagation_proposal(
     }
 
     let existing = load_pending_proposal(conn, &command.payload.proposal_id)?;
+    if existing.script_review_binding.is_some() {
+        return Err(PropagationProposalStoreError::InvalidCommand(
+            "revision-bound screenplay proposals require a fresh preview; reject this proposal first".into(),
+        ));
+    }
     let updated = updated_proposal(&existing, &command.payload);
     propagation_proposal_store::validate_proposal_shape(
         &updated.action,
@@ -75,6 +80,7 @@ fn updated_proposal(
         source_event_id: command.source_event_id,
         rationale: command.rationale.clone(),
         created_at_ms: existing.created_at_ms,
+        script_review_binding: existing.script_review_binding.clone(),
     }
 }
 

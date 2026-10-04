@@ -96,6 +96,9 @@ continues.
 - Centralizing every UI field in one store file: rejected because it would collapse unrelated lifecycles into one mutable surface.
 
 ## Invariants
+- Targeted preview responses populate the existing propagation proposal store.
+  Failed/stale previews retain prior review state and expose the refusal. Explicit
+  accept/reject commands remain separate from preview creation.
 - Script projection refresh retains backend generation impact and exact authored
   output together. Version guards prevent older clean responses from hiding a
   newer Needs review cause, including explainable deleted-source evidence.

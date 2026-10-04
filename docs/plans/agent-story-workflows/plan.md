@@ -107,6 +107,41 @@ independent qualification; the GitHub publication hold remains unchanged.
   Skipped-ORT compilation cannot qualify server runtime behavior.
 
 
+## Targeted review proposal: bounded follow-up
+
+Frozen lineage `0b687a8168c3499cfbcc356f814958d7ee11859b` has parent-reported
+independent source/native-service acceptance: 113 core, 323 server, 339 frontend,
+checks/build and additional deletion-before-commit and placement-only probes.
+Graphical Needs review remains unqualified under the existing WebKit blocker.
+Continue separately on `feat/script-impact-review`; publication hold stays intact.
+
+The actual missing feature is a bridge from a proven review cause to a targeted
+pending propagation proposal and its explicit accept/reject flow. Existing
+proposal storage/review commands are reused; older generic proposals remain
+unbound. This slice adds a preview service/provider boundary, additive captured
+evidence binding, transaction-local stale/lock guards and a Script review surface.
+
+- Target the output block identified by the generation's impact. Capture current
+  authored screenplay context and resolved graph evidence at explicit optional
+  fictional time; reuse current SQLite, semantic lineage and temporal resolver.
+  Include a proven moved source outside the default continuity window. No world
+  extraction, database migration or presentation-to-fictional-time inference.
+- Preview creates a proposal without changing canonical text. Strict stream
+  completion refuses partial/error/empty output. A persisted request replays
+  without another provider call. Prompt sources are completely represented by
+  the stored binding, without unbound timeline prose or recaps.
+- Explicit acceptance rechecks target/source revisions, cause, pending proposal,
+  resolved graph evidence and locks inside the writer transaction. Commit only
+  the selected block/span, proposal status, sparse history and actual refreshed
+  lineage. Preserve source edits, unrelated C, other blocks and segment metadata.
+- Rejection records review status and retains authored text and the review cause.
+  Refused stale/ABA or locked acceptance leaves a pending proposal available for
+  rejection. Retargeting/amending a bound preview requires a fresh preview.
+- Qualify deterministic linked scenes and the existing provider boundary here;
+  independently qualify native service/desktop behavior on the exact checkpoint.
+  No real-model quality, native GUI, full server runtime or recovery claims arise
+  from isolated module tests or skipped-ORT compilation.
+
 ## Binding decisions and ownership
 
 - SQLite commands/events/revisions remain authoritative. No graph database

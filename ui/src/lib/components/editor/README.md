@@ -15,6 +15,7 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `ScriptPanel.svelte` | Container for script-editing surfaces. |
 | `ScriptBlockEditor.svelte` | Focused manual screenplay edit/save/cancel surface, preserving failed drafts and submitting the captured block revision. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
+| `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
 | `scriptImpactNotice.ts` | Human-readable labels for the typed input review causes. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
 
@@ -33,6 +34,10 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+- Review targets the block identified by the generation impact. Display current
+  and exact proposed text; accept/reject explicitly and refresh the canonical
+  script projection afterward. Manual editor drafts remain local and intact.
+  A refusal keeps the proposal available for rejection or a fresh preview.
 - Timeline selection remains the single source of truth for the active editor node.
 - AI generation state remains transient frontend state; durable script text is read from script document projections.
 - Needs review is supplied by the backend projection and rendered alongside

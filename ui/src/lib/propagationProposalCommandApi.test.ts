@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   acceptPropagationProposal,
+  requestScriptImpactProposal,
   createPropagationProposal,
   rejectPropagationProposal,
   updatePropagationProposal,
@@ -13,6 +14,27 @@ afterEach(() => {
 });
 
 describe('propagation proposal command api helpers', () => {
+  it('sends a proven cause and expected target revision through the desktop preview boundary', async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      outcome: 'recorded',
+      projection: { version: 1, payload: { proposals: [] } },
+    });
+    vi.stubGlobal('window', { __TAURI__: { core: { invoke } } });
+    const payload = {
+      proposal_id: 'review.B',
+      document_id: 'script.document.main',
+      segment_id: 'segment.B',
+      block_id: 'block.B',
+      expected_block_revision_event_id: 'B-current',
+      generation_event_id: 'B-generation',
+      dependency_id: 'B.input-A',
+      story_time_ms: null,
+    };
+    await requestScriptImpactProposal(payload, 'preview-B');
+    expect(invoke).toHaveBeenCalledExactlyOnceWith('command_script_impact_proposal_preview', {
+      command: { id: 'preview-B', payload },
+    });
+  });
   it('uses desktop propagation proposal commands when Tauri transport is available', async () => {
     const response = {
       outcome: 'recorded',

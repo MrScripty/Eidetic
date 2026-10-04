@@ -1,6 +1,7 @@
 <script lang="ts">
   import ScriptBlockEditor from './ScriptBlockEditor.svelte';
   import ScriptImpactNotice from './ScriptImpactNotice.svelte';
+  import ScriptImpactReview from './ScriptImpactReview.svelte';
   import { scriptDocumentBlockCount } from '$lib/scriptDocumentFormat.js';
   import {
     getCachedScriptDocumentProjection,
@@ -33,6 +34,7 @@
     {#if blockCount > 0}
       {#each projection?.payload.segments ?? [] as segment (segment.segment.id)}
         {#if segment.impact}<ScriptImpactNotice impact={segment.impact} />{/if}
+        <ScriptImpactReview documentId={MAIN_SCRIPT_DOCUMENT_ID} {segment} />
         {#each segment.blocks as block (block.block.id)}
           <ScriptBlockEditor documentId={MAIN_SCRIPT_DOCUMENT_ID} {block} />
         {/each}

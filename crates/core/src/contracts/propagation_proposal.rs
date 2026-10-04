@@ -94,6 +94,8 @@ pub struct PropagationProposal {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rationale: Option<String>,
     pub created_at_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_review_binding: Option<super::ScriptImpactProposalBinding>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -163,6 +165,7 @@ impl CreatePropagationProposalCommand {
             source_event_id: self.source_event_id,
             rationale: self.rationale,
             created_at_ms,
+            script_review_binding: None,
         }
     }
 }

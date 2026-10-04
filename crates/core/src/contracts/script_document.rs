@@ -217,6 +217,8 @@ pub struct GenerateScriptBlockCommand {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScriptImpactProjection {
     pub generation_event_id: super::ChangeEventId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_block_id: Option<ScriptBlockId>,
     pub lineage_available: bool,
     pub needs_review: bool,
     pub causes: Vec<ScriptImpactCause>,
@@ -318,6 +320,7 @@ mod tests {
 
         projection.segments[0].impact = Some(ScriptImpactProjection {
             generation_event_id: super::super::ChangeEventId(uuid::Uuid::new_v4()),
+            output_block_id: Some(ScriptBlockId::new("script.block.heading-1").unwrap()),
             lineage_available: true,
             needs_review: true,
             causes: vec![ScriptImpactCause {

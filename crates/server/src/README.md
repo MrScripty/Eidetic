@@ -18,6 +18,12 @@ domain model in `eidetic-core`.
 | `script_generation_lineage.rs` | Atomic successful-generation records and existing semantic dependencies bound to consumed screenplay revisions. |
 | `script_generation_lineage_tests.rs` | A-to-B/unrelated-C, edits during generation, atomic rollback, replay, source deletion, refreshed and unavailable binding regressions. |
 | `script_impact_projection.rs` | Derived Needs review causes against the latest successful generation, retaining historical source excerpts after deletion. |
+| `script_impact_review.rs` | Proven-cause capture, revision-bound propagation proposal recording and atomic targeted acceptance with refreshed lineage. |
+| `script_impact_review_tests.rs` | Linked-scene preview/reject/accept, stale/ABA, graph-time, lock, replay, target-scope and rollback fixtures. |
+| `script_impact_review_guard_tests.rs` | Resolved-world context, explicit fictional time and late span/content regeneration lock guards. |
+| `script_impact_review_service.rs` | Desktop-facing preview service using the configured provider without committing screenplay output. |
+| `script_impact_prompt.rs` | Targeted screenplay prompt from captured canonical inputs and resolved graph context, with strict complete-stream collection. |
+| `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
 | `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
 | `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |
@@ -113,6 +119,27 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+- A Needs review preview targets the generated output block of a proven current
+  cause. Capture target text/placement events, current screenplay inputs, cause
+  and resolved graph context in one read snapshot. Include a moved source even
+  outside the ordinary continuity window; retain deleted-source explanation.
+- The targeted prompt consumes only its captured screenplay and resolved graph
+  evidence. It shares screenplay formatting and the existing temporal resolver;
+  it neither includes unbound timeline prose nor treats placement as fictional
+  time. The UI supplies no fictional time, so timed world facts remain unresolved;
+  the typed request also supports an explicit query coordinate.
+- Preview persists an existing propagation proposal plus additive typed binding
+  storage, not screenplay changes. Partial failed/empty streams create no draft.
+  Request replay returns existing review state without another provider call.
+- Bound acceptance rechecks source/target revisions, cause, graph evidence,
+  pending proposal contents, span locks and the source node's regeneration lock
+  after acquiring the SQLite writer lock. Accepted text/span, proposal status,
+  sparse history and refreshed actual-input lineage commit atomically. Preserve
+  document/segment metadata, other blocks and the writer's source edit.
+- Bound previews cannot be amended/retargeted through the generic update command;
+  reject and request a fresh preview. Stale refusal leaves the pending proposal
+  and authored text available. Rejection changes only proposal review history.
+  Inferred world assertions remain separate proposals; this flow writes no facts.
 - Successful generated output, generation record, revision-bound semantic
   dependencies and sparse history commit in one SQLite transaction. Stream
   failure/empty output creates no generation lineage. Validate captured historical

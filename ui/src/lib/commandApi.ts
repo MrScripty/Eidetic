@@ -33,6 +33,7 @@ import type {
 } from './contextInfluenceTypes.js';
 import type {
   AcceptPropagationProposalCommand,
+  RequestScriptImpactProposalCommand,
   CreatePropagationProposalCommand,
   PropagationProposalCommandResponse,
   RejectPropagationProposalCommand,
@@ -328,6 +329,18 @@ export function createPropagationProposal(
   return invokeDesktop<PropagationProposalCommandResponse>('command_propagation_proposal_create', {
     command,
   });
+}
+
+export function requestScriptImpactProposal(
+  payload: RequestScriptImpactProposalCommand,
+  commandId?: string,
+): Promise<PropagationProposalCommandResponse> {
+  return invokeDesktop<PropagationProposalCommandResponse>(
+    'command_script_impact_proposal_preview',
+    {
+      command: { id: commandId ?? createCommandId(), payload },
+    },
+  );
 }
 
 export function rejectPropagationProposal(
