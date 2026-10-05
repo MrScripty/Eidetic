@@ -19,7 +19,7 @@ spec = importlib.util.spec_from_file_location('authoring_capture', Path(__file__
 ui = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ui)
 
-SOURCE = 'a66e1c74e164178208bd3e63c9ab99147d5290de'
+SOURCE = 'fe7fa5900b648ae9d24b374411ab8f9ebcc72343'
 RED = "Mara's umbrella is red."
 BLUE = "Mara's umbrella is blue."
 DRAFT = 'Retained manual draft. The train waits.\n\n'

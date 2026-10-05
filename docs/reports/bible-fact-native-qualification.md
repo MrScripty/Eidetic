@@ -1,12 +1,12 @@
 # Bible fact propagation native qualification
 
-Frozen application source: `a66e1c74e164178208bd3e63c9ab99147d5290de`, tree
-`e1c9be374651f6d23efc8ca86eee440d93764081`, based on verified merged main
+Frozen application source: `fe7fa5900b648ae9d24b374411ab8f9ebcc72343`, tree
+`2dfced8960e8452f86c40fa4efba74ff93d342ea`, based on verified merged main
 `9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09`.
 
 Implementation adds consumed untimed Bible field revisions to existing screenplay
 semantic lineage and targeted proposal acceptance. Its local evidence is 115 core,
-151 isolated actual-source-module and 399 frontend tests plus frontend gates and
+151 isolated actual-source-module and 400 frontend tests plus frontend gates and
 compile-only server checks/strict Clippy. All implementation pre-commit hooks pass.
 The normal local pre-push workspace test fails on missing GLib/GTK system libraries;
 source publication excludes that unavailable local test hook and delegates actual
@@ -65,5 +65,5 @@ Bible revisions because fact impact can change without changing screenplay text.
 Database version assertions and a deferred frontend response regression prove
 older results cannot erase the new review cause. Local evidence is now 400
 frontend tests plus 151 source-module tests and strict server Clippy. The native
-workflow will be rebound to the successor application checkpoint before its
-result is used as current runtime evidence.
+workflow is bound to fe7fa590 before its result is used as current runtime
+evidence; the initial implementation checkpoint remains a66e1c74.
