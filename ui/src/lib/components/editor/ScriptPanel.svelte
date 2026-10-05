@@ -4,6 +4,7 @@
   import ScriptBlockComposer from './ScriptBlockComposer.svelte';
   import { getScriptCreationSource, refreshRetimedScriptSource } from './scriptCreationSource.js';
   import { editorState } from '$lib/stores/editor.svelte.js';
+  import { timelineRenderProjectionState } from '$lib/stores/timelineRenderProjection.svelte.js';
   import {
     selectedNodeEditorProjectionState,
     refreshSelectedNodeEditorProjection,
@@ -20,6 +21,14 @@
   } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
   const source = $derived(getScriptCreationSource());
+  const selectedNodePlacementIsStale = $derived.by(() => {
+    const node = selectedNodeEditorProjectionState.projection?.payload.node;
+    const clip = timelineRenderProjectionState.projection?.payload.clips.find(
+      (item) => item.node_id === editorState.selectedNodeId,
+    );
+    if (!node || node.node_id !== editorState.selectedNodeId || !clip) return false;
+    return clip.start_ms !== node.start_ms || clip.end_ms !== node.end_ms;
+  });
   $effect(() => {
     void refreshRetimedScriptSource().catch(() => {});
   });
@@ -56,8 +65,10 @@
 
   <div class="script-panel-body">
     <ScriptBlockComposer {source} />
-    {#if !source && selectedNodeEditorProjectionState.error && selectedNodeEditorProjectionState.selectedNodeId === editorState.selectedNodeId}
-      <p role="alert">{selectedNodeEditorProjectionState.error}</p>
+    {#if !source && (selectedNodeEditorProjectionState.error || selectedNodePlacementIsStale) && selectedNodeEditorProjectionState.selectedNodeId === editorState.selectedNodeId}
+      {#if selectedNodeEditorProjectionState.error}
+        <p role="alert">{selectedNodeEditorProjectionState.error}</p>
+      {/if}
       <button
         type="button"
         disabled={selectedNodeEditorProjectionState.pending}

@@ -216,6 +216,7 @@ def accessibility_snapshot(root):
 class FixtureProvider(BaseHTTPRequestHandler):
     """Explicit localhost HTTP fixture; the application's real provider client consumes SSE."""
     records = []
+    records_lock = threading.Lock()
 
     def log_message(self, *args):
         pass
@@ -248,8 +249,15 @@ class FixtureProvider(BaseHTTPRequestHandler):
                   'contains_exact_expected_context': required in user,
                   'stream': body.get('stream') is True,
                   'real_model': False}
-        self.records.append(record)
-        if sum(r['kind'] == kind for r in self.records) != 1 or len(self.records) > 3 or not record['stream'] or required not in user:
+        # ThreadingHTTPServer must admit and record each decision atomically.
+        # Rejected attempts remain evidence but cannot consume an accepted slot.
+        with self.records_lock:
+            accepted = [r for r in self.records if r.get('accepted') is True]
+            record['accepted'] = (not any(r['kind'] == kind for r in accepted)
+                                  and len(accepted) < 3 and record['stream']
+                                  and record['contains_exact_expected_context'])
+            self.records.append(record)
+        if not record['accepted']:
             self.send_error(422, 'Qualification prompt did not contain exact authored context')
             return
         text = PROPOSED_TEXT if preview else 'Eli waits at the station with Mara and the red umbrella.' if recap else GENERATED_TEXT
@@ -261,6 +269,13 @@ class FixtureProvider(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+
+def require_accepted_preview(records):
+    """Fail closed unless the latest fixture request was an accepted preview."""
+    latest = records[-1] if records else None
+    if not latest or latest['kind'] != 'preview' or latest.get('accepted') is not True:
+        raise RuntimeError('Preview did not reach the production HTTP provider client')
 
 
 def query(database, sql, parameters=()):
@@ -537,8 +552,7 @@ def main():
             (b[0],))), None))
         if proposal[1:] != ('pending', PROPOSED_TEXT) or blocks(database, b_id)[0] != b:
             raise RuntimeError('Preview did not preserve canonical target text')
-        if not FixtureProvider.records or FixtureProvider.records[-1]['kind'] != 'preview':
-            raise RuntimeError('Preview did not reach the production HTTP provider client')
+        require_accepted_preview(FixtureProvider.records)
         evidence['preview'] = {'proposal_id': proposal[0], 'target_unchanged': True,
                                'exact_updated_manual_context_consumed': True}
         capture('eidetic-authoring-preview.png')

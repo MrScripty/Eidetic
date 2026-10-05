@@ -65,8 +65,10 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
   Read completion is untracked by the range effect to avoid self-retrying loops.
   Returning to a cached matching placement while a retime read is pending still
   supersedes that request; a delayed intermediate placement cannot replace the
-  returned placement. A failed read retains the draft and exposes explicit
-  Refresh selected clip.
+  returned placement. Failed reads and stale placements retain the draft and
+  expose explicit Refresh selected clip, including when an older response is
+  rejected after clearing a read error. The button is disabled while a read is
+  pending and disappears once the selected source agrees with the timeline.
 - Source links display current canonical timeline names/ranges and recheck clip
   availability at activation. Go to clip changes only transient selection and
   scroll, then reads its focused projection. It preserves exact editing/creation

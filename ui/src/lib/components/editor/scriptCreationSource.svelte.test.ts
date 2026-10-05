@@ -176,7 +176,7 @@ it('uses the latest placement when a second resize races the first retime refres
   expect(getScriptCreationSource()?.end_ms).toBe(2900);
 });
 
-it('keeps recovery unavailable after a failed or older-version refresh without changing the captured draft', async () => {
+it('keeps explicit refresh available after failed and older-version reads while withholding stale placement', async () => {
   await seed();
   const { getScriptCreationSource, refreshRetimedScriptSource } =
     await import('./scriptCreationSource.js');
@@ -195,6 +195,27 @@ it('keeps recovery unavailable after a failed or older-version refresh without c
   await refreshRetimedScriptSource();
   expect(getScriptCreationSource()).toBeNull();
   expect(selectedNodeEditorProjectionState.projection?.version).toBe(1);
+  expect(selectedNodeEditorProjectionState.error).toBeUndefined();
+  const staleBody = render(ScriptPanel).body;
+  expect(staleBody).toContain('Refresh selected clip');
+  expect(staleBody).not.toContain('role="alert"');
+  expect(staleBody).not.toContain('Use current placement and save');
+  expect(composer.state.target?.start_ms).toBe(1000);
+  expect(composer.state.text).toBe('Original exact draft');
+
+  const current = deferred<ProjectionEnvelope<SelectedNodeEditorProjection>>();
+  invoke.mockReturnValueOnce(current.promise);
+  const retry = refreshSelectedNodeEditorProjection(node.node_id);
+  expect(render(ScriptPanel).body).toMatch(
+    /<button[^>]*disabled[^>]*>Refresh selected clip<\/button>/,
+  );
+  current.resolve(selected(1500, 2600, 2));
+  await retry;
+  expect(getScriptCreationSource()?.start_ms).toBe(1500);
+  expect(getScriptCreationSource()?.end_ms).toBe(2600);
+  expect(render(ScriptPanel).body).not.toContain('Refresh selected clip');
+  expect(composer.state.target?.start_ms).toBe(1000);
+  expect(composer.state.text).toBe('Original exact draft');
 });
 
 it('preserves clear/selection request guards and does not fetch for an unchanged or absent selected clip', async () => {
@@ -203,16 +224,19 @@ it('preserves clear/selection request guards and does not fetch for an unchanged
     await import('./scriptCreationSource.js');
   await refreshRetimedScriptSource();
   expect(invoke).toHaveBeenCalledTimes(2);
+  expect(render(ScriptPanel).body).not.toContain('Refresh selected clip');
   await retime(1500, 2600, 2);
   const response = deferred<ProjectionEnvelope<SelectedNodeEditorProjection>>();
   invoke.mockReturnValueOnce(response.promise);
   const pending = refreshRetimedScriptSource();
-  clearSelectedNodeEditorProjection();
   editorState.selectedNodeId = 'scene.B';
+  expect(render(ScriptPanel).body).not.toContain('Refresh selected clip');
+  clearSelectedNodeEditorProjection();
   response.resolve(selected(1500, 2600, 2));
   await pending;
   expect(selectedNodeEditorProjectionState.projection).toBeNull();
   expect(getScriptCreationSource()).toBeNull();
+  expect(render(ScriptPanel).body).not.toContain('Refresh selected clip');
   const calls = invoke.mock.calls.length;
   await refreshRetimedScriptSource();
   expect(invoke).toHaveBeenCalledTimes(calls);
