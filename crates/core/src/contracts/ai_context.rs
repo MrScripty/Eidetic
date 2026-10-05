@@ -3,9 +3,21 @@ use serde::{Deserialize, Serialize};
 use crate::timeline::node::NodeId;
 
 use super::{
-    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
-    BibleGraphSchemaKey, FieldValue,
+    BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId,
+    BibleGraphPartKey, BibleGraphSchemaKey, ChangeEventId, FieldValue,
 };
+
+/// Exact untimed field evidence consumed by generation. Timed overrides are
+/// resolved separately and must never be rebound to their baseline field.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BibleFieldInput {
+    pub node_id: BibleGraphNodeId,
+    pub part_key: BibleGraphPartKey,
+    pub field_key: BibleGraphFieldKey,
+    pub field_id: BibleGraphFieldId,
+    pub revision_event_id: ChangeEventId,
+    pub value: FieldValue,
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AiBibleContextProjection {

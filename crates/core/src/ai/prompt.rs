@@ -57,6 +57,7 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
         style_notes: None,
         rag_context: vec![],
         bible_context: None,
+        bible_inputs: None,
         affect_context: None,
         script_context: None,
     })

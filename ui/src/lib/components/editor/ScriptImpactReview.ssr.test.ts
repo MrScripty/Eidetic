@@ -98,3 +98,19 @@ it('disables preview when the impact does not identify its generated output bloc
   const { body } = render(ScriptImpactReview, { props: { documentId: 'main', segment: older } });
   expect(body).toMatch(/<button[^>]*disabled[^>]*>Preview update<\/button>/);
 });
+
+it('identifies an authored Bible fact as a cause through the existing review surface', () => {
+  const fact = structuredClone(segment);
+  fact.impact!.causes[0]!.input = {
+    kind: 'bible_field',
+    node_id: 'Mara',
+    part_key: 'profile',
+    field_key: 'tagline',
+    field_id: 'Mara.tagline',
+  };
+  const { body } = render(ScriptImpactReview, { props: { documentId: 'main', segment: fact } });
+  expect(body).toContain('Bible fact profile.tagline changed.');
+  expect(body).toContain('Preview update');
+  expect(body).not.toMatch(/<button[^>]*disabled[^>]*>Preview update/);
+  expect(fact.blocks[0]?.block.text).toBe('  Canonical B — 雨\n\n');
+});

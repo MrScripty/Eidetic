@@ -10,6 +10,7 @@ use crate::history_store::HistoryStoreError;
 use crate::semantic_dependency_store;
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {
+    crate::bible_graph_store::create_schema(conn)?;
     semantic_dependency_store::create_schema(conn)
         .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
     conn.execute_batch("CREATE TABLE IF NOT EXISTS script_generations (
@@ -55,7 +56,7 @@ pub(crate) fn dependencies(
             ));
         }
     }
-    inputs
+    let mut dependencies = inputs
         .into_iter()
         .enumerate()
         .map(|(index, (_, (target, revision)))| {
@@ -76,7 +77,36 @@ pub(crate) fn dependencies(
                 }),
             })
         })
-        .collect()
+        .collect::<Result<Vec<_>, HistoryStoreError>>()?;
+    let mut seen = std::collections::BTreeSet::new();
+    for input in command.bible_inputs.iter().flatten() {
+        if !seen.insert(input.field_id.as_str()) {
+            return Err(HistoryStoreError::InvalidValue(
+                "duplicate Bible input".into(),
+            ));
+        }
+        dependencies.push(SemanticDependency {
+            id: SemanticDependencyId::new(format!(
+                "generation.{}.bible.{}",
+                event.0,
+                dependencies.len()
+            ))
+            .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?,
+            source: SemanticDependencyEndpoint::ScriptSegment {
+                segment_id: command.block.segment_id.clone(),
+            },
+            target: crate::bible_field_lineage::endpoint(input),
+            kind: SemanticDependencyKind::UsesFact,
+            rationale: Some("Untimed Bible field supplied to generation".into()),
+            confidence: None,
+            created_at_ms,
+            revision_binding: Some(SemanticDependencyRevisionBinding {
+                source_revision_event_id: event,
+                target_revision_event_id: input.revision_event_id,
+            }),
+        });
+    }
+    Ok(dependencies)
 }
 
 pub(crate) fn record_in_transaction(
@@ -116,6 +146,9 @@ pub(crate) fn record_in_transaction(
                 "generation input does not match canonical revision history".into(),
             ));
         }
+    }
+    for input in command.bible_inputs.iter().flatten() {
+        crate::bible_field_lineage::validate_history(tx, input)?;
     }
     tx.execute("INSERT INTO script_generations (event_id, segment_id, block_id, inputs_known) VALUES (?1, ?2, ?3, ?4)",
         params![event.0.to_string(), command.block.segment_id.as_str(), command.block.block_id.as_str(), command.script_inputs.is_some()])?;

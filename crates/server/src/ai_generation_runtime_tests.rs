@@ -9,6 +9,101 @@ struct Fixture {
     node_id: NodeId,
 }
 
+#[tokio::test]
+async fn independent_real_service_bible_fact_capture_output_and_manual_change_publish_review() {
+    use eidetic_core::contracts::*;
+    let fixture = fixture().await;
+    let create = serde_json::from_value(serde_json::json!({
+        "id": Uuid::new_v4(), "payload": {
+            "node_id": "Mara", "schema_key": "character", "name": "Mara", "sort_order": 0
+        }
+    }))
+    .unwrap();
+    crate::command_service::create_bible_graph_node(&fixture.state, create)
+        .await
+        .unwrap();
+    let mut field = SetBibleGraphFieldCommand {
+        node_id: BibleGraphNodeId::new("Mara").unwrap(),
+        part_id: BibleGraphPartId::new("Mara.profile").unwrap(),
+        part_key: BibleGraphPartKey::new("profile").unwrap(),
+        part_name: "Profile".into(),
+        part_sort_order: 0,
+        field_id: BibleGraphFieldId::new("Mara.tagline").unwrap(),
+        field_key: BibleGraphFieldKey::new("tagline").unwrap(),
+        value: Some(FieldValue::Text("Mara carries red.".into())),
+        field_sort_order: 0,
+    };
+    crate::command_service::set_bible_graph_field(
+        &fixture.state,
+        CommandEnvelope::new(field.clone()),
+    )
+    .await
+    .unwrap();
+    let project = fixture.state.project.lock().as_ref().unwrap().clone();
+    let mut request =
+        eidetic_core::ai::prompt::build_generate_request(&project, fixture.node_id).unwrap();
+    crate::ai_service::attach_ai_generation_context(
+        &mut request,
+        fixture.path.clone(),
+        fixture.node_id,
+    )
+    .await
+    .unwrap();
+    assert_eq!(request.bible_inputs.as_ref().unwrap().len(), 1);
+    let captured = request.bible_inputs.as_ref().unwrap()[0].clone();
+    assert!(
+        crate::prompt_format::build_chat_prompt(&request)
+            .user
+            .contains("Mara carries red.")
+    );
+    // Predefined stream exercises canonical runtime persistence, not model quality.
+    finish_generation_stream(
+        fixture.state.clone(),
+        fixture.path.clone(),
+        fixture.node_id.0,
+        Box::pin(stream::iter([Ok(
+            "Synthetic fixture screenplay: Mara carries red.".into(),
+        )])),
+        request.script_context,
+        request.bible_inputs,
+    )
+    .await;
+    assert!(
+        !script(&fixture).payload.segments[0]
+            .impact
+            .as_ref()
+            .unwrap()
+            .needs_review
+    );
+    let before = script(&fixture).payload.segments[0].blocks[0].clone();
+    let mut events = fixture.state.events_tx.subscribe();
+    field.value = Some(FieldValue::Text("Mara carries blue.".into()));
+    crate::command_service::set_bible_graph_field(&fixture.state, CommandEnvelope::new(field))
+        .await
+        .unwrap();
+    assert!(matches!(
+        events.recv().await.unwrap(),
+        ServerEvent::BibleChanged
+    ));
+    let after = script(&fixture);
+    assert_eq!(after.payload.segments[0].blocks[0], before);
+    let impact = after.payload.segments[0].impact.as_ref().unwrap();
+    assert!(impact.needs_review);
+    assert_eq!(
+        impact.causes[0].input,
+        crate::bible_field_lineage::endpoint(&captured)
+    );
+    assert_eq!(
+        impact.causes[0].consumed_revision_event_id,
+        captured.revision_event_id
+    );
+    assert_eq!(
+        impact.causes[0].input_excerpt.as_deref(),
+        Some("Mara carries red.")
+    );
+    fixture.state.shutdown_tasks_async().await;
+}
+
 impl Drop for Fixture {
     fn drop(&mut self) {
         self.state.shutdown_tasks();
@@ -38,6 +133,7 @@ async fn fixture() -> Fixture {
             end_ms: node.time_range.end_ms,
         },
         "Previously approved screenplay".to_string(),
+        None,
         None,
     )
     .await
@@ -92,6 +188,7 @@ async fn assert_failed_stream(
         fixture.node_id.0,
         Box::pin(stream::iter(items)),
         Some(inputs),
+        None,
     )
     .await;
 
@@ -240,6 +337,7 @@ async fn successful_persistence_keeps_captured_input_lineage_after_an_intervenin
         },
         "  B from captured A\n\n".into(),
         Some(vec![captured.clone()]),
+        None,
     )
     .await
     .unwrap();

@@ -29,6 +29,8 @@ pub struct ScriptImpactProposalBinding {
     pub target_segment_revision_event_id: ChangeEventId,
     pub script_inputs: Vec<ScriptContextBlock>,
     pub bible_context: ProjectionEnvelope<AiBibleContextProjection>,
+    #[serde(default)]
+    pub bible_inputs: Vec<super::BibleFieldInput>,
 }
 
 #[cfg(test)]

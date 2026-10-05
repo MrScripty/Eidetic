@@ -668,3 +668,32 @@ this reader; this slice makes no guarantee for arbitrary external DB rewrites.
   must exercise the public range service's success/replay/rollback publication.
 - Keep fictional time explicitly optional and independent from screen placement.
   Track reparenting/hierarchy changes and project recovery are outside this slice.
+
+## Authored Bible fact propagation: bounded consumed-field slice
+
+Verified PR9 base `25b860d12fe37a3538a40616cc02ab4a81370863` and merged main
+`9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09` have identical accepted tree
+`d22b036891aed7eb66fc94059aa1b5c1d9aab85a`. Concrete missing behavior:
+BibleGraphPartFields writes canonical values/history, and ai_service supplies
+resolved graph fields to generation, but ai_generation_runtime persisted only
+script_context; script_impact_projection ignored BibleField endpoints. The Bible
+event also left screenplay impact and cached prompt context unchanged.
+
+- Capture untimed resolved field identities, values and exact revisions with the
+  Bible context in a single read snapshot. Forward through successful generation
+  and validate historical evidence before committing output and existing UsesFact
+  semantic dependency bindings. Never rebind late output to a newer fact.
+- Derive changed/deleted causes and consumed excerpts through existing sparse
+  history. Reuse the targeted pending proposal and explicit accept/reject workflow;
+  refresh actual field lineage only on accepted replacement. Preserve human text,
+  drafts, locks, stale/ABA refusals and unrelated screenplay.
+- Qualify exact manual Bible edit, downstream review, preview preservation and
+  explicit targeted acceptance with Bible, timeline and screenplay in the real
+  native window. Label the production-client HTTP fixture as synthetic; no model
+  quality claim. Use the existing normal hosted native build route without
+  retrying/bypassing the known local ONNX403 acquisition failure.
+- Bound scope: baseline fields actually supplied to generation, including node
+  text stored as a field. Timed snapshots, relationships/node names, added or
+  previously absent/unconsumed fields and broader semantic extraction remain
+  follow-ups. Existing unbound outputs are not assigned inferred historical
+  consumption; project recovery and embeddings remain deferred.

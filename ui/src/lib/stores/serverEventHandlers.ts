@@ -112,7 +112,13 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('bible_changed', async () => {
-      await Promise.all([refreshBibleNodeList(), refreshBibleRenderGraph(), refreshChangeReview()]);
+      invalidateScriptContext();
+      await Promise.all([
+        refreshBibleNodeList(),
+        refreshBibleRenderGraph(),
+        refreshChangeReview(),
+        refreshMainScriptDocument(),
+      ]);
     }),
 
     events.on('semantic_proposals_changed', async () => {

@@ -65,7 +65,13 @@ fn capture_in_snapshot(
     )?;
     // A changed input may have moved outside the normal continuity window.
     // Include that proven source explicitly; deletion is represented by the cause.
-    if cause.current_revision_event_id.is_some() {
+    if cause.current_revision_event_id.is_some()
+        && matches!(
+            cause.input,
+            SemanticDependencyEndpoint::ScriptBlock { .. }
+                | SemanticDependencyEndpoint::ScriptSegment { .. }
+        )
+    {
         let source_segment: String = match &cause.input {
             SemanticDependencyEndpoint::ScriptBlock { block_id } => conn.query_row(
                 "SELECT segment_id FROM script_blocks WHERE id = ?1",
@@ -113,12 +119,26 @@ fn capture_in_snapshot(
         node_id,
         request.story_time_ms,
     )?;
+    if let SemanticDependencyEndpoint::BibleField { node_id, .. } = &cause.input
+        && cause.current_revision_event_id.is_some()
+        && !bible_context
+            .payload
+            .nodes
+            .iter()
+            .any(|node| node.node_id == *node_id)
+    {
+        return Err(HistoryStoreError::InvalidValue(
+            "Bible review source is outside the current context; restore its context before previewing".into(),
+        ));
+    }
+    let bible_inputs = crate::bible_field_lineage::capture(conn, &bible_context.payload)?;
     Ok(ScriptImpactProposalBinding {
         request: request.clone(),
         cause,
         target_segment_revision_event_id: segment_revision,
         script_inputs,
         bible_context,
+        bible_inputs,
     })
 }
 
@@ -277,6 +297,7 @@ pub(crate) fn accept_bound_proposal(
     let generated = GenerateScriptBlockCommand {
         block: write.clone(),
         script_inputs: Some(binding.script_inputs.clone()),
+        bible_inputs: Some(binding.bible_inputs.clone()),
     };
     let event = ChangeEvent::new(
         command.id,

@@ -1196,3 +1196,30 @@ still a separate pending gate. Broader generation persistence is not covered.
   `e5f2bfe4`, repair `3c7e9058` and ordered composition `72ae4806`. No production
   integration repair was needed for this flow; driver input/geometry corrections
   are bounded qualification changes. No PR8/main merge or external review request.
+
+## Authored Bible fact propagation milestone
+
+- Verified exact PR9 successor `25b860d12fe37a3538a40616cc02ab4a81370863`, tree
+  `d22b036891aed7eb66fc94059aa1b5c1d9aab85a`. Composed onto verified merged
+  main `9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09`, identical source tree; no
+  duplication of stale-placement or HTTP-fixture repairs. No AGENTS.md or local
+  .agents skill content was supplied in this workspace.
+- Inspected BibleGraphPartFields, canonical field writes, AI context attachment,
+  generation persistence, dependency impact, targeted review and Bible events.
+  The missing link was consumed Bible field revisions: model prompts received
+  facts, but saved generation lineage covered screenplay alone.
+- Added snapshot-bound untimed field capture and existing UsesFact revision
+  dependencies, historical output validation, changed/deleted impact and old
+  excerpts. Bible change events now refresh affected screenplay and invalidate
+  prompt context. Bible causes reuse existing preview/reject/accept and atomically
+  refresh lineage. No automatic screenplay/graph rewrite or embedding dependency.
+- Local evidence: 115 core tests, 151 isolated actual-source SQLite/proposal/prompt
+  tests (six new Bible propagation regressions), 399 frontend tests, frontend
+  lint/format/typecheck/build and server all-target check/strict Clippy pass.
+  The standalone harness is `/workspace/scratch/bible-field-harness`, using actual
+  source files without AppState/Pumas/ORT; it does not qualify native services.
+  Server compilation uses ORT_SKIP_DOWNLOAD=1, compile evidence only. The new
+  AppState/public-service Bible regression compiles and awaits hosted execution.
+- Native exact-source Bible edit/preview/accept screenshots remain pending at
+  this implementation checkpoint. Real-model quality is unqualified. Timed fact,
+  relationship, new/unconsumed field impact and project recovery remain deferred.

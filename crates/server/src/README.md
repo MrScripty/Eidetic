@@ -399,3 +399,25 @@ statement abort with transaction-drop rollback and SQLite transaction rollback.
 Reopen checks retain prior history and Y.Doc bytes; failed attempts leave command
 identities available for explicit resubmission. These are deterministic database
 interleavings and injected SQL failures, not process-kill or power-loss tests.
+
+### Bible fact changes and targeted screenplay review
+
+`bible_field_lineage` captures only untimed fields actually included by the
+canonical resolver. Context and revision reads share a SQLite snapshot. Generation
+validates captured values against their historical field revisions inside the
+output transaction and records ordinary UsesFact dependencies in the existing
+semantic store. Late completion retains the consumed revision, so an intervening
+manual fact change immediately derives Needs review rather than silently rebinding.
+Live field identity includes node/part deletion; old consumed values remain
+explainable through sparse history. Manual screenplay blocks acquire no invented
+model dependencies. Existing generations without field inputs are not backfilled.
+
+Bible causes use the existing targeted preview service and bound proposal store.
+The prompt carries current authored screenplay and resolved Bible evidence;
+preview leaves saved text intact. Explicit acceptance rechecks cause, target,
+Bible evidence and locks in the existing writer transaction, then updates only
+the target block and refreshes screenplay plus field lineage. Stale/ABA previews
+remain pending and rejectable. A live Bible source outside the current bounded
+context refuses preview instead of omitting its evidence. Node headers, graph
+edges, timed snapshots, new/unconsumed fields and semantic extraction remain
+separate follow-ups; embeddings are not required.

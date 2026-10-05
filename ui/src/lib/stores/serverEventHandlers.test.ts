@@ -274,6 +274,19 @@ describe('backend event projection handlers', () => {
   });
 });
 
+it('refreshes affected screenplay and invalidates prompt context after a Bible fact edit', async () => {
+  vi.mocked(invalidateScriptContext).mockClear();
+  const events = new MockServerEventClient();
+  setupServerEventHandlers(events as never);
+  events.emit({ type: 'bible_changed' });
+  await vi.waitFor(() => {
+    expect(refreshScriptDocumentProjectionMock).toHaveBeenCalledWith({
+      document_id: 'script.document.main',
+    });
+  });
+  expect(invalidateScriptContext).toHaveBeenCalledTimes(1);
+});
+
 it('invalidates cached prompt context when canonical screenplay changes', async () => {
   const events = new MockServerEventClient();
   const dispose = setupServerEventHandlers(events);

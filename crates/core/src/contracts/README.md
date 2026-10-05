@@ -101,3 +101,12 @@ assert_eq!(event.summary, "edit script");
 - `ChangeEvent`, `ObjectRevision`, and `ObjectRevisionField` are intended to map directly to SQLite command/event/revision rows.
 - `ProjectionEnvelope<T>` is a versioned read model wrapper for Svelte, Bevy, AI, and export projections.
 - Field value variants define typed persistence semantics; adding variants requires persistence and wire round-trip tests.
+
+### Consumed Bible field revisions
+
+`BibleFieldInput` binds an untimed resolved field's stable node/part/key/field
+identity, exact value and write event to a generated screenplay command. The
+optional input collection preserves older unbound generations. These inputs
+become ordinary UsesFact semantic dependencies with revision bindings; there is
+no additional canonical fact store. Timed overrides, unresolved fields, node
+headers and relationships are outside this field-lineage contract.
