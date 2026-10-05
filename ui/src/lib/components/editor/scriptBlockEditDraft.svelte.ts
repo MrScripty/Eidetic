@@ -1,38 +1,58 @@
 import { createCommandId } from '$lib/commandTransport.js';
 import type { EditScriptBlockCommand, ScriptBlockProjection } from '$lib/scriptTypes.js';
 
+interface SavedComparison {
+  text: string;
+  revisionEventId: string;
+}
+
 export function createScriptBlockEditDraft(options: {
   documentId: string;
   blockId: string;
   save: (payload: EditScriptBlockCommand, commandId: string) => Promise<unknown>;
   reload: () => Promise<unknown>;
+  readCurrent: () => Promise<ScriptBlockProjection | null>;
 }) {
   const state = $state({
     editing: false,
     text: '',
     baseRevision: null as string | null,
     saving: false,
+    comparing: false,
+    comparison: null as SavedComparison | null,
     error: null as string | null,
     uncertain: false,
   });
+  let compared: SavedComparison | null = null;
   let submitted: { payload: EditScriptBlockCommand; commandId: string } | null = null;
 
   function begin(block: ScriptBlockProjection): void {
-    if (state.editing || state.saving || submitted || block.block.id !== options.blockId) return;
+    if (
+      state.editing ||
+      state.saving ||
+      state.comparing ||
+      submitted ||
+      block.block.id !== options.blockId
+    )
+      return;
     state.text = block.block.text;
     state.baseRevision = block.revision_event_id ?? null;
     state.error = null;
+    compared = null;
+    state.comparison = null;
     state.editing = true;
   }
   function cancel(): void {
-    if (state.saving || submitted) return;
+    if (state.saving || state.comparing || submitted) return;
+    compared = null;
+    state.comparison = null;
     state.editing = false;
     state.text = '';
     state.baseRevision = null;
     state.error = null;
   }
   async function save(): Promise<void> {
-    if (!state.editing || !state.baseRevision || state.saving) return;
+    if (!state.editing || !state.baseRevision || state.saving || state.comparing) return;
     if (!submitted) {
       submitted = {
         payload: {
@@ -50,6 +70,8 @@ export function createScriptBlockEditDraft(options: {
       await options.save({ ...submitted.payload }, submitted.commandId);
       submitted = null;
       state.uncertain = false;
+      compared = null;
+      state.comparison = null;
       state.editing = false;
       state.text = '';
       state.baseRevision = null;
@@ -62,11 +84,13 @@ export function createScriptBlockEditDraft(options: {
     }
   }
   async function reload(): Promise<void> {
-    if (state.saving || submitted) return;
+    if (state.saving || state.comparing || submitted) return;
     state.saving = true;
     state.error = null;
     try {
       await options.reload();
+      compared = null;
+      state.comparison = null;
       state.editing = false;
       state.text = '';
       state.baseRevision = null;
@@ -76,7 +100,43 @@ export function createScriptBlockEditDraft(options: {
       state.saving = false;
     }
   }
-  return { state, begin, cancel, save, reload };
+  async function compare(): Promise<void> {
+    if (!state.editing || state.saving || state.comparing || submitted) return;
+    state.comparing = true;
+    state.error = null;
+    compared = null;
+    state.comparison = null;
+    try {
+      const current = await options.readCurrent();
+      if (!current?.revision_event_id || current.block.id !== options.blockId) {
+        throw new Error('Saved block is unavailable.');
+      }
+      compared = { text: current.block.text, revisionEventId: current.revision_event_id };
+      // Display state cannot change the read snapshot used by explicit continuation.
+      state.comparison = { ...compared };
+    } catch (failure) {
+      state.error = failure instanceof Error ? failure.message : 'Could not compare saved text';
+    } finally {
+      state.comparing = false;
+    }
+  }
+  function useComparedRevision(current: ScriptBlockProjection): void {
+    if (!state.editing || state.saving || state.comparing || submitted || !compared) return;
+    if (
+      current.block.id !== options.blockId ||
+      current.revision_event_id !== compared.revisionEventId
+    ) {
+      state.error = 'Saved text changed again. Compare it before continuing.';
+      compared = null;
+      state.comparison = null;
+      return;
+    }
+    state.baseRevision = compared.revisionEventId;
+    state.error = null;
+    compared = null;
+    state.comparison = null;
+  }
+  return { state, begin, cancel, save, reload, compare, useComparedRevision };
 }
 
 function isEditRefusal(failure: unknown): boolean {

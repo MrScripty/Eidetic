@@ -30,10 +30,10 @@ domain model in `eidetic-core`.
 | `script_impact_prompt_tests.rs` | Deterministic provider boundary and partial/error/empty-output refusal fixtures. |
 | `script_block_create.rs` | Manual first-block creation and non-destructive appends with backend identities and transaction-local placement/order validation. |
 | `script_block_create_tests.rs` | Exact persistence/context, locks, replay, refusal, writer rollback and retiming SQLite regressions. |
-| `script_block_create_impact_tests.rs` | Consumed-source append review/explicit acceptance, refreshed new-block lineage, later-append refusal, replay, rollback and historical retiming regressions; reconciled manual edit preserves newer text and downstream review. |
+| `script_block_create_impact_tests.rs` | Consumed-source append review/explicit acceptance, refreshed new-block lineage, later-append refusal, replay, rollback and historical retiming regressions; reconciled edits preserve newer text/review; explicitly continued drafts still reject later revisions and update canonical memory only on save. |
 | `script_block_create_service_tests.rs` | Native AppState save/reopen/preview/retime and queued project replacement regressions; empty canonical schema is initialized before queuing because refusal precedes database access. |
 | `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
-| `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal and bounded continuity source regressions. |
+| `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal including locks added after a comparison read, and bounded continuity source regressions. |
 | `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |
 | `ai_temporal_context.rs` | Deterministic per-field fictional-time resolution before prompt construction; excludes future assertions and rejects same-time conflicts. |
 | `ai_temporal_context_tests.rs` | Sparse inheritance, ordering, conflict, duplicate and cleared-value temporal regressions. |

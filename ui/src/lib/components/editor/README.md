@@ -27,7 +27,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `scriptBlockCreationRetry.svelte.test.ts` | Lost acknowledgement, exact retry, guarded discard/retarget and definite native placement refusal through actual frontend command/store functions with an invoke fixture. |
 | `ScriptBlockComposer.retry.ssr.test.ts` | Uncertain-save read-only controls, exact retry action and definite-refusal recovery rendering fixtures. |
 | `ScriptBlockEditor.svelte` | Session-owned per-block edit/save/cancel surface with exact uncertain retry and explicit reload. |
-| `scriptBlockEditDraft.svelte.ts` | Captured-revision text draft, immutable pending edit and definite-refusal recovery controller. |
+| `scriptBlockEditDraft.svelte.ts` | Captured draft, immutable pending edit, read comparison and explicit continuation from that version. |
+| `scriptBlockEditComparison.svelte.test.ts` | Exact draft/current-text comparison, explicit version continuation, stale/ABA/read failures, navigation, immutable retry and retired-session fixtures. |
 | `scriptBlockEditLifetime.ssr.test.ts` | Fresh workspace consumers, independent Unicode drafts, delayed acknowledgement, exact command replay, refusal/reload and retired-session fixture regressions. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
@@ -49,6 +50,14 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+- Comparing saved text reads its exact text/version without changing draft text,
+  base revision or canon. Explicit continuation uses the private read snapshot
+  only when the current block still has that revision. Changed/ABA revisions
+  require another comparison; backend expected-revision and lock validation
+  remains authoritative when Save is later requested. Ambiguous saves disable
+  comparison/continuation until exact retry is reconciled. Comparison snapshots
+  and exact drafts survive normal workspace navigation; read failures retain
+  drafts without admitting unread revisions.
 - Timeline range changes refresh the selected-node projection even when its ID
   stays the same. Creation/recovery consumes a source only when its range agrees
   with the canonical timeline clip. A late pre-move read or second resize cannot

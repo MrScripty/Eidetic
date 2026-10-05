@@ -14,7 +14,7 @@
     <textarea
       id={`script-edit-${block.block.id}`}
       bind:value={draft.text}
-      disabled={draft.saving || draft.uncertain}
+      disabled={draft.saving || draft.comparing || draft.uncertain}
       rows="8"
     ></textarea>
     {#if block.locks.length}<p>Protected text must remain unchanged.</p>{/if}
@@ -23,18 +23,48 @@
         The save may have completed. Retry to confirm it before changing this text.
       </p>{/if}
     <div class="actions">
-      <button type="button" onclick={editor.save} disabled={draft.saving || !draft.baseRevision}
+      <button
+        type="button"
+        onclick={editor.compare}
+        disabled={draft.saving || draft.comparing || draft.uncertain}
+        >{draft.comparing ? 'Reading saved text…' : 'Compare saved text'}</button
+      >
+      <button
+        type="button"
+        onclick={editor.save}
+        disabled={draft.saving || draft.comparing || !draft.baseRevision}
         >{draft.saving ? 'Saving…' : draft.uncertain ? 'Retry same save' : 'Save'}</button
       >
-      <button type="button" onclick={editor.cancel} disabled={draft.saving || draft.uncertain}
-        >Cancel</button
+      <button
+        type="button"
+        onclick={editor.cancel}
+        disabled={draft.saving || draft.comparing || draft.uncertain}>Cancel</button
       >
       {#if draft.error && !draft.uncertain}<button
           type="button"
           onclick={editor.reload}
-          disabled={draft.saving}>Discard draft and reload</button
+          disabled={draft.saving || draft.comparing}>Discard draft and reload</button
         >{/if}
     </div>
+    {#if draft.comparison}
+      <section class="comparison" aria-label="Saved text comparison">
+        <strong>Saved text</strong>
+        <pre>{draft.comparison.text}</pre>
+        {#if block.revision_event_id !== draft.comparison.revisionEventId}
+          <p>Saved text changed again. Compare it before continuing.</p>
+        {/if}
+        <p>Your draft stays unchanged. Save applies it to this version.</p>
+        <button
+          type="button"
+          onclick={() => editor.useComparedRevision(block)}
+          disabled={draft.saving ||
+            draft.comparing ||
+            draft.uncertain ||
+            block.revision_event_id !== draft.comparison.revisionEventId}
+          >Continue draft from this version</button
+        >
+      </section>
+    {/if}
   {:else}
     <ScriptView text={block.block.text} />
     <button type="button" onclick={() => editor.begin(block)} disabled={!block.revision_event_id}
@@ -59,8 +89,18 @@
   p {
     font-size: 0.8rem;
   }
+  .comparison {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid var(--color-border-subtle);
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
   .actions {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
   }
 </style>

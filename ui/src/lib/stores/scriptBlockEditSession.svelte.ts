@@ -25,6 +25,16 @@ export function getSessionScriptBlockEditDraft(documentId: string, blockId: stri
         assertCurrent();
         return applyScriptBlockEditCommand(payload, commandId);
       },
+      readCurrent: async () => {
+        assertCurrent();
+        const projection = await refreshScriptDocumentProjection({ document_id: documentId });
+        if (projection.payload.document.id !== documentId) return null;
+        return (
+          projection.payload.segments
+            .flatMap((segment) => segment.blocks)
+            .find((block) => block.block.id === blockId) ?? null
+        );
+      },
       reload: async () => {
         assertCurrent();
         return refreshScriptDocumentProjection({ document_id: documentId });

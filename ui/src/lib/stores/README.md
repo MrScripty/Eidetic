@@ -105,6 +105,9 @@ continues.
   draft text or its captured base revision. An uncertain edit retries its exact
   payload/ID; only exact known native edit refusals unlock correction/discard.
   Explicit reload discards a draft only after its canonical read succeeds.
+  Saved-text comparison uses the existing canonical read; its snapshot is
+  separate from the retained draft. Only explicit continuation advances the
+  expected draft revision, and later Save still rechecks it in the backend.
   Project activation resets these transient owners; this does not persist drafts
   across application restart or cancel admitted backend writes.
 - The creation draft belongs to the active project session. Script/Graph/Split

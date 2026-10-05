@@ -1015,3 +1015,45 @@ still a separate pending gate. Broader generation persistence is not covered.
   overwrite; uncertain submissions remain immutable, and intervening edits must
   still refuse through backend expected-revision/lock authority. Project switching
   and broad recovery remain deferred.
+
+
+## Retained edit comparison and explicit continuation milestone
+
+- Continue independently after publishing/freeze of composition
+  `a25565267fc5e9662458196b6b8bc9373eacdfb8`, tested local
+  `0488ef075956030af343df07555ad80ab1a1790f`, shared tree
+  `e964d509f528fbdb8154954c2389e102c61a5342`, on isolated
+  `feat/screenplay-draft-comparison`. No review wait, PR8/main change or alteration
+  of the frozen combined candidate. Parent owns stacked hosted qualification.
+- Existing editing offered discard/reload after stale refusal, losing retained
+  intent. Compare saved text now uses the existing canonical read and displays
+  its exact snapshot beside the retained draft. It does not write or advance
+  base revision. Explicit Continue draft from this version retains exact text
+  and admits only the private read revision when current projected revision agrees.
+  Changed/same-text ABA versions require another comparison. Later Save retains
+  the existing backend expected-revision, locked-span and replay authority.
+- Session-owned comparison survives Script/Graph/Split consumer replacement.
+  Pending/read-failed/missing comparisons retain exact text, and admit no unread
+  version. Private read evidence cannot be replaced through mutable display
+  state. Uncertain saves cannot compare/continue/discard another request; their
+  immutable original payload/ID remains the only retry until reconciliation.
+- Execute **396 frontend tests / 70 files**, including **nine new regressions**
+  for real read/controller/store/SSR comparison and explicit save; navigation;
+  canonical/ABA mismatch; edit after continuation; failed/missing reads; pending
+  read controls and late failure; uncertain exact retry; display-state mutation;
+  and retired read isolation. Native invoke/receipt payloads are fixtures, not
+  graphical or native transport observation. Typecheck has zero errors/warnings;
+  static build, formatting and normal hooks/postcommit traceability pass.
+- Execute **227 actual-source module tests** with actual SQLite/history/context/
+  impact modules and the bounded configuration-only shim, no AppState/ORT. Two
+  new regressions verify a retained draft remains stale after a later writer,
+  fresh explicit revision continuation commits exact Unicode/whitespace text
+  into canonical context and B's review while preserving unrelated C, and replay
+  adds no rows; a lock added after reading still refuses with no partial history
+  or text mutation. Production Rust is unchanged. Core remains the composition's
+  separately executed 115-test gate; this milestone does not claim a new core run.
+- Native GUI, full-server/native AppState and live-model quality remain parent
+  qualification gates. No automatic merge/overwrite/acceptance, new backend
+  contract or general draft framework. Project-switch recovery remains deferred.
+  No ORT retry, alternate acquisition, network/sandbox change, external review
+  request or merge into PR8/main. Preserve all frozen source lineages/artifacts.

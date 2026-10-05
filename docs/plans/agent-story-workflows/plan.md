@@ -1,12 +1,12 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Composition of independently accepted PR8 placement repair
-`a84dfc21c99972612b4c8ea8799d7e488c6329ec` and authoring feature chain
-`e8dbfffae2e0faebbffec2b7e72155df05f55073`, on a separate candidate branch.
-**Next gate:** Parent exact-head hosted/native qualification of the composition.
-Continue a separate retained-draft comparison/revision follow-up after freezing
-this candidate. Pumas runtime/revision integration and native GUI remain open.
+**Current phase:** Retained-draft comparison and explicit version continuation,
+separately on frozen combined candidate
+`a25565267fc5e9662458196b6b8bc9373eacdfb8`. The accepted a84/e8 histories
+remain preserved in that candidate; parent owns stacked hosted qualification.
+**Next gate:** Exact-head hosted/native and graphical qualification remain open.
+Pumas runtime/revision integration and project-switch recovery remain deferred.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -135,6 +135,24 @@ preserved. Earlier milestone sections retain their historical qualification.
   canonical timeline projection and selects that clip through existing editor
   state. Missing or unbound sources remain explicit. Navigation must retain live
   drafts and must not infer fictional time, rewrite placement or issue writes.
+
+## Retained-draft comparison: bounded authoring follow-up
+
+- A refused or still-open edit can read and display current canonical saved text
+  beside its exact retained draft. Reading never writes text or changes its base
+  revision. Preserve the comparison across normal workspace navigation.
+- Explicit Continue draft from this version retains exact draft text and advances
+  only its expected revision to the read snapshot. Current projection must agree
+  with that snapshot; changed/ABA versions require a fresh comparison. A later
+  intervening write or lock still refuses through existing backend validation.
+- Uncertain saves keep immutable payload/ID reconciliation and cannot compare,
+  discard or continue another version. Failed/missing reads keep the draft and
+  admit no unread version. Reuse canonical command/projection and session owners;
+  no backend authority change, automatic merge, save or proposal acceptance.
+- Qualify actual frontend read/controller/store/SSR flows with fixture native
+  transport, plus actual SQLite stale/read/continuation, exact memory/downstream
+  review, idempotent replay and late lock regression evidence. Parent separately
+  qualifies native GUI and full server execution. Project switching is deferred.
 
 ## Screenplay generation lineage and Needs review: bounded descendant
 
