@@ -1,5 +1,6 @@
 <script lang="ts">
   import ScriptBlockEditor from './ScriptBlockEditor.svelte';
+  import ScriptSegmentSource from './ScriptSegmentSource.svelte';
   import ScriptBlockComposer from './ScriptBlockComposer.svelte';
   import { editorState } from '$lib/stores/editor.svelte.js';
   import {
@@ -58,6 +59,7 @@
     <ScriptBlockComposer {source} />
     {#if blockCount > 0}
       {#each projection?.payload.segments ?? [] as segment (segment.segment.id)}
+        <ScriptSegmentSource sourceNodeId={segment.segment.source_node_id} />
         {#if segment.impact}<ScriptImpactNotice impact={segment.impact} />{/if}
         <ScriptImpactReview documentId={MAIN_SCRIPT_DOCUMENT_ID} {segment} />
         {#each segment.blocks as block (block.block.id)}

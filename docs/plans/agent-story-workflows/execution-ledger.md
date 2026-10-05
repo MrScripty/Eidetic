@@ -917,3 +917,39 @@ still a separate pending gate. Broader generation persistence is not covered.
 - During final verification the parent supplied PR8 review 5408774586's separate
   same-node retiming/current-placement gap. Preserve this feature checkpoint and
   prioritize its bounded repair on another branch from exact PR8 head.
+
+
+## Screenplay source navigation milestone
+
+- Continue the next independent agreed authoring slice on isolated
+  `feat/screenplay-source-navigation`, directly from frozen published edit
+  continuity `1c2bf23736880e0f36945fb7f3335d4310becc79` (tested local
+  `94c24298c66245aa90b76f2472c793b0ce327899`, shared tree
+  `f846de1c0f75903a1db8e1ff181f5da4b5f270c9`). This proceeds without waiting
+  for review. Preserve PR8 and separate same-node placement repair published
+  `a84dfc21c99972612b4c8ea8799d7e488c6329ec` on its own exact-parent branch.
+- Script now displays each segment's source clip name and current canonical
+  timeline range with Go to clip. The existing focused projection, selection
+  and viewport scroll helpers own navigation. Re-read clip availability at
+  activation, so a removed/retimed source cannot use captured rendering data.
+  Missing sources and standalone screenplay remain explicit; failed reads show
+  an error and permit retry. Selection/clear races retain existing store guards.
+- Execute **382 frontend tests / 68 files**, including **seven new regressions**:
+  real Script panel source rendering without altering authored text; missing/
+  standalone source states; actual frontend range change then navigation to its
+  latest clip while preserving independent exact Unicode edit/creation drafts
+  and uncertain identity; removal between rendering/activation; superseding
+  selection; failed-read retry; and session projection clearing. Frontend
+  commands/stores/helpers and SSR are executed; native invoke/read receipts are
+  fixture data. This does not qualify graphical clicking/scroll or native IPC.
+- Frontend typecheck (zero errors/warnings), static build and normal hooks pass.
+  Production Rust and the already executed 225 source-module evidence are
+  unchanged; no new source/native server or live-model execution claim. Source
+  navigation performs reads and transient selection/scroll only, without durable
+  writes, fictional-time inference, retargeting drafts, changing zoom/playhead
+  or accepting propagation proposals. It uses the existing timeline viewport
+  behavior, not a new feature-length layout or scrolling implementation.
+- Freeze this second coherent feature checkpoint. Parent owns independent
+  exact-head native/GUI/live-model qualification and integration of the separate
+  PR8 repair/feature lineages, plus PR/review/merges. Project switching remains
+  deferred; no ORT retries, network/sandbox change or external review request.

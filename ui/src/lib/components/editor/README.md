@@ -14,7 +14,10 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `BeatNotesPanel.svelte` | Notes editor, generation status, and prompt preview container. |
 | `BeatPlanningActions.svelte` | Parent-node child-planning action controls. |
 | `AiPromptPreview.svelte` | Raw AI prompt context preview. |
-| `ScriptPanel.svelte` | Container for script-editing surfaces. |
+| `ScriptPanel.svelte` | Container for script-editing surfaces with canonical source links. |
+| `ScriptSegmentSource.svelte` | Canonical source clip name/range, explicit Go to clip, read failure and missing/standalone states. |
+| `scriptSourceNavigation.ts` | Read-only source lookup and transient selection/scroll bridge using existing projection request guards. |
+| `scriptSourceNavigation.svelte.test.ts` | Actual source lookup/range command/navigation functions, exact draft preservation, missing/read/race/clear and SSR fixtures. |
 | `ScriptBlockComposer.svelte` | Selected-context first-block and append writing surface. |
 | `scriptBlockCreationDraft.svelte.ts` | Transient captured-context draft, retry identity and explicit placement refresh controller. |
 | `ScriptBlockComposer.ssr.test.ts` | Rendering and authoring discoverability fixtures. |
@@ -44,6 +47,14 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+- Source links display current canonical timeline names/ranges and recheck clip
+  availability at activation. Go to clip changes only transient selection and
+  scroll, then reads its focused projection. It preserves exact editing/creation
+  drafts, their captured revisions and uncertain payload/IDs. Missing sources
+  and standalone screenplay remain explicit; navigation errors expose retry.
+  Existing request/clear guards prevent a late read from replacing a later
+  selection or a cleared session. No fictional-time mapping or durable write is
+  inferred from a source link.
 - Existing-block edits survive Script/Graph/Split navigation with exact text and
   their captured block revision. Canonical updates and selection changes never
   reset a live draft. Uncertain saves expose Retry same save and disable editing,

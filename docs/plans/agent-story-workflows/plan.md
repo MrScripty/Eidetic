@@ -1,9 +1,10 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Existing-block edit continuity and screenplay-to-timeline
-manual navigation, on separate descendants of independently accepted PR8 source
-`dd815f51d674f07514759c1d74f119be7b50bd9c`. PR8 remains frozen for CI/review.
+**Current phase:** Screenplay-to-timeline source navigation on a separate
+descendant of frozen edit-continuity source
+`1c2bf23736880e0f36945fb7f3335d4310becc79`. PR8 source and its bounded
+current-placement repair remain independently frozen for parent CI/review.
 **Next gate:** Qualify the exact new creation checkpoint through native AppState
 and graphical type/save/reopen. Pumas runtime/revision integration remains open.
 
