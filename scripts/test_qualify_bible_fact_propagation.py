@@ -5,6 +5,8 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import sqlite3
+import tempfile
 import threading
 from types import ModuleType
 import unittest
@@ -20,6 +22,16 @@ with patch.dict(sys.modules, {'pyatspi': ModuleType('pyatspi'), 'gi': ModuleType
 
 
 class BibleFactProviderTests(unittest.TestCase):
+    def test_readonly_fact_checkpoint_works_before_screenplay_schema_exists(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / 'fixture.db'
+            with sqlite3.connect(database) as connection:
+                connection.execute('CREATE TABLE bible_graph_fields (id TEXT, text_value TEXT, updated_event_id TEXT)')
+                connection.execute('INSERT INTO bible_graph_fields VALUES (?, ?, ?)', ('qualification.mara.tagline', driver.RED, 'red-revision'))
+            self.assertEqual(driver.fact(database), (driver.RED, 'red-revision'))
+            with sqlite3.connect(database) as connection:
+                self.assertEqual(connection.execute("SELECT count(*) FROM sqlite_master WHERE name='script_blocks'").fetchone()[0], 0)
+
     def test_generation_and_preview_require_exact_fact_and_manual_context(self):
         provider = driver.BibleFactProvider
         provider.records.clear()

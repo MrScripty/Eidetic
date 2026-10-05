@@ -53,3 +53,9 @@ different part. The corrected fixture also uses the default sort positions and
 removes a duplicate import. No production application changes are involved.
 The newer qualification push supersedes the initial build through its separate
 standard concurrency group.
+
+The initial Bible checkpoint uses its own mode=ro SQLite read: unlike the shared
+screenplay query helper, it must work before any screenplay table exists. A
+stdlib regression verifies it reads the initial fact without creating screenplay
+schema or changing canon. The corrected qualification push supersedes the earlier
+build; application source remains a66e1c7.

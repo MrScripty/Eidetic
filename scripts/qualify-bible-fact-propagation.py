@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import sqlite3
 import subprocess
 import threading
 import time
@@ -56,7 +57,8 @@ def save_fact_control(application, field):
 
 
 def fact(database):
-    return ui.query(database, "SELECT text_value,updated_event_id FROM bible_graph_fields WHERE id='qualification.mara.tagline'")[0]
+    with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True, timeout=2) as connection:
+        return connection.execute("SELECT text_value,updated_event_id FROM bible_graph_fields WHERE id='qualification.mara.tagline'").fetchone()
 
 
 def main():
