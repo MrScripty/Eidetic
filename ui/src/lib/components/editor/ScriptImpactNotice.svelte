@@ -7,7 +7,7 @@
 {#if impact.needs_review}
   <aside class="impact" aria-label="Screenplay needs review">
     <strong>Needs review</strong>
-    <p>Screenplay inputs have changed since this text was generated.</p>
+    <p>Story inputs have changed since this text was generated.</p>
     <details>
       <summary>What changed</summary>
       <ul>

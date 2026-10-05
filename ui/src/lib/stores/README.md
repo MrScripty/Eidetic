@@ -184,3 +184,15 @@ await refreshTimelineRenderProjection();
 - Projection cache stores hold backend `ProjectionEnvelope` payloads as replace-only snapshots. Components may read cached envelopes but must not mutate payload contents.
 - Transient stores own local interaction state only. If the backend stores or acts on a field, that field must be changed through a command helper and refreshed through a projection response or invalidation.
 - Changes to shared store fields must land with dependent component, backend event, README, and verification updates in the same logical slice.
+
+### Bible changes invalidate story consumers
+
+The bible_changed event reloads screenplay impact together with Bible/history
+projections and invalidates cached prompt context. Canonical generated field
+dependencies derive the review state; the frontend does not infer dependencies
+from text or write replacements. Existing edit/creation draft owners remain intact.
+
+Bible-driven impact changes carry an advanced canonical screenplay projection
+version. A deferred older read cannot hide a newer fact review cause while exact
+block text remains equal. The normal version/session guards continue to own cache
+admission; no frontend-generated revision or automatic retry is introduced.

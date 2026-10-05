@@ -221,8 +221,10 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     .await
     .map_err(|error| BackendError::internal(format!("script context task failed: {error}")))??;
     crate::ai_script_context::attach_script_context(request, blocks);
-    request.bible_context =
-        Some(load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?);
+    let (bible_context, bible_inputs) =
+        load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?;
+    request.bible_context = Some(bible_context);
+    request.bible_inputs = Some(bible_inputs);
     request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(())
 }
@@ -231,17 +233,33 @@ async fn load_ai_bible_context_projection(
     path: PathBuf,
     node_id: NodeId,
     story_time_ms: Option<u64>,
-) -> Result<ProjectionEnvelope<AiBibleContextProjection>, BackendError> {
+) -> Result<
+    (
+        ProjectionEnvelope<AiBibleContextProjection>,
+        Vec<eidetic_core::contracts::BibleFieldInput>,
+    ),
+    BackendError,
+> {
     tokio::task::spawn_blocking(move || {
         let conn = crate::sqlite::open_write_connection(&path).map_err(|error| {
             BackendError::Internal(format!("open AI bible context database failed: {error}"))
         })?;
-        crate::ai_context_projection::load_ai_bible_context_projection(
-            &conn,
+        crate::bible_graph_store::create_schema(&conn)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        let tx = conn
+            .unchecked_transaction()
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        let context = crate::ai_context_projection::load_ai_bible_context_projection(
+            &tx,
             node_id,
             story_time_ms,
         )
-        .map_err(|error| BackendError::Internal(error.to_string()))
+        .map_err(|error| BackendError::internal(error.to_string()))?;
+        let inputs = crate::bible_field_lineage::capture(&tx, &context.payload)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        tx.commit()
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        Ok((context, inputs))
     })
     .await
     .map_err(|error| {
@@ -255,8 +273,11 @@ async fn attach_ai_generation_context_to_children(
     node_id: NodeId,
     story_time_ms: Option<u64>,
 ) -> Result<(), BackendError> {
-    request.bible_context =
-        Some(load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?);
+    request.bible_context = Some(
+        load_ai_bible_context_projection(path.clone(), node_id, story_time_ms)
+            .await?
+            .0,
+    );
     request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(())
 }

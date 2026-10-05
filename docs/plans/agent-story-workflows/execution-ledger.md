@@ -1196,3 +1196,82 @@ still a separate pending gate. Broader generation persistence is not covered.
   `e5f2bfe4`, repair `3c7e9058` and ordered composition `72ae4806`. No production
   integration repair was needed for this flow; driver input/geometry corrections
   are bounded qualification changes. No PR8/main merge or external review request.
+
+## Authored Bible fact propagation milestone
+
+- Verified exact PR9 successor `25b860d12fe37a3538a40616cc02ab4a81370863`, tree
+  `d22b036891aed7eb66fc94059aa1b5c1d9aab85a`. Composed onto verified merged
+  main `9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09`, identical source tree; no
+  duplication of stale-placement or HTTP-fixture repairs. No AGENTS.md or local
+  .agents skill content was supplied in this workspace.
+- Inspected BibleGraphPartFields, canonical field writes, AI context attachment,
+  generation persistence, dependency impact, targeted review and Bible events.
+  The missing link was consumed Bible field revisions: model prompts received
+  facts, but saved generation lineage covered screenplay alone.
+- Added snapshot-bound untimed field capture and existing UsesFact revision
+  dependencies, historical output validation, changed/deleted impact and old
+  excerpts. Bible change events now refresh affected screenplay and invalidate
+  prompt context. Bible causes reuse existing preview/reject/accept and atomically
+  refresh lineage. No automatic screenplay/graph rewrite or embedding dependency.
+- Local evidence: 115 core tests, 151 isolated actual-source SQLite/proposal/prompt
+  tests (six new Bible propagation regressions), 399 frontend tests, frontend
+  lint/format/typecheck/build and server all-target check/strict Clippy pass.
+  The standalone harness is `/workspace/scratch/bible-field-harness`, using actual
+  source files without AppState/Pumas/ORT; it does not qualify native services.
+  Server compilation uses ORT_SKIP_DOWNLOAD=1, compile evidence only. The new
+  AppState/public-service Bible regression compiles and awaits hosted execution.
+- Native exact-source Bible edit/preview/accept screenshots remain pending at
+  this implementation checkpoint. Real-model quality is unqualified. Timed fact,
+  relationship, new/unconsumed field impact and project recovery remain deferred.
+
+### Separate exact-source Bible fact native qualification
+
+- Implementation `a66e1c74e164178208bd3e63c9ab99147d5290de`, tree
+  `e1c9be374651f6d23efc8ca86eee440d93764081`, committed after all local scoped
+  checks and pre-commit hooks. The ordinary pre-push workspace hook fails on
+  missing GLib/GTK; it is excluded only for source publication to the hosted
+  native gate. No local runtime qualification or ONNX workaround is claimed.
+- Added a separate push-only test/bible-fact-native workflow/concurrency group,
+  public-service setup fixture and real Tauri AT-SPI/X11 Bible fact driver. Reuse
+  existing driver geometry, exact typing, sanitized/bounded capture and HTTP
+  acceptance guards. Application source remains unchanged from a66e1c7.
+- Python syntax/HTTP fixture tests and compile-only example check pass locally;
+  exact hosted/native execution and visual screenshot inspection remain pending.
+
+### Bible-derived review projection ordering
+
+- Inspection found that derived fact impact can change without a script object
+  revision. Equal screenplay projection versions would admit a late pre-fact
+  response over a fresh Needs review result. Extend the existing version summary
+  with the append-only Bible revisions (node/field/edge/snapshot); include owner
+  deletion and preserve a monotonic clock when lineage is refreshed/narrowed.
+- Actual-source SQLite regressions now require an advanced projection after value
+  change, value removal and owner deletion. The public-service runtime regression
+  checks it too. A new deferred frontend read proves the older projection cannot
+  hide the Bible cause while blocks/text remain unchanged. No parallel state.
+- 151 source-module and 400 frontend tests pass; strict compile-only server Clippy
+  passes. Actual hosted runtime qualification must use the successor application
+  checkpoint, rather than treating the earlier a66e1c7 build as current evidence.
+
+### Frozen Bible feature: final native qualification
+
+- Application `fe7fa5900b648ae9d24b374411ab8f9ebcc72343`, tree
+  `2dfced8960e8452f86c40fa4efba74ff93d342ea`, remains unchanged from the
+  tested application checkpoint. Qualification `b1129893eae5df2b17e931d5391283faa7d4631b`
+  passes hosted run 37337057557 / job 111854378246: actual 115 core and 389 server
+  tests, plus real native fact edit, retained manual draft, pending preview,
+  explicit acceptance and settled visible canonical target/cleared old review.
+- Canonical fact changed exactly from Mara's umbrella is red. to Mara's umbrella
+  is blue.; saved manual A/B survive fact Save and B survives preview. Accept
+  changes only B and refreshes its UsesFact binding to the blue revision. HTTP
+  provider generation/recap/preview admission is exact and synthetic, not a
+  real-model quality qualification. Local 400 UI, 151 source and 9 helper tests
+  and frontend/compile-only Clippy gates pass.
+- Final artifact 11356828022 (three-day retention) and all hashes/revision IDs are
+  in docs/reports/bible-fact-native-qualification.md. Review/preview hashes match
+  inspected bytes; accepted image was inspected after UI refresh. Preserved local
+  files: /workspace/scratch/bible-fact-native-37337057557/. Library helper failed
+  at tool-list startup before any upload, so no Library IDs are claimed.
+- The user-requested next scene-order/context membership audit is independent of
+  this frozen Bible branch. Parent owns PRs/reviews/merges. No reset or replacement
+  workspace was used after the temporary executor disconnection.

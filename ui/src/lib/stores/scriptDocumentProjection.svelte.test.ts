@@ -7,7 +7,8 @@ import {
   setScriptLock,
 } from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
-import type { ScriptImpactProjection } from '$lib/scriptTypes.js';
+import type { ScriptImpactProjection, ScriptDocumentProjection } from '$lib/scriptTypes.js';
+import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import {
   applyScriptBlockCommand,
   applyScriptBlockCreationCommand,
@@ -444,4 +445,49 @@ it('creates authored text through the canonical response and invalidates prompt 
   expect(createScriptBlock).toHaveBeenLastCalledWith(payload, 'new-block-command');
   expect(getCachedScriptDocumentProjection(key)).toEqual(projection);
   expect(scriptDocumentProjectionState.contextRevision).toBe(revision + 1);
+});
+
+it('a pre-fact read cannot hide a newer Bible review cause with unchanged screenplay text', async () => {
+  const before: ProjectionEnvelope<ScriptDocumentProjection> = structuredClone(projection);
+  const after = structuredClone(before);
+  after.version += 1;
+  after.change_event_id = 'Bible-edit';
+  after.payload.segments[0]!.impact = {
+    generation_event_id: 'generation',
+    output_block_id: after.payload.segments[0]!.blocks[0]!.block.id,
+    lineage_available: true,
+    needs_review: true,
+    causes: [
+      {
+        dependency_id: 'consumed-fact',
+        input: {
+          kind: 'bible_field',
+          node_id: 'Mara',
+          part_key: 'profile',
+          field_key: 'tagline',
+          field_id: 'Mara.tagline',
+        },
+        consumed_revision_event_id: 'red',
+        current_revision_event_id: 'blue',
+        reason: 'changed',
+        input_excerpt: 'Red umbrella',
+      },
+    ],
+  };
+  let resolveOld!: (value: ProjectionEnvelope<ScriptDocumentProjection>) => void;
+  getScriptDocumentProjectionMock.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveOld = resolve;
+      }),
+  );
+  getScriptDocumentProjectionMock.mockResolvedValueOnce(after);
+  const oldRead = refreshScriptDocumentProjection(key);
+  await refreshScriptDocumentProjection(key);
+  resolveOld(before);
+  await oldRead;
+  expect(getCachedScriptDocumentProjection(key)).toEqual(after);
+  expect(getCachedScriptDocumentProjection(key)?.payload.segments[0]?.blocks).toEqual(
+    before.payload.segments[0]?.blocks,
+  );
 });

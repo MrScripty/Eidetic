@@ -221,10 +221,12 @@ pub struct ScriptContextBlock {
 }
 
 /// Internal generation commit: its captured evidence is part of the replay signature.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GenerateScriptBlockCommand {
     pub block: SetScriptBlockCommand,
     pub script_inputs: Option<Vec<ScriptContextBlock>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_inputs: Option<Vec<super::BibleFieldInput>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

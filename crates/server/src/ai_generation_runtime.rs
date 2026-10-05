@@ -85,6 +85,7 @@ pub(crate) async fn run_generation(
         node_uuid,
         stream,
         request.script_context,
+        request.bible_inputs,
     )
     .await;
 }
@@ -95,6 +96,7 @@ async fn finish_generation_stream(
     node_uuid: Uuid,
     stream: eidetic_core::ai::backend::GenerateStream,
     script_inputs: Option<Vec<ScriptContextBlock>>,
+    bible_inputs: Option<Vec<eidetic_core::contracts::BibleFieldInput>>,
 ) {
     let node_id = NodeId(node_uuid);
     let full_text = match stream_generated_text(stream, |token, tokens_generated| {
@@ -125,6 +127,7 @@ async fn finish_generation_stream(
         node_uuid,
         full_text,
         script_inputs,
+        bible_inputs,
     )
     .await;
 }
@@ -258,6 +261,7 @@ async fn persist_successful_generation(
     node_uuid: Uuid,
     full_text: String,
     script_inputs: Option<Vec<ScriptContextBlock>>,
+    bible_inputs: Option<Vec<eidetic_core::contracts::BibleFieldInput>>,
 ) {
     if let Err(error) =
         persist_node_content_status(project_path.clone(), node_id, ContentStatus::HasContent).await
@@ -274,6 +278,7 @@ async fn persist_successful_generation(
         metadata,
         full_text.clone(),
         script_inputs,
+        bible_inputs,
     )
     .await
     {
@@ -349,6 +354,7 @@ async fn persist_generated_script_block(
     metadata: GeneratedScriptMetadata,
     full_text: String,
     script_inputs: Option<Vec<ScriptContextBlock>>,
+    bible_inputs: Option<Vec<eidetic_core::contracts::BibleFieldInput>>,
 ) -> Result<(), String> {
     tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&project_path)
@@ -362,6 +368,7 @@ async fn persist_generated_script_block(
                 payload: GenerateScriptBlockCommand {
                     block: command.payload,
                     script_inputs,
+                    bible_inputs,
                 },
             },
             0,

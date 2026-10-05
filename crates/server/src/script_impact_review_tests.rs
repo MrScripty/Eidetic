@@ -49,6 +49,7 @@ pub(crate) fn fixture() -> (
     script_document_command::apply_generated_script_block(
         &mut conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
+            bible_inputs: None,
             block: b.clone(),
             script_inputs: Some(vec![a_input]),
         }),

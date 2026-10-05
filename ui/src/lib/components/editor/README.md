@@ -138,3 +138,11 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - None identified as of 2026-03-08.
 - Reason: editor components consume server/store contracts rather than publishing them.
 - Revisit trigger: the editor starts emitting reusable saved templates or machine-consumed schemas.
+
+### Bible fact review causes
+
+ScriptImpactNotice and ScriptImpactReview show consumed Bible field changes with
+their part/key identity through the existing preview, reject and explicit Accept
+update surface. A Bible change refreshes the canonical screenplay projection and
+invalidates prompt context. This surface preserves existing authoring draft owners
+and never replaces saved screenplay on a fact edit or a preview response.

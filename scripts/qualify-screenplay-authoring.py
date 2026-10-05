@@ -221,6 +221,13 @@ class FixtureProvider(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
+    def contains_expected_context(self, user, kind):
+        required = EDITED_TEXT if kind == 'preview' else GENERATED_TEXT if kind == 'recap' else MANUAL_TEXT
+        return required in user
+
+    def response_text(self, kind):
+        return PROPOSED_TEXT if kind == 'preview' else 'Eli waits at the station with Mara and the red umbrella.' if kind == 'recap' else GENERATED_TEXT
+
     def do_GET(self):
         if self.path != '/v1/models':
             self.send_error(404)
@@ -244,9 +251,8 @@ class FixtureProvider(BaseHTTPRequestHandler):
         preview = 'targeted screenplay update' in system
         recap = user.startswith('Generate a scene recap for this screenplay beat:')
         kind = 'preview' if preview else 'recap' if recap else 'generation'
-        required = EDITED_TEXT if preview else GENERATED_TEXT if recap else MANUAL_TEXT
         record = {'kind': kind,
-                  'contains_exact_expected_context': required in user,
+                  'contains_exact_expected_context': self.contains_expected_context(user, kind),
                   'stream': body.get('stream') is True,
                   'real_model': False}
         # ThreadingHTTPServer must admit and record each decision atomically.
@@ -260,7 +266,7 @@ class FixtureProvider(BaseHTTPRequestHandler):
         if not record['accepted']:
             self.send_error(422, 'Qualification prompt did not contain exact authored context')
             return
-        text = PROPOSED_TEXT if preview else 'Eli waits at the station with Mara and the red umbrella.' if recap else GENERATED_TEXT
+        text = self.response_text(kind)
         parts = [text[:len(text)//2], text[len(text)//2:]]
         data = ''.join('data: ' + json.dumps({'choices': [{'delta': {'content': part}}]})
                        + '\n\n' for part in parts).encode() + b'data: [DONE]\n\n'

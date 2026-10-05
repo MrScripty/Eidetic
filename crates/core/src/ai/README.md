@@ -60,3 +60,11 @@ use eidetic_core::ai::prompt::build_generate_request;
 - `backend.rs` defines the stable request/response shapes consumed by server-side AI adapters.
 - Field semantics must stay aligned with backend adapters and frontend progress rendering.
 - Changes to request defaults or enum meanings require coordinated server and test updates.
+
+### Bible field evidence custody
+
+GenerateRequest carries the canonical Bible projection and the untimed field
+inputs captured in the same SQLite read snapshot. Generation forwards these
+inputs unchanged through model I/O to the existing screenplay commit. Prompt
+formatting remains driven by the resolved Bible context; lineage never substitutes
+a baseline value for a timed override or unresolved fact.
