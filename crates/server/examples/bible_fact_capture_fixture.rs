@@ -1,5 +1,5 @@
 //! Bible propagation qualification: public setup services; actual fact change and screenplay review use the GUI.
-use eidetic_core::contracts::{CommandEnvelope, SetTimelineNodeNotesCommand};
+use eidetic_core::contracts::*;
 use eidetic_core::timeline::node::StoryLevel;
 use eidetic_server::{command_service, project_service, state::AppState};
 
@@ -52,19 +52,18 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         }
     }))?;
     command_service::create_bible_graph_node(state, create).await?;
-    use eidetic_core::contracts::*;
     command_service::set_bible_graph_field(
         state,
         CommandEnvelope::new(SetBibleGraphFieldCommand {
             node_id: BibleGraphNodeId::new("qualification.mara")?,
-            part_id: BibleGraphPartId::new("qualification.mara.profile")?,
+            part_id: BibleGraphPartId::new("part.default.qualification.mara.profile")?,
             part_key: BibleGraphPartKey::new("profile")?,
             part_name: "Profile".into(),
-            part_sort_order: 0,
+            part_sort_order: 10,
             field_id: BibleGraphFieldId::new("qualification.mara.tagline")?,
             field_key: BibleGraphFieldKey::new("tagline")?,
             value: Some(FieldValue::Text("Mara's umbrella is red.".into())),
-            field_sort_order: 0,
+            field_sort_order: 20,
         }),
     )
     .await?;

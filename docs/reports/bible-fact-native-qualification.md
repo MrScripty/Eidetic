@@ -45,3 +45,11 @@ Scope is previously consumed baseline fields. Timed snapshots, relationships/nod
 headers, new or unconsumed facts and automatic semantic extraction remain follow-ups;
 existing unbound generations are not backfilled. Project recovery and embeddings
 remain deferred. The parent owns PRs/reviews/merges and Library delivery.
+
+Preparation correction: the setup fixture must use the existing default Profile
+part identity exposed by the Bible editor, rather than an arbitrary backend-only
+part ID. Otherwise the GUI correctly refuses to move the stored field to a
+different part. The corrected fixture also uses the default sort positions and
+removes a duplicate import. No production application changes are involved.
+The newer qualification push supersedes the initial build through its separate
+standard concurrency group.
