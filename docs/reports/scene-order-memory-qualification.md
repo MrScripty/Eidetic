@@ -18,7 +18,8 @@ dependencies retain it; there is no added database schema, vector dependency or
 parallel memory store. Derived review identifies entering/displaced members or
 changed external order/relative position and preserves manual text. Preview uses
 the fresh window; replacement requires existing explicit targeted acceptance.
-Acceptance refreshes actual input lineage. Old absent scope is not backfilled.
+Acceptance refreshes actual input lineage. Old absent scope is not backfilled. Pre-upgrade pending previews may require
+a fresh preview; their saved text and proposals remain intact.
 
 The append-only main-document segment epoch guards pending window equality,
 including an unconsumed move-in/move-out ABA. An unrelated segment revision may
@@ -68,7 +69,29 @@ Screenshots are unaltered **prototype views**. No GUI drag/reorder or real-model
 quality is claimed: reorder setup uses the public native range service before
 GUI launch; manual edit/preview/acceptance use native GUI input.
 
-Hosted run, artifact, screenshots, exact revisions and hashes will be recorded
-after execution. No screenshot Library IDs are available: the previously attempted
+The first hosted run [37346181993](https://github.com/MrScripty/Eidetic/actions/runs/37346181993),
+qualification head `beee2d97219936bc93d7a02f8f56c5ceaee0653b`, built the actual
+native runtime and passed **116 core / 396 server tests**. Its GUI setup stopped
+before launch because the qualification example omitted `/v1` from its provider
+URL. It produced no accepted provider calls and no screenshots. Failure artifact
+11361006580 is preserved locally under
+`/workspace/scratch/scene-order-native-37346181993/`.
+
+Qualification-only correction `141ff3d1b959a6e5f4899dbdc160a490d80b5ee0`
+(tree `a331c8153c5daa284676191b28a730c95f2ba842`) uses the existing configured
+OpenAI `/v1` endpoint. Compile check and unchanged-source guard pass. Corrected
+run [37347395869](https://github.com/MrScripty/Eidetic/actions/runs/37347395869)
+also passed 116 core / 396 server tests. Its exact generation context was
+accepted by the synthetic HTTP fixture, but setup stopped because the newly
+created B was absent from the legacy project mirror read by generation completion.
+No GUI launch or screenshots occurred. Artifact 11361382681 is preserved locally
+under `/workspace/scratch/scene-order-native-37347395869/`.
+
+The next qualification-only fixture saves and reopens the prepared project through
+public services before generating, asserts B exists in the refreshed mirror, and
+reports exact GenerationError events instead of a generic missing-output message.
+This is normal qualification setup, not a mirror/recovery repair or a claim of
+live generation immediately after canonical node creation. Application source
+remains frozen at 9429daa. Final native UI results will be recorded after execution. No screenshot Library IDs are available: the previously attempted
 official prepared-upload helper failed at tool-list startup before any write.
 Parent handles PRs/reviews/merges and Library delivery.

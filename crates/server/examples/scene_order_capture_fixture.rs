@@ -149,11 +149,35 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         }),
     )
     .await?;
+    // Public timeline creation owns canonical rows. Normal save/open refreshes
+    // the legacy project mirror that generation completion still reads.
+    let prepared =
+        project_service::save_project(state, project_service::SaveProjectRequest { path: None })
+            .await?;
+    project_service::load_project(
+        state,
+        project_service::LoadProjectRequest {
+            path: prepared["saved"]
+                .as_str()
+                .ok_or("prepared path missing")?
+                .into(),
+        },
+    )
+    .await?;
+    if state
+        .project
+        .lock()
+        .as_ref()
+        .is_none_or(|p| p.timeline.node(b).is_err())
+    {
+        return Err("prepared B absent from refreshed project mirror".into());
+    }
     *state.ai_config.lock() = AiConfig {
         base_url: "http://127.0.0.1:18080/v1".into(),
         model: "authoring-http-fixture".into(),
         ..AiConfig::default()
     };
+    let mut events = state.events_tx.subscribe();
     ai_generation_service::start_generation(
         state,
         ai_generation_service::AiGenerateRequest {
@@ -168,6 +192,13 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         }
     })
     .await?;
+    while let Ok(event) = events.try_recv() {
+        if let eidetic_server::state::ServerEvent::GenerationError { node_id, error } = event
+            && node_id == b.0
+        {
+            return Err(format!("qualification generation failed: {error}").into());
+        }
+    }
     let before = projection_service::script_document_projection(
         state,
         projection_service::ScriptDocumentProjectionRequest {
