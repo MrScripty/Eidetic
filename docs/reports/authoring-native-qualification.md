@@ -48,3 +48,13 @@ native runtime execution. Exact local ORT acquisition already failed once with
 `cdn.pyke.io` HTTP 403; it is not retried or bypassed. The existing hosted native
 route succeeded for older source in run `37221991765`, providing route evidence
 only. Real-model story quality remains unqualified by this fixture exercise.
+
+Run `37250082342` built normally and passed all 382 real server library tests,
+including WAL stale-writer/interleaving and interrupted descendant rollback.
+The native app opened its empty project; traversal then hit a retired WebKit
+accessibility object while the captured PID/window stayed alive and displayed
+the workspace. This is partial GUI evidence, with no authored block or provider
+call. The corrected driver retries only the observed retired-object error within
+its existing deadline, refreshes from the root on the next poll, counts these
+polls, and fails immediately if the native process disappears. Other errors stay
+fatal. Complete GUI authoring and real-model quality remain unqualified.

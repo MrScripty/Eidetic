@@ -20,7 +20,7 @@ import subprocess
 import time
 
 import pyatspi
-from gi.repository import Atspi
+from gi.repository import Atspi, GLib
 
 
 SOURCE = "72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1"
@@ -29,6 +29,8 @@ EDITED_TEXT = "INT. CAFE - NIGHT\n\nMara carries a blue umbrella.\n\nELI\nThe la
 GENERATED_TEXT = "EXT. STATION - NIGHT\n\nEli spots Mara and her red umbrella."
 PROPOSED_TEXT = "EXT. STATION - NIGHT\n\nEli spots Mara and her blue umbrella."
 DEADLINE = time.monotonic() + 270
+NATIVE_WINDOW_PID = None
+ACCESSIBILITY_RETIREMENTS = 0
 
 
 def command(*args):
@@ -36,8 +38,20 @@ def command(*args):
 
 
 def wait_for(description, check):
+    global ACCESSIBILITY_RETIREMENTS
     while time.monotonic() < DEADLINE:
-        found = check()
+        if NATIVE_WINDOW_PID is not None and not Path(f'/proc/{NATIVE_WINDOW_PID}').exists():
+            raise RuntimeError('Native application exited during qualification')
+        try:
+            found = check()
+        except GLib.Error as error:
+            # WebKit retires DOM accessibility objects while switching views.
+            # Reacquire from the refreshed root on the next bounded poll only.
+            if (error.domain != 'atspi_error' or error.code != 0
+                    or 'application no longer exists' not in error.message.lower()):
+                raise
+            ACCESSIBILITY_RETIREMENTS += 1
+            found = None
         if found:
             return found
         time.sleep(0.25)
@@ -296,6 +310,7 @@ def screenplay_block(application, excerpt):
 
 
 def main():
+    global NATIVE_WINDOW_PID
     repo = Path.cwd()
     output = Path(os.environ['EIDETIC_CAPTURE_DIR'])
     output.mkdir(parents=True, exist_ok=True)
@@ -367,6 +382,7 @@ def main():
             return None
 
         window, pid = wait_for('owned native window', owned_window)
+        NATIVE_WINDOW_PID = pid
         evidence.update(window_id=int(window), window_pid=pid)
         evidence['application_binary_sha256'] = file_hash(Path('/proc/' + str(pid) + '/exe'))
         application = wait_for('native accessibility app', lambda: next((app for app in
@@ -484,6 +500,7 @@ def main():
                     os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+        evidence['accessibility_retired_object_polls'] = ACCESSIBILITY_RETIREMENTS
         evidence['provider_calls'] = FixtureProvider.records
         raw = raw_log.read_text(errors='replace') if raw_log.exists() else 'No app launch log.'
         (output / 'app-sanitized.log').write_text(sanitized_log(raw, [

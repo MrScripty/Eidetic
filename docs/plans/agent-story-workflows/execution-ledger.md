@@ -1119,3 +1119,16 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Standard Actions concurrency now cancels obsolete qualification runs on this
   isolated branch when a corrected qualification is published, avoiding duplicate
   native builds. This does not change application source or execution security.
+- Hosted run `37250082342`, qualification `60a8255d112a04d2a6275933bb1ce506454adf6f`,
+  built the actual native app and public-service fixture normally; all 382 actual
+  server tests passed, including both WAL stale-writer tests and interrupted
+  descendant rollback. Application source guard for `72ae4806` passed.
+- GUI opened the empty project, then failed traversing a retired WebKit AT-SPI
+  object (`atspi_error`, code 0, application no longer exists). Captured native
+  window PID 19303 remained alive and visibly showed the loaded workspace.
+  No authoring, provider call or complete GUI flow is claimed from that run.
+- Qualification-only repair retries exactly that retired-object error within
+  the existing deadline, refreshing the accessibility root on the next poll.
+  Other errors remain fatal; native process disappearance fails immediately.
+  It records the number of retired-object polls. No security/display setting,
+  application change, fixture receipt substitute or automatic relaunch is added.
