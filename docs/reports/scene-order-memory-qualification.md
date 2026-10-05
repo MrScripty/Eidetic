@@ -3,7 +3,11 @@
 Application source: `9429daa53de9d7ce6679f0b166b1f736f332892a`, tree
 `17b166b08d10e0c3a07047eb289c2a5f576f7de2`. Branch
 `feat/scene-order-story-memory`, based on frozen Bible head
-`af603e7682417fd49dbaac02e75142fd1b9d0d61`. The Bible branch is unchanged.
+`af603e7682417fd49dbaac02e75142fd1b9d0d61`. Merged main
+`302851dbb5bf67cda922b4d79f70623e444891dc` has the same Bible tree
+`becb86624608663a9e91ff629edd1080d6eada54`. Ancestry-only reconciliation
+`5b057efdf038a5959630270dea5c749075307844` changed no application files.
+Original application 9429daa and qualification checkpoint da54a85 remain ancestors.
 
 ## Demonstrated gap and bounded implementation
 
@@ -46,88 +50,120 @@ The existing timeline UI's drag bounds and semantic extraction are separate gaps
   Post-commit traceability found two adjacent README omissions, corrected in the
   separate qualification milestone. Hosted Ubuntu executes native tests normally.
 
-## Hosted native qualification gate
+## Passed hosted native qualification
 
-Dedicated push-only branch `test/scene-order-native` and workflow
-`.github/workflows/scene-order-native.yml` use the existing standard Ubuntu 24.04
-GTK/Webkit/Xvfb and locked Pumas/ORT build route. They are independent of frozen
-Bible and previous authoring workers. The source guard permits only qualification
-and documentation changes relative to the exact application checkpoint above.
+[Run 37354081654](https://github.com/MrScripty/Eidetic/actions/runs/37354081654),
+job **111911938710**, passed on qualification commit
+`4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7`, tree
+`1803c3eaa376a641a00d770263d1a14e86917242`. The unchanged-source guard binds
+application behavior to 9429daa above. Actual runtime tests pass: **116 core and
+396 server**, including the public AppState complete-window range/preview/acceptance
+regression. The Tauri walkthrough completed in 25.179 seconds.
 
-The public fixture creates six proper hierarchy scenes and exact authored blocks,
-generates B through the production client, then moves E from 540000–570000 to
-180000–210000. Order changes from A,F,B,C,D,E to A,F,E,B,C,D. B's complete window
-changes from A,F,C,D (before its own generation) to F,E,B,C,D; A leaves and E
-enters. Fixture generation and recap responses are explicitly synthetic.
-
-The real Tauri GUI then manually saves exact B text
-`Manual B: retain this station beat.\n\n`, shows the entering/leaving cause with
-Bible and timeline present, previews from E/F/C/D plus exact human B, and requires
-explicit Accept update. Read-only SQLite checkpoints verify unrelated blocks
-remain exact. Normal native scrolling reveals the accepted canonical target.
-Screenshots are unaltered **prototype views**. No GUI drag/reorder or real-model
-quality is claimed: reorder setup uses the public native range service before
-GUI launch; manual edit/preview/acceptance use native GUI input.
-
-The first hosted run [37346181993](https://github.com/MrScripty/Eidetic/actions/runs/37346181993),
-qualification head `beee2d97219936bc93d7a02f8f56c5ceaee0653b`, built the actual
-native runtime and passed **116 core / 396 server tests**. Its GUI setup stopped
-before launch because the qualification example omitted `/v1` from its provider
-URL. It produced no accepted provider calls and no screenshots. Failure artifact
-11361006580 is preserved locally under
-`/workspace/scratch/scene-order-native-37346181993/`.
-
-Qualification-only correction `141ff3d1b959a6e5f4899dbdc160a490d80b5ee0`
-(tree `a331c8153c5daa284676191b28a730c95f2ba842`) uses the existing configured
-OpenAI `/v1` endpoint. Compile check and unchanged-source guard pass. Corrected
-run [37347395869](https://github.com/MrScripty/Eidetic/actions/runs/37347395869)
-also passed 116 core / 396 server tests. Its exact generation context was
-accepted by the synthetic HTTP fixture, but setup stopped because the newly
-created B was absent from the legacy project mirror read by generation completion.
-No GUI launch or screenshots occurred. Artifact 11361382681 is preserved locally
-under `/workspace/scratch/scene-order-native-37347395869/`.
-
-The next qualification-only fixture saves and reopens the prepared project through
-public services before generating, asserts B exists in the refreshed mirror, and
-reports exact GenerationError events instead of a generic missing-output message.
-This is normal qualification setup, not a mirror/recovery repair or a claim of
-live generation immediately after canonical node creation. Application source
-remains frozen at 9429daa. Final native UI results will be recorded after execution. No screenshot Library IDs are available: the previously attempted
-official prepared-upload helper failed at tool-list startup before any write.
-Parent handles PRs/reviews/merges and Library delivery.
-
-### Native walkthrough successor after preserved checkpoint
-
-Run 37348942331, source 9429daa and qualification head
-`da54a856b46e7de712bf46e0ff7d660904b4b63f`, passed 116 core / 396 server tests,
-prepared the actual six-scene reorder, launched Tauri and saved exact human B
-through native input (revision 81b24ba1-0a82-42f2-a76d-a8f99f782d0a).
-Synthetic generation and recap admitted the exact expected context. The driver
-then timed out at the What changed disclosure: AT-SPI ANYWHERE left its fragmented
-multicolumn rectangle behind the Bible sidebar, and native input hit that sidebar.
-No pending preview or acceptance was qualified. Failure artifact 11361543736 and
-unaltered screenshot are preserved at
-`/workspace/scratch/scene-order-native-37348942331/`; binary SHA256
+Dedicated branch `test/scene-order-native` and workflow
+`.github/workflows/scene-order-native.yml` use standard Ubuntu 24.04
+GTK/Webkit/Xvfb and the locked Pumas/ORT build route. No local ONNX download
+bypass or alternative runtime was used. Native executable SHA256:
 `ffe7f431c9f2f6722ca909b2fd33026e01e27b60db3f53df37362e101027a728`.
 
-The successor uses ordinary X11 horizontal left-wheel input on a verified visible
-saved Script block, then reacquires the disclosure without ANYWHERE scrolling.
-This repairs the actual walkthrough interaction, without altering app source,
-UI layout or screenshot pixels. Final preview/acceptance qualification is pending.
+Public native services create six proper hierarchy scenes and exact authored
+blocks, generate B, then move E from 540000–570000 to 180000–210000.
+Order changes A,F,B,C,D,E → A,F,E,B,C,D. B's captured external window A,F,C,D
+changes to F,E,C,D, with its own saved B included in the fresh preview context.
+The driver saves/reopens the prepared project before generating to refresh the
+existing legacy mirror. This setup does not qualify generation immediately after
+creating a scene without reopening, nor a timeline drag/reorder through the GUI.
 
-Run 37351241936, qualification 6711d1e797b7c2709862b1d3398af2282669c74c,
-also passed 116 core / 396 server tests and exact native B save. Left-wheel input
-returned the actual Script pane to its start (inspected failure PNG), where A/F/E
-occupied the visible columns and B's disclosure remained farther along the narrow
-pane. It timed out before preview; artifact 11362729031 is preserved under
-`/workspace/scratch/scene-order-native-37351241936/`. Its application binary hash
-matches the preceding run exactly. The next driver uses the app's existing
-focusable Resize panels splitter and normal ArrowUp keys to enlarge Script before
-authoring, then reacquires controls. Source and pixels remain unaltered.
+The real GUI uses native AT-SPI geometry and X11 input, including the existing
+Resize panels splitter's keyboard control and ordinary horizontal scrolling.
+Bible, screenplay and timeline are visible together. It verifies:
 
-Main PR10 merge 302851dbb5bf67cda922b4d79f70623e444891dc has exactly frozen
-Bible tree becb86624608663a9e91ff629edd1080d6eada54. Ancestry reconciliation
-5b057efdf038a5959630270dea5c749075307844 preserves the exact scene-order tree
-00f1ef1389bf19c608d4351fc56a227a2aa18677 and both original application/qualification
-heads. Only the feature branch received this merge; the active qualification run
-was preserved without duplicate execution.
+1. Exact manual B save: `Manual B: retain this station beat.\n\n`, revision
+   `35e94dce-cac0-4263-b772-580ebc15a3d0`.
+2. Visible Needs review and disclosed `Entered: SCENE E. Left: SCENE A.`.
+3. Pending proposal `script.review.ddba91d9-49a3-4861-801e-7c6ca8d496d6`, exact
+   text `Synthetic preview: B follows the newly preceding E.\n\n`.
+   Read-only SQLite confirms saved B remains exact until acceptance. The actual
+   accessibility tree exposes the exact proposed text before native acceptance.
+4. Explicit Accept update changes only B, with revision
+   `bd0ccf97-9bfa-4ce1-b002-f7fa29fe5dd8`. All other authored blocks remain exact;
+   the old review clears, and normal scrolling reveals the saved canonical B.
+
+Generation, recap and preview each passed the strict **synthetic localhost
+HTTP/SSE fixture through the production client**. Preview admission requires
+fresh F/E/C/D and exact human B, excludes displaced A and refuses obsolete generated
+B. These checks qualify context custody and application behavior, not real-model
+quality. No real model was executed.
+
+### Inspected native screenshots and evidence
+
+All three PNGs are unaltered **prototype views**, visually inspected after download.
+Review shows the exact entering/leaving explanation, Mara's blue Bible fact and
+timeline. The preview-state PNG leaves the proposal controls below the viewport;
+it is not visual proof of readable proposal text or saved manual B. Pending state
+and preservation are instead supported by the native UI and SQLite assertions
+above. Accepted PNG visibly shows the accepted notice and exact canonical B,
+with Bible and timeline still present. No layout or screenshot pixels were changed.
+
+Artifact **11363753551**, `eidetic-scene-order-native-9429daa`, is 264854 bytes,
+expires **2026-10-08 18:20:17 UTC**. ZIP SHA256:
+`c2c7c21fafe30284dbb88b39ba8001b8efc7825be19b0861b26ad4876344c15a`.
+Downloaded files are preserved at
+`/workspace/scratch/scene-order-native-37354081654/`.
+
+| File | SHA256 |
+| --- | --- |
+| eidetic-scene-order-review.png | 9c0e314a2828a7c7c3473d1f3c7f6716eb7a54fe5b097cc9e80661bce5f66b63 |
+| eidetic-scene-order-preview.png | 7d7e3080c004b4daa73586cdaac0a11627c931b36054fe347039285b14c6305f |
+| eidetic-scene-order-accepted.png | d3fad50ea8c29d791db099771c5e9533e276ca00d08081db6b1ee8d2ac36d0ed |
+| capture-evidence.json | 69a3143e63c4938a81ab85556b0446901bf2a34c30f45413868f0fceec08089a |
+| app-sanitized.log | 8bbab417cee51a2efe04a8579be25506b968b9de6bf0f2b27ee6c0dbce678109 |
+
+Parent handles PRs, reviews, merges and Library delivery. No Library IDs are
+claimed: the earlier official prepared-upload helper failed during tool-list
+startup before any write. There were no external reviewer requests, credential
+changes or paid services.
+
+### Preserved qualification attempts
+
+Each attempt passed the same 116 core / 396 server tests. Application source never
+changed after 9429daa; fixes were limited to qualification setup/navigation.
+Failure artifacts and unaltered captures remain in matching local scratch folders.
+
+| Run | Qualification | Actual failure and separate correction |
+| --- | --- | --- |
+| 37346181993 | beee2d97219936bc93d7a02f8f56c5ceaee0653b | Fixture omitted /v1; no accepted HTTP request or GUI launch. Artifact 11361006580. Corrected in 141ff3d. |
+| 37347395869 | 141ff3d1b959a6e5f4899dbdc160a490d80b5ee0 | Exact generation context admitted, newly created B not persisted. Canonical creation/legacy mirror mismatch identified in completion source. No GUI launch. Artifact 11361382681. Save/reopen fixture correction in da54a85. |
+| 37348942331 | da54a856b46e7de712bf46e0ff7d660904b4b63f | Exact native B save succeeded; fragmented disclosure rectangle remained behind Bible sidebar. No preview/acceptance qualified. Artifact 11361543736. Native left-wheel correction in 6711d1e. |
+| 37351241936 | 6711d1e797b7c2709862b1d3398af2282669c74c | Inspected PNG proved scrolling returned pane to start; B remained farther along narrow columns. Artifact 11362729031. Existing keyboard splitter control correction in 4fcd79e. |
+
+The running 37348942331 walkthrough was resumed rather than duplicated. Successors
+started only after the preceding run completed. The main ancestry merge was pushed
+only to the feature branch and did not restart or cancel the active qualification.
+
+## Next concrete authoring priority, reported before implementation
+
+**Generate a screenplay for a newly created canonical scene without save/reopen.**
+This follows the plan's SQLite authority/backend ownership decision and shared
+manual/agent timeline editing plus conversational authoring milestones M4/M5.
+Evidence is distinct from deferred project-switch recovery:
+
+- `command_service_timeline.rs:create_timeline_node_at_admission` records creation
+  in SQLite, sends EnsureNode and publishes TimelineChanged/HierarchyChanged,
+  without inserting that node into the legacy `state.project` timeline.
+- AI admission uses `ai_service::active_sqlite_project`, so the actual hosted
+  37347395869 synthetic provider accepted the newly created B's exact context.
+- `ai_generation_runtime.rs:successful_generation_metadata` still calls
+  `state.project.timeline.node_mut`. A missing mirrored node emits `node not found`
+  and returns before generated-script persistence. This source path explains the
+  observed admitted-but-unpersisted output; the artifact itself records setup
+  failure, not that error string. Public save/reopen made the same frozen source
+  qualify successfully.
+
+The next bounded slice should reproduce this through public services, then bind
+completion metadata to canonical node existence/placement under existing session,
+command/history and stale-result guards. Check create-then-generate without reopening,
+retime/delete during generation, locks and intervening human text before making
+replacement claims. Reuse existing mechanisms; no duplicate mirror synchronization
+store, new dependencies or broad project recovery rewrite. **No implementation of
+this next slice is included in the present checkpoint.**

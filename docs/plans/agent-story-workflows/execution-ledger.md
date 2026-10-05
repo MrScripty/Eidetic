@@ -1295,3 +1295,29 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Full native pre-push remains blocked locally by missing GTK/GLib development
   libraries; the existing standard hosted Ubuntu/Pumas/ORT route will execute
   actual native tests. No credential changes or external review requests.
+
+
+### Scene-order native qualification completed — 5 October 2026
+
+- Application 9429daa53de9d7ce6679f0b166b1f736f332892a and original qualification
+  da54a856b46e7de712bf46e0ff7d660904b4b63f remain preserved ancestors. Main PR10
+  merge 302851dbb5bf67cda922b4d79f70623e444891dc matches the frozen Bible tree;
+  ancestry merge 5b057ef changes no application tree. No existing worker repair
+  or active walkthrough was duplicated.
+- Run 37354081654 / job 111911938710 passes at qualification
+  4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7 with unchanged application guard,
+  116 actual core / 396 actual server tests and real Tauri authoring/review flow.
+  Native input saves exact manual B; pending preview preserves it; explicit
+  acceptance changes only B and clears review. Strict synthetic HTTP generation,
+  recap and preview admit exact expected context; no real-model quality claim.
+- Three unaltered prototype PNGs inspected and preserved with evidence/log in
+  /workspace/scratch/scene-order-native-37354081654/. Review visibly explains
+  E entering/A leaving; accepted canonical B is readable. Preview proposal falls
+  below captured viewport; its pending state is proven by native UI/SQLite checks,
+  not a readable proposal screenshot. Artifact 11363753551 expires October 8
+  18:20:17 UTC; all hashes/source/revisions and prior failures are in the report.
+- Next priority reported before implementation: canonical create-then-generate
+  without save/reopen. Earlier actual hosted request admitted new B, while
+  successful_generation_metadata still reads state.project's absent mirror node.
+  This is bounded authoring custody, not project-switch recovery. No new slice
+  implementation yet; parent owns PRs/reviews/merges and Library delivery.

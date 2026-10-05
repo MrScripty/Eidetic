@@ -1,17 +1,20 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Authored Bible facts feed existing screenplay lineage and
-targeted review, on verified merged main
-`9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09` (the accepted PR9 tree).
-Application checkpoint `fe7fa5900b648ae9d24b374411ab8f9ebcc72343` preserves the
-accepted manual authoring workflow and adds the Bible-derived projection clock.
-**Next gate:** Parent review of the frozen Bible feature, qualified by hosted run
-37337057557 with synthetic HTTP responses and settled native captures. Independently
-qualify complete screenplay context-window changes on `feat/scene-order-story-memory`. Timed facts,
-relationships and new/unconsumed Bible facts are
-separate follow-ups. Project-switch recovery is deferred; embeddings remain a
-possible later improvement, not a required dependency for this slice.
+**Current phase:** Authored Bible fact propagation is merged in main
+`302851dbb5bf67cda922b4d79f70623e444891dc` (frozen Bible tree
+`becb86624608663a9e91ff629edd1080d6eada54`). Complete screenplay context-window
+memory is implemented at `9429daa53de9d7ce6679f0b166b1f736f332892a` and qualified
+by hosted run 37354081654 on `4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7`:
+116 core / 396 server tests and actual native manual edit, pending preview and
+explicit targeted acceptance with synthetic HTTP responses.
+**Next gate:** Parent review of the source-bound scene-order checkpoint and report.
+Next authoring priority, reported before implementation: newly created canonical
+scenes can enter AI context but completion still reads an absent legacy mirror
+node. Reproduce and bind completion metadata to canonical node/placement using
+existing guards; see the scene-order qualification report. Timed facts,
+relationships and new/unconsumed Bible facts remain separate follow-ups.
+Project-switch recovery is deferred; embeddings are optional later work.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
