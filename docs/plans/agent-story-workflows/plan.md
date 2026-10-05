@@ -9,13 +9,13 @@ Immediate canonical creation/generation is implemented at
 405 frontend tests, and actual native create/select/notes/manual anchor/generate
 without reopening. The delayed native response refuses persistence and the failure
 capture retains exact human text, but final banner/history qualification is pending.
-**Next gate:** Exact-current-source full-service qualification now runs locally
-with the separately audited Pumas no-download successor. Historical zero-step
-native job failures remain historical infrastructure evidence, not a current
-source test result. A new native qualification uses the exact `8d2719d2` application
-source with an explicitly separate dependency integration; neither preserved
-membership repair nor context-stack review branch is rewritten. Parent owns
-review/PR/merge and Library delivery.
+**Next gate:** Parent review of the separately audited Pumas no-download
+integration. Exact-current-source full-service tests pass locally and hosted;
+fresh native Bible edit/review/preview/acceptance passes in run `37379727832`.
+Historical zero-step native failures remain historical infrastructure evidence.
+The new capture uses exact `8d2719d2` application source with the separate tested
+dependency integration; neither preserved membership repair nor context-stack
+review branch is rewritten. Parent owns review/PR/merge and Library delivery.
 Timed facts, relationships and broader unknown entity relevance remain follow-ups.
 Project-switch recovery is deferred; embeddings are optional later work.
 
@@ -24,7 +24,8 @@ Project-switch recovery is deferred; embeddings are optional later work.
 saved-screenplay context-stack bridge now passes 119 core / 283 source-module /
 411 frontend tests and strict compile gates. Exact-source execution with audited
 no-download Pumas now passes 425 full-server / 119 core / 411 frontend;
-native/model execution is pending.
+fresh native Bible edit/acceptance passes; context-stack inspector GUI, SDK
+inference and real-model execution remain unqualified.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -911,7 +912,9 @@ remain outside the permitted route. No old native banner job is rerun.
 - Publish the pin/lock and CI metadata feature-union gate as a separate tested
   dependency milestone. Then publish exact-source native qualification with a
   narrow source guard, real Bible edit/review/preview/explicit acceptance and
-  synthetic localhost HTTP responses. Native screenshots and real-model quality
-  remain unqualified until execution supplies evidence.
+  synthetic localhost HTTP responses. Fresh hosted run `37379727832` passes: actual native builds, 119 core/425
+  server tests and the real GUI walkthrough. Three source-bound screenshots
+  and the verified capture receipt are preserved; real-model quality remains
+  unqualified. This capture does not claim context-stack inspector GUI coverage.
 
 See `docs/reports/story-memory-no-download-qualification.md` for scope and receipts.

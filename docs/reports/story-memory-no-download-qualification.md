@@ -85,7 +85,45 @@ Its provider is explicitly a synthetic localhost HTTP/SSE fixture. This existing
 GUI walkthrough qualifies consumed-field propagation, not the 201-node membership
 stress case or context-stack inspector visibility; those remain separately scoped.
 
-Native execution, new screenshots, SDK inference and real-model quality are
-pending until the new run returns evidence. Full workspace/native local execution
-requires GTK/WebKit/display packages absent here; no permissions, credentials or
-security settings were changed. Parent retains PR/review/merge/Library ownership.
+Fresh hosted run [37379727832](https://github.com/MrScripty/Eidetic/actions/runs/37379727832)
+**passes** at qualification `a0b46fedfdef03901ecd031f43c4bf7636627ce1`, tree
+`2a689f3b23506254655c6164a0c91ff9177f4657`; job `111998278006`.
+Its source guard and all-features no-download gate passed before compilation.
+Actual desktop and fixture builds passed, followed by **119 core / 425 server**
+tests and the actual native walkthrough. No historical job was rerun.
+
+The GUI saved exactly `Mara's umbrella is blue.` over the red fact. The capture
+receipt proves that the saved manual source and generated target remained
+unchanged, an exact manual draft survived the Bible refresh, and pending preview
+consumed the new value plus exact saved screenplay. Only explicit Accept update
+replaced the target and refreshed its consumed-fact dependency. The Bible value,
+timeline and screenplay review state are visible together in the unmodified
+native window screenshots. Some screenplay columns overflow the horizontal
+viewport; exact saved/proposed values are additionally checked by the read-only
+SQL and native accessibility observations. No screenshot was retouched.
+
+| Screenshot | SHA-256 |
+| --- | --- |
+| `eidetic-bible-fact-review.png` | `a9c3312d93dce5ce478733698c6e32228e268d037d7659f95d30834039947c9b` |
+| `eidetic-bible-fact-preview.png` | `5f22e64859cd1fd821f6df6a88074a6218298fd674446bbf07dbd675f45dfec4` |
+| `eidetic-bible-fact-accepted.png` | `ad9ae78ab45c82de2ccd8c8b5079ae8a0606496a9ffd83a58ff6aa26b7203dac` |
+
+Artifact `11372654692`, `eidetic-story-memory-native-8d2719d`, was downloaded
+and verified against GitHub's ZIP digest
+`756f27afe7b96d529c3947a0cc74e1e3224ff5e61b1795f8062a1cd0ff64de04`.
+The three PNGs, sanitized app log and capture receipt are preserved under
+`/workspace/scratch/no-download-qualification/native-37379727832/`.
+Capture receipt hash: `35d959a37e3316c4faefd1aaf2b995db587851ca982811e0549c8fdb24408bb9`.
+Actual native binary hash: `59f7b56b079f37ea709499db6ce6188df9c21973c2ff1e36699c6cb2cc580ab9`.
+Full job log hash: `a047333ad0d88daed84176fdbde37af7c9c7704291f9f0467ebe8e7265e94f47`.
+
+The native walkthrough qualifies consumed-field propagation on this exact
+application source. The 201-node membership case executes in the full server
+suite; its GUI stress presentation and the context-stack inspector GUI remain
+unqualified. SDK inference, live Pumas runtime operation and real-model quality
+also remain unqualified. Full local workspace/native execution requires absent
+GTK/WebKit/display packages; hosted execution supplied the scoped native evidence.
+No credentials, permissions or security settings were changed. The local
+full-workspace pre-push hook was excluded only for those absent native packages;
+ordinary pre-commit gates and the explicit service checks passed. Parent retains
+PR/review/merge/Library ownership.

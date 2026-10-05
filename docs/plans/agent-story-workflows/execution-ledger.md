@@ -1488,3 +1488,23 @@ maintained writable XDG isolation makes all 425 pass. New dependency pin and
 feature-union CI admission are separate from both unchanged review milestones.
 Fresh exact-source native capture is pending; synthetic providers qualify only
 mechanical context/acceptance behavior. See the no-download qualification report.
+
+### Fresh hosted service and native qualification completed
+
+Run `37379727832`, job `111998278006`, passes at qualification
+`a0b46fedfdef03901ecd031f43c4bf7636627ce1` (tree
+`2a689f3b23506254655c6164a0c91ff9177f4657`). Unchanged application source is
+`8d2719d2f80f3529864a138720aeb02463fc390f`; candidate Pumas is a94fd920,
+qualified separately at `1e4afc03427054d2ec40798ba08581f1cee08ee0`
+(tree `3de785bb26280d49103b0e602d06a168f9bb7a8d`). Normal hosted native builds
+and all-features no-download admission pass; actual hosted 119 core/425 server
+and real Tauri Bible red-to-blue Save, preserved manual draft/saved screenplay,
+pending targeted preview and explicit Accept update all pass. Synthetic HTTP/SSE
+responses only; no real-model quality, SDK inference, live runtime or context-stack
+inspector GUI claim. The 201-node membership guard runs in the full server suite.
+Artifact `11372654692` verified ZIP digest
+`756f27afe7b96d529c3947a0cc74e1e3224ff5e61b1795f8062a1cd0ff64de04`;
+three untouched PNGs and capture receipt preserved at
+`/workspace/scratch/no-download-qualification/native-37379727832/`.
+See the report for all hashes and viewport limits. Both original review branches
+stay unchanged; historical failed jobs were not rerun. Parent owns delivery.
