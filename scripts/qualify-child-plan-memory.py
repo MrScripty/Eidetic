@@ -65,7 +65,12 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     original_b = ui.blocks(database, b)[0]
 
     def manual_save(previous, text):
-        block = ui.wait_for('saved manual source block', lambda: ui.screenplay_block(application, previous))
+        if ui.blocks(database, a)[0][1] != previous:
+            raise RuntimeError('Manual source differs from the expected exact saved bytes')
+        # ScriptView renders Fountain paragraphs separately; locate by the
+        # visible action, then require the full raw textarea and saved bytes.
+        excerpt = previous.splitlines()[2]
+        block = ui.wait_for('saved manual source block', lambda: ui.screenplay_block(application, excerpt))
         ui.reveal_button(block, 'Edit', window)
         field = ui.wait_for('exact existing source draft', lambda: ui.editable(application, previous))
         ui.type_text(field, window, text)
