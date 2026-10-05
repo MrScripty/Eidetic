@@ -1089,3 +1089,24 @@ still a separate pending gate. Broader generation persistence is not covered.
 - 397 frontend tests pass across 70 files; typecheck reports zero errors/warnings,
   and production UI build passes. Rust source matches frozen feature source;
   server/native/GUI qualification is separate and remains pending.
+
+## Integrated native authoring qualification preparation
+
+- Frozen application source `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1`
+  (full identity is pinned in the workflow/report) remains unchanged on a separate
+  `test/screenplay-authoring-native` descendant. No PR8/main merge or review request.
+- Add a bounded supported hosted Ubuntu Tauri qualification, public-service
+  empty-screenplay fixture and AT-SPI/X11 driver. The flow verifies first/manual
+  authoring, Graph/Split draft continuity, current-text comparison, canonical
+  timeline retime, exact authored context in production HTTP/SSE provider calls,
+  preview preservation and explicit targeted acceptance. SQLite inspection is
+  read-only and provider text is explicitly fixture data.
+- Local compilation with skipped ORT acquisition is preparation only. Actual
+  hosted server/GUI results must be recorded separately; real-model quality and
+  native lost-ack injection are not claimed. Existing interrupted-save regression
+  coverage and all accepted source heads remain preserved.
+- Preparation validation: Rust formatting, Python syntax and real localhost
+  HTTP/SSE fixture bodies (generation, production recap and preview) pass.
+  Workflow trigger/permissions/source identity checks pass. The public-service
+  example compiled with `ORT_SKIP_DOWNLOAD=1` on the unchanged Rust source of
+  the frozen feature base; this is compile-only, not runtime evidence.
