@@ -124,9 +124,9 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     latest = manual_save(MIDNIGHT, MORNING)
     # Editing the source block does not retarget the selected scene's proposal.
     ui.reveal_button(application, 'Accept timeline plan', window)
-    ui.wait_for('visible stale child plan refusal', lambda: ui.reveal(application,
-        lambda n: n.getRole() == ui.pyatspi.ROLE_ALERT
-        and 'Child plan story context changed; generate and review a fresh plan before accepting' in ui.text_of(n)))
+    ui.wait_for('visible stale child plan refusal', lambda: ui.find(application,
+        lambda n: ui.text_of(n).strip() ==
+        'Child plan story context changed; generate and review a fresh plan before accepting'))
     if plans()[0] != initial or children() != old_children or ui.blocks(database, a)[0] != latest or ui.blocks(database, b)[0] != original_b:
         raise RuntimeError('Stale child acceptance changed canonical material or plan status')
     evidence['child_planning']['stale_acceptance_refused_and_pending_retained'] = True
