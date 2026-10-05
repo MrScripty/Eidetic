@@ -47,6 +47,25 @@ def scene_order(database):
     return [row[0] for row in ui.query(database, "SELECT name FROM nodes WHERE level='Scene' ORDER BY start_ms,sort_order,id")]
 
 
+def scroll_script_start(application, window, exact_text):
+    """Native horizontal wheel navigation in the actual multicolumn Script pane.
+
+    AT-SPI ANYWHERE can leave a fragmented disclosure behind the sidebar. Use
+    the known visible saved block as the pointer surface and real X11 left-wheel
+    events before locating controls again; never click an occluded old rectangle.
+    """
+    block = ui.wait_for('visible saved Script pointer surface',
+                        lambda: ui.screenplay_block(application, exact_text.strip()))
+    rectangle = block.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)
+    geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
+        ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
+    point = ui.control_click_point(rectangle, geometry)
+    ui.command('xdotool', 'windowfocus', '--sync', window)
+    ui.command('xdotool', 'mousemove', str(point[0]), str(point[1]))
+    ui.command('xdotool', 'click', '--repeat', '16', '--delay', '40', '6')
+    application.clear_cache()
+
+
 def main():
     repo = Path.cwd()
     output = Path(os.environ['EIDETIC_CAPTURE_DIR'])
@@ -140,11 +159,12 @@ def main():
         mara = ui.wait_for('Mara Bible control', lambda: ui.reveal(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and ui.button_label_matches(n.name, 'Mara', prefix=True)))
         ui.click_control(mara, window)
         ui.wait_for('blue Bible fact', lambda: ui.reveal(application, lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n) == "Mara's umbrella is blue."))
-        ui.wait_for('context cause in native review UI', lambda: ui.reveal(application, lambda n: 'Screenplay context changed.' in ui.text_of(n)))
+        scroll_script_start(application, window, MANUAL)
+        ui.wait_for('context cause in native review UI', lambda: ui.find(application, lambda n: 'Screenplay context changed.' in ui.text_of(n)))
         # The existing What changed disclosure shows the exact entering/displaced scenes.
-        disclosure = ui.wait_for('What changed disclosure', lambda: ui.reveal(application, lambda n: n.name == 'What changed'))
+        disclosure = ui.wait_for('What changed disclosure', lambda: ui.find(application, lambda n: n.name == 'What changed'))
         ui.click_control(disclosure, window)
-        ui.wait_for('exact scene membership explanation', lambda: ui.reveal(application, lambda n: 'Entered: SCENE E. Left: SCENE A.' in ui.text_of(n)))
+        ui.wait_for('exact scene membership explanation', lambda: ui.find(application, lambda n: 'Entered: SCENE E. Left: SCENE A.' in ui.text_of(n)))
         checkpoint('native downstream review; human B and actual order preserved')
         capture('eidetic-scene-order-review.png')
         ui.reveal_button(application, 'Preview update', window)

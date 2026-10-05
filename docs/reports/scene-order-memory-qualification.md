@@ -95,3 +95,22 @@ live generation immediately after canonical node creation. Application source
 remains frozen at 9429daa. Final native UI results will be recorded after execution. No screenshot Library IDs are available: the previously attempted
 official prepared-upload helper failed at tool-list startup before any write.
 Parent handles PRs/reviews/merges and Library delivery.
+
+### Native walkthrough successor after preserved checkpoint
+
+Run 37348942331, source 9429daa and qualification head
+`da54a856b46e7de712bf46e0ff7d660904b4b63f`, passed 116 core / 396 server tests,
+prepared the actual six-scene reorder, launched Tauri and saved exact human B
+through native input (revision 81b24ba1-0a82-42f2-a76d-a8f99f782d0a).
+Synthetic generation and recap admitted the exact expected context. The driver
+then timed out at the What changed disclosure: AT-SPI ANYWHERE left its fragmented
+multicolumn rectangle behind the Bible sidebar, and native input hit that sidebar.
+No pending preview or acceptance was qualified. Failure artifact 11361543736 and
+unaltered screenshot are preserved at
+`/workspace/scratch/scene-order-native-37348942331/`; binary SHA256
+`ffe7f431c9f2f6722ca909b2fd33026e01e27b60db3f53df37362e101027a728`.
+
+The successor uses ordinary X11 horizontal left-wheel input on a verified visible
+saved Script block, then reacquires the disclosure without ANYWHERE scrolling.
+This repairs the actual walkthrough interaction, without altering app source,
+UI layout or screenshot pixels. Final preview/acceptance qualification is pending.
