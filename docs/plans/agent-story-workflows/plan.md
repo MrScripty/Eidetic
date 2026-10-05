@@ -816,3 +816,30 @@ manual B and unrelated A/C survive. Scope/rule reported before implementation:
 - Local source harness/core/frontend/strict compile gates qualify this slice.
   Hosted native/model execution must be reported only if actually available;
   local ONNX403 is not bypassed and existing screenshots are not new-slice proof.
+
+
+## Membership preview value completeness: independent-review repair
+
+Preserve reviewed checkpoint `2761aacb8e70571729faf535d5cef407d01d36e8`.
+Separate `fix/bible-membership-preview-context` successor; context-stack feature
+work is parked until this repair is tested and published. Independent P2 review
+identified a missing guard: after 200 earlier-sorting default entities displace
+retained Mara, a new motivation causes membership review but is absent from preview
+value context. Actual Rust capture -> synthetic preview -> explicit acceptance at
+this checkpoint reproduced warning clearance without supplying the new value.
+
+- Reuse the same membership delta that derives review. Every targeted preview,
+  regardless of its selected cause, must contain actual resolved BibleFieldInput
+  values for all newly entered membership field IDs. IDs alone do not acknowledge
+  those values. Refuse capture when the bounded resolver omits them; restore their
+  context through the existing assignment owner before requesting fresh preview.
+- Existing capture/binding validation also runs before proposal persistence and
+  explicit acceptance, so stale/legacy pending bindings cannot escape the guard.
+  Preserve manual text, drafts, pending proposals, historical generation receipts,
+  membership scope, existing node limits and field/context ABA checks. Removals
+  need no invented current value. Do not add inferred context or bypass limits.
+- Test actual >200-node default displacement, retained field addition, refused
+  preview/no history, explicit assignment restoration, exact synthetic prompt
+  value, preview/manual preservation and explicit acceptance/refreshed lineage.
+  Also test a different selected cause and context loss after preview. Real-model
+  and native UI quality stay unqualified; no runner retry loop or ONNX workaround.

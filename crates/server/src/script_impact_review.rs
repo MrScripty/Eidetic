@@ -139,6 +139,12 @@ fn capture_in_snapshot(
         ));
     }
     let bible_inputs = crate::bible_field_lineage::capture(conn, &bible_context.payload)?;
+    crate::bible_context_scope::validate_preview_inputs(
+        conn,
+        request.generation_event_id,
+        &request.segment_id,
+        &bible_inputs,
+    )?;
     let bible_context_scope = Some(crate::bible_context_scope::capture(
         conn,
         node_id,

@@ -367,11 +367,18 @@ fn label(conn: &Connection, id: &BibleGraphFieldId) -> Result<String, HistorySto
     Ok(conn.query_row("SELECT n.name || '.' || p.part_key || '.' || f.field_key FROM bible_graph_fields f JOIN bible_graph_parts p ON p.id=f.part_id JOIN bible_graph_nodes n ON n.id=p.node_id WHERE f.id=?1", [id.as_str()], |row| row.get::<_,String>(0)).optional()?.unwrap_or_else(|| id.as_str().into()))
 }
 
-pub(crate) fn cause(
+struct MembershipDelta {
+    node: NodeId,
+    revision: ChangeEventId,
+    entered: Vec<BibleGraphFieldId>,
+    removed: Vec<BibleGraphFieldId>,
+}
+
+fn delta(
     conn: &Connection,
     event: ChangeEventId,
     segment: &ScriptSegmentId,
-) -> Result<Option<ScriptImpactCause>, HistoryStoreError> {
+) -> Result<Option<MembershipDelta>, HistoryStoreError> {
     let Some(before) = recorded(conn, event)? else {
         return Ok(None);
     };
@@ -424,18 +431,59 @@ pub(crate) fn cause(
     if current == old {
         return Ok(None);
     }
-    let entered = current
-        .difference(&old)
+    Ok(Some(MembershipDelta {
+        node,
+        revision,
+        entered: current.difference(&old).cloned().collect(),
+        removed: old.difference(&current).cloned().collect(),
+    }))
+}
+
+// Membership IDs alone cannot acknowledge a newly entered value. Every bound
+// preview must supply those values, even when another impact cause was selected.
+// Reuse the exact delta that owns review, including conservative legacy absence.
+pub(crate) fn validate_preview_inputs(
+    conn: &Connection,
+    event: ChangeEventId,
+    segment: &ScriptSegmentId,
+    inputs: &[BibleFieldInput],
+) -> Result<(), HistoryStoreError> {
+    let Some(delta) = delta(conn, event, segment)? else {
+        return Ok(());
+    };
+    let supplied: BTreeSet<_> = inputs.iter().map(|input| &input.field_id).collect();
+    if delta.entered.iter().any(|id| !supplied.contains(id)) {
+        return Err(HistoryStoreError::InvalidValue(
+            "Bible membership review values are outside the current resolved context; restore their context before previewing".into(),
+        ));
+    }
+    Ok(())
+}
+
+pub(crate) fn cause(
+    conn: &Connection,
+    event: ChangeEventId,
+    segment: &ScriptSegmentId,
+) -> Result<Option<ScriptImpactCause>, HistoryStoreError> {
+    let Some(delta) = delta(conn, event, segment)? else {
+        return Ok(None);
+    };
+    let entered = delta
+        .entered
+        .iter()
         .map(|id| label(conn, id))
         .collect::<Result<Vec<_>, _>>()?;
-    let removed = old
-        .difference(&current)
+    let removed = delta
+        .removed
+        .iter()
         .map(|id| label(conn, id))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(Some(ScriptImpactCause {
         dependency_id: dependency_id(event),
-        input: SemanticDependencyEndpoint::TimelineNode { node_id: node },
-        consumed_revision_event_id: revision,
+        input: SemanticDependencyEndpoint::TimelineNode {
+            node_id: delta.node,
+        },
+        consumed_revision_event_id: delta.revision,
         current_revision_event_id: epoch(conn)?,
         reason: ScriptImpactReason::ContextChanged,
         input_excerpt: Some(format!(

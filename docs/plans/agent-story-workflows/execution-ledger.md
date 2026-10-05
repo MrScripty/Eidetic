@@ -1413,3 +1413,28 @@ still a separate pending gate. Broader generation persistence is not covered.
   Local GTK/GLib and ONNX acquisition limits remain; no bypass, new native UI
   screenshot or real-model quality claim. Frozen screenshots prove only their
   historical application source. Parent owns PR/review/merge and Library delivery.
+
+
+### Membership preview value completeness repair — 5 October 2026
+
+- Independent review of frozen c63370a/2761aac found missing preview values when
+  200 earlier-sorting defaults displace retained Mara. Actual Rust capture,
+  synthetic preview, proposal and explicit acceptance reproduced the warning
+  clearing without new motivation ever reaching the prompt. Reproduction source,
+  immutable log and hashes are in /workspace/scratch/bible-membership-preview-limit-audit/.
+- Separate fix/bible-membership-preview-context successor of preserved 2761aac.
+  New context-stack feature work was parked before repairing this P2. Shared
+  membership delta now requires actual resolved inputs for entered field IDs on
+  every targeted preview, including requests selecting another impact cause.
+  Missing values refuse preview; existing assignment restoration enables a fresh
+  value-bearing preview and explicit acceptance. Node cap and provenance remain.
+- Two regression functions execute actual >200-node displacement for legacy and
+  scoped generations, new field -> refusal -> restored assignment -> exact
+  synthetic prompt -> pending/manual preservation -> explicit acceptance and
+  refreshed UsesFact lineage; alternative cause, context loss and assignment ABA
+  retain pending proposal/manual text and roll back history. No model/native claim.
+- Local 118 core / 245 actual production-module / 406 frontend tests qualify this
+  successor; strict server all-target Clippy remains compile-only. Hosted native
+  final banner/history gate remains blocked after two zero-step allocation
+  failures. No retry loop or ONNX acquisition workaround. Parent owns PR/review,
+  merge and Library delivery; the prior checkpoint and screenshots stay frozen.

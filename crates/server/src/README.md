@@ -19,6 +19,7 @@ domain model in `eidetic-core`.
 | `script_generation_target_tests.rs` | Target/output ABA, retime/delete/locks, manual append, forged custody, rollback and replay regressions. |
 | `canonical_generation_service_tests.rs` | Public create/select/generate and paused synthetic HTTP regressions with an actually stale mirror; delayed scene/manual changes preserve text/history. |
 | `script_context_scope.rs` | Complete continuity-window capture in existing generation/proposal history, derived entering/leaving/order causes and append-only placement guards. |
+| `bible_membership_preview_limit_tests.rs` | Real >200-node displacement, refused missing-value preview, restored context/explicit acceptance, alternate selected cause and pending context-loss/ABA rollback. |
 | `bible_context_scope.rs` | Untimed entity-scoped field membership, legacy historical absence, existing context clocks and derived targeted review; no timed/relationship inference. |
 | `bible_context_scope_tests.rs` | Membership addition/removal, bounded relevance, retained relevance, ABA/stale/acceptance and historical custody regressions. |
 | `scene_context_membership_tests.rs` | Six-scene entering/displaced-neighbor and target-relocation fixtures, exact manual text, late generation/replay, malformed capture rollback and unconsumed membership ABA refusal. |
@@ -479,3 +480,10 @@ fields; unknown completeness stays unknown. Snapshot keys cannot introduce new
 membership. Existing Bible/context history stales pending requests conservatively;
 unrelated changes alone do not create Needs review. Context assignment revisions
 advance screenplay projections and publish existing refresh events. No new schema.
+
+Targeted preview cannot acknowledge newly entered Bible membership using IDs alone.
+The shared membership delta requires actual resolved BibleFieldInput values for
+all entered IDs, regardless of the selected review cause. Missing bounded context
+refuses capture before provider execution; existing binding checks repeat the
+same guard before proposal persistence/acceptance. Restore context through existing
+assignments and request a fresh preview. Removed fields need no invented value.

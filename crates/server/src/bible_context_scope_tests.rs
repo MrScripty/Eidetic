@@ -2,6 +2,9 @@ use super::*;
 use crate::script_impact_review::tests::{accept, edit, fixture, request, text};
 use crate::{bible_graph_command, script_document_command, script_impact_review, script_store};
 
+#[path = "bible_membership_preview_limit_tests.rs"]
+mod preview_limit;
+
 fn entity(conn: &mut Connection, id: &str) {
     bible_graph_command::apply_create_bible_graph_node(
         conn,
