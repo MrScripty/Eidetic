@@ -48,7 +48,7 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 
 ## Invariants
 - Workspace modes remain freely navigable while a screenplay creation save is
-  pending or uncertain. The project-session owner retains the draft/submission
+  pending or uncertain. Project-session owners retain creation and per-block edit drafts/submissions
   when the Script panel is absent; returning Script renders its exact retry.
   Fresh-consumer SSR regressions qualify this state lifetime, not graphical
   navigation or native transport execution.

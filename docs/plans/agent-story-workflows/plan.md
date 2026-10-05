@@ -1,10 +1,12 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Manual first-block creation and screenplay appends, following
-merged PR7 and verified main `27680cb52c2b8bdfcdc478bb7f35801aa2d8e072`.
-**Next gate:** Qualify the exact new creation checkpoint through native AppState
-and graphical type/save/reopen. Pumas runtime/revision integration remains open.
+**Current phase:** Composition of independently accepted PR8 placement repair
+`a84dfc21c99972612b4c8ea8799d7e488c6329ec` and authoring feature chain
+`e8dbfffae2e0faebbffec2b7e72155df05f55073`, on a separate candidate branch.
+**Next gate:** Parent exact-head hosted/native qualification of the composition.
+Continue a separate retained-draft comparison/revision follow-up after freezing
+this candidate. Pumas runtime/revision integration and native GUI remain open.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -115,6 +117,24 @@ preserved. Earlier milestone sections retain their historical qualification.
   execution remain distinct gates; skipped-ORT compilation is compile evidence.
 - **Deferred:** Automatic semantic extraction into the bible, live-model quality,
   broader authoring operations and project switching remain separate work.
+
+## Manual edit continuity and source navigation: bounded follow-ups
+
+- Existing-block edit drafts belong to the active project session, keyed by
+  document/block. Script/Graph/Split removal, selection changes and projection
+  refresh retain exact text and captured revisions. Uncertain saves reconcile
+  immutable payload/IDs through existing revision/replay/lock authority.
+- Known definite native stale/locked refusals retain editable drafts. Explicit
+  discard/reload clears only after a successful canonical read. Drafts are
+  transient; application restart and project-switch recovery remain deferred.
+- Execute late-acknowledgement/navigation and exact-text frontend fixtures, plus
+  actual SQLite reconciliation/context/downstream-review evidence. Distinguish
+  these from native GUI and live-model evidence. Freeze this milestone, then
+  continue the independent navigation follow-up without awaiting review.
+- Source navigation displays existing source clip identity/name/range from the
+  canonical timeline projection and selects that clip through existing editor
+  state. Missing or unbound sources remain explicit. Navigation must retain live
+  drafts and must not infer fictional time, rewrite placement or issue writes.
 
 ## Screenplay generation lineage and Needs review: bounded descendant
 

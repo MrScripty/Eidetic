@@ -353,3 +353,93 @@ fn captured_append_membership_remains_valid_after_source_retimes_during_generati
         assert_eq!((current.start_ms, current.end_ms), (6000, 7000));
     }
 }
+
+#[test]
+fn reconciled_manual_edit_preserves_later_exact_text_and_consumed_source_review() {
+    let (mut conn, _, a, b, c) = linked_fixture();
+    let first = ai_script_context::load_script_context(&conn, a.source_node_id, 1000, 2000)
+        .unwrap()[0]
+        .clone();
+    let original = CommandEnvelope::new(EditScriptBlockCommand {
+        document_id: a.document_id.clone(),
+        block_id: first.block_id.clone(),
+        expected_revision_event_id: first.revision_event_id,
+        text: "  First saved edit — 雨\n\n".into(),
+    });
+    let (_, saved) =
+        crate::script_block_edit::apply_edit_script_block(&mut conn, &original, 30).unwrap();
+    let after_first = row_counts(&conn);
+    // An acknowledgement may be lost. The canonical edit and its real impact
+    // already exist; no client receipt is needed to create that review cause.
+    assert!(
+        script_impact_projection::load_impact(&conn, &b.segment_id)
+            .unwrap()
+            .unwrap()
+            .needs_review
+    );
+    assert!(
+        !script_impact_projection::load_impact(&conn, &c.segment_id)
+            .unwrap()
+            .unwrap()
+            .needs_review
+    );
+    let current = saved
+        .payload
+        .segments
+        .iter()
+        .flat_map(|segment| &segment.blocks)
+        .find(|block| block.block.id == first.block_id)
+        .unwrap();
+    let newer = CommandEnvelope::new(EditScriptBlockCommand {
+        expected_revision_event_id: current.revision_event_id.unwrap(),
+        text: "  Later canonical author text — 雪\n\n  ".into(),
+        ..original.payload.clone()
+    });
+    crate::script_block_edit::apply_edit_script_block(&mut conn, &newer, 40).unwrap();
+    let before_retry = row_counts(&conn);
+    assert_ne!(before_retry, after_first);
+    let before = script_store::load_document_projection_envelope(&conn, &a.document_id)
+        .unwrap()
+        .unwrap();
+    let (outcome, replayed) =
+        crate::script_block_edit::apply_edit_script_block(&mut conn, &original, 50).unwrap();
+    assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
+    assert_eq!(row_counts(&conn), before_retry);
+    assert_eq!(replayed, before);
+    let memory =
+        ai_script_context::load_script_context(&conn, a.source_node_id, 1000, 2000).unwrap();
+    let latest = memory
+        .iter()
+        .find(|input| input.block_id == first.block_id)
+        .unwrap();
+    assert_eq!(latest.text, newer.payload.text);
+    assert_ne!(latest.revision_event_id, first.revision_event_id);
+    assert_eq!(
+        latest.segment_revision_event_id,
+        first.segment_revision_event_id
+    );
+    let impact = script_impact_projection::load_impact(&conn, &b.segment_id)
+        .unwrap()
+        .unwrap();
+    assert!(impact.needs_review);
+    assert!(impact.causes.iter().any(|cause| cause.input
+        == SemanticDependencyEndpoint::ScriptBlock {
+            block_id: first.block_id.clone()
+        }));
+    assert_eq!(block_text(&conn, &b), "Original B");
+    assert_eq!(block_text(&conn, &c), "Unrelated C");
+    let request = script_impact_review::tests::request(&conn, &b);
+    let binding = script_impact_review::capture(&conn, &request.payload).unwrap();
+    assert!(
+        binding
+            .script_inputs
+            .iter()
+            .any(|input| input.block_id == first.block_id && input.text == newer.payload.text)
+    );
+    assert!(
+        !binding
+            .script_inputs
+            .iter()
+            .any(|input| input.text == original.payload.text)
+    );
+}
