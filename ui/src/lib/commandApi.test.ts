@@ -4,6 +4,7 @@ import {
   acceptAffectProposal,
   applyTimelineChildren,
   createAffectProposal,
+  createScriptBlock,
   createBibleGraphNode,
   createConnectedBibleGraphNode,
   deleteBibleGraphEdge,
@@ -1318,5 +1319,22 @@ it('sends a manual screenplay edit through the registered desktop command', asyn
   await editScriptBlock(payload, 'manual-command');
   expect(invoke).toHaveBeenCalledWith('command_script_block_edit', {
     command: { id: 'manual-command', payload },
+  });
+});
+
+it('sends a captured timeline context and exact authored text without frontend block IDs', async () => {
+  const invoke = vi.fn().mockResolvedValue({ outcome: 'recorded', projection: { version: 1 } });
+  vi.stubGlobal('window', { __TAURI__: { core: { invoke } } });
+  const payload = {
+    document_id: 'script.document.main',
+    source_node_id: 'scene.id',
+    expected_start_ms: 1000,
+    expected_end_ms: 2000,
+    block_kind: 'action' as const,
+    text: '  INT. CAFE — 雨\n\n',
+  };
+  await createScriptBlock(payload, 'authoring-request');
+  expect(invoke).toHaveBeenCalledExactlyOnceWith('command_script_block_create', {
+    command: { id: 'authoring-request', payload },
   });
 });

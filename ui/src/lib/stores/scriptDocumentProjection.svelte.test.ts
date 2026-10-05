@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { editScriptBlock, setScriptBlock, setScriptLock } from '$lib/commandApi.js';
+import {
+  createScriptBlock,
+  editScriptBlock,
+  setScriptBlock,
+  setScriptLock,
+} from '$lib/commandApi.js';
 import { getScriptDocumentProjection } from '$lib/projectionApi.js';
 import type { ScriptImpactProjection } from '$lib/scriptTypes.js';
 import {
   applyScriptBlockCommand,
+  applyScriptBlockCreationCommand,
   applyScriptBlockEditCommand,
   applyScriptLockCommand,
   clearScriptDocumentProjection,
@@ -16,6 +22,7 @@ import {
 } from './scriptDocumentProjection.svelte.js';
 
 vi.mock('$lib/commandApi.js', () => ({
+  createScriptBlock: vi.fn(),
   editScriptBlock: vi.fn(),
   setScriptBlock: vi.fn(),
   setScriptLock: vi.fn(),
@@ -413,4 +420,28 @@ it('keeps the last committed projection and context revision when an edit is ref
   expect(getCachedScriptDocumentProjection(key)).toEqual(projection);
   expect(scriptDocumentProjectionState.contextRevision).toBe(revision);
   expect(getScriptDocumentProjectionError(key)).toContain('changed');
+});
+
+it('creates authored text through the canonical response and invalidates prompt memory only on success', async () => {
+  clearScriptDocumentProjection(key);
+  const payload = {
+    document_id: key.document_id,
+    source_node_id: 'node.one',
+    expected_start_ms: 1000,
+    expected_end_ms: 2000,
+    block_kind: 'action' as const,
+    text: '  Mara — 雨\n\n',
+  };
+  const revision = scriptDocumentProjectionState.contextRevision;
+  vi.mocked(createScriptBlock).mockRejectedValueOnce(new Error('placement changed'));
+  await expect(applyScriptBlockCreationCommand(payload, 'new-block-command')).rejects.toThrow(
+    'placement changed',
+  );
+  expect(scriptDocumentProjectionState.contextRevision).toBe(revision);
+  expect(getCachedScriptDocumentProjection(key)).toBeUndefined();
+  vi.mocked(createScriptBlock).mockResolvedValueOnce({ outcome: 'recorded', projection });
+  await applyScriptBlockCreationCommand(payload, 'new-block-command');
+  expect(createScriptBlock).toHaveBeenLastCalledWith(payload, 'new-block-command');
+  expect(getCachedScriptDocumentProjection(key)).toEqual(projection);
+  expect(scriptDocumentProjectionState.contextRevision).toBe(revision + 1);
 });

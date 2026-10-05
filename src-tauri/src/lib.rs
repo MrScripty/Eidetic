@@ -122,6 +122,7 @@ pub fn run() {
             commands::object_script_story::command_object_field,
             commands::object_script_story::command_script_block,
             commands::object_script_story::command_script_block_edit,
+            commands::object_script_story::command_script_block_create,
             commands::object_script_story::command_script_lock,
             commands::object_script_story::command_story_create,
             commands::object_script_story::command_story_update,

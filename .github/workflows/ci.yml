@@ -70,6 +70,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Authoring HTTP fixture regressions (no native runtime)
+        run: python3 -m unittest discover -s scripts -p 'test_qualify_screenplay_authoring.py' -v
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

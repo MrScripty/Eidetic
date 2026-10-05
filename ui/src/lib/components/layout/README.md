@@ -12,6 +12,7 @@ This directory contains the top-level shell components that partition the Eideti
 | `AiStatusIndicator.svelte`           | Floating AI connection status indicator positioned by the shell.                                                                             |
 | `AppToolbar.svelte`                  | Focused top toolbar surface for shell-level save/export commands.                                                                            |
 | `AppWorkspace.svelte`                | Focused central workspace switcher for script, graph, and split layouts.                                                                     |
+| `AppWorkspace.creationLifetime.ssr.test.ts` | Fresh Script/Graph/Split consumer renders, late acknowledgement failure and project-session isolation using actual controllers with native invoke fixtures. |
 | `BottomTimelineStack.svelte`         | Fixed-height bottom region that keeps the timeline anchored to the window bottom and conditionally stacks the character timeline beneath it. |
 | `GraphRendererWindowControls.svelte` | Projection-only launch/focus/close/status controls for the floating Bevy bible graph renderer window.                                        |
 | `GraphSelectionDetail.svelte`        | Right-panel detail projection for selected graph edges, influence paths, context layers, and neighborhoods.                                  |
@@ -46,6 +47,11 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 - Letting the timeline continue to consume remaining flex height: rejected because it makes the bottom editing surface unstable across window sizes.
 
 ## Invariants
+- Workspace modes remain freely navigable while a screenplay creation save is
+  pending or uncertain. Project-session owners retain creation and per-block edit drafts/submissions
+  when the Script panel is absent; returning Script renders its exact retry.
+  Fresh-consumer SSR regressions qualify this state lifetime, not graphical
+  navigation or native transport execution.
 
 - The timeline stack is the bottom-most shell region whenever a project is open.
 - Fixed-height timeline sizing is derived from shared constants, not component-local literals.

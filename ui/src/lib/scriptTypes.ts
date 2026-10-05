@@ -145,3 +145,12 @@ export interface ScriptDocumentCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<ScriptDocumentProjection>;
 }
+
+export interface CreateScriptBlockCommand {
+  document_id: ScriptDocumentId;
+  source_node_id: string;
+  expected_start_ms: number;
+  expected_end_ms: number;
+  block_kind: ScriptBlockKind;
+  text: string;
+}

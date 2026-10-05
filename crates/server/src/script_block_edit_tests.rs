@@ -215,3 +215,26 @@ fn context_selects_two_adjacent_segments_and_excludes_deleted_text() {
         crate::ai_script_context::load_script_context(&conn, target, 8000, 9000).unwrap();
     assert!(!evidence.iter().any(|block| block.text == "Scene 7"));
 }
+
+#[test]
+fn explicit_current_revision_does_not_bypass_a_lock_added_after_the_read() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let block = seed(&mut conn, NodeId::new(), 0, "Protected exact text — 雨");
+    let compared = edit(&conn, &block, "My retained replacement");
+    let lock = CommandEnvelope::new(SetScriptLockCommand {
+        lock_id: ScriptLockId::new("comparison.lock").unwrap(),
+        span_id: ScriptSpanId::new(format!("{}.span.main", block.as_str())).unwrap(),
+        reason: "Protected after comparison".into(),
+    });
+    script_document_command::apply_set_script_lock(&mut conn, &lock, 20).unwrap();
+    let before = projection(&conn, &compared).unwrap();
+    let count = commands(&conn);
+    assert!(
+        apply_edit_script_block(&mut conn, &compared, 30)
+            .unwrap_err()
+            .to_string()
+            .contains("locked")
+    );
+    assert_eq!(projection(&conn, &compared).unwrap(), before);
+    assert_eq!(commands(&conn), count);
+}

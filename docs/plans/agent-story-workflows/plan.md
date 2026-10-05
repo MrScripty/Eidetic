@@ -1,9 +1,12 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** M4a shared timeline write-conflict boundary; M1/M2a merged.
-**Next gate:** Qualify and independently review shared timeline custody before
-agent write exposure. Pumas runtime/revision integration remains open.
+**Current phase:** Retained-draft comparison and explicit version continuation,
+separately on frozen combined candidate
+`a25565267fc5e9662458196b6b8bc9373eacdfb8`. The accepted a84/e8 histories
+remain preserved in that candidate; parent owns stacked hosted qualification.
+**Next gate:** Exact-head hosted/native and graphical qualification remain open.
+Pumas runtime/revision integration and project-switch recovery remain deferred.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -73,6 +76,83 @@ Eidetic audit targets `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`. The accepted
 source already includes the later fictional-time resolver. Reuse canonical
 SQLite/history/projections; neither a graph database nor embedding relevance
 replaces authored evidence or acceptance policy.
+
+## Manual creation: bounded follow-up
+
+On `feat/screenplay-story-memory`, close the empty-screenplay writing gap from
+verified merged main `27680cb52c2b8bdfcdc478bb7f35801aa2d8e072`. Existing manual
+editing, generation lineage, explicit review and range-to-script placement are
+preserved. Earlier milestone sections retain their historical qualification.
+
+- **Authoring:** Select a timeline clip, choose Write screenplay, type exact text
+  and block kind, then save. Create the main document and its source-bound segment
+  only when absent; subsequent commands append independent blocks. Existing text,
+  locks, segment status and placement fields remain unchanged. Appends advance
+  the segment dependency revision with sparse new-block membership history.
+- **Authority:** SQLite owns source admission, deterministic command-derived
+  block/span identities and append order. Recheck current placement/order under
+  the writer lock; refusals roll back history and text. Capture project ownership
+  before waiting and retain its gate through completion and publication.
+- **Drafts:** Capture context/document and a stable request identity at begin;
+  selection changes do not retarget pending text. An uncertain acknowledgement
+  retains the exact submitted payload/ID in the active project-session owner
+  through Script/Graph/Split navigation and Script consumer replacement, including
+  delayed acknowledgement failure while Script is absent. Returning Script exposes
+  exact retry; actual project activation replaces the draft owner and excludes
+  old responses/callers. Editing, discard,
+  restart and placement refresh stay disabled while that result is unknown.
+  The definite native pre-recording placement refusal unlocks editing and
+  explicit current-placement refresh for the original source. Same-node move or
+  resize refreshes selected-node evidence from the canonical timeline range;
+  recovery waits for agreement and retains explicit read-error recovery.
+- **Memory:** Reuse canonical screenplay reads and revision invalidation. New text
+  survives reopen, appears in neighboring prompt context and follows ordinary
+  source range changes without changing authored text revisions. A generated
+  descendant that consumed this segment exposes Needs review after an append.
+  Its normal preview captures all new members; explicit acceptance refreshes
+  actual lineage, and later edits to those members trigger review again. No model
+  call is required to create canonical text or derive the review cause.
+- **Qualification:** Execute actual SQLite source modules, core contracts and
+  frontend logic/rendering fixtures here. Native AppState and graphical desktop
+  execution remain distinct gates; skipped-ORT compilation is compile evidence.
+- **Deferred:** Automatic semantic extraction into the bible, live-model quality,
+  broader authoring operations and project switching remain separate work.
+
+## Manual edit continuity and source navigation: bounded follow-ups
+
+- Existing-block edit drafts belong to the active project session, keyed by
+  document/block. Script/Graph/Split removal, selection changes and projection
+  refresh retain exact text and captured revisions. Uncertain saves reconcile
+  immutable payload/IDs through existing revision/replay/lock authority.
+- Known definite native stale/locked refusals retain editable drafts. Explicit
+  discard/reload clears only after a successful canonical read. Drafts are
+  transient; application restart and project-switch recovery remain deferred.
+- Execute late-acknowledgement/navigation and exact-text frontend fixtures, plus
+  actual SQLite reconciliation/context/downstream-review evidence. Distinguish
+  these from native GUI and live-model evidence. Freeze this milestone, then
+  continue the independent navigation follow-up without awaiting review.
+- Source navigation displays existing source clip identity/name/range from the
+  canonical timeline projection and selects that clip through existing editor
+  state. Missing or unbound sources remain explicit. Navigation must retain live
+  drafts and must not infer fictional time, rewrite placement or issue writes.
+
+## Retained-draft comparison: bounded authoring follow-up
+
+- A refused or still-open edit can read and display current canonical saved text
+  beside its exact retained draft. Reading never writes text or changes its base
+  revision. Preserve the comparison across normal workspace navigation.
+- Explicit Continue draft from this version retains exact draft text and advances
+  only its expected revision to the read snapshot. Current projection must agree
+  with that snapshot; changed/ABA versions require a fresh comparison. A later
+  intervening write or lock still refuses through existing backend validation.
+- Uncertain saves keep immutable payload/ID reconciliation and cannot compare,
+  discard or continue another version. Failed/missing reads keep the draft and
+  admit no unread version. Reuse canonical command/projection and session owners;
+  no backend authority change, automatic merge, save or proposal acceptance.
+- Qualify actual frontend read/controller/store/SSR flows with fixture native
+  transport, plus actual SQLite stale/read/continuation, exact memory/downstream
+  review, idempotent replay and late lock regression evidence. Parent separately
+  qualifies native GUI and full server execution. Project switching is deferred.
 
 ## Screenplay generation lineage and Needs review: bounded descendant
 

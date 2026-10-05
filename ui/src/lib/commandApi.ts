@@ -41,6 +41,7 @@ import type {
 } from './propagationProposalTypes.js';
 import type {
   ScriptDocumentCommandResponse,
+  CreateScriptBlockCommand,
   SetScriptBlockCommand,
   EditScriptBlockCommand,
   SetScriptLockCommand,
@@ -451,4 +452,12 @@ export function deleteStoryArc(
   };
 
   return invokeDesktop<StoryArcCommandResponse>('command_story_delete', { command });
+}
+
+export function createScriptBlock(
+  payload: CreateScriptBlockCommand,
+  commandId = createCommandId(),
+): Promise<ScriptDocumentCommandResponse> {
+  const command: CommandEnvelope<CreateScriptBlockCommand> = { id: commandId, payload };
+  return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block_create', { command });
 }

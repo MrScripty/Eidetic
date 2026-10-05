@@ -735,3 +735,464 @@ still a separate pending gate. Broader generation persistence is not covered.
   `ORT_SKIP_DOWNLOAD=1` (compile only); exact descendant native execution remains
   with the same reviewer. No AppState substitute, HTTP bridge, graphical claim,
   model call, publication or merge.
+
+
+## Manual first-block creation and screenplay appends
+
+- Started a fresh `feat/screenplay-story-memory` worktree from verified merged main
+  `27680cb52c2b8bdfcdc478bb7f35801aa2d8e072`; the parent reports its postmerge CI
+  passed. Preserved prior path/custody qualification artifacts and branches.
+- Confirmed Script could edit existing blocks but offered no writing action for
+  an empty document. Added Write screenplay for the selected timeline context,
+  kind selection, exact-text save, cancel and explicit placement refresh. Draft
+  document/context/request identity is captured before typing and retained on
+  refusal; selection changes cannot silently retarget text.
+- Added a host-neutral creation command, thin registered Tauri adapter and cache
+  action. SQLite creates main document/source segment only when absent, assigns
+  command-derived block/span identities and appends after existing blocks. User
+  provenance, sparse history and current projection are committed together.
+  Existing blocks, protected spans, segment status and placement revision remain
+  intact. Writer-local source/order revalidation rolls back partial history/text.
+  Source-session admission precedes queueing, and the session gate is supervised
+  through commit/event completion. Identical replay publishes no extra event.
+- Executed **115 core tests**, **357 frontend tests**, and **219 actual-source
+  SQLite/module tests**, including **seven new creation regressions** for exact
+  save/reopen and neighboring memory; locks/metadata; existing generated text;
+  replay after later edits; stale/deleted/empty requests; writer-trigger rollback;
+  and retiming without authored revision changes. The standalone module harness
+  uses a configuration-only shim for provider fixture tests, no AppState or ORT.
+  Frontend draft, invoke, cache and SSR tests use fixtures; they are not graphical
+  typing or native transport execution. No live-model calls were made.
+- Frontend checks/build and strict core/server all-target/all-feature Clippy pass.
+  Server compilation uses `ORT_SKIP_DOWNLOAD=1`, strictly compile-only evidence.
+  Two new real AppState tests cover create/edit/save/reopen/preview/retime and
+  queued source replacement; they compile but require exact-head native execution.
+- Normal Chromium aborted because its installed SUID sandbox helper is incorrectly
+  configured. GTK3/WebKit2GTK4.1 development packages are absent, so graphical and
+  desktop build/runtime qualification remain pending. No sandbox settings were
+  changed. The environment's earlier normal exact ORT download was denied by
+  `cdn.pyke.io` with HTTP 403; no retry, alternate fetch or network-policy change.
+- Automatic bible extraction, model quality and project switching are deferred.
+  This milestone closes manual screenplay creation and feeds existing canonical
+  memory/placement contracts. Parent owns independent review, PR and merge.
+
+
+## Manual append propagation correction
+
+- Independent review held `bab69018a0b8c5346a98e95bb09c9372e73361db` acceptance:
+  A1 was consumed by generated B, then appending A2 changed canonical prompt
+  context without changing B's dependency revisions or exposing Needs review.
+  Executed a new actual-source regression on that frozen production source and
+  reproduced the failure at the downstream review assertion. The earlier 219
+  source tests passed but did not qualify consumed-source append propagation.
+- Created isolated `fix/screenplay-append-impact` directly from that published
+  source. A segment dependency now changes when manual creation adds a member:
+  each new block gets an exact sparse `block.<block-id>` reference delta on its
+  segment, and an existing segment's write identity advances in the same writer
+  transaction. New-segment creation includes that delta in its create revision.
+  Exact text, prior block revisions/provenance/locks, segment status and placement
+  fields remain intact. No schema, lineage algorithm or UI change is introduced.
+- Executed **223 actual-source module tests**, including four new regressions:
+  consumed A1 + appended A2 exposes B review; preview retains exact A1/A2 and
+  explicit acceptance updates B alone, clears review and binds A2 so its later
+  edit retriggers review; unrelated C remains unaffected. An intervening A3
+  refuses old acceptance with no partial history, and A2 replay preserves current
+  membership identity. Injected block insertion failure rolls back the segment
+  identity, text and all history. Captured A1/A2 membership evidence remains valid
+  when its source retimes during generation, while B reports changed placement.
+- Existing exact save/reopen, protected text, writer admission and retiming tests
+  remain active; expected append revision counts now include the new segment
+  revision. Strict server all-target/all-feature Clippy and normal commit hooks
+  pass. Clippy uses `ORT_SKIP_DOWNLOAD=1`, compile-only. The harness executes real
+  SQLite/source modules with a configuration-only provider fixture shim; no native
+  AppState, graphical or live-model execution claim is made. Prior ORT CDN HTTP403
+  and native/graphical dependency limitations remain; no retries or workarounds.
+- Parent owns exact-head native qualification, independent review, PR and merge.
+
+
+## PR8 uncertain-save retry and queued fixture schema repairs
+
+- Read official review `5408583844`, comment `4179636372`, on exact head
+  `35ad9d595a9b77b77b0678971fb2fceb382b9aac`. Added executable frontend regressions
+  and reproduced both failures before repair: changed text/kind reused the old
+  command ID after a simulated committed-but-lost acknowledgement, and uncertain
+  cancel/restart replaced the original ID. The tests drive actual controller,
+  store, command and desktop-invoke helpers; native receipts are fixture data.
+- On isolated `fix/pr8-authoring-retry`, capture the submitted payload/ID once and
+  retry that exact snapshot until its outcome is reconciled. While uncertain,
+  text/kind/discard/restart/placement controls remain disabled, and mutable draft
+  fields cannot change the retried command. Exact retry reconciles a recorded
+  receipt without appending another block. The existing native error shape is
+  preserved in `Error.cause`; only `bad_request` plus the exact known pre-recording
+  placement message unlocks editing/current-placement recovery. Lookalike text,
+  internal errors and untyped failures remain uncertain. A later exact retry
+  receiving the definite placement refusal safely restores recovery.
+- Parent-local handoff/log paths are absent here. Retrieved official Linux job
+  `111546267404` and Windows job `111546267415` logs from run `37239871656`: both
+  check out PR merge `0758062` for head `35ad9d5`, report **378 server passed / one
+  failed**, and fail the queued creation fixture's diagnostic read at line 165
+  with `no such table: script_documents`. The refused queued command correctly
+  returns before schema creation. Initialize the empty canonical script schema
+  in fixture setup before AppState/queueing; preserve every original assertion
+  and all production Rust service/storage code.
+- Executed **363 frontend tests**, including four new retry/command-path and two
+  rendered-control fixtures. Executed **223 existing actual-source module tests
+  plus one verification of the exact copied fixture setup prefix** against real
+  saved/reopened SQLite (224 total). This prefix verifies canonical tables are
+  empty and the selected source node remains stored; it does not invoke AppState.
+  Frontend build/checks, strict server all-target/all-feature Clippy and normal
+  commit hooks pass. Server Clippy uses `ORT_SKIP_DOWNLOAD=1`, compilation only.
+- New-head native AppState/Linux/Windows CI remains pending hosted execution.
+  No graphical or live-model claim, normal ORT download retry, policy/sandbox
+  change, external review request or merge. Parent owns PR/review/qualification.
+
+
+## PR8 creation draft lifetime correction
+
+- Independent source review held published retry repair
+  `23fc2379feca5467cc7d70fb0e7b4b8a0be359f9`: Script/Graph/Split navigation
+  removes the Script panel, so its component-owned immutable pending submission
+  could disappear despite correct local retry logic. Executed the fresh Script
+  consumer regression against that exact frozen production head; returning Script
+  failed to render Retry same save or the original uncertain draft. This is an
+  executed state-lifetime/SSR reproduction, not a graphical observation.
+- Isolated `fix/pr8-draft-lifetime` moves the existing creation controller into
+  a small active-project-session owner. The Script composer consumes it and
+  reacts to project-session replacement. Mode changes remain unrestricted;
+  text, captured source and exact submitted payload/ID survive view removal,
+  including a delayed acknowledgement failure while Script is absent. Existing
+  exact retry and definite-placement-refusal behavior remain unchanged.
+- Existing project activation resets this owner alongside transient editor
+  state. An old retained consumer cannot submit into the new project; old
+  completion only updates its retired draft and existing projection lifetime
+  guards reject its publication. No application-restart persistence, backend
+  write cancellation, generic draft framework or Rust change is introduced.
+- Executed **366 frontend tests** across **66 files**, including three new
+  actual-controller/command-path lifetime regressions: fresh Script consumers
+  restore the exact uncertain submission after Graph/Split; an in-flight save
+  loses acknowledgement while absent and later retries the identical command;
+  real project activation replaces the owner and isolates late response/retry.
+  Native receipts and invoke are fixtures. These qualify equivalent consumer
+  state lifetime through real workspace SSR rendering, not DOM unmount events,
+  graphical navigation, native transport, live models or full server runtime.
+- Frontend typecheck (zero errors/warnings), static build, and normal commit
+  hooks pass. The previously denied normal ORT download (`cdn.pyke.io`, HTTP403)
+  was not retried; no policy or sandbox change. Parent retains exact-head hosted
+  native/graphical qualification, independent review, PR and merge ownership.
+
+
+## PR8 same-node placement refresh correction
+
+- Read official review `5408774586` on exact head
+  `dd815f51d674f07514759c1d74f119be7b50bd9c`. Executed a new regression on
+  that frozen production source: the actual frontend range-command/store path
+  retimes selected A without changing its ID, its old selected-node projection
+  persists, and a definite creation placement refusal still renders Use current
+  placement and save with stale times. Baseline fails at the stale recovery
+  visibility assertion (one failure/four skipped), before any new helper is used.
+- Isolated `fix/pr8-current-placement` refreshes selected-node evidence when
+  the canonical timeline clip range changes. It supersedes pending pre-move
+  reads through the existing request/version guards. Creation and recovery
+  consume source data only when its range agrees with that canonical clip; no
+  optimistic range patching or draft retargeting. A failed read exposes explicit
+  Refresh selected clip and retains exact text/captured intent. Read completion
+  is untracked by the range effect, preventing a self-retrying read loop.
+- Execute **371 frontend tests / 67 files**, including **five new regressions**:
+  actual same-ID range change, definite refusal, fresh selected evidence and
+  exact Unicode/newline recovery payload; late pre-move response; second resize
+  racing the first read; read failure/older-version response; and existing clear/
+  selection guards plus unchanged/absent clip no-fetch behavior. Actual frontend
+  commands/stores/controller and SSR source rendering are exercised; native invoke
+  receipts are fixtures and the client range-effect body is executed explicitly.
+  This is not graphical drag/resize or native transport observation.
+- Frontend typecheck reports zero errors/warnings; static build and normal hooks
+  pass. No Rust, schema or guard-store change, generic framework, native server/
+  GUI or live-model claim. Prior normal ORT `cdn.pyke.io` HTTP403 was not retried;
+  no network/sandbox changes or alternate acquisition. Parent owns PR/review/merge.
+- Preserve separate edit-continuity milestone local
+  `94c24298c66245aa90b76f2472c793b0ce327899` (tree
+  `f846de1c0f75903a1db8e1ff181f5da4b5f270c9`) and its logs/source harness.
+  The PR8 repair branch includes none of that independent feature's changes.
+## Existing screenplay edit continuity milestone
+
+- Continue the owner-prioritized manual authoring/story-memory work on isolated
+  `feat/screenplay-edit-continuity`, directly from accepted PR8 source
+  `dd815f51d674f07514759c1d74f119be7b50bd9c`. Existing block editors owned
+  drafts in their components and allocated a fresh command ID on every save,
+  unlike the already repaired creation path. This is a source-level finding.
+- Per-document/block project-session owners now retain exact Unicode/whitespace
+  text and captured base revisions through Script/Graph/Split replacement,
+  selection changes and canonical refresh. Save snapshots its payload/ID once.
+  An ambiguous acknowledgement permits exact retry only; known native stale or
+  locked-span transaction refusal restores editing/discard. Explicit reload
+  discards only after a successful read. Session activation resets the owners;
+  old retained callers cannot submit another edit into the replacement session.
+- Execute **375 frontend tests / 67 files**, including **nine new regressions**
+  for independent exact drafts, actual workspace SSR consumers, delayed failure
+  while Script is absent, immutable retry through actual command/store/invoke
+  helpers, canonical cache/context refresh, native stale/locked provenance,
+  lookalike refusal, failed reload and late old-controller completion. Invoke
+  receipts are fixtures; these are state-lifetime tests, not DOM or native GUI.
+- Execute **225 actual-source module tests** using the bounded configuration-only
+  shim and actual SQLite/history/context/impact modules, no AppState or ORT. One
+  new linked A/B/unrelated-C regression commits a manual edit, preserves B's real
+  consumed-source review before any acknowledgement, commits later exact Unicode
+  author text, then replays the original request without new rows or overwriting
+  that text. Memory and targeted preview capture the latest revision/text; source
+  placement and generated B/unrelated C remain unchanged. Production Rust is
+  unchanged. The prior fixture-prefix proof remains included in the 225 count.
+- Frontend check (zero errors/warnings), build and normal hooks pass. Freeze this
+  milestone and continue the independent source-navigation slice; parent owns
+  native/GUI/live-model qualification, independent review and merges. PR8 history
+  remains preserved. Project-switch recovery stays deferred; no ORT retry,
+  alternate acquisition, policy/sandbox change or external review request.
+- During final verification the parent supplied PR8 review 5408774586's separate
+  same-node retiming/current-placement gap. Preserve this feature checkpoint and
+  prioritize its bounded repair on another branch from exact PR8 head.
+
+
+## Screenplay source navigation milestone
+
+- Continue the next independent agreed authoring slice on isolated
+  `feat/screenplay-source-navigation`, directly from frozen published edit
+  continuity `1c2bf23736880e0f36945fb7f3335d4310becc79` (tested local
+  `94c24298c66245aa90b76f2472c793b0ce327899`, shared tree
+  `f846de1c0f75903a1db8e1ff181f5da4b5f270c9`). This proceeds without waiting
+  for review. Preserve PR8 and separate same-node placement repair published
+  `a84dfc21c99972612b4c8ea8799d7e488c6329ec` on its own exact-parent branch.
+- Script now displays each segment's source clip name and current canonical
+  timeline range with Go to clip. The existing focused projection, selection
+  and viewport scroll helpers own navigation. Re-read clip availability at
+  activation, so a removed/retimed source cannot use captured rendering data.
+  Missing sources and standalone screenplay remain explicit; failed reads show
+  an error and permit retry. Selection/clear races retain existing store guards.
+- Execute **382 frontend tests / 68 files**, including **seven new regressions**:
+  real Script panel source rendering without altering authored text; missing/
+  standalone source states; actual frontend range change then navigation to its
+  latest clip while preserving independent exact Unicode edit/creation drafts
+  and uncertain identity; removal between rendering/activation; superseding
+  selection; failed-read retry; and session projection clearing. Frontend
+  commands/stores/helpers and SSR are executed; native invoke/read receipts are
+  fixture data. This does not qualify graphical clicking/scroll or native IPC.
+- Frontend typecheck (zero errors/warnings), static build and normal hooks pass.
+  Production Rust and the already executed 225 source-module evidence are
+  unchanged; no new source/native server or live-model execution claim. Source
+  navigation performs reads and transient selection/scroll only, without durable
+  writes, fictional-time inference, retargeting drafts, changing zoom/playhead
+  or accepting propagation proposals. It uses the existing timeline viewport
+  behavior, not a new feature-length layout or scrolling implementation.
+- Freeze this second coherent feature checkpoint. Parent owns independent
+  exact-head native/GUI/live-model qualification and integration of the separate
+  PR8 repair/feature lineages, plus PR/review/merges. Project switching remains
+  deferred; no ORT retries, network/sandbox change or external review request.
+
+
+## Accepted authoring composition candidate
+
+- Parent independently accepted frozen placement repair
+  `a84dfc21c99972612b4c8ea8799d7e488c6329ec` and feature chain
+  `e8dbfffae2e0faebbffec2b7e72155df05f55073`, reporting 12/17/7 focused
+  independent tests. On isolated `feat/screenplay-authoring-composed`, preserve
+  the actual frozen histories with ordered parents: a84 first, e8 second.
+  Neither PR8 nor main is modified. Parent owns the stacked feature PR.
+- Source merged without conflict. ScriptPanel combines the canonical creation
+  source/range-refresh effect and failed-read recovery from a84 with the source
+  navigation header from e8. All other changed source/test files retain their
+  exact frozen parent identities. Resolve only two documentation conflicts: keep
+  both ledger append histories and all editor contents/invariants, consolidating
+  the duplicate ScriptPanel contents row. No new production behavior is added.
+- Execute **115 core tests**, **387 frontend tests / 69 files** and **225
+  actual-source module tests**, frontend typecheck (zero errors/warnings), static
+  build, normal hooks and postcommit traceability here. Core initially exhausted
+  the temporary build volume; preserve the generated cache in the larger
+  workspace volume and rerun successfully without changing source or policy. The bounded source harness uses a
+  configuration-only shim, no AppState or ORT. Native/graphical/live-model and
+  full-server qualification remain distinct parent gates; no ORT download retry,
+  network/sandbox change, merge into PR8/main or external review request.
+- Freeze/report this composition, then continue the agreed manual-authoring
+  priority on another branch: compare a refused draft with current saved text
+  and explicitly retain the exact draft against that read revision. No automatic
+  overwrite; uncertain submissions remain immutable, and intervening edits must
+  still refuse through backend expected-revision/lock authority. Project switching
+  and broad recovery remain deferred.
+
+
+## Retained edit comparison and explicit continuation milestone
+
+- Continue independently after publishing/freeze of composition
+  `a25565267fc5e9662458196b6b8bc9373eacdfb8`, tested local
+  `0488ef075956030af343df07555ad80ab1a1790f`, shared tree
+  `e964d509f528fbdb8154954c2389e102c61a5342`, on isolated
+  `feat/screenplay-draft-comparison`. No review wait, PR8/main change or alteration
+  of the frozen combined candidate. Parent owns stacked hosted qualification.
+- Existing editing offered discard/reload after stale refusal, losing retained
+  intent. Compare saved text now uses the existing canonical read and displays
+  its exact snapshot beside the retained draft. It does not write or advance
+  base revision. Explicit Continue draft from this version retains exact text
+  and admits only the private read revision when current projected revision agrees.
+  Changed/same-text ABA versions require another comparison. Later Save retains
+  the existing backend expected-revision, locked-span and replay authority.
+- Session-owned comparison survives Script/Graph/Split consumer replacement.
+  Pending/read-failed/missing comparisons retain exact text, and admit no unread
+  version. Private read evidence cannot be replaced through mutable display
+  state. Uncertain saves cannot compare/continue/discard another request; their
+  immutable original payload/ID remains the only retry until reconciliation.
+- Execute **396 frontend tests / 70 files**, including **nine new regressions**
+  for real read/controller/store/SSR comparison and explicit save; navigation;
+  canonical/ABA mismatch; edit after continuation; failed/missing reads; pending
+  read controls and late failure; uncertain exact retry; display-state mutation;
+  and retired read isolation. Native invoke/receipt payloads are fixtures, not
+  graphical or native transport observation. Typecheck has zero errors/warnings;
+  static build, formatting and normal hooks/postcommit traceability pass.
+- Execute **227 actual-source module tests** with actual SQLite/history/context/
+  impact modules and the bounded configuration-only shim, no AppState/ORT. Two
+  new regressions verify a retained draft remains stale after a later writer,
+  fresh explicit revision continuation commits exact Unicode/whitespace text
+  into canonical context and B's review while preserving unrelated C, and replay
+  adds no rows; a lock added after reading still refuses with no partial history
+  or text mutation. Production Rust is unchanged. Core remains the composition's
+  separately executed 115-test gate; this milestone does not claim a new core run.
+- Native GUI, full-server/native AppState and live-model quality remain parent
+  qualification gates. No automatic merge/overwrite/acceptance, new backend
+  contract or general draft framework. Project-switch recovery remains deferred.
+  No ORT retry, alternate acquisition, network/sandbox change, external review
+  request or merge into PR8/main. Preserve all frozen source lineages/artifacts.
+
+## PR8 A-to-B-to-A retiming request ownership repair
+
+- Exact accepted base `a84dfc21c99972612b4c8ea8799d7e488c6329ec`, isolated
+  `fix/pr8-retime-return`; accepted feature descendants remain unchanged.
+- Reproduced review `5409007766` with actual frontend range commands and selected
+  projection refresh: A-to-B starts a delayed B read, returning the same node to
+  A matches cached A and skips refresh, then late B makes creation unavailable.
+  The added regression fails on the base after admitting that delayed response.
+- Matching cached placement only avoids a read when no selected projection read
+  is pending. Otherwise the existing refresh increments request ownership, reads
+  current A and ignores the superseded B completion. Version/clear guards and
+  untracked read-completion behavior remain unchanged; no retry loop is added.
+- Regression also preserves exact Unicode draft/captured A placement and proves
+  an idle matching placement performs no further request. Native receipts in
+  this frontend execution are fixture data; graphical qualification is separate.
+- Validation: 372 frontend tests across 67 files pass (including the reproduced
+  regression); typecheck has zero errors/warnings and production UI build passes.
+  No Rust/application runtime change or claim; source qualification remains pending.
+
+## Ordered authoring composition after the A-to-B-to-A repair
+
+- First parent `3c7e9058863d6175e4e0f7cc017ab468869404c9` (narrow PR8 repair),
+  second parent `64b74ecbd5d57549f8a95a1aaf59b1d68616f17f` (frozen feature
+  chain). Separate `feat/screenplay-authoring-retime-return`; no accepted ref move.
+- Merge preserves all original commits. Only execution-ledger and editor README
+  conflicts needed reconciliation; production TS and regression blobs match the
+  verified repair exactly. The only four files differing from frozen feature
+  source are the bounded repair's original files plus this composition note.
+- 397 frontend tests pass across 70 files; typecheck reports zero errors/warnings,
+  and production UI build passes. Rust source matches frozen feature source;
+  server/native/GUI qualification is separate and remains pending.
+
+## Integrated native authoring qualification preparation
+
+- Frozen application source `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1`
+  (full identity is pinned in the workflow/report) remains unchanged on a separate
+  `test/screenplay-authoring-native` descendant. No PR8/main merge or review request.
+- Add a bounded supported hosted Ubuntu Tauri qualification, public-service
+  empty-screenplay fixture and AT-SPI/X11 driver. The flow verifies first/manual
+  authoring, Graph/Split draft continuity, current-text comparison, canonical
+  timeline retime, exact authored context in production HTTP/SSE provider calls,
+  preview preservation and explicit targeted acceptance. SQLite inspection is
+  read-only and provider text is explicitly fixture data.
+- Local compilation with skipped ORT acquisition is preparation only. Actual
+  hosted server/GUI results must be recorded separately; real-model quality and
+  native lost-ack injection are not claimed. Existing interrupted-save regression
+  coverage and all accepted source heads remain preserved.
+- Preparation validation: Rust formatting, Python syntax and real localhost
+  HTTP/SSE fixture bodies (generation, production recap and preview) pass.
+  Workflow trigger/permissions/source identity checks pass. The public-service
+  example compiled with `ORT_SKIP_DOWNLOAD=1` on the unchanged Rust source of
+  the frozen feature base; this is compile-only, not runtime evidence.
+- Before GUI execution, driver inspection found that Split also removes the
+  screenplay panel. Correct the qualification driver to return to Script after
+  Graph/Split before checking either retained draft. Production application
+  source remains pinned to `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1`.
+  The initial hosted run `37249817552` has the earlier driver and cannot qualify
+  the complete flow; cancellation is unavailable through exposed app tools.
+- Standard Actions concurrency now cancels obsolete qualification runs on this
+  isolated branch when a corrected qualification is published, avoiding duplicate
+  native builds. This does not change application source or execution security.
+- Hosted run `37250082342`, qualification `60a8255d112a04d2a6275933bb1ce506454adf6f`,
+  built the actual native app and public-service fixture normally; all 382 actual
+  server tests passed, including both WAL stale-writer tests and interrupted
+  descendant rollback. Application source guard for `72ae4806` passed.
+- GUI opened the empty project, then failed traversing a retired WebKit AT-SPI
+  object (`atspi_error`, code 0, application no longer exists). Captured native
+  window PID 19303 remained alive and visibly showed the loaded workspace.
+  No authoring, provider call or complete GUI flow is claimed from that run.
+- Qualification-only repair retries exactly that retired-object error within
+  the existing deadline, refreshing the accessibility root on the next poll.
+  Other errors remain fatal; native process disappearance fails immediately.
+  It records the number of retired-object polls. No security/display setting,
+  application change, fixture receipt substitute or automatic relaunch is added.
+- Run `37250774496` at qualification `a85ce6d69b435606866d8fd96b4115fbe1f84050`
+  again builds normally and passes all 382 actual server tests on unchanged
+  application source `72ae4806`. GUI fails before project opening: a repeated
+  home-button click calls `xdotool mousemove --sync` at the pointer's existing
+  target coordinates and stalls for 15 seconds; its underlying cause is not
+  proven by these logs.
+  No authored text/provider call is claimed. Preserve the failed capture/log.
+- Qualification-only pointer correction uses normal native mousemove then reads
+  exact X11 cursor coordinates before clicking. It supports repeated clicks at
+  the same position while retaining verified control bounds/window ownership
+  and the existing driver deadline. No input/IPC substitution or security change.
+- Run `37251636717`, qualification `fe383b494d120389c13cec8843082fe87e4eeca4`,
+  passes normal native build and all 382 server tests; pointer/chooser transition
+  now reaches the loaded workspace. The exact-text scene locator never matches
+  and hits its 270-second deadline before any authored text/provider call. The
+  inspected native PNG visibly shows the first scene; source remains `72ae4806`.
+- Qualification locator now uses the canonical scene name in native accessible
+  text with the smallest bounded individual control region, rejecting document/
+  row-wide matches. It records actual native text/role/geometry. Canonical source
+  IDs/ranges are still independently verified after GUI save. Driver actions also
+  wait for enabled buttons and reveal the saved-text comparison through existing
+  standard AT-SPI scrolling. No application source/security setting changes.
+- Run `37252954727`, qualification `2293f679c5c7223b30a34235728aaadfe0359c91`,
+  again passes normal native compilation and all 382 actual server tests. Native
+  evidence now proves the scene names exist in one row-wide Text object, whose
+  center the locator correctly refuses to click. First-scene selection times out
+  before authored text or provider calls; captured native PID remains alive.
+- Qualification-only correction uses AT-SPI `Text.getRangeExtents` for the exact
+  unique canonical label within that actual aggregate text, retaining verified
+  native window bounds and X11 pointer input. Helper checks verify exact offsets,
+  no aggregate-row-center click, ambiguity/zero/row-wide/off-window rejection,
+  and preservation of the individual-control route. Application remains `72ae4806`.
+- Run `37253832473`, qualification `374a9a3631d0cbacadce925349d76acfc285b4c9`,
+  again builds normally and passes all 382 server tests. Actual Text range geometry
+  selects A and opens its real composer. The inspected PNG shows newline bytes
+  omitted by `xdotool type`; exact-text checking refuses to save or advance.
+- Qualification-only input correction types individual lines and sends native
+  Return events for each newline, preserving empty lines. Native text observation
+  refreshes the field cache and records bounded fixture text; exact equality stays
+  mandatory. No production, network, sandbox or provider change is involved.
+
+## Completed native integrated authoring qualification
+
+- Hosted run `37254812148` at qualification
+  `e5f2bfe480abda16f90b9f1d7a01595c69148060` passes normally on application
+  `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1`: locked native build, source guard,
+  **382 actual server tests**, including all three WAL/interleaving/rollback
+  regressions, and the full native GUI driver. No ORT skip in runtime execution.
+- Captured native window 2097155/PID 19220 completes the flow in 19.635 seconds.
+  Exact manual creation and edit survive Graph/Split navigation and Script return;
+  saved-text comparison preserves canon/draft. A's range moves from `[0,120000]`
+  to `[1000,121000]` with text/revision unchanged. B shows Needs review, previews
+  exact current authored context with target canon unchanged, then explicit
+  acceptance changes B alone. Read-only SQLite independently verifies canon.
+- Preview/accept PNGs were visually inspected and hashes verified. Native readback
+  preserves exact multiline text. Generation/recap/preview each use the actual
+  production HTTP/SSE client with an explicitly predefined localhost fixture.
+  Real-model quality is unqualified; native lost-ack injection is not claimed.
+  Existing interrupted-save/unknown-ack regression evidence stays distinct.
+- Record results on separate documentation-only branch
+  `docs/screenplay-authoring-native-results`, preserving passing qualification
+  `e5f2bfe4`, repair `3c7e9058` and ordered composition `72ae4806`. No production
+  integration repair was needed for this flow; driver input/geometry corrections
+  are bounded qualification changes. No PR8/main merge or external review request.

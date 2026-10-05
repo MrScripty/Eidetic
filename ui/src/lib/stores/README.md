@@ -22,6 +22,8 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `bibleGraphSchemaProjection.svelte.ts`    | Focused cache layer for backend-owned bible graph schema projections.                |
 | `objectFieldProjection.svelte.ts`         | Focused cache/action layer for backend-owned object-field projections.               |
 | `scriptDocumentProjection.svelte.ts`      | Focused cache/action layer for backend-owned script document projections.            |
+| `scriptBlockCreationSession.svelte.ts`    | Project-session owner of the transient creation draft and exact pending retry.       |
+| `scriptBlockEditSession.svelte.ts`        | Session-scoped per-block edit drafts with captured revision and exact retry.          |
 | `semanticProposalProjection.svelte.ts`    | Focused cache/action layer for semantic bible reference proposals.                   |
 | `propagationProposalProjection.svelte.ts` | Focused cache/action layer for semantic propagation proposals.                       |
 | `changeReviewProjection.svelte.ts`        | Focused cache layer for backend-owned change history review projections.             |
@@ -81,6 +83,8 @@ continues.
 | `projectionCacheGuards.ts`                | Projection cache infrastructure     | Provides shared version guards for replace-only projection cache writes.                                                                  | Keep as infrastructure; projection stores should use it instead of ad hoc stale-response checks.              |
 | `projectionRefreshQueue.ts`               | Projection refresh orchestration    | Coalesces backend event/project-triggered projection refreshes and resolves queued waiters during teardown.                                | Keep as the single refresh coalescing owner; do not start per-component refresh state machines.               |
 | `propagationProposalProjection.svelte.ts` | Projection cache and command bridge | Caches backend proposal list and replaces cache from command responses with stale-response guards.                                        | Keep.                                                                                                         |
+| `scriptBlockEditSession.svelte.ts`        | Transient UI state                  | Retains independent block text drafts, captured revisions and immutable pending edits across Script consumer replacement. | Keep session scoped; canonical text and propagation remain backend/projection-owned. |
+| `scriptBlockCreationSession.svelte.ts`    | Transient UI state                  | Retains captured creation context, text and immutable pending payload/ID across Script consumer lifetimes; project activation replaces its owner. | Keep session scoped; canonical screenplay remains backend-owned and projection-backed.                        |
 | `scriptDocumentProjection.svelte.ts`      | Projection cache and command bridge | Caches backend script document projections and replaces cache from command responses with stale-response guards.                          | Keep.                                                                                                         |
 | `semanticProposalProjection.svelte.ts`    | Projection cache and command bridge | Caches backend semantic proposal list and replaces cache from command responses with stale-response guards.                               | Keep.                                                                                                         |
 | `shortcuts.svelte.ts`                     | Transient UI infrastructure         | Owns in-memory shortcut registrations.                                                                                                    | Keep; ensure cleanup on component unmount remains deterministic.                                              |
@@ -96,6 +100,26 @@ continues.
 - Centralizing every UI field in one store file: rejected because it would collapse unrelated lifecycles into one mutable surface.
 
 ## Invariants
+- Existing-block edit drafts are keyed by document/block in the active project
+  session. Navigation, selection and canonical refresh cannot silently replace
+  draft text or its captured base revision. An uncertain edit retries its exact
+  payload/ID; only exact known native edit refusals unlock correction/discard.
+  Explicit reload discards a draft only after its canonical read succeeds.
+  Saved-text comparison uses the existing canonical read; its snapshot is
+  separate from the retained draft. Only explicit continuation advances the
+  expected draft revision, and later Save still rechecks it in the backend.
+  Project activation resets these transient owners; this does not persist drafts
+  across application restart or cancel admitted backend writes.
+- The creation draft belongs to the active project session. Script/Graph/Split
+  navigation and Script panel replacement retain its text, captured source and
+  exact pending payload/ID, including acknowledgement failure while no Script
+  consumer exists. Project activation replaces the owner; old callers cannot
+  submit another command into the new session, and old completions cannot mutate
+  its draft. This is transient memory, not persistence across application restart
+  or cancellation of an already admitted backend write.
+- Successful manual block creation replaces the screenplay cache from its
+  canonical response and invalidates prompt memory. Refusal leaves cache and
+  context revision unchanged; existing lifetime/version guards reject late data.
 - Targeted preview responses populate the existing propagation proposal store.
   Failed/stale previews retain prior review state and expose the refusal. Explicit
   accept/reject commands remain separate from preview creation.
