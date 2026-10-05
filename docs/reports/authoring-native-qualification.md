@@ -1,6 +1,12 @@
 # Integrated native screenplay authoring qualification
 
 The frozen application source is `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1`.
+The full native flow passed in [hosted run 37254812148](https://github.com/MrScripty/Eidetic/actions/runs/37254812148),
+qualification `e5f2bfe480abda16f90b9f1d7a01595c69148060` (tree
+`f9441fdb6865fa64dbe1f9924a3b6b6ba77757a5`). This is real Tauri and canonical
+state evidence with an explicitly predefined HTTP provider fixture; it does not
+qualify real-model story quality or native lost-acknowledgement injection.
+
 This isolated qualification adds a hosted workflow, public-service empty-project
 fixture, and native accessibility/X11 driver. The workflow verifies its ancestry
 and rejects application changes outside its five qualification files.
@@ -98,3 +104,39 @@ each line with normal X11 input and sends a real Return key for every newline,
 including consecutive blank lines. It refreshes the field's native cache and
 records bounded observed fixture text before requiring exact equality. Production
 application source remains `72ae4806`; the corrected flow still needs execution.
+
+## Verified native execution on the frozen application
+
+Run `37254812148` builds the locked native desktop and public-service fixture
+normally, passes the source guard, and executes **382 actual server tests** with
+zero failures. The three retained WAL promotion, stale-writer/reload/replay and
+interrupted-descendant rollback/reopen regressions all pass. No skipped ORT
+download is used for this runtime evidence. Native binary SHA-256 is
+`62d92355d86206b4057c98c28d03a2704fa60762444ae928fa0bd4e5bd37a96e`.
+
+The native GUI completes the whole flow in 19.635 seconds, on captured window
+2097155/PID 19220. It creates the first manual block in an empty document,
+verifies exact multiline creation/edit drafts after Graph/Split navigation and
+return to Script, compares saved text while preserving canon and draft, saves
+the exact blue-umbrella edit, and moves A from `[0,120000]` to `[1000,121000]`
+through the real timeline shortcut without changing block text or revision.
+The impacted generated B block shows Needs review. Preview consumes the exact
+current edited A text but preserves B's red-umbrella canon; explicit Accept update
+then changes B to blue while leaving A unchanged. Read-only SQLite checks verify
+these canonical boundaries and revision identities independently of UI receipts.
+
+Both PNGs were visually inspected and their evidence hashes verified. Preview
+shows proposed blue text alongside unchanged red canon; acceptance shows Update
+accepted, blue target canon and the intact authored blue input. Native field
+readback verifies every exact newline. There are exactly three production-client
+HTTP/SSE fixture requests (generation, recap, preview), each containing its exact
+expected authored context. All fixture records explicitly set `real_model=false`.
+No native lost-ack transport fault was injected; interrupted-save/unknown-ack
+coverage remains the existing frontend/provider/server regression evidence.
+
+The passing qualification ref remains at `e5f2bfe480abda16f90b9f1d7a01595c69148060`.
+This result record is a documentation-only descendant on a separate branch,
+avoiding a redundant native rerun or any change to the tested source. The narrow
+PR8 A-to-B-to-A repair `3c7e9058863d6175e4e0f7cc017ab468869404c9` and ordered
+application composition `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1` remain
+preserved; no accepted ref, PR8/main merge or external review request occurs.

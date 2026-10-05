@@ -1172,3 +1172,27 @@ still a separate pending gate. Broader generation persistence is not covered.
   Return events for each newline, preserving empty lines. Native text observation
   refreshes the field cache and records bounded fixture text; exact equality stays
   mandatory. No production, network, sandbox or provider change is involved.
+
+## Completed native integrated authoring qualification
+
+- Hosted run `37254812148` at qualification
+  `e5f2bfe480abda16f90b9f1d7a01595c69148060` passes normally on application
+  `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1`: locked native build, source guard,
+  **382 actual server tests**, including all three WAL/interleaving/rollback
+  regressions, and the full native GUI driver. No ORT skip in runtime execution.
+- Captured native window 2097155/PID 19220 completes the flow in 19.635 seconds.
+  Exact manual creation and edit survive Graph/Split navigation and Script return;
+  saved-text comparison preserves canon/draft. A's range moves from `[0,120000]`
+  to `[1000,121000]` with text/revision unchanged. B shows Needs review, previews
+  exact current authored context with target canon unchanged, then explicit
+  acceptance changes B alone. Read-only SQLite independently verifies canon.
+- Preview/accept PNGs were visually inspected and hashes verified. Native readback
+  preserves exact multiline text. Generation/recap/preview each use the actual
+  production HTTP/SSE client with an explicitly predefined localhost fixture.
+  Real-model quality is unqualified; native lost-ack injection is not claimed.
+  Existing interrupted-save/unknown-ack regression evidence stays distinct.
+- Record results on separate documentation-only branch
+  `docs/screenplay-authoring-native-results`, preserving passing qualification
+  `e5f2bfe4`, repair `3c7e9058` and ordered composition `72ae4806`. No production
+  integration repair was needed for this flow; driver input/geometry corrections
+  are bounded qualification changes. No PR8/main merge or external review request.
