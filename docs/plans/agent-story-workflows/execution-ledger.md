@@ -1164,3 +1164,11 @@ still a separate pending gate. Broader generation persistence is not covered.
   native window bounds and X11 pointer input. Helper checks verify exact offsets,
   no aggregate-row-center click, ambiguity/zero/row-wide/off-window rejection,
   and preservation of the individual-control route. Application remains `72ae4806`.
+- Run `37253832473`, qualification `374a9a3631d0cbacadce925349d76acfc285b4c9`,
+  again builds normally and passes all 382 server tests. Actual Text range geometry
+  selects A and opens its real composer. The inspected PNG shows newline bytes
+  omitted by `xdotool type`; exact-text checking refuses to save or advance.
+- Qualification-only input correction types individual lines and sends native
+  Return events for each newline, preserving empty lines. Native text observation
+  refreshes the field cache and records bounded fixture text; exact equality stays
+  mandatory. No production, network, sandbox or provider change is involved.

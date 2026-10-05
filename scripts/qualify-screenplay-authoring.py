@@ -32,6 +32,7 @@ DEADLINE = time.monotonic() + 270
 NATIVE_WINDOW_PID = None
 ACCESSIBILITY_RETIREMENTS = 0
 TIMELINE_LOCATOR_OBSERVATIONS = []
+TYPED_TEXT_OBSERVATIONS = []
 
 
 def command(*args):
@@ -342,9 +343,26 @@ def type_text(node, window, text):
         return node.getState().contains(pyatspi.STATE_FOCUSED)
     wait_for('native text focus', focused)
     command('xdotool', 'key', '--clearmodifiers', 'ctrl+a')
-    subprocess.run(['xdotool', 'type', '--clearmodifiers', '--delay', '10', text],
-                   check=True, timeout=20)
-    wait_for('exact typed text', lambda: text_of(node) == text)
+    # xdotool type omitted literal LF bytes in the observed native capture.
+    # Use real Return events for each newline, including consecutive blank lines.
+    lines = text.split('\n')
+    for index, line in enumerate(lines):
+        if line:
+            subprocess.run(['xdotool', 'type', '--clearmodifiers', '--delay', '10', line],
+                           check=True, timeout=20)
+        if index < len(lines) - 1:
+            command('xdotool', 'key', '--clearmodifiers', 'Return')
+    def exact_typed_text():
+        node.clear_cache()
+        actual = text_of(node)
+        observation = {'field': (node.name or '')[:120],
+                       'expected_length': len(text), 'actual_text': actual[:1000],
+                       'exact': actual == text}
+        if not TYPED_TEXT_OBSERVATIONS or TYPED_TEXT_OBSERVATIONS[-1] != observation:
+            if len(TYPED_TEXT_OBSERVATIONS) < 20:
+                TYPED_TEXT_OBSERVATIONS.append(observation)
+        return actual == text
+    wait_for('exact typed text', exact_typed_text)
 
 
 def reveal(application, predicate):
@@ -558,6 +576,7 @@ def main():
                 except ProcessLookupError:
                     pass
         evidence['timeline_locator_observations'] = TIMELINE_LOCATOR_OBSERVATIONS
+        evidence['typed_text_observations'] = TYPED_TEXT_OBSERVATIONS
         evidence['accessibility_retired_object_polls'] = ACCESSIBILITY_RETIREMENTS
         evidence['provider_calls'] = FixtureProvider.records
         raw = raw_log.read_text(errors='replace') if raw_log.exists() else 'No app launch log.'

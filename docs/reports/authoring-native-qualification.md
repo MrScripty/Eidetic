@@ -88,3 +88,13 @@ native glyph coordinates. Zero, row-wide, ambiguous and off-window ranges are
 rejected. This supported geometry route changes only the qualification driver;
 application source and execution security stay unchanged. Actual authoring flow
 and real-model quality remain unqualified until execution succeeds.
+
+Run `37253832473` passes normal native compilation and all 382 server tests.
+Its real Text range bounds select the first scene and open the actual composer.
+The inspected capture shows literal newlines omitted by `xdotool type`, joining
+the scene heading, action and character text. Exact-text verification refuses to
+continue, so no save/provider/preview claim follows. The qualification now types
+each line with normal X11 input and sends a real Return key for every newline,
+including consecutive blank lines. It refreshes the field's native cache and
+records bounded observed fixture text before requiring exact equality. Production
+application source remains `72ae4806`; the corrected flow still needs execution.
