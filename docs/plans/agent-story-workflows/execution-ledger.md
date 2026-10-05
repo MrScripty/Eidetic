@@ -1154,3 +1154,13 @@ still a separate pending gate. Broader generation persistence is not covered.
   IDs/ranges are still independently verified after GUI save. Driver actions also
   wait for enabled buttons and reveal the saved-text comparison through existing
   standard AT-SPI scrolling. No application source/security setting changes.
+- Run `37252954727`, qualification `2293f679c5c7223b30a34235728aaadfe0359c91`,
+  again passes normal native compilation and all 382 actual server tests. Native
+  evidence now proves the scene names exist in one row-wide Text object, whose
+  center the locator correctly refuses to click. First-scene selection times out
+  before authored text or provider calls; captured native PID remains alive.
+- Qualification-only correction uses AT-SPI `Text.getRangeExtents` for the exact
+  unique canonical label within that actual aggregate text, retaining verified
+  native window bounds and X11 pointer input. Helper checks verify exact offsets,
+  no aggregate-row-center click, ambiguity/zero/row-wide/off-window rejection,
+  and preservation of the individual-control route. Application remains `72ae4806`.

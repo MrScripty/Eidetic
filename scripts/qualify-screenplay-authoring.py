@@ -102,8 +102,9 @@ def control_click_point(rect, geometry):
     return x + width // 2, y + height // 2
 
 
-def click_control(node, window):
-    rect = node.queryComponent().getExtents(pyatspi.XY_SCREEN)
+def click_control(node, window, rect=None):
+    if rect is None:
+        rect = node.queryComponent().getExtents(pyatspi.XY_SCREEN)
     geometry = dict(line.split("=", 1) for line in command(
         "xdotool", "getwindowgeometry", "--shell", window).splitlines())
     point = control_click_point(rect, {key: int(value) for key, value in geometry.items()})
@@ -276,9 +277,9 @@ def blocks(database, node_id):
 
 
 def native_timeline_clip(application, label, window):
-    # WebKit text includes inline embedded-object characters/spacing. Require
-    # canonical name containment and an individual native control-sized region;
-    # selecting the smallest region rejects whole-document/whole-row matches.
+    # The actual WebKit tree exposes all scene names in one row-wide Text.
+    # Use native substring geometry when an individual clip object is absent.
+    # Never click the center of the aggregate row or infer coordinates from time.
     global TIMELINE_LOCATOR_OBSERVATIONS
     TIMELINE_LOCATOR_OBSERVATIONS = []
     application.clear_cache()
@@ -295,16 +296,32 @@ def native_timeline_clip(application, label, window):
         if len(TIMELINE_LOCATOR_OBSERVATIONS) < 20:
             TIMELINE_LOCATOR_OBSERVATIONS.append({'name': (node.name or '')[:120],
                 'text': text[:120], 'role': node.getRoleName(), 'bounds': rect})
-        if not 0 < rect[2] <= geometry['WIDTH'] // 2 or not 0 < rect[3] <= 64:
-            continue
-        control_click_point(rect, geometry)
-        candidates.append((rect[2] * rect[3], node, rect, text))
+        ranges = [(rect, 'control')]
+        if rect[2] > geometry['WIDTH'] // 2:
+            try:
+                native_text = node.queryText()
+            except NotImplementedError:
+                continue
+            # Exact, unique authored fixture names identify the visible glyphs.
+            if text.count(label) != 1:
+                continue
+            offset = text.index(label)
+            rect = tuple(native_text.getRangeExtents(offset, offset + len(label), pyatspi.XY_SCREEN))
+            ranges = [(rect, 'native-text-range')]
+            if len(TIMELINE_LOCATOR_OBSERVATIONS) < 20:
+                TIMELINE_LOCATOR_OBSERVATIONS.append({'name': label,
+                    'text': label, 'role': 'native-text-range', 'bounds': rect})
+        for rect, route in ranges:
+            if not 0 < rect[2] <= geometry['WIDTH'] // 2 or not 0 < rect[3] <= 64:
+                continue
+            control_click_point(rect, geometry)
+            candidates.append((rect[2] * rect[3], node, rect, text, route))
     if not candidates:
         return None
-    _, node, rect, text = min(candidates, key=lambda candidate: candidate[0])
+    _, node, rect, text, route = min(candidates, key=lambda candidate: candidate[0])
     print(f'Native timeline locator: canonical={label!r}, text={text[:120]!r}, '
-          f'role={node.getRoleName()!r}, bounds={tuple(rect)}', flush=True)
-    return node
+          f'role={node.getRoleName()!r}, route={route!r}, bounds={tuple(rect)}', flush=True)
+    return node, rect
 
 
 def choose_mode(application, label, window):
@@ -433,7 +450,7 @@ def main():
         click_button(application, database.parent.name, window, prefix=True)
         checkpoint('select first scene and begin manual screenplay')
         scene = wait_for('first scene in timeline', lambda: native_timeline_clip(application, fixture['a']['name'], window))
-        click_control(scene, window)
+        click_control(scene[0], window, scene[1])
         click_button(application, 'Write screenplay', window)
         # Select the exact labelled composer, since the selected scene also has an empty Notes field.
         textarea = wait_for('labelled new screenplay editor', lambda: find(application, lambda n:
@@ -456,7 +473,7 @@ def main():
             lambda n: 'Connected' in text_of(n)))
         checkpoint('generate second scene through real desktop provider client')
         scene = wait_for('second timeline scene', lambda: native_timeline_clip(application, fixture['b']['name'], window))
-        click_control(scene, window)
+        click_control(scene[0], window, scene[1])
         click_button(application, 'Generate', window)
         b = wait_for('canonical generated second scene', lambda: next((row for row in blocks(database, b_id)
             if row[1] == GENERATED_TEXT), None))

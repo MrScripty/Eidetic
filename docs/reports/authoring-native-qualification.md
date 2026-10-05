@@ -77,3 +77,14 @@ whole-document/row matches and recording actual native text/role/geometry.
 Canonical source identity/range checks after GUI save remain mandatory. Button
 input waits for enabled state; the saved-text comparison uses supported native
 scrolling to reveal its region. Application source is still unchanged.
+
+Run `37252954727` again builds normally and passes all 382 server tests. Its
+native evidence establishes that WebKit exposes the scene names together in one
+1360-by-48-pixel row-wide Text object, with no individual clip object matching
+the first scene. The locator correctly rejects that row's center and times out
+before authoring. The qualification now asks the actual AT-SPI Text interface
+for the exact unique scene label's substring bounds and clicks those verified
+native glyph coordinates. Zero, row-wide, ambiguous and off-window ranges are
+rejected. This supported geometry route changes only the qualification driver;
+application source and execution security stay unchanged. Actual authoring flow
+and real-model quality remain unqualified until execution succeeds.
