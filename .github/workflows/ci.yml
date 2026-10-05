@@ -54,6 +54,12 @@ jobs:
       - name: Prepare Pumas dependency
         run: scripts/prepare-pumas-dependency.sh
 
+      - name: Verify no native ONNX download features before building
+        run: |
+          cargo metadata --locked --all-features --format-version 1 > "${RUNNER_TEMP}/eidetic-cargo-metadata.json"
+          python3 scripts/check-onnx-no-download.py "${RUNNER_TEMP}/eidetic-cargo-metadata.json"
+          python3 -m unittest discover -s scripts -p 'test_check_onnx_no_download.py' -v
+
       - name: Rust format
         run: cargo fmt --all -- --check
 
