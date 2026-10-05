@@ -191,3 +191,8 @@ The bible_changed event reloads screenplay impact together with Bible/history
 projections and invalidates cached prompt context. Canonical generated field
 dependencies derive the review state; the frontend does not infer dependencies
 from text or write replacements. Existing edit/creation draft owners remain intact.
+
+Bible-driven impact changes carry an advanced canonical screenplay projection
+version. A deferred older read cannot hide a newer fact review cause while exact
+block text remains equal. The normal version/session guards continue to own cache
+admission; no frontend-generated revision or automatic retry is introduced.

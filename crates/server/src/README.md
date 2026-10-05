@@ -421,3 +421,10 @@ remain pending and rejectable. A live Bible source outside the current bounded
 context refuses preview instead of omitting its evidence. Node headers, graph
 edges, timed snapshots, new/unconsumed fields and semantic extraction remain
 separate follow-ups; embeddings are not required.
+
+The screenplay projection version also includes existing Bible revisions. Needs
+review depends on graph values/owner existence even when block text is unchanged;
+a delayed pre-fact read must have a lower version than its fresh review projection.
+The clock conservatively includes all four Bible revision kinds and never resets
+when a generation refreshes or narrows its consumption. This is derived metadata,
+not an extra revision store or an inference of fictional truth.

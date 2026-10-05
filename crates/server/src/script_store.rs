@@ -394,7 +394,8 @@ fn load_document_revision_summary(
     let revision_count = conn.query_row(
         "SELECT COUNT(*)
          FROM object_revisions
-         WHERE (object_kind = ?1 AND object_id = ?2)
+         WHERE object_kind IN ('bible_node', 'bible_part_field', 'bible_edge', 'bible_snapshot')
+            OR (object_kind = ?1 AND object_id = ?2)
             OR (
                 object_kind = ?3
                 AND object_id IN (
@@ -445,7 +446,8 @@ fn load_document_revision_summary(
         .query_row(
             "SELECT change_event_id
              FROM object_revisions
-             WHERE (object_kind = ?1 AND object_id = ?2)
+             WHERE object_kind IN ('bible_node', 'bible_part_field', 'bible_edge', 'bible_snapshot')
+            OR (object_kind = ?1 AND object_id = ?2)
                 OR (
                     object_kind = ?3
                     AND object_id IN (

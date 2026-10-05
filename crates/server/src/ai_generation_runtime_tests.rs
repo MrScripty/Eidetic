@@ -75,7 +75,8 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
             .unwrap()
             .needs_review
     );
-    let before = script(&fixture).payload.segments[0].blocks[0].clone();
+    let before_projection = script(&fixture);
+    let before = before_projection.payload.segments[0].blocks[0].clone();
     let mut events = fixture.state.events_tx.subscribe();
     field.value = Some(FieldValue::Text("Mara carries blue.".into()));
     crate::command_service::set_bible_graph_field(&fixture.state, CommandEnvelope::new(field))
@@ -86,6 +87,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
         ServerEvent::BibleChanged
     ));
     let after = script(&fixture);
+    assert!(after.version.0 > before_projection.version.0);
     assert_eq!(after.payload.segments[0].blocks[0], before);
     let impact = after.payload.segments[0].impact.as_ref().unwrap();
     assert!(impact.needs_review);

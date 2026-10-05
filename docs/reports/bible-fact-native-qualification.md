@@ -59,3 +59,11 @@ screenplay query helper, it must work before any screenplay table exists. A
 stdlib regression verifies it reads the initial fact without creating screenplay
 schema or changing canon. The corrected qualification push supersedes the earlier
 build; application source remains a66e1c7.
+
+Application follow-up: the existing screenplay projection clock now includes
+Bible revisions because fact impact can change without changing screenplay text.
+Database version assertions and a deferred frontend response regression prove
+older results cannot erase the new review cause. Local evidence is now 400
+frontend tests plus 151 source-module tests and strict server Clippy. The native
+workflow will be rebound to the successor application checkpoint before its
+result is used as current runtime evidence.

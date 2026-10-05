@@ -87,7 +87,19 @@ async fn manual_bible_fact_edit_previews_and_explicitly_accepts_only_target_with
     let inputs = capture_for(&conn, &b);
     generate(&mut conn, &b, inputs);
     assert!(!impact(&conn, &b).needs_review);
+    let before_version = script_store::load_document_projection_envelope(&conn, &b.document_id)
+        .unwrap()
+        .unwrap()
+        .version;
     set(&mut conn, &field, Some(BLUE));
+    let after_version = script_store::load_document_projection_envelope(&conn, &b.document_id)
+        .unwrap()
+        .unwrap()
+        .version;
+    assert!(
+        after_version.0 > before_version.0,
+        "Bible impact must advance the canonical projection version"
+    );
     let cause = impact(&conn, &b).causes.remove(0);
     assert_eq!(cause.reason, ScriptImpactReason::Changed);
     assert_eq!(cause.input_excerpt.as_deref(), Some(RED));
@@ -203,6 +215,10 @@ fn deleted_fact_owner_and_cleared_value_keep_explainable_consumed_history() {
         let field = fact(&mut conn, "Mara");
         let inputs = capture_for(&conn, &b);
         generate(&mut conn, &b, inputs);
+        let before_version = script_store::load_document_projection_envelope(&conn, &b.document_id)
+            .unwrap()
+            .unwrap()
+            .version;
         if delete_owner {
             bible_graph_command::apply_delete_bible_graph_node(
                 &mut conn,
@@ -215,6 +231,11 @@ fn deleted_fact_owner_and_cleared_value_keep_explainable_consumed_history() {
         } else {
             set(&mut conn, &field, None);
         }
+        let after_version = script_store::load_document_projection_envelope(&conn, &b.document_id)
+            .unwrap()
+            .unwrap()
+            .version;
+        assert!(after_version.0 > before_version.0);
         let cause = &impact(&conn, &b).causes[0];
         assert_eq!(cause.input_excerpt.as_deref(), Some(RED));
         assert_eq!(

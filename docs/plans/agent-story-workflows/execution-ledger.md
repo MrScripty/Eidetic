@@ -1237,3 +1237,18 @@ still a separate pending gate. Broader generation persistence is not covered.
   acceptance guards. Application source remains unchanged from a66e1c7.
 - Python syntax/HTTP fixture tests and compile-only example check pass locally;
   exact hosted/native execution and visual screenshot inspection remain pending.
+
+### Bible-derived review projection ordering
+
+- Inspection found that derived fact impact can change without a script object
+  revision. Equal screenplay projection versions would admit a late pre-fact
+  response over a fresh Needs review result. Extend the existing version summary
+  with the append-only Bible revisions (node/field/edge/snapshot); include owner
+  deletion and preserve a monotonic clock when lineage is refreshed/narrowed.
+- Actual-source SQLite regressions now require an advanced projection after value
+  change, value removal and owner deletion. The public-service runtime regression
+  checks it too. A new deferred frontend read proves the older projection cannot
+  hide the Bible cause while blocks/text remain unchanged. No parallel state.
+- 151 source-module and 400 frontend tests pass; strict compile-only server Clippy
+  passes. Actual hosted runtime qualification must use the successor application
+  checkpoint, rather than treating the earlier a66e1c7 build as current evidence.
