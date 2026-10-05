@@ -65,6 +65,7 @@ fn generation(
         target_binding: None,
         script_context_scope: None,
         bible_inputs: None,
+        bible_context_scope: None,
         block,
         script_inputs: inputs,
     })

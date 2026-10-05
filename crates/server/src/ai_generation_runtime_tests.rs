@@ -50,6 +50,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
     .await
     .unwrap();
     assert_eq!(request.bible_inputs.as_ref().unwrap().len(), 1);
+    assert!(request.bible_context_scope.is_some());
     let captured = request.bible_inputs.as_ref().unwrap()[0].clone();
     assert!(
         crate::prompt_format::build_chat_prompt(&request)
@@ -67,6 +68,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
         GenerationInputs {
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
+            bible_context_scope: request.bible_context_scope,
             script_context_scope: request.script_context_scope,
             target_binding: request.generation_target,
             ..GenerationInputs::default()

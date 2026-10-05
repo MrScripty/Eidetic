@@ -52,6 +52,7 @@ pub(crate) fn fixture() -> (
             target_binding: None,
             script_context_scope: None,
             bible_inputs: None,
+            bible_context_scope: None,
             block: b.clone(),
             script_inputs: Some(vec![a_input]),
         }),

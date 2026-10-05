@@ -117,6 +117,8 @@ pub struct GenerateRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_inputs: Option<Vec<crate::contracts::BibleFieldInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_context_scope: Option<crate::contracts::BibleContextScope>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub script_context_scope: Option<crate::contracts::ScriptContextScope>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub generation_target: Option<crate::contracts::ScriptGenerationTarget>,

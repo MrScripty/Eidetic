@@ -139,6 +139,11 @@ fn capture_in_snapshot(
         ));
     }
     let bible_inputs = crate::bible_field_lineage::capture(conn, &bible_context.payload)?;
+    let bible_context_scope = Some(crate::bible_context_scope::capture(
+        conn,
+        node_id,
+        &bible_inputs,
+    )?);
     Ok(ScriptImpactProposalBinding {
         request: request.clone(),
         cause,
@@ -146,6 +151,7 @@ fn capture_in_snapshot(
         script_inputs,
         bible_context,
         bible_inputs,
+        bible_context_scope,
         script_context_scope,
     })
 }
@@ -307,6 +313,7 @@ pub(crate) fn accept_bound_proposal(
         block: write.clone(),
         script_inputs: Some(binding.script_inputs.clone()),
         bible_inputs: Some(binding.bible_inputs.clone()),
+        bible_context_scope: binding.bible_context_scope.clone(),
         script_context_scope: binding.script_context_scope.clone(),
     };
     let event = ChangeEvent::new(

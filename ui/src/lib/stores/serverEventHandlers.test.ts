@@ -8,6 +8,7 @@ import {
 } from './scriptDocumentProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
+import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import { completeGeneration, editorState } from './editor.svelte.js';
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
@@ -92,6 +93,8 @@ class MockServerEventClient {
 
 beforeEach(() => {
   clearProjectionRefreshQueue();
+  vi.mocked(invalidateScriptContext).mockClear();
+  vi.mocked(refreshChangeReviewProjection).mockClear();
   refreshTimelineRenderProjectionMock.mockReset();
   refreshTimelineRenderProjectionMock.mockResolvedValue({
     version: 1,
@@ -179,6 +182,11 @@ describe('backend event projection handlers', () => {
     });
 
     await vi.waitFor(() => {
+      expect(invalidateScriptContext).toHaveBeenCalledTimes(1);
+      expect(refreshScriptDocumentProjectionMock).toHaveBeenCalledWith({
+        document_id: 'script.document.main',
+      });
+      expect(refreshChangeReviewProjection).toHaveBeenCalledTimes(1);
       expect(refreshBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
         selected_timeline_node_id: 'node.scene.beach',
         selected_node_id: 'node.character.ada',

@@ -1383,3 +1383,33 @@ still a separate pending gate. Broader generation persistence is not covered.
   annotations report no hosted runner acquisition and internal server error. Retry
   that job after service recovery; do not infer an app defect before its actual snapshot. Report includes full source/artifact hashes
   and honest visual limits. Parent owns PR/review/merge and Library delivery.
+
+### Scoped untimed Bible membership successor — 5 October 2026
+
+- Separate `feat/bible-context-membership` descendant of frozen 8941f3ac; prior
+  application 9e8bd1c9 and all native screenshots remain unchanged. Authorized
+  supported rerun of 37365296113 also ended cancelled without a runner: attempt 2,
+  job 111956186116, runner 0, zero steps/artifacts. Native final banner/history gate
+  remains explicitly blocked after two allocation failures; no repeat run here.
+- The isolated current-source reproduction showed null/absent motivation entering
+  resolved Bible input (1 → 2 fields) without review, while consumed tagline edits
+  correctly raised review. Bounded entity rule was documented before code changes:
+  actual prior baseline input entities plus Direct UserSelected/AiSelected node
+  assignments; no default new-entity, graph relationship or name/text inference.
+- Existing generation/proposal JSON carries optional canonical field membership
+  and existing append-only Bible/context clock. Existing semantic dependencies and
+  impact owner derive exact entered/removed causes. Actual BibleFieldInput values
+  alone create UsesFact bindings; retained relevance outside the resolver window
+  never invents consumed values. Historical validation rejects incomplete/forged
+  receipts, while legacy inputs retain unknown historical completeness.
+- Fact edits and assignment events refresh the existing screenplay/review owners.
+  Manual text remains exact through preview; explicit targeted acceptance replaces
+  only the reviewed block and refreshes provenance atomically. Accepted clears
+  retain proven entity relevance for restored facts. Pending preview/acceptance
+  refuses Bible/context ABA and intervening manual writes without discarding drafts.
+- Local 118 core / 243 actual production-module harness / 406 frontend tests pass.
+  Strict all-target server Clippy is compile-only using ORT_SKIP_DOWNLOAD=1; the
+  new public AppState/paused synthetic HTTP test compiles but has not executed.
+  Local GTK/GLib and ONNX acquisition limits remain; no bypass, new native UI
+  screenshot or real-model quality claim. Frozen screenshots prove only their
+  historical application source. Parent owns PR/review/merge and Library delivery.

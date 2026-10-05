@@ -130,7 +130,12 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('context_influence_changed', async () => {
-      await refreshActiveBibleRenderGraphForContextInfluence();
+      invalidateScriptContext();
+      await Promise.all([
+        refreshActiveBibleRenderGraphForContextInfluence(),
+        refreshMainScriptDocument(),
+        refreshChangeReview(),
+      ]);
     }),
 
     events.on('script_changed', async () => {

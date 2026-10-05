@@ -117,6 +117,9 @@ pub(crate) fn load_impact(
             input_excerpt,
         });
     }
+    if let Some(cause) = crate::bible_context_scope::cause(conn, generation_event_id, segment)? {
+        causes.push(cause);
+    }
     Ok(Some(ScriptImpactProjection {
         generation_event_id,
         output_block_id: Some(

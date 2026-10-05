@@ -85,6 +85,7 @@ pub(crate) fn fixture() -> (
             target_binding: None,
             script_context_scope: None,
             bible_inputs: None,
+            bible_context_scope: None,
             block: b.clone(),
             script_inputs: Some(vec![captured]),
         }),
@@ -439,6 +440,7 @@ fn historical_sparse_placement_validates_captured_input_after_later_move_and_rej
             target_binding: None,
             script_context_scope: None,
             bible_inputs: None,
+            bible_context_scope: None,
             block: b.clone(),
             script_inputs: Some(vec![evidence]),
         });

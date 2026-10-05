@@ -19,6 +19,7 @@ fn fixture() -> (
         block,
         script_inputs: None,
         bible_inputs: None,
+        bible_context_scope: None,
         script_context_scope: None,
         target_binding: Some(capture(&conn, node).unwrap()),
     });

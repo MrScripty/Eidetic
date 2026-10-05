@@ -259,6 +259,87 @@ fn history_count(f: &Fixture) -> i64 {
 }
 
 #[tokio::test]
+async fn paused_public_http_generation_retains_original_bible_membership_and_publishes_added_field_review()
+ {
+    let f = fixture().await;
+    command_service::create_bible_graph_node(&f.state,serde_json::from_value(serde_json::json!({
+        "id":Uuid::new_v4(),"payload":{"node_id":"Mara","schema_key":"character","name":"Mara","sort_order":0}
+    })).unwrap()).await.unwrap();
+    let field = |key: &str, value: Option<&str>| SetBibleGraphFieldCommand {
+        node_id: BibleGraphNodeId::new("Mara").unwrap(),
+        part_id: BibleGraphPartId::new("Mara.profile").unwrap(),
+        part_key: BibleGraphPartKey::new("profile").unwrap(),
+        part_name: "Profile".into(),
+        part_sort_order: 0,
+        field_id: BibleGraphFieldId::new(format!("Mara.{key}")).unwrap(),
+        field_key: BibleGraphFieldKey::new(key).unwrap(),
+        value: value.map(|value| FieldValue::Text(value.into())),
+        field_sort_order: 0,
+    };
+    command_service::set_bible_graph_field(
+        &f.state,
+        CommandEnvelope::new(field("tagline", Some("Blue umbrella"))),
+    )
+    .await
+    .unwrap();
+    command_service::set_bible_graph_field(
+        &f.state,
+        CommandEnvelope::new(field("motivation", None)),
+    )
+    .await
+    .unwrap();
+    let before = document(&f);
+    let (release, worker, mut events) = start(&f).await;
+    command_service::set_bible_graph_field(
+        &f.state,
+        CommandEnvelope::new(field("motivation", Some("Keep the station key"))),
+    )
+    .await
+    .unwrap();
+    release.send(()).unwrap();
+    terminal(&f, &mut events).await.unwrap();
+    worker.join().unwrap();
+    let after = document(&f);
+    for old in before.segments.iter().flat_map(|segment| &segment.blocks) {
+        assert!(
+            after
+                .segments
+                .iter()
+                .flat_map(|segment| &segment.blocks)
+                .any(|block| block == old)
+        );
+    }
+    let impact = after
+        .segments
+        .iter()
+        .find(|segment| {
+            segment.segment.source_node_id.as_deref() == Some(f.node.0.to_string().as_str())
+        })
+        .unwrap()
+        .impact
+        .as_ref()
+        .unwrap();
+    assert!(impact.needs_review);
+    assert!(impact.causes.iter().any(|cause| {
+        cause.reason == ScriptImpactReason::ContextChanged
+            && cause
+                .input_excerpt
+                .as_deref()
+                .is_some_and(|text| text.contains("Mara.profile.motivation"))
+    }));
+    let conn = sqlite::open_write_connection(&f.path).unwrap();
+    let json:String=conn.query_row("SELECT payload_json FROM commands WHERE payload_type='script.generate_block' ORDER BY rowid DESC LIMIT 1",[],|row|row.get(0)).unwrap();
+    let command: GenerateScriptBlockCommand = serde_json::from_str(&json).unwrap();
+    let scope = command.bible_context_scope.unwrap();
+    assert_eq!(scope.node_ids, vec![BibleGraphNodeId::new("Mara").unwrap()]);
+    assert_eq!(
+        scope.field_ids,
+        vec![BibleGraphFieldId::new("Mara.tagline").unwrap()]
+    );
+    assert_eq!(command.bible_inputs.unwrap().len(), 1);
+}
+
+#[tokio::test]
 async fn create_select_and_generate_without_reopening_reads_canonical_metadata_and_retains_anchors()
 {
     let f = fixture().await;

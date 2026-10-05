@@ -201,3 +201,5 @@ admission; no frontend-generated revision or automatic retry is introduced.
 Timeline child creation uses the same runTimelineProjectionRequest and cache
 lifetime/version guards as other timeline writes. Selected-parent authoring uses
 the existing editor session generation to refuse late selection side effects.
+
+Context influence changes invalidate cached prompt context and refresh canonical screenplay/review projections alongside the active Bible graph. They reuse backend context revision clocks and never patch durable text locally.

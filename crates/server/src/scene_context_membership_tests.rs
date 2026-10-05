@@ -87,6 +87,7 @@ fn generation(
         block: block.clone(),
         script_inputs: Some(inputs),
         bible_inputs: None,
+        bible_context_scope: None,
         script_context_scope: Some(scope),
     })
 }

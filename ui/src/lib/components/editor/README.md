@@ -162,3 +162,5 @@ and existing editor session generation across delayed acknowledgements/unmounts.
 The backend derives child hierarchy and placement; frontend controls do not create
 an alternate story owner. Immediate generation admission errors clear streaming
 state and remain visible without discarding authored screenplay drafts.
+
+ScriptImpactNotice distinguishes Bible membership ContextChanged causes from screenplay continuity changes. Existing preview and explicit acceptance remain the only proposal replacement path; saved human text and retained drafts are preserved.

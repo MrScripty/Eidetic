@@ -64,6 +64,7 @@ fn generate(
         block: block.clone(),
         script_inputs: Some(vec![]),
         bible_inputs: Some(inputs),
+        bible_context_scope: None,
     });
     script_document_command::apply_generated_script_block(conn, &command, 25).unwrap();
     command
@@ -267,6 +268,7 @@ fn forged_consumed_field_value_rolls_back_output_history_and_dependencies() {
         block: b.clone(),
         script_inputs: Some(vec![]),
         bible_inputs: Some(inputs),
+        bible_context_scope: None,
     });
     assert!(
         script_document_command::apply_generated_script_block(&mut conn, &command, 30).is_err()

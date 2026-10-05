@@ -19,6 +19,8 @@ domain model in `eidetic-core`.
 | `script_generation_target_tests.rs` | Target/output ABA, retime/delete/locks, manual append, forged custody, rollback and replay regressions. |
 | `canonical_generation_service_tests.rs` | Public create/select/generate and paused synthetic HTTP regressions with an actually stale mirror; delayed scene/manual changes preserve text/history. |
 | `script_context_scope.rs` | Complete continuity-window capture in existing generation/proposal history, derived entering/leaving/order causes and append-only placement guards. |
+| `bible_context_scope.rs` | Untimed entity-scoped field membership, legacy historical absence, existing context clocks and derived targeted review; no timed/relationship inference. |
+| `bible_context_scope_tests.rs` | Membership addition/removal, bounded relevance, retained relevance, ABA/stale/acceptance and historical custody regressions. |
 | `scene_context_membership_tests.rs` | Six-scene entering/displaced-neighbor and target-relocation fixtures, exact manual text, late generation/replay, malformed capture rollback and unconsumed membership ABA refusal. |
 | `scene_context_membership_service_tests.rs` | Native AppState range publication, backend generation-window capture, synthetic HTTP preview and explicit targeted acceptance. |
 | `script_generation_lineage.rs` | Atomic successful-generation records and existing semantic dependencies bound to consumed screenplay revisions. |
@@ -465,3 +467,15 @@ history. External model I/O holds no session gate; final persistence checks the
 existing project identity/session and holds its gate through publication. Legacy
 commands lacking target receipts still replay without fictional backfill. No new
 schema or refresh/synchronization state is introduced.
+
+Untimed Bible membership reuses generation/proposal JSON and semantic dependencies.
+Known consumed entities and Direct UserSelected/AiSelected node assignments define
+relevance; arbitrary new default entities never broaden existing output scope.
+Latest generation provenance retains entity relevance across accepted clears.
+Membership records canonical field presence, including retained entities outside
+the resolver window; only actual BibleFieldInput values receive UsesFact bindings.
+Legacy inputs prove only their recorded entities and historically absent/null
+fields; unknown completeness stays unknown. Snapshot keys cannot introduce new
+membership. Existing Bible/context history stales pending requests conservatively;
+unrelated changes alone do not create Needs review. Context assignment revisions
+advance screenplay projections and publish existing refresh events. No new schema.

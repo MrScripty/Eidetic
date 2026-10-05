@@ -123,3 +123,5 @@ exact admitted notes and placement protect delayed completion and ABA; older
 serialized requests/commands omit the receipt without invented backfill. The
 backend enforces it, while canonical facts and complete-window lineage remain
 independent consumed evidence. No new persistent memory owner or dependency.
+
+Optional BibleContextScope stores scoped untimed entity/field IDs and the existing Bible/context epoch in generation/proposal history. Absent legacy receipts remain absent; BibleFieldInput retains exact values and revisions.

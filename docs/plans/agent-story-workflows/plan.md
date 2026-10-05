@@ -10,13 +10,14 @@ Immediate canonical creation/generation is implemented at
 without reopening. The delayed native response refuses persistence and the failure
 capture retains exact human text, but final banner/history qualification is pending.
 **Next gate:** Hosted run 37365296113 on qualification
-`776d16c6e1039641c00beba9dade31465c9f28fe` failed before acquiring a runner during
-GitHub's active runner-assignment incident (zero steps/artifacts). Retry that hosted
-job after service recovery. Keep source/evidence frozen and inspect its actual UI
-result before classifying a locator or error-publication defect. Parent owns
+`776d16c6e1039641c00beba9dade31465c9f28fe` failed before acquiring a runner in
+both attempts (zero steps/artifacts). Final native banner/history qualification
+remains blocked; do not repeatedly rerun while infrastructure is unavailable.
+Keep source/evidence frozen. The separate untimed Bible membership successor
+implements the reproduced context-entry gap with local qualification. Parent owns
 review/PR/merge and Library delivery. See the canonical generation qualification
 report for exact source, tests, screenshots and preserved failures.
-Timed facts, relationships and new/unconsumed Bible facts remain separate follow-ups.
+Timed facts, relationships and broader unknown entity relevance remain follow-ups.
 Project-switch recovery is deferred; embeddings are optional later work.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
@@ -774,3 +775,44 @@ event also left screenplay impact and cached prompt context unchanged.
   explicit accept checks. Final qualification b1129893 and run 37337057557 await
   settled UI before capture. Full source, hashes and limits are in
   [the qualification report](../../reports/bible-fact-native-qualification.md).
+
+## Untimed Bible field membership: bounded successor
+
+Frozen review head 8941f3ac61c7e1a823aa03a7ccb66ba8ff4f3e01 and application
+9e8bd1c9d51250ac1c517945269278b7fe7e3d61 remain preserved. Native final
+banner/history qualification is blocked by two zero-step hosted runner failures;
+no repeat rerun or changed assertion belongs to this successor.
+
+The isolated production-source reproduction proves that a previously empty Mara
+motivation enters generation context (one baseline field becomes two) without a
+review cause. Editing the already consumed tagline still produces review; exact
+manual B and unrelated A/C survive. Scope/rule reported before implementation:
+
+- Track untimed fields on entities with actually captured baseline Bible inputs,
+  plus entities explicitly assigned to this scene by existing context-influence
+  records (Direct with UserSelected/AiSelected provenance). Proven entity relevance
+  from the latest generation is retained across accepted clears so restoration
+  cannot escape review. Empty default-list entities and newly created unrelated entities are
+  not enough to establish relevance. Do not infer relevance from screenplay text,
+  names, relations, descendants or embeddings.
+- Store optional scoped membership custody in existing generation/proposal JSON,
+  with the existing Bible/context revision clock for conservative pending-request
+  ABA guards. Membership differences create ContextChanged review causes; field
+  value changes retain their existing UsesFact bindings and historical evidence.
+  Membership captures canonical field presence on those entities, even when a
+  retained entity is outside the current resolver window. Actual supplied values
+  remain exclusively in BibleFieldInput; membership never fabricates consumption.
+- Legacy generations with known Bible inputs can detect new fields only on those
+  recorded entities and only when sparse history proves the field was absent/null
+  at generation. Unknown scope/consumption stays unknown. No inferred completeness.
+- Timed snapshot keys are excluded from newly tracked membership, including
+  soft-deleted snapshot history. Existing consumed bindings are preserved. New
+  relevance uses explicit node assignments only; relationship semantics are deferred.
+- Manual saved text/drafts and unrelated scenes remain unchanged until existing
+  preview/explicit acceptance. Preserve receipts from late output; fresh preview
+  and acceptance refresh lineage. Test absent→present, clear/remove, unrelated
+  entities, explicitly relevant entities, historical ambiguity, legacy replay,
+  ABA/stale requests, late responses and targeted acceptance/rollback.
+- Local source harness/core/frontend/strict compile gates qualify this slice.
+  Hosted native/model execution must be reported only if actually available;
+  local ONNX403 is not bypassed and existing screenshots are not new-slice proof.
