@@ -150,7 +150,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
     )
     .await?;
     *state.ai_config.lock() = AiConfig {
-        base_url: "http://127.0.0.1:18080".into(),
+        base_url: "http://127.0.0.1:18080/v1".into(),
         model: "authoring-http-fixture".into(),
         ..AiConfig::default()
     };
