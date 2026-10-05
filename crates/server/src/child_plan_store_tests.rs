@@ -88,6 +88,7 @@ fn sample_plan() -> ChildPlan {
         id: ChildPlanId::new("child_plan.test").unwrap(),
         parent_node_id: NodeId(Uuid::new_v4()),
         target_child_level: StoryLevel::Scene,
+        script_context: None,
         children: vec![
             ChildProposal {
                 name: "Arrival".to_string(),

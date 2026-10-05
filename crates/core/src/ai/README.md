@@ -58,6 +58,7 @@ use eidetic_core::ai::prompt::build_generate_request;
 ```
 
 ## API Consumer Contract
+- ChildPlan and GenerateChildrenRequest optionally carry existing ScriptContextBlock receipts. Absence means legacy unknown evidence; an empty supplied array is a known empty selection. Consumers do not infer story facts or authorize screenplay replacement from these receipts.
 - None identified as of 2026-03-08.
 - Reason: callers are internal Rust modules, not external clients.
 - Revisit trigger: request types here become part of a published SDK or binding.

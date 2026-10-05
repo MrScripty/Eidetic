@@ -1508,3 +1508,28 @@ three untouched PNGs and capture receipt preserved at
 `/workspace/scratch/no-download-qualification/native-37379727832/`.
 See the report for all hashes and viewport limits. Both original review branches
 stay unchanged; historical failed jobs were not rerun. Parent owns delivery.
+
+### Manual screenplay child planning: bounded implementation
+
+Separate descendant of preserved `b0d6d17c0d776f1c46e39c2590cfd2f944768412`;
+native a0b46fed stays frozen. The baseline actual public-save / child-prompt
+reproduction fails with saved_manual_text_present_in_child_prompt=false.
+GenerateChildren lacked canonical script inputs, and BeatEditor auto-applied plans.
+New generation reuses the existing bounded main-document screenplay selector,
+clears unversioned recap continuity and stores consumed receipts plus parent/
+subtree versions in existing creation command JSON. Existing optional wire fields
+retain legacy unknown versus known empty. A focused child-plan owner preserves
+ai_service's public facade; no new schema, SDK dependency or parallel canon.
+
+The editor now offers child planning for non-leaf clips including scenes and
+shows proposed outlines/saved evidence before explicit Accept timeline plan.
+Existing timeline commands apply only the durable reviewed material, revalidate
+receipt under the same writer transaction and preserve screenplay bytes/revisions.
+Replay precedes stale admission; failures roll back command/history/status/children.
+Actual synthetic HTTP delayed/pending text ABA, subtree notes ABA, membership
+and forged material refusals pass; distant unselected text remains compatible.
+Local actual full server432/core119/frontend423 and strict server all-target
+Clippy/typecheck/build/traceability pass. Receipt/source publication and new native
+child UI capture follow separately. Bible/affect/arc-description full receipt
+coverage and durable pending-review UI recovery remain outside this slice;
+SDK inference, inspector GUI and real-model quality remain unqualified.

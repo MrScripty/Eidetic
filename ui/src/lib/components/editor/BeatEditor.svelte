@@ -28,6 +28,8 @@
   import BeatEditorHeader from './BeatEditorHeader.svelte';
   import BeatNotesPanel from './BeatNotesPanel.svelte';
   import BeatPlanningActions from './BeatPlanningActions.svelte';
+  import ChildPlanReview from './ChildPlanReview.svelte';
+  import { createChildPlanReview } from './childPlanReview.svelte.js';
   import { beatContentStatusLabel } from './beatEditorStatus.js';
   import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
   import { createContextRequestLifecycle } from './contextRequestLifecycle.js';
@@ -47,7 +49,20 @@
       }
     },
   });
-  let planning = $state(false);
+  const childPlanReview = createChildPlanReview({
+    owner: () => ({ nodeId: editorState.selectedNodeId, session: getEditorSessionGeneration() }),
+    mounted: () => editorMounted,
+    generate: generateChildren,
+    apply: applyTimelineChildrenCommand,
+    async accepted(parent) {
+      await refreshSelectedProjection();
+      if (editorMounted && editorState.selectedNodeId === parent) {
+        const range = selectedNodeRange();
+        if (range) zoomToRange(range.start_ms, range.end_ms);
+      }
+    },
+  });
+  $effect(() => childPlanReview.syncOwner());
   let creatingChild = $state(false);
   let childCreateError = $state<string | null>(null);
   let editorMounted = true;
@@ -308,34 +323,7 @@
 
   async function handleGenerateChildren() {
     if (!editorState.selectedNodeId || !selectedStoryNodeIsReady()) return;
-    const parentNodeId = editorState.selectedNodeId;
-    const selectedRange = selectedNodeRange();
-    planning = true;
-    try {
-      const plan = await generateChildren(parentNodeId);
-      if (plan.parent_node_id !== parentNodeId) {
-        throw new Error('Generated child plan parent did not match the selected node');
-      }
-      await applyTimelineChildrenCommand({
-        parent_id: parentNodeId,
-        child_plan_id: plan.id,
-        children: plan.children.map((child) => ({
-          name: child.name,
-          outline: child.outline,
-          weight: child.weight,
-          beat_type: child.beat_type,
-          characters: child.characters ?? [],
-          location: child.location ?? null,
-          props: child.props ?? [],
-        })),
-      });
-      await refreshSelectedProjection();
-      if (selectedRange) {
-        zoomToRange(selectedRange.start_ms, selectedRange.end_ms);
-      }
-    } finally {
-      planning = false;
-    }
+    await childPlanReview.generate();
   }
 
   function navigateNode(direction: -1 | 1) {
@@ -375,15 +363,24 @@
       />
     {/if}
 
-    {#if !isChildNode && childLevelName}
+    {#if childLevelName}
       <BeatPlanningActions
         {childLevelName}
         {hasChildren}
-        {planning}
+        planning={childPlanReview.state.busy || childPlanReview.state.uncertain}
         notes={node.content.notes}
         onplan={handleGenerateChildren}
       />
     {/if}
+
+    <ChildPlanReview
+      plan={childPlanReview.state.plan}
+      busy={childPlanReview.state.busy}
+      uncertain={childPlanReview.state.uncertain}
+      error={childPlanReview.state.error}
+      onaccept={() => void childPlanReview.accept()}
+      onclose={childPlanReview.close}
+    />
 
     <BeatNotesPanel
       {node}

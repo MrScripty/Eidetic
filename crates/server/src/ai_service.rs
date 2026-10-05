@@ -1,8 +1,7 @@
 use std::path::PathBuf;
 
 use eidetic_core::Project;
-use eidetic_core::ai::backend::{ChildPlan, ChildPlanId, ChildProposal, GenerateChildrenRequest};
-use eidetic_core::ai::prompt::{build_generate_children_request, build_generate_request};
+use eidetic_core::ai::prompt::build_generate_request;
 use eidetic_core::contracts::{
     AffectProjection, AffectTarget, AiBibleContextProjection, ProjectionEnvelope,
 };
@@ -14,9 +13,11 @@ use uuid::Uuid;
 #[path = "manual_script_workflow_tests.rs"]
 mod manual_script_workflow_tests;
 
+pub use crate::child_plan_generation::generate_children;
+
 use crate::ai_backends::Backend;
 use crate::backend_error::BackendError;
-use crate::prompt_format::{build_chat_prompt, build_decompose_prompt};
+use crate::prompt_format::build_chat_prompt;
 use crate::state::{AiConfig, AppState, BackendType};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -97,65 +98,6 @@ pub async fn preview_ai_context_at_story_time(
         system: prompt.system,
         user: prompt.user,
     })
-}
-
-pub async fn generate_children(
-    state: &AppState,
-    body: AiGenerateChildrenRequest,
-) -> Result<ChildPlan, BackendError> {
-    let node_id = NodeId(body.node_id);
-    let (mut request, project_path) = {
-        let (project, project_path) = active_sqlite_project(state).await?;
-        let node = project
-            .timeline
-            .node(node_id)
-            .map_err(|_| BackendError::not_found(format!("node not found: {}", body.node_id)))?;
-        if node.content.notes.trim().is_empty() {
-            return Err(BackendError::bad_request("node has no notes"));
-        }
-
-        let request = build_generate_children_request(&project, node_id)
-            .map_err(|error| BackendError::bad_request(error.to_string()))?;
-        (request, project_path)
-    };
-    attach_ai_generation_context_to_children(
-        &mut request,
-        project_path,
-        node_id,
-        body.story_time_ms,
-    )
-    .await?;
-
-    let config = state.ai_config.lock().clone();
-    let backend = Backend::from_config(&config);
-    let prompt = build_decompose_prompt(&request);
-    let json_text = backend
-        .generate_json(&prompt, &config)
-        .await
-        .map_err(|error| {
-            tracing::error!(
-                "Child decomposition failed for node {}: {error}",
-                body.node_id
-            );
-            BackendError::internal(error.to_string())
-        })?;
-
-    let children = parse_child_proposals(&json_text, body.node_id)?;
-    let plan = ChildPlan {
-        id: ChildPlanId::new(format!("child_plan.{}", Uuid::new_v4()))
-            .expect("generated child plan ids are non-empty"),
-        parent_node_id: node_id,
-        target_child_level: request.target_child_level,
-        children,
-    };
-    let mut conn = state
-        .project_database
-        .open_active_write_connection()
-        .map_err(|error| BackendError::internal(error.to_string()))?;
-    crate::child_plan_store::record_child_plan(&mut conn, &plan, 0)
-        .map_err(|error| BackendError::internal(error.to_string()))?;
-
-    Ok(plan)
 }
 
 pub fn update_ai_config(state: &AppState, update: AiConfigUpdate) -> AiConfig {
@@ -256,7 +198,7 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     Ok(())
 }
 
-async fn load_ai_bible_context_projection(
+pub(crate) async fn load_ai_bible_context_projection(
     path: PathBuf,
     node_id: NodeId,
     story_time_ms: Option<u64>,
@@ -297,22 +239,7 @@ async fn load_ai_bible_context_projection(
     })?
 }
 
-async fn attach_ai_generation_context_to_children(
-    request: &mut GenerateChildrenRequest,
-    path: PathBuf,
-    node_id: NodeId,
-    story_time_ms: Option<u64>,
-) -> Result<(), BackendError> {
-    request.bible_context = Some(
-        load_ai_bible_context_projection(path.clone(), node_id, story_time_ms)
-            .await?
-            .0,
-    );
-    request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
-    Ok(())
-}
-
-async fn load_ai_affect_projection(
+pub(crate) async fn load_ai_affect_projection(
     path: PathBuf,
     node_id: NodeId,
 ) -> Result<ProjectionEnvelope<AffectProjection>, BackendError> {
@@ -327,47 +254,6 @@ async fn load_ai_affect_projection(
     .map_err(|error| {
         BackendError::Internal(format!("AI affect context projection task failed: {error}"))
     })?
-}
-
-fn parse_child_proposals(
-    json_text: &str,
-    node_id: Uuid,
-) -> Result<Vec<ChildProposal>, BackendError> {
-    match serde_json::from_str::<Vec<ChildProposal>>(json_text) {
-        Ok(children) => Ok(children),
-        Err(_) => parse_wrapped_or_single_child_proposal(json_text, node_id),
-    }
-}
-
-fn parse_wrapped_or_single_child_proposal(
-    json_text: &str,
-    node_id: Uuid,
-) -> Result<Vec<ChildProposal>, BackendError> {
-    #[derive(Deserialize)]
-    struct Wrapped {
-        #[serde(
-            alias = "acts",
-            alias = "beats",
-            alias = "children",
-            alias = "sequences",
-            alias = "scenes"
-        )]
-        items: Vec<ChildProposal>,
-    }
-    match serde_json::from_str::<Wrapped>(json_text) {
-        Ok(wrapped) => Ok(wrapped.items),
-        Err(_) => match serde_json::from_str::<ChildProposal>(json_text) {
-            Ok(single) => Ok(vec![single]),
-            Err(error) => {
-                tracing::warn!(
-                    "Failed to parse child plan JSON for node {node_id}: {error}\nRaw: {json_text}"
-                );
-                Err(BackendError::bad_request(format!(
-                    "failed to parse AI response: {error}"
-                )))
-            }
-        },
-    }
 }
 
 fn display_model(config: &AiConfig, detected_model: &str) -> String {

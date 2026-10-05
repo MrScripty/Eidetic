@@ -38,12 +38,15 @@ fn load_child_plan_records(conn: &Connection) -> Result<Vec<ChildPlanRecord>, Ch
     for row in rows {
         let (id, parent_node_id, target_child_level, status, created_at_ms) = row?;
         let children = load_child_plan_children(conn, &id)?;
+        let script_context =
+            child_plan_store::load_memory(conn, &id)?.map(|memory| memory.script_inputs);
         plans.push(ChildPlanRecord {
             plan: ChildPlan {
                 id,
                 parent_node_id,
                 target_child_level,
                 children,
+                script_context,
             },
             status,
             created_at_ms,
@@ -52,7 +55,7 @@ fn load_child_plan_records(conn: &Connection) -> Result<Vec<ChildPlanRecord>, Ch
     Ok(plans)
 }
 
-fn load_child_plan_children(
+pub(crate) fn load_child_plan_children(
     conn: &Connection,
     plan_id: &ChildPlanId,
 ) -> Result<Vec<ChildProposal>, ChildPlanStoreError> {

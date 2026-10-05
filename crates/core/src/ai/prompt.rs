@@ -109,6 +109,7 @@ pub fn build_generate_children_request(
         episode_structure,
         bible_context: None,
         affect_context: None,
+        script_context: None,
     })
 }
 

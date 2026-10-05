@@ -36,6 +36,10 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
 | `scriptImpactNotice.ts` | Human-readable labels for the typed input review causes. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
+| `ChildPlanReview.svelte` | Explicit timeline-plan preview, proposed outlines and exact saved screenplay evidence. |
+| `childPlanReview.svelte.ts` | Transient review lifecycle; no generation-time apply, guarded selection/session continuations and exact acceptance retry. |
+| `childPlanReview.svelte.test.ts` | Pending-only generation, explicit accept, retired continuations and uncertain acknowledgement regressions. |
+| `ChildPlanReview.ssr.test.ts` | Explicit acceptance and saved evidence presentation with safe text rendering. |
 
 ## Problem
 The app needs focused editing surfaces where timeline selection, AI generation, and projection-backed script review stay coordinated.
@@ -52,6 +56,8 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+
+- Plan actions are available on selected clips with a child level. Generation presents the durable pending plan without applying it. Only Accept timeline plan calls the existing validated children command; saved screenplay and author drafts are untouched. Refused plans retain their preview and error. Ordinary close/navigation can hide a durable pending plan; recovering its review surface after remount is not implemented in this slice.
 
 - Screenplay context changes use the existing Needs review and targeted proposal
   controls. What changed identifies scenes entering/leaving the captured window;

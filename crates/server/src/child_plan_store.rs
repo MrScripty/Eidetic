@@ -45,11 +45,13 @@ CREATE TABLE IF NOT EXISTS child_plan_child_references (
 );
 "#;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct CreateChildPlanCommand {
     plan_id: ChildPlanId,
     parent_node_id: NodeId,
     target_child_level: StoryLevel,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    memory: Option<crate::child_plan_memory::ChildPlanMemory>,
 }
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), ChildPlanStoreError> {
@@ -58,10 +60,20 @@ pub(crate) fn create_schema(conn: &Connection) -> Result<(), ChildPlanStoreError
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) fn record_child_plan(
     conn: &mut Connection,
     plan: &ChildPlan,
     created_at_ms: u64,
+) -> Result<RecordChangeOutcome, ChildPlanStoreError> {
+    record_child_plan_with_memory(conn, plan, created_at_ms, None)
+}
+
+pub(crate) fn record_child_plan_with_memory(
+    conn: &mut Connection,
+    plan: &ChildPlan,
+    created_at_ms: u64,
+    memory: Option<crate::child_plan_memory::ChildPlanMemory>,
 ) -> Result<RecordChangeOutcome, ChildPlanStoreError> {
     create_schema(conn)?;
     validate_child_plan(plan)?;
@@ -76,6 +88,7 @@ pub(crate) fn record_child_plan(
         plan_id: plan.id.clone(),
         parent_node_id: plan.parent_node_id,
         target_child_level: plan.target_child_level,
+        memory,
     });
     let event = ChangeEvent::new(
         command.id,
@@ -91,8 +104,24 @@ pub(crate) fn record_child_plan(
         "ai.child_plan_create",
         &event,
         &[revision],
-        |tx| insert_child_plan_in_transaction(tx, plan, created_at_ms, event.id),
+        |tx| {
+            if let Some(memory) = &command.payload.memory {
+                crate::child_plan_memory::validate(tx, plan.parent_node_id, memory)?;
+            }
+            insert_child_plan_in_transaction(tx, plan, created_at_ms, event.id)
+        },
     )?)
+}
+
+pub(crate) fn load_memory(
+    conn: &Connection,
+    plan: &ChildPlanId,
+) -> Result<Option<crate::child_plan_memory::ChildPlanMemory>, HistoryStoreError> {
+    let json: String = conn.query_row(
+        "SELECT c.payload_json FROM child_plans p JOIN change_events e ON e.id=p.created_event_id
+         JOIN commands c ON c.id=e.command_id WHERE p.id=?1 AND c.payload_type='ai.child_plan_create'",
+        [plan.as_str()], |row| row.get(0))?;
+    Ok(serde_json::from_str::<CreateChildPlanCommand>(&json)?.memory)
 }
 
 pub(crate) fn validate_child_plan_for_apply(

@@ -204,6 +204,9 @@ pub struct ChildPlan {
     pub parent_node_id: NodeId,
     pub target_child_level: StoryLevel,
     pub children: Vec<ChildProposal>,
+    /// Exact saved screenplay supplied to this proposal; absent on legacy plans.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context: Option<Vec<crate::contracts::ScriptContextBlock>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -246,6 +249,9 @@ pub struct GenerateChildrenRequest {
     /// Backend-owned affect constraints relevant to this decomposition, when available.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub affect_context: Option<ProjectionEnvelope<AffectProjection>>,
+    /// Canonical screenplay evidence for decomposition, with source revisions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context: Option<Vec<crate::contracts::ScriptContextBlock>>,
 }
 
 /// Everything the AI needs to infer a parent from children.

@@ -918,3 +918,37 @@ remain outside the permitted route. No old native banner job is rerun.
   unqualified. This capture does not claim context-stack inspector GUI coverage.
 
 See `docs/reports/story-memory-no-download-qualification.md` for scope and receipts.
+
+## Manual screenplay memory in reviewed child planning
+
+Continue from preserved qualification/report head
+`b0d6d17c0d776f1c46e39c2590cfd2f944768412`; preserve native qualification a0b46fed.
+The actual public-save reproduction reports
+`saved_manual_text_present_in_child_prompt=false` on that application source.
+GenerateChildrenRequest has no canonical screenplay field; child prompts use
+unversioned recaps. BeatEditor immediately applies generated children, and only
+root clips expose planning. This is the next bounded manual Memory read /
+Projection propagation criterion, including shared manual/agent timeline writes
+and explicit conversational review (objective 1/4).
+
+- Reuse the existing main-document target/intersecting + two-neighbor selector and
+  exact block/segment revision receipts. Canonical evidence replaces unversioned
+  recap continuity in this consumer; never regenerate recaps or infer Bible facts.
+- Keep generation pending in the existing child-plan store and show its proposed
+  outlines/source screenplay. Expose planning for all selected non-leaf clips,
+  so an authored scene can propose beats while retaining its own screenplay anchor.
+- Persist the receipt in the existing creation command JSON, not new schema/state.
+  Writer transactions revalidate selected inputs/selection epoch and parent/subtree
+  nodes/revisions before recording and before explicit timeline acceptance. Refuse
+  relevant manual text/notes/placement changes and ABA; validate accepted material
+  against the durable proposal. Preserve the existing command replay/lock guards.
+- Apply changes child clips only after Accept timeline plan; no saved screenplay
+  write, draft mutation or automatic world-fact update. Legacy receipt absence
+  remains unknown. Complete Bible/affect/arc-description source binding and durable
+  pending-review UI recovery are outside this bounded slice; no project switching.
+- Qualify actual manual Save -> canonical child prompt -> synthetic HTTP pending
+  plan -> explicit public timeline apply, unchanged screenplay and later replay;
+  delayed/pending ABA refusal, membership/subtree changes and unrelated distant
+  text edits. Frontend pending/retry/lifetime and SSR checks are mechanical;
+  new native UI evidence requires a source-bound run. SDK and real-model quality
+  remain unqualified.

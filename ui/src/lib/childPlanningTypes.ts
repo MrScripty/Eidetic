@@ -1,4 +1,5 @@
 import type { BeatType, NodeId, StoryLevel } from './timelineTypes.js';
+import type { ScriptContextBlock } from './scriptTypes.js';
 
 export interface ChildProposal {
   name: string;
@@ -15,4 +16,5 @@ export interface ChildPlan {
   parent_node_id: NodeId;
   target_child_level: StoryLevel;
   children: ChildProposal[];
+  script_context?: ScriptContextBlock[] | null;
 }

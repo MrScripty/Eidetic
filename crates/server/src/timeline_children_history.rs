@@ -126,6 +126,7 @@ pub(crate) fn record_apply_timeline_children_history(
         &revisions,
         |tx| {
             crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            timeline_child_plan_apply::validate_memory_in_transaction(tx, command, event.id)?;
             timeline_relationship_store::delete_relationships_in_transaction(
                 tx,
                 &removed_relationship_ids,
