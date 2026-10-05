@@ -1470,3 +1470,21 @@ still a separate pending gate. Broader generation persistence is not covered.
   new native UI or real-model execution claim. Prior screenshots remain frozen.
 - Parent owns PRs/reviews/merges and Library delivery. Native final banner/history
   qualification remains blocked after two zero-step hosted allocation failures.
+
+### Exact-source service qualification / dependency compatibility
+
+Frozen review heads remain `8ea7153b2c0f236c85ec47c0422e4f8e58a078c3`
+(tree `be8155a48c6b7718b80fd080f8b3fdca10fdbac3`) and
+`8d2719d2f80f3529864a138720aeb02463fc390f`
+(tree `bf8fc445602b0a8b52cbd5434c668f36cb4a004c`). No application source edits.
+The old Pumas dependency resolves ONNX download features and was not built.
+An isolated compatibility qualification uses Pumas
+`a94fd92021f27fdeedb6e2de6e01c41c250ef576` (tree
+`4a6977b88ed532089807183e218a959ac02b724d`), typed dynamic SDK loading,
+no download features, and a candidate lock. Full server 425/core119/frontend411
+pass; strict server all-target Clippy passes normally with no SDK and no bypass.
+The initial server run's 17 read-only host-state failures are preserved; using the
+maintained writable XDG isolation makes all 425 pass. New dependency pin and
+feature-union CI admission are separate from both unchanged review milestones.
+Fresh exact-source native capture is pending; synthetic providers qualify only
+mechanical context/acceptance behavior. See the no-download qualification report.

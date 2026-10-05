@@ -9,21 +9,22 @@ Immediate canonical creation/generation is implemented at
 405 frontend tests, and actual native create/select/notes/manual anchor/generate
 without reopening. The delayed native response refuses persistence and the failure
 capture retains exact human text, but final banner/history qualification is pending.
-**Next gate:** Hosted run 37365296113 on qualification
-`776d16c6e1039641c00beba9dade31465c9f28fe` failed before acquiring a runner in
-both attempts (zero steps/artifacts). Final native banner/history qualification
-remains blocked; do not repeatedly rerun while infrastructure is unavailable.
-Keep source/evidence frozen. The separate untimed Bible membership successor
-implements the reproduced context-entry gap with local qualification. Parent owns
-review/PR/merge and Library delivery. See the canonical generation qualification
-report for exact source, tests, screenshots and preserved failures.
+**Next gate:** Exact-current-source full-service qualification now runs locally
+with the separately audited Pumas no-download successor. Historical zero-step
+native job failures remain historical infrastructure evidence, not a current
+source test result. A new native qualification uses the exact `8d2719d2` application
+source with an explicitly separate dependency integration; neither preserved
+membership repair nor context-stack review branch is rewritten. Parent owns
+review/PR/merge and Library delivery.
 Timed facts, relationships and broader unknown entity relevance remain follow-ups.
 Project-switch recovery is deferred; embeddings are optional later work.
 
 **Local successor status:** Membership preview value completeness is repaired at
 `3ebb752f131bb233c16d49210ee226de14d2caf2` (report head `8ea7153b`). The separate
 saved-screenplay context-stack bridge now passes 119 core / 283 source-module /
-411 frontend tests and strict compile gates; native/model execution is pending.
+411 frontend tests and strict compile gates. Exact-source execution with audited
+no-download Pumas now passes 425 full-server / 119 core / 411 frontend;
+native/model execution is pending.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -890,3 +891,27 @@ Context-stack work resumed after repair checkpoint
 `8ea7153b2c0f236c85ec47c0422e4f8e58a078c3` was tested and pushed; the
 independently reviewed 2761aac branch remains unchanged. Requalify the combined
 successor before publishing it; neither feature replaces native/model gates.
+
+## Exact-source service qualification with no ONNX downloads
+
+Application source is frozen `8d2719d2f80f3529864a138720aeb02463fc390f`
+(tree `bf8fc445602b0a8b52cbd5434c668f36cb4a004c`), including accepted membership
+repair `8ea7153b2c0f236c85ec47c0422e4f8e58a078c3`
+(tree `be8155a48c6b7718b80fd080f8b3fdca10fdbac3`). Both branches stay unchanged.
+The old Pumas pin enables `download-binaries`; normal builds on that dependency
+remain outside the permitted route. No old native banner job is rerun.
+
+- Audit Pumas `a94fd92021f27fdeedb6e2de6e01c41c250ef576` in isolated sibling
+  worktrees, retain Eidetic's application files, and resolve its own candidate lock.
+  The used ModelLibrary/runtime-profile APIs remain compatible; no adapter changes.
+- Actual full server 425 / core 119 / frontend 411 tests pass on this exact source
+  with candidate Pumas 0.7.0. Strict server all-target Clippy passes without an
+  ONNX SDK, skipped downloads, DOCS_RS or linking overrides. All server tests use
+  the launcher's writable XDG isolation, retaining the first failed host-state run.
+- Publish the pin/lock and CI metadata feature-union gate as a separate tested
+  dependency milestone. Then publish exact-source native qualification with a
+  narrow source guard, real Bible edit/review/preview/explicit acceptance and
+  synthetic localhost HTTP responses. Native screenshots and real-model quality
+  remain unqualified until execution supplies evidence.
+
+See `docs/reports/story-memory-no-download-qualification.md` for scope and receipts.
