@@ -8,7 +8,7 @@ Application checkpoint `fe7fa5900b648ae9d24b374411ab8f9ebcc72343` preserves the
 accepted manual authoring workflow and adds the Bible-derived projection clock.
 **Next gate:** Parent review of the frozen Bible feature, qualified by hosted run
 37337057557 with synthetic HTTP responses and settled native captures. Independently
-audit scene-order changes and context membership on a separate branch. Timed facts,
+qualify complete screenplay context-window changes on `feat/scene-order-story-memory`. Timed facts,
 relationships and new/unconsumed Bible facts are
 separate follow-ups. Project-switch recovery is deferred; embeddings remain a
 possible later improvement, not a required dependency for this slice.
@@ -43,6 +43,34 @@ Acceptance claims (all pending unless the ledger records scoped evidence):
 5. A multi-act, feature-length manual/agent screenplay walkthrough demonstrates
    continuity and separate screenplay output, recovery and undo, repeated and
    interrupted interactions, with graph visualization closed as well as open.
+
+## Scene order: complete continuity window
+
+The independent follow-up starts from frozen Bible head
+`af603e7682417fd49dbaac02e75142fd1b9d0d61`. Existing two-scene placement and
+consumed-input review already work. A source reproduction verified a different
+gap: moving unseen E from 9000 to 3000 changes B's actual selected window, and
+moving B from 4000 to 8500 removes A/E, without any old consumed-source revision
+change or review cause. Human B text remained unchanged in both cases.
+
+- Capture the complete ordered selected segment window alongside actual inputs
+  in existing generation command/proposal history. An absent legacy receipt
+  stays absent; do not claim all historical inputs were complete windows.
+- Derive review for entering/leaving members or changed external order/relative
+  position. Ignore the output segment's own intentional replacement and ordinary
+  target shifts that leave external selection unchanged. Preserve manual blocks,
+  drafts, factual-time policy and existing source revision guards.
+- Preview from the fresh window and accept only through existing targeted review.
+  Refresh its existing dependencies atomically. The latest main-document segment
+  event is a conservative append-only selection epoch in the review binding,
+  refusing unseen move-in/move-out ABA even when visible inputs return unchanged.
+  Unrelated segment edits may require a new preview; they do not alone create
+  Needs review. No new schema, vectors or parallel state.
+- Qualify exact entering/displaced-neighbor and target-relocation reads, native
+  public-service publication, synthetic provider preview and explicit acceptance.
+  Native screenshots must distinguish public-service setup from GUI actions.
+  Existing timeline drag bounds and semantic story extraction remain outside
+  this bounded continuity receipt; presentation placement never infers story time.
 
 ## Manual screenplay authoring: first bounded memory slice
 

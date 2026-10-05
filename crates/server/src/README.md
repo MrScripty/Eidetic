@@ -15,6 +15,9 @@ domain model in `eidetic-core`.
 | `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
 | `ai_script_context.rs` | Canonical screenplay evidence for shared preview/generation context, carrying exact block and segment write identities. |
+| `script_context_scope.rs` | Complete continuity-window capture in existing generation/proposal history, derived entering/leaving/order causes and append-only placement guards. |
+| `scene_context_membership_tests.rs` | Six-scene entering/displaced-neighbor and target-relocation fixtures, exact manual text, late generation/replay, malformed capture rollback and unconsumed membership ABA refusal. |
+| `scene_context_membership_service_tests.rs` | Native AppState range publication, backend generation-window capture, synthetic HTTP preview and explicit targeted acceptance. |
 | `script_generation_lineage.rs` | Atomic successful-generation records and existing semantic dependencies bound to consumed screenplay revisions. |
 | `script_generation_lineage_tests.rs` | A-to-B/unrelated-C, edits during generation, atomic rollback, replay, source deletion, refreshed and unavailable binding regressions. |
 | `script_impact_projection.rs` | Derived Needs review causes against the latest successful generation, retaining historical source excerpts after deletion. |
@@ -132,6 +135,21 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+
+- New main-screenplay generation records a complete selected window separately
+  from its exact consumed blocks. Selection uses presentation placement only.
+  Existing command and proposal JSON hold this optional receipt; existing
+  revision-bound dependencies identify its timeline anchor. No schema, embedding
+  or second memory store is added, and older incomplete inputs are not backfilled.
+- Context review compares ordered external segment membership and relative
+  before/intersecting/after positions. Target replacement itself is excluded.
+  An unconsumed scene entering the window or a target relocation can require
+  review without changing any saved screenplay text. Preview uses the fresh
+  window; explicit acceptance refreshes its existing lineage.
+- Pending preview equality also includes the latest append-only main-document
+  segment event. This conservative selection epoch refuses an unconsumed
+  move-in/move-out ABA and can refuse a preview after an unrelated segment edit.
+  It is a selection guard, never a fictional-time or timeline-node fact revision.
 - Replayed manual text edits return the current canonical projection without
   overwriting an intervening author edit or adding history. Canonical context and
   downstream consumed-source review retain the latest text/revision, independent

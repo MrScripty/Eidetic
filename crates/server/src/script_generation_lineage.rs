@@ -106,6 +106,10 @@ pub(crate) fn dependencies(
             }),
         });
     }
+    if let Some(dependency) = crate::script_context_scope::dependency(command, event, created_at_ms)
+    {
+        dependencies.push(dependency);
+    }
     Ok(dependencies)
 }
 
@@ -115,6 +119,7 @@ pub(crate) fn record_in_transaction(
     event: ChangeEventId,
     dependencies: &[SemanticDependency],
 ) -> Result<(), HistoryStoreError> {
+    crate::script_context_scope::validate(tx, command)?;
     for input in command.script_inputs.iter().flatten() {
         if input.document_id != command.block.document_id {
             return Err(HistoryStoreError::InvalidValue(

@@ -50,6 +50,11 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+
+- Screenplay context changes use the existing Needs review and targeted proposal
+  controls. What changed identifies scenes entering/leaving the captured window;
+  the saved block and any active manual draft stay under existing save/accept
+  guards. A context cause does not authorize automatic replacement.
 - Comparing saved text reads its exact text/version without changing draft text,
   base revision or canon. Explicit continuation uses the private read snapshot
   only when the current block still has that revision. Changed/ABA revisions

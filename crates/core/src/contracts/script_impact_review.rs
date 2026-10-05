@@ -31,6 +31,8 @@ pub struct ScriptImpactProposalBinding {
     pub bible_context: ProjectionEnvelope<AiBibleContextProjection>,
     #[serde(default)]
     pub bible_inputs: Vec<super::BibleFieldInput>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context_scope: Option<super::ScriptContextScope>,
 }
 
 #[cfg(test)]

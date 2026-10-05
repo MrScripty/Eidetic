@@ -116,6 +116,8 @@ pub struct GenerateRequest {
     /// Captured with the Bible projection in the same canonical read snapshot.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_inputs: Option<Vec<crate::contracts::BibleFieldInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context_scope: Option<crate::contracts::ScriptContextScope>,
 }
 
 /// Adjacent node content for context.

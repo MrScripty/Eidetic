@@ -66,6 +66,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
         )])),
         request.script_context,
         request.bible_inputs,
+        request.script_context_scope,
     )
     .await;
     assert!(
@@ -137,6 +138,7 @@ async fn fixture() -> Fixture {
         "Previously approved screenplay".to_string(),
         None,
         None,
+        None,
     )
     .await
     .unwrap();
@@ -190,6 +192,7 @@ async fn assert_failed_stream(
         fixture.node_id.0,
         Box::pin(stream::iter(items)),
         Some(inputs),
+        None,
         None,
     )
     .await;
@@ -339,6 +342,7 @@ async fn successful_persistence_keeps_captured_input_lineage_after_an_intervenin
         },
         "  B from captured A\n\n".into(),
         Some(vec![captured.clone()]),
+        None,
         None,
     )
     .await

@@ -86,6 +86,7 @@ pub(crate) async fn run_generation(
         stream,
         request.script_context,
         request.bible_inputs,
+        request.script_context_scope,
     )
     .await;
 }
@@ -97,6 +98,7 @@ async fn finish_generation_stream(
     stream: eidetic_core::ai::backend::GenerateStream,
     script_inputs: Option<Vec<ScriptContextBlock>>,
     bible_inputs: Option<Vec<eidetic_core::contracts::BibleFieldInput>>,
+    script_context_scope: Option<eidetic_core::contracts::ScriptContextScope>,
 ) {
     let node_id = NodeId(node_uuid);
     let full_text = match stream_generated_text(stream, |token, tokens_generated| {
@@ -123,11 +125,11 @@ async fn finish_generation_stream(
     persist_successful_generation(
         state,
         project_path,
-        node_id,
         node_uuid,
         full_text,
         script_inputs,
         bible_inputs,
+        script_context_scope,
     )
     .await;
 }
@@ -257,12 +259,13 @@ async fn handle_empty_generation(
 async fn persist_successful_generation(
     state: AppState,
     project_path: PathBuf,
-    node_id: NodeId,
     node_uuid: Uuid,
     full_text: String,
     script_inputs: Option<Vec<ScriptContextBlock>>,
     bible_inputs: Option<Vec<eidetic_core::contracts::BibleFieldInput>>,
+    script_context_scope: Option<eidetic_core::contracts::ScriptContextScope>,
 ) {
+    let node_id = NodeId(node_uuid);
     if let Err(error) =
         persist_node_content_status(project_path.clone(), node_id, ContentStatus::HasContent).await
     {
@@ -279,6 +282,7 @@ async fn persist_successful_generation(
         full_text.clone(),
         script_inputs,
         bible_inputs,
+        script_context_scope,
     )
     .await
     {
@@ -355,6 +359,7 @@ async fn persist_generated_script_block(
     full_text: String,
     script_inputs: Option<Vec<ScriptContextBlock>>,
     bible_inputs: Option<Vec<eidetic_core::contracts::BibleFieldInput>>,
+    script_context_scope: Option<eidetic_core::contracts::ScriptContextScope>,
 ) -> Result<(), String> {
     tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&project_path)
@@ -369,6 +374,7 @@ async fn persist_generated_script_block(
                     block: command.payload,
                     script_inputs,
                     bible_inputs,
+                    script_context_scope,
                 },
             },
             0,

@@ -57,6 +57,11 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Generation commands retain the exact supplied screenplay context in their
   replay identity. Bound dependencies identify both the successful output event
   and consumed input event. Missing lineage differs from a known empty input set.
+- Optional complete screenplay-window receipts retain the selected node, range,
+  ordered segment identities and append-only selection epoch in existing
+  generation/proposal history. Older absent receipts remain absent in serde and
+  replay identity. Context-change causes describe entering/leaving or changed
+  order; they neither replace saved text nor infer fictional time.
 - Needs review is a derived read projection with changed/deleted input causes;
   it does not change canonical segment status or authorize proposal acceptance.
 - Impact identifies its generated output block; a targeted preview cannot resolve

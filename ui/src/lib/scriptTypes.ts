@@ -95,7 +95,7 @@ export interface ScriptImpactCause {
     | { kind: 'script_segment'; segment_id: string };
   consumed_revision_event_id: string;
   current_revision_event_id: string | null;
-  reason: 'changed' | 'deleted';
+  reason: 'changed' | 'deleted' | 'context_changed';
   input_excerpt: string | null;
 }
 

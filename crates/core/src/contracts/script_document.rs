@@ -220,6 +220,17 @@ pub struct ScriptContextBlock {
     pub text: String,
 }
 
+/// Complete continuity-window selection captured with the screenplay inputs.
+/// None on an older generation means completeness was not recorded.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScriptContextScope {
+    pub node_id: crate::timeline::node::NodeId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub segment_ids: Vec<ScriptSegmentId>,
+    pub revision_event_id: Option<super::ChangeEventId>,
+}
+
 /// Internal generation commit: its captured evidence is part of the replay signature.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GenerateScriptBlockCommand {
@@ -227,6 +238,8 @@ pub struct GenerateScriptBlockCommand {
     pub script_inputs: Option<Vec<ScriptContextBlock>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_inputs: Option<Vec<super::BibleFieldInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context_scope: Option<ScriptContextScope>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -254,6 +267,7 @@ pub struct ScriptImpactCause {
 pub enum ScriptImpactReason {
     Changed,
     Deleted,
+    ContextChanged,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -398,6 +412,50 @@ mod tests {
         let round_trip: SetScriptLockCommand = serde_json::from_str(&json).unwrap();
 
         assert_eq!(round_trip, command);
+    }
+
+    #[test]
+    fn complete_context_scope_round_trips_and_absent_legacy_scope_stays_absent() {
+        let mut json = serde_json::json!({
+            "block": {
+                "document_id": "script.document.main", "document_title": "Pilot",
+                "document_sort_order": 0, "segment_id": "segment.B",
+                "source_node_id": "00000000-0000-0000-0000-000000000005",
+                "segment_start_ms": 4000, "segment_end_ms": 5000,
+                "segment_status": "current", "segment_sort_order": 0,
+                "block_id": "block.B", "block_kind": "action", "text": "Exact B\n\n",
+                "span_provenance": "ai_generated", "sort_order": 0
+            }, "script_inputs": []
+        });
+        let legacy: GenerateScriptBlockCommand = serde_json::from_value(json.clone()).unwrap();
+        assert!(legacy.script_context_scope.is_none());
+        assert!(
+            serde_json::to_value(legacy)
+                .unwrap()
+                .get("script_context_scope")
+                .is_none()
+        );
+        json["script_context_scope"] = serde_json::json!({
+            "node_id": "00000000-0000-0000-0000-000000000005", "start_ms": 4000,
+            "end_ms": 5000, "segment_ids": [], "revision_event_id": null
+        });
+        let complete: GenerateScriptBlockCommand = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            complete
+                .script_context_scope
+                .as_ref()
+                .unwrap()
+                .segment_ids
+                .len(),
+            0
+        );
+        assert_eq!(
+            serde_json::from_value::<GenerateScriptBlockCommand>(
+                serde_json::to_value(&complete).unwrap()
+            )
+            .unwrap(),
+            complete
+        );
     }
 }
 

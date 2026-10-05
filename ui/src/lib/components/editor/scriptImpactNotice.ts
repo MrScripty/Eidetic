@@ -1,6 +1,7 @@
 import type { ScriptImpactCause } from '$lib/scriptTypes.js';
 
 export function scriptImpactCauseLabel(cause: ScriptImpactCause): string {
+  if (cause.reason === 'context_changed') return 'Screenplay context changed.';
   const source =
     cause.input.kind === 'script_block'
       ? 'Source screenplay text'

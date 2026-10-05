@@ -1275,3 +1275,23 @@ still a separate pending gate. Broader generation persistence is not covered.
 - The user-requested next scene-order/context membership audit is independent of
   this frozen Bible branch. Parent owns PRs/reviews/merges. No reset or replacement
   workspace was used after the temporary executor disconnection.
+
+### Independent scene-order continuity implementation — 5 October 2026
+
+- Frozen Bible head af603e7682417fd49dbaac02e75142fd1b9d0d61 is unchanged. New
+  branch feat/scene-order-story-memory reproduces the entering/target-relocation
+  gap using actual source, before implementation. Existing consumed two-scene
+  reorder already passes; this is complete-window membership, not a one-second
+  placement adjustment or a duplicate manual authoring flow.
+- Optional window custody is recorded in existing generation/proposal JSON and
+  revision-bound dependencies. New derived context causes identify entering and
+  displaced scenes, while saved human B text stays exact. Preview selects the
+  fresh window; explicit acceptance refreshes lineage. Legacy scope is absent.
+- Local core 116, actual-source module harness 215 (208 existing, six new boundary
+  regressions, one legacy gap reproduction) and UI 401 tests pass. Native public
+  AppState range/preview/acceptance test is added and compile checked; hosted
+  execution is the next gate. Strict server all-target Clippy uses compile-only
+  ORT_SKIP_DOWNLOAD locally, never native execution or a download bypass.
+- Full native pre-push remains blocked locally by missing GTK/GLib development
+  libraries; the existing standard hosted Ubuntu/Pumas/ORT route will execute
+  actual native tests. No credential changes or external review requests.

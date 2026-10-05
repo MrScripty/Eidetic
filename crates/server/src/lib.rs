@@ -64,6 +64,7 @@ pub mod reference_service;
 pub(crate) mod revision_projection;
 pub(crate) mod script_block_create;
 pub(crate) mod script_block_edit;
+mod script_context_scope;
 pub(crate) mod script_document_command;
 pub(crate) mod script_generation_lineage;
 pub(crate) mod script_impact_projection;
@@ -104,3 +105,6 @@ mod timeline_script_placement;
 
 #[cfg(test)]
 mod timeline_script_placement_service_tests;
+
+#[cfg(test)]
+mod scene_context_membership_service_tests;

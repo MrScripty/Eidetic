@@ -6,6 +6,7 @@ import {
   propagationProposalProjectionState,
 } from '$lib/stores/propagationProposalProjection.svelte.js';
 import ScriptImpactReview from './ScriptImpactReview.svelte';
+import ScriptImpactNotice from './ScriptImpactNotice.svelte';
 
 const segment: ScriptSegmentProjection = {
   segment: {
@@ -113,4 +114,18 @@ it('identifies an authored Bible fact as a cause through the existing review sur
   expect(body).toContain('Preview update');
   expect(body).not.toMatch(/<button[^>]*disabled[^>]*>Preview update/);
   expect(fact.blocks[0]?.block.text).toBe('  Canonical B — 雨\n\n');
+});
+
+it('explains scenes entering and leaving the consumed screenplay window', () => {
+  const moved = structuredClone(segment);
+  moved.impact!.causes[0]!.input = { kind: 'timeline_node', node_id: 'node.B' };
+  moved.impact!.causes[0]!.reason = 'context_changed';
+  moved.impact!.causes[0]!.input_excerpt = 'Entered: E. Left: A.';
+  const { body } = render(ScriptImpactReview, { props: { documentId: 'main', segment: moved } });
+  const notice = render(ScriptImpactNotice, { props: { impact: moved.impact! } });
+  expect(body).toContain('Screenplay context changed.');
+  expect(notice.body).toContain('Entered: E. Left: A.');
+  expect(body).toContain('Preview update');
+  expect(body).not.toMatch(/<button[^>]*disabled[^>]*>Preview update/);
+  expect(moved.blocks[0]?.block.text).toBe('  Canonical B — 雨\n\n');
 });
