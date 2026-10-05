@@ -20,6 +20,11 @@ report for exact source, tests, screenshots and preserved failures.
 Timed facts, relationships and broader unknown entity relevance remain follow-ups.
 Project-switch recovery is deferred; embeddings are optional later work.
 
+**Local successor status:** Membership preview value completeness is repaired at
+`3ebb752f131bb233c16d49210ee226de14d2caf2` (report head `8ea7153b`). The separate
+saved-screenplay context-stack bridge now passes 119 core / 283 source-module /
+411 frontend tests and strict compile gates; native/model execution is pending.
+
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
 
@@ -843,3 +848,45 @@ this checkpoint reproduced warning clearance without supplying the new value.
   value, preview/manual preservation and explicit acceptance/refreshed lineage.
   Also test a different selected cause and context loss after preview. Real-model
   and native UI quality stay unqualified; no runner retry loop or ONNX workaround.
+
+
+## Saved screenplay in timeline/agent context: bounded successor
+
+Preserve Bible membership checkpoint `2761aacb8e70571729faf535d5cef407d01d36e8`
+(tree `c268d4937657b0323d521470503674e1aef6896f`) for independent review.
+Separate branch `feat/screenplay-context-stack`. Chosen criterion: extend the
+manual authoring **Memory read / Projection propagation** acceptance into the
+existing timeline context stack and its inspectable agent read (acceptance 4).
+The source-module reproduction saves exact BLUE umbrella screenplay, confirms
+canonical generation reads it, but ContextStackProjection still exposes only an
+old synthetic RED recap and no screenplay receipts. Both the native projection
+service and AgentGraphReadTools call that incomplete stack owner.
+
+- Share one SQLite context-stack read owner between native projection and agent
+  ReadContextStack. Add optional canonical screenplay evidence using the existing
+  main-document target/intersecting plus two adjacent segments on each side.
+  Keep exact text, source/block/segment IDs and their existing write revisions.
+  Known empty canonical evidence differs from legacy unavailable evidence.
+- Read nodes, recorded distilled context, screenplay and projection clock in one
+  snapshot. Include relevant script/context revisions in the existing envelope
+  version so a cached older read cannot erase a saved edit or edit/restore ABA.
+- Reuse existing ScriptChanged/context/timeline events and context-stack store
+  lifetime. Display saved screenplay alongside stored distilled context; label
+  the latter as recorded rather than implying automatic fresh semantic extraction.
+  Agent graph-context workflows can request the existing read_context_stack tool;
+  tool-result history preserves the evidence actually read.
+- This is a read-only bridge. Never rewrite scene notes, recaps, Bible facts,
+  screenplay, locks or drafts during a context read. Existing downstream review,
+  targeted preview and explicit acceptance remain the only generated replacement
+  route. No new memory owner, relation inference, embeddings or project switching.
+- Test exact manual text/revisions, bounded neighboring evidence, empty/legacy
+  distinction, context evaluation versioning, pinned WAL snapshot, stale cache
+  reads, and manual edit -> context evidence -> existing review/explicit acceptance.
+  Full native/service and real-model quality remain separate qualification gates;
+  no hosted retry loop or local ONNX acquisition workaround belongs to this slice.
+
+
+Context-stack work resumed after repair checkpoint
+`8ea7153b2c0f236c85ec47c0422e4f8e58a078c3` was tested and pushed; the
+independently reviewed 2761aac branch remains unchanged. Requalify the combined
+successor before publishing it; neither feature replaces native/model gates.

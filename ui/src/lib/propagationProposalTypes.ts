@@ -7,7 +7,7 @@ import type {
 } from './bibleGraphTypes.js';
 import type { CommandOutcome, FieldValue, ProjectionEnvelope } from './projectionTypes.js';
 import type { ScriptBlockId, ScriptPatch, ScriptSegmentId } from './scriptTypes.js';
-import type { ScriptImpactCause } from './scriptTypes.js';
+import type { ScriptContextBlock, ScriptImpactCause } from './scriptTypes.js';
 import type { SemanticProposalStatus } from './semanticProposalTypes.js';
 
 export type PropagationProposalId = string;
@@ -63,17 +63,7 @@ export interface PropagationProposal {
     request: RequestScriptImpactProposalCommand;
     cause: ScriptImpactCause;
     target_segment_revision_event_id: string;
-    script_inputs: {
-      document_id: string;
-      segment_id: string;
-      block_id: string;
-      source_node_id: string | null;
-      revision_event_id: string;
-      segment_revision_event_id: string;
-      start_ms: number;
-      end_ms: number;
-      text: string;
-    }[];
+    script_inputs: ScriptContextBlock[];
     bible_context: ProjectionEnvelope<unknown>;
   } | null;
 }

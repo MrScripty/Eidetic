@@ -113,6 +113,7 @@ describe('graph selection details', () => {
       timelineNodeId: 'node.scene.beach',
       influenceCount: 1,
       layer: contextStack.layers[0],
+      scriptContext: undefined,
     });
   });
 

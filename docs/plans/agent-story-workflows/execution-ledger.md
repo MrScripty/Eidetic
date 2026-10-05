@@ -1438,3 +1438,35 @@ still a separate pending gate. Broader generation persistence is not covered.
   final banner/history gate remains blocked after two zero-step allocation
   failures. No retry loop or ONNX acquisition workaround. Parent owns PR/review,
   merge and Library delivery; the prior checkpoint and screenshots stay frozen.
+
+
+### Saved screenplay in timeline and agent context — 5 October 2026
+
+- Discovery checkpoint 2761aacb/tree c268d493 stays frozen for review. Offline
+  source reproduction saved exact BLUE umbrella text and confirmed the canonical
+  screenplay reader sees it, but timeline/agent ContextStackProjection contained
+  only an old synthetic RED recap and no screenplay receipts. Chosen criterion
+  was reported before code changes: manual Memory read/Projection propagation
+  into the existing context stack and inspectable graph-context runs (criterion 4).
+- Separate feat/screenplay-context-stack work was parked for the independent P2
+  node-limit repair, then resumed on tested/pushed 8ea7153b. Repair branch stays
+  separately reviewable; no native rerun or dependency workaround occurred.
+- Native projection and existing agent ReadContextStack share one SQLite snapshot
+  of hierarchy, recorded summaries, exact main-document screenplay and relevant
+  revision clock. Existing target/intersecting/two-adjacent selection is reused.
+  Optional legacy evidence stays unknown; known empty reads are explicit. Script
+  and context revisions advance the existing cache clock, including text ABA.
+- Existing event queue refreshes only an already requested stack after script,
+  assignment, node and timeline changes. Graph context detail preserves exact text
+  alongside labelled recorded summary, without mixing another target's evidence.
+  Agent context workflows expose the existing read_context_stack tool. Actual
+  structured loop persists the evidence it read; historical results remain exact
+  after later human writes/ABA. No world interpretation or automatic rewrite.
+- Local 119 core / 283 actual production-module / 411 frontend tests pass, including
+  the P2 repair tests, pinned WAL snapshot, bounds, version/ABA, exact synthetic
+  provider prompt/history and manual edit -> read -> pending preview -> explicit
+  acceptance. Strict all-target server Clippy and frontend checks/build pass.
+  The extended native AppState manual-edit/context-stack test compiles only; no
+  new native UI or real-model execution claim. Prior screenshots remain frozen.
+- Parent owns PRs/reviews/merges and Library delivery. Native final banner/history
+  qualification remains blocked after two zero-step hosted allocation failures.

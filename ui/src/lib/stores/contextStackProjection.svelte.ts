@@ -69,3 +69,9 @@ export function clearContextStackProjection(): void {
   contextStackProjectionState.pending = false;
   contextStackProjectionState.error = undefined;
 }
+
+/** Refresh only an already requested context; never activate a hidden consumer. */
+export function refreshCurrentContextStackProjection() {
+  const target = contextStackProjectionState.targetNodeId;
+  return target ? refreshContextStackProjection(target) : Promise.resolve(undefined);
+}

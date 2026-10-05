@@ -14,6 +14,9 @@ domain model in `eidetic-core`.
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
+| `context_stack_projection.rs` | Shared timeline/agent read of exact saved screenplay, recorded summaries and revision clock in one snapshot. |
+| `context_stack_projection_tests.rs` | Bounded evidence, read-only preservation, context/text ABA versioning, known empty, WAL snapshot and explicit targeted acceptance. |
+| `agent_screenplay_context_tests.rs` | Actual structured tool loop with explicitly synthetic provider, exact manual receipts, preserved historical results and missing-target failure. |
 | `ai_script_context.rs` | Canonical screenplay evidence for shared preview/generation context, carrying exact block and segment write identities. |
 | `script_generation_target.rs` | Canonical generation target receipts and transaction-local node/output revision and manual-content validation. |
 | `script_generation_target_tests.rs` | Target/output ABA, retime/delete/locks, manual append, forged custody, rollback and replay regressions. |
@@ -313,6 +316,14 @@ increase coupling by hiding the transaction invariant.
   through Tauri adapters.
 - Saved project compatibility is preserved across persistence changes.
 - Realtime document state and structural project state stay synchronized on load/save boundaries.
+
+- Timeline and agent context-stack consumers share context_stack_projection.rs:
+  canonical node hierarchy, latest recorded summaries, existing bounded screenplay
+  selection and relevant revision clock are read in one SQLite snapshot. Reads
+  never rewrite authored content or summaries. Agent graph-context manifests expose
+  the existing read_context_stack tool; persisted results retain actual evidence.
+  AgentRunHistoryProjection has one definition beside its existing store and is
+  re-exported by the service without changing the public API or wire shape.
 
 ## Revisit Triggers
 - Another persistence backend is introduced.

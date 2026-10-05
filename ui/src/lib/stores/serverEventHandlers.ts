@@ -24,6 +24,7 @@ import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.j
 import { clearProjectionRefreshQueue, requestProjectionRefresh } from './projectionRefreshQueue.js';
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
 import { timelineState } from './timeline.svelte.js';
+import { refreshCurrentContextStackProjection } from './contextStackProjection.svelte.js';
 
 const SCRIPT_DOCUMENT_KEY = `script-document:${MAIN_SCRIPT_DOCUMENT_ID}`;
 
@@ -75,15 +76,19 @@ function refreshChangeReview() {
   return requestProjectionRefresh('change-review', refreshChangeReviewProjection);
 }
 
+function refreshContextStack() {
+  return requestProjectionRefresh('context-stack', refreshCurrentContextStackProjection);
+}
+
 /** Register backend event handlers that update Svelte stores. */
 export function setupServerEventHandlers(events: ServerEventClient): () => void {
   const unsubscribers = [
     events.on('timeline_changed', async () => {
-      await refreshTimelineRender();
+      await Promise.all([refreshTimelineRender(), refreshContextStack()]);
     }),
 
     events.on('hierarchy_changed', async () => {
-      await refreshTimelineRender();
+      await Promise.all([refreshTimelineRender(), refreshContextStack()]);
     }),
 
     events.on('story_changed', async () => {
@@ -91,7 +96,11 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('node_updated', async () => {
-      await Promise.all([refreshTimelineRender(), refreshMainScriptDocument()]);
+      await Promise.all([
+        refreshTimelineRender(),
+        refreshMainScriptDocument(),
+        refreshContextStack(),
+      ]);
     }),
 
     events.on('generation_context', (data) => {
@@ -103,7 +112,11 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('generation_complete', async (data) => {
-      await Promise.all([refreshTimelineRender(), refreshMainScriptDocument()]);
+      await Promise.all([
+        refreshTimelineRender(),
+        refreshMainScriptDocument(),
+        refreshContextStack(),
+      ]);
       completeGeneration(data.node_id);
     }),
 
@@ -135,12 +148,17 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
         refreshActiveBibleRenderGraphForContextInfluence(),
         refreshMainScriptDocument(),
         refreshChangeReview(),
+        refreshContextStack(),
       ]);
     }),
 
     events.on('script_changed', async () => {
       invalidateScriptContext();
-      await Promise.all([refreshMainScriptDocument(), refreshChangeReview()]);
+      await Promise.all([
+        refreshMainScriptDocument(),
+        refreshChangeReview(),
+        refreshContextStack(),
+      ]);
     }),
 
     events.on('timeline_selection_changed', async (command) => {

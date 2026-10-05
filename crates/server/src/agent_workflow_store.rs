@@ -9,6 +9,13 @@ use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
 use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
 
+#[derive(Debug, serde::Serialize)]
+pub struct AgentRunHistoryProjection {
+    pub run: AgentRun,
+    pub calls: Vec<AgentToolCall>,
+    pub results: Vec<AgentToolResult>,
+}
+
 const AGENT_WORKFLOW_SCHEMA_SQL: &str = r#"
 CREATE TABLE IF NOT EXISTS agent_runs (
     id                TEXT PRIMARY KEY CHECK (id <> ''),

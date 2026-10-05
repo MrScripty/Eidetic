@@ -1,5 +1,6 @@
 import type { BibleGraphEdgeId, BibleGraphNodeId } from './bibleGraphTypes.js';
 import type { NodeId, StoryLevel } from './timelineTypes.js';
+import type { ScriptContextBlock } from './scriptTypes.js';
 
 export type ContextEvaluationId = string;
 export type ContextInfluenceId = string;
@@ -26,6 +27,7 @@ export type ContextEvaluationTaskKind =
 export interface ContextStackProjection {
   target_node_id: NodeId;
   layers: ContextStackLayer[];
+  script_context?: ScriptContextBlock[] | null;
 }
 
 export interface ContextStackProjectionRequest {

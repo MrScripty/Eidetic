@@ -77,6 +77,10 @@ raw size would separate scenarios that share the same contract fixtures.
 - Shared timeline geometry values are defined once and reused by all dependent components.
 - Stores own transient UI coordination; components render from store state rather than manual DOM mutation.
 
+- ScriptContextBlock is shared by context-stack evidence and propagation bindings;
+  block/segment identity, exact text and separate write revisions mirror core.
+  Context-stack evidence is optional so legacy absence is never backfilled.
+
 ## Revisit Triggers
 
 - A second frontend client needs a slimmer shared contract package.

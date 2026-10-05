@@ -105,11 +105,38 @@
       </div>
       {#if detail.layer?.distilled_context}
         <div>
-          <dt>Distilled Context</dt>
+          <dt>Recorded summary</dt>
           <dd>{detail.layer.distilled_context}</dd>
         </div>
       {/if}
     </dl>
+    <section class="screenplay-context" aria-label="Saved screenplay context">
+      <h3>Saved screenplay context</h3>
+      {#if detail.scriptContext == null}
+        <p>Saved screenplay evidence is unavailable for this layer.</p>
+      {:else if detail.scriptContext.length === 0}
+        <p>No saved screenplay in this clip's context.</p>
+      {:else}
+        <p>
+          Saved text is story evidence. World interpretations and generated replacements require
+          review.
+        </p>
+        {#each detail.scriptContext as block (block.block_id)}
+          <article
+            data-block-id={block.block_id}
+            data-block-revision={block.revision_event_id}
+            data-segment-revision={block.segment_revision_event_id}
+          >
+            <h4>
+              {block.source_node_id === detail.timelineNodeId
+                ? 'Selected clip'
+                : 'Nearby screenplay'}
+            </h4>
+            <pre>{block.text}</pre>
+          </article>
+        {/each}
+      {/if}
+    </section>
   {:else if detail?.kind === 'neighborhood'}
     <dl>
       <div>
@@ -208,5 +235,24 @@
     color: var(--color-text-muted);
     font-size: 0.82rem;
     line-height: 1.4;
+  }
+
+  .screenplay-context {
+    padding: 0 12px 12px;
+  }
+
+  .screenplay-context h3,
+  .screenplay-context h4 {
+    font-size: 0.82rem;
+  }
+
+  .screenplay-context p {
+    padding: 0;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 0.82rem;
   }
 </style>

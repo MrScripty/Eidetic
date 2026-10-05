@@ -1,15 +1,14 @@
 use eidetic_core::contracts::{
-    CommandEnvelope, ContextEvaluation, ContextInfluenceProjection,
-    ContextInfluenceProjectionRequest, ContextStackProjection, ContextStackProjectionRequest,
-    ObjectKind, ProjectionEnvelope, ProjectionVersion, RecordContextEvaluationCommand,
+    CommandEnvelope, ContextInfluenceProjection, ContextInfluenceProjectionRequest,
+    ContextStackProjection, ContextStackProjectionRequest, ProjectionEnvelope,
+    RecordContextEvaluationCommand,
 };
 
 use crate::backend_error::BackendError;
 use crate::command_service_support::{active_project_path, map_history_error};
 use crate::context_influence_store;
-use crate::history_store::{self, RecordChangeOutcome};
+use crate::history_store::RecordChangeOutcome;
 use crate::state::{AppState, ServerEvent};
-use crate::timeline_node_store;
 
 pub async fn record_context_evaluation(
     state: &AppState,
@@ -97,47 +96,9 @@ fn load_context_stack_projection_at_path(
 ) -> Result<ProjectionEnvelope<ContextStackProjection>, BackendError> {
     let conn = crate::sqlite::open_write_connection(&path)
         .map_err(|e| BackendError::internal(e.to_string()))?;
-    let nodes = timeline_node_store::load_node_ancestor_stack(&conn, request.target_node_id)
-        .map_err(map_history_error)?;
-    let mut projection = ContextStackProjection::from_nodes(&nodes, request.target_node_id)
-        .ok_or_else(|| BackendError::not_found("context stack target node not found"))?;
-    let context_node_ids: Vec<_> = projection
-        .layers
-        .iter()
-        .map(|layer| layer.node_id)
-        .collect();
-    let evaluations =
-        context_influence_store::load_latest_context_evaluations(&conn, &context_node_ids)
-            .map_err(map_history_error)?;
-    apply_distilled_context_overrides(&mut projection, &evaluations);
-    let summary = history_store::load_revision_summary_for_kind(&conn, ObjectKind::TimelineNode)
-        .map_err(map_history_error)?;
-
-    match summary.latest_change_event_id {
-        Some(change_event_id) => Ok(ProjectionEnvelope::from_event(
-            ProjectionVersion(summary.revision_count + 1),
-            change_event_id,
-            projection,
-        )),
-        None => Ok(ProjectionEnvelope::initial(projection)),
-    }
-}
-
-fn apply_distilled_context_overrides(
-    projection: &mut ContextStackProjection,
-    evaluations: &[ContextEvaluation],
-) {
-    for layer in &mut projection.layers {
-        let Some(evaluation) = evaluations
-            .iter()
-            .find(|evaluation| evaluation.target_node_id == layer.node_id)
-        else {
-            continue;
-        };
-        if let Some(distilled_context) = &evaluation.distilled_context {
-            layer.distilled_context = Some(distilled_context.clone());
-        }
-    }
+    crate::context_stack_projection::load(&conn, request.target_node_id)
+        .map_err(map_history_error)?
+        .ok_or_else(|| BackendError::not_found("context stack target node not found"))
 }
 
 #[cfg(test)]
@@ -151,6 +112,7 @@ mod tests {
     use eidetic_core::timeline::node::{NodeId, StoryLevel};
 
     use super::*;
+    use crate::context_stack_projection::apply_distilled_context_overrides;
 
     #[test]
     fn context_stack_uses_recorded_distilled_parent_context() {
@@ -158,6 +120,7 @@ mod tests {
         let child_id = NodeId::new();
         let mut projection = ContextStackProjection {
             target_node_id: child_id,
+            script_context: None,
             layers: vec![
                 ContextStackLayer {
                     node_id: parent_id,

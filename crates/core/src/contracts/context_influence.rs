@@ -70,6 +70,10 @@ pub struct ContextStackProjection {
     pub target_node_id: NodeId,
     #[serde(default)]
     pub layers: Vec<ContextStackLayer>,
+    /// Canonical saved screenplay, separate from recorded semantic summaries.
+    /// Absent legacy evidence stays unknown; Some(empty) is a known empty read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context: Option<Vec<super::ScriptContextBlock>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -111,6 +115,7 @@ impl ContextStackProjection {
         Some(Self {
             target_node_id,
             layers,
+            script_context: None,
         })
     }
 }
@@ -197,6 +202,31 @@ pub enum ContextInfluenceProvenance {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn legacy_stack_does_not_fabricate_known_empty_screenplay_evidence() {
+        let legacy: super::ContextStackProjection = serde_json::from_value(serde_json::json!({
+            "target_node_id": uuid::Uuid::new_v4(), "layers": []
+        }))
+        .unwrap();
+        assert!(legacy.script_context.is_none());
+        assert!(
+            serde_json::to_value(&legacy)
+                .unwrap()
+                .get("script_context")
+                .is_none()
+        );
+        let mut known = legacy;
+        known.script_context = Some(vec![]);
+        assert_eq!(
+            serde_json::to_value(&known).unwrap()["script_context"],
+            serde_json::json!([])
+        );
+        assert_eq!(
+            known,
+            serde_json::from_value(serde_json::to_value(&known).unwrap()).unwrap()
+        );
+    }
+
     use super::*;
     use crate::contracts::{BibleGraphEdgeId, BibleGraphNodeId};
 

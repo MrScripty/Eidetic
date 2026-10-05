@@ -7,6 +7,18 @@ export type ScriptSpanId = string;
 export type ScriptLockId = string;
 export type ScriptPatchId = string;
 
+export interface ScriptContextBlock {
+  document_id: ScriptDocumentId;
+  segment_id: ScriptSegmentId;
+  block_id: ScriptBlockId;
+  source_node_id: string | null;
+  revision_event_id: string;
+  segment_revision_event_id: string;
+  start_ms: number;
+  end_ms: number;
+  text: string;
+}
+
 export interface ScriptDocument {
   id: ScriptDocumentId;
   title: string;

@@ -13,6 +13,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `bible_graph.rs` | Canonical story-bible graph contracts, expected root nodes, typed graph parts/fields/edges, and node-detail projection shapes. |
 | `bible_graph_defaults.rs` | Built-in story-bible schema defaults used to project expected empty parts and fields for known graph schemas. |
 | `bible_render_graph.rs` | Disposable Bevy-facing story-bible graph projection DTOs, deterministic layout helpers, and neighborhood indexes derived from canonical graph rows. |
+| `context_influence.rs` | Timeline context stack with optional exact saved screenplay evidence and recorded evaluation/influence contracts. |
 | `graph_proposal.rs` | Generic reviewable graph proposal contracts for agent-proposed bible nodes, fields, edges, and timeline-context links. |
 | `script_document.rs` | Canonical script document, segment, block, span, lock, patch, and script projection contracts. |
 | `script_impact_review.rs` | Explicit targeted preview request and captured screenplay/world-context evidence for revision-bound propagation proposals. |
@@ -74,6 +75,10 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Affect values use validated integer basis-point domain types for valence,
   arousal, intensity, and confidence so invalid floats cannot cross contract
   boundaries.
+
+- Context-stack screenplay evidence is optional for legacy compatibility; a known
+  empty read differs from unavailable evidence. Exact text and existing block and
+  segment revisions remain separate from recorded semantic summaries.
 
 ## Revisit Triggers
 - Contracts become public SDK or binding surface.

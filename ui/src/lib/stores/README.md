@@ -151,6 +151,11 @@ continues.
   effect. This does not cancel backend writes or guard caller continuations.
 - Backend contract changes are reflected here before individual components fork around them.
 
+- Existing script/context/node/timeline events refresh only an already requested
+  context stack through the shared refresh queue. They never activate an absent
+  consumer. Request and projection-version guards retain post-save screenplay
+  evidence against older responses and navigation/clear continuations.
+
 ## Revisit Triggers
 
 - Another realtime channel or polling workflow appears without a clear current owner.

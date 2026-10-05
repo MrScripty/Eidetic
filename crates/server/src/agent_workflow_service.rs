@@ -4,6 +4,7 @@ use eidetic_core::contracts::{
 use serde::Serialize;
 
 use crate::agent_workflow_store;
+pub use crate::agent_workflow_store::AgentRunHistoryProjection;
 use crate::backend_error::BackendError;
 use crate::command_service_support::{active_project_path, map_history_error};
 use crate::history_store::RecordChangeOutcome;
@@ -41,13 +42,6 @@ pub struct AgentToolCallCommandResponse {
 pub struct AgentToolResultCommandResponse {
     pub outcome: AgentCommandOutcome,
     pub result: AgentToolResult,
-}
-
-#[derive(Debug, Serialize)]
-pub struct AgentRunHistoryProjection {
-    pub run: AgentRun,
-    pub calls: Vec<AgentToolCall>,
-    pub results: Vec<AgentToolResult>,
 }
 
 pub async fn record_agent_run(
