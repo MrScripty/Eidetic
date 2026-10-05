@@ -1110,3 +1110,12 @@ still a separate pending gate. Broader generation persistence is not covered.
   Workflow trigger/permissions/source identity checks pass. The public-service
   example compiled with `ORT_SKIP_DOWNLOAD=1` on the unchanged Rust source of
   the frozen feature base; this is compile-only, not runtime evidence.
+- Before GUI execution, driver inspection found that Split also removes the
+  screenplay panel. Correct the qualification driver to return to Script after
+  Graph/Split before checking either retained draft. Production application
+  source remains pinned to `72ae4806ef70a8465e6fe26f5ce8e891b0dfb8f1`.
+  The initial hosted run `37249817552` has the earlier driver and cannot qualify
+  the complete flow; cancellation is unavailable through exposed app tools.
+- Standard Actions concurrency now cancels obsolete qualification runs on this
+  isolated branch when a corrected qualification is published, avoiding duplicate
+  native builds. This does not change application source or execution security.

@@ -9,7 +9,7 @@ permissions:
 
 concurrency:
   group: eidetic-authoring-native
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 defaults:
   run:

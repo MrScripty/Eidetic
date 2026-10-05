@@ -12,7 +12,9 @@ through `launcher.sh --run`. There is no skipped dependency download, injected
 JavaScript, substituted IPC, network-policy change or sandbox override.
 
 The native flow creates the first screenplay in an empty canonical document,
-keeps the exact creation draft through Graph/Split navigation, and saves it. It
+keeps the exact creation draft through Graph/Split navigation and return to Script,
+and saves it. Both Graph and Split remove the screenplay panel; retained text is
+checked after returning to the actual Script view. It
 connects the existing AI settings to a localhost HTTP/SSE provider fixture,
 generates the next scene through the production client, edits the first scene,
 preserves that edit through navigation, compares saved text without writing,
@@ -31,6 +33,8 @@ and provider-fixture results. PNGs require visual inspection after execution.
 Interrupted transport remains covered by existing frontend/provider/server
 regressions; this driver does not inject a native lost acknowledgement.
 
+A newer qualification push supersedes the obsolete run using standard Actions
+concurrency cancellation on this isolated branch, avoiding duplicate native builds.
 The push-only branch is `test/screenplay-authoring-native`; one bounded job runs
 with read-only repository permissions and unpersisted checkout credentials.
 The job has a 35-minute limit, two build workers, resource-floor checks, and a

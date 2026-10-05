@@ -384,6 +384,7 @@ def main():
         type_text(textarea, window, MANUAL_TEXT)
         choose_mode(application, 'Graph', window)
         choose_mode(application, 'Split', window)
+        choose_mode(application, 'Script', window)
         textarea = wait_for('creation draft after navigation', lambda: editable(application, MANUAL_TEXT))
         evidence['creation_navigation_preserved_exact_text'] = True
         reveal_button(application, 'Save screenplay', window)
@@ -411,6 +412,7 @@ def main():
         type_text(textarea, window, EDITED_TEXT)
         choose_mode(application, 'Graph', window)
         choose_mode(application, 'Split', window)
+        choose_mode(application, 'Script', window)
         wait_for('existing draft after navigation', lambda: editable(application, EDITED_TEXT))
         evidence['edit_navigation_preserved_exact_text'] = True
         block = wait_for('draft screenplay block', lambda: screenplay_block(application, 'blue umbrella'))
