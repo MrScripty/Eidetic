@@ -58,3 +58,12 @@ call. The corrected driver retries only the observed retired-object error within
 its existing deadline, refreshes from the root on the next poll, counts these
 polls, and fails immediately if the native process disappears. Other errors stay
 fatal. Complete GUI authoring and real-model quality remain unqualified.
+
+Run `37250774496` again passes normal native compilation and all 382 actual
+server tests. A repeated click on the still-loading home button stalls in
+`xdotool mousemove --sync` with the same target coordinates; the 15-second
+subprocess limit stops the driver before project opening. The underlying cause
+is not established by the log.
+The qualification now uses ordinary native mousemove and verifies exact X11
+cursor coordinates before clicking, including the already-positioned case.
+No application source or execution-security change is involved.

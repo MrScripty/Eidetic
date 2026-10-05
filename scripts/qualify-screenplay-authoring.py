@@ -109,7 +109,14 @@ def click_control(node, window):
     print(f"Native pointer input: control={(node.name or '')[:100]!r}, bounds={tuple(rect)}, point={point}",
           flush=True)
     command("xdotool", "windowfocus", "--sync", window)
-    command("xdotool", "mousemove", "--sync", str(point[0]), str(point[1]))
+    command("xdotool", "mousemove", str(point[0]), str(point[1]))
+    # The hosted --sync move stalled on a repeated target coordinate.
+    # Verify exact native pointer coordinates before clicking instead.
+    def pointer_positioned():
+        location = dict(line.split("=", 1) for line in command(
+            "xdotool", "getmouselocation", "--shell").splitlines())
+        return (int(location["X"]), int(location["Y"])) == point
+    wait_for("native pointer at verified control", pointer_positioned)
     command("xdotool", "click", "1")
 
 

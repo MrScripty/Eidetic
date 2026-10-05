@@ -1132,3 +1132,14 @@ still a separate pending gate. Broader generation persistence is not covered.
   Other errors remain fatal; native process disappearance fails immediately.
   It records the number of retired-object polls. No security/display setting,
   application change, fixture receipt substitute or automatic relaunch is added.
+- Run `37250774496` at qualification `a85ce6d69b435606866d8fd96b4115fbe1f84050`
+  again builds normally and passes all 382 actual server tests on unchanged
+  application source `72ae4806`. GUI fails before project opening: a repeated
+  home-button click calls `xdotool mousemove --sync` at the pointer's existing
+  target coordinates and stalls for 15 seconds; its underlying cause is not
+  proven by these logs.
+  No authored text/provider call is claimed. Preserve the failed capture/log.
+- Qualification-only pointer correction uses normal native mousemove then reads
+  exact X11 cursor coordinates before clicking. It supports repeated clicks at
+  the same position while retaining verified control bounds/window ownership
+  and the existing driver deadline. No input/IPC substitution or security change.
