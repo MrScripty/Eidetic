@@ -78,3 +78,16 @@ changing its frozen source or evidence. No offscreen proposal screenshot claim.
 Native screenshots will be unaltered prototype views, inspected after execution.
 Source/run/artifact IDs, revision IDs, hashes and actual visual limits will be recorded
 only after the hosted run completes. No Library IDs or uploads are claimed here.
+
+
+### Preserved first hosted attempt
+
+Run 37359633825 / job 111930684321 on qualification
+624893ed749c32e8993a799430c4c0ba7d4997a3 passed the unchanged application guard,
+117 actual core / 406 actual server tests (including all new paused production HTTP
+service tests), then stopped before GUI launch. Qualification setup incorrectly
+read save response field path; the public response contains saved. No provider
+calls or screenshots occurred. Artifact 11365819243 and its evidence/log remain
+preserved under /workspace/scratch/canonical-scene-native-37359633825/.
+The separate qualification-only successor reports the existing database owner's
+active path. Application source remains exactly 9e8bd1c; GUI execution is pending.

@@ -114,11 +114,14 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         }),
     )
     .await?;
-    let saved =
-        project_service::save_project(state, project_service::SaveProjectRequest { path: None })
-            .await?;
+    project_service::save_project(state, project_service::SaveProjectRequest { path: None })
+        .await?;
+    let path = state
+        .project_database
+        .active_path()
+        .ok_or("prepared project path missing")?;
     Ok(
-        serde_json::json!({"path":saved["path"],"sequence":{"id":sequence.0,"name":"Canonical sequence"},
+        serde_json::json!({"path":path,"sequence":{"id":sequence.0,"name":"Canonical sequence"},
         "a":{"id":a.0,"name":"SCENE A"},"setup_route":"public services prepare existing A/parent/Bible only; new scene must be created in GUI"}),
     )
 }
