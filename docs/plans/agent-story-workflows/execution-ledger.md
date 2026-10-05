@@ -1223,3 +1223,17 @@ still a separate pending gate. Broader generation persistence is not covered.
 - Native exact-source Bible edit/preview/accept screenshots remain pending at
   this implementation checkpoint. Real-model quality is unqualified. Timed fact,
   relationship, new/unconsumed field impact and project recovery remain deferred.
+
+### Separate exact-source Bible fact native qualification
+
+- Implementation `a66e1c74e164178208bd3e63c9ab99147d5290de`, tree
+  `e1c9be374651f6d23efc8ca86eee440d93764081`, committed after all local scoped
+  checks and pre-commit hooks. The ordinary pre-push workspace hook fails on
+  missing GLib/GTK; it is excluded only for source publication to the hosted
+  native gate. No local runtime qualification or ONNX workaround is claimed.
+- Added a separate push-only test/bible-fact-native workflow/concurrency group,
+  public-service setup fixture and real Tauri AT-SPI/X11 Bible fact driver. Reuse
+  existing driver geometry, exact typing, sanitized/bounded capture and HTTP
+  acceptance guards. Application source remains unchanged from a66e1c7.
+- Python syntax/HTTP fixture tests and compile-only example check pass locally;
+  exact hosted/native execution and visual screenshot inspection remain pending.
