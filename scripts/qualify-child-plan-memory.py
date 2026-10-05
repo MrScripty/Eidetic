@@ -100,7 +100,7 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     old_children = children()
     plan_beats()
     initial = ui.wait_for('pending screenplay-aware child plan', lambda: next((row for row in plans() if row[1] == 'pending'), None))
-    ui.wait_for('proposed timeline material visible', lambda: ui.reveal(application, lambda n: 'Midnight departure' in ui.text_of(n)))
+    ui.wait_for('proposed timeline material visible', lambda: ui.reveal(application, lambda n: ui.text_of(n).strip() == 'Midnight departure'))
     if children() != old_children or ui.blocks(database, a)[0] != first or ui.blocks(database, b)[0] != original_b:
         raise RuntimeError('Child planning changed canonical timeline or screenplay before acceptance')
     evidence['child_planning'] = {'initial_plan_id': initial[0], 'pending_preserves_children_and_screenplay': True,
@@ -112,7 +112,8 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     # Editing the source block does not retarget the selected scene's proposal.
     ui.reveal_button(application, 'Accept timeline plan', window)
     ui.wait_for('visible stale child plan refusal', lambda: ui.reveal(application,
-        lambda n: 'Child plan story context changed; generate and review a fresh plan before accepting' in ui.text_of(n)))
+        lambda n: n.getRole() == ui.pyatspi.ROLE_ALERT
+        and 'Child plan story context changed; generate and review a fresh plan before accepting' in ui.text_of(n)))
     if plans()[0] != initial or children() != old_children or ui.blocks(database, a)[0] != latest or ui.blocks(database, b)[0] != original_b:
         raise RuntimeError('Stale child acceptance changed canonical material or plan status')
     evidence['child_planning']['stale_acceptance_refused_and_pending_retained'] = True
@@ -121,7 +122,7 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
 
     plan_beats()
     fresh = ui.wait_for('fresh pending child plan', lambda: next((row for row in plans() if row[0] != initial[0] and row[1] == 'pending'), None))
-    ui.wait_for('fresh proposed timeline material visible', lambda: ui.reveal(application, lambda n: 'Morning departure' in ui.text_of(n)))
+    ui.wait_for('fresh proposed timeline material visible', lambda: ui.reveal(application, lambda n: ui.text_of(n).strip() == 'Morning departure'))
     ui.reveal_button(application, 'Accept timeline plan', window)
     ui.wait_for('explicitly accepted new child plan', lambda: next((row for row in plans() if row == (fresh[0], 'applied')), None))
     accepted_children = ui.wait_for('canonical proposed child material', lambda: children() if any(row[1] == 'Morning departure' for row in children()) else None)
