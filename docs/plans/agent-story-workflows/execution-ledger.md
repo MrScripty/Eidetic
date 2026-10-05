@@ -1350,3 +1350,36 @@ still a separate pending gate. Broader generation persistence is not covered.
   The successor narrows that report claim; old evidence remains untouched. New
   native qualification will parse the exact canonical screenplay section and
   reject swapped blocks, duplicate or obsolete text. No offscreen preview claim.
+
+
+### Canonical native evidence and remaining hosted gate — 5 October 2026
+
+- Application source 9e8bd1c9d51250ac1c517945269278b7fe7e3d61, tree
+  594a474ec14eb5d23353805287469558528dab6c, remains unchanged through all
+  qualification successors. Runs 37359633825, 37360892289 and 37362942784
+  each pass 117 actual core / 406 actual server tests, including all four new
+  public AppState/paused production HTTP tests and six writer-boundary tests.
+  Local 234 production-module / 405 frontend / 12 helper tests and strict gates pass.
+- Run 37362942784 / job 111941610253 at c383601bd8ac3c78fb112f2c0610006823ac1cef
+  uses native Add Scene, canonical selection and exact notes/manual anchor input;
+  Generate immediately saves output without reopening. Exact existing A and manual
+  B are unchanged. All three synthetic HTTP phases verify complete ordered block
+  identity/revision/text. Real-model quality remains unqualified.
+- Native input saves exact human replacement during paused second HTTP. Runtime
+  logs stale refusal and later failure PNG visibly retains human text. Banner
+  discovery times out; final GUI history-count assertion is not reached. Do not
+  claim a fully passed walkthrough or readable refusal screenshot. Generated
+  screenshot still shows Notes written in the selected header; header freshness
+  is not qualified. Artifact 11368330401 and three inspected unaltered PNGs,
+  evidence and sanitized log remain under /workspace/scratch/canonical-scene-native-37362942784/.
+- Earlier fixture-path and uppercase NOTES locator failures remain preserved;
+  qualification-only corrections change no application source. Exact-banner
+  successor 776d16c6e1039641c00beba9dade31465c9f28fe records human revision before
+  error discovery and captures focused accessibility evidence if still blocked.
+- Run 37365296113 / job 111948855213 fails before acquiring a runner during GitHub's confirmed Actions
+  runner-assignment incident (official incident 3q1yb5m7ltvb, began 19:11 UTC;
+  19:50 UTC update confirms continuing delays). This is the remaining external
+  blocker: job cancelled at 19:59:04 UTC, runner ID 0, zero steps/artifacts; public
+  annotations report no hosted runner acquisition and internal server error. Retry
+  that job after service recovery; do not infer an app defect before its actual snapshot. Report includes full source/artifact hashes
+  and honest visual limits. Parent owns PR/review/merge and Library delivery.

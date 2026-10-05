@@ -2,18 +2,21 @@
 
 **Status:** Active
 **Current phase:** Authored Bible fact propagation is merged in main
-`302851dbb5bf67cda922b4d79f70623e444891dc` (frozen Bible tree
-`becb86624608663a9e91ff629edd1080d6eada54`). Complete screenplay context-window
-memory is implemented at `9429daa53de9d7ce6679f0b166b1f736f332892a` and qualified
-by hosted run 37354081654 on `4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7`:
-116 core / 396 server tests and actual native manual edit, pending preview and
-explicit targeted acceptance with synthetic HTTP responses.
-**Next gate:** Parent review of the source-bound scene-order checkpoint and report.
-Next authoring priority, reported before implementation: newly created canonical
-scenes can enter AI context but completion still reads an absent legacy mirror
-node. Reproduce and bind completion metadata to canonical node/placement using
-existing guards; see the scene-order qualification report. Timed facts,
-relationships and new/unconsumed Bible facts remain separate follow-ups.
+`302851dbb5bf67cda922b4d79f70623e444891dc`; scene-order continuity is qualified
+at frozen predecessor `441c2a29af6199b53b92f718df43d0ca916b1ce5`.
+Immediate canonical creation/generation is implemented at
+`9e8bd1c9d51250ac1c517945269278b7fe7e3d61`: 117 hosted core / 406 server tests,
+405 frontend tests, and actual native create/select/notes/manual anchor/generate
+without reopening. The delayed native response refuses persistence and the failure
+capture retains exact human text, but final banner/history qualification is pending.
+**Next gate:** Hosted run 37365296113 on qualification
+`776d16c6e1039641c00beba9dade31465c9f28fe` failed before acquiring a runner during
+GitHub's active runner-assignment incident (zero steps/artifacts). Retry that hosted
+job after service recovery. Keep source/evidence frozen and inspect its actual UI
+result before classifying a locator or error-publication defect. Parent owns
+review/PR/merge and Library delivery. See the canonical generation qualification
+report for exact source, tests, screenshots and preserved failures.
+Timed facts, relationships and new/unconsumed Bible facts remain separate follow-ups.
 Project-switch recovery is deferred; embeddings are optional later work.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
