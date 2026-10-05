@@ -28,7 +28,7 @@ manual scene A and generates B through the production provider client. The nativ
 driver types and saves `Mara's umbrella is blue.` in the actual Bible field, verifies
 its canonical revision and Needs review without changing saved A or B, and keeps
 an existing unsaved manual draft through the Bible event refresh. It explicitly
-discards that draft to reload unchanged saved A, previews a targeted B replacement,
+cancels that draft to display unchanged saved A, previews a targeted B replacement,
 and confirms saved B remains unchanged until clicking Accept update. Acceptance
 must change only B and refresh its actual consumed Bible revision. Bible, timeline
 and screenplay remain in the native workspace for review/preview/accepted captures.
@@ -67,3 +67,13 @@ older results cannot erase the new review cause. Local evidence is now 400
 frontend tests plus 151 source-module tests and strict server Clippy. The native
 workflow is bound to fe7fa590 before its result is used as current runtime
 evidence; the initial implementation checkpoint remains a66e1c74.
+
+Hosted run `37332976685` on qualification `0c42b36a532605f5924c12b2681f5c884e869e53`
+built the actual desktop and passed 115 core / 389 server tests, including the new
+public-service Bible regression. Its real GUI saved the exact blue fact and proved
+both canonical screenplay and the manual draft were preserved. It timed out next
+because the driver requested Discard draft and reload, which only exists after
+a failed save; the healthy draft exposes Cancel. The inspected failure PNG and
+evidence JSON confirm that checkpoint. Correct only the driver to reveal and click
+the scoped Cancel, and rerun on the same frozen application source. Targeted
+preview/accept remain unqualified until that run completes.

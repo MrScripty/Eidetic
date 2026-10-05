@@ -169,9 +169,12 @@ def main():
             raise RuntimeError('Fact save replaced screenplay')
         ui.wait_for('retained manual draft after Bible refresh', lambda: ui.editable(application, DRAFT))
         evidence['fact_edit'] = {'before': RED, 'after': BLUE, 'revision_event_id': edited[1], 'saved_screenplay_preserved': True, 'manual_draft_preserved': True}
-        # Reload the canonical manual block explicitly; the exact saved A is unchanged.
+        checkpoint('exact fact saved; canonical screenplay and manual draft preserved')
+        # Cancel this healthy draft explicitly; reload is reserved for a refused save.
         block = ui.wait_for('retained draft block', lambda: ui.screenplay_block(application, 'Retained manual draft'))
-        ui.click_button(block, 'Discard draft and reload', window)
+        ui.reveal_button(block, 'Cancel', window)
+        if ui.blocks(database, a_id)[0] != a:
+            raise RuntimeError('Cancelling the retained draft changed saved screenplay')
         ui.wait_for('Bible review cause', lambda: ui.reveal(application, lambda n: 'Bible fact profile.tagline changed.' in ui.text_of(n)))
         checkpoint('downstream review with Bible timeline and screenplay visible')
         capture('eidetic-bible-fact-review.png')
