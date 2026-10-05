@@ -28,6 +28,7 @@ HUMAN = 'Exact human replacement saved during delayed generation.\n\n'
 DELAYED = 'Synthetic delayed response that must not replace human text.\n\n'
 HEADER = 'CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n'
 SUFFIX = 'Write ONLY the structural outline for this scene. Do not include metadata, comments, or explanations.'
+REFUSAL = 'invalid value: generation target changed; saved screenplay was preserved, generate again from current context'
 
 
 
@@ -221,8 +222,23 @@ def main():
         ui.reveal_button(block, 'Save', window)
         human = ui.wait_for('saved exact manual replacement', lambda: next((row for row in ui.blocks(database, b_id) if row[1] == HUMAN), None))
         count_before = ui.query(database, "SELECT COUNT(*) FROM commands WHERE payload_type='script.generate_block'")[0][0]
+        evidence['saved_during_delay'] = {'exact_text': HUMAN, 'revision_event_id': human[2],
+                                         'generation_command_count': count_before}
+        checkpoint('native exact human replacement saved while second HTTP response is paused')
         CanonicalProvider.release.set()
-        ui.wait_for('visible stale generation refusal', lambda: ui.reveal(application, lambda n: 'generation target changed' in ui.text_of(n)))
+        def visible_refusal():
+            # Match the banner itself, not an ancestor whose aggregated text also
+            # contains the error. Scrolling that ancestor leaves the banner below
+            # the reduced editor viewport after the script splitter is enlarged.
+            application.clear_cache()
+            banner = next((n for n in ui.walk(application) if ui.text_of(n).strip() == REFUSAL), None)
+            if banner is None:
+                return None
+            evidence['refusal_accessibility'] = {'role': banner.getRoleName(), 'exact_text': ui.text_of(banner)}
+            banner.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_EDGE)
+            banner.clear_cache()
+            return banner if ui.visible(banner) else None
+        ui.wait_for('visible stale generation refusal', visible_refusal)
         if (human not in ui.blocks(database, b_id) or anchor not in ui.blocks(database, b_id)
                 or ui.blocks(database, a_id) != original_a or ui.query(database, "SELECT COUNT(*) FROM commands WHERE payload_type='script.generate_block'")[0][0] != count_before):
             raise RuntimeError('Delayed response changed human text/history')
@@ -237,6 +253,13 @@ def main():
         if application is not None:
             try: evidence['ui_snapshot'] = ui.accessibility_snapshot(application)
             except Exception as snapshot_error: evidence['ui_snapshot_error'] = type(snapshot_error).__name__
+            try:
+                evidence['targeted_accessibility'] = [
+                    {'role': n.getRoleName(), 'name': (n.name or '')[:200], 'text': ui.text_of(n)[:1000], 'showing': ui.visible(n)}
+                    for n in ui.walk(application)
+                    if any(value in ui.text_of(n) for value in ('generation target changed', HUMAN.strip(), NOTES.strip()))
+                ][:30]
+            except Exception as snapshot_error: evidence['targeted_accessibility_error'] = type(snapshot_error).__name__
             try: capture('eidetic-canonical-scene-failure.png')
             except Exception as capture_error: evidence['failure_capture_error'] = type(capture_error).__name__
         raise

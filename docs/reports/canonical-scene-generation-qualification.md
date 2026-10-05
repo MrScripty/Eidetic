@@ -106,3 +106,32 @@ cd9bbf7c4e2de24092283a0893df798ec70f7f51c90872e8610210c4b6af5197.
 The separate driver successor matches that verified native label and uses standard
 AT-SPI top-edge scrolling to reveal the full textarea before actual X11 typing.
 Application source remains unchanged; generation/refusal UI qualification is pending.
+
+
+### Preserved third hosted attempt: immediate native generation succeeds
+
+Run 37362942784 / job 111941610253 at qualification
+c383601bd8ac3c78fb112f2c0610006823ac1cef again passes 117 core / 406 native server
+tests. Real native input creates/selects target 536678b8-4c3b-4ba6-b6a5-d05353ef0127,
+saves exact notes and manual B anchor, and immediately persists generated output
+without reopening. Existing A and manual B remain exact. Generation receipt is
+recorded in capture-evidence.json. All three HTTP phases pass exact ordered section
+checks; responses remain explicitly synthetic. Native input saves the exact human
+replacement during the paused second response. The actual runtime logs the stale
+refusal and the failure PNG visibly retains the human replacement.
+
+The remaining driver failure is discovery of the visible refusal banner. Its broad
+substring predicate can select an ancestor with aggregated descendant text and
+scroll the ancestor instead of the banner in the reduced editor viewport. A separate
+qualification-only successor targets the exact production refusal text with native
+top-edge scrolling and records focused accessibility diagnostics if still blocked.
+Banner visibility and final history-preservation qualification remain pending; no
+application repair is inferred from the driver timeout.
+
+Artifact 11368330401 expires October 8 19:40:53 UTC. ZIP SHA256
+8a5162defdb6c0852bc4c0186aa619cc09c7983f2de887d3128d4610313b39b8; preserved local
+evidence and three unaltered PNGs are under
+/workspace/scratch/canonical-scene-native-37362942784/. Created and generated views
+show Bible, timeline and exact canonical manual/generated screenplay together.
+The failure view shows saved human text, with the error location outside the editor
+viewport; it does not prove a readable refusal banner. Binary SHA256 is unchanged.
