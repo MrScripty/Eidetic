@@ -91,3 +91,18 @@ calls or screenshots occurred. Artifact 11365819243 and its evidence/log remain
 preserved under /workspace/scratch/canonical-scene-native-37359633825/.
 The separate qualification-only successor reports the existing database owner's
 active path. Application source remains exactly 9e8bd1c; GUI execution is pending.
+
+
+Run 37360892289 / job 111934912052 on qualification
+bd2c6adab434f09979e946f634d371b93229ed6f again passed 117 core / 406 native server
+tests. Actual native Add Scene created 5f1ffd36-bcb0-4c41-8e6b-eb7c1344ac11 beneath
+the selected canonical Sequence with inherited 0–600000 range and selected it in
+the editor, opening the project only once. The driver stopped at Notes discovery:
+inspected accessibility evidence names the editable control NOTES (CSS transformed),
+while it searched for Notes. No typing or provider calls occurred. Artifact
+11366668121, unaltered failure PNG and evidence are preserved under
+/workspace/scratch/canonical-scene-native-37360892289/. Binary SHA256 remains
+cd9bbf7c4e2de24092283a0893df798ec70f7f51c90872e8610210c4b6af5197.
+The separate driver successor matches that verified native label and uses standard
+AT-SPI top-edge scrolling to reveal the full textarea before actual X11 typing.
+Application source remains unchanged; generation/refusal UI qualification is pending.

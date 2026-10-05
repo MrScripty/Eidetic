@@ -175,7 +175,11 @@ def main():
         b_id = b[0]; evidence['creation'] = {'node_id': b_id, 'parent_id': b[1], 'start_ms': b[2], 'end_ms': b[3],
             'exact_name': b[4], 'route': 'native Add Scene in selected Sequence; automatic canonical child selection'}
         ui.wait_for('new scene selected in editor', lambda: ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_HEADING and n.name == 'New Scene'))
-        notes = ui.wait_for('new scene Notes field', lambda: ui.reveal(application, lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE) and n.name == 'Notes'))
+        notes = ui.wait_for('new scene Notes field', lambda: ui.reveal(application, lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE) and (n.name or '').strip().casefold() == 'notes'))
+        # WebKit exposes the CSS-transformed label as NOTES. Normal native
+        # scrolling brings the complete textarea into the editor viewport.
+        notes.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_EDGE)
+        evidence['notes_locator'] = {'accessible_name': notes.name, 'scroll_route': 'standard AT-SPI top-edge'}
         ui.type_text(notes, window, NOTES)
         ui.wait_for('exact canonical new-scene notes', lambda: json.loads(ui.query(database, 'SELECT content_json FROM nodes WHERE id=?', (b_id,))[0][0])['notes'] == NOTES)
         ui.reveal_button(application, 'Write screenplay', window)
