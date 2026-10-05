@@ -77,3 +77,12 @@ a failed save; the healthy draft exposes Cancel. The inspected failure PNG and
 evidence JSON confirm that checkpoint. Correct only the driver to reveal and click
 the scoped Cancel, and rerun on the same frozen application source. Targeted
 preview/accept remain unqualified until that run completes.
+
+Run `37335330967` on `9fb6e07124c79dcb7bc2a8b553b1ff8d9e5c95c3` passed the
+actual core/server suites and the full native fact-edit/preview/accept flow.
+Visual inspection caught an immediate-acknowledgement screenshot: accepted status
+was visible while the old review notice still awaited the screenplay projection
+refresh. Tighten the driver to await disappearance of the old notice and reveal
+the canonical accepted block; reveal exact pending proposed text before its
+capture too. Requalify this screenshot synchronization on unchanged fe7fa590.
+The earlier run proves canonical acceptance/lineage, not a settled final UI image.

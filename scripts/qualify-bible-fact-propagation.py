@@ -183,6 +183,8 @@ def main():
         if proposal[1:] != ('pending', ui.PROPOSED_TEXT) or ui.blocks(database, b_id)[0] != b:
             raise RuntimeError('Preview changed saved target')
         ui.require_accepted_preview(BibleFactProvider.records)
+        ui.wait_for('exact proposed text visible in pending UI', lambda: ui.reveal(application,
+                    lambda n: n.name == 'Proposed text' and ui.text_of(n) == ui.PROPOSED_TEXT))
         evidence['preview'] = {'proposal_id': proposal[0], 'target_unchanged': True, 'current_bible_fact_and_exact_manual_context_consumed': True}
         checkpoint('pending targeted preview; explicit acceptance still required')
         capture('eidetic-bible-fact-preview.png')
@@ -193,7 +195,12 @@ def main():
         bindings = ui.query(database, "SELECT r.target_revision_event_id FROM semantic_dependencies d JOIN semantic_dependency_revisions r ON r.dependency_id=d.id WHERE d.target_field_id='qualification.mara.tagline' AND r.source_revision_event_id=?", (accepted[2],))
         if bindings != [(edited[1],)]:
             raise RuntimeError('Acceptance did not refresh actual Bible consumption')
-        evidence['acceptance'] = {'revision_event_id': accepted[2], 'manual_input_and_fact_unchanged': True, 'refreshed_consumed_fact_revision': edited[1]}
+        def review_cleared():
+            application.clear_cache()
+            return not any(n.name == 'Screenplay needs review' for n in ui.walk(application))
+        ui.wait_for('accepted screenplay projection clears old review', review_cleared)
+        ui.wait_for('canonical accepted screenplay visible', lambda: ui.screenplay_block(application, 'Eli spots Mara and her blue umbrella.'))
+        evidence['acceptance'] = {'revision_event_id': accepted[2], 'manual_input_and_fact_unchanged': True, 'refreshed_consumed_fact_revision': edited[1], 'old_review_cleared_in_ui': True, 'canonical_target_visible_in_ui': True}
         checkpoint('explicit acceptance commits only targeted screenplay')
         capture('eidetic-bible-fact-accepted.png')
         evidence['status'] = 'native_bible_fact_propagation_passed_with_synthetic_http_fixture'
