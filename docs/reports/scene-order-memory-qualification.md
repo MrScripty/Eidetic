@@ -114,3 +114,20 @@ The successor uses ordinary X11 horizontal left-wheel input on a verified visibl
 saved Script block, then reacquires the disclosure without ANYWHERE scrolling.
 This repairs the actual walkthrough interaction, without altering app source,
 UI layout or screenshot pixels. Final preview/acceptance qualification is pending.
+
+Run 37351241936, qualification 6711d1e797b7c2709862b1d3398af2282669c74c,
+also passed 116 core / 396 server tests and exact native B save. Left-wheel input
+returned the actual Script pane to its start (inspected failure PNG), where A/F/E
+occupied the visible columns and B's disclosure remained farther along the narrow
+pane. It timed out before preview; artifact 11362729031 is preserved under
+`/workspace/scratch/scene-order-native-37351241936/`. Its application binary hash
+matches the preceding run exactly. The next driver uses the app's existing
+focusable Resize panels splitter and normal ArrowUp keys to enlarge Script before
+authoring, then reacquires controls. Source and pixels remain unaltered.
+
+Main PR10 merge 302851dbb5bf67cda922b4d79f70623e444891dc has exactly frozen
+Bible tree becb86624608663a9e91ff629edd1080d6eada54. Ancestry reconciliation
+5b057efdf038a5959630270dea5c749075307844 preserves the exact scene-order tree
+00f1ef1389bf19c608d4351fc56a227a2aa18677 and both original application/qualification
+heads. Only the feature branch received this merge; the active qualification run
+was preserved without duplicate execution.

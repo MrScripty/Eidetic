@@ -66,6 +66,34 @@ def scroll_script_start(application, window, exact_text):
     application.clear_cache()
 
 
+def enlarge_script_pane(application, window):
+    """Use the existing focusable splitter's normal ArrowUp keyboard controls."""
+    geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
+        ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
+    def editor_splitter():
+        application.clear_cache()
+        candidates = []
+        for node in ui.walk(application):
+            if node.name != 'Resize panels' or not ui.visible(node):
+                continue
+            rectangle = tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+            x, y, width, height = rectangle
+            if 0 < height <= 8 and width > geometry['WIDTH'] // 2 and y < geometry['Y'] + geometry['HEIGHT'] // 2:
+                ui.control_click_point(rectangle, geometry)
+                candidates.append(node)
+        if len(candidates) > 1:
+            raise RuntimeError('Ambiguous native editor splitter')
+        return candidates[0] if candidates else None
+    splitter = ui.wait_for('existing editor/script splitter', editor_splitter)
+    ui.click_control(splitter, window)
+    def focused():
+        splitter.clear_cache()
+        return splitter.getState().contains(ui.pyatspi.STATE_FOCUSED)
+    ui.wait_for('native splitter focus', focused)
+    ui.command('xdotool', 'key', '--clearmodifiers', '--repeat', '8', '--delay', '40', 'Up')
+    application.clear_cache()
+
+
 def main():
     repo = Path.cwd()
     output = Path(os.environ['EIDETIC_CAPTURE_DIR'])
@@ -144,6 +172,7 @@ def main():
         application = ui.wait_for('native accessibility app', lambda: next((app for app in ui.pyatspi.Registry.getDesktop(0) if app.get_process_id() == pid), None))
         ui.open_project_chooser(application, window)
         ui.click_button(application, database.parent.name, window, prefix=True)
+        enlarge_script_pane(application, window)
         block = ui.wait_for('generated B in native Script panel', lambda: ui.screenplay_block(application, GENERATED.strip()))
         ui.reveal_button(block, 'Edit', window)
         field = ui.wait_for('B editor', lambda: ui.editable(application, GENERATED))
