@@ -1143,3 +1143,14 @@ still a separate pending gate. Broader generation persistence is not covered.
   exact X11 cursor coordinates before clicking. It supports repeated clicks at
   the same position while retaining verified control bounds/window ownership
   and the existing driver deadline. No input/IPC substitution or security change.
+- Run `37251636717`, qualification `fe383b494d120389c13cec8843082fe87e4eeca4`,
+  passes normal native build and all 382 server tests; pointer/chooser transition
+  now reaches the loaded workspace. The exact-text scene locator never matches
+  and hits its 270-second deadline before any authored text/provider call. The
+  inspected native PNG visibly shows the first scene; source remains `72ae4806`.
+- Qualification locator now uses the canonical scene name in native accessible
+  text with the smallest bounded individual control region, rejecting document/
+  row-wide matches. It records actual native text/role/geometry. Canonical source
+  IDs/ranges are still independently verified after GUI save. Driver actions also
+  wait for enabled buttons and reveal the saved-text comparison through existing
+  standard AT-SPI scrolling. No application source/security setting changes.

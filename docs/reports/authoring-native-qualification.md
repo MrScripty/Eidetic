@@ -67,3 +67,13 @@ is not established by the log.
 The qualification now uses ordinary native mousemove and verifies exact X11
 cursor coordinates before clicking, including the already-positioned case.
 No application source or execution-security change is involved.
+
+Run `37251636717` again passes normal native compilation and 382 server tests,
+and now opens the project. Its exact accessible-text scene locator times out
+while the inspected native image visibly shows the first scene. No authored text
+or provider call occurs. The qualification uses canonical name containment in
+native text and selects the smallest bounded individual control region, rejecting
+whole-document/row matches and recording actual native text/role/geometry.
+Canonical source identity/range checks after GUI save remain mandatory. Button
+input waits for enabled state; the saved-text comparison uses supported native
+scrolling to reveal its region. Application source is still unchanged.

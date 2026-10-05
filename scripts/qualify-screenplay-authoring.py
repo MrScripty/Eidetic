@@ -31,6 +31,7 @@ PROPOSED_TEXT = "EXT. STATION - NIGHT\n\nEli spots Mara and her blue umbrella."
 DEADLINE = time.monotonic() + 270
 NATIVE_WINDOW_PID = None
 ACCESSIBILITY_RETIREMENTS = 0
+TIMELINE_LOCATOR_OBSERVATIONS = []
 
 
 def command(*args):
@@ -124,6 +125,7 @@ def click_button(root, label, window, prefix=False):
     node = wait_for(
         f"visible button {label}",
         lambda: find(root, lambda node: node.getRole() == pyatspi.ROLE_PUSH_BUTTON
+                     and node.getState().contains(pyatspi.STATE_ENABLED)
                      and button_label_matches(node.name, label, prefix)),
     )
     click_control(node, window)
@@ -273,6 +275,38 @@ def blocks(database, node_id):
                  'AND s.deleted_event_id IS NULL ORDER BY b.sort_order,b.id', (node_id,))
 
 
+def native_timeline_clip(application, label, window):
+    # WebKit text includes inline embedded-object characters/spacing. Require
+    # canonical name containment and an individual native control-sized region;
+    # selecting the smallest region rejects whole-document/whole-row matches.
+    global TIMELINE_LOCATOR_OBSERVATIONS
+    TIMELINE_LOCATOR_OBSERVATIONS = []
+    application.clear_cache()
+    geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
+        command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
+    candidates = []
+    for node in walk(application):
+        if not visible(node) or node.getRole() == pyatspi.ROLE_HEADING:
+            continue
+        text = text_of(node)
+        if label not in text:
+            continue
+        rect = tuple(node.queryComponent().getExtents(pyatspi.XY_SCREEN))
+        if len(TIMELINE_LOCATOR_OBSERVATIONS) < 20:
+            TIMELINE_LOCATOR_OBSERVATIONS.append({'name': (node.name or '')[:120],
+                'text': text[:120], 'role': node.getRoleName(), 'bounds': rect})
+        if not 0 < rect[2] <= geometry['WIDTH'] // 2 or not 0 < rect[3] <= 64:
+            continue
+        control_click_point(rect, geometry)
+        candidates.append((rect[2] * rect[3], node, rect, text))
+    if not candidates:
+        return None
+    _, node, rect, text = min(candidates, key=lambda candidate: candidate[0])
+    print(f'Native timeline locator: canonical={label!r}, text={text[:120]!r}, '
+          f'role={node.getRoleName()!r}, bounds={tuple(rect)}', flush=True)
+    return node
+
+
 def choose_mode(application, label, window):
     node = wait_for('workspace ' + label, lambda: find(application, lambda n:
         n.getRole() == pyatspi.ROLE_TOGGLE_BUTTON and n.name == label))
@@ -307,7 +341,8 @@ def reveal(application, predicate):
 
 def reveal_button(application, label, window):
     node = wait_for('reachable button ' + label, lambda: reveal(application,
-        lambda n: n.getRole() == pyatspi.ROLE_PUSH_BUTTON and n.name == label))
+        lambda n: n.getRole() == pyatspi.ROLE_PUSH_BUTTON
+        and n.getState().contains(pyatspi.STATE_ENABLED) and n.name == label))
     click_control(node, window)
 
 
@@ -397,8 +432,7 @@ def main():
         open_project_chooser(application, window)
         click_button(application, database.parent.name, window, prefix=True)
         checkpoint('select first scene and begin manual screenplay')
-        scene = wait_for('first scene in timeline', lambda: find(application,
-            lambda n: text_of(n) == fixture['a']['name'] and n.getRole() != pyatspi.ROLE_HEADING))
+        scene = wait_for('first scene in timeline', lambda: native_timeline_clip(application, fixture['a']['name'], window))
         click_control(scene, window)
         click_button(application, 'Write screenplay', window)
         # Select the exact labelled composer, since the selected scene also has an empty Notes field.
@@ -421,8 +455,7 @@ def main():
         wait_for('provider fixture connected', lambda: find(application,
             lambda n: 'Connected' in text_of(n)))
         checkpoint('generate second scene through real desktop provider client')
-        scene = wait_for('second timeline scene', lambda: find(application,
-            lambda n: text_of(n) == fixture['b']['name'] and n.getRole() != pyatspi.ROLE_HEADING))
+        scene = wait_for('second timeline scene', lambda: native_timeline_clip(application, fixture['b']['name'], window))
         click_control(scene, window)
         click_button(application, 'Generate', window)
         b = wait_for('canonical generated second scene', lambda: next((row for row in blocks(database, b_id)
@@ -440,7 +473,7 @@ def main():
         evidence['edit_navigation_preserved_exact_text'] = True
         block = wait_for('draft screenplay block', lambda: screenplay_block(application, 'blue umbrella'))
         click_button(block, 'Compare saved text', window)
-        wait_for('comparison contains saved red umbrella', lambda: find(application,
+        wait_for('comparison contains saved red umbrella', lambda: reveal(application,
             lambda n: n.name == 'Saved text comparison' and any(MANUAL_TEXT == text_of(c) for c in walk(n))))
         if blocks(database, a_id)[0] != a:
             raise RuntimeError('Draft comparison unexpectedly wrote canonical text')
@@ -507,6 +540,7 @@ def main():
                     os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+        evidence['timeline_locator_observations'] = TIMELINE_LOCATOR_OBSERVATIONS
         evidence['accessibility_retired_object_polls'] = ACCESSIBILITY_RETIREMENTS
         evidence['provider_calls'] = FixtureProvider.records
         raw = raw_log.read_text(errors='replace') if raw_log.exists() else 'No app launch log.'
