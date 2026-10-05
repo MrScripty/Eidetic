@@ -23,6 +23,7 @@ SOURCE = os.environ.get('EIDETIC_CAPTURE_SOURCE', 'fe7fa5900b648ae9d24b374411ab8
 RED = "Mara's umbrella is red."
 BLUE = "Mara's umbrella is blue."
 DRAFT = 'Retained manual draft. The train waits.\n\n'
+AFTER_ACCEPTANCE = None  # Optional native-only qualification continuation.
 
 
 class BibleFactProvider(ui.FixtureProvider):
@@ -203,6 +204,8 @@ def main():
         evidence['acceptance'] = {'revision_event_id': accepted[2], 'manual_input_and_fact_unchanged': True, 'refreshed_consumed_fact_revision': edited[1], 'old_review_cleared_in_ui': True, 'canonical_target_visible_in_ui': True}
         checkpoint('explicit acceptance commits only targeted screenplay')
         capture('eidetic-bible-fact-accepted.png')
+        if AFTER_ACCEPTANCE is not None:
+            AFTER_ACCEPTANCE(application, window, database, fixture, evidence, checkpoint, capture)
         evidence['status'] = 'native_bible_fact_propagation_passed_with_synthetic_http_fixture'
     except Exception as error:
         evidence['failure'] = type(error).__name__ + ': ' + str(error)[:1000]
