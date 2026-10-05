@@ -63,6 +63,24 @@ class ChildProviderTests(unittest.TestCase):
         self.assertEqual(driver.ChildProvider.records[-1]['kind'], 'generation')
         self.assertFalse(driver.ChildProvider.records[-1]['real_model'])
 
+    def test_exact_retired_native_child_count_reacquires_on_bounded_poll(self):
+        calls = []
+        def check():
+            calls.append(True)
+            if len(calls) == 1:
+                raise ValueError('__len__() should return >= 0')
+            return 'fresh native root'
+        with patch.object(driver.ui.GLib, 'Error', type('NativeError', (Exception,), {}), create=True), patch.object(driver.ui.time, 'sleep'):
+            self.assertEqual(driver.ui.wait_for('retired root', check), 'fresh native root')
+        self.assertEqual(len(calls), 2)
+
+    def test_unrelated_native_enumeration_failure_is_not_suppressed(self):
+        def check():
+            raise ValueError('unrelated failure')
+        with patch.object(driver.ui.GLib, 'Error', type('NativeError', (Exception,), {}), create=True):
+            with self.assertRaisesRegex(ValueError, 'unrelated failure'):
+                driver.ui.wait_for('root', check)
+
 
 if __name__ == '__main__':
     unittest.main()

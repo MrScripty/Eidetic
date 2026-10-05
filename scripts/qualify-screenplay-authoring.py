@@ -54,6 +54,14 @@ def wait_for(description, check):
                 raise
             ACCESSIBILITY_RETIREMENTS += 1
             found = None
+        except ValueError as error:
+            # pyatspi can report a retired WebKit object's child count as -1.
+            # Retry only this exact native enumeration failure from a fresh
+            # root; keep unrelated ValueErrors and the global deadline visible.
+            if str(error) != '__len__() should return >= 0':
+                raise
+            ACCESSIBILITY_RETIREMENTS += 1
+            found = None
         if found:
             return found
         time.sleep(0.25)

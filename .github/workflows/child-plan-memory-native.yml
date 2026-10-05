@@ -38,6 +38,7 @@ jobs:
           allowed = {
               '.github/workflows/child-plan-memory-native.yml',
               'scripts/qualify-bible-fact-propagation.py',
+              'scripts/qualify-screenplay-authoring.py',
               'scripts/qualify-child-plan-memory.py',
               'scripts/test_qualify_child_plan_memory.py',
               'docs/reports/screenplay-child-plan-memory-qualification.md',
