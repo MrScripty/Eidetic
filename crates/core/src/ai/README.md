@@ -26,6 +26,12 @@ Keep prompt request assembly in core, where it can reuse timeline/story rules di
 - Building prompts in the UI: rejected because backend-owned project state belongs with the domain model.
 
 ## Invariants
+
+- Backend-attached main-screenplay context can carry an optional complete-window
+  receipt beside its exact blocks. The provider prompt uses authored evidence;
+  existing generation history retains the ordered selection and placement epoch
+  for later review. Legacy requests omit this receipt, and selection ranges do
+  not infer fictional story time.
 - GenerateRequest can carry backend-hydrated canonical screenplay evidence with
   exact source block/segment IDs and write events. Core request construction alone
   leaves this field unset; backend preview and generation share its hydration.

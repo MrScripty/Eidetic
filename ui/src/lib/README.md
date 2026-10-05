@@ -55,6 +55,11 @@ raw size would separate scenarios that share the same contract fixtures.
 - Splitting each store next to every consumer component: rejected because the timeline/editor shell shares state across multiple panels.
 
 ## Invariants
+
+- The script wire model admits a derived `context_changed` impact reason for
+  scene order/window membership. Existing editor review labels explain entering
+  and leaving material; saved text still changes only through explicit guarded
+  save or proposal acceptance.
 - Desktop invocation preserves the original native error as `Error.cause` while
   keeping its user-facing message. Creation retry can recognize its specific
   pre-recording placement refusal without guessing certainty from message text
