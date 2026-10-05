@@ -90,6 +90,19 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
             and n.getState().contains(ui.pyatspi.STATE_ENABLED)))
         ui.click_control(control, window)
 
+    def review_proposal(name):
+        # WebKit exposes inline strong text within the list item's text range,
+        # not as an independently queryable exact-name object. Scope the read
+        # to the named review section, as the maintained screenplay locator does.
+        section = ui.reveal(application, lambda n: n.name == 'Review proposed timeline children')
+        if section is None:
+            return None
+        snapshot = [{'role': n.getRoleName(), 'name': n.name,
+                     'showing': ui.visible(n), 'text': ui.text_of(n)[:1000]}
+                    for n in ui.walk(section)]
+        evidence['native_child_review_accessibility'] = snapshot[:80]
+        return section if any(name in row['text'] for row in snapshot) else None
+
     def select_target():
         scene = ui.wait_for('selected target scene', lambda: ui.native_timeline_clip(application, fixture['b']['name'], window))
         ui.click_control(scene[0], window, scene[1])
@@ -100,7 +113,7 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     old_children = children()
     plan_beats()
     initial = ui.wait_for('pending screenplay-aware child plan', lambda: next((row for row in plans() if row[1] == 'pending'), None))
-    ui.wait_for('proposed timeline material visible', lambda: ui.reveal(application, lambda n: ui.text_of(n).strip() == 'Midnight departure'))
+    ui.wait_for('proposed timeline material visible', lambda: review_proposal('Midnight departure'))
     if children() != old_children or ui.blocks(database, a)[0] != first or ui.blocks(database, b)[0] != original_b:
         raise RuntimeError('Child planning changed canonical timeline or screenplay before acceptance')
     evidence['child_planning'] = {'initial_plan_id': initial[0], 'pending_preserves_children_and_screenplay': True,
@@ -122,7 +135,7 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
 
     plan_beats()
     fresh = ui.wait_for('fresh pending child plan', lambda: next((row for row in plans() if row[0] != initial[0] and row[1] == 'pending'), None))
-    ui.wait_for('fresh proposed timeline material visible', lambda: ui.reveal(application, lambda n: ui.text_of(n).strip() == 'Morning departure'))
+    ui.wait_for('fresh proposed timeline material visible', lambda: review_proposal('Morning departure'))
     ui.reveal_button(application, 'Accept timeline plan', window)
     ui.wait_for('explicitly accepted new child plan', lambda: next((row for row in plans() if row == (fresh[0], 'applied')), None))
     accepted_children = ui.wait_for('canonical proposed child material', lambda: children() if any(row[1] == 'Morning departure' for row in children()) else None)
