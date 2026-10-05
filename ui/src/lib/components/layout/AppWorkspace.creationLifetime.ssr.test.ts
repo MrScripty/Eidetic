@@ -171,6 +171,7 @@ it('replaces the owner on project activation and keeps an old acknowledgement/re
       clearProjectionRefreshQueue: () => {},
       resetEditorState: () => {},
       resetScriptBlockCreationDraft: owner.resetSessionScriptBlockCreationDraft,
+      resetScriptBlockEditDrafts: () => {},
       clearBibleSelection: () => {},
       clearProjectionCaches: () =>
         clearScriptDocumentProjection({ document_id: 'script.document.main' }),

@@ -32,6 +32,7 @@ function lifecycle(): ProjectSessionLifecycle & {
     clearProjectionRefreshQueue: vi.fn(() => calls.push('clear-queue')),
     resetEditorState: vi.fn(() => calls.push('reset-editor')),
     resetScriptBlockCreationDraft: vi.fn(() => calls.push('reset-script-draft')),
+    resetScriptBlockEditDrafts: vi.fn(() => calls.push('reset-script-edits')),
     clearBibleSelection: vi.fn(() => calls.push('clear-bible-selection')),
     clearProjectionCaches: vi.fn(() => calls.push('clear-projection-caches')),
     setActiveProject: vi.fn(() => calls.push('set-project')),
@@ -51,6 +52,7 @@ describe('project session activation', () => {
     expect(deps.clearProjectionRefreshQueue).toHaveBeenCalledWith();
     expect(deps.resetEditorState).toHaveBeenCalledWith();
     expect(deps.resetScriptBlockCreationDraft).toHaveBeenCalledWith();
+    expect(deps.resetScriptBlockEditDrafts).toHaveBeenCalledWith();
     expect(deps.clearBibleSelection).toHaveBeenCalledWith();
     expect(deps.clearProjectionCaches).toHaveBeenCalledWith();
     expect(deps.setActiveProject).toHaveBeenCalledWith(nextProject);
@@ -59,6 +61,7 @@ describe('project session activation', () => {
       'clear-queue',
       'reset-editor',
       'reset-script-draft',
+      'reset-script-edits',
       'clear-bible-selection',
       'clear-projection-caches',
       'set-project',
