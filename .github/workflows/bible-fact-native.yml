@@ -43,6 +43,7 @@ jobs:
               'scripts/test_qualify_bible_fact_propagation.py',
               'docs/reports/bible-fact-native-qualification.md',
               'docs/plans/agent-story-workflows/execution-ledger.md',
+              'docs/plans/agent-story-workflows/plan.md',
           }
           changed = set(subprocess.check_output([
               'git', 'diff', '--name-only', os.environ['EIDETIC_CAPTURE_SOURCE'], 'HEAD'

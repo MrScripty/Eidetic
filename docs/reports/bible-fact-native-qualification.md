@@ -1,88 +1,116 @@
 # Bible fact propagation native qualification
 
-Frozen application source: `fe7fa5900b648ae9d24b374411ab8f9ebcc72343`, tree
-`2dfced8960e8452f86c40fa4efba74ff93d342ea`, based on verified merged main
-`9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09`.
+**Result:** Passed with predefined synthetic HTTP/SSE model responses.
+Real-model screenplay quality is unqualified.
 
-Implementation adds consumed untimed Bible field revisions to existing screenplay
-semantic lineage and targeted proposal acceptance. Its local evidence is 115 core,
-151 isolated actual-source-module and 400 frontend tests plus frontend gates and
-compile-only server checks/strict Clippy. All implementation pre-commit hooks pass.
-The normal local pre-push workspace test fails on missing GLib/GTK system libraries;
-source publication excludes that unavailable local test hook and delegates actual
-native runtime qualification to the normal hosted route. No ONNX acquisition,
-runtime, credential or security-policy workaround is used.
+## Exact source and execution
 
-`test/bible-fact-native` is a separate push-only qualification branch and concurrency
-group, leaving existing PR9 monitoring and authoring qualification untouched. The
-workflow verifies ancestry and unchanged application source, installs standard
-Linux GTK/WebKit/X11 dependencies, builds with the locked Pumas/ORT dependency route,
-and runs actual core/server tests before launching the real Tauri application.
-Uploads contain only bounded PNGs, sanitized log tail and evidence JSON, retained
-for three days. It never uploads a project database, credentials, raw prompts or
-binaries. Qualification remains pending until exact-source execution is recorded.
+- Verified accepted PR9 source `25b860d12fe37a3538a40616cc02ab4a81370863`
+  and merged main `9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09` share tree
+  `d22b036891aed7eb66fc94059aa1b5c1d9aab85a`.
+- Feature implementation `a66e1c74e164178208bd3e63c9ab99147d5290de`;
+  frozen application source `fe7fa5900b648ae9d24b374411ab8f9ebcc72343`,
+  tree `2dfced8960e8452f86c40fa4efba74ff93d342ea`. The successor adds the
+  Bible-derived screenplay projection clock and ordering regression.
+- Qualification `b1129893eae5df2b17e931d5391283faa7d4631b`,
+  tree `d1cbb4822a9593c8d3bb8f7c24d6449bdf7ab68f`.
+- [Passing hosted run 37337057557](https://github.com/MrScripty/Eidetic/actions/runs/37337057557),
+  job `111854378246`, completed 5 October 2026.
+- Executed desktop binary SHA256:
+  `e6d0ae90ec7abb84ce2633c01a991c0061b575b1483cbdf0f6cfc9e0c5323b7c`.
+- [Capture artifact 11356828022](https://github.com/MrScripty/Eidetic/actions/runs/37337057557/artifacts/11356828022):
+  `eidetic-bible-fact-native-fe7fa59`, expires 8 October 2026 16:07 UTC.
+  ZIP SHA256 `bb690dbf78f9a11e9d60a0758c32ebdeccac5b5eeb76b1cd37911eee08c94642`.
 
-The public-service fixture creates a project, scene notes and Mara's initial
-untimed profile.tagline value `Mara's umbrella is red.`. The GUI authors exact
-manual scene A and generates B through the production provider client. The native
-driver types and saves `Mara's umbrella is blue.` in the actual Bible field, verifies
-its canonical revision and Needs review without changing saved A or B, and keeps
-an existing unsaved manual draft through the Bible event refresh. It explicitly
-cancels that draft to display unchanged saved A, previews a targeted B replacement,
-and confirms saved B remains unchanged until clicking Accept update. Acceptance
-must change only B and refresh its actual consumed Bible revision. Bible, timeline
-and screenplay remain in the native workspace for review/preview/accepted captures.
+The workflow verifies ancestry and an allowlist of qualification/documentation
+changes from the frozen application source. Its separate push-only branch and
+concurrency group preserve existing authoring qualification. It installs standard
+GTK/WebKit/X11 dependencies and uses the locked normal Pumas/ORT build route.
+No ONNX download bypass, alternate runtime, credential or security-policy change
+is involved. Only bounded native PNGs, sanitized logs and evidence JSON are
+uploaded for three days; no project database, binaries or raw prompts.
 
-The HTTP/SSE provider serves predefined synthetic text and requires exact current
-Bible fact plus authored screenplay evidence in generation/preview prompts. Its
-records explicitly set real_model=false. This qualifies UI, service and canonical
-state boundaries when executed, not real-model screenplay quality. Existing native
-authoring HTTP admission/acceptance guards are reused; helper methods only allow
-this separate fixture's stricter context predicate. Stdlib HTTP tests retain
-rejected attempts and reject duplicate accepted slots.
+## Executed evidence
 
-Scope is previously consumed baseline fields. Timed snapshots, relationships/node
-headers, new or unconsumed facts and automatic semantic extraction remain follow-ups;
-existing unbound generations are not backfilled. Project recovery and embeddings
-remain deferred. The parent owns PRs/reviews/merges and Library delivery.
+- Hosted actual core: **115 passed**; actual server library: **389 passed**,
+  zero failed/ignored, including the new public-service Bible capture/generation/
+  manual-change publication regression and six Bible lineage/acceptance guards.
+- Local frontend: **400 passed**, plus lint, format, typecheck and build.
+- Local actual-source SQLite/proposal harness: **151 passed**. It imports real
+  modules without AppState/Pumas/ORT; hosted full-server execution supplies the
+  separate native-service evidence.
+- Python qualification HTTP/read-only setup regressions: **9 passed**.
+- Strict server all-target Clippy and checks passed locally with
+  `ORT_SKIP_DOWNLOAD=1`: compilation only. Local full workspace pre-push tests
+  require unavailable GLib/GTK; only that hook was excluded for source publication
+  to the hosted native gate. Ordinary pre-commit hooks passed.
 
-Preparation correction: the setup fixture must use the existing default Profile
-part identity exposed by the Bible editor, rather than an arbitrary backend-only
-part ID. Otherwise the GUI correctly refuses to move the stored field to a
-different part. The corrected fixture also uses the default sort positions and
-removes a duplicate import. No production application changes are involved.
-The newer qualification push supersedes the initial build through its separate
-standard concurrency group.
+## Actual native fact edit and acceptance
 
-The initial Bible checkpoint uses its own mode=ro SQLite read: unlike the shared
-screenplay query helper, it must work before any screenplay table exists. A
-stdlib regression verifies it reads the initial fact without creating screenplay
-schema or changing canon. The corrected qualification push supersedes the earlier
-build; application source remains a66e1c7.
+Public services create a project, scene notes and Mara's initial untimed
+`profile.tagline`. The GUI authors exact manual A, generates B through the
+production provider client, and opens an unsaved manual draft. Native AT-SPI
+control geometry and X11 input type and save **Mara's umbrella is blue.** in the
+actual Bible field, replacing **Mara's umbrella is red.**.
 
-Application follow-up: the existing screenplay projection clock now includes
-Bible revisions because fact impact can change without changing screenplay text.
-Database version assertions and a deferred frontend response regression prove
-older results cannot erase the new review cause. Local evidence is now 400
-frontend tests plus 151 source-module tests and strict server Clippy. The native
-workflow is bound to fe7fa590 before its result is used as current runtime
-evidence; the initial implementation checkpoint remains a66e1c74.
+- Consumed red fact revision: `8105d74a-5500-40ab-84a8-bfabecdee4b4`.
+- Saved blue fact revision: `6aa1b9e3-3d14-4150-9b1c-30d9f542d393`.
+- Original dependency: `generation.fce8827b-9eec-4e09-b212-d3a9cf7f242b.bible.2`.
+- Canonical A/B and the exact unsaved draft survive fact Save. The driver then
+  explicitly cancels its healthy draft; it never silently discards a user draft.
+- Pending proposal `script.review.1360bfdb-9677-405b-b00a-63b2a2dbff81` consumes
+  the current blue fact, exact manual A and old B. Saved B remains unchanged.
+- Clicking **Accept update** commits only B at
+  `45199e38-45a9-4a05-b17d-6aed7c9617ce`. A and Bible remain unchanged;
+  actual consumed fact lineage refreshes to the blue revision.
+- Native checks await the exact proposed text, disappearance of the old review
+  notice and visible canonical accepted block before the final screenshot.
 
-Hosted run `37332976685` on qualification `0c42b36a532605f5924c12b2681f5c884e869e53`
-built the actual desktop and passed 115 core / 389 server tests, including the new
-public-service Bible regression. Its real GUI saved the exact blue fact and proved
-both canonical screenplay and the manual draft were preserved. It timed out next
-because the driver requested Discard draft and reload, which only exists after
-a failed save; the healthy draft exposes Cancel. The inspected failure PNG and
-evidence JSON confirm that checkpoint. Correct only the driver to reveal and click
-the scoped Cancel, and rerun on the same frozen application source. Targeted
-preview/accept remain unqualified until that run completes.
+The HTTP/SSE responses are predefined synthetic screenplay and recap text.
+Generation, recap and preview each passed exact-context admission; every provider
+record has `real_model=false`. No JavaScript/IPC injection or direct database
+mutation supplies the manual fact edit, review or acceptance.
 
-Run `37335330967` on `9fb6e07124c79dcb7bc2a8b553b1ff8d9e5c95c3` passed the
-actual core/server suites and the full native fact-edit/preview/accept flow.
-Visual inspection caught an immediate-acknowledgement screenshot: accepted status
-was visible while the old review notice still awaited the screenplay projection
-refresh. Tighten the driver to await disappearance of the old notice and reveal
-the canonical accepted block; reveal exact pending proposed text before its
-capture too. Requalify this screenshot synchronization on unchanged fe7fa590.
-The earlier run proves canonical acceptance/lineage, not a settled final UI image.
+## Inspected captures
+
+All images show the real owned Tauri window with Bible, timeline and Script.
+Review/preview bytes match the previously inspected captures; the final accepted
+image was independently inspected and shows Update accepted and refreshed
+screenplay without the old Needs review notice. The existing multicolumn Script
+layout clips portions of adjacent columns; canonical text/acceptance is also
+verified through read-only SQL and native accessibility.
+
+| Image | SHA256 |
+| --- | --- |
+| `eidetic-bible-fact-review.png` | `30c52c35ed4e8222dae17279cc61d871affd02fb097b5d12b6aafe13932e52b4` |
+| `eidetic-bible-fact-preview.png` | `c090e141225b6952252cdb716a4ecdf11656e3ab6ddc93e185ab5fffab9b988a` |
+| `eidetic-bible-fact-accepted.png` | `e56ec3ec991d285e64051823c0f39e28e8b7a8f1db4b5f9392c50e218086f365` |
+
+Local copies and evidence are in
+`/workspace/scratch/bible-fact-native-37337057557/`. Requested Library saving
+failed before uploads because the supported helper could not reach the hosted
+app tool listing; no Library IDs were created. The parent can deliver these
+preserved PNGs/artifact independently.
+
+Preparation corrected the fixture's default Profile part identity and a
+read-only initial checkpoint before screenplay schema exists. Native run
+37332976685 then proved fact save/draft preservation but used the refused-save
+reload control for a healthy draft; Cancel corrected that driver step.
+Run 37335330967 passed the canonical flow, but its accepted screenshot preceded
+UI refresh. The final run adds settled native UI assertions; application source
+stays frozen at fe7fa590 throughout these qualification-only corrections.
+
+## Scope and follow-ups
+
+Previously consumed untimed fields reuse existing UsesFact revision bindings,
+sparse history and targeted proposal acceptance. No parallel durable state or
+embedding dependency is added. Late output retains its captured historical
+revision; stale/ABA, forged input, deletion and replay guards preserve manual
+text. The append-only Bible revision clock prevents older screenplay reads from
+erasing new fact impact.
+
+Timed snapshots, relationships/node names, new or unconsumed facts and semantic
+extraction remain separate work. Old unbound outputs are not assigned inferred
+consumption. Project switching is deferred and embeddings are optional future
+work. The parent owns PRs, reviews and merges; the next scene-order/context
+membership audit will use a separate branch.

@@ -1,12 +1,17 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Retained-draft comparison and explicit version continuation,
-separately on frozen combined candidate
-`a25565267fc5e9662458196b6b8bc9373eacdfb8`. The accepted a84/e8 histories
-remain preserved in that candidate; parent owns stacked hosted qualification.
-**Next gate:** Exact-head hosted/native and graphical qualification remain open.
-Pumas runtime/revision integration and project-switch recovery remain deferred.
+**Current phase:** Authored Bible facts feed existing screenplay lineage and
+targeted review, on verified merged main
+`9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09` (the accepted PR9 tree).
+Application checkpoint `fe7fa5900b648ae9d24b374411ab8f9ebcc72343` preserves the
+accepted manual authoring workflow and adds the Bible-derived projection clock.
+**Next gate:** Parent review of the frozen Bible feature, qualified by hosted run
+37337057557 with synthetic HTTP responses and settled native captures. Independently
+audit scene-order changes and context membership on a separate branch. Timed facts,
+relationships and new/unconsumed Bible facts are
+separate follow-ups. Project-switch recovery is deferred; embeddings remain a
+possible later improvement, not a required dependency for this slice.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -697,3 +702,8 @@ event also left screenplay impact and cached prompt context unchanged.
   previously absent/unconsumed fields and broader semantic extraction remain
   follow-ups. Existing unbound outputs are not assigned inferred historical
   consumption; project recovery and embeddings remain deferred.
+- Frozen application fe7fa590 passes 115 actual core / 389 actual server / 400
+  frontend tests and real Tauri fact-edit, retained-draft, pending preview and
+  explicit accept checks. Final qualification b1129893 and run 37337057557 await
+  settled UI before capture. Full source, hashes and limits are in
+  [the qualification report](../../reports/bible-fact-native-qualification.md).

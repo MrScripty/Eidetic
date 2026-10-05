@@ -1252,3 +1252,26 @@ still a separate pending gate. Broader generation persistence is not covered.
 - 151 source-module and 400 frontend tests pass; strict compile-only server Clippy
   passes. Actual hosted runtime qualification must use the successor application
   checkpoint, rather than treating the earlier a66e1c7 build as current evidence.
+
+### Frozen Bible feature: final native qualification
+
+- Application `fe7fa5900b648ae9d24b374411ab8f9ebcc72343`, tree
+  `2dfced8960e8452f86c40fa4efba74ff93d342ea`, remains unchanged from the
+  tested application checkpoint. Qualification `b1129893eae5df2b17e931d5391283faa7d4631b`
+  passes hosted run 37337057557 / job 111854378246: actual 115 core and 389 server
+  tests, plus real native fact edit, retained manual draft, pending preview,
+  explicit acceptance and settled visible canonical target/cleared old review.
+- Canonical fact changed exactly from Mara's umbrella is red. to Mara's umbrella
+  is blue.; saved manual A/B survive fact Save and B survives preview. Accept
+  changes only B and refreshes its UsesFact binding to the blue revision. HTTP
+  provider generation/recap/preview admission is exact and synthetic, not a
+  real-model quality qualification. Local 400 UI, 151 source and 9 helper tests
+  and frontend/compile-only Clippy gates pass.
+- Final artifact 11356828022 (three-day retention) and all hashes/revision IDs are
+  in docs/reports/bible-fact-native-qualification.md. Review/preview hashes match
+  inspected bytes; accepted image was inspected after UI refresh. Preserved local
+  files: /workspace/scratch/bible-fact-native-37337057557/. Library helper failed
+  at tool-list startup before any upload, so no Library IDs are claimed.
+- The user-requested next scene-order/context membership audit is independent of
+  this frozen Bible branch. Parent owns PRs/reviews/merges. No reset or replacement
+  workspace was used after the temporary executor disconnection.
