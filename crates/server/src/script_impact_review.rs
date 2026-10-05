@@ -303,6 +303,7 @@ pub(crate) fn accept_bound_proposal(
     };
     script_document_command::validate_locked_spans(Some(&document), &write)?;
     let generated = GenerateScriptBlockCommand {
+        target_binding: None,
         block: write.clone(),
         script_inputs: Some(binding.script_inputs.clone()),
         bible_inputs: Some(binding.bible_inputs.clone()),

@@ -231,6 +231,19 @@ pub struct ScriptContextScope {
     pub revision_event_id: Option<super::ChangeEventId>,
 }
 
+/// Canonical target custody captured before external generation. Existing
+/// revisions also detect edit-and-restore ABA; absence preserves legacy replay.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScriptGenerationTarget {
+    pub node_id: crate::timeline::node::NodeId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub notes: String,
+    pub node_revision_event_id: Option<super::ChangeEventId>,
+    pub segment_revision_event_id: Option<super::ChangeEventId>,
+    pub block_revision_event_id: Option<super::ChangeEventId>,
+}
+
 /// Internal generation commit: its captured evidence is part of the replay signature.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GenerateScriptBlockCommand {
@@ -240,6 +253,8 @@ pub struct GenerateScriptBlockCommand {
     pub bible_inputs: Option<Vec<super::BibleFieldInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub script_context_scope: Option<ScriptContextScope>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_binding: Option<ScriptGenerationTarget>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -462,6 +477,34 @@ mod tests {
 #[cfg(test)]
 mod creation_contract_tests {
     use super::*;
+
+    #[test]
+    fn generation_target_round_trips_without_backfilling_legacy_history() {
+        let old = serde_json::json!({
+            "block": {"document_id":"script.document.main", "document_title":"Story", "segment_id":"segment.B",
+            "source_node_id":"B", "segment_start_ms":1000,"segment_end_ms":2000,"segment_status":"current",
+            "block_id":"block.B","block_kind":"action","text":"B","span_provenance":"ai_generated"},
+            "script_inputs":null
+        });
+        let legacy: GenerateScriptBlockCommand = serde_json::from_value(old.clone()).unwrap();
+        assert!(legacy.target_binding.is_none());
+        assert!(
+            serde_json::to_value(legacy)
+                .unwrap()
+                .get("target_binding")
+                .is_none()
+        );
+        let mut json = old;
+        json["target_binding"] = serde_json::json!({
+            "node_id":uuid::Uuid::new_v4(),"start_ms":1000,"end_ms":2000,"notes":"Exact notes — 雨",
+            "node_revision_event_id":uuid::Uuid::new_v4(),"segment_revision_event_id":null,"block_revision_event_id":null
+        });
+        let command: GenerateScriptBlockCommand = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            command,
+            serde_json::from_value(serde_json::to_value(&command).unwrap()).unwrap()
+        );
+    }
 
     #[test]
     fn manual_creation_round_trip_preserves_intent_and_refuses_client_owned_ids() {

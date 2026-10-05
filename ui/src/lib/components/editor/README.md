@@ -6,6 +6,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
+| `createSelectedTimelineChild.ts` | Existing canonical create-child command and guarded selection after acknowledgement. |
+| `createSelectedTimelineChild.svelte.test.ts` | Delayed selection, same-ID session reset and unmounted editor acknowledgement regressions. |
 | `BeatEditor.svelte` | Primary node editing surface for notes, generation, and context panels. |
 | `contextRequestLifecycle.ts` | Prompt request invalidation, loading cleanup and stale-response guards. |
 | `contextRequestLifecycle.test.ts` | Empty notes/selection invalidation and delayed response ordering. |
@@ -151,3 +153,12 @@ their part/key identity through the existing preview, reject and explicit Accept
 update surface. A Bible change refreshes the canonical screenplay projection and
 invalidates prompt context. This surface preserves existing authoring draft owners
 and never replaces saved screenplay on a fact edit or a preview response.
+
+
+Selected-parent authoring exposes Add Scene (or the corresponding child level)
+through the existing canonical create-child command, then selects only that
+acknowledged child. createSelectedTimelineChild retains the user's later selection
+and existing editor session generation across delayed acknowledgements/unmounts.
+The backend derives child hierarchy and placement; frontend controls do not create
+an alternate story owner. Immediate generation admission errors clear streaming
+state and remain visible without discarding authored screenplay drafts.

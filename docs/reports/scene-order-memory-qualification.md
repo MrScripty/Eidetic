@@ -90,9 +90,9 @@ Bible, screenplay and timeline are visible together. It verifies:
    the old review clears, and normal scrolling reveals the saved canonical B.
 
 Generation, recap and preview each passed the strict **synthetic localhost
-HTTP/SSE fixture through the production client**. Preview admission requires
-fresh F/E/C/D and exact human B, excludes displaced A and refuses obsolete generated
-B. These checks qualify context custody and application behavior, not real-model
+HTTP/SSE fixture through the production client**. The wire fixture requires membership substrings for F/E/C/D and exact human B
+and excludes displaced A. It does not prove exact order or absence of an additional
+obsolete generated B; ordered receipt custody is covered separately by Rust tests. These checks qualify context custody and application behavior, not real-model
 quality. No real model was executed.
 
 ### Inspected native screenshots and evidence

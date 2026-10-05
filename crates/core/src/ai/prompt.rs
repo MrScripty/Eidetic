@@ -59,6 +59,7 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
         bible_context: None,
         bible_inputs: None,
         script_context_scope: None,
+        generation_target: None,
         affect_context: None,
         script_context: None,
     })

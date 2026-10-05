@@ -1,6 +1,7 @@
 import {
   applyTimelineChildren,
   createTimelineNode,
+  createTimelineChildFromParent,
   createTimelineRelationship,
   deleteTimelineNode,
   deleteTimelineRelationship,
@@ -17,6 +18,7 @@ import {
 import type {
   ApplyTimelineChildrenCommand,
   CreateTimelineNodeCommand,
+  CreateTimelineChildFromParentCommand,
   CreateTimelineRelationshipCommand,
   DeleteTimelineNodeCommand,
   DeleteTimelineRelationshipCommand,
@@ -125,6 +127,17 @@ export async function applyCreateTimelineNodeCommand(
     () => createTimelineNode(payload, commandId),
     (result) => result.projection,
     'Failed to apply timeline create node command',
+  );
+}
+
+export async function applyCreateTimelineChildFromParentCommand(
+  payload: CreateTimelineChildFromParentCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  return runTimelineProjectionRequest(
+    () => createTimelineChildFromParent(payload, commandId),
+    (result) => result.projection,
+    'Failed to create timeline child',
   );
 }
 

@@ -115,3 +115,11 @@ optional input collection preserves older unbound generations. These inputs
 become ordinary UsesFact semantic dependencies with revision bindings; there is
 no additional canonical fact store. Timed overrides, unresolved fields, node
 headers and relationships are outside this field-lineage contract.
+
+
+Canonical generation carries optional ScriptGenerationTarget custody in the
+existing request and generation command. Timeline/output/segment revisions plus
+exact admitted notes and placement protect delayed completion and ABA; older
+serialized requests/commands omit the receipt without invented backfill. The
+backend enforces it, while canonical facts and complete-window lineage remain
+independent consumed evidence. No new persistent memory owner or dependency.

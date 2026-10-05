@@ -64,9 +64,13 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
         Box::pin(stream::iter([Ok(
             "Synthetic fixture screenplay: Mara carries red.".into(),
         )])),
-        request.script_context,
-        request.bible_inputs,
-        request.script_context_scope,
+        GenerationInputs {
+            script_inputs: request.script_context,
+            bible_inputs: request.bible_inputs,
+            script_context_scope: request.script_context_scope,
+            target_binding: request.generation_target,
+            ..GenerationInputs::default()
+        },
     )
     .await;
     assert!(
@@ -126,19 +130,11 @@ async fn fixture() -> Fixture {
     crate::persistence::save_project(&project, &path, None)
         .await
         .unwrap();
-    let node = project.timeline.node(node_id).unwrap();
     persist_generated_script_block(
         path.clone(),
         node_id.0,
-        GeneratedScriptMetadata {
-            project_name: project.name.clone(),
-            start_ms: node.time_range.start_ms,
-            end_ms: node.time_range.end_ms,
-        },
         "Previously approved screenplay".to_string(),
-        None,
-        None,
-        None,
+        GenerationInputs::default(),
     )
     .await
     .unwrap();
@@ -191,9 +187,10 @@ async fn assert_failed_stream(
         fixture.path.clone(),
         fixture.node_id.0,
         Box::pin(stream::iter(items)),
-        Some(inputs),
-        None,
-        None,
+        GenerationInputs {
+            script_inputs: Some(inputs),
+            ..GenerationInputs::default()
+        },
     )
     .await;
 
@@ -335,15 +332,11 @@ async fn successful_persistence_keeps_captured_input_lineage_after_an_intervenin
     persist_generated_script_block(
         fixture.path.clone(),
         fixture.node_id.0,
-        GeneratedScriptMetadata {
-            project_name: "Stream failure".into(),
-            start_ms: 1000,
-            end_ms: 2000,
-        },
         "  B from captured A\n\n".into(),
-        Some(vec![captured.clone()]),
-        None,
-        None,
+        GenerationInputs {
+            script_inputs: Some(vec![captured.clone()]),
+            ..GenerationInputs::default()
+        },
     )
     .await
     .unwrap();

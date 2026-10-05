@@ -212,7 +212,8 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
 ) -> Result<(), BackendError> {
     let range = request.target_node.time_range;
     let script_path = path.clone();
-    let (blocks, scope) = tokio::task::spawn_blocking(move || {
+    let expected_node = request.target_node.clone();
+    let (blocks, scope, target) = tokio::task::spawn_blocking(move || {
         let conn = crate::sqlite::open_write_connection(&script_path)
             .map_err(|error| BackendError::internal(error.to_string()))?;
         crate::script_store::create_schema(&conn)
@@ -220,6 +221,8 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
         let tx = conn
             .unchecked_transaction()
             .map_err(|error| BackendError::internal(error.to_string()))?;
+        let target = crate::script_generation_target::capture(&tx, &expected_node)
+            .map_err(|error| BackendError::bad_request(error.to_string()))?;
         let blocks = crate::ai_script_context::load_script_context(
             &tx,
             node_id,
@@ -237,12 +240,13 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
         .map_err(|error| BackendError::internal(error.to_string()))?;
         tx.commit()
             .map_err(|error| BackendError::internal(error.to_string()))?;
-        Ok::<_, BackendError>((blocks, scope))
+        Ok::<_, BackendError>((blocks, scope, target))
     })
     .await
     .map_err(|error| BackendError::internal(format!("script context task failed: {error}")))??;
     crate::ai_script_context::attach_script_context(request, blocks);
     request.script_context_scope = Some(scope);
+    request.generation_target = Some(target);
     let (bible_context, bible_inputs) =
         load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?;
     request.bible_context = Some(bible_context);

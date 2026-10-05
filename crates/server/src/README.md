@@ -15,6 +15,9 @@ domain model in `eidetic-core`.
 | `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
 | `ai_script_context.rs` | Canonical screenplay evidence for shared preview/generation context, carrying exact block and segment write identities. |
+| `script_generation_target.rs` | Canonical generation target receipts and transaction-local node/output revision and manual-content validation. |
+| `script_generation_target_tests.rs` | Target/output ABA, retime/delete/locks, manual append, forged custody, rollback and replay regressions. |
+| `canonical_generation_service_tests.rs` | Public create/select/generate and paused synthetic HTTP regressions with an actually stale mirror; delayed scene/manual changes preserve text/history. |
 | `script_context_scope.rs` | Complete continuity-window capture in existing generation/proposal history, derived entering/leaving/order causes and append-only placement guards. |
 | `scene_context_membership_tests.rs` | Six-scene entering/displaced-neighbor and target-relocation fixtures, exact manual text, late generation/replay, malformed capture rollback and unconsumed membership ABA refusal. |
 | `scene_context_membership_service_tests.rs` | Native AppState range publication, backend generation-window capture, synthetic HTTP preview and explicit targeted acceptance. |
@@ -446,3 +449,19 @@ a delayed pre-fact read must have a lower version than its fresh review projecti
 The clock conservatively includes all four Bible revision kinds and never resets
 when a generation refreshes or narrows its consumption. This is derived metadata,
 not an extra revision store or an inference of fictional truth.
+
+
+## Immediate canonical generation custody
+
+Creation and completion use canonical SQLite; the legacy project mirror is never
+required to contain a newly created scene. Generation captures a target receipt
+alongside its context read, using existing timeline and screenplay revision IDs.
+Completion validates existence, notes, placement, locks and target/output revisions
+inside the existing generation history transaction. User-edited generated output
+requires a reviewed replacement; independent manual blocks remain exact. Node
+HasContent commits with successful screenplay output, never before it. A late
+target edit/ABA/delete or manual write refuses replacement and rolls back generation
+history. External model I/O holds no session gate; final persistence checks the
+existing project identity/session and holds its gate through publication. Legacy
+commands lacking target receipts still replay without fictional backfill. No new
+schema or refresh/synchronization state is introduced.

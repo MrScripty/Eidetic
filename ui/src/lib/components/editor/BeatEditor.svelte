@@ -10,6 +10,8 @@
     startBatchGeneration,
     startGeneration,
     setBatchTotalCount,
+    getEditorSessionGeneration,
+    setGenerationError,
   } from '$lib/stores/editor.svelte.js';
   import { zoomToRange } from '$lib/stores/timeline.svelte.js';
   import { generateBatch, generateChildren, generateContent, getAiContext } from '$lib/api.js';
@@ -30,6 +32,7 @@
   import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
   import { createContextRequestLifecycle } from './contextRequestLifecycle.js';
   import './beatEditor.css';
+  import { createSelectedTimelineChild } from './createSelectedTimelineChild.js';
   import { scriptDocumentProjectionState } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
   const debouncedNotesSave = createDebouncedNodeNotesSave({
@@ -45,6 +48,9 @@
     },
   });
   let planning = $state(false);
+  let creatingChild = $state(false);
+  let childCreateError = $state<string | null>(null);
+  let editorMounted = true;
   let nodeContext: { system: string; user: string } | null = $state(null);
   let contextLoading = $state(false);
   const contextRequests = createContextRequestLifecycle({
@@ -240,9 +246,32 @@
   }
 
   onDestroy(() => {
+    editorMounted = false;
     debouncedNotesSave.dispose();
     contextRequests.invalidate();
   });
+
+  async function handleAddChild() {
+    if (!selectedNodeIsReady() || !childLevelName || creatingChild) return;
+    const parentId = editorState.selectedNodeId;
+    if (!parentId) return;
+    const session = getEditorSessionGeneration();
+    creatingChild = true;
+    childCreateError = null;
+    try {
+      await createSelectedTimelineChild(parentId, () => editorMounted);
+    } catch (error) {
+      if (
+        editorMounted &&
+        session === getEditorSessionGeneration() &&
+        editorState.selectedNodeId === parentId
+      ) {
+        childCreateError = error instanceof Error ? error.message : 'Unable to add child';
+      }
+    } finally {
+      creatingChild = false;
+    }
+  }
 
   async function handleToggleLock() {
     if (!editorState.selectedNodeId || !selectedNodeIsReady()) return;
@@ -266,7 +295,15 @@
     }
 
     startGeneration(editorState.selectedNodeId);
-    await generateContent(editorState.selectedNodeId);
+    const nodeId = editorState.selectedNodeId;
+    const session = getEditorSessionGeneration();
+    try {
+      await generateContent(nodeId);
+    } catch (error) {
+      if (session === getEditorSessionGeneration()) {
+        setGenerationError(nodeId, error instanceof Error ? error.message : 'Generation refused');
+      }
+    }
   }
 
   async function handleGenerateChildren() {
@@ -319,7 +356,11 @@
       {childLevelName}
       ontogglelock={handleToggleLock}
       ongenerate={handleGenerate}
+      onaddchild={handleAddChild}
+      {creatingChild}
     />
+
+    {#if childCreateError}<p role="alert">{childCreateError}</p>{/if}
 
     {#if isChildNode && parentNode}
       <BeatChildContext

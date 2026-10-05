@@ -67,6 +67,7 @@ pub(crate) mod script_block_edit;
 mod script_context_scope;
 pub(crate) mod script_document_command;
 pub(crate) mod script_generation_lineage;
+mod script_generation_target;
 pub(crate) mod script_impact_projection;
 pub(crate) mod script_impact_prompt;
 pub(crate) mod script_impact_review;
@@ -108,3 +109,6 @@ mod timeline_script_placement_service_tests;
 
 #[cfg(test)]
 mod scene_context_membership_service_tests;
+
+#[cfg(test)]
+mod canonical_generation_service_tests;

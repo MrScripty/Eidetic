@@ -9,6 +9,8 @@
     childLevelName,
     ontogglelock,
     ongenerate,
+    onaddchild,
+    creatingChild = false,
   }: {
     node: StoryNode;
     statusLabel: string;
@@ -17,6 +19,8 @@
     childLevelName: string | null;
     ontogglelock: () => void;
     ongenerate: () => void;
+    onaddchild: () => void;
+    creatingChild?: boolean;
   } = $props();
 </script>
 
@@ -29,6 +33,11 @@
   <button type="button" class="lock-toggle" class:locked={node.locked} onclick={ontogglelock}>
     {node.locked ? 'Unlock' : 'Lock'}
   </button>
+  {#if childLevelName}
+    <button type="button" onclick={onaddchild} disabled={creatingChild}>
+      {creatingChild ? 'Adding...' : `Add ${childLevelName}`}
+    </button>
+  {/if}
   <button
     type="button"
     class="generate-btn"

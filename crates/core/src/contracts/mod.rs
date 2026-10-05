@@ -87,10 +87,10 @@ pub use script_document::{
     CreateScriptBlockCommand, EditScriptBlockCommand, GenerateScriptBlockCommand, ScriptBlock,
     ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptContextBlock, ScriptContextScope,
     ScriptContractError, ScriptDocument, ScriptDocumentId, ScriptDocumentProjection,
-    ScriptImpactCause, ScriptImpactProjection, ScriptImpactReason, ScriptLock, ScriptLockId,
-    ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
-    ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SetScriptBlockCommand,
-    SetScriptLockCommand,
+    ScriptGenerationTarget, ScriptImpactCause, ScriptImpactProjection, ScriptImpactReason,
+    ScriptLock, ScriptLockId, ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId,
+    ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance,
+    SetScriptBlockCommand, SetScriptLockCommand,
 };
 pub use script_impact_review::{RequestScriptImpactProposalCommand, ScriptImpactProposalBinding};
 pub use selected_node_editor::{

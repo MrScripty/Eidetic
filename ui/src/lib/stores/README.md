@@ -196,3 +196,8 @@ Bible-driven impact changes carry an advanced canonical screenplay projection
 version. A deferred older read cannot hide a newer fact review cause while exact
 block text remains equal. The normal version/session guards continue to own cache
 admission; no frontend-generated revision or automatic retry is introduced.
+
+
+Timeline child creation uses the same runTimelineProjectionRequest and cache
+lifetime/version guards as other timeline writes. Selected-parent authoring uses
+the existing editor session generation to refuse late selection side effects.

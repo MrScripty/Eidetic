@@ -1321,3 +1321,32 @@ still a separate pending gate. Broader generation persistence is not covered.
   successful_generation_metadata still reads state.project's absent mirror node.
   This is bounded authoring custody, not project-switch recovery. No new slice
   implementation yet; parent owns PRs/reviews/merges and Library delivery.
+
+
+### Immediate canonical scene generation successor — 5 October 2026
+
+- Frozen scene-order head 441c2a29af6199b53b92f718df43d0ca916b1ce5 and all
+  application/native milestones remain unchanged ancestors. Separate branch
+  feat/canonical-scene-generation. Cause and acceptance criteria were reported
+  before implementation: canonical creation/admission versus stale mirror lookup
+  during completion, and premature HasContent before script commit.
+- Generation now captures existing timeline/segment/output revision custody with
+  the canonical screenplay read. Final completion reads SQLite node metadata and
+  validates target/notes/placement/locks/manual output in the history writer
+  transaction. HasContent commits atomically; refused streams restore status
+  from saved canonical blocks without demoting manual screenplay to NotesOnly.
+  Existing session gate/identity and revision/ABA guards remain authoritative.
+- UI Add Scene in a selected Sequence reuses existing parent-derived create-child
+  API (the old timeline double-click path sends a parentless Scene rejected by
+  core). Selection after acknowledgement uses existing editor session lifetime,
+  current selection and mounted state. Admission errors clear streaming state.
+- Local 117 core, 234 actual-source modules and 405 UI tests pass; strict compile-only
+  server Clippy passes. Four added real AppState/paused-HTTP tests cover immediate
+  creation/selection without reopen, notes ABA, retime/lock/delete, and manual edit
+  during delayed regeneration; full native execution is pending hosted qualification.
+  GTK/GLib remains unavailable locally and ONNX403 is not bypassed.
+- Peer accepted predecessor application/native evidence but identified old HTTP
+  fixture membership checks as insufficient for wire order/stale duplicate absence.
+  The successor narrows that report claim; old evidence remains untouched. New
+  native qualification will parse the exact canonical screenplay section and
+  reject swapped blocks, duplicate or obsolete text. No offscreen preview claim.

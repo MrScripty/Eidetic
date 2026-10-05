@@ -75,6 +75,39 @@ change or review cause. Human B text remained unchanged in both cases.
   Existing timeline drag bounds and semantic story extraction remain outside
   this bounded continuity receipt; presentation placement never infers story time.
 
+## Immediate canonical scene generation: bounded successor
+
+Frozen predecessor: 441c2a29af6199b53b92f718df43d0ca916b1ce5. New branch:
+feat/canonical-scene-generation. Cause and criteria were reported before code changes.
+Canonical create writes SQLite without inserting into state.project. Admission
+loads canonical SQLite, but successful_generation_metadata reads the stale mirror,
+then returns before screenplay persistence when the new node is absent. It also
+marks HasContent before the screenplay transaction. Save/reopen masks this ownership
+split and is not an acceptable application fix.
+
+- The existing create-child backend/transport lacks an editor action, while
+  timeline double-click sends a parentless Scene rejected by core. Expose Add Scene
+  in the selected Sequence editor using that validated API; backend derives parent,
+  level and placement. Guard delayed acknowledgement selection by existing editor
+  session/selection and mounted lifetime. No separate placement inference.
+- Create a scene and generate immediately through public services and the real
+  selected-node GUI without reopening. Completion reads canonical metadata and
+  commits status with the generated screenplay, never inventing a mirror refresh.
+- Capture target custody using existing timeline/script revisions at admission.
+  Recheck existence, placement, notes, locks and output revision inside the writer
+  transaction. Refuse delayed responses after target edit/delete/retime/lock or
+  an intervening human screenplay write, including ABA; retain manual text,
+  unrelated authored blocks and canonical placement. Stale upstream inputs remain
+  captured provenance and produce review through existing mechanisms.
+- Reuse existing command/history, generation dependencies and session guards.
+  Preserve legacy replay; no new database/schema, credentials or dependencies.
+  Project switching recovery remains deferred, rather than widening this slice.
+- Test actual canonical selection and immediate creation with a deliberately
+  stale mirror, delayed synthetic HTTP responses, refusal/no partial history,
+  and successful ordinary streaming. Qualify UI create/select/notes/generate
+  through native input, with Bible/timeline/screenplay visible, source-bound
+  unaltered prototype evidence and explicitly synthetic model responses.
+
 ## Manual screenplay authoring: first bounded memory slice
 
 The owner prioritizes manual screenplay edits, timeline-driven story changes and
