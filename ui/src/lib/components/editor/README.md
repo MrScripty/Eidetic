@@ -49,7 +49,10 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
   with the canonical timeline clip. A late pre-move read or second resize cannot
   expose stale recovery times; existing request/version guards retain ownership.
   Read completion is untracked by the range effect to avoid self-retrying loops.
-  A failed read retains the draft and exposes explicit Refresh selected clip.
+  Returning to a cached matching placement while a retime read is pending still
+  supersedes that request; a delayed intermediate placement cannot replace the
+  returned placement. A failed read retains the draft and exposes explicit
+  Refresh selected clip.
 - Script exposes Write screenplay even before a document exists. The session-owned
   composer draft captures its selected clip and document when writing begins, preserves
   exact refused drafts, and never retargets them on selection change. A placement

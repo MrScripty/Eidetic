@@ -217,3 +217,33 @@ it('preserves clear/selection request guards and does not fetch for an unchanged
   await refreshRetimedScriptSource();
   expect(invoke).toHaveBeenCalledTimes(calls);
 });
+
+it('supersedes a delayed B read when A-to-B-to-A retiming returns to the matching cached placement', async () => {
+  await seed();
+  const { getScriptCreationSource, refreshRetimedScriptSource } =
+    await import('./scriptCreationSource.js');
+  const composer = getSessionScriptBlockCreationDraft();
+  composer.begin(node);
+  composer.state.text = '  Retained A draft — 雨\n\n';
+  await retime(1500, 2500, 2);
+  const delayedB = deferred<ProjectionEnvelope<SelectedNodeEditorProjection>>();
+  invoke.mockReturnValueOnce(delayedB.promise);
+  const readB = refreshRetimedScriptSource();
+  expect(selectedNodeEditorProjectionState.pending).toBe(true);
+  await retime(1000, 2000, 3);
+  expect(getScriptCreationSource()?.start_ms).toBe(1000);
+  // The current clip agrees with cached A, but an owned B request is still in flight.
+  invoke.mockResolvedValueOnce(selected(1000, 2000, 3));
+  await refreshRetimedScriptSource();
+  delayedB.resolve(selected(1500, 2500, 2));
+  await readB;
+  expect(getScriptCreationSource()?.start_ms).toBe(1000);
+  expect(getScriptCreationSource()?.end_ms).toBe(2000);
+  expect(selectedNodeEditorProjectionState.projection?.version).toBe(3);
+  expect(selectedNodeEditorProjectionState.pending).toBe(false);
+  expect(composer.state.target?.start_ms).toBe(1000);
+  expect(composer.state.text).toBe('  Retained A draft — 雨\n\n');
+  const calls = invoke.mock.calls.length;
+  await refreshRetimedScriptSource();
+  expect(invoke).toHaveBeenCalledTimes(calls);
+});

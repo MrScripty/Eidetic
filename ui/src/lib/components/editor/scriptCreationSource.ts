@@ -31,7 +31,13 @@ export function refreshRetimedScriptSource(): Promise<void> {
   const end = clip.end_ms;
   return untrack(async () => {
     const node = selectedNodeEditorProjectionState.projection?.payload.node;
-    if (node?.node_id === nodeId && node.start_ms === start && node.end_ms === end) return;
+    if (
+      !selectedNodeEditorProjectionState.pending &&
+      node?.node_id === nodeId &&
+      node.start_ms === start &&
+      node.end_ms === end
+    )
+      return;
     await refreshSelectedNodeEditorProjection(nodeId);
   });
 }

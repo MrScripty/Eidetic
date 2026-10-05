@@ -913,3 +913,22 @@ still a separate pending gate. Broader generation persistence is not covered.
   `94c24298c66245aa90b76f2472c793b0ce327899` (tree
   `f846de1c0f75903a1db8e1ff181f5da4b5f270c9`) and its logs/source harness.
   The PR8 repair branch includes none of that independent feature's changes.
+
+## PR8 A-to-B-to-A retiming request ownership repair
+
+- Exact accepted base `a84dfc21c99972612b4c8ea8799d7e488c6329ec`, isolated
+  `fix/pr8-retime-return`; accepted feature descendants remain unchanged.
+- Reproduced review `5409007766` with actual frontend range commands and selected
+  projection refresh: A-to-B starts a delayed B read, returning the same node to
+  A matches cached A and skips refresh, then late B makes creation unavailable.
+  The added regression fails on the base after admitting that delayed response.
+- Matching cached placement only avoids a read when no selected projection read
+  is pending. Otherwise the existing refresh increments request ownership, reads
+  current A and ignores the superseded B completion. Version/clear guards and
+  untracked read-completion behavior remain unchanged; no retry loop is added.
+- Regression also preserves exact Unicode draft/captured A placement and proves
+  an idle matching placement performs no further request. Native receipts in
+  this frontend execution are fixture data; graphical qualification is separate.
+- Validation: 372 frontend tests across 67 files pass (including the reproduced
+  regression); typecheck has zero errors/warnings and production UI build passes.
+  No Rust/application runtime change or claim; source qualification remains pending.
