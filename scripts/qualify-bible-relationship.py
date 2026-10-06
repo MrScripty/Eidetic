@@ -109,6 +109,15 @@ def review_region(application, proposal_text):
         and any(child.name == 'Proposed text' and ui.text_of(child) == proposal_text for child in ui.walk(n)))
 
 
+def begin_manual_draft(application, window):
+    block = ui.wait_for('manual source block', lambda: ui.screenplay_block(application, 'red umbrella'))
+    # The accepted target can scroll the manual card horizontally out of view.
+    # Reveal this exact card's button through native AT-SPI before pointer input.
+    ui.reveal_button(block, 'Edit', window)
+    draft = ui.wait_for('manual source editor', lambda: ui.editable(application, ui.MANUAL_TEXT))
+    ui.type_text(draft, window, bible.DRAFT)
+
+
 def readable_saved(application, window, evidence):
     geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
         ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
@@ -140,10 +149,7 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
         raise RuntimeError('Accepted screenplay did not bind its actually supplied relationship')
     evidence['bible_relationship'] = {'original_edge': list(original), 'consumed_dependency': dependencies[0][0],
         'consumed_revision': dependencies[0][1], 'real_model': False}
-    block = ui.wait_for('manual source block', lambda: ui.screenplay_block(application, 'red umbrella'))
-    ui.click_button(block, 'Edit', window)
-    draft = ui.wait_for('manual source editor', lambda: ui.editable(application, ui.MANUAL_TEXT))
-    ui.type_text(draft, window, bible.DRAFT)
+    begin_manual_draft(application, window)
     baseline = base.saved_script_and_placement(database)
     checkpoint('native exact relationship label edit; saved screenplay and draft retained')
     changed = edit_label(application, window, database, original, DOUBT)
@@ -214,7 +220,10 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
         'AND d.target_id=? AND r.source_revision_event_id=?', (EDGE_ID, saved[2]))
     if bindings != [(again[7],)]:
         raise RuntimeError('Acceptance did not refresh exact relationship consumption')
-    ui.wait_for('relationship needs-review cleared', lambda: not any(n.name == 'Screenplay needs review' for n in ui.walk(application)))
+    def review_cleared():
+        application.clear_cache()
+        return not any(n.name == 'Screenplay needs review' for n in ui.walk(application))
+    ui.wait_for('relationship needs-review cleared', review_cleared)
     evidence['bible_relationship'].update(status='native_relationship_review_passed_with_synthetic_provider',
         saved_screenplay_revision=saved[2], refreshed_relationship_revision=again[7],
         explicit_acceptance=True, exact_manual_source_preserved=True)

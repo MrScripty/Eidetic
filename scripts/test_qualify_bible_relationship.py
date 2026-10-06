@@ -75,5 +75,19 @@ class RelationshipProviderTests(unittest.TestCase):
             self.request(self.prompt(), system='unrelated task')
 
 
+class NativeControlTests(unittest.TestCase):
+    def test_manual_card_edit_reveals_its_own_button_before_exact_draft_input(self):
+        application, window, block, field = object(), 'owned-window', object(), object()
+        with patch.object(driver.ui, 'wait_for', side_effect=lambda _, check: check()), \
+                patch.object(driver.ui, 'screenplay_block', return_value=block), \
+                patch.object(driver.ui, 'editable', return_value=field), \
+                patch.object(driver.ui, 'reveal_button') as reveal, \
+                patch.object(driver.ui, 'click_button', side_effect=AssertionError('Offscreen input is forbidden')), \
+                patch.object(driver.ui, 'type_text') as type_text:
+            driver.begin_manual_draft(application, window)
+        reveal.assert_called_once_with(block, 'Edit', window)
+        type_text.assert_called_once_with(field, window, driver.bible.DRAFT)
+
+
 if __name__ == '__main__':
     unittest.main()
