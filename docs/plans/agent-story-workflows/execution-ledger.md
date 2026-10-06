@@ -1896,3 +1896,30 @@ Inspection on provisional ab25029 and then identical-tree main74fd438f found the
 Application8c1956f (tree764ae1c5) descends from verified main74fd438f, separate from PR15. Exact start/end seconds and Apply placement reuse the range command, canonical snapshot and existing node history receipt. Optional omission preserves legacy signatures; writer admission checks original range/history including ABA, replay remains first and unknown acknowledgements keep immutable retry. Local/hosted core120/server486/UI467, frontend0/0/lint/format/build, strict server all-target Clippy and no-download gates pass.
 
 Qualification443ddc2 (tree5335f1c1) passes native run37538195351/job112524966283/artifact11447317950. Actual native Save types exact manual B, retains another draft and applies E180–210 seconds across neighbors without changing saved text or draft. Existing review explains enteredE/leftA. Preview preserves saved B and consumes the new window; only explicit acceptance replaces B and clears review. Four original1440x960 captures were verified/viewed. Three responses are labelled synthetic. The preview-named image does not show its proposed paragraph within the constrained pane; the durable/native receipt establishes pending custody and the accepted image visibly shows canonical replacement. Source and functional UI are qualified; no model-quality or native ABA sequence claim. Initial qualifier945c4e3/run37537216165 is cancelled, preserved, and corrected only for observation tuple ranges. Full receipts: exact-timeline-placement-qualification.md and manifest. Parent retains PR/review/merge/Library; no new models, credentials, embedding dependency, hierarchy or project-switch work.
+
+
+### Last Train native writing and retained-draft demonstration
+
+Frozen application42c3c0b (implementation8c1956f) exactly matches merged main
+25895e7b's complete tree21f9432d; parent owns postmerge CI37544288693. Separate
+QA67b1efb/run37545170522/job112547329212 passes core120/server486/UI467,
+driver50/no-download5 and normal GTK/WebKit builds. Actual native Write screenplay
+and Save author A, Generate creates B via labelled synthetic HTTP, manual B/C Save
+changes the departure board from midnight to morning, E moves to180–210 seconds,
+and native Bible Save changes blue to amber. Existing dependencies identify B
+for targeted review. The full pending proposal paragraph and explicit Reject/Accept
+controls are visibly captured alongside Bible/timeline and an unrelated open F
+draft. Native acceptance replaces only B, refreshes the consumed Bible revision,
+clears review and retains every other saved block and F's unsaved draft.
+
+Seven original 1920x1440 captures were hash verified and viewed. Artifact11450083908
+ZIP SHA d32920da60799969cc10f6f7c118a51d95280125ffef0cd68cb729e8c041f15d;
+report/manifest: story-authoring-walkthrough-native.md and
+story-authoring-walkthrough-manifest.json. Two preserved failed QA attempts exposed
+formatted-text and hidden-option lookup errors; corrections changed only QA files.
+Their completed subsets are distinguished from the successful full run. Selected
+B's inspector remains Notes written after generation; this concrete feedback
+mismatch is recorded without an application change. The placement frame retains
+its transient stale selected read; later frames show fresh exact placement. All
+three model responses are synthetic; no real-model quality, new dependency/model,
+application fix, PR/review/merge, project-switch or Library action is claimed.

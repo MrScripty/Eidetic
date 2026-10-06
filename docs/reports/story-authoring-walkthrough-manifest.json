@@ -1,0 +1,1687 @@
+{
+  "merged_main": {
+    "sha": "25895e7bcf215e5a013dd7c4a98873e9b7412b8a",
+    "tree": "21f9432d2f14b104ab90bcfe0b4c7e87be201b63",
+    "parents": [
+      "74fd438f3ab4cf40734e094b4b2a62fc67d58b07",
+      "42c3c0b94fdc18146b3e9ef128acb36de4399d67"
+    ],
+    "parent_owned_postmerge_ci": 37544288693
+  },
+  "application": {
+    "sha": "42c3c0b94fdc18146b3e9ef128acb36de4399d67",
+    "tree": "21f9432d2f14b104ab90bcfe0b4c7e87be201b63",
+    "implementation_sha": "8c1956f7afa18a2a3ea3a1732fb8eca58a1129b3",
+    "branch": "feat/timeline-story-memory",
+    "binary_sha256": "4a51fac11fee64f7d1b9e926a11145afe6cb5391b66387af2f31b34012553d80",
+    "unchanged_from_merged_main": true
+  },
+  "qualification": {
+    "sha": "67b1efb116ccae29e86bc201513e315cb430ee01",
+    "tree": "fc21be6d0e9fb185512d459d93996ed0f4995e05",
+    "branch": "test/story-authoring-walkthrough-native",
+    "qualification_only_paths": [
+      ".github/workflows/story-authoring-walkthrough-native.yml",
+      ".github/workflows/timeline-placement-native.yml",
+      "crates/server/examples/story_authoring_walkthrough_fixture.rs",
+      "crates/server/examples/timeline_placement_capture_fixture.rs",
+      "scripts/qualify-story-authoring-walkthrough.py",
+      "scripts/qualify-timeline-placement.py",
+      "scripts/test_qualify_story_authoring_walkthrough.py",
+      "scripts/test_qualify_timeline_placement.py"
+    ]
+  },
+  "hosted_native": {
+    "run_id": 37545170522,
+    "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37545170522",
+    "job_id": 112547329212,
+    "artifact_id": 11450083908,
+    "artifact_url": "https://github.com/MrScripty/Eidetic/actions/runs/37545170522/artifacts/11450083908",
+    "expires_at": "2026-10-09T23:22:40Z",
+    "conclusion": "success",
+    "original_zip": {
+      "path": "/workspace/attachments/243ca033-65cc-4b13-8bd6-fc48932bc1b2/eidetic-last-train-authoring-success.zip",
+      "sha256": "d32920da60799969cc10f6f7c118a51d95280125ffef0cd68cb729e8c041f15d"
+    },
+    "original_files": [
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/app-sanitized.log",
+        "sha256": "4a443a2c1aac4e003698e387f4f172112ec5ec9e442ec959f4ca5e6a245d44c0"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/capture-evidence.json",
+        "sha256": "d4026929791a98308e38bef7fd6e0bce4d7f54237f889b0ed6ca28500a4b21e0"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-accepted.png",
+        "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-manual-edit.png",
+        "sha256": "44fed0f6bdb829f4403a1c2c31f281a296bf59aa25fd4f0b186474372ba6a451"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-placement.png",
+        "sha256": "d3e28f112bec24db7aa9a547688bf5f7fd5309ba40f6d2f59c01f2c4e0a1d71b"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-preview.png",
+        "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-retained-draft.png",
+        "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-review.png",
+        "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903"
+      },
+      {
+        "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-writing.png",
+        "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13"
+      }
+    ],
+    "receipt": {
+      "status": "native_last_train_authoring_passed_with_labelled_synthetic_http_fixture",
+      "application_source_sha": "42c3c0b94fdc18146b3e9ef128acb36de4399d67",
+      "qualification_sha": "67b1efb116ccae29e86bc201513e315cb430ee01",
+      "application_binary_sha256": "4a51fac11fee64f7d1b9e926a11145afe6cb5391b66387af2f31b34012553d80",
+      "capture_label": "prototype views",
+      "setup_route": "public native services; four supporting blocks, empty A and ungenerated B",
+      "gui_route": "actual Tauri AT-SPI/X11 Write screenplay, Generate, manual Save, Bible Save, retained unrelated draft, placement, visible preview and explicit acceptance",
+      "provider": "synthetic localhost HTTP/SSE fixture through production client",
+      "real_model_quality_qualified": false,
+      "checkpoints": [
+        {
+          "stage": "public services prepare fresh Last Train project with empty A and ungenerated B",
+          "elapsed_seconds": 0.297
+        },
+        {
+          "stage": "launch actual desktop and begin writing",
+          "elapsed_seconds": 0.471
+        },
+        {
+          "stage": "exact original screenplay typed in actual Write screenplay area",
+          "elapsed_seconds": 27.901
+        },
+        {
+          "stage": "native generation and exact manual B saved; begin upstream C edit",
+          "elapsed_seconds": 32.115
+        },
+        {
+          "stage": "native exact manual edits save B and change C from midnight to morning",
+          "elapsed_seconds": 34.725
+        },
+        {
+          "stage": "native E placement crosses neighbors with F draft open",
+          "elapsed_seconds": 38.173
+        },
+        {
+          "stage": "Bible, manual-source and placement changes visibly identify affected B",
+          "elapsed_seconds": 44.033
+        },
+        {
+          "stage": "complete proposal paragraph and explicit pending controls visible before acceptance",
+          "elapsed_seconds": 46.745
+        },
+        {
+          "stage": "explicit native acceptance replaces only B with unrelated F draft still open",
+          "elapsed_seconds": 49.589
+        }
+      ],
+      "stage": "explicit native acceptance replaces only B with unrelated F draft still open",
+      "project": {
+        "name": "Last_Train_Authoring_QA",
+        "initial_scene_order": [
+          "A",
+          "F",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "setup_route": "public services only; A empty and B ungenerated",
+        "A_and_B_initially_empty": true
+      },
+      "window_id": 2097155,
+      "window_pid": 22221,
+      "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+      "writing_area": {
+        "exact_draft": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n",
+        "selected_scene": "4df2f2b5-394e-49ef-bed3-b95f686e88db",
+        "not_saved_before_capture": true
+      },
+      "captures": [
+        {
+          "file": "eidetic-story-authoring-writing.png",
+          "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13",
+          "window_id": 2097155,
+          "pid": 22221
+        },
+        {
+          "file": "eidetic-story-authoring-manual-edit.png",
+          "sha256": "44fed0f6bdb829f4403a1c2c31f281a296bf59aa25fd4f0b186474372ba6a451",
+          "window_id": 2097155,
+          "pid": 22221
+        },
+        {
+          "file": "eidetic-story-authoring-placement.png",
+          "sha256": "d3e28f112bec24db7aa9a547688bf5f7fd5309ba40f6d2f59c01f2c4e0a1d71b",
+          "window_id": 2097155,
+          "pid": 22221
+        },
+        {
+          "file": "eidetic-story-authoring-review.png",
+          "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903",
+          "window_id": 2097155,
+          "pid": 22221
+        },
+        {
+          "file": "eidetic-story-authoring-preview.png",
+          "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05",
+          "window_id": 2097155,
+          "pid": 22221
+        },
+        {
+          "file": "eidetic-story-authoring-accepted.png",
+          "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+          "window_id": 2097155,
+          "pid": 22221
+        },
+        {
+          "file": "eidetic-story-authoring-retained-draft.png",
+          "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+          "window_id": 2097155,
+          "pid": 22221
+        }
+      ],
+      "manual_creation": {
+        "block_id": "script.block.d559ee4d-b629-47dc-8b89-de46ead06c78.user",
+        "revision_event_id": "5d08e398-4b16-4cde-8e92-08a5e3195167",
+        "exact_text": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n"
+      },
+      "generation": {
+        "block_id": "script.block.b9b44ba7-bfae-425c-92ed-030f6ed310c7.generated",
+        "revision_event_id": "dfb2ea0d-645f-4c92-9df5-98ef95c56cf6",
+        "real_model": false,
+        "actual_GUI_Generate": true,
+        "exact_original_A_consumed": true
+      },
+      "manual_B_save": {
+        "exact_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+        "revision_event_id": "c4d154a8-18d5-44dc-b3bb-15b03b05aeb8"
+      },
+      "manual_edit": {
+        "target_B_exact_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+        "target_B_revision": "c4d154a8-18d5-44dc-b3bb-15b03b05aeb8",
+        "upstream_C_before": "INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+        "upstream_C_after": "INT. TICKET OFFICE - DAWN\n\nThe departure board reads morning.\n\n",
+        "upstream_C_revision": "bace3325-573e-4432-88ca-cec51dd3c038",
+        "visible_review_label": {
+          "expected_label": "Source screenplay text changed.",
+          "native_name": "Source screenplay text changed. INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.",
+          "native_text": "Source screenplay text changed.\nINT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+          "role": "list item",
+          "bounds": [
+            301,
+            690,
+            368,
+            85
+          ],
+          "viewport": [
+            280,
+            208,
+            1640,
+            836
+          ]
+        }
+      },
+      "unrelated_draft": {
+        "source_scene_id": "eb40627e-0df2-46c9-8b3a-c2f2a67dcc47",
+        "saved_text": "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n",
+        "exact_draft": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+        "saved_revision": "956eec82-50ec-4404-9257-1f36ba9d9b22",
+        "not_saved": true
+      },
+      "placement": {
+        "before_ms": [
+          540000,
+          570000
+        ],
+        "after_ms": [
+          180000,
+          210000
+        ],
+        "after_order": [
+          "A",
+          "F",
+          "E",
+          "B",
+          "C",
+          "D"
+        ],
+        "command_id": "6957b911-7faf-4f8a-b711-d1c74f366548",
+        "change_event_id": "b3bc29dd-b0a2-4bea-96cc-18203c477fed",
+        "expected_read": {
+          "start_ms": 540000,
+          "end_ms": 570000,
+          "node_revision_event_id": "c00f7c53-297c-4bea-87e7-7a35eb27402f"
+        },
+        "all_saved_screenplay_and_F_draft_preserved": true
+      },
+      "fact_edit": {
+        "before": "Mara's umbrella is blue.",
+        "after": "Mara's umbrella is amber.",
+        "revision_event_id": "4c6d25cd-98eb-4ae8-8692-b4120fbb2837",
+        "saved_screenplay_and_unrelated_draft_preserved": true
+      },
+      "review_labels": [
+        {
+          "expected_label": "Source screenplay text changed.",
+          "native_name": "Source screenplay text changed. INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.",
+          "native_text": "Source screenplay text changed.\nINT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+          "role": "list item",
+          "bounds": [
+            739,
+            356,
+            396,
+            84
+          ],
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ]
+        },
+        {
+          "expected_label": "Bible fact profile.tagline changed.",
+          "native_name": "Bible fact profile.tagline changed. Mara's umbrella is blue.",
+          "native_text": "Bible fact profile.tagline changed.\nMara's umbrella is blue.\n",
+          "role": "list item",
+          "bounds": [
+            739,
+            276,
+            396,
+            36
+          ],
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ]
+        },
+        {
+          "expected_label": "Entered: SCENE E. Left: SCENE A.",
+          "native_name": "Screenplay context changed. Entered: SCENE E. Left: SCENE A.",
+          "native_text": "Screenplay context changed.\nEntered: SCENE E. Left: SCENE A.\n",
+          "role": "list item",
+          "bounds": [
+            739,
+            316,
+            396,
+            36
+          ],
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ]
+        }
+      ],
+      "preview": {
+        "proposal_id": "script.review.56905ae5-5e0d-46b4-a8fc-934bce5cb6b9",
+        "target_B_unchanged": true,
+        "unrelated_F_draft_open": true,
+        "exact_updated_C_and_Bible_and_FECD_window_consumed": true,
+        "unsaved_F_draft_excluded_from_context": true,
+        "visible_proposal": {
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ],
+          "character_bounds": [
+            [
+              739,
+              589,
+              8,
+              12
+            ],
+            [
+              746,
+              589,
+              8,
+              12
+            ],
+            [
+              753,
+              589,
+              8,
+              12
+            ],
+            [
+              760,
+              589,
+              8,
+              12
+            ],
+            [
+              767,
+              589,
+              8,
+              12
+            ],
+            [
+              774,
+              589,
+              8,
+              12
+            ],
+            [
+              781,
+              589,
+              8,
+              12
+            ],
+            [
+              788,
+              589,
+              8,
+              12
+            ],
+            [
+              795,
+              589,
+              8,
+              12
+            ],
+            [
+              809,
+              589,
+              8,
+              12
+            ],
+            [
+              816,
+              589,
+              8,
+              12
+            ],
+            [
+              823,
+              589,
+              8,
+              12
+            ],
+            [
+              830,
+              589,
+              8,
+              12
+            ],
+            [
+              837,
+              589,
+              8,
+              12
+            ],
+            [
+              844,
+              589,
+              8,
+              12
+            ],
+            [
+              851,
+              589,
+              8,
+              12
+            ],
+            [
+              858,
+              589,
+              8,
+              12
+            ],
+            [
+              872,
+              589,
+              8,
+              12
+            ],
+            [
+              879,
+              589,
+              8,
+              12
+            ],
+            [
+              886,
+              589,
+              8,
+              12
+            ],
+            [
+              893,
+              589,
+              8,
+              12
+            ],
+            [
+              900,
+              589,
+              8,
+              12
+            ],
+            [
+              914,
+              589,
+              8,
+              12
+            ],
+            [
+              921,
+              589,
+              8,
+              12
+            ],
+            [
+              928,
+              589,
+              8,
+              12
+            ],
+            [
+              935,
+              589,
+              8,
+              12
+            ],
+            [
+              942,
+              589,
+              8,
+              12
+            ],
+            [
+              949,
+              589,
+              8,
+              12
+            ],
+            [
+              956,
+              589,
+              8,
+              12
+            ],
+            [
+              970,
+              589,
+              8,
+              12
+            ],
+            [
+              977,
+              589,
+              8,
+              12
+            ],
+            [
+              984,
+              589,
+              8,
+              12
+            ],
+            [
+              998,
+              589,
+              8,
+              12
+            ],
+            [
+              1005,
+              589,
+              8,
+              12
+            ],
+            [
+              1012,
+              589,
+              8,
+              12
+            ],
+            [
+              1019,
+              589,
+              8,
+              12
+            ],
+            [
+              1026,
+              589,
+              8,
+              12
+            ],
+            [
+              1033,
+              589,
+              8,
+              12
+            ],
+            [
+              1040,
+              589,
+              8,
+              12
+            ],
+            [
+              1054,
+              589,
+              8,
+              12
+            ],
+            [
+              1061,
+              589,
+              8,
+              12
+            ],
+            [
+              1068,
+              589,
+              8,
+              12
+            ],
+            [
+              1075,
+              589,
+              8,
+              12
+            ],
+            [
+              739,
+              601,
+              8,
+              16
+            ],
+            [
+              746,
+              601,
+              8,
+              16
+            ],
+            [
+              753,
+              601,
+              8,
+              16
+            ],
+            [
+              760,
+              601,
+              8,
+              16
+            ],
+            [
+              767,
+              601,
+              8,
+              16
+            ],
+            [
+              774,
+              601,
+              8,
+              16
+            ],
+            [
+              781,
+              601,
+              8,
+              16
+            ],
+            [
+              795,
+              601,
+              8,
+              16
+            ],
+            [
+              802,
+              601,
+              8,
+              16
+            ],
+            [
+              809,
+              601,
+              8,
+              16
+            ],
+            [
+              816,
+              601,
+              8,
+              16
+            ],
+            [
+              830,
+              601,
+              8,
+              16
+            ],
+            [
+              837,
+              601,
+              8,
+              16
+            ],
+            [
+              844,
+              601,
+              8,
+              16
+            ],
+            [
+              858,
+              601,
+              8,
+              16
+            ],
+            [
+              865,
+              601,
+              8,
+              16
+            ],
+            [
+              872,
+              601,
+              8,
+              16
+            ],
+            [
+              879,
+              601,
+              8,
+              16
+            ],
+            [
+              886,
+              601,
+              8,
+              16
+            ],
+            [
+              900,
+              601,
+              8,
+              16
+            ],
+            [
+              907,
+              601,
+              8,
+              16
+            ],
+            [
+              914,
+              601,
+              8,
+              16
+            ],
+            [
+              921,
+              601,
+              8,
+              16
+            ],
+            [
+              928,
+              601,
+              8,
+              16
+            ],
+            [
+              935,
+              601,
+              8,
+              16
+            ],
+            [
+              942,
+              601,
+              8,
+              16
+            ],
+            [
+              949,
+              601,
+              8,
+              16
+            ],
+            [
+              963,
+              601,
+              8,
+              16
+            ],
+            [
+              970,
+              601,
+              8,
+              16
+            ],
+            [
+              977,
+              601,
+              8,
+              16
+            ],
+            [
+              991,
+              601,
+              8,
+              16
+            ],
+            [
+              998,
+              601,
+              8,
+              16
+            ],
+            [
+              1005,
+              601,
+              8,
+              16
+            ],
+            [
+              1019,
+              601,
+              8,
+              16
+            ],
+            [
+              1026,
+              601,
+              8,
+              16
+            ],
+            [
+              1033,
+              601,
+              8,
+              16
+            ],
+            [
+              1040,
+              601,
+              8,
+              16
+            ],
+            [
+              1047,
+              601,
+              8,
+              16
+            ],
+            [
+              1054,
+              601,
+              8,
+              16
+            ],
+            [
+              1061,
+              601,
+              8,
+              16
+            ],
+            [
+              1075,
+              601,
+              8,
+              16
+            ],
+            [
+              1082,
+              601,
+              8,
+              16
+            ],
+            [
+              1089,
+              601,
+              8,
+              16
+            ],
+            [
+              1096,
+              601,
+              8,
+              16
+            ],
+            [
+              1103,
+              601,
+              8,
+              16
+            ],
+            [
+              1110,
+              601,
+              8,
+              16
+            ]
+          ],
+          "exact_text": "Synthetic preview: After finding her ticket, Mara arrives with her amber umbrella for the morning train.\n\n",
+          "native_text_geometry_inside_script": true,
+          "pending_controls": [
+            {
+              "name": "Reject",
+              "bounds": [
+                739,
+                651,
+                35,
+                16
+              ]
+            },
+            {
+              "name": "Accept update",
+              "bounds": [
+                783,
+                651,
+                82,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      "acceptance": {
+        "revision_event_id": "661499b9-52e7-47b6-9674-c6de8b7910ff",
+        "only_B_changed": true,
+        "Bible_revision_refreshed": "4c6d25cd-98eb-4ae8-8692-b4120fbb2837",
+        "accepted_proposal_visible": {
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ],
+          "character_bounds": [
+            [
+              301,
+              900,
+              8,
+              13
+            ],
+            [
+              308,
+              900,
+              8,
+              13
+            ],
+            [
+              315,
+              900,
+              8,
+              13
+            ],
+            [
+              322,
+              900,
+              8,
+              13
+            ],
+            [
+              329,
+              900,
+              8,
+              13
+            ],
+            [
+              336,
+              900,
+              8,
+              13
+            ],
+            [
+              343,
+              900,
+              8,
+              13
+            ],
+            [
+              350,
+              900,
+              8,
+              13
+            ],
+            [
+              357,
+              900,
+              8,
+              13
+            ],
+            [
+              371,
+              900,
+              8,
+              13
+            ],
+            [
+              378,
+              900,
+              8,
+              13
+            ],
+            [
+              385,
+              900,
+              8,
+              13
+            ],
+            [
+              392,
+              900,
+              8,
+              13
+            ],
+            [
+              399,
+              900,
+              8,
+              13
+            ],
+            [
+              406,
+              900,
+              8,
+              13
+            ],
+            [
+              413,
+              900,
+              8,
+              13
+            ],
+            [
+              420,
+              900,
+              8,
+              13
+            ],
+            [
+              434,
+              900,
+              8,
+              13
+            ],
+            [
+              441,
+              900,
+              8,
+              13
+            ],
+            [
+              448,
+              900,
+              8,
+              13
+            ],
+            [
+              455,
+              900,
+              8,
+              13
+            ],
+            [
+              462,
+              900,
+              8,
+              13
+            ],
+            [
+              476,
+              900,
+              8,
+              13
+            ],
+            [
+              483,
+              900,
+              8,
+              13
+            ],
+            [
+              490,
+              900,
+              8,
+              13
+            ],
+            [
+              497,
+              900,
+              8,
+              13
+            ],
+            [
+              504,
+              900,
+              8,
+              13
+            ],
+            [
+              511,
+              900,
+              8,
+              13
+            ],
+            [
+              518,
+              900,
+              8,
+              13
+            ],
+            [
+              532,
+              900,
+              8,
+              13
+            ],
+            [
+              539,
+              900,
+              8,
+              13
+            ],
+            [
+              546,
+              900,
+              8,
+              13
+            ],
+            [
+              560,
+              900,
+              8,
+              13
+            ],
+            [
+              567,
+              900,
+              8,
+              13
+            ],
+            [
+              574,
+              900,
+              8,
+              13
+            ],
+            [
+              581,
+              900,
+              8,
+              13
+            ],
+            [
+              588,
+              900,
+              8,
+              13
+            ],
+            [
+              595,
+              900,
+              8,
+              13
+            ],
+            [
+              602,
+              900,
+              8,
+              13
+            ],
+            [
+              616,
+              900,
+              8,
+              13
+            ],
+            [
+              623,
+              900,
+              8,
+              13
+            ],
+            [
+              630,
+              900,
+              8,
+              13
+            ],
+            [
+              637,
+              900,
+              8,
+              13
+            ],
+            [
+              301,
+              912,
+              8,
+              17
+            ],
+            [
+              308,
+              912,
+              8,
+              17
+            ],
+            [
+              315,
+              912,
+              8,
+              17
+            ],
+            [
+              322,
+              912,
+              8,
+              17
+            ],
+            [
+              329,
+              912,
+              8,
+              17
+            ],
+            [
+              336,
+              912,
+              8,
+              17
+            ],
+            [
+              343,
+              912,
+              8,
+              17
+            ],
+            [
+              357,
+              912,
+              8,
+              17
+            ],
+            [
+              364,
+              912,
+              8,
+              17
+            ],
+            [
+              371,
+              912,
+              8,
+              17
+            ],
+            [
+              378,
+              912,
+              8,
+              17
+            ],
+            [
+              392,
+              912,
+              8,
+              17
+            ],
+            [
+              399,
+              912,
+              8,
+              17
+            ],
+            [
+              406,
+              912,
+              8,
+              17
+            ],
+            [
+              420,
+              912,
+              8,
+              17
+            ],
+            [
+              427,
+              912,
+              8,
+              17
+            ],
+            [
+              434,
+              912,
+              8,
+              17
+            ],
+            [
+              441,
+              912,
+              8,
+              17
+            ],
+            [
+              448,
+              912,
+              8,
+              17
+            ],
+            [
+              462,
+              912,
+              8,
+              17
+            ],
+            [
+              469,
+              912,
+              8,
+              17
+            ],
+            [
+              476,
+              912,
+              8,
+              17
+            ],
+            [
+              483,
+              912,
+              8,
+              17
+            ],
+            [
+              490,
+              912,
+              8,
+              17
+            ],
+            [
+              497,
+              912,
+              8,
+              17
+            ],
+            [
+              504,
+              912,
+              8,
+              17
+            ],
+            [
+              511,
+              912,
+              8,
+              17
+            ],
+            [
+              525,
+              912,
+              8,
+              17
+            ],
+            [
+              532,
+              912,
+              8,
+              17
+            ],
+            [
+              539,
+              912,
+              8,
+              17
+            ],
+            [
+              553,
+              912,
+              8,
+              17
+            ],
+            [
+              560,
+              912,
+              8,
+              17
+            ],
+            [
+              567,
+              912,
+              8,
+              17
+            ],
+            [
+              581,
+              912,
+              8,
+              17
+            ],
+            [
+              588,
+              912,
+              8,
+              17
+            ],
+            [
+              595,
+              912,
+              8,
+              17
+            ],
+            [
+              602,
+              912,
+              8,
+              17
+            ],
+            [
+              609,
+              912,
+              8,
+              17
+            ],
+            [
+              616,
+              912,
+              8,
+              17
+            ],
+            [
+              623,
+              912,
+              8,
+              17
+            ],
+            [
+              637,
+              912,
+              8,
+              17
+            ],
+            [
+              644,
+              912,
+              8,
+              17
+            ],
+            [
+              651,
+              912,
+              8,
+              17
+            ],
+            [
+              658,
+              912,
+              8,
+              17
+            ],
+            [
+              665,
+              912,
+              8,
+              17
+            ],
+            [
+              672,
+              912,
+              8,
+              17
+            ]
+          ],
+          "exact_text": "Synthetic preview: After finding her ticket, Mara arrives with her amber umbrella for the morning train.\n\n",
+          "native_text_geometry_inside_script": true
+        },
+        "unrelated_F_draft_still_open": true,
+        "review_cleared": true
+      },
+      "provider_calls": [
+        {
+          "kind": "generation",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        },
+        {
+          "kind": "recap",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        },
+        {
+          "kind": "preview",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        }
+      ],
+      "accessibility_retired_object_polls": 1,
+      "typed_text_observations": [
+        {
+          "field": "New screenplay text",
+          "expected_length": 84,
+          "actual_text": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 74,
+          "actual_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 63,
+          "actual_text": "INT. TICKET OFFICE - DAWN\n\nThe departure board reads morning.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 47,
+          "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Placement start seconds",
+          "expected_length": 3,
+          "actual_text": "180",
+          "exact": true
+        },
+        {
+          "field": "Placement end seconds",
+          "expected_length": 3,
+          "actual_text": "210",
+          "exact": true
+        },
+        {
+          "field": "TAGLINE Mara's umbrella is amber.",
+          "expected_length": 25,
+          "actual_text": "Mara's umbrella is amber.",
+          "exact": true
+        }
+      ],
+      "timeline_locator_observations": [
+        {
+          "name": "",
+          "text": "SCENE E",
+          "role": "unknown",
+          "bounds": [
+            702,
+            579,
+            53,
+            17
+          ]
+        },
+        {
+          "name": "",
+          "text": "SCENE A\nSCENE F\nSCENE B\nSCENE C\nSCENE D\nSCENE E\n+\n+\n+\n+\n+\n+\n",
+          "role": "section",
+          "bounds": [
+            80,
+            1296,
+            3594,
+            48
+          ]
+        },
+        {
+          "name": "SCENE E",
+          "text": "SCENE E",
+          "role": "native-text-range",
+          "bounds": [
+            1569,
+            1314,
+            31,
+            11
+          ]
+        }
+      ]
+    }
+  },
+  "gates": {
+    "core": 120,
+    "server": 486,
+    "ui": 467,
+    "qualification_drivers": 50,
+    "no_download": 5,
+    "typecheck": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "lint_format_build": true,
+    "normal_native_and_fixture_builds": true,
+    "locked_feature_union": true
+  },
+  "local_log_receipts": {
+    "story-authoring-qa-drivers.log": {
+      "path": "/workspace/scratch/story-authoring-qa-drivers.log",
+      "sha256": "91652d1f729a5825c27adec4ae7156166c2d442c423097e6c75d1b147915baf6"
+    },
+    "story-authoring-qa-fixture-check-shared.log": {
+      "path": "/workspace/scratch/story-authoring-qa-fixture-check-shared.log",
+      "sha256": "b0b494dd81377c9c46c926ecd079416e1adac2229100985f691c3c3ef6e49b07"
+    },
+    "story-authoring-qa-fixture-execution.log": {
+      "path": "/workspace/scratch/story-authoring-qa-fixture-execution.log",
+      "sha256": "c5ac5f770f92abf91652625003d466c5feb873cbda6d7e07b602ffa2060d1ed6"
+    },
+    "story-authoring-qa-commit.log": {
+      "path": "/workspace/scratch/story-authoring-qa-commit.log",
+      "sha256": "03035d02976034d41127604a2151db7cc696834a61d0864fa4d5b056fee40897"
+    },
+    "story-authoring-qa-drivers-formatted.log": {
+      "path": "/workspace/scratch/story-authoring-qa-drivers-formatted.log",
+      "sha256": "f8b097cc549f122d12b5e5733930776f04a9e28d765701a8a90064a1a7846f94"
+    },
+    "story-authoring-qa-formatted-commit.log": {
+      "path": "/workspace/scratch/story-authoring-qa-formatted-commit.log",
+      "sha256": "f7bff542e8d6f340d453351655e80a0f51b99c433ce8c5d2dfb20fefc58cb67c"
+    },
+    "story-authoring-qa-drivers-visible-label.log": {
+      "path": "/workspace/scratch/story-authoring-qa-drivers-visible-label.log",
+      "sha256": "428e9a6bbe3af57efdf1e26b3944fb672893da2dfcc4e6fb9ea2bd2a26e9db6b"
+    },
+    "story-authoring-qa-visible-label-commit.log": {
+      "path": "/workspace/scratch/story-authoring-qa-visible-label-commit.log",
+      "sha256": "eff52723dc5b960d913e1036700bc76f326a6ae5b40c04c2f1c9c4b387bb0827"
+    }
+  },
+  "separate_hosted_ci_receipt": {
+    "path": "/workspace/scratch/story-authoring-native-success-37545170522/hosted-ci-evidence.json",
+    "sha256": "79dc86c738fbe6e433695fa3c69e72088ad091ebef8f411b1e867202f57c52e7"
+  },
+  "preserved_failed_attempts": [
+    {
+      "run_id": 37541801584,
+      "qa_sha": "f86d306d5e67fdd8a7a8aa65955d48a1c0437632",
+      "artifact_id": 11449617605,
+      "zip": {
+        "path": "/workspace/attachments/c2461e54-b143-4114-8849-2ac2eec84809/eidetic-story-authoring-first-attempt.zip",
+        "sha256": "069b4d2bfe3003712af194c5fcaa9782d6c46895a801023d9d5dcc6b0e7be1a5"
+      },
+      "failure": "RuntimeError: Timed out waiting for C manual source block",
+      "original_files": [
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37541801584/app-sanitized.log",
+          "sha256": "9b9a0eb4aa1126644af9267f5c9cd306804ea5915c740fc2abb7b36088b44e37"
+        },
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37541801584/capture-evidence.json",
+          "sha256": "8bb5604d83830273e1bde9f5862d9a0afa061a34245d150074e7be3e7e69d7ee"
+        },
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37541801584/eidetic-story-authoring-failure.png",
+          "sha256": "6aa76f1f334c5d1285c6e50f0026af5c01a72581fc9579449e0a5cbeb1cbaad3"
+        },
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37541801584/eidetic-story-authoring-writing.png",
+          "sha256": "4dbebeeccaf388ddd057e80a19ddfa1f4e53b12121830b2d71e134f69eb72e8f"
+        }
+      ],
+      "status": "failed; completed native subset only"
+    },
+    {
+      "run_id": 37543498566,
+      "qa_sha": "960da71932e1c604242fe8de0f5813287b715023",
+      "artifact_id": 11450810081,
+      "zip": {
+        "path": "/workspace/attachments/e7743628-2e86-4005-9feb-c151cbefd16c/eidetic-story-authoring-second-attempt.zip",
+        "sha256": "9d1c9d55991d41a6d0b2db1d794c9a66e300fd155e0c49de913d9ccdced71a00"
+      },
+      "failure": "RuntimeError: Timed out waiting for manual source edit causes downstream review",
+      "original_files": [
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37543498566/app-sanitized.log",
+          "sha256": "29463633c3f4dc768bd2ef2337c91955d60c2a8ec68b8cd0d8a73f876dd6e884"
+        },
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37543498566/capture-evidence.json",
+          "sha256": "7619713548f90f6c5333ebca57db4216e5e41d04315f498aceb397442091e451"
+        },
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37543498566/eidetic-story-authoring-failure.png",
+          "sha256": "44fed0f6bdb829f4403a1c2c31f281a296bf59aa25fd4f0b186474372ba6a451"
+        },
+        {
+          "path": "/workspace/scratch/story-authoring-native-failed-37543498566/eidetic-story-authoring-writing.png",
+          "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13"
+        }
+      ],
+      "status": "failed; completed native subset only"
+    }
+  ],
+  "limits": [
+    "All three provider responses are synthetic HTTP/SSE with real_model=false; no real-model quality claim.",
+    "Seven original 1920x1440 images were hash verified and viewed without edits; accepted and retained-draft frames are byte-identical consecutive checkpoints.",
+    "Placement capture is a transient guarded stale-selected-read view; later review/preview/accepted captures show the fresh 180\u2013210-second read.",
+    "Public services seed four supporting blocks and a blue Bible fact; native input writes A, generates B, saves B/C, retimes E, edits the fact and reviews/accepts B.",
+    "F draft opens after manual C Save; it stays open through placement, Bible Save, preview and acceptance.",
+    "Observed selected-B inspector caption remains Notes written after generation; no application fix applied in this QA scope.",
+    "No new schema/dependency/model/credential, project-switch work, application-source change, PR, review request, product merge or Library upload.",
+    "Parent owns postmerge CI and Library delivery; artifact retention ends 2026-10-09."
+  ]
+}
