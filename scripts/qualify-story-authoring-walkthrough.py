@@ -110,28 +110,48 @@ def contained(rect, viewport):
 
 
 def visible_inspector_feedback(application, window, scene_name, exact_label):
-    heading = ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_HEADING and n.name == scene_name)
-    if heading is None:
-        return None
-    heading_bounds = tuple(heading.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
     geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
         ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
-    viewport = (geometry['X'], geometry['Y'], geometry['WIDTH'], geometry['HEIGHT'])
-    if not contained(heading_bounds, viewport):
+    script = script_viewport(application, window)
+    # In Script mode the selected inspector is above the Script splitter.
+    # A scene heading in the saved screenplay cannot establish editor selection.
+    viewport = (script[0], geometry['Y'], geometry['WIDTH'] - script[0] + geometry['X'],
+                script[1] - geometry['Y'] - 30)
+    heading = ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_HEADING
+        and n.name == scene_name
+        and contained(tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)), viewport))
+    if heading is None:
         return None
-    def matches(node):
-        if ui.text_of(node) != exact_label:
-            return False
-        bounds = tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
-        return contained(bounds, viewport) and bounds[0] >= heading_bounds[0] - 8
-    label = ui.find(application, matches)
-    if label is None:
-        return None
-    return {'selected_scene': scene_name, 'heading_bounds': list(heading_bounds),
-            'exact_native_label': ui.text_of(label), 'native_name': label.name,
-            'role': label.getRoleName(),
-            'bounds': list(label.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
-            'window_bounds': list(viewport)}
+    application.clear_cache()
+    for node in ui.walk(application):
+        if not ui.visible(node):
+            continue
+        text = ui.text_of(node)
+        if text.count(exact_label) != 1:
+            continue
+        offset = text.index(exact_label)
+        try:
+            native_text = node.queryText()
+        except NotImplementedError:
+            if text != exact_label:
+                continue
+            bounds = tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+            rectangles = [bounds]
+            route = 'native-control'
+        else:
+            if native_text.getText(offset, offset + len(exact_label)) != exact_label:
+                continue
+            bounds = tuple(native_text.getRangeExtents(offset, offset + len(exact_label), ui.pyatspi.XY_SCREEN))
+            rectangles = [tuple(native_text.getCharacterExtents(offset + i, ui.pyatspi.XY_SCREEN))
+                          for i, char in enumerate(exact_label) if not char.isspace()]
+            route = 'native-text-range'
+        if rectangles and contained(bounds, viewport) and all(contained(r, viewport) for r in rectangles):
+            return {'selected_scene': scene_name,
+                    'heading_bounds': list(heading.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
+                    'exact_native_label': exact_label, 'native_text': text, 'native_name': node.name,
+                    'role': node.getRoleName(), 'route': route, 'bounds': list(bounds),
+                    'character_bounds': [list(r) for r in rectangles], 'inspector_bounds': list(viewport)}
+    return None
 
 
 def script_viewport(application, window):

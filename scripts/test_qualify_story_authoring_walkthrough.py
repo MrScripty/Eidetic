@@ -116,32 +116,48 @@ class VisibleProposalGeometryTests(unittest.TestCase):
 
 
 class InspectorFeedbackTests(unittest.TestCase):
-    def test_feedback_requires_exact_selected_heading_and_visible_bounded_inspector_label(self):
+    def test_feedback_uses_exact_glyphs_in_top_inspector_and_excludes_saved_scene_heading(self):
         class State:
             def __init__(self, showing): self.showing=showing
             def contains(self, _): return self.showing
         class Node:
-            def __init__(self, name, rect, heading=False, showing=True):
-                self.name=name; self.rect=rect; self.heading=heading; self.showing=showing
+            def __init__(self, name, rect, heading=False, showing=True, text=None):
+                self.name=name; self.rect=rect; self.heading=heading; self.showing=showing; self.text=text
             def getRole(self): return 1 if self.heading else 2
-            def getRoleName(self): return 'heading' if self.heading else 'text'
+            def getRoleName(self): return 'heading' if self.heading else 'section'
             def getState(self): return State(self.showing)
             def queryComponent(self):
                 if self.rect is None: raise NotImplementedError('No component on unrelated root')
                 return self
             def getExtents(self, _): return self.rect
+            def queryText(self):
+                if self.text is None: raise NotImplementedError('No native Text')
+                return self
+            def getText(self, start, end): return self.text[start:end]
+            def getRangeExtents(self, start, end, _):
+                assert self.text[start:end] == 'Has content'
+                return self.rect
+            def getCharacterExtents(self, offset, _):
+                return (self.rect[0] + offset % 10, self.rect[1], 1, self.rect[3])
         class Root:
             def clear_cache(self): pass
-        nodes=[Node('Application',None), Node('SCENE B',(1610,205,200,20),heading=True),
-               Node('Has content',(0,0,0,0),showing=False),
-               Node('Has content',(300,400,100,20)),
-               Node('Has content',(1610,240,100,20))]
-        with patch.object(driver.ui,'walk',side_effect=lambda _:iter(nodes)),patch.object(driver.ui,'text_of',side_effect=lambda n:n.name),patch.object(driver.ui,'command',return_value='X=0\nY=0\nWIDTH=1920\nHEIGHT=1440\n'),patch.object(driver.ui.pyatspi,'STATE_SHOWING',1,create=True),patch.object(driver.ui.pyatspi,'ROLE_HEADING',1,create=True),patch.object(driver.ui.pyatspi,'XY_SCREEN',0,create=True):
+        caption=Node('',(425,40,100,20),text='SCENE B\nScene\nHas content\nLock')
+        heading=Node('SCENE B',(295,40,80,20),heading=True)
+        nodes=[Node('Application',None), Node('SCENE B',(295,600,80,20),heading=True),
+               heading, Node('Has content',(0,0,0,0),showing=False),
+               Node('Has content',(300,400,100,20)), caption]
+        with patch.object(driver.ui,'walk',side_effect=lambda _:iter(nodes)),patch.object(driver.ui,'text_of',side_effect=lambda n:n.text if n.text is not None else n.name),patch.object(driver,'script_viewport',return_value=(280,208,1314,836)),patch.object(driver.ui,'command',return_value='X=0\nY=0\nWIDTH=1920\nHEIGHT=1440\n'),patch.object(driver.ui.pyatspi,'STATE_SHOWING',1,create=True),patch.object(driver.ui.pyatspi,'ROLE_HEADING',1,create=True),patch.object(driver.ui.pyatspi,'XY_SCREEN',0,create=True):
             shown=driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Has content')
-            self.assertEqual(shown['bounds'],[1610,240,100,20])
-            self.assertEqual(shown['selected_scene'],'SCENE B')
+            self.assertEqual(shown['bounds'],[425,40,100,20])
+            self.assertEqual(shown['route'],'native-text-range')
+            self.assertEqual(shown['exact_native_label'],'Has content')
             self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE F','Has content'))
             self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Notes written'))
+            nodes.remove(heading)
+            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Has content'))
+            nodes.insert(0,heading)
+            caption.rect=(425,400,100,20)
+            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Has content'))
 
 
 if __name__=='__main__':
