@@ -32,8 +32,10 @@ function cacheProjection(projection: ProjectionEnvelope<SelectedNodeEditorProjec
   }
 }
 
+/** Event callers may additionally require their selection/session to still own the response. */
 export async function refreshSelectedNodeEditorProjection(
   nodeId: NodeId | null = selectedNodeEditorProjectionState.selectedNodeId,
+  isCurrent: () => boolean = () => true,
 ): Promise<ProjectionEnvelope<SelectedNodeEditorProjection>> {
   const requestId = latestRequestId + 1;
   latestRequestId = requestId;
@@ -43,12 +45,12 @@ export async function refreshSelectedNodeEditorProjection(
 
   try {
     const projection = await getSelectedNodeEditorProjection({ node_id: nodeId });
-    if (requestId === latestRequestId) {
+    if (requestId === latestRequestId && isCurrent()) {
       cacheProjection(projection);
     }
     return projection;
   } catch (error) {
-    if (requestId === latestRequestId) {
+    if (requestId === latestRequestId && isCurrent()) {
       selectedNodeEditorProjectionState.error = errorMessage(
         error,
         'Failed to load selected node editor projection',

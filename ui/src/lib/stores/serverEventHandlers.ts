@@ -4,6 +4,7 @@ import {
   appendStreamingToken,
   completeGeneration,
   editorState,
+  getEditorSessionGeneration,
   setGenerationContext,
   setGenerationError,
 } from './editor.svelte.js';
@@ -25,6 +26,7 @@ import { clearProjectionRefreshQueue, requestProjectionRefresh } from './project
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
 import { timelineState } from './timeline.svelte.js';
 import { refreshCurrentContextStackProjection } from './contextStackProjection.svelte.js';
+import { refreshSelectedNodeEditorProjection } from './selectedNodeEditorProjection.svelte.js';
 
 const SCRIPT_DOCUMENT_KEY = `script-document:${MAIN_SCRIPT_DOCUMENT_ID}`;
 
@@ -82,24 +84,49 @@ function refreshContextStack() {
 
 /** Register backend event handlers that update Svelte stores. */
 export function setupServerEventHandlers(events: ServerEventClient): () => void {
+  let active = true;
+
+  function refreshSelectedInspector(affectedNodeId?: string) {
+    const nodeId = editorState.selectedNodeId;
+    if (!nodeId || (affectedNodeId !== undefined && affectedNodeId !== nodeId)) {
+      return Promise.resolve();
+    }
+    const session = getEditorSessionGeneration();
+    const isCurrent = () =>
+      active && session === getEditorSessionGeneration() && nodeId === editorState.selectedNodeId;
+    return requestProjectionRefresh('selected-node-editor', async () => {
+      // Events invalidate the canonical read; they never own selection or draft receipts.
+      if (isCurrent()) await refreshSelectedNodeEditorProjection(nodeId, isCurrent);
+    });
+  }
+
   const unsubscribers = [
     events.on('timeline_changed', async () => {
-      await Promise.all([refreshTimelineRender(), refreshContextStack()]);
+      await Promise.all([
+        refreshTimelineRender(),
+        refreshContextStack(),
+        refreshSelectedInspector(),
+      ]);
     }),
 
     events.on('hierarchy_changed', async () => {
-      await Promise.all([refreshTimelineRender(), refreshContextStack()]);
+      await Promise.all([
+        refreshTimelineRender(),
+        refreshContextStack(),
+        refreshSelectedInspector(),
+      ]);
     }),
 
     events.on('story_changed', async () => {
       await refreshStoryArcs();
     }),
 
-    events.on('node_updated', async () => {
+    events.on('node_updated', async (data) => {
       await Promise.all([
         refreshTimelineRender(),
         refreshMainScriptDocument(),
         refreshContextStack(),
+        refreshSelectedInspector(data.node_id),
       ]);
     }),
 
@@ -112,12 +139,14 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('generation_complete', async (data) => {
+      const session = getEditorSessionGeneration();
       await Promise.all([
         refreshTimelineRender(),
         refreshMainScriptDocument(),
         refreshContextStack(),
+        refreshSelectedInspector(data.node_id),
       ]);
-      completeGeneration(data.node_id);
+      if (active && session === getEditorSessionGeneration()) completeGeneration(data.node_id);
     }),
 
     events.on('generation_error', (data) => {
@@ -200,6 +229,7 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
   ];
 
   return () => {
+    active = false;
     for (const unsubscribe of unsubscribers) {
       unsubscribe();
     }

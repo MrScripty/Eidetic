@@ -101,6 +101,13 @@ continues.
 - Centralizing every UI field in one store file: rejected because it would collapse unrelated lifecycles into one mutable surface.
 
 ## Invariants
+
+- Generation completion and matching node updates invalidate the selected inspector;
+  timeline/hierarchy changes invalidate its canonical placement and hierarchy read.
+  The shared refresh queue coalesces these reads. Event reads may publish only while
+  their original selected node, editor session and handler remain current, in
+  addition to request/version guards. They never change selection or rebase local
+  screenplay/placement drafts or accept pending propagation proposals.
 - Existing-block edit drafts are keyed by document/block in the active project
   session. Navigation, selection and canonical refresh cannot silently replace
   draft text or its captured base revision. An uncertain edit retries its exact
