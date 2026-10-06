@@ -29,6 +29,13 @@ def expected_context(user, fact):
             and 'qualification.mara' in user and 'qualification.eli' in user)
 
 
+def relationship_control(node):
+    # WebKit can merge the span label into its list-item text. The existing
+    # native Delete control has the exact authored edge label in its aria-name.
+    # Reveal it for inspection only; never click a destructive control.
+    return node.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and node.name == 'Delete edge ' + EDGE
+
+
 class BiblePlanProvider(bible.BibleFactProvider):
     records = []
 
@@ -193,10 +200,13 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
 
     # Inspect the seeded relationship in the actual existing Bible detail UI.
     # Setup is explicitly public-service authored; this is native inspection.
-    ui.wait_for('Bible relationship label', lambda: ui.reveal(application,
-        lambda n: ui.text_of(n).strip() == EDGE))
+    relationship = ui.wait_for('native Bible relationship control', lambda: ui.reveal(application,
+        relationship_control))
     evidence['bible_graph_inspection'] = {**fixture['relationship_setup'],
-        'native_label_inspected': True, 'native_edge_authoring': False}
+        'native_label_inspected': True, 'native_edge_authoring': False,
+        'native_control_accessible_name': relationship.name,
+        'native_control_bounds': list(relationship.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
+        'destructive_control_clicked': False}
     checkpoint('existing graph relationship inspected in native Bible detail')
     capture('eidetic-bible-relationship-inspected.png')
 

@@ -75,6 +75,24 @@ class BiblePlanProviderTests(unittest.TestCase):
 
 
 class BiblePlanReceiptTests(unittest.TestCase):
+    def test_merged_relationship_text_is_inspected_through_exact_native_control_without_click(self):
+        class Node:
+            def __init__(self, name, role):
+                self.name, self.role = name, role
+            def getRole(self):
+                return self.role
+            def queryText(self):
+                raise NotImplementedError
+        push = object()
+        label = Node(driver.EDGE + ' × references qualification.eli', object())
+        delete = Node('Delete edge ' + driver.EDGE, push)
+        wrong = Node('Delete edge Mara distrusts Eli', push)
+        with patch.object(driver.ui.pyatspi, 'ROLE_PUSH_BUTTON', push, create=True):
+            self.assertNotEqual(driver.ui.text_of(label).strip(), driver.EDGE)
+            self.assertFalse(driver.relationship_control(label))
+            self.assertFalse(driver.relationship_control(wrong))
+            self.assertTrue(driver.relationship_control(delete))
+
     def test_original_receipt_read_only_and_missing_legacy_evidence_refuses(self):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / 'story.sqlite'
