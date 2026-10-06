@@ -328,6 +328,7 @@ fn captured_append_membership_remains_valid_after_source_retimes_during_generati
         node_id: a.source_node_id,
         start_ms: 6000,
         end_ms: 7000,
+        expected: None,
     });
     crate::timeline_command_history::record_set_timeline_node_range_history(
         &mut conn, &project, &movement, 40,

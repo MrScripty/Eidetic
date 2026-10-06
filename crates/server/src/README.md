@@ -560,3 +560,5 @@ canonical revisions/locks under that writer and failed mutations roll back histo
 This adds no application mutex, timeout, retry loop or inverted session/doc lock.
 The actual autosave/public-edit barrier regression retains manual text, refuses
 late generation and proves canonical preview still reads the manual edit.
+
+The selected-node editor reads canonical placement and its existing committed-order node event in one SQLite read transaction. The guarded range command rechecks both under the history writer, excluding only its own in-flight event. Range/notes/lock ABA refuses before upsert; replay remains first. Domain/receipt refusals from this pre-commit path carry the Placement edit refused marker; post-commit projection failures stay uncertain. Existing atomic segment placement, text preservation and TimelineChanged/ScriptChanged publication remain the owners.

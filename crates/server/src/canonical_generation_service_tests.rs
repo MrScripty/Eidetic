@@ -467,6 +467,7 @@ async fn delayed_http_after_target_retime_lock_or_delete_never_writes_a_scene_fr
                         node_id: f.node,
                         start_ms: node.time_range.start_ms + 200,
                         end_ms: node.time_range.end_ms + 200,
+                        expected: None,
                     }),
                 )
                 .await

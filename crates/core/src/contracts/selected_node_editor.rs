@@ -39,6 +39,8 @@ pub struct SelectedNodeEditorNode {
     pub beat_type: Option<BeatType>,
     #[serde(default)]
     pub locked: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub range_read: Option<super::TimelineNodeRangeRead>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -137,6 +139,7 @@ impl From<&StoryNode> for SelectedNodeEditorNode {
             content_status: node.content.status,
             beat_type: node.beat_type.clone(),
             locked: node.locked,
+            range_read: None,
         }
     }
 }

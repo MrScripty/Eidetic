@@ -83,6 +83,7 @@ async fn native_manual_creation_edit_save_reopen_and_retime_reach_exact_prompt_m
             node_id: first,
             start_ms: 6000,
             end_ms: 7000,
+            expected: None,
         }),
     )
     .await

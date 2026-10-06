@@ -6,6 +6,13 @@ export interface SetTimelineNodeRangeCommand {
   node_id: string;
   start_ms: number;
   end_ms: number;
+  expected?: TimelineNodeRangeRead;
+}
+
+export interface TimelineNodeRangeRead {
+  start_ms: number;
+  end_ms: number;
+  node_revision_event_id: string | null;
 }
 
 export interface SplitTimelineNodeCommand {

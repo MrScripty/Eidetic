@@ -1886,3 +1886,7 @@ server all-target Clippy and frontend/build/rustfmt/traceability gates pass.
 Source/report receipts: docs/reports/pr15-autosave-writer-admission.md and JSON.
 Publish only to existing PR15 branch; parent owns exact-head CI/review cadence
 and merge. Original native screenshot provenance remains unchanged.
+
+### Exact placement UI choice after PR15 merge
+
+Inspection on provisional ab25029 and then identical-tree main74fd438f found the documented M4 manual move/resize surface incomplete: BeatEditor has no exact range inputs and StoryNodeClip is bounded by adjacent clips. Existing public range services already propagate source-bound screenplay placement and derive targeted review. Implement an exact placement form and reuse existing node history for read/write custody on separate feat/timeline-story-memory. Baseline full server485 passes; no PR15 edit or duplicate repair. Audit and feature choice were reported before extensive implementation. Qualification is pending.

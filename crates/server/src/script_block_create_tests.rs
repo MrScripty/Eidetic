@@ -359,6 +359,7 @@ fn timeline_range_write_moves_new_authored_segment_without_changing_text_revisio
         node_id: payload.source_node_id,
         start_ms: 6000,
         end_ms: 7000,
+        expected: None,
     });
     timeline_command_history::record_set_timeline_node_range_history(
         &mut conn, &project, &movement, 20,

@@ -226,6 +226,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
             node_id: e,
             start_ms: 180_000,
             end_ms: 210_000,
+            expected: None,
         }),
     )
     .await?;

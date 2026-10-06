@@ -359,23 +359,39 @@ fn load_selected_node_editor_at_path(
     fallback_timeline: Timeline,
     node_id: Option<NodeId>,
 ) -> Result<ProjectionEnvelope<SelectedNodeEditorProjection>, BackendError> {
-    let conn = crate::sqlite::open_write_connection(&path)
+    let mut conn = crate::sqlite::open_write_connection(&path)
         .map_err(|e| BackendError::internal(e.to_string()))?;
     history_store::create_schema(&conn).map_err(map_history_error)?;
+    let tx = conn
+        .transaction()
+        .map_err(|e| BackendError::internal(e.to_string()))?;
     let mut timeline = fallback_timeline;
-    let nodes = timeline_node_store::load_nodes(&conn).map_err(map_history_error)?;
-    let node_summary =
-        history_store::load_revision_summary_for_kind(&conn, ObjectKind::TimelineNode)
-            .map_err(map_history_error)?;
+    let nodes = timeline_node_store::load_nodes(&tx).map_err(map_history_error)?;
+    let node_summary = history_store::load_revision_summary_for_kind(&tx, ObjectKind::TimelineNode)
+        .map_err(map_history_error)?;
+    let canonical_node_ids = nodes.iter().map(|node| node.id).collect::<Vec<_>>();
     if node_summary.revision_count > 0 || !nodes.is_empty() {
         timeline.nodes = nodes;
-        timeline.node_arcs =
-            timeline_node_store::load_node_arcs(&conn).map_err(map_history_error)?;
+        timeline.node_arcs = timeline_node_store::load_node_arcs(&tx).map_err(map_history_error)?;
     }
 
-    let projection = SelectedNodeEditorProjection::from_timeline(&timeline, node_id)
+    let mut projection = SelectedNodeEditorProjection::from_timeline(&timeline, node_id)
         .ok_or_else(|| BackendError::not_found("timeline node not found"))?;
 
+    if let Some(node) = projection
+        .node
+        .as_mut()
+        .filter(|node| canonical_node_ids.contains(&node.node_id))
+    {
+        node.range_read = Some(eidetic_core::contracts::TimelineNodeRangeRead {
+            start_ms: node.start_ms,
+            end_ms: node.end_ms,
+            node_revision_event_id: timeline_node_store::latest_node_event(&tx, node.node_id, None)
+                .map_err(map_history_error)?,
+        });
+    }
+    tx.commit()
+        .map_err(|e| BackendError::internal(e.to_string()))?;
     Ok(ProjectionEnvelope::initial(projection))
 }
 

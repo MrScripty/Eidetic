@@ -38,27 +38,10 @@ fn current(
         start_ms: node.time_range.start_ms,
         end_ms: node.time_range.end_ms,
         notes: node.content.notes.clone(),
-        node_revision_event_id: latest_node_event(conn, node.id)?,
+        node_revision_event_id: timeline_node_store::latest_node_event(conn, node.id, None)?,
         segment_revision_event_id: row_event(conn, "script_segments", &segment_id)?,
         block_revision_event_id: row_event(conn, "script_blocks", &block_id)?,
     })
-}
-
-fn latest_node_event(
-    conn: &Connection,
-    node: NodeId,
-) -> Result<Option<ChangeEventId>, HistoryStoreError> {
-    let value = conn
-        .query_row(
-            "SELECT r.change_event_id FROM object_revisions r
-             JOIN change_events e ON e.id = r.change_event_id
-             WHERE r.object_kind = 'timeline_node' AND r.object_id = ?1
-             ORDER BY e.rowid DESC, r.sort_order DESC, r.rowid DESC LIMIT 1",
-            [node.0.to_string()],
-            |row| row.get::<_, String>(0),
-        )
-        .optional()?;
-    event(value)
 }
 
 fn row_event(

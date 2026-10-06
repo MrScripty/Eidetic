@@ -118,7 +118,7 @@ pub use timeline_command::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineChildFromParentCommand,
     CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineNodeRangeRead,
 };
 pub use timeline_render::{
     TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderGap, TimelineRenderProjection,

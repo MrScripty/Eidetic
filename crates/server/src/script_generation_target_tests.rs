@@ -195,6 +195,7 @@ fn retime_restore_lock_restore_and_delete_all_refuse_delayed_generation() {
                             node_id,
                             start_ms: start,
                             end_ms: start + 500,
+                            expected: None,
                         }),
                         110,
                     )

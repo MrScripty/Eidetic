@@ -141,6 +141,7 @@ fn timeline_renderer_mutation_command(
                 node_id,
                 start_ms,
                 end_ms,
+                expected: None,
             }),
         )),
         TimelineRendererCommand::DeleteNode { node_id } => {

@@ -157,3 +157,5 @@ Screenplay proposal custody mirrors optional `bible_node_name_inputs` and owned
 name-absence revisions from the canonical server. The existing review surface
 labels name causes and discloses recorded names/revisions; proposal acceptance
 continues through the guarded server command, without client replacement text.
+
+Timeline range commands optionally carry a canonical TimelineNodeRangeRead captured by the selected-node editor. Exact start/end milliseconds and the optional owned node event preserve placement intent across UI edits; omitted receipts keep existing legacy command signatures and renderer callers. Screen placement remains distinct from fictional time, and range acknowledgements use existing projection/session guards.

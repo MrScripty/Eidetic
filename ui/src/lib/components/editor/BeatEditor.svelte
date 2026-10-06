@@ -27,6 +27,7 @@
   } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import BeatChildContext from './BeatChildContext.svelte';
   import BeatEditorHeader from './BeatEditorHeader.svelte';
+  import TimelinePlacementEditor from './TimelinePlacementEditor.svelte';
   import BeatNotesPanel from './BeatNotesPanel.svelte';
   import BeatPlanningActions from './BeatPlanningActions.svelte';
   import ChildPlanReview from './ChildPlanReview.svelte';
@@ -349,6 +350,10 @@
       onaddchild={handleAddChild}
       {creatingChild}
     />
+
+    {#if selectedProjectionNode}
+      <TimelinePlacementEditor node={selectedProjectionNode} />
+    {/if}
 
     {#if childCreateError}<p role="alert">{childCreateError}</p>{/if}
 

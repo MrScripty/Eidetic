@@ -62,6 +62,7 @@ fn command(
         node_id,
         start_ms,
         end_ms,
+        expected: None,
     })
 }
 
