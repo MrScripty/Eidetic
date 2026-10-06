@@ -1863,3 +1863,26 @@ synthetic. Earlier cancelled/failed runs and the qualification-only retired-None
 traversal repair remain accounted for in the new report/manifest. No real-model,
 timed-name, embedding or project-switch recovery claim. Parent retains PR,
 review, merge and Library delivery. No feature or native qualification blocker.
+
+### PR15 actual autosave/edit snapshot promotion
+
+CI37526522571 fails the unchanged original delayed-regeneration test on Windows
+at538 with Internal(database is locked); other481 server tests and other jobs
+pass. Preservedc6dc3a and frozen regressionb3a95a9 instrument the actual public
+edit after signature SELECT and allow real debounced autosave to commit. The
+first command INSERT deterministically reports SQLite517/BUSY_SNAPSHOT, ruling
+out earlier open/schema failure in that reproduction. No historical extended
+code is claimed from the Windows log and no blind CI retry was requested.
+
+Repaird159bd3 reserves the shared history writer with BEGIN IMMEDIATE before
+transaction-local signature read. Immutable replay stays read-only; signature
+recheck under writer ownership retains same-ID concurrency custody. Existing
+canonical guards and rollback remain; no mutex, timeout increase, busy-error
+suppression or lock inversion. Actual barrier now saves exact manual text,
+completes autosave, refuses late regeneration unchanged and preserves canonical
+preview. New concurrent-ID/read-only replay regressions pass alongside original
+failure test. Full local server485/core119/UI459/driver39/no-download5, strict
+server all-target Clippy and frontend/build/rustfmt/traceability gates pass.
+Source/report receipts: docs/reports/pr15-autosave-writer-admission.md and JSON.
+Publish only to existing PR15 branch; parent owns exact-head CI/review cadence
+and merge. Original native screenshot provenance remains unchanged.
