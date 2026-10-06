@@ -80,6 +80,7 @@ class NativeControlTests(unittest.TestCase):
         from unittest.mock import MagicMock
         root, leaf = MagicMock(), MagicMock()
         leaf.__len__.return_value = 0
+        leaf.__bool__.return_value = False
         leaf.childCount = 0
         leaf.getRole.return_value = 42
         leaf.getRoleName.return_value = 'paragraph'
