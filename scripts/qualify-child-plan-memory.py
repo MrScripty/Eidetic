@@ -50,8 +50,9 @@ class ChildProvider(bible.BibleFactProvider):
             self.send_error(422, 'Child plan omitted exact canonical screenplay/Bible context')
             return
         name = 'Morning departure' if fresh else 'Midnight departure'
-        children = [{'name': name, 'outline': f'Mara takes her blue umbrella to the {"morning" if fresh else "midnight"} train.',
-                     'weight': 1.0, 'characters': [], 'props': []}]
+        children = [{'name': f' {name} ', 'outline': f'Mara takes her blue umbrella to the {"morning" if fresh else "midnight"} train.\n',
+                     'weight': 1.0, 'location': '', 'characters': [' Mara ', ' '],
+                     'props': ['', ' Umbrella ', ' ']}]
         response = json.dumps({'choices': [{'message': {'content': json.dumps(children)}}]}).encode()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
@@ -83,6 +84,15 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
 
     def plans():
         return ui.query(database, 'SELECT id,status FROM child_plans WHERE parent_node_id=? ORDER BY rowid', (b,))
+
+    def canonical_proposal(plan_id, name, departure):
+        rows = ui.query(database, 'SELECT name,outline,location FROM child_plan_children WHERE plan_id=? ORDER BY child_index', (plan_id,))
+        expected = [(name, f'Mara takes her blue umbrella to the {departure} train.', None)]
+        references = ui.query(database, 'SELECT reference_kind,reference_text,sort_order FROM child_plan_child_references WHERE plan_id=? ORDER BY reference_kind,sort_order', (plan_id,))
+        if rows != expected or references != [('character', 'Mara', 0), ('prop', 'Umbrella', 0)]:
+            raise RuntimeError('Durable reviewed proposal differs from canonicalized synthetic provider material')
+        return {'children': rows, 'references': references,
+                'raw_fixture_has_padded_name_trailing_outline_newline_empty_location_and_padded_blank_references': True}
 
     def plan_beats():
         control = ui.wait_for('reachable scene child planning', lambda: ui.reveal(application,
@@ -117,7 +127,8 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     if children() != old_children or ui.blocks(database, a)[0] != first or ui.blocks(database, b)[0] != original_b:
         raise RuntimeError('Child planning changed canonical timeline or screenplay before acceptance')
     evidence['child_planning'] = {'initial_plan_id': initial[0], 'pending_preserves_children_and_screenplay': True,
-                                  'first_manual_edit': MIDNIGHT, 'real_model': False}
+                                  'first_manual_edit': MIDNIGHT, 'real_model': False,
+                                  'initial_canonical_proposal': canonical_proposal(initial[0], 'Midnight departure', 'midnight')}
     checkpoint('reviewable child proposal; no automatic apply')
     capture('eidetic-child-plan-pending.png')
 
@@ -136,6 +147,7 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     plan_beats()
     fresh = ui.wait_for('fresh pending child plan', lambda: next((row for row in plans() if row[0] != initial[0] and row[1] == 'pending'), None))
     ui.wait_for('fresh proposed timeline material visible', lambda: review_proposal('Morning departure'))
+    evidence['child_planning']['fresh_canonical_proposal'] = canonical_proposal(fresh[0], 'Morning departure', 'morning')
     ui.reveal_button(application, 'Accept timeline plan', window)
     ui.wait_for('explicitly accepted new child plan', lambda: next((row for row in plans() if row == (fresh[0], 'applied')), None))
     accepted_children = ui.wait_for('canonical proposed child material', lambda: children() if any(row[1] == 'Morning departure' for row in children()) else None)
