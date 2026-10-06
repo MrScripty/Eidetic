@@ -130,5 +130,50 @@ class MaintainedDriverExtensionTests(unittest.TestCase):
             recovery.assert_called_once()
 
 
+class NativeRefusalVisibilityTests(unittest.TestCase):
+    def test_exact_hidden_native_refusal_is_revealed_after_expanded_evidence_scroll(self):
+        # Exercise the actual maintained locator's native component scroll,
+        # rather than declaring a hidden accessibility node already visible.
+        message = 'Child plan story context changed; generate and review a fresh plan before accepting'
+        showing, anywhere = object(), object()
+
+        class NativeNode:
+            def __init__(self, text, visible=False, children=()):
+                self.name = text
+                self.visible = visible
+                self.children = children
+                self.scroll_calls = []
+            def __iter__(self):
+                return iter(self.children)
+            def clear_cache(self):
+                pass
+            def queryText(self):
+                raise NotImplementedError
+            def getState(self):
+                node = self
+                class State:
+                    def contains(self, state):
+                        return state is showing and node.visible
+                return State()
+            def queryComponent(self):
+                return self
+            def scrollTo(self, destination):
+                self.scroll_calls.append(destination)
+                self.visible = True
+
+        lookalike = NativeNode('Child plan story context changed')
+        refusal = NativeNode(message)
+        application = NativeNode('Eidetic', visible=True, children=(lookalike, refusal))
+        exact = lambda node: driver.ui.text_of(node).strip() == message
+        with patch.object(driver.ui.pyatspi, 'STATE_SHOWING', showing, create=True), patch.object(
+                driver.ui.pyatspi, 'SCROLL_ANYWHERE', anywhere, create=True):
+            self.assertIsNone(driver.ui.find(application, exact))
+            self.assertEqual(refusal.scroll_calls, [])
+            self.assertIs(driver.ui.reveal(application, exact), refusal)
+            self.assertTrue(driver.ui.visible(refusal))
+        self.assertEqual(refusal.scroll_calls, [anywhere])
+        self.assertEqual(lookalike.scroll_calls, [])
+
+
 if __name__ == '__main__':
     unittest.main()
