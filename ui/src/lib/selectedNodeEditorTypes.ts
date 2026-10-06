@@ -1,3 +1,4 @@
+import type { TimelineNodeRangeRead } from './timelineCommandTypes.js';
 import type { BeatType, ContentStatus, NodeId, StoryLevel } from './timelineTypes.js';
 
 export interface SelectedNodeEditorProjection {
@@ -23,6 +24,7 @@ export interface SelectedNodeEditorNode {
   content_status: ContentStatus;
   beat_type?: BeatType | null;
   locked: boolean;
+  range_read?: TimelineNodeRangeRead | null;
 }
 
 export interface SelectedNodeEditorSummary {

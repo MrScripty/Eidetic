@@ -66,6 +66,22 @@ pub(crate) fn record_set_timeline_node_range_history(
         &revisions,
         |tx| {
             crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            if let Some(expected) = &command.payload.expected {
+                let current = eidetic_core::contracts::TimelineNodeRangeRead {
+                    start_ms: node.time_range.start_ms,
+                    end_ms: node.time_range.end_ms,
+                    node_revision_event_id: timeline_node_store::latest_node_event(
+                        tx,
+                        node.id,
+                        Some(event.id),
+                    )?,
+                };
+                if current != *expected {
+                    return Err(history_store::HistoryStoreError::InvalidValue(
+                        "placement changed; read current placement before applying".into(),
+                    ));
+                }
+            }
             timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)?;
             crate::timeline_script_placement::sync_in_transaction(
                 tx,

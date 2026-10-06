@@ -1071,3 +1071,7 @@ existing targeted preview, explicit acceptance and manual-draft safeguards.
 Qualify exact native name editing and downstream review with synthetic HTTP/SSE
 responses labelled as such. No inferred facts, automatic Bible extraction,
 embedding dependency or timed name semantics belong to this slice.
+
+## Exact placement authoring: bounded M4 successor
+
+After verified merged main74fd438f (tree30a7b0f7), manual screenplay memory and range-to-script propagation already work. The selected editor lacks exact placement inputs and timeline gestures cannot pass adjacent clips. Expose exact screen-time start/end and Apply placement through the existing range command. Capture canonical range and existing node history event in one read snapshot; recheck under the writer, including ABA, while preserving legacy/replay behavior. Existing text/drafts and downstream preview/explicit acceptance remain intact. Separate branch feat/timeline-story-memory; no hierarchy, fictional-time inference, extraction, embedding or project-switch scope. See exact-timeline-placement-audit.md for pre-implementation evidence.

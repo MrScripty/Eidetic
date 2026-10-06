@@ -25,6 +25,7 @@ fn set_timeline_node_range_updates_projection() {
             node_id,
             start_ms: 1_000,
             end_ms: 2_000,
+            expected: None,
         },
     };
 
@@ -50,6 +51,7 @@ fn set_timeline_node_range_rejects_invalid_range() {
             node_id,
             start_ms: 2_000,
             end_ms: 1_000,
+            expected: None,
         },
     };
 

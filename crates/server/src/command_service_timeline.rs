@@ -130,10 +130,24 @@ pub async fn set_timeline_node_range(
             let mut conn = crate::sqlite::open_write_connection(&path)
                 .map_err(|e| BackendError::internal(e.to_string()))?;
             history_store::create_schema(&conn).map_err(map_history_error)?;
+            let guarded = command.payload.expected.is_some();
             let outcome = timeline_command::record_set_timeline_node_range_history(
                 &mut conn, &project, &command, 0,
             )
-            .map_err(map_timeline_command_error)?;
+            .map_err(|error| {
+                let error = map_timeline_command_error(error);
+                // Only pre-commit domain/receipt refusals carry this marker.
+                // Projection/publication failures after commit remain uncertain.
+                match error {
+                    BackendError::BadRequest(message) if guarded => {
+                        BackendError::bad_request(format!("Placement edit refused: {message}"))
+                    }
+                    BackendError::Conflict(message) if guarded => {
+                        BackendError::conflict(format!("Placement edit refused: {message}"))
+                    }
+                    other => other,
+                }
+            })?;
             let projection =
                 timeline_render_projection_from_current_state(&conn, &project.timeline)
                     .map_err(map_timeline_command_error)?;

@@ -145,3 +145,5 @@ Bible prompt header to its node identity and owned name revision. Optional
 reads. Existing `BibleNode` / `UsesFact` dependencies carry these name receipts;
 node metadata-only edits do not advance the name clock. Proposal absence receipts
 retain deleted-node history, without inventing a consumed name.
+
+Exact timeline placement uses optional TimelineNodeRangeRead expected custody in the existing range command. Omission preserves legacy command JSON signatures. A present receipt records exact start/end and a known optional node history event; absent receipt is not inferred from fallback projections.

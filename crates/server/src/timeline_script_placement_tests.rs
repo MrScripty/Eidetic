@@ -123,6 +123,7 @@ pub(crate) fn command(
         node_id: node_id(a),
         start_ms: start,
         end_ms: end,
+        expected: None,
     })
 }
 
@@ -375,6 +376,7 @@ fn parent_resize_updates_both_bound_scenes_and_rollback_preserves_all_state() {
         node_id: NodeId(uuid::Uuid::from_u128(3)),
         start_ms: 0,
         end_ms: 8000,
+        expected: None,
     });
     conn.execute_batch("CREATE TRIGGER reject_segment BEFORE UPDATE ON script_segments WHEN OLD.id = 'segment.B' BEGIN SELECT RAISE(ABORT, 'injected placement failure'); END;").unwrap();
     assert!(

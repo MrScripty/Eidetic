@@ -1,0 +1,356 @@
+{
+  "base": {
+    "sha": "74fd438f3ab4cf40734e094b4b2a62fc67d58b07",
+    "tree": "30a7b0f746ca132bc70bfe601faef6df1f9e1749"
+  },
+  "application": {
+    "sha": "8c1956f7afa18a2a3ea3a1732fb8eca58a1129b3",
+    "tree": "764ae1c5b2be223d75c6d3ee726fb365085bd93b",
+    "branch": "feat/timeline-story-memory"
+  },
+  "qualification": {
+    "sha": "443ddc2635a24405679e0e74e130f84d24e09270",
+    "tree": "5335f1c1351e24952fc363dd0aa2705f19aeef64",
+    "branch": "test/timeline-placement-native",
+    "application_diff": [
+      ".github/workflows/timeline-placement-native.yml",
+      "crates/server/examples/timeline_placement_capture_fixture.rs",
+      "scripts/qualify-timeline-placement.py",
+      "scripts/test_qualify_timeline_placement.py"
+    ]
+  },
+  "native": {
+    "run_id": 37538195351,
+    "job_id": 112524966283,
+    "artifact_id": 11447317950,
+    "artifact_sha256": "79bed196d95d74fdc226c1f2bedd7c6b40a049d69e9c068fb30ec47a708173a0",
+    "zip_path": "/workspace/attachments/13b5cd0e-19b6-472f-859f-92cadf12fecc/eidetic-timeline-placement-success.zip",
+    "originals_directory": "/workspace/scratch/timeline-placement-native-success-37538195351",
+    "status": "native_exact_timeline_placement_passed_with_synthetic_http_fixture",
+    "receipt": {
+      "status": "native_exact_timeline_placement_passed_with_synthetic_http_fixture",
+      "application_source_sha": "8c1956f7afa18a2a3ea3a1732fb8eca58a1129b3",
+      "qualification_sha": "443ddc2635a24405679e0e74e130f84d24e09270",
+      "application_binary_sha256": "4a51fac11fee64f7d1b9e926a11145afe6cb5391b66387af2f31b34012553d80",
+      "capture_label": "prototype views",
+      "setup_route": "public native services; six scenes and synthetic generation only",
+      "gui_route": "actual Tauri AT-SPI/X11 manual Save, retained draft, exact placement Apply, preview and explicit acceptance",
+      "provider": "synthetic localhost HTTP/SSE fixture through production client",
+      "real_model_quality_qualified": false,
+      "checkpoints": [
+        {
+          "stage": "public services prepare original six-scene window",
+          "elapsed_seconds": 0.235
+        },
+        {
+          "stage": "launch actual desktop and save exact human B text",
+          "elapsed_seconds": 0.531
+        },
+        {
+          "stage": "native exact placement crosses neighbors and preserves saved text and draft",
+          "elapsed_seconds": 26.537
+        },
+        {
+          "stage": "native downstream review; human B and actual order preserved",
+          "elapsed_seconds": 29.83
+        },
+        {
+          "stage": "pending fresh-window preview; explicit acceptance required",
+          "elapsed_seconds": 30.618
+        },
+        {
+          "stage": "explicit native acceptance commits only B and reveals canonical target",
+          "elapsed_seconds": 31.792
+        }
+      ],
+      "stage": "explicit native acceptance commits only B and reveals canonical target",
+      "reorder": {
+        "before_order": [
+          "A",
+          "F",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "after_order": [
+          "A",
+          "F",
+          "E",
+          "B",
+          "C",
+          "D"
+        ],
+        "reorder_route": "native exact placement form after launch"
+      },
+      "window_id": 2097155,
+      "window_pid": 22244,
+      "manual_edit": {
+        "exact_text": "Manual B: retain this station beat.\n\n",
+        "revision_event_id": "9d4a89a4-39fb-450e-802d-c47c638cd63b"
+      },
+      "placement": {
+        "source_node_id": "2f9bdcf1-82ac-4dc2-b23d-3c08ee491955",
+        "before_ms": [
+          540000,
+          570000
+        ],
+        "after_ms": [
+          180000,
+          210000
+        ],
+        "before_order": [
+          "A",
+          "F",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "after_order": [
+          "A",
+          "F",
+          "E",
+          "B",
+          "C",
+          "D"
+        ],
+        "native_route": "selected clip exact start/end seconds then Apply placement",
+        "saved_manual_text_preserved": true,
+        "retained_draft_preserved": true,
+        "command_id": "5cfdf512-7e0f-48f1-b979-83c2bdc119f2",
+        "change_event_id": "c5cb484b-e66b-4988-83dc-73608b2577f0",
+        "expected_read": {
+          "start_ms": 540000,
+          "end_ms": 570000,
+          "node_revision_event_id": "e4e2ec6c-d434-40a7-9d90-9ed3592c20ba"
+        }
+      },
+      "captures": [
+        {
+          "file": "eidetic-timeline-placement-authored.png",
+          "sha256": "c90c01fb0c6c9ba0ea32d4703465a82a50c05aa17f9ef729c1eabc59aaa12c66",
+          "window_id": 2097155,
+          "pid": 22244
+        },
+        {
+          "file": "eidetic-timeline-placement-review.png",
+          "sha256": "6688746d5d244d7f660635049a924c70f54ed6fa987795e219ebd3c8fc64d7dd",
+          "window_id": 2097155,
+          "pid": 22244
+        },
+        {
+          "file": "eidetic-timeline-placement-preview.png",
+          "sha256": "db6073717665b71f815fd459fe0afc8d82f9218ebde4a51ab8db4f3af19a3019",
+          "window_id": 2097155,
+          "pid": 22244
+        },
+        {
+          "file": "eidetic-timeline-placement-accepted.png",
+          "sha256": "cedd24660338bef489b71c109ae4c51d4ce78b9135d7190cd09cad98c64b00aa",
+          "window_id": 2097155,
+          "pid": 22244
+        }
+      ],
+      "preview": {
+        "proposal_id": "script.review.8ef0c699-59dd-49cf-8863-a785358ea953",
+        "target_unchanged": true,
+        "entered_E_consumed_and_displaced_A_excluded": true
+      },
+      "acceptance": {
+        "revision_event_id": "f52f45e1-47c6-4934-951e-3330a7f29c70",
+        "only_B_changed": true,
+        "old_review_cleared_in_ui": true,
+        "canonical_target_revealed_by_normal_scroll": true
+      },
+      "provider_calls": [
+        {
+          "kind": "generation",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        },
+        {
+          "kind": "recap",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        },
+        {
+          "kind": "preview",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        }
+      ],
+      "accessibility_retired_object_polls": 0,
+      "typed_text_observations": [
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 37,
+          "actual_text": "Manual B: retain this station beat.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 36,
+          "actual_text": "Retained manual B placement draft.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Placement start seconds",
+          "expected_length": 3,
+          "actual_text": "180",
+          "exact": true
+        },
+        {
+          "field": "Placement end seconds",
+          "expected_length": 3,
+          "actual_text": "210",
+          "exact": true
+        }
+      ]
+    },
+    "image_dimensions": [
+      1440,
+      960
+    ],
+    "images_viewed_unmodified": true
+  },
+  "gates": {
+    "baseline_server": 485,
+    "core": 120,
+    "server": 486,
+    "ui": 467,
+    "frontend_typecheck": "0 errors, 0 warnings",
+    "frontend_lint_format_build": "passed",
+    "server_clippy_all_targets": "passed with -D warnings",
+    "native_driver_tests": 43,
+    "no_download_tests": 5,
+    "locked_all_features_union": "passed",
+    "actual_desktop_and_fixture_build": "passed hosted Linux"
+  },
+  "local_receipts": {
+    "timeline-story-memory-baseline.log": {
+      "path": "/workspace/scratch/timeline-story-memory-baseline.log",
+      "sha256": "58eafc1a13a0f5ab22d884a6a10bbfd12de8ac7620b01c069dfbd62ab62f54a7"
+    },
+    "timeline-placement-server-full.log": {
+      "path": "/workspace/scratch/timeline-placement-server-full.log",
+      "sha256": "60dcdf29e9a9ba4206f49e5a0e096e3d4a99ef5950a66eeba1d83ac4dc60a9c3"
+    },
+    "timeline-placement-core-final.log": {
+      "path": "/workspace/scratch/timeline-placement-core-final.log",
+      "sha256": "42a209677b1997d0250880697ab36a2fa943838b0b3c4d6e6a5123b725950b59"
+    },
+    "timeline-placement-ui-full.log": {
+      "path": "/workspace/scratch/timeline-placement-ui-full.log",
+      "sha256": "68951cb43341a9176fef2a74dff8580f111f17fd72fbed7b92d038ec41f92327"
+    },
+    "timeline-placement-ui-final-targeted.log": {
+      "path": "/workspace/scratch/timeline-placement-ui-final-targeted.log",
+      "sha256": "36d1469addb45bb3bcfef745f49995a8313808908c5f756cf31de883c681a528"
+    },
+    "timeline-placement-service.log": {
+      "path": "/workspace/scratch/timeline-placement-service.log",
+      "sha256": "70a81b7566b4f75e85d653a1638f678f84033fe55efcfc397926d33247185d12"
+    },
+    "timeline-placement-clippy.log": {
+      "path": "/workspace/scratch/timeline-placement-clippy.log",
+      "sha256": "167c05a44d9e73afcc90c00517056e0d7ca1a1cdddf2c798018ab29265da1d2a"
+    },
+    "timeline-placement-typecheck.log": {
+      "path": "/workspace/scratch/timeline-placement-typecheck.log",
+      "sha256": "73bb89f5c91b3d528be9d64927667918368965de53e8d73bab99937ba59ec464"
+    },
+    "timeline-placement-lint.log": {
+      "path": "/workspace/scratch/timeline-placement-lint.log",
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    "timeline-placement-format-check.log": {
+      "path": "/workspace/scratch/timeline-placement-format-check.log",
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    "timeline-placement-build.log": {
+      "path": "/workspace/scratch/timeline-placement-build.log",
+      "sha256": "831abdb613be75c166589dfdcc0beb480091663b5830d2b51617a7176ca3fe48"
+    },
+    "timeline-placement-traceability.log": {
+      "path": "/workspace/scratch/timeline-placement-traceability.log",
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+    },
+    "timeline-placement-no-download.log": {
+      "path": "/workspace/scratch/timeline-placement-no-download.log",
+      "sha256": "f7a18c303001c2725a910aa054889d85364792b196a2f05160d33326c16d2b81"
+    },
+    "timeline-placement-no-download.json": {
+      "path": "/workspace/scratch/timeline-placement-no-download.json",
+      "sha256": "1e7297da0ccc2431db2669855534c83715792bbc1434dbdfb062ab0cb7d5ab7d"
+    },
+    "timeline-placement-native-drivers.log": {
+      "path": "/workspace/scratch/timeline-placement-native-drivers.log",
+      "sha256": "023ca8b7b9e3e3eda01238969bc95f172619f36f34b6447612e2431646a44028"
+    },
+    "timeline-placement-native-fixture-check.log": {
+      "path": "/workspace/scratch/timeline-placement-native-fixture-check.log",
+      "sha256": "d9d7cb3f926a613b5e4a2600e6eda68a9286986bc10452d3b431c2378ef96590"
+    },
+    "timeline-placement-fixture-execution.log": {
+      "path": "/workspace/scratch/timeline-placement-fixture-execution.log",
+      "sha256": "4e4843d64a383763cc6a8784bc54069e159e2fa1f3963923b05378146a460038"
+    },
+    "timeline-placement-native-drivers-final.log": {
+      "path": "/workspace/scratch/timeline-placement-native-drivers-final.log",
+      "sha256": "95accafa0909e6c8def6e24cf544fefd17330f38ca6564069c0a760c79f6c59b"
+    }
+  },
+  "artifact_file_receipts": {
+    "eidetic-timeline-placement-preview.png": {
+      "path": "/workspace/scratch/timeline-placement-native-success-37538195351/eidetic-timeline-placement-preview.png",
+      "sha256": "db6073717665b71f815fd459fe0afc8d82f9218ebde4a51ab8db4f3af19a3019"
+    },
+    "eidetic-timeline-placement-authored.png": {
+      "path": "/workspace/scratch/timeline-placement-native-success-37538195351/eidetic-timeline-placement-authored.png",
+      "sha256": "c90c01fb0c6c9ba0ea32d4703465a82a50c05aa17f9ef729c1eabc59aaa12c66"
+    },
+    "eidetic-timeline-placement-accepted.png": {
+      "path": "/workspace/scratch/timeline-placement-native-success-37538195351/eidetic-timeline-placement-accepted.png",
+      "sha256": "cedd24660338bef489b71c109ae4c51d4ce78b9135d7190cd09cad98c64b00aa"
+    },
+    "eidetic-timeline-placement-review.png": {
+      "path": "/workspace/scratch/timeline-placement-native-success-37538195351/eidetic-timeline-placement-review.png",
+      "sha256": "6688746d5d244d7f660635049a924c70f54ed6fa987795e219ebd3c8fc64d7dd"
+    },
+    "app-sanitized.log": {
+      "path": "/workspace/scratch/timeline-placement-native-success-37538195351/app-sanitized.log",
+      "sha256": "d2624d6b93c1242c24e66d6c6864cffb38fbcfda243841b0e4d8e37878d80a48"
+    },
+    "capture-evidence.json": {
+      "path": "/workspace/scratch/timeline-placement-native-success-37538195351/capture-evidence.json",
+      "sha256": "3f11cdafc67bfa938f48c164e114fc9bb6071cc558a97a8d336422044a02f561"
+    }
+  },
+  "hosted_ci_receipt": {
+    "path": "/workspace/scratch/timeline-placement-native-success-37538195351/hosted-ci-evidence.json",
+    "sha256": "8eb2bacbe88952d0c3ef2e7da7f7f13dcf771ccf88a7a7720b84d1277947845b"
+  },
+  "preserved_runs": [
+    {
+      "id": 37537216165,
+      "head": "945c4e3a8356d5c45e6247eb26f8eb058f8465d2",
+      "status": "cancelled",
+      "reason": "Superseded before GUI by qualification-only correction of block-reader range columns; no native UI claim."
+    }
+  ],
+  "limits": [
+    "All three provider responses are synthetic production HTTP/SSE, not real-model quality.",
+    "Authored capture shows exact placement and retained draft; Bible is visible in review and accepted captures.",
+    "Pending proposal and exact input custody are proved by the native receipt; the preview-named image does not visibly show the proposed paragraph because of the existing constrained Script pane.",
+    "Native ABA placement refusal is covered by the public-service regression, not a claimed GUI ABA sequence.",
+    "No hierarchy/reparenting, fictional-time inference, semantic extraction, new models, credentials, embedding dependency or project-switch recovery.",
+    "No PR/review/merge or Library action; parent retains those responsibilities."
+  ]
+}

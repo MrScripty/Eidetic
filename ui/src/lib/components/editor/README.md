@@ -184,3 +184,5 @@ Consumed Bible names use the existing screenplay impact notice and targeted
 review controls. A name change/removal displays its historical excerpt. A preview
 shows the exact captured names and revision IDs under “Names used for this
 preview”; saved blocks and manual drafts are preserved until explicit acceptance.
+
+TimelinePlacementEditor exposes exact start/end seconds and explicit Apply placement. Its transient per-node session draft retains entered times through selection/panel changes. It captures only canonical range_read receipts, refuses imprecise input, keeps immutable payload/ID on uncertain acknowledgement and requires explicit discard/reload to adopt a fresh base. Known native pre-commit refusals retain editable input. Existing screenplay drafts, targeted preview and explicit acceptance remain unchanged; presentation time never infers fictional time.

@@ -9,6 +9,43 @@ pub struct SetTimelineNodeRangeCommand {
     pub node_id: NodeId,
     pub start_ms: u64,
     pub end_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected: Option<TimelineNodeRangeRead>,
+}
+
+/// Canonical placement read; a missing event is a known history-free node.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineNodeRangeRead {
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub node_revision_event_id: Option<super::ChangeEventId>,
+}
+
+#[cfg(test)]
+mod placement_wire_tests {
+    use super::*;
+
+    #[test]
+    fn legacy_range_payload_keeps_its_exact_signature_and_known_empty_history_round_trips() {
+        let legacy = format!(
+            "{{\"node_id\":\"{}\",\"start_ms\":1000,\"end_ms\":2000}}",
+            uuid::Uuid::nil()
+        );
+        let mut command: SetTimelineNodeRangeCommand = serde_json::from_str(&legacy).unwrap();
+        assert_eq!(command.expected, None);
+        assert_eq!(serde_json::to_string(&command).unwrap(), legacy);
+        command.expected = Some(TimelineNodeRangeRead {
+            start_ms: 1000,
+            end_ms: 2000,
+            node_revision_event_id: None,
+        });
+        let wire = serde_json::to_string(&command).unwrap();
+        assert!(wire.contains("\"node_revision_event_id\":null"));
+        assert_eq!(
+            serde_json::from_str::<SetTimelineNodeRangeCommand>(&wire).unwrap(),
+            command
+        );
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

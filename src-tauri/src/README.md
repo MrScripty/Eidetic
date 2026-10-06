@@ -94,3 +94,5 @@ The command registry includes `command_bible_graph_edge_label` for authored
 relationship labels. Its expected-revision contract reaches the server writer
 transaction through the existing Bible IPC/service boundary, keeping label
 editing and screenplay dependency invalidation on normal desktop transport.
+
+The Bevy timeline bridge continues submitting legacy range commands with no expected receipt. Exact placement form custody is optional on the shared command and does not alter renderer gesture ownership.

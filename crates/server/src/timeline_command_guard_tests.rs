@@ -95,6 +95,7 @@ fn every_shared_timeline_writer_rejects_a_stale_snapshot_atomically() {
             node_id: node.id,
             start_ms: node.time_range.start_ms,
             end_ms: node.time_range.end_ms,
+            expected: None,
         }),
         2,
     ));
