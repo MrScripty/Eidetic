@@ -144,6 +144,18 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
     evidence['child_planning'].update(status='native_child_plan_memory_passed_with_synthetic_http_fixture', fresh_plan_id=fresh[0], final_manual_edit=MORNING,
                                      accepted_children=accepted_children,
                                      explicit_timeline_acceptance_preserved_screenplay_and_bible=True)
+    def review_cleared():
+        application.clear_cache()
+        return not any(n.name == 'Review proposed timeline children' for n in ui.walk(application))
+    ui.wait_for('accepted child review cleared in the real UI', review_cleared)
+    ui.wait_for('child acceptance acknowledged and selected projection refreshed', lambda: ui.find(application,
+        lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and n.name == 'Replan Beats'
+        and n.getState().contains(ui.pyatspi.STATE_ENABLED)))
+    rendered = ui.wait_for('accepted child in the native timeline',
+        lambda: ui.native_timeline_clip(application, 'Morning departure', window))
+    evidence['child_planning'].update(review_cleared_in_ui=True,
+        accepted_child_visible_in_native_timeline=True,
+        accepted_child_native_bounds=list(rendered[1]))
     checkpoint('fresh screenplay-aware timeline plan accepted explicitly')
     capture('eidetic-child-plan-accepted.png')
 
