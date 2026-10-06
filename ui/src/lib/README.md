@@ -152,3 +152,8 @@ commands carry the original expected revision through desktop transport. Node
 detail's edge revision map belongs to the same backend read snapshot; the writer
 owns revision/live-identity authority, while the UI owns retained draft and
 conflicting-operation controls. No parallel memory store or embedding dependency.
+
+Screenplay proposal custody mirrors optional `bible_node_name_inputs` and owned
+name-absence revisions from the canonical server. The existing review surface
+labels name causes and discloses recorded names/revisions; proposal acceptance
+continues through the guarded server command, without client replacement text.
