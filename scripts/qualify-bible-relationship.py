@@ -122,6 +122,12 @@ def review_region(application, proposal_text):
     return ui.reveal(section, lambda n: pending_review(n, proposal_text)) if section else None
 
 
+def stale_alert(application):
+    # Do not select a nonvisual ancestor whose aggregate text contains the error.
+    return ui.reveal(application, lambda n: n.getRole() == ui.pyatspi.ROLE_ALERT
+        and any(STALE in ui.text_of(child) for child in ui.walk(n)))
+
+
 def begin_manual_draft(application, window):
     block = ui.wait_for('manual source block', lambda: ui.screenplay_block(application, 'red umbrella'))
     # The accepted target can scroll the manual card horizontally out of view.
@@ -293,8 +299,7 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
     # This old preview is the sole pending proposal; explicit native acceptance must refuse it.
     region = ui.wait_for('original preview after relationship ABA', lambda: review_region(application, REPLACEMENT))
     ui.reveal_button(region, 'Accept update', window)
-    ui.wait_for('exact stale relationship acceptance refusal', lambda: ui.reveal(application,
-        lambda n: STALE in ui.text_of(n)))
+    ui.wait_for('exact stale relationship acceptance refusal', lambda: stale_alert(application))
     after = base.recovery.database_snapshot(database)
     base.require_refusal_unchanged(before, after)
     if (pending[0], 'pending', REPLACEMENT) not in proposals(database, b[0]):

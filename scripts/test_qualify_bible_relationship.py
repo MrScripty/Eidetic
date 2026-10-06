@@ -76,6 +76,19 @@ class RelationshipProviderTests(unittest.TestCase):
 
 
 class NativeControlTests(unittest.TestCase):
+    def test_exact_stale_observation_ignores_nonvisual_aggregate_ancestors(self):
+        from unittest.mock import Mock
+        root, alert, paragraph = Mock(), Mock(), Mock()
+        root.getRole.return_value = 0
+        alert.getRole.return_value = 42
+        with patch.object(driver.ui.pyatspi, 'ROLE_ALERT', 42, create=True), \
+                patch.object(driver.ui, 'walk', return_value=[paragraph]), \
+                patch.object(driver.ui, 'text_of', return_value=driver.STALE) as text_of, \
+                patch.object(driver.ui, 'reveal', side_effect=lambda _, predicate: alert if not predicate(root) and predicate(alert) else None):
+            self.assertIs(driver.stale_alert(root), alert)
+            text_of.return_value = 'Another error'
+            self.assertIsNone(driver.stale_alert(root))
+
     def test_exact_pending_disclosure_aligns_before_strict_native_pointer_input(self):
         from unittest.mock import Mock
         region, disclosure = object(), Mock()
