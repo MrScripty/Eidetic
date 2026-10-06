@@ -339,3 +339,43 @@ fn legacy_generation_has_no_fabricated_name_dependency() {
     rename(&mut conn, "Mara", "Marisol");
     assert!(!impact(&conn, &b).needs_review);
 }
+
+#[test]
+fn sparse_node_deletion_cannot_be_labelled_as_an_unchanged_live_name_read() {
+    let (mut conn, _, _, b, _) = fixture();
+    node(&mut conn, "Mara");
+    let command = CommandEnvelope::new("sparse deletion");
+    let event = ChangeEvent::new(command.id, ChangeEventKind::UserEdit, "sparse deletion");
+    let revision = ObjectRevision::new(
+        ObjectKind::BibleNode,
+        "Mara",
+        event.id,
+        RevisionOperation::Delete,
+    );
+    crate::history_store::record_change(
+        &mut conn,
+        &command,
+        "test.sparse_delete",
+        &event,
+        &[revision],
+    )
+    .unwrap();
+    let context = crate::ai_context_projection::load_ai_bible_context_projection(
+        &conn,
+        eidetic_core::timeline::node::NodeId(
+            uuid::Uuid::parse_str(b.source_node_id.as_ref().unwrap()).unwrap(),
+        ),
+        None,
+    )
+    .unwrap();
+    assert_eq!(
+        context.payload.nodes[0].name, "Mara",
+        "Physical graph still exposes the name"
+    );
+    assert!(
+        capture(&conn, &context.payload)
+            .unwrap_err()
+            .to_string()
+            .contains("canonical revision history")
+    );
+}

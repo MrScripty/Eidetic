@@ -542,3 +542,5 @@ original read. Targeted preview must retain every live consumed name in scope;
 owned deletion history and name revisions detect ABA at explicit acceptance.
 Saved manual screenplay and drafts use the existing custody and replacement
 rules. Legacy absent name receipts stay unknown; no backfill or inferred facts.
+A sparse owned node deletion while the physical graph still exposes its name
+refuses capture: deletion history cannot be labelled as an unchanged live read.
