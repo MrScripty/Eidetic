@@ -67,3 +67,71 @@ it('keeps uncertain acceptance retry visible and prevents closing the pending pr
   expect(body).toContain('No saved screenplay was selected for this plan.');
   expect(body).toContain('role="alert"');
 });
+
+it('lists saved proposals as explicit review choices without an acceptance button', () => {
+  const { body } = render(ChildPlanReview, {
+    props: {
+      recoverable: true,
+      plan: null,
+      busy: false,
+      uncertain: false,
+      error: null,
+      savedPlans: [
+        {
+          id: 'one',
+          parent_node_id: 'scene',
+          target_child_level: 'Beat',
+          children: [
+            { name: '<Midnight>', outline: 'Original train.', weight: 1, beat_type: null },
+          ],
+        },
+        {
+          id: 'two',
+          parent_node_id: 'scene',
+          target_child_level: 'Beat',
+          children: [{ name: 'Morning', outline: 'Later train.', weight: 1, beat_type: null }],
+        },
+      ],
+      onaccept() {},
+      onclose() {},
+    },
+  });
+  expect(body).toContain('Review saved timeline plans');
+  expect(body).toContain('aria-label="Saved timeline plans"');
+  expect(body).toContain('&lt;Midnight>');
+  expect(body).toContain('Morning');
+  expect(body).toContain('Review plan 1');
+  expect(body).toContain('Review plan 2');
+  expect(body).not.toContain('Accept timeline plan');
+});
+
+it('renders empty/read-error recovery and disabled loading state without a proposal', () => {
+  const { body } = render(ChildPlanReview, {
+    props: {
+      recoverable: true,
+      plan: null,
+      savedPlans: [],
+      busy: false,
+      uncertain: false,
+      error: 'Read unavailable',
+      onaccept() {},
+      onclose() {},
+    },
+  });
+  expect(body).toContain('No pending timeline plans for this clip.');
+  expect(body).toContain('Review saved timeline plans');
+  expect(body).toContain('role="alert"');
+  const loading = render(ChildPlanReview, {
+    props: {
+      recoverable: true,
+      reading: true,
+      plan: null,
+      busy: true,
+      uncertain: false,
+      error: null,
+      onaccept() {},
+      onclose() {},
+    },
+  }).body;
+  expect(loading).toMatch(/disabled(?:="")?[^>]*>\s*Loading saved timeline plans…/);
+});

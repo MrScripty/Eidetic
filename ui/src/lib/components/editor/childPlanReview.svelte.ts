@@ -1,18 +1,22 @@
-import type { ChildPlan } from '$lib/childPlanningTypes.js';
+import type { ChildPlan, ChildPlanListProjection } from '$lib/childPlanningTypes.js';
+import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import type { ApplyTimelineChildrenCommand } from '$lib/timelineCommandTypes.js';
 
 type Owner = { nodeId: string | null; session: number };
 
-/** Transient review of the existing durable plan; generation never applies it. */
+/** Review existing durable plans; generation and recovery never apply them. */
 export function createChildPlanReview(options: {
   owner: () => Owner;
   mounted: () => boolean;
+  load: () => Promise<ProjectionEnvelope<ChildPlanListProjection>>;
   generate: (parent: string) => Promise<ChildPlan>;
   apply: (payload: ApplyTimelineChildrenCommand, commandId: string) => Promise<unknown>;
   accepted: (parent: string) => Promise<void>;
 }) {
   const state = $state({
     plan: null as ChildPlan | null,
+    savedPlans: null as ChildPlan[] | null,
+    reading: false,
     busy: false,
     error: null as string | null,
     uncertain: false,
@@ -26,6 +30,8 @@ export function createChildPlanReview(options: {
     owner = current;
     sequence += 1;
     state.plan = null;
+    state.savedPlans = null;
+    state.reading = false;
     state.error = null;
     state.busy = false;
     state.uncertain = false;
@@ -40,12 +46,50 @@ export function createChildPlanReview(options: {
       selected.session === owner.session
     );
   }
+  async function recover() {
+    syncOwner();
+    if (!options.mounted() || !owner.nodeId || state.busy || state.uncertain || state.plan) return;
+    const parent = owner.nodeId;
+    const token = ++sequence;
+    state.busy = true;
+    state.reading = true;
+    state.error = null;
+    state.savedPlans = null;
+    try {
+      const projection = await options.load();
+      if (!current(token)) return;
+      state.savedPlans = projection.payload.plans
+        .filter((record) => record.status === 'pending' && record.plan.parent_node_id === parent)
+        .map((record) => structuredClone(record.plan));
+    } catch (error) {
+      if (current(token)) state.error = error instanceof Error ? error.message : String(error);
+    } finally {
+      if (current(token)) {
+        state.busy = false;
+        state.reading = false;
+      }
+    }
+  }
+  function reviewSaved(planId: string) {
+    syncOwner();
+    if (!options.mounted() || state.busy || state.uncertain || state.plan) return;
+    const plan = state.savedPlans?.find(
+      (candidate) => candidate.id === planId && candidate.parent_node_id === owner.nodeId,
+    );
+    if (!plan) return;
+    sequence += 1;
+    state.plan = structuredClone($state.snapshot(plan));
+    state.savedPlans = null;
+    state.error = null;
+    submission = null;
+  }
   async function generate() {
     syncOwner();
     if (!owner.nodeId || state.busy || state.uncertain) return;
     const parent = owner.nodeId;
     const token = ++sequence;
     state.busy = true;
+    state.savedPlans = null;
     state.error = null;
     try {
       const plan = await options.generate(parent);
@@ -105,10 +149,11 @@ export function createChildPlanReview(options: {
     if (state.busy || state.uncertain) return;
     sequence += 1;
     state.plan = null;
+    state.savedPlans = null;
     state.error = null;
     submission = null;
   }
-  return { state, syncOwner, generate, accept, close };
+  return { state, syncOwner, recover, reviewSaved, generate, accept, close };
 }
 
 function isChildPlanRefusal(failure: unknown): boolean {

@@ -1,6 +1,11 @@
 <script lang="ts">
   import type { ChildPlan } from '$lib/childPlanningTypes.js';
   let {
+    recoverable = false,
+    savedPlans = null,
+    reading = false,
+    onrecover = () => {},
+    onreviewsaved = () => {},
     plan,
     busy,
     uncertain,
@@ -8,6 +13,11 @@
     onaccept,
     onclose,
   }: {
+    recoverable?: boolean;
+    savedPlans?: ChildPlan[] | null;
+    reading?: boolean;
+    onrecover?: () => void;
+    onreviewsaved?: (planId: string) => void;
     plan: ChildPlan | null;
     busy: boolean;
     uncertain: boolean;
@@ -17,6 +27,37 @@
   } = $props();
 </script>
 
+{#if recoverable}
+  <button type="button" disabled={busy || uncertain || plan != null} onclick={onrecover}>
+    {reading ? 'Loading saved timeline plans…' : 'Review saved timeline plans'}
+  </button>
+{/if}
+{#if savedPlans != null && !plan}
+  <section aria-label="Saved timeline plans" class="child-plan-review">
+    <h3>Saved timeline plans</h3>
+    <p>Choose a pending plan to review its original proposal and screenplay evidence.</p>
+    {#if savedPlans.length === 0}
+      <p>No pending timeline plans for this clip.</p>
+    {:else}
+      <ol>
+        {#each savedPlans as saved, index (saved.id)}
+          <li>
+            {#each saved.children as child}
+              <strong>{child.name}</strong>
+              <p>{child.outline}</p>
+            {/each}
+            <button
+              type="button"
+              disabled={busy || uncertain}
+              onclick={() => onreviewsaved(saved.id)}>Review plan {index + 1}</button
+            >
+          </li>
+        {/each}
+      </ol>
+    {/if}
+    <button type="button" disabled={busy || uncertain} onclick={onclose}>Close saved plans</button>
+  </section>
+{/if}
 {#if error}<p role="alert">{error}</p>{/if}
 {#if plan}
   <section aria-label="Review proposed timeline children" class="child-plan-review">

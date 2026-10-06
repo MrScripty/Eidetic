@@ -18,3 +18,13 @@ export interface ChildPlan {
   children: ChildProposal[];
   script_context?: ScriptContextBlock[] | null;
 }
+
+export interface ChildPlanRecord {
+  plan: ChildPlan;
+  status: 'pending' | 'applied' | 'rejected';
+  created_at_ms: number;
+}
+
+export interface ChildPlanListProjection {
+  plans: ChildPlanRecord[];
+}

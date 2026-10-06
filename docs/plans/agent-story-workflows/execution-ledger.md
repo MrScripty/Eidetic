@@ -1,5 +1,38 @@
 # Execution ledger
 
+## 2026-10-06 — Recover saved pending timeline plans
+
+Base is merged PR11 main `325f505481369e91f6cfdc125a27b2bf3b2a4384`,
+tree `45546e91b6e4c5d64d301a733c473945f1b911a9`. Inspection confirmed
+the documented recovery gap: Close and editor selection changes hide the preview,
+while the existing native `projection_child_plans` already reconstructs durable
+canonical children and their original saved-screenplay inputs. No frontend reader
+existed. Manual screenplay editing, Bible propagation and prior stale/relationship
+repairs are retained.
+
+The new explicit Review saved timeline plans action lists all Pending records for
+the selected non-leaf clip. A separate Review plan choice restores its exact
+proposal and receipt in the existing review surface. Generation, recovery and
+acceptance remain separate operations; only Accept timeline plan writes through
+the existing guarded command. Reads cannot overwrite an active preview or an
+uncertain acceptance, and retired selection/session/unmount continuations cannot
+restore old state. No newest-plan inference from zero creation timestamps, new
+schema, parallel proposal persistence, model dependency or project-switch feature.
+
+Two actual synthetic HTTP/public-service regressions reconstruct the same SQLite
+file in a fresh AppState and recover multiple exact normalized plans and original
+screenplay receipts. Explicit acceptance affects only the chosen status; later
+identical-command replay preserves manual text/history. Recovering a stale receipt
+does not acknowledge a later human save: native admission refuses without changing
+timeline, screenplay, Pending evidence or any of the four history table counts.
+Local full server444/core119/frontend445 and strict server all-target Clippy pass
+using the unchanged pinned no-download dependency. Frontend typecheck, lint,
+formatting and production build pass. A client-compiled controller regression
+exercises Svelte reactive proposals: reopening snapshots the original material
+before cloning, avoiding browser DataCloneError hidden by the server test transform.
+Actual native UI qualification is recorded separately when complete. Providers are synthetic, not real-model
+quality evidence; complete Bible/affect/arc-description binding remains separate.
+
 ## 2026-10-02 — Baseline and M1 admission
 
 Verified remote main at `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841` and created

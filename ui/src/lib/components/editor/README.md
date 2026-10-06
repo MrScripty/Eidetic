@@ -39,6 +39,7 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `ChildPlanReview.svelte` | Explicit timeline-plan preview, proposed outlines and exact saved screenplay evidence. |
 | `childPlanReview.svelte.ts` | Transient review lifecycle; no generation-time apply, guarded selection/session continuations and exact acceptance retry. |
 | `childPlanReview.svelte.test.ts` | Pending-only generation, explicit accept, retired continuations and uncertain acknowledgement regressions. |
+| `childPlanReview.client.test.ts` | Actual client-compiled controller recovery of reactive proposals, original evidence and explicit immutable acceptance. |
 | `ChildPlanReview.ssr.test.ts` | Explicit acceptance and saved evidence presentation with safe text rendering. |
 
 ## Problem
@@ -57,7 +58,7 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 
 ## Invariants
 
-- Plan actions are available on selected clips with a child level. Generation presents the durable pending plan without applying it. Only Accept timeline plan calls the existing validated children command; saved screenplay and author drafts are untouched. Refused plans retain their preview and error. Ordinary close/navigation can hide a durable pending plan; recovering its review surface after remount is not implemented in this slice.
+- Plan actions are available on selected clips with a child level. Generation presents the durable pending plan without applying it. Only Accept timeline plan calls the existing validated children command; saved screenplay and author drafts are untouched. Refused plans retain their preview and error. Review saved timeline plans reads the existing child-plan projection, lists every pending plan for the selected clip, and reopens only the plan the writer chooses. Applied/rejected plans are excluded. Recovery never generates or applies material, infers a newest plan from timestamps, or replaces an active preview or uncertain acceptance. Retired selection/session/read continuations cannot repopulate the review surface. Project-switch recovery remains deferred.
 
 - Screenplay context changes use the existing Needs review and targeted proposal
   controls. What changed identifies scenes entering/leaving the captured window;
