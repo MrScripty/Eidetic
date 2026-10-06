@@ -66,6 +66,8 @@ export interface PropagationProposal {
     target_segment_revision_event_id: string;
     script_inputs: ScriptContextBlock[];
     bible_context: ProjectionEnvelope<unknown>;
+    bible_node_name_inputs?: { node_id: string; name: string; revision_event_id: string }[] | null;
+    bible_node_name_absence_revisions?: [string, string][] | null;
     bible_relationship_inputs?:
       | {
           edge: AiBibleContextEdge;

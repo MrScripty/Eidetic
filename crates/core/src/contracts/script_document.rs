@@ -262,6 +262,9 @@ pub struct GenerateScriptBlockCommand {
     pub script_inputs: Option<Vec<ScriptContextBlock>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_inputs: Option<Vec<super::BibleFieldInput>>,
+    /// Names actually supplied; absent legacy receipts remain unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_node_name_inputs: Option<Vec<super::BibleNodeNameInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_relationship_inputs: Option<Vec<super::BibleRelationshipInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

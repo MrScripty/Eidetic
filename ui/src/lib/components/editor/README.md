@@ -179,3 +179,8 @@ ScriptImpactNotice distinguishes Bible membership ContextChanged causes from scr
 Screenplay impact review identifies consumed Bible relationship changes and shows
 the original relationship evidence supplied to each preview. Existing preview,
 Reject and explicit Accept update controls retain their canonical behavior.
+
+Consumed Bible names use the existing screenplay impact notice and targeted
+review controls. A name change/removal displays its historical excerpt. A preview
+shows the exact captured names and revision IDs under “Names used for this
+preview”; saved blocks and manual drafts are preserved until explicit acceptance.

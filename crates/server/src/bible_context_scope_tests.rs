@@ -62,6 +62,7 @@ fn generation(
         script_context_scope: None,
         target_binding: None,
         bible_context_scope: scoped.then(|| capture(conn, node(block), &inputs).unwrap()),
+        bible_node_name_inputs: None,
         bible_relationship_inputs: None,
         bible_inputs: Some(inputs),
     })

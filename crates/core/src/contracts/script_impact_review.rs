@@ -31,9 +31,15 @@ pub struct ScriptImpactProposalBinding {
     pub bible_context: ProjectionEnvelope<AiBibleContextProjection>,
     #[serde(default)]
     pub bible_inputs: Vec<super::BibleFieldInput>,
+    /// Names actually supplied; absent legacy receipts remain unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_node_name_inputs: Option<Vec<super::BibleNodeNameInput>>,
     /// Absent legacy receipts stay unknown; Some(empty) is a recorded read.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_relationship_inputs: Option<Vec<super::BibleRelationshipInput>>,
+    /// Negative name reads use the node's owned history to detect ABA.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_node_name_absence_revisions: Option<Vec<(super::BibleGraphNodeId, ChangeEventId)>>,
     /// Negative reads for previously consumed edges, bound to owned history.
     /// These are absence custody, never fabricated consumed relationship values.
     #[serde(default, skip_serializing_if = "Option::is_none")]

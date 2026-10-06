@@ -1,0 +1,132 @@
+{
+  "baseline": {
+    "sha": "c6dc3a716bcb5db61994004bb5a49fc989837580",
+    "tree": "8b879508a1e222515b4f086c33b6ab0ad8a77772",
+    "failed_ci_run": 37526522571,
+    "failed_windows_job": 112484801596,
+    "original_test_blob": "9a9db5c392babd75437b43f3715a1025700a3364",
+    "original_tests_preserved_verbatim": true
+  },
+  "reproduction": {
+    "sha": "b3a95a9e856d949d142b62e6d82cc4d600d18f8c",
+    "tree": "1bfdbe06013ba40b137de7edd6d31eace61e61d0",
+    "branch": "test/pr15-autosave-snapshot-regression",
+    "route": "Actual AppState, successful first HTTP generation, delayed regeneration, public edit_script_block and actual auto_save_task",
+    "ordering": [
+      "Pause public edit after transaction-local command signature SELECT",
+      "Actual autosave commits through persistence::save_project",
+      "Release edit before first INSERT INTO commands"
+    ],
+    "writer_reserved": false,
+    "extended_sqlite_error_code": 517,
+    "public_error": "Internal(\"database is locked\")",
+    "original_windows_extended_code": "not present in CI log; 517 is established by the deterministic actual-service reproduction"
+  },
+  "repair": {
+    "sha": "d159bd3ae6f0ad4314504f681a707ceb6657db0f",
+    "tree": "40067a4e1de990d4f165d3d35e773413c8b84bcb",
+    "mechanism": "Read-only immutable replay check, BEGIN IMMEDIATE, signature recheck under writer ownership, unchanged guarded mutation and commit",
+    "new_mutexes": false,
+    "timeout_changes": false,
+    "busy_error_retry_or_suppression": false,
+    "writer_reserved": true,
+    "first_command_insert_extended_error": null,
+    "public_edit_result": "saved",
+    "manual_text_preserved": true,
+    "late_generation_refused": true,
+    "canonical_preview_reads_manual_text": true,
+    "late_refusal_history_unchanged": true
+  },
+  "local_gates": {
+    "server_tests": 485,
+    "core_tests": 119,
+    "ui_tests": 459,
+    "production_http_driver_tests": 39,
+    "no_download_tests": 5,
+    "server_all_target_clippy": "passed with -D warnings",
+    "frontend": [
+      "typecheck0/0",
+      "lint",
+      "format",
+      "build"
+    ],
+    "rustfmt": "passed",
+    "decision_traceability": "passed",
+    "locked_all_features_no_download_union": "passed"
+  },
+  "targeted_tests": [
+    "canonical_generation_service_tests::autosave_interleaving_after_public_edit_signature_read_preserves_manual_and_generation_custody",
+    "canonical_generation_service_tests::delayed_regeneration_refuses_a_saved_human_edit_and_canonical_preview_still_reads_it",
+    "history_store::tests::committed_replay_remains_read_only_while_another_connection_owns_the_writer",
+    "history_store::tests::concurrent_fresh_command_id_rechecks_signature_after_writer_admission"
+  ],
+  "receipts": {
+    "reproduction-b3a95a9.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/reproduction-b3a95a9.log",
+      "sha256": "63de6f18fbb4d6268d5ec526a8159305dd2df3a443beedd260c6fc84f8b1330f"
+    },
+    "repair-regression-final.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/repair-regression-final.log",
+      "sha256": "a365354b523e0a1d63bceec90e5786e3932d69077450eacb7b19ddd104cd4e50"
+    },
+    "server-tests.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/server-tests.log",
+      "sha256": "3606b9aabef52ce33f103c51d5e7cc06502dfac7690ff3bcb326b4c24d9cb130"
+    },
+    "core-tests.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/core-tests.log",
+      "sha256": "b88e0855b21d2b4c02eed9d65500a00396f9e032afc92d3ffb90a5ab59bf0ea7"
+    },
+    "server-clippy.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/server-clippy.log",
+      "sha256": "0da734edfb11bff717e794124605745670b43b81f8145db95767863223ccbf0b"
+    },
+    "ui-tests.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/ui-tests.log",
+      "sha256": "410d719a3bdcb1ed2b3cde9335da75ec0f7bf86466648ef0cedd5611a3bdc614"
+    },
+    "ui-typecheck.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/ui-typecheck.log",
+      "sha256": "78965ef5dd084a707f61890e7ca99867f50b4857d2bc20fb4d2eddb131d43c00"
+    },
+    "ui-lint.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/ui-lint.log",
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    "ui-format.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/ui-format.log",
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    "ui-build.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/ui-build.log",
+      "sha256": "c10ba0ebb90462d1801d3dc4a3163bf0c74915e17721c0a3957e138579dfc182"
+    },
+    "driver-tests.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/driver-tests.log",
+      "sha256": "1b3b800735cd414b290ec615d91d185d0b57f796d4749623fafa54d4ad19db43"
+    },
+    "no-download-tests.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/no-download-tests.log",
+      "sha256": "fcf369e01fbb156adb3e0f2554317a528c2530064facb9127519752c79767f1c"
+    },
+    "no-download.json": {
+      "path": "/workspace/scratch/pr15-autosave-repair/no-download.json",
+      "sha256": "1e7297da0ccc2431db2669855534c83715792bbc1434dbdfb062ab0cb7d5ab7d"
+    },
+    "traceability.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/traceability.log",
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+    },
+    "failed-windows-excerpt.log": {
+      "path": "/workspace/scratch/pr15-autosave-repair/failed-windows-excerpt.log",
+      "sha256": "e4b930ff8eff3a54b861972dd5edcd4e182dc8c20ae1e5d41f09b8d468bdfafa"
+    }
+  },
+  "limits": [
+    "The original Windows CI log exposes only database is locked, not its extended code.",
+    "Deterministic instrumentation establishes 517 at the actual public service command INSERT, rather than identifying a historical CI statement retroactively.",
+    "Full local workspace/native compilation remains unavailable because glib-2.0.pc is absent; unchanged hosted PR CI owns platform-wide checks.",
+    "Prior name-feature native screenshots and run37523579021 remain pinned to their original source; no post-repair screenshot or real-model claim.",
+    "No merge or CodeRabbit review request; parent owns review cadence and merge."
+  ]
+}

@@ -60,6 +60,7 @@ fn generate(
         block: b.clone(),
         script_inputs: Some(vec![]),
         bible_inputs: Some(vec![]),
+        bible_node_name_inputs: None,
         bible_relationship_inputs: relationships,
         bible_context_scope: None,
         script_context_scope: None,

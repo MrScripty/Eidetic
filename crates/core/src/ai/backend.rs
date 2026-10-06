@@ -118,6 +118,9 @@ pub struct GenerateRequest {
     /// Captured with the Bible projection in the same canonical read snapshot.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_inputs: Option<Vec<crate::contracts::BibleFieldInput>>,
+    /// Names actually supplied; absent legacy receipts remain unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_node_name_inputs: Option<Vec<crate::contracts::BibleNodeNameInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_relationship_inputs: Option<Vec<crate::contracts::BibleRelationshipInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

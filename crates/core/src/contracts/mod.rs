@@ -38,7 +38,8 @@ pub use agent_workflow::{
 };
 pub use ai_context::{
     AiBibleContextEdge, AiBibleContextField, AiBibleContextFieldRef, AiBibleContextNode,
-    AiBibleContextProjection, AiBibleContextSnapshot, BibleFieldInput, BibleRelationshipInput,
+    AiBibleContextProjection, AiBibleContextSnapshot, BibleFieldInput, BibleNodeNameInput,
+    BibleRelationshipInput,
 };
 pub use bible_graph::{
     BIBLE_GRAPH_NODE_TEXT_FIELD_KEY, BIBLE_GRAPH_NODE_TEXT_FIELD_SORT_ORDER,

@@ -1054,3 +1054,20 @@ object revision in the proposal receipt, even when another cause is selected.
 Retain explicit preview/acceptance and writer revalidation. No invented consumed
 relationship, canonical store, dependency or automatic text replacement. Missing
 legacy absence receipts require fresh review.
+
+### Consumed Bible node names
+
+Merged main `7a8172df78772f8f2b23bb8fe9a913aeb3b0bfd5` already carries manual
+screenplay revisions into canonical generation, agent reads, child planning and
+explicit targeted review. The public-name-edit reproduction demonstrates the
+separately documented node-name gap: a resolved prompt header names Mara, but a
+manual rename to Marisol leaves that generation unflagged. Bind only resolved
+header names through existing `BibleNode` / `UsesFact` dependencies and owned
+name revisions; parent/order metadata is not a name clock. Retain exact receipts
+in existing generation/proposal JSON, preserve late historical reads and ABA,
+and require live previously consumed names to remain in preview context. Deleted
+names use owned absence history. Legacy absent reads remain unknown. Reuse the
+existing targeted preview, explicit acceptance and manual-draft safeguards.
+Qualify exact native name editing and downstream review with synthetic HTTP/SSE
+responses labelled as such. No inferred facts, automatic Bible extraction,
+embedding dependency or timed name semantics belong to this slice.

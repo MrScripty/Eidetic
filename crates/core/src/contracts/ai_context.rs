@@ -19,6 +19,14 @@ pub struct BibleFieldInput {
     pub value: FieldValue,
 }
 
+/// Exact authored node name supplied in a resolved Bible context header.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleNodeNameInput {
+    pub node_id: BibleGraphNodeId,
+    pub name: String,
+    pub revision_event_id: ChangeEventId,
+}
+
 /// Exact untimed relationship supplied by the Bible resolver. Repeated incoming
 /// and outgoing appearances refer to one consumed edge identity and revision.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

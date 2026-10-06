@@ -38,6 +38,9 @@ fn capture_in_snapshot(
     {
         return Err(stale());
     }
+    let bible_node_name_absence_revisions = Some(
+        crate::bible_node_name_lineage::capture_absence_revisions(conn, &impact.causes)?,
+    );
     let bible_relationship_absence_revisions =
         Some(crate::bible_relationship_lineage::capture_absence_revisions(conn, &impact.causes)?);
     let cause = impact
@@ -140,6 +143,16 @@ fn capture_in_snapshot(
             "Bible review source is outside the current context; restore its context before previewing".into(),
         ));
     }
+    let bible_node_name_inputs = Some(crate::bible_node_name_lineage::capture(
+        conn,
+        &bible_context.payload,
+    )?);
+    crate::bible_node_name_lineage::validate_preview_inputs(
+        conn,
+        request.generation_event_id,
+        &request.segment_id,
+        bible_node_name_inputs.as_ref().unwrap(),
+    )?;
     let bible_relationship_inputs = Some(crate::bible_relationship_lineage::capture(
         conn,
         &bible_context.payload,
@@ -169,6 +182,8 @@ fn capture_in_snapshot(
         script_inputs,
         bible_context,
         bible_inputs,
+        bible_node_name_inputs,
+        bible_node_name_absence_revisions,
         bible_relationship_inputs,
         bible_relationship_absence_revisions,
         bible_context_scope,
@@ -337,6 +352,7 @@ pub(crate) fn accept_bound_proposal(
         target_binding: None,
         block: write.clone(),
         script_inputs: Some(binding.script_inputs.clone()),
+        bible_node_name_inputs: binding.bible_node_name_inputs.clone(),
         bible_relationship_inputs: binding.bible_relationship_inputs.clone(),
         bible_inputs: Some(binding.bible_inputs.clone()),
         bible_context_scope: binding.bible_context_scope.clone(),

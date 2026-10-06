@@ -523,7 +523,7 @@ preview/acceptance recapture refuses drift and ABA. Sparse edge history particip
 in revision custody; divergent sparse/live payloads are refused until reconciled
 by the canonical graph command. Off-scope edge edits do not invalidate a preview
 through the global Bible projection clock. Timed edge semantics, new edge membership
-and Bible node-name provenance are not implemented by this bounded successor.
+remain outside that relationship successor; consumed node names are handled below.
 
 Relationship label updates use `bible_graph_edge_label_command.rs` and existing command/revision history. Node detail exposes each edge’s owned revision from the same read snapshot; the writer checks that revision and updates only the label of an active edge. Deleted or changed identities refuse without recording history, and command replay remains idempotent.
 
@@ -533,3 +533,30 @@ write returns its source projection; an exact command-ID/payload replay returns
 the relationship and its source node does not invalidate an already committed
 command. Replay performs no row writes and never recreates graph material. Fresh
 commands retain every active-identity and owned-revision guard.
+
+`bible_node_name_lineage` captures only resolved header names in the same read
+snapshot as Bible fields/relationships. It validates exact owned historical
+name deltas, stores existing `BibleNode` / `UsesFact` dependencies and produces
+changed/deleted review causes with historical excerpts. Late output retains its
+original read. Targeted preview must retain every live consumed name in scope;
+owned deletion history and name revisions detect ABA at explicit acceptance.
+Saved manual screenplay and drafts use the existing custody and replacement
+rules. Legacy absent name receipts stay unknown; no backfill or inferred facts.
+A sparse owned node deletion while the physical graph still exposes its name
+refuses capture: deletion history cannot be labelled as an unchanged live read.
+
+
+The PR15 autosave/edit diagnostic uses test-only, command-ID and database-path
+barriers. It pauses the real public edit after signature SELECT, allows the actual
+autosave loop to commit, and observes SQLite's extended code at the first command
+INSERT. This establishes BUSY_SNAPSHOT(517) rather than assuming a Windows flake.
+Production locking, delays and error handling are unchanged in the reproducer.
+
+History writes reserve SQLite ownership with BEGIN IMMEDIATE before their
+transaction-local signature read. Exact immutable replay remains a read-only
+fast path, while a second signature check under writer ownership handles another
+caller committing the same ID during admission. Existing callbacks revalidate
+canonical revisions/locks under that writer and failed mutations roll back history.
+This adds no application mutex, timeout, retry loop or inverted session/doc lock.
+The actual autosave/public-edit barrier regression retains manual text, refuses
+late generation and proves canonical preview still reads the manual edit.

@@ -4,6 +4,81 @@ use eidetic_core::{Error, Template};
 use futures::stream;
 
 #[tokio::test]
+async fn public_consumed_bible_name_edit_marks_saved_screenplay_for_review() {
+    use eidetic_core::contracts::*;
+    let fixture = fixture().await;
+    crate::command_service::create_bible_graph_node(
+        &fixture.state,
+        serde_json::from_value(serde_json::json!({
+            "id": Uuid::new_v4(), "payload": {
+                "node_id": "Mara", "schema_key": "character", "name": "Mara", "sort_order": 0
+            }
+        }))
+        .unwrap(),
+    )
+    .await
+    .unwrap();
+    let project = fixture.state.project.lock().as_ref().unwrap().clone();
+    let mut request =
+        eidetic_core::ai::prompt::build_generate_request(&project, fixture.node_id).unwrap();
+    crate::ai_service::attach_ai_generation_context(
+        &mut request,
+        fixture.path.clone(),
+        fixture.node_id,
+    )
+    .await
+    .unwrap();
+    assert!(
+        crate::prompt_format::build_chat_prompt(&request)
+            .user
+            .contains("- Mara [character] (Mara)")
+    );
+    persist_generated_script_block(
+        fixture.path.clone(),
+        fixture.node_id.0,
+        "Synthetic screenplay starring Mara.".into(),
+        GenerationInputs {
+            script_inputs: request.script_context,
+            bible_inputs: request.bible_inputs,
+            bible_node_name_inputs: request.bible_node_name_inputs,
+            bible_relationship_inputs: request.bible_relationship_inputs,
+            bible_context_scope: request.bible_context_scope,
+            script_context_scope: request.script_context_scope,
+            target_binding: request.generation_target,
+            ..GenerationInputs::default()
+        },
+    )
+    .await
+    .unwrap();
+    let before = script(&fixture);
+    crate::command_service::set_bible_graph_node_name(
+        &fixture.state,
+        CommandEnvelope::new(SetBibleGraphNodeNameCommand {
+            node_id: BibleGraphNodeId::new("Mara").unwrap(),
+            name: "Marisol".into(),
+        }),
+    )
+    .await
+    .unwrap();
+    let after = script(&fixture);
+    assert_eq!(
+        after.payload.segments[0].blocks,
+        before.payload.segments[0].blocks
+    );
+    let needs_review = after.payload.segments[0]
+        .impact
+        .as_ref()
+        .unwrap()
+        .needs_review;
+    fixture.state.shutdown_tasks_async().await;
+    std::fs::remove_file(&fixture.path).unwrap();
+    assert!(
+        needs_review,
+        "A name actually supplied to generation changed without downstream review"
+    );
+}
+
+#[tokio::test]
 async fn public_relationship_edit_publishes_affected_review_from_original_generation_read() {
     use eidetic_core::contracts::*;
     let fixture = fixture().await;
@@ -70,6 +145,7 @@ async fn public_relationship_edit_publishes_affected_review_from_original_genera
         GenerationInputs {
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
+            bible_node_name_inputs: request.bible_node_name_inputs,
             bible_relationship_inputs: request.bible_relationship_inputs,
             bible_context_scope: request.bible_context_scope,
             script_context_scope: request.script_context_scope,
@@ -184,6 +260,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
         )])),
         GenerationInputs {
             script_inputs: request.script_context,
+            bible_node_name_inputs: request.bible_node_name_inputs,
             bible_relationship_inputs: request.bible_relationship_inputs,
             bible_inputs: request.bible_inputs,
             bible_context_scope: request.bible_context_scope,

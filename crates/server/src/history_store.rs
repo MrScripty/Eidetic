@@ -127,8 +127,26 @@ where
     T: Serialize,
     F: FnOnce(&Transaction<'_>) -> Result<(), HistoryStoreError>,
 {
+    // Committed commands are immutable. Exact replay is a read-only operation,
+    // including query_only connections and replay while another writer is busy.
+    if let Some(outcome) = check_recorded_command(conn, command, payload_type)? {
+        return Ok(outcome);
+    }
     let payload_json = serde_json::to_string(&command.payload)?;
-    let tx = conn.transaction()?;
+    // Reserve the writer before reading transaction-local authority. A deferred
+    // signature read could become a stale WAL snapshot when autosave commits;
+    // promotion then fails with BUSY_SNAPSHOT without invoking the busy handler.
+    #[cfg(test)]
+    let probe = crate::write_concurrency_probe::take_command(command.id);
+    #[cfg(test)]
+    if let Some(probe) = &probe {
+        let _ = probe
+            .stages
+            .send(crate::write_concurrency_probe::CommandStage::BeforeAdmission);
+    }
+    let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+    // Another caller may have committed this ID while admission waited. Keep the
+    // existing signature check under writer ownership; never trust the early miss.
     if let Some(existing) = existing_command_signature(&tx, command.id)? {
         if existing.payload_type == payload_type && existing.payload_json == payload_json {
             return Ok(RecordChangeOutcome::AlreadyRecorded);
@@ -138,7 +156,15 @@ where
         ));
     }
 
-    tx.execute(
+    #[cfg(test)]
+    if let Some(probe) = &probe {
+        let _ = probe
+            .stages
+            .send(crate::write_concurrency_probe::CommandStage::SignatureRead);
+        // Only this command's blocking worker pauses; no registry lock is held.
+        let _ = probe.release.recv();
+    }
+    let insert = tx.execute(
         "INSERT INTO commands (id, payload_type, payload_json, created_at_ms)
          VALUES (?1, ?2, ?3, ?4)",
         params![
@@ -147,7 +173,20 @@ where
             payload_json,
             event.created_at_ms
         ],
-    )?;
+    );
+    #[cfg(test)]
+    if let Some(probe) = &probe {
+        let extended_error_code = match &insert {
+            Err(rusqlite::Error::SqliteFailure(error, _)) => Some(error.extended_code),
+            _ => None,
+        };
+        let _ = probe
+            .stages
+            .send(crate::write_concurrency_probe::CommandStage::FirstInsert {
+                extended_error_code,
+            });
+    }
+    insert?;
 
     tx.execute(
         "INSERT INTO change_events (id, command_id, kind, summary, created_at_ms)

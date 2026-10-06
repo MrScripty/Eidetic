@@ -90,3 +90,9 @@ GenerateRequest forwards optional BibleContextScope captured with canonical Bibl
 Screenplay requests capture BibleRelationshipInput with the Bible projection in
 one read snapshot. Runtime persistence forwards those original inputs, including
 a known empty set, without rebinding late output to current relationships.
+
+Canonical screenplay generation requests also carry optional
+`BibleNodeNameInput` receipts for authored names in resolved Bible headers.
+These accompany existing field and relationship inputs; downstream persistence
+retains the captured name revision rather than rebinding late output to latest.
+Legacy requests omit receipts and do not infer past name consumption.
