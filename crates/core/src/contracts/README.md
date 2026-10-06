@@ -135,3 +135,6 @@ Consumed untimed Bible relationships retain exact edge payloads and source
 revisions in optional BibleRelationshipInput receipts. BibleEdge UsesFact
 dependencies reuse existing dependency storage; absent legacy receipts remain
 unknown. Captured endpoints, kind, label and direction are historical evidence.
+Targeted proposals also retain optional per-identity absence revision pairs for
+previously consumed edges. These bind missing-state history without inventing a
+consumed value; a missing legacy receipt requires fresh review.

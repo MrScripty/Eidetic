@@ -1042,3 +1042,15 @@ unknown. Qualify label-only native editing through the existing set-edge command
 affected review and separate explicit acceptance, preserving manual screenplay
 and drafts. Timed relationship semantics, new relationship membership detection,
 node-name provenance and broader authoring remain separate gaps.
+
+### Consumed relationship absence custody
+
+The focused deleted_relationship_preview_refuses_absence_aba_without_writes
+regression fails on frozen source237d048: a deletion preview is accepted after
+recreate/delete because both current revisions are None and the unrelated global
+Bible clock is correctly excluded. Preserve that reproduction and published
+source. Bind all absent consumed edge identities to their latest owned existing
+object revision in the proposal receipt, even when another cause is selected.
+Retain explicit preview/acceptance and writer revalidation. No invented consumed
+relationship, canonical store, dependency or automatic text replacement. Missing
+legacy absence receipts require fresh review.

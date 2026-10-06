@@ -72,6 +72,7 @@ export interface PropagationProposal {
           revision_event_id: string;
         }[]
       | null;
+    bible_relationship_absence_revisions?: [string, string][] | null;
   } | null;
 }
 

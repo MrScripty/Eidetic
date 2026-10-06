@@ -38,6 +38,8 @@ fn capture_in_snapshot(
     {
         return Err(stale());
     }
+    let bible_relationship_absence_revisions =
+        Some(crate::bible_relationship_lineage::capture_absence_revisions(conn, &impact.causes)?);
     let cause = impact
         .causes
         .into_iter()
@@ -172,6 +174,7 @@ fn capture_in_snapshot(
         bible_context,
         bible_inputs,
         bible_relationship_inputs,
+        bible_relationship_absence_revisions,
         bible_context_scope,
         script_context_scope,
     })

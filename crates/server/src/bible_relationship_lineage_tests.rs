@@ -249,6 +249,123 @@ fn label_kind_direction_endpoint_and_delete_recreate_aba_refuse_old_preview_with
 }
 
 #[test]
+fn deleted_relationship_preview_refuses_absence_aba_without_writes() {
+    let (mut conn, _, a, b, c) = fixture();
+    let edge = setup(&mut conn);
+    let manual = (text(&conn, &a), text(&conn, &c));
+    let inputs = captured(&conn, &b);
+    generate(&mut conn, &b, Some(inputs));
+    let delete = |conn: &mut Connection| {
+        bible_graph_command::apply_delete_bible_graph_edge(
+            conn,
+            &CommandEnvelope::new(DeleteBibleGraphEdgeCommand {
+                edge_id: edge.edge_id.clone(),
+            }),
+            5,
+        )
+        .unwrap();
+    };
+    delete(&mut conn);
+    let command = preview(&mut conn, &b);
+    let captured = script_impact_review::capture(&conn, &command.payload).unwrap();
+    assert!(
+        captured
+            .bible_relationship_inputs
+            .as_ref()
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(
+        captured
+            .bible_relationship_absence_revisions
+            .as_ref()
+            .unwrap()
+            .len(),
+        1
+    );
+    set(&mut conn, &edge);
+    delete(&mut conn);
+    let before = rows(&conn);
+    assert!(
+        accept(&mut conn, &command).is_err(),
+        "An absent edge is a revision-bound read, not a timeless None"
+    );
+    assert_eq!(rows(&conn), before);
+    assert_eq!(text(&conn, &b), b.text);
+    assert_eq!((text(&conn, &a), text(&conn, &c)), manual);
+    let fresh = preview(&mut conn, &b);
+    accept(&mut conn, &fresh).unwrap();
+    assert!(!impact(&conn, &b).needs_review);
+    assert_eq!((text(&conn, &a), text(&conn, &c)), manual);
+}
+
+#[test]
+fn absent_consumed_relationship_is_guarded_when_preview_selects_another_cause() {
+    let (mut conn, _, a, b, c) = fixture();
+    let edge = setup(&mut conn);
+    let manual = (text(&conn, &a), text(&conn, &c));
+    let mut other = edge.clone();
+    other.edge_id = BibleGraphEdgeId::new("Mara.Noor").unwrap();
+    other.to_node_id = BibleGraphNodeId::new("Noor").unwrap();
+    set(&mut conn, &other);
+    let inputs = captured(&conn, &b);
+    generate(&mut conn, &b, Some(inputs));
+    let delete = |conn: &mut Connection| {
+        bible_graph_command::apply_delete_bible_graph_edge(
+            conn,
+            &CommandEnvelope::new(DeleteBibleGraphEdgeCommand {
+                edge_id: edge.edge_id.clone(),
+            }),
+            5,
+        )
+        .unwrap();
+    };
+    delete(&mut conn);
+    other.label = "Mara doubts Noor".into();
+    set(&mut conn, &other);
+    let mut command = request(&conn, &b);
+    command.payload.dependency_id = impact(&conn, &b)
+        .causes
+        .iter()
+        .find(|cause| {
+            cause.input
+                == SemanticDependencyEndpoint::BibleEdge {
+                    edge_id: other.edge_id.clone(),
+                }
+        })
+        .unwrap()
+        .dependency_id
+        .clone();
+    let binding = script_impact_review::capture(&conn, &command.payload).unwrap();
+    assert_eq!(
+        binding
+            .bible_relationship_absence_revisions
+            .as_ref()
+            .unwrap()[0]
+            .0,
+        edge.edge_id
+    );
+    script_impact_review::record_proposal(
+        &mut conn,
+        &command,
+        binding.clone(),
+        "Synthetic review of two inputs".into(),
+        4,
+    )
+    .unwrap();
+    let mut legacy = binding;
+    legacy.bible_relationship_absence_revisions = None;
+    assert!(script_impact_review::validate_binding(&conn, &legacy).is_err());
+    set(&mut conn, &edge);
+    delete(&mut conn);
+    let before = rows(&conn);
+    assert!(accept(&mut conn, &command).is_err());
+    assert_eq!(rows(&conn), before);
+    assert_eq!(text(&conn, &b), b.text);
+    assert_eq!((text(&conn, &a), text(&conn, &c)), manual);
+}
+
+#[test]
 fn off_scope_relationship_edits_do_not_create_review_or_invalidate_current_preview() {
     let (mut conn, _, _, b, _) = fixture();
     let mut edge = setup(&mut conn);

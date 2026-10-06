@@ -513,7 +513,11 @@ same guard before proposal persistence/acceptance. Restore context through exist
 assignments and request a fresh preview. Removed fields need no invented value.
 
 Bible relationship lineage binds only actual resolver-supplied edges, deduplicated
-by identity. Existing generation command JSON and UsesFact dependencies own the
+by identity. Preview custody separately retains latest owned revisions for every
+absent consumed edge, including when another cause is selected. Recreate/delete
+ABA cannot disappear behind a repeated None. These negative reads reuse existing
+object history and proposal JSON, and are never generated UsesFact values.
+Existing generation command JSON and UsesFact dependencies own the
 receipts; existing impact review derives changed/deleted causes and writer-side
 preview/acceptance recapture refuses drift and ABA. Sparse edge history participates
 in revision custody; divergent sparse/live payloads are refused until reconciled

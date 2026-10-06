@@ -1742,3 +1742,20 @@ assertion failures and the first full-suite's17 read-only default-XDG setup
 failures are preserved in scratch logs; the full server rerun using writable
 task-local XDG directories passed all464. Hosted actual native qualification is
 pending at this source checkpoint; all planned HTTP outputs are synthetic.
+
+### Relationship absence guard and native observation checkpoint
+
+Frozen source237d048 and qualification15bfd3a remain published. Native run37490179062
+passed unchanged-source, ordinary build and all gates, then completed the exact
+relationship edit, pending disclosure and label ABA. Its failure capture shows
+the exact stale-refusal message and still-saved Blue screenplay, but the broad
+accessibility lookup timed out before the all-row observation. Preserve artifact
+11426305722; native ABA rollback is not qualified by this failed run alone.
+
+A separate source reproduction proves deletion-preview recreate/delete ABA was
+accepted on237d048 (0/1). The successor binds per-identity absence to existing
+owned object revision history in existing proposal JSON, including missing edges
+when another impact cause is selected. No value consumption is fabricated.
+The focused repaired tests pass with all-row refusal, manual preservation, fresh
+explicit acceptance and missing-legacy-absence refusal. Full successor gates and
+source-bound native qualification are recorded before final delivery.

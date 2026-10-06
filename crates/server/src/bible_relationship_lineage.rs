@@ -50,6 +50,31 @@ fn invalid() -> HistoryStoreError {
     )
 }
 
+/// Reuse owned object revisions just as child-plan Bible custody does. Missing
+/// consumed edges must retain identity history: recreate/delete is still drift.
+pub(crate) fn capture_absence_revisions(
+    conn: &Connection,
+    causes: &[ScriptImpactCause],
+) -> Result<Vec<(BibleGraphEdgeId, ChangeEventId)>, HistoryStoreError> {
+    let mut missing = BTreeMap::new();
+    for cause in causes {
+        if let SemanticDependencyEndpoint::BibleEdge { edge_id } = &cause.input
+            && cause.current_revision_event_id.is_none()
+        {
+            let latest = crate::history_store::load_revisions_for_object(
+                conn,
+                ObjectKind::BibleEdge,
+                edge_id.as_str(),
+            )?
+            .last()
+            .map(|revision| revision.change_event_id)
+            .ok_or_else(invalid)?;
+            missing.insert(edge_id.as_str().to_owned(), (edge_id.clone(), latest));
+        }
+    }
+    Ok(missing.into_values().collect())
+}
+
 fn endpoint_id(edge_id: &BibleGraphEdgeId) -> SemanticDependencyEndpoint {
     SemanticDependencyEndpoint::BibleEdge {
         edge_id: edge_id.clone(),
