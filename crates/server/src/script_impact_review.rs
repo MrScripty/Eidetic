@@ -144,16 +144,12 @@ fn capture_in_snapshot(
         conn,
         &bible_context.payload,
     )?);
-    if let SemanticDependencyEndpoint::BibleEdge { edge_id } = &cause.input
-        && cause.current_revision_event_id.is_some()
-        && !bible_relationship_inputs
-            .as_ref()
-            .unwrap()
-            .iter()
-            .any(|input| input.edge.edge_id == *edge_id)
-    {
-        return Err(HistoryStoreError::InvalidValue("Bible relationship review source is outside the current context; restore its context before previewing".into()));
-    }
+    crate::bible_relationship_lineage::validate_preview_inputs(
+        conn,
+        request.generation_event_id,
+        &request.segment_id,
+        bible_relationship_inputs.as_ref().unwrap(),
+    )?;
     let bible_inputs = crate::bible_field_lineage::capture(conn, &bible_context.payload)?;
     crate::bible_context_scope::validate_preview_inputs(
         conn,

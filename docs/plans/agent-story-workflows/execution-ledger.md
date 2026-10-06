@@ -1759,3 +1759,15 @@ when another impact cause is selected. No value consumption is fabricated.
 The focused repaired tests pass with all-row refusal, manual preservation, fresh
 explicit acceptance and missing-legacy-absence refusal. Full successor gates and
 source-bound native qualification are recorded before final delivery.
+
+### Consumed live relationship leaves bounded resolver
+
+A source-level regression with206 nodes and two previously consumed edges proves
+85170c9 could preview a selected visible cause while dropping another live input
+outside the200-node resolver. The repair reuses current-generation UsesFact
+revision bindings to require every previously consumed live edge in the current
+read, including unchanged inputs. Restore context before previewing. The test
+covers changed and unchanged out-of-scope inputs and refuses both new preview
+and acceptance of an earlier pending preview with all logical rows and manual
+screenplay unchanged. Full server467 and strict all-target Clippy pass. Existing
+unconsumed off-scope edits remain permitted. No additional state or dependency.

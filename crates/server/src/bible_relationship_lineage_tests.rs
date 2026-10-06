@@ -609,3 +609,66 @@ fn unrelated_event_cannot_be_forged_as_a_consumed_relationship_revision() {
     input.revision_event_id = ChangeEventId(uuid::Uuid::parse_str(&event).unwrap());
     assert!(validate_history(&conn, &input).is_err());
 }
+
+#[test]
+fn consumed_live_relationship_outside_bounded_context_refuses_other_cause_preview() {
+    let (mut conn, _, a, b, c) = fixture();
+    node(&mut conn, "Mara", 0);
+    node(&mut conn, "Eli", 900);
+    node(&mut conn, "Noor", 1);
+    let mut edge = SetBibleGraphEdgeCommand {
+        edge_id: BibleGraphEdgeId::new("Mara.Eli").unwrap(),
+        from_node_id: BibleGraphNodeId::new("Mara").unwrap(),
+        to_node_id: BibleGraphNodeId::new("Eli").unwrap(),
+        edge_kind: BibleGraphEdgeKind::References,
+        label: "Mara trusts Eli".into(),
+        directed: true,
+        sort_order: 0,
+    };
+    set(&mut conn, &edge);
+    let mut other = edge.clone();
+    other.edge_id = BibleGraphEdgeId::new("Mara.Noor").unwrap();
+    other.to_node_id = BibleGraphNodeId::new("Noor").unwrap();
+    set(&mut conn, &other);
+    let inputs = captured(&conn, &b);
+    assert_eq!(inputs.len(), 2);
+    generate(&mut conn, &b, Some(inputs));
+    other.label = "Mara doubts Noor".into();
+    set(&mut conn, &other);
+    let pending = preview(&mut conn, &b);
+    for index in 2..205 {
+        node(&mut conn, &format!("Filler{index:03}"), index);
+    }
+    assert_eq!(captured(&conn, &b).len(), 1);
+    let mut command = request(&conn, &b);
+    command.payload.dependency_id = impact(&conn, &b)
+        .causes
+        .iter()
+        .find(|cause| {
+            cause.input
+                == SemanticDependencyEndpoint::BibleEdge {
+                    edge_id: other.edge_id.clone(),
+                }
+        })
+        .unwrap()
+        .dependency_id
+        .clone();
+    let manual = (text(&conn, &a), text(&conn, &c));
+    for changed in [false, true] {
+        if changed {
+            edge.label = "Mara doubts Eli".into();
+            set(&mut conn, &edge);
+        }
+        let before = rows(&conn);
+        let error = script_impact_review::capture(&conn, &command.payload).unwrap_err();
+        assert!(
+            error.to_string().contains("outside the current context"),
+            "{error}"
+        );
+        assert_eq!(rows(&conn), before);
+        assert!(accept(&mut conn, &pending).is_err());
+        assert_eq!(rows(&conn), before);
+        assert_eq!(text(&conn, &b), b.text);
+        assert_eq!((text(&conn, &a), text(&conn, &c)), manual);
+    }
+}

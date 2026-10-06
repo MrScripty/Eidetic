@@ -5,6 +5,9 @@ use eidetic_core::contracts::*;
 use rusqlite::{Connection, OptionalExtension};
 
 use crate::history_store::HistoryStoreError;
+use crate::semantic_dependency_store::{
+    DependencyDirection, DependencyEndpointFilter, SemanticDependencyFilter,
+};
 
 /// Caller owns the read snapshot covering both resolution and revision capture.
 pub(crate) fn capture(
@@ -73,6 +76,47 @@ pub(crate) fn capture_absence_revisions(
         }
     }
     Ok(missing.into_values().collect())
+}
+
+/// A targeted update replaces generation lineage. Every previously consumed
+/// live relationship must remain in the new read, even when another cause is
+/// selected and this input itself has not changed. Deleted inputs use absence
+/// custody; live inputs outside bounded resolution require restored context.
+pub(crate) fn validate_preview_inputs(
+    conn: &Connection,
+    generation_event_id: ChangeEventId,
+    segment_id: &ScriptSegmentId,
+    inputs: &[BibleRelationshipInput],
+) -> Result<(), HistoryStoreError> {
+    let dependencies = crate::semantic_dependency_store::load_semantic_dependency_projection(
+        conn,
+        &SemanticDependencyFilter {
+            endpoint: DependencyEndpointFilter {
+                kind: "script_segment".into(),
+                id: segment_id.as_str().into(),
+                part_key: None,
+                field_key: None,
+            },
+            direction: DependencyDirection::Source,
+        },
+    )
+    .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
+    for dependency in dependencies.payload.dependencies {
+        if !dependency
+            .revision_binding
+            .as_ref()
+            .is_some_and(|binding| binding.source_revision_event_id == generation_event_id)
+        {
+            continue;
+        }
+        if let SemanticDependencyEndpoint::BibleEdge { edge_id } = &dependency.target
+            && current_revision(conn, &dependency.target)?.is_some()
+            && !inputs.iter().any(|input| input.edge.edge_id == *edge_id)
+        {
+            return Err(HistoryStoreError::InvalidValue("Bible relationship review source is outside the current context; restore its context before previewing".into()));
+        }
+    }
+    Ok(())
 }
 
 fn endpoint_id(edge_id: &BibleGraphEdgeId) -> SemanticDependencyEndpoint {
