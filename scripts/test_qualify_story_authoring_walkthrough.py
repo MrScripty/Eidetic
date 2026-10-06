@@ -57,6 +57,19 @@ class NativeAuthoringProviderTests(unittest.TestCase):
         self.assertFalse(provider.contains_expected_context(initial+driver.E_TEXT,'generation'))
 
 
+class FormattedScreenplayAnchorTests(unittest.TestCase):
+    def test_raw_multiline_C_is_located_by_its_unique_rendered_action_line(self):
+        # The native failure capture shows a separate heading and action <p>.
+        rendered_children=['INT. TICKET OFFICE - NIGHT','The departure board reads midnight.']
+        self.assertFalse(any(driver.C_TEXT.strip() in child for child in rendered_children))
+        self.assertEqual(driver.screenplay_anchor(driver.C_TEXT),rendered_children[1])
+        self.assertTrue(any(driver.screenplay_anchor(driver.C_TEXT) in child for child in rendered_children))
+        self.assertEqual(driver.screenplay_anchor(driver.F_TEXT),'Eli keeps the gate open.')
+        self.assertEqual(driver.screenplay_anchor(driver.GENERATED),driver.GENERATED.strip())
+        with self.assertRaisesRegex(RuntimeError,'no authored text'):
+            driver.screenplay_anchor('\n\n')
+
+
 class VisibleProposalGeometryTests(unittest.TestCase):
     def test_showing_or_window_bounds_cannot_substitute_for_actual_script_viewport(self):
         viewport=(280,200,1320,840)

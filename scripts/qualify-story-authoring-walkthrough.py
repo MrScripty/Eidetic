@@ -55,6 +55,17 @@ class AuthoringProvider(ui.FixtureProvider):
         return PROPOSED if kind == 'preview' else 'Mara waits for Eli at the station.' if kind == 'recap' else GENERATED
 
 
+def screenplay_anchor(exact_text):
+    # ScriptView renders screenplay headings/action/dialogue as separate nodes;
+    # a raw multiline block cannot be a substring of any single rendered child.
+    # This fixture's distinctive action line identifies the native block, while
+    # textarea and canonical-read checks below still require every exact byte.
+    lines = [line for line in exact_text.splitlines() if line.strip()]
+    if not lines:
+        raise RuntimeError('QA screenplay anchor has no authored text')
+    return lines[1] if len(lines) > 1 else lines[0]
+
+
 def fact(database):
     return next(iter(ui.query(database, "SELECT text_value,updated_event_id FROM bible_graph_fields WHERE id='qualification.mara.tagline'")), None)
 
@@ -272,19 +283,21 @@ def main():
         evidence['generation'] = {'block_id':generated[0], 'revision_event_id':generated[2], 'real_model':False,
                                   'actual_GUI_Generate':True, 'exact_original_A_consumed':True}
         original[b_id] = ui.blocks(database,b_id)
-        block = ui.wait_for('generated B native block',lambda:ui.screenplay_block(application,GENERATED.strip()))
+        block = ui.wait_for('generated B native block',lambda:ui.screenplay_block(application,screenplay_anchor(GENERATED)))
         ui.reveal_button(block,'Edit',window)
         field = ui.wait_for('B edit field',lambda:ui.editable(application,GENERATED))
         ui.type_text(field,window,MANUAL)
-        block = ui.wait_for('B exact manual draft',lambda:ui.screenplay_block(application,MANUAL.strip()))
+        block = ui.wait_for('B exact manual draft',lambda:ui.screenplay_block(application,screenplay_anchor(MANUAL)))
         ui.reveal_button(block,'Save',window)
         b = ui.wait_for('saved exact manual B',lambda:next((row for row in ui.blocks(database,b_id) if row[1]==MANUAL),None))
         original[b_id] = ui.blocks(database,b_id)
-        block = ui.wait_for('C manual source block',lambda:ui.screenplay_block(application,C_TEXT.strip()))
+        evidence['manual_B_save']={'exact_text':MANUAL,'revision_event_id':b[2]}
+        checkpoint('native generation and exact manual B saved; begin upstream C edit')
+        block = ui.wait_for('C manual source block',lambda:ui.screenplay_block(application,screenplay_anchor(C_TEXT)))
         ui.reveal_button(block,'Edit',window)
         field = ui.wait_for('C exact existing text',lambda:ui.editable(application,C_TEXT))
         ui.type_text(field,window,C_EDITED)
-        block = ui.wait_for('C exact edited draft',lambda:ui.screenplay_block(application,C_EDITED.strip()))
+        block = ui.wait_for('C exact edited draft',lambda:ui.screenplay_block(application,screenplay_anchor(C_EDITED)))
         ui.reveal_button(block,'Save',window)
         c = ui.wait_for('saved midnight-to-morning C',lambda:next((row for row in ui.blocks(database,c_id) if row[1]==C_EDITED),None))
         original[c_id] = ui.blocks(database,c_id)
@@ -295,7 +308,7 @@ def main():
         ui.wait_for('manual source edit causes downstream review',lambda:ui.reveal(application,lambda n:'Source screenplay text changed.' in ui.text_of(n)))
         checkpoint('native exact manual edits save B and change C from midnight to morning')
         capture('eidetic-story-authoring-manual-edit.png')
-        block = ui.wait_for('unrelated F saved block',lambda:ui.screenplay_block(application,F_TEXT.strip()))
+        block = ui.wait_for('unrelated F saved block',lambda:ui.screenplay_block(application,screenplay_anchor(F_TEXT)))
         ui.reveal_button(block,'Edit',window)
         field = ui.wait_for('F exact edit field',lambda:ui.editable(application,F_TEXT))
         ui.type_text(field,window,DRAFT)
@@ -375,7 +388,7 @@ def main():
             return not any(n.name=='Screenplay needs review' for n in ui.walk(application))
         ui.wait_for('old downstream review cleared',cleared)
         ui.wait_for('F exact draft remains editable after B acceptance',lambda:draft_field(application))
-        ui.wait_for('canonical accepted paragraph visible',lambda:ui.screenplay_block(application,PROPOSED.strip()))
+        ui.wait_for('canonical accepted paragraph visible',lambda:ui.screenplay_block(application,screenplay_anchor(PROPOSED)))
         accepted_visibility=reveal_visible_proposal(application,window,pending=False)
         evidence['acceptance']={'revision_event_id':accepted[2],'only_B_changed':True,'Bible_revision_refreshed':edited_fact[1],
                                 'accepted_proposal_visible':accepted_visibility,'unrelated_F_draft_still_open':True,'review_cleared':True}
