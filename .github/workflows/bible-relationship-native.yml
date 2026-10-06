@@ -2,7 +2,7 @@ name: Consumed Bible relationships exact-source native qualification
 
 on:
   push:
-    branches: [test/screenplay-bible-relationship-label-native]
+    branches: [test/screenplay-bible-relationship-label-native, test/screenplay-bible-relationship-replay-native]
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: e94cbffa88fd3f58665e55a22b1c5969c60d3d4e
+      EIDETIC_CAPTURE_SOURCE: 55536fa85fb91b0673d94e97b9f06b7297f23b12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,6 +41,8 @@ jobs:
               'scripts/test_qualify_bible_relationship.py',
               'docs/reports/bible-relationship-qualification.md',
               'docs/reports/bible-relationship-manifest.json',
+              'docs/reports/bible-relationship-replay-repair.md',
+              'docs/reports/bible-relationship-replay-repair.json',
               'docs/plans/agent-story-workflows/execution-ledger.md',
           }
           changed = set(subprocess.check_output([
@@ -105,6 +107,14 @@ jobs:
           mkdir -p "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME"
           cargo test --locked -p eidetic-core
           cargo test --locked -p eidetic-server --lib
+      - name: Verify committed label replay after edge and source deletion
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/eidetic-capture-artifact"
+          cargo test --locked -p eidetic-server --lib \
+            bible_graph_edge_label_command::tests::committed_label_replay_after_edge_and_source_deletion_is_read_only \
+            -- --exact 2>&1 | tee "${RUNNER_TEMP}/eidetic-capture-artifact/deleted-source-replay-regression.txt"
       - name: Qualify actual native relationship edit, ABA refusal and explicit review
         timeout-minutes: 6
         env:
@@ -132,3 +142,4 @@ jobs:
             ${{ runner.temp }}/eidetic-capture-artifact/eidetic-relationship-readable.png
             ${{ runner.temp }}/eidetic-capture-artifact/app-sanitized.log
             ${{ runner.temp }}/eidetic-capture-artifact/capture-evidence.json
+            ${{ runner.temp }}/eidetic-capture-artifact/deleted-source-replay-regression.txt
