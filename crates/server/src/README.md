@@ -93,7 +93,7 @@ domain model in `eidetic-core`.
 | `ai_backends/` | Provider adapters for local and remote text generation backends. |
 | `child_plan_generation.rs` | Pending child decomposition using canonical screenplay receipts and existing provider adapters. |
 | `child_plan_memory.rs` | Revision-bound parent/subtree and bounded screenplay inputs stored in existing child-plan command history. |
-| `child_plan_memory_service_tests.rs` | Actual public manual edits, synthetic HTTP pending plans, explicit acceptance, ABA/membership refusal and unchanged screenplay. |
+| `child_plan_memory_service_tests.rs` | Actual public manual edits, synthetic HTTP pending plans, explicit acceptance, ABA/membership refusal, unchanged screenplay and exact durable public-projection recovery in a fresh AppState. |
 
 ## Problem
 The application needs backend-owned services that expose core behavior to the
@@ -147,6 +147,12 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+
+- Child-plan list projections recover existing durable canonical proposals and
+  original screenplay inputs without acknowledging later edits or applying
+  children. Recovered acceptance uses the same receipt admission, status changes
+  and identical-command replay as an immediately reviewed plan. Service restart
+  tests qualify storage durability, not GUI project-switch recovery.
 
 - New child plans supply exact main-document screenplay and record its revisions in the existing creation command. Creation and explicit timeline acceptance validate the same receipt under the writer transaction. Pending/accepted plans never rewrite saved screenplay; legacy plans without receipts remain legacy unknown. This binding covers screenplay and parent/subtree custody, not complete Bible, affect or arc-description consumption.
 

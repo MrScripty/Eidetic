@@ -56,6 +56,12 @@ raw size would separate scenarios that share the same contract fixtures.
 
 ## Invariants
 
+- Pending child-plan recovery reads the registered `projection_child_plans`
+  endpoint through `getChildPlanListProjection`. Backend records retain their
+  original canonical children, statuses and screenplay receipts; callers filter
+  Pending records for the selected parent and require an explicit review choice.
+  A projection read never generates, accepts or patches saved material.
+
 - The script wire model admits a derived `context_changed` impact reason for
   scene order/window membership. Existing editor review labels explain entering
   and leaving material; saved text still changes only through explicit guarded

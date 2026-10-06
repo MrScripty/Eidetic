@@ -29,6 +29,18 @@ review branch is rewritten. Parent owns review/PR/merge and Library delivery.
 Timed facts, relationships and broader unknown entity relevance remain follow-ups.
 Project-switch recovery is deferred; embeddings are optional later work.
 
+**Current follow-up:** Merged PR11 main
+`325f505481369e91f6cfdc125a27b2bf3b2a4384` retains the accepted child-plan
+workflow and repairs. The next bounded gap is recovery of saved pending timeline
+plans within the current project: the native `projection_child_plans` command
+already returns durable canonical proposals and original screenplay receipts,
+but the editor has no read path after Close or selection changes. Expose an
+explicit read, list all pending plans for the selected clip, and reopen only the
+writer's chosen plan in the existing review/accept flow. Preserve manual text,
+drafts, exact uncertain retries and native stale-result admission. No new store,
+schema, model dependency or project-switch feature. Full Bible/affect/arc source
+binding remains a separate documented criterion.
+
 **Local successor status:** Membership preview value completeness is repaired at
 `3ebb752f131bb233c16d49210ee226de14d2caf2` (report head `8ea7153b`). The separate
 saved-screenplay context-stack bridge now passes 119 core / 283 source-module /

@@ -9,6 +9,7 @@ import {
   getBibleReferenceProposalListProjection,
   getBibleRenderGraphProjection,
   getChangeReviewProjection,
+  getChildPlanListProjection,
   getContextInfluenceProjection,
   getContextStackProjection,
   getObjectFieldProjection,
@@ -36,6 +37,13 @@ afterEach(() => {
 });
 
 describe('projection api helpers', () => {
+  it('reads existing durable child plans through the registered desktop projection', async () => {
+    const response = { version: 3, payload: { plans: [] } };
+    const invoke = installDesktopInvoke(response);
+    await expect(getChildPlanListProjection()).resolves.toEqual(response);
+    expect(invoke).toHaveBeenCalledWith('projection_child_plans', undefined);
+  });
+
   it('requires desktop transport instead of falling back to HTTP', async () => {
     vi.stubGlobal('fetch', vi.fn());
 

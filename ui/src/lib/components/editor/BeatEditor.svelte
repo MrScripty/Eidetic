@@ -14,6 +14,7 @@
     setGenerationError,
   } from '$lib/stores/editor.svelte.js';
   import { zoomToRange } from '$lib/stores/timeline.svelte.js';
+  import { getChildPlanListProjection } from '$lib/projectionApi.js';
   import { generateBatch, generateChildren, generateContent, getAiContext } from '$lib/api.js';
   import {
     applyTimelineChildrenCommand,
@@ -53,6 +54,7 @@
     owner: () => ({ nodeId: editorState.selectedNodeId, session: getEditorSessionGeneration() }),
     mounted: () => editorMounted,
     generate: generateChildren,
+    load: getChildPlanListProjection,
     apply: applyTimelineChildrenCommand,
     async accepted(parent) {
       await refreshSelectedProjection();
@@ -374,6 +376,11 @@
     {/if}
 
     <ChildPlanReview
+      recoverable={childLevelName != null}
+      savedPlans={childPlanReview.state.savedPlans}
+      reading={childPlanReview.state.reading}
+      onrecover={() => void childPlanReview.recover()}
+      onreviewsaved={childPlanReview.reviewSaved}
       plan={childPlanReview.state.plan}
       busy={childPlanReview.state.busy}
       uncertain={childPlanReview.state.uncertain}

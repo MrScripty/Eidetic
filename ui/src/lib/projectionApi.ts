@@ -1,3 +1,4 @@
+import type { ChildPlanListProjection } from './childPlanningTypes.js';
 import type {
   AffectProjection,
   AffectProjectionRequest,
@@ -183,4 +184,8 @@ export function getSelectedNodeEditorProjection({
 
 export function getChangeReviewProjection(): Promise<ProjectionEnvelope<ChangeReviewProjection>> {
   return invokeDesktop<ProjectionEnvelope<ChangeReviewProjection>>('projection_change_review');
+}
+
+export function getChildPlanListProjection(): Promise<ProjectionEnvelope<ChildPlanListProjection>> {
+  return invokeDesktop<ProjectionEnvelope<ChildPlanListProjection>>('projection_child_plans');
 }

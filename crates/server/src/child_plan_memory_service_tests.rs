@@ -987,3 +987,176 @@ async fn old_pending_child_plan_without_relationship_receipt_requires_fresh_revi
     .unwrap();
     assert_edge_refusal_preserves_state(&fixture, &plan).await;
 }
+
+async fn reopen_same_project(fixture: &mut Fixture) {
+    // Test installation uses the existing persistence reader. The recovery
+    // endpoint below is public and opens its own connection; no UI-held plan or
+    // source AppState survives. This does not implement project switching.
+    fixture.state.shutdown_tasks();
+    let (project, _) = crate::persistence::load_project(&fixture.path)
+        .await
+        .unwrap();
+    let state = AppState::new().await;
+    crate::project_service::replace_active_project(&state, project, fixture.path.clone());
+    fixture.state = state;
+}
+
+#[tokio::test]
+async fn child_plan_recovery_public_projection_preserves_multiple_plans_and_explicit_acceptance() {
+    use eidetic_core::ai::backend::ChildPlanStatus;
+
+    let mut fixture = fixture().await;
+    let (task, _, release, provider) = planning_with_children(
+        &fixture,
+        serde_json::json!([{
+            "name": "  Recovered departure  ",
+            "outline": "  Mara catches the midnight train.\nShe keeps her blue umbrella.  ",
+            "weight": 1.0,
+            "location": "  INT. STATION - NIGHT  ",
+            "characters": [" Mara ", " "],
+            "props": ["", " Umbrella "]
+        }]),
+    )
+    .await;
+    release.send(()).unwrap();
+    let first = task.await.unwrap().unwrap();
+    provider.join().unwrap();
+    let second = pending_plan(&fixture).await;
+    let before = script(&fixture);
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    let timeline = serde_json::to_value(project.timeline).unwrap();
+    let counts = history_counts(&fixture);
+
+    reopen_same_project(&mut fixture).await;
+    let recovered = crate::projection_service::child_plan_list_projection(&fixture.state)
+        .await
+        .unwrap();
+    assert_eq!(recovered.payload.plans.len(), 2);
+    for original in [&first, &second] {
+        let record = recovered
+            .payload
+            .plans
+            .iter()
+            .find(|record| record.plan.id == original.id)
+            .unwrap();
+        assert_eq!(record.status, ChildPlanStatus::Pending);
+        assert_eq!(
+            serde_json::to_value(&record.plan).unwrap(),
+            serde_json::to_value(original).unwrap()
+        );
+        assert_eq!(record.plan.script_context.as_ref().unwrap()[0].text, AFTER);
+    }
+    assert_eq!(history_counts(&fixture), counts);
+    assert_eq!(script(&fixture), before);
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    assert_eq!(serde_json::to_value(project.timeline).unwrap(), timeline);
+
+    let selected = &recovered
+        .payload
+        .plans
+        .iter()
+        .find(|record| record.plan.id == first.id)
+        .unwrap()
+        .plan;
+    assert_eq!(selected.children[0].name, "Recovered departure");
+    assert_eq!(
+        selected.children[0].outline,
+        "Mara catches the midnight train.\nShe keeps her blue umbrella."
+    );
+    assert_eq!(selected.children[0].characters, ["Mara"]);
+    assert_eq!(selected.children[0].props, ["Umbrella"]);
+    let command = accept_command(selected);
+    let applied = crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(command.clone()).unwrap(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        serde_json::to_value(applied).unwrap()["outcome"],
+        "recorded"
+    );
+    assert_eq!(script(&fixture), before);
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    assert!(project.timeline.nodes.iter().any(|node| {
+        node.parent_id == Some(fixture.parent)
+            && node.name == selected.children[0].name
+            && node.content.notes == selected.children[0].outline
+    }));
+    let statuses = crate::projection_service::child_plan_list_projection(&fixture.state)
+        .await
+        .unwrap();
+    assert_eq!(statuses.payload.plans.len(), 2);
+    assert_eq!(
+        statuses
+            .payload
+            .plans
+            .iter()
+            .find(|record| record.plan.id == first.id)
+            .unwrap()
+            .status,
+        ChildPlanStatus::Applied
+    );
+    assert_eq!(
+        statuses
+            .payload
+            .plans
+            .iter()
+            .find(|record| record.plan.id == second.id)
+            .unwrap()
+            .status,
+        ChildPlanStatus::Pending
+    );
+
+    edit(
+        &fixture,
+        "Later manual screenplay survives recovered command replay.\n\n",
+    )
+    .await;
+    let later = script(&fixture);
+    let counts = history_counts(&fixture);
+    let replay = crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(command).unwrap(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        serde_json::to_value(replay).unwrap()["outcome"],
+        "already_recorded"
+    );
+    assert_eq!(history_counts(&fixture), counts);
+    assert_eq!(script(&fixture), later);
+}
+
+#[tokio::test]
+async fn child_plan_recovery_public_projection_retains_stale_receipt_and_refuses_without_writes() {
+    let mut fixture = fixture().await;
+    let generated = pending_plan(&fixture).await;
+    edit(
+        &fixture,
+        "Later human screenplay must not be acknowledged by recovery.\n\n",
+    )
+    .await;
+    reopen_same_project(&mut fixture).await;
+    let counts = history_counts(&fixture);
+    let recovered = crate::projection_service::child_plan_list_projection(&fixture.state)
+        .await
+        .unwrap();
+    assert_eq!(recovered.payload.plans.len(), 1);
+    let plan = &recovered.payload.plans[0].plan;
+    assert_eq!(
+        serde_json::to_value(plan).unwrap(),
+        serde_json::to_value(generated).unwrap()
+    );
+    assert_eq!(plan.script_context.as_ref().unwrap()[0].text, AFTER);
+    assert_eq!(history_counts(&fixture), counts);
+    assert_edge_refusal_preserves_state(&fixture, plan).await;
+    let after = crate::projection_service::child_plan_list_projection(&fixture.state)
+        .await
+        .unwrap();
+    assert_eq!(
+        serde_json::to_value(after).unwrap(),
+        serde_json::to_value(recovered).unwrap()
+    );
+}
