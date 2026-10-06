@@ -1,0 +1,219 @@
+{
+  "application_source": {
+    "sha": "d59d503ccfb41871fcbbd9689932a84fe35c605f",
+    "tree": "b4372541359e53ace1d0273fb8a9f9761b804630",
+    "branch": "feat/bible-node-name-screenplay-memory",
+    "base_sha": "7a8172df78772f8f2b23bb8fe9a913aeb3b0bfd5"
+  },
+  "qualification": {
+    "sha": "4f2a75f671ec6dd1b9a27fd34ae87be8046233a0",
+    "tree": "851da59b69b06454f6cce4fc5b4f6e0a1e4242fe",
+    "branch": "test/screenplay-bible-node-name-native",
+    "allowed_diff": [
+      ".github/workflows/bible-node-name-native.yml",
+      "scripts/qualify-bible-node-name.py",
+      "scripts/test_qualify_bible_node_name.py"
+    ],
+    "run_id": 37523579021,
+    "job_id": 112474823310,
+    "conclusion": "success",
+    "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37523579021"
+  },
+  "artifact": {
+    "id": 11441696863,
+    "size_bytes": 886455,
+    "sha256": "9cffc843e9eade7ccc369f409aeb19ca586490eaac56ced8f842eed5f01eca8b",
+    "url": "https://github.com/MrScripty/Eidetic/actions/runs/37523579021/artifacts/11441696863",
+    "local_zip": "/workspace/attachments/0266db36-edda-48c4-8ac9-40181d32f143/bible-node-name-success-native.zip",
+    "local_capture_directory": "/workspace/scratch/manual-story-memory-audit/native-success-37523579021",
+    "expires_at": "2026-10-09T20:14:32Z"
+  },
+  "validation": {
+    "core_tests": 119,
+    "server_tests": 482,
+    "ui_tests": 459,
+    "qualification_driver_tests": 45,
+    "no_download_tests": 5,
+    "ui_typecheck_errors": 0,
+    "ui_typecheck_warnings": 0,
+    "ui_lint": "passed",
+    "ui_format": "passed",
+    "ui_build": "passed (hosted)",
+    "strict_server_all_target_clippy": "passed (local)",
+    "rustfmt": "passed",
+    "decision_traceability": "passed",
+    "dependency_feature_union_no_download": "passed (local and hosted)",
+    "normal_locked_desktop_and_fixture_build": "passed (hosted)"
+  },
+  "native_name_edit": {
+    "node_id": "qualification.mara",
+    "before": [
+      "Mara",
+      "07facf67-8b1e-490a-a00c-d411c1bdf060"
+    ],
+    "after": [
+      "Marisol",
+      "7286498b-1184-4a04-8a94-413b5d8e7f8e"
+    ],
+    "after_aba": [
+      "Marisol",
+      "1af27813-f4b5-487e-aaeb-dab46aed1835"
+    ],
+    "original_preview_name_input": {
+      "node_id": "qualification.mara",
+      "name": "Marisol",
+      "revision_event_id": "7286498b-1184-4a04-8a94-413b5d8e7f8e"
+    },
+    "fresh_preview_name_input": {
+      "node_id": "qualification.mara",
+      "name": "Marisol",
+      "revision_event_id": "1af27813-f4b5-487e-aaeb-dab46aed1835"
+    },
+    "accepted_block_revision": "4bf93e1d-0fb8-4581-8177-362e968d3d0e",
+    "manual_source_unchanged": true,
+    "manual_draft_preserved": true,
+    "saved_text_and_placement_preserved_before_acceptance": true,
+    "stale_refusal": "screenplay proposal is stale; request a fresh preview",
+    "all_table_refusal_snapshot_equal": true,
+    "refreshed_consumed_name_revision": "1af27813-f4b5-487e-aaeb-dab46aed1835"
+  },
+  "model_provenance": {
+    "real_model": false,
+    "provider": "synthetic localhost HTTP/SSE through production provider client",
+    "calls": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview_name_1",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false
+      },
+      {
+        "kind": "preview_name_2",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false
+      }
+    ]
+  },
+  "captures": [
+    {
+      "file": "eidetic-bible-fact-review.png",
+      "sha256": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    },
+    {
+      "file": "eidetic-bible-fact-preview.png",
+      "sha256": "74c379d5a4b3ec688911e161845bc8952035bafd3abf256eeadcc69aa2c9867d",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    },
+    {
+      "file": "eidetic-bible-fact-accepted.png",
+      "sha256": "cfd063827c861e65402fa8de6e2187cd91db594c289f2e0684fced304c7f9904",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    },
+    {
+      "file": "eidetic-name-review.png",
+      "sha256": "1478991ef30a24d731c6b7686490d80b9049239cfb22b6385e37866f822478f6",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    },
+    {
+      "file": "eidetic-name-preview.png",
+      "sha256": "433fc6984b4615bc57229bdced7a0c34c1bc526d5bdf34d86d35b40af55ca635",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    },
+    {
+      "file": "eidetic-name-stale.png",
+      "sha256": "607cdfc453dc74062c0bbd3f3de7731d62800aac3a2ded3987330f0511a8e8cb",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    },
+    {
+      "file": "eidetic-name-fresh-preview.png",
+      "sha256": "1e7908285651f627b7fed9860c08be2c755a2f0c980894e882983cb6eaca6124",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    },
+    {
+      "file": "eidetic-name-accepted.png",
+      "sha256": "6aff7fe89a0b68864c1b897afb9d20270e0f3b7d38f7289af694bcf1a96b4bc5",
+      "window_id": 2097155,
+      "pid": 22279,
+      "width": 1440,
+      "height": 960,
+      "viewed": true
+    }
+  ],
+  "prior_runs": [
+    {
+      "id": 37521277899,
+      "qualification_sha": "6960fac0d9257b6078c7817969aa52f640c5f867",
+      "conclusion": "cancelled (superseded application source)"
+    },
+    {
+      "id": 37521680769,
+      "job_id": 112468964558,
+      "qualification_sha": "4f797c3aed3cd4143b96f6c6480e26e348ae1698",
+      "conclusion": "failure",
+      "artifact_id": 11440958869,
+      "artifact_sha256": "8f97653ba56bfbfe142bc3234d65ae2f881c36a0ebbcc5eb67bac2bc91f23c71",
+      "reason": "Qualification traversal received a retired None accessibility child after the name edit; repaired only in qualification driver.",
+      "local_directory": "/workspace/scratch/manual-story-memory-audit/failed-native-37521680769"
+    }
+  ],
+  "limits": [
+    "Synthetic output proves context custody and UI behavior, not real-model quality.",
+    "Fresh-preview capture retains older proposal history; the fresh receipt and acceptance are verified by durable bindings and actual native controls.",
+    "Local workspace desktop hook stops at missing glib-2.0.pc; hosted ordinary native builds passed.",
+    "No timed-name semantics, new-name membership inference, automatic Bible extraction, embedding dependency, native multi-user race or project-switch recovery claim.",
+    "Parent owns PRs, reviews, merges and Library delivery."
+  ]
+}
