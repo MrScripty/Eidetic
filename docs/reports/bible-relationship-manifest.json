@@ -1,0 +1,901 @@
+{
+  "schema_version": 1,
+  "feature": "Consumed Bible relationship revisions in targeted screenplay review",
+  "status": "qualified_with_synthetic_http_provider",
+  "source": {
+    "commit": "e94cbffa88fd3f58665e55a22b1c5969c60d3d4e",
+    "tree": "a08355b922698f34169b85c97860060499004bb8",
+    "branch": "fix/bible-relationship-label-custody",
+    "label_implementation_commit": "017e92ec207d3d0c35ae49a4f412d44b9ee7595d",
+    "out_of_scope_implementation_commit": "aeacee85b24ce6eecc93b1709613632b17019821"
+  },
+  "qualification": {
+    "commit": "c5b962c18e241e5ec865a643ff888a405ad896de",
+    "tree": "34c2f046b5b7447bd06b987d01143f4b105c2d4e",
+    "branch": "test/screenplay-bible-relationship-label-native",
+    "source_blob_count": 675,
+    "application_and_dependency_blobs_match": true,
+    "qualification_only_changed_files": [
+      ".github/workflows/bible-relationship-native.yml",
+      "scripts/qualify-bible-relationship.py",
+      "scripts/test_qualify_bible_relationship.py"
+    ],
+    "run_id": 37505367170,
+    "job_id": 112412549433
+  },
+  "frozen_predecessor": {
+    "source": "d672f0b36557593a47e34849bd564ca8b244ef2a",
+    "qualification": "ae96213f6d93a5babcc3f8a2dbebe778cd1c0963",
+    "evidence": "6b313aa3e1aeebbbb1c4d60e2629cbc8a91c4383"
+  },
+  "author_committer": "MrScripty <TheEnvironmentGuy@protonmail.com>",
+  "tests": {
+    "core": 119,
+    "server": 471,
+    "new_relationship_cases": 16,
+    "frontend": 456,
+    "drivers": 39,
+    "no_download_gate": 5
+  },
+  "checks": {
+    "server_all_target_clippy": "passed",
+    "frontend_errors": 0,
+    "frontend_warnings": 0,
+    "lint": "passed",
+    "format": "passed",
+    "production_frontend_build": "passed",
+    "rustfmt": "passed",
+    "traceability": "passed"
+  },
+  "dependency": {
+    "pumas_commit": "a94fd92021f27fdeedb6e2de6e01c41c250ef576",
+    "pumas_tree": "4a6977b88ed532089807183e218a959ac02b724d",
+    "locked_all_features_no_download_gate": "passed",
+    "new_dependencies": false,
+    "onnx_403_bypass": false
+  },
+  "local_receipts": {
+    "absence-qualification-commit.log": {
+      "bytes": 15124,
+      "sha256": "e9643ab7d3dd2c97878df804d8706263c81348656fafc0cc34cfdecb1497cef4"
+    },
+    "absence-qualification-push.log": {
+      "bytes": 890,
+      "sha256": "82d7e1f1a416a45ec89e4dff2ebe2366fc83511757b8d67e72370b3116ef9fa3"
+    },
+    "absence-source-commit.log": {
+      "bytes": 15105,
+      "sha256": "f44a29359afaac4e53469a39633121fcb1530ad6ab5f5edb7be69661689be0af"
+    },
+    "absence-source-push.log": {
+      "bytes": 862,
+      "sha256": "13838abd76e8486f8074734ce33736fe5456c298c897a2a5655c2c558f536386"
+    },
+    "clippy-absence-repair.log": {
+      "bytes": 285,
+      "sha256": "e081a4503312b8acbc80bd99f4c62fd5b9e00241890f29a4a3d55bdb8eb6afc5"
+    },
+    "clippy-label-repair.log": {
+      "bytes": 285,
+      "sha256": "3bd9f3669b3437cb0152191a770e6a766beb6f024e675c66ecf7e989b7438a63"
+    },
+    "clippy-outscope-repair.log": {
+      "bytes": 60,
+      "sha256": "7e8397b3c3d5ef73830e57f61ffa6f2cfd565f338d3d371aefe79dbf3b020764"
+    },
+    "clippy.log": {
+      "bytes": 285,
+      "sha256": "ac471c0b902ecf71ab239b7c4fc676f8bfacc66dfc552487c4af49f72c06a9e5"
+    },
+    "core-tests-absence-repair.log": {
+      "bytes": 10897,
+      "sha256": "ba6f6c0aebac9c6f640df8f47af70e502cabdcd3a510d1ff272b009664064715"
+    },
+    "core-tests-label-repair.log": {
+      "bytes": 10897,
+      "sha256": "b8011c0b9b44676799bf7af6803dc19c6e8cf32c88d5de07c97af433b3b072e5"
+    },
+    "core-tests.log": {
+      "bytes": 10897,
+      "sha256": "3b2cc889dea8c817eaad9f0e0ca44be92a5636e2e8e1881689f1825c02928cb7"
+    },
+    "deleted-edge-aba-repair.log": {
+      "bytes": 631,
+      "sha256": "943b38534149c25e4b5ab1dbd1a04102041c45ed50a54a418cc7ef449ce9a78e"
+    },
+    "deleted-edge-aba-reproduction.log": {
+      "bytes": 1161,
+      "sha256": "158c0083bc6ae7446610d9aeb442774dd55f868ae239a5519195fda1306ce2c7"
+    },
+    "draft-cancel-fix-commit.log": {
+      "bytes": 15115,
+      "sha256": "86adf67bdb3245574e9c612db2ba4b56ef98bb17f487f7632474b367f6a392f1"
+    },
+    "draft-cancel-fix-push.log": {
+      "bytes": 624,
+      "sha256": "c7af8dc30312e511c213a5d31223bb42a7b40ab071fc315808c63486a26c9240"
+    },
+    "driver-tests-alert-fix.log": {
+      "bytes": 7753,
+      "sha256": "d0c5b5293541fede24b611282a10633dcf2861c62a800b26670f2abc3f9afa6a"
+    },
+    "driver-tests-draft-cancel-fix.log": {
+      "bytes": 7133,
+      "sha256": "5b3c888fde36a07d8e23af2dc6d8b375cf6e13df2f11f8d513940168bccf4115"
+    },
+    "driver-tests-label-inspection.log": {
+      "bytes": 339,
+      "sha256": "1498c0d7080464b05ad622a57e16a170d71965aefd0dd8609b43f7c408a03e92"
+    },
+    "driver-tests-label-qualification.log": {
+      "bytes": 339,
+      "sha256": "7c6b457ed775c90160f14762e885cce75e35ba5a9523d35c020667fc2c49daac"
+    },
+    "driver-tests-leaf-fix-final.log": {
+      "bytes": 338,
+      "sha256": "6c945070287adb4c29e8dc0f48ef43be6fd55715a884286a39c5a19bc2992e2a"
+    },
+    "driver-tests-leaf-fix.log": {
+      "bytes": 796,
+      "sha256": "ebe9f2623313ac5b1905c94b5aa76587c67a90a34535783264debc1b922906d1"
+    },
+    "driver-tests-native-fix.log": {
+      "bytes": 6927,
+      "sha256": "77862646c22c9414f311f3bf4cd3d7ad2f0c2682d346dccb531b8b68c5de1757"
+    },
+    "driver-tests-offscreen-draft-fix.log": {
+      "bytes": 7133,
+      "sha256": "3e94386b67167c8e905fd30a90543926236c93510cd767e66b862b080f4bccc5"
+    },
+    "driver-tests-pending-scope-fix.log": {
+      "bytes": 7355,
+      "sha256": "6a6ef7e707f1ba92b88ee54201155f1a912b8f81c1dd83984b15d33ec135ad6a"
+    },
+    "driver-tests-qualification.log": {
+      "bytes": 6727,
+      "sha256": "1d6c4dd7045218a8f2b0526b3df63707e29dd4e14da89257f7d1a9c6dd6d5323"
+    },
+    "driver-tests-review-layout-final.log": {
+      "bytes": 7559,
+      "sha256": "b5217f88a1e2f9c4620f7de25730cafca1d7e317b70a78eb2d7a6560239a737d"
+    },
+    "driver-tests-review-layout-fix.log": {
+      "bytes": 7559,
+      "sha256": "b5217f88a1e2f9c4620f7de25730cafca1d7e317b70a78eb2d7a6560239a737d"
+    },
+    "driver-tests.log": {
+      "bytes": 6727,
+      "sha256": "a9a954d5339023e5a5e28d6fc028964c75b3807327ee2a7aa9b5e45377f92a18"
+    },
+    "frontend-build-absence-repair.log": {
+      "bytes": 3628,
+      "sha256": "ee68b323bf31bfd0ac1844b2fc03a074ce389f54977ea358c2339c80abe86399"
+    },
+    "frontend-build-label-repair.log": {
+      "bytes": 3628,
+      "sha256": "2b5d51ca18b8fc973e20c73418d259453ba1b5b6acfe14a95d7d422982cd0e38"
+    },
+    "frontend-build.log": {
+      "bytes": 3628,
+      "sha256": "0b3e0d6a06b0b9838f2728f94e812d7c1fd756d057d21776df55b18866ffe70f"
+    },
+    "frontend-format-absence-repair.log": {
+      "bytes": 374,
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    "frontend-format-label-repair.log": {
+      "bytes": 374,
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    "frontend-format.log": {
+      "bytes": 374,
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    "frontend-lint-absence-repair.log": {
+      "bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    "frontend-lint-label-repair.log": {
+      "bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    "frontend-lint.log": {
+      "bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    "frontend-tests-absence-repair.log": {
+      "bytes": 6183,
+      "sha256": "1de31d01482b3885804d53a3bdb01ffc0674ecdc4acc2c1607a21835244ec2bd"
+    },
+    "frontend-tests-label-repair.log": {
+      "bytes": 6385,
+      "sha256": "3dae0b533c64df342c1ec077564459cdad3ed7e85a456cbbeee9fd6aab88cbec"
+    },
+    "frontend-tests.log": {
+      "bytes": 1446,
+      "sha256": "94427838698da42e0e9f90a2dcf703a51a516f56ec85bcd55e7e54e93d214341"
+    },
+    "frontend-typecheck-absence-repair.log": {
+      "bytes": 732,
+      "sha256": "aa40d2d4bb10fc014799ccffa5a5c7d4b81dda7e060ab8a0286cfe79743f256c"
+    },
+    "frontend-typecheck-final.log": {
+      "bytes": 732,
+      "sha256": "aa40d2d4bb10fc014799ccffa5a5c7d4b81dda7e060ab8a0286cfe79743f256c"
+    },
+    "frontend-typecheck-label-repair.log": {
+      "bytes": 732,
+      "sha256": "aa40d2d4bb10fc014799ccffa5a5c7d4b81dda7e060ab8a0286cfe79743f256c"
+    },
+    "frontend-typecheck.log": {
+      "bytes": 732,
+      "sha256": "aa40d2d4bb10fc014799ccffa5a5c7d4b81dda7e060ab8a0286cfe79743f256c"
+    },
+    "label-boundary-commit.log": {
+      "bytes": 15240,
+      "sha256": "5ecb9d8ce31057b5376d743602cc62ac5276106f23213d9de882df7e719f63f6"
+    },
+    "label-boundary-push.log": {
+      "bytes": 612,
+      "sha256": "e7acdc6ba7ecd776eae35fecf14bee508169dd03bf1d0dd3a1414455d1b98b11"
+    },
+    "label-client-tests.log": {
+      "bytes": 754,
+      "sha256": "d426a755735b9c9a1ff3420b075c3681e03457ca2c7d03797a9803a1f19061de"
+    },
+    "label-format.log": {
+      "bytes": 645,
+      "sha256": "87e39b2451271f29c5f0a8a6f7c3c0a3e44c62371fe5f2cd440f96e0b044a908"
+    },
+    "label-inspection-commit.log": {
+      "bytes": 15279,
+      "sha256": "7e29b18765dbd9b2f6635841946b7505a6d74f4e4676848e51b1c6b1ca94a239"
+    },
+    "label-inspection-push.log": {
+      "bytes": 634,
+      "sha256": "9448dfc4dbd4e14fce85bc332630923ae74fdf02d6c363e586053940512b90d6"
+    },
+    "label-qualification-commit.log": {
+      "bytes": 15281,
+      "sha256": "b5bd3773430b50c46b3495a59aa2e89355791d2bf197a0c199c45a078b319eb1"
+    },
+    "label-qualification-push.log": {
+      "bytes": 1013,
+      "sha256": "fc89596035a30d3dcd41f15606cfba293d3a57ec1f8f7d0187d3f51eb92a2ca8"
+    },
+    "label-source-commit.log": {
+      "bytes": 15596,
+      "sha256": "d3852406830d9bf4e0f7f915f593f496867802bfba6fddf22e655a4d5a863b97"
+    },
+    "label-source-push.log": {
+      "bytes": 612,
+      "sha256": "3c37135910f3092e777b6809729c3dd2a8e576808b0933cb043bb4d3243f3911"
+    },
+    "label-store-client-final.log": {
+      "bytes": 623,
+      "sha256": "293bbcfd0e7f7fc8fe3fe8669069bd623c2df2ca8d86593e92456967968144fd"
+    },
+    "label-store-tests.log": {
+      "bytes": 934,
+      "sha256": "34fadd4d06cfee97ff8c613e362ff4f2de386e6a1ac1577baa4348937690bb2e"
+    },
+    "label-test-format.log": {
+      "bytes": 283,
+      "sha256": "0877cf8ec2c4895c80b4a818b7b203a1c8c494a85055e3f8ab46b938f3ba0553"
+    },
+    "label-typecheck.log": {
+      "bytes": 732,
+      "sha256": "aa40d2d4bb10fc014799ccffa5a5c7d4b81dda7e060ab8a0286cfe79743f256c"
+    },
+    "leaf-mock-commit.log": {
+      "bytes": 15093,
+      "sha256": "5ed5483d0c67ee6f94568b5cc7d159a6e775aef60bc66d841c3d09d7b56dc91d"
+    },
+    "leaf-mock-push.log": {
+      "bytes": 638,
+      "sha256": "f45837a8219f5a6fad06cda229a925e68c5cf94a050944dc0d63d94b6ae8c000"
+    },
+    "leaf-qualification-commit.log": {
+      "bytes": 15107,
+      "sha256": "73eabbcba2db30eb457f985a63920797ea85c68326927ed1cd544c13aceed2dc"
+    },
+    "leaf-qualification-push.log": {
+      "bytes": 638,
+      "sha256": "799bd9a6f4ec42e7f4c4e76d96ee517f46a7869b6b5ed442bb68a353b7091acf"
+    },
+    "native-fix-commit.log": {
+      "bytes": 15121,
+      "sha256": "3ca6681d2c5edcd3e84d2c15f8bfc5806aee9460e667a4c446dcd1daf932721b"
+    },
+    "native-fix-push.log": {
+      "bytes": 624,
+      "sha256": "159f25d7c9f1b7b9252e31687d4e407aee0f8c96b7cdbf4db783f8eaf2229c24"
+    },
+    "native-job-112311873606.log": {
+      "bytes": 442299,
+      "sha256": "373aea900b4c9a83bf5ca84cf87746f8407c28ffc6dc92a937ce6fed7162b893"
+    },
+    "native-job-112321376737.log": {
+      "bytes": 443981,
+      "sha256": "ee16ae94943cda1fcbf94d93a26f1d0a4bb6caf116eb8c0a2007a08d08b66e6a"
+    },
+    "native-job-112333955333.log": {
+      "bytes": 444418,
+      "sha256": "210ab640bfef82e611058c5c563dac142be055ace72404b366b383743fae5fa2"
+    },
+    "native-job-112342689361.log": {
+      "bytes": 444666,
+      "sha256": "7c69782f470fdc20f1aa0accc83d126abd6e81dd07386719aa38b971c00949ec"
+    },
+    "native-job-112352980786.log": {
+      "bytes": 441539,
+      "sha256": "0cb133f52585acea10bb9d53a56c604c904c4b8f6f0c40289c9ebd1686f780e3"
+    },
+    "native-job-112360527973.log": {
+      "bytes": 446264,
+      "sha256": "7a70155cc7dc27e1b29447f7b2fd278791fb551609616231084095f01561dd9b"
+    },
+    "native-job-112398623461.log": {
+      "bytes": 447562,
+      "sha256": "a9001b4090f4a753a9a1bf85f4bc16e9cbbba1d1e624c6488381f98b0fc9e84f"
+    },
+    "native-job-112404599630.log": {
+      "bytes": 447071,
+      "sha256": "c1ab035be9838c642b0d745993da3a26dbfdc9271f50f5bce9f443321fc7383e"
+    },
+    "native-job-112412549433.log": {
+      "bytes": 446182,
+      "sha256": "a8e57dd247a4a6f693da5f6787935f4a3ee5f511d9126397e06b90c9adecae65"
+    },
+    "no-download-tests.log": {
+      "bytes": 905,
+      "sha256": "fcf369e01fbb156adb3e0f2554317a528c2530064facb9127519752c79767f1c"
+    },
+    "offscreen-draft-fix-commit.log": {
+      "bytes": 15111,
+      "sha256": "9e304604efbbee011522b83f76edb5b56950e592526a686e6ddfecfb933480e2"
+    },
+    "offscreen-draft-fix-push.log": {
+      "bytes": 624,
+      "sha256": "09bcba4efa367f34e0a7ad870ed2aa797fedd84d4e301e06d7b8a292df3d3e27"
+    },
+    "outscope-repair-tests.log": {
+      "bytes": 1818,
+      "sha256": "6cdafac689a7fa6c237ba2641088cc45e4507d93f36364ce1e69fcb130e21c34"
+    },
+    "outscope-reproduction.log": {
+      "bytes": 53410,
+      "sha256": "05c5b2b5affe43bd7d7707dc6bd8b754b9a5af5e291c8f43c01715828436cab0"
+    },
+    "outscope-source-commit.log": {
+      "bytes": 15114,
+      "sha256": "e466eff1150b14a2ec1706a474dac7ce496932a2c2108fda9dd254cbe8cf94d8"
+    },
+    "outscope-source-push.log": {
+      "bytes": 947,
+      "sha256": "b0cbadc1413f892cb809b845fc7ce2b80a89fd18054389de92e5fef41c07f269"
+    },
+    "pending-scope-fix-commit.log": {
+      "bytes": 15110,
+      "sha256": "e518cde1aebfa4c9011ad5dcbde930e5d96694890640a821a752743e6ca79fc8"
+    },
+    "pending-scope-fix-push.log": {
+      "bytes": 624,
+      "sha256": "56efe30d37862054b166564b9e4f34a7dc6eaedd5bee548ea250a31a4f5bf2d6"
+    },
+    "qualification-commit.log": {
+      "bytes": 15300,
+      "sha256": "7ba6f02dd21b0c058d54d989699709bb0d52cc36564237feec0ae5b311808034"
+    },
+    "qualification-push.log": {
+      "bytes": 983,
+      "sha256": "b8cbcc63bd8193e2cc1466c7112afdf8759439340c66338c37c9d0f31b3832bf"
+    },
+    "relationship-tests-absence-repair.log": {
+      "bytes": 1692,
+      "sha256": "c6c0cb6afc2f8793ae2a9a148e5ad6db7d05c0b4324173c5ede7c9a0dc84d466"
+    },
+    "relationship-tests-final.log": {
+      "bytes": 4425,
+      "sha256": "db2a3f83ed3eaa9abe4d5310f13ec1a8abe5b3828a83333d5a93ff5c3ed9934b"
+    },
+    "relationship-tests-initial.log": {
+      "bytes": 2194,
+      "sha256": "b36adfe57de111641fdf67ffe3be15e46b4db512d3584fd5f40cc921cbb02651"
+    },
+    "relationship-tests-second.log": {
+      "bytes": 3417,
+      "sha256": "8d230567ea768910c05681805e5bcb8383df251c09db65112c3e2077974509cc"
+    },
+    "review-layout-fix-commit.log": {
+      "bytes": 15112,
+      "sha256": "9c24a13eb10e4400a870841cf6b8eb4f852418631c647e755cded84c37524c74"
+    },
+    "review-layout-fix-push.log": {
+      "bytes": 624,
+      "sha256": "98a4dba0c7e0897900f194244190f0d0203e95dc23d795349eac7d2b0a3ea500"
+    },
+    "server-check.log": {
+      "bytes": 409,
+      "sha256": "e9f354b6f7361c50222dcde71ced22e34c6b8cd42775111103ed9a909a28bccc"
+    },
+    "server-tests-absence-repair.log": {
+      "bytes": 48563,
+      "sha256": "46fc17a51904df06544c6a76231e71aca519d5640e681f54f2f5f41288793c11"
+    },
+    "server-tests-isolated.log": {
+      "bytes": 48330,
+      "sha256": "5ec9829f5b1743a8b64de97d16dc9560f02b327133464b56fd8c99a50582b1f6"
+    },
+    "server-tests-label-repair.log": {
+      "bytes": 49468,
+      "sha256": "213dd3340aa0b4ff325a2c9f690db81291491e7d7d2adb7c8a490dcf5dddb4ab"
+    },
+    "server-tests-outscope-repair.log": {
+      "bytes": 48944,
+      "sha256": "1852e03cf1f932b5e5e218c8cba1ceb97e9deed8bf69754b609dfc7ae292a63a"
+    },
+    "server-tests.log": {
+      "bytes": 58000,
+      "sha256": "baa7b34ad893d096bfca98da7d15734bff3aea7a93d1ce4c6c374742dbcd86ee"
+    },
+    "source-commit.log": {
+      "bytes": 15257,
+      "sha256": "8e43b71c2cf02f7e7fa90b8fa373b6c8a20fc358cc7e535fd5ef84dd50e43bea"
+    },
+    "source-push.log": {
+      "bytes": 995,
+      "sha256": "078a0ee22bd193e74828624b98e24fe65399adf230e1ccdfc7dc9144db236349"
+    },
+    "traceability-absence-repair.log": {
+      "bytes": 36,
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+    },
+    "traceability-label-repair-final.log": {
+      "bytes": 36,
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+    },
+    "traceability-label-repair.log": {
+      "bytes": 36,
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+    },
+    "traceability.log": {
+      "bytes": 36,
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+    }
+  },
+  "preserved_native_failures": [
+    {
+      "run_id": 37476127400,
+      "job_id": 112311873606,
+      "artifact_id": 11420360569,
+      "qualification": "1df4b7d567b887b8489324f366aedc5b8c39b692",
+      "failure": "Timed out waiting for visible button Edit; manual card had scrolled horizontally offscreen",
+      "application_source_unchanged": true,
+      "captures_verified_and_viewed": 4,
+      "zip_path": "/workspace/attachments/04035219-17b4-4be7-b85d-09ffe9465231/eidetic-bible-relationship-first-native.zip",
+      "zip_sha256": "51f4ae7190e7ae308d6631ea659e41f7386e6adf8e3014124e70605177506dd5",
+      "receipt_sha256": "eb70cfe96c8832af095ae4f3cdc54a98e44ac933053d6df82844e0e2e917f939"
+    },
+    {
+      "run_id": 37478851725,
+      "job_id": 112321376737,
+      "artifact_id": 11421300699,
+      "qualification": "396d2250fe1e63b6c86f1e95d94dde985ecead59",
+      "failure": "Timed out waiting for retained draft block after successful native relationship edit and preserved exact draft",
+      "application_source_unchanged": true,
+      "captures_verified": 5,
+      "captures_viewed": 5,
+      "zip_path": "/workspace/attachments/4693cc17-7f23-4881-bf78-2ab4d45bade4/eidetic-bible-relationship-second-native.zip",
+      "zip_sha256": "efc7ab7053a7c60639b2f8f843823bc9eb949b312cb0357e09372570c0deeee6",
+      "receipt_sha256": "f4d7acb9496c590ab0af76b012f599767e3a098ae078af807168cd7850d21bdf"
+    },
+    {
+      "run_id": 37482490140,
+      "job_id": 112333955333,
+      "artifact_id": 11422652735,
+      "qualification": "3f7047481dd9c3d473e1a56ec950736570e64e54",
+      "failure": "Visible-only exact draft lookup failed after native label inspection scrolled the draft offscreen",
+      "application_source_unchanged": true,
+      "captures_verified": 5,
+      "captures_viewed": 5,
+      "zip_path": "/workspace/attachments/23eabe70-23b4-4c6f-90d9-5122299f7ed7/eidetic-bible-relationship-third-native.zip",
+      "zip_sha256": "8126cd7458b882729a08b98c9dfe34e5c8488a7820064565a4d5cfe7914e4b82",
+      "receipt_sha256": "b1906ea5facd9103bcc2c36368dbb2899ff3bbb2ac360ae499f5ce703247bd17"
+    },
+    {
+      "run_id": 37485011359,
+      "job_id": 112342689361,
+      "artifact_id": 11424490179,
+      "qualification": "ec69062111e44d558b810119fb93ad1547896195",
+      "failure": "Disclosure lookup targeted older accepted preview instead of exact pending relationship preview",
+      "application_source_unchanged": true,
+      "exact_relationship_preview_recorded": true,
+      "exact_manual_draft_cancelled_explicitly": true,
+      "captures_verified": 5,
+      "captures_viewed": 5,
+      "zip_path": "/workspace/attachments/00d3373d-b8a6-4d07-be7f-0c437fda5b6f/eidetic-bible-relationship-fourth-native.zip",
+      "zip_sha256": "f5b5b846c339cd0d1f27122ba6da17117a67bc7796f984a2d04800d926a826ec",
+      "receipt_sha256": "0e0d374db0ea0c521419e5c7247b07814d8ec4825f44d938c8fade01bc4f9f5a"
+    },
+    {
+      "run_id": 37487992013,
+      "job_id": 112352980786,
+      "artifact_id": 11423889806,
+      "qualification": "660153d71878f453a2b58b76512193af6ef2ac49",
+      "failure": "Strict native pointer bounds guard refused exact pending disclosure fragmented partly outside window",
+      "application_source_unchanged": true,
+      "exact_pending_relationship_preview_recorded": true,
+      "captures_verified": 5,
+      "captures_viewed": 5,
+      "zip_path": "/workspace/attachments/33f46354-98a7-4e6e-a5fc-d80a535d9914/eidetic-bible-relationship-fifth-native.zip",
+      "zip_sha256": "f02d2869e103ebee12dc389ea622a5b9a2f5087a2104aea35ee1b70436b96130",
+      "receipt_sha256": "0aae2557fa39665fb9c9e39841d7b4ac97c29bf622661ddd4a6e993df207eb9a"
+    },
+    {
+      "run_id": 37490179062,
+      "job_id": 112360527973,
+      "artifact_id": 11426305722,
+      "qualification": "15bfd3a235a5b6847f2c4ef45dbb6d897625c59c",
+      "failure": "Exact stale message visibly rendered after label ABA but broad nonvisual aggregate accessibility lookup timed out before all-row check",
+      "application_source_unchanged": true,
+      "pending_relationship_disclosure_completed": true,
+      "stale_message_visible_in_failure_capture": true,
+      "native_aba_all_row_rollback_qualified": false,
+      "captures_verified": 6,
+      "captures_viewed": 6,
+      "zip_path": "/workspace/attachments/452340ac-136d-4701-a2bb-56814d3f12f0/eidetic-bible-relationship-sixth-native.zip",
+      "zip_sha256": "399c4bec4402de85b6c9f5ed6c646f637dc71a8bdf411707ad7f0832bea916e2",
+      "receipt_sha256": "2eee2641a7af0ec9bb94d1ef9f5facc78992e9fefcbede259ec39d73d00ee871"
+    },
+    {
+      "run_id": 37498130226,
+      "job_id": 112387843920,
+      "artifact_id": 11428938464,
+      "qualification": "73f6e5515725cc2289322107d3c841ed90299c91",
+      "failure": "RuntimeError: Timed out waiting for exact stale relationship acceptance refusal",
+      "application_source_unchanged": true,
+      "captures_verified_and_viewed": 6,
+      "zip_path": "/workspace/attachments/188811ec-b803-4860-a53a-b9e7ccb759bd/eidetic-bible-relationship-seventh-native.zip",
+      "zip_sha256": "069657df0ccaf330841cfd160abdae354f38b971510febb8123a85eadc2e94f2",
+      "receipt_sha256": "5b6c0637c214a988f035f8dc59170311dcc2059d411133b25b99cda4f17818ef"
+    },
+    {
+      "run_id": 37503033300,
+      "job_id": 112404599630,
+      "artifact_id": 11430973285,
+      "qualification": "bad0bb6941e33b11879c17c08807d191cb09e75d",
+      "application_source_sha": "e94cbffa88fd3f58665e55a22b1c5969c60d3d4e",
+      "failure": "RuntimeError: Timed out waiting for canonical Bible label glyphs above timeline",
+      "zip_sha256": "33e337be935d9b65bfc9d418ea2d5189698a31e3f0336ab82dd6f9c9d73416c3",
+      "receipt_sha256": "1385dd5df0534a65a20b857dfc5965898e7dc7d66460dcc6235f6cfdf5217b89",
+      "all_rows_equal_after_stale_refusal": true,
+      "fresh_explicit_acceptance_completed": true,
+      "readable_canonical_label_still_unqualified": true,
+      "captures_verified_and_viewed": 9
+    }
+  ],
+  "limits": {
+    "real_model_quality_qualified": false,
+    "authenticated_model_access_qualified": false,
+    "native_sdk_inference_qualified": false,
+    "provider": "synthetic localhost HTTP/SSE through production provider client",
+    "native_ui": "normal Tauri launcher with Vite development UI; production frontend build separately passed",
+    "injected_js_or_ipc": false,
+    "edited_pixels": false,
+    "git_credentials_changed": false,
+    "new_manual_set_edge_backend_concurrency_contract": false,
+    "native_concurrent_multi_user_qualification": false,
+    "deferred": [
+      "new relationship membership",
+      "node-name provenance",
+      "timed relationship semantics",
+      "project switching recovery",
+      "embeddings"
+    ],
+    "existing_changed_relationship_outside_resolver_context": "Preview refuses until context is restored"
+  },
+  "parent_owns": [
+    "review requests and review slot",
+    "final PR CI/review",
+    "merges",
+    "Library delivery"
+  ],
+  "accepted_pr9_base": {
+    "commit": "25b860d12fe37a3538a40616cc02ab4a81370863",
+    "tree": "d22b036891aed7eb66fc94059aa1b5c1d9aab85a",
+    "verified_ancestor": true
+  },
+  "preserved_first_source": {
+    "commit": "237d0481d9cbc0c84df81d767cbd364b8d817ce4",
+    "tree": "7915e0ac83b45e0043612ff3f9417d1d5af5b9d2"
+  },
+  "preserved_first_qualification": {
+    "commit": "15bfd3a235a5b6847f2c4ef45dbb6d897625c59c",
+    "tree": "c40f098ed00237971fa73f7ff66c0b80cb71d182"
+  },
+  "absence_aba_reproduction": {
+    "source": "237d0481d9cbc0c84df81d767cbd364b8d817ce4",
+    "test": "deleted_relationship_preview_refuses_absence_aba_without_writes",
+    "before": "failed: unsafe explicit acceptance succeeded",
+    "after": "passed: stale refusal preserves all rows, fresh explicit acceptance succeeds",
+    "selected_other_cause": "passed; all absent consumed identities bound",
+    "legacy_missing_absence_receipt": "fresh review required"
+  },
+  "preserved_absence_source": {
+    "commit": "85170c9542322e2e197efcd07e1c2cafac3c8f6a",
+    "tree": "a78f46971cfb606a23e43a38cbb579cc6560b6c4",
+    "branch": "feat/screenplay-bible-relationship-absence"
+  },
+  "preserved_absence_qualification": {
+    "commit": "786dfbc41d41e324575503db2142af3ea22193d9",
+    "tree": "cbb7d026382821b1c6c48bfb0bda6b30a84a8de7",
+    "branch": "test/screenplay-bible-relationship-absence-native"
+  },
+  "preserved_absence_native_pass": {
+    "run_id": 37501157593,
+    "job_id": 112398623461,
+    "artifact_id": 11430641183,
+    "zip_sha256": "64a2fa695a4125974089ffecccc5fdc6b68b23ba6512d6a8039e5aed17aee6c5",
+    "receipt_sha256": "22b458f3ecf213a7a61f4e601fff3b432ee106ae97afe53bb8efb5b3e6e4fe3e",
+    "application_source_sha": "85170c9542322e2e197efcd07e1c2cafac3c8f6a",
+    "qualification_sha": "786dfbc41d41e324575503db2142af3ea22193d9",
+    "status": "native_relationship_review_passed_with_synthetic_provider",
+    "stale_accessibility": [
+      [
+        {
+          "role": "notification",
+          "role_id": 101,
+          "child_count": 0,
+          "showing": true,
+          "bounds": [
+            313,
+            379,
+            375,
+            16
+          ],
+          "exact_text": "screenplay proposal is stale; request a fresh preview"
+        }
+      ]
+    ],
+    "all_logical_rows_equal_after_refusal": true,
+    "explicit_fresh_acceptance": true,
+    "exact_manual_draft_preserved": true,
+    "captures": [
+      {
+        "file": "eidetic-bible-fact-review.png",
+        "sha256": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-bible-fact-preview.png",
+        "sha256": "7e2d52379ecfaea439eb2ac3f189f8056134634e55b89675f5aad1d4b1c70e28",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-bible-fact-accepted.png",
+        "sha256": "52c855660518839df78a347ecd132dc4f7c470d36cb70793bc381011b8bf2072",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-relationship-review.png",
+        "sha256": "a2dcb1a6f9fb138a5f58eb270bfcadef08fc50b90213cb79a49a0fd0ca5ba5d3",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-relationship-preview.png",
+        "sha256": "af6e59d2fdb08b4faccf75534b09a9bf786bbc9aa0a9757d510ee1e02e732c8c",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-relationship-stale.png",
+        "sha256": "a9495aeec05bf3012b56855171cd18e2d223f977f39d2d6c716911153d1ae4d0",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-relationship-fresh-preview.png",
+        "sha256": "fced96a3aab042601a60a84a1e7dee4f4c1e49197b4bde60a99ccf36369e13ff",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-relationship-accepted.png",
+        "sha256": "014761596b302d26cb34cbb608549632489ad6490726328e996e242c6d43d387",
+        "window_id": 2097155,
+        "pid": 21984
+      },
+      {
+        "file": "eidetic-relationship-readable.png",
+        "sha256": "014761596b302d26cb34cbb608549632489ad6490726328e996e242c6d43d387",
+        "window_id": 2097155,
+        "pid": 21984
+      }
+    ],
+    "real_model_quality_qualified": false
+  },
+  "out_of_scope_reproduction": {
+    "prior_source": "85170c9542322e2e197efcd07e1c2cafac3c8f6a",
+    "failed_log": "outscope-reproduction.log",
+    "fixed_log": "server-tests-outscope-repair.log",
+    "fixture_nodes": 206,
+    "consumed_edges": 2,
+    "selected_visible_cause_retains_other_live_input_authority_by_refusal": true,
+    "unchanged_and_changed_inputs_tested": true,
+    "pending_preview_acceptance_refused_without_writes": true
+  },
+  "label_write_repair": {
+    "prior_source": "85170c9542322e2e197efcd07e1c2cafac3c8f6a",
+    "backend_expected_revision_label_only_update": true,
+    "transaction_owned_revision_and_live_identity_guard": true,
+    "store_cases": 4,
+    "two_connection_races": true,
+    "refusal_all_rows_unchanged": true,
+    "actual_client_compiled_controller_interruption_tests": true,
+    "orphan_draft_retained": true,
+    "native_concurrent_multi_user_race_qualified": false
+  },
+  "native": {
+    "run_id": 37505367170,
+    "job_id": 112412549433,
+    "artifact_id": 11432076755,
+    "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37505367170",
+    "conclusion": "success",
+    "artifact_bytes": 980466,
+    "artifact_sha256": "9e7ecf6504352c10ff1e82b12c9cd77f0ac9c5bcc88d47a33ccb53b96639e8d5",
+    "zip_path": "/workspace/attachments/4224e51f-3d83-4ebb-9de6-92f7d9e57a54/eidetic-bible-relationship-final-native.zip",
+    "receipt_path": "/workspace/scratch/relationship-lineage/native-37505367170/capture-evidence.json",
+    "receipt_sha256": "4ebdb348fd43c7ead002d3e7c0fbf464aa1d456d4006efb877b69f6607c36a5a",
+    "application_source_sha": "e94cbffa88fd3f58665e55a22b1c5969c60d3d4e",
+    "qualification_sha": "c5b962c18e241e5ec865a643ff888a405ad896de",
+    "application_binary_sha256": "052cc765118613052598fe05d5c7841ce8d5e1cb1a1ef06d06ce8c52708f24c4",
+    "window_id": 2097155,
+    "window_pid": 21873,
+    "root_status": "native_bible_fact_propagation_passed_with_synthetic_http_fixture",
+    "relationship_status": "native_relationship_review_passed_with_synthetic_provider",
+    "provider_calls": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview_relationship_1",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false
+      },
+      {
+        "kind": "preview_relationship_2",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false
+      }
+    ],
+    "real_model_quality_qualified": false,
+    "stale_aba_refused_without_writes": true,
+    "all_logical_rows_equal_after_refusal": true,
+    "explicit_fresh_acceptance": true,
+    "exact_manual_draft_preserved": true,
+    "exact_manual_source_preserved": true,
+    "current_consumption_revision": "f63a82ce-464d-43c2-bcd6-f322051a3e1c",
+    "original_preview_revision": "6e8b72a2-ad3b-4f67-b548-ff60e530b9c6",
+    "fresh_preview_revision": "f63a82ce-464d-43c2-bcd6-f322051a3e1c",
+    "readable_canonical_bible_label": {
+      "exact_label": "Mara doubts Eli",
+      "editor_bounds": [
+        0,
+        467,
+        185,
+        22
+      ],
+      "role": "entry",
+      "child_count": 0
+    },
+    "readable_saved_screenplay": {
+      "expected_saved_text": "EXT. STATION - NIGHT\n\nMara doubts Eli as they board the train.",
+      "bounds": [
+        280,
+        178,
+        1114,
+        564
+      ],
+      "saved_text_ranges": {
+        "EXT. STATION - NIGHT": [
+          738,
+          226,
+          141,
+          12
+        ],
+        "Mara doubts Eli as they board the train.": [
+          738,
+          253,
+          281,
+          13
+        ]
+      }
+    },
+    "captures": [
+      {
+        "file": "eidetic-bible-fact-review.png",
+        "sha256": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-bible-fact-preview.png",
+        "sha256": "7e2d52379ecfaea439eb2ac3f189f8056134634e55b89675f5aad1d4b1c70e28",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-bible-fact-accepted.png",
+        "sha256": "52c855660518839df78a347ecd132dc4f7c470d36cb70793bc381011b8bf2072",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-relationship-review.png",
+        "sha256": "6cab22fb7187d2c324910a802f9cc6b6273b114b35c5e9e54cac6c6a163a12de",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-relationship-preview.png",
+        "sha256": "16bf11f37aafe275596c290b7c3be7db4bf0ea62aa8dec2caf7d924edad12f02",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-relationship-stale.png",
+        "sha256": "71d1369645cc5a062bc98a599bc29571d40e915dbe8518fc22b8402cbaaa73e4",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-relationship-fresh-preview.png",
+        "sha256": "076196575c29a8f40dd426445c1d379cf6ea5b7a2c2cb3fb57a2e0cf1a9af579",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-relationship-accepted.png",
+        "sha256": "a2f9409478fa9d8b0d45e63b532e5041f372302b8c2a46d20934692fe64b9e7c",
+        "window_id": 2097155,
+        "pid": 21873
+      },
+      {
+        "file": "eidetic-relationship-readable.png",
+        "sha256": "1ed0e996aa728d81b2cfa38f3b4cee2eb324155001b5033e60801b2cdba7f8ac",
+        "window_id": 2097155,
+        "pid": 21873
+      }
+    ],
+    "all_captures_sha_dimensions_window_pid_verified": true,
+    "all_capture_bytes_visually_reviewed": true
+  },
+  "draft_pr_authorized": true
+}

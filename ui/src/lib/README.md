@@ -139,3 +139,12 @@ async function openTimeline() {
 - `types.ts` exports stable field names that mirror backend timeline/story payloads used throughout the UI.
 - UI layout helper exports define default semantics for fixed panel sizing; consumers should treat them as the canonical budget for the main timeline shell.
 - When a shared shape or layout helper changes, dependent components must be updated in the same change to preserve visual and type consistency.
+
+Consumed Bible relationships use the existing screenplay input, dependency and
+proposal DTOs. Original endpoints/kind/direction/label and owned revision remain
+in generation/review receipts; proposal previews require explicit acceptance
+and stale results refuse without replacing manual screenplay. Label-only edge
+commands carry the original expected revision through desktop transport. Node
+detail's edge revision map belongs to the same backend read snapshot; the writer
+owns revision/live-identity authority, while the UI owns retained draft and
+conflicting-operation controls. No parallel memory store or embedding dependency.

@@ -1791,3 +1791,22 @@ regressions retain newer cache on delayed label response. Full gates:
 core119/server471/frontend456, typecheck0/0, lint, format, build, strict server
 all-target Clippy, rustfmt and traceability. Hosted exact-source native build and
 relationship flow must still qualify this successor before delivery.
+
+### Final source-bound relationship qualification
+
+Maintained source e94cbffa (label implementation017e92ec, out-of-scope repair
+ aeacee85) and qualification c5b962c pass actual native run37505367170, job
+112412549433, artifact11432076755. Normal locked desktop/fixture builds and
+core119/server471/UI456/driver39/no-download5 pass. Native exact Red-to-Blue Bible
+fact and Trust-to-Doubt relationship edits preserve saved scripts, placement and
+exact manual draft. Pending previews require explicit acceptance. Relationship
+ABA refuses old acceptance with identical all-table rows, then fresh review and
+explicit acceptance update only generated B and refresh the original read
+revision. Manual A remains exact. Final capture opens the saved-label editor
+without Save; bounded exact entry, readable saved B, Blue field and timeline are
+visible. Nine untouched captures are hash/dimension/window/PID verified/viewed;
+five HTTP model responses are explicitly synthetic. Report/manifest preserve all
+prior failed runs, frozen sources and source-level reproductions. No real-model
+quality, native multi-user race or embedding dependency claim. Final steering
+permits a normal draft PR after current-main/duplication checks; parent retains
+review requests/slot, final CI/review, merge and Library delivery.
