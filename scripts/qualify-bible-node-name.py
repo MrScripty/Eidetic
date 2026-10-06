@@ -17,6 +17,22 @@ AFTER = 'Marisol'
 REPLACEMENT = 'EXT. STATION - NIGHT\n\nEli spots Marisol and her blue umbrella.'
 
 
+def walk_live(root):
+    """Skip exact retired None children while retaining the existing hard bound."""
+    pending = [root]
+    visited = 0
+    while pending:
+        node = pending.pop()
+        visited += 1
+        if visited > 3000:
+            raise RuntimeError("Accessibility tree exceeds capture traversal bound")
+        if node is None:
+            ui.ACCESSIBILITY_RETIREMENTS += 1
+            continue
+        yield node
+        pending.extend(reversed(list(node)))
+
+
 def name_prompt(user, system):
     return ('targeted screenplay update' in system and '"kind":"bible_node"' in user
             and '"input_excerpt":"Mara"' in user
@@ -171,6 +187,9 @@ def name_flow(application, window, database, fixture, evidence, checkpoint, capt
 if __name__ == '__main__':
     if not os.environ.get('EIDETIC_CAPTURE_SOURCE'):
         raise SystemExit('An exact frozen EIDETIC_CAPTURE_SOURCE is required')
+    # Name refresh replaces the Bible tree; WebKit can return retired None slots.
+    # This changes qualification traversal only, not application state or input.
+    ui.walk = walk_live
     bible.BibleFactProvider = NameProvider
     bible.AFTER_ACCEPTANCE = name_flow
     bible.main()

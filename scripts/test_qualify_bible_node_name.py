@@ -74,3 +74,31 @@ class NameProviderTests(unittest.TestCase):
         with self.assertRaises(HTTPError):
             self.request(self.prompt(), system='unrelated task')
 
+
+
+class NameAccessibilityTraversalTests(unittest.TestCase):
+    def test_exact_retired_none_child_is_skipped_and_recorded_without_losing_live_nodes(self):
+        class Node:
+            def __init__(self, *children):
+                self.children = children
+            def __iter__(self):
+                return iter(self.children)
+        leaf = Node()
+        root = Node(None, leaf)
+        before = driver.ui.ACCESSIBILITY_RETIREMENTS
+        self.assertEqual(list(driver.walk_live(root)), [root, leaf])
+        self.assertEqual(driver.ui.ACCESSIBILITY_RETIREMENTS, before + 1)
+
+    def test_existing_hard_bound_still_refuses_a_cycling_tree(self):
+        class Cycle:
+            def __iter__(self):
+                return iter([self])
+        with self.assertRaisesRegex(RuntimeError, 'Accessibility tree exceeds capture traversal bound'):
+            list(driver.walk_live(Cycle()))
+
+    def test_unrelated_enumeration_failure_is_not_hidden(self):
+        class Broken:
+            def __iter__(self):
+                raise ValueError('unrelated malformed tree')
+        with self.assertRaisesRegex(ValueError, 'unrelated malformed tree'):
+            list(driver.walk_live(Broken()))
