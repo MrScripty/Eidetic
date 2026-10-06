@@ -25,6 +25,10 @@ const plan = {
   children: [{ name: 'Exact', outline: 'Saved outline', weight: 1, beat_type: null,
     characters: ['Mara'], props: ['Umbrella'], location: null }],
   script_context: [{ text: 'Exact manual text\\n\\n', block_id: 'manual', revision_event_id: 'saved' }],
+  bible_context: {
+    context: { version: 3, payload: { target_node_id: 'scene', nodes: [{ node_id: 'Mara', name: 'Original Mara', fields: [{ part_key: 'profile', field_key: 'tagline', value: { type: 'text', value: 'Original blue fact' } }] }] } },
+    inputs: [{ node_id: 'Mara', part_key: 'profile', field_key: 'tagline', field_id: 'fact', revision_event_id: 'blue-revision', value: { type: 'text', value: 'Original blue fact' } }],
+  },
 };
 const expected = structuredClone(plan);
 const calls = [];
@@ -39,10 +43,13 @@ await review.recover();
 assert.equal(review.state.plan, null);
 assert.equal(calls.length, 0);
 plan.children[0].outline = 'Later provider mutation';
+plan.bible_context.context.payload.nodes[0].fields[0].value.value = 'Later green fact';
+plan.bible_context.inputs[0].revision_event_id = 'green-revision';
 review.reviewSaved('durable');
 assert.equal(review.state.plan.id, expected.id);
 assert.equal(review.state.plan.children[0].outline, expected.children[0].outline);
 assert.equal(review.state.plan.script_context[0].text, expected.script_context[0].text);
+assert.deepEqual(JSON.parse(JSON.stringify(review.state.plan.bible_context)), expected.bible_context);
 assert.equal(calls.length, 0);
 await review.accept();
 assert.equal(calls.length, 1);

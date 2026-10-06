@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ChildPlan } from '$lib/childPlanningTypes.js';
+  import ChildPlanBibleEvidence from './ChildPlanBibleEvidence.svelte';
   let {
     recoverable = false,
     savedPlans = null,
@@ -89,6 +90,7 @@
         {/each}
       {/if}
     </details>
+    <ChildPlanBibleEvidence evidence={plan.bible_context} />
     <button type="button" disabled={busy} onclick={onaccept}
       >{busy ? 'Accepting…' : uncertain ? 'Retry acceptance' : 'Accept timeline plan'}</button
     >

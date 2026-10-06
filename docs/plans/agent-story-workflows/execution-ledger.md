@@ -1,5 +1,45 @@
 # Execution ledger
 
+## 2026-10-06 — Bible-bound pending timeline plans
+
+Separate successor `feat/child-plan-bible-bindings` starts from frozen recovery
+checkpoint `fbf0f3187e741fcf825062b52a08bb62707eaec9`. Inspection verified the
+documented gap: child generation passed resolved Bible context to the provider
+after capturing screenplay in another read, discarded Bible field inputs, and
+stored/recovered only screenplay evidence. Bible-only drift could therefore
+leave a pending timeline plan admissible. Existing fact-to-screenplay targeted
+preview/acceptance already works and is retained.
+
+Bible context now shares the existing child-memory transaction and creation-command
+JSON. Provider requests and original review evidence use that exact read. Scoped
+node/field/snapshot/edge history, target context selection and conservative bounded
+node metadata guards refuse relevant drift before proposal persistence and explicit
+timeline acceptance. Sparse endpoint history reconstructs edge entry/revert; old
+outside-only label edits do not fabricate consumption. The public envelope retains
+historical display provenance, while its global value clock is not admission.
+Missing Bible or entire memory receipts require fresh review. First-command replay
+and structural commands without a plan ID remain supported.
+
+The existing review now discloses original names, facts, baseline field revisions,
+effective snapshot time/labels, withheld timed fields and untimed graph connections.
+Recovered evidence is never hydrated from current Bible values. Missing legacy
+and recorded empty contexts differ. Manual screenplay, drafts and explicit
+acceptance retain their existing owners. No schema, dependency or parallel store.
+All selected-entity field/snapshot identities are conservatively guarded; node
+metadata changes anywhere can require fresh bounded-context review. Unselected
+fact/snapshot/edge changes remain admissible. Affect and arc-description binding,
+broader screenplay graph dependencies, native edge authoring and real-model quality
+are separate; project switching stays deferred.
+
+Eleven actual public-service/synthetic HTTP regressions pass, including fact-only
+drift and fresh acceptance/replay, fact and sparse-edge ABA, delayed response
+rollback of all durable rows, durable original recovery, explicit context and capped
+node membership ABA, explicit story-time resolution and later temporal conflict,
+legacy refusal and unrelated outside-source admission. Frontend452 tests, typecheck
+with zero errors/warnings, lint, formatting and production build pass. Full native
+gates and actual hosted UI qualification are recorded in the successor report
+when executed; no real-model quality is claimed.
+
 ## 2026-10-06 — Recover saved pending timeline plans
 
 Frozen source `7f0b4e502bb668e8ef4a8ab29487bdf1b8cdeeae`, tree

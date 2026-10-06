@@ -3,7 +3,9 @@ use std::pin::Pin;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
 
-use crate::contracts::{AffectProjection, AiBibleContextProjection, ProjectionEnvelope};
+use crate::contracts::{
+    AffectProjection, AiBibleContextProjection, BibleFieldInput, ProjectionEnvelope,
+};
 use crate::error::Error;
 use crate::story::arc::StoryArc;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel, StoryNode};
@@ -197,7 +199,15 @@ pub struct ChildProposal {
     pub props: Vec<String>,
 }
 
-/// AI-generated plan for decomposing a parent node into children.
+/// Original resolved Bible evidence supplied to a child-planning provider.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ChildPlanBibleContext {
+    pub context: ProjectionEnvelope<AiBibleContextProjection>,
+    /// Exact untimed baseline inputs; snapshots and unresolved fields stay in context.
+    pub inputs: Vec<BibleFieldInput>,
+}
+
+/// Pending proposal and the original canonical evidence supplied to its provider.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChildPlan {
     pub id: ChildPlanId,
@@ -207,6 +217,9 @@ pub struct ChildPlan {
     /// Exact saved screenplay supplied to this proposal; absent on legacy plans.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub script_context: Option<Vec<crate::contracts::ScriptContextBlock>>,
+    /// Original resolved Bible evidence. Absence means legacy unknown custody.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_context: Option<ChildPlanBibleContext>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

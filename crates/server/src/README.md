@@ -91,8 +91,10 @@ domain model in `eidetic-core`.
 | `revision_projection_tests.rs` | Focused projection rebuild tests over persisted history rows. |
 | `ydoc.rs` | Yjs/Yrs document coordination and persistence serialization. |
 | `ai_backends/` | Provider adapters for local and remote text generation backends. |
-| `child_plan_generation.rs` | Pending child decomposition using canonical screenplay receipts and existing provider adapters. |
-| `child_plan_memory.rs` | Revision-bound parent/subtree and bounded screenplay inputs stored in existing child-plan command history. |
+| `child_plan_generation.rs` | Pending child decomposition using screenplay and resolved Bible evidence from the same SQLite snapshot and existing provider adapters. |
+| `child_plan_memory.rs` | Revision-bound parent/subtree, bounded screenplay and Bible receipts stored in existing child-plan command history. |
+| `child_plan_bible_memory.rs` | Original resolved Bible evidence plus scoped source history, target context and metadata-only bounded node-selection custody; ignores unrelated global value clocks. |
+| `child_plan_bible_service_tests.rs` | Public synthetic HTTP/manual Bible edits, pending and delayed source admission, historical review evidence, explicit acceptance and scoped refusal/replay regressions. |
 | `child_plan_memory_service_tests.rs` | Actual public manual edits, synthetic HTTP pending plans, explicit acceptance, ABA/membership refusal, unchanged screenplay and exact durable public-projection recovery in a fresh AppState. |
 
 ## Problem
@@ -154,7 +156,7 @@ increase coupling by hiding the transaction invariant.
   and identical-command replay as an immediately reviewed plan. Service restart
   tests qualify storage durability, not GUI project-switch recovery.
 
-- New child plans supply exact main-document screenplay and record its revisions in the existing creation command. Creation and explicit timeline acceptance validate the same receipt under the writer transaction. Pending/accepted plans never rewrite saved screenplay; legacy plans without receipts remain legacy unknown. This binding covers screenplay and parent/subtree custody, not complete Bible, affect or arc-description consumption.
+- New child plans supply exact main-document screenplay and record its revisions in the existing creation command. Creation and explicit timeline acceptance validate the same receipt under the writer transaction. Pending/accepted plans never rewrite saved screenplay; legacy plans without receipts remain legacy unknown. Bible binding now shares that receipt and read transaction; affect and arc-description consumption remain separate.
 
 - New main-screenplay generation records a complete selected window separately
   from its exact consumed blocks. Selection uses presentation placement only.

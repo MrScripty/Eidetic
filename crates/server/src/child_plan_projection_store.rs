@@ -38,8 +38,9 @@ fn load_child_plan_records(conn: &Connection) -> Result<Vec<ChildPlanRecord>, Ch
     for row in rows {
         let (id, parent_node_id, target_child_level, status, created_at_ms) = row?;
         let children = load_child_plan_children(conn, &id)?;
-        let script_context =
-            child_plan_store::load_memory(conn, &id)?.map(|memory| memory.script_inputs);
+        let memory = child_plan_store::load_memory(conn, &id)?;
+        let bible_context = memory.as_ref().and_then(|memory| memory.bible_context());
+        let script_context = memory.map(|memory| memory.script_inputs);
         plans.push(ChildPlanRecord {
             plan: ChildPlan {
                 id,
@@ -47,6 +48,7 @@ fn load_child_plan_records(conn: &Connection) -> Result<Vec<ChildPlanRecord>, Ch
                 target_child_level,
                 children,
                 script_context,
+                bible_context,
             },
             status,
             created_at_ms,
