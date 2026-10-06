@@ -138,3 +138,10 @@ unknown. Captured endpoints, kind, label and direction are historical evidence.
 Targeted proposals also retain optional per-identity absence revision pairs for
 previously consumed edges. These bind missing-state history without inventing a
 consumed value; a missing legacy receipt requires fresh review.
+
+`BibleNodeNameInput` binds each authored name actually supplied in a resolved
+Bible prompt header to its node identity and owned name revision. Optional
+`bible_node_name_inputs` in generation/proposal custody preserves unknown legacy
+reads. Existing `BibleNode` / `UsesFact` dependencies carry these name receipts;
+node metadata-only edits do not advance the name clock. Proposal absence receipts
+retain deleted-node history, without inventing a consumed name.

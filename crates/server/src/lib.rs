@@ -27,6 +27,7 @@ pub(crate) mod bible_graph_schema;
 pub(crate) mod bible_graph_snapshot_store;
 pub(crate) mod bible_graph_store;
 pub(crate) mod bible_graph_value_store;
+pub(crate) mod bible_node_name_lineage;
 pub(crate) mod bible_relationship_lineage;
 pub mod bible_render_graph_projection;
 pub(crate) mod bible_render_graph_query;

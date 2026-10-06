@@ -86,6 +86,7 @@ fn generation(
         target_binding: None,
         block: block.clone(),
         script_inputs: Some(inputs),
+        bible_node_name_inputs: None,
         bible_relationship_inputs: None,
         bible_inputs: None,
         bible_context_scope: None,

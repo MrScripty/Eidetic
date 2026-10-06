@@ -96,6 +96,13 @@ it('renders exact proposed text alongside current canon and explicit review acti
             target_segment_revision_event_id: 'B-placement',
             script_inputs: [],
             bible_context: { version: 1, payload: {} },
+            bible_node_name_inputs: [
+              {
+                node_id: 'Mara',
+                name: 'Captured <Marisol>',
+                revision_event_id: 'name-original-revision',
+              },
+            ],
             bible_relationship_inputs: [
               {
                 edge: {
@@ -119,6 +126,9 @@ it('renders exact proposed text alongside current canon and explicit review acti
   expect(body).toContain('  Proposed &lt;B> — 雨\n\n');
   expect(body).toContain('Accept update');
   expect(body).toContain('Reject');
+  expect(body).toContain('Names used for this preview');
+  expect(body).toContain('Captured &lt;Marisol>');
+  expect(body).toContain('name-original-revision');
   expect(body).toContain('Relationships used for this preview');
   expect(body).toContain('Original captured &lt;relationship>');
   expect(body).toContain('edge-original-revision');
@@ -182,4 +192,19 @@ it('renders Bible membership changes with exact field evidence and preserves can
   expect(render(ScriptImpactNotice, { props: { impact: target.impact! } }).body).toContain(
     'Screenplay context changed.',
   );
+});
+
+it('explains a consumed Bible name edit and removal through explicit screenplay review', () => {
+  const renamed = structuredClone(segment);
+  const cause = renamed.impact!.causes[0]!;
+  cause.input = { kind: 'bible_node', node_id: 'Mara' };
+  cause.input_excerpt = 'Mara';
+  const changed = render(ScriptImpactReview, { props: { documentId: 'main', segment: renamed } });
+  expect(changed.body).toContain('Bible name changed.');
+  expect(changed.body).toContain('Preview update');
+  cause.reason = 'deleted';
+  const removed = render(ScriptImpactNotice, { props: { impact: renamed.impact! } });
+  expect(removed.body).toContain('Bible name was removed.');
+  expect(removed.body).toContain('Mara');
+  expect(renamed.blocks[0]!.block.text).toBe(segment.blocks[0]!.block.text);
 });

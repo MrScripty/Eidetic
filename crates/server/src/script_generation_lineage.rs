@@ -106,6 +106,34 @@ pub(crate) fn dependencies(
             }),
         });
     }
+    let mut seen_names = std::collections::BTreeSet::new();
+    for input in command.bible_node_name_inputs.iter().flatten() {
+        if !seen_names.insert(input.node_id.as_str()) {
+            return Err(HistoryStoreError::InvalidValue(
+                "duplicate Bible name input".into(),
+            ));
+        }
+        dependencies.push(SemanticDependency {
+            id: SemanticDependencyId::new(format!(
+                "generation.{}.name.{}",
+                event.0,
+                dependencies.len()
+            ))
+            .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?,
+            source: SemanticDependencyEndpoint::ScriptSegment {
+                segment_id: command.block.segment_id.clone(),
+            },
+            target: crate::bible_node_name_lineage::endpoint(input),
+            kind: SemanticDependencyKind::UsesFact,
+            rationale: Some("Authored Bible name supplied to generation".into()),
+            confidence: None,
+            created_at_ms,
+            revision_binding: Some(SemanticDependencyRevisionBinding {
+                source_revision_event_id: event,
+                target_revision_event_id: input.revision_event_id,
+            }),
+        });
+    }
     let mut seen_relationships = std::collections::BTreeSet::new();
     for input in command.bible_relationship_inputs.iter().flatten() {
         if !seen_relationships.insert(input.edge.edge_id.as_str()) {
@@ -187,6 +215,9 @@ pub(crate) fn record_in_transaction(
     }
     for input in command.bible_inputs.iter().flatten() {
         crate::bible_field_lineage::validate_history(tx, input)?;
+    }
+    for input in command.bible_node_name_inputs.iter().flatten() {
+        crate::bible_node_name_lineage::validate_history(tx, input)?;
     }
     for input in command.bible_relationship_inputs.iter().flatten() {
         crate::bible_relationship_lineage::validate_history(tx, input)?;

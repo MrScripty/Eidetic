@@ -23,6 +23,7 @@ use crate::ai_service::active_sqlite_project;
 struct GenerationInputs {
     script_inputs: Option<Vec<ScriptContextBlock>>,
     bible_inputs: Option<Vec<eidetic_core::contracts::BibleFieldInput>>,
+    bible_node_name_inputs: Option<Vec<eidetic_core::contracts::BibleNodeNameInput>>,
     bible_relationship_inputs: Option<Vec<eidetic_core::contracts::BibleRelationshipInput>>,
     bible_context_scope: Option<eidetic_core::contracts::BibleContextScope>,
     script_context_scope: Option<eidetic_core::contracts::ScriptContextScope>,
@@ -98,6 +99,7 @@ pub(crate) async fn run_generation(
         stream,
         GenerationInputs {
             script_inputs: request.script_context,
+            bible_node_name_inputs: request.bible_node_name_inputs,
             bible_relationship_inputs: request.bible_relationship_inputs,
             bible_inputs: request.bible_inputs,
             bible_context_scope: request.bible_context_scope,
@@ -378,6 +380,7 @@ async fn persist_generated_script_block(
                     target_binding: inputs.target_binding,
                     block: command.payload,
                     script_inputs: inputs.script_inputs,
+                    bible_node_name_inputs: inputs.bible_node_name_inputs,
                     bible_relationship_inputs: inputs.bible_relationship_inputs,
                     bible_inputs: inputs.bible_inputs,
                     bible_context_scope: inputs.bible_context_scope,

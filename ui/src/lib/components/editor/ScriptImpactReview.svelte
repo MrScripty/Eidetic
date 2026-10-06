@@ -116,6 +116,18 @@
           </details>
         {/if}
         <pre aria-label="Proposed text">{proposal.proposed_text}</pre>
+        {#if proposal.script_review_binding?.bible_node_name_inputs?.length}
+          <details aria-label="Recorded screenplay name evidence">
+            <summary>Names used for this preview</summary>
+            <ul>
+              {#each proposal.script_review_binding.bible_node_name_inputs as input (input.node_id)}
+                <li>
+                  {input.name} ({input.node_id}) <small>Revision {input.revision_event_id}</small>
+                </li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
         {#if proposal.script_review_binding?.bible_relationship_inputs?.length}
           <details aria-label="Recorded screenplay relationship evidence">
             <summary>Relationships used for this preview</summary>
