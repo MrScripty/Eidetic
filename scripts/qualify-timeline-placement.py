@@ -62,6 +62,14 @@ class SceneOrderProvider(ui.FixtureProvider):
         return PROPOSED if kind == 'preview' else 'B waits at the station.' if kind == 'recap' else GENERATED
 
 
+def require_placement_preserves_screenplay(before, after, start_ms, end_ms):
+    # The shared blocks reader includes presentation ranges in columns 3/4.
+    # Only those columns may change during this explicit range command.
+    expected = [(row[0], row[1], row[2], start_ms, end_ms) for row in before]
+    if not before or after != expected:
+        raise RuntimeError('Placement changed saved text/revision/membership or missed the exact range')
+
+
 def scene_order(database):
     return [row[0] for row in ui.query(database, "SELECT name FROM nodes WHERE level='Scene' ORDER BY start_ms,sort_order,id")]
 
@@ -225,8 +233,17 @@ def main():
         expected_order = ['SCENE ' + letter for letter in fixture['after_order']]
         if scene_order(database) != expected_order:
             raise RuntimeError('Native exact placement did not reorder across neighbors')
-        if ui.blocks(database, b_id)[0] != b or ui.blocks(database, e_id) != original[e_id]:
-            raise RuntimeError('Placement changed saved manual screenplay')
+        after_e = ui.blocks(database, e_id)
+        require_placement_preserves_screenplay(original[e_id], after_e, 180000, 210000)
+        if ui.blocks(database, b_id)[0] != b:
+            raise RuntimeError('Placement changed saved manual B')
+        original[e_id] = after_e
+        written = ui.query(database, "SELECT c.id,c.payload_json,e.id FROM commands c JOIN change_events e ON e.command_id=c.id WHERE c.payload_type='timeline.node_range' ORDER BY e.rowid DESC LIMIT 1")
+        if len(written) != 1:
+            raise RuntimeError('Native placement command receipt missing')
+        payload = json.loads(written[0][1])
+        if (payload.get('node_id'), payload.get('start_ms'), payload.get('end_ms')) != (e_id,180000,210000) or not payload.get('expected') or (payload['expected']['start_ms'],payload['expected']['end_ms']) != (540000,570000):
+            raise RuntimeError('Native placement did not bind the exact original read')
         ui.wait_for('retained exact B draft after placement', lambda: ui.reveal(application,
             lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n) == DRAFT))
         ui.wait_for('placement acknowledged in native UI', lambda: ui.find(application,
@@ -234,7 +251,8 @@ def main():
         evidence['placement'] = {'source_node_id': e_id, 'before_ms': [540000,570000], 'after_ms': list(placed),
             'before_order': fixture['before_order'], 'after_order': fixture['after_order'],
             'native_route': 'selected clip exact start/end seconds then Apply placement',
-            'saved_manual_text_preserved': True, 'retained_draft_preserved': True}
+            'saved_manual_text_preserved': True, 'retained_draft_preserved': True,
+            'command_id': written[0][0], 'change_event_id': written[0][2], 'expected_read': payload['expected']}
         checkpoint('native exact placement crosses neighbors and preserves saved text and draft')
         capture('eidetic-timeline-placement-authored.png')
         block = ui.wait_for('retained manual draft block', lambda: ui.screenplay_block(application, DRAFT.strip()))

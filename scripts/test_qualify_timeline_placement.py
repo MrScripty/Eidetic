@@ -58,6 +58,17 @@ class SceneOrderProviderTests(unittest.TestCase):
             thread.join(timeout=2)
 
 
+class PlacementPreservationTests(unittest.TestCase):
+    def test_exact_range_changes_while_block_identity_text_revision_and_membership_stay_owned(self):
+        before = [('b','Exact manual text\n\n','human-revision',540000,570000)]
+        after = [('b','Exact manual text\n\n','human-revision',180000,210000)]
+        driver.require_placement_preserves_screenplay(before, after, 180000,210000)
+        for invalid in [before, [], [('b','Changed','human-revision',180000,210000)],
+                        [('b','Exact manual text\n\n','new-revision',180000,210000)], after + after]:
+            with self.assertRaisesRegex(RuntimeError, 'Placement changed saved text'):
+                driver.require_placement_preserves_screenplay(before,invalid,180000,210000)
+
+
 class PlacementTraversalTests(unittest.TestCase):
     def test_traversal_keeps_the_existing_bound(self):
         class Cycle:
