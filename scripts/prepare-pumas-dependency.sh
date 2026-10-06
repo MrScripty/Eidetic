@@ -6,7 +6,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEFAULT_PUMAS_ROOT="$(cd "$PROJECT_ROOT/../.." && pwd)/ai-systems/Pumas-Library"
 PUMAS_ROOT="${EIDETIC_PUMAS_LIBRARY_ROOT:-$DEFAULT_PUMAS_ROOT}"
 PUMAS_REPOSITORY="${EIDETIC_PUMAS_LIBRARY_REPOSITORY:-https://github.com/MrScripty/Pumas-Library.git}"
-PUMAS_REF="${EIDETIC_PUMAS_LIBRARY_REF:-8444b50df28c3e2bd8db58fb3645fa4dd8664b27}"
+PUMAS_REF="${EIDETIC_PUMAS_LIBRARY_REF:-a94fd92021f27fdeedb6e2de6e01c41c250ef576}"
 PUMAS_PACKAGE_PATH="$PUMAS_ROOT/rust/crates/pumas-core"
 
 log() {
@@ -44,7 +44,7 @@ verify_pumas() {
     die "expected package name pumas-library in $PUMAS_PACKAGE_PATH/Cargo.toml"
   fi
 
-  if [[ -d "$PUMAS_ROOT/.git" ]]; then
+  if [[ -e "$PUMAS_ROOT/.git" ]]; then
     local actual_ref
     actual_ref="$(git -C "$PUMAS_ROOT" rev-parse HEAD)"
     if [[ "$actual_ref" != "$PUMAS_REF" ]]; then

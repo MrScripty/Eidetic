@@ -5,8 +5,8 @@ use eidetic_core::contracts::{
 };
 use rusqlite::Connection;
 
-use crate::agent_workflow_service::AgentRunHistoryProjection;
 use crate::agent_workflow_store;
+use crate::agent_workflow_store::AgentRunHistoryProjection;
 use crate::history_store::HistoryStoreError;
 
 pub trait AgentWorkflowProvider {

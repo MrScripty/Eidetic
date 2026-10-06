@@ -7,6 +7,18 @@ export type ScriptSpanId = string;
 export type ScriptLockId = string;
 export type ScriptPatchId = string;
 
+export interface ScriptContextBlock {
+  document_id: ScriptDocumentId;
+  segment_id: ScriptSegmentId;
+  block_id: ScriptBlockId;
+  source_node_id: string | null;
+  revision_event_id: string;
+  segment_revision_event_id: string;
+  start_ms: number;
+  end_ms: number;
+  text: string;
+}
+
 export interface ScriptDocument {
   id: ScriptDocumentId;
   title: string;
@@ -95,7 +107,7 @@ export interface ScriptImpactCause {
     | { kind: 'script_segment'; segment_id: string };
   consumed_revision_event_id: string;
   current_revision_event_id: string | null;
-  reason: 'changed' | 'deleted';
+  reason: 'changed' | 'deleted' | 'context_changed';
   input_excerpt: string | null;
 }
 

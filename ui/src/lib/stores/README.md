@@ -151,6 +151,11 @@ continues.
   effect. This does not cancel backend writes or guard caller continuations.
 - Backend contract changes are reflected here before individual components fork around them.
 
+- Existing script/context/node/timeline events refresh only an already requested
+  context stack through the shared refresh queue. They never activate an absent
+  consumer. Request and projection-version guards retain post-save screenplay
+  evidence against older responses and navigation/clear continuations.
+
 ## Revisit Triggers
 
 - Another realtime channel or polling workflow appears without a clear current owner.
@@ -196,3 +201,10 @@ Bible-driven impact changes carry an advanced canonical screenplay projection
 version. A deferred older read cannot hide a newer fact review cause while exact
 block text remains equal. The normal version/session guards continue to own cache
 admission; no frontend-generated revision or automatic retry is introduced.
+
+
+Timeline child creation uses the same runTimelineProjectionRequest and cache
+lifetime/version guards as other timeline writes. Selected-parent authoring uses
+the existing editor session generation to refuse late selection side effects.
+
+Context influence changes invalidate cached prompt context and refresh canonical screenplay/review projections alongside the active Bible graph. They reuse backend context revision clocks and never patch durable text locally.

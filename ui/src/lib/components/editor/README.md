@@ -6,6 +6,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
+| `createSelectedTimelineChild.ts` | Existing canonical create-child command and guarded selection after acknowledgement. |
+| `createSelectedTimelineChild.svelte.test.ts` | Delayed selection, same-ID session reset and unmounted editor acknowledgement regressions. |
 | `BeatEditor.svelte` | Primary node editing surface for notes, generation, and context panels. |
 | `contextRequestLifecycle.ts` | Prompt request invalidation, loading cleanup and stale-response guards. |
 | `contextRequestLifecycle.test.ts` | Empty notes/selection invalidation and delayed response ordering. |
@@ -34,6 +36,10 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
 | `scriptImpactNotice.ts` | Human-readable labels for the typed input review causes. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
+| `ChildPlanReview.svelte` | Explicit timeline-plan preview, proposed outlines and exact saved screenplay evidence. |
+| `childPlanReview.svelte.ts` | Transient review lifecycle; no generation-time apply, guarded selection/session continuations and exact acceptance retry. |
+| `childPlanReview.svelte.test.ts` | Pending-only generation, explicit accept, retired continuations and uncertain acknowledgement regressions. |
+| `ChildPlanReview.ssr.test.ts` | Explicit acceptance and saved evidence presentation with safe text rendering. |
 
 ## Problem
 The app needs focused editing surfaces where timeline selection, AI generation, and projection-backed script review stay coordinated.
@@ -50,6 +56,13 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+
+- Plan actions are available on selected clips with a child level. Generation presents the durable pending plan without applying it. Only Accept timeline plan calls the existing validated children command; saved screenplay and author drafts are untouched. Refused plans retain their preview and error. Ordinary close/navigation can hide a durable pending plan; recovering its review surface after remount is not implemented in this slice.
+
+- Screenplay context changes use the existing Needs review and targeted proposal
+  controls. What changed identifies scenes entering/leaving the captured window;
+  the saved block and any active manual draft stay under existing save/accept
+  guards. A context cause does not authorize automatic replacement.
 - Comparing saved text reads its exact text/version without changing draft text,
   base revision or canon. Explicit continuation uses the private read snapshot
   only when the current block still has that revision. Changed/ABA revisions
@@ -146,3 +159,14 @@ their part/key identity through the existing preview, reject and explicit Accept
 update surface. A Bible change refreshes the canonical screenplay projection and
 invalidates prompt context. This surface preserves existing authoring draft owners
 and never replaces saved screenplay on a fact edit or a preview response.
+
+
+Selected-parent authoring exposes Add Scene (or the corresponding child level)
+through the existing canonical create-child command, then selects only that
+acknowledged child. createSelectedTimelineChild retains the user's later selection
+and existing editor session generation across delayed acknowledgements/unmounts.
+The backend derives child hierarchy and placement; frontend controls do not create
+an alternate story owner. Immediate generation admission errors clear streaming
+state and remain visible without discarding authored screenplay drafts.
+
+ScriptImpactNotice distinguishes Bible membership ContextChanged causes from screenplay continuity changes. Existing preview and explicit acceptance remain the only proposal replacement path; saved human text and retained drafts are preserved.

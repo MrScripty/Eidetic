@@ -15,6 +15,7 @@ This directory contains the top-level shell components that partition the Eideti
 | `AppWorkspace.creationLifetime.ssr.test.ts` | Fresh Script/Graph/Split consumer renders, late acknowledgement failure and project-session isolation using actual controllers with native invoke fixtures. |
 | `BottomTimelineStack.svelte`         | Fixed-height bottom region that keeps the timeline anchored to the window bottom and conditionally stacks the character timeline beneath it. |
 | `GraphRendererWindowControls.svelte` | Projection-only launch/focus/close/status controls for the floating Bevy bible graph renderer window.                                        |
+| `GraphSelectionDetail.ssr.test.ts` | Read-only saved screenplay evidence, recorded summary distinction, exact revision custody and unavailable/empty/mismatched target rendering. |
 | `GraphSelectionDetail.svelte`        | Right-panel detail projection for selected graph edges, influence paths, context layers, and neighborhoods.                                  |
 | `GraphRightInspector.svelte`         | Right inspector owner that selects between node detail and graph selection detail projections.                                               |
 | `graphSelectionDetails.ts`           | Pure adapter from bounded bible render graph projections plus transient selection into inspectable detail rows.                              |
@@ -57,6 +58,11 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 - Fixed-height timeline sizing is derived from shared constants, not component-local literals.
 - The user-selected main timeline height is preserved across window resize; viewport changes may clamp the rendered height temporarily but do not overwrite the preferred value.
 - The upper workspace gets leftover vertical space after the timeline stack claims its budget.
+
+- Context-layer detail displays saved screenplay from the existing context-stack
+  projection alongside a labelled recorded summary, preserving exact whitespace.
+  Evidence is shown only for its captured target; unknown and known empty reads
+  stay distinct. The panel neither writes text nor accepts a generated replacement.
 
 ## Revisit Triggers
 

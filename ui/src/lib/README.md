@@ -55,6 +55,11 @@ raw size would separate scenarios that share the same contract fixtures.
 - Splitting each store next to every consumer component: rejected because the timeline/editor shell shares state across multiple panels.
 
 ## Invariants
+
+- The script wire model admits a derived `context_changed` impact reason for
+  scene order/window membership. Existing editor review labels explain entering
+  and leaving material; saved text still changes only through explicit guarded
+  save or proposal acceptance.
 - Desktop invocation preserves the original native error as `Error.cause` while
   keeping its user-facing message. Creation retry can recognize its specific
   pre-recording placement refusal without guessing certainty from message text
@@ -71,6 +76,10 @@ raw size would separate scenarios that share the same contract fixtures.
 - Backend-owned project data enters the UI through typed Tauri IPC contracts instead of free-form objects.
 - Shared timeline geometry values are defined once and reused by all dependent components.
 - Stores own transient UI coordination; components render from store state rather than manual DOM mutation.
+
+- ScriptContextBlock is shared by context-stack evidence and propagation bindings;
+  block/segment identity, exact text and separate write revisions mirror core.
+  Context-stack evidence is optional so legacy absence is never backfilled.
 
 ## Revisit Triggers
 

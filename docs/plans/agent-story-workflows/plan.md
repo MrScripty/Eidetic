@@ -1,17 +1,41 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Current phase:** Authored Bible facts feed existing screenplay lineage and
-targeted review, on verified merged main
-`9f75d1cb9865bbea9c93bd2b1411eb78ed7eab09` (the accepted PR9 tree).
-Application checkpoint `fe7fa5900b648ae9d24b374411ab8f9ebcc72343` preserves the
-accepted manual authoring workflow and adds the Bible-derived projection clock.
-**Next gate:** Parent review of the frozen Bible feature, qualified by hosted run
-37337057557 with synthetic HTTP responses and settled native captures. Independently
-audit scene-order changes and context membership on a separate branch. Timed facts,
-relationships and new/unconsumed Bible facts are
-separate follow-ups. Project-switch recovery is deferred; embeddings remain a
-possible later improvement, not a required dependency for this slice.
+**Current phase:** Authored Bible fact propagation is merged in main
+`302851dbb5bf67cda922b4d79f70623e444891dc`; scene-order continuity is qualified
+at frozen predecessor `441c2a29af6199b53b92f718df43d0ca916b1ce5`.
+Immediate canonical creation/generation is implemented at
+`9e8bd1c9d51250ac1c517945269278b7fe7e3d61`: 117 hosted core / 406 server tests,
+405 frontend tests, and actual native create/select/notes/manual anchor/generate
+without reopening. The delayed native response refuses persistence and the failure
+capture retains exact human text, but final banner/history qualification is pending.
+**Newest bounded milestone:** Manual screenplay child planning at
+`122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6` consumes canonical saved text and
+requires review/explicit timeline acceptance with writer-transaction source guards.
+Local432 server /119 core /423 frontend and fresh hosted432/119 pass. Native
+run `37391688210` qualifies exact Bible Save, manual midnight-to-morning Save,
+pending child review, stale refusal and a visible explicitly accepted Morning
+departure Beat. Synthetic HTTP responses only. b0d6d17c/a0b46fed stay preserved;
+complete Bible/affect/arc-description receipts and durable pending UI recovery
+remain outside this slice. See screenplay-child-plan-memory-qualification.md.
+
+**Next gate:** Parent review of the separately audited Pumas no-download
+integration. Exact-current-source full-service tests pass locally and hosted;
+fresh native Bible edit/review/preview/acceptance passes in run `37379727832`.
+Historical zero-step native failures remain historical infrastructure evidence.
+The new capture uses exact `8d2719d2` application source with the separate tested
+dependency integration; neither preserved membership repair nor context-stack
+review branch is rewritten. Parent owns review/PR/merge and Library delivery.
+Timed facts, relationships and broader unknown entity relevance remain follow-ups.
+Project-switch recovery is deferred; embeddings are optional later work.
+
+**Local successor status:** Membership preview value completeness is repaired at
+`3ebb752f131bb233c16d49210ee226de14d2caf2` (report head `8ea7153b`). The separate
+saved-screenplay context-stack bridge now passes 119 core / 283 source-module /
+411 frontend tests and strict compile gates. Exact-source execution with audited
+no-download Pumas now passes 425 full-server / 119 core / 411 frontend;
+fresh native Bible edit/acceptance passes; context-stack inspector GUI, SDK
+inference and real-model execution remain unqualified.
 
 **Admission:** Continue the user-requested Eidetic story-workflow development on
 `feat/agent-story-workflows`; baseline `ab5d75ce138c1b8e25cb5effc8f8800c0c6f9841`.
@@ -43,6 +67,67 @@ Acceptance claims (all pending unless the ledger records scoped evidence):
 5. A multi-act, feature-length manual/agent screenplay walkthrough demonstrates
    continuity and separate screenplay output, recovery and undo, repeated and
    interrupted interactions, with graph visualization closed as well as open.
+
+## Scene order: complete continuity window
+
+The independent follow-up starts from frozen Bible head
+`af603e7682417fd49dbaac02e75142fd1b9d0d61`. Existing two-scene placement and
+consumed-input review already work. A source reproduction verified a different
+gap: moving unseen E from 9000 to 3000 changes B's actual selected window, and
+moving B from 4000 to 8500 removes A/E, without any old consumed-source revision
+change or review cause. Human B text remained unchanged in both cases.
+
+- Capture the complete ordered selected segment window alongside actual inputs
+  in existing generation command/proposal history. An absent legacy receipt
+  stays absent; do not claim all historical inputs were complete windows.
+- Derive review for entering/leaving members or changed external order/relative
+  position. Ignore the output segment's own intentional replacement and ordinary
+  target shifts that leave external selection unchanged. Preserve manual blocks,
+  drafts, factual-time policy and existing source revision guards.
+- Preview from the fresh window and accept only through existing targeted review.
+  Refresh its existing dependencies atomically. The latest main-document segment
+  event is a conservative append-only selection epoch in the review binding,
+  refusing unseen move-in/move-out ABA even when visible inputs return unchanged.
+  Unrelated segment edits may require a new preview; they do not alone create
+  Needs review. No new schema, vectors or parallel state.
+- Qualify exact entering/displaced-neighbor and target-relocation reads, native
+  public-service publication, synthetic provider preview and explicit acceptance.
+  Native screenshots must distinguish public-service setup from GUI actions.
+  Existing timeline drag bounds and semantic story extraction remain outside
+  this bounded continuity receipt; presentation placement never infers story time.
+
+## Immediate canonical scene generation: bounded successor
+
+Frozen predecessor: 441c2a29af6199b53b92f718df43d0ca916b1ce5. New branch:
+feat/canonical-scene-generation. Cause and criteria were reported before code changes.
+Canonical create writes SQLite without inserting into state.project. Admission
+loads canonical SQLite, but successful_generation_metadata reads the stale mirror,
+then returns before screenplay persistence when the new node is absent. It also
+marks HasContent before the screenplay transaction. Save/reopen masks this ownership
+split and is not an acceptable application fix.
+
+- The existing create-child backend/transport lacks an editor action, while
+  timeline double-click sends a parentless Scene rejected by core. Expose Add Scene
+  in the selected Sequence editor using that validated API; backend derives parent,
+  level and placement. Guard delayed acknowledgement selection by existing editor
+  session/selection and mounted lifetime. No separate placement inference.
+- Create a scene and generate immediately through public services and the real
+  selected-node GUI without reopening. Completion reads canonical metadata and
+  commits status with the generated screenplay, never inventing a mirror refresh.
+- Capture target custody using existing timeline/script revisions at admission.
+  Recheck existence, placement, notes, locks and output revision inside the writer
+  transaction. Refuse delayed responses after target edit/delete/retime/lock or
+  an intervening human screenplay write, including ABA; retain manual text,
+  unrelated authored blocks and canonical placement. Stale upstream inputs remain
+  captured provenance and produce review through existing mechanisms.
+- Reuse existing command/history, generation dependencies and session guards.
+  Preserve legacy replay; no new database/schema, credentials or dependencies.
+  Project switching recovery remains deferred, rather than widening this slice.
+- Test actual canonical selection and immediate creation with a deliberately
+  stale mirror, delayed synthetic HTTP responses, refusal/no partial history,
+  and successful ordinary streaming. Qualify UI create/select/notes/generate
+  through native input, with Bible/timeline/screenplay visible, source-bound
+  unaltered prototype evidence and explicitly synthetic model responses.
 
 ## Manual screenplay authoring: first bounded memory slice
 
@@ -707,3 +792,197 @@ event also left screenplay impact and cached prompt context unchanged.
   explicit accept checks. Final qualification b1129893 and run 37337057557 await
   settled UI before capture. Full source, hashes and limits are in
   [the qualification report](../../reports/bible-fact-native-qualification.md).
+
+## Untimed Bible field membership: bounded successor
+
+Frozen review head 8941f3ac61c7e1a823aa03a7ccb66ba8ff4f3e01 and application
+9e8bd1c9d51250ac1c517945269278b7fe7e3d61 remain preserved. Native final
+banner/history qualification is blocked by two zero-step hosted runner failures;
+no repeat rerun or changed assertion belongs to this successor.
+
+The isolated production-source reproduction proves that a previously empty Mara
+motivation enters generation context (one baseline field becomes two) without a
+review cause. Editing the already consumed tagline still produces review; exact
+manual B and unrelated A/C survive. Scope/rule reported before implementation:
+
+- Track untimed fields on entities with actually captured baseline Bible inputs,
+  plus entities explicitly assigned to this scene by existing context-influence
+  records (Direct with UserSelected/AiSelected provenance). Proven entity relevance
+  from the latest generation is retained across accepted clears so restoration
+  cannot escape review. Empty default-list entities and newly created unrelated entities are
+  not enough to establish relevance. Do not infer relevance from screenplay text,
+  names, relations, descendants or embeddings.
+- Store optional scoped membership custody in existing generation/proposal JSON,
+  with the existing Bible/context revision clock for conservative pending-request
+  ABA guards. Membership differences create ContextChanged review causes; field
+  value changes retain their existing UsesFact bindings and historical evidence.
+  Membership captures canonical field presence on those entities, even when a
+  retained entity is outside the current resolver window. Actual supplied values
+  remain exclusively in BibleFieldInput; membership never fabricates consumption.
+- Legacy generations with known Bible inputs can detect new fields only on those
+  recorded entities and only when sparse history proves the field was absent/null
+  at generation. Unknown scope/consumption stays unknown. No inferred completeness.
+- Timed snapshot keys are excluded from newly tracked membership, including
+  soft-deleted snapshot history. Existing consumed bindings are preserved. New
+  relevance uses explicit node assignments only; relationship semantics are deferred.
+- Manual saved text/drafts and unrelated scenes remain unchanged until existing
+  preview/explicit acceptance. Preserve receipts from late output; fresh preview
+  and acceptance refresh lineage. Test absent→present, clear/remove, unrelated
+  entities, explicitly relevant entities, historical ambiguity, legacy replay,
+  ABA/stale requests, late responses and targeted acceptance/rollback.
+- Local source harness/core/frontend/strict compile gates qualify this slice.
+  Hosted native/model execution must be reported only if actually available;
+  local ONNX403 is not bypassed and existing screenshots are not new-slice proof.
+
+
+## Membership preview value completeness: independent-review repair
+
+Preserve reviewed checkpoint `2761aacb8e70571729faf535d5cef407d01d36e8`.
+Separate `fix/bible-membership-preview-context` successor; context-stack feature
+work is parked until this repair is tested and published. Independent P2 review
+identified a missing guard: after 200 earlier-sorting default entities displace
+retained Mara, a new motivation causes membership review but is absent from preview
+value context. Actual Rust capture -> synthetic preview -> explicit acceptance at
+this checkpoint reproduced warning clearance without supplying the new value.
+
+- Reuse the same membership delta that derives review. Every targeted preview,
+  regardless of its selected cause, must contain actual resolved BibleFieldInput
+  values for all newly entered membership field IDs. IDs alone do not acknowledge
+  those values. Refuse capture when the bounded resolver omits them; restore their
+  context through the existing assignment owner before requesting fresh preview.
+- Existing capture/binding validation also runs before proposal persistence and
+  explicit acceptance, so stale/legacy pending bindings cannot escape the guard.
+  Preserve manual text, drafts, pending proposals, historical generation receipts,
+  membership scope, existing node limits and field/context ABA checks. Removals
+  need no invented current value. Do not add inferred context or bypass limits.
+- Test actual >200-node default displacement, retained field addition, refused
+  preview/no history, explicit assignment restoration, exact synthetic prompt
+  value, preview/manual preservation and explicit acceptance/refreshed lineage.
+  Also test a different selected cause and context loss after preview. Real-model
+  and native UI quality stay unqualified; no runner retry loop or ONNX workaround.
+
+
+## Saved screenplay in timeline/agent context: bounded successor
+
+Preserve Bible membership checkpoint `2761aacb8e70571729faf535d5cef407d01d36e8`
+(tree `c268d4937657b0323d521470503674e1aef6896f`) for independent review.
+Separate branch `feat/screenplay-context-stack`. Chosen criterion: extend the
+manual authoring **Memory read / Projection propagation** acceptance into the
+existing timeline context stack and its inspectable agent read (acceptance 4).
+The source-module reproduction saves exact BLUE umbrella screenplay, confirms
+canonical generation reads it, but ContextStackProjection still exposes only an
+old synthetic RED recap and no screenplay receipts. Both the native projection
+service and AgentGraphReadTools call that incomplete stack owner.
+
+- Share one SQLite context-stack read owner between native projection and agent
+  ReadContextStack. Add optional canonical screenplay evidence using the existing
+  main-document target/intersecting plus two adjacent segments on each side.
+  Keep exact text, source/block/segment IDs and their existing write revisions.
+  Known empty canonical evidence differs from legacy unavailable evidence.
+- Read nodes, recorded distilled context, screenplay and projection clock in one
+  snapshot. Include relevant script/context revisions in the existing envelope
+  version so a cached older read cannot erase a saved edit or edit/restore ABA.
+- Reuse existing ScriptChanged/context/timeline events and context-stack store
+  lifetime. Display saved screenplay alongside stored distilled context; label
+  the latter as recorded rather than implying automatic fresh semantic extraction.
+  Agent graph-context workflows can request the existing read_context_stack tool;
+  tool-result history preserves the evidence actually read.
+- This is a read-only bridge. Never rewrite scene notes, recaps, Bible facts,
+  screenplay, locks or drafts during a context read. Existing downstream review,
+  targeted preview and explicit acceptance remain the only generated replacement
+  route. No new memory owner, relation inference, embeddings or project switching.
+- Test exact manual text/revisions, bounded neighboring evidence, empty/legacy
+  distinction, context evaluation versioning, pinned WAL snapshot, stale cache
+  reads, and manual edit -> context evidence -> existing review/explicit acceptance.
+  Full native/service and real-model quality remain separate qualification gates;
+  no hosted retry loop or local ONNX acquisition workaround belongs to this slice.
+
+
+Context-stack work resumed after repair checkpoint
+`8ea7153b2c0f236c85ec47c0422e4f8e58a078c3` was tested and pushed; the
+independently reviewed 2761aac branch remains unchanged. Requalify the combined
+successor before publishing it; neither feature replaces native/model gates.
+
+## Exact-source service qualification with no ONNX downloads
+
+Application source is frozen `8d2719d2f80f3529864a138720aeb02463fc390f`
+(tree `bf8fc445602b0a8b52cbd5434c668f36cb4a004c`), including accepted membership
+repair `8ea7153b2c0f236c85ec47c0422e4f8e58a078c3`
+(tree `be8155a48c6b7718b80fd080f8b3fdca10fdbac3`). Both branches stay unchanged.
+The old Pumas pin enables `download-binaries`; normal builds on that dependency
+remain outside the permitted route. No old native banner job is rerun.
+
+- Audit Pumas `a94fd92021f27fdeedb6e2de6e01c41c250ef576` in isolated sibling
+  worktrees, retain Eidetic's application files, and resolve its own candidate lock.
+  The used ModelLibrary/runtime-profile APIs remain compatible; no adapter changes.
+- Actual full server 425 / core 119 / frontend 411 tests pass on this exact source
+  with candidate Pumas 0.7.0. Strict server all-target Clippy passes without an
+  ONNX SDK, skipped downloads, DOCS_RS or linking overrides. All server tests use
+  the launcher's writable XDG isolation, retaining the first failed host-state run.
+- Publish the pin/lock and CI metadata feature-union gate as a separate tested
+  dependency milestone. Then publish exact-source native qualification with a
+  narrow source guard, real Bible edit/review/preview/explicit acceptance and
+  synthetic localhost HTTP responses. Fresh hosted run `37379727832` passes: actual native builds, 119 core/425
+  server tests and the real GUI walkthrough. Three source-bound screenshots
+  and the verified capture receipt are preserved; real-model quality remains
+  unqualified. This capture does not claim context-stack inspector GUI coverage.
+
+See `docs/reports/story-memory-no-download-qualification.md` for scope and receipts.
+
+## Manual screenplay memory in reviewed child planning
+
+Continue from preserved qualification/report head
+`b0d6d17c0d776f1c46e39c2590cfd2f944768412`; preserve native qualification a0b46fed.
+The actual public-save reproduction reports
+`saved_manual_text_present_in_child_prompt=false` on that application source.
+GenerateChildrenRequest has no canonical screenplay field; child prompts use
+unversioned recaps. BeatEditor immediately applies generated children, and only
+root clips expose planning. This is the next bounded manual Memory read /
+Projection propagation criterion, including shared manual/agent timeline writes
+and explicit conversational review (objective 1/4).
+
+- Reuse the existing main-document target/intersecting + two-neighbor selector and
+  exact block/segment revision receipts. Canonical evidence replaces unversioned
+  recap continuity in this consumer; never regenerate recaps or infer Bible facts.
+- Keep generation pending in the existing child-plan store and show its proposed
+  outlines/source screenplay. Expose planning for all selected non-leaf clips,
+  so an authored scene can propose beats while retaining its own screenplay anchor.
+- Persist the receipt in the existing creation command JSON, not new schema/state.
+  Writer transactions revalidate selected inputs/selection epoch and parent/subtree
+  nodes/revisions before recording and before explicit timeline acceptance. Refuse
+  relevant manual text/notes/placement changes and ABA; validate accepted material
+  against the durable proposal. Preserve the existing command replay/lock guards.
+- Apply changes child clips only after Accept timeline plan; no saved screenplay
+  write, draft mutation or automatic world-fact update. Legacy receipt absence
+  remains unknown. Complete Bible/affect/arc-description source binding and durable
+  pending-review UI recovery are outside this bounded slice; no project switching.
+- Qualify actual manual Save -> canonical child prompt -> synthetic HTTP pending
+  plan -> explicit public timeline apply, unchanged screenplay and later replay;
+  delayed/pending ABA refusal, membership/subtree changes and unrelated distant
+  text edits. Frontend pending/retry/lifetime and SSR checks are mechanical;
+  new native UI evidence requires a source-bound run. SDK and real-model quality
+  remain unqualified.
+
+## Child-plan normalization/refusal repair
+
+Preserve application 122c71e, qualification 9b4c5ff and report 85bed285.
+Independent planning review identified raw provider children diverging from the
+store's canonical proposal. Reproduce via actual HTTP/AppState/SQLite commands;
+return the existing durable child projection for review instead of raw model
+strings. Storage remains the single normalization owner and acceptance still
+compares exact persisted material. Preserve saved screenplay and receipt guards.
+Classify only exact writer-transaction refusals with native conflict provenance
+as definite; other failures retain immutable acceptance retry custody. Qualify
+whitespace, empty locations, ordered/blank references and Close/fresh-generation
+recovery. Relationship receipt coverage is a separate follow-up repair.
+
+## Child-plan relationship receipt repair
+
+Preserve normalization/refusal d5ae81a as a separate checkpoint. Independent
+review found acceptance could delete a new edge touching replaced descendants
+after review. Bind canonical current edges plus existing committed-order history
+receipts, including incoming/outgoing edges across the subtree boundary and
+deleted identities for ABA. Reuse creation command JSON and transaction recapture;
+exclude only the in-flight acceptance event. Parent-only/unrelated edges stay
+unbound because replacement preserves them. Old missing receipts mean unknown
+and require fresh review; replay precedes validation. No schema or SDK change.

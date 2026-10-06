@@ -58,6 +58,9 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
         rag_context: vec![],
         bible_context: None,
         bible_inputs: None,
+        bible_context_scope: None,
+        script_context_scope: None,
+        generation_target: None,
         affect_context: None,
         script_context: None,
     })
@@ -106,6 +109,7 @@ pub fn build_generate_children_request(
         episode_structure,
         bible_context: None,
         affect_context: None,
+        script_context: None,
     })
 }
 

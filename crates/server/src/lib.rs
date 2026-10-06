@@ -17,6 +17,7 @@ pub mod ai_service;
 pub(crate) mod ai_temporal_context;
 pub mod backend_error;
 pub mod backend_task;
+pub(crate) mod bible_context_scope;
 pub(crate) mod bible_field_lineage;
 pub(crate) mod bible_graph_command;
 pub(crate) mod bible_graph_edge_store;
@@ -28,6 +29,8 @@ pub(crate) mod bible_graph_value_store;
 pub mod bible_render_graph_projection;
 pub(crate) mod bible_render_graph_query;
 pub(crate) mod change_review_projection;
+pub(crate) mod child_plan_generation;
+pub(crate) mod child_plan_memory;
 pub(crate) mod child_plan_projection_store;
 pub(crate) mod child_plan_store;
 pub mod command_service;
@@ -38,6 +41,7 @@ pub(crate) mod command_service_timeline;
 pub(crate) mod command_service_timeline_requests;
 pub mod context_influence_service;
 pub(crate) mod context_influence_store;
+pub(crate) mod context_stack_projection;
 pub(crate) mod embeddings;
 pub(crate) mod export;
 pub mod export_service;
@@ -64,8 +68,10 @@ pub mod reference_service;
 pub(crate) mod revision_projection;
 pub(crate) mod script_block_create;
 pub(crate) mod script_block_edit;
+mod script_context_scope;
 pub(crate) mod script_document_command;
 pub(crate) mod script_generation_lineage;
+mod script_generation_target;
 pub(crate) mod script_impact_projection;
 pub(crate) mod script_impact_prompt;
 pub(crate) mod script_impact_review;
@@ -104,3 +110,9 @@ mod timeline_script_placement;
 
 #[cfg(test)]
 mod timeline_script_placement_service_tests;
+
+#[cfg(test)]
+mod scene_context_membership_service_tests;
+
+#[cfg(test)]
+mod canonical_generation_service_tests;

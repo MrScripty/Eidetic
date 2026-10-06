@@ -59,9 +59,12 @@ fn generate(
     inputs: Vec<BibleFieldInput>,
 ) -> CommandEnvelope<GenerateScriptBlockCommand> {
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        target_binding: None,
+        script_context_scope: None,
         block: block.clone(),
         script_inputs: Some(vec![]),
         bible_inputs: Some(inputs),
+        bible_context_scope: None,
     });
     script_document_command::apply_generated_script_block(conn, &command, 25).unwrap();
     command
@@ -260,9 +263,12 @@ fn forged_consumed_field_value_rolls_back_output_history_and_dependencies() {
     let mut inputs = capture_for(&conn, &b);
     inputs[0].value = FieldValue::Text("Forged canon".into());
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        target_binding: None,
+        script_context_scope: None,
         block: b.clone(),
         script_inputs: Some(vec![]),
         bible_inputs: Some(inputs),
+        bible_context_scope: None,
     });
     assert!(
         script_document_command::apply_generated_script_block(&mut conn, &command, 30).is_err()

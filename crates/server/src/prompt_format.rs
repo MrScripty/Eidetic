@@ -440,6 +440,10 @@ pub(crate) fn build_decompose_prompt(request: &GenerateChildrenRequest) -> ChatP
         duration_sec % 60,
     ));
 
+    // Saved authored evidence takes precedence over unversioned recap continuity.
+    if let Some(blocks) = &request.script_context {
+        append_script_context(&mut user, blocks);
+    }
     // Continuity.
     if !request.surrounding_context.preceding_recaps.is_empty() {
         user.push_str("CONTINUITY CONTEXT:\n");

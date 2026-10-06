@@ -1,0 +1,254 @@
+#!/usr/bin/env python3
+"""Extend maintained real native Bible qualification with screenplay-aware plans.
+
+All input is native AT-SPI/X11. SQLite observations are read-only. Responses are
+explicitly synthetic HTTP fixtures, not evidence of real-model quality.
+"""
+import importlib.util
+import io
+import json
+from pathlib import Path
+
+spec = importlib.util.spec_from_file_location('bible_capture', Path(__file__).with_name('qualify-bible-fact-propagation.py'))
+bible = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bible)
+ui = bible.ui
+
+MIDNIGHT = 'INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves at midnight.\n\n'
+MORNING = 'INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves in the morning.\n\n'
+
+
+class ChildProvider(bible.BibleFactProvider):
+    records = []
+
+    def do_POST(self):
+        size = int(self.headers.get('Content-Length', '0'))
+        if self.path != '/v1/chat/completions' or not 0 < size <= 512_000:
+            self.send_error(400)
+            return
+        data = self.rfile.read(size)
+        body = json.loads(data)
+        if body.get('stream') is True:
+            original = self.rfile
+            self.rfile = io.BytesIO(data)
+            try:
+                super().do_POST()
+            finally:
+                self.rfile = original
+            return
+        user = next((m['content'] for m in body.get('messages', []) if m.get('role') == 'user'), '')
+        fresh = MORNING in user
+        kind = 'child_fresh' if fresh else 'child_initial'
+        valid = ((MORNING if fresh else MIDNIGHT) in user and ui.PROPOSED_TEXT in user
+                 and f'profile.tagline: {bible.BLUE}' in user and body.get('stream') is False)
+        with self.records_lock:
+            accepted = valid and not any(r['kind'] == kind and r.get('accepted') for r in self.records)
+            self.records.append({'kind': kind, 'accepted': accepted,
+                                 'contains_exact_expected_context': valid,
+                                 'stream': False, 'real_model': False})
+        if not accepted:
+            self.send_error(422, 'Child plan omitted exact canonical screenplay/Bible context')
+            return
+        name = 'Morning departure' if fresh else 'Midnight departure'
+        children = [{'name': f' {name} ', 'outline': f'Mara takes her blue umbrella to the {"morning" if fresh else "midnight"} train.\n',
+                     'weight': 1.0, 'location': '', 'characters': [' Mara ', ' '],
+                     'props': ['', ' Umbrella ', ' ']}]
+        response = json.dumps({'choices': [{'message': {'content': json.dumps(children)}}]}).encode()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(response)))
+        self.end_headers()
+        self.wfile.write(response)
+
+
+
+def inside_writing_area(rect, frame):
+    x, y, width, height = rect
+    left, top, right, bottom = frame
+    return width > 0 and height > 0 and left <= x and top <= y and x + width <= right and y + height <= bottom
+
+
+def readable_saved_screenplay(application, window, expected, evidence):
+    """Use existing resize keyboard controls and native scroll; never change CSS/text."""
+    geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
+        ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
+    def editor_divider():
+        return ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+            and n.name == 'Resize panels' and is_editor_divider(
+                tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)), geometry['WIDTH'], geometry['HEIGHT']))
+    divider = ui.wait_for('native editor/script resize control', editor_divider)
+    before = tuple(divider.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+    ui.click_control(divider, window)
+    # The existing panel control handles Up with a 24px step and its own minimum.
+    ui.command('xdotool', 'key', '--clearmodifiers', *(['Up'] * 7))
+    def resized():
+        current = editor_divider()
+        if current is None:
+            return None
+        rect = tuple(current.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+        return rect if rect[1] < before[1] else None
+    after = ui.wait_for('script writing area enlarged through supported panel resize', resized)
+    block = ui.wait_for('canonical morning screenplay block', lambda: ui.screenplay_block(application, 'The train leaves in the morning.'))
+    block.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
+    def visible_ranges():
+        application.clear_cache()
+        timeline_divider = ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+            and n.name == 'Resize panels'
+            and tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))[2] >= geometry['WIDTH'] - 10)
+        if timeline_divider is None:
+            return None
+        bottom = tuple(timeline_divider.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))[1]
+        frame = (after[0], after[1] + after[3], after[0] + after[2], bottom)
+        lines = [line for line in expected.splitlines() if line]
+        ranges = {}
+        # Freshly reacquire the saved, non-editing block after layout/scroll.
+        saved = next((n for n in ui.walk(application) if n.name == 'Screenplay block'
+            and any('The train leaves in the morning.' in ui.text_of(child) for child in ui.walk(n))), None)
+        if saved is None:
+            return None
+        for node in ui.walk(saved):
+            value = ui.text_of(node).strip()
+            if value not in lines or not ui.visible(node):
+                continue
+            try:
+                native = node.queryText()
+                rect = tuple(native.getRangeExtents(0, len(value), ui.pyatspi.XY_SCREEN))
+            except NotImplementedError:
+                continue
+            if inside_writing_area(rect, frame):
+                ranges[value] = list(rect)
+        evidence['readable_writing_area_observation'] = {'bounds': list(frame), 'saved_text_ranges': ranges}
+        return evidence['readable_writing_area_observation'] if len(ranges) == len(lines) else None
+    observed = ui.wait_for('all exact saved screenplay lines fully within the native writing area', visible_ranges)
+    evidence['readable_writing_area'] = {'supported_actions': ['Resize panels keyboard Up', 'AT-SPI SCROLL_TOP_LEFT'],
+        'editor_divider_before': list(before), 'editor_divider_after': list(after),
+        'expected_saved_text': expected, **observed, 'model_responses': 'synthetic localhost HTTP/SSE'}
+
+
+def is_editor_divider(rect, width, height):
+    x, y, w, h = rect
+    return x > 100 and w > width // 3 and 0 < h <= 10 and 0 < y < height // 2
+
+def child_flow(application, window, database, fixture, evidence, checkpoint, capture):
+    a, b = fixture['a']['id'], fixture['b']['id']
+    original_b = ui.blocks(database, b)[0]
+
+    def manual_save(previous, text):
+        if ui.blocks(database, a)[0][1] != previous:
+            raise RuntimeError('Manual source differs from the expected exact saved bytes')
+        # ScriptView renders Fountain paragraphs separately; locate by the
+        # visible action, then require the full raw textarea and saved bytes.
+        excerpt = previous.splitlines()[2]
+        block = ui.wait_for('saved manual source block', lambda: ui.screenplay_block(application, excerpt))
+        ui.reveal_button(block, 'Edit', window)
+        field = ui.wait_for('exact existing source draft', lambda: ui.editable(application, previous))
+        ui.type_text(field, window, text)
+        draft = ui.wait_for('source draft block', lambda: ui.screenplay_block(application, text))
+        ui.reveal_button(draft, 'Save', window)
+        return ui.wait_for('exact new saved source screenplay', lambda: next((row for row in ui.blocks(database, a) if row[1] == text), None))
+
+    def children():
+        return ui.query(database, 'SELECT id,name,content_json FROM nodes WHERE parent_id=? ORDER BY id', (b,))
+
+    def plans():
+        return ui.query(database, 'SELECT id,status FROM child_plans WHERE parent_node_id=? ORDER BY rowid', (b,))
+
+    def canonical_proposal(plan_id, name, departure):
+        rows = ui.query(database, 'SELECT name,outline,location FROM child_plan_children WHERE plan_id=? ORDER BY child_index', (plan_id,))
+        expected = [(name, f'Mara takes her blue umbrella to the {departure} train.', None)]
+        references = ui.query(database, 'SELECT reference_kind,reference_text,sort_order FROM child_plan_child_references WHERE plan_id=? ORDER BY reference_kind,sort_order', (plan_id,))
+        if rows != expected or references != [('character', 'Mara', 0), ('prop', 'Umbrella', 0)]:
+            raise RuntimeError('Durable reviewed proposal differs from canonicalized synthetic provider material')
+        return {'children': rows, 'references': references,
+                'raw_fixture_has_padded_name_trailing_outline_newline_empty_location_and_padded_blank_references': True}
+
+    def plan_beats():
+        control = ui.wait_for('reachable scene child planning', lambda: ui.reveal(application,
+            lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and n.name in ('Plan Beats', 'Replan Beats')
+            and n.getState().contains(ui.pyatspi.STATE_ENABLED)))
+        ui.click_control(control, window)
+
+    def review_proposal(name):
+        # WebKit exposes inline strong text within the list item's text range,
+        # not as an independently queryable exact-name object. Scope the read
+        # to the named review section, as the maintained screenplay locator does.
+        section = ui.reveal(application, lambda n: n.name == 'Review proposed timeline children')
+        if section is None:
+            return None
+        snapshot = [{'role': n.getRoleName(), 'name': n.name,
+                     'showing': ui.visible(n), 'text': ui.text_of(n)[:1000]}
+                    for n in ui.walk(section)]
+        evidence['native_child_review_accessibility'] = snapshot[:80]
+        return section if any(name in row['text'] for row in snapshot) else None
+
+    def select_target():
+        scene = ui.wait_for('selected target scene', lambda: ui.native_timeline_clip(application, fixture['b']['name'], window))
+        ui.click_control(scene[0], window, scene[1])
+
+    checkpoint('manual screenplay save changes exact evidence for downstream timeline planning')
+    first = manual_save(ui.MANUAL_TEXT, MIDNIGHT)
+    select_target()
+    old_children = children()
+    plan_beats()
+    initial = ui.wait_for('pending screenplay-aware child plan', lambda: next((row for row in plans() if row[1] == 'pending'), None))
+    ui.wait_for('proposed timeline material visible', lambda: review_proposal('Midnight departure'))
+    if children() != old_children or ui.blocks(database, a)[0] != first or ui.blocks(database, b)[0] != original_b:
+        raise RuntimeError('Child planning changed canonical timeline or screenplay before acceptance')
+    evidence['child_planning'] = {'initial_plan_id': initial[0], 'pending_preserves_children_and_screenplay': True,
+                                  'first_manual_edit': MIDNIGHT, 'real_model': False,
+                                  'initial_canonical_proposal': canonical_proposal(initial[0], 'Midnight departure', 'midnight')}
+    checkpoint('reviewable child proposal; no automatic apply')
+    capture('eidetic-child-plan-pending.png')
+
+    latest = manual_save(MIDNIGHT, MORNING)
+    # Editing the source block does not retarget the selected scene's proposal.
+    ui.reveal_button(application, 'Accept timeline plan', window)
+    ui.wait_for('visible stale child plan refusal', lambda: ui.find(application,
+        lambda n: ui.text_of(n).strip() ==
+        'Child plan story context changed; generate and review a fresh plan before accepting'))
+    if plans()[0] != initial or children() != old_children or ui.blocks(database, a)[0] != latest or ui.blocks(database, b)[0] != original_b:
+        raise RuntimeError('Stale child acceptance changed canonical material or plan status')
+    evidence['child_planning']['stale_acceptance_refused_and_pending_retained'] = True
+    checkpoint('intervening manual screenplay edit refuses the old child plan')
+    capture('eidetic-child-plan-refused.png')
+
+    plan_beats()
+    fresh = ui.wait_for('fresh pending child plan', lambda: next((row for row in plans() if row[0] != initial[0] and row[1] == 'pending'), None))
+    ui.wait_for('fresh proposed timeline material visible', lambda: review_proposal('Morning departure'))
+    evidence['child_planning']['fresh_canonical_proposal'] = canonical_proposal(fresh[0], 'Morning departure', 'morning')
+    ui.reveal_button(application, 'Accept timeline plan', window)
+    ui.wait_for('explicitly accepted new child plan', lambda: next((row for row in plans() if row == (fresh[0], 'applied')), None))
+    accepted_children = ui.wait_for('canonical proposed child material', lambda: children() if any(row[1] == 'Morning departure' for row in children()) else None)
+    if ui.blocks(database, a)[0] != latest or ui.blocks(database, b)[0] != original_b or bible.fact(database)[0] != bible.BLUE:
+        raise RuntimeError('Child acceptance rewrote saved screenplay or Bible')
+    evidence['child_planning'].update(status='native_child_plan_memory_passed_with_synthetic_http_fixture', fresh_plan_id=fresh[0], final_manual_edit=MORNING,
+                                     accepted_children=accepted_children,
+                                     explicit_timeline_acceptance_preserved_screenplay_and_bible=True)
+    def review_cleared():
+        application.clear_cache()
+        return not any(n.name == 'Review proposed timeline children' for n in ui.walk(application))
+    ui.wait_for('accepted child review cleared in the real UI', review_cleared)
+    ui.wait_for('child acceptance acknowledged and selected projection refreshed', lambda: ui.find(application,
+        lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and n.name == 'Replan Beats'
+        and n.getState().contains(ui.pyatspi.STATE_ENABLED)))
+    rendered = ui.wait_for('accepted child in the native timeline',
+        lambda: ui.native_timeline_clip(application, 'Morning departure', window))
+    evidence['child_planning'].update(review_cleared_in_ui=True,
+        accepted_child_visible_in_native_timeline=True,
+        accepted_child_native_bounds=list(rendered[1]))
+    checkpoint('fresh screenplay-aware timeline plan accepted explicitly')
+    capture('eidetic-child-plan-accepted.png')
+    readable_saved_screenplay(application, window, MORNING, evidence)
+    if ui.blocks(database, a)[0] != latest or ui.blocks(database, b)[0] != original_b:
+        raise RuntimeError('Readable capture layout actions changed saved screenplay')
+    visible_beat = ui.wait_for('accepted beat remains visible after layout adjustment',
+        lambda: ui.native_timeline_clip(application, 'Morning departure', window))
+    evidence['readable_writing_area']['accepted_child_native_bounds'] = list(visible_beat[1])
+    checkpoint('readable saved screenplay, Bible and accepted timeline together')
+    capture('eidetic-story-memory-readable.png')
+
+
+if __name__ == '__main__':
+    bible.BibleFactProvider = ChildProvider
+    bible.AFTER_ACCEPTANCE = child_flow
+    bible.main()

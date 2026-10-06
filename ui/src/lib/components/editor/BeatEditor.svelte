@@ -10,6 +10,8 @@
     startBatchGeneration,
     startGeneration,
     setBatchTotalCount,
+    getEditorSessionGeneration,
+    setGenerationError,
   } from '$lib/stores/editor.svelte.js';
   import { zoomToRange } from '$lib/stores/timeline.svelte.js';
   import { generateBatch, generateChildren, generateContent, getAiContext } from '$lib/api.js';
@@ -26,10 +28,13 @@
   import BeatEditorHeader from './BeatEditorHeader.svelte';
   import BeatNotesPanel from './BeatNotesPanel.svelte';
   import BeatPlanningActions from './BeatPlanningActions.svelte';
+  import ChildPlanReview from './ChildPlanReview.svelte';
+  import { createChildPlanReview } from './childPlanReview.svelte.js';
   import { beatContentStatusLabel } from './beatEditorStatus.js';
   import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
   import { createContextRequestLifecycle } from './contextRequestLifecycle.js';
   import './beatEditor.css';
+  import { createSelectedTimelineChild } from './createSelectedTimelineChild.js';
   import { scriptDocumentProjectionState } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
   const debouncedNotesSave = createDebouncedNodeNotesSave({
@@ -44,7 +49,23 @@
       }
     },
   });
-  let planning = $state(false);
+  const childPlanReview = createChildPlanReview({
+    owner: () => ({ nodeId: editorState.selectedNodeId, session: getEditorSessionGeneration() }),
+    mounted: () => editorMounted,
+    generate: generateChildren,
+    apply: applyTimelineChildrenCommand,
+    async accepted(parent) {
+      await refreshSelectedProjection();
+      if (editorMounted && editorState.selectedNodeId === parent) {
+        const range = selectedNodeRange();
+        if (range) zoomToRange(range.start_ms, range.end_ms);
+      }
+    },
+  });
+  $effect(() => childPlanReview.syncOwner());
+  let creatingChild = $state(false);
+  let childCreateError = $state<string | null>(null);
+  let editorMounted = true;
   let nodeContext: { system: string; user: string } | null = $state(null);
   let contextLoading = $state(false);
   const contextRequests = createContextRequestLifecycle({
@@ -240,9 +261,32 @@
   }
 
   onDestroy(() => {
+    editorMounted = false;
     debouncedNotesSave.dispose();
     contextRequests.invalidate();
   });
+
+  async function handleAddChild() {
+    if (!selectedNodeIsReady() || !childLevelName || creatingChild) return;
+    const parentId = editorState.selectedNodeId;
+    if (!parentId) return;
+    const session = getEditorSessionGeneration();
+    creatingChild = true;
+    childCreateError = null;
+    try {
+      await createSelectedTimelineChild(parentId, () => editorMounted);
+    } catch (error) {
+      if (
+        editorMounted &&
+        session === getEditorSessionGeneration() &&
+        editorState.selectedNodeId === parentId
+      ) {
+        childCreateError = error instanceof Error ? error.message : 'Unable to add child';
+      }
+    } finally {
+      creatingChild = false;
+    }
+  }
 
   async function handleToggleLock() {
     if (!editorState.selectedNodeId || !selectedNodeIsReady()) return;
@@ -266,39 +310,20 @@
     }
 
     startGeneration(editorState.selectedNodeId);
-    await generateContent(editorState.selectedNodeId);
+    const nodeId = editorState.selectedNodeId;
+    const session = getEditorSessionGeneration();
+    try {
+      await generateContent(nodeId);
+    } catch (error) {
+      if (session === getEditorSessionGeneration()) {
+        setGenerationError(nodeId, error instanceof Error ? error.message : 'Generation refused');
+      }
+    }
   }
 
   async function handleGenerateChildren() {
     if (!editorState.selectedNodeId || !selectedStoryNodeIsReady()) return;
-    const parentNodeId = editorState.selectedNodeId;
-    const selectedRange = selectedNodeRange();
-    planning = true;
-    try {
-      const plan = await generateChildren(parentNodeId);
-      if (plan.parent_node_id !== parentNodeId) {
-        throw new Error('Generated child plan parent did not match the selected node');
-      }
-      await applyTimelineChildrenCommand({
-        parent_id: parentNodeId,
-        child_plan_id: plan.id,
-        children: plan.children.map((child) => ({
-          name: child.name,
-          outline: child.outline,
-          weight: child.weight,
-          beat_type: child.beat_type,
-          characters: child.characters ?? [],
-          location: child.location ?? null,
-          props: child.props ?? [],
-        })),
-      });
-      await refreshSelectedProjection();
-      if (selectedRange) {
-        zoomToRange(selectedRange.start_ms, selectedRange.end_ms);
-      }
-    } finally {
-      planning = false;
-    }
+    await childPlanReview.generate();
   }
 
   function navigateNode(direction: -1 | 1) {
@@ -319,7 +344,11 @@
       {childLevelName}
       ontogglelock={handleToggleLock}
       ongenerate={handleGenerate}
+      onaddchild={handleAddChild}
+      {creatingChild}
     />
+
+    {#if childCreateError}<p role="alert">{childCreateError}</p>{/if}
 
     {#if isChildNode && parentNode}
       <BeatChildContext
@@ -334,15 +363,24 @@
       />
     {/if}
 
-    {#if !isChildNode && childLevelName}
+    {#if childLevelName}
       <BeatPlanningActions
         {childLevelName}
         {hasChildren}
-        {planning}
+        planning={childPlanReview.state.busy || childPlanReview.state.uncertain}
         notes={node.content.notes}
         onplan={handleGenerateChildren}
       />
     {/if}
+
+    <ChildPlanReview
+      plan={childPlanReview.state.plan}
+      busy={childPlanReview.state.busy}
+      uncertain={childPlanReview.state.uncertain}
+      error={childPlanReview.state.error}
+      onaccept={() => void childPlanReview.accept()}
+      onclose={childPlanReview.close}
+    />
 
     <BeatNotesPanel
       {node}

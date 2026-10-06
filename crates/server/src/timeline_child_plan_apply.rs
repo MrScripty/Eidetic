@@ -47,6 +47,43 @@ pub(crate) fn mark_child_plan_applied_in_transaction(
     Ok(())
 }
 
+pub(crate) fn validate_memory_in_transaction(
+    tx: &Transaction<'_>,
+    command: &CommandEnvelope<ApplyTimelineChildrenCommand>,
+    event: ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    let Some(plan) = &command.payload.child_plan_id else {
+        return Ok(());
+    };
+    if let Some(memory) = child_plan_store::load_memory(tx, plan)? {
+        crate::child_plan_memory::validate_before_apply(
+            tx,
+            command.payload.parent_id,
+            &memory,
+            event,
+        )?;
+        let children = crate::child_plan_projection_store::load_child_plan_children(tx, plan)
+            .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
+        let actual = &command.payload.children;
+        if children.len() != actual.len()
+            || children.iter().zip(actual).any(|(proposed, accepted)| {
+                proposed.name != accepted.name
+                    || proposed.outline != accepted.outline
+                    || proposed.weight != accepted.weight
+                    || proposed.beat_type != accepted.beat_type
+                    || proposed.characters != accepted.characters
+                    || proposed.location != accepted.location
+                    || proposed.props != accepted.props
+            })
+        {
+            return Err(HistoryStoreError::InvalidValue(
+                "Accepted children differ from the reviewed child plan".into(),
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn child_plan_error(error: child_plan_store::ChildPlanStoreError) -> TimelineCommandError {
     TimelineCommandError::History(HistoryStoreError::InvalidValue(error.to_string()))
 }

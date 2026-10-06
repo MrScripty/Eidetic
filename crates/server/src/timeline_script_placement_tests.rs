@@ -82,7 +82,10 @@ pub(crate) fn fixture() -> (
     script_document_command::apply_generated_script_block(
         &mut conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
+            target_binding: None,
+            script_context_scope: None,
             bible_inputs: None,
+            bible_context_scope: None,
             block: b.clone(),
             script_inputs: Some(vec![captured]),
         }),
@@ -434,7 +437,10 @@ fn historical_sparse_placement_validates_captured_input_after_later_move_and_rej
             evidence.start_ms += 1;
         }
         let generation = CommandEnvelope::new(GenerateScriptBlockCommand {
+            target_binding: None,
+            script_context_scope: None,
             bible_inputs: None,
+            bible_context_scope: None,
             block: b.clone(),
             script_inputs: Some(vec![evidence]),
         });

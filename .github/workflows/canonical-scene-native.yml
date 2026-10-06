@@ -1,0 +1,116 @@
+name: Immediate canonical scene generation qualification
+
+on:
+  push:
+    branches: [test/canonical-scene-native]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eidetic-canonical-scene-native
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      EIDETIC_FETCH_PUMAS: "1"
+      CARGO_BUILD_JOBS: "2"
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_INCREMENTAL: "0"
+      EIDETIC_CAPTURE_SOURCE: 9e8bd1c9d51250ac1c517945269278b7fe7e3d61
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify unchanged application source
+        run: |
+          git merge-base --is-ancestor "$EIDETIC_CAPTURE_SOURCE" HEAD
+          python3 - <<'PY'
+          import os, subprocess
+          allowed = {
+              '.github/workflows/canonical-scene-native.yml',
+              'crates/server/examples/canonical_scene_capture_fixture.rs',
+              'scripts/qualify-canonical-scene-generation.py',
+              'scripts/test_qualify_canonical_scene_generation.py',
+              'docs/reports/canonical-scene-generation-qualification.md',
+              'docs/plans/agent-story-workflows/execution-ledger.md',
+              'docs/plans/agent-story-workflows/plan.md',
+          }
+          changed = set(subprocess.check_output([
+              'git', 'diff', '--name-only', os.environ['EIDETIC_CAPTURE_SOURCE'], 'HEAD'
+          ], text=True).splitlines())
+          if changed - allowed:
+              raise SystemExit('Application source differs from the reviewed capture source')
+          PY
+      - name: Install standard Linux and display dependencies
+        timeout-minutes: 5
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev librsvg2-dev \
+            xvfb xauth xdotool imagemagick dbus-x11 \
+            at-spi2-core python3-pyatspi
+      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
+        with:
+          toolchain: 1.92.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Prepare pinned dependency and UI assets
+        timeout-minutes: 5
+        run: |
+          scripts/prepare-pumas-dependency.sh
+          npm --prefix ui ci
+          npm --prefix ui run build
+          python3 -m unittest discover -s scripts -p 'test_qualify_*.py' -v
+      - name: Check resource floors and build actual native runtime
+        timeout-minutes: 20
+        run: |
+          python3 - <<'PY'
+          import shutil
+          from pathlib import Path
+          memory = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())
+          if int(memory['MemAvailable'].split()[0]) < 2 * 1024 * 1024:
+              raise SystemExit('Below 2 GiB available memory floor')
+          if shutil.disk_usage('.').free < 6 * 1024**3:
+              raise SystemExit('Below 6 GiB free workspace disk floor')
+          PY
+          # Same locked ort-sys/Pumas dependency route as the passing Linux CI job.
+          # No skipped download, alternate ORT source, or sandbox overrides.
+          cargo build --locked -p eidetic-desktop --bin eidetic-desktop
+          cargo build --locked -p eidetic-server --example canonical_scene_capture_fixture
+      - name: Run actual server regressions
+        timeout-minutes: 5
+        run: |
+          cargo test --locked -p eidetic-core
+          cargo test --locked -p eidetic-server --lib
+      - name: Qualify real native create and generate
+        timeout-minutes: 6
+        env:
+          EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
+        run: |
+          xvfb-run -a -s '-screen 0 1440x960x24 -nolisten tcp' \
+            dbus-run-session -- /usr/bin/python3 scripts/qualify-canonical-scene-generation.py
+      - name: Upload only reviewed capture outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eidetic-canonical-scene-native-9e8bd1c
+          retention-days: 3
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/eidetic-capture-artifact/eidetic-canonical-scene-created.png
+            ${{ runner.temp }}/eidetic-capture-artifact/eidetic-canonical-scene-generated.png
+            ${{ runner.temp }}/eidetic-capture-artifact/eidetic-canonical-scene-refused.png
+            ${{ runner.temp }}/eidetic-capture-artifact/eidetic-canonical-scene-failure.png
+            ${{ runner.temp }}/eidetic-capture-artifact/app-sanitized.log
+            ${{ runner.temp }}/eidetic-capture-artifact/capture-evidence.json

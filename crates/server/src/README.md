@@ -14,7 +14,19 @@ domain model in `eidetic-core`.
 | `persistence.rs` | SQLite project persistence and project listing. |
 | `project_service.rs` | Host-neutral project lifecycle, with outgoing document persistence and committed source snapshots for Save As. |
 | `ai_service.rs` | Host-neutral AI status, config, context-preview, and child-plan generation behavior consumed by Tauri commands. |
+| `context_stack_projection.rs` | Shared timeline/agent read of exact saved screenplay, recorded summaries and revision clock in one snapshot. |
+| `context_stack_projection_tests.rs` | Bounded evidence, read-only preservation, context/text ABA versioning, known empty, WAL snapshot and explicit targeted acceptance. |
+| `agent_screenplay_context_tests.rs` | Actual structured tool loop with explicitly synthetic provider, exact manual receipts, preserved historical results and missing-target failure. |
 | `ai_script_context.rs` | Canonical screenplay evidence for shared preview/generation context, carrying exact block and segment write identities. |
+| `script_generation_target.rs` | Canonical generation target receipts and transaction-local node/output revision and manual-content validation. |
+| `script_generation_target_tests.rs` | Target/output ABA, retime/delete/locks, manual append, forged custody, rollback and replay regressions. |
+| `canonical_generation_service_tests.rs` | Public create/select/generate and paused synthetic HTTP regressions with an actually stale mirror; delayed scene/manual changes preserve text/history. |
+| `script_context_scope.rs` | Complete continuity-window capture in existing generation/proposal history, derived entering/leaving/order causes and append-only placement guards. |
+| `bible_membership_preview_limit_tests.rs` | Real >200-node displacement, refused missing-value preview, restored context/explicit acceptance, alternate selected cause and pending context-loss/ABA rollback. |
+| `bible_context_scope.rs` | Untimed entity-scoped field membership, legacy historical absence, existing context clocks and derived targeted review; no timed/relationship inference. |
+| `bible_context_scope_tests.rs` | Membership addition/removal, bounded relevance, retained relevance, ABA/stale/acceptance and historical custody regressions. |
+| `scene_context_membership_tests.rs` | Six-scene entering/displaced-neighbor and target-relocation fixtures, exact manual text, late generation/replay, malformed capture rollback and unconsumed membership ABA refusal. |
+| `scene_context_membership_service_tests.rs` | Native AppState range publication, backend generation-window capture, synthetic HTTP preview and explicit targeted acceptance. |
 | `script_generation_lineage.rs` | Atomic successful-generation records and existing semantic dependencies bound to consumed screenplay revisions. |
 | `script_generation_lineage_tests.rs` | A-to-B/unrelated-C, edits during generation, atomic rollback, replay, source deletion, refreshed and unavailable binding regressions. |
 | `script_impact_projection.rs` | Derived Needs review causes against the latest successful generation, retaining historical source excerpts after deletion. |
@@ -79,6 +91,9 @@ domain model in `eidetic-core`.
 | `revision_projection_tests.rs` | Focused projection rebuild tests over persisted history rows. |
 | `ydoc.rs` | Yjs/Yrs document coordination and persistence serialization. |
 | `ai_backends/` | Provider adapters for local and remote text generation backends. |
+| `child_plan_generation.rs` | Pending child decomposition using canonical screenplay receipts and existing provider adapters. |
+| `child_plan_memory.rs` | Revision-bound parent/subtree and bounded screenplay inputs stored in existing child-plan command history. |
+| `child_plan_memory_service_tests.rs` | Actual public manual edits, synthetic HTTP pending plans, explicit acceptance, ABA/membership refusal and unchanged screenplay. |
 
 ## Problem
 The application needs backend-owned services that expose core behavior to the
@@ -132,6 +147,23 @@ increase coupling by hiding the transaction invariant.
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
 ## Invariants
+
+- New child plans supply exact main-document screenplay and record its revisions in the existing creation command. Creation and explicit timeline acceptance validate the same receipt under the writer transaction. Pending/accepted plans never rewrite saved screenplay; legacy plans without receipts remain legacy unknown. This binding covers screenplay and parent/subtree custody, not complete Bible, affect or arc-description consumption.
+
+- New main-screenplay generation records a complete selected window separately
+  from its exact consumed blocks. Selection uses presentation placement only.
+  Existing command and proposal JSON hold this optional receipt; existing
+  revision-bound dependencies identify its timeline anchor. No schema, embedding
+  or second memory store is added, and older incomplete inputs are not backfilled.
+- Context review compares ordered external segment membership and relative
+  before/intersecting/after positions. Target replacement itself is excluded.
+  An unconsumed scene entering the window or a target relocation can require
+  review without changing any saved screenplay text. Preview uses the fresh
+  window; explicit acceptance refreshes its existing lineage.
+- Pending preview equality also includes the latest append-only main-document
+  segment event. This conservative selection epoch refuses an unconsumed
+  move-in/move-out ABA and can refuse a preview after an unrelated segment edit.
+  It is a selection guard, never a fictional-time or timeline-node fact revision.
 - Replayed manual text edits return the current canonical projection without
   overwriting an intervening author edit or adding history. Canonical context and
   downstream consumed-source review retain the latest text/revision, independent
@@ -290,6 +322,14 @@ increase coupling by hiding the transaction invariant.
 - Saved project compatibility is preserved across persistence changes.
 - Realtime document state and structural project state stay synchronized on load/save boundaries.
 
+- Timeline and agent context-stack consumers share context_stack_projection.rs:
+  canonical node hierarchy, latest recorded summaries, existing bounded screenplay
+  selection and relevant revision clock are read in one SQLite snapshot. Reads
+  never rewrite authored content or summaries. Agent graph-context manifests expose
+  the existing read_context_stack tool; persisted results retain actual evidence.
+  AgentRunHistoryProjection has one definition beside its existing store and is
+  re-exported by the service without changing the public API or wire shape.
+
 ## Revisit Triggers
 - Another persistence backend is introduced.
 - A desktop command needs behavior that is not yet backed by a service-level
@@ -428,3 +468,38 @@ a delayed pre-fact read must have a lower version than its fresh review projecti
 The clock conservatively includes all four Bible revision kinds and never resets
 when a generation refreshes or narrows its consumption. This is derived metadata,
 not an extra revision store or an inference of fictional truth.
+
+
+## Immediate canonical generation custody
+
+Creation and completion use canonical SQLite; the legacy project mirror is never
+required to contain a newly created scene. Generation captures a target receipt
+alongside its context read, using existing timeline and screenplay revision IDs.
+Completion validates existence, notes, placement, locks and target/output revisions
+inside the existing generation history transaction. User-edited generated output
+requires a reviewed replacement; independent manual blocks remain exact. Node
+HasContent commits with successful screenplay output, never before it. A late
+target edit/ABA/delete or manual write refuses replacement and rolls back generation
+history. External model I/O holds no session gate; final persistence checks the
+existing project identity/session and holds its gate through publication. Legacy
+commands lacking target receipts still replay without fictional backfill. No new
+schema or refresh/synchronization state is introduced.
+
+Untimed Bible membership reuses generation/proposal JSON and semantic dependencies.
+Known consumed entities and Direct UserSelected/AiSelected node assignments define
+relevance; arbitrary new default entities never broaden existing output scope.
+Latest generation provenance retains entity relevance across accepted clears.
+Membership records canonical field presence, including retained entities outside
+the resolver window; only actual BibleFieldInput values receive UsesFact bindings.
+Legacy inputs prove only their recorded entities and historically absent/null
+fields; unknown completeness stays unknown. Snapshot keys cannot introduce new
+membership. Existing Bible/context history stales pending requests conservatively;
+unrelated changes alone do not create Needs review. Context assignment revisions
+advance screenplay projections and publish existing refresh events. No new schema.
+
+Targeted preview cannot acknowledge newly entered Bible membership using IDs alone.
+The shared membership delta requires actual resolved BibleFieldInput values for
+all entered IDs, regardless of the selected review cause. Missing bounded context
+refuses capture before provider execution; existing binding checks repeat the
+same guard before proposal persistence/acceptance. Restore context through existing
+assignments and request a fresh preview. Removed fields need no invented value.

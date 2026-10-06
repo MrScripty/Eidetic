@@ -48,10 +48,21 @@ pub(crate) fn load_impact(
     .dependencies;
     let mut causes = Vec::new();
     for dependency in dependencies {
-        let Some(binding) = dependency.revision_binding else {
+        let Some(ref binding) = dependency.revision_binding else {
             continue;
         };
         if binding.source_revision_event_id != generation_event_id {
+            continue;
+        }
+        if matches!(
+            dependency.target,
+            SemanticDependencyEndpoint::TimelineNode { .. }
+        ) {
+            if let Some(cause) =
+                crate::script_context_scope::cause(conn, generation_event_id, segment, &dependency)?
+            {
+                causes.push(cause);
+            }
             continue;
         }
         let state = match &dependency.target {
@@ -105,6 +116,9 @@ pub(crate) fn load_impact(
             reason,
             input_excerpt,
         });
+    }
+    if let Some(cause) = crate::bible_context_scope::cause(conn, generation_event_id, segment)? {
+        causes.push(cause);
     }
     Ok(Some(ScriptImpactProjection {
         generation_event_id,

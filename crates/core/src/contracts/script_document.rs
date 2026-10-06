@@ -220,6 +220,41 @@ pub struct ScriptContextBlock {
     pub text: String,
 }
 
+/// Complete continuity-window selection captured with the screenplay inputs.
+/// None on an older generation means completeness was not recorded.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScriptContextScope {
+    pub node_id: crate::timeline::node::NodeId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub segment_ids: Vec<ScriptSegmentId>,
+    pub revision_event_id: Option<super::ChangeEventId>,
+}
+
+/// Canonical untimed field presence on scoped entities, including retained
+/// relevance outside the resolver window. Actual supplied values/revisions remain
+/// exclusively in BibleFieldInput. Relevance requires consumption or assignment.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleContextScope {
+    pub node_id: crate::timeline::node::NodeId,
+    pub node_ids: Vec<super::BibleGraphNodeId>,
+    pub field_ids: Vec<super::BibleGraphFieldId>,
+    pub revision_event_id: Option<super::ChangeEventId>,
+}
+
+/// Canonical target custody captured before external generation. Existing
+/// revisions also detect edit-and-restore ABA; absence preserves legacy replay.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScriptGenerationTarget {
+    pub node_id: crate::timeline::node::NodeId,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub notes: String,
+    pub node_revision_event_id: Option<super::ChangeEventId>,
+    pub segment_revision_event_id: Option<super::ChangeEventId>,
+    pub block_revision_event_id: Option<super::ChangeEventId>,
+}
+
 /// Internal generation commit: its captured evidence is part of the replay signature.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GenerateScriptBlockCommand {
@@ -227,6 +262,12 @@ pub struct GenerateScriptBlockCommand {
     pub script_inputs: Option<Vec<ScriptContextBlock>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_inputs: Option<Vec<super::BibleFieldInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_context_scope: Option<BibleContextScope>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_context_scope: Option<ScriptContextScope>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_binding: Option<ScriptGenerationTarget>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -254,6 +295,7 @@ pub struct ScriptImpactCause {
 pub enum ScriptImpactReason {
     Changed,
     Deleted,
+    ContextChanged,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -399,11 +441,103 @@ mod tests {
 
         assert_eq!(round_trip, command);
     }
+
+    #[test]
+    fn complete_context_scope_round_trips_and_absent_legacy_scope_stays_absent() {
+        let mut json = serde_json::json!({
+            "block": {
+                "document_id": "script.document.main", "document_title": "Pilot",
+                "document_sort_order": 0, "segment_id": "segment.B",
+                "source_node_id": "00000000-0000-0000-0000-000000000005",
+                "segment_start_ms": 4000, "segment_end_ms": 5000,
+                "segment_status": "current", "segment_sort_order": 0,
+                "block_id": "block.B", "block_kind": "action", "text": "Exact B\n\n",
+                "span_provenance": "ai_generated", "sort_order": 0
+            }, "script_inputs": []
+        });
+        let legacy: GenerateScriptBlockCommand = serde_json::from_value(json.clone()).unwrap();
+        assert!(legacy.script_context_scope.is_none());
+        assert!(
+            serde_json::to_value(legacy)
+                .unwrap()
+                .get("script_context_scope")
+                .is_none()
+        );
+        json["script_context_scope"] = serde_json::json!({
+            "node_id": "00000000-0000-0000-0000-000000000005", "start_ms": 4000,
+            "end_ms": 5000, "segment_ids": [], "revision_event_id": null
+        });
+        let complete: GenerateScriptBlockCommand = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            complete
+                .script_context_scope
+                .as_ref()
+                .unwrap()
+                .segment_ids
+                .len(),
+            0
+        );
+        assert_eq!(
+            serde_json::from_value::<GenerateScriptBlockCommand>(
+                serde_json::to_value(&complete).unwrap()
+            )
+            .unwrap(),
+            complete
+        );
+    }
 }
 
 #[cfg(test)]
 mod creation_contract_tests {
     use super::*;
+
+    #[test]
+    fn generation_target_round_trips_without_backfilling_legacy_history() {
+        let old = serde_json::json!({
+            "block": {"document_id":"script.document.main", "document_title":"Story", "segment_id":"segment.B",
+            "source_node_id":"B", "segment_start_ms":1000,"segment_end_ms":2000,"segment_status":"current",
+            "block_id":"block.B","block_kind":"action","text":"B","span_provenance":"ai_generated"},
+            "script_inputs":null
+        });
+        let legacy: GenerateScriptBlockCommand = serde_json::from_value(old.clone()).unwrap();
+        assert!(legacy.target_binding.is_none());
+        assert!(
+            serde_json::to_value(legacy)
+                .unwrap()
+                .get("target_binding")
+                .is_none()
+        );
+        let mut json = old;
+        json["target_binding"] = serde_json::json!({
+            "node_id":uuid::Uuid::new_v4(),"start_ms":1000,"end_ms":2000,"notes":"Exact notes — 雨",
+            "node_revision_event_id":uuid::Uuid::new_v4(),"segment_revision_event_id":null,"block_revision_event_id":null
+        });
+        let command: GenerateScriptBlockCommand = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            command,
+            serde_json::from_value(serde_json::to_value(&command).unwrap()).unwrap()
+        );
+    }
+
+    #[test]
+    fn bible_membership_round_trips_and_legacy_absence_is_not_backfilled() {
+        let old = serde_json::json!({"block":{"document_id":"script.document.main","document_title":"Story","segment_id":"segment.B","source_node_id":"B","segment_start_ms":1000,"segment_end_ms":2000,"segment_status":"current","block_id":"block.B","block_kind":"action","text":"Exact B\n\n","span_provenance":"ai_generated"},"script_inputs":null});
+        let legacy: GenerateScriptBlockCommand = serde_json::from_value(old.clone()).unwrap();
+        assert!(legacy.bible_context_scope.is_none());
+        assert!(
+            serde_json::to_value(&legacy)
+                .unwrap()
+                .get("bible_context_scope")
+                .is_none()
+        );
+        let mut json = old;
+        json["bible_context_scope"] = serde_json::json!({"node_id":uuid::Uuid::new_v4(),"node_ids":["Mara"],"field_ids":["Mara.tagline"],"revision_event_id":uuid::Uuid::new_v4()});
+        let complete: GenerateScriptBlockCommand = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            complete,
+            serde_json::from_value(serde_json::to_value(&complete).unwrap()).unwrap()
+        );
+    }
 
     #[test]
     fn manual_creation_round_trip_preserves_intent_and_refuses_client_owned_ids() {

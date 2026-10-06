@@ -9,7 +9,7 @@ use crate::agent_workflow_harness::{
     AgentHarnessClock, AgentHarnessError, AgentWorkflowProvider, AgentWorkflowToolExecutor,
     run_agent_workflow_with_connection_tools,
 };
-use crate::agent_workflow_service::AgentRunHistoryProjection;
+use crate::agent_workflow_store::AgentRunHistoryProjection;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ContextRefinementWorkflowKind {
@@ -67,6 +67,13 @@ pub fn context_refinement_workflow(kind: ContextRefinementWorkflowKind) -> Agent
         intent: kind.intent(),
         manifest: AgentToolManifest {
             tools: vec![
+                AgentToolDefinition {
+                    name: AgentToolName::new("read_context_stack")
+                        .expect("static tool name is non-empty"),
+                    kind: AgentToolKind::GraphRead,
+                    description: "Read timeline context and revision-bound saved screenplay. Recorded summaries may be stale; authored text is evidence and world interpretations require review."
+                        .to_string(),
+                },
                 AgentToolDefinition {
                     name: AgentToolName::new("read_active_graph_context")
                         .expect("static tool name is non-empty"),
@@ -185,7 +192,7 @@ mod tests {
 
             assert_eq!(workflow.id.as_str(), expected_id);
             assert_eq!(workflow.intent, expected_intent);
-            assert_eq!(workflow.manifest.tools.len(), 3);
+            assert_eq!(workflow.manifest.tools.len(), 4);
             workflow.validate().unwrap();
         }
     }

@@ -1,0 +1,1846 @@
+{
+  "snapshot_utc": "2026-10-06",
+  "main": "302851dbb5bf67cda922b4d79f70623e444891dc",
+  "main_tree": "becb86624608663a9e91ff629edd1080d6eada54",
+  "candidate": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+  "candidate_tree": "994854318cf84b2c10009bb26aeb1b23598370ad",
+  "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+  "application_tree": "ec16af1d5eb36dc75155968224dd347d9e63c1f7",
+  "merge_base": "302851dbb5bf67cda922b4d79f70623e444891dc",
+  "ahead_behind": "0\t37",
+  "diff_shortstat": "112 files changed, 12798 insertions(+), 838 deletions(-)",
+  "roles": {
+    "native qualification infrastructure": 16,
+    "dependency/build admission": 5,
+    "documentation": 19,
+    "application source": 47,
+    "application regression tests": 25
+  },
+  "files": [
+    {
+      "path": ".github/workflows/canonical-scene-native.yml",
+      "category": "native qualification infrastructure",
+      "last_commit": "624893ed749c32e8993a799430c4c0ba7d4997a3",
+      "candidate_blob": "6f710d2b1abc3dd6dc7f89d6b3590d5f60044bfc"
+    },
+    {
+      "path": ".github/workflows/child-plan-memory-native.yml",
+      "category": "native qualification infrastructure",
+      "last_commit": "7f71b085153b95b49769572c10d44754bfbb9547",
+      "candidate_blob": "4521f5206f01c6f6739cb512cc0440aa7e8d30a3"
+    },
+    {
+      "path": ".github/workflows/child-plan-readable-native.yml",
+      "category": "native qualification infrastructure",
+      "last_commit": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "candidate_blob": "60fb8e15e729a4c2f8ab717fcb4fbdfcdc9b5aab"
+    },
+    {
+      "path": ".github/workflows/child-plan-review-repairs-native.yml",
+      "category": "native qualification infrastructure",
+      "last_commit": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
+      "candidate_blob": "4e1421a6e226b555f72d3ac90853f98370b94c42"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "category": "dependency/build admission",
+      "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+      "candidate_blob": "aa3692c665c9224013e20ef0e268e6c7aaf42d84"
+    },
+    {
+      "path": ".github/workflows/scene-order-native.yml",
+      "category": "native qualification infrastructure",
+      "last_commit": "beee2d97219936bc93d7a02f8f56c5ceaee0653b",
+      "candidate_blob": "9e1475f2614a906850d241d1ac8be90039d9a07f"
+    },
+    {
+      "path": ".github/workflows/story-memory-native.yml",
+      "category": "native qualification infrastructure",
+      "last_commit": "a0b46fedfdef03901ecd031f43c4bf7636627ce1",
+      "candidate_blob": "25dda2a5c1b8b7d7f85bd06d3fdbcf4f7da7b66f"
+    },
+    {
+      "path": "Cargo.lock",
+      "category": "dependency/build admission",
+      "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+      "candidate_blob": "3538ff44dc7f14eaa692d89f17feb29c4bd83df1"
+    },
+    {
+      "path": "crates/core/src/ai/README.md",
+      "category": "documentation",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "ad788008c397a297a05fa387cc50ea827ea34199"
+    },
+    {
+      "path": "crates/core/src/ai/backend.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "304354606f6f98d8f909db00bf0bab37f2cefe0b"
+    },
+    {
+      "path": "crates/core/src/ai/prompt.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "553a6923cbff415cc1d9fd867452813ce6f5bfcc"
+    },
+    {
+      "path": "crates/core/src/contracts/README.md",
+      "category": "documentation",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "a2ba7d09172b96d3fbd2cd3e4d776f657cfa9de1"
+    },
+    {
+      "path": "crates/core/src/contracts/context_influence.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "23a5462bda0973004384e81d0aba8805e9b0c035"
+    },
+    {
+      "path": "crates/core/src/contracts/mod.rs",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "2f9e108673b087e4604ef383f1fe2ad20ceff74b"
+    },
+    {
+      "path": "crates/core/src/contracts/script_document.rs",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "3e636fe512d07506ae319e68dbee3fdecfd00044"
+    },
+    {
+      "path": "crates/core/src/contracts/script_impact_review.rs",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "37fafe45b6a49c4d5e5a40b554c457b81f845a98"
+    },
+    {
+      "path": "crates/server/examples/canonical_scene_capture_fixture.rs",
+      "category": "native qualification infrastructure",
+      "last_commit": "bd2c6adab434f09979e946f634d371b93229ed6f",
+      "candidate_blob": "b1489a1e181ec9d01b8acd1b5a2f51fec8e4042d"
+    },
+    {
+      "path": "crates/server/examples/scene_order_capture_fixture.rs",
+      "category": "native qualification infrastructure",
+      "last_commit": "da54a856b46e7de712bf46e0ff7d660904b4b63f",
+      "candidate_blob": "f84aa86b16f2d5875c0320ace7dd1ccc57f4c469"
+    },
+    {
+      "path": "crates/server/src/README.md",
+      "category": "documentation",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "beae4bb6d662daeef5cbd95b3e9d8e376645f6ee"
+    },
+    {
+      "path": "crates/server/src/agent_graph_tools.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "8df5bf9431b2d1152a61e173fa24db2d68855cbd"
+    },
+    {
+      "path": "crates/server/src/agent_premise_workflow.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "a89af7b91062cfcf16d50c4287ef029c9f2a52c7"
+    },
+    {
+      "path": "crates/server/src/agent_screenplay_context_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "b78728e98b5c921bc14411ed8dc44f7d90921553"
+    },
+    {
+      "path": "crates/server/src/agent_workflow_harness.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "8d6bcd925612f57199ea9612c6bb367b42068bf3"
+    },
+    {
+      "path": "crates/server/src/agent_workflow_service.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "5f9eb17f45bdc949fcad0f2217c9a229c65151e4"
+    },
+    {
+      "path": "crates/server/src/agent_workflow_store.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "42f5317422fefa32d0ea0fe9a78d30a01a0aa68d"
+    },
+    {
+      "path": "crates/server/src/ai_generation_runtime.rs",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "77bee8f4e4ef260bcf1dc88c119f58b2c9dfb707"
+    },
+    {
+      "path": "crates/server/src/ai_generation_runtime_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "9fc05d6d15a0867a1f436590c0dee3e067d2650c"
+    },
+    {
+      "path": "crates/server/src/ai_generation_service.rs",
+      "category": "application source",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "dc3f3aa96b4206816ce2a59a820daf6e7550f565"
+    },
+    {
+      "path": "crates/server/src/ai_service.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "7569a18a3ed227a44f96ed2776c73db4902bb59a"
+    },
+    {
+      "path": "crates/server/src/bible_context_scope.rs",
+      "category": "application source",
+      "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+      "candidate_blob": "fd92125828e8c7f8b633f57e5834b033edd89e2c"
+    },
+    {
+      "path": "crates/server/src/bible_context_scope_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+      "candidate_blob": "e5efb0fb27d969832b8188c69b7fafd5304cf126"
+    },
+    {
+      "path": "crates/server/src/bible_field_lineage_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "67815b9143d0d5f97fa41ce19d116edf914bfa35"
+    },
+    {
+      "path": "crates/server/src/bible_membership_preview_limit_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+      "candidate_blob": "07d6372b4f988d163f91c918d485dac559800366"
+    },
+    {
+      "path": "crates/server/src/canonical_generation_service_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "9a9db5c392babd75437b43f3715a1025700a3364"
+    },
+    {
+      "path": "crates/server/src/child_plan_generation.rs",
+      "category": "application source",
+      "last_commit": "d5ae81a6c0cb8c4a1c2184da4aa1e8fd2b398374",
+      "candidate_blob": "32c5dc1c0e843c94a5827366e6695c87d42f4ccf"
+    },
+    {
+      "path": "crates/server/src/child_plan_memory.rs",
+      "category": "application source",
+      "last_commit": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+      "candidate_blob": "f2b1b8c28cad4eac09c399843f773e16a6e38554"
+    },
+    {
+      "path": "crates/server/src/child_plan_memory_service_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+      "candidate_blob": "ffd7f7e57c1b64d623f17b42aec017903dbfd10a"
+    },
+    {
+      "path": "crates/server/src/child_plan_projection_store.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "d8e43c79f84d11355a9318eaeef7bb566590015a"
+    },
+    {
+      "path": "crates/server/src/child_plan_store.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "6c0cc803eb3baf93c3c7b40fa72af66b36f90854"
+    },
+    {
+      "path": "crates/server/src/child_plan_store_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "c481d864b05f2bc4cd917ae89ec2716cf08975d1"
+    },
+    {
+      "path": "crates/server/src/context_influence_service.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "3b7b6b124f9b4ba1a3a3018018a2349401f288ca"
+    },
+    {
+      "path": "crates/server/src/context_stack_projection.rs",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "ba258e972e3feb7adfd5c58fb967425714d9ded8"
+    },
+    {
+      "path": "crates/server/src/context_stack_projection_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "16a7c02f55d9180797f4d2e2f3a03aaadfddf663"
+    },
+    {
+      "path": "crates/server/src/lib.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "cda67ca05f370f6b46fd1684014080a23f1e4fbb"
+    },
+    {
+      "path": "crates/server/src/manual_script_workflow_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "be505a0071c177d0d0dc3567ae7963f35a6d4a08"
+    },
+    {
+      "path": "crates/server/src/prompt_format.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "4905e139bc3599b4bd9bb39abc66f4ef4586840f"
+    },
+    {
+      "path": "crates/server/src/scene_context_membership_service_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "9429daa53de9d7ce6679f0b166b1f736f332892a",
+      "candidate_blob": "efafdcfab2f42d9e33fc9eeab0dfab8393987564"
+    },
+    {
+      "path": "crates/server/src/scene_context_membership_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "ca6496583697b56be8e7afbce531b6f27bab7fa6"
+    },
+    {
+      "path": "crates/server/src/script_block_create_impact_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "404efe089566c3e4ca173c23a9c022c70e0a632d"
+    },
+    {
+      "path": "crates/server/src/script_context_scope.rs",
+      "category": "application source",
+      "last_commit": "9429daa53de9d7ce6679f0b166b1f736f332892a",
+      "candidate_blob": "246c712bd2b3d159b809715cb8382ea3b2f8bb52"
+    },
+    {
+      "path": "crates/server/src/script_document_command.rs",
+      "category": "application source",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "9e1eba22c7d3b5725c0b6320150e8a12cb1897b2"
+    },
+    {
+      "path": "crates/server/src/script_generation_lineage.rs",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "56b9ec86a4f7cd6a83d6db7559ff01fde73d986f"
+    },
+    {
+      "path": "crates/server/src/script_generation_lineage_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "dfd264dca42cd5b49cb1dd235b03facc95fa6251"
+    },
+    {
+      "path": "crates/server/src/script_generation_target.rs",
+      "category": "application source",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "04c1da328cac154c5d29c87deaf188dc16c158ab"
+    },
+    {
+      "path": "crates/server/src/script_generation_target_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "4d85f10334ce6eda63f162ab357ff6a6d1d91c18"
+    },
+    {
+      "path": "crates/server/src/script_impact_projection.rs",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "87452e5a80038d26c0af1f914570d758f78babba"
+    },
+    {
+      "path": "crates/server/src/script_impact_review.rs",
+      "category": "application source",
+      "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+      "candidate_blob": "12824aeae5349c5f2071c8088453abf7ce9fea51"
+    },
+    {
+      "path": "crates/server/src/script_impact_review_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "7f465e682da49faee6d018d76c515b28d3b47ce4"
+    },
+    {
+      "path": "crates/server/src/script_store.rs",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "1aad4a386d18b674cdc808ced6d8742ede81c269"
+    },
+    {
+      "path": "crates/server/src/timeline_child_plan_apply.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "b5c053919ac25abe0e36813df7d8e32174df5512"
+    },
+    {
+      "path": "crates/server/src/timeline_children_history.rs",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "a500ec58b4b1fe25cea33e5350cf8ef3e0e84b2f"
+    },
+    {
+      "path": "crates/server/src/timeline_script_placement_tests.rs",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "065b3a389facb01cefc971e9262caddbe9efc719"
+    },
+    {
+      "path": "docs/plans/agent-story-workflows/execution-ledger.md",
+      "category": "documentation",
+      "last_commit": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+      "candidate_blob": "151082139e90dca73d917532b07c5cd663ecc4c8"
+    },
+    {
+      "path": "docs/plans/agent-story-workflows/plan.md",
+      "category": "documentation",
+      "last_commit": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+      "candidate_blob": "d4ce0d39dc7cfbae45ad652a5b2e2813cef17f30"
+    },
+    {
+      "path": "docs/reports/bible-context-membership-qualification.md",
+      "category": "documentation",
+      "last_commit": "2761aacb8e70571729faf535d5cef407d01d36e8",
+      "candidate_blob": "8ee14004b2e11811fddeb401f808e669b379033a"
+    },
+    {
+      "path": "docs/reports/bible-membership-preview-limit-repair.md",
+      "category": "documentation",
+      "last_commit": "8ea7153b2c0f236c85ec47c0422e4f8e58a078c3",
+      "candidate_blob": "11a7ccc2e39e430f309185d745db8e7eb5150d1a"
+    },
+    {
+      "path": "docs/reports/canonical-scene-generation-qualification.md",
+      "category": "documentation",
+      "last_commit": "8941f3ac61c7e1a823aa03a7ccb66ba8ff4f3e01",
+      "candidate_blob": "db41abe6b5f50ba175ddf2f44b91750ac3b209ae"
+    },
+    {
+      "path": "docs/reports/child-plan-review-repairs-qualification.md",
+      "category": "documentation",
+      "last_commit": "e93814c230127176385cbd507abe84633733689b",
+      "candidate_blob": "ca517270ed3cf1ec55dba042991c5da260df1e63"
+    },
+    {
+      "path": "docs/reports/scene-order-memory-qualification.md",
+      "category": "documentation",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "64487f4b9ee7bf380092e498d30b6e973fed96b4"
+    },
+    {
+      "path": "docs/reports/screenplay-child-plan-memory-qualification.md",
+      "category": "documentation",
+      "last_commit": "85bed2854a11b805b91c53b934f9fe75b62764f6",
+      "candidate_blob": "41165fefb0f8d50056aae2cd6da107cf8682b4bf"
+    },
+    {
+      "path": "docs/reports/screenplay-context-stack-qualification.md",
+      "category": "documentation",
+      "last_commit": "8d2719d2f80f3529864a138720aeb02463fc390f",
+      "candidate_blob": "5c730ab3ccd9b58486141d5f8eb27e54e0415834"
+    },
+    {
+      "path": "docs/reports/story-memory-integration-readiness-manifest.json",
+      "category": "documentation",
+      "last_commit": "e93814c230127176385cbd507abe84633733689b",
+      "candidate_blob": "ad19881163bee73eb41f4698bd8c102050144464"
+    },
+    {
+      "path": "docs/reports/story-memory-integration-readiness.md",
+      "category": "documentation",
+      "last_commit": "e93814c230127176385cbd507abe84633733689b",
+      "candidate_blob": "0bcde20cb0ddfb14cd82e30f23473c39491b7de8"
+    },
+    {
+      "path": "docs/reports/story-memory-no-download-qualification.md",
+      "category": "documentation",
+      "last_commit": "b0d6d17c0d776f1c46e39c2590cfd2f944768412",
+      "candidate_blob": "f750cecccd66d3efb8a16c39273d8fb05f8f667a"
+    },
+    {
+      "path": "scripts/check-onnx-no-download.py",
+      "category": "dependency/build admission",
+      "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+      "candidate_blob": "e32891ecce0609629af9d466e1f69384154cd2a1"
+    },
+    {
+      "path": "scripts/prepare-pumas-dependency.sh",
+      "category": "dependency/build admission",
+      "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+      "candidate_blob": "ce3912cc7aac43c50466062248338baf9a5464b9"
+    },
+    {
+      "path": "scripts/qualify-bible-fact-propagation.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "3f716aff21c4ac8e03ca86d86c77491a43e91b47",
+      "candidate_blob": "59f71711f603176f97aa25d2edc20950db1dd31f"
+    },
+    {
+      "path": "scripts/qualify-canonical-scene-generation.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "776d16c6e1039641c00beba9dade31465c9f28fe",
+      "candidate_blob": "2b1274532a8b92cf6f68a9b650c6687a2467fb3e"
+    },
+    {
+      "path": "scripts/qualify-child-plan-memory.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "candidate_blob": "40f85be56beef59797dea4f49cd0f4b5b44fffb7"
+    },
+    {
+      "path": "scripts/qualify-scene-order-memory.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7",
+      "candidate_blob": "6a86e92cc988d4ba415961a363fad5b1169806ab"
+    },
+    {
+      "path": "scripts/qualify-screenplay-authoring.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "7f71b085153b95b49769572c10d44754bfbb9547",
+      "candidate_blob": "96ed4b49622062c9ce177a5eda3b4dfa1ac54ee5"
+    },
+    {
+      "path": "scripts/test_check_onnx_no_download.py",
+      "category": "dependency/build admission",
+      "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+      "candidate_blob": "6adcabee760a720214c8d7241a78f8a6b85f2d1d"
+    },
+    {
+      "path": "scripts/test_qualify_canonical_scene_generation.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "624893ed749c32e8993a799430c4c0ba7d4997a3",
+      "candidate_blob": "756d61b95afd21157432e207496c86ea9d79691a"
+    },
+    {
+      "path": "scripts/test_qualify_child_plan_memory.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "candidate_blob": "d7a36eb3d6d79bc3ed1007dab0a6d64542ae5ea9"
+    },
+    {
+      "path": "scripts/test_qualify_scene_order_memory.py",
+      "category": "native qualification infrastructure",
+      "last_commit": "beee2d97219936bc93d7a02f8f56c5ceaee0653b",
+      "candidate_blob": "ce6da82a44d88c4a27e15f3518357b3d8f9cbbf9"
+    },
+    {
+      "path": "ui/src/lib/README.md",
+      "category": "documentation",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "9c6602992549a42ea94059ec1412b1e5bc0ea2f9"
+    },
+    {
+      "path": "ui/src/lib/childPlanningTypes.ts",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "bb53ac27aea6c2a9648e4cde030b6447f5027744"
+    },
+    {
+      "path": "ui/src/lib/components/editor/BeatEditor.svelte",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "7373a9819000732058c22407bcb2384ba0c23fcc"
+    },
+    {
+      "path": "ui/src/lib/components/editor/BeatEditorHeader.svelte",
+      "category": "application source",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "89a5f58dcaf48d0582bb3a4baa30fd6c5bf65ab9"
+    },
+    {
+      "path": "ui/src/lib/components/editor/ChildPlanReview.ssr.test.ts",
+      "category": "application regression tests",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "ef8e93d2fea442997ed3bd2489cc7d680595cf17"
+    },
+    {
+      "path": "ui/src/lib/components/editor/ChildPlanReview.svelte",
+      "category": "application source",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "fcbedd16ad6b91bb45f45eda15c9057eeaf3cc8c"
+    },
+    {
+      "path": "ui/src/lib/components/editor/README.md",
+      "category": "documentation",
+      "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "candidate_blob": "9a9a8b751469d3e46b57ac9d3e3195193ebc2ff2"
+    },
+    {
+      "path": "ui/src/lib/components/editor/ScriptImpactReview.ssr.test.ts",
+      "category": "application regression tests",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "8f1017d4258942bc36735581310c92032c457456"
+    },
+    {
+      "path": "ui/src/lib/components/editor/childPlanReview.svelte.test.ts",
+      "category": "application regression tests",
+      "last_commit": "d5ae81a6c0cb8c4a1c2184da4aa1e8fd2b398374",
+      "candidate_blob": "5ef187d395ae81a005c72611f340e64f8a485548"
+    },
+    {
+      "path": "ui/src/lib/components/editor/childPlanReview.svelte.ts",
+      "category": "application source",
+      "last_commit": "d5ae81a6c0cb8c4a1c2184da4aa1e8fd2b398374",
+      "candidate_blob": "bc6e21601af755fb86923bd3592114eadf28f1a7"
+    },
+    {
+      "path": "ui/src/lib/components/editor/createSelectedTimelineChild.svelte.test.ts",
+      "category": "application regression tests",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "2ef86590fa977db7fc53f2d0fb62c08367232a98"
+    },
+    {
+      "path": "ui/src/lib/components/editor/createSelectedTimelineChild.ts",
+      "category": "application source",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "091493503278d02185b9c190adae716827f067aa"
+    },
+    {
+      "path": "ui/src/lib/components/editor/scriptImpactNotice.ts",
+      "category": "application source",
+      "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "candidate_blob": "dce49ff26b51e4ea177da3e1cd5dc0c857ab57fb"
+    },
+    {
+      "path": "ui/src/lib/components/layout/GraphSelectionDetail.ssr.test.ts",
+      "category": "application regression tests",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "aa78db320c3fb0f427369af9b6d92aa547ee3346"
+    },
+    {
+      "path": "ui/src/lib/components/layout/GraphSelectionDetail.svelte",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "8c5598db981d59f2e9704904486ca380589b7446"
+    },
+    {
+      "path": "ui/src/lib/components/layout/README.md",
+      "category": "documentation",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "85a01fb4eb29ca43b9e4209f49620c3c4990de0f"
+    },
+    {
+      "path": "ui/src/lib/components/layout/graphSelectionDetails.test.ts",
+      "category": "application regression tests",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "93c0c3476de7f2d2866442de97b6e233e5b208c5"
+    },
+    {
+      "path": "ui/src/lib/components/layout/graphSelectionDetails.ts",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "5eab34c1959107f25af2ed8616eb42caab96bc74"
+    },
+    {
+      "path": "ui/src/lib/contextInfluenceTypes.ts",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "05d1eee69b16f777ebef2634b16ca26f40adba9d"
+    },
+    {
+      "path": "ui/src/lib/propagationProposalTypes.ts",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "b3d51fc696b8975225e4bc3a573411567268d02f"
+    },
+    {
+      "path": "ui/src/lib/scriptTypes.ts",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "d6903854d71ca87ce622bfa4ab323623f95454f2"
+    },
+    {
+      "path": "ui/src/lib/stores/README.md",
+      "category": "documentation",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "77a4d3a3395f2a1856774ac5af279533b83e6ac0"
+    },
+    {
+      "path": "ui/src/lib/stores/contextStackProjection.svelte.test.ts",
+      "category": "application regression tests",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "e3fb90dbbcce71403cad60470f38398565476848"
+    },
+    {
+      "path": "ui/src/lib/stores/contextStackProjection.svelte.ts",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "6a42ec558ac0718ae5e0cec886f24e95084ddd77"
+    },
+    {
+      "path": "ui/src/lib/stores/serverEventHandlers.test.ts",
+      "category": "application regression tests",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "61b9bb1fb319fdae9c788c476a703d1b415ebb13"
+    },
+    {
+      "path": "ui/src/lib/stores/serverEventHandlers.ts",
+      "category": "application source",
+      "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "candidate_blob": "9a8fdaea34305b61db21de2200ab7b5407e60049"
+    },
+    {
+      "path": "ui/src/lib/stores/timelineRenderProjection.svelte.ts",
+      "category": "application source",
+      "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "candidate_blob": "c9835d0708d6eae54c2b3f8f18d799ac1609512d"
+    }
+  ],
+  "commits": [
+    {
+      "sha": "9429daa53de9d7ce6679f0b166b1f736f332892a",
+      "subject": "feat(memory): review scene-order continuity window changes"
+    },
+    {
+      "sha": "beee2d97219936bc93d7a02f8f56c5ceaee0653b",
+      "subject": "test(memory): qualify native scene-window review with exact human text"
+    },
+    {
+      "sha": "141ff3d1b959a6e5f4899dbdc160a490d80b5ee0",
+      "subject": "fix(test): use the configured OpenAI v1 fixture endpoint"
+    },
+    {
+      "sha": "da54a856b46e7de712bf46e0ff7d660904b4b63f",
+      "subject": "fix(test): reopen canonical scene setup before native generation"
+    },
+    {
+      "sha": "6711d1e797b7c2709862b1d3398af2282669c74c",
+      "subject": "fix(test): scroll native script disclosure into its visible pane"
+    },
+    {
+      "sha": "5b057efdf038a5959630270dea5c749075307844",
+      "subject": "chore(memory): reconcile merged Bible ancestry without source changes"
+    },
+    {
+      "sha": "4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7",
+      "subject": "fix(test): use native splitter controls for screenplay review"
+    },
+    {
+      "sha": "441c2a29af6199b53b92f718df43d0ca916b1ce5",
+      "subject": "docs(memory): record passed native scene-order qualification"
+    },
+    {
+      "sha": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+      "subject": "fix(authoring): generate newly created scenes from canonical state"
+    },
+    {
+      "sha": "624893ed749c32e8993a799430c4c0ba7d4997a3",
+      "subject": "test(authoring): qualify native scene creation and guarded generation"
+    },
+    {
+      "sha": "bd2c6adab434f09979e946f634d371b93229ed6f",
+      "subject": "fix(test): bind native fixture path to canonical database owner"
+    },
+    {
+      "sha": "c383601bd8ac3c78fb112f2c0610006823ac1cef",
+      "subject": "fix(test): locate native notes by verified accessible label"
+    },
+    {
+      "sha": "776d16c6e1039641c00beba9dade31465c9f28fe",
+      "subject": "fix(test): reveal exact native generation refusal banner"
+    },
+    {
+      "sha": "8941f3ac61c7e1a823aa03a7ccb66ba8ff4f3e01",
+      "subject": "docs(authoring): record canonical native proof and runner blocker"
+    },
+    {
+      "sha": "c63370a55eaa925a4ab684ea91463d480e360659",
+      "subject": "feat(memory): review scoped untimed Bible field membership"
+    },
+    {
+      "sha": "2761aacb8e70571729faf535d5cef407d01d36e8",
+      "subject": "docs(memory): record membership qualification and frozen native limits"
+    },
+    {
+      "sha": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+      "subject": "fix(memory): require entered Bible values in targeted previews"
+    },
+    {
+      "sha": "8ea7153b2c0f236c85ec47c0422e4f8e58a078c3",
+      "subject": "docs(memory): qualify the membership preview node-limit repair"
+    },
+    {
+      "sha": "4aae549c04924ad2580be86c142c017a960f5a00",
+      "subject": "feat(memory): expose saved screenplay in timeline and agent context"
+    },
+    {
+      "sha": "8d2719d2f80f3529864a138720aeb02463fc390f",
+      "subject": "docs(memory): qualify the saved screenplay context bridge"
+    },
+    {
+      "sha": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+      "subject": "build(pumas): qualify no-download dependency for story memory"
+    },
+    {
+      "sha": "a0b46fedfdef03901ecd031f43c4bf7636627ce1",
+      "subject": "test(memory): run exact-source service and native qualification"
+    },
+    {
+      "sha": "b0d6d17c0d776f1c46e39c2590cfd2f944768412",
+      "subject": "docs(memory): record exact-source native and service results"
+    },
+    {
+      "sha": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+      "subject": "feat(memory): review screenplay-informed timeline child plans"
+    },
+    {
+      "sha": "3f716aff21c4ac8e03ca86d86c77491a43e91b47",
+      "subject": "test(story-memory): qualify manual screenplay child planning natively"
+    },
+    {
+      "sha": "b27b4dc2ce82507ea04cb078f0c120eb3ea0d1f3",
+      "subject": "test(story-memory): locate native screenplay paragraphs correctly"
+    },
+    {
+      "sha": "7f71b085153b95b49769572c10d44754bfbb9547",
+      "subject": "test(story-memory): reacquire retired native accessibility roots"
+    },
+    {
+      "sha": "76b93204d336b9428c5d0d3d15a24b5ed826f01c",
+      "subject": "test(story-memory): match native child review text precisely"
+    },
+    {
+      "sha": "4b52d31d77aed4bab95fa99b7b923351a8802789",
+      "subject": "test(story-memory): scope native proposal reads to review landmark"
+    },
+    {
+      "sha": "ce7405f61a7117b8a138ff32950512767d3a7421",
+      "subject": "test(story-memory): read visible native refusal text"
+    },
+    {
+      "sha": "9b4c5ff563f9662489ceac3ea321c5f68fbc677a",
+      "subject": "test(story-memory): capture timeline after native acceptance settles"
+    },
+    {
+      "sha": "85bed2854a11b805b91c53b934f9fe75b62764f6",
+      "subject": "docs(memory): record qualified screenplay-aware child planning"
+    },
+    {
+      "sha": "d5ae81a6c0cb8c4a1c2184da4aa1e8fd2b398374",
+      "subject": "fix(memory): review canonical child plans and recover from refusals"
+    },
+    {
+      "sha": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+      "subject": "fix(memory): bind reviewed descendant relationships before replacement"
+    },
+    {
+      "sha": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
+      "subject": "test(memory): qualify canonical child-plan acceptance in native UI"
+    },
+    {
+      "sha": "e93814c230127176385cbd507abe84633733689b",
+      "subject": "docs(memory): consolidate repaired integration readiness and native evidence"
+    },
+    {
+      "sha": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "subject": "test(memory): capture readable screenplay with Bible and accepted timeline"
+    }
+  ],
+  "source_identity_proof": {
+    "file_count": 77,
+    "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+    "qualification": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+    "all_blobs_identical": true
+  },
+  "post_application_changed_paths": [
+    ".github/workflows/child-plan-readable-native.yml",
+    ".github/workflows/child-plan-review-repairs-native.yml",
+    "docs/reports/child-plan-review-repairs-qualification.md",
+    "docs/reports/story-memory-integration-readiness-manifest.json",
+    "docs/reports/story-memory-integration-readiness.md",
+    "scripts/qualify-child-plan-memory.py",
+    "scripts/test_qualify_child_plan_memory.py"
+  ],
+  "preserved_85bed285_inventory": {
+    "main": "302851dbb5bf67cda922b4d79f70623e444891dc",
+    "candidate": "85bed2854a11b805b91c53b934f9fe75b62764f6",
+    "merge_base": "302851dbb5bf67cda922b4d79f70623e444891dc",
+    "ahead_behind": "0\t32",
+    "files": [
+      {
+        "path": ".github/workflows/canonical-scene-native.yml",
+        "category": "native qualification infrastructure",
+        "last_commit": "624893ed749c32e8993a799430c4c0ba7d4997a3",
+        "candidate_blob": "6f710d2b1abc3dd6dc7f89d6b3590d5f60044bfc"
+      },
+      {
+        "path": ".github/workflows/child-plan-memory-native.yml",
+        "category": "native qualification infrastructure",
+        "last_commit": "7f71b085153b95b49769572c10d44754bfbb9547",
+        "candidate_blob": "4521f5206f01c6f6739cb512cc0440aa7e8d30a3"
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "category": "dependency/build admission",
+        "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+        "candidate_blob": "aa3692c665c9224013e20ef0e268e6c7aaf42d84"
+      },
+      {
+        "path": ".github/workflows/scene-order-native.yml",
+        "category": "native qualification infrastructure",
+        "last_commit": "beee2d97219936bc93d7a02f8f56c5ceaee0653b",
+        "candidate_blob": "9e1475f2614a906850d241d1ac8be90039d9a07f"
+      },
+      {
+        "path": ".github/workflows/story-memory-native.yml",
+        "category": "native qualification infrastructure",
+        "last_commit": "a0b46fedfdef03901ecd031f43c4bf7636627ce1",
+        "candidate_blob": "25dda2a5c1b8b7d7f85bd06d3fdbcf4f7da7b66f"
+      },
+      {
+        "path": "Cargo.lock",
+        "category": "dependency/build admission",
+        "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+        "candidate_blob": "3538ff44dc7f14eaa692d89f17feb29c4bd83df1"
+      },
+      {
+        "path": "crates/core/src/ai/README.md",
+        "category": "documentation",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "ad788008c397a297a05fa387cc50ea827ea34199"
+      },
+      {
+        "path": "crates/core/src/ai/backend.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "304354606f6f98d8f909db00bf0bab37f2cefe0b"
+      },
+      {
+        "path": "crates/core/src/ai/prompt.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "553a6923cbff415cc1d9fd867452813ce6f5bfcc"
+      },
+      {
+        "path": "crates/core/src/contracts/README.md",
+        "category": "documentation",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "a2ba7d09172b96d3fbd2cd3e4d776f657cfa9de1"
+      },
+      {
+        "path": "crates/core/src/contracts/context_influence.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "23a5462bda0973004384e81d0aba8805e9b0c035"
+      },
+      {
+        "path": "crates/core/src/contracts/mod.rs",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "2f9e108673b087e4604ef383f1fe2ad20ceff74b"
+      },
+      {
+        "path": "crates/core/src/contracts/script_document.rs",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "3e636fe512d07506ae319e68dbee3fdecfd00044"
+      },
+      {
+        "path": "crates/core/src/contracts/script_impact_review.rs",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "37fafe45b6a49c4d5e5a40b554c457b81f845a98"
+      },
+      {
+        "path": "crates/server/examples/canonical_scene_capture_fixture.rs",
+        "category": "native qualification infrastructure",
+        "last_commit": "bd2c6adab434f09979e946f634d371b93229ed6f",
+        "candidate_blob": "b1489a1e181ec9d01b8acd1b5a2f51fec8e4042d"
+      },
+      {
+        "path": "crates/server/examples/scene_order_capture_fixture.rs",
+        "category": "native qualification infrastructure",
+        "last_commit": "da54a856b46e7de712bf46e0ff7d660904b4b63f",
+        "candidate_blob": "f84aa86b16f2d5875c0320ace7dd1ccc57f4c469"
+      },
+      {
+        "path": "crates/server/src/README.md",
+        "category": "documentation",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "beae4bb6d662daeef5cbd95b3e9d8e376645f6ee"
+      },
+      {
+        "path": "crates/server/src/agent_graph_tools.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "8df5bf9431b2d1152a61e173fa24db2d68855cbd"
+      },
+      {
+        "path": "crates/server/src/agent_premise_workflow.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "a89af7b91062cfcf16d50c4287ef029c9f2a52c7"
+      },
+      {
+        "path": "crates/server/src/agent_screenplay_context_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "b78728e98b5c921bc14411ed8dc44f7d90921553"
+      },
+      {
+        "path": "crates/server/src/agent_workflow_harness.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "8d6bcd925612f57199ea9612c6bb367b42068bf3"
+      },
+      {
+        "path": "crates/server/src/agent_workflow_service.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "5f9eb17f45bdc949fcad0f2217c9a229c65151e4"
+      },
+      {
+        "path": "crates/server/src/agent_workflow_store.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "42f5317422fefa32d0ea0fe9a78d30a01a0aa68d"
+      },
+      {
+        "path": "crates/server/src/ai_generation_runtime.rs",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "77bee8f4e4ef260bcf1dc88c119f58b2c9dfb707"
+      },
+      {
+        "path": "crates/server/src/ai_generation_runtime_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "9fc05d6d15a0867a1f436590c0dee3e067d2650c"
+      },
+      {
+        "path": "crates/server/src/ai_generation_service.rs",
+        "category": "application source",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "dc3f3aa96b4206816ce2a59a820daf6e7550f565"
+      },
+      {
+        "path": "crates/server/src/ai_service.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "7569a18a3ed227a44f96ed2776c73db4902bb59a"
+      },
+      {
+        "path": "crates/server/src/bible_context_scope.rs",
+        "category": "application source",
+        "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+        "candidate_blob": "fd92125828e8c7f8b633f57e5834b033edd89e2c"
+      },
+      {
+        "path": "crates/server/src/bible_context_scope_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+        "candidate_blob": "e5efb0fb27d969832b8188c69b7fafd5304cf126"
+      },
+      {
+        "path": "crates/server/src/bible_field_lineage_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "67815b9143d0d5f97fa41ce19d116edf914bfa35"
+      },
+      {
+        "path": "crates/server/src/bible_membership_preview_limit_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+        "candidate_blob": "07d6372b4f988d163f91c918d485dac559800366"
+      },
+      {
+        "path": "crates/server/src/canonical_generation_service_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "9a9db5c392babd75437b43f3715a1025700a3364"
+      },
+      {
+        "path": "crates/server/src/child_plan_generation.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "3155bb47b090457cf9030525c187df3f216eaf29"
+      },
+      {
+        "path": "crates/server/src/child_plan_memory.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "e51d61b483aceeccb03a752b2754682f2c778745"
+      },
+      {
+        "path": "crates/server/src/child_plan_memory_service_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "ec418a095573d3a849305160070259f5deb61ab5"
+      },
+      {
+        "path": "crates/server/src/child_plan_projection_store.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "d8e43c79f84d11355a9318eaeef7bb566590015a"
+      },
+      {
+        "path": "crates/server/src/child_plan_store.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "6c0cc803eb3baf93c3c7b40fa72af66b36f90854"
+      },
+      {
+        "path": "crates/server/src/child_plan_store_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "c481d864b05f2bc4cd917ae89ec2716cf08975d1"
+      },
+      {
+        "path": "crates/server/src/context_influence_service.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "3b7b6b124f9b4ba1a3a3018018a2349401f288ca"
+      },
+      {
+        "path": "crates/server/src/context_stack_projection.rs",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "ba258e972e3feb7adfd5c58fb967425714d9ded8"
+      },
+      {
+        "path": "crates/server/src/context_stack_projection_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "16a7c02f55d9180797f4d2e2f3a03aaadfddf663"
+      },
+      {
+        "path": "crates/server/src/lib.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "cda67ca05f370f6b46fd1684014080a23f1e4fbb"
+      },
+      {
+        "path": "crates/server/src/manual_script_workflow_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "be505a0071c177d0d0dc3567ae7963f35a6d4a08"
+      },
+      {
+        "path": "crates/server/src/prompt_format.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "4905e139bc3599b4bd9bb39abc66f4ef4586840f"
+      },
+      {
+        "path": "crates/server/src/scene_context_membership_service_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "9429daa53de9d7ce6679f0b166b1f736f332892a",
+        "candidate_blob": "efafdcfab2f42d9e33fc9eeab0dfab8393987564"
+      },
+      {
+        "path": "crates/server/src/scene_context_membership_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "ca6496583697b56be8e7afbce531b6f27bab7fa6"
+      },
+      {
+        "path": "crates/server/src/script_block_create_impact_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "404efe089566c3e4ca173c23a9c022c70e0a632d"
+      },
+      {
+        "path": "crates/server/src/script_context_scope.rs",
+        "category": "application source",
+        "last_commit": "9429daa53de9d7ce6679f0b166b1f736f332892a",
+        "candidate_blob": "246c712bd2b3d159b809715cb8382ea3b2f8bb52"
+      },
+      {
+        "path": "crates/server/src/script_document_command.rs",
+        "category": "application source",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "9e1eba22c7d3b5725c0b6320150e8a12cb1897b2"
+      },
+      {
+        "path": "crates/server/src/script_generation_lineage.rs",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "56b9ec86a4f7cd6a83d6db7559ff01fde73d986f"
+      },
+      {
+        "path": "crates/server/src/script_generation_lineage_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "dfd264dca42cd5b49cb1dd235b03facc95fa6251"
+      },
+      {
+        "path": "crates/server/src/script_generation_target.rs",
+        "category": "application source",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "04c1da328cac154c5d29c87deaf188dc16c158ab"
+      },
+      {
+        "path": "crates/server/src/script_generation_target_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "4d85f10334ce6eda63f162ab357ff6a6d1d91c18"
+      },
+      {
+        "path": "crates/server/src/script_impact_projection.rs",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "87452e5a80038d26c0af1f914570d758f78babba"
+      },
+      {
+        "path": "crates/server/src/script_impact_review.rs",
+        "category": "application source",
+        "last_commit": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+        "candidate_blob": "12824aeae5349c5f2071c8088453abf7ce9fea51"
+      },
+      {
+        "path": "crates/server/src/script_impact_review_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "7f465e682da49faee6d018d76c515b28d3b47ce4"
+      },
+      {
+        "path": "crates/server/src/script_store.rs",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "1aad4a386d18b674cdc808ced6d8742ede81c269"
+      },
+      {
+        "path": "crates/server/src/timeline_child_plan_apply.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "b5c053919ac25abe0e36813df7d8e32174df5512"
+      },
+      {
+        "path": "crates/server/src/timeline_children_history.rs",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "a500ec58b4b1fe25cea33e5350cf8ef3e0e84b2f"
+      },
+      {
+        "path": "crates/server/src/timeline_script_placement_tests.rs",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "065b3a389facb01cefc971e9262caddbe9efc719"
+      },
+      {
+        "path": "docs/plans/agent-story-workflows/execution-ledger.md",
+        "category": "documentation",
+        "last_commit": "85bed2854a11b805b91c53b934f9fe75b62764f6",
+        "candidate_blob": "7b8931c96ff14ef4ac8d67aa89374e8c3197f8cf"
+      },
+      {
+        "path": "docs/plans/agent-story-workflows/plan.md",
+        "category": "documentation",
+        "last_commit": "85bed2854a11b805b91c53b934f9fe75b62764f6",
+        "candidate_blob": "61a90763720ca24ebf1f6f766152d0ab03f815c1"
+      },
+      {
+        "path": "docs/reports/bible-context-membership-qualification.md",
+        "category": "documentation",
+        "last_commit": "2761aacb8e70571729faf535d5cef407d01d36e8",
+        "candidate_blob": "8ee14004b2e11811fddeb401f808e669b379033a"
+      },
+      {
+        "path": "docs/reports/bible-membership-preview-limit-repair.md",
+        "category": "documentation",
+        "last_commit": "8ea7153b2c0f236c85ec47c0422e4f8e58a078c3",
+        "candidate_blob": "11a7ccc2e39e430f309185d745db8e7eb5150d1a"
+      },
+      {
+        "path": "docs/reports/canonical-scene-generation-qualification.md",
+        "category": "documentation",
+        "last_commit": "8941f3ac61c7e1a823aa03a7ccb66ba8ff4f3e01",
+        "candidate_blob": "db41abe6b5f50ba175ddf2f44b91750ac3b209ae"
+      },
+      {
+        "path": "docs/reports/scene-order-memory-qualification.md",
+        "category": "documentation",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "64487f4b9ee7bf380092e498d30b6e973fed96b4"
+      },
+      {
+        "path": "docs/reports/screenplay-child-plan-memory-qualification.md",
+        "category": "documentation",
+        "last_commit": "85bed2854a11b805b91c53b934f9fe75b62764f6",
+        "candidate_blob": "41165fefb0f8d50056aae2cd6da107cf8682b4bf"
+      },
+      {
+        "path": "docs/reports/screenplay-context-stack-qualification.md",
+        "category": "documentation",
+        "last_commit": "8d2719d2f80f3529864a138720aeb02463fc390f",
+        "candidate_blob": "5c730ab3ccd9b58486141d5f8eb27e54e0415834"
+      },
+      {
+        "path": "docs/reports/story-memory-no-download-qualification.md",
+        "category": "documentation",
+        "last_commit": "b0d6d17c0d776f1c46e39c2590cfd2f944768412",
+        "candidate_blob": "f750cecccd66d3efb8a16c39273d8fb05f8f667a"
+      },
+      {
+        "path": "scripts/check-onnx-no-download.py",
+        "category": "dependency/build admission",
+        "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+        "candidate_blob": "e32891ecce0609629af9d466e1f69384154cd2a1"
+      },
+      {
+        "path": "scripts/prepare-pumas-dependency.sh",
+        "category": "dependency/build admission",
+        "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+        "candidate_blob": "ce3912cc7aac43c50466062248338baf9a5464b9"
+      },
+      {
+        "path": "scripts/qualify-bible-fact-propagation.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "3f716aff21c4ac8e03ca86d86c77491a43e91b47",
+        "candidate_blob": "59f71711f603176f97aa25d2edc20950db1dd31f"
+      },
+      {
+        "path": "scripts/qualify-canonical-scene-generation.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "776d16c6e1039641c00beba9dade31465c9f28fe",
+        "candidate_blob": "2b1274532a8b92cf6f68a9b650c6687a2467fb3e"
+      },
+      {
+        "path": "scripts/qualify-child-plan-memory.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "9b4c5ff563f9662489ceac3ea321c5f68fbc677a",
+        "candidate_blob": "a88e397a37e3c6072f46d00c13e3e7baae8ddba2"
+      },
+      {
+        "path": "scripts/qualify-scene-order-memory.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7",
+        "candidate_blob": "6a86e92cc988d4ba415961a363fad5b1169806ab"
+      },
+      {
+        "path": "scripts/qualify-screenplay-authoring.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "7f71b085153b95b49769572c10d44754bfbb9547",
+        "candidate_blob": "96ed4b49622062c9ce177a5eda3b4dfa1ac54ee5"
+      },
+      {
+        "path": "scripts/test_check_onnx_no_download.py",
+        "category": "dependency/build admission",
+        "last_commit": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+        "candidate_blob": "6adcabee760a720214c8d7241a78f8a6b85f2d1d"
+      },
+      {
+        "path": "scripts/test_qualify_canonical_scene_generation.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "624893ed749c32e8993a799430c4c0ba7d4997a3",
+        "candidate_blob": "756d61b95afd21157432e207496c86ea9d79691a"
+      },
+      {
+        "path": "scripts/test_qualify_child_plan_memory.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "7f71b085153b95b49769572c10d44754bfbb9547",
+        "candidate_blob": "981b7bf33e77e600ecdf4b76018bd209f4155954"
+      },
+      {
+        "path": "scripts/test_qualify_scene_order_memory.py",
+        "category": "native qualification infrastructure",
+        "last_commit": "beee2d97219936bc93d7a02f8f56c5ceaee0653b",
+        "candidate_blob": "ce6da82a44d88c4a27e15f3518357b3d8f9cbbf9"
+      },
+      {
+        "path": "ui/src/lib/README.md",
+        "category": "documentation",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "9c6602992549a42ea94059ec1412b1e5bc0ea2f9"
+      },
+      {
+        "path": "ui/src/lib/childPlanningTypes.ts",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "bb53ac27aea6c2a9648e4cde030b6447f5027744"
+      },
+      {
+        "path": "ui/src/lib/components/editor/BeatEditor.svelte",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "7373a9819000732058c22407bcb2384ba0c23fcc"
+      },
+      {
+        "path": "ui/src/lib/components/editor/BeatEditorHeader.svelte",
+        "category": "application source",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "89a5f58dcaf48d0582bb3a4baa30fd6c5bf65ab9"
+      },
+      {
+        "path": "ui/src/lib/components/editor/ChildPlanReview.ssr.test.ts",
+        "category": "application regression tests",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "ef8e93d2fea442997ed3bd2489cc7d680595cf17"
+      },
+      {
+        "path": "ui/src/lib/components/editor/ChildPlanReview.svelte",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "fcbedd16ad6b91bb45f45eda15c9057eeaf3cc8c"
+      },
+      {
+        "path": "ui/src/lib/components/editor/README.md",
+        "category": "documentation",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "9a9a8b751469d3e46b57ac9d3e3195193ebc2ff2"
+      },
+      {
+        "path": "ui/src/lib/components/editor/ScriptImpactReview.ssr.test.ts",
+        "category": "application regression tests",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "8f1017d4258942bc36735581310c92032c457456"
+      },
+      {
+        "path": "ui/src/lib/components/editor/childPlanReview.svelte.test.ts",
+        "category": "application regression tests",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "587b04ab879d48e056ff52020efb8e80b447546f"
+      },
+      {
+        "path": "ui/src/lib/components/editor/childPlanReview.svelte.ts",
+        "category": "application source",
+        "last_commit": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "candidate_blob": "5632cab2aa6f63f5df9a0ef1484cff4640172930"
+      },
+      {
+        "path": "ui/src/lib/components/editor/createSelectedTimelineChild.svelte.test.ts",
+        "category": "application regression tests",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "2ef86590fa977db7fc53f2d0fb62c08367232a98"
+      },
+      {
+        "path": "ui/src/lib/components/editor/createSelectedTimelineChild.ts",
+        "category": "application source",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "091493503278d02185b9c190adae716827f067aa"
+      },
+      {
+        "path": "ui/src/lib/components/editor/scriptImpactNotice.ts",
+        "category": "application source",
+        "last_commit": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "candidate_blob": "dce49ff26b51e4ea177da3e1cd5dc0c857ab57fb"
+      },
+      {
+        "path": "ui/src/lib/components/layout/GraphSelectionDetail.ssr.test.ts",
+        "category": "application regression tests",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "aa78db320c3fb0f427369af9b6d92aa547ee3346"
+      },
+      {
+        "path": "ui/src/lib/components/layout/GraphSelectionDetail.svelte",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "8c5598db981d59f2e9704904486ca380589b7446"
+      },
+      {
+        "path": "ui/src/lib/components/layout/README.md",
+        "category": "documentation",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "85a01fb4eb29ca43b9e4209f49620c3c4990de0f"
+      },
+      {
+        "path": "ui/src/lib/components/layout/graphSelectionDetails.test.ts",
+        "category": "application regression tests",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "93c0c3476de7f2d2866442de97b6e233e5b208c5"
+      },
+      {
+        "path": "ui/src/lib/components/layout/graphSelectionDetails.ts",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "5eab34c1959107f25af2ed8616eb42caab96bc74"
+      },
+      {
+        "path": "ui/src/lib/contextInfluenceTypes.ts",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "05d1eee69b16f777ebef2634b16ca26f40adba9d"
+      },
+      {
+        "path": "ui/src/lib/propagationProposalTypes.ts",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "b3d51fc696b8975225e4bc3a573411567268d02f"
+      },
+      {
+        "path": "ui/src/lib/scriptTypes.ts",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "d6903854d71ca87ce622bfa4ab323623f95454f2"
+      },
+      {
+        "path": "ui/src/lib/stores/README.md",
+        "category": "documentation",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "77a4d3a3395f2a1856774ac5af279533b83e6ac0"
+      },
+      {
+        "path": "ui/src/lib/stores/contextStackProjection.svelte.test.ts",
+        "category": "application regression tests",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "e3fb90dbbcce71403cad60470f38398565476848"
+      },
+      {
+        "path": "ui/src/lib/stores/contextStackProjection.svelte.ts",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "6a42ec558ac0718ae5e0cec886f24e95084ddd77"
+      },
+      {
+        "path": "ui/src/lib/stores/serverEventHandlers.test.ts",
+        "category": "application regression tests",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "61b9bb1fb319fdae9c788c476a703d1b415ebb13"
+      },
+      {
+        "path": "ui/src/lib/stores/serverEventHandlers.ts",
+        "category": "application source",
+        "last_commit": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "candidate_blob": "9a8fdaea34305b61db21de2200ab7b5407e60049"
+      },
+      {
+        "path": "ui/src/lib/stores/timelineRenderProjection.svelte.ts",
+        "category": "application source",
+        "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "candidate_blob": "c9835d0708d6eae54c2b3f8f18d799ac1609512d"
+      }
+    ],
+    "snapshot_utc": "2026-10-06T00:28:12.051114+00:00",
+    "main_tree": "becb86624608663a9e91ff629edd1080d6eada54",
+    "candidate_tree": "2571e92e113981b64806ab02f5616f4ab7b8d1a9",
+    "application": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+    "application_tree": "9796132f854ed298c27fd431e1ac1cccb8182ccd",
+    "qualification": "9b4c5ff563f9662489ceac3ea321c5f68fbc677a",
+    "qualification_tree": "4608cdf8e6d5055ca954601202567f2eac2830ad",
+    "category_counts": {
+      "native qualification infrastructure": 14,
+      "dependency/build admission": 5,
+      "documentation": 16,
+      "application source": 47,
+      "application regression tests": 25
+    },
+    "application_test_dependency_files_identical_across_checkpoints": 77,
+    "commits": [
+      {
+        "sha": "9429daa53de9d7ce6679f0b166b1f736f332892a",
+        "subject": "feat(memory): review scene-order continuity window changes"
+      },
+      {
+        "sha": "beee2d97219936bc93d7a02f8f56c5ceaee0653b",
+        "subject": "test(memory): qualify native scene-window review with exact human text"
+      },
+      {
+        "sha": "141ff3d1b959a6e5f4899dbdc160a490d80b5ee0",
+        "subject": "fix(test): use the configured OpenAI v1 fixture endpoint"
+      },
+      {
+        "sha": "da54a856b46e7de712bf46e0ff7d660904b4b63f",
+        "subject": "fix(test): reopen canonical scene setup before native generation"
+      },
+      {
+        "sha": "6711d1e797b7c2709862b1d3398af2282669c74c",
+        "subject": "fix(test): scroll native script disclosure into its visible pane"
+      },
+      {
+        "sha": "5b057efdf038a5959630270dea5c749075307844",
+        "subject": "chore(memory): reconcile merged Bible ancestry without source changes"
+      },
+      {
+        "sha": "4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7",
+        "subject": "fix(test): use native splitter controls for screenplay review"
+      },
+      {
+        "sha": "441c2a29af6199b53b92f718df43d0ca916b1ce5",
+        "subject": "docs(memory): record passed native scene-order qualification"
+      },
+      {
+        "sha": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
+        "subject": "fix(authoring): generate newly created scenes from canonical state"
+      },
+      {
+        "sha": "624893ed749c32e8993a799430c4c0ba7d4997a3",
+        "subject": "test(authoring): qualify native scene creation and guarded generation"
+      },
+      {
+        "sha": "bd2c6adab434f09979e946f634d371b93229ed6f",
+        "subject": "fix(test): bind native fixture path to canonical database owner"
+      },
+      {
+        "sha": "c383601bd8ac3c78fb112f2c0610006823ac1cef",
+        "subject": "fix(test): locate native notes by verified accessible label"
+      },
+      {
+        "sha": "776d16c6e1039641c00beba9dade31465c9f28fe",
+        "subject": "fix(test): reveal exact native generation refusal banner"
+      },
+      {
+        "sha": "8941f3ac61c7e1a823aa03a7ccb66ba8ff4f3e01",
+        "subject": "docs(authoring): record canonical native proof and runner blocker"
+      },
+      {
+        "sha": "c63370a55eaa925a4ab684ea91463d480e360659",
+        "subject": "feat(memory): review scoped untimed Bible field membership"
+      },
+      {
+        "sha": "2761aacb8e70571729faf535d5cef407d01d36e8",
+        "subject": "docs(memory): record membership qualification and frozen native limits"
+      },
+      {
+        "sha": "3ebb752f131bb233c16d49210ee226de14d2caf2",
+        "subject": "fix(memory): require entered Bible values in targeted previews"
+      },
+      {
+        "sha": "8ea7153b2c0f236c85ec47c0422e4f8e58a078c3",
+        "subject": "docs(memory): qualify the membership preview node-limit repair"
+      },
+      {
+        "sha": "4aae549c04924ad2580be86c142c017a960f5a00",
+        "subject": "feat(memory): expose saved screenplay in timeline and agent context"
+      },
+      {
+        "sha": "8d2719d2f80f3529864a138720aeb02463fc390f",
+        "subject": "docs(memory): qualify the saved screenplay context bridge"
+      },
+      {
+        "sha": "1e4afc03427054d2ec40798ba08581f1cee08ee0",
+        "subject": "build(pumas): qualify no-download dependency for story memory"
+      },
+      {
+        "sha": "a0b46fedfdef03901ecd031f43c4bf7636627ce1",
+        "subject": "test(memory): run exact-source service and native qualification"
+      },
+      {
+        "sha": "b0d6d17c0d776f1c46e39c2590cfd2f944768412",
+        "subject": "docs(memory): record exact-source native and service results"
+      },
+      {
+        "sha": "122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6",
+        "subject": "feat(memory): review screenplay-informed timeline child plans"
+      },
+      {
+        "sha": "3f716aff21c4ac8e03ca86d86c77491a43e91b47",
+        "subject": "test(story-memory): qualify manual screenplay child planning natively"
+      },
+      {
+        "sha": "b27b4dc2ce82507ea04cb078f0c120eb3ea0d1f3",
+        "subject": "test(story-memory): locate native screenplay paragraphs correctly"
+      },
+      {
+        "sha": "7f71b085153b95b49769572c10d44754bfbb9547",
+        "subject": "test(story-memory): reacquire retired native accessibility roots"
+      },
+      {
+        "sha": "76b93204d336b9428c5d0d3d15a24b5ed826f01c",
+        "subject": "test(story-memory): match native child review text precisely"
+      },
+      {
+        "sha": "4b52d31d77aed4bab95fa99b7b923351a8802789",
+        "subject": "test(story-memory): scope native proposal reads to review landmark"
+      },
+      {
+        "sha": "ce7405f61a7117b8a138ff32950512767d3a7421",
+        "subject": "test(story-memory): read visible native refusal text"
+      },
+      {
+        "sha": "9b4c5ff563f9662489ceac3ea321c5f68fbc677a",
+        "subject": "test(story-memory): capture timeline after native acceptance settles"
+      },
+      {
+        "sha": "85bed2854a11b805b91c53b934f9fe75b62764f6",
+        "subject": "docs(memory): record qualified screenplay-aware child planning"
+      }
+    ],
+    "post_application_changed_paths": [
+      ".github/workflows/child-plan-memory-native.yml",
+      "docs/plans/agent-story-workflows/execution-ledger.md",
+      "docs/plans/agent-story-workflows/plan.md",
+      "docs/reports/screenplay-child-plan-memory-qualification.md",
+      "scripts/qualify-bible-fact-propagation.py",
+      "scripts/qualify-child-plan-memory.py",
+      "scripts/qualify-screenplay-authoring.py",
+      "scripts/test_qualify_child_plan_memory.py"
+    ],
+    "ancestry_merge": {
+      "sha": "5b057efdf038a5959630270dea5c749075307844",
+      "main_is_second_parent": true,
+      "first_parent_tree_unchanged": true
+    }
+  },
+  "review_gate": "Parent independent repair-source acceptance and exact-head ordinary PR matrix pending",
+  "native_execution": {
+    "run": 37396627562,
+    "job": 112054054613,
+    "artifact_id": 11384360136,
+    "conclusion": "success",
+    "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+    "qualification": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+    "archive_sha256": "2654969cc230ebfa796b426a2b6b4da5a3bc65e3031164c69f535a3692d22386",
+    "capture_receipt_sha256": "a2bd27d6f729e305c80e169431a4af48cb916ef964cd168cb4017a5ba5c5dae7",
+    "binary_sha256": "71d711be42f3351e7fcd2a6628b1ed2fe4bb62f2fea3a2cf6295a8b091eaccde",
+    "screenshots": [
+      {
+        "file": "eidetic-bible-fact-review.png",
+        "sha256": "0ccf59b0023e8a5a7dada99bccc3882bccf143aa95856ea48bae1e185ce94fb5",
+        "window_id": 2097155,
+        "pid": 20147
+      },
+      {
+        "file": "eidetic-bible-fact-preview.png",
+        "sha256": "8cccf43d5ff87e09e45533e6bd4a212d38db35ea44485672c0b4ac174e570e63",
+        "window_id": 2097155,
+        "pid": 20147
+      },
+      {
+        "file": "eidetic-bible-fact-accepted.png",
+        "sha256": "5d43e50c5b35a4cb34ed2ff50d72f70344f6e1c507604c466c968c5b7acddfeb",
+        "window_id": 2097155,
+        "pid": 20147
+      },
+      {
+        "file": "eidetic-child-plan-pending.png",
+        "sha256": "8df1e2269f8276946cc814480b296d8cb245b91c1afac52b6f9f8523df85597c",
+        "window_id": 2097155,
+        "pid": 20147
+      },
+      {
+        "file": "eidetic-child-plan-refused.png",
+        "sha256": "4cc77308a8c0714c97179978bf146b202e90fdd49cd8a47b8d05ca7cde33e63b",
+        "window_id": 2097155,
+        "pid": 20147
+      },
+      {
+        "file": "eidetic-child-plan-accepted.png",
+        "sha256": "f9f7f25c089d52dbdd70012563b866d01700f5af7c46ba1355fd0b07241440e1",
+        "window_id": 2097155,
+        "pid": 20147
+      },
+      {
+        "file": "eidetic-story-memory-readable.png",
+        "sha256": "0be93495ea2db1f174e9a27c05d842b86fe04ce01856c1a7f05752880fa32989",
+        "window_id": 2097155,
+        "pid": 20147
+      }
+    ],
+    "readable_writing_area": {
+      "supported_actions": [
+        "Resize panels keyboard Up",
+        "AT-SPI SCROLL_TOP_LEFT"
+      ],
+      "editor_divider_before": [
+        280,
+        322,
+        834,
+        6
+      ],
+      "editor_divider_after": [
+        280,
+        172,
+        834,
+        6
+      ],
+      "expected_saved_text": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves in the morning.\n\n",
+      "bounds": [
+        280,
+        178,
+        1114,
+        564
+      ],
+      "saved_text_ranges": {
+        "INT. CAFE - NIGHT": [
+          309,
+          321,
+          120,
+          12
+        ],
+        "Mara takes her blue umbrella.": [
+          309,
+          348,
+          204,
+          13
+        ],
+        "The train leaves in the morning.": [
+          309,
+          375,
+          225,
+          13
+        ]
+      },
+      "model_responses": "synthetic localhost HTTP/SSE",
+      "accepted_child_native_bounds": [
+        212,
+        883,
+        108,
+        11
+      ]
+    },
+    "author_viewed_all_original_images": true,
+    "parent_image_acceptance": "pending",
+    "provider": "synthetic localhost HTTP/SSE",
+    "real_model_quality_qualified": false,
+    "core_tests": 119,
+    "server_tests": 442,
+    "frontend_tests": 429,
+    "driver_tests": 18,
+    "no_download_gate_tests": 4
+  },
+  "preserved_repair_qualification": {
+    "candidate": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
+    "tree": "1d948840a5d1803b151346bd8d4c269072f42b68",
+    "native_execution": {
+      "run": 37395200220,
+      "job": 112049404919,
+      "artifact_id": 11382778877,
+      "conclusion": "success",
+      "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+      "qualification": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
+      "archive_sha256": "86ecc1fc912244751406a03044f8c13f65ebf33c4ab6ed74f0c9a2ca1776f209",
+      "capture_receipt_sha256": "e0e89fc7e3090043def001c2bb283c6eb7a3c5013b067f78fb75ea507999387e",
+      "binary_sha256": "71d711be42f3351e7fcd2a6628b1ed2fe4bb62f2fea3a2cf6295a8b091eaccde",
+      "screenshots": [
+        {
+          "file": "eidetic-bible-fact-review.png",
+          "sha256": "0ccf59b0023e8a5a7dada99bccc3882bccf143aa95856ea48bae1e185ce94fb5",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-bible-fact-preview.png",
+          "sha256": "8cccf43d5ff87e09e45533e6bd4a212d38db35ea44485672c0b4ac174e570e63",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-bible-fact-accepted.png",
+          "sha256": "5d43e50c5b35a4cb34ed2ff50d72f70344f6e1c507604c466c968c5b7acddfeb",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-child-plan-pending.png",
+          "sha256": "d67c306b9b8deccca96088576d10610d231ce384f2286db4373f0c27fb6d30b5",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-child-plan-refused.png",
+          "sha256": "4cc77308a8c0714c97179978bf146b202e90fdd49cd8a47b8d05ca7cde33e63b",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-child-plan-accepted.png",
+          "sha256": "f9f7f25c089d52dbdd70012563b866d01700f5af7c46ba1355fd0b07241440e1",
+          "window_id": 2097155,
+          "pid": 20426
+        }
+      ],
+      "provider": "synthetic localhost HTTP/SSE",
+      "real_model_quality_qualified": false,
+      "core_tests": 119,
+      "server_tests": 442,
+      "frontend_tests": 429,
+      "driver_tests": 16,
+      "no_download_gate_tests": 4,
+      "parent_image_acceptance": "pending"
+    }
+  }
+}

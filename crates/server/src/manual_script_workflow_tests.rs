@@ -49,7 +49,14 @@ async fn manual_edit_reaches_preview_and_generation_admission_with_a_stale_proje
     let state = AppState::new().await;
     *state.project.lock() = Some(project.clone());
     *state.project_path.lock() = Some(path.clone());
-    crate::command_service::edit_script_block(
+    let stack_request = ContextStackProjectionRequest {
+        target_node_id: scene_ids[1],
+    };
+    let stack_before =
+        crate::context_influence_service::context_stack_projection(&state, stack_request.clone())
+            .await
+            .unwrap();
+    let saved = crate::command_service::edit_script_block(
         &state,
         CommandEnvelope::new(EditScriptBlockCommand {
             document_id: seed.payload.document_id,
@@ -62,6 +69,31 @@ async fn manual_edit_reaches_preview_and_generation_admission_with_a_stale_proje
     )
     .await
     .unwrap();
+    let saved: ProjectionEnvelope<ScriptDocumentProjection> =
+        serde_json::from_value(serde_json::to_value(saved).unwrap()["projection"].clone()).unwrap();
+    let stack_after =
+        crate::context_influence_service::context_stack_projection(&state, stack_request)
+            .await
+            .unwrap();
+    assert!(stack_after.version.0 > stack_before.version.0);
+    let evidence = stack_after.payload.script_context.unwrap();
+    let first = evidence
+        .iter()
+        .find(|input| input.block_id.as_str() == "screenplay.manual.first")
+        .unwrap();
+    assert_eq!(
+        first.text,
+        "Ada leaves under clear skies.\nBen waves goodbye."
+    );
+    assert_eq!(
+        Some(first.revision_event_id),
+        saved.payload.segments[0].blocks[0].revision_event_id
+    );
+    assert!(
+        !evidence
+            .iter()
+            .any(|input| input.text.contains("STALE MIRROR SCRIPT"))
+    );
     let preview = preview_ai_context(&state, scene_ids[1].0).await.unwrap();
     assert!(
         preview

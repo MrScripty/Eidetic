@@ -13,6 +13,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `bible_graph.rs` | Canonical story-bible graph contracts, expected root nodes, typed graph parts/fields/edges, and node-detail projection shapes. |
 | `bible_graph_defaults.rs` | Built-in story-bible schema defaults used to project expected empty parts and fields for known graph schemas. |
 | `bible_render_graph.rs` | Disposable Bevy-facing story-bible graph projection DTOs, deterministic layout helpers, and neighborhood indexes derived from canonical graph rows. |
+| `context_influence.rs` | Timeline context stack with optional exact saved screenplay evidence and recorded evaluation/influence contracts. |
 | `graph_proposal.rs` | Generic reviewable graph proposal contracts for agent-proposed bible nodes, fields, edges, and timeline-context links. |
 | `script_document.rs` | Canonical script document, segment, block, span, lock, patch, and script projection contracts. |
 | `script_impact_review.rs` | Explicit targeted preview request and captured screenplay/world-context evidence for revision-bound propagation proposals. |
@@ -57,6 +58,11 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Generation commands retain the exact supplied screenplay context in their
   replay identity. Bound dependencies identify both the successful output event
   and consumed input event. Missing lineage differs from a known empty input set.
+- Optional complete screenplay-window receipts retain the selected node, range,
+  ordered segment identities and append-only selection epoch in existing
+  generation/proposal history. Older absent receipts remain absent in serde and
+  replay identity. Context-change causes describe entering/leaving or changed
+  order; they neither replace saved text nor infer fictional time.
 - Needs review is a derived read projection with changed/deleted input causes;
   it does not change canonical segment status or authorize proposal acceptance.
 - Impact identifies its generated output block; a targeted preview cannot resolve
@@ -69,6 +75,10 @@ Start with small core contract modules that own IDs, object kinds, field values,
 - Affect values use validated integer basis-point domain types for valence,
   arousal, intensity, and confidence so invalid floats cannot cross contract
   boundaries.
+
+- Context-stack screenplay evidence is optional for legacy compatibility; a known
+  empty read differs from unavailable evidence. Exact text and existing block and
+  segment revisions remain separate from recorded semantic summaries.
 
 ## Revisit Triggers
 - Contracts become public SDK or binding surface.
@@ -110,3 +120,13 @@ optional input collection preserves older unbound generations. These inputs
 become ordinary UsesFact semantic dependencies with revision bindings; there is
 no additional canonical fact store. Timed overrides, unresolved fields, node
 headers and relationships are outside this field-lineage contract.
+
+
+Canonical generation carries optional ScriptGenerationTarget custody in the
+existing request and generation command. Timeline/output/segment revisions plus
+exact admitted notes and placement protect delayed completion and ABA; older
+serialized requests/commands omit the receipt without invented backfill. The
+backend enforces it, while canonical facts and complete-window lineage remain
+independent consumed evidence. No new persistent memory owner or dependency.
+
+Optional BibleContextScope stores scoped untimed entity/field IDs and the existing Bible/context epoch in generation/proposal history. Absent legacy receipts remain absent; BibleFieldInput retains exact values and revisions.

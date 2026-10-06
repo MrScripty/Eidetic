@@ -1,8 +1,7 @@
 use eidetic_core::contracts::{
     AgentToolArguments, AgentToolKind, AgentToolRequest, AgentToolResultPayload,
     BibleGraphNodeListProjection, BibleRenderGraphProjectionRequest, CommandEnvelope,
-    ContextStackProjection, CreateGraphProposalCommand, GraphProposalAction, GraphProposalId,
-    GraphProposalTarget,
+    CreateGraphProposalCommand, GraphProposalAction, GraphProposalId, GraphProposalTarget,
 };
 use eidetic_core::contracts::{BibleGraphEdgeId, BibleGraphNodeId};
 use rusqlite::Connection;
@@ -11,7 +10,6 @@ use crate::agent_workflow_harness::{AgentHarnessError, AgentWorkflowToolExecutor
 use crate::bible_graph_store;
 use crate::context_influence_store;
 use crate::graph_proposal_store;
-use crate::timeline_node_store;
 
 pub struct AgentGraphReadTools<'a> {
     conn: &'a Connection,
@@ -65,16 +63,11 @@ impl AgentWorkflowToolExecutor for AgentGraphReadTools<'_> {
                 json_payload(&projection)
             }
             AgentToolArguments::ReadContextStack { target_node_id } => {
-                let nodes =
-                    timeline_node_store::load_node_ancestor_stack(self.conn, *target_node_id)?;
-                let projection = ContextStackProjection::from_nodes(&nodes, *target_node_id)
+                let projection = crate::context_stack_projection::load(self.conn, *target_node_id)?
                     .ok_or_else(|| {
-                        AgentHarnessError::Tool(format!(
-                            "context stack target node not found: {}",
-                            target_node_id.0
-                        ))
+                        AgentHarnessError::Tool("context stack target node not found".into())
                     })?;
-                json_payload(&projection)
+                json_payload(&projection.payload)
             }
             AgentToolArguments::ReadActiveGraphContext { target_node_id } => {
                 bible_graph_store::create_schema(self.conn)?;
@@ -322,6 +315,10 @@ fn proposed_edge_id(command_id: &eidetic_core::contracts::CommandId) -> BibleGra
     BibleGraphEdgeId::new(format!("proposal.edge.{}", command_id.0))
         .expect("generated edge ids are non-empty")
 }
+
+#[cfg(test)]
+#[path = "agent_screenplay_context_tests.rs"]
+mod screenplay_tests;
 
 #[cfg(test)]
 mod tests {

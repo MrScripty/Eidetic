@@ -6,6 +6,7 @@ import {
   propagationProposalProjectionState,
 } from '$lib/stores/propagationProposalProjection.svelte.js';
 import ScriptImpactReview from './ScriptImpactReview.svelte';
+import ScriptImpactNotice from './ScriptImpactNotice.svelte';
 
 const segment: ScriptSegmentProjection = {
   segment: {
@@ -113,4 +114,40 @@ it('identifies an authored Bible fact as a cause through the existing review sur
   expect(body).toContain('Preview update');
   expect(body).not.toMatch(/<button[^>]*disabled[^>]*>Preview update/);
   expect(fact.blocks[0]?.block.text).toBe('  Canonical B — 雨\n\n');
+});
+
+it('explains scenes entering and leaving the consumed screenplay window', () => {
+  const moved = structuredClone(segment);
+  moved.impact!.causes[0]!.input = { kind: 'timeline_node', node_id: 'node.B' };
+  moved.impact!.causes[0]!.reason = 'context_changed';
+  moved.impact!.causes[0]!.input_excerpt = 'Entered: E. Left: A.';
+  const { body } = render(ScriptImpactReview, { props: { documentId: 'main', segment: moved } });
+  const notice = render(ScriptImpactNotice, { props: { impact: moved.impact! } });
+  expect(body).toContain('Screenplay context changed.');
+  expect(notice.body).toContain('Entered: E. Left: A.');
+  expect(body).toContain('Preview update');
+  expect(body).not.toMatch(/<button[^>]*disabled[^>]*>Preview update/);
+  expect(moved.blocks[0]?.block.text).toBe('  Canonical B — 雨\n\n');
+});
+
+it('renders Bible membership changes with exact field evidence and preserves canon until review', () => {
+  const target = structuredClone(segment);
+  target.impact!.causes = [
+    {
+      dependency_id: 'generation.B.bible_context',
+      input: { kind: 'timeline_node', node_id: 'node.B' },
+      consumed_revision_event_id: 'old-fields',
+      current_revision_event_id: 'new-fields',
+      reason: 'context_changed',
+      input_excerpt: 'Untimed Bible fields entered: Mara.profile.motivation; removed: ',
+    },
+  ];
+  const notice = render(ScriptImpactNotice, { props: { impact: target.impact! } });
+  expect(notice.body).toContain('Bible context membership changed.');
+  expect(notice.body).toContain('Mara.profile.motivation');
+  expect(target.blocks[0]!.block.text).toBe('  Canonical B — 雨\n\n');
+  target.impact!.causes[0]!.dependency_id = 'generation.B.context';
+  expect(render(ScriptImpactNotice, { props: { impact: target.impact! } }).body).toContain(
+    'Screenplay context changed.',
+  );
 });

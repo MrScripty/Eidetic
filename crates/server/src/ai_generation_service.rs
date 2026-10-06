@@ -42,6 +42,7 @@ pub async fn start_generation(
     // Capture before any project-snapshot await. A replacement during admission
     // may conservatively disable retrieval, never rebind an old request.
     let retrieval_scope = state.vector_store.lock().scope();
+    let session_id = *state.project_session_id.lock();
     let node_id = NodeId(body.node_id);
     let (mut request, project_path) = {
         let (project, project_path) = active_sqlite_project(state).await?;
@@ -72,7 +73,7 @@ pub async fn start_generation(
     )
     .await?;
 
-    state.generating.lock().insert(body.node_id);
+    admit_generation(state, &project_path, &request, session_id, body.node_id).await?;
     mark_node_generating(state, project_path.clone(), node_id, body.node_id).await;
 
     let state_clone = state.clone();
@@ -84,6 +85,7 @@ pub async fn start_generation(
             node_uuid,
             request,
             retrieval_scope,
+            session_id,
         )
         .await;
     });
@@ -99,6 +101,7 @@ pub async fn start_generation_batch(
     body: AiGenerateBatchRequest,
 ) -> Result<AiGenerateBatchResponse, BackendError> {
     let retrieval_scope = state.vector_store.lock().scope();
+    let session_id = *state.project_session_id.lock();
     let parent_id = NodeId(body.parent_node_id);
     let child_ids: Vec<Uuid> = {
         let (project, _) = active_sqlite_project(state).await?;
@@ -120,7 +123,13 @@ pub async fn start_generation_batch(
         .task_supervisor
         .spawn("ai-generation-batch", async move {
             for child_uuid in &child_ids {
-                generate_child_in_batch(state_clone.clone(), *child_uuid, retrieval_scope).await;
+                generate_child_in_batch(
+                    state_clone.clone(),
+                    *child_uuid,
+                    retrieval_scope,
+                    session_id,
+                )
+                .await;
             }
         });
 
@@ -131,7 +140,12 @@ pub async fn start_generation_batch(
     })
 }
 
-async fn generate_child_in_batch(state: AppState, child_uuid: Uuid, retrieval_scope: Uuid) {
+async fn generate_child_in_batch(
+    state: AppState,
+    child_uuid: Uuid,
+    retrieval_scope: Uuid,
+    session_id: Uuid,
+) {
     let child_id = NodeId(child_uuid);
     let (mut request, project_path) = {
         let (project, project_path) = match active_sqlite_project(&state).await {
@@ -173,9 +187,57 @@ async fn generate_child_in_batch(state: AppState, child_uuid: Uuid, retrieval_sc
         return;
     }
 
-    state.generating.lock().insert(child_uuid);
+    if let Err(error) =
+        admit_generation(&state, &project_path, &request, session_id, child_uuid).await
+    {
+        let _ = state.events_tx.send(ServerEvent::GenerationError {
+            node_id: child_uuid,
+            error: error.to_string(),
+        });
+        return;
+    }
     mark_node_generating(&state, project_path.clone(), child_id, child_uuid).await;
-    run_generation(state, project_path, child_uuid, request, retrieval_scope).await;
+    run_generation(
+        state,
+        project_path,
+        child_uuid,
+        request,
+        retrieval_scope,
+        session_id,
+    )
+    .await;
+}
+
+async fn admit_generation(
+    state: &AppState,
+    path: &std::path::Path,
+    request: &eidetic_core::ai::backend::GenerateRequest,
+    session_id: Uuid,
+    node_uuid: Uuid,
+) -> Result<(), BackendError> {
+    let _session = state.project_session_gate.clone().lock_owned().await;
+    if state.project_database.active_path().as_deref() != Some(path)
+        || *state.project_session_id.lock() != session_id
+    {
+        return Err(BackendError::conflict("generation project session changed"));
+    }
+    let binding = request
+        .generation_target
+        .clone()
+        .ok_or_else(|| BackendError::internal("generation target custody missing"))?;
+    let path = path.to_path_buf();
+    tokio::task::spawn_blocking(move || {
+        let conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        crate::script_generation_target::validate_admission(&conn, &binding)
+            .map_err(|error| BackendError::conflict(error.to_string()))
+    })
+    .await
+    .map_err(|error| BackendError::internal(error.to_string()))??;
+    if !state.generating.lock().insert(node_uuid) {
+        return Err(BackendError::conflict("generation already in progress"));
+    }
+    Ok(())
 }
 
 #[cfg(test)]

@@ -26,6 +26,12 @@ Keep prompt request assembly in core, where it can reuse timeline/story rules di
 - Building prompts in the UI: rejected because backend-owned project state belongs with the domain model.
 
 ## Invariants
+
+- Backend-attached main-screenplay context can carry an optional complete-window
+  receipt beside its exact blocks. The provider prompt uses authored evidence;
+  existing generation history retains the ordered selection and placement epoch
+  for later review. Legacy requests omit this receipt, and selection ranges do
+  not infer fictional story time.
 - GenerateRequest can carry backend-hydrated canonical screenplay evidence with
   exact source block/segment IDs and write events. Core request construction alone
   leaves this field unset; backend preview and generation share its hydration.
@@ -52,6 +58,7 @@ use eidetic_core::ai::prompt::build_generate_request;
 ```
 
 ## API Consumer Contract
+- ChildPlan and GenerateChildrenRequest optionally carry existing ScriptContextBlock receipts. Absence means legacy unknown evidence; an empty supplied array is a known empty selection. Consumers do not infer story facts or authorize screenplay replacement from these receipts.
 - None identified as of 2026-03-08.
 - Reason: callers are internal Rust modules, not external clients.
 - Revisit trigger: request types here become part of a published SDK or binding.
@@ -68,3 +75,13 @@ inputs captured in the same SQLite read snapshot. Generation forwards these
 inputs unchanged through model I/O to the existing screenplay commit. Prompt
 formatting remains driven by the resolved Bible context; lineage never substitutes
 a baseline value for a timed override or unresolved fact.
+
+
+Canonical generation carries optional ScriptGenerationTarget custody in the
+existing request and generation command. Timeline/output/segment revisions plus
+exact admitted notes and placement protect delayed completion and ABA; older
+serialized requests/commands omit the receipt without invented backfill. The
+backend enforces it, while canonical facts and complete-window lineage remain
+independent consumed evidence. No new persistent memory owner or dependency.
+
+GenerateRequest forwards optional BibleContextScope captured with canonical BibleFieldInput evidence; generation never replaces a late receipt with current membership.

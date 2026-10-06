@@ -8,6 +8,7 @@ import {
   contextStackProjectionState,
   getCachedContextStackProjection,
   refreshContextStackProjection,
+  refreshCurrentContextStackProjection,
 } from './contextStackProjection.svelte.js';
 
 vi.mock('$lib/projectionApi.js', () => ({
@@ -42,6 +43,54 @@ beforeEach(() => {
 });
 
 describe('context stack projection store', () => {
+  it('refreshes only the already requested context and never activates a hidden consumer', async () => {
+    await refreshCurrentContextStackProjection();
+    expect(getContextStackProjectionMock).not.toHaveBeenCalled();
+    const response = projection(2);
+    getContextStackProjectionMock.mockResolvedValue(response);
+    await refreshContextStackProjection('node.scene.beach');
+    getContextStackProjectionMock.mockClear();
+    await refreshCurrentContextStackProjection();
+    expect(getContextStackProjectionMock).toHaveBeenCalledWith({
+      target_node_id: 'node.scene.beach',
+    });
+    clearContextStackProjection();
+    getContextStackProjectionMock.mockClear();
+    await refreshCurrentContextStackProjection();
+    expect(getContextStackProjectionMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps saved screenplay receipts when an older read completes after a post-save refresh', async () => {
+    const older = projection(10);
+    const newer = projection(11);
+    const block = {
+      document_id: 'script.document.main',
+      segment_id: 'segment.A',
+      block_id: 'block.A',
+      source_node_id: 'node.A',
+      revision_event_id: 'saved-A',
+      segment_revision_event_id: 'placement-A',
+      start_ms: 0,
+      end_ms: 1000,
+      text: '  Exact saved A — 雨\n\n',
+    };
+    newer.payload.script_context = [block];
+    older.payload.script_context = [{ ...block, revision_event_id: 'old-A', text: 'Old A' }];
+    let resolveOld!: (value: ProjectionEnvelope<ContextStackProjection>) => void;
+    getContextStackProjectionMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOld = resolve;
+        }),
+    );
+    const pending = refreshContextStackProjection('node.scene.beach');
+    getContextStackProjectionMock.mockResolvedValueOnce(newer);
+    await refreshCurrentContextStackProjection();
+    resolveOld(older);
+    await pending;
+    expect(getCachedContextStackProjection()).toEqual(newer);
+    expect(getCachedContextStackProjection()?.payload.script_context?.[0]?.text).toBe(block.text);
+  });
   it('loads context stack projections through the desktop projection API', async () => {
     const response = projection(1);
     getContextStackProjectionMock.mockResolvedValue(response);

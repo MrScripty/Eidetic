@@ -116,7 +116,8 @@ fn apply_script_block<T: serde::Serialize>(
         &event,
         &revisions,
         |tx| {
-            if generation.is_some() {
+            if let Some(generation) = generation {
+                crate::script_generation_target::validate(tx, generation)?;
                 let current = script_store::load_document_projection(tx, &payload.document_id)?;
                 validate_locked_spans(current.as_ref(), payload)
                     .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
@@ -132,6 +133,13 @@ fn apply_script_block<T: serde::Serialize>(
                     event.id,
                     &dependencies,
                 )?;
+                if let Some(target) = &generation.target_binding {
+                    crate::timeline_node_store::update_node_content_status(
+                        tx,
+                        target.node_id,
+                        eidetic_core::timeline::node::ContentStatus::HasContent,
+                    )?;
+                }
             }
             Ok(())
         },

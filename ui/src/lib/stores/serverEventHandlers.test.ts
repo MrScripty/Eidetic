@@ -8,10 +8,16 @@ import {
 } from './scriptDocumentProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
+import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import { completeGeneration, editorState } from './editor.svelte.js';
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
 import { timelineState } from './timeline.svelte.js';
+import { refreshCurrentContextStackProjection } from './contextStackProjection.svelte.js';
+
+vi.mock('./contextStackProjection.svelte.js', () => ({
+  refreshCurrentContextStackProjection: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('./timelineRenderProjection.svelte.js', () => ({
   refreshTimelineRenderProjection: vi.fn(),
@@ -91,7 +97,10 @@ class MockServerEventClient {
 }
 
 beforeEach(() => {
+  vi.mocked(refreshCurrentContextStackProjection).mockReset().mockResolvedValue(undefined);
   clearProjectionRefreshQueue();
+  vi.mocked(invalidateScriptContext).mockClear();
+  vi.mocked(refreshChangeReviewProjection).mockClear();
   refreshTimelineRenderProjectionMock.mockReset();
   refreshTimelineRenderProjectionMock.mockResolvedValue({
     version: 1,
@@ -179,6 +188,11 @@ describe('backend event projection handlers', () => {
     });
 
     await vi.waitFor(() => {
+      expect(invalidateScriptContext).toHaveBeenCalledTimes(1);
+      expect(refreshScriptDocumentProjectionMock).toHaveBeenCalledWith({
+        document_id: 'script.document.main',
+      });
+      expect(refreshChangeReviewProjection).toHaveBeenCalledTimes(1);
       expect(refreshBibleRenderGraphProjectionMock).toHaveBeenCalledWith({
         selected_timeline_node_id: 'node.scene.beach',
         selected_node_id: 'node.character.ada',
@@ -292,5 +306,15 @@ it('invalidates cached prompt context when canonical screenplay changes', async 
   const dispose = setupServerEventHandlers(events);
   events.emit({ type: 'script_changed' });
   expect(invalidateScriptContext).toHaveBeenCalled();
+  await vi.waitFor(() => expect(refreshCurrentContextStackProjection).toHaveBeenCalledTimes(1));
+  dispose();
+});
+
+it('coalesces screenplay and context assignment refreshes into the existing context stack owner', async () => {
+  const events = new MockServerEventClient();
+  const dispose = setupServerEventHandlers(events);
+  events.emit({ type: 'script_changed' });
+  events.emit({ type: 'context_influence_changed', target_node_id: 'node.scene.beach' });
+  await vi.waitFor(() => expect(refreshCurrentContextStackProjection).toHaveBeenCalledTimes(1));
   dispose();
 });

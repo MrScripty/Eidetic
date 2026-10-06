@@ -1275,3 +1275,324 @@ still a separate pending gate. Broader generation persistence is not covered.
 - The user-requested next scene-order/context membership audit is independent of
   this frozen Bible branch. Parent owns PRs/reviews/merges. No reset or replacement
   workspace was used after the temporary executor disconnection.
+
+### Independent scene-order continuity implementation — 5 October 2026
+
+- Frozen Bible head af603e7682417fd49dbaac02e75142fd1b9d0d61 is unchanged. New
+  branch feat/scene-order-story-memory reproduces the entering/target-relocation
+  gap using actual source, before implementation. Existing consumed two-scene
+  reorder already passes; this is complete-window membership, not a one-second
+  placement adjustment or a duplicate manual authoring flow.
+- Optional window custody is recorded in existing generation/proposal JSON and
+  revision-bound dependencies. New derived context causes identify entering and
+  displaced scenes, while saved human B text stays exact. Preview selects the
+  fresh window; explicit acceptance refreshes lineage. Legacy scope is absent.
+- Local core 116, actual-source module harness 215 (208 existing, six new boundary
+  regressions, one legacy gap reproduction) and UI 401 tests pass. Native public
+  AppState range/preview/acceptance test is added and compile checked; hosted
+  execution is the next gate. Strict server all-target Clippy uses compile-only
+  ORT_SKIP_DOWNLOAD locally, never native execution or a download bypass.
+- Full native pre-push remains blocked locally by missing GTK/GLib development
+  libraries; the existing standard hosted Ubuntu/Pumas/ORT route will execute
+  actual native tests. No credential changes or external review requests.
+
+
+### Scene-order native qualification completed — 5 October 2026
+
+- Application 9429daa53de9d7ce6679f0b166b1f736f332892a and original qualification
+  da54a856b46e7de712bf46e0ff7d660904b4b63f remain preserved ancestors. Main PR10
+  merge 302851dbb5bf67cda922b4d79f70623e444891dc matches the frozen Bible tree;
+  ancestry merge 5b057ef changes no application tree. No existing worker repair
+  or active walkthrough was duplicated.
+- Run 37354081654 / job 111911938710 passes at qualification
+  4fcd79e1bc5b0c4fbd52d66247fe37463dc513d7 with unchanged application guard,
+  116 actual core / 396 actual server tests and real Tauri authoring/review flow.
+  Native input saves exact manual B; pending preview preserves it; explicit
+  acceptance changes only B and clears review. Strict synthetic HTTP generation,
+  recap and preview admit exact expected context; no real-model quality claim.
+- Three unaltered prototype PNGs inspected and preserved with evidence/log in
+  /workspace/scratch/scene-order-native-37354081654/. Review visibly explains
+  E entering/A leaving; accepted canonical B is readable. Preview proposal falls
+  below captured viewport; its pending state is proven by native UI/SQLite checks,
+  not a readable proposal screenshot. Artifact 11363753551 expires October 8
+  18:20:17 UTC; all hashes/source/revisions and prior failures are in the report.
+- Next priority reported before implementation: canonical create-then-generate
+  without save/reopen. Earlier actual hosted request admitted new B, while
+  successful_generation_metadata still reads state.project's absent mirror node.
+  This is bounded authoring custody, not project-switch recovery. No new slice
+  implementation yet; parent owns PRs/reviews/merges and Library delivery.
+
+
+### Immediate canonical scene generation successor — 5 October 2026
+
+- Frozen scene-order head 441c2a29af6199b53b92f718df43d0ca916b1ce5 and all
+  application/native milestones remain unchanged ancestors. Separate branch
+  feat/canonical-scene-generation. Cause and acceptance criteria were reported
+  before implementation: canonical creation/admission versus stale mirror lookup
+  during completion, and premature HasContent before script commit.
+- Generation now captures existing timeline/segment/output revision custody with
+  the canonical screenplay read. Final completion reads SQLite node metadata and
+  validates target/notes/placement/locks/manual output in the history writer
+  transaction. HasContent commits atomically; refused streams restore status
+  from saved canonical blocks without demoting manual screenplay to NotesOnly.
+  Existing session gate/identity and revision/ABA guards remain authoritative.
+- UI Add Scene in a selected Sequence reuses existing parent-derived create-child
+  API (the old timeline double-click path sends a parentless Scene rejected by
+  core). Selection after acknowledgement uses existing editor session lifetime,
+  current selection and mounted state. Admission errors clear streaming state.
+- Local 117 core, 234 actual-source modules and 405 UI tests pass; strict compile-only
+  server Clippy passes. Four added real AppState/paused-HTTP tests cover immediate
+  creation/selection without reopen, notes ABA, retime/lock/delete, and manual edit
+  during delayed regeneration; full native execution is pending hosted qualification.
+  GTK/GLib remains unavailable locally and ONNX403 is not bypassed.
+- Peer accepted predecessor application/native evidence but identified old HTTP
+  fixture membership checks as insufficient for wire order/stale duplicate absence.
+  The successor narrows that report claim; old evidence remains untouched. New
+  native qualification will parse the exact canonical screenplay section and
+  reject swapped blocks, duplicate or obsolete text. No offscreen preview claim.
+
+
+### Canonical native evidence and remaining hosted gate — 5 October 2026
+
+- Application source 9e8bd1c9d51250ac1c517945269278b7fe7e3d61, tree
+  594a474ec14eb5d23353805287469558528dab6c, remains unchanged through all
+  qualification successors. Runs 37359633825, 37360892289 and 37362942784
+  each pass 117 actual core / 406 actual server tests, including all four new
+  public AppState/paused production HTTP tests and six writer-boundary tests.
+  Local 234 production-module / 405 frontend / 12 helper tests and strict gates pass.
+- Run 37362942784 / job 111941610253 at c383601bd8ac3c78fb112f2c0610006823ac1cef
+  uses native Add Scene, canonical selection and exact notes/manual anchor input;
+  Generate immediately saves output without reopening. Exact existing A and manual
+  B are unchanged. All three synthetic HTTP phases verify complete ordered block
+  identity/revision/text. Real-model quality remains unqualified.
+- Native input saves exact human replacement during paused second HTTP. Runtime
+  logs stale refusal and later failure PNG visibly retains human text. Banner
+  discovery times out; final GUI history-count assertion is not reached. Do not
+  claim a fully passed walkthrough or readable refusal screenshot. Generated
+  screenshot still shows Notes written in the selected header; header freshness
+  is not qualified. Artifact 11368330401 and three inspected unaltered PNGs,
+  evidence and sanitized log remain under /workspace/scratch/canonical-scene-native-37362942784/.
+- Earlier fixture-path and uppercase NOTES locator failures remain preserved;
+  qualification-only corrections change no application source. Exact-banner
+  successor 776d16c6e1039641c00beba9dade31465c9f28fe records human revision before
+  error discovery and captures focused accessibility evidence if still blocked.
+- Run 37365296113 / job 111948855213 fails before acquiring a runner during GitHub's confirmed Actions
+  runner-assignment incident (official incident 3q1yb5m7ltvb, began 19:11 UTC;
+  19:50 UTC update confirms continuing delays). This is the remaining external
+  blocker: job cancelled at 19:59:04 UTC, runner ID 0, zero steps/artifacts; public
+  annotations report no hosted runner acquisition and internal server error. Retry
+  that job after service recovery; do not infer an app defect before its actual snapshot. Report includes full source/artifact hashes
+  and honest visual limits. Parent owns PR/review/merge and Library delivery.
+
+### Scoped untimed Bible membership successor — 5 October 2026
+
+- Separate `feat/bible-context-membership` descendant of frozen 8941f3ac; prior
+  application 9e8bd1c9 and all native screenshots remain unchanged. Authorized
+  supported rerun of 37365296113 also ended cancelled without a runner: attempt 2,
+  job 111956186116, runner 0, zero steps/artifacts. Native final banner/history gate
+  remains explicitly blocked after two allocation failures; no repeat run here.
+- The isolated current-source reproduction showed null/absent motivation entering
+  resolved Bible input (1 → 2 fields) without review, while consumed tagline edits
+  correctly raised review. Bounded entity rule was documented before code changes:
+  actual prior baseline input entities plus Direct UserSelected/AiSelected node
+  assignments; no default new-entity, graph relationship or name/text inference.
+- Existing generation/proposal JSON carries optional canonical field membership
+  and existing append-only Bible/context clock. Existing semantic dependencies and
+  impact owner derive exact entered/removed causes. Actual BibleFieldInput values
+  alone create UsesFact bindings; retained relevance outside the resolver window
+  never invents consumed values. Historical validation rejects incomplete/forged
+  receipts, while legacy inputs retain unknown historical completeness.
+- Fact edits and assignment events refresh the existing screenplay/review owners.
+  Manual text remains exact through preview; explicit targeted acceptance replaces
+  only the reviewed block and refreshes provenance atomically. Accepted clears
+  retain proven entity relevance for restored facts. Pending preview/acceptance
+  refuses Bible/context ABA and intervening manual writes without discarding drafts.
+- Local 118 core / 243 actual production-module harness / 406 frontend tests pass.
+  Strict all-target server Clippy is compile-only using ORT_SKIP_DOWNLOAD=1; the
+  new public AppState/paused synthetic HTTP test compiles but has not executed.
+  Local GTK/GLib and ONNX acquisition limits remain; no bypass, new native UI
+  screenshot or real-model quality claim. Frozen screenshots prove only their
+  historical application source. Parent owns PR/review/merge and Library delivery.
+
+
+### Membership preview value completeness repair — 5 October 2026
+
+- Independent review of frozen c63370a/2761aac found missing preview values when
+  200 earlier-sorting defaults displace retained Mara. Actual Rust capture,
+  synthetic preview, proposal and explicit acceptance reproduced the warning
+  clearing without new motivation ever reaching the prompt. Reproduction source,
+  immutable log and hashes are in /workspace/scratch/bible-membership-preview-limit-audit/.
+- Separate fix/bible-membership-preview-context successor of preserved 2761aac.
+  New context-stack feature work was parked before repairing this P2. Shared
+  membership delta now requires actual resolved inputs for entered field IDs on
+  every targeted preview, including requests selecting another impact cause.
+  Missing values refuse preview; existing assignment restoration enables a fresh
+  value-bearing preview and explicit acceptance. Node cap and provenance remain.
+- Two regression functions execute actual >200-node displacement for legacy and
+  scoped generations, new field -> refusal -> restored assignment -> exact
+  synthetic prompt -> pending/manual preservation -> explicit acceptance and
+  refreshed UsesFact lineage; alternative cause, context loss and assignment ABA
+  retain pending proposal/manual text and roll back history. No model/native claim.
+- Local 118 core / 245 actual production-module / 406 frontend tests qualify this
+  successor; strict server all-target Clippy remains compile-only. Hosted native
+  final banner/history gate remains blocked after two zero-step allocation
+  failures. No retry loop or ONNX acquisition workaround. Parent owns PR/review,
+  merge and Library delivery; the prior checkpoint and screenshots stay frozen.
+
+
+### Saved screenplay in timeline and agent context — 5 October 2026
+
+- Discovery checkpoint 2761aacb/tree c268d493 stays frozen for review. Offline
+  source reproduction saved exact BLUE umbrella text and confirmed the canonical
+  screenplay reader sees it, but timeline/agent ContextStackProjection contained
+  only an old synthetic RED recap and no screenplay receipts. Chosen criterion
+  was reported before code changes: manual Memory read/Projection propagation
+  into the existing context stack and inspectable graph-context runs (criterion 4).
+- Separate feat/screenplay-context-stack work was parked for the independent P2
+  node-limit repair, then resumed on tested/pushed 8ea7153b. Repair branch stays
+  separately reviewable; no native rerun or dependency workaround occurred.
+- Native projection and existing agent ReadContextStack share one SQLite snapshot
+  of hierarchy, recorded summaries, exact main-document screenplay and relevant
+  revision clock. Existing target/intersecting/two-adjacent selection is reused.
+  Optional legacy evidence stays unknown; known empty reads are explicit. Script
+  and context revisions advance the existing cache clock, including text ABA.
+- Existing event queue refreshes only an already requested stack after script,
+  assignment, node and timeline changes. Graph context detail preserves exact text
+  alongside labelled recorded summary, without mixing another target's evidence.
+  Agent context workflows expose the existing read_context_stack tool. Actual
+  structured loop persists the evidence it read; historical results remain exact
+  after later human writes/ABA. No world interpretation or automatic rewrite.
+- Local 119 core / 283 actual production-module / 411 frontend tests pass, including
+  the P2 repair tests, pinned WAL snapshot, bounds, version/ABA, exact synthetic
+  provider prompt/history and manual edit -> read -> pending preview -> explicit
+  acceptance. Strict all-target server Clippy and frontend checks/build pass.
+  The extended native AppState manual-edit/context-stack test compiles only; no
+  new native UI or real-model execution claim. Prior screenshots remain frozen.
+- Parent owns PRs/reviews/merges and Library delivery. Native final banner/history
+  qualification remains blocked after two zero-step hosted allocation failures.
+
+### Exact-source service qualification / dependency compatibility
+
+Frozen review heads remain `8ea7153b2c0f236c85ec47c0422e4f8e58a078c3`
+(tree `be8155a48c6b7718b80fd080f8b3fdca10fdbac3`) and
+`8d2719d2f80f3529864a138720aeb02463fc390f`
+(tree `bf8fc445602b0a8b52cbd5434c668f36cb4a004c`). No application source edits.
+The old Pumas dependency resolves ONNX download features and was not built.
+An isolated compatibility qualification uses Pumas
+`a94fd92021f27fdeedb6e2de6e01c41c250ef576` (tree
+`4a6977b88ed532089807183e218a959ac02b724d`), typed dynamic SDK loading,
+no download features, and a candidate lock. Full server 425/core119/frontend411
+pass; strict server all-target Clippy passes normally with no SDK and no bypass.
+The initial server run's 17 read-only host-state failures are preserved; using the
+maintained writable XDG isolation makes all 425 pass. New dependency pin and
+feature-union CI admission are separate from both unchanged review milestones.
+Fresh exact-source native capture is pending; synthetic providers qualify only
+mechanical context/acceptance behavior. See the no-download qualification report.
+
+### Fresh hosted service and native qualification completed
+
+Run `37379727832`, job `111998278006`, passes at qualification
+`a0b46fedfdef03901ecd031f43c4bf7636627ce1` (tree
+`2a689f3b23506254655c6164a0c91ff9177f4657`). Unchanged application source is
+`8d2719d2f80f3529864a138720aeb02463fc390f`; candidate Pumas is a94fd920,
+qualified separately at `1e4afc03427054d2ec40798ba08581f1cee08ee0`
+(tree `3de785bb26280d49103b0e602d06a168f9bb7a8d`). Normal hosted native builds
+and all-features no-download admission pass; actual hosted 119 core/425 server
+and real Tauri Bible red-to-blue Save, preserved manual draft/saved screenplay,
+pending targeted preview and explicit Accept update all pass. Synthetic HTTP/SSE
+responses only; no real-model quality, SDK inference, live runtime or context-stack
+inspector GUI claim. The 201-node membership guard runs in the full server suite.
+Artifact `11372654692` verified ZIP digest
+`756f27afe7b96d529c3947a0cc74e1e3224ff5e61b1795f8062a1cd0ff64de04`;
+three untouched PNGs and capture receipt preserved at
+`/workspace/scratch/no-download-qualification/native-37379727832/`.
+See the report for all hashes and viewport limits. Both original review branches
+stay unchanged; historical failed jobs were not rerun. Parent owns delivery.
+
+### Manual screenplay child planning: bounded implementation
+
+Separate descendant of preserved `b0d6d17c0d776f1c46e39c2590cfd2f944768412`;
+native a0b46fed stays frozen. The baseline actual public-save / child-prompt
+reproduction fails with saved_manual_text_present_in_child_prompt=false.
+GenerateChildren lacked canonical script inputs, and BeatEditor auto-applied plans.
+New generation reuses the existing bounded main-document screenplay selector,
+clears unversioned recap continuity and stores consumed receipts plus parent/
+subtree versions in existing creation command JSON. Existing optional wire fields
+retain legacy unknown versus known empty. A focused child-plan owner preserves
+ai_service's public facade; no new schema, SDK dependency or parallel canon.
+
+The editor now offers child planning for non-leaf clips including scenes and
+shows proposed outlines/saved evidence before explicit Accept timeline plan.
+Existing timeline commands apply only the durable reviewed material, revalidate
+receipt under the same writer transaction and preserve screenplay bytes/revisions.
+Replay precedes stale admission; failures roll back command/history/status/children.
+Actual synthetic HTTP delayed/pending text ABA, subtree notes ABA, membership
+and forged material refusals pass; distant unselected text remains compatible.
+Local actual full server432/core119/frontend423 and strict server all-target
+Clippy/typecheck/build/traceability pass. Receipt/source publication and new native
+child UI capture follow separately. Bible/affect/arc-description full receipt
+coverage and durable pending-review UI recovery remain outside this slice;
+SDK inference, inspector GUI and real-model quality remain unqualified.
+
+### Manual screenplay child planning: final native qualification
+
+Implementation `122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6`, tree
+`9796132f854ed298c27fd431e1ac1cccb8182ccd`, is published separately from
+preserved b0d6d17c / a0b46fed. Final qualification
+`9b4c5ff563f9662489ceac3ea321c5f68fbc677a`, tree
+`4608cdf8e6d5055ca954601202567f2eac2830ad`, passes run `37391688210`,
+job `112037996504`: actual native builds, no-download gate, 119 core / 432
+full-server tests, 16 driver / 4 gate tests. Local frontend423 and strict gates
+pass. Exact native Bible Save and manual screenplay midnight-to-morning Save
+produce reviewable targeted material. Old child acceptance refuses with pending
+evidence/canonical children preserved. Fresh explicit timeline acceptance preserves
+screenplay bytes/revisions; final UI clears its proposal and visibly renders
+Morning departure on the Beats track. Existing stale screenplay review remains.
+All responses are synthetic and labelled; no SDK inference, context-stack
+inspector GUI or real-model quality claim. Four earlier locator failures and the
+first canonical-pass/early-frame capture are preserved in the report. Final ZIP
+artifact `11381572325`, digest
+`37d6fb515b25d3ba4a14fb82a337d96adf1d9bc50b3cdbcd73aa3f6e119949cd`;
+six untouched viewed PNGs and receipt in native-37391688210. Complete Bible/affect/
+arc-description source binding and durable pending-review UI recovery remain
+later criteria. Parent owns integration and Library delivery.
+
+### Child-plan normalization/refusal repair
+
+Independent planning review found raw HTTP proposals differ from the existing
+store's trimmed names/outlines/locations and ordered nonblank references. Three
+new actual public generation/apply service regressions fail on frozen 122c71e
+(exit 101, 0/3), then pass after returning the durable children from the existing
+projection. No new normalizer/state or relaxed acceptance matching: a changed
+outline, including just an added newline, still refuses transactionally. Pending
+status/history/timeline and exact saved screenplay are preserved after refusal;
+canonical acceptance and identical-command replay succeed. Empty/padded location
+cases and filtered character/prop order (including duplicates) are exercised.
+
+Actual full server 435 and frontend 429 tests pass; child controller/SSR 18 tests
+cover native-provenance refusal, Close/fresh generation, uncertainty-to-refusal
+recovery and lookalike/internal errors retaining exact payload/command retries.
+Strict server all-target Clippy and ordinary precommit checks are required before
+publication. Synthetic HTTP responses only; prior native screenshots qualify the
+preserved old source until a fresh source-bound run. Relationship receipt repair
+remains separate. Parent retains review/integration/delivery ownership.
+
+### Child-plan relationship receipt repair
+
+Independent source tracing identified unbound relationships that child replacement
+could silently delete after review. The actual public service reproduces the
+cross-boundary failure on d5ae81a (successful apply where refusal is required).
+The separate successor binds canonical edge state and per-identity latest revision
+in existing creation-command memory. Endpoint deltas retain deleted identities,
+so exact-state delete/recreate and add/delete ABA refuse. Reads use existing
+committed event ordering even when every command timestamp is zero; the writer
+transaction excludes only its own in-flight event. Relevant nodes are the replaced
+descendants, including outside-to-child edges; parent-only/unrelated edges survive.
+
+Actual HTTP/AppState/SQLite service cases cover both boundary directions, internal
+edges, both ABA forms, delayed completion, old missing receipt refusal, reviewed
+edge removal, unrelated edge ABA preservation and identical-command replay.
+Refusal preserves entire timeline, saved screenplay, pending evidence and all four
+history table counts. Full server suite and strict Clippy are recorded before
+publication; native relationship drawing itself remains unqualified. Preserve
+122c71e/9b4c5ff/85bed285 and d5ae81a. No extra schema, dependency or manual-text write.
