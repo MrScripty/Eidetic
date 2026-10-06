@@ -90,19 +90,27 @@ class NativeControlTests(unittest.TestCase):
 
     def test_draft_cancel_requires_exact_draft_and_unique_enabled_native_control(self):
         from unittest.mock import Mock
-        application, field = Mock(), object()
+        application, field = Mock(), Mock()
+        field.getState.return_value.contains.return_value = True
         cancel = Mock(name='native-cancel')
         cancel.name = 'Cancel'
         cancel.getRole.return_value = 42
         cancel.getState.return_value.contains.return_value = True
         with patch.object(driver.ui.pyatspi, 'ROLE_PUSH_BUTTON', 42, create=True), \
                 patch.object(driver.ui.pyatspi, 'STATE_ENABLED', 'enabled', create=True), \
+                patch.object(driver.ui.pyatspi, 'STATE_EDITABLE', 'editable', create=True), \
                 patch.object(driver.ui, 'wait_for', side_effect=lambda _, check: check()), \
-                patch.object(driver.ui, 'editable', return_value=field) as editable, \
+                patch.object(driver.ui, 'editable', side_effect=AssertionError('Visible-only draft lookup is forbidden')), \
+                patch.object(driver.ui, 'text_of', return_value=driver.bible.DRAFT) as text_of, \
+                patch.object(driver.ui, 'reveal', side_effect=lambda _, predicate: field if predicate(field) else None) as draft_reveal, \
                 patch.object(driver.ui, 'walk', return_value=[cancel]) as walk, \
                 patch.object(driver.ui, 'reveal_button') as reveal:
             driver.cancel_manual_draft(application, 'owned-window')
-            editable.assert_called_once_with(application, driver.bible.DRAFT)
+            draft_reveal.assert_called_once()
+            predicate = draft_reveal.call_args.args[1]
+            text_of.return_value = 'Lookalike draft'
+            self.assertFalse(predicate(field))
+            text_of.return_value = driver.bible.DRAFT
             reveal.assert_called_once_with(application, 'Cancel', 'owned-window')
             reveal.reset_mock()
             walk.return_value = [cancel, cancel]

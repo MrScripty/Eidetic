@@ -120,7 +120,9 @@ def begin_manual_draft(application, window):
 
 def cancel_manual_draft(application, window):
     ui.wait_for('exact retained manual draft before explicit cancellation',
-                lambda: ui.editable(application, bible.DRAFT))
+                lambda: ui.reveal(application, lambda n:
+                    n.getState().contains(ui.pyatspi.STATE_EDITABLE)
+                    and ui.text_of(n) == bible.DRAFT))
     application.clear_cache()
     controls = [n for n in ui.walk(application) if n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
                 and n.name == 'Cancel' and n.getState().contains(ui.pyatspi.STATE_ENABLED)]
