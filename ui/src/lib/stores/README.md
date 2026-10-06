@@ -208,3 +208,9 @@ lifetime/version guards as other timeline writes. Selected-parent authoring uses
 the existing editor session generation to refuse late selection side effects.
 
 Context influence changes invalidate cached prompt context and refresh canonical screenplay/review projections alongside the active Bible graph. They reuse backend context revision clocks and never patch durable text locally.
+
+Bible relationship label writes forward the editor's original expected edge
+revision and label-only payload. Node detail caches include owned edge revision
+IDs. Delayed responses still pass existing projection version guards; failed
+writes preserve cached material and clear pending state. Incoming endpoint detail
+is invalidated/refreshed through the existing edge mutation path.
