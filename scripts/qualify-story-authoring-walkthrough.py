@@ -124,6 +124,21 @@ def script_viewport(application, window):
     return (x, y + height + 30, width, bottom[0][1] - y - height - 30)
 
 
+def visible_review_label(application, window, exact_label):
+    # reveal() chooses the first matching object, including hidden select options.
+    # Read a visible, bounded native control/text object instead of scrolling a
+    # closed option and assuming that None means the rendered review is absent.
+    viewport=script_viewport(application,window)
+    node=ui.find(application,lambda n: exact_label in ui.text_of(n)
+        and contained(tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),viewport))
+    if node is None:
+        return None
+    return {'expected_label':exact_label,'native_name':node.name,
+            'native_text':ui.text_of(node),'role':node.getRoleName(),
+            'bounds':list(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
+            'viewport':list(viewport)}
+
+
 def text_rectangles(node, exact_text):
     text = node.queryText()
     if text.getText(0, text.characterCount) != exact_text:
@@ -305,7 +320,8 @@ def main():
                                    'upstream_C_before':C_TEXT,'upstream_C_after':C_EDITED,'upstream_C_revision':c[2]}
         disclosure=ui.wait_for('manual-change What changed disclosure',lambda:ui.reveal(application,lambda n:n.name=='What changed'))
         ui.click_control(disclosure,window)
-        ui.wait_for('manual source edit causes downstream review',lambda:ui.reveal(application,lambda n:'Source screenplay text changed.' in ui.text_of(n)))
+        manual_label=ui.wait_for('visible manual source edit cause',lambda:visible_review_label(application,window,'Source screenplay text changed.'))
+        evidence['manual_edit']['visible_review_label']=manual_label
         checkpoint('native exact manual edits save B and change C from midnight to morning')
         capture('eidetic-story-authoring-manual-edit.png')
         block = ui.wait_for('unrelated F saved block',lambda:ui.screenplay_block(application,screenplay_anchor(F_TEXT)))
@@ -353,10 +369,12 @@ def main():
         evidence['fact_edit']={'before':BLUE,'after':AMBER,'revision_event_id':edited_fact[1],
                                'saved_screenplay_and_unrelated_draft_preserved':True}
         disclosure=ui.wait_for('downstream What changed disclosure',lambda:ui.reveal(application,lambda n:n.name=='What changed'))
-        if not ui.find(application,lambda n:'Source screenplay text changed.' in ui.text_of(n)):
+        if not visible_review_label(application,window,'Source screenplay text changed.'):
             ui.click_control(disclosure,window)
+        evidence['review_labels']=[]
         for explanation in ('Source screenplay text changed.','Bible fact profile.tagline changed.','Entered: SCENE E. Left: SCENE A.'):
-            ui.wait_for(explanation,lambda explanation=explanation:ui.reveal(application,lambda n:explanation in ui.text_of(n)))
+            label=ui.wait_for(explanation,lambda explanation=explanation:visible_review_label(application,window,explanation))
+            evidence['review_labels'].append(label)
         checkpoint('Bible, manual-source and placement changes visibly identify affected B')
         capture('eidetic-story-authoring-review.png')
         ui.reveal_button(application,'Preview update',window)

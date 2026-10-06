@@ -70,6 +70,26 @@ class FormattedScreenplayAnchorTests(unittest.TestCase):
             driver.screenplay_anchor('\n\n')
 
 
+class NativeReviewLabelTests(unittest.TestCase):
+    def test_hidden_select_option_cannot_hide_a_visible_bounded_cause(self):
+        class State:
+            def __init__(self,showing):self.showing=showing
+            def contains(self,kind):return self.showing
+        class Node:
+            name='Source screenplay text changed.'
+            def __init__(self,showing,rect):self.showing=showing;self.rect=rect
+            def getState(self):return State(self.showing)
+            def queryComponent(self):return self
+            def getExtents(self,coords):return self.rect
+            def getRoleName(self):return 'combo box'
+        class Root:
+            def clear_cache(self):pass
+        nodes=[Node(False,(0,0,0,0)),Node(True,(300,600,370,20))]
+        with patch.object(driver.ui,'walk',return_value=iter(nodes)),patch.object(driver.ui,'text_of',side_effect=lambda n:n.name),patch.object(driver,'script_viewport',return_value=(280,200,1320,840)),patch.object(driver.ui.pyatspi,'STATE_SHOWING',1,create=True),patch.object(driver.ui.pyatspi,'XY_SCREEN',0,create=True):
+            shown=driver.visible_review_label(Root(),'owned-window','Source screenplay text changed.')
+        self.assertEqual(shown['bounds'],[300,600,370,20])
+
+
 class VisibleProposalGeometryTests(unittest.TestCase):
     def test_showing_or_window_bounds_cannot_substitute_for_actual_script_viewport(self):
         viewport=(280,200,1320,840)
