@@ -568,3 +568,144 @@ async fn delayed_regeneration_refuses_a_saved_human_edit_and_canonical_preview_s
     assert!(refused.to_string().contains("manually edited"));
     f.state.shutdown_tasks_async().await;
 }
+
+#[tokio::test]
+async fn autosave_interleaving_after_public_edit_signature_read_preserves_manual_and_generation_custody()
+ {
+    use crate::write_concurrency_probe::{
+        self as probe, AutosaveStage, CommandProbe, CommandStage,
+    };
+    let f = fixture().await;
+    let (release, worker, mut events) = start(&f).await;
+    release.send(()).unwrap();
+    terminal(&f, &mut events).await.unwrap();
+    worker.join().unwrap();
+    tokio::time::timeout(Duration::from_secs(10), async {
+        while f.state.generating.lock().contains(&f.node.0) {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    let (generation_release, worker, mut events) = start(&f).await;
+    // Hold the actual autosave admission gate, not a timing approximation.
+    // The existing public edit is not a session-gate participant.
+    let autosave_admission = f.state.project_session_gate.clone().lock_owned().await;
+    let doc = document(&f);
+    let block = doc
+        .segments
+        .iter()
+        .flat_map(|segment| &segment.blocks)
+        .find(|block| block.block.text == OUTPUT)
+        .unwrap();
+    let manual = "Exact human edit across an autosave commit.\n\n";
+    let command = CommandEnvelope::new(EditScriptBlockCommand {
+        document_id: doc.document.id,
+        block_id: block.block.id.clone(),
+        expected_revision_event_id: block.revision_event_id.unwrap(),
+        text: manual.into(),
+    });
+    let (stages, mut command_stages) = tokio::sync::mpsc::unbounded_channel();
+    let (edit_release, release) = std::sync::mpsc::channel();
+    let _command_probe = probe::command(command.id, CommandProbe { stages, release });
+    let (autosaves, mut autosave_stages) = tokio::sync::mpsc::unbounded_channel();
+    let _autosave_probe = probe::autosave(f.path.clone(), autosaves);
+    let state = f.state.clone();
+    let edit =
+        tokio::spawn(async move { command_service::edit_script_block(&state, command).await });
+    assert!(matches!(
+        tokio::time::timeout(Duration::from_secs(10), command_stages.recv())
+            .await
+            .unwrap()
+            .unwrap(),
+        CommandStage::SignatureRead
+    ));
+    // A zero-wait independent observer identifies writer ownership. This never
+    // changes the application connection's existing busy timeout.
+    let observer = rusqlite::Connection::open(&f.path).unwrap();
+    observer.busy_timeout(Duration::ZERO).unwrap();
+    let writer_reserved = match observer.execute_batch("BEGIN IMMEDIATE") {
+        Ok(()) => {
+            observer.execute_batch("ROLLBACK").unwrap();
+            false
+        }
+        Err(rusqlite::Error::SqliteFailure(error, _))
+            if error.code == rusqlite::ErrorCode::DatabaseBusy =>
+        {
+            true
+        }
+        other => panic!("unexpected writer ownership probe: {other:?}"),
+    };
+    drop(observer);
+    // Force the real 2-second autosave loop to persist while the public edit is
+    // paused immediately after its signature SELECT. No injected database write.
+    f.state.trigger_save();
+    drop(autosave_admission);
+    let before = tokio::time::timeout(Duration::from_secs(10), autosave_stages.recv())
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(matches!(before, AutosaveStage::BeforePersistence));
+    if !writer_reserved {
+        // Baseline DEFERRED transaction: autosave commits before command INSERT,
+        // deterministically producing SQLITE_BUSY_SNAPSHOT at that exact INSERT.
+        let saved = tokio::time::timeout(Duration::from_secs(10), autosave_stages.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(saved, AutosaveStage::Persisted(Ok(()))));
+    }
+    edit_release.send(()).unwrap();
+    let outcome = edit.await.unwrap();
+    let insertion = tokio::time::timeout(Duration::from_secs(10), command_stages.recv())
+        .await
+        .unwrap()
+        .unwrap();
+    eprintln!(
+        "Public edit/autosave ordering: writer_reserved={writer_reserved}; first_insert={insertion:?}; public_result={outcome:?}"
+    );
+    if writer_reserved {
+        let saved = tokio::time::timeout(Duration::from_secs(10), autosave_stages.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(saved, AutosaveStage::Persisted(Ok(()))));
+    }
+    let command_count = history_count(&f);
+    generation_release.send(()).unwrap();
+    let generation = terminal(&f, &mut events).await;
+    worker.join().unwrap();
+    let canonical = document(&f);
+    assert_eq!(
+        history_count(&f),
+        command_count,
+        "Refused late output must roll back history"
+    );
+    let preview = crate::ai_service::preview_ai_context(&f.state, f.node.0)
+        .await
+        .unwrap();
+    f.state.shutdown_tasks_async().await;
+    assert!(
+        matches!(
+            insertion,
+            CommandStage::FirstInsert {
+                extended_error_code: None
+            }
+        ),
+        "actual INSERT must succeed: {insertion:?}"
+    );
+    outcome.unwrap();
+    assert!(
+        generation
+            .unwrap_err()
+            .contains("generation target changed")
+    );
+    assert!(
+        canonical
+            .segments
+            .iter()
+            .flat_map(|segment| &segment.blocks)
+            .any(|block| block.block.text == manual)
+    );
+    assert!(preview.user.contains(manual));
+}

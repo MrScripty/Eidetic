@@ -358,7 +358,18 @@ async fn auto_save_task(
             continue;
         };
 
-        if let Err(e) = persistence::save_project(&proj_json, &path, Some(ydoc_state)).await {
+        #[cfg(test)]
+        crate::write_concurrency_probe::observe_autosave(
+            &path,
+            crate::write_concurrency_probe::AutosaveStage::BeforePersistence,
+        );
+        let saved = persistence::save_project(&proj_json, &path, Some(ydoc_state)).await;
+        #[cfg(test)]
+        crate::write_concurrency_probe::observe_autosave(
+            &path,
+            crate::write_concurrency_probe::AutosaveStage::Persisted(saved.clone()),
+        );
+        if let Err(e) = saved {
             tracing::error!("auto-save failed: {e}");
         }
     }

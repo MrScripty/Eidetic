@@ -122,3 +122,6 @@ mod scene_context_membership_service_tests;
 
 #[cfg(test)]
 mod canonical_generation_service_tests;
+
+#[cfg(test)]
+pub(crate) mod write_concurrency_probe;

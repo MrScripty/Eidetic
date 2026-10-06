@@ -138,7 +138,17 @@ where
         ));
     }
 
-    tx.execute(
+    #[cfg(test)]
+    let probe = crate::write_concurrency_probe::take_command(command.id);
+    #[cfg(test)]
+    if let Some(probe) = &probe {
+        let _ = probe
+            .stages
+            .send(crate::write_concurrency_probe::CommandStage::SignatureRead);
+        // Only this command's blocking worker pauses; no registry lock is held.
+        let _ = probe.release.recv();
+    }
+    let insert = tx.execute(
         "INSERT INTO commands (id, payload_type, payload_json, created_at_ms)
          VALUES (?1, ?2, ?3, ?4)",
         params![
@@ -147,7 +157,20 @@ where
             payload_json,
             event.created_at_ms
         ],
-    )?;
+    );
+    #[cfg(test)]
+    if let Some(probe) = &probe {
+        let extended_error_code = match &insert {
+            Err(rusqlite::Error::SqliteFailure(error, _)) => Some(error.extended_code),
+            _ => None,
+        };
+        let _ = probe
+            .stages
+            .send(crate::write_concurrency_probe::CommandStage::FirstInsert {
+                extended_error_code,
+            });
+    }
+    insert?;
 
     tx.execute(
         "INSERT INTO change_events (id, command_id, kind, summary, created_at_ms)

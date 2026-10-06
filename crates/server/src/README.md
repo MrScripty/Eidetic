@@ -544,3 +544,10 @@ Saved manual screenplay and drafts use the existing custody and replacement
 rules. Legacy absent name receipts stay unknown; no backfill or inferred facts.
 A sparse owned node deletion while the physical graph still exposes its name
 refuses capture: deletion history cannot be labelled as an unchanged live read.
+
+
+The PR15 autosave/edit diagnostic uses test-only, command-ID and database-path
+barriers. It pauses the real public edit after signature SELECT, allows the actual
+autosave loop to commit, and observes SQLite's extended code at the first command
+INSERT. This establishes BUSY_SNAPSHOT(517) rather than assuming a Windows flake.
+Production locking, delays and error handling are unchanged in the reproducer.
