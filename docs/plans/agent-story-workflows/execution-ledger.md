@@ -31,14 +31,41 @@ fact/snapshot/edge changes remain admissible. Affect and arc-description binding
 broader screenplay graph dependencies, native edge authoring and real-model quality
 are separate; project switching stays deferred.
 
+Frozen source `d672f0b36557593a47e34849bd564ca8b244ef2a`, tree
+`6fe2a94de91d2d985d58e910bfee812770e5fc34`, retains this implementation.
+Qualification `ae96213f6d93a5babcc3f8a2dbebe778cd1c0963`, tree
+`8ca63971cd9014425dbbb41b75ff250109db5867`, passes hosted run `37432934110`,
+job `112167808053`. All 579 application/dependency blobs match frozen source.
+Normal native builds, core119/server455/frontend452, driver30/gate5 and strict
+frontend checks pass. Actual native Red-to-Blue and Blue-to-Gold saves preserve
+manual text/draft. Original Blue facts/revisions and graph relationship stay
+inspectable while current Gold creates downstream Needs review. Saved-plan recovery
+does not write or call the provider. Old explicit acceptance refuses with every
+logical SQLite row unchanged; fresh explicit timeline acceptance preserves Blue
+screenplay and its review. Separate Gold preview/explicit screenplay acceptance
+refreshes fact lineage. Final supported resize/scroll shows readable manual source,
+Gold screenplay, Gold Bible and accepted Gold Beat. Twelve untouched PNGs are hash
+verified and viewed; synthetic providers only. Report/manifest record artifact
+`11398028606`, ZIP SHA-256
+`afb450117503269011e2c39d421375b3550afc56180635e717d74c5febbbf684`.
+The refused capture retains the plan but not visible error pixels; exact error
+is verified through native AT-SPI and the complete no-write receipt. Relationship
+detail is visibly qualified in the Blue-evidence frame. No native edge-authoring
+claim. First run `37430869926` passes the prior Bible workflow but times out on an
+isolated label locator; artifact `11397671337` remains preserved. Only qualification
+reveal changed to the existing exact relationship control; no destructive click or
+application guard change. Source and initial qualification `d06bca9b` predate the
+identity hold and retain Jeremy metadata unchanged. Future commits, including the
+correction, use verified MrScripty name/email from repository-local settings.
+
 Eleven actual public-service/synthetic HTTP regressions pass, including fact-only
 drift and fresh acceptance/replay, fact and sparse-edge ABA, delayed response
 rollback of all durable rows, durable original recovery, explicit context and capped
 node membership ABA, explicit story-time resolution and later temporal conflict,
 legacy refusal and unrelated outside-source admission. Frontend452 tests, typecheck
 with zero errors/warnings, lint, formatting and production build pass. Full native
-gates and actual hosted UI qualification are recorded in the successor report
-when executed; no real-model quality is claimed.
+gates and actual hosted UI qualification are recorded in the successor report;
+no real-model quality is claimed.
 
 ## 2026-10-06 — Recover saved pending timeline plans
 
