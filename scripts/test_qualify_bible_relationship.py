@@ -88,6 +88,28 @@ class NativeControlTests(unittest.TestCase):
         reveal.assert_called_once_with(block, 'Edit', window)
         type_text.assert_called_once_with(field, window, driver.bible.DRAFT)
 
+    def test_draft_cancel_requires_exact_draft_and_unique_enabled_native_control(self):
+        from unittest.mock import Mock
+        application, field = Mock(), object()
+        cancel = Mock(name='native-cancel')
+        cancel.name = 'Cancel'
+        cancel.getRole.return_value = 42
+        cancel.getState.return_value.contains.return_value = True
+        with patch.object(driver.ui.pyatspi, 'ROLE_PUSH_BUTTON', 42, create=True), \
+                patch.object(driver.ui.pyatspi, 'STATE_ENABLED', 'enabled', create=True), \
+                patch.object(driver.ui, 'wait_for', side_effect=lambda _, check: check()), \
+                patch.object(driver.ui, 'editable', return_value=field) as editable, \
+                patch.object(driver.ui, 'walk', return_value=[cancel]) as walk, \
+                patch.object(driver.ui, 'reveal_button') as reveal:
+            driver.cancel_manual_draft(application, 'owned-window')
+            editable.assert_called_once_with(application, driver.bible.DRAFT)
+            reveal.assert_called_once_with(application, 'Cancel', 'owned-window')
+            reveal.reset_mock()
+            walk.return_value = [cancel, cancel]
+            with self.assertRaisesRegex(RuntimeError, 'unambiguous'):
+                driver.cancel_manual_draft(application, 'owned-window')
+            reveal.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -118,6 +118,27 @@ def begin_manual_draft(application, window):
     ui.type_text(draft, window, bible.DRAFT)
 
 
+def cancel_manual_draft(application, window):
+    ui.wait_for('exact retained manual draft before explicit cancellation',
+                lambda: ui.editable(application, bible.DRAFT))
+    application.clear_cache()
+    controls = [n for n in ui.walk(application) if n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+                and n.name == 'Cancel' and n.getState().contains(ui.pyatspi.STATE_ENABLED)]
+    if len(controls) != 1:
+        raise RuntimeError('Expected one unambiguous healthy manual draft Cancel control')
+    ui.reveal_button(application, 'Cancel', window)
+
+
+def inspect_saved_label(application, window, database, saved):
+    ui.reveal_button(application, 'Edit relationship label ' + saved[4], window)
+    field = ui.wait_for('exact saved label in native editor', lambda: ui.reveal(application,
+        lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE)
+        and n.name == 'Relationship label ' + EDGE_ID and ui.text_of(n) == saved[4]))
+    if edge(database) != saved:
+        raise RuntimeError('Opening the saved relationship label changed canon')
+    return field
+
+
 def readable_saved(application, window, evidence):
     geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
         ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
@@ -160,10 +181,13 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
         lambda n: 'Bible relationship changed.' in ui.text_of(n)))
     evidence['bible_relationship'].update(edited_edge=list(changed), saved_scripts_and_placement_preserved=True,
         exact_manual_draft_preserved=True)
+    inspect_saved_label(application, window, database, changed)
     capture('eidetic-relationship-review.png')
+    ui.reveal_button(application, 'Cancel label edit', window)
     # Explicitly cancel the healthy manual draft after proving refresh preservation.
-    block = ui.wait_for('retained draft block', lambda: ui.screenplay_block(application, 'Retained manual draft'))
-    ui.reveal_button(block, 'Cancel', window)
+    cancel_manual_draft(application, window)
+    if ui.blocks(database, a_id)[0] != a:
+        raise RuntimeError('Explicit draft cancellation changed the saved manual source')
     ui.reveal_button(application, 'Preview update', window)
     pending = ui.wait_for('relationship preview persisted', lambda: next((r for r in proposals(database, b[0])
         if r[1] == 'pending' and r[2] == REPLACEMENT), None))
