@@ -299,3 +299,17 @@ refuses until a canonical graph command reconciles it. Project-switching
 recovery and embeddings remain deferred. The final steering authorizes one normal draft PR after duplication/current-main
 checks. Parent owns final CI/review, the review slot, merges and Library delivery.
 No reviewer request or merge is performed.
+
+## Current-main integration
+
+Current main `71cd5ba92758aec497b871b1a0a501d0e69a2671`, tree
+`def6448edd8b5c3d3e49fb2dc63492d6677b9ade`, exactly matches the feature baseline
+`6b313aa` tree. Normal merge `987ade5961a953d38769ce43d4b0ccee12dc70fe` on
+`feat/bible-relationship-screenplay-memory` changes no file and retains the
+qualification-report tree. Production/test/dependency bytes match qualified
+source `e94cbffa`; remaining differences are dedicated qualification files,
+report/ledger and one required UI API module README. Traceability passes against
+verified current main. No open PR duplicated the feature at the preparation
+check. Test/qualification sources and all frozen source branches remain intact.
+Local log receipts are sealed as content-addressed private workspace copies so
+subsequent Git/traceability logs cannot overwrite evidence hashes.
