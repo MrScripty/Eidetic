@@ -89,3 +89,12 @@ backend services or command services.
 - Command results are structured JSON payloads consumed by UI stores and tests.
 - New fields should be additive unless the active plan explicitly owns a
   breaking contract change.
+
+`command_bible_graph_edge_label` accepts the core label-only command envelope,
+including the expected owned edge revision. It forwards to the shared Bible
+command service; transaction validation and revision recording stay in the
+server. The desktop boundary adds no cached graph preimage or replacement state.
+
+Its label-only response returns `projection: null` for `already_recorded` replay,
+so a deleted source need not be projected. Fresh writes still return source node
+detail. The adapter forwards this optional projection without inventing one.

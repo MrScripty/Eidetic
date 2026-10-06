@@ -50,6 +50,9 @@ pub enum SemanticDependencyEndpoint {
     BibleNode {
         node_id: BibleGraphNodeId,
     },
+    BibleEdge {
+        edge_id: super::BibleGraphEdgeId,
+    },
     BibleField {
         node_id: BibleGraphNodeId,
         part_key: BibleGraphPartKey,

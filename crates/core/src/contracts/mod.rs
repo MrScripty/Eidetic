@@ -38,7 +38,7 @@ pub use agent_workflow::{
 };
 pub use ai_context::{
     AiBibleContextEdge, AiBibleContextField, AiBibleContextFieldRef, AiBibleContextNode,
-    AiBibleContextProjection, AiBibleContextSnapshot, BibleFieldInput,
+    AiBibleContextProjection, AiBibleContextSnapshot, BibleFieldInput, BibleRelationshipInput,
 };
 pub use bible_graph::{
     BIBLE_GRAPH_NODE_TEXT_FIELD_KEY, BIBLE_GRAPH_NODE_TEXT_FIELD_SORT_ORDER,
@@ -51,8 +51,9 @@ pub use bible_graph::{
     BibleGraphSnapshotFieldId, BibleGraphSnapshotId, BibleGraphSnapshotProjection,
     BibleNodeDetailProjection, CanonicalBibleRoot, CreateBibleGraphNodeCommand,
     DeleteBibleGraphEdgeCommand, DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphNodeNameCommand,
-    SetBibleGraphNodeTextCommand, SetBibleGraphSnapshotFieldCommand, canonical_bible_root_nodes,
+    SetBibleGraphEdgeCommand, SetBibleGraphEdgeLabelCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphNodeNameCommand, SetBibleGraphNodeTextCommand, SetBibleGraphSnapshotFieldCommand,
+    canonical_bible_root_nodes,
 };
 pub use bible_graph_defaults::{
     BUILTIN_BIBLE_GRAPH_SCHEMAS, BibleGraphCategoryProjection, BibleGraphFieldDefault,

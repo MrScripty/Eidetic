@@ -130,3 +130,11 @@ backend enforces it, while canonical facts and complete-window lineage remain
 independent consumed evidence. No new persistent memory owner or dependency.
 
 Optional BibleContextScope stores scoped untimed entity/field IDs and the existing Bible/context epoch in generation/proposal history. Absent legacy receipts remain absent; BibleFieldInput retains exact values and revisions.
+
+Consumed untimed Bible relationships retain exact edge payloads and source
+revisions in optional BibleRelationshipInput receipts. BibleEdge UsesFact
+dependencies reuse existing dependency storage; absent legacy receipts remain
+unknown. Captured endpoints, kind, label and direction are historical evidence.
+Targeted proposals also retain optional per-identity absence revision pairs for
+previously consumed edges. These bind missing-state history without inventing a
+consumed value; a missing legacy receipt requires fresh review.

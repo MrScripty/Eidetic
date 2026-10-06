@@ -61,6 +61,12 @@ export interface SetBibleGraphEdgeCommand {
   sort_order?: number;
 }
 
+export interface SetBibleGraphEdgeLabelCommand {
+  edge_id: BibleGraphEdgeId;
+  label: string;
+  expected_revision_event_id: string;
+}
+
 export interface DeleteBibleGraphEdgeCommand {
   edge_id: BibleGraphEdgeId;
 }
@@ -158,6 +164,7 @@ export interface BibleNodeDetailProjection {
   node: BibleGraphNode;
   parts: BibleGraphPartProjection[];
   incoming_edges: BibleGraphEdge[];
+  edge_revision_event_ids?: Record<BibleGraphEdgeId, string>;
   outgoing_edges: BibleGraphEdge[];
   snapshots: BibleGraphSnapshotProjection[];
 }
@@ -239,6 +246,12 @@ export interface BibleRenderGraphInfluence {
 export interface BibleGraphNodeCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<BibleNodeDetailProjection>;
+}
+
+export interface BibleGraphEdgeLabelCommandResponse {
+  outcome: CommandOutcome;
+  // A committed replay returns no projection, even if the source still exists.
+  projection: ProjectionEnvelope<BibleNodeDetailProjection> | null;
 }
 
 export interface BibleGraphRootsCommandResponse {

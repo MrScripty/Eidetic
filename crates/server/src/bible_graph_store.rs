@@ -143,6 +143,12 @@ pub(crate) fn load_node_detail_projection(
     conn: &Connection,
     node_id: &BibleGraphNodeId,
 ) -> Result<Option<BibleNodeDetailProjection>, HistoryStoreError> {
+    if conn.is_autocommit() {
+        let tx = conn.unchecked_transaction()?;
+        let projection = load_node_detail_projection(&tx, node_id)?;
+        tx.commit()?;
+        return Ok(projection);
+    }
     let node = conn
         .query_row(
             "SELECT id, parent_id, schema_key, name, system_owned, sort_order
@@ -163,12 +169,24 @@ pub(crate) fn load_node_detail_projection(
 
     let incoming_edges = bible_graph_edge_store::load_incoming_edges(conn, node_id)?;
     let outgoing_edges = bible_graph_edge_store::load_outgoing_edges(conn, node_id)?;
+    let mut edge_revision_event_ids = std::collections::BTreeMap::new();
+    for edge in incoming_edges.iter().chain(&outgoing_edges) {
+        if let Some(revision) = crate::bible_relationship_lineage::current_revision(
+            conn,
+            &eidetic_core::contracts::SemanticDependencyEndpoint::BibleEdge {
+                edge_id: edge.id.clone(),
+            },
+        )? {
+            edge_revision_event_ids.insert(edge.id.clone(), revision);
+        }
+    }
     let snapshots = bible_graph_snapshot_store::load_snapshot_projections(conn, node_id)?;
 
     Ok(Some(BibleNodeDetailProjection {
         node,
         parts,
         incoming_edges,
+        edge_revision_event_ids,
         outgoing_edges,
         snapshots,
     }))

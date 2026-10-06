@@ -321,12 +321,14 @@
       <BibleGraphEdgeList
         title="Outgoing Edges"
         edges={projection.payload.outgoing_edges}
+        revisions={projection.payload.edge_revision_event_ids}
         direction="outgoing"
         ownerNodeId={projection.payload.node.id}
       />
       <BibleGraphEdgeList
         title="Incoming Edges"
         edges={projection.payload.incoming_edges}
+        revisions={projection.payload.edge_revision_event_ids}
         direction="incoming"
         ownerNodeId={projection.payload.node.id}
       />

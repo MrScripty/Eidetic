@@ -106,6 +106,34 @@ pub(crate) fn dependencies(
             }),
         });
     }
+    let mut seen_relationships = std::collections::BTreeSet::new();
+    for input in command.bible_relationship_inputs.iter().flatten() {
+        if !seen_relationships.insert(input.edge.edge_id.as_str()) {
+            return Err(HistoryStoreError::InvalidValue(
+                "duplicate Bible relationship input".into(),
+            ));
+        }
+        dependencies.push(SemanticDependency {
+            id: SemanticDependencyId::new(format!(
+                "generation.{}.relationship.{}",
+                event.0,
+                dependencies.len()
+            ))
+            .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?,
+            source: SemanticDependencyEndpoint::ScriptSegment {
+                segment_id: command.block.segment_id.clone(),
+            },
+            target: crate::bible_relationship_lineage::endpoint(input),
+            kind: SemanticDependencyKind::UsesFact,
+            rationale: Some("Bible relationship supplied to generation".into()),
+            confidence: None,
+            created_at_ms,
+            revision_binding: Some(SemanticDependencyRevisionBinding {
+                source_revision_event_id: event,
+                target_revision_event_id: input.revision_event_id,
+            }),
+        });
+    }
     if let Some(dependency) = crate::script_context_scope::dependency(command, event, created_at_ms)
     {
         dependencies.push(dependency);
@@ -159,6 +187,9 @@ pub(crate) fn record_in_transaction(
     }
     for input in command.bible_inputs.iter().flatten() {
         crate::bible_field_lineage::validate_history(tx, input)?;
+    }
+    for input in command.bible_relationship_inputs.iter().flatten() {
+        crate::bible_relationship_lineage::validate_history(tx, input)?;
     }
     tx.execute("INSERT INTO script_generations (event_id, segment_id, block_id, inputs_known) VALUES (?1, ?2, ?3, ?4)",
         params![event.0.to_string(), command.block.segment_id.as_str(), command.block.block_id.as_str(), command.script_inputs.is_some()])?;

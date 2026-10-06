@@ -189,10 +189,11 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     crate::ai_script_context::attach_script_context(request, blocks);
     request.script_context_scope = Some(scope);
     request.generation_target = Some(target);
-    let (bible_context, bible_inputs, bible_context_scope) =
+    let (bible_context, bible_inputs, bible_context_scope, bible_relationship_inputs) =
         load_ai_bible_context_projection(path.clone(), node_id, story_time_ms).await?;
     request.bible_context = Some(bible_context);
     request.bible_inputs = Some(bible_inputs);
+    request.bible_relationship_inputs = Some(bible_relationship_inputs);
     request.bible_context_scope = Some(bible_context_scope);
     request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(())
@@ -207,6 +208,7 @@ pub(crate) async fn load_ai_bible_context_projection(
         ProjectionEnvelope<AiBibleContextProjection>,
         Vec<eidetic_core::contracts::BibleFieldInput>,
         eidetic_core::contracts::BibleContextScope,
+        Vec<eidetic_core::contracts::BibleRelationshipInput>,
     ),
     BackendError,
 > {
@@ -227,11 +229,13 @@ pub(crate) async fn load_ai_bible_context_projection(
         .map_err(|error| BackendError::internal(error.to_string()))?;
         let inputs = crate::bible_field_lineage::capture(&tx, &context.payload)
             .map_err(|error| BackendError::internal(error.to_string()))?;
+        let relationships = crate::bible_relationship_lineage::capture(&tx, &context.payload)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
         let scope = crate::bible_context_scope::capture(&tx, node_id, &inputs)
             .map_err(|error| BackendError::internal(error.to_string()))?;
         tx.commit()
             .map_err(|error| BackendError::internal(error.to_string()))?;
-        Ok((context, inputs, scope))
+        Ok((context, inputs, scope, relationships))
     })
     .await
     .map_err(|error| {

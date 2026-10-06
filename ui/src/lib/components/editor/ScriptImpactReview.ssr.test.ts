@@ -52,6 +52,22 @@ const segment: ScriptSegmentProjection = {
 
 beforeEach(clearPropagationProposalListProjection);
 
+it('explains changed and removed consumed relationships without altering saved text', () => {
+  const relationship = structuredClone(segment);
+  relationship.impact!.causes[0]!.input = { kind: 'bible_edge', edge_id: 'Mara.Eli' };
+  relationship.impact!.causes[0]!.input_excerpt = 'Mara trusts Eli';
+  const notice = render(ScriptImpactNotice, { props: { impact: relationship.impact! } });
+  expect(notice.body).toContain('Bible relationship changed.');
+  expect(notice.body).toContain('Mara trusts Eli');
+  relationship.impact!.causes[0]!.reason = 'deleted';
+  const review = render(ScriptImpactReview, {
+    props: { documentId: 'main', segment: relationship },
+  });
+  expect(review.body).toContain('Bible relationship was removed.');
+  expect(review.body).toContain('Preview update');
+  expect(relationship.blocks[0]!.block.text).toBe(segment.blocks[0]!.block.text);
+});
+
 it('renders exact proposed text alongside current canon and explicit review actions', () => {
   propagationProposalProjectionState.projection = {
     version: 2,
@@ -80,6 +96,19 @@ it('renders exact proposed text alongside current canon and explicit review acti
             target_segment_revision_event_id: 'B-placement',
             script_inputs: [],
             bible_context: { version: 1, payload: {} },
+            bible_relationship_inputs: [
+              {
+                edge: {
+                  edge_id: 'Mara.Eli',
+                  from_node_id: 'Mara',
+                  to_node_id: 'Eli',
+                  edge_kind: 'references',
+                  label: 'Original captured <relationship>',
+                  directed: true,
+                },
+                revision_event_id: 'edge-original-revision',
+              },
+            ],
           },
         },
       ],
@@ -90,6 +119,9 @@ it('renders exact proposed text alongside current canon and explicit review acti
   expect(body).toContain('  Proposed &lt;B> — 雨\n\n');
   expect(body).toContain('Accept update');
   expect(body).toContain('Reject');
+  expect(body).toContain('Relationships used for this preview');
+  expect(body).toContain('Original captured &lt;relationship>');
+  expect(body).toContain('edge-original-revision');
   expect(segment.blocks[0]?.block.text).toBe('  Canonical B — 雨\n\n');
 });
 

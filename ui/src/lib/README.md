@@ -129,6 +129,10 @@ async function openTimeline() {
 - Internal consumers import typed shapes and helpers from `$lib/*`.
 - Store consumers should treat backend-backed entities as read-through state and mutate them through API/store actions, not local object surgery.
 - Command helpers return backend projections and must not patch persistent stores optimistically.
+- The label-only Bible command returns `BibleGraphEdgeLabelCommandResponse`:
+  fresh writes include source node detail; committed replay returns a null
+  projection even when the relationship/source no longer exists. Consumers must
+  retain current cache state rather than fabricate a projection on replay.
 - Desktop command helpers return backend projections through Tauri IPC; legacy HTTP fallback paths are not production frontend contracts.
 - Projection helpers are read-only, use Tauri IPC directly, and return backend-owned versioned read models.
 - Layout consumers should reuse exported constants/helpers instead of re-declaring pixel budgets in component-local CSS.
@@ -139,3 +143,12 @@ async function openTimeline() {
 - `types.ts` exports stable field names that mirror backend timeline/story payloads used throughout the UI.
 - UI layout helper exports define default semantics for fixed panel sizing; consumers should treat them as the canonical budget for the main timeline shell.
 - When a shared shape or layout helper changes, dependent components must be updated in the same change to preserve visual and type consistency.
+
+Consumed Bible relationships use the existing screenplay input, dependency and
+proposal DTOs. Original endpoints/kind/direction/label and owned revision remain
+in generation/review receipts; proposal previews require explicit acceptance
+and stale results refuse without replacing manual screenplay. Label-only edge
+commands carry the original expected revision through desktop transport. Node
+detail's edge revision map belongs to the same backend read snapshot; the writer
+owns revision/live-identity authority, while the UI owns retained draft and
+conflicting-operation controls. No parallel memory store or embedding dependency.

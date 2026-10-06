@@ -84,6 +84,7 @@ pub(crate) fn fixture() -> (
         &CommandEnvelope::new(GenerateScriptBlockCommand {
             target_binding: None,
             script_context_scope: None,
+            bible_relationship_inputs: None,
             bible_inputs: None,
             bible_context_scope: None,
             block: b.clone(),
@@ -439,6 +440,7 @@ fn historical_sparse_placement_validates_captured_input_after_later_move_and_rej
         let generation = CommandEnvelope::new(GenerateScriptBlockCommand {
             target_binding: None,
             script_context_scope: None,
+            bible_relationship_inputs: None,
             bible_inputs: None,
             bible_context_scope: None,
             block: b.clone(),

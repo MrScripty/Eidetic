@@ -1719,3 +1719,121 @@ Refusal preserves entire timeline, saved screenplay, pending evidence and all fo
 history table counts. Full server suite and strict Clippy are recorded before
 publication; native relationship drawing itself remains unqualified. Preserve
 122c71e/9b4c5ff/85bed285 and d5ae81a. No extra schema, dependency or manual-text write.
+
+
+### Separate successor: consumed Bible relationships in screenplay provenance
+
+The published d672/ae962/6b313 candidate remains frozen. Separate worktree and
+branch feat/screenplay-bible-relationships extend the existing UsesFact endpoint,
+generation command/proposal receipts and impact/preview/accept path. The exact
+relationship payload and owned revision are captured with the resolver read,
+deduplicated across incoming/outgoing copies. Late output keeps historical
+consumption. Canonical and sparse-history ABA participate; inconsistent sparse
+history/live payloads refuse capture. Only the global Bible projection clock is
+ignored during preview recapture; actual payload, field-membership, target and
+source revision guards remain. Label-only native editing reuses set-edge, and
+preview discloses original relationship evidence. No schema, dependencies,
+auto-acceptance, timed edge semantics, new-edge membership or node-name lineage.
+
+Local validation: core119/server464 (nine added relationship cases), frontend453,
+driver33 and no-download gate5; strict all-target server Clippy, typecheck0/0,
+lint/format/production build, rustfmt and traceability passed. Initial fixture
+assertion failures and the first full-suite's17 read-only default-XDG setup
+failures are preserved in scratch logs; the full server rerun using writable
+task-local XDG directories passed all464. Hosted actual native qualification is
+pending at this source checkpoint; all planned HTTP outputs are synthetic.
+
+### Relationship absence guard and native observation checkpoint
+
+Frozen source237d048 and qualification15bfd3a remain published. Native run37490179062
+passed unchanged-source, ordinary build and all gates, then completed the exact
+relationship edit, pending disclosure and label ABA. Its failure capture shows
+the exact stale-refusal message and still-saved Blue screenplay, but the broad
+accessibility lookup timed out before the all-row observation. Preserve artifact
+11426305722; native ABA rollback is not qualified by this failed run alone.
+
+A separate source reproduction proves deletion-preview recreate/delete ABA was
+accepted on237d048 (0/1). The successor binds per-identity absence to existing
+owned object revision history in existing proposal JSON, including missing edges
+when another impact cause is selected. No value consumption is fabricated.
+The focused repaired tests pass with all-row refusal, manual preservation, fresh
+explicit acceptance and missing-legacy-absence refusal. Full successor gates and
+source-bound native qualification are recorded before final delivery.
+
+### Consumed live relationship leaves bounded resolver
+
+A source-level regression with206 nodes and two previously consumed edges proves
+85170c9 could preview a selected visible cause while dropping another live input
+outside the200-node resolver. The repair reuses current-generation UsesFact
+revision bindings to require every previously consumed live edge in the current
+read, including unchanged inputs. Restore context before previewing. The test
+covers changed and unchanged out-of-scope inputs and refuses both new preview
+and acceptance of an earlier pending preview with all logical rows and manual
+screenplay unchanged. Full server467 and strict all-target Clippy pass. Existing
+unconsumed off-scope edits remain permitted. No additional state or dependency.
+
+### Relationship label editor stale-write repair
+
+Independent review of85170c9 demonstrated cached full-edge UPSERT could recreate
+an edge deleted during label editing or replace newer direction/kind. A separate
+successor replaces that editor dispatch with a label-only command carrying the
+owned revision captured on opening. Node detail returns edge revisions in the
+same read snapshot. Existing history's writer transaction verifies owned revision
+and active identity, updates only label, and records one label delta; refusal
+rolls back command, event and all logical rows. No new database state/dependency.
+Save/delete/edit/cancel controls share a busy guard; removed or interrupted drafts
+stay visible until cancellation or fresh review. Four actual-store regressions
+cover two-connection structural/delete races, owned sparse-history conflict,
+label ABA/delete-recreate and idempotent replay. Actual client-compiled rune
+controller tests cover interrupted save/delete, blocked overlapping dispatch,
+original expected revision, retained draft and fresh explicit save; API/store
+regressions retain newer cache on delayed label response. Full gates:
+core119/server471/frontend456, typecheck0/0, lint, format, build, strict server
+all-target Clippy, rustfmt and traceability. Hosted exact-source native build and
+relationship flow must still qualify this successor before delivery.
+
+### Final source-bound relationship qualification
+
+Maintained source e94cbffa (label implementation017e92ec, out-of-scope repair
+ aeacee85) and qualification c5b962c pass actual native run37505367170, job
+112412549433, artifact11432076755. Normal locked desktop/fixture builds and
+core119/server471/UI456/driver39/no-download5 pass. Native exact Red-to-Blue Bible
+fact and Trust-to-Doubt relationship edits preserve saved scripts, placement and
+exact manual draft. Pending previews require explicit acceptance. Relationship
+ABA refuses old acceptance with identical all-table rows, then fresh review and
+explicit acceptance update only generated B and refresh the original read
+revision. Manual A remains exact. Final capture opens the saved-label editor
+without Save; bounded exact entry, readable saved B, Blue field and timeline are
+visible. Nine untouched captures are hash/dimension/window/PID verified/viewed;
+five HTTP model responses are explicitly synthetic. Report/manifest preserve all
+prior failed runs, frozen sources and source-level reproductions. No real-model
+quality, native multi-user race or embedding dependency claim. Final steering
+permits a normal draft PR after current-main/duplication checks; parent retains
+review requests/slot, final CI/review, merge and Library delivery.
+
+### PR14 committed label replay after source deletion
+
+The valid review finding reproduces on preserved bc041d8: canonical label commit,
+edge deletion and source-node deletion make exact command replay fail while
+constructing its result. Repair55536fa returns AlreadyRecorded with no projection
+before any live graph lookup and forwards a label-only optional response through
+service/Tauri/UI. The store preserves source/target caches and clears pending.
+The actual backend regression passes under SQLite query_only with every logical
+row and total_changes unchanged; fresh deleted commands and mismatched replay
+payloads still refuse unchanged. Full server472/core119/UI458, strict server
+all-target Clippy, frontend gates and no-download5 pass. Local desktop check is
+blocked by missing glib-2.0.pc; ordinary hosted PR CI owns native adapter checks.
+Original report/manifest/screenshots and bc041d8 remain intact. Detailed source,
+limits and sealed receipts: `docs/reports/bible-relationship-replay-repair.md`
+and its companion JSON. No thread resolution, reviewer request or merge.
+
+Exact-successor qualification f9081da (tree76cf658) pins source55536fa and passes
+native run37512778165/job112437930692/artifact11436690798. Standard locked native
+builds, core119/server472/UI458/driver39/no-download5 and the explicit named
+deleted-source replay backend gate1/1 pass. Actual Tauri fact/relationship edit,
+manual-draft custody, all-row stale ABA refusal, fresh preview and explicit
+targeted acceptance pass. Nine untouched capture hashes/dimensions/window/PID
+are verified; four byte-identical prior captures and five individually viewed
+new captures are accounted for. Provider calls remain synthetic. Native UI does
+not expose command-ID replay; that result belongs to the actual hosted backend
+gate plus API/store tests. Original evidence and all branches remain preserved.

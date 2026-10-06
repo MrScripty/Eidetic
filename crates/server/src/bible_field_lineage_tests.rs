@@ -63,6 +63,7 @@ fn generate(
         script_context_scope: None,
         block: block.clone(),
         script_inputs: Some(vec![]),
+        bible_relationship_inputs: None,
         bible_inputs: Some(inputs),
         bible_context_scope: None,
     });
@@ -267,6 +268,7 @@ fn forged_consumed_field_value_rolls_back_output_history_and_dependencies() {
         script_context_scope: None,
         block: b.clone(),
         script_inputs: Some(vec![]),
+        bible_relationship_inputs: None,
         bible_inputs: Some(inputs),
         bible_context_scope: None,
     });

@@ -7,23 +7,37 @@
   import {
     deleteBibleGraphEdgeProjection,
     refreshBibleGraphNodeProjection,
+    setBibleGraphEdgeLabelProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+
+  import { createBibleGraphEdgeLabelEditor } from './bibleGraphEdgeLabelEditor.svelte.js';
 
   let {
     title,
     edges,
     direction,
     ownerNodeId,
+    revisions = {},
   }: {
     title: string;
     edges: BibleGraphEdge[];
     direction: 'incoming' | 'outgoing';
     ownerNodeId: BibleGraphNodeId;
+    revisions?: Record<string, string>;
   } = $props();
 
-  let deletingEdgeId = $state<string | null>(null);
-  let deleteError = $state<string | undefined>(undefined);
-
+  const editor = createBibleGraphEdgeLabelEditor({
+    edges: () => edges,
+    revisions: () => revisions,
+    save: setBibleGraphEdgeLabelProjection,
+    remove: deleteBibleGraphEdgeProjection,
+    refresh: async (edge) => {
+      if (edge.from_node_id !== ownerNodeId) {
+        await refreshBibleGraphNodeProjection({ node_id: ownerNodeId });
+      }
+    },
+    confirm: (edge) => window.confirm(`Delete edge "${edge.label}"?`),
+  });
   function edgeKindLabel(kind: BibleGraphEdgeKind): string {
     if (typeof kind === 'string') return kind.replaceAll('_', ' ');
     return kind.custom;
@@ -32,29 +46,12 @@
   function endpointLabel(edge: BibleGraphEdge): string {
     return direction === 'incoming' ? edge.from_node_id : edge.to_node_id;
   }
-
-  async function handleDelete(edge: BibleGraphEdge): Promise<void> {
-    if (!window.confirm(`Delete edge "${edge.label}"?`)) return;
-
-    deletingEdgeId = edge.id;
-    deleteError = undefined;
-    try {
-      await deleteBibleGraphEdgeProjection(edge);
-      if (edge.from_node_id !== ownerNodeId) {
-        await refreshBibleGraphNodeProjection({ node_id: ownerNodeId });
-      }
-    } catch (error) {
-      deleteError = error instanceof Error ? error.message : 'Failed to delete edge';
-    } finally {
-      deletingEdgeId = null;
-    }
-  }
 </script>
 
 <section class="edge-section">
   <h3>{title}</h3>
-  {#if deleteError}
-    <p class="error">{deleteError}</p>
+  {#if editor.state.error}
+    <p class="error" role="alert">{editor.state.error}</p>
   {/if}
   {#if edges.length > 0}
     <ul class="edge-list">
@@ -64,13 +61,19 @@
             <span class="edge-label">{edge.label}</span>
             <button
               type="button"
+              aria-label={`Edit relationship label ${edge.label}`}
+              disabled={editor.busy()}
+              onclick={() => editor.edit(edge)}>Edit</button
+            >
+            <button
+              type="button"
               class="edge-delete"
               aria-label={`Delete edge ${edge.label}`}
               title="Delete edge"
-              disabled={deletingEdgeId !== null}
-              onclick={() => void handleDelete(edge)}
+              disabled={editor.busy()}
+              onclick={() => void editor.remove(edge)}
             >
-              {deletingEdgeId === edge.id ? '...' : '×'}
+              {editor.state.deleting === edge.id ? '...' : '×'}
             </button>
           </div>
           <span class="edge-kind">{edgeKindLabel(edge.edge_kind)}</span>
@@ -80,6 +83,26 @@
     </ul>
   {:else}
     <p class="muted">No edges</p>
+  {/if}
+  {#if editor.state.edge}
+    <label
+      >Relationship label
+      <input
+        aria-label={`Relationship label ${editor.state.edge.id}`}
+        bind:value={editor.state.label}
+        disabled={editor.busy()}
+      />
+    </label>
+    <div>
+      <button
+        type="button"
+        disabled={editor.busy() || !editor.state.label.trim()}
+        onclick={() => void editor.save()}>Save relationship label</button
+      >
+      <button type="button" disabled={editor.busy()} onclick={() => editor.cancel()}
+        >Cancel label edit</button
+      >
+    </div>
   {/if}
 </section>
 
@@ -116,7 +139,7 @@
 
   .edge-main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 24px;
+    grid-template-columns: minmax(0, 1fr) auto 24px;
     align-items: center;
     gap: 8px;
   }

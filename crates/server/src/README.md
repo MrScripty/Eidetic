@@ -511,3 +511,25 @@ all entered IDs, regardless of the selected review cause. Missing bounded contex
 refuses capture before provider execution; existing binding checks repeat the
 same guard before proposal persistence/acceptance. Restore context through existing
 assignments and request a fresh preview. Removed fields need no invented value.
+
+Bible relationship lineage binds only actual resolver-supplied edges, deduplicated
+by identity. Preview custody separately retains latest owned revisions for every
+absent consumed edge, including when another cause is selected. Recreate/delete
+ABA cannot disappear behind a repeated None. These negative reads reuse existing
+object history and proposal JSON, and are never generated UsesFact values.
+Existing generation command JSON and UsesFact dependencies own the
+receipts; existing impact review derives changed/deleted causes and writer-side
+preview/acceptance recapture refuses drift and ABA. Sparse edge history participates
+in revision custody; divergent sparse/live payloads are refused until reconciled
+by the canonical graph command. Off-scope edge edits do not invalidate a preview
+through the global Bible projection clock. Timed edge semantics, new edge membership
+and Bible node-name provenance are not implemented by this bounded successor.
+
+Relationship label updates use `bible_graph_edge_label_command.rs` and existing command/revision history. Node detail exposes each edge’s owned revision from the same read snapshot; the writer checks that revision and updates only the label of an active edge. Deleted or changed identities refuse without recording history, and command replay remains idempotent.
+
+The label-only response is `BibleGraphEdgeLabelCommandResponse`. A fresh committed
+write returns its source projection; an exact command-ID/payload replay returns
+`already_recorded` with `projection: null` before any live graph lookup. Deleting
+the relationship and its source node does not invalidate an already committed
+command. Replay performs no row writes and never recreates graph material. Fresh
+commands retain every active-identity and owned-revision guard.

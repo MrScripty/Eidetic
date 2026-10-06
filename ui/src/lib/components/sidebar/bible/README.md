@@ -12,7 +12,7 @@ This directory contains the story-bible UI backed by backend-owned bible graph p
 | `BibleGraphAddControls.svelte`     | Category-aware graph-node creation controls.                                   |
 | `BibleGraphCategoryFilters.svelte` | Category filter controls for the graph-node list.                              |
 | `BibleGraphEdgeEditor.svelte`      | Projection-backed edge creation form that writes through graph edge commands.  |
-| `BibleGraphEdgeList.svelte`        | Read-only incoming/outgoing edge list for graph node detail projections.       |
+| `BibleGraphEdgeList.svelte`        | Incoming/outgoing edges with revision-guarded label editing and deletion.       |
 | `BibleGraphNodeCard.svelte`        | List-card summary for backend-owned bible graph nodes.                         |
 | `BibleGraphNodeDetail.svelte`      | Detail panel for backend-owned bible graph node projections and commands.      |
 | `BibleGraphPartFields.svelte`      | Projection-backed bible graph field editor that writes through graph commands. |
@@ -74,3 +74,10 @@ Keep story-bible components together while routing list, detail, field, edge, an
 - None identified as of 2026-03-08.
 - Reason: the directory edits story-bible data but does not own the canonical schema definition.
 - Revisit trigger: entity templates or exported bible artifacts are generated from this boundary.
+
+Existing relationship lists allow label-only editing through the canonical
+set-edge command. Save retains endpoints, kind, direction and order; Cancel and
+failed saves retain canonical screenplay. This is a narrow label editor, not a
+new full relationship authoring workflow.
+
+Label editors capture owned edge revision IDs from the node detail read. They submit only edge ID, label and expected revision; conflicting save/delete actions wait, and interrupted or removed-edge drafts remain editable until explicit cancellation. The server rechecks live identity and owned revision in its writer transaction.

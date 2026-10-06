@@ -89,3 +89,8 @@ tauri::Builder::default();
 - Command and projection payloads are JSON-compatible Rust structures consumed
   by Svelte stores.
 - Any payload shape change requires synchronized TypeScript contract updates.
+
+The command registry includes `command_bible_graph_edge_label` for authored
+relationship labels. Its expected-revision contract reaches the server writer
+transaction through the existing Bible IPC/service boundary, keeping label
+editing and screenplay dependency invalidation on normal desktop transport.

@@ -377,6 +377,13 @@ struct SqlEndpoint {
 impl SqlEndpoint {
     fn from_endpoint(endpoint: &SemanticDependencyEndpoint) -> Self {
         match endpoint {
+            SemanticDependencyEndpoint::BibleEdge { edge_id } => Self {
+                kind: "bible_edge".into(),
+                id: edge_id.as_str().into(),
+                part_key: None,
+                field_key: None,
+                field_id: None,
+            },
             SemanticDependencyEndpoint::TimelineNode { node_id } => Self {
                 kind: "timeline_node".to_string(),
                 id: node_id.0.to_string(),
@@ -422,6 +429,9 @@ impl SqlEndpoint {
 
     fn into_endpoint(self) -> Result<SemanticDependencyEndpoint, SemanticDependencyStoreError> {
         match self.kind.as_str() {
+            "bible_edge" => Ok(SemanticDependencyEndpoint::BibleEdge {
+                edge_id: eidetic_core::contracts::BibleGraphEdgeId::new(self.id)?,
+            }),
             "timeline_node" => Ok(SemanticDependencyEndpoint::TimelineNode {
                 node_id: eidetic_core::timeline::node::NodeId(parse_uuid(&self.id)?),
             }),

@@ -116,6 +116,25 @@
           </details>
         {/if}
         <pre aria-label="Proposed text">{proposal.proposed_text}</pre>
+        {#if proposal.script_review_binding?.bible_relationship_inputs?.length}
+          <details aria-label="Recorded screenplay relationship evidence">
+            <summary>Relationships used for this preview</summary>
+            <ul>
+              {#each proposal.script_review_binding.bible_relationship_inputs as input (input.edge.edge_id)}
+                <li>
+                  {input.edge.from_node_id}
+                  {input.edge.directed ? '→' : '↔'}
+                  {input.edge.to_node_id}:
+                  {input.edge.label}
+                  ({typeof input.edge.edge_kind === 'string'
+                    ? input.edge.edge_kind.replaceAll('_', ' ')
+                    : input.edge.edge_kind.custom})
+                  <small>Revision {input.revision_event_id}</small>
+                </li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
         {#if proposal.status === 'pending'}
           <button type="button" onclick={() => decide(proposal.id, false)} disabled={pending}
             >Reject</button

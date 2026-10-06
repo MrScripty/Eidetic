@@ -78,6 +78,9 @@ pub(crate) fn load_impact(
             SemanticDependencyEndpoint::BibleField { field_id: Some(_), .. } =>
                 crate::bible_field_lineage::current_revision(conn, &dependency.target)?
                     .map(|revision| (revision.0.to_string(), false, String::new())),
+            SemanticDependencyEndpoint::BibleEdge { .. } =>
+                crate::bible_relationship_lineage::current_revision(conn, &dependency.target)?
+                    .map(|revision| (revision.0.to_string(), false, String::new())),
             _ => continue,
         };
         // A generation can read its own previous draft. Retain that audit input
@@ -105,6 +108,8 @@ pub(crate) fn load_impact(
                 params![block_id.as_str(), binding.target_revision_event_id.0.to_string()], |row| row.get::<_, Option<String>>(0)).optional()?.flatten()
                 .map(|text| text.chars().take(120).collect()),
             SemanticDependencyEndpoint::BibleField { .. } => crate::bible_field_lineage::excerpt(
+                conn, &dependency.target, binding.target_revision_event_id)?,
+            SemanticDependencyEndpoint::BibleEdge { .. } => crate::bible_relationship_lineage::excerpt(
                 conn, &dependency.target, binding.target_revision_event_id)?,
             _ => None,
         };

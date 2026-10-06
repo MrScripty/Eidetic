@@ -3,6 +3,123 @@ use crate::project_service::replace_active_project;
 use eidetic_core::{Error, Template};
 use futures::stream;
 
+#[tokio::test]
+async fn public_relationship_edit_publishes_affected_review_from_original_generation_read() {
+    use eidetic_core::contracts::*;
+    let fixture = fixture().await;
+    for id in ["Mara", "Eli"] {
+        crate::command_service::create_bible_graph_node(
+            &fixture.state,
+            serde_json::from_value(
+                serde_json::to_value(CommandEnvelope::new(CreateBibleGraphNodeCommand {
+                    node_id: BibleGraphNodeId::new(id).unwrap(),
+                    parent_id: None,
+                    schema_key: BibleGraphSchemaKey::new("character").unwrap(),
+                    name: id.into(),
+                    sort_order: 0,
+                }))
+                .unwrap(),
+            )
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+    }
+    let mut edge = SetBibleGraphEdgeCommand {
+        edge_id: BibleGraphEdgeId::new("Mara.Eli").unwrap(),
+        from_node_id: BibleGraphNodeId::new("Mara").unwrap(),
+        to_node_id: BibleGraphNodeId::new("Eli").unwrap(),
+        edge_kind: BibleGraphEdgeKind::References,
+        label: "Mara trusts Eli".into(),
+        directed: true,
+        sort_order: 0,
+    };
+    crate::command_service::set_bible_graph_edge(
+        &fixture.state,
+        serde_json::from_value(serde_json::to_value(CommandEnvelope::new(edge.clone())).unwrap())
+            .unwrap(),
+    )
+    .await
+    .unwrap();
+    let project = fixture.state.project.lock().as_ref().unwrap().clone();
+    let mut request =
+        eidetic_core::ai::prompt::build_generate_request(&project, fixture.node_id).unwrap();
+    crate::ai_service::attach_ai_generation_context(
+        &mut request,
+        fixture.path.clone(),
+        fixture.node_id,
+    )
+    .await
+    .unwrap();
+    let inputs = request.bible_relationship_inputs.as_ref().unwrap();
+    assert_eq!(inputs.len(), 1);
+    let original = inputs[0].clone();
+    assert!(
+        crate::prompt_format::build_chat_prompt(&request)
+            .user
+            .contains("Mara trusts Eli")
+    );
+    // Predefined synthetic output exercises the real runtime and command service.
+    finish_generation_stream(
+        fixture.state.clone(),
+        fixture.path.clone(),
+        fixture.node_id.0,
+        Box::pin(stream::iter([Ok(
+            "Synthetic screenplay: Mara trusts Eli.".into()
+        )])),
+        GenerationInputs {
+            script_inputs: request.script_context,
+            bible_inputs: request.bible_inputs,
+            bible_relationship_inputs: request.bible_relationship_inputs,
+            bible_context_scope: request.bible_context_scope,
+            script_context_scope: request.script_context_scope,
+            target_binding: request.generation_target,
+            ..GenerationInputs::default()
+        },
+    )
+    .await;
+    let before = script(&fixture);
+    assert!(
+        !before.payload.segments[0]
+            .impact
+            .as_ref()
+            .unwrap()
+            .needs_review
+    );
+    let mut events = fixture.state.events_tx.subscribe();
+    edge.label = "Mara doubts Eli".into();
+    crate::command_service::set_bible_graph_edge(
+        &fixture.state,
+        serde_json::from_value(serde_json::to_value(CommandEnvelope::new(edge)).unwrap()).unwrap(),
+    )
+    .await
+    .unwrap();
+    assert!(matches!(
+        events.recv().await.unwrap(),
+        ServerEvent::BibleChanged
+    ));
+    let after = script(&fixture);
+    assert!(after.version.0 > before.version.0);
+    assert_eq!(
+        after.payload.segments[0].blocks,
+        before.payload.segments[0].blocks
+    );
+    let impact = after.payload.segments[0].impact.as_ref().unwrap();
+    assert!(impact.needs_review);
+    assert_eq!(
+        impact.causes[0].input,
+        crate::bible_relationship_lineage::endpoint(&original)
+    );
+    assert_eq!(
+        impact.causes[0].consumed_revision_event_id,
+        original.revision_event_id
+    );
+    assert_eq!(
+        impact.causes[0].input_excerpt.as_deref(),
+        Some("Mara trusts Eli")
+    );
+}
+
 struct Fixture {
     state: AppState,
     path: PathBuf,
@@ -67,6 +184,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
         )])),
         GenerationInputs {
             script_inputs: request.script_context,
+            bible_relationship_inputs: request.bible_relationship_inputs,
             bible_inputs: request.bible_inputs,
             bible_context_scope: request.bible_context_scope,
             script_context_scope: request.script_context_scope,

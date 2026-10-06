@@ -86,3 +86,7 @@ backend enforces it, while canonical facts and complete-window lineage remain
 independent consumed evidence. No new persistent memory owner or dependency.
 
 GenerateRequest forwards optional BibleContextScope captured with canonical BibleFieldInput evidence; generation never replaces a late receipt with current membership.
+
+Screenplay requests capture BibleRelationshipInput with the Bible projection in
+one read snapshot. Runtime persistence forwards those original inputs, including
+a known empty set, without rebinding late output to current relationships.
