@@ -31,6 +31,9 @@ pub struct ScriptImpactProposalBinding {
     pub bible_context: ProjectionEnvelope<AiBibleContextProjection>,
     #[serde(default)]
     pub bible_inputs: Vec<super::BibleFieldInput>,
+    /// Absent legacy receipts stay unknown; Some(empty) is a recorded read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_relationship_inputs: Option<Vec<super::BibleRelationshipInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_context_scope: Option<super::BibleContextScope>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

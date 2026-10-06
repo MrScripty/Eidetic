@@ -13,6 +13,8 @@ export function scriptImpactCauseLabel(cause: ScriptImpactCause): string {
         ? 'Source screenplay segment'
         : cause.input.kind === 'bible_field'
           ? `Bible fact ${cause.input.part_key}.${cause.input.field_key}`
-          : 'Source input';
+          : cause.input.kind === 'bible_edge'
+            ? 'Bible relationship'
+            : 'Source input';
   return `${source} ${cause.reason === 'deleted' ? 'was removed.' : 'changed.'}`;
 }

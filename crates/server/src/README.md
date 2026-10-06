@@ -511,3 +511,12 @@ all entered IDs, regardless of the selected review cause. Missing bounded contex
 refuses capture before provider execution; existing binding checks repeat the
 same guard before proposal persistence/acceptance. Restore context through existing
 assignments and request a fresh preview. Removed fields need no invented value.
+
+Bible relationship lineage binds only actual resolver-supplied edges, deduplicated
+by identity. Existing generation command JSON and UsesFact dependencies own the
+receipts; existing impact review derives changed/deleted causes and writer-side
+preview/acceptance recapture refuses drift and ABA. Sparse edge history participates
+in revision custody; divergent sparse/live payloads are refused until reconciled
+by the canonical graph command. Off-scope edge edits do not invalidate a preview
+through the global Bible projection clock. Timed edge semantics, new edge membership
+and Bible node-name provenance are not implemented by this bounded successor.

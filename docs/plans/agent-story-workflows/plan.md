@@ -1016,3 +1016,29 @@ deleted identities for ABA. Reuse creation command JSON and transaction recaptur
 exclude only the in-flight acceptance event. Parent-only/unrelated edges stay
 unbound because replacement preserves them. Old missing receipts mean unknown
 and require fresh review; replay precedes validation. No schema or SDK change.
+
+
+## Consumed Bible relationships: bounded screenplay successor
+
+Frozen predecessor: source d672f0b36557593a47e34849bd564ca8b244ef2a,
+qualification ae96213f6d93a5babcc3f8a2dbebe778cd1c0963, evidence
+6b313aa3e1aeebbbb1c4d60e2629cbc8a91c4383. Work on a separate branch.
+Inspection before implementation: ai_bible_context_prompt.rs supplies incoming
+and outgoing endpoints, kinds and labels. script_generation_lineage.rs creates
+Bible dependencies only from BibleFieldInput; semantic_dependency.rs has no
+BibleEdge endpoint and script_impact_projection.rs cannot report edge drift.
+BibleGraphEdgeList offers Delete while BibleGraphEdgeEditor only adds edges.
+
+Bind only relationships actually supplied by the resolver, deduplicated by edge
+identity, with exact original revision and endpoints/kind/label/direction. Extend
+existing UsesFact dependencies and command/proposal JSON; no parallel store or
+embedding dependency. Late generation binds historical evidence and may need
+review; it must never silently acknowledge a later edit. Existing preview and
+explicit acceptance revalidate exact receipts inside the writer transaction.
+Ignore the global Bible projection clock only, retaining payload/field membership
+and exact input revision guards. Off-scope relationship edits must not create
+review or refuse an otherwise current preview. Legacy absent receipts stay
+unknown. Qualify label-only native editing through the existing set-edge command,
+affected review and separate explicit acceptance, preserving manual screenplay
+and drafts. Timed relationship semantics, new relationship membership detection,
+node-name provenance and broader authoring remain separate gaps.

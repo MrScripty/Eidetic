@@ -74,3 +74,8 @@ Keep story-bible components together while routing list, detail, field, edge, an
 - None identified as of 2026-03-08.
 - Reason: the directory edits story-bible data but does not own the canonical schema definition.
 - Revisit trigger: entity templates or exported bible artifacts are generated from this boundary.
+
+Existing relationship lists allow label-only editing through the canonical
+set-edge command. Save retains endpoints, kind, direction and order; Cancel and
+failed saves retain canonical screenplay. This is a narrow label editor, not a
+new full relationship authoring workflow.

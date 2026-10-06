@@ -263,6 +263,8 @@ pub struct GenerateScriptBlockCommand {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_inputs: Option<Vec<super::BibleFieldInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bible_relationship_inputs: Option<Vec<super::BibleRelationshipInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bible_context_scope: Option<BibleContextScope>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub script_context_scope: Option<ScriptContextScope>,

@@ -64,6 +64,7 @@ fn generation(
     CommandEnvelope::new(GenerateScriptBlockCommand {
         target_binding: None,
         script_context_scope: None,
+        bible_relationship_inputs: None,
         bible_inputs: None,
         bible_context_scope: None,
         block,

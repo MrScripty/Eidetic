@@ -9,6 +9,7 @@ import type { CommandOutcome, FieldValue, ProjectionEnvelope } from './projectio
 import type { ScriptBlockId, ScriptPatch, ScriptSegmentId } from './scriptTypes.js';
 import type { ScriptContextBlock, ScriptImpactCause } from './scriptTypes.js';
 import type { SemanticProposalStatus } from './semanticProposalTypes.js';
+import type { AiBibleContextEdge } from './childPlanningTypes.js';
 
 export type PropagationProposalId = string;
 export type BibleGraphFieldId = string;
@@ -65,6 +66,12 @@ export interface PropagationProposal {
     target_segment_revision_event_id: string;
     script_inputs: ScriptContextBlock[];
     bible_context: ProjectionEnvelope<unknown>;
+    bible_relationship_inputs?:
+      | {
+          edge: AiBibleContextEdge;
+          revision_event_id: string;
+        }[]
+      | null;
   } | null;
 }
 

@@ -1719,3 +1719,26 @@ Refusal preserves entire timeline, saved screenplay, pending evidence and all fo
 history table counts. Full server suite and strict Clippy are recorded before
 publication; native relationship drawing itself remains unqualified. Preserve
 122c71e/9b4c5ff/85bed285 and d5ae81a. No extra schema, dependency or manual-text write.
+
+
+### Separate successor: consumed Bible relationships in screenplay provenance
+
+The published d672/ae962/6b313 candidate remains frozen. Separate worktree and
+branch feat/screenplay-bible-relationships extend the existing UsesFact endpoint,
+generation command/proposal receipts and impact/preview/accept path. The exact
+relationship payload and owned revision are captured with the resolver read,
+deduplicated across incoming/outgoing copies. Late output keeps historical
+consumption. Canonical and sparse-history ABA participate; inconsistent sparse
+history/live payloads refuse capture. Only the global Bible projection clock is
+ignored during preview recapture; actual payload, field-membership, target and
+source revision guards remain. Label-only native editing reuses set-edge, and
+preview discloses original relationship evidence. No schema, dependencies,
+auto-acceptance, timed edge semantics, new-edge membership or node-name lineage.
+
+Local validation: core119/server464 (nine added relationship cases), frontend453,
+driver33 and no-download gate5; strict all-target server Clippy, typecheck0/0,
+lint/format/production build, rustfmt and traceability passed. Initial fixture
+assertion failures and the first full-suite's17 read-only default-XDG setup
+failures are preserved in scratch logs; the full server rerun using writable
+task-local XDG directories passed all464. Hosted actual native qualification is
+pending at this source checkpoint; all planned HTTP outputs are synthetic.

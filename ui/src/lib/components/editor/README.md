@@ -175,3 +175,7 @@ state and remain visible without discarding authored screenplay drafts.
 ScriptImpactNotice distinguishes Bible membership ContextChanged causes from screenplay continuity changes. Existing preview and explicit acceptance remain the only proposal replacement path; saved human text and retained drafts are preserved.
 
 - Bible facts used for this plan displays the original optional public receipt. Recorded empty context is distinct from absent legacy evidence. Untimed field revisions come only from matching recorded node/part/field inputs; timed overrides do not borrow baseline revision custody. Review does not refresh Bible values or alter acceptance payloads, canonical screenplay, drafts or facts.
+
+Screenplay impact review identifies consumed Bible relationship changes and shows
+the original relationship evidence supplied to each preview. Existing preview,
+Reject and explicit Accept update controls retain their canonical behavior.

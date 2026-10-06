@@ -18,6 +18,7 @@ fn fixture() -> (
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
         block,
         script_inputs: None,
+        bible_relationship_inputs: None,
         bible_inputs: None,
         bible_context_scope: None,
         script_context_scope: None,

@@ -7,6 +7,7 @@
   import {
     deleteBibleGraphEdgeProjection,
     refreshBibleGraphNodeProjection,
+    setBibleGraphEdgeProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
 
   let {
@@ -23,6 +24,45 @@
 
   let deletingEdgeId = $state<string | null>(null);
   let deleteError = $state<string | undefined>(undefined);
+  let editingEdge = $state<BibleGraphEdge | null>(null);
+  let draftLabel = $state('');
+  let savingLabel = $state(false);
+
+  function editLabel(edge: BibleGraphEdge): void {
+    editingEdge = JSON.parse(JSON.stringify(edge)) as BibleGraphEdge;
+    draftLabel = edge.label;
+    deleteError = undefined;
+  }
+
+  async function saveLabel(): Promise<void> {
+    if (!editingEdge || !draftLabel.trim() || savingLabel) return;
+    const edge = edges.find((item) => item.id === editingEdge?.id);
+    if (!edge || JSON.stringify(edge) !== JSON.stringify(editingEdge)) {
+      deleteError = 'Relationship changed while editing; reopen its label editor.';
+      return;
+    }
+    savingLabel = true;
+    deleteError = undefined;
+    try {
+      await setBibleGraphEdgeProjection({
+        edge_id: edge.id,
+        from_node_id: edge.from_node_id,
+        to_node_id: edge.to_node_id,
+        edge_kind: edge.edge_kind,
+        label: draftLabel.trim(),
+        directed: edge.directed,
+        sort_order: edge.sort_order,
+      });
+      if (edge.from_node_id !== ownerNodeId) {
+        await refreshBibleGraphNodeProjection({ node_id: ownerNodeId });
+      }
+      editingEdge = null;
+    } catch (error) {
+      deleteError = error instanceof Error ? error.message : 'Failed to save relationship label';
+    } finally {
+      savingLabel = false;
+    }
+  }
 
   function edgeKindLabel(kind: BibleGraphEdgeKind): string {
     if (typeof kind === 'string') return kind.replaceAll('_', ' ');
@@ -64,6 +104,12 @@
             <span class="edge-label">{edge.label}</span>
             <button
               type="button"
+              aria-label={`Edit relationship label ${edge.label}`}
+              disabled={savingLabel || deletingEdgeId !== null}
+              onclick={() => editLabel(edge)}>Edit</button
+            >
+            <button
+              type="button"
               class="edge-delete"
               aria-label={`Delete edge ${edge.label}`}
               title="Delete edge"
@@ -73,6 +119,30 @@
               {deletingEdgeId === edge.id ? '...' : '×'}
             </button>
           </div>
+          {#if editingEdge?.id === edge.id}
+            <label
+              >Relationship label
+              <input
+                aria-label={`Relationship label ${edge.id}`}
+                bind:value={draftLabel}
+                disabled={savingLabel}
+              />
+            </label>
+            <div>
+              <button
+                type="button"
+                disabled={savingLabel || !draftLabel.trim()}
+                onclick={() => void saveLabel()}>Save relationship label</button
+              >
+              <button
+                type="button"
+                disabled={savingLabel}
+                onclick={() => {
+                  editingEdge = null;
+                }}>Cancel label edit</button
+              >
+            </div>
+          {/if}
           <span class="edge-kind">{edgeKindLabel(edge.edge_kind)}</span>
           <span class="edge-target">{endpointLabel(edge)}</span>
         </li>
@@ -116,7 +186,7 @@
 
   .edge-main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 24px;
+    grid-template-columns: minmax(0, 1fr) auto 24px;
     align-items: center;
     gap: 8px;
   }

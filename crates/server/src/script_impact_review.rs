@@ -138,6 +138,20 @@ fn capture_in_snapshot(
             "Bible review source is outside the current context; restore its context before previewing".into(),
         ));
     }
+    let bible_relationship_inputs = Some(crate::bible_relationship_lineage::capture(
+        conn,
+        &bible_context.payload,
+    )?);
+    if let SemanticDependencyEndpoint::BibleEdge { edge_id } = &cause.input
+        && cause.current_revision_event_id.is_some()
+        && !bible_relationship_inputs
+            .as_ref()
+            .unwrap()
+            .iter()
+            .any(|input| input.edge.edge_id == *edge_id)
+    {
+        return Err(HistoryStoreError::InvalidValue("Bible relationship review source is outside the current context; restore its context before previewing".into()));
+    }
     let bible_inputs = crate::bible_field_lineage::capture(conn, &bible_context.payload)?;
     crate::bible_context_scope::validate_preview_inputs(
         conn,
@@ -157,6 +171,7 @@ fn capture_in_snapshot(
         script_inputs,
         bible_context,
         bible_inputs,
+        bible_relationship_inputs,
         bible_context_scope,
         script_context_scope,
     })
@@ -166,7 +181,12 @@ pub(crate) fn validate_binding(
     conn: &Connection,
     binding: &ScriptImpactProposalBinding,
 ) -> Result<(), HistoryStoreError> {
-    if capture(conn, &binding.request)? != *binding {
+    let mut current = capture(conn, &binding.request)?;
+    // Global projection clocks include unrelated graph edits. Payload and exact
+    // consumed revisions remain authoritative, including edge edit/restore ABA.
+    current.bible_context.version = binding.bible_context.version;
+    current.bible_context.change_event_id = binding.bible_context.change_event_id;
+    if current != *binding {
         return Err(stale());
     }
     Ok(())
@@ -318,6 +338,7 @@ pub(crate) fn accept_bound_proposal(
         target_binding: None,
         block: write.clone(),
         script_inputs: Some(binding.script_inputs.clone()),
+        bible_relationship_inputs: binding.bible_relationship_inputs.clone(),
         bible_inputs: Some(binding.bible_inputs.clone()),
         bible_context_scope: binding.bible_context_scope.clone(),
         script_context_scope: binding.script_context_scope.clone(),

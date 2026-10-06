@@ -19,6 +19,14 @@ pub struct BibleFieldInput {
     pub value: FieldValue,
 }
 
+/// Exact untimed relationship supplied by the Bible resolver. Repeated incoming
+/// and outgoing appearances refer to one consumed edge identity and revision.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BibleRelationshipInput {
+    pub edge: AiBibleContextEdge,
+    pub revision_event_id: ChangeEventId,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AiBibleContextProjection {
     pub target_node_id: NodeId,
