@@ -1576,3 +1576,23 @@ Strict server all-target Clippy and ordinary precommit checks are required befor
 publication. Synthetic HTTP responses only; prior native screenshots qualify the
 preserved old source until a fresh source-bound run. Relationship receipt repair
 remains separate. Parent retains review/integration/delivery ownership.
+
+### Child-plan relationship receipt repair
+
+Independent source tracing identified unbound relationships that child replacement
+could silently delete after review. The actual public service reproduces the
+cross-boundary failure on d5ae81a (successful apply where refusal is required).
+The separate successor binds canonical edge state and per-identity latest revision
+in existing creation-command memory. Endpoint deltas retain deleted identities,
+so exact-state delete/recreate and add/delete ABA refuse. Reads use existing
+committed event ordering even when every command timestamp is zero; the writer
+transaction excludes only its own in-flight event. Relevant nodes are the replaced
+descendants, including outside-to-child edges; parent-only/unrelated edges survive.
+
+Actual HTTP/AppState/SQLite service cases cover both boundary directions, internal
+edges, both ABA forms, delayed completion, old missing receipt refusal, reviewed
+edge removal, unrelated edge ABA preservation and identical-command replay.
+Refusal preserves entire timeline, saved screenplay, pending evidence and all four
+history table counts. Full server suite and strict Clippy are recorded before
+publication; native relationship drawing itself remains unqualified. Preserve
+122c71e/9b4c5ff/85bed285 and d5ae81a. No extra schema, dependency or manual-text write.

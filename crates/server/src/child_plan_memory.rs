@@ -1,6 +1,7 @@
 //! Child-plan screenplay receipts live in the existing creation command history.
 use eidetic_core::contracts::{ChangeEventId, ObjectKind, ScriptContextBlock, ScriptContextScope};
 use eidetic_core::timeline::node::{NodeArc, NodeId, StoryNode};
+use eidetic_core::timeline::relationship::Relationship;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -13,6 +14,16 @@ pub(crate) struct ChildPlanMemory {
     parent_arcs: Vec<NodeArc>,
     pub(crate) script_inputs: Vec<ScriptContextBlock>,
     script_scope: ScriptContextScope,
+    // Absent on older pending plans: unknown edge custody must require a fresh
+    // review, not silently assert that no relationships were consumed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    relationships: Option<ChildPlanRelationships>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct ChildPlanRelationships {
+    current: Vec<Relationship>,
+    revisions: Vec<(String, Option<ChangeEventId>)>,
 }
 
 pub(crate) fn capture(
@@ -76,12 +87,88 @@ fn capture_before_event(
         range.end_ms,
         &script_inputs,
     )?;
+    selected.remove(&parent.0);
+    let relationships = capture_relationships(conn, &selected, excluded)?;
     Ok(ChildPlanMemory {
         nodes: bound,
         parent_arcs,
         script_inputs,
         script_scope,
+        relationships: Some(relationships),
     })
+}
+
+fn capture_relationships(
+    conn: &Connection,
+    descendants: &BTreeSet<uuid::Uuid>,
+    excluded: Option<ChangeEventId>,
+) -> Result<ChildPlanRelationships, HistoryStoreError> {
+    // Acceptance removes exactly the edges touching replaced descendants,
+    // including edges from outside the subtree; parent-only edges survive.
+    let mut current = crate::timeline_relationship_store::load_relationships(conn)?
+        .into_iter()
+        .filter(|edge| {
+            descendants.contains(&edge.from_node.0) || descendants.contains(&edge.to_node.0)
+        })
+        .collect::<Vec<_>>();
+    current.sort_by_key(|edge| edge.id.0);
+    let mut ids = current
+        .iter()
+        .map(|edge| edge.id.0.to_string())
+        .collect::<BTreeSet<_>>();
+    let descendants = descendants
+        .iter()
+        .map(ToString::to_string)
+        .collect::<BTreeSet<_>>();
+    // Include deleted identities from endpoint deltas so add/delete and
+    // delete/recreate ABA cannot masquerade as an unchanged canonical edge set.
+    let mut statement = conn.prepare(
+        "SELECT DISTINCT r.object_id, f.old_text, f.new_text
+         FROM object_revisions r JOIN object_revision_fields f ON f.revision_id=r.id
+         WHERE r.object_kind=?1 AND f.field_key IN ('from_node_id','to_node_id')
+           AND (?2 IS NULL OR r.change_event_id<>?2)",
+    )?;
+    let rows = statement.query_map(
+        rusqlite::params![
+            serde_json::to_value(ObjectKind::TimelineRelationship)?.as_str(),
+            excluded.map(|id| id.0.to_string())
+        ],
+        |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Option<String>>(1)?,
+                row.get::<_, Option<String>>(2)?,
+            ))
+        },
+    )?;
+    for row in rows {
+        let (id, old, new) = row?;
+        if old
+            .iter()
+            .chain(new.iter())
+            .any(|endpoint| descendants.contains(endpoint))
+        {
+            ids.insert(id);
+        }
+    }
+    let revisions = ids
+        .into_iter()
+        .map(|id| {
+            // Existing history reads committed event order, not timestamps or
+            // event-local sort_order. Exclude only this apply's in-flight revisions.
+            let latest = history_store::load_revisions_for_object(
+                conn,
+                ObjectKind::TimelineRelationship,
+                &id,
+            )?
+            .into_iter()
+            .rev()
+            .find(|revision| Some(revision.change_event_id) != excluded)
+            .map(|revision| revision.change_event_id);
+            Ok((id, latest))
+        })
+        .collect::<Result<Vec<_>, HistoryStoreError>>()?;
+    Ok(ChildPlanRelationships { current, revisions })
 }
 
 pub(crate) fn validate(

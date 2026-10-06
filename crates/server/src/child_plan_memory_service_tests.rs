@@ -719,3 +719,271 @@ async fn actual_http_child_plan_reviews_and_accepts_filtered_ordered_character_a
         serde_json::json!({"characters":["Mara","Ivo","Mara"], "props":["Umbrella","Ticket"]}),
     ).await;
 }
+
+async fn create_beat(fixture: &Fixture) -> NodeId {
+    let child = NodeId(Uuid::new_v4());
+    crate::command_service_timeline::create_timeline_child_from_parent_core_command(
+        &fixture.state,
+        CommandEnvelope::new(CreateTimelineChildFromParentCommand {
+            node_id: child,
+            parent_id: fixture.parent,
+        }),
+    )
+    .await
+    .unwrap();
+    child
+}
+
+async fn create_edge(fixture: &Fixture, id: Uuid, from: NodeId, to: NodeId) {
+    crate::command_service::create_timeline_relationship(&fixture.state,
+        serde_json::from_value(serde_json::json!({"id":Uuid::new_v4(), "payload":{"relationship_id":id, "from_node_id":from, "to_node_id":to, "relationship_type":"Causal"}})).unwrap(),
+    ).await.unwrap();
+}
+
+async fn delete_edge(fixture: &Fixture, id: Uuid) {
+    crate::command_service::delete_timeline_relationship(
+        &fixture.state,
+        CommandEnvelope::new(DeleteTimelineRelationshipCommand {
+            relationship_id: eidetic_core::timeline::relationship::RelationshipId(id),
+        }),
+    )
+    .await
+    .unwrap();
+}
+
+async fn outside_scenes(fixture: &Fixture) -> Vec<NodeId> {
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    project
+        .timeline
+        .nodes
+        .iter()
+        .filter(|n| n.level == StoryLevel::Scene && n.id != fixture.parent)
+        .map(|n| n.id)
+        .collect()
+}
+
+async fn pending_plan(fixture: &Fixture) -> ChildPlan {
+    let (task, _, release, provider) = planning(fixture).await;
+    release.send(()).unwrap();
+    let plan = task.await.unwrap().unwrap();
+    provider.join().unwrap();
+    plan
+}
+
+fn history_counts(fixture: &Fixture) -> [i64; 4] {
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    [
+        "commands",
+        "change_events",
+        "object_revisions",
+        "object_revision_fields",
+    ]
+    .map(|table| {
+        conn.query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+            row.get(0)
+        })
+        .unwrap()
+    })
+}
+
+async fn assert_edge_refusal_preserves_state(fixture: &Fixture, plan: &ChildPlan) {
+    let before = script(fixture);
+    let counts = history_counts(fixture);
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    let error = crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(accept_command(plan)).unwrap(),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(
+        error,
+        BackendError::conflict(
+            "Child plan story context changed; generate and review a fresh plan before accepting"
+        )
+    );
+    let (after, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    assert_eq!(
+        serde_json::to_value(after.timeline).unwrap(),
+        serde_json::to_value(project.timeline).unwrap()
+    );
+    assert_eq!(history_counts(fixture), counts);
+    assert_eq!(script(fixture), before);
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    let pending =
+        crate::child_plan_projection_store::load_child_plan_list_projection(&conn).unwrap();
+    assert_eq!(
+        pending.payload.plans[0].status,
+        eidetic_core::ai::backend::ChildPlanStatus::Pending
+    );
+    assert_eq!(
+        pending.payload.plans[0].plan.script_context,
+        plan.script_context
+    );
+}
+
+#[tokio::test]
+async fn pending_child_plan_refuses_new_cross_boundary_edges_in_both_directions() {
+    for incoming in [true, false] {
+        let fixture = fixture().await;
+        let child = create_beat(&fixture).await;
+        let outside = outside_scenes(&fixture).await[0];
+        let plan = pending_plan(&fixture).await;
+        let (from, to) = if incoming {
+            (outside, child)
+        } else {
+            (child, outside)
+        };
+        create_edge(&fixture, Uuid::new_v4(), from, to).await;
+        assert_edge_refusal_preserves_state(&fixture, &plan).await;
+    }
+}
+
+#[tokio::test]
+async fn pending_child_plan_refuses_new_internal_descendant_edge() {
+    let fixture = fixture().await;
+    let a = create_beat(&fixture).await;
+    let b = create_beat(&fixture).await;
+    let plan = pending_plan(&fixture).await;
+    create_edge(&fixture, Uuid::new_v4(), a, b).await;
+    assert_edge_refusal_preserves_state(&fixture, &plan).await;
+}
+
+#[tokio::test]
+async fn pending_child_plan_refuses_relationship_delete_recreate_aba_in_committed_order() {
+    let fixture = fixture().await;
+    let child = create_beat(&fixture).await;
+    let outside = outside_scenes(&fixture).await[0];
+    let edge = Uuid::new_v4();
+    create_edge(&fixture, edge, outside, child).await;
+    let plan = pending_plan(&fixture).await;
+    delete_edge(&fixture, edge).await;
+    create_edge(&fixture, edge, outside, child).await;
+    // Public commands use the same timestamp (0); only committed history order
+    // distinguishes this exact-identity, exact-canonical-state ABA.
+    assert_edge_refusal_preserves_state(&fixture, &plan).await;
+}
+
+#[tokio::test]
+async fn pending_child_plan_refuses_new_relationship_add_delete_aba() {
+    let fixture = fixture().await;
+    let child = create_beat(&fixture).await;
+    let outside = outside_scenes(&fixture).await[0];
+    let plan = pending_plan(&fixture).await;
+    let edge = Uuid::new_v4();
+    create_edge(&fixture, edge, outside, child).await;
+    delete_edge(&fixture, edge).await;
+    assert_edge_refusal_preserves_state(&fixture, &plan).await;
+}
+
+#[tokio::test]
+async fn explicit_child_plan_acceptance_removes_reviewed_edges_and_preserves_unrelated_edges_and_replay()
+ {
+    let fixture = fixture().await;
+    let child = create_beat(&fixture).await;
+    let outside = outside_scenes(&fixture).await;
+    let reviewed = Uuid::new_v4();
+    create_edge(&fixture, reviewed, outside[0], child).await;
+    let plan = pending_plan(&fixture).await;
+    let unrelated = Uuid::new_v4();
+    create_edge(&fixture, unrelated, outside[0], outside[1]).await;
+    delete_edge(&fixture, unrelated).await;
+    create_edge(&fixture, unrelated, outside[0], outside[1]).await;
+    let parent_only = Uuid::new_v4();
+    create_edge(&fixture, parent_only, fixture.parent, outside[0]).await;
+    let before = script(&fixture);
+    let command = accept_command(&plan);
+    crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(command.clone()).unwrap(),
+    )
+    .await
+    .unwrap();
+    let (after, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    assert!(after.timeline.node(child).is_err());
+    assert!(
+        !after
+            .timeline
+            .relationships
+            .iter()
+            .any(|edge| edge.id.0 == reviewed)
+    );
+    for preserved in [unrelated, parent_only] {
+        assert!(
+            after
+                .timeline
+                .relationships
+                .iter()
+                .any(|edge| edge.id.0 == preserved)
+        );
+    }
+    let counts = history_counts(&fixture);
+    let replay = crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(command).unwrap(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        serde_json::to_value(replay).unwrap()["outcome"],
+        "already_recorded"
+    );
+    assert_eq!(history_counts(&fixture), counts);
+    assert_eq!(script(&fixture), before);
+}
+
+#[tokio::test]
+async fn delayed_child_plan_refuses_new_edge_without_recording_a_plan_or_partial_history() {
+    let fixture = fixture().await;
+    let child = create_beat(&fixture).await;
+    let outside = outside_scenes(&fixture).await[0];
+    let (task, _, release, provider) = planning(&fixture).await;
+    create_edge(&fixture, Uuid::new_v4(), outside, child).await;
+    let counts = history_counts(&fixture);
+    let before = script(&fixture);
+    release.send(()).unwrap();
+    let error = task.await.unwrap().unwrap_err();
+    provider.join().unwrap();
+    assert!(
+        error
+            .to_string()
+            .contains("Child plan story context changed")
+    );
+    assert_eq!(history_counts(&fixture), counts);
+    assert_eq!(script(&fixture), before);
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    assert!(
+        crate::child_plan_projection_store::load_child_plan_list_projection(&conn)
+            .unwrap()
+            .payload
+            .plans
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn old_pending_child_plan_without_relationship_receipt_requires_fresh_review() {
+    let fixture = fixture().await;
+    let plan = pending_plan(&fixture).await;
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    // Emulate the exact persisted command shape predating edge receipts. This
+    // fixture changes no canonical timeline/script or history revision identity.
+    let raw: String = conn
+        .query_row(
+            "SELECT payload_json FROM commands WHERE payload_type='ai.child_plan_create'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    let mut old: serde_json::Value = serde_json::from_str(&raw).unwrap();
+    old["memory"]
+        .as_object_mut()
+        .unwrap()
+        .remove("relationships");
+    conn.execute(
+        "UPDATE commands SET payload_json=?1 WHERE payload_type='ai.child_plan_create'",
+        [old.to_string()],
+    )
+    .unwrap();
+    assert_edge_refusal_preserves_state(&fixture, &plan).await;
+}

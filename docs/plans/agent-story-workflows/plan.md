@@ -975,3 +975,14 @@ Classify only exact writer-transaction refusals with native conflict provenance
 as definite; other failures retain immutable acceptance retry custody. Qualify
 whitespace, empty locations, ordered/blank references and Close/fresh-generation
 recovery. Relationship receipt coverage is a separate follow-up repair.
+
+## Child-plan relationship receipt repair
+
+Preserve normalization/refusal d5ae81a as a separate checkpoint. Independent
+review found acceptance could delete a new edge touching replaced descendants
+after review. Bind canonical current edges plus existing committed-order history
+receipts, including incoming/outgoing edges across the subtree boundary and
+deleted identities for ABA. Reuse creation command JSON and transaction recapture;
+exclude only the in-flight acceptance event. Parent-only/unrelated edges stay
+unbound because replacement preserves them. Old missing receipts mean unknown
+and require fresh review; replay precedes validation. No schema or SDK change.
