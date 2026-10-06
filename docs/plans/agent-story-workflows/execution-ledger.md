@@ -2,6 +2,29 @@
 
 ## 2026-10-06 — Recover saved pending timeline plans
 
+Frozen source `7f0b4e502bb668e8ef4a8ab29487bdf1b8cdeeae`, tree
+`c98794dc8aa3f1b5a93d6992234068150e5d5588`, includes implementation
+`511fd8928888844b4f094513b1449b866ecd2f37` and two traceability README updates.
+Native qualification `6c6439586ccb62d8a26831c8d425c55d52930cc0`, tree
+`f4049a17b1a78c276c1991068faf59c3d0dbb4c8`, passes run `37424649728`,
+job `112141445299`: normal native builds, core119/server444/frontend445,
+driver26/gate5 and strict frontend checks. All 574 app/dependency blobs match
+frozen source. Exact native Bible Red-to-Blue Save preserves a 41-character draft
+and downstream preview/acceptance. Close/navigation/reopen restores the same
+pending child plan and original script inputs without changing any logical SQLite
+row or adding to four provider calls. Manual midnight-to-morning Save produces
+visible stale refusal; fresh explicit acceptance preserves script/Bible and renders
+Morning departure. Final readable frame qualifies all three manual lines, Bible
+and accepted timeline, retaining B's truthful Needs review. Nine PNGs are hash
+verified and viewed; synthetic HTTP/SSE only. Report/manifest record artifact
+`11394742805`, ZIP digest `716e97337791c6170507e8f7e7c831f62fa062fcadfe0024338dafcaf4fe7247`.
+The first run `37423029259` passed recovery but timed out on a visible-error
+locator with expanded evidence; artifact `11394610357` remains preserved. The
+qualification-only successor uses supported native reveal of the exact refusal.
+Application guards are unchanged. Pending-review recovery within the current
+project is now qualified; project switching and full Bible/affect/arc receipts
+remain separate. Parent retains PR/review/merge/Library ownership.
+
 Base is merged PR11 main `325f505481369e91f6cfdc125a27b2bf3b2a4384`,
 tree `45546e91b6e4c5d64d301a733c473945f1b911a9`. Inspection confirmed
 the documented recovery gap: Close and editor selection changes hide the preview,

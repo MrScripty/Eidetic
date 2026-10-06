@@ -1,0 +1,546 @@
+{
+  "schema_version": 1,
+  "feature": "Recover stored Pending timeline plans within the current project",
+  "base": {
+    "sha": "325f505481369e91f6cfdc125a27b2bf3b2a4384",
+    "tree": "45546e91b6e4c5d64d301a733c473945f1b911a9"
+  },
+  "implementation": {
+    "sha": "511fd8928888844b4f094513b1449b866ecd2f37",
+    "tree": "7a7dabd4bf724ad602b9830a6786e25ba3fc109e"
+  },
+  "source": {
+    "sha": "7f0b4e502bb668e8ef4a8ab29487bdf1b8cdeeae",
+    "tree": "c98794dc8aa3f1b5a93d6992234068150e5d5588",
+    "branch": "feat/recover-pending-timeline-plans"
+  },
+  "qualification": {
+    "sha": "6c6439586ccb62d8a26831c8d425c55d52930cc0",
+    "tree": "f4049a17b1a78c276c1991068faf59c3d0dbb4c8",
+    "branch": "test/child-plan-recovery-native",
+    "changed_files": [
+      ".github/workflows/child-plan-recovery-native.yml",
+      "scripts/qualify-child-plan-memory.py",
+      "scripts/qualify-child-plan-recovery.py",
+      "scripts/test_qualify_child_plan_recovery.py"
+    ],
+    "identical_application_dependency_blobs": 574
+  },
+  "tests": {
+    "core": 119,
+    "server": 444,
+    "frontend": 445,
+    "child_planning_service": 19,
+    "new_service_recovery": 2,
+    "qualification_driver": 26,
+    "no_download_gate": 5
+  },
+  "strict_checks": [
+    "server all-target Clippy -D warnings",
+    "typecheck zero errors/warnings",
+    "lint",
+    "format",
+    "production build",
+    "ordinary precommit hooks",
+    "resolved cargo metadata no-download gate"
+  ],
+  "dependency": {
+    "pumas_sha": "a94fd92021f27fdeedb6e2de6e01c41c250ef576",
+    "pumas_tree": "4a6977b88ed532089807183e218a959ac02b724d",
+    "changed": false,
+    "onnx_download_bypassed": false
+  },
+  "native": {
+    "run_id": 37424649728,
+    "job_id": 112141445299,
+    "url": "https://github.com/MrScripty/Eidetic/actions/runs/37424649728",
+    "conclusion": "success",
+    "artifact_id": 11394742805,
+    "artifact_bytes": 922158,
+    "artifact_zip_sha256": "716e97337791c6170507e8f7e7c831f62fa062fcadfe0024338dafcaf4fe7247",
+    "artifact_zip_path": "/workspace/attachments/ce7e2781-4ce6-4764-aba2-f1350494ed97/eidetic-child-plan-recovery-final-native.zip",
+    "extraction_path": "/workspace/scratch/child-plan-recovery/native-37424649728",
+    "receipt_sha256": "062321bb40e53d8c2fcc390647fe26423bcb50405438bbbf2237cff9c0879321",
+    "job_log_sha256": "09e664b737ed1279db8b63165dfe670d2a8ad6c8b00f9a150b4b72d3291c99e1",
+    "application_binary_sha256": "71d711be42f3351e7fcd2a6628b1ed2fe4bb62f2fea3a2cf6295a8b091eaccde",
+    "route": "Real Tauri through maintained launcher/Vite dev UI, supported AT-SPI scroll/geometry and X11 input; production UI build also passed",
+    "window_id": 2097155,
+    "window_pid": 22061,
+    "captures": [
+      {
+        "file": "eidetic-bible-fact-review.png",
+        "sha256": "e5c0fc8f69d1669d683899fa3072f81430bd0511edeb989c1c5291762b81b22d",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-bible-fact-preview.png",
+        "sha256": "5122c2c759eeedea7b3fb3b72912ea6fa70a14a2e7bfb9b8191d85f5c9179bd2",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-bible-fact-accepted.png",
+        "sha256": "2f91eb803ce10a4dfa556c3bcb61d3a16870f02d4d5e9681b1c7589803560286",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-child-plan-pending.png",
+        "sha256": "962b7607804d7c48d7982f9ac7a74c09f84fd9922fa406ff380f20355c950391",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-child-plan-recovery-list.png",
+        "sha256": "1291d813262f450078e55ef0bb4e0aacecca9ee2387ca6b14b7c11213f9557bf",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-child-plan-recovered.png",
+        "sha256": "52d181c65bf43a2d1dfbd9e76d714123d722767e701918602287a13c37a95250",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-child-plan-refused.png",
+        "sha256": "42e983a8574b9ff09ae4910d2eee1f60b8320ae8ae5d98edeef82e3a710c2c0d",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-child-plan-accepted.png",
+        "sha256": "8c5211bfd86970fa5324b504d3bfd5632b6c5419b6a154911f34eacbd10aa353",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      },
+      {
+        "file": "eidetic-story-memory-readable.png",
+        "sha256": "569adda647f0908a0ee801cf0127a306148eec4ef22e782d2070cf1858789012",
+        "window_id": 2097155,
+        "pid": 22061,
+        "width": 1440,
+        "height": 960,
+        "hash_verified": true,
+        "viewed": true,
+        "edited": false
+      }
+    ]
+  },
+  "manual_fact_edit": {
+    "before": "Mara's umbrella is red.",
+    "after": "Mara's umbrella is blue.",
+    "revision_event_id": "74af5808-6501-4dc9-bd12-c3fa8e0685d8",
+    "saved_screenplay_preserved": true,
+    "manual_draft_preserved": true
+  },
+  "typed_text_observations": [
+    {
+      "field": "New screenplay text",
+      "expected_length": 85,
+      "actual_text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting.",
+      "exact": true
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 41,
+      "actual_text": "Retained manual draft. The train waits.\n\n",
+      "exact": true
+    },
+    {
+      "field": "TAGLINE Mara's umbrella is blue.",
+      "expected_length": 24,
+      "actual_text": "Mara's umbrella is blue.",
+      "exact": true
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 80,
+      "actual_text": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves at midnight.\n\n",
+      "exact": true
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 83,
+      "actual_text": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves in the morning.\n\n",
+      "exact": true
+    }
+  ],
+  "recovery": {
+    "plan_id": "child_plan.00fcc077-15bb-434d-8340-e2ef9b1ab48f",
+    "parent_node_id": "c40f9657-d619-4258-b136-fbbbdf5149f5",
+    "original_script_inputs": [
+      {
+        "document_id": "script.document.main",
+        "segment_id": "script.segment.d2ed8407-7c49-4f65-8138-5597e3390ebc",
+        "block_id": "script.block.0f254975-64ff-4bb4-955b-8475c9177aff.user",
+        "source_node_id": "d2ed8407-7c49-4f65-8138-5597e3390ebc",
+        "revision_event_id": "b6aab545-0aca-493c-be37-cbd1d9231cd4",
+        "segment_revision_event_id": "01d4f170-0deb-4a3d-a860-62d6c77ee290",
+        "start_ms": 0,
+        "end_ms": 120000,
+        "text": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves at midnight.\n\n"
+      },
+      {
+        "document_id": "script.document.main",
+        "segment_id": "script.segment.c40f9657-d619-4258-b136-fbbbdf5149f5",
+        "block_id": "script.block.c40f9657-d619-4258-b136-fbbbdf5149f5.generated",
+        "source_node_id": "c40f9657-d619-4258-b136-fbbbdf5149f5",
+        "revision_event_id": "67d9d07c-cc90-4d9b-9f62-a4f10cb6c143",
+        "segment_revision_event_id": "42975931-f81c-4016-a8ce-0e8929ad6783",
+        "start_ms": 150000,
+        "end_ms": 300000,
+        "text": "EXT. STATION - NIGHT\n\nEli spots Mara and her blue umbrella."
+      }
+    ],
+    "database_before": {
+      "sha256": "00fbea394c2f7aab740b6a7d90ef4c332852efc64edd798b03ce7e140fe404fd",
+      "table_row_counts": {
+        "affect_dependencies": 0,
+        "affect_mood_labels": 0,
+        "affect_proposal_mood_labels": 0,
+        "affect_proposals": 0,
+        "affect_values": 0,
+        "arcs": 3,
+        "bible_graph_edges": 0,
+        "bible_graph_fields": 1,
+        "bible_graph_nodes": 1,
+        "bible_graph_parts": 1,
+        "bible_graph_snapshot_fields": 0,
+        "bible_graph_snapshots": 0,
+        "bible_reference_proposals": 0,
+        "change_events": 10,
+        "child_plan_child_references": 2,
+        "child_plan_children": 1,
+        "child_plans": 1,
+        "commands": 10,
+        "context_evaluations": 0,
+        "context_influence_records": 0,
+        "episode_structure": 1,
+        "node_arcs": 12,
+        "nodes": 18,
+        "object_revision_fields": 126,
+        "object_revisions": 31,
+        "project": 1,
+        "propagation_proposals": 1,
+        "reference_documents": 0,
+        "relationships": 0,
+        "schema_meta": 1,
+        "script_blocks": 2,
+        "script_documents": 1,
+        "script_generations": 2,
+        "script_impact_proposal_bindings": 1,
+        "script_locks": 0,
+        "script_segments": 2,
+        "script_spans": 2,
+        "semantic_dependencies": 12,
+        "semantic_dependency_revisions": 12,
+        "tracks": 5,
+        "ydoc_state": 1
+      }
+    },
+    "provider_request_count_before": 4,
+    "route": [
+      "Close preview",
+      "select another scene",
+      "reselect target scene",
+      "Review saved timeline plans",
+      "Review plan 1"
+    ],
+    "real_model": false,
+    "database_after": {
+      "sha256": "00fbea394c2f7aab740b6a7d90ef4c332852efc64edd798b03ce7e140fe404fd",
+      "table_row_counts": {
+        "affect_dependencies": 0,
+        "affect_mood_labels": 0,
+        "affect_proposal_mood_labels": 0,
+        "affect_proposals": 0,
+        "affect_values": 0,
+        "arcs": 3,
+        "bible_graph_edges": 0,
+        "bible_graph_fields": 1,
+        "bible_graph_nodes": 1,
+        "bible_graph_parts": 1,
+        "bible_graph_snapshot_fields": 0,
+        "bible_graph_snapshots": 0,
+        "bible_reference_proposals": 0,
+        "change_events": 10,
+        "child_plan_child_references": 2,
+        "child_plan_children": 1,
+        "child_plans": 1,
+        "commands": 10,
+        "context_evaluations": 0,
+        "context_influence_records": 0,
+        "episode_structure": 1,
+        "node_arcs": 12,
+        "nodes": 18,
+        "object_revision_fields": 126,
+        "object_revisions": 31,
+        "project": 1,
+        "propagation_proposals": 1,
+        "reference_documents": 0,
+        "relationships": 0,
+        "schema_meta": 1,
+        "script_blocks": 2,
+        "script_documents": 1,
+        "script_generations": 2,
+        "script_impact_proposal_bindings": 1,
+        "script_locks": 0,
+        "script_segments": 2,
+        "script_spans": 2,
+        "semantic_dependencies": 12,
+        "semantic_dependency_revisions": 12,
+        "tracks": 5,
+        "ydoc_state": 1
+      }
+    },
+    "provider_request_count_after": 4,
+    "exact_original_screenplay_evidence_visible": true,
+    "exact_canonical_child_proposal_reopened": true,
+    "canonical_state_history_and_receipt_unchanged": true,
+    "no_extra_provider_request": true,
+    "explicit_acceptance_still_required": true,
+    "status": "native_saved_child_plan_recovery_passed_with_synthetic_http_fixture",
+    "later_manual_edit_refused_recovered_plan": true,
+    "later_fresh_plan_explicitly_accepted": true
+  },
+  "child_planning": {
+    "initial_plan_id": "child_plan.00fcc077-15bb-434d-8340-e2ef9b1ab48f",
+    "pending_preserves_children_and_screenplay": true,
+    "first_manual_edit": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves at midnight.\n\n",
+    "real_model": false,
+    "initial_canonical_proposal": {
+      "children": [
+        [
+          "Midnight departure",
+          "Mara takes her blue umbrella to the midnight train.",
+          null
+        ]
+      ],
+      "references": [
+        [
+          "character",
+          "Mara",
+          0
+        ],
+        [
+          "prop",
+          "Umbrella",
+          0
+        ]
+      ],
+      "raw_fixture_has_padded_name_trailing_outline_newline_empty_location_and_padded_blank_references": true
+    },
+    "stale_acceptance_refused_and_pending_retained": true,
+    "fresh_canonical_proposal": {
+      "children": [
+        [
+          "Morning departure",
+          "Mara takes her blue umbrella to the morning train.",
+          null
+        ]
+      ],
+      "references": [
+        [
+          "character",
+          "Mara",
+          0
+        ],
+        [
+          "prop",
+          "Umbrella",
+          0
+        ]
+      ],
+      "raw_fixture_has_padded_name_trailing_outline_newline_empty_location_and_padded_blank_references": true
+    },
+    "status": "native_child_plan_memory_passed_with_synthetic_http_fixture",
+    "fresh_plan_id": "child_plan.e8d0b4b9-1081-4e06-992a-d8653dc14103",
+    "final_manual_edit": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves in the morning.\n\n",
+    "accepted_children": [
+      [
+        "a41a0174-68c1-45a2-83fc-7b050a5035e6",
+        "Morning departure",
+        "{\"notes\":\"Mara takes her blue umbrella to the morning train.\",\"content\":\"\",\"status\":\"NotesOnly\"}"
+      ]
+    ],
+    "explicit_timeline_acceptance_preserved_screenplay_and_bible": true,
+    "review_cleared_in_ui": true,
+    "accepted_child_visible_in_native_timeline": true,
+    "accepted_child_native_bounds": [
+      212,
+      883,
+      108,
+      11
+    ]
+  },
+  "readable_frame": {
+    "supported_actions": [
+      "Resize panels keyboard Up",
+      "AT-SPI SCROLL_TOP_LEFT"
+    ],
+    "editor_divider_before": [
+      280,
+      322,
+      834,
+      6
+    ],
+    "editor_divider_after": [
+      280,
+      172,
+      834,
+      6
+    ],
+    "expected_saved_text": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves in the morning.\n\n",
+    "bounds": [
+      280,
+      178,
+      1114,
+      564
+    ],
+    "saved_text_ranges": {
+      "INT. CAFE - NIGHT": [
+        309,
+        321,
+        120,
+        12
+      ],
+      "Mara takes her blue umbrella.": [
+        309,
+        348,
+        204,
+        13
+      ],
+      "The train leaves in the morning.": [
+        309,
+        375,
+        225,
+        13
+      ]
+    },
+    "model_responses": "synthetic localhost HTTP/SSE",
+    "accepted_child_native_bounds": [
+      212,
+      883,
+      108,
+      11
+    ]
+  },
+  "providers": {
+    "kind": "Synthetic localhost HTTP/SSE fixtures through production provider client",
+    "calls": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "child_initial",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": false,
+        "real_model": false
+      },
+      {
+        "kind": "child_fresh",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": false,
+        "real_model": false
+      }
+    ],
+    "real_model_quality_qualified": false
+  },
+  "preserved_first_failure": {
+    "run_id": 37423029259,
+    "job_id": 112136412620,
+    "conclusion": "failure",
+    "qualification_sha": "9a514cc299b47e96bec85cda2ff4d4ac83e582c4",
+    "artifact_id": 11394610357,
+    "artifact_zip_sha256": "f9f0ddcc23beaf9ec09721a2c813baebc6e722fbe9a81a4f19a4beaa9c96f9bf",
+    "receipt_sha256": "bd0f0b29bdd91fcdf692ca1ac0101cd3da743bea43c48c718e5fec93893013c8",
+    "job_log_sha256": "36e460a861d327e9672cc1536ffac0ed928929f287a8e3deeeb2465043f9380a",
+    "failure": "RuntimeError: Timed out waiting for visible stale child plan refusal",
+    "recovery_checks_passed": true,
+    "captures_preserved": true,
+    "correction": "Qualification locator uses supported ui.reveal for exact native refusal after expanded receipt scroll; application source/guards unchanged."
+  },
+  "local_receipts": {
+    "test_receipt": {
+      "path": "/workspace/scratch/child-plan-recovery/local-test-receipt.json",
+      "sha256": "a53ee0fc7562410554931ac538c3948f4eaac8971b0fd0956bbc88d5c8652164"
+    },
+    "source_audit": {
+      "path": "/workspace/scratch/child-plan-recovery/source-audit.json",
+      "sha256": "ce4fd155bb8338f2bc5a3e556df0e34982e69c4679a0f8acd1aed6dcdac59047"
+    },
+    "frontend_checks": {
+      "path": "/workspace/scratch/child-plan-recovery-native/frontend/checks.json",
+      "sha256": "b1cb0c1f4586349c1604a81bda6b2d2d6882cdcb5158062c195a41b02a90204c"
+    }
+  },
+  "limits": [
+    "Project-switch recovery remains deferred",
+    "Full child-plan Bible/affect/arc-description source binding remains separate",
+    "Fresh AppState storage proof does not qualify GUI restart",
+    "No real-model quality, SDK inference, inspector GUI or relationship-drawing claim"
+  ],
+  "ownership": "Parent handles PRs, reviews, merge and Library delivery; no external review requests, credential changes or paid services."
+}
