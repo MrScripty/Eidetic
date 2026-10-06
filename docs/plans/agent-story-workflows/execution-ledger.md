@@ -1556,3 +1556,23 @@ artifact `11381572325`, digest
 six untouched viewed PNGs and receipt in native-37391688210. Complete Bible/affect/
 arc-description source binding and durable pending-review UI recovery remain
 later criteria. Parent owns integration and Library delivery.
+
+### Child-plan normalization/refusal repair
+
+Independent planning review found raw HTTP proposals differ from the existing
+store's trimmed names/outlines/locations and ordered nonblank references. Three
+new actual public generation/apply service regressions fail on frozen 122c71e
+(exit 101, 0/3), then pass after returning the durable children from the existing
+projection. No new normalizer/state or relaxed acceptance matching: a changed
+outline, including just an added newline, still refuses transactionally. Pending
+status/history/timeline and exact saved screenplay are preserved after refusal;
+canonical acceptance and identical-command replay succeed. Empty/padded location
+cases and filtered character/prop order (including duplicates) are exercised.
+
+Actual full server 435 and frontend 429 tests pass; child controller/SSR 18 tests
+cover native-provenance refusal, Close/fresh generation, uncertainty-to-refusal
+recovery and lookalike/internal errors retaining exact payload/command retries.
+Strict server all-target Clippy and ordinary precommit checks are required before
+publication. Synthetic HTTP responses only; prior native screenshots qualify the
+preserved old source until a fresh source-bound run. Relationship receipt repair
+remains separate. Parent retains review/integration/delivery ownership.

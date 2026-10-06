@@ -962,3 +962,16 @@ and explicit conversational review (objective 1/4).
   text edits. Frontend pending/retry/lifetime and SSR checks are mechanical;
   new native UI evidence requires a source-bound run. SDK and real-model quality
   remain unqualified.
+
+## Child-plan normalization/refusal repair
+
+Preserve application 122c71e, qualification 9b4c5ff and report 85bed285.
+Independent planning review identified raw provider children diverging from the
+store's canonical proposal. Reproduce via actual HTTP/AppState/SQLite commands;
+return the existing durable child projection for review instead of raw model
+strings. Storage remains the single normalization owner and acceptance still
+compares exact persisted material. Preserve saved screenplay and receipt guards.
+Classify only exact writer-transaction refusals with native conflict provenance
+as definite; other failures retain immutable acceptance retry custody. Qualify
+whitespace, empty locations, ordered/blank references and Close/fresh-generation
+recovery. Relationship receipt coverage is a separate follow-up repair.

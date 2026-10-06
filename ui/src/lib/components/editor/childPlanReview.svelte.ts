@@ -95,11 +95,7 @@ export function createChildPlanReview(options: {
     } catch (error) {
       if (!current(token)) return;
       state.error = error instanceof Error ? error.message : String(error);
-      // This exact native refusal occurs in the writer transaction after replay
-      // admission, so it proves no acceptance committed. Other errors keep retry.
-      state.uncertain = !state.error.includes(
-        'Child plan story context changed; generate and review a fresh plan before accepting',
-      );
+      state.uncertain = !isChildPlanRefusal(error);
       if (!state.uncertain) submission = null;
     } finally {
       if (current(token)) state.busy = false;
@@ -113,4 +109,20 @@ export function createChildPlanReview(options: {
     submission = null;
   }
   return { state, syncOwner, generate, accept, close };
+}
+
+function isChildPlanRefusal(failure: unknown): boolean {
+  if (!(failure instanceof Error)) return false;
+  const native = failure.cause;
+  if (typeof native !== 'object' || native === null || !('kind' in native)) return false;
+  // These exact native validation failures roll back the writer transaction.
+  // Replay precedes validation. Error text or broad kinds alone cannot prove
+  // that completion was refused rather than its acknowledgement being lost.
+  return (
+    native.kind === 'conflict' &&
+    [
+      'Child plan story context changed; generate and review a fresh plan before accepting',
+      'Accepted children differ from the reviewed child plan',
+    ].includes(failure.message)
+  );
 }

@@ -85,14 +85,18 @@ pub async fn generate_children(
                 Some(memory),
             )
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
-            Ok::<_, BackendError>(())
+            // Storage owns proposal normalization. Present that exact durable
+            // material for review, never the unnormalized provider response.
+            let mut reviewed = recorded;
+            reviewed.children =
+                crate::child_plan_projection_store::load_child_plan_children(&conn, &reviewed.id)
+                    .map_err(|error| BackendError::internal(error.to_string()))?;
+            Ok::<_, BackendError>(reviewed)
         })
         .await
         .map_err(|error| BackendError::internal(error.to_string()))?
     })
-    .await?;
-
-    Ok(plan)
+    .await
 }
 
 pub(crate) async fn attach_ai_generation_context_to_children(

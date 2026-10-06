@@ -136,7 +136,9 @@ async fn edit(fixture: &Fixture, text: &str) {
     .unwrap();
 }
 
-fn provider() -> (
+fn provider(
+    children: serde_json::Value,
+) -> (
     String,
     tokio::sync::oneshot::Receiver<serde_json::Value>,
     std::sync::mpsc::Sender<()>,
@@ -177,7 +179,6 @@ fn provider() -> (
         }
         wait.recv_timeout(std::time::Duration::from_secs(5))
             .unwrap();
-        let children = serde_json::json!([{"name":"Midnight departure", "outline":"Mara takes her blue umbrella to the midnight train.", "weight":1.0, "characters":[], "props":[]}]);
         let body = serde_json::json!({"choices":[{"message":{"content":children.to_string()}}]})
             .to_string();
         write!(socket, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", body.len(), body).unwrap();
@@ -193,7 +194,19 @@ async fn planning(
     std::sync::mpsc::Sender<()>,
     std::thread::JoinHandle<()>,
 ) {
-    let (url, request, release, thread) = provider();
+    planning_with_children(fixture, serde_json::json!([{"name":"Midnight departure", "outline":"Mara takes her blue umbrella to the midnight train.", "weight":1.0, "characters":[], "props":[]}])).await
+}
+
+async fn planning_with_children(
+    fixture: &Fixture,
+    children: serde_json::Value,
+) -> (
+    tokio::task::JoinHandle<Result<ChildPlan, BackendError>>,
+    serde_json::Value,
+    std::sync::mpsc::Sender<()>,
+    std::thread::JoinHandle<()>,
+) {
+    let (url, request, release, thread) = provider(children);
     *fixture.state.ai_config.lock() = AiConfig {
         backend_type: BackendType::LlamaCpp,
         model: "synthetic-child-plan".into(),
@@ -573,4 +586,136 @@ async fn unselected_distant_screenplay_text_edit_does_not_stale_the_pending_plan
     .await
     .unwrap();
     assert_eq!(script(&fixture), before);
+}
+
+async fn normalized_plan_round_trip(raw: serde_json::Value, expected: serde_json::Value) {
+    let fixture = fixture().await;
+    let before = script(&fixture);
+    let (original, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    let (task, _, release, provider) =
+        planning_with_children(&fixture, serde_json::json!([raw])).await;
+    release.send(()).unwrap();
+    let plan = task.await.unwrap().unwrap();
+    provider.join().unwrap();
+    let conn = crate::sqlite::open_write_connection(&fixture.path).unwrap();
+    let durable =
+        crate::child_plan_projection_store::load_child_plan_children(&conn, &plan.id).unwrap();
+    assert_eq!(
+        serde_json::to_value(&plan.children).unwrap(),
+        serde_json::to_value(durable).unwrap()
+    );
+    let returned = serde_json::to_value(&plan.children[0]).unwrap();
+    for (field, value) in expected.as_object().unwrap() {
+        assert_eq!(&returned[field], value, "canonical field {field}");
+    }
+    assert_eq!(plan.script_context.as_ref().unwrap()[0].text, AFTER);
+    assert_eq!(script(&fixture), before);
+    let (pending, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    assert_eq!(
+        serde_json::to_value(&pending.timeline).unwrap(),
+        serde_json::to_value(&original.timeline).unwrap()
+    );
+    let count: i64 = conn
+        .query_row("SELECT count(*) FROM commands", [], |row| row.get(0))
+        .unwrap();
+    let mut changed = accept_command(&plan);
+    changed["payload"]["children"][0]["outline"] =
+        serde_json::json!(format!("{}\n", plan.children[0].outline));
+    let refused = crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(changed).unwrap(),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(
+        refused,
+        BackendError::conflict("Accepted children differ from the reviewed child plan")
+    );
+    assert_eq!(
+        conn.query_row("SELECT count(*) FROM commands", [], |row| row
+            .get::<_, i64>(0))
+            .unwrap(),
+        count
+    );
+    let (unchanged, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    assert_eq!(
+        serde_json::to_value(&unchanged.timeline).unwrap(),
+        serde_json::to_value(&original.timeline).unwrap()
+    );
+    let projection =
+        crate::child_plan_projection_store::load_child_plan_list_projection(&conn).unwrap();
+    assert_eq!(
+        projection.payload.plans[0].status,
+        eidetic_core::ai::backend::ChildPlanStatus::Pending
+    );
+    assert_eq!(script(&fixture), before);
+    let command = accept_command(&plan);
+    let accepted = crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(command.clone()).unwrap(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        serde_json::to_value(accepted).unwrap()["outcome"],
+        "recorded"
+    );
+    let (applied, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    assert!(
+        applied
+            .timeline
+            .nodes
+            .iter()
+            .any(|node| node.parent_id == Some(fixture.parent)
+                && node.name == plan.children[0].name
+                && node.content.notes == plan.children[0].outline)
+    );
+    let projection =
+        crate::child_plan_projection_store::load_child_plan_list_projection(&conn).unwrap();
+    assert_eq!(
+        projection.payload.plans[0].status,
+        eidetic_core::ai::backend::ChildPlanStatus::Applied
+    );
+    let replay = crate::command_service::apply_timeline_children(
+        &fixture.state,
+        serde_json::from_value(command).unwrap(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        serde_json::to_value(replay).unwrap()["outcome"],
+        "already_recorded"
+    );
+    assert_eq!(script(&fixture), before);
+}
+
+#[tokio::test]
+async fn actual_http_child_plan_reviews_and_accepts_trimmed_name_and_multiline_outline() {
+    normalized_plan_round_trip(
+        serde_json::json!({"name":" Departure ", "outline":" First line.\nSecond line.\n\n", "weight":1.0}),
+        serde_json::json!({"name":"Departure", "outline":"First line.\nSecond line."}),
+    ).await;
+}
+
+#[tokio::test]
+async fn actual_http_child_plan_reviews_and_accepts_empty_and_padded_locations() {
+    for (location, expected) in [
+        ("", serde_json::Value::Null),
+        (" \t", serde_json::Value::Null),
+        (" Station ", serde_json::json!("Station")),
+    ] {
+        normalized_plan_round_trip(
+            serde_json::json!({"name":"Departure", "outline":"Mara departs.", "weight":1.0, "location":location}),
+            serde_json::json!({"location":expected}),
+        ).await;
+    }
+}
+
+#[tokio::test]
+async fn actual_http_child_plan_reviews_and_accepts_filtered_ordered_character_and_prop_references()
+{
+    normalized_plan_round_trip(
+        serde_json::json!({"name":"Departure", "outline":"Mara departs.", "weight":1.0, "characters":[" Mara "," ","Ivo","Mara"], "props":["", " Umbrella ", "Ticket", " \n"]}),
+        serde_json::json!({"characters":["Mara","Ivo","Mara"], "props":["Umbrella","Ticket"]}),
+    ).await;
 }

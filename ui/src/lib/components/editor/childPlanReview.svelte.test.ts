@@ -108,20 +108,62 @@ it.each(['selection', 'selection-aba', 'session', 'unmount'])(
   },
 );
 
-it('retains the proposal and visible error after definite native context refusal', async () => {
+it.each([
+  'Child plan story context changed; generate and review a fresh plan before accepting',
+  'Accepted children differ from the reviewed child plan',
+])('allows Close and fresh generation after definite native refusal: %s', async (message) => {
   const f = fixture();
   await f.review.generate();
-  f.apply.mockRejectedValue(
-    new Error(
-      'Child plan story context changed; generate and review a fresh plan before accepting',
-    ),
-  );
+  f.apply.mockRejectedValue(new Error(message, { cause: { kind: 'conflict', message } }));
   await f.review.accept();
   expect(f.review.state.plan).toEqual(plan);
-  expect(f.review.state.error).toContain('fresh plan');
+  expect(f.review.state.error).toBe(message);
   expect(f.review.state.uncertain).toBe(false);
   f.review.close();
   expect(f.review.state.plan).toBeNull();
+  await f.review.generate();
+  expect(f.generate).toHaveBeenCalledTimes(2);
+  f.apply.mockResolvedValueOnce({});
+  await f.review.accept();
+  expect(f.apply.mock.calls[1]?.[1]).not.toBe(f.apply.mock.calls[0]?.[1]);
+  expect(f.review.state.plan).toBeNull();
+});
+
+it.each([
+  new Error('Accepted children differ from the reviewed child plan'),
+  new Error('Child plan story context changed; generate and review a fresh plan before accepting'),
+  new Error('Accepted children differ from the reviewed child plan', {
+    cause: { kind: 'internal' },
+  }),
+  new Error('Different validation error', { cause: { kind: 'conflict' } }),
+])('keeps lookalike or unproven completion errors uncertain: %s', async (error) => {
+  const f = fixture();
+  await f.review.generate();
+  f.apply.mockRejectedValueOnce(error);
+  await f.review.accept();
+  expect(f.review.state.uncertain).toBe(true);
+  f.review.close();
+  await f.review.generate();
+  expect(f.generate).toHaveBeenCalledOnce();
+  await f.review.accept();
+  expect(f.apply.mock.calls[1]).toEqual(f.apply.mock.calls[0]);
+});
+
+it('unlocks fresh generation after an exact uncertain retry receives a definite refusal', async () => {
+  const f = fixture();
+  const message = 'Accepted children differ from the reviewed child plan';
+  await f.review.generate();
+  f.apply
+    .mockRejectedValueOnce(new Error('Acknowledgement lost'))
+    .mockRejectedValueOnce(new Error(message, { cause: { kind: 'conflict', message } }));
+  await f.review.accept();
+  await f.review.accept();
+  expect(f.apply.mock.calls[1]).toEqual(f.apply.mock.calls[0]);
+  expect(f.review.state.uncertain).toBe(false);
+  await f.review.generate();
+  f.apply.mockResolvedValueOnce({});
+  await f.review.accept();
+  expect(f.apply.mock.calls[2]?.[1]).not.toBe(f.apply.mock.calls[0]?.[1]);
 });
 
 it('retries an uncertain acceptance using the exact payload and command identity', async () => {
