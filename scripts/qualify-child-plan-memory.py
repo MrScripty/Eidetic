@@ -61,6 +61,74 @@ class ChildProvider(bible.BibleFactProvider):
         self.wfile.write(response)
 
 
+
+def inside_writing_area(rect, frame):
+    x, y, width, height = rect
+    left, top, right, bottom = frame
+    return width > 0 and height > 0 and left <= x and top <= y and x + width <= right and y + height <= bottom
+
+
+def readable_saved_screenplay(application, window, expected, evidence):
+    """Use existing resize keyboard controls and native scroll; never change CSS/text."""
+    geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
+        ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
+    def editor_divider():
+        return ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+            and n.name == 'Resize panels' and is_editor_divider(
+                tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)), geometry['WIDTH'], geometry['HEIGHT']))
+    divider = ui.wait_for('native editor/script resize control', editor_divider)
+    before = tuple(divider.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+    ui.click_control(divider, window)
+    # The existing panel control handles Up with a 24px step and its own minimum.
+    ui.command('xdotool', 'key', '--clearmodifiers', *(['Up'] * 7))
+    def resized():
+        current = editor_divider()
+        if current is None:
+            return None
+        rect = tuple(current.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+        return rect if rect[1] < before[1] else None
+    after = ui.wait_for('script writing area enlarged through supported panel resize', resized)
+    block = ui.wait_for('canonical morning screenplay block', lambda: ui.screenplay_block(application, 'The train leaves in the morning.'))
+    block.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
+    def visible_ranges():
+        application.clear_cache()
+        timeline_divider = ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+            and n.name == 'Resize panels'
+            and tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))[2] >= geometry['WIDTH'] - 10)
+        if timeline_divider is None:
+            return None
+        bottom = tuple(timeline_divider.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))[1]
+        frame = (after[0], after[1] + after[3], after[0] + after[2], bottom)
+        lines = [line for line in expected.splitlines() if line]
+        ranges = {}
+        # Freshly reacquire the saved, non-editing block after layout/scroll.
+        saved = next((n for n in ui.walk(application) if n.name == 'Screenplay block'
+            and any('The train leaves in the morning.' in ui.text_of(child) for child in ui.walk(n))), None)
+        if saved is None:
+            return None
+        for node in ui.walk(saved):
+            value = ui.text_of(node).strip()
+            if value not in lines or not ui.visible(node):
+                continue
+            try:
+                native = node.queryText()
+                rect = tuple(native.getRangeExtents(0, len(value), ui.pyatspi.XY_SCREEN))
+            except NotImplementedError:
+                continue
+            if inside_writing_area(rect, frame):
+                ranges[value] = list(rect)
+        evidence['readable_writing_area_observation'] = {'bounds': list(frame), 'saved_text_ranges': ranges}
+        return evidence['readable_writing_area_observation'] if len(ranges) == len(lines) else None
+    observed = ui.wait_for('all exact saved screenplay lines fully within the native writing area', visible_ranges)
+    evidence['readable_writing_area'] = {'supported_actions': ['Resize panels keyboard Up', 'AT-SPI SCROLL_TOP_LEFT'],
+        'editor_divider_before': list(before), 'editor_divider_after': list(after),
+        'expected_saved_text': expected, **observed, 'model_responses': 'synthetic localhost HTTP/SSE'}
+
+
+def is_editor_divider(rect, width, height):
+    x, y, w, h = rect
+    return x > 100 and w > width // 3 and 0 < h <= 10 and 0 < y < height // 2
+
 def child_flow(application, window, database, fixture, evidence, checkpoint, capture):
     a, b = fixture['a']['id'], fixture['b']['id']
     original_b = ui.blocks(database, b)[0]
@@ -170,6 +238,14 @@ def child_flow(application, window, database, fixture, evidence, checkpoint, cap
         accepted_child_native_bounds=list(rendered[1]))
     checkpoint('fresh screenplay-aware timeline plan accepted explicitly')
     capture('eidetic-child-plan-accepted.png')
+    readable_saved_screenplay(application, window, MORNING, evidence)
+    if ui.blocks(database, a)[0] != latest or ui.blocks(database, b)[0] != original_b:
+        raise RuntimeError('Readable capture layout actions changed saved screenplay')
+    visible_beat = ui.wait_for('accepted beat remains visible after layout adjustment',
+        lambda: ui.native_timeline_clip(application, 'Morning departure', window))
+    evidence['readable_writing_area']['accepted_child_native_bounds'] = list(visible_beat[1])
+    checkpoint('readable saved screenplay, Bible and accepted timeline together')
+    capture('eidetic-story-memory-readable.png')
 
 
 if __name__ == '__main__':

@@ -86,5 +86,18 @@ class ChildProviderTests(unittest.TestCase):
                 driver.ui.wait_for('root', check)
 
 
+class ReadableCaptureGeometryTests(unittest.TestCase):
+    def test_rejects_partially_clipped_or_empty_text_even_when_native_showing(self):
+        frame = (280, 180, 1114, 568)
+        self.assertTrue(driver.inside_writing_area((300, 200, 250, 12), frame))
+        for rect in [(279, 200, 250, 12), (1000, 200, 250, 12), (300, 170, 250, 12), (300, 560, 250, 12), (300, 200, 0, 12)]:
+            self.assertFalse(driver.inside_writing_area(rect, frame))
+
+    def test_only_the_supported_editor_script_divider_is_selected(self):
+        self.assertTrue(driver.is_editor_divider((280, 320, 834, 6), 1440, 960))
+        self.assertFalse(driver.is_editor_divider((0, 566, 1440, 6), 1440, 960))
+        self.assertFalse(driver.is_editor_divider((1114, 20, 6, 548), 1440, 960))
+
+
 if __name__ == '__main__':
     unittest.main()
