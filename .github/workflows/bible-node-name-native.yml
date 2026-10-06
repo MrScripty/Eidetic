@@ -24,7 +24,7 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: ca69c3795bb47264bf53474b20062779144d43c0
+      EIDETIC_CAPTURE_SOURCE: d59d503ccfb41871fcbbd9689932a84fe35c605f
     steps:
       - uses: actions/checkout@v4
         with:
