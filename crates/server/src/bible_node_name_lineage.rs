@@ -94,13 +94,18 @@ pub(crate) fn current_revision(
     if crate::bible_graph_store::load_node(conn, node_id)?.is_none() {
         return Ok(None);
     }
-    let event: Option<String> = conn.query_row(
-        "SELECT r.change_event_id FROM object_revisions r
-         JOIN object_revision_fields f ON f.revision_id=r.id JOIN change_events e ON e.id=r.change_event_id
-         WHERE r.object_kind='bible_node' AND r.object_id=?1 AND f.field_key='name' AND f.new_type='text'
+    let event: Option<String> = conn
+        .query_row(
+            "SELECT r.change_event_id FROM object_revisions r
+         JOIN change_events e ON e.id=r.change_event_id
+         WHERE r.object_kind='bible_node' AND r.object_id=?1
+         AND (r.operation='delete' OR EXISTS(SELECT 1 FROM object_revision_fields f
+              WHERE f.revision_id=r.id AND f.field_key='name' AND f.new_type='text'))
          ORDER BY e.rowid DESC,r.rowid DESC LIMIT 1",
-        [node_id.as_str()], |row| row.get(0),
-    ).optional()?;
+            [node_id.as_str()],
+            |row| row.get(0),
+        )
+        .optional()?;
     let event = event.ok_or_else(invalid)?;
     Ok(Some(ChangeEventId(uuid::Uuid::parse_str(&event).map_err(
         |error| HistoryStoreError::InvalidId(error.to_string()),
