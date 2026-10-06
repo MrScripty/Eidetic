@@ -1810,3 +1810,19 @@ prior failed runs, frozen sources and source-level reproductions. No real-model
 quality, native multi-user race or embedding dependency claim. Final steering
 permits a normal draft PR after current-main/duplication checks; parent retains
 review requests/slot, final CI/review, merge and Library delivery.
+
+### PR14 committed label replay after source deletion
+
+The valid review finding reproduces on preserved bc041d8: canonical label commit,
+edge deletion and source-node deletion make exact command replay fail while
+constructing its result. Repair55536fa returns AlreadyRecorded with no projection
+before any live graph lookup and forwards a label-only optional response through
+service/Tauri/UI. The store preserves source/target caches and clears pending.
+The actual backend regression passes under SQLite query_only with every logical
+row and total_changes unchanged; fresh deleted commands and mismatched replay
+payloads still refuse unchanged. Full server472/core119/UI458, strict server
+all-target Clippy, frontend gates and no-download5 pass. Local desktop check is
+blocked by missing glib-2.0.pc; ordinary hosted PR CI owns native adapter checks.
+Original report/manifest/screenshots and bc041d8 remain intact. Detailed source,
+limits and sealed receipts: `docs/reports/bible-relationship-replay-repair.md`
+and its companion JSON. No thread resolution, reviewer request or merge.

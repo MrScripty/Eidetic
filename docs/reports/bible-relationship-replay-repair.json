@@ -1,0 +1,132 @@
+{
+  "predecessor_commit": "bc041d890a54a8124cab428d8e50bfab5b47d0b3",
+  "predecessor_tree": "2798f1b221cf9504dba40825d8eddc416dc8a528",
+  "repair_commit": "55536fa85fb91b0673d94e97b9f06b7297f23b12",
+  "repair_tree": "39da595626dd68ff73dc91f859aff6819b4ba42f",
+  "review_url": "https://github.com/MrScripty/Eidetic/pull/14#discussion_r4198977466",
+  "executed_tests": {
+    "core": 119,
+    "server": 472,
+    "ui": 458,
+    "no_download_checker": 5
+  },
+  "desktop_local_check": "blocked: missing glib-2.0.pc",
+  "source_ci_run": 37512093897,
+  "source_ci_status_at_checkpoint": "queued",
+  "original_report_manifest_unchanged": true,
+  "original_native_run": 37505367170,
+  "original_native_qualifies_new_replay": false,
+  "reviewed_thread_resolved": false,
+  "manual_review_request": false,
+  "merged": false,
+  "log_receipts": [
+    {
+      "name": "replay-deleted-source-reproduction-final.log",
+      "sha256": "cba0ed4614f49776bf57e13cc339fcd47921979f7db322f6b4f8b1c170a6460f",
+      "size_bytes": 1115,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/cba0ed4614f49776bf57e13cc339fcd47921979f7db322f6b4f8b1c170a6460f-replay-deleted-source-reproduction-final.log"
+    },
+    {
+      "name": "replay-null-projection-reproduction.log",
+      "sha256": "1b4ed52b935c7eb232ec4fc232bd9ab4756ca8bf37999966cad6714115b9a923",
+      "size_bytes": 3032,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/1b4ed52b935c7eb232ec4fc232bd9ab4756ca8bf37999966cad6714115b9a923-replay-null-projection-reproduction.log"
+    },
+    {
+      "name": "replay-backend-focused.log",
+      "sha256": "6f601e7717a2178229d192b0e87add7a83179e322187ba85e247fa77160708f5",
+      "size_bytes": 1052,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/6f601e7717a2178229d192b0e87add7a83179e322187ba85e247fa77160708f5-replay-backend-focused.log"
+    },
+    {
+      "name": "replay-server-tests.log",
+      "sha256": "102ab2098aac47250263ae0fa0c67dc7ed03d1df729a5ec7bfaf8c48fb17ab2e",
+      "size_bytes": 49586,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/102ab2098aac47250263ae0fa0c67dc7ed03d1df729a5ec7bfaf8c48fb17ab2e-replay-server-tests.log"
+    },
+    {
+      "name": "replay-core-tests.log",
+      "sha256": "c3998e8fb8a30cee4b886a2ce59e83232aeb41a1cde46b4704a6cc308c5a1b32",
+      "size_bytes": 10841,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/c3998e8fb8a30cee4b886a2ce59e83232aeb41a1cde46b4704a6cc308c5a1b32-replay-core-tests.log"
+    },
+    {
+      "name": "replay-ui-tests.log",
+      "sha256": "cb3f2099beb325b1cf2f6aed9c4d2b6bd7821846c0d929d641145725c6f6caf4",
+      "size_bytes": 6393,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/cb3f2099beb325b1cf2f6aed9c4d2b6bd7821846c0d929d641145725c6f6caf4-replay-ui-tests.log"
+    },
+    {
+      "name": "replay-ui-typecheck-final.log",
+      "sha256": "aa40d2d4bb10fc014799ccffa5a5c7d4b81dda7e060ab8a0286cfe79743f256c",
+      "size_bytes": 732,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/aa40d2d4bb10fc014799ccffa5a5c7d4b81dda7e060ab8a0286cfe79743f256c-replay-ui-typecheck-final.log"
+    },
+    {
+      "name": "replay-ui-lint.log",
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42",
+      "size_bytes": 251,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42-replay-ui-lint.log"
+    },
+    {
+      "name": "replay-ui-format.log",
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57",
+      "size_bytes": 374,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57-replay-ui-format.log"
+    },
+    {
+      "name": "replay-ui-build.log",
+      "sha256": "d86525b4c7e69892e6ce6d24de012efd19ed7f693e080dd089d54f354f7b1e35",
+      "size_bytes": 3628,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/d86525b4c7e69892e6ce6d24de012efd19ed7f693e080dd089d54f354f7b1e35-replay-ui-build.log"
+    },
+    {
+      "name": "replay-server-clippy.log",
+      "sha256": "9533101f0f5944b905546249320005d6639dba91e35ea0d1f1dd0cf0512b9c3b",
+      "size_bytes": 174,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/9533101f0f5944b905546249320005d6639dba91e35ea0d1f1dd0cf0512b9c3b-replay-server-clippy.log"
+    },
+    {
+      "name": "replay-desktop-check.log",
+      "sha256": "504b72112f6af93396999c0601fc478ced4b6e7f38c0d228ed0380e0276f0da3",
+      "size_bytes": 3237,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/504b72112f6af93396999c0601fc478ced4b6e7f38c0d228ed0380e0276f0da3-replay-desktop-check.log"
+    },
+    {
+      "name": "replay-rustfmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855-replay-rustfmt.log"
+    },
+    {
+      "name": "replay-traceability.log",
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf",
+      "size_bytes": 36,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf-replay-traceability.log"
+    },
+    {
+      "name": "replay-no-download-tests.log",
+      "sha256": "fcf369e01fbb156adb3e0f2554317a528c2530064facb9127519752c79767f1c",
+      "size_bytes": 905,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/fcf369e01fbb156adb3e0f2554317a528c2530064facb9127519752c79767f1c-replay-no-download-tests.log"
+    },
+    {
+      "name": "replay-source-commit.log",
+      "sha256": "c19053c5c78e1bdc318522648bd8ab67a1d9f89f74fc18d7f31c19f2ac4c2e53",
+      "size_bytes": 15276,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/c19053c5c78e1bdc318522648bd8ab67a1d9f89f74fc18d7f31c19f2ac4c2e53-replay-source-commit.log"
+    },
+    {
+      "name": "replay-source-push.log",
+      "sha256": "7f5b36a2738cac567b9da8e685c2ac5808c94f5c23433b3b00638ad39212fd25",
+      "size_bytes": 585,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/7f5b36a2738cac567b9da8e685c2ac5808c94f5c23433b3b00638ad39212fd25-replay-source-push.log"
+    },
+    {
+      "name": "replay-original-evidence-sha256.txt",
+      "sha256": "ee292eb8aab7435fec090fbc05c6d33a4f16a70c12f5ef699c9ebf8f44faf17f",
+      "size_bytes": 227,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/ee292eb8aab7435fec090fbc05c6d33a4f16a70c12f5ef699c9ebf8f44faf17f-replay-original-evidence-sha256.txt"
+    }
+  ]
+}
