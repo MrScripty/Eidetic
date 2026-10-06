@@ -56,6 +56,11 @@ raw size would separate scenarios that share the same contract fixtures.
 
 ## Invariants
 
+- `childPlanningTypes.ts` includes optional original Bible context and exact
+  untimed field revision inputs on child plans. Missing legacy evidence stays
+  unknown. Review and recovery display the recorded facts and relationships
+  without fetching current Bible values or writing screenplay/timeline state.
+
 - Pending child-plan recovery reads the registered `projection_child_plans`
   endpoint through `getChildPlanListProjection`. Backend records retain their
   original canonical children, statuses and screenplay receipts; callers filter

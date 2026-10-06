@@ -52,6 +52,20 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         }
     }))?;
     command_service::create_bible_graph_node(state, create).await?;
+    let eli = serde_json::from_value(serde_json::json!({
+        "id": uuid::Uuid::new_v4(), "payload": {
+            "node_id": "qualification.eli", "schema_key": "character", "name": "Eli", "sort_order": 1
+        }
+    }))?;
+    command_service::create_bible_graph_node(state, eli).await?;
+    let relationship = serde_json::from_value(serde_json::json!({
+        "id": uuid::Uuid::new_v4(), "payload": {
+            "edge_id": "qualification.mara.eli", "from_node_id": "qualification.mara",
+            "to_node_id": "qualification.eli", "edge_kind": "references",
+            "label": "Mara trusts Eli", "directed": true, "sort_order": 0
+        }
+    }))?;
+    command_service::set_bible_graph_edge(state, relationship).await?;
     command_service::set_bible_graph_field(
         state,
         CommandEnvelope::new(SetBibleGraphFieldCommand {
@@ -73,6 +87,9 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
     Ok(
         serde_json::json!({"project_path": saved["saved"], "a": {"id": a.id.0, "name": a.name,
         "start_ms": a.time_range.start_ms, "end_ms": a.time_range.end_ms},
-        "b": {"id": b.id.0, "name": b.name}}),
+        "b": {"id": b.id.0, "name": b.name},
+        "relationship_setup": {"method": "public command_service; not native edge authoring",
+            "edge_id": "qualification.mara.eli", "label": "Mara trusts Eli",
+            "from_node_id": "qualification.mara", "to_node_id": "qualification.eli"}}),
     )
 }

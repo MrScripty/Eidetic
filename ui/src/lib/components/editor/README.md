@@ -36,7 +36,9 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
 | `scriptImpactNotice.ts` | Human-readable labels for the typed input review causes. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
-| `ChildPlanReview.svelte` | Explicit timeline-plan preview, proposed outlines and exact saved screenplay evidence. |
+| `ChildPlanReview.svelte` | Explicit timeline-plan preview, proposed outlines and exact saved screenplay/Bible evidence. |
+| `ChildPlanBibleEvidence.svelte` | Historical consumed Bible fields/revisions, node names, effective timed facts, unresolved identities and untimed graph connections; no current-state fetch. |
+| `ChildPlanBibleEvidence.ssr.test.ts` | Original receipt rendering, safe values, absent/empty evidence, timed unknowns and typed graph/fact provenance. |
 | `childPlanReview.svelte.ts` | Transient review lifecycle; no generation-time apply, guarded selection/session continuations and exact acceptance retry. |
 | `childPlanReview.svelte.test.ts` | Pending-only generation, explicit accept, retired continuations and uncertain acknowledgement regressions. |
 | `childPlanReview.client.test.ts` | Actual client-compiled controller recovery of reactive proposals, original evidence and explicit immutable acceptance. |
@@ -171,3 +173,5 @@ an alternate story owner. Immediate generation admission errors clear streaming
 state and remain visible without discarding authored screenplay drafts.
 
 ScriptImpactNotice distinguishes Bible membership ContextChanged causes from screenplay continuity changes. Existing preview and explicit acceptance remain the only proposal replacement path; saved human text and retained drafts are preserved.
+
+- Bible facts used for this plan displays the original optional public receipt. Recorded empty context is distinct from absent legacy evidence. Untimed field revisions come only from matching recorded node/part/field inputs; timed overrides do not borrow baseline revision custody. Review does not refresh Bible values or alter acceptance payloads, canonical screenplay, drafts or facts.

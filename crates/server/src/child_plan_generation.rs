@@ -2,7 +2,6 @@
 use crate::ai_backends::Backend;
 use crate::ai_service::{
     AiGenerateChildrenRequest, active_sqlite_project, load_ai_affect_projection,
-    load_ai_bible_context_projection,
 };
 use crate::backend_error::BackendError;
 use crate::prompt_format::build_decompose_prompt;
@@ -64,6 +63,7 @@ pub async fn generate_children(
         target_child_level: request.target_child_level,
         children,
         script_context: request.script_context,
+        bible_context: memory.bible_context(),
     };
     let session = state.project_session_gate.clone().lock_owned().await;
     if *state.project_session_id.lock() != session_id
@@ -112,10 +112,14 @@ pub(crate) async fn attach_ai_generation_context_to_children(
             .map_err(|error| BackendError::internal(error.to_string()))?;
         crate::script_store::create_schema(&conn)
             .map_err(|error| BackendError::internal(error.to_string()))?;
+        crate::bible_graph_store::create_schema(&conn)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+        crate::context_influence_store::create_schema(&conn)
+            .map_err(|error| BackendError::internal(error.to_string()))?;
         let tx = conn
             .unchecked_transaction()
             .map_err(|error| BackendError::internal(error.to_string()))?;
-        let memory = crate::child_plan_memory::capture(&tx, node_id)
+        let memory = crate::child_plan_memory::capture(&tx, node_id, story_time_ms)
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
         crate::child_plan_memory::validate_parent(&memory, &parent)
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
@@ -128,9 +132,12 @@ pub(crate) async fn attach_ai_generation_context_to_children(
     request.script_context = Some(memory.script_inputs.clone());
     request.surrounding_context = Default::default();
     request.bible_context = Some(
-        load_ai_bible_context_projection(path.clone(), node_id, story_time_ms)
-            .await?
-            .0,
+        memory
+            .bible_context()
+            .ok_or_else(|| {
+                BackendError::bad_request(crate::child_plan_memory::stale().to_string())
+            })?
+            .context,
     );
     request.affect_context = Some(load_ai_affect_projection(path, node_id).await?);
     Ok(memory)

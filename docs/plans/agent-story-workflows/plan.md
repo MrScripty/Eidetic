@@ -41,6 +41,24 @@ drafts, exact uncertain retries and native stale-result admission. No new store,
 schema, model dependency or project-switch feature. Full Bible/affect/arc source
 binding remains a separate documented criterion.
 
+**Bible binding successor:** Saved-plan recovery is frozen at
+`fbf0f3187e741fcf825062b52a08bb62707eaec9`; work continues separately on
+`feat/child-plan-bible-bindings`. Inspection found child generation loads resolved
+Bible context after its screenplay receipt transaction and discards Bible source
+inputs. Creation-command memory and recovered review expose screenplay only;
+acceptance cannot detect a Bible-only edit. Bind the actual resolved Bible read
+in that existing receipt transaction, retain original facts/relationships for
+review, and reject relevant revision or membership drift before storage/apply.
+Use existing source revisions and command JSON, without a new store or automatic
+screenplay replacement. Legacy missing Bible evidence requires fresh review.
+The bounded graph's node-selection metadata and target context history are
+conservative selection guards; unrelated unselected fact/snapshot/edge changes
+must not alone stale a plan. Affect, arc-description and broader screenplay
+relationship dependencies remain separate. Native qualification must isolate
+Bible drift without changing scripts or placement, inspect original evidence,
+refuse the old plan and explicitly accept a fresh one. Provider responses are
+synthetic; existing targeted screenplay review remains independent.
+
 **Local successor status:** Membership preview value completeness is repaired at
 `3ebb752f131bb233c16d49210ee226de14d2caf2` (report head `8ea7153b`). The separate
 saved-screenplay context-stack bridge now passes 119 core / 283 source-module /

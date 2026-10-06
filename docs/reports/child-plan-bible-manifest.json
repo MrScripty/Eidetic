@@ -1,0 +1,2339 @@
+{
+  "schema_version": 1,
+  "feature": "Bible-bound pending timeline plans",
+  "status": "qualified_with_actual_native_UI_and_synthetic_providers",
+  "base": {
+    "commit": "fbf0f3187e741fcf825062b52a08bb62707eaec9",
+    "tree": "7f873f2cfbc40f17bd7e5f86d45f6faa38016e2f",
+    "branch": "docs/child-plan-recovery-qualification",
+    "unchanged": true
+  },
+  "source": {
+    "commit": "d672f0b36557593a47e34849bd564ca8b244ef2a",
+    "tree": "6fe2a94de91d2d985d58e910bfee812770e5fc34",
+    "branch": "feat/child-plan-bible-bindings"
+  },
+  "qualification": {
+    "commit": "ae96213f6d93a5babcc3f8a2dbebe778cd1c0963",
+    "tree": "8ca63971cd9014425dbbb41b75ff250109db5867",
+    "branch": "test/child-plan-bible-native",
+    "application_dependency_blobs": 579,
+    "application_dependency_blobs_match_source": true
+  },
+  "tests": {
+    "core": 119,
+    "server": 455,
+    "new_bible_service": 11,
+    "frontend": 452,
+    "drivers": 30,
+    "no_download_gate": 5
+  },
+  "strict_checks": {
+    "server_all_target_clippy": "passed",
+    "frontend_errors": 0,
+    "frontend_warnings": 0,
+    "frontend_lint": "passed",
+    "frontend_format": "passed",
+    "production_frontend_build": "passed",
+    "rustfmt": "passed",
+    "decision_traceability": "passed"
+  },
+  "dependency": {
+    "pumas_commit": "a94fd92021f27fdeedb6e2de6e01c41c250ef576",
+    "pumas_tree": "4a6977b88ed532089807183e218a959ac02b724d",
+    "locked_all_features_no_download_gate": "passed",
+    "new_dependencies": false,
+    "onnx_403_bypass": false
+  },
+  "local_receipts": {
+    "targeted-server.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/targeted-server.log",
+      "sha256": "ceeeeb1c59d7e71ec6d8b1a3576a113f414e6faed0be6d38f341f28bfd4ebf78",
+      "bytes": 270499
+    },
+    "targeted-server-final.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/targeted-server-final.log",
+      "sha256": "2270e4a49930cfa2bdfde24e820d5000383c8833eab72f93464b605bfb4d2761",
+      "bytes": 1795
+    },
+    "core-tests.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/core-tests.log",
+      "sha256": "9a5c8c7326e1dfe30cc87ae612b7103bb8cec7327931648e6bf1df12ad9ab3e6",
+      "bytes": 10902
+    },
+    "server-tests.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/server-tests.log",
+      "sha256": "f5bc4881dd33a1870567c7cf9fc20d12d5e60804de4a6c2a8d40baf3288e1407",
+      "bytes": 47152
+    },
+    "clippy.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/clippy.log",
+      "sha256": "476ec4eaaa68964c1f409a8acc81978cc63a23284cb9491c180acb6653b73078",
+      "bytes": 295
+    },
+    "driver-tests-resumed.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/driver-tests-resumed.log",
+      "sha256": "04b5da829ad4f30ec3f91dc6e476b51d113a31d4a9fd9095aa57f0db4d16416f",
+      "bytes": 5891
+    },
+    "no-download-gate.json": {
+      "path": "/workspace/scratch/child-plan-bible-native/no-download-gate.json",
+      "sha256": "1e7297da0ccc2431db2669855534c83715792bbc1434dbdfb062ab0cb7d5ab7d",
+      "bytes": 546
+    },
+    "no-download-tests.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/no-download-tests.log",
+      "sha256": "fcf369e01fbb156adb3e0f2554317a528c2530064facb9127519752c79767f1c",
+      "bytes": 905
+    },
+    "committed-traceability.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/committed-traceability.log",
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf",
+      "bytes": 36
+    },
+    "source-push.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/source-push.log",
+      "sha256": "b977b4ca1e5e059c4893ac15132f572c4143d420b74f9f44d62d12a57abe2981",
+      "bytes": 911
+    },
+    "qualification-commit.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/qualification-commit.log",
+      "sha256": "24e52475b11ab2a2258d864565b404fc300e4f90dd72b9a0a375adfedae124e9",
+      "bytes": 15264
+    },
+    "qualification-push.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/qualification-push.log",
+      "sha256": "41d2eedb70189d05031df20b685a97df766237f70c105eabcb51c9a4be51be4e",
+      "bytes": 899
+    },
+    "driver-tests-relationship-fix.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/driver-tests-relationship-fix.log",
+      "bytes": 6124,
+      "sha256": "7f03ea000285d51708b226ca97390f4dd4c5d53980390a85b2a98b2de43f30cf"
+    },
+    "relationship-fix-commit.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/relationship-fix-commit.log",
+      "bytes": 15095,
+      "sha256": "92f4549ea74f2e829f43a9fd504d1e2eb6f6b17df13bc0e58f5be347fbae8cd6"
+    },
+    "relationship-fix-push.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/relationship-fix-push.log",
+      "bytes": 596,
+      "sha256": "63241032e53ea1f9bbe702bfb8cefec7c1812631f93789dbcde1d7cb6cba6036"
+    },
+    "native-job-112161160637.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/native-job-112161160637.log",
+      "bytes": 439632,
+      "sha256": "362b247b8b57b1dbac0f30aada76a6f501e262fe057551e39e57c06cb9d2374a"
+    },
+    "native-job-112167808053.log": {
+      "path": "/workspace/scratch/child-plan-bible-native/native-job-112167808053.log",
+      "sha256": "b35c4e44d444c8345d667a845f28500b2323644cf491b3709db49e626f1a7de5"
+    }
+  },
+  "frontend_receipts": {
+    "frontend_tests": 452,
+    "frontend_test_files": 76,
+    "svelte_errors": 0,
+    "svelte_warnings": 0,
+    "lint": "passed",
+    "format": "passed",
+    "production_build": "passed",
+    "logs": {
+      "tests": {
+        "path": "/workspace/scratch/child-plan-bible-native/frontend/tests.log",
+        "sha256": "20a457ae8bd8759090ef0006446ab6177cd7942f85ec87fe72e49968b13c7187"
+      },
+      "check": {
+        "path": "/workspace/scratch/child-plan-bible-native/frontend/check.log",
+        "sha256": "b75eccd04c3bed4f622e5ace6df68b8095b551dd407991102413fa9cdeaff0fb"
+      },
+      "lint-format": {
+        "path": "/workspace/scratch/child-plan-bible-native/frontend/lint-format.log",
+        "sha256": "034694bc3f0f36a005721999d93a203a46569135745f001411bd55bc96581d31"
+      },
+      "build": {
+        "path": "/workspace/scratch/child-plan-bible-native/frontend/build.log",
+        "sha256": "00735d4bb59937a3b2fe124572cb457a78881afd0af2ae68419cd056eec9dfe1"
+      }
+    }
+  },
+  "pre_hold_commits_with_unchanged_metadata": {
+    "source": {
+      "sha": "d672f0b36557593a47e34849bd564ca8b244ef2a",
+      "author": "Jeremy <jeremy@vidbacon.com>",
+      "committer": "Jeremy <jeremy@vidbacon.com>"
+    },
+    "qualification": {
+      "sha": "d06bca9b8e8e26ab0e8b9f1b15c056aa9df82095",
+      "author": "Jeremy <jeremy@vidbacon.com>",
+      "committer": "Jeremy <jeremy@vidbacon.com>"
+    }
+  },
+  "future_author_and_committer": "MrScripty <TheEnvironmentGuy@protonmail.com>",
+  "identity_setting_origin": "Owned repository common .git/config files; only user.name and user.email. Worktrees inherit their common repository config.",
+  "native": {
+    "run_id": 37432934110,
+    "job_id": 112167808053,
+    "status": "completed",
+    "conclusion": "success",
+    "qualification_commit": "ae96213f6d93a5babcc3f8a2dbebe778cd1c0963",
+    "application_source_commit": "d672f0b36557593a47e34849bd564ca8b244ef2a",
+    "artifact_id": 11398028606,
+    "artifact_bytes": 1224254,
+    "artifact_zip_sha256": "afb450117503269011e2c39d421375b3550afc56180635e717d74c5febbbf684",
+    "artifact_local_path": "/workspace/attachments/ebd4d052-ad18-4068-93e5-7c4bdf635fa6/eidetic-child-plan-bible-final-native.zip",
+    "extracted_path": "/workspace/scratch/child-plan-bible-native/native-37432934110",
+    "receipt_sha256": "8c4d587a9c8199ccdf87108dadecd4216edf21339ca096a7b076774dbb109eb9",
+    "application_binary_sha256": "959762729fadf00f092aaa171e208d3db7647499fdf85088cdd7171a677811dc",
+    "window_id": 2097155,
+    "window_pid": 22108,
+    "frontend_runtime": "Normal launcher with Vite development UI; production frontend build also passes",
+    "captures": [
+      {
+        "file": "eidetic-bible-fact-review.png",
+        "sha256": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-fact-preview.png",
+        "sha256": "374ea77f33fd1721d6174ac7ccf9fdccb7b94002e66c69e31cc60a9d87c6128c",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-fact-accepted.png",
+        "sha256": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-relationship-inspected.png",
+        "sha256": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-blue-evidence.png",
+        "sha256": "496bde20264b9c59f742ec2afff215ad92383a27cc9c2eedffc01f5115da6ebc",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-gold-review.png",
+        "sha256": "e01935c3bb1190840742b7da2ff84381c9980fb4ed702b5c5d95ae9e35c3073b",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-refused.png",
+        "sha256": "69e357289bfd956dc88a9c4b22bbe03a81d82bb7c340a355669c7a7cdb980651",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-gold-evidence.png",
+        "sha256": "b36733110f567fab58e3b2b664cb24b740de1bc6f60b58143c73c6a26c40f77c",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-accepted-review.png",
+        "sha256": "6883b1f6acd91ab29528e8d1998ce37efbfa2516349ca8df9fd32d3402a88d1a",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-gold-screenplay-preview.png",
+        "sha256": "f67a23c028888e2d0a044e0bb2eb7f73e451b5040ef8c2b2d452e303ae7cec3f",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-gold-screenplay-accepted.png",
+        "sha256": "46c6bea4ad62b34ebd69512683e10c0813596086d0c3b71935ed0292876934f0",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-story-memory-readable.png",
+        "sha256": "e207fee57958a7308b6e5a58febe49fb55963da50f9a04a7995c3b3aa0f78b17",
+        "window_id": 2097155,
+        "pid": 22108
+      }
+    ],
+    "captures_hash_and_dimensions_verified": 12,
+    "captures_viewed": 12,
+    "model_responses": "Synthetic localhost HTTP/SSE through real production provider client",
+    "screenshot_limits": [
+      "Relationship-inspected frame precedes painted scroll; relationship visibly appears in Blue evidence frame",
+      "Refused frame retains proposal but does not visibly contain error text; exact refusal verified via native AT-SPI and all-row preservation",
+      "No edited pixels or injected JavaScript/IPC"
+    ],
+    "qualified_captures": {
+      "eidetic-bible-fact-review.png": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+      "eidetic-bible-fact-preview.png": "374ea77f33fd1721d6174ac7ccf9fdccb7b94002e66c69e31cc60a9d87c6128c",
+      "eidetic-bible-fact-accepted.png": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+      "eidetic-bible-relationship-inspected.png": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+      "eidetic-bible-plan-blue-evidence.png": "496bde20264b9c59f742ec2afff215ad92383a27cc9c2eedffc01f5115da6ebc",
+      "eidetic-bible-plan-gold-review.png": "e01935c3bb1190840742b7da2ff84381c9980fb4ed702b5c5d95ae9e35c3073b",
+      "eidetic-bible-plan-refused.png": "69e357289bfd956dc88a9c4b22bbe03a81d82bb7c340a355669c7a7cdb980651",
+      "eidetic-bible-plan-gold-evidence.png": "b36733110f567fab58e3b2b664cb24b740de1bc6f60b58143c73c6a26c40f77c",
+      "eidetic-bible-plan-accepted-review.png": "6883b1f6acd91ab29528e8d1998ce37efbfa2516349ca8df9fd32d3402a88d1a",
+      "eidetic-bible-gold-screenplay-preview.png": "f67a23c028888e2d0a044e0bb2eb7f73e451b5040ef8c2b2d452e303ae7cec3f",
+      "eidetic-bible-gold-screenplay-accepted.png": "46c6bea4ad62b34ebd69512683e10c0813596086d0c3b71935ed0292876934f0",
+      "eidetic-bible-story-memory-readable.png": "e207fee57958a7308b6e5a58febe49fb55963da50f9a04a7995c3b3aa0f78b17"
+    }
+  },
+  "preserved_local_initial_fixture_failure": {
+    "path": "/workspace/scratch/child-plan-bible-native/targeted-server.log",
+    "sha256": "ceeeeb1c59d7e71ec6d8b1a3576a113f414e6faed0be6d38f341f28bfd4ebf78",
+    "bytes": 270499
+  },
+  "prior_failure_preserved": {
+    "run_id": 37423029259,
+    "artifact_id": 11394610357,
+    "report": "docs/reports/child-plan-recovery-qualification.md",
+    "qualification_for": "predecessor pending-plan recovery; unchanged"
+  },
+  "limits": [
+    "Synthetic providers; no real-model quality or SDK inference",
+    "Relationship setup via public services; native inspection is not native edge authoring",
+    "Conservative selected-entity fields/snapshots and project-wide node metadata selection guards",
+    "Affect and arc-description receipts separate",
+    "Broader screenplay graph/timed-fact dependencies separate",
+    "Project switching deferred"
+  ],
+  "ownership": {
+    "parent": [
+      "PR publication",
+      "reviews",
+      "merges",
+      "Library delivery"
+    ],
+    "external_reviewer_requests": false,
+    "credential_changes": false,
+    "paid_services": false
+  },
+  "initial_qualification": {
+    "commit": "d06bca9b8e8e26ab0e8b9f1b15c056aa9df82095",
+    "tree": "4f84236efe7751aa3583e353da9ebe00b799b0df",
+    "metadata": "Pre-hold Jeremy author/committer preserved unchanged"
+  },
+  "preserved_first_native_failure": {
+    "run_id": 37430869926,
+    "job_id": 112161160637,
+    "conclusion": "failure",
+    "artifact_id": 11397671337,
+    "artifact_bytes": 406925,
+    "artifact_zip_sha256": "51d474c923a643f3270ab0636852147e4f988a6a1d5869d06638a96de98ac1ae",
+    "extracted_path": "/workspace/scratch/child-plan-bible-native/native-37430869926",
+    "receipt_sha256": "fc3ddb06eca9ff09b9ae78854f7058d0c66bfb51a9e50d11ba926df3e48ca6df",
+    "receipt": {
+      "status": "failed",
+      "application_source_sha": "d672f0b36557593a47e34849bd564ca8b244ef2a",
+      "qualification_sha": "d06bca9b8e8e26ab0e8b9f1b15c056aa9df82095",
+      "application_binary_sha256": "959762729fadf00f092aaa171e208d3db7647499fdf85088cdd7171a677811dc",
+      "interaction_route": "Real Tauri; existing AT-SPI geometry and X11 input",
+      "provider": "synthetic localhost HTTP/SSE fixture through production provider client",
+      "real_model_quality_qualified": false,
+      "checkpoints": [
+        {
+          "stage": "public service setup; screenplay initially empty",
+          "elapsed_seconds": 0.298
+        },
+        {
+          "stage": "launch actual desktop and author exact manual screenplay",
+          "elapsed_seconds": 0.346
+        },
+        {
+          "stage": "generate linked scene consuming exact red Bible field",
+          "elapsed_seconds": 22.017
+        },
+        {
+          "stage": "manually edit exact Bible fact through native field and Save",
+          "elapsed_seconds": 25.28
+        },
+        {
+          "stage": "exact fact saved; canonical screenplay and manual draft preserved",
+          "elapsed_seconds": 27.195
+        },
+        {
+          "stage": "downstream review with Bible timeline and screenplay visible",
+          "elapsed_seconds": 27.832
+        },
+        {
+          "stage": "pending targeted preview; explicit acceptance still required",
+          "elapsed_seconds": 28.849
+        },
+        {
+          "stage": "explicit acceptance commits only targeted screenplay",
+          "elapsed_seconds": 30.151
+        }
+      ],
+      "stage": "explicit acceptance commits only targeted screenplay",
+      "window_id": 2097155,
+      "window_pid": 22179,
+      "consumed_fact": {
+        "dependency_id": "generation.8c1e7436-0dd9-442b-8b69-e7f5c0502cf4.bible.2",
+        "revision_event_id": "4416556c-f30a-43d8-91a3-40b0ce827ebe",
+        "exact_value": "Mara's umbrella is red."
+      },
+      "fact_edit": {
+        "before": "Mara's umbrella is red.",
+        "after": "Mara's umbrella is blue.",
+        "revision_event_id": "0eccf5a8-8837-4aa6-a51e-4443b5fc996b",
+        "saved_screenplay_preserved": true,
+        "manual_draft_preserved": true
+      },
+      "captures": [
+        {
+          "file": "eidetic-bible-fact-review.png",
+          "sha256": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+          "window_id": 2097155,
+          "pid": 22179
+        },
+        {
+          "file": "eidetic-bible-fact-preview.png",
+          "sha256": "374ea77f33fd1721d6174ac7ccf9fdccb7b94002e66c69e31cc60a9d87c6128c",
+          "window_id": 2097155,
+          "pid": 22179
+        },
+        {
+          "file": "eidetic-bible-fact-accepted.png",
+          "sha256": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+          "window_id": 2097155,
+          "pid": 22179
+        },
+        {
+          "file": "eidetic-bible-fact-failure.png",
+          "sha256": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+          "window_id": 2097155,
+          "pid": 22179
+        }
+      ],
+      "preview": {
+        "proposal_id": "script.review.16cf0dc4-fd99-4959-974f-f6533906e210",
+        "target_unchanged": true,
+        "current_bible_fact_and_exact_manual_context_consumed": true
+      },
+      "acceptance": {
+        "revision_event_id": "eefeb04f-c519-4130-8e67-eb6894cbbd02",
+        "manual_input_and_fact_unchanged": true,
+        "refreshed_consumed_fact_revision": "0eccf5a8-8837-4aa6-a51e-4443b5fc996b",
+        "old_review_cleared_in_ui": true,
+        "canonical_target_visible_in_ui": true
+      },
+      "failure": "RuntimeError: Timed out waiting for Bible relationship label",
+      "accessibility_snapshot": [
+        {
+          "role": "application",
+          "name": "eidetic-desktop",
+          "showing": false
+        },
+        {
+          "role": "frame",
+          "name": "Eidetic",
+          "showing": true
+        },
+        {
+          "role": "filler",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "filler",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "filler",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "scroll pane",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "document web",
+          "name": "Eidetic",
+          "showing": true
+        },
+        {
+          "role": "section",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "landmark",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Arcs",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Bible",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Review",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "AI",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Refs",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Close sidebar",
+          "showing": false
+        },
+        {
+          "role": "section",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "entry",
+          "name": "Search entities...",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "ALL",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "CHARACTER",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "LOCATION",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "PROP",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "CULTURE",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "EVENT",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "THEME",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "RULE",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "REFERENCE",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add CHR",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add LOC",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add PRP",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add CUL",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add EVT",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add THM",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add RUL",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add REF",
+          "showing": true
+        },
+        {
+          "role": "landmark",
+          "name": "Bible graph",
+          "showing": true
+        },
+        {
+          "role": "list",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "list item",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "toggle button",
+          "name": "Mara 1 connected nodes, 1 edges",
+          "showing": true
+        },
+        {
+          "role": "list item",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "toggle button",
+          "name": "Eli 1 connected nodes, 1 edges",
+          "showing": true
+        },
+        {
+          "role": "panel",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "list item",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Mara CHR",
+          "showing": true
+        },
+        {
+          "role": "list item",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Eli CHR",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "\u00d7 Close",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add Child",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Delete",
+          "showing": true
+        },
+        {
+          "role": "form",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "push button",
+          "name": "Mara",
+          "showing": false
+        },
+        {
+          "role": "description list",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "description term",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "description value",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "heading",
+          "name": "CHILDREN",
+          "showing": false
+        },
+        {
+          "role": "paragraph",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "heading",
+          "name": "Profile",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "SUMMARY",
+          "showing": false
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": true
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "entry",
+          "name": "TAGLINE Mara's umbrella is blue.",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": true
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "MOTIVATION",
+          "showing": false
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": false
+        },
+        {
+          "role": "heading",
+          "name": "Appearance",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "DESCRIPTION",
+          "showing": false
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "COSTUME",
+          "showing": false
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": false
+        },
+        {
+          "role": "heading",
+          "name": "New Snapshot",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "LABEL",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "TIME 0",
+          "showing": false
+        },
+        {
+          "role": "section",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "unknown",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "unknown",
+          "name": "",
+          "showing": false
+        }
+      ],
+      "provider_calls": [
+        {
+          "kind": "generation",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        },
+        {
+          "kind": "recap",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        },
+        {
+          "kind": "preview",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "accepted": true
+        }
+      ],
+      "typed_text_observations": [
+        {
+          "field": "New screenplay text",
+          "expected_length": 85,
+          "actual_text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting.",
+          "exact": true
+        },
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 41,
+          "actual_text": "Retained manual draft. The train waits.\n\n",
+          "exact": true
+        },
+        {
+          "field": "TAGLINE Mara's umbrella is blue.",
+          "expected_length": 24,
+          "actual_text": "Mara's umbrella is blue.",
+          "exact": true
+        }
+      ],
+      "timeline_locator_observations": [
+        {
+          "name": "",
+          "text": "A: Setup\nB: Setup\nA: Complication\nC: Beat\nB: Complication\nA: Escalation\nB: Payoff\nC: Beat\nA: Escalation 2\nA: Climax\nC: C",
+          "role": "section",
+          "bounds": [
+            80,
+            816,
+            1360,
+            48
+          ]
+        },
+        {
+          "name": "B: Setup",
+          "text": "B: Setup",
+          "role": "native-text-range",
+          "bounds": [
+            253,
+            834,
+            50,
+            11
+          ]
+        }
+      ],
+      "accessibility_retired_object_polls": 1
+    },
+    "verified_and_viewed_captures": 4,
+    "repair": "Qualification-only exact native relationship control reveal; no Delete click or application change. Native resolution still requires execution."
+  },
+  "manual_fact_edit": {
+    "before": "Mara's umbrella is red.",
+    "after": "Mara's umbrella is blue.",
+    "revision_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+    "saved_screenplay_preserved": true,
+    "manual_draft_preserved": true
+  },
+  "bible_only_fact_edit": {
+    "before": "Mara's umbrella is blue.",
+    "after": "Mara's umbrella is gold.",
+    "revision_event_id": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+    "all_saved_scripts_segments_and_nodes_unchanged": true
+  },
+  "typed_text_observations": [
+    {
+      "field": "New screenplay text",
+      "expected_length": 85,
+      "actual_text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting.",
+      "exact": true
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 41,
+      "actual_text": "Retained manual draft. The train waits.\n\n",
+      "exact": true
+    },
+    {
+      "field": "TAGLINE Mara's umbrella is blue.",
+      "expected_length": 24,
+      "actual_text": "Mara's umbrella is blue.",
+      "exact": true
+    },
+    {
+      "field": "TAGLINE Mara's umbrella is gold.",
+      "expected_length": 24,
+      "actual_text": "Mara's umbrella is gold.",
+      "exact": true
+    }
+  ],
+  "bible_child_plan": {
+    "initial_plan_id": "child_plan.7f6f4a1c-c70b-4faa-b952-fe2961e42756",
+    "original_receipt": {
+      "nodes": [
+        [
+          {
+            "id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+            "parent_id": "3f9df785-cfb6-48c2-83dc-98dca62c053d",
+            "level": "Scene",
+            "sort_order": 1,
+            "time_range": {
+              "start_ms": 150000,
+              "end_ms": 300000
+            },
+            "name": "B: Setup",
+            "content": {
+              "notes": "Eli waits for Mara at the station. Continue the preceding screenplay.",
+              "content": "",
+              "status": "HasContent",
+              "scene_recap": "Eli waits at the station with Mara and the red umbrella."
+            },
+            "beat_type": "Setup",
+            "locked": false
+          },
+          "5de3138e-4300-488d-9386-92bc53f874fa"
+        ]
+      ],
+      "parent_arcs": [
+        {
+          "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+          "arc_id": "5140167e-38c7-4397-820a-96d1b99606b0"
+        }
+      ],
+      "script_inputs": [
+        {
+          "document_id": "script.document.main",
+          "segment_id": "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+          "block_id": "script.block.cf2af279-fe86-4c76-8c57-37b7d698b331.user",
+          "source_node_id": "a610b85f-4e8a-4298-b315-43960cfe3b1e",
+          "revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+          "segment_revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+          "start_ms": 0,
+          "end_ms": 120000,
+          "text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting."
+        },
+        {
+          "document_id": "script.document.main",
+          "segment_id": "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b",
+          "block_id": "script.block.dd69c783-336c-44f6-a288-c59acda01d6b.generated",
+          "source_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+          "revision_event_id": "80a173dc-7400-4db8-a9fa-12f3be7648ff",
+          "segment_revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85",
+          "start_ms": 150000,
+          "end_ms": 300000,
+          "text": "EXT. STATION - NIGHT\n\nEli spots Mara and her blue umbrella."
+        }
+      ],
+      "script_scope": {
+        "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+        "start_ms": 150000,
+        "end_ms": 300000,
+        "segment_ids": [
+          "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+          "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b"
+        ],
+        "revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85"
+      },
+      "relationships": {
+        "current": [],
+        "revisions": []
+      },
+      "bible": {
+        "receipt": {
+          "context": {
+            "version": 6,
+            "change_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+            "payload": {
+              "target_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+              "nodes": [
+                {
+                  "node_id": "qualification.mara",
+                  "schema_key": "character",
+                  "name": "Mara",
+                  "fields": [
+                    {
+                      "part_key": "profile",
+                      "part_name": "Profile",
+                      "field_key": "tagline",
+                      "value": {
+                        "type": "text",
+                        "value": "Mara's umbrella is blue."
+                      }
+                    }
+                  ],
+                  "snapshots": [],
+                  "incoming_edges": [],
+                  "outgoing_edges": [
+                    {
+                      "edge_id": "qualification.mara.eli",
+                      "from_node_id": "qualification.mara",
+                      "to_node_id": "qualification.eli",
+                      "edge_kind": "references",
+                      "label": "Mara trusts Eli",
+                      "directed": true
+                    }
+                  ]
+                },
+                {
+                  "node_id": "qualification.eli",
+                  "schema_key": "character",
+                  "name": "Eli",
+                  "fields": [],
+                  "snapshots": [],
+                  "incoming_edges": [
+                    {
+                      "edge_id": "qualification.mara.eli",
+                      "from_node_id": "qualification.mara",
+                      "to_node_id": "qualification.eli",
+                      "edge_kind": "references",
+                      "label": "Mara trusts Eli",
+                      "directed": true
+                    }
+                  ],
+                  "outgoing_edges": []
+                }
+              ]
+            }
+          },
+          "inputs": [
+            {
+              "node_id": "qualification.mara",
+              "part_key": "profile",
+              "field_key": "tagline",
+              "field_id": "qualification.mara.tagline",
+              "revision_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+              "value": {
+                "type": "text",
+                "value": "Mara's umbrella is blue."
+              }
+            }
+          ]
+        },
+        "sources": [
+          [
+            "bible_node",
+            "qualification.mara",
+            "6b932d60-c1d5-44d2-969a-18a70a2b72f4"
+          ],
+          [
+            "bible_part_field",
+            "qualification.mara.tagline",
+            "75d95f80-fb1b-4a65-9b19-99bfcadbe705"
+          ],
+          [
+            "bible_node",
+            "qualification.eli",
+            "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4"
+          ],
+          [
+            "bible_edge",
+            "qualification.mara.eli",
+            "1cf04af9-0ae1-488b-907b-563e63328f27"
+          ]
+        ],
+        "node_selection_event": "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4",
+        "context_selection_event": null
+      }
+    },
+    "original_evidence_visible": {
+      "region": "Recorded Bible evidence",
+      "exact_value": "Mara's umbrella is blue.",
+      "field_revision_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+      "relationship_label": "Mara trusts Eli",
+      "fictional_time": "unspecified",
+      "source": "original saved receipt; no current Bible hydration"
+    },
+    "pending_preserved_script_and_placement": true,
+    "real_model": false,
+    "recovery_retained_original_evidence_without_writes_or_provider_call": true,
+    "manual_bible_only_edit": {
+      "before": "Mara's umbrella is blue.",
+      "after": "Mara's umbrella is gold.",
+      "revision_event_id": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+      "all_saved_scripts_segments_and_nodes_unchanged": true
+    },
+    "stale_refusal": "Child plan story context changed; generate and review a fresh plan before accepting",
+    "database_before_refusal": {
+      "sha256": "bc53e182b60654dcdb482d02ea4372e9398efb7368da95b75077ab0e3faaac33",
+      "table_row_counts": {
+        "affect_dependencies": 0,
+        "affect_mood_labels": 0,
+        "affect_proposal_mood_labels": 0,
+        "affect_proposals": 0,
+        "affect_values": 0,
+        "arcs": 3,
+        "bible_graph_edges": 1,
+        "bible_graph_fields": 1,
+        "bible_graph_nodes": 2,
+        "bible_graph_parts": 1,
+        "bible_graph_snapshot_fields": 0,
+        "bible_graph_snapshots": 0,
+        "bible_reference_proposals": 0,
+        "change_events": 12,
+        "child_plan_child_references": 3,
+        "child_plan_children": 1,
+        "child_plans": 1,
+        "commands": 12,
+        "context_evaluations": 0,
+        "context_influence_records": 0,
+        "episode_structure": 1,
+        "node_arcs": 12,
+        "nodes": 18,
+        "object_revision_fields": 132,
+        "object_revisions": 32,
+        "project": 1,
+        "propagation_proposals": 1,
+        "reference_documents": 0,
+        "relationships": 0,
+        "schema_meta": 1,
+        "script_blocks": 2,
+        "script_documents": 1,
+        "script_generations": 2,
+        "script_impact_proposal_bindings": 1,
+        "script_locks": 0,
+        "script_segments": 2,
+        "script_spans": 2,
+        "semantic_dependencies": 12,
+        "semantic_dependency_revisions": 12,
+        "tracks": 5,
+        "ydoc_state": 1
+      }
+    },
+    "database_after_refusal": {
+      "sha256": "bc53e182b60654dcdb482d02ea4372e9398efb7368da95b75077ab0e3faaac33",
+      "table_row_counts": {
+        "affect_dependencies": 0,
+        "affect_mood_labels": 0,
+        "affect_proposal_mood_labels": 0,
+        "affect_proposals": 0,
+        "affect_values": 0,
+        "arcs": 3,
+        "bible_graph_edges": 1,
+        "bible_graph_fields": 1,
+        "bible_graph_nodes": 2,
+        "bible_graph_parts": 1,
+        "bible_graph_snapshot_fields": 0,
+        "bible_graph_snapshots": 0,
+        "bible_reference_proposals": 0,
+        "change_events": 12,
+        "child_plan_child_references": 3,
+        "child_plan_children": 1,
+        "child_plans": 1,
+        "commands": 12,
+        "context_evaluations": 0,
+        "context_influence_records": 0,
+        "episode_structure": 1,
+        "node_arcs": 12,
+        "nodes": 18,
+        "object_revision_fields": 132,
+        "object_revisions": 32,
+        "project": 1,
+        "propagation_proposals": 1,
+        "reference_documents": 0,
+        "relationships": 0,
+        "schema_meta": 1,
+        "script_blocks": 2,
+        "script_documents": 1,
+        "script_generations": 2,
+        "script_impact_proposal_bindings": 1,
+        "script_locks": 0,
+        "script_segments": 2,
+        "script_spans": 2,
+        "semantic_dependencies": 12,
+        "semantic_dependency_revisions": 12,
+        "tracks": 5,
+        "ydoc_state": 1
+      }
+    },
+    "bible_only_stale_acceptance_refused_without_writes": true,
+    "fresh_original_receipt": {
+      "nodes": [
+        [
+          {
+            "id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+            "parent_id": "3f9df785-cfb6-48c2-83dc-98dca62c053d",
+            "level": "Scene",
+            "sort_order": 1,
+            "time_range": {
+              "start_ms": 150000,
+              "end_ms": 300000
+            },
+            "name": "B: Setup",
+            "content": {
+              "notes": "Eli waits for Mara at the station. Continue the preceding screenplay.",
+              "content": "",
+              "status": "HasContent",
+              "scene_recap": "Eli waits at the station with Mara and the red umbrella."
+            },
+            "beat_type": "Setup",
+            "locked": false
+          },
+          "5de3138e-4300-488d-9386-92bc53f874fa"
+        ]
+      ],
+      "parent_arcs": [
+        {
+          "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+          "arc_id": "5140167e-38c7-4397-820a-96d1b99606b0"
+        }
+      ],
+      "script_inputs": [
+        {
+          "document_id": "script.document.main",
+          "segment_id": "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+          "block_id": "script.block.cf2af279-fe86-4c76-8c57-37b7d698b331.user",
+          "source_node_id": "a610b85f-4e8a-4298-b315-43960cfe3b1e",
+          "revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+          "segment_revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+          "start_ms": 0,
+          "end_ms": 120000,
+          "text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting."
+        },
+        {
+          "document_id": "script.document.main",
+          "segment_id": "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b",
+          "block_id": "script.block.dd69c783-336c-44f6-a288-c59acda01d6b.generated",
+          "source_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+          "revision_event_id": "80a173dc-7400-4db8-a9fa-12f3be7648ff",
+          "segment_revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85",
+          "start_ms": 150000,
+          "end_ms": 300000,
+          "text": "EXT. STATION - NIGHT\n\nEli spots Mara and her blue umbrella."
+        }
+      ],
+      "script_scope": {
+        "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+        "start_ms": 150000,
+        "end_ms": 300000,
+        "segment_ids": [
+          "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+          "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b"
+        ],
+        "revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85"
+      },
+      "relationships": {
+        "current": [],
+        "revisions": []
+      },
+      "bible": {
+        "receipt": {
+          "context": {
+            "version": 7,
+            "change_event_id": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+            "payload": {
+              "target_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+              "nodes": [
+                {
+                  "node_id": "qualification.mara",
+                  "schema_key": "character",
+                  "name": "Mara",
+                  "fields": [
+                    {
+                      "part_key": "profile",
+                      "part_name": "Profile",
+                      "field_key": "tagline",
+                      "value": {
+                        "type": "text",
+                        "value": "Mara's umbrella is gold."
+                      }
+                    }
+                  ],
+                  "snapshots": [],
+                  "incoming_edges": [],
+                  "outgoing_edges": [
+                    {
+                      "edge_id": "qualification.mara.eli",
+                      "from_node_id": "qualification.mara",
+                      "to_node_id": "qualification.eli",
+                      "edge_kind": "references",
+                      "label": "Mara trusts Eli",
+                      "directed": true
+                    }
+                  ]
+                },
+                {
+                  "node_id": "qualification.eli",
+                  "schema_key": "character",
+                  "name": "Eli",
+                  "fields": [],
+                  "snapshots": [],
+                  "incoming_edges": [
+                    {
+                      "edge_id": "qualification.mara.eli",
+                      "from_node_id": "qualification.mara",
+                      "to_node_id": "qualification.eli",
+                      "edge_kind": "references",
+                      "label": "Mara trusts Eli",
+                      "directed": true
+                    }
+                  ],
+                  "outgoing_edges": []
+                }
+              ]
+            }
+          },
+          "inputs": [
+            {
+              "node_id": "qualification.mara",
+              "part_key": "profile",
+              "field_key": "tagline",
+              "field_id": "qualification.mara.tagline",
+              "revision_event_id": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+              "value": {
+                "type": "text",
+                "value": "Mara's umbrella is gold."
+              }
+            }
+          ]
+        },
+        "sources": [
+          [
+            "bible_node",
+            "qualification.mara",
+            "6b932d60-c1d5-44d2-969a-18a70a2b72f4"
+          ],
+          [
+            "bible_part_field",
+            "qualification.mara.tagline",
+            "e3be0016-5b6b-4455-baad-f244a0c3c55d"
+          ],
+          [
+            "bible_node",
+            "qualification.eli",
+            "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4"
+          ],
+          [
+            "bible_edge",
+            "qualification.mara.eli",
+            "1cf04af9-0ae1-488b-907b-563e63328f27"
+          ]
+        ],
+        "node_selection_event": "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4",
+        "context_selection_event": null
+      }
+    },
+    "fresh_plan_id": "child_plan.571845f9-63c6-479e-ae3b-5626e47ac535",
+    "fresh_explicit_timeline_acceptance": true,
+    "canonical_screenplay_and_bible_preserved": true,
+    "screenplay_review_remained": true,
+    "accepted_child_native_bounds": [
+      212,
+      883,
+      87,
+      11
+    ],
+    "status": "native_bible_child_plan_passed_with_synthetic_http_fixture",
+    "separate_gold_screenplay_preview_id": "script.review.df36a4b7-c336-42cb-a4f3-613d481dd9bf",
+    "gold_screenplay_revision": "fb8db18d-87b3-4ece-9271-1014691fd917",
+    "independent_explicit_screenplay_acceptance": true,
+    "exact_manual_source_preserved": true,
+    "gold_screenplay_fact_binding": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+    "readable_final_screenplay": {
+      "supported_actions": [
+        "Resize panels keyboard Up",
+        "AT-SPI SCROLL_TOP_LEFT"
+      ],
+      "editor_divider_before": [
+        280,
+        322,
+        834,
+        6
+      ],
+      "editor_divider_after": [
+        280,
+        172,
+        834,
+        6
+      ],
+      "bounds": [
+        280,
+        178,
+        1114,
+        564
+      ],
+      "saved_text_ranges": {
+        "EXT. STATION - NIGHT": [
+          726,
+          400,
+          141,
+          12
+        ],
+        "Eli spots Mara and her gold umbrella.": [
+          726,
+          427,
+          260,
+          13
+        ]
+      }
+    }
+  },
+  "bible_graph_inspection": {
+    "edge_id": "qualification.mara.eli",
+    "from_node_id": "qualification.mara",
+    "label": "Mara trusts Eli",
+    "method": "public command_service; not native edge authoring",
+    "to_node_id": "qualification.eli",
+    "native_label_inspected": true,
+    "native_edge_authoring": false,
+    "native_control_accessible_name": "Delete edge Mara trusts Eli",
+    "native_control_bounds": [
+      235,
+      503,
+      24,
+      25
+    ],
+    "destructive_control_clicked": false
+  },
+  "readable_frame": {
+    "supported_actions": [
+      "Resize panels keyboard Up",
+      "AT-SPI SCROLL_TOP_LEFT"
+    ],
+    "editor_divider_before": [
+      280,
+      322,
+      834,
+      6
+    ],
+    "editor_divider_after": [
+      280,
+      172,
+      834,
+      6
+    ],
+    "bounds": [
+      280,
+      178,
+      1114,
+      564
+    ],
+    "saved_text_ranges": {
+      "EXT. STATION - NIGHT": [
+        726,
+        400,
+        141,
+        12
+      ],
+      "Eli spots Mara and her gold umbrella.": [
+        726,
+        427,
+        260,
+        13
+      ]
+    }
+  },
+  "providers": {
+    "accepted_count": 6,
+    "rejected_count": 0,
+    "real_model_quality_qualified": false,
+    "records": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "child_blue",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": false,
+        "real_model": false
+      },
+      {
+        "kind": "child_gold",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": false,
+        "real_model": false
+      },
+      {
+        "kind": "preview_gold",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false
+      }
+    ]
+  },
+  "native_receipt": {
+    "status": "native_bible_fact_propagation_passed_with_synthetic_http_fixture",
+    "application_source_sha": "d672f0b36557593a47e34849bd564ca8b244ef2a",
+    "qualification_sha": "ae96213f6d93a5babcc3f8a2dbebe778cd1c0963",
+    "application_binary_sha256": "959762729fadf00f092aaa171e208d3db7647499fdf85088cdd7171a677811dc",
+    "interaction_route": "Real Tauri; existing AT-SPI geometry and X11 input",
+    "provider": "synthetic localhost HTTP/SSE fixture through production provider client",
+    "real_model_quality_qualified": false,
+    "checkpoints": [
+      {
+        "stage": "public service setup; screenplay initially empty",
+        "elapsed_seconds": 0.294
+      },
+      {
+        "stage": "launch actual desktop and author exact manual screenplay",
+        "elapsed_seconds": 0.341
+      },
+      {
+        "stage": "generate linked scene consuming exact red Bible field",
+        "elapsed_seconds": 22.325
+      },
+      {
+        "stage": "manually edit exact Bible fact through native field and Save",
+        "elapsed_seconds": 25.711
+      },
+      {
+        "stage": "exact fact saved; canonical screenplay and manual draft preserved",
+        "elapsed_seconds": 27.642
+      },
+      {
+        "stage": "downstream review with Bible timeline and screenplay visible",
+        "elapsed_seconds": 28.258
+      },
+      {
+        "stage": "pending targeted preview; explicit acceptance still required",
+        "elapsed_seconds": 29.185
+      },
+      {
+        "stage": "explicit acceptance commits only targeted screenplay",
+        "elapsed_seconds": 30.56
+      },
+      {
+        "stage": "existing graph relationship inspected in native Bible detail",
+        "elapsed_seconds": 30.872
+      },
+      {
+        "stage": "review original Blue facts and graph relationship before acceptance",
+        "elapsed_seconds": 32.13
+      },
+      {
+        "stage": "manual Gold fact; original Blue plan evidence and downstream review retained",
+        "elapsed_seconds": 36.466
+      },
+      {
+        "stage": "Bible-only drift refuses old timeline acceptance with no SQLite writes",
+        "elapsed_seconds": 37.264
+      },
+      {
+        "stage": "fresh Gold facts and relationships in reviewable targeted timeline proposal",
+        "elapsed_seconds": 38.404
+      },
+      {
+        "stage": "explicit Gold timeline acceptance preserves saved Blue screenplay and its review",
+        "elapsed_seconds": 40.038
+      },
+      {
+        "stage": "independent Gold screenplay preview; saved Blue text retained",
+        "elapsed_seconds": 40.818
+      },
+      {
+        "stage": "separate explicit Gold screenplay acceptance refreshes provenance",
+        "elapsed_seconds": 42.072
+      },
+      {
+        "stage": "readable saved Gold screenplay with authored Bible and accepted timeline",
+        "elapsed_seconds": 45.066
+      }
+    ],
+    "stage": "readable saved Gold screenplay with authored Bible and accepted timeline",
+    "window_id": 2097155,
+    "window_pid": 22108,
+    "consumed_fact": {
+      "dependency_id": "generation.01e212e5-a189-4bf3-a2a2-67bfdace5e85.bible.2",
+      "revision_event_id": "092fa9a3-0723-4110-9293-295ce90acfc0",
+      "exact_value": "Mara's umbrella is red."
+    },
+    "fact_edit": {
+      "before": "Mara's umbrella is red.",
+      "after": "Mara's umbrella is blue.",
+      "revision_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+      "saved_screenplay_preserved": true,
+      "manual_draft_preserved": true
+    },
+    "captures": [
+      {
+        "file": "eidetic-bible-fact-review.png",
+        "sha256": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-fact-preview.png",
+        "sha256": "374ea77f33fd1721d6174ac7ccf9fdccb7b94002e66c69e31cc60a9d87c6128c",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-fact-accepted.png",
+        "sha256": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-relationship-inspected.png",
+        "sha256": "01f847ff185b419e369b40caddcff3da90cbc763b4844abe9153a85b4299c708",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-blue-evidence.png",
+        "sha256": "496bde20264b9c59f742ec2afff215ad92383a27cc9c2eedffc01f5115da6ebc",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-gold-review.png",
+        "sha256": "e01935c3bb1190840742b7da2ff84381c9980fb4ed702b5c5d95ae9e35c3073b",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-refused.png",
+        "sha256": "69e357289bfd956dc88a9c4b22bbe03a81d82bb7c340a355669c7a7cdb980651",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-gold-evidence.png",
+        "sha256": "b36733110f567fab58e3b2b664cb24b740de1bc6f60b58143c73c6a26c40f77c",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-plan-accepted-review.png",
+        "sha256": "6883b1f6acd91ab29528e8d1998ce37efbfa2516349ca8df9fd32d3402a88d1a",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-gold-screenplay-preview.png",
+        "sha256": "f67a23c028888e2d0a044e0bb2eb7f73e451b5040ef8c2b2d452e303ae7cec3f",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-gold-screenplay-accepted.png",
+        "sha256": "46c6bea4ad62b34ebd69512683e10c0813596086d0c3b71935ed0292876934f0",
+        "window_id": 2097155,
+        "pid": 22108
+      },
+      {
+        "file": "eidetic-bible-story-memory-readable.png",
+        "sha256": "e207fee57958a7308b6e5a58febe49fb55963da50f9a04a7995c3b3aa0f78b17",
+        "window_id": 2097155,
+        "pid": 22108
+      }
+    ],
+    "preview": {
+      "proposal_id": "script.review.e20356e1-339b-4d20-a022-f254e6e4cc9b",
+      "target_unchanged": true,
+      "current_bible_fact_and_exact_manual_context_consumed": true
+    },
+    "acceptance": {
+      "revision_event_id": "80a173dc-7400-4db8-a9fa-12f3be7648ff",
+      "manual_input_and_fact_unchanged": true,
+      "refreshed_consumed_fact_revision": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+      "old_review_cleared_in_ui": true,
+      "canonical_target_visible_in_ui": true
+    },
+    "bible_graph_inspection": {
+      "edge_id": "qualification.mara.eli",
+      "from_node_id": "qualification.mara",
+      "label": "Mara trusts Eli",
+      "method": "public command_service; not native edge authoring",
+      "to_node_id": "qualification.eli",
+      "native_label_inspected": true,
+      "native_edge_authoring": false,
+      "native_control_accessible_name": "Delete edge Mara trusts Eli",
+      "native_control_bounds": [
+        235,
+        503,
+        24,
+        25
+      ],
+      "destructive_control_clicked": false
+    },
+    "bible_child_plan": {
+      "initial_plan_id": "child_plan.7f6f4a1c-c70b-4faa-b952-fe2961e42756",
+      "original_receipt": {
+        "nodes": [
+          [
+            {
+              "id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+              "parent_id": "3f9df785-cfb6-48c2-83dc-98dca62c053d",
+              "level": "Scene",
+              "sort_order": 1,
+              "time_range": {
+                "start_ms": 150000,
+                "end_ms": 300000
+              },
+              "name": "B: Setup",
+              "content": {
+                "notes": "Eli waits for Mara at the station. Continue the preceding screenplay.",
+                "content": "",
+                "status": "HasContent",
+                "scene_recap": "Eli waits at the station with Mara and the red umbrella."
+              },
+              "beat_type": "Setup",
+              "locked": false
+            },
+            "5de3138e-4300-488d-9386-92bc53f874fa"
+          ]
+        ],
+        "parent_arcs": [
+          {
+            "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+            "arc_id": "5140167e-38c7-4397-820a-96d1b99606b0"
+          }
+        ],
+        "script_inputs": [
+          {
+            "document_id": "script.document.main",
+            "segment_id": "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+            "block_id": "script.block.cf2af279-fe86-4c76-8c57-37b7d698b331.user",
+            "source_node_id": "a610b85f-4e8a-4298-b315-43960cfe3b1e",
+            "revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+            "segment_revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+            "start_ms": 0,
+            "end_ms": 120000,
+            "text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting."
+          },
+          {
+            "document_id": "script.document.main",
+            "segment_id": "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b",
+            "block_id": "script.block.dd69c783-336c-44f6-a288-c59acda01d6b.generated",
+            "source_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+            "revision_event_id": "80a173dc-7400-4db8-a9fa-12f3be7648ff",
+            "segment_revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85",
+            "start_ms": 150000,
+            "end_ms": 300000,
+            "text": "EXT. STATION - NIGHT\n\nEli spots Mara and her blue umbrella."
+          }
+        ],
+        "script_scope": {
+          "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+          "start_ms": 150000,
+          "end_ms": 300000,
+          "segment_ids": [
+            "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+            "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b"
+          ],
+          "revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85"
+        },
+        "relationships": {
+          "current": [],
+          "revisions": []
+        },
+        "bible": {
+          "receipt": {
+            "context": {
+              "version": 6,
+              "change_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+              "payload": {
+                "target_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+                "nodes": [
+                  {
+                    "node_id": "qualification.mara",
+                    "schema_key": "character",
+                    "name": "Mara",
+                    "fields": [
+                      {
+                        "part_key": "profile",
+                        "part_name": "Profile",
+                        "field_key": "tagline",
+                        "value": {
+                          "type": "text",
+                          "value": "Mara's umbrella is blue."
+                        }
+                      }
+                    ],
+                    "snapshots": [],
+                    "incoming_edges": [],
+                    "outgoing_edges": [
+                      {
+                        "edge_id": "qualification.mara.eli",
+                        "from_node_id": "qualification.mara",
+                        "to_node_id": "qualification.eli",
+                        "edge_kind": "references",
+                        "label": "Mara trusts Eli",
+                        "directed": true
+                      }
+                    ]
+                  },
+                  {
+                    "node_id": "qualification.eli",
+                    "schema_key": "character",
+                    "name": "Eli",
+                    "fields": [],
+                    "snapshots": [],
+                    "incoming_edges": [
+                      {
+                        "edge_id": "qualification.mara.eli",
+                        "from_node_id": "qualification.mara",
+                        "to_node_id": "qualification.eli",
+                        "edge_kind": "references",
+                        "label": "Mara trusts Eli",
+                        "directed": true
+                      }
+                    ],
+                    "outgoing_edges": []
+                  }
+                ]
+              }
+            },
+            "inputs": [
+              {
+                "node_id": "qualification.mara",
+                "part_key": "profile",
+                "field_key": "tagline",
+                "field_id": "qualification.mara.tagline",
+                "revision_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+                "value": {
+                  "type": "text",
+                  "value": "Mara's umbrella is blue."
+                }
+              }
+            ]
+          },
+          "sources": [
+            [
+              "bible_node",
+              "qualification.mara",
+              "6b932d60-c1d5-44d2-969a-18a70a2b72f4"
+            ],
+            [
+              "bible_part_field",
+              "qualification.mara.tagline",
+              "75d95f80-fb1b-4a65-9b19-99bfcadbe705"
+            ],
+            [
+              "bible_node",
+              "qualification.eli",
+              "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4"
+            ],
+            [
+              "bible_edge",
+              "qualification.mara.eli",
+              "1cf04af9-0ae1-488b-907b-563e63328f27"
+            ]
+          ],
+          "node_selection_event": "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4",
+          "context_selection_event": null
+        }
+      },
+      "original_evidence_visible": {
+        "region": "Recorded Bible evidence",
+        "exact_value": "Mara's umbrella is blue.",
+        "field_revision_event_id": "75d95f80-fb1b-4a65-9b19-99bfcadbe705",
+        "relationship_label": "Mara trusts Eli",
+        "fictional_time": "unspecified",
+        "source": "original saved receipt; no current Bible hydration"
+      },
+      "pending_preserved_script_and_placement": true,
+      "real_model": false,
+      "recovery_retained_original_evidence_without_writes_or_provider_call": true,
+      "manual_bible_only_edit": {
+        "before": "Mara's umbrella is blue.",
+        "after": "Mara's umbrella is gold.",
+        "revision_event_id": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+        "all_saved_scripts_segments_and_nodes_unchanged": true
+      },
+      "stale_refusal": "Child plan story context changed; generate and review a fresh plan before accepting",
+      "database_before_refusal": {
+        "sha256": "bc53e182b60654dcdb482d02ea4372e9398efb7368da95b75077ab0e3faaac33",
+        "table_row_counts": {
+          "affect_dependencies": 0,
+          "affect_mood_labels": 0,
+          "affect_proposal_mood_labels": 0,
+          "affect_proposals": 0,
+          "affect_values": 0,
+          "arcs": 3,
+          "bible_graph_edges": 1,
+          "bible_graph_fields": 1,
+          "bible_graph_nodes": 2,
+          "bible_graph_parts": 1,
+          "bible_graph_snapshot_fields": 0,
+          "bible_graph_snapshots": 0,
+          "bible_reference_proposals": 0,
+          "change_events": 12,
+          "child_plan_child_references": 3,
+          "child_plan_children": 1,
+          "child_plans": 1,
+          "commands": 12,
+          "context_evaluations": 0,
+          "context_influence_records": 0,
+          "episode_structure": 1,
+          "node_arcs": 12,
+          "nodes": 18,
+          "object_revision_fields": 132,
+          "object_revisions": 32,
+          "project": 1,
+          "propagation_proposals": 1,
+          "reference_documents": 0,
+          "relationships": 0,
+          "schema_meta": 1,
+          "script_blocks": 2,
+          "script_documents": 1,
+          "script_generations": 2,
+          "script_impact_proposal_bindings": 1,
+          "script_locks": 0,
+          "script_segments": 2,
+          "script_spans": 2,
+          "semantic_dependencies": 12,
+          "semantic_dependency_revisions": 12,
+          "tracks": 5,
+          "ydoc_state": 1
+        }
+      },
+      "database_after_refusal": {
+        "sha256": "bc53e182b60654dcdb482d02ea4372e9398efb7368da95b75077ab0e3faaac33",
+        "table_row_counts": {
+          "affect_dependencies": 0,
+          "affect_mood_labels": 0,
+          "affect_proposal_mood_labels": 0,
+          "affect_proposals": 0,
+          "affect_values": 0,
+          "arcs": 3,
+          "bible_graph_edges": 1,
+          "bible_graph_fields": 1,
+          "bible_graph_nodes": 2,
+          "bible_graph_parts": 1,
+          "bible_graph_snapshot_fields": 0,
+          "bible_graph_snapshots": 0,
+          "bible_reference_proposals": 0,
+          "change_events": 12,
+          "child_plan_child_references": 3,
+          "child_plan_children": 1,
+          "child_plans": 1,
+          "commands": 12,
+          "context_evaluations": 0,
+          "context_influence_records": 0,
+          "episode_structure": 1,
+          "node_arcs": 12,
+          "nodes": 18,
+          "object_revision_fields": 132,
+          "object_revisions": 32,
+          "project": 1,
+          "propagation_proposals": 1,
+          "reference_documents": 0,
+          "relationships": 0,
+          "schema_meta": 1,
+          "script_blocks": 2,
+          "script_documents": 1,
+          "script_generations": 2,
+          "script_impact_proposal_bindings": 1,
+          "script_locks": 0,
+          "script_segments": 2,
+          "script_spans": 2,
+          "semantic_dependencies": 12,
+          "semantic_dependency_revisions": 12,
+          "tracks": 5,
+          "ydoc_state": 1
+        }
+      },
+      "bible_only_stale_acceptance_refused_without_writes": true,
+      "fresh_original_receipt": {
+        "nodes": [
+          [
+            {
+              "id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+              "parent_id": "3f9df785-cfb6-48c2-83dc-98dca62c053d",
+              "level": "Scene",
+              "sort_order": 1,
+              "time_range": {
+                "start_ms": 150000,
+                "end_ms": 300000
+              },
+              "name": "B: Setup",
+              "content": {
+                "notes": "Eli waits for Mara at the station. Continue the preceding screenplay.",
+                "content": "",
+                "status": "HasContent",
+                "scene_recap": "Eli waits at the station with Mara and the red umbrella."
+              },
+              "beat_type": "Setup",
+              "locked": false
+            },
+            "5de3138e-4300-488d-9386-92bc53f874fa"
+          ]
+        ],
+        "parent_arcs": [
+          {
+            "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+            "arc_id": "5140167e-38c7-4397-820a-96d1b99606b0"
+          }
+        ],
+        "script_inputs": [
+          {
+            "document_id": "script.document.main",
+            "segment_id": "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+            "block_id": "script.block.cf2af279-fe86-4c76-8c57-37b7d698b331.user",
+            "source_node_id": "a610b85f-4e8a-4298-b315-43960cfe3b1e",
+            "revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+            "segment_revision_event_id": "4bc100e0-faa4-454c-8fde-d22c81333f22",
+            "start_ms": 0,
+            "end_ms": 120000,
+            "text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting."
+          },
+          {
+            "document_id": "script.document.main",
+            "segment_id": "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b",
+            "block_id": "script.block.dd69c783-336c-44f6-a288-c59acda01d6b.generated",
+            "source_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+            "revision_event_id": "80a173dc-7400-4db8-a9fa-12f3be7648ff",
+            "segment_revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85",
+            "start_ms": 150000,
+            "end_ms": 300000,
+            "text": "EXT. STATION - NIGHT\n\nEli spots Mara and her blue umbrella."
+          }
+        ],
+        "script_scope": {
+          "node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+          "start_ms": 150000,
+          "end_ms": 300000,
+          "segment_ids": [
+            "script.segment.a610b85f-4e8a-4298-b315-43960cfe3b1e",
+            "script.segment.dd69c783-336c-44f6-a288-c59acda01d6b"
+          ],
+          "revision_event_id": "01e212e5-a189-4bf3-a2a2-67bfdace5e85"
+        },
+        "relationships": {
+          "current": [],
+          "revisions": []
+        },
+        "bible": {
+          "receipt": {
+            "context": {
+              "version": 7,
+              "change_event_id": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+              "payload": {
+                "target_node_id": "dd69c783-336c-44f6-a288-c59acda01d6b",
+                "nodes": [
+                  {
+                    "node_id": "qualification.mara",
+                    "schema_key": "character",
+                    "name": "Mara",
+                    "fields": [
+                      {
+                        "part_key": "profile",
+                        "part_name": "Profile",
+                        "field_key": "tagline",
+                        "value": {
+                          "type": "text",
+                          "value": "Mara's umbrella is gold."
+                        }
+                      }
+                    ],
+                    "snapshots": [],
+                    "incoming_edges": [],
+                    "outgoing_edges": [
+                      {
+                        "edge_id": "qualification.mara.eli",
+                        "from_node_id": "qualification.mara",
+                        "to_node_id": "qualification.eli",
+                        "edge_kind": "references",
+                        "label": "Mara trusts Eli",
+                        "directed": true
+                      }
+                    ]
+                  },
+                  {
+                    "node_id": "qualification.eli",
+                    "schema_key": "character",
+                    "name": "Eli",
+                    "fields": [],
+                    "snapshots": [],
+                    "incoming_edges": [
+                      {
+                        "edge_id": "qualification.mara.eli",
+                        "from_node_id": "qualification.mara",
+                        "to_node_id": "qualification.eli",
+                        "edge_kind": "references",
+                        "label": "Mara trusts Eli",
+                        "directed": true
+                      }
+                    ],
+                    "outgoing_edges": []
+                  }
+                ]
+              }
+            },
+            "inputs": [
+              {
+                "node_id": "qualification.mara",
+                "part_key": "profile",
+                "field_key": "tagline",
+                "field_id": "qualification.mara.tagline",
+                "revision_event_id": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+                "value": {
+                  "type": "text",
+                  "value": "Mara's umbrella is gold."
+                }
+              }
+            ]
+          },
+          "sources": [
+            [
+              "bible_node",
+              "qualification.mara",
+              "6b932d60-c1d5-44d2-969a-18a70a2b72f4"
+            ],
+            [
+              "bible_part_field",
+              "qualification.mara.tagline",
+              "e3be0016-5b6b-4455-baad-f244a0c3c55d"
+            ],
+            [
+              "bible_node",
+              "qualification.eli",
+              "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4"
+            ],
+            [
+              "bible_edge",
+              "qualification.mara.eli",
+              "1cf04af9-0ae1-488b-907b-563e63328f27"
+            ]
+          ],
+          "node_selection_event": "b9a38f68-edd6-4f6c-a4b4-546cc5cc65e4",
+          "context_selection_event": null
+        }
+      },
+      "fresh_plan_id": "child_plan.571845f9-63c6-479e-ae3b-5626e47ac535",
+      "fresh_explicit_timeline_acceptance": true,
+      "canonical_screenplay_and_bible_preserved": true,
+      "screenplay_review_remained": true,
+      "accepted_child_native_bounds": [
+        212,
+        883,
+        87,
+        11
+      ],
+      "status": "native_bible_child_plan_passed_with_synthetic_http_fixture",
+      "separate_gold_screenplay_preview_id": "script.review.df36a4b7-c336-42cb-a4f3-613d481dd9bf",
+      "gold_screenplay_revision": "fb8db18d-87b3-4ece-9271-1014691fd917",
+      "independent_explicit_screenplay_acceptance": true,
+      "exact_manual_source_preserved": true,
+      "gold_screenplay_fact_binding": "e3be0016-5b6b-4455-baad-f244a0c3c55d",
+      "readable_final_screenplay": {
+        "supported_actions": [
+          "Resize panels keyboard Up",
+          "AT-SPI SCROLL_TOP_LEFT"
+        ],
+        "editor_divider_before": [
+          280,
+          322,
+          834,
+          6
+        ],
+        "editor_divider_after": [
+          280,
+          172,
+          834,
+          6
+        ],
+        "bounds": [
+          280,
+          178,
+          1114,
+          564
+        ],
+        "saved_text_ranges": {
+          "EXT. STATION - NIGHT": [
+            726,
+            400,
+            141,
+            12
+          ],
+          "Eli spots Mara and her gold umbrella.": [
+            726,
+            427,
+            260,
+            13
+          ]
+        }
+      }
+    },
+    "provider_calls": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "child_blue",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": false,
+        "real_model": false
+      },
+      {
+        "kind": "child_gold",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": false,
+        "real_model": false
+      },
+      {
+        "kind": "preview_gold",
+        "accepted": true,
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false
+      }
+    ],
+    "typed_text_observations": [
+      {
+        "field": "New screenplay text",
+        "expected_length": 85,
+        "actual_text": "INT. CAFE - NIGHT\n\nMara carries a red umbrella.\n\nELI\nThe last train is still waiting.",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 41,
+        "actual_text": "Retained manual draft. The train waits.\n\n",
+        "exact": true
+      },
+      {
+        "field": "TAGLINE Mara's umbrella is blue.",
+        "expected_length": 24,
+        "actual_text": "Mara's umbrella is blue.",
+        "exact": true
+      },
+      {
+        "field": "TAGLINE Mara's umbrella is gold.",
+        "expected_length": 24,
+        "actual_text": "Mara's umbrella is gold.",
+        "exact": true
+      }
+    ],
+    "timeline_locator_observations": [
+      {
+        "name": "",
+        "text": "Gold departure\n+\n+\n",
+        "role": "section",
+        "bounds": [
+          -940,
+          865,
+          9973,
+          48
+        ]
+      },
+      {
+        "name": "Gold departure",
+        "text": "Gold departure",
+        "role": "native-text-range",
+        "bounds": [
+          212,
+          883,
+          87,
+          11
+        ]
+      }
+    ],
+    "accessibility_retired_object_polls": 1
+  },
+  "artifact_first_native_failure_preserved": true
+}

@@ -59,6 +59,7 @@ use eidetic_core::ai::prompt::build_generate_request;
 
 ## API Consumer Contract
 - ChildPlan and GenerateChildrenRequest optionally carry existing ScriptContextBlock receipts. Absence means legacy unknown evidence; an empty supplied array is a known empty selection. Consumers do not infer story facts or authorize screenplay replacement from these receipts.
+- ChildPlan optionally carries ChildPlanBibleContext: the original resolved Bible projection and untimed BibleFieldInput values supplied to the provider. Missing evidence is legacy unknown; a supplied empty projection is known empty. Timed snapshots and withheld facts remain in the resolved projection and must not be relabelled as baseline field consumption. Recovery returns this original receipt, never current facts.
 - None identified as of 2026-03-08.
 - Reason: callers are internal Rust modules, not external clients.
 - Revisit trigger: request types here become part of a published SDK or binding.

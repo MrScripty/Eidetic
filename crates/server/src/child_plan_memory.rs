@@ -1,4 +1,5 @@
-//! Child-plan screenplay receipts live in the existing creation command history.
+//! Child-plan source receipts live in the existing creation command history.
+use eidetic_core::ai::backend::ChildPlanBibleContext;
 use eidetic_core::contracts::{ChangeEventId, ObjectKind, ScriptContextBlock, ScriptContextScope};
 use eidetic_core::timeline::node::{NodeArc, NodeId, StoryNode};
 use eidetic_core::timeline::relationship::Relationship;
@@ -18,6 +19,21 @@ pub(crate) struct ChildPlanMemory {
     // review, not silently assert that no relationships were consumed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     relationships: Option<ChildPlanRelationships>,
+    // Missing on older proposals: unknown Bible custody needs fresh review.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    bible: Option<crate::child_plan_bible_memory::ChildPlanBibleMemory>,
+}
+
+impl ChildPlanMemory {
+    pub(crate) fn bible_context(&self) -> Option<ChildPlanBibleContext> {
+        self.bible.as_ref().map(|memory| memory.receipt.clone())
+    }
+
+    fn story_time_ms(&self) -> Option<u64> {
+        self.bible
+            .as_ref()
+            .and_then(|memory| memory.receipt.context.payload.story_time_ms)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,13 +45,15 @@ struct ChildPlanRelationships {
 pub(crate) fn capture(
     conn: &Connection,
     parent: NodeId,
+    story_time_ms: Option<u64>,
 ) -> Result<ChildPlanMemory, HistoryStoreError> {
-    capture_before_event(conn, parent, None)
+    capture_before_event(conn, parent, story_time_ms, None)
 }
 
 fn capture_before_event(
     conn: &Connection,
     parent: NodeId,
+    story_time_ms: Option<u64>,
     excluded: Option<ChangeEventId>,
 ) -> Result<ChildPlanMemory, HistoryStoreError> {
     let nodes = crate::timeline_node_store::load_nodes(conn)?;
@@ -95,6 +113,11 @@ fn capture_before_event(
         script_inputs,
         script_scope,
         relationships: Some(relationships),
+        bible: Some(crate::child_plan_bible_memory::capture(
+            conn,
+            parent,
+            story_time_ms,
+        )?),
     })
 }
 
@@ -176,7 +199,8 @@ pub(crate) fn validate(
     parent: NodeId,
     expected: &ChildPlanMemory,
 ) -> Result<(), HistoryStoreError> {
-    if serde_json::to_value(capture(conn, parent)?)? != serde_json::to_value(expected)? {
+    let current = capture(conn, parent, expected.story_time_ms()).map_err(changed_source)?;
+    if !unchanged(current, expected)? {
         return Err(stale());
     }
     Ok(())
@@ -191,12 +215,42 @@ pub(crate) fn validate_before_apply(
     // The history writer has inserted this command's delete/create revisions
     // before its current-state closure. Exclude only that in-flight event while
     // checking the committed source receipts under the same writer transaction.
-    if serde_json::to_value(capture_before_event(conn, parent, Some(event))?)?
-        != serde_json::to_value(expected)?
-    {
+    if !unchanged(
+        capture_before_event(conn, parent, expected.story_time_ms(), Some(event))
+            .map_err(changed_source)?,
+        expected,
+    )? {
         return Err(stale());
     }
     Ok(())
+}
+
+fn changed_source(error: HistoryStoreError) -> HistoryStoreError {
+    // A recorded proposal whose canonical sources no longer resolve is a
+    // definite writer refusal, including newly conflicting timed assertions.
+    // Preserve infrastructure failures as uncertain rather than relabel them.
+    match error {
+        HistoryStoreError::InvalidValue(_) => stale(),
+        other => other,
+    }
+}
+
+fn unchanged(
+    mut current: ChildPlanMemory,
+    expected: &ChildPlanMemory,
+) -> Result<bool, HistoryStoreError> {
+    let Some(bible) = current.bible.take() else {
+        return Ok(false);
+    };
+    let Some(expected_bible) = &expected.bible else {
+        return Ok(false);
+    };
+    if !bible.unchanged(expected_bible) {
+        return Ok(false);
+    }
+    let mut expected = expected.clone();
+    expected.bible = None;
+    Ok(serde_json::to_value(current)? == serde_json::to_value(expected)?)
 }
 
 pub(crate) fn validate_parent(
@@ -215,7 +269,7 @@ pub(crate) fn validate_parent(
     Ok(())
 }
 
-fn stale() -> HistoryStoreError {
+pub(crate) fn stale() -> HistoryStoreError {
     HistoryStoreError::InvalidValue(
         "Child plan story context changed; generate and review a fresh plan before accepting"
             .into(),

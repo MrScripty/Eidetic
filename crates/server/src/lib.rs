@@ -29,6 +29,9 @@ pub(crate) mod bible_graph_value_store;
 pub mod bible_render_graph_projection;
 pub(crate) mod bible_render_graph_query;
 pub(crate) mod change_review_projection;
+pub(crate) mod child_plan_bible_memory;
+#[cfg(test)]
+mod child_plan_bible_service_tests;
 pub(crate) mod child_plan_generation;
 pub(crate) mod child_plan_memory;
 pub(crate) mod child_plan_projection_store;
