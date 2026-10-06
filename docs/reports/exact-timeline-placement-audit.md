@@ -38,4 +38,4 @@ hosted native compilation must run without an ONNX download bypass.
 
 ## Local implementation gates
 
-Baseline server485 passed. The implementation has server486/core120/UI467 passing, including the actual read/ABA/refusal/fresh-move/replay service regression, historical wire signature compatibility, exact input and immutable retry, selection/session retention and a compiled browser-rune proxy check. Strict server all-target Clippy and frontend typecheck0/0 pass. Native UI execution is a separate pending gate; this report makes no model-quality claim.
+Baseline server485 passed. The implementation has server486/core120/UI467 passing, including the actual read/ABA/refusal/fresh-move/replay service regression, historical wire signature compatibility, exact input and immutable retry, selection/session retention and a compiled browser-rune proxy check. Strict server all-target Clippy and frontend typecheck0/0 pass. Native UI execution is now qualified separately at source8c1956f/qualifier443ddc2 in run37538195351. See exact-timeline-placement-qualification.md and its manifest; this report makes no model-quality claim.
