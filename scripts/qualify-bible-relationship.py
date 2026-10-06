@@ -104,9 +104,22 @@ def receipt(database, proposal_id):
     return value
 
 
+def pending_review(node, proposal_text):
+    children = list(ui.walk(node))
+    texts = [child for child in children if child.name == 'Proposed text']
+    controls = [child.name for child in children
+        if child.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+        and child.getState().contains(ui.pyatspi.STATE_ENABLED)]
+    return (len(texts) == 1 and ui.text_of(texts[0]) == proposal_text
+        and controls.count('Accept update') == 1 and controls.count('Reject') == 1)
+
+
 def review_region(application, proposal_text):
-    return ui.reveal(application, lambda n: n.name == 'Screenplay update proposals'
+    section = ui.reveal(application, lambda n: n.name == 'Screenplay update proposals'
         and any(child.name == 'Proposed text' and ui.text_of(child) == proposal_text for child in ui.walk(n)))
+    # The section also retains accepted/rejected history. Scope the disclosure
+    # and decision controls to the article owning this exact pending text.
+    return ui.reveal(section, lambda n: pending_review(n, proposal_text)) if section else None
 
 
 def begin_manual_draft(application, window):
@@ -236,7 +249,8 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
     evidence['bible_relationship']['fresh_preview_binding'] = latest
     checkpoint('fresh relationship revision in review; saved screenplay unchanged')
     capture('eidetic-relationship-fresh-preview.png')
-    ui.reveal_button(application, 'Accept update', window)
+    region = ui.wait_for('fresh exact pending screenplay review', lambda: review_region(application, REPLACEMENT))
+    ui.reveal_button(region, 'Accept update', window)
     saved = ui.wait_for('explicit accepted relationship screenplay', lambda: next((r for r in ui.blocks(database, b_id)
         if r[1] == REPLACEMENT and r[2] != b[2]), None))
     if ui.blocks(database, a_id)[0] != a or edge(database) != again:

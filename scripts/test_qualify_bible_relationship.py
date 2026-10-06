@@ -76,6 +76,32 @@ class RelationshipProviderTests(unittest.TestCase):
 
 
 class NativeControlTests(unittest.TestCase):
+    def test_pending_review_scopes_exact_text_and_enabled_decisions_not_accepted_history(self):
+        from unittest.mock import Mock
+        article, history = Mock(), Mock()
+        def node(name, role=0, enabled=True):
+            result = Mock()
+            result.name = name
+            result.getRole.return_value = role
+            result.getState.return_value.contains.return_value = enabled
+            return result
+        proposed = node('Proposed text')
+        accepted = node('Proposed text')
+        accept, reject = node('Accept update', 42), node('Reject', 42)
+        with patch.object(driver.ui.pyatspi, 'ROLE_PUSH_BUTTON', 42, create=True), \
+                patch.object(driver.ui.pyatspi, 'STATE_ENABLED', 'enabled', create=True), \
+                patch.object(driver.ui, 'walk', return_value=[proposed, accept, reject]) as walk, \
+                patch.object(driver.ui, 'text_of', return_value=driver.REPLACEMENT):
+            self.assertTrue(driver.pending_review(article, driver.REPLACEMENT))
+            walk.return_value = [proposed, accepted, accept, reject]
+            self.assertFalse(driver.pending_review(history, driver.REPLACEMENT))
+            walk.return_value = [proposed]
+            self.assertFalse(driver.pending_review(article, driver.REPLACEMENT))
+            walk.return_value = [proposed, accept, reject]
+            self.assertFalse(driver.pending_review(article, 'Another screenplay'))
+            accept.getState.return_value.contains.return_value = False
+            self.assertFalse(driver.pending_review(article, driver.REPLACEMENT))
+
     def test_manual_card_edit_reveals_its_own_button_before_exact_draft_input(self):
         application, window, block, field = object(), 'owned-window', object(), object()
         with patch.object(driver.ui, 'wait_for', side_effect=lambda _, check: check()), \
