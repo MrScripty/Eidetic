@@ -76,6 +76,22 @@ class RelationshipProviderTests(unittest.TestCase):
 
 
 class NativeControlTests(unittest.TestCase):
+    def test_exact_pending_disclosure_aligns_before_strict_native_pointer_input(self):
+        from unittest.mock import Mock
+        region, disclosure = object(), Mock()
+        order = []
+        disclosure.queryComponent.return_value.scrollTo.side_effect = lambda direction: order.append(('scroll', direction))
+        disclosure.queryComponent.return_value.getExtents.return_value = (100, 100, 200, 20)
+        with patch.object(driver.ui.pyatspi, 'SCROLL_TOP_LEFT', 'top-left', create=True), \
+                patch.object(driver.ui.pyatspi, 'XY_SCREEN', 'screen', create=True), \
+                patch.object(driver.ui, 'wait_for', side_effect=lambda _, check: check()), \
+                patch.object(driver.ui, 'reveal', return_value=disclosure), \
+                patch.object(driver.ui, 'command', return_value='X=0\nY=0\nWIDTH=1440\nHEIGHT=960'), \
+                patch.object(driver.ui, 'click_control', side_effect=lambda node, window: order.append(('click', node, window))):
+            driver.open_relationship_evidence(region, 'owned-window')
+        self.assertEqual(order, [('scroll', 'top-left'), ('click', disclosure, 'owned-window')])
+        disclosure.clear_cache.assert_called_once()
+
     def test_pending_review_scopes_exact_text_and_enabled_decisions_not_accepted_history(self):
         from unittest.mock import Mock
         article, history = Mock(), Mock()

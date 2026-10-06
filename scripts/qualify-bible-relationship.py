@@ -154,22 +154,90 @@ def inspect_saved_label(application, window, database, saved):
     return field
 
 
-def readable_saved(application, window, evidence):
+def expand_writing_area(application, window, evidence):
     geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
         ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
-    control = ui.wait_for('existing panel divider', lambda: ui.find(application,
+    def divider():
+        return ui.find(application,
         lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and n.name == 'Resize panels'
         and base.recovery.memory.is_editor_divider(tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
-            geometry['WIDTH'], geometry['HEIGHT'])))
+            geometry['WIDTH'], geometry['HEIGHT']))
+    control = ui.wait_for('existing panel divider', divider)
     before = tuple(control.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
     ui.click_control(control, window)
     ui.command('xdotool', 'key', '--clearmodifiers', *(['Up'] * 7))
+    def expanded():
+        current = divider()
+        if current is None:
+            return None
+        bounds = tuple(current.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+        return bounds if bounds[1] < before[1] else None
+    after = ui.wait_for('supported expanded writing area', expanded)
+    evidence['bible_relationship']['writing_area_resize'] = {'before': list(before), 'after': list(after),
+        'supported_action': 'existing Resize panels keyboard Up'}
+
+
+def open_relationship_evidence(region, window):
+    disclosure = ui.wait_for('original preview relationship disclosure', lambda: ui.reveal(region,
+        lambda n: n.name == 'Relationships used for this preview'))
+    # ANYWHERE may leave a fragmented summary partly outside the window.
+    # Align the exact pending control before the unchanged strict pointer guard.
+    disclosure.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
+    geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
+        ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
+    def aligned():
+        disclosure.clear_cache()
+        bounds = tuple(disclosure.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+        try:
+            ui.control_click_point(bounds, geometry)
+        except RuntimeError as error:
+            if str(error) != 'Control bounds are outside the verified native window':
+                raise
+            return None
+        return disclosure
+    ui.wait_for('fully bounded pending disclosure after native scroll', aligned)
+    ui.click_control(disclosure, window)
+
+
+def readable_saved(application, window, evidence):
     block = ui.wait_for('saved relationship screenplay', lambda: ui.screenplay_block(application, REPLACEMENT.splitlines()[-1]))
     block.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
+    geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
+        ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
+    def exact_ranges():
+        application.clear_cache()
+        divider = ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+            and n.name == 'Resize panels' and base.recovery.memory.is_editor_divider(
+                tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)), geometry['WIDTH'], geometry['HEIGHT']))
+        timeline = ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON
+            and n.name == 'Resize panels' and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[2] >= geometry['WIDTH'] - 10)
+        if divider is None or timeline is None:
+            return None
+        top = tuple(divider.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+        frame = (top[0], top[1] + top[3], top[0] + top[2],
+            timeline.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[1])
+        saved = next((n for n in ui.walk(application) if n.name == 'Screenplay block'
+            and any(REPLACEMENT.splitlines()[-1] in ui.text_of(child) for child in ui.walk(n))), None)
+        if saved is None:
+            return None
+        lines = [line for line in REPLACEMENT.splitlines() if line]
+        ranges = {}
+        for node in ui.walk(saved):
+            value = ui.text_of(node).strip()
+            if value not in lines or not ui.visible(node):
+                continue
+            try:
+                bounds = tuple(node.queryText().getRangeExtents(0, len(value), ui.pyatspi.XY_SCREEN))
+            except NotImplementedError:
+                continue
+            if base.recovery.memory.inside_writing_area(bounds, frame):
+                ranges[value] = list(bounds)
+        return {'bounds': list(frame), 'saved_text_ranges': ranges} if len(ranges) == len(lines) else None
+    observed = ui.wait_for('both exact saved screenplay lines inside writing area', exact_ranges)
     ui.wait_for('saved relationship still in Bible detail', lambda: ui.reveal(application,
         lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and n.name == 'Edit relationship label ' + DOUBT))
     evidence['bible_relationship']['readable_final_actions'] = ['Resize panels keyboard Up', 'AT-SPI SCROLL_TOP_LEFT']
-    evidence['bible_relationship']['divider_before'] = list(before)
+    evidence['bible_relationship']['readable_final_screenplay'] = {'expected_saved_text': REPLACEMENT, **observed}
 
 
 def relationship_flow(application, window, database, fixture, evidence, checkpoint, capture):
@@ -203,6 +271,7 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
     cancel_manual_draft(application, window)
     if ui.blocks(database, a_id)[0] != a:
         raise RuntimeError('Explicit draft cancellation changed the saved manual source')
+    expand_writing_area(application, window, evidence)
     ui.reveal_button(application, 'Preview update', window)
     pending = ui.wait_for('relationship preview persisted', lambda: next((r for r in proposals(database, b[0])
         if r[1] == 'pending' and r[2] == REPLACEMENT), None))
@@ -210,9 +279,7 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
     if first['bible_relationship_inputs'][0]['revision_event_id'] != changed[7] or ui.blocks(database, b_id)[0] != b:
         raise RuntimeError('Preview changed canon or rebound relationship custody')
     region = ui.wait_for('relationship preview native review', lambda: review_region(application, REPLACEMENT))
-    disclosure = ui.wait_for('original preview relationship disclosure', lambda: ui.reveal(region,
-        lambda n: n.name == 'Relationships used for this preview'))
-    ui.click_control(disclosure, window)
+    open_relationship_evidence(region, window)
     ui.wait_for('exact original preview receipt visible', lambda: ui.reveal(region,
         lambda n: changed[7] in ui.text_of(n)))
     evidence['bible_relationship']['original_preview_binding'] = first
