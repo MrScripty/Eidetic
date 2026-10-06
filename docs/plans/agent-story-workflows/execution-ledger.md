@@ -1533,3 +1533,26 @@ Clippy/typecheck/build/traceability pass. Receipt/source publication and new nat
 child UI capture follow separately. Bible/affect/arc-description full receipt
 coverage and durable pending-review UI recovery remain outside this slice;
 SDK inference, inspector GUI and real-model quality remain unqualified.
+
+### Manual screenplay child planning: final native qualification
+
+Implementation `122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6`, tree
+`9796132f854ed298c27fd431e1ac1cccb8182ccd`, is published separately from
+preserved b0d6d17c / a0b46fed. Final qualification
+`9b4c5ff563f9662489ceac3ea321c5f68fbc677a`, tree
+`4608cdf8e6d5055ca954601202567f2eac2830ad`, passes run `37391688210`,
+job `112037996504`: actual native builds, no-download gate, 119 core / 432
+full-server tests, 16 driver / 4 gate tests. Local frontend423 and strict gates
+pass. Exact native Bible Save and manual screenplay midnight-to-morning Save
+produce reviewable targeted material. Old child acceptance refuses with pending
+evidence/canonical children preserved. Fresh explicit timeline acceptance preserves
+screenplay bytes/revisions; final UI clears its proposal and visibly renders
+Morning departure on the Beats track. Existing stale screenplay review remains.
+All responses are synthetic and labelled; no SDK inference, context-stack
+inspector GUI or real-model quality claim. Four earlier locator failures and the
+first canonical-pass/early-frame capture are preserved in the report. Final ZIP
+artifact `11381572325`, digest
+`37d6fb515b25d3ba4a14fb82a337d96adf1d9bc50b3cdbcd73aa3f6e119949cd`;
+six untouched viewed PNGs and receipt in native-37391688210. Complete Bible/affect/
+arc-description source binding and durable pending-review UI recovery remain
+later criteria. Parent owns integration and Library delivery.

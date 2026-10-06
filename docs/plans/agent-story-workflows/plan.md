@@ -9,6 +9,16 @@ Immediate canonical creation/generation is implemented at
 405 frontend tests, and actual native create/select/notes/manual anchor/generate
 without reopening. The delayed native response refuses persistence and the failure
 capture retains exact human text, but final banner/history qualification is pending.
+**Newest bounded milestone:** Manual screenplay child planning at
+`122c71e123ee9ff34f27c5ad9a2f34cf4bc5bcd6` consumes canonical saved text and
+requires review/explicit timeline acceptance with writer-transaction source guards.
+Local432 server /119 core /423 frontend and fresh hosted432/119 pass. Native
+run `37391688210` qualifies exact Bible Save, manual midnight-to-morning Save,
+pending child review, stale refusal and a visible explicitly accepted Morning
+departure Beat. Synthetic HTTP responses only. b0d6d17c/a0b46fed stay preserved;
+complete Bible/affect/arc-description receipts and durable pending UI recovery
+remain outside this slice. See screenplay-child-plan-memory-qualification.md.
+
 **Next gate:** Parent review of the separately audited Pumas no-download
 integration. Exact-current-source full-service tests pass locally and hosted;
 fresh native Bible edit/review/preview/acceptance passes in run `37379727832`.
