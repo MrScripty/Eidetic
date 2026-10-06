@@ -122,10 +122,29 @@ def review_region(application, proposal_text):
     return ui.reveal(section, lambda n: pending_review(n, proposal_text)) if section else None
 
 
-def stale_alert(application):
-    # Do not select a nonvisual ancestor whose aggregate text contains the error.
-    return ui.reveal(application, lambda n: n.getRole() == ui.pyatspi.ROLE_ALERT
-        and any(STALE in ui.text_of(child) for child in ui.walk(n)))
+def stale_alert(application, observations=None):
+    # Accessible leaves implement __len__ using child count. Never use their
+    # truthiness: a real, showing zero-child error can otherwise be discarded.
+    application.clear_cache()
+    matches = []
+    visible_exact = False
+    for node in ui.walk(application):
+        if ui.text_of(node) != STALE:
+            continue
+        component = node.queryComponent()
+        component.scrollTo(ui.pyatspi.SCROLL_ANYWHERE)
+        node.clear_cache()
+        showing = ui.visible(node)
+        matches.append({'role': node.getRoleName(), 'role_id': node.getRole(),
+                        'child_count': node.childCount, 'showing': showing,
+                        'bounds': list(component.getExtents(ui.pyatspi.XY_SCREEN)),
+                        'exact_text': ui.text_of(node)})
+        visible_exact = visible_exact or showing
+    if observations is not None and matches and (not observations or observations[-1] != matches):
+        observations.append(matches)
+        print('Exact stale accessibility: ' + json.dumps(matches), flush=True)
+    # wait_for also tests truthiness, so return a boolean observation, not a leaf.
+    return visible_exact
 
 
 def begin_manual_draft(application, window):
@@ -299,7 +318,8 @@ def relationship_flow(application, window, database, fixture, evidence, checkpoi
     # This old preview is the sole pending proposal; explicit native acceptance must refuse it.
     region = ui.wait_for('original preview after relationship ABA', lambda: review_region(application, REPLACEMENT))
     ui.reveal_button(region, 'Accept update', window)
-    ui.wait_for('exact stale relationship acceptance refusal', lambda: stale_alert(application))
+    observations = evidence['bible_relationship'].setdefault('stale_accessibility', [])
+    ui.wait_for('exact stale relationship acceptance refusal', lambda: stale_alert(application, observations))
     after = base.recovery.database_snapshot(database)
     base.require_refusal_unchanged(before, after)
     if (pending[0], 'pending', REPLACEMENT) not in proposals(database, b[0]):

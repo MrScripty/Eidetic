@@ -76,18 +76,27 @@ class RelationshipProviderTests(unittest.TestCase):
 
 
 class NativeControlTests(unittest.TestCase):
-    def test_exact_stale_observation_ignores_nonvisual_aggregate_ancestors(self):
-        from unittest.mock import Mock
-        root, alert, paragraph = Mock(), Mock(), Mock()
-        root.getRole.return_value = 0
-        alert.getRole.return_value = 42
-        with patch.object(driver.ui.pyatspi, 'ROLE_ALERT', 42, create=True), \
-                patch.object(driver.ui, 'walk', return_value=[paragraph]), \
-                patch.object(driver.ui, 'text_of', return_value=driver.STALE) as text_of, \
-                patch.object(driver.ui, 'reveal', side_effect=lambda _, predicate: alert if not predicate(root) and predicate(alert) else None):
-            self.assertIs(driver.stale_alert(root), alert)
-            text_of.return_value = 'Another error'
-            self.assertIsNone(driver.stale_alert(root))
+    def test_exact_stale_observation_keeps_showing_zero_child_accessible_leaf(self):
+        from unittest.mock import MagicMock
+        root, leaf = MagicMock(), MagicMock()
+        leaf.__len__.return_value = 0
+        leaf.childCount = 0
+        leaf.getRole.return_value = 42
+        leaf.getRoleName.return_value = 'paragraph'
+        leaf.queryComponent.return_value.getExtents.return_value = (20, 30, 400, 20)
+        observations = []
+        with patch.object(driver.ui.pyatspi, 'SCROLL_ANYWHERE', 'any', create=True), \
+                patch.object(driver.ui.pyatspi, 'XY_SCREEN', 'screen', create=True), \
+                patch.object(driver.ui, 'walk', return_value=[root, leaf]), \
+                patch.object(driver.ui, 'text_of', side_effect=lambda n: driver.STALE if n is leaf else 'Aggregate text'), \
+                patch.object(driver.ui, 'visible', return_value=True) as visible:
+            self.assertFalse(bool(leaf))
+            self.assertTrue(driver.stale_alert(root, observations))
+            self.assertEqual(observations[0][0]['child_count'], 0)
+            self.assertEqual(observations[0][0]['exact_text'], driver.STALE)
+            visible.return_value = False
+            self.assertFalse(driver.stale_alert(root))
+        leaf.queryComponent.return_value.scrollTo.assert_called_with('any')
 
     def test_exact_pending_disclosure_aligns_before_strict_native_pointer_input(self):
         from unittest.mock import Mock
