@@ -132,6 +132,66 @@ Extracted originals and verification receipt are in
 Sanitized app log SHA256 `66a81e2a34deab585b5e8c6ccd75bd0865d8b432570e513c3c293f69c25169a7`.
 
 
+## Readable writing-area follow-up
+
+Parent requested an additional readable frame because the verified accepted
+timeline image retains horizontal script clipping. Qualification
+`4fa35c649838f95ac3cf1d9ae407bb31f779749d`, tree
+`994854318cf84b2c10009bb26aeb1b23598370ad`, keeps application 9c95a97 unchanged.
+It uses the existing Resize panels Up-key control (24px steps, existing minimum),
+AT-SPI scrolling and native glyph-range bounds, with no CSS, application or pixel
+edits. All three exact saved morning screenplay lines must lie within the actual
+writing area, with the accepted Morning departure clip still visible. The previous
+six-frame run and its clipping limit remain preserved. Eighteen driver tests pass,
+including rejection of partially clipped text and the wrong panel divider.
+[Readable run 37396627562](https://github.com/MrScripty/Eidetic/actions/runs/37396627562),
+job **112054054613**, passes: exact-source guard, no-download admission, four gate
+tests, normal native/public-fixture builds, **119 core / 442 server / 18 driver**
+tests and the complete native flow plus readable writing-area qualification.
+No completed prior native job was retried. The actual saved screenplay is unchanged
+by the layout actions; all five provider responses remain labelled synthetic.
+
+The original [readable frame](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-story-memory-readable.png)
+was individually viewed at its native 1440x960 resolution. It clearly shows
+`Mara's umbrella is blue.`, the full saved morning source, the previously accepted
+B screenplay, the green Morning departure beat and the truthful remaining Needs
+review notice. Editor/script divider moved from `(280,322,834,6)` to
+`(280,172,834,6)` through its existing keyboard control. Native scrolling placed
+these complete glyph ranges inside writing area `(280,178,1114,564)`:
+
+| Exact saved screenplay line | Native full glyph bounds |
+| --- | --- |
+| `INT. CAFE - NIGHT` | `(309,321,120,12)` |
+| `Mara takes her blue umbrella.` | `(309,348,204,13)` |
+| `The train leaves in the morning.` | `(309,375,225,13)` |
+
+Accepted Morning departure remains at `(212,883,108,11)`. No pixel edit, simulated
+screen, injected JS/IPC, CSS change or application redesign was used. The other
+six original captures retain their documented clipping limits and were also
+individually viewed; all seven are hash verified. This fixes the presentation of
+the requested final overview, not the application's general overflow behavior.
+The readonly receipt verifies full exact saved 83-character source including blank
+lines. Model/story quality, SDK inference and inspector GUI remain unqualified.
+
+Artifact **11384360136**, **711,423 bytes**, ZIP SHA256
+`2654969cc230ebfa796b426a2b6b4da5a3bc65e3031164c69f535a3692d22386`.
+Receipt SHA256 `a2bd27d6f729e305c80e169431a4af48cb916ef964cd168cb4017a5ba5c5dae7`.
+Native binary SHA256 remains `71d711be42f3351e7fcd2a6628b1ed2fe4bb62f2fea3a2cf6295a8b091eaccde`,
+matching the unchanged application. Original files/verified receipt:
+`/workspace/scratch/story-memory-readiness/native-37396627562/`.
+Complete job log: `/workspace/scratch/story-memory-readiness/native-job-112054054613.log`.
+
+| Original readable-run image | SHA256 |
+| --- | --- |
+| [eidetic-bible-fact-review.png](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-bible-fact-review.png) | `0ccf59b0023e8a5a7dada99bccc3882bccf143aa95856ea48bae1e185ce94fb5` |
+| [eidetic-bible-fact-preview.png](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-bible-fact-preview.png) | `8cccf43d5ff87e09e45533e6bd4a212d38db35ea44485672c0b4ac174e570e63` |
+| [eidetic-bible-fact-accepted.png](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-bible-fact-accepted.png) | `5d43e50c5b35a4cb34ed2ff50d72f70344f6e1c507604c466c968c5b7acddfeb` |
+| [eidetic-child-plan-pending.png](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-child-plan-pending.png) | `8df1e2269f8276946cc814480b296d8cb245b91c1afac52b6f9f8523df85597c` |
+| [eidetic-child-plan-refused.png](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-child-plan-refused.png) | `4cc77308a8c0714c97179978bf146b202e90fdd49cd8a47b8d05ca7cde33e63b` |
+| [eidetic-child-plan-accepted.png](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-child-plan-accepted.png) | `f9f7f25c089d52dbdd70012563b866d01700f5af7c46ba1355fd0b07241440e1` |
+| [eidetic-story-memory-readable.png](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-story-memory-readable.png) | `0be93495ea2db1f174e9a27c05d842b86fe04ce01856c1a7f05752880fa32989` |
+
+
 Parent owns independent repair-source acceptance, image review, normal PR CI,
 integration and delivery. See the [readiness report](story-memory-integration-readiness.md)
 for the accumulated source versus evidence review surface and smallest normal route.

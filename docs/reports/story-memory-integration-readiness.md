@@ -32,17 +32,19 @@ Selected checkpoints in ancestry order are scene-order 9429/441c, canonical
 creation 9e8b/8941, membershipc633/2761, repair 3ebb/8ea7, context 4aae/8d27,
 dependency 1e4a, nativea0b4/reportb0d6, application 122c, qualification 9b4c and
 report 85be, then normalization/refusal d5ae81a, relationship receipt 9c95a97 and
-new native qualification 1d036b0. The [machine-readable manifest](story-memory-integration-readiness-manifest.json)
-contains all 35 candidate commit IDs/subjects, all 108 changed paths and exact
+new native qualification 1d036b0, report e93814c and readable qualification 4fa35c6. The [machine-readable manifest](story-memory-integration-readiness-manifest.json)
+contains all 37 candidate commit IDs/subjects, all 112 changed paths and exact
 Git blob IDs, plus the preserved 32-commit/107-path inventory. The three requested heads 122c/9b4c/85be remain frozen.
 
 ## Application versus evidence review surface
 
 The preserved 85bed285 main-relative diff is **107 files, 9,719 added / 838 removed lines**.
-At repaired qualification 1d036b0 it is **108 files, 10,488 added / 838 removed lines**
-(47 application source, 25 regression tests, 5 dependency files, 15 native
-qualification files, 16 documentation files). This report, its manifest and the
-new repair qualification report are additional documentation only. This is
+At repaired qualification 1d036b0 it is **108 files, 10,488 added / 838 removed lines**.
+Readable qualification 4fa35c6 retains those source files, the published report
+e93814c and supported capture controls: **112 files, 12,798 added / 838 removed
+lines** (47 application source, 25 regression tests, 5 dependency files, 16 native
+qualification files, 19 documentation files). The final report update adds
+documentation only. This is
 a substantial accumulated line despite a one-PR minimum; review it by bounded
 source units rather than treating it as just the newest child-planning change.
 The following role table describes the preserved 85bed285 inventory.
@@ -169,6 +171,20 @@ remains after the manual source change.
 
 ## Actual execution and visual evidence
 
+Final [readable run 37396627562](https://github.com/MrScripty/Eidetic/actions/runs/37396627562)
+passes at qualification **4fa35c6**, source **9c95a97**: **119 core / 442 server /
+18 driver**, four no-download gate tests and normal native builds. The seven
+untouched, individually inspected PNGs include the [readable writing-area overview](/workspace/scratch/story-memory-readiness/native-37396627562/eidetic-story-memory-readable.png):
+full exact saved morning screenplay, previously accepted B screenplay, blue Bible
+fact, accepted Morning departure beat and remaining Needs review are visible in
+one frame. Only existing panel resize, focus and native scroll were used; source,
+saved text and timeline acceptance remain unchanged. Earlier six-frame captures
+retain their own clipping bounds. The qualification report records actual glyph
+bounds and every image hash. ZIP artifact **11384360136** SHA256
+`2654969cc230ebfa796b426a2b6b4da5a3bc65e3031164c69f535a3692d22386`; receipt SHA256
+`a2bd27d6f729e305c80e169431a4af48cb916ef964cd168cb4017a5ba5c5dae7`. Application binary remains
+`71d711be42f3351e7fcd2a6628b1ed2fe4bb62f2fea3a2cf6295a8b091eaccde`. All model responses are synthetic.
+
 Repaired source 9c95a97 has **442 full-server / 429 frontend** tests passing
 locally and strict server all-target Clippy, with the same UI source qualified
 by the normalization checkpoint. Fresh [native run 37395200220](https://github.com/MrScripty/Eidetic/actions/runs/37395200220)
@@ -235,10 +251,11 @@ clips portions of text, with exact typed bytes/revisions verified independently.
 
 1. Parent uses a new integration branch at this report's repaired descendant of 85bed285,
    preserving the frozen 122c71e/9b4c5ff/85bed285 refs and existing history.
-   At qualification 1d036b0 main is 0 commits ahead / candidate 35 ahead; the
+   At qualification 4fa35c6 main is 0 commits ahead / candidate 37 ahead; the
    final documentation checkpoint adds one commit. Main302 is already ancestral.
 2. Close the bounded source-review units above and attach any completed private
-   receipts. Parent inspects the six native images with their explicit limits.
+   receipts. Parent inspects all seven readable-run images, including the unretouched
+   readable overview, with their explicit limits. Earlier captures remain preserved.
 3. Open one normal PR to main. Its ordinary CI must pass on the exact PR head:
    Linux/Windows `cargo clippy --workspace --all-targets --all-features`,
    `cargo test --workspace --all-targets`, format, frontend lint/format/typecheck/

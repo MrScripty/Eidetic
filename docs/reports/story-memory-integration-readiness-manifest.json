@@ -2,17 +2,17 @@
   "snapshot_utc": "2026-10-06",
   "main": "302851dbb5bf67cda922b4d79f70623e444891dc",
   "main_tree": "becb86624608663a9e91ff629edd1080d6eada54",
-  "candidate": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
-  "candidate_tree": "1d948840a5d1803b151346bd8d4c269072f42b68",
+  "candidate": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+  "candidate_tree": "994854318cf84b2c10009bb26aeb1b23598370ad",
   "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
   "application_tree": "ec16af1d5eb36dc75155968224dd347d9e63c1f7",
   "merge_base": "302851dbb5bf67cda922b4d79f70623e444891dc",
-  "ahead_behind": "0\t35",
-  "diff_shortstat": "108 files changed, 10488 insertions(+), 838 deletions(-)",
+  "ahead_behind": "0\t37",
+  "diff_shortstat": "112 files changed, 12798 insertions(+), 838 deletions(-)",
   "roles": {
-    "native qualification infrastructure": 15,
+    "native qualification infrastructure": 16,
     "dependency/build admission": 5,
-    "documentation": 16,
+    "documentation": 19,
     "application source": 47,
     "application regression tests": 25
   },
@@ -28,6 +28,12 @@
       "category": "native qualification infrastructure",
       "last_commit": "7f71b085153b95b49769572c10d44754bfbb9547",
       "candidate_blob": "4521f5206f01c6f6739cb512cc0440aa7e8d30a3"
+    },
+    {
+      "path": ".github/workflows/child-plan-readable-native.yml",
+      "category": "native qualification infrastructure",
+      "last_commit": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "candidate_blob": "60fb8e15e729a4c2f8ab717fcb4fbdfcdc9b5aab"
     },
     {
       "path": ".github/workflows/child-plan-review-repairs-native.yml",
@@ -414,6 +420,12 @@
       "candidate_blob": "db41abe6b5f50ba175ddf2f44b91750ac3b209ae"
     },
     {
+      "path": "docs/reports/child-plan-review-repairs-qualification.md",
+      "category": "documentation",
+      "last_commit": "e93814c230127176385cbd507abe84633733689b",
+      "candidate_blob": "ca517270ed3cf1ec55dba042991c5da260df1e63"
+    },
+    {
       "path": "docs/reports/scene-order-memory-qualification.md",
       "category": "documentation",
       "last_commit": "9e8bd1c9d51250ac1c517945269278b7fe7e3d61",
@@ -430,6 +442,18 @@
       "category": "documentation",
       "last_commit": "8d2719d2f80f3529864a138720aeb02463fc390f",
       "candidate_blob": "5c730ab3ccd9b58486141d5f8eb27e54e0415834"
+    },
+    {
+      "path": "docs/reports/story-memory-integration-readiness-manifest.json",
+      "category": "documentation",
+      "last_commit": "e93814c230127176385cbd507abe84633733689b",
+      "candidate_blob": "ad19881163bee73eb41f4698bd8c102050144464"
+    },
+    {
+      "path": "docs/reports/story-memory-integration-readiness.md",
+      "category": "documentation",
+      "last_commit": "e93814c230127176385cbd507abe84633733689b",
+      "candidate_blob": "0bcde20cb0ddfb14cd82e30f23473c39491b7de8"
     },
     {
       "path": "docs/reports/story-memory-no-download-qualification.md",
@@ -464,8 +488,8 @@
     {
       "path": "scripts/qualify-child-plan-memory.py",
       "category": "native qualification infrastructure",
-      "last_commit": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
-      "candidate_blob": "88ec43d9adf104edd8d36da7239b25cd454138e1"
+      "last_commit": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "candidate_blob": "40f85be56beef59797dea4f49cd0f4b5b44fffb7"
     },
     {
       "path": "scripts/qualify-scene-order-memory.py",
@@ -494,8 +518,8 @@
     {
       "path": "scripts/test_qualify_child_plan_memory.py",
       "category": "native qualification infrastructure",
-      "last_commit": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
-      "candidate_blob": "14bba94389b9e27d691f021d01aee8ce5d5067aa"
+      "last_commit": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "candidate_blob": "d7a36eb3d6d79bc3ed1007dab0a6d64542ae5ea9"
     },
     {
       "path": "scripts/test_qualify_scene_order_memory.py",
@@ -806,16 +830,28 @@
     {
       "sha": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
       "subject": "test(memory): qualify canonical child-plan acceptance in native UI"
+    },
+    {
+      "sha": "e93814c230127176385cbd507abe84633733689b",
+      "subject": "docs(memory): consolidate repaired integration readiness and native evidence"
+    },
+    {
+      "sha": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+      "subject": "test(memory): capture readable screenplay with Bible and accepted timeline"
     }
   ],
   "source_identity_proof": {
     "file_count": 77,
     "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
-    "qualification": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
+    "qualification": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
     "all_blobs_identical": true
   },
   "post_application_changed_paths": [
+    ".github/workflows/child-plan-readable-native.yml",
     ".github/workflows/child-plan-review-repairs-native.yml",
+    "docs/reports/child-plan-review-repairs-qualification.md",
+    "docs/reports/story-memory-integration-readiness-manifest.json",
+    "docs/reports/story-memory-integration-readiness.md",
     "scripts/qualify-child-plan-memory.py",
     "scripts/test_qualify_child_plan_memory.py"
   ],
@@ -1631,60 +1667,180 @@
   },
   "review_gate": "Parent independent repair-source acceptance and exact-head ordinary PR matrix pending",
   "native_execution": {
-    "run": 37395200220,
-    "job": 112049404919,
-    "artifact_id": 11382778877,
+    "run": 37396627562,
+    "job": 112054054613,
+    "artifact_id": 11384360136,
     "conclusion": "success",
     "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
-    "qualification": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
-    "archive_sha256": "86ecc1fc912244751406a03044f8c13f65ebf33c4ab6ed74f0c9a2ca1776f209",
-    "capture_receipt_sha256": "e0e89fc7e3090043def001c2bb283c6eb7a3c5013b067f78fb75ea507999387e",
+    "qualification": "4fa35c649838f95ac3cf1d9ae407bb31f779749d",
+    "archive_sha256": "2654969cc230ebfa796b426a2b6b4da5a3bc65e3031164c69f535a3692d22386",
+    "capture_receipt_sha256": "a2bd27d6f729e305c80e169431a4af48cb916ef964cd168cb4017a5ba5c5dae7",
     "binary_sha256": "71d711be42f3351e7fcd2a6628b1ed2fe4bb62f2fea3a2cf6295a8b091eaccde",
     "screenshots": [
       {
         "file": "eidetic-bible-fact-review.png",
         "sha256": "0ccf59b0023e8a5a7dada99bccc3882bccf143aa95856ea48bae1e185ce94fb5",
         "window_id": 2097155,
-        "pid": 20426
+        "pid": 20147
       },
       {
         "file": "eidetic-bible-fact-preview.png",
         "sha256": "8cccf43d5ff87e09e45533e6bd4a212d38db35ea44485672c0b4ac174e570e63",
         "window_id": 2097155,
-        "pid": 20426
+        "pid": 20147
       },
       {
         "file": "eidetic-bible-fact-accepted.png",
         "sha256": "5d43e50c5b35a4cb34ed2ff50d72f70344f6e1c507604c466c968c5b7acddfeb",
         "window_id": 2097155,
-        "pid": 20426
+        "pid": 20147
       },
       {
         "file": "eidetic-child-plan-pending.png",
-        "sha256": "d67c306b9b8deccca96088576d10610d231ce384f2286db4373f0c27fb6d30b5",
+        "sha256": "8df1e2269f8276946cc814480b296d8cb245b91c1afac52b6f9f8523df85597c",
         "window_id": 2097155,
-        "pid": 20426
+        "pid": 20147
       },
       {
         "file": "eidetic-child-plan-refused.png",
         "sha256": "4cc77308a8c0714c97179978bf146b202e90fdd49cd8a47b8d05ca7cde33e63b",
         "window_id": 2097155,
-        "pid": 20426
+        "pid": 20147
       },
       {
         "file": "eidetic-child-plan-accepted.png",
         "sha256": "f9f7f25c089d52dbdd70012563b866d01700f5af7c46ba1355fd0b07241440e1",
         "window_id": 2097155,
-        "pid": 20426
+        "pid": 20147
+      },
+      {
+        "file": "eidetic-story-memory-readable.png",
+        "sha256": "0be93495ea2db1f174e9a27c05d842b86fe04ce01856c1a7f05752880fa32989",
+        "window_id": 2097155,
+        "pid": 20147
       }
     ],
+    "readable_writing_area": {
+      "supported_actions": [
+        "Resize panels keyboard Up",
+        "AT-SPI SCROLL_TOP_LEFT"
+      ],
+      "editor_divider_before": [
+        280,
+        322,
+        834,
+        6
+      ],
+      "editor_divider_after": [
+        280,
+        172,
+        834,
+        6
+      ],
+      "expected_saved_text": "INT. CAFE - NIGHT\n\nMara takes her blue umbrella.\nThe train leaves in the morning.\n\n",
+      "bounds": [
+        280,
+        178,
+        1114,
+        564
+      ],
+      "saved_text_ranges": {
+        "INT. CAFE - NIGHT": [
+          309,
+          321,
+          120,
+          12
+        ],
+        "Mara takes her blue umbrella.": [
+          309,
+          348,
+          204,
+          13
+        ],
+        "The train leaves in the morning.": [
+          309,
+          375,
+          225,
+          13
+        ]
+      },
+      "model_responses": "synthetic localhost HTTP/SSE",
+      "accepted_child_native_bounds": [
+        212,
+        883,
+        108,
+        11
+      ]
+    },
+    "author_viewed_all_original_images": true,
+    "parent_image_acceptance": "pending",
     "provider": "synthetic localhost HTTP/SSE",
     "real_model_quality_qualified": false,
     "core_tests": 119,
     "server_tests": 442,
     "frontend_tests": 429,
-    "driver_tests": 16,
-    "no_download_gate_tests": 4,
-    "parent_image_acceptance": "pending"
+    "driver_tests": 18,
+    "no_download_gate_tests": 4
+  },
+  "preserved_repair_qualification": {
+    "candidate": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
+    "tree": "1d948840a5d1803b151346bd8d4c269072f42b68",
+    "native_execution": {
+      "run": 37395200220,
+      "job": 112049404919,
+      "artifact_id": 11382778877,
+      "conclusion": "success",
+      "application": "9c95a9714e8be5c2be71fd62ff049d71092ad8b3",
+      "qualification": "1d036b0091b45595f94ed84cf91a7e4d6dd9fa55",
+      "archive_sha256": "86ecc1fc912244751406a03044f8c13f65ebf33c4ab6ed74f0c9a2ca1776f209",
+      "capture_receipt_sha256": "e0e89fc7e3090043def001c2bb283c6eb7a3c5013b067f78fb75ea507999387e",
+      "binary_sha256": "71d711be42f3351e7fcd2a6628b1ed2fe4bb62f2fea3a2cf6295a8b091eaccde",
+      "screenshots": [
+        {
+          "file": "eidetic-bible-fact-review.png",
+          "sha256": "0ccf59b0023e8a5a7dada99bccc3882bccf143aa95856ea48bae1e185ce94fb5",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-bible-fact-preview.png",
+          "sha256": "8cccf43d5ff87e09e45533e6bd4a212d38db35ea44485672c0b4ac174e570e63",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-bible-fact-accepted.png",
+          "sha256": "5d43e50c5b35a4cb34ed2ff50d72f70344f6e1c507604c466c968c5b7acddfeb",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-child-plan-pending.png",
+          "sha256": "d67c306b9b8deccca96088576d10610d231ce384f2286db4373f0c27fb6d30b5",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-child-plan-refused.png",
+          "sha256": "4cc77308a8c0714c97179978bf146b202e90fdd49cd8a47b8d05ca7cde33e63b",
+          "window_id": 2097155,
+          "pid": 20426
+        },
+        {
+          "file": "eidetic-child-plan-accepted.png",
+          "sha256": "f9f7f25c089d52dbdd70012563b866d01700f5af7c46ba1355fd0b07241440e1",
+          "window_id": 2097155,
+          "pid": 20426
+        }
+      ],
+      "provider": "synthetic localhost HTTP/SSE",
+      "real_model_quality_qualified": false,
+      "core_tests": 119,
+      "server_tests": 442,
+      "frontend_tests": 429,
+      "driver_tests": 16,
+      "no_download_gate_tests": 4,
+      "parent_image_acceptance": "pending"
+    }
   }
 }
