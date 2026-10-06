@@ -2,7 +2,7 @@ name: Consumed Bible relationships exact-source native qualification
 
 on:
   push:
-    branches: [test/screenplay-bible-relationship-absence-native]
+    branches: [test/screenplay-bible-relationship-label-native]
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: 85170c9542322e2e197efcd07e1c2cafac3c8f6a
+      EIDETIC_CAPTURE_SOURCE: e94cbffa88fd3f58665e55a22b1c5969c60d3d4e
     steps:
       - uses: actions/checkout@v4
         with:

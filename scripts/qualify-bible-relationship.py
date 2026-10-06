@@ -224,6 +224,28 @@ def open_relationship_evidence(region, window):
     ui.click_control(disclosure, window)
 
 
+def reveal_bible_label(application, width, timeline_y):
+    application.clear_cache()
+    for node in ui.walk(application):
+        if ui.text_of(node) != DOUBT:
+            continue
+        node.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
+        node.clear_cache()
+        if not ui.visible(node):
+            continue
+        try:
+            bounds = tuple(node.queryText().getRangeExtents(0, len(DOUBT), ui.pyatspi.XY_SCREEN))
+        except NotImplementedError:
+            continue
+        x, y, w, h = bounds
+        # Canonical label glyphs must be in a Bible sidebar above the timeline,
+        # not merely flagged showing by an offscreen WebKit descendant.
+        if w > 0 and h > 0 and 0 <= x and x + w <= width and 60 <= y and y + h <= timeline_y and (x + w <= 280 or x >= width - 320):
+            return {'exact_label': DOUBT, 'glyph_bounds': list(bounds),
+                    'role': node.getRoleName(), 'child_count': node.childCount}
+    return None
+
+
 def readable_saved(application, window, evidence):
     block = ui.wait_for('saved relationship screenplay', lambda: ui.screenplay_block(application, REPLACEMENT.splitlines()[-1]))
     block.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
@@ -259,8 +281,9 @@ def readable_saved(application, window, evidence):
                 ranges[value] = list(bounds)
         return {'bounds': list(frame), 'saved_text_ranges': ranges} if len(ranges) == len(lines) else None
     observed = ui.wait_for('both exact saved screenplay lines inside writing area', exact_ranges)
-    ui.wait_for('saved relationship still in Bible detail', lambda: ui.reveal(application,
-        lambda n: n.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and n.name == 'Edit relationship label ' + DOUBT))
+    label = ui.wait_for('canonical Bible label glyphs above timeline',
+        lambda: reveal_bible_label(application, geometry['WIDTH'], observed['bounds'][3]))
+    evidence['bible_relationship']['readable_canonical_bible_label'] = label
     evidence['bible_relationship']['readable_final_actions'] = ['Resize panels keyboard Up', 'AT-SPI SCROLL_TOP_LEFT']
     evidence['bible_relationship']['readable_final_screenplay'] = {'expected_saved_text': REPLACEMENT, **observed}
 

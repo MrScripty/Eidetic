@@ -99,6 +99,23 @@ class NativeControlTests(unittest.TestCase):
             self.assertFalse(driver.stale_alert(root))
         leaf.queryComponent.return_value.scrollTo.assert_called_with('any')
 
+    def test_canonical_bible_label_requires_actual_glyphs_inside_sidebar_above_timeline(self):
+        from unittest.mock import MagicMock
+        application, leaf = MagicMock(), MagicMock()
+        leaf.__bool__.return_value = False
+        leaf.childCount = 0
+        leaf.queryText.return_value.getRangeExtents.return_value = (12, 500, 100, 16)
+        with patch.object(driver.ui.pyatspi, 'SCROLL_TOP_LEFT', 'top', create=True), \
+                patch.object(driver.ui.pyatspi, 'XY_SCREEN', 'screen', create=True), \
+                patch.object(driver.ui, 'walk', return_value=[leaf]), \
+                patch.object(driver.ui, 'text_of', return_value=driver.DOUBT), \
+                patch.object(driver.ui, 'visible', return_value=True):
+            self.assertEqual(driver.reveal_bible_label(application, 1440, 564)['exact_label'], driver.DOUBT)
+            for outside in [(12, 600, 100, 16), (12, -10, 100, 16), (700, 500, 100, 16), (12, 500, 0, 16)]:
+                leaf.queryText.return_value.getRangeExtents.return_value = outside
+                self.assertIsNone(driver.reveal_bible_label(application, 1440, 564))
+        leaf.queryComponent.return_value.scrollTo.assert_called_with('top')
+
     def test_exact_pending_disclosure_aligns_before_strict_native_pointer_input(self):
         from unittest.mock import Mock
         region, disclosure = object(), Mock()
