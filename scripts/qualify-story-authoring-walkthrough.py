@@ -120,9 +120,10 @@ def visible_inspector_feedback(application, window, scene_name, exact_label):
     if not contained(heading_bounds, viewport):
         return None
     def matches(node):
+        if ui.text_of(node) != exact_label:
+            return False
         bounds = tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
-        return (ui.text_of(node) == exact_label and contained(bounds, viewport)
-                and bounds[0] >= heading_bounds[0] - 8)
+        return contained(bounds, viewport) and bounds[0] >= heading_bounds[0] - 8
     label = ui.find(application, matches)
     if label is None:
         return None

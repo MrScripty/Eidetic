@@ -126,11 +126,13 @@ class InspectorFeedbackTests(unittest.TestCase):
             def getRole(self): return 1 if self.heading else 2
             def getRoleName(self): return 'heading' if self.heading else 'text'
             def getState(self): return State(self.showing)
-            def queryComponent(self): return self
+            def queryComponent(self):
+                if self.rect is None: raise NotImplementedError('No component on unrelated root')
+                return self
             def getExtents(self, _): return self.rect
         class Root:
             def clear_cache(self): pass
-        nodes=[Node('SCENE B',(1610,205,200,20),heading=True),
+        nodes=[Node('Application',None), Node('SCENE B',(1610,205,200,20),heading=True),
                Node('Has content',(0,0,0,0),showing=False),
                Node('Has content',(300,400,100,20)),
                Node('Has content',(1610,240,100,20))]
