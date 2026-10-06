@@ -15,6 +15,7 @@ import {
   getBibleGraphNodeProjection,
 } from '$lib/projectionApi.js';
 import type {
+  BibleGraphEdgeLabelCommandResponse,
   BibleGraphNodeCommandResponse,
   BibleGraphRootsCommandResponse,
   BibleGraphEdge,
@@ -345,13 +346,14 @@ export async function setBibleGraphEdgeLabelProjection(
   edge: BibleGraphEdge,
   payload: SetBibleGraphEdgeLabelCommand,
   commandId?: CommandId,
-): Promise<BibleGraphNodeCommandResponse> {
+): Promise<BibleGraphEdgeLabelCommandResponse> {
   const sourceKeyString = cacheKey({ node_id: edge.from_node_id });
   const targetKeyString = cacheKey({ node_id: edge.to_node_id });
   bibleGraphNodeProjectionState.pending[sourceKeyString] = true;
   bibleGraphNodeProjectionState.errors[sourceKeyString] = undefined;
   try {
     const response = await setBibleGraphEdgeLabel(payload, commandId);
+    if (!response.projection) return response;
     const accepted = cacheNodeProjection(sourceKeyString, response.projection);
     if (accepted && targetKeyString !== sourceKeyString) {
       delete bibleGraphNodeProjectionState.projections[targetKeyString];

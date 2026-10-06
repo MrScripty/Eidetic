@@ -90,7 +90,7 @@ pub async fn command_bible_graph_edge(
 pub async fn command_bible_graph_edge_label(
     app: tauri::AppHandle,
     command: CommandEnvelope<SetBibleGraphEdgeLabelCommand>,
-) -> Result<command_service::BibleGraphNodeCommandResponse, CommandError> {
+) -> Result<command_service::BibleGraphEdgeLabelCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     command_service::set_bible_graph_edge_label(&state, command)
         .await

@@ -139,6 +139,36 @@ beforeEach(() => {
 });
 
 describe('bible graph node projection store', () => {
+  it('accepts a committed label replay without a projection and preserves current caches', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValue(newerProjection);
+    await refreshBibleGraphNodeProjection(key);
+    const edge = projection.payload.outgoing_edges[0];
+    if (!edge) throw new Error('Missing edge fixture');
+    const targetKey = { node_id: edge.to_node_id };
+    const targetProjection = {
+      ...newerProjection,
+      payload: {
+        ...newerProjection.payload,
+        node: { ...newerProjection.payload.node, id: edge.to_node_id },
+      },
+    };
+    getBibleGraphNodeProjectionMock.mockResolvedValue(targetProjection);
+    await refreshBibleGraphNodeProjection(targetKey);
+    const response = { outcome: 'already_recorded' as const, projection: null };
+    vi.mocked(setBibleGraphEdgeLabel).mockResolvedValue(response);
+    await expect(
+      setBibleGraphEdgeLabelProjection(
+        edge,
+        { edge_id: edge.id, label: 'Committed label', expected_revision_event_id: 'old-read' },
+        'committed-command',
+      ),
+    ).resolves.toEqual(response);
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    expect(getCachedBibleGraphNodeProjection(targetKey)).toEqual(targetProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+  });
+
   it('preserves newer projections when an older label response arrives and clears an interrupted write', async () => {
     getBibleGraphNodeProjectionMock.mockResolvedValue(newerProjection);
     await refreshBibleGraphNodeProjection(key);

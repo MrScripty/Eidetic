@@ -11,7 +11,7 @@ pub(crate) fn apply(
 ) -> Result<
     (
         RecordChangeOutcome,
-        ProjectionEnvelope<BibleNodeDetailProjection>,
+        Option<ProjectionEnvelope<BibleNodeDetailProjection>>,
     ),
     HistoryStoreError,
 > {
@@ -54,7 +54,11 @@ pub(crate) fn apply(
             Ok(())
         },
     )?;
-    // A replay stays read-only even after another edit or deletion.
+    // History already validated the command ID and exact payload. A committed
+    // replay needs no live graph material, which may have since been deleted.
+    if outcome == RecordChangeOutcome::AlreadyRecorded {
+        return Ok((outcome, None));
+    }
     let source: String = conn.query_row(
         "SELECT from_node_id FROM bible_graph_edges WHERE id=?1",
         [command.payload.edge_id.as_str()],
@@ -66,7 +70,7 @@ pub(crate) fn apply(
         .ok_or_else(|| {
             HistoryStoreError::InvalidValue("Bible relationship source no longer exists".into())
         })?;
-    Ok((outcome, projection))
+    Ok((outcome, Some(projection)))
 }
 
 #[cfg(test)]

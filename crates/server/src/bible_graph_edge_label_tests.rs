@@ -85,6 +85,7 @@ fn label_only_update_preserves_structure_and_owned_history_and_replays_without_w
     let command = edit(&conn, &edge);
     let (outcome, projection) = apply(&mut conn, &command, 1).unwrap(); // deliberately earlier timestamp
     assert_eq!(outcome, RecordChangeOutcome::Recorded);
+    let projection = projection.expect("fresh write returns its source projection");
     let mut expected = edge.clone().into_edge();
     expected.label = command.payload.label.clone();
     assert_eq!(projection.payload.outgoing_edges, vec![expected]);
@@ -118,23 +119,64 @@ fn label_only_update_preserves_structure_and_owned_history_and_replays_without_w
     )
     .unwrap();
     let before = rows(&conn);
-    assert_eq!(
-        apply(&mut conn, &command, 20).unwrap().0,
-        RecordChangeOutcome::AlreadyRecorded
-    );
+    let (outcome, projection) = apply(&mut conn, &command, 20).unwrap();
+    assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
+    assert!(projection.is_none());
     assert_eq!(rows(&conn), before);
     delete(&mut conn, &edge);
     let before = rows(&conn);
-    assert_eq!(
-        apply(&mut conn, &command, 30).unwrap().0,
-        RecordChangeOutcome::AlreadyRecorded
-    );
+    let (outcome, projection) = apply(&mut conn, &command, 30).unwrap();
+    assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
+    assert!(projection.is_none());
     assert_eq!(rows(&conn), before);
     assert!(
         bible_graph_edge_store::load_edge(&conn, &edge.edge_id)
             .unwrap()
             .is_none()
     );
+}
+
+#[test]
+fn committed_label_replay_after_edge_and_source_deletion_is_read_only() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let edge = setup(&mut conn);
+    let command = edit(&conn, &edge);
+    apply(&mut conn, &command, 12).unwrap();
+    delete(&mut conn, &edge);
+    bible_graph_command::apply_delete_bible_graph_node(
+        &mut conn,
+        &CommandEnvelope::new(DeleteBibleGraphNodeCommand {
+            node_id: edge.from_node_id.clone(),
+        }),
+        13,
+    )
+    .unwrap();
+    assert!(
+        bible_graph_store::load_node_detail_projection(&conn, &edge.from_node_id)
+            .unwrap()
+            .is_none()
+    );
+    let before = rows(&conn);
+    let changes = conn.total_changes();
+    conn.pragma_update(None, "query_only", true).unwrap();
+    let (outcome, projection) = apply(&mut conn, &command, 14).unwrap();
+    assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
+    assert!(projection.is_none());
+    assert_eq!(conn.total_changes(), changes);
+    assert_eq!(rows(&conn), before);
+    conn.pragma_update(None, "query_only", false).unwrap();
+    let fresh = CommandEnvelope::new(command.payload.clone());
+    assert!(
+        apply(&mut conn, &fresh, 15)
+            .unwrap_err()
+            .to_string()
+            .contains("Relationship changed while editing")
+    );
+    assert_eq!(rows(&conn), before);
+    let mut mismatched = command;
+    mismatched.payload.label = "Different replay payload".into();
+    assert!(apply(&mut conn, &mismatched, 16).is_err());
+    assert_eq!(rows(&conn), before);
 }
 
 #[test]

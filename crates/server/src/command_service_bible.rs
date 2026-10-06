@@ -26,6 +26,13 @@ pub struct BibleGraphNodeCommandResponse {
     projection: ProjectionEnvelope<BibleNodeDetailProjection>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct BibleGraphEdgeLabelCommandResponse {
+    outcome: RecordChangeOutcome,
+    // Replays do not require a live source and return no projection.
+    projection: Option<ProjectionEnvelope<BibleNodeDetailProjection>>,
+}
+
 impl BibleGraphNodeCommandResponse {
     pub fn node_id(&self) -> &BibleGraphNodeId {
         &self.projection.payload.node.id
@@ -279,7 +286,7 @@ pub async fn set_bible_graph_edge(
 pub async fn set_bible_graph_edge_label(
     state: &AppState,
     command: CommandEnvelope<SetBibleGraphEdgeLabelCommand>,
-) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+) -> Result<BibleGraphEdgeLabelCommandResponse, BackendError> {
     let path = active_project_path(state)?;
     let response = tokio::task::spawn_blocking(move || {
         let mut conn = crate::sqlite::open_write_connection(&path)
@@ -287,7 +294,7 @@ pub async fn set_bible_graph_edge_label(
         let (outcome, projection) =
             crate::bible_graph_edge_label_command::apply(&mut conn, &command, 0)
                 .map_err(map_history_error)?;
-        Ok::<_, BackendError>(BibleGraphNodeCommandResponse {
+        Ok::<_, BackendError>(BibleGraphEdgeLabelCommandResponse {
             outcome,
             projection,
         })

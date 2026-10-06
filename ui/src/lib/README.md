@@ -129,6 +129,10 @@ async function openTimeline() {
 - Internal consumers import typed shapes and helpers from `$lib/*`.
 - Store consumers should treat backend-backed entities as read-through state and mutate them through API/store actions, not local object surgery.
 - Command helpers return backend projections and must not patch persistent stores optimistically.
+- The label-only Bible command returns `BibleGraphEdgeLabelCommandResponse`:
+  fresh writes include source node detail; committed replay returns a null
+  projection even when the relationship/source no longer exists. Consumers must
+  retain current cache state rather than fabricate a projection on replay.
 - Desktop command helpers return backend projections through Tauri IPC; legacy HTTP fallback paths are not production frontend contracts.
 - Projection helpers are read-only, use Tauri IPC directly, and return backend-owned versioned read models.
 - Layout consumers should reuse exported constants/helpers instead of re-declaring pixel budgets in component-local CSS.

@@ -1,4 +1,5 @@
 import type {
+  BibleGraphEdgeLabelCommandResponse,
   BibleGraphNodeCommandResponse,
   BibleGraphNodeId,
   BibleGraphNodeListCommandResponse,
@@ -221,9 +222,9 @@ export function setBibleGraphEdge(
 export function setBibleGraphEdgeLabel(
   payload: SetBibleGraphEdgeLabelCommand,
   commandId = createCommandId(),
-): Promise<BibleGraphNodeCommandResponse> {
+): Promise<BibleGraphEdgeLabelCommandResponse> {
   const command: CommandEnvelope<SetBibleGraphEdgeLabelCommand> = { id: commandId, payload };
-  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_edge_label', {
+  return invokeDesktop<BibleGraphEdgeLabelCommandResponse>('command_bible_graph_edge_label', {
     command,
   });
 }

@@ -1200,6 +1200,21 @@ describe('command api helpers', () => {
     });
   });
 
+  it('returns a committed label replay without inventing a projection', async () => {
+    const response = { outcome: 'already_recorded', projection: null };
+    const invoke = vi.fn().mockResolvedValue(response);
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('window', { __TAURI__: { core: { invoke } } });
+    await expect(
+      setBibleGraphEdgeLabel(
+        { edge_id: 'Mara.Eli', label: 'Committed label', expected_revision_event_id: 'old-read' },
+        'committed-command',
+      ),
+    ).resolves.toEqual(response);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('uses desktop bible graph edge delete commands when Tauri transport is available', async () => {
     const response = {
       outcome: 'recorded',

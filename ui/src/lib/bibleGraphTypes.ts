@@ -248,6 +248,12 @@ export interface BibleGraphNodeCommandResponse {
   projection: ProjectionEnvelope<BibleNodeDetailProjection>;
 }
 
+export interface BibleGraphEdgeLabelCommandResponse {
+  outcome: CommandOutcome;
+  // A committed replay returns no projection, even if the source still exists.
+  projection: ProjectionEnvelope<BibleNodeDetailProjection> | null;
+}
+
 export interface BibleGraphRootsCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<BibleGraphNodeListProjection>;

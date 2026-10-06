@@ -214,3 +214,8 @@ revision and label-only payload. Node detail caches include owned edge revision
 IDs. Delayed responses still pass existing projection version guards; failed
 writes preserve cached material and clear pending state. Incoming endpoint detail
 is invalidated/refreshed through the existing edge mutation path.
+
+A committed label replay returns no projection. The label store resolves that
+response and clears pending state without replacing source detail or invalidating
+the target cache. Ordinary projected responses still use the existing version
+guard, and interrupted/stale failures still preserve cached material.

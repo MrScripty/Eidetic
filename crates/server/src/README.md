@@ -526,3 +526,10 @@ through the global Bible projection clock. Timed edge semantics, new edge member
 and Bible node-name provenance are not implemented by this bounded successor.
 
 Relationship label updates use `bible_graph_edge_label_command.rs` and existing command/revision history. Node detail exposes each edge’s owned revision from the same read snapshot; the writer checks that revision and updates only the label of an active edge. Deleted or changed identities refuse without recording history, and command replay remains idempotent.
+
+The label-only response is `BibleGraphEdgeLabelCommandResponse`. A fresh committed
+write returns its source projection; an exact command-ID/payload replay returns
+`already_recorded` with `projection: null` before any live graph lookup. Deleting
+the relationship and its source node does not invalidate an already committed
+command. Replay performs no row writes and never recreates graph material. Fresh
+commands retain every active-identity and owned-revision guard.
