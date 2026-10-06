@@ -618,6 +618,13 @@ async fn autosave_interleaving_after_public_edit_signature_read_preserves_manual
             .await
             .unwrap()
             .unwrap(),
+        CommandStage::BeforeAdmission
+    ));
+    assert!(matches!(
+        tokio::time::timeout(Duration::from_secs(10), command_stages.recv())
+            .await
+            .unwrap()
+            .unwrap(),
         CommandStage::SignatureRead
     ));
     // A zero-wait independent observer identifies writer ownership. This never
@@ -661,8 +668,9 @@ async fn autosave_interleaving_after_public_edit_signature_read_preserves_manual
         .await
         .unwrap()
         .unwrap();
+    let public_result = outcome.as_ref().map(|_| "saved");
     eprintln!(
-        "Public edit/autosave ordering: writer_reserved={writer_reserved}; first_insert={insertion:?}; public_result={outcome:?}"
+        "Public edit/autosave ordering: writer_reserved={writer_reserved}; first_insert={insertion:?}; public_result={public_result:?}"
     );
     if writer_reserved {
         let saved = tokio::time::timeout(Duration::from_secs(10), autosave_stages.recv())
@@ -676,11 +684,7 @@ async fn autosave_interleaving_after_public_edit_signature_read_preserves_manual
     let generation = terminal(&f, &mut events).await;
     worker.join().unwrap();
     let canonical = document(&f);
-    assert_eq!(
-        history_count(&f),
-        command_count,
-        "Refused late output must roll back history"
-    );
+    let after_count = history_count(&f);
     let preview = crate::ai_service::preview_ai_context(&f.state, f.node.0)
         .await
         .unwrap();
@@ -695,6 +699,14 @@ async fn autosave_interleaving_after_public_edit_signature_read_preserves_manual
         "actual INSERT must succeed: {insertion:?}"
     );
     outcome.unwrap();
+    assert!(
+        writer_reserved,
+        "History signature must be read under writer ownership"
+    );
+    assert_eq!(
+        after_count, command_count,
+        "Refused late output must roll back history"
+    );
     assert!(
         generation
             .unwrap_err()

@@ -6,6 +6,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 #[derive(Debug)]
 pub(crate) enum CommandStage {
+    BeforeAdmission,
     SignatureRead,
     FirstInsert { extended_error_code: Option<i32> },
 }

@@ -551,3 +551,12 @@ barriers. It pauses the real public edit after signature SELECT, allows the actu
 autosave loop to commit, and observes SQLite's extended code at the first command
 INSERT. This establishes BUSY_SNAPSHOT(517) rather than assuming a Windows flake.
 Production locking, delays and error handling are unchanged in the reproducer.
+
+History writes reserve SQLite ownership with BEGIN IMMEDIATE before their
+transaction-local signature read. Exact immutable replay remains a read-only
+fast path, while a second signature check under writer ownership handles another
+caller committing the same ID during admission. Existing callbacks revalidate
+canonical revisions/locks under that writer and failed mutations roll back history.
+This adds no application mutex, timeout, retry loop or inverted session/doc lock.
+The actual autosave/public-edit barrier regression retains manual text, refuses
+late generation and proves canonical preview still reads the manual edit.

@@ -229,3 +229,163 @@ fn table_count(conn: &Connection, table: &str) -> i64 {
     })
     .unwrap()
 }
+
+#[test]
+fn committed_replay_remains_read_only_while_another_connection_owns_the_writer() {
+    let directory =
+        std::env::temp_dir().join(format!("eidetic-history-replay-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let path = directory.join("project.db");
+    let mut conn = crate::sqlite::open_write_connection(&path).unwrap();
+    create_schema(&conn).unwrap();
+    let mut command = command("immutable committed operation");
+    let event = event(command.id);
+    let revision = revision(event.id);
+    record_change(
+        &mut conn,
+        &command,
+        "test.read_only_replay",
+        &event,
+        std::slice::from_ref(&revision),
+    )
+    .unwrap();
+    conn.pragma_update(None, "query_only", true).unwrap();
+    let before = conn.total_changes();
+    let other = Connection::open(&path).unwrap();
+    other.execute_batch("BEGIN IMMEDIATE").unwrap();
+    let outcome = record_change_with(
+        &mut conn,
+        &command,
+        "test.read_only_replay",
+        &event,
+        &[revision],
+        |_| panic!("committed replay must not apply current state twice"),
+    )
+    .unwrap();
+    assert_eq!(outcome, RecordChangeOutcome::AlreadyRecorded);
+    command.payload.label = "conflicting replay payload".into();
+    assert!(matches!(
+        record_change(&mut conn, &command, "test.read_only_replay", &event, &[]),
+        Err(HistoryStoreError::InvalidValue(_))
+    ));
+    assert_eq!(conn.total_changes(), before);
+    assert_eq!(table_count(&conn, "commands"), 1);
+    assert_eq!(table_count(&conn, "change_events"), 1);
+    assert_eq!(table_count(&conn, "object_revisions"), 1);
+    other.execute_batch("ROLLBACK").unwrap();
+    drop(other);
+    drop(conn);
+    std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[tokio::test]
+async fn concurrent_fresh_command_id_rechecks_signature_after_writer_admission() {
+    use crate::write_concurrency_probe::{self as probe, CommandProbe, CommandStage};
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
+    for conflict in [false, true] {
+        let directory = std::env::temp_dir().join(format!(
+            "eidetic-history-admission-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&directory).unwrap();
+        let path = directory.join("project.db");
+        let initial = crate::sqlite::open_write_connection(&path).unwrap();
+        create_schema(&initial).unwrap();
+        drop(initial);
+        let command = command("first payload");
+        let first_event = event(command.id);
+        let (first_stages, mut first_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (release_first, release) = std::sync::mpsc::channel();
+        let _first_probe = probe::command(
+            command.id,
+            CommandProbe {
+                stages: first_stages,
+                release,
+            },
+        );
+        let applications = Arc::new(AtomicUsize::new(0));
+        let applied = applications.clone();
+        let first_path = path.clone();
+        let first_command = command.clone();
+        let first = std::thread::spawn(move || {
+            let mut conn = crate::sqlite::open_write_connection(&first_path).unwrap();
+            record_change_with(
+                &mut conn,
+                &first_command,
+                "test.concurrent_admission",
+                &first_event,
+                &[],
+                |_| {
+                    applied.fetch_add(1, Ordering::SeqCst);
+                    Ok(())
+                },
+            )
+        });
+        for expected_signature in [false, true] {
+            let stage = tokio::time::timeout(std::time::Duration::from_secs(10), first_rx.recv())
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(if expected_signature {
+                matches!(stage, CommandStage::SignatureRead)
+            } else {
+                matches!(stage, CommandStage::BeforeAdmission)
+            });
+        }
+        // The first owns the writer and has not inserted its command. Force a
+        // second caller to observe the same ID missing before writer admission.
+        let (second_stages, mut second_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (_release_second, release) = std::sync::mpsc::channel();
+        let _second_probe = probe::command(
+            command.id,
+            CommandProbe {
+                stages: second_stages,
+                release,
+            },
+        );
+        let mut second_command = command;
+        if conflict {
+            second_command.payload.label = "conflicting payload".into();
+        }
+        let second_path = path.clone();
+        let second = std::thread::spawn(move || {
+            let mut conn = crate::sqlite::open_write_connection(&second_path).unwrap();
+            let second_event = event(second_command.id);
+            record_change_with(
+                &mut conn,
+                &second_command,
+                "test.concurrent_admission",
+                &second_event,
+                &[],
+                |_| panic!("second caller must not apply an already committed ID"),
+            )
+        });
+        assert!(matches!(
+            tokio::time::timeout(std::time::Duration::from_secs(10), second_rx.recv())
+                .await
+                .unwrap()
+                .unwrap(),
+            CommandStage::BeforeAdmission
+        ));
+        release_first.send(()).unwrap();
+        assert_eq!(
+            first.join().unwrap().unwrap(),
+            RecordChangeOutcome::Recorded
+        );
+        let result = second.join().unwrap();
+        if conflict {
+            assert!(matches!(result, Err(HistoryStoreError::InvalidValue(_))));
+        } else {
+            assert_eq!(result.unwrap(), RecordChangeOutcome::AlreadyRecorded);
+        }
+        assert_eq!(applications.load(Ordering::SeqCst), 1);
+        let conn = Connection::open(&path).unwrap();
+        assert_eq!(table_count(&conn, "commands"), 1);
+        assert_eq!(table_count(&conn, "change_events"), 1);
+        drop(conn);
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+}
