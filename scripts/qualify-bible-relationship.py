@@ -224,24 +224,31 @@ def open_relationship_evidence(region, window):
     ui.click_control(disclosure, window)
 
 
-def reveal_bible_label(application, width, timeline_y):
+def relationship_accessibility(application):
+    application.clear_cache()
+    matches = []
+    for node in ui.walk(application):
+        value = ui.text_of(node)
+        if DOUBT not in value and DOUBT not in (node.name or ''):
+            continue
+        matches.append({'role': node.getRoleName(), 'child_count': node.childCount,
+            'showing': ui.visible(node), 'name': (node.name or '')[:120],
+            'text': value[:160], 'bounds': list(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))})
+    return matches
+
+
+def inspect_bible_label(application, width, timeline_y):
     application.clear_cache()
     for node in ui.walk(application):
-        if ui.text_of(node) != DOUBT:
+        # The rendered editor's exact ID/value is the qualified UI contract.
+        # Do not assume a plain span has its own accessible text/glyph object.
+        if node.name != 'Relationship label ' + EDGE_ID or ui.text_of(node) != DOUBT:
             continue
         node.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
         node.clear_cache()
-        if not ui.visible(node):
-            continue
-        try:
-            bounds = tuple(node.queryText().getRangeExtents(0, len(DOUBT), ui.pyatspi.XY_SCREEN))
-        except NotImplementedError:
-            continue
-        x, y, w, h = bounds
-        # Canonical label glyphs must be in a Bible sidebar above the timeline,
-        # not merely flagged showing by an offscreen WebKit descendant.
-        if w > 0 and h > 0 and 0 <= x and x + w <= width and 60 <= y and y + h <= timeline_y and (x + w <= 280 or x >= width - 320):
-            return {'exact_label': DOUBT, 'glyph_bounds': list(bounds),
+        x, y, w, h = node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)
+        if ui.visible(node) and w > 0 and h > 0 and 0 <= x and x + w <= width and 60 <= y and y + h <= timeline_y and (x + w <= 280 or x >= width - 320):
+            return {'exact_label': DOUBT, 'editor_bounds': [x, y, w, h],
                     'role': node.getRoleName(), 'child_count': node.childCount}
     return None
 
@@ -281,10 +288,15 @@ def readable_saved(application, window, evidence):
                 ranges[value] = list(bounds)
         return {'bounds': list(frame), 'saved_text_ranges': ranges} if len(ranges) == len(lines) else None
     observed = ui.wait_for('both exact saved screenplay lines inside writing area', exact_ranges)
-    label = ui.wait_for('canonical Bible label glyphs above timeline',
-        lambda: reveal_bible_label(application, geometry['WIDTH'], observed['bounds'][3]))
+    evidence['bible_relationship']['label_accessibility_before_inspection'] = relationship_accessibility(application)
+    ui.reveal_button(application, 'Edit relationship label ' + DOUBT, window)
+    label = ui.wait_for('exact saved Bible label in bounded native editor',
+        lambda: inspect_bible_label(application, geometry['WIDTH'], observed['bounds'][3]))
+    # Sidebar inspection must also leave both saved screenplay glyph ranges visible.
+    observed = ui.wait_for('saved screenplay still readable during Bible inspection', exact_ranges)
+    evidence['bible_relationship']['label_accessibility_after_inspection'] = relationship_accessibility(application)
     evidence['bible_relationship']['readable_canonical_bible_label'] = label
-    evidence['bible_relationship']['readable_final_actions'] = ['Resize panels keyboard Up', 'AT-SPI SCROLL_TOP_LEFT']
+    evidence['bible_relationship']['readable_final_actions'] = ['Resize panels keyboard Up', 'AT-SPI SCROLL_TOP_LEFT', 'native saved-label editor inspection without Save']
     evidence['bible_relationship']['readable_final_screenplay'] = {'expected_saved_text': REPLACEMENT, **observed}
 
 
