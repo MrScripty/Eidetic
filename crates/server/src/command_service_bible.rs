@@ -6,8 +6,8 @@ use eidetic_core::contracts::{
     BibleGraphSnapshotFieldId, BibleGraphSnapshotId, BibleNodeDetailProjection, CommandEnvelope,
     CommandId, CreateBibleGraphNodeCommand, DeleteBibleGraphEdgeCommand,
     DeleteBibleGraphNodeCommand, EnsureCanonicalBibleRootsCommand, FieldValue, ProjectionEnvelope,
-    SetBibleGraphEdgeCommand, SetBibleGraphFieldCommand, SetBibleGraphNodeNameCommand,
-    SetBibleGraphNodeTextCommand, SetBibleGraphSnapshotFieldCommand,
+    SetBibleGraphEdgeCommand, SetBibleGraphEdgeLabelCommand, SetBibleGraphFieldCommand,
+    SetBibleGraphNodeNameCommand, SetBibleGraphNodeTextCommand, SetBibleGraphSnapshotFieldCommand,
     builtin_bible_graph_schema_list_projection,
 };
 use serde::{Deserialize, Serialize};
@@ -272,6 +272,28 @@ pub async fn set_bible_graph_edge(
             BackendError::internal(format!("bible graph edge task failed: {error}"))
         })??;
 
+    let _ = state.events_tx.send(ServerEvent::BibleChanged);
+    Ok(response)
+}
+
+pub async fn set_bible_graph_edge_label(
+    state: &AppState,
+    command: CommandEnvelope<SetBibleGraphEdgeLabelCommand>,
+) -> Result<BibleGraphNodeCommandResponse, BackendError> {
+    let path = active_project_path(state)?;
+    let response = tokio::task::spawn_blocking(move || {
+        let mut conn = crate::sqlite::open_write_connection(&path)
+            .map_err(|e| BackendError::internal(e.to_string()))?;
+        let (outcome, projection) =
+            crate::bible_graph_edge_label_command::apply(&mut conn, &command, 0)
+                .map_err(map_history_error)?;
+        Ok::<_, BackendError>(BibleGraphNodeCommandResponse {
+            outcome,
+            projection,
+        })
+    })
+    .await
+    .map_err(|error| BackendError::internal(format!("Bible label task failed: {error}")))??;
     let _ = state.events_tx.send(ServerEvent::BibleChanged);
     Ok(response)
 }

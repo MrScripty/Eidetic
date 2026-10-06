@@ -1,6 +1,6 @@
 use eidetic_core::contracts::{
     BibleGraphEdge, BibleGraphEdgeId, BibleGraphEdgeKind, BibleGraphNodeId, ChangeEventId,
-    SetBibleGraphEdgeCommand,
+    ObjectKind, SetBibleGraphEdgeCommand, SetBibleGraphEdgeLabelCommand,
 };
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params, params_from_iter};
 
@@ -54,6 +54,42 @@ pub(crate) fn set_edge_in_transaction(
         ],
     )?;
     Ok(())
+}
+
+/// Runs inside the history writer transaction. Neither deleted identities nor
+/// newer owned revisions can be acknowledged by a cached editor's label write.
+pub(crate) fn set_edge_label_in_transaction(
+    tx: &Transaction<'_>,
+    command: &SetBibleGraphEdgeLabelCommand,
+    event_id: ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    let latest = crate::history_store::load_revisions_for_object(
+        tx,
+        ObjectKind::BibleEdge,
+        command.edge_id.as_str(),
+    )?
+    .last()
+    .map(|revision| revision.change_event_id);
+    if latest != Some(command.expected_revision_event_id) {
+        return Err(stale_label());
+    }
+    let changed = tx.execute(
+        "UPDATE bible_graph_edges SET label=?2, updated_event_id=?3
+         WHERE id=?1 AND deleted_event_id IS NULL AND updated_event_id=?4
+         AND EXISTS(SELECT 1 FROM bible_graph_nodes n WHERE n.id=from_node_id AND n.deleted_event_id IS NULL)
+         AND EXISTS(SELECT 1 FROM bible_graph_nodes n WHERE n.id=to_node_id AND n.deleted_event_id IS NULL)",
+        params![command.edge_id.as_str(), command.label.trim(), event_id.0.to_string(), command.expected_revision_event_id.0.to_string()],
+    )?;
+    if changed != 1 {
+        return Err(stale_label());
+    }
+    Ok(())
+}
+
+fn stale_label() -> HistoryStoreError {
+    HistoryStoreError::InvalidValue(
+        "Relationship changed while editing; reopen its label editor.".into(),
+    )
 }
 
 pub(crate) fn delete_edge_in_transaction(

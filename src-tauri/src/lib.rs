@@ -138,6 +138,7 @@ pub fn run() {
             commands::bible::command_bible_graph_node_text,
             commands::bible::command_bible_graph_field,
             commands::bible::command_bible_graph_edge,
+            commands::bible::command_bible_graph_edge_label,
             commands::bible::command_bible_graph_delete_edge,
             commands::bible::command_bible_graph_snapshot_field,
             commands::bible::command_bible_graph_roots,

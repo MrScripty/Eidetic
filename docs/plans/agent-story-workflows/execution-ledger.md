@@ -1771,3 +1771,23 @@ covers changed and unchanged out-of-scope inputs and refuses both new preview
 and acceptance of an earlier pending preview with all logical rows and manual
 screenplay unchanged. Full server467 and strict all-target Clippy pass. Existing
 unconsumed off-scope edits remain permitted. No additional state or dependency.
+
+### Relationship label editor stale-write repair
+
+Independent review of85170c9 demonstrated cached full-edge UPSERT could recreate
+an edge deleted during label editing or replace newer direction/kind. A separate
+successor replaces that editor dispatch with a label-only command carrying the
+owned revision captured on opening. Node detail returns edge revisions in the
+same read snapshot. Existing history's writer transaction verifies owned revision
+and active identity, updates only label, and records one label delta; refusal
+rolls back command, event and all logical rows. No new database state/dependency.
+Save/delete/edit/cancel controls share a busy guard; removed or interrupted drafts
+stay visible until cancellation or fresh review. Four actual-store regressions
+cover two-connection structural/delete races, owned sparse-history conflict,
+label ABA/delete-recreate and idempotent replay. Actual client-compiled rune
+controller tests cover interrupted save/delete, blocked overlapping dispatch,
+original expected revision, retained draft and fresh explicit save; API/store
+regressions retain newer cache on delayed label response. Full gates:
+core119/server471/frontend456, typecheck0/0, lint, format, build, strict server
+all-target Clippy, rustfmt and traceability. Hosted exact-source native build and
+relationship flow must still qualify this successor before delivery.

@@ -8,6 +8,7 @@ import type {
   DeleteBibleGraphNodeCommand,
   EnsureCanonicalBibleRootsCommand,
   SetBibleGraphEdgeCommand,
+  SetBibleGraphEdgeLabelCommand,
   SetBibleGraphFieldCommand,
   SetBibleGraphNodeNameCommand,
   SetBibleGraphSnapshotFieldCommand,
@@ -215,6 +216,16 @@ export function setBibleGraphEdge(
   };
 
   return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_edge', { command });
+}
+
+export function setBibleGraphEdgeLabel(
+  payload: SetBibleGraphEdgeLabelCommand,
+  commandId = createCommandId(),
+): Promise<BibleGraphNodeCommandResponse> {
+  const command: CommandEnvelope<SetBibleGraphEdgeLabelCommand> = { id: commandId, payload };
+  return invokeDesktop<BibleGraphNodeCommandResponse>('command_bible_graph_edge_label', {
+    command,
+  });
 }
 
 export function deleteBibleGraphEdge(

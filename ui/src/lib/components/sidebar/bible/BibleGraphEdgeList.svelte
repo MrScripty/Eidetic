@@ -7,63 +7,37 @@
   import {
     deleteBibleGraphEdgeProjection,
     refreshBibleGraphNodeProjection,
-    setBibleGraphEdgeProjection,
+    setBibleGraphEdgeLabelProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+
+  import { createBibleGraphEdgeLabelEditor } from './bibleGraphEdgeLabelEditor.svelte.js';
 
   let {
     title,
     edges,
     direction,
     ownerNodeId,
+    revisions = {},
   }: {
     title: string;
     edges: BibleGraphEdge[];
     direction: 'incoming' | 'outgoing';
     ownerNodeId: BibleGraphNodeId;
+    revisions?: Record<string, string>;
   } = $props();
 
-  let deletingEdgeId = $state<string | null>(null);
-  let deleteError = $state<string | undefined>(undefined);
-  let editingEdge = $state<BibleGraphEdge | null>(null);
-  let draftLabel = $state('');
-  let savingLabel = $state(false);
-
-  function editLabel(edge: BibleGraphEdge): void {
-    editingEdge = JSON.parse(JSON.stringify(edge)) as BibleGraphEdge;
-    draftLabel = edge.label;
-    deleteError = undefined;
-  }
-
-  async function saveLabel(): Promise<void> {
-    if (!editingEdge || !draftLabel.trim() || savingLabel) return;
-    const edge = edges.find((item) => item.id === editingEdge?.id);
-    if (!edge || JSON.stringify(edge) !== JSON.stringify(editingEdge)) {
-      deleteError = 'Relationship changed while editing; reopen its label editor.';
-      return;
-    }
-    savingLabel = true;
-    deleteError = undefined;
-    try {
-      await setBibleGraphEdgeProjection({
-        edge_id: edge.id,
-        from_node_id: edge.from_node_id,
-        to_node_id: edge.to_node_id,
-        edge_kind: edge.edge_kind,
-        label: draftLabel.trim(),
-        directed: edge.directed,
-        sort_order: edge.sort_order,
-      });
+  const editor = createBibleGraphEdgeLabelEditor({
+    edges: () => edges,
+    revisions: () => revisions,
+    save: setBibleGraphEdgeLabelProjection,
+    remove: deleteBibleGraphEdgeProjection,
+    refresh: async (edge) => {
       if (edge.from_node_id !== ownerNodeId) {
         await refreshBibleGraphNodeProjection({ node_id: ownerNodeId });
       }
-      editingEdge = null;
-    } catch (error) {
-      deleteError = error instanceof Error ? error.message : 'Failed to save relationship label';
-    } finally {
-      savingLabel = false;
-    }
-  }
-
+    },
+    confirm: (edge) => window.confirm(`Delete edge "${edge.label}"?`),
+  });
   function edgeKindLabel(kind: BibleGraphEdgeKind): string {
     if (typeof kind === 'string') return kind.replaceAll('_', ' ');
     return kind.custom;
@@ -72,29 +46,12 @@
   function endpointLabel(edge: BibleGraphEdge): string {
     return direction === 'incoming' ? edge.from_node_id : edge.to_node_id;
   }
-
-  async function handleDelete(edge: BibleGraphEdge): Promise<void> {
-    if (!window.confirm(`Delete edge "${edge.label}"?`)) return;
-
-    deletingEdgeId = edge.id;
-    deleteError = undefined;
-    try {
-      await deleteBibleGraphEdgeProjection(edge);
-      if (edge.from_node_id !== ownerNodeId) {
-        await refreshBibleGraphNodeProjection({ node_id: ownerNodeId });
-      }
-    } catch (error) {
-      deleteError = error instanceof Error ? error.message : 'Failed to delete edge';
-    } finally {
-      deletingEdgeId = null;
-    }
-  }
 </script>
 
 <section class="edge-section">
   <h3>{title}</h3>
-  {#if deleteError}
-    <p class="error">{deleteError}</p>
+  {#if editor.state.error}
+    <p class="error" role="alert">{editor.state.error}</p>
   {/if}
   {#if edges.length > 0}
     <ul class="edge-list">
@@ -105,44 +62,20 @@
             <button
               type="button"
               aria-label={`Edit relationship label ${edge.label}`}
-              disabled={savingLabel || deletingEdgeId !== null}
-              onclick={() => editLabel(edge)}>Edit</button
+              disabled={editor.busy()}
+              onclick={() => editor.edit(edge)}>Edit</button
             >
             <button
               type="button"
               class="edge-delete"
               aria-label={`Delete edge ${edge.label}`}
               title="Delete edge"
-              disabled={deletingEdgeId !== null}
-              onclick={() => void handleDelete(edge)}
+              disabled={editor.busy()}
+              onclick={() => void editor.remove(edge)}
             >
-              {deletingEdgeId === edge.id ? '...' : '×'}
+              {editor.state.deleting === edge.id ? '...' : '×'}
             </button>
           </div>
-          {#if editingEdge?.id === edge.id}
-            <label
-              >Relationship label
-              <input
-                aria-label={`Relationship label ${edge.id}`}
-                bind:value={draftLabel}
-                disabled={savingLabel}
-              />
-            </label>
-            <div>
-              <button
-                type="button"
-                disabled={savingLabel || !draftLabel.trim()}
-                onclick={() => void saveLabel()}>Save relationship label</button
-              >
-              <button
-                type="button"
-                disabled={savingLabel}
-                onclick={() => {
-                  editingEdge = null;
-                }}>Cancel label edit</button
-              >
-            </div>
-          {/if}
           <span class="edge-kind">{edgeKindLabel(edge.edge_kind)}</span>
           <span class="edge-target">{endpointLabel(edge)}</span>
         </li>
@@ -150,6 +83,26 @@
     </ul>
   {:else}
     <p class="muted">No edges</p>
+  {/if}
+  {#if editor.state.edge}
+    <label
+      >Relationship label
+      <input
+        aria-label={`Relationship label ${editor.state.edge.id}`}
+        bind:value={editor.state.label}
+        disabled={editor.busy()}
+      />
+    </label>
+    <div>
+      <button
+        type="button"
+        disabled={editor.busy() || !editor.state.label.trim()}
+        onclick={() => void editor.save()}>Save relationship label</button
+      >
+      <button type="button" disabled={editor.busy()} onclick={() => editor.cancel()}
+        >Cancel label edit</button
+      >
+    </div>
   {/if}
 </section>
 

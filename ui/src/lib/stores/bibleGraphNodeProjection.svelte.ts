@@ -6,6 +6,7 @@ import {
   ensureCanonicalBibleRoots,
   setBibleGraphNodeName,
   setBibleGraphEdge,
+  setBibleGraphEdgeLabel,
   setBibleGraphField,
   setBibleGraphSnapshotField,
 } from '$lib/commandApi.js';
@@ -22,6 +23,7 @@ import type {
   BibleNodeDetailProjection,
   CreateBibleGraphNodeCommand,
   SetBibleGraphEdgeCommand,
+  SetBibleGraphEdgeLabelCommand,
   SetBibleGraphFieldCommand,
   SetBibleGraphNodeNameCommand,
   SetBibleGraphSnapshotFieldCommand,
@@ -332,6 +334,34 @@ export async function setBibleGraphEdgeProjection(
     bibleGraphNodeProjectionState.errors[sourceKeyString] = errorMessage(
       error,
       'Failed to set bible graph edge',
+    );
+    throw error;
+  } finally {
+    bibleGraphNodeProjectionState.pending[sourceKeyString] = false;
+  }
+}
+
+export async function setBibleGraphEdgeLabelProjection(
+  edge: BibleGraphEdge,
+  payload: SetBibleGraphEdgeLabelCommand,
+  commandId?: CommandId,
+): Promise<BibleGraphNodeCommandResponse> {
+  const sourceKeyString = cacheKey({ node_id: edge.from_node_id });
+  const targetKeyString = cacheKey({ node_id: edge.to_node_id });
+  bibleGraphNodeProjectionState.pending[sourceKeyString] = true;
+  bibleGraphNodeProjectionState.errors[sourceKeyString] = undefined;
+  try {
+    const response = await setBibleGraphEdgeLabel(payload, commandId);
+    const accepted = cacheNodeProjection(sourceKeyString, response.projection);
+    if (accepted && targetKeyString !== sourceKeyString) {
+      delete bibleGraphNodeProjectionState.projections[targetKeyString];
+      delete bibleGraphNodeProjectionState.errors[targetKeyString];
+    }
+    return response;
+  } catch (error) {
+    bibleGraphNodeProjectionState.errors[sourceKeyString] = errorMessage(
+      error,
+      'Failed to save relationship label',
     );
     throw error;
   } finally {

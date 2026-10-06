@@ -20,6 +20,7 @@ pub mod backend_task;
 pub(crate) mod bible_context_scope;
 pub(crate) mod bible_field_lineage;
 pub(crate) mod bible_graph_command;
+pub(crate) mod bible_graph_edge_label_command;
 pub(crate) mod bible_graph_edge_store;
 pub(crate) mod bible_graph_field_store;
 pub(crate) mod bible_graph_schema;

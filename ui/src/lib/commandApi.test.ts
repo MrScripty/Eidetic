@@ -21,6 +21,7 @@ import {
   rejectAffectProposal,
   setAffectValue,
   setBibleGraphEdge,
+  setBibleGraphEdgeLabel,
   setBibleGraphField,
   setBibleGraphNodeName,
   setBibleGraphSnapshotField,
@@ -1183,6 +1184,20 @@ describe('command api helpers', () => {
       },
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('sends only the label and original expected revision through desktop transport', async () => {
+    const invoke = vi.fn().mockResolvedValue({ outcome: 'recorded' });
+    vi.stubGlobal('window', { __TAURI__: { core: { invoke } } });
+    const payload = {
+      edge_id: 'Mara.Eli',
+      label: 'Exact manual label',
+      expected_revision_event_id: 'opened-revision',
+    };
+    await setBibleGraphEdgeLabel(payload, 'label-command');
+    expect(invoke).toHaveBeenCalledWith('command_bible_graph_edge_label', {
+      command: { id: 'label-command', payload },
+    });
   });
 
   it('uses desktop bible graph edge delete commands when Tauri transport is available', async () => {

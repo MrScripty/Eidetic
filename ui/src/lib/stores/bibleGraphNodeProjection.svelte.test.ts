@@ -1,3 +1,5 @@
+import { setBibleGraphEdgeLabel } from '$lib/commandApi.js';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -16,7 +18,10 @@ import {
   isBibleGraphNodeProjectionPending,
   refreshBibleGraphNodeListProjection,
   refreshBibleGraphNodeProjection,
+  setBibleGraphEdgeLabelProjection,
 } from './bibleGraphNodeProjection.svelte.js';
+
+vi.mock('$lib/commandApi.js', () => ({ setBibleGraphEdgeLabel: vi.fn() }));
 
 vi.mock('$lib/projectionApi.js', () => ({
   getBibleGraphNodeListProjection: vi.fn(),
@@ -128,11 +133,40 @@ function resetProjectionState(): void {
 
 beforeEach(() => {
   resetProjectionState();
+  vi.mocked(setBibleGraphEdgeLabel).mockReset();
   getBibleGraphNodeProjectionMock.mockReset();
   getBibleGraphNodeListProjectionMock.mockReset();
 });
 
 describe('bible graph node projection store', () => {
+  it('preserves newer projections when an older label response arrives and clears an interrupted write', async () => {
+    getBibleGraphNodeProjectionMock.mockResolvedValue(newerProjection);
+    await refreshBibleGraphNodeProjection(key);
+    const edge = projection.payload.outgoing_edges[0];
+    if (!edge) throw new Error('Missing edge fixture');
+    const payload = {
+      edge_id: edge.id,
+      label: 'Exact draft',
+      expected_revision_event_id: 'opened-revision',
+    };
+    vi.mocked(setBibleGraphEdgeLabel).mockResolvedValue({
+      outcome: 'recorded',
+      projection: olderProjection,
+    });
+    await setBibleGraphEdgeLabelProjection(edge, payload, 'label-command');
+    expect(setBibleGraphEdgeLabel).toHaveBeenCalledWith(payload, 'label-command');
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    vi.mocked(setBibleGraphEdgeLabel).mockRejectedValue(
+      new Error('Relationship changed while editing'),
+    );
+    await expect(setBibleGraphEdgeLabelProjection(edge, payload)).rejects.toThrow(
+      'Relationship changed',
+    );
+    expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
+    expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
+    expect(getBibleGraphNodeProjectionError(key)).toContain('Relationship changed');
+  });
+
   it('stores backend graph node projection reads and clears pending state', async () => {
     getBibleGraphNodeProjectionMock.mockResolvedValue(projection);
 

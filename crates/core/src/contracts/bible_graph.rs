@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::FieldValue;
+use super::{ChangeEventId, FieldValue};
 
 macro_rules! non_empty_string_id {
     ($name:ident) => {
@@ -296,6 +296,15 @@ pub struct DeleteBibleGraphEdgeCommand {
     pub edge_id: BibleGraphEdgeId,
 }
 
+/// Compare-and-set a label without copying graph structure from an editor.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SetBibleGraphEdgeLabelCommand {
+    pub edge_id: BibleGraphEdgeId,
+    pub label: String,
+    pub expected_revision_event_id: ChangeEventId,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetBibleGraphSnapshotFieldCommand {
     pub snapshot_id: BibleGraphSnapshotId,
@@ -494,6 +503,8 @@ pub struct BibleNodeDetailProjection {
     #[serde(default)]
     pub incoming_edges: Vec<BibleGraphEdge>,
     #[serde(default)]
+    pub edge_revision_event_ids: std::collections::BTreeMap<BibleGraphEdgeId, ChangeEventId>,
+    #[serde(default)]
     pub outgoing_edges: Vec<BibleGraphEdge>,
     #[serde(default)]
     pub snapshots: Vec<BibleGraphSnapshotProjection>,
@@ -597,6 +608,7 @@ mod tests {
                 }],
             }],
             incoming_edges: Vec::new(),
+            edge_revision_event_ids: Default::default(),
             outgoing_edges: vec![BibleGraphEdge {
                 id: BibleGraphEdgeId::new("edge.beach.theme").unwrap(),
                 from_node_id: BibleGraphNodeId::new("node.location.beach").unwrap(),
