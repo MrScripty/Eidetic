@@ -1826,3 +1826,14 @@ blocked by missing glib-2.0.pc; ordinary hosted PR CI owns native adapter checks
 Original report/manifest/screenshots and bc041d8 remain intact. Detailed source,
 limits and sealed receipts: `docs/reports/bible-relationship-replay-repair.md`
 and its companion JSON. No thread resolution, reviewer request or merge.
+
+Exact-successor qualification f9081da (tree76cf658) pins source55536fa and passes
+native run37512778165/job112437930692/artifact11436690798. Standard locked native
+builds, core119/server472/UI458/driver39/no-download5 and the explicit named
+deleted-source replay backend gate1/1 pass. Actual Tauri fact/relationship edit,
+manual-draft custody, all-row stale ABA refusal, fresh preview and explicit
+targeted acceptance pass. Nine untouched capture hashes/dimensions/window/PID
+are verified; four byte-identical prior captures and five individually viewed
+new captures are accounted for. Provider calls remain synthetic. Native UI does
+not expose command-ID replay; that result belongs to the actual hosted backend
+gate plus API/store tests. Original evidence and all branches remain preserved.

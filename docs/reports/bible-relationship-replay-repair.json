@@ -127,6 +127,143 @@
       "sha256": "ee292eb8aab7435fec090fbc05c6d33a4f16a70c12f5ef699c9ebf8f44faf17f",
       "size_bytes": 227,
       "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/ee292eb8aab7435fec090fbc05c6d33a4f16a70c12f5ef699c9ebf8f44faf17f-replay-original-evidence-sha256.txt"
+    },
+    {
+      "name": "replay-native-source-audit.json",
+      "sha256": "242e583bf700259ae49df5fa89ef5001e8a57906be27c8af85e64ab7b1576b18",
+      "size_bytes": 795,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/242e583bf700259ae49df5fa89ef5001e8a57906be27c8af85e64ab7b1576b18-replay-native-source-audit.json"
+    },
+    {
+      "name": "replay-native-driver-tests.log",
+      "sha256": "b03a14258aae7ab13cc294f95a0f4b81c82be53d2420c02aedac69252065aee8",
+      "size_bytes": 2164,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/b03a14258aae7ab13cc294f95a0f4b81c82be53d2420c02aedac69252065aee8-replay-native-driver-tests.log"
+    },
+    {
+      "name": "replay-native-job-112437930692.log",
+      "sha256": "fd6caac5afa62153db7bf29d734699edccc41103927339ab1ca9289803d12034",
+      "size_bytes": 449022,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/fd6caac5afa62153db7bf29d734699edccc41103927339ab1ca9289803d12034-replay-native-job-112437930692.log"
+    },
+    {
+      "name": "deleted-source-replay-regression.txt",
+      "sha256": "51d931401842cb83c0bbca284e29c5378d9ce20e5ac9d96ea4761af01b0481d0",
+      "size_bytes": 405,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/51d931401842cb83c0bbca284e29c5378d9ce20e5ac9d96ea4761af01b0481d0-deleted-source-replay-regression.txt"
+    },
+    {
+      "name": "capture-evidence.json",
+      "sha256": "6a3d0ce78698fe0c41bb425a7bd7d1599a4da6f7555c2f0a692d9ac783006baa",
+      "size_bytes": 32807,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/6a3d0ce78698fe0c41bb425a7bd7d1599a4da6f7555c2f0a692d9ac783006baa-capture-evidence.json"
+    },
+    {
+      "name": "verified-summary.json",
+      "sha256": "fb87e1b2eb8be61ce5628ea981dfb228c5cc5bb487ac855896e5f28406e311c6",
+      "size_bytes": 2305,
+      "frozen_path": "/workspace/scratch/relationship-lineage/evidence-receipts/fb87e1b2eb8be61ce5628ea981dfb228c5cc5bb487ac855896e5f28406e311c6-verified-summary.json"
     }
-  ]
+  ],
+  "successor_native_qualification": {
+    "source_commit": "55536fa85fb91b0673d94e97b9f06b7297f23b12",
+    "source_tree": "39da595626dd68ff73dc91f859aff6819b4ba42f",
+    "qualification_commit": "f9081da5dbc37a7fa50d9edaf04f0849464238f5",
+    "qualification_tree": "76cf658cd279eadb61e3ce642ab357fcdd8f8088",
+    "qualification_branch": "test/screenplay-bible-relationship-replay-native",
+    "run_id": 37512778165,
+    "job_id": 112437930692,
+    "status": "success",
+    "artifact_id": 11436690798,
+    "artifact_size_bytes": 980112,
+    "artifact_zip_sha256": "c07c120c8b9fe5eea76f140e7db9ddfeb27b11bd227cf93a5a0dd4027933b5b7",
+    "capture_receipt_sha256": "6a3d0ce78698fe0c41bb425a7bd7d1599a4da6f7555c2f0a692d9ac783006baa",
+    "replay_gate_passed": 1,
+    "replay_gate_failed": 0,
+    "core": 119,
+    "server": 472,
+    "ui": 458,
+    "driver": 39,
+    "no_download": 5,
+    "application_test_dependency_blobs_match": true,
+    "summary": {
+      "application_source_sha": "55536fa85fb91b0673d94e97b9f06b7297f23b12",
+      "qualification_sha": "f9081da5dbc37a7fa50d9edaf04f0849464238f5",
+      "all_capture_hashes_dimensions_window_pid_verified": true,
+      "visually_reviewed": 9,
+      "identical_previously_viewed_captures": 4,
+      "individually_viewed_new_captures": 5,
+      "exact_refusal_all_rows_identical": true,
+      "fresh_receipt_matches_owned_revision": true,
+      "synthetic_provider_calls": 5,
+      "real_model_quality_qualified": false,
+      "deleted_source_replay_actual_hosted_test_passed": true,
+      "captures": [
+        {
+          "file": "eidetic-bible-fact-review.png",
+          "sha256": "a24080c5cd8398b7f87c9d7f7cd8cdbcd3cfe745bd30a8ce428085ee92c8fa46",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-bible-fact-preview.png",
+          "sha256": "7e2d52379ecfaea439eb2ac3f189f8056134634e55b89675f5aad1d4b1c70e28",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-bible-fact-accepted.png",
+          "sha256": "52c855660518839df78a347ecd132dc4f7c470d36cb70793bc381011b8bf2072",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-relationship-review.png",
+          "sha256": "6cab22fb7187d2c324910a802f9cc6b6273b114b35c5e9e54cac6c6a163a12de",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-relationship-preview.png",
+          "sha256": "927a14b3880aa9a2ab0a76e7c825a72a992d40630af03e9f41ed2063838b4ffd",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-relationship-stale.png",
+          "sha256": "a2bcbf4f5538fea8f3777ee0c5c1b945f124c507683de8f9fc0c6d9f43d56a01",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-relationship-fresh-preview.png",
+          "sha256": "48337fb302f8e988df56278041e6d7bceb0c43c66caf68ccb980376db651cfd4",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-relationship-accepted.png",
+          "sha256": "9878f6ff0de79918ea1f5610fec76b8a2721d461f85a4c877a4358090b40bc5e",
+          "window_id": 2097155,
+          "pid": 21956
+        },
+        {
+          "file": "eidetic-relationship-readable.png",
+          "sha256": "ac1848b01cd8cceabf31b96069028aa3dbb4828f5963f72db757a8ae83c0b996",
+          "window_id": 2097155,
+          "pid": 21956
+        }
+      ]
+    },
+    "raw_evidence_directory": "/workspace/scratch/relationship-lineage/native-37512778165",
+    "native_ui_command_id_replay_gesture_executed": false
+  },
+  "source_report_successor_ci_checkpoint": {
+    "commit": "4e1384969b49b5645f95e29c9c06eb8d5508c41b",
+    "run_id": 37512443938,
+    "frontend": "success",
+    "traceability": "success",
+    "linux_rust": "success",
+    "windows_rust": "in_progress"
+  }
 }
