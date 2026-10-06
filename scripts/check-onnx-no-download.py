@@ -36,7 +36,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         raise SystemExit('Usage: check-onnx-no-download.py <cargo-metadata.json>')
     try:
-        result = check(json.loads(Path(sys.argv[1]).read_text()))
+        result = check(json.loads(Path(sys.argv[1]).read_text(encoding='utf-8')))
     except (KeyError, ValueError) as error:
         raise SystemExit(f'ONNX dependency gate failed: {error}') from error
     print(json.dumps(result, indent=2))
