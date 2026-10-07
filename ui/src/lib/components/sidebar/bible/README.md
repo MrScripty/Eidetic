@@ -81,3 +81,12 @@ failed saves retain canonical screenplay. This is a narrow label editor, not a
 new full relationship authoring workflow.
 
 Label editors capture owned edge revision IDs from the node detail read. They submit only edge ID, label and expected revision; conflicting save/delete actions wait, and interrupted or removed-edge drafts remain editable until explicit cancellation. The server rechecks live identity and owned revision in its writer transaction.
+
+`BibleRecall.svelte` adds an explicit “Recall related story facts” action to the
+selected Bible entity detail, with optional fictional time and direction/kind
+filters. It displays named neighbors, typed stored orientation, exact field and
+relationship source revisions, unresolved fields and whole-record omissions.
+Untimed associations are qualified as connectedness evidence, not truth. Input
+changes and component disposal revoke evidence; no graph view or generation
+change is required. SSR and asynchronous read tests cover the visible evidence
+and stale-result guards alongside preserved screenplay work.

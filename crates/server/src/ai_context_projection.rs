@@ -83,7 +83,7 @@ fn load_context_node(
     })
 }
 
-fn context_fields(parts: Vec<BibleGraphPartProjection>) -> Vec<AiBibleContextField> {
+pub(crate) fn context_fields(parts: Vec<BibleGraphPartProjection>) -> Vec<AiBibleContextField> {
     let mut fields = Vec::new();
     for part in parts {
         for field in part.fields {

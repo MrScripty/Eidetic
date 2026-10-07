@@ -11,6 +11,14 @@ pub(crate) struct ResolvedFields {
     pub fields: Vec<AiBibleContextField>,
     pub snapshots: Vec<AiBibleContextSnapshot>,
     pub unresolved_fields: Vec<AiBibleContextFieldRef>,
+    /// Exact selected assertion; current callers continue using the same values.
+    pub snapshot_sources: BTreeMap<(String, String), ResolvedSnapshotSource>,
+}
+
+pub(crate) struct ResolvedSnapshotSource {
+    pub field: BibleGraphSnapshotField,
+    pub at_ms: u64,
+    pub label: String,
 }
 
 type FieldKey = (String, String);
@@ -101,6 +109,7 @@ pub(crate) fn resolve_fields(
         ))
     });
     let mut effective: BTreeMap<(u64, String), Vec<AiBibleContextField>> = BTreeMap::new();
+    let mut snapshot_sources = BTreeMap::new();
     for (
         key,
         LatestAssertions {
@@ -125,7 +134,15 @@ pub(crate) fn resolve_fields(
                 key.0, key.1,
             )));
         }
-        if let Some(value) = field.value {
+        if let Some(value) = field.value.clone() {
+            snapshot_sources.insert(
+                key,
+                ResolvedSnapshotSource {
+                    field: field.clone(),
+                    at_ms,
+                    label: label.clone(),
+                },
+            );
             effective
                 .entry((at_ms, label))
                 .or_default()
@@ -156,6 +173,7 @@ pub(crate) fn resolve_fields(
             })
             .collect(),
         unresolved_fields: unresolved.into_values().collect(),
+        snapshot_sources,
     })
 }
 

@@ -168,6 +168,7 @@ pub fn run() {
             projections::bible::projection_bible_graph_nodes,
             projections::bible::projection_bible_graph_schemas,
             projections::bible::projection_bible_render_graph,
+            projections::bible::projection_bible_recall,
             projections::context::projection_context_influence,
             projections::context::projection_context_stack,
             projections::semantic::projection_bible_reference_proposals,

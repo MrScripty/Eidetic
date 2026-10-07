@@ -3,6 +3,7 @@ mod agent_workflow;
 mod ai_context;
 mod bible_graph;
 mod bible_graph_defaults;
+mod bible_recall;
 mod bible_render_graph;
 mod bible_render_graph_filter;
 mod change_review;
@@ -62,6 +63,11 @@ pub use bible_graph_defaults::{
     BibleGraphSchemaDefault, BibleGraphSchemaListProjection, BibleGraphSchemaProjection,
     builtin_bible_graph_schema, builtin_bible_graph_schema_list_projection,
     default_part_projections_for_node,
+};
+pub use bible_recall::{
+    BIBLE_RECALL_MAX_BYTES, BIBLE_RECALL_MAX_EDGES, BIBLE_RECALL_MAX_NEIGHBORS,
+    BibleRecallDirection, BibleRecallField, BibleRecallFieldSource, BibleRecallNode,
+    BibleRecallPath, BibleRecallProjection, BibleRecallRequest,
 };
 pub use bible_render_graph::{
     BibleRenderGraphEdge, BibleRenderGraphInfluence, BibleRenderGraphNeighborhood,

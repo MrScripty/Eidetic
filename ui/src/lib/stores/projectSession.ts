@@ -45,6 +45,7 @@ import {
   refreshTimelineRenderProjection,
 } from './timelineRenderProjection.svelte.js';
 import { clearSelectedNodeEditorProjection } from './selectedNodeEditorProjection.svelte.js';
+import { clearBibleRecall } from './bibleRecallProjection.svelte.js';
 
 export interface ProjectSessionLifecycle {
   clearProjectionRefreshQueue: () => void;
@@ -66,6 +67,7 @@ const defaultProjectSessionLifecycle: ProjectSessionLifecycle = {
   resetScriptBlockEditDrafts: resetSessionScriptBlockEditDrafts,
   clearBibleSelection: () => selectBibleGraphNode(null),
   clearProjectionCaches() {
+    clearBibleRecall();
     clearTimelineRenderProjection();
     clearStoryArcListProjection();
     clearSelectedNodeEditorProjection();

@@ -5,7 +5,7 @@ use crate::timeline::node::NodeId;
 
 use super::{
     BibleGraphEdgeKind, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
-    BibleGraphSchemaKey, CommandId, ContextEvaluationTaskKind,
+    BibleGraphSchemaKey, BibleRecallRequest, CommandId, ContextEvaluationTaskKind,
 };
 
 const DEFAULT_MAX_TOOL_CALLS: u32 = 32;
@@ -333,6 +333,9 @@ pub enum AgentToolArguments {
     ReadBibleNode {
         node_id: BibleGraphNodeId,
     },
+    ReadBibleRecall {
+        query: BibleRecallRequest,
+    },
     ReadBibleNeighborhood {
         node_id: BibleGraphNodeId,
         depth: u8,
@@ -389,6 +392,7 @@ impl AgentToolArguments {
             Self::SearchBibleNodes { .. }
             | Self::ReadBibleNode { .. }
             | Self::ReadBibleNeighborhood { .. }
+            | Self::ReadBibleRecall { .. }
             | Self::ReadContextStack { .. }
             | Self::ReadActiveGraphContext { .. }
             | Self::ReadInfluencePaths { .. } => AgentToolKind::GraphRead,
@@ -419,6 +423,13 @@ impl AgentToolArguments {
             Self::ReadInfluencePaths { limit, .. } => {
                 validate_limit("limit", *limit, budget.max_graph_read_limit)
             }
+            Self::ReadBibleRecall { query } => validate_limit(
+                "neighbor_limit",
+                query.neighbor_limit,
+                budget
+                    .max_graph_read_limit
+                    .min(super::BIBLE_RECALL_MAX_NEIGHBORS),
+            ),
             Self::ProposeBibleNode { title, .. } => validate_non_empty("title", title),
             Self::ProposeBibleField { value, .. } => validate_non_empty("value", value),
             Self::ProposeBibleEdge { label, .. } => validate_non_empty("label", label),

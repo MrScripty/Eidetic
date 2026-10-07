@@ -147,3 +147,10 @@ node metadata-only edits do not advance the name clock. Proposal absence receipt
 retain deleted-node history, without inventing a consumed name.
 
 Exact timeline placement uses optional TimelineNodeRangeRead expected custody in the existing range command. Omission preserves legacy command JSON signatures. A present receipt records exact start/end and a known optional node history event; absent receipt is not inferred from fallback projections.
+
+## Explicit Bible recall
+`bible_recall.rs` defines an exact entity and bounded one-hop inspection request,
+typed directed paths, resolved fields with baseline/snapshot source revisions,
+unresolved timed identities and explicit omissions. Limits are eight neighbors,
+32 paths and 32 KiB; this evidence grants no generation or replacement authority.
+`ReadBibleRecall` shares that contract within existing agent graph-read budgets.

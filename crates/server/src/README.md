@@ -562,3 +562,18 @@ The actual autosave/public-edit barrier regression retains manual text, refuses
 late generation and proves canonical preview still reads the manual edit.
 
 The selected-node editor reads canonical placement and its existing committed-order node event in one SQLite read transaction. The guarded range command rechecks both under the history writer, excluding only its own in-flight event. Range/notes/lock ABA refuses before upsert; replay remains first. Domain/receipt refusals from this pre-commit path carry the Placement edit refused marker; post-commit projection failures stay uncertain. Existing atomic segment placement, text preservation and TimelineChanged/ScriptChanged publication remain the owners.
+
+## Explicit related-fact inspection
+`bible_recall_projection.rs` selects live incident relationships and neighbors
+independently of the renderer prefix. `bible_recall_evidence.rs` reuses temporal
+resolution and field/name/relationship history to capture exact source revisions
+and the projection clock within one SQLite read snapshot. Snapshot metadata and
+assertion writes retain separate clocks; unknown fictional time withholds timed
+values and conflicts refuse the read. Whole field records may be omitted to fit
+32 KiB; oversized identity/path evidence refuses instead of cutting qualifiers.
+`bible_recall_service.rs` and `ReadBibleRecall` expose this same read to desktop
+and scoped agent workflows without changing generation context, canonical text,
+proposals or semantic dependencies. Regression fixtures cover >205 entities,
+typed direction/cycles/bounds, temporal source custody, deletion and WAL atomicity.
+The temporal resolver additionally returns the exact selected assertion identity;
+existing generation values and temporal choices retain their prior behavior.

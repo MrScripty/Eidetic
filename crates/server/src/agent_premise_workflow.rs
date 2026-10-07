@@ -82,6 +82,13 @@ pub fn context_refinement_workflow(kind: ContextRefinementWorkflowKind) -> Agent
                         .to_string(),
                 },
                 AgentToolDefinition {
+                    name: AgentToolName::new("read_bible_recall")
+                        .expect("static tool name is non-empty"),
+                    kind: AgentToolKind::GraphRead,
+                    description: "Inspect an exact Bible entity and bounded one-hop related facts at explicit fictional time. Paths explain connectedness, not truth; unresolved facts and untimed relationships remain qualified. This read does not add generation inputs."
+                        .to_string(),
+                },
+                AgentToolDefinition {
                     name: AgentToolName::new("propose_bible_node")
                         .expect("static tool name is non-empty"),
                     kind: AgentToolKind::GraphProposal,
@@ -192,7 +199,7 @@ mod tests {
 
             assert_eq!(workflow.id.as_str(), expected_id);
             assert_eq!(workflow.intent, expected_intent);
-            assert_eq!(workflow.manifest.tools.len(), 4);
+            assert_eq!(workflow.manifest.tools.len(), 5);
             workflow.validate().unwrap();
         }
     }
