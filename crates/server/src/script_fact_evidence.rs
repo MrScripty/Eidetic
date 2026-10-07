@@ -53,10 +53,12 @@ pub(crate) fn evidence(
     let Some((document, revision, segment_revision, text, start_ms, end_ms, command)) = row else {
         return Ok(None);
     };
-    let edit: EditScriptBlockCommand = serde_json::from_str(&command)?;
+    let Ok(edit) = serde_json::from_str::<EditScriptBlockCommand>(&command) else {
+        return Ok(None);
+    };
     if edit.block_id.as_str() != block || edit.document_id.as_str() != document || edit.text != text
     {
-        return Err(stale());
+        return Ok(None);
     }
     let before = crate::revision_projection::load_object_field_projection_at_event(
         conn,

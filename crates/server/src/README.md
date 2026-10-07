@@ -98,7 +98,6 @@ domain model in `eidetic-core`.
 | `child_plan_bible_memory.rs` | Original resolved Bible evidence plus scoped source history, target context and metadata-only bounded node-selection custody; ignores unrelated global value clocks. |
 | `child_plan_bible_service_tests.rs` | Public synthetic HTTP/manual Bible edits, pending and delayed source admission, historical review evidence, explicit acceptance and scoped refusal/replay regressions. |
 | `child_plan_memory_service_tests.rs` | Actual public manual edits, synthetic HTTP pending plans, explicit acceptance, ABA/membership refusal, unchanged screenplay and exact durable public-projection recovery in a fresh AppState. |
-
 | `script_fact_evidence.rs` | Read-only exact manual edit and consumed-fact eligibility with generation/name/relationship revision custody. |
 | `script_fact_proposal.rs` | Strict labelled-provider analysis and immutable bound proposal creation on the existing proposal/history owner. |
 | `script_fact_proposal_service.rs` | Explicit canonical capture/provider/store lifecycle and exact command replay for saved-edit fact reconciliation. |

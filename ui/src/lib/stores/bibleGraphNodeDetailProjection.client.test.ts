@@ -34,8 +34,8 @@ it('refreshes clean committed fields while dirty same-field and unrelated drafts
 globalThis.read = async () => projection('Mara','Red');
 const left = store.retainBibleGraphNodeDetail(key('Mara')); const right = store.retainBibleGraphNodeDetail(key('Mara')); await settle();
 let calls=0;
-const dirty = createBibleGraphFieldDrafts({owner:()=> 'Mara:'+globalThis.session, fields:()=>fields('Mara'), save:async()=>calls++});
-const clean = createBibleGraphFieldDrafts({owner:()=> 'Mara:'+globalThis.session, fields:()=>fields('Mara'), save:async()=>calls++});
+const dirty = createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara:'+globalThis.session, fields:()=>fields('Mara'), save:async()=>calls++});
+const clean = createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara:'+globalThis.session, fields:()=>fields('Mara'), save:async()=>calls++});
 dirty.update(fields('Mara')[0],'  Unsaved blue draft — 雨.  '); dirty.update(fields('Mara')[1],'Independent motivation draft');
 const base = dirty.state.drafts['Mara.tagline'].base;
 globalThis.read = async () => projection('Mara','Blue',2); await store.refreshOwnedBibleGraphNodeProjections(); dirty.observe();
@@ -74,11 +74,11 @@ globalThis.read=async()=>projection('Eli','Wrong node',99); await assert.rejects
 it('keeps interrupted field drafts and prevents late saves from clearing a different selection', () =>
   run(`
 let owner='Mara', current=[{id:'shared',part_id:'profile',field_key:'tagline',value:{type:'text',value:'Mara saved'}}], finish;
-const editor=createBibleGraphFieldDrafts({owner:()=>owner,fields:()=>current,save:()=>new Promise(resolve=>finish=resolve)});
+const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=>owner,fields:()=>current,save:()=>new Promise(resolve=>finish=resolve)});
 editor.update(current[0],'Original manual draft'); const saving=editor.save(current[0]); assert.equal(editor.state.saving.shared,true);
 owner='Eli'; current=[{...current[0],value:{type:'text',value:'Eli saved'}}]; editor.observe(); editor.update(current[0],'Eli manual draft'); const eliBase=editor.state.drafts.shared.base;
 finish(); await saving; assert.equal(editor.value(current[0]),'Eli manual draft'); assert.equal(editor.state.drafts.shared.base,eliBase); assert.equal(editor.state.saving.shared,undefined);
-const interrupted=createBibleGraphFieldDrafts({owner:()=>owner,fields:()=>current,save:async()=>{throw Error('Lost acknowledgement');}}); interrupted.update(current[0],'Retained exact draft'); await interrupted.save(current[0]); assert.equal(interrupted.value(current[0]),'Retained exact draft'); assert.equal(interrupted.state.drafts.shared.baseText,'Eli saved'); assert.equal(interrupted.state.errors.shared,'Lost acknowledgement');
+const interrupted=createBibleGraphFieldDrafts({verified:()=>true,owner:()=>owner,fields:()=>current,save:async()=>{throw Error('Lost acknowledgement');}}); interrupted.update(current[0],'Retained exact draft'); await interrupted.save(current[0]); assert.equal(interrupted.value(current[0]),'Retained exact draft'); assert.equal(interrupted.state.drafts.shared.baseText,'Eli saved'); assert.equal(interrupted.state.errors.shared,'Lost acknowledgement');
 `));
 
 it('keeps the shared latest read owned when one of two Bible inspectors closes', () =>
@@ -94,4 +94,71 @@ for(const outcome of ['success','failure']) {
   else { assert.equal(store.getBibleGraphNodeProjectionError(key('Mara')),'Current shared read failed'); globalThis.read=async()=>projection('Mara','Retried shared blue',2); await store.refreshOwnedBibleGraphNodeProjections(); assert.equal(fields('Mara')[0].value.value,'Retried shared blue'); }
   assert.equal(store.isBibleGraphNodeProjectionPending(key('Mara')),false); left(); assert.equal(store.getCachedBibleGraphNodeProjection(key('Mara')),undefined);
 }
+`));
+
+it('retains exact submitted text and base when newer facts precede or follow a delayed acknowledgement', () =>
+  run(`
+for (const ordering of ['refresh-before-ack','ack-before-refresh']) {
+  let current=[{id:'fact',part_id:'profile',field_key:'tagline',value:{type:'text',value:'Red'}}], finish;
+  const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara',fields:()=>current,save:()=>new Promise(resolve=>finish=resolve)});
+  const exact='  Blue draft — 雨.\\n\\n  ';
+  editor.update(current[0],exact); const base=editor.state.drafts.fact.base;
+  const saving=editor.save(current[0]); const ack={...current[0],value:{type:'text',value:exact.trim()}};
+  if(ordering==='refresh-before-ack') { current=[{...current[0],value:{type:'text',value:'Green'}}]; editor.observe(); }
+  finish(ack); await saving;
+  if(ordering==='ack-before-refresh') { current=[{...current[0],value:{type:'text',value:'Green'}}]; editor.observe(); }
+  assert.equal(editor.value(current[0]),exact); assert.equal(editor.state.drafts.fact.base,base); assert.equal(editor.state.drafts.fact.baseText,'Red'); assert.equal(editor.changed(current[0]),true);
+  assert.equal(editor.state.saving.fact,false); editor.discard(current[0]); assert.equal(editor.value(current[0]),'Green');
+}
+`));
+
+it('clears only an owned matching acknowledgement and retains an already observed conflict', () =>
+  run(`
+for(const conflict of [false,true]) {
+  let current=[{id:'fact',part_id:'profile',field_key:'tagline',value:{type:'text',value:'Red'}}],finish;
+  const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara',fields:()=>current,save:()=>new Promise(resolve=>finish=resolve)});
+  editor.update(current[0],'  Blue — 雨.  '); const saving=editor.save(current[0]);
+  if(conflict) { current=[{...current[0],value:{type:'text',value:'Green'}}]; editor.observe(); }
+  current=[{...current[0],value:{type:'text',value:'Blue — 雨.'}}]; editor.observe(); finish(current[0]); await saving;
+  if(conflict) { assert.equal(editor.value(current[0]),'  Blue — 雨.  '); assert.equal(editor.changed(current[0]),true); }
+  else { assert.equal(editor.state.drafts.fact,undefined); assert.equal(editor.value(current[0]),'Blue — 雨.'); }
+}
+`));
+
+it('keeps a failed cached read and pending retry unsaveable until admitted recovery', () =>
+  run(`
+globalThis.read=async()=>projection('Mara','Red',1); const release=store.retainBibleGraphNodeDetail(key('Mara')); await settle();
+assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),true);
+let calls=0;
+const editor=createBibleGraphFieldDrafts({owner:()=> 'Mara',fields:()=>fields('Mara'),verified:()=>store.isBibleGraphNodeProjectionVerified(key('Mara')),save:async()=>calls++});
+editor.update(fields('Mara')[0],'  Local draft — 雨.\\n\\n  '); const base=editor.state.drafts['Mara.tagline'].base;
+globalThis.read=async()=>{throw Error('Current detail refresh failed');}; await assert.rejects(store.refreshOwnedBibleGraphNodeProjections(),/refresh failed/);
+assert.equal(fields('Mara')[0].value.value,'Red'); assert.equal(store.getBibleGraphNodeProjectionError(key('Mara')),'Current detail refresh failed');
+await editor.save(fields('Mara')[0]); assert.equal(calls,0); assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
+let finish;globalThis.read=()=>new Promise(resolve=>finish=resolve);const retry=store.refreshOwnedBibleGraphNodeProjections();
+assert.equal(store.getBibleGraphNodeProjectionError(key('Mara')),undefined); await editor.save(fields('Mara')[0]); assert.equal(calls,0);
+finish(projection('Mara','Green',2)); await retry; editor.observe(); assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),true);
+assert.equal(editor.value(fields('Mara')[0]),'  Local draft — 雨.\\n\\n  '); assert.equal(editor.state.drafts['Mara.tagline'].base,base); assert.equal(editor.changed(fields('Mara')[0]),true); await editor.save(fields('Mara')[0]);assert.equal(calls,0);
+editor.discard(fields('Mara')[0]); await editor.save(fields('Mara')[0]); assert.equal(calls,1); release();
+`));
+
+it('retains a draft when acknowledgement arrives during delayed refresh and refuses stale recovery', () =>
+  run(`
+globalThis.read=async()=>projection('Mara','Red',1);const release=store.retainBibleGraphNodeDetail(key('Mara'));await settle();
+let acknowledge,refresh;const editor=createBibleGraphFieldDrafts({owner:()=> 'Mara',fields:()=>fields('Mara'),verified:()=>store.isBibleGraphNodeProjectionVerified(key('Mara')),save:()=>new Promise(resolve=>acknowledge=resolve)});
+editor.update(fields('Mara')[0],'  Blue draft — 雨.  ');const saving=editor.save(fields('Mara')[0]);
+globalThis.read=()=>new Promise(resolve=>refresh=resolve);const reading=store.refreshOwnedBibleGraphNodeProjections();
+const ack=projection('Mara','Blue draft — 雨.',2);store.cacheNodeProjection(store.cacheKey(key('Mara')),ack);acknowledge(ack.payload.parts[0].fields[0]);await saving;
+assert.equal(editor.value(fields('Mara')[0]),'  Blue draft — 雨.  ');assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
+refresh(projection('Mara','Red',1));await assert.rejects(reading,/older revision/);assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);assert.equal(fields('Mara')[0].value.value,'Blue draft — 雨.');
+globalThis.read=async()=>projection('Mara','Green',3);await store.refreshOwnedBibleGraphNodeProjections();editor.observe();assert.equal(editor.changed(fields('Mara')[0]),true);assert.equal(editor.state.drafts['Mara.tagline'].baseText,'Red');release();
+`));
+
+it('does not let an old save complete a new same-name owner after selection ABA', () =>
+  run(`
+let owner='Mara', current=[{id:'fact',part_id:'profile',field_key:'tagline',value:{type:'text',value:'Red'}}];const completions=[];
+const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=>owner,fields:()=>current,save:()=>new Promise(resolve=>completions.push(resolve))});
+editor.update(current[0],'Old blue');const old=editor.save(current[0]);owner='Eli';editor.observe();owner='Mara';editor.observe();editor.update(current[0],'New exact draft — 雨.');const fresh=editor.save(current[0]);
+completions[0]({...current[0],value:{type:'text',value:'Old blue'}});await old;assert.equal(editor.value(current[0]),'New exact draft — 雨.');assert.equal(editor.state.saving.fact,true);
+current=[{...current[0],value:{type:'text',value:'New exact draft — 雨.'}}];completions[1](current[0]);await fresh;assert.equal(editor.state.drafts.fact,undefined);assert.equal(editor.state.saving.fact,false);
 `));

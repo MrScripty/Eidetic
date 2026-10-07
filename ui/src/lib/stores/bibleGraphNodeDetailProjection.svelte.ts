@@ -18,6 +18,7 @@ export const bibleGraphNodeProjectionState = $state<{
   projections: Record<string, ProjectionEnvelope<BibleNodeDetailProjection>>;
   pending: Record<string, boolean>;
   errors: Record<string, string | undefined>;
+  verified: Record<string, boolean>;
   nodeList: ProjectionEnvelope<BibleGraphNodeListProjection> | null;
   nodeListPending: boolean;
   nodeListError?: string;
@@ -25,6 +26,7 @@ export const bibleGraphNodeProjectionState = $state<{
   projections: {},
   pending: {},
   errors: {},
+  verified: {},
   nodeList: null,
   nodeListPending: false,
   nodeListError: undefined,
@@ -54,6 +56,15 @@ export function isBibleGraphNodeProjectionPending(key: BibleGraphNodeProjectionK
 export function getBibleGraphNodeProjectionError(key: BibleGraphNodeProjectionKey) {
   return bibleGraphNodeProjectionState.errors[cacheKey(key)];
 }
+export function isBibleGraphNodeProjectionVerified(key: BibleGraphNodeProjectionKey): boolean {
+  const encoded = cacheKey(key);
+  return (
+    bibleGraphNodeProjectionState.verified[encoded] === true &&
+    !!bibleGraphNodeProjectionState.projections[encoded] &&
+    !bibleGraphNodeProjectionState.pending[encoded] &&
+    !bibleGraphNodeProjectionState.errors[encoded]
+  );
+}
 
 export async function refreshBibleGraphNodeProjection(
   key: BibleGraphNodeProjectionKey,
@@ -65,11 +76,16 @@ export async function refreshBibleGraphNodeProjection(
   requests.set(encoded, token);
   const current = () => session === getEditorSessionGeneration() && requests.get(encoded) === token;
   bibleGraphNodeProjectionState.pending[encoded] = true;
+  bibleGraphNodeProjectionState.verified[encoded] = false;
   bibleGraphNodeProjectionState.errors[encoded] = undefined;
   try {
     const projection = await getBibleGraphNodeProjection(key);
     if (!current() || !isOwned()) throw new Error('The Bible detail owner changed during refresh.');
-    cacheNodeProjection(encoded, projection);
+    if (!cacheNodeProjection(encoded, projection))
+      throw new Error(
+        'Bible detail refresh returned an older revision. Retry to verify saved facts.',
+      );
+    bibleGraphNodeProjectionState.verified[encoded] = true;
     return projection;
   } catch (error) {
     if (current() && isOwned())
@@ -122,6 +138,7 @@ export function clearBibleGraphNodeProjection(key: BibleGraphNodeProjectionKey):
   delete bibleGraphNodeProjectionState.projections[encoded];
   delete bibleGraphNodeProjectionState.pending[encoded];
   delete bibleGraphNodeProjectionState.errors[encoded];
+  delete bibleGraphNodeProjectionState.verified[encoded];
 }
 
 export function clearBibleGraphNodeDetailProjections(): void {
@@ -130,4 +147,5 @@ export function clearBibleGraphNodeDetailProjections(): void {
   bibleGraphNodeProjectionState.projections = {};
   bibleGraphNodeProjectionState.pending = {};
   bibleGraphNodeProjectionState.errors = {};
+  bibleGraphNodeProjectionState.verified = {};
 }

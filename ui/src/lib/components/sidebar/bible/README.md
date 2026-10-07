@@ -113,6 +113,12 @@ contract is unchanged, with no new claim of a revision/CAS writer guarantee.
 Part components are keyed by node and part identity. Local save completion/error
 may clear only the same admitted owner, and input is disabled during that save.
 Late acknowledgement after a selection change cannot clear another field draft.
+Completion additionally requires the same save request, the submitted typed value
+in both the acknowledgement and current verified field, and no observed conflict.
+A newer or unverified committed value retains exact submitted text and its base
+for explicit discard. Observed conflicts remain latched even if a later value
+matches the submitted value. The expected pending save value alone is not
+treated as an external conflict.
 No canonical text is optimistically changed. Existing trimming at explicit field
 Save remains unchanged; unsaved input is retained exactly. Dirty draft persistence
 across inspector destruction/project switching is not added.
@@ -122,3 +128,9 @@ new ownership and field state live in the extracted small modules. Tests exercis
 actual client rune state, canonical refresh versus dirty bases, explicit discard,
 interruption and rapid selection/delayed ownership. Native qualification must show
 the clean accepted fact and a preserved dirty draft simultaneously.
+
+Cached details remain visible during a failed refresh. The inspector displays the
+failure and an ordinary Retry saved facts action. Field Save is gated in both its
+button and handler until an owned, version-admitted read succeeds; clearing the
+error at retry start does not restore permission. Drafts remain editable during
+verification and failure, and recovery does not rebase them.

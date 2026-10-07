@@ -8,6 +8,7 @@ export {
   getCachedBibleGraphNodeProjection,
   isBibleGraphNodeProjectionPending,
   getBibleGraphNodeProjectionError,
+  isBibleGraphNodeProjectionVerified,
   refreshBibleGraphNodeProjection,
   retainBibleGraphNodeDetail,
   refreshOwnedBibleGraphNodeProjections,

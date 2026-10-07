@@ -2,9 +2,70 @@
 use super::*;
 use crate::bible_field_lineage::tests::{capture_for, fact, set};
 use crate::script_impact_review::tests::{edit, fixture as scenes};
+use rusqlite::params;
 
 pub(crate) const SAVED: &str = "  Mara carries a blue umbrella — 雨.\n\n  ";
 pub(crate) const VALUE: &str = "Mara's umbrella is blue — 雨.\n\n";
+
+#[test]
+fn malformed_optional_edit_receipt_keeps_impact_and_refuses_capture() {
+    for malformed in ["json", "block", "document", "text"] {
+        let (conn, _, block, _, _, request) = fixture();
+        let original = crate::script_store::load_document_projection(&conn, &block.document_id)
+            .unwrap()
+            .unwrap();
+        let mut payload: serde_json::Value = conn
+            .query_row(
+                "SELECT c.payload_json FROM commands c JOIN change_events e ON e.command_id=c.id JOIN script_blocks b ON b.updated_event_id=e.id WHERE b.id=?1",
+                [block.block_id.as_str()],
+                |r| r.get::<_, String>(0),
+            )
+            .map(|s| serde_json::from_str(&s).unwrap())
+            .unwrap();
+        if malformed != "json" {
+            if malformed == "text" {
+                payload["text"] = serde_json::json!("Other saved text");
+            } else {
+                payload[format!("{malformed}_id")] = serde_json::json!("other");
+            }
+        }
+        let serialized = if malformed == "json" {
+            "{".into()
+        } else {
+            payload.to_string()
+        };
+        conn.execute(
+            "UPDATE commands SET payload_json=?1 WHERE id=(SELECT e.command_id FROM change_events e JOIN script_blocks b ON b.updated_event_id=e.id WHERE b.id=?2)",
+            params![serialized, block.block_id.as_str()],
+        ).unwrap();
+        let current = crate::script_store::load_document_projection(&conn, &block.document_id)
+            .unwrap()
+            .unwrap();
+        let old = original
+            .segments
+            .iter()
+            .find(|s| s.segment.id == block.segment_id)
+            .unwrap()
+            .impact
+            .as_ref()
+            .unwrap();
+        let impact = current
+            .segments
+            .iter()
+            .find(|s| s.segment.id == block.segment_id)
+            .unwrap()
+            .impact
+            .as_ref()
+            .unwrap();
+        assert!(impact.fact_edit.is_none(), "{malformed}");
+        assert_eq!(impact.generation_event_id, old.generation_event_id);
+        assert_eq!(impact.output_block_id, old.output_block_id);
+        assert_eq!(impact.lineage_available, old.lineage_available);
+        assert_eq!(impact.causes, old.causes);
+        assert_eq!(impact.needs_review, old.needs_review);
+        assert!(crate::script_fact_evidence::capture(&conn, &request.payload).is_err());
+    }
+}
 
 pub(crate) fn fixture() -> (
     Connection,

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { setBibleGraphFieldProjection } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+  import {
+    isBibleGraphNodeProjectionVerified,
+    setBibleGraphFieldProjection,
+  } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import type { BibleGraphNodeId, BibleGraphPartProjection } from '$lib/bibleGraphTypes.js';
   import { getEditorSessionGeneration } from '$lib/stores/editor.svelte.js';
   import {
@@ -18,8 +21,9 @@
   const editor = createBibleGraphFieldDrafts({
     owner: () => JSON.stringify([getEditorSessionGeneration(), nodeId, partProjection.part.id]),
     fields: () => partProjection.fields,
-    save: (field, text) =>
-      setBibleGraphFieldProjection({
+    verified: () => isBibleGraphNodeProjectionVerified({ node_id: nodeId }),
+    save: async (field, text) => {
+      const response = await setBibleGraphFieldProjection({
         node_id: nodeId,
         part_id: partProjection.part.id,
         part_key: partProjection.part.part_key,
@@ -29,7 +33,11 @@
         field_key: field.field_key,
         value: text ? { type: 'text', value: text } : null,
         field_sort_order: field.sort_order,
-      }),
+      });
+      return response.projection.payload.parts
+        .flatMap((part) => part.fields)
+        .find((saved) => saved.id === field.id);
+    },
   });
   $effect(() => {
     editor.observe();
@@ -70,7 +78,9 @@
           {/if}
           <button
             type="button"
-            disabled={editor.state.saving[field.id] || editor.changed(field)}
+            disabled={editor.state.saving[field.id] ||
+              editor.changed(field) ||
+              !isBibleGraphNodeProjectionVerified({ node_id: nodeId })}
             onclick={() => editor.save(field)}
           >
             {editor.state.saving[field.id] ? 'Saving' : 'Save'}

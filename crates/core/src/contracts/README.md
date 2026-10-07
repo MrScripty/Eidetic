@@ -19,7 +19,6 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `script_impact_review.rs` | Explicit targeted preview request, bounded author-selected recall identities and captured screenplay/world-context evidence for revision-bound propagation proposals. |
 | `semantic_dependency.rs` | Typed semantic relationships with optional source/target revision bindings for generation lineage. |
 | `timeline_render.rs` | Timeline renderer projections, including core-derived gaps filtered by the renderer's minimum duration. |
-
 | `script_fact_reconciliation.rs` | Canonical saved-edit receipts and identity-only request for one consumed baseline fact proposal. |
 
 ## Problem

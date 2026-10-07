@@ -272,6 +272,13 @@ mounted ownership and projection version admit each response. Retired reads
 cannot publish success/error or clear a newer pending read; old releases cannot
 clear a newer inspector. Project cache cleanup retires all detail reads.
 
+A disposable verified-read flag shares this cache lifetime. Starting a read
+invalidates it; only an owned response admitted by the existing version guard
+restores it. Failures and pending retries preserve cached values and drafts while
+field Save stays disabled. Command responses cannot recover a failed read, and
+older read responses cannot certify a newer cached value. Visible cached-detail
+errors expose ordinary retry without destroying the editor.
+
 This is UI cache coherence, not project-switch recovery. It does not create a
 parallel fact store. Command/list behavior remains in the original facade;
 existing version guards still apply to command responses. Actual client tests
