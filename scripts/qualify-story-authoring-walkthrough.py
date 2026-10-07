@@ -15,7 +15,7 @@ import threading
 import time
 from http.server import ThreadingHTTPServer
 
-SOURCE = '5ac9eb99ffb155878d5dcfda77baa01d60ef24f7'
+SOURCE = os.environ.get('EIDETIC_CAPTURE_SOURCE', 'f05fa888245db0fff1dad5a3165b0c1d3e07539c')
 A_TEXT = 'INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n'
 F_TEXT = 'EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n'
 C_TEXT = 'INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n'
