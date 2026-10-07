@@ -1935,3 +1935,35 @@ clear/deletion/ABA, writer recapture, target edits, both locks and failed stream
 five added UI cases cover exact source evidence and event refresh/draft retention.
 Hosted native qualification is prepared separately, not yet claimed. Synthetic
 HTTP fixtures establish workflow behavior, not real-model narrative quality.
+
+
+### Explicit Bible recall — source and native evidence complete, 7 October 2026
+
+Source `8bd0da0daa22897996b8e60976bf2de63fffe4eb` (treeccae6c03) normally merges
+accepted mainc4587c1 and original recall14f7575. The documented renderer-prefix
+retrieval gap is addressed by one shared exact-anchor, live one-hop read for
+native inspection and ReadBibleRecall. Typed direction/kinds, temporal source
+clocks, explicit unresolved/untimed/omitted evidence and8/32/32KiB caps reuse
+existing SQLite/history/lineage. Inspection does not write canon, consumption,
+context links, proposals or screenplay. Request/selection/session/version guards
+revoke stale evidence and preserve author drafts. No embedding dependency.
+
+Local/hosted core122/server511/UI503 (85files), strict Clippy, frontend0/0,
+format/lint/build/rustfmt/traceability,46QA driver and5no-download checks pass.
+Qualifiercf9830b (tree5dcc8248) has only four QA files beyond exact application.
+Native run37568916076/job112622899670/artifact11459778402 passes with the graph
+closed and Bible/timeline/screenplay visible. All seven original1920×1440PNGs
+were individually viewed and hash-bound to the original ZIP/raw metadata. Native
+untimed/999/1000ms recall reaches far-linked Beach House, displays the exact
+snapshot/field sources, and leaves canonical history/text unchanged. Actual blue
+→amber fact Save identifies affected B; fresh recall shows revision222; the
+visible targeted proposal remains pending. Exact manual B, saved A/F and F draft
+remain. Three responses are labelled synthetic; no real-model quality or clicked
+acceptance is claimed. Native selector text contrast remains a recorded visual
+limit. Earlier failed/cancelled attempts keep original source and capture labels.
+
+Report/manifest: explicit-bible-recall-native.md and explicit-bible-recall-manifest.json.
+Parent authorizes a duplicate-checked draft PR after evidence sealing; parent
+retains review, merge and Library delivery. Source8bd0da0 is unchanged during
+evidence publication. Prior pending ledger entries are historical: PR17/18 were
+completed and merged separately by the parent; this work duplicates neither.
