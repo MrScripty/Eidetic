@@ -1935,3 +1935,22 @@ clear/deletion/ABA, writer recapture, target edits, both locks and failed stream
 five added UI cases cover exact source evidence and event refresh/draft retention.
 Hosted native qualification is prepared separately, not yet claimed. Synthetic
 HTTP fixtures establish workflow behavior, not real-model narrative quality.
+
+
+### Consumed story-arc memory qualification receipts — 7 October 2026
+
+Application source `292630b91b6677684279f852fdfb7257b8c97aa8` preserves the
+production body of `d0967efabc9ef908dccf5626b0dd9ef7b5811a67` and supplies the
+required core AI/contracts/UI ownership documentation. Core120/server504/UI492
+(83 files), strict server all-target Clippy, typecheck0/0, lint/format/build,
+rustfmt, committed-source traceability and precommit pass. Exact source remains
+stacked on the separately published PR17 completion repair f05fa888.
+
+Qualification publication details are recorded in
+[story-arc-memory-native.md](../../reports/story-arc-memory-native.md) and its
+manifest. Hosted run37557179034 / job112585981839 on QA a90ce8d2 succeeds with
+the same checks, driver54/no-download5, actual typed arc edit, fully visible
+review, ABA stale acceptance refusal and fresh explicit acceptance. All ten
+untouched PNGs were individually inspected and their hashes verified. Original
+failed attempts, source/receipt hashes and synthetic labels
+are preserved. No PR, reviewer request or merge is performed by this executor.

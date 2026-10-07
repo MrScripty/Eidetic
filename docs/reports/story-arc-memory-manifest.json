@@ -1,0 +1,2857 @@
+{
+  "application_source": "292630b91b6677684279f852fdfb7257b8c97aa8",
+  "application_tree": "c7d7c16b38d4c0a52a87e5d98eae40a20f6580f5",
+  "production_milestone": "d0967efabc9ef908dccf5626b0dd9ef7b5811a67",
+  "base_pr17_source": "f05fa888245db0fff1dad5a3165b0c1d3e07539c",
+  "qualification_source": "a90ce8d2a4c5885c3daad1adf45de5ac87d11c31",
+  "qualification_tree": "206b1789799cb396ed853b1a7148039680a10b71",
+  "qualification_only_delta": [
+    ".github/workflows/story-arc-memory-native.yml",
+    ".github/workflows/story-authoring-walkthrough-native.yml",
+    ".github/workflows/timeline-placement-native.yml",
+    "crates/server/examples/story_arc_memory_fixture.rs",
+    "crates/server/examples/story_authoring_walkthrough_fixture.rs",
+    "crates/server/examples/timeline_placement_capture_fixture.rs",
+    "scripts/qualify-story-arc-memory.py",
+    "scripts/qualify-story-authoring-walkthrough.py",
+    "scripts/qualify-timeline-placement.py",
+    "scripts/test_qualify_story_arc_memory.py",
+    "scripts/test_qualify_story_authoring_walkthrough.py",
+    "scripts/test_qualify_timeline_placement.py"
+  ],
+  "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37557179034",
+  "tests": {
+    "core": 120,
+    "server": 504,
+    "ui": 492,
+    "ui_files": 83,
+    "qa_driver": 54,
+    "no_download": 5
+  },
+  "real_model_quality_qualified": false,
+  "visual_review": {
+    "all_final_10_original_pngs_individually_inspected": true,
+    "all_first_attempt_6_original_pngs_individually_inspected": true
+  },
+  "original_zip": {
+    "path": "/workspace/attachments/0ff5e064-7403-4834-9d9a-ce520fb96a97/eidetic-story-arc-memory-success.zip",
+    "size_bytes": 1156730,
+    "sha256": "4c8a1779061134b420deb2ce2f30203ad8d8f8b19849094cd6199972fe688027",
+    "file_id": "file_00000000fd1081f795758c6f1f557bbd"
+  },
+  "final_native": {
+    "untouched_directory": "/workspace/scratch/story-arc-native-success-37557179034",
+    "raw_capture_evidence": {
+      "status": "native_story_arc_memory_passed_with_labelled_synthetic_http_fixture",
+      "application_source_sha": "292630b91b6677684279f852fdfb7257b8c97aa8",
+      "qualification_sha": "a90ce8d2a4c5885c3daad1adf45de5ac87d11c31",
+      "application_binary_sha256": "86cf3e2f8f3cee86d197436c85b4d60d180b0a13ffef517dfc7d005468c291c4",
+      "capture_label": "actual native application with labelled synthetic provider",
+      "setup_route": "public services; tagged B ungenerated and unconsumed F manually authored",
+      "gui_route": "actual Tauri AT-SPI/X11 Generate, manual screenplay Save, typed arc edit, retained draft, stale refusal, preview and explicit acceptance",
+      "provider": "synthetic localhost HTTP/SSE fixture through production client",
+      "real_model_quality_qualified": false,
+      "checkpoints": [
+        {
+          "stage": "public services prepare tagged Witness arc, manual support and ungenerated scene",
+          "elapsed_seconds": 0.182
+        },
+        {
+          "stage": "launch actual desktop and begin writing",
+          "elapsed_seconds": 0.227
+        },
+        {
+          "stage": "exact typed arc edit identifies affected saved B without changing manual screenplay or Bible",
+          "elapsed_seconds": 27.025
+        },
+        {
+          "stage": "arc description ABA visibly refuses old preview and retains saved manual B",
+          "elapsed_seconds": 33.558
+        },
+        {
+          "stage": "explicit acceptance alone replaces B and refreshes owned arc lineage",
+          "elapsed_seconds": 37.225
+        }
+      ],
+      "stage": "explicit acceptance alone replaces B and refreshes owned arc lineage",
+      "project": {
+        "name": "Witness_Arc_Memory_QA",
+        "setup_route": "public project/template, arc metadata, notes, manual block and Bible services; no direct DB writes",
+        "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+        "b": {
+          "end_ms": 60000,
+          "id": "f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+          "name": "A: Setup",
+          "start_ms": 0
+        },
+        "f": {
+          "end_ms": 120000,
+          "id": "d18252e5-b6c2-4353-bbd4-d2c25dc3ab32",
+          "name": "C: Beat",
+          "start_ms": 60000
+        }
+      },
+      "original_arc": {
+        "exact_text": "Mara conceals the witness's identity.",
+        "revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727"
+      },
+      "window_id": 2097155,
+      "window_pid": 24023,
+      "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+      "generation": {
+        "block_id": "script.block.f9aa9ea2-24a8-482a-ac1c-baa405923e2a.generated",
+        "revision_event_id": "cfc4b4df-563c-4196-8fd6-96f033dcc46a",
+        "arc_inputs": [
+          {
+            "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+            "field": "name",
+            "value": "Witness",
+            "revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727"
+          },
+          {
+            "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+            "field": "arc_type",
+            "value": "\"APlot\"",
+            "revision_event_id": null
+          },
+          {
+            "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+            "field": "description",
+            "value": "Mara conceals the witness's identity.",
+            "revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727"
+          }
+        ],
+        "real_model": false
+      },
+      "captures": [
+        {
+          "file": "eidetic-story-arc-generated.png",
+          "sha256": "f4eca440c6572418f56fe91bbf4d8255d715b708b554322277fce828e91e9cfc",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-manual-edit.png",
+          "sha256": "2c231302989585bd96ed23cfe01960c72ed26328208b6dbec2801905cc7afeed",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-draft.png",
+          "sha256": "a3c2f4793d51d6636360d6ea77def6c22f066a60728e697b78b11333e92af0b2",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-arc-edit.png",
+          "sha256": "8221304fd9ac0a27231dfe77489c2eb976aaea01caa5ae3a26b46d25d8d053cf",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-review.png",
+          "sha256": "ddca2b65bf820355b64478d157be6d0dfc50c59874a82463b535f610540f9701",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-preview.png",
+          "sha256": "6674f246a7ee66105f0507611d40286bfdd45ed1ad2eb2058239ec4868e07fcb",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-stale.png",
+          "sha256": "684145ae4bc7bc2d908d8e85e964d60ece9f8bb9bbcbf4a63765f837cd7713f3",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-fresh-preview.png",
+          "sha256": "87b79a1324548c5fe70277eff831a153c127e77c99f32b3de6ffcd12946e8df3",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-accepted.png",
+          "sha256": "4a4c8162514eb8d2bef275aff39e47863a0a61a38971184bb403624c55749df1",
+          "window_id": 2097155,
+          "pid": 24023
+        },
+        {
+          "file": "eidetic-story-arc-retained-draft.png",
+          "sha256": "4a4c8162514eb8d2bef275aff39e47863a0a61a38971184bb403624c55749df1",
+          "window_id": 2097155,
+          "pid": 24023
+        }
+      ],
+      "manual_saved_B": {
+        "exact_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+        "revision_event_id": "26cea73a-9f83-4c0d-bb67-863452d36ef6"
+      },
+      "manual_arc_edit": {
+        "before": "Mara conceals the witness's identity.",
+        "after": "Mara reveals the witness's identity.",
+        "before_revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727",
+        "after_revision_event_id": "bc114562-ca58-4652-a334-494c87432e1b",
+        "route": "actual native typed description and existing debounced canonical command"
+      },
+      "preview": {
+        "proposal_id": "script.review.65207e98-56ea-46cd-b007-5d89974d0570",
+        "canonical_unchanged": true,
+        "visible_proposal": {
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ],
+          "character_bounds": [
+            [
+              301,
+              564,
+              8,
+              12
+            ],
+            [
+              308,
+              564,
+              8,
+              12
+            ],
+            [
+              315,
+              564,
+              8,
+              12
+            ],
+            [
+              322,
+              564,
+              8,
+              12
+            ],
+            [
+              329,
+              564,
+              8,
+              12
+            ],
+            [
+              336,
+              564,
+              8,
+              12
+            ],
+            [
+              343,
+              564,
+              8,
+              12
+            ],
+            [
+              350,
+              564,
+              8,
+              12
+            ],
+            [
+              357,
+              564,
+              8,
+              12
+            ],
+            [
+              371,
+              564,
+              8,
+              12
+            ],
+            [
+              378,
+              564,
+              8,
+              12
+            ],
+            [
+              385,
+              564,
+              8,
+              12
+            ],
+            [
+              392,
+              564,
+              8,
+              12
+            ],
+            [
+              399,
+              564,
+              8,
+              12
+            ],
+            [
+              406,
+              564,
+              8,
+              12
+            ],
+            [
+              413,
+              564,
+              8,
+              12
+            ],
+            [
+              420,
+              564,
+              8,
+              12
+            ],
+            [
+              434,
+              564,
+              8,
+              12
+            ],
+            [
+              441,
+              564,
+              8,
+              12
+            ],
+            [
+              448,
+              564,
+              8,
+              12
+            ],
+            [
+              455,
+              564,
+              8,
+              12
+            ],
+            [
+              469,
+              564,
+              8,
+              12
+            ],
+            [
+              476,
+              564,
+              8,
+              12
+            ],
+            [
+              483,
+              564,
+              8,
+              12
+            ],
+            [
+              490,
+              564,
+              8,
+              12
+            ],
+            [
+              497,
+              564,
+              8,
+              12
+            ],
+            [
+              504,
+              564,
+              8,
+              12
+            ],
+            [
+              511,
+              564,
+              8,
+              12
+            ],
+            [
+              525,
+              564,
+              8,
+              12
+            ],
+            [
+              532,
+              564,
+              8,
+              12
+            ],
+            [
+              539,
+              564,
+              8,
+              12
+            ],
+            [
+              553,
+              564,
+              8,
+              12
+            ],
+            [
+              560,
+              564,
+              8,
+              12
+            ],
+            [
+              567,
+              564,
+              8,
+              12
+            ],
+            [
+              574,
+              564,
+              8,
+              12
+            ],
+            [
+              581,
+              564,
+              8,
+              12
+            ],
+            [
+              588,
+              564,
+              8,
+              12
+            ],
+            [
+              595,
+              564,
+              8,
+              12
+            ],
+            [
+              602,
+              564,
+              8,
+              12
+            ],
+            [
+              609,
+              564,
+              8,
+              12
+            ],
+            [
+              623,
+              564,
+              8,
+              12
+            ],
+            [
+              630,
+              564,
+              8,
+              12
+            ],
+            [
+              637,
+              564,
+              8,
+              12
+            ],
+            [
+              644,
+              564,
+              8,
+              12
+            ],
+            [
+              651,
+              564,
+              8,
+              12
+            ],
+            [
+              658,
+              564,
+              8,
+              12
+            ],
+            [
+              665,
+              564,
+              8,
+              12
+            ],
+            [
+              672,
+              564,
+              8,
+              12
+            ],
+            [
+              679,
+              564,
+              8,
+              12
+            ]
+          ],
+          "exact_text": "Synthetic preview: Mara reveals the witness's identity.\n\n",
+          "native_text_geometry_inside_script": true,
+          "pending_controls": [
+            {
+              "name": "Reject",
+              "bounds": [
+                301,
+                610,
+                35,
+                16
+              ]
+            },
+            {
+              "name": "Accept update",
+              "bounds": [
+                345,
+                610,
+                82,
+                16
+              ]
+            }
+          ]
+        },
+        "binding": {
+          "arc_previous_inputs": [
+            {
+              "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+              "field": "name",
+              "value": "Witness",
+              "revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727"
+            },
+            {
+              "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+              "field": "arc_type",
+              "value": "\"APlot\"",
+              "revision_event_id": null
+            },
+            {
+              "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+              "field": "description",
+              "value": "Mara conceals the witness's identity.",
+              "revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727"
+            }
+          ],
+          "arc_inputs": [
+            {
+              "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+              "field": "name",
+              "value": "Witness",
+              "revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727"
+            },
+            {
+              "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+              "field": "arc_type",
+              "value": "\"APlot\"",
+              "revision_event_id": null
+            },
+            {
+              "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+              "field": "description",
+              "value": "Mara reveals the witness's identity.",
+              "revision_event_id": "bc114562-ca58-4652-a334-494c87432e1b"
+            }
+          ],
+          "arc_absence_revisions": [],
+          "request": {
+            "proposal_id": "script.review.65207e98-56ea-46cd-b007-5d89974d0570",
+            "document_id": "script.document.main",
+            "segment_id": "script.segment.f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+            "block_id": "script.block.f9aa9ea2-24a8-482a-ac1c-baa405923e2a.generated",
+            "expected_block_revision_event_id": "26cea73a-9f83-4c0d-bb67-863452d36ef6",
+            "generation_event_id": "cfc4b4df-563c-4196-8fd6-96f033dcc46a",
+            "dependency_id": "generation.cfc4b4df-563c-4196-8fd6-96f033dcc46a.arc.c799039c-a9a3-4b73-9c8e-533546c1e3ff.description",
+            "story_time_ms": null
+          },
+          "cause": {
+            "dependency_id": "generation.cfc4b4df-563c-4196-8fd6-96f033dcc46a.arc.c799039c-a9a3-4b73-9c8e-533546c1e3ff.description",
+            "input": {
+              "kind": "story_arc_field",
+              "arc_id": "c799039c-a9a3-4b73-9c8e-533546c1e3ff",
+              "field": "description"
+            },
+            "consumed_revision_event_id": "933e0cfe-557c-4912-9458-0c4414248727",
+            "current_revision_event_id": "bc114562-ca58-4652-a334-494c87432e1b",
+            "reason": "changed",
+            "input_excerpt": "Mara conceals the witness's identity."
+          },
+          "target_segment_revision_event_id": "cfc4b4df-563c-4196-8fd6-96f033dcc46a",
+          "script_inputs": [
+            {
+              "document_id": "script.document.main",
+              "segment_id": "script.segment.f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+              "block_id": "script.block.f9aa9ea2-24a8-482a-ac1c-baa405923e2a.generated",
+              "source_node_id": "f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+              "revision_event_id": "26cea73a-9f83-4c0d-bb67-863452d36ef6",
+              "segment_revision_event_id": "cfc4b4df-563c-4196-8fd6-96f033dcc46a",
+              "start_ms": 0,
+              "end_ms": 60000,
+              "text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n"
+            },
+            {
+              "document_id": "script.document.main",
+              "segment_id": "script.segment.d18252e5-b6c2-4353-bbd4-d2c25dc3ab32",
+              "block_id": "script.block.308748d3-9a3a-4b0a-bf33-4b722036a0b6.user",
+              "source_node_id": "d18252e5-b6c2-4353-bbd4-d2c25dc3ab32",
+              "revision_event_id": "61810eb7-622b-44cd-950a-5b193a02954e",
+              "segment_revision_event_id": "61810eb7-622b-44cd-950a-5b193a02954e",
+              "start_ms": 60000,
+              "end_ms": 120000,
+              "text": "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n"
+            }
+          ],
+          "bible_context": {
+            "version": 3,
+            "change_event_id": "3ff218ab-7b6d-45c8-a0f4-8bbab34e0db2",
+            "payload": {
+              "target_node_id": "f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+              "nodes": [
+                {
+                  "node_id": "qualification.mara",
+                  "schema_key": "character",
+                  "name": "Mara",
+                  "fields": [
+                    {
+                      "part_key": "profile",
+                      "part_name": "Profile",
+                      "field_key": "tagline",
+                      "value": {
+                        "type": "text",
+                        "value": "Mara's umbrella is blue."
+                      }
+                    }
+                  ],
+                  "snapshots": [],
+                  "incoming_edges": [],
+                  "outgoing_edges": []
+                }
+              ]
+            }
+          },
+          "bible_inputs": [
+            {
+              "node_id": "qualification.mara",
+              "part_key": "profile",
+              "field_key": "tagline",
+              "field_id": "qualification.mara.tagline",
+              "revision_event_id": "3ff218ab-7b6d-45c8-a0f4-8bbab34e0db2",
+              "value": {
+                "type": "text",
+                "value": "Mara's umbrella is blue."
+              }
+            }
+          ],
+          "bible_node_name_inputs": [
+            {
+              "node_id": "qualification.mara",
+              "name": "Mara",
+              "revision_event_id": "fe3245f5-f855-43ff-8754-70398e7fc3af"
+            }
+          ],
+          "bible_relationship_inputs": [],
+          "bible_node_name_absence_revisions": [],
+          "bible_relationship_absence_revisions": [],
+          "bible_context_scope": {
+            "node_id": "f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+            "node_ids": [
+              "qualification.mara"
+            ],
+            "field_ids": [
+              "qualification.mara.tagline"
+            ],
+            "revision_event_id": "3ff218ab-7b6d-45c8-a0f4-8bbab34e0db2"
+          },
+          "script_context_scope": {
+            "node_id": "f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+            "start_ms": 0,
+            "end_ms": 60000,
+            "segment_ids": [
+              "script.segment.f9aa9ea2-24a8-482a-ac1c-baa405923e2a",
+              "script.segment.d18252e5-b6c2-4353-bbd4-d2c25dc3ab32"
+            ],
+            "revision_event_id": "cfc4b4df-563c-4196-8fd6-96f033dcc46a"
+          }
+        }
+      },
+      "stale_refusal": {
+        "arc_aba_revisions": [
+          "bc114562-ca58-4652-a334-494c87432e1b",
+          "92ff0e53-e799-42df-acbb-b05ad1977f11",
+          "29f861ec-53ad-4b3a-a76b-3016a67fa2b4"
+        ],
+        "exact_text_restored": "Mara reveals the witness's identity.",
+        "saved_B_unchanged": true,
+        "draft_retained": true
+      },
+      "fresh_preview": {
+        "proposal_id": "script.review.fb6a7971-0701-45ea-b1ce-0282630b178e",
+        "visible_proposal": {
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ],
+          "character_bounds": [
+            [
+              301,
+              684,
+              8,
+              12
+            ],
+            [
+              308,
+              684,
+              8,
+              12
+            ],
+            [
+              315,
+              684,
+              8,
+              12
+            ],
+            [
+              322,
+              684,
+              8,
+              12
+            ],
+            [
+              329,
+              684,
+              8,
+              12
+            ],
+            [
+              336,
+              684,
+              8,
+              12
+            ],
+            [
+              343,
+              684,
+              8,
+              12
+            ],
+            [
+              350,
+              684,
+              8,
+              12
+            ],
+            [
+              357,
+              684,
+              8,
+              12
+            ],
+            [
+              371,
+              684,
+              8,
+              12
+            ],
+            [
+              378,
+              684,
+              8,
+              12
+            ],
+            [
+              385,
+              684,
+              8,
+              12
+            ],
+            [
+              392,
+              684,
+              8,
+              12
+            ],
+            [
+              399,
+              684,
+              8,
+              12
+            ],
+            [
+              406,
+              684,
+              8,
+              12
+            ],
+            [
+              413,
+              684,
+              8,
+              12
+            ],
+            [
+              420,
+              684,
+              8,
+              12
+            ],
+            [
+              434,
+              684,
+              8,
+              12
+            ],
+            [
+              441,
+              684,
+              8,
+              12
+            ],
+            [
+              448,
+              684,
+              8,
+              12
+            ],
+            [
+              455,
+              684,
+              8,
+              12
+            ],
+            [
+              469,
+              684,
+              8,
+              12
+            ],
+            [
+              476,
+              684,
+              8,
+              12
+            ],
+            [
+              483,
+              684,
+              8,
+              12
+            ],
+            [
+              490,
+              684,
+              8,
+              12
+            ],
+            [
+              497,
+              684,
+              8,
+              12
+            ],
+            [
+              511,
+              684,
+              8,
+              12
+            ],
+            [
+              518,
+              684,
+              8,
+              12
+            ],
+            [
+              525,
+              684,
+              8,
+              12
+            ],
+            [
+              539,
+              684,
+              8,
+              12
+            ],
+            [
+              546,
+              684,
+              8,
+              12
+            ],
+            [
+              553,
+              684,
+              8,
+              12
+            ],
+            [
+              560,
+              684,
+              8,
+              12
+            ],
+            [
+              567,
+              684,
+              8,
+              12
+            ],
+            [
+              574,
+              684,
+              8,
+              12
+            ],
+            [
+              581,
+              684,
+              8,
+              12
+            ],
+            [
+              595,
+              684,
+              8,
+              12
+            ],
+            [
+              602,
+              684,
+              8,
+              12
+            ],
+            [
+              609,
+              684,
+              8,
+              12
+            ],
+            [
+              623,
+              684,
+              8,
+              12
+            ],
+            [
+              630,
+              684,
+              8,
+              12
+            ],
+            [
+              637,
+              684,
+              8,
+              12
+            ],
+            [
+              644,
+              684,
+              8,
+              12
+            ]
+          ],
+          "exact_text": "Synthetic preview: Mara names the witness for Eli.\n\n",
+          "native_text_geometry_inside_script": true,
+          "pending_controls": [
+            {
+              "name": "Reject",
+              "bounds": [
+                301,
+                730,
+                35,
+                16
+              ]
+            },
+            {
+              "name": "Accept update",
+              "bounds": [
+                345,
+                730,
+                82,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      "acceptance": {
+        "revision_event_id": "5211cd60-3da8-46f6-8b31-faf9973ccfc5",
+        "only_B_changed": true,
+        "arc_revision_consumed": "29f861ec-53ad-4b3a-a76b-3016a67fa2b4",
+        "Bible_unchanged": true,
+        "review_cleared": true,
+        "exact_F_draft_retained": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+        "visible_proposal": {
+          "viewport": [
+            280,
+            208,
+            1314,
+            836
+          ],
+          "character_bounds": [
+            [
+              301,
+              509,
+              8,
+              12
+            ],
+            [
+              308,
+              509,
+              8,
+              12
+            ],
+            [
+              315,
+              509,
+              8,
+              12
+            ],
+            [
+              322,
+              509,
+              8,
+              12
+            ],
+            [
+              329,
+              509,
+              8,
+              12
+            ],
+            [
+              336,
+              509,
+              8,
+              12
+            ],
+            [
+              343,
+              509,
+              8,
+              12
+            ],
+            [
+              350,
+              509,
+              8,
+              12
+            ],
+            [
+              357,
+              509,
+              8,
+              12
+            ],
+            [
+              371,
+              509,
+              8,
+              12
+            ],
+            [
+              378,
+              509,
+              8,
+              12
+            ],
+            [
+              385,
+              509,
+              8,
+              12
+            ],
+            [
+              392,
+              509,
+              8,
+              12
+            ],
+            [
+              399,
+              509,
+              8,
+              12
+            ],
+            [
+              406,
+              509,
+              8,
+              12
+            ],
+            [
+              413,
+              509,
+              8,
+              12
+            ],
+            [
+              420,
+              509,
+              8,
+              12
+            ],
+            [
+              434,
+              509,
+              8,
+              12
+            ],
+            [
+              441,
+              509,
+              8,
+              12
+            ],
+            [
+              448,
+              509,
+              8,
+              12
+            ],
+            [
+              455,
+              509,
+              8,
+              12
+            ],
+            [
+              469,
+              509,
+              8,
+              12
+            ],
+            [
+              476,
+              509,
+              8,
+              12
+            ],
+            [
+              483,
+              509,
+              8,
+              12
+            ],
+            [
+              490,
+              509,
+              8,
+              12
+            ],
+            [
+              497,
+              509,
+              8,
+              12
+            ],
+            [
+              511,
+              509,
+              8,
+              12
+            ],
+            [
+              518,
+              509,
+              8,
+              12
+            ],
+            [
+              525,
+              509,
+              8,
+              12
+            ],
+            [
+              539,
+              509,
+              8,
+              12
+            ],
+            [
+              546,
+              509,
+              8,
+              12
+            ],
+            [
+              553,
+              509,
+              8,
+              12
+            ],
+            [
+              560,
+              509,
+              8,
+              12
+            ],
+            [
+              567,
+              509,
+              8,
+              12
+            ],
+            [
+              574,
+              509,
+              8,
+              12
+            ],
+            [
+              581,
+              509,
+              8,
+              12
+            ],
+            [
+              595,
+              509,
+              8,
+              12
+            ],
+            [
+              602,
+              509,
+              8,
+              12
+            ],
+            [
+              609,
+              509,
+              8,
+              12
+            ],
+            [
+              623,
+              509,
+              8,
+              12
+            ],
+            [
+              630,
+              509,
+              8,
+              12
+            ],
+            [
+              637,
+              509,
+              8,
+              12
+            ],
+            [
+              644,
+              509,
+              8,
+              12
+            ]
+          ],
+          "exact_text": "Synthetic preview: Mara names the witness for Eli.\n\n",
+          "native_text_geometry_inside_script": true
+        }
+      },
+      "provider_calls": [
+        {
+          "kind": "generation",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "prompt_sha256": "749ad310aa58a4e762be80bad2222b95961ad628cf63d712c500b1601f838fee",
+          "accepted": true
+        },
+        {
+          "kind": "recap",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "prompt_sha256": "81e84dc3407b7ce65d7b367b5aad18e240ed01a8dd9c7aadf63cb4152fb1980d",
+          "accepted": true
+        },
+        {
+          "kind": "preview",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "prompt_sha256": "ac5c560db50a57794dab659b5ff4f89846a1185ae36c3ddc72bf7e2eaabae309",
+          "accepted": true
+        },
+        {
+          "kind": "preview",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "prompt_sha256": "219fad81b5d96a0997e4292b708fcd4bbae8d31fed11d4ad0be91bc54f4c907e",
+          "accepted": true
+        }
+      ],
+      "accessibility_retired_object_polls": 0,
+      "typed_text_observations": [
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 82,
+          "actual_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 47,
+          "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+          "exact": true
+        },
+        {
+          "field": "DESCRIPTION",
+          "expected_length": 36,
+          "actual_text": "Mara reveals the witness's identity.",
+          "exact": true
+        },
+        {
+          "field": "DESCRIPTION",
+          "expected_length": 37,
+          "actual_text": "Mara conceals the witness's identity.",
+          "exact": true
+        },
+        {
+          "field": "DESCRIPTION",
+          "expected_length": 36,
+          "actual_text": "Mara reveals the witness's identity",
+          "exact": false
+        },
+        {
+          "field": "DESCRIPTION",
+          "expected_length": 36,
+          "actual_text": "Mara reveals the witness's identity.",
+          "exact": true
+        }
+      ],
+      "timeline_locator_observations": [
+        {
+          "name": "",
+          "text": "A: Setup\nC: Beat\nB: Setup\nA: Complication\nC: Beat\nB: Complication\nA: Escalation\n+\n",
+          "role": "section",
+          "bounds": [
+            80,
+            1296,
+            3594,
+            48
+          ]
+        },
+        {
+          "name": "A: Setup",
+          "text": "A: Setup",
+          "role": "native-text-range",
+          "bounds": [
+            99,
+            1314,
+            49,
+            11
+          ]
+        }
+      ]
+    },
+    "files": [
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/app-sanitized.log",
+        "size_bytes": 946,
+        "sha256": "b4294fcb8a6c8e550b6d7fe5aeb099a343b75bdbdffc5da770f097f72d05dd3a"
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/capture-evidence.json",
+        "size_bytes": 27160,
+        "sha256": "2863a97d0cb48345d71ea1510e9256cf726635a881a28f1852246474f5ea58a2"
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-accepted.png",
+        "size_bytes": 147754,
+        "sha256": "4a4c8162514eb8d2bef275aff39e47863a0a61a38971184bb403624c55749df1",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-arc-edit.png",
+        "size_bytes": 98092,
+        "sha256": "8221304fd9ac0a27231dfe77489c2eb976aaea01caa5ae3a26b46d25d8d053cf",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-draft.png",
+        "size_bytes": 90084,
+        "sha256": "a3c2f4793d51d6636360d6ea77def6c22f066a60728e697b78b11333e92af0b2",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-fresh-preview.png",
+        "size_bytes": 163680,
+        "sha256": "87b79a1324548c5fe70277eff831a153c127e77c99f32b3de6ffcd12946e8df3",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-generated.png",
+        "size_bytes": 83547,
+        "sha256": "f4eca440c6572418f56fe91bbf4d8255d715b708b554322277fce828e91e9cfc",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-manual-edit.png",
+        "size_bytes": 85208,
+        "sha256": "2c231302989585bd96ed23cfe01960c72ed26328208b6dbec2801905cc7afeed",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-preview.png",
+        "size_bytes": 151751,
+        "sha256": "6674f246a7ee66105f0507611d40286bfdd45ed1ad2eb2058239ec4868e07fcb",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-retained-draft.png",
+        "size_bytes": 147754,
+        "sha256": "4a4c8162514eb8d2bef275aff39e47863a0a61a38971184bb403624c55749df1",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-review.png",
+        "size_bytes": 136513,
+        "sha256": "ddca2b65bf820355b64478d157be6d0dfc50c59874a82463b535f610540f9701",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-success-37557179034/eidetic-story-arc-stale.png",
+        "size_bytes": 154972,
+        "sha256": "684145ae4bc7bc2d908d8e85e964d60ece9f8bb9bbcbf4a63765f837cd7713f3",
+        "width": 1920,
+        "height": 1440
+      }
+    ]
+  },
+  "first_failed_native": {
+    "untouched_directory": "/workspace/scratch/story-arc-native-first-37555601615",
+    "raw_capture_evidence": {
+      "status": "failed",
+      "application_source_sha": "292630b91b6677684279f852fdfb7257b8c97aa8",
+      "qualification_sha": "bbfa423b500a029bbc950d8241c911c6b27836b3",
+      "application_binary_sha256": "86cf3e2f8f3cee86d197436c85b4d60d180b0a13ffef517dfc7d005468c291c4",
+      "capture_label": "prototype views",
+      "setup_route": "public services; tagged B ungenerated and unconsumed F manually authored",
+      "gui_route": "actual Tauri AT-SPI/X11 Generate, manual screenplay Save, typed arc edit, retained draft, stale refusal, preview and explicit acceptance",
+      "provider": "synthetic localhost HTTP/SSE fixture through production client",
+      "real_model_quality_qualified": false,
+      "checkpoints": [
+        {
+          "stage": "public services prepare fresh Last Train project with empty A and ungenerated B",
+          "elapsed_seconds": 0.294
+        },
+        {
+          "stage": "launch actual desktop and begin writing",
+          "elapsed_seconds": 0.349
+        },
+        {
+          "stage": "exact typed arc edit identifies affected saved B without changing manual screenplay or Bible",
+          "elapsed_seconds": 31.318
+        }
+      ],
+      "stage": "exact typed arc edit identifies affected saved B without changing manual screenplay or Bible",
+      "project": {
+        "name": "Witness_Arc_Memory_QA",
+        "setup_route": "public project/template, arc metadata, notes, manual block and Bible services; no direct DB writes",
+        "arc_id": "d6a8ec64-c595-4573-ae10-6cf178df5c70",
+        "b": {
+          "end_ms": 60000,
+          "id": "ef7607ae-f0fa-42fa-a247-12a6013a3c2d",
+          "name": "A: Setup",
+          "start_ms": 0
+        },
+        "f": {
+          "end_ms": 120000,
+          "id": "4f47b775-724d-4afa-b825-d943744f9c47",
+          "name": "C: Beat",
+          "start_ms": 60000
+        }
+      },
+      "original_arc": {
+        "exact_text": "Mara conceals the witness's identity.",
+        "revision_event_id": "f17bdb30-6f3c-4184-b8f9-e50189b2167c"
+      },
+      "window_id": 2097155,
+      "window_pid": 24363,
+      "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+      "generation": {
+        "block_id": "script.block.ef7607ae-f0fa-42fa-a247-12a6013a3c2d.generated",
+        "revision_event_id": "47ccb71c-9b30-4ce6-b453-3f67fa265eec",
+        "arc_inputs": [
+          {
+            "arc_id": "d6a8ec64-c595-4573-ae10-6cf178df5c70",
+            "field": "name",
+            "value": "Witness",
+            "revision_event_id": "f17bdb30-6f3c-4184-b8f9-e50189b2167c"
+          },
+          {
+            "arc_id": "d6a8ec64-c595-4573-ae10-6cf178df5c70",
+            "field": "arc_type",
+            "value": "\"APlot\"",
+            "revision_event_id": null
+          },
+          {
+            "arc_id": "d6a8ec64-c595-4573-ae10-6cf178df5c70",
+            "field": "description",
+            "value": "Mara conceals the witness's identity.",
+            "revision_event_id": "f17bdb30-6f3c-4184-b8f9-e50189b2167c"
+          }
+        ],
+        "real_model": false
+      },
+      "captures": [
+        {
+          "file": "eidetic-story-arc-generated.png",
+          "sha256": "f4eca440c6572418f56fe91bbf4d8255d715b708b554322277fce828e91e9cfc",
+          "window_id": 2097155,
+          "pid": 24363
+        },
+        {
+          "file": "eidetic-story-arc-manual-edit.png",
+          "sha256": "2c231302989585bd96ed23cfe01960c72ed26328208b6dbec2801905cc7afeed",
+          "window_id": 2097155,
+          "pid": 24363
+        },
+        {
+          "file": "eidetic-story-arc-draft.png",
+          "sha256": "61139ee646abc016a9aa1e02a760849d0da1474e06396dd24a57b63a2273e51f",
+          "window_id": 2097155,
+          "pid": 24363
+        },
+        {
+          "file": "eidetic-story-arc-arc-edit.png",
+          "sha256": "8221304fd9ac0a27231dfe77489c2eb976aaea01caa5ae3a26b46d25d8d053cf",
+          "window_id": 2097155,
+          "pid": 24363
+        },
+        {
+          "file": "eidetic-story-arc-review.png",
+          "sha256": "ddca2b65bf820355b64478d157be6d0dfc50c59874a82463b535f610540f9701",
+          "window_id": 2097155,
+          "pid": 24363
+        },
+        {
+          "file": "eidetic-story-arc-failure.png",
+          "sha256": "6674f246a7ee66105f0507611d40286bfdd45ed1ad2eb2058239ec4868e07fcb",
+          "window_id": 2097155,
+          "pid": 24363
+        }
+      ],
+      "manual_saved_B": {
+        "exact_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+        "revision_event_id": "cd837ea8-f052-4801-b31c-ad83fc2d9cf7"
+      },
+      "manual_arc_edit": {
+        "before": "Mara conceals the witness's identity.",
+        "after": "Mara reveals the witness's identity.",
+        "before_revision_event_id": "f17bdb30-6f3c-4184-b8f9-e50189b2167c",
+        "after_revision_event_id": "85d8e6e5-2d97-40b0-aa6d-39c74aabfdef",
+        "route": "actual native typed description and existing debounced canonical command"
+      },
+      "failure": "AttributeError: module 'authoring_capture' has no attribute 'proposal'",
+      "accessibility_snapshot": [
+        {
+          "role": "application",
+          "name": "eidetic-desktop",
+          "showing": false
+        },
+        {
+          "role": "frame",
+          "name": "Eidetic",
+          "showing": true
+        },
+        {
+          "role": "filler",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "filler",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "filler",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "scroll pane",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "document web",
+          "name": "Eidetic",
+          "showing": true
+        },
+        {
+          "role": "section",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "landmark",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Arcs",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Bible",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Review",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "AI",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Refs",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Close sidebar",
+          "showing": false
+        },
+        {
+          "role": "section",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "entry",
+          "name": "Search entities...",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "ALL",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "CHARACTER",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "LOCATION",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "PROP",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "CULTURE",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "EVENT",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "THEME",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "RULE",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "REFERENCE",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add CHR",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add LOC",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add PRP",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add CUL",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add EVT",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add THM",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add RUL",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add REF",
+          "showing": true
+        },
+        {
+          "role": "landmark",
+          "name": "Bible graph",
+          "showing": true
+        },
+        {
+          "role": "list",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "list item",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "toggle button",
+          "name": "Mara 0 connected nodes, 0 edges",
+          "showing": true
+        },
+        {
+          "role": "panel",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "list item",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Mara CHR",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "\u00d7 Close",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Add Child",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Delete",
+          "showing": true
+        },
+        {
+          "role": "form",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Mara",
+          "showing": true
+        },
+        {
+          "role": "description list",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "description term",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "description value",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "heading",
+          "name": "CHILDREN",
+          "showing": true
+        },
+        {
+          "role": "paragraph",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "heading",
+          "name": "Profile",
+          "showing": true
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "entry",
+          "name": "SUMMARY",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": true
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "entry",
+          "name": "TAGLINE Mara's umbrella is blue.",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": true
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "entry",
+          "name": "MOTIVATION",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": true
+        },
+        {
+          "role": "heading",
+          "name": "Appearance",
+          "showing": true
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": true
+        },
+        {
+          "role": "entry",
+          "name": "DESCRIPTION",
+          "showing": true
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": true
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "COSTUME",
+          "showing": false
+        },
+        {
+          "role": "push button",
+          "name": "Save",
+          "showing": false
+        },
+        {
+          "role": "heading",
+          "name": "New Snapshot",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "LABEL",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "entry",
+          "name": "TIME 0",
+          "showing": false
+        },
+        {
+          "role": "section",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "unknown",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "unknown",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "label",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "combo box",
+          "name": "FIELD",
+          "showing": false
+        },
+        {
+          "role": "menu",
+          "name": "",
+          "showing": false
+        },
+        {
+          "role": "menu item",
+          "name": "Profile / summary",
+          "showing": false
+        }
+      ],
+      "provider_calls": [
+        {
+          "kind": "generation",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "prompt_sha256": "4b13f048baafb5d414b94383d7588835fda2b677fb8e8e1e848fcee2c3d0c9ea",
+          "accepted": true
+        },
+        {
+          "kind": "recap",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "prompt_sha256": "81e84dc3407b7ce65d7b367b5aad18e240ed01a8dd9c7aadf63cb4152fb1980d",
+          "accepted": true
+        },
+        {
+          "kind": "preview",
+          "contains_exact_expected_context": true,
+          "stream": true,
+          "real_model": false,
+          "prompt_sha256": "dd88217ab9699313fcec9b6aa77f86ab3b150eec0bb218b00466329671baaf52",
+          "accepted": true
+        }
+      ],
+      "accessibility_retired_object_polls": 0,
+      "typed_text_observations": [
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 82,
+          "actual_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+          "exact": true
+        },
+        {
+          "field": "Edit screenplay text",
+          "expected_length": 47,
+          "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+          "exact": true
+        },
+        {
+          "field": "DESCRIPTION",
+          "expected_length": 36,
+          "actual_text": "Mara reveals the witness's identity.",
+          "exact": true
+        }
+      ],
+      "timeline_locator_observations": [
+        {
+          "name": "",
+          "text": "A: Setup\nC: Beat\nB: Setup\nA: Complication\nC: Beat\nB: Complication\nA: Escalation\n+\n",
+          "role": "section",
+          "bounds": [
+            80,
+            1296,
+            3594,
+            48
+          ]
+        },
+        {
+          "name": "A: Setup",
+          "text": "A: Setup",
+          "role": "native-text-range",
+          "bounds": [
+            99,
+            1314,
+            49,
+            11
+          ]
+        }
+      ]
+    },
+    "files": [
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/app-sanitized.log",
+        "size_bytes": 947,
+        "sha256": "80125433f47a6d4edcf80f2e5f169f310e7c3ed9822b940546a11d029ebd205b"
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/capture-evidence.json",
+        "size_bytes": 13349,
+        "sha256": "5c0d627eea8ed7853404967e83af8526af877c58fe410cc9d819c8e953e06ca7"
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/eidetic-story-arc-arc-edit.png",
+        "size_bytes": 98092,
+        "sha256": "8221304fd9ac0a27231dfe77489c2eb976aaea01caa5ae3a26b46d25d8d053cf",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/eidetic-story-arc-draft.png",
+        "size_bytes": 90084,
+        "sha256": "61139ee646abc016a9aa1e02a760849d0da1474e06396dd24a57b63a2273e51f",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/eidetic-story-arc-failure.png",
+        "size_bytes": 151751,
+        "sha256": "6674f246a7ee66105f0507611d40286bfdd45ed1ad2eb2058239ec4868e07fcb",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/eidetic-story-arc-generated.png",
+        "size_bytes": 83547,
+        "sha256": "f4eca440c6572418f56fe91bbf4d8255d715b708b554322277fce828e91e9cfc",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/eidetic-story-arc-manual-edit.png",
+        "size_bytes": 85208,
+        "sha256": "2c231302989585bd96ed23cfe01960c72ed26328208b6dbec2801905cc7afeed",
+        "width": 1920,
+        "height": 1440
+      },
+      {
+        "path": "/workspace/scratch/story-arc-native-first-37555601615/eidetic-story-arc-review.png",
+        "size_bytes": 136513,
+        "sha256": "ddca2b65bf820355b64478d157be6d0dfc50c59874a82463b535f610540f9701",
+        "width": 1920,
+        "height": 1440
+      }
+    ]
+  },
+  "first_failed_zip": {
+    "path": "/workspace/attachments/889dd83d-258d-4f16-a545-e785e45d7b6e/eidetic-story-arc-memory-first-attempt.zip",
+    "size_bytes": 583879,
+    "sha256": "95f39107564d8df6769ff682c480b1b8ff1d5ac19a5d6c6db604d5e05b1cb79b",
+    "file_id": "file_00000000026481f79770c7bdd2508cda"
+  },
+  "sealed_source_and_local_receipts": {
+    "source": "292630b91b6677684279f852fdfb7257b8c97aa8",
+    "production_milestone": "d0967efabc9ef908dccf5626b0dd9ef7b5811a67",
+    "source_tree": "c7d7c16b38d4c0a52a87e5d98eae40a20f6580f5",
+    "production_files": [
+      {
+        "path": "crates/core/src/ai/README.md",
+        "sha256": "b1ff09d62cc8593856e00ac6710b987856df60759ca49fd329fc482f8f8a4455",
+        "git_blob": "ee2640322ddf80e2fc9999da3a62afa6ab1af78c"
+      },
+      {
+        "path": "crates/core/src/ai/backend.rs",
+        "sha256": "d68219bbc97d3f3b8f4737fe94d0049cadb203c88c1c7a223d06d2f4c37d89a7",
+        "git_blob": "37e856eeeafda35002259b6f1a66bb84ca0676f6"
+      },
+      {
+        "path": "crates/core/src/ai/prompt.rs",
+        "sha256": "546b4d497a760f822261cb07a05e041654a6736350aaf4587eb221e946229a6c",
+        "git_blob": "bdd5ee9e66746c88ed9e8e2c755201686e7b32d3"
+      },
+      {
+        "path": "crates/core/src/contracts/README.md",
+        "sha256": "82cc516d9cd9803183f6e5a78db3b629348dfd7f3e6e2a0948584a718342832c",
+        "git_blob": "b6c29a27fb4fcc0434a9cfbefd1d1a8c6ed4e7e7"
+      },
+      {
+        "path": "crates/core/src/contracts/mod.rs",
+        "sha256": "59aed10cd656ec82df5a9d935f545c52b829ad038bb3076e5502315df4809140",
+        "git_blob": "5151b5a5abbc710b223f82a933082bd2337cbd69"
+      },
+      {
+        "path": "crates/core/src/contracts/script_document.rs",
+        "sha256": "90a2daec4342b8aca4679cbd2e9d15b350939f24a93484436e64d8a78aa0a089",
+        "git_blob": "f8c998fb817ebdfda8b3705663c224afd54206e3"
+      },
+      {
+        "path": "crates/core/src/contracts/script_impact_review.rs",
+        "sha256": "ef0b7425c24879ce780355eaf633031ebd57ff4377e8376bfb6be4835d648fae",
+        "git_blob": "e4a75de388dbc084a1b6438ea44c0574e58012d1"
+      },
+      {
+        "path": "crates/core/src/contracts/semantic_dependency.rs",
+        "sha256": "e234cfd57e1802124b28bff7ee6d88f558a5f85c80ec433d2fc114c70450f6c0",
+        "git_blob": "b6386c018412fb26ac966c5e482b5d063c5568d1"
+      },
+      {
+        "path": "crates/core/src/contracts/story_arc.rs",
+        "sha256": "5fbf40d729984ec3eb5ad1edd9b8e10274e35ddcafbd28ea6942201f5a0525b7",
+        "git_blob": "1ae0170b0dd8622cb34e0a1bc16b882eb380b95b"
+      },
+      {
+        "path": "crates/server/src/README.md",
+        "sha256": "079911063337a74bcc60eb23c87ceedc048f70416d3ba4d5b5136a023690b544",
+        "git_blob": "c8105714dc4debadf8732e7e5ff50676623b07a1"
+      },
+      {
+        "path": "crates/server/src/ai_generation_runtime.rs",
+        "sha256": "8c22851d90f3e850e11b89615512760efbbda550647c6ba3aa523a471f5886fa",
+        "git_blob": "1127d2447cef53b4fb11dff4edee1edc90445450"
+      },
+      {
+        "path": "crates/server/src/ai_generation_runtime_tests.rs",
+        "sha256": "0551df6f9007af86f179db11f9f28df1e0a51b930c9062572540e1685ad891f4",
+        "git_blob": "c26105031d9ac3e58dd1f6374f57c4cf838f90f0"
+      },
+      {
+        "path": "crates/server/src/ai_service.rs",
+        "sha256": "4edd8d50359bf411e1c87e11064534a62499801c2a24b3f5a3074faebc6d8773",
+        "git_blob": "21b2cfa92a21bc0e9f3a31efe3076d15920d70a8"
+      },
+      {
+        "path": "crates/server/src/bible_context_scope_tests.rs",
+        "sha256": "48ccafb4f3a11abc55746ca4e0f792d57e2503c61603dfa4e5dff122e3b43308",
+        "git_blob": "4e6344fe09a6911fe0c55854ca572bd91e5bc5ed"
+      },
+      {
+        "path": "crates/server/src/bible_field_lineage_tests.rs",
+        "sha256": "4f774f0e32d80c7ba73f48a713eb5dcd75357a4d5154970e2eab9c6c4c161325",
+        "git_blob": "0fc4e83e030a82651d8cb513987edad61b3ce00b"
+      },
+      {
+        "path": "crates/server/src/bible_node_name_lineage_tests.rs",
+        "sha256": "c9448f6a5dd26a08957eb3303cd28c35a1623dd05b337500c42d4ea06b2e3d7a",
+        "git_blob": "a995a6988a6c625b3e47f1807d1f381c226370ae"
+      },
+      {
+        "path": "crates/server/src/bible_relationship_lineage_tests.rs",
+        "sha256": "bae8544c3943786bad1e3a2b75c5952cc783714aec454e7b88f134dae1fa9a04",
+        "git_blob": "e42a29f458e65059b8c3e40fca681e377d7a1e06"
+      },
+      {
+        "path": "crates/server/src/lib.rs",
+        "sha256": "75c66da98d3ce77bdf0669d5feca662cc634e2abc7472e846f42cfd6424a3c7a",
+        "git_blob": "6a399208921869e4de04f3d451acbff2993a895c"
+      },
+      {
+        "path": "crates/server/src/projection_service_semantic_dependency.rs",
+        "sha256": "f4d17c6e70bd3cf99097b767d1c03fa0f4e836dc1be68c3d36af411052161a3b",
+        "git_blob": "29e27e9e4b11ad245132b01b5e5d4b64049cc750"
+      },
+      {
+        "path": "crates/server/src/scene_context_membership_tests.rs",
+        "sha256": "b6c214ec4efde941836cbcccb97a3f5a0c963ca1a4f532194189d0c951124a37",
+        "git_blob": "4d9eb5d21228cd9a1287f4d4010627c84b709a46"
+      },
+      {
+        "path": "crates/server/src/script_block_create_impact_tests.rs",
+        "sha256": "b26c4cfb21c66480f65d593f1e40a18761e0c1c5c93f29b5878da0c749b1607f",
+        "git_blob": "a37a5011233251af51e575e71eb620ee714be4d0"
+      },
+      {
+        "path": "crates/server/src/script_generation_lineage.rs",
+        "sha256": "342309c867d2cdaf0c779c31eefac9e551fd0c2214dfc01487498c7235cef4b2",
+        "git_blob": "77f239489005c4e302f44b739b34f1a40cda11e3"
+      },
+      {
+        "path": "crates/server/src/script_generation_lineage_tests.rs",
+        "sha256": "2b90f711d6d966d1975c845eb3d4d737c70b9c1a560d6cbf4d6718115688e741",
+        "git_blob": "5d03460f2984534765ed5db84ee7d7e0a42f3407"
+      },
+      {
+        "path": "crates/server/src/script_generation_target_tests.rs",
+        "sha256": "2b80f5e17e4addac1abc675cea44068609830ec19671f2a24ed15deb65a1c871",
+        "git_blob": "05b3565932ef10233fee1f6d0469b8df19a7ad5a"
+      },
+      {
+        "path": "crates/server/src/script_impact_projection.rs",
+        "sha256": "aeb4e1bfff710194dc4ed0260a71bdc0457ff90ae381481c0a746be5ce840813",
+        "git_blob": "b29c3a6e66feabec4cd3a4ea6fc515e917724a79"
+      },
+      {
+        "path": "crates/server/src/script_impact_prompt.rs",
+        "sha256": "a7b7504849104f1e45c7cad539f52d37f52d450821d56b5c524158a39a47d3e4",
+        "git_blob": "f5226f741a61a7e704515781f3a53ec064908cb7"
+      },
+      {
+        "path": "crates/server/src/script_impact_review.rs",
+        "sha256": "469f509871ecc468e58018490e4304dfce808524841582fd91482e45dfb4571e",
+        "git_blob": "4a9c1ea87bfe346af9d3453bedb77d208938d955"
+      },
+      {
+        "path": "crates/server/src/script_impact_review_tests.rs",
+        "sha256": "c349220054a73e3993b281345fc01f63c2bf07e2916fa7952f46066de7ab5fe0",
+        "git_blob": "d656afef2f0bd81c0ed09937e80df3a007a65f38"
+      },
+      {
+        "path": "crates/server/src/semantic_dependency_store.rs",
+        "sha256": "d3c2a1ed90264e80b3d7b2853dc9e532bff99efc8e14006b1d70a0e1a78ae31d",
+        "git_blob": "b0fbd83bf9953d4d9eb4c26160c02fa2db81ba30"
+      },
+      {
+        "path": "crates/server/src/story_arc_lineage.rs",
+        "sha256": "6973c25138ea3070bbeba21b75e33170033e148e16935ca2be2e09f2c629d0ab",
+        "git_blob": "669f59ae975c84a60549a96d79a22766b50abd59"
+      },
+      {
+        "path": "crates/server/src/story_arc_lineage_guard_tests.rs",
+        "sha256": "f147cd3dae373fc03a8d79776b01927c10ef0f8f83b6d902c9d84641501f9711",
+        "git_blob": "876bfc51812dcf049fd22270c2ec5aa10e85c24c"
+      },
+      {
+        "path": "crates/server/src/story_arc_lineage_tests.rs",
+        "sha256": "70e6b4457ab97c7eff5df6f1ab314bfde7157b4e3073008f697cacca59f4a575",
+        "git_blob": "7619fd09fa20f1b8546be90c22cfd8b09ef5bf0e"
+      },
+      {
+        "path": "crates/server/src/timeline_script_placement_tests.rs",
+        "sha256": "60d9082614c58b10532447d534ab6a1452e770f39e52d4b03f8475ffb11d0223",
+        "git_blob": "ff64473dade1d12c4cf753fbef090e161d70eee0"
+      },
+      {
+        "path": "docs/plans/agent-story-workflows/consumed-arc-memory.md",
+        "sha256": "b0bd2eca7af3770cf24cfe6e949cf91552e9a07b9c7421cafcbbea23029b76e7",
+        "git_blob": "e12d3d91f43d5a191757b1f6e9fa5655fb27965b"
+      },
+      {
+        "path": "docs/plans/agent-story-workflows/execution-ledger.md",
+        "sha256": "12eb57b8c07b0c8f50ba7174a0b93017aac98d8a9e424516faa28f8acc9b5d25",
+        "git_blob": "4af45307c5314afe02890bc6783cdb1f531db93c"
+      },
+      {
+        "path": "ui/src/lib/README.md",
+        "sha256": "dacab8be4b94897ac4f4ba08e6bd5f0e7813de8bf12d4b45436a085dd84fd9a3",
+        "git_blob": "7bc622bffdcf691421c82eec0ca693516806bff9"
+      },
+      {
+        "path": "ui/src/lib/components/editor/README.md",
+        "sha256": "a34dd7f3cb59f6db437bfa3353188197bb370cfb75f0a968e962b6fd67ebcca2",
+        "git_blob": "0461b00a457643574b7af0a48be138dd66532cb5"
+      },
+      {
+        "path": "ui/src/lib/components/editor/ScriptArcEvidence.ssr.test.ts",
+        "sha256": "1db37b42af66d0b4adf43431aea6b591d45a6ffb3ede8b2f87de555786b6064b",
+        "git_blob": "3b3268486097a8c1a6657b4b7be98d5034727dff"
+      },
+      {
+        "path": "ui/src/lib/components/editor/ScriptArcEvidence.svelte",
+        "sha256": "363db18a1507564f1809dffbfd0b6de57f0361b9e397dd08d39ba77f2aebc1a6",
+        "git_blob": "0d1ee0abdac96ea0d9304ca56df4249c970d85de"
+      },
+      {
+        "path": "ui/src/lib/components/editor/ScriptImpactReview.svelte",
+        "sha256": "e24a1d14049d1213fb064dd9cde6a5ca3637a0163d17e6bd321c2828f0cf8bfd",
+        "git_blob": "67f723ac084bcc170b95942f4c8a86d181a592dd"
+      },
+      {
+        "path": "ui/src/lib/components/editor/scriptImpactNotice.ts",
+        "sha256": "f18bc1065e43ed6682df17a0ad32dfa1283c7125e05f31a468e9055f535aee3e",
+        "git_blob": "5b60e07722b7978a098023c0989b47dcde894387"
+      },
+      {
+        "path": "ui/src/lib/propagationProposalTypes.ts",
+        "sha256": "af9edb2a476e4070b2c5ab9ce658e1cd6403c03b5f15b451241ff7f409aa8378",
+        "git_blob": "fd9048bf30eeaca4defa7bd39de7964c65c7e331"
+      },
+      {
+        "path": "ui/src/lib/scriptTypes.ts",
+        "sha256": "72639c0fc515b50e830f927bb03c15f5f78e2264eb415c4b4587755603bae38f",
+        "git_blob": "5459a3b0c32ca9d5b86ff970ba9f2f8c2cbf1ea0"
+      },
+      {
+        "path": "ui/src/lib/stores/selectedInspectorEvents.svelte.test.ts",
+        "sha256": "2af014a3002560b14bb48422de32746c56e7b893f614ffcc29583a8e9dea9d26",
+        "git_blob": "2af6e098a1a4f36fc9e11efc4f390b4a8e8ff804"
+      },
+      {
+        "path": "ui/src/lib/stores/serverEventHandlers.ts",
+        "sha256": "de0ad38192604dcc9c0bd5d5d9e90bd07a9658eb725b90bce08bcad0234a1112",
+        "git_blob": "6591596e423449e32e87070a410f402d3710e70b"
+      },
+      {
+        "path": "ui/src/lib/storyArcTypes.ts",
+        "sha256": "cd38cd00bb01902970a77db55de1895a73877f3ba0c93d1436640e6394ce22cb",
+        "git_blob": "5b0f0d2850cc6f5b3b1eae307cae9cdfd3d18a4d"
+      }
+    ],
+    "local_receipts": [
+      {
+        "path": "/workspace/scratch/arc-memory-boundaries-final-precommit.log",
+        "size_bytes": 15881,
+        "sha256": "712f7dfad917c4cfaf8f09993a43e4f878c2805716a5bc29023aee01fd5a6589"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-boundaries-precommit.log",
+        "size_bytes": 15712,
+        "sha256": "9ff5b7461c1e65187e9a0c50d19e4665a137f70ee4c8adf15360ac9fbbe8ec70"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-build.log",
+        "size_bytes": 3628,
+        "sha256": "f7e851212a2d49ec4de63511e9dfd42e1043257eeacab0e9986ca50610234967"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-clippy.log",
+        "size_bytes": 1929,
+        "sha256": "3ecce3d2967375f6a6f5aefba32ba57ce5a2335f042ceba417f9ea564eb20e7a"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-event-tests.log",
+        "size_bytes": 663,
+        "sha256": "350ecd10092b4addc7b1c8e4ce9f976128c6303f02860341034703bf0a579270"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final-clippy.log",
+        "size_bytes": 1808,
+        "sha256": "a6a1a34f5b89f7225fdbdfc25e2d94f758812ffe1f5b2292ab7ef169482a90be"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final-focused-ui.log",
+        "size_bytes": 660,
+        "sha256": "102ae086b7b59ed9f7b6a33fd47923a724e457cc20c76c04f5c11fe3a25d0995"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final-formatcheck.log",
+        "size_bytes": 374,
+        "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final-server.log",
+        "size_bytes": 53065,
+        "sha256": "44c79c1051cf5dabd7c11bd90b113b4a10b7b45f5d28ba887d7857acb1a9dca7"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final-traceability.log",
+        "size_bytes": 36,
+        "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final-typecheck.log",
+        "size_bytes": 743,
+        "sha256": "2e9821b3f5a3fcae7019b728c749ace9f59d9c7f58f0175797d1ae54c4be8272"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final2-clippy.log",
+        "size_bytes": 186,
+        "sha256": "b885274fa2e71856b551236a652212d369d6bbef3069911563978c07c4ee4014"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-final2-server.log",
+        "size_bytes": 53120,
+        "sha256": "ef0ef800f3acfeff5708f1424ec4730a4751b0c0b94e32abe7a7864af67ea1d1"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-first-server.log",
+        "size_bytes": 461,
+        "sha256": "6c78b6370fc01a5c9ba53e8ea9a91588867849cde8f18fc6ee47e90e0baae750"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-focused-ui.log",
+        "size_bytes": 907,
+        "sha256": "119cd3f22814f8c9eb40a9413c13e512417863a35084f3b11bef7183171f2865"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-formatcheck.log",
+        "size_bytes": 374,
+        "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-fourth-server.log",
+        "size_bytes": 2007,
+        "sha256": "31909e141b3cb315467877c87d16271f0b892c3bea6043e17232c821ca9a06f6"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-full-core.log",
+        "size_bytes": 11055,
+        "sha256": "763334b5577c9af54007734c2ee955a585474681016d41842dbbb3ab7a840540"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-full-server.log",
+        "size_bytes": 52915,
+        "sha256": "4834a14cf894456ed08cac194320e8f6c422f4916049509370589a79d4425c08"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-full-ui.log",
+        "size_bytes": 7214,
+        "sha256": "648ea022c181ae74da1750feb1909d8cd814b58a25d94ac9c9a48ef3a3092ef9"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-lint.log",
+        "size_bytes": 251,
+        "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-clippy.log",
+        "size_bytes": 321,
+        "sha256": "ae0ff0db0350d08ae6d72f7ca605a181bfee20e5e276e029055ce4368ad5a9f7"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-driver-tests.log",
+        "size_bytes": 11036,
+        "sha256": "5d021f8d6354e150f409098ce502b2c44c39d5c59a7d63b7dc6b1192d3bcd107"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-final-clippy.log",
+        "size_bytes": 60,
+        "sha256": "1f788b66ea062f199afb46076a789cb2520299b3af49e5c9c7f501bfacae9f7f"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-final-driver-tests.log",
+        "size_bytes": 11036,
+        "sha256": "383ec289cba3b7300d6daa86365edf236d0517580ff74da0156e735d5696125c"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-final-precommit.log",
+        "size_bytes": 16728,
+        "sha256": "53611fc7462406b58c271036d22d5526ea0ea20354e28b6f23e04f7508849254"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-fixture-build.log",
+        "size_bytes": 832,
+        "sha256": "0300bbdd70ef7cfb80c0e694945587a9f5d5a60a0fbb1dfdbc1a8b4e5aa59d64"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-fixture-final-build.log",
+        "size_bytes": 611,
+        "sha256": "fc1322d9df7689f943adb13413b0f3d3f588db8b75b6fe6733e8fed6333de75c"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-fixture-final2-build.log",
+        "size_bytes": 247,
+        "sha256": "ab55d317abd3119b270b13e9a098d6c5cbdae4f7842b97b49e317b71fff1830f"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-fixture-setup.log",
+        "size_bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-precommit.log",
+        "size_bytes": 15721,
+        "sha256": "a89177afb25fafe771b933cdba1bcf0110944d7f6383f38fcf35005a3477d1fd"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-native-rustfmt.log",
+        "size_bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-rustfmt.log",
+        "size_bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-second-server.log",
+        "size_bytes": 1061,
+        "sha256": "948127a04430abe66794a51cb4e9a756b0ec23302804a16e3cbe8a26b57945e0"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-source-precommit.log",
+        "size_bytes": 16271,
+        "sha256": "f4d3cca2af48437edc7896d5719b73b61fe6136ab117edd358cd786a17f7d989"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-third-server.log",
+        "size_bytes": 9535,
+        "sha256": "b7481c25f70d33c3a439db0e57965366eac65258f93614a3114a280f8df33b97"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-traceability.log",
+        "size_bytes": 36,
+        "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-type-fix-format.log",
+        "size_bytes": 149,
+        "sha256": "6162288ebad41977e6d874648f0bd26ffd594b391bccfbb802494e7cc3e518aa"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-typecheck.log",
+        "size_bytes": 2447,
+        "sha256": "b73bdb83e72c33e28388a953b44d07861bbfb816dc9564f2b787518d8ec9d737"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-ui-event-format.log",
+        "size_bytes": 60,
+        "sha256": "1a3d02307b8e8f3cd909462192165fbaaf9aa688c74a849c81a34aa8dcb78698"
+      },
+      {
+        "path": "/workspace/scratch/arc-memory-ui-format.log",
+        "size_bytes": 441,
+        "sha256": "0d25ceab833dcabd3cfba6c17d95ee1e4acf9edd33f3de946492d82a3bb729c1"
+      }
+    ]
+  },
+  "additional_receipts": [
+    {
+      "path": "/workspace/scratch/arc-memory-native-final-job.log",
+      "size_bytes": 474398,
+      "sha256": "67d4900cdb867f67fd17773bb29446c4b48646bbe0f839513652ad3131638661"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-native-first-job.log",
+      "size_bytes": 473761,
+      "sha256": "5c3392157c7996a94aea4a334cbdc08f85179d2ff6fb2c52f99e38fa98973fe5"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-native-second-driver-tests.log",
+      "size_bytes": 12072,
+      "sha256": "7d1370f7c2ce5b81d5985b35f8eefd4f25318036aa42ad37f7e6582eeec07c03"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-native-second-job.log",
+      "size_bytes": 295531,
+      "sha256": "0f92172d593a32a76d60039ee5190b53b4fb96c89b8a18e93a5f7fdbcadf56c3"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-native-second-precommit.log",
+      "size_bytes": 15919,
+      "sha256": "69901e3f6fb6cc058c3700c7b14622c42a6521ed321c8de47eb8933b0e90fdd6"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-native-third-driver-tests.log",
+      "size_bytes": 11250,
+      "sha256": "a6aced66504dfd237d6db17976a02a84d5638c028dc6aabc194929eaee07b977"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-native-third-precommit.log",
+      "size_bytes": 15890,
+      "sha256": "05554f614ec57c2715da288b6278900f78bfcec66b1bc2250516156d47a44c4f"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-final-ci-metadata.json",
+      "size_bytes": 3750,
+      "sha256": "4c861cdc2e7f737f41f0d40365d997d72ce4cd5207936432d5fca135ff01597a"
+    },
+    {
+      "path": "/workspace/scratch/arc-memory-first-second-ci-metadata.json",
+      "size_bytes": 4052,
+      "sha256": "a33fe9efd57caea35db8c39ce880c6589d8f19410b18f2f4b3c6a9eab218e3ce"
+    }
+  ],
+  "official_ci_metadata": {
+    "run": 37557179034,
+    "jobs": {
+      "jobs": [
+        {
+          "id": 112585981839,
+          "name": "capture",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37557179034,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Verify unchanged application source",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Install standard Linux and display dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Prepare pinned dependency and UI assets",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Check resource floors and build actual native runtime",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run actual server regressions",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Qualify typed arc edit, stale refusal, targeted review and explicit acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Upload only reviewed capture outputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        }
+      ]
+    },
+    "artifacts": {
+      "artifacts": [
+        {
+          "id": 11455274592,
+          "name": "eidetic-story-arc-memory-native-292630b",
+          "size_in_bytes": 1156730,
+          "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11455274592",
+          "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11455274592/zip",
+          "expired": false,
+          "created_at": "2026-10-07T01:37:06Z",
+          "expires_at": "2026-10-10T01:37:05Z",
+          "updated_at": "2026-10-07T01:37:06Z",
+          "digest": "sha256:4c8a1779061134b420deb2ce2f30203ad8d8f8b19849094cd6199972fe688027",
+          "workflow_run": {
+            "id": 37557179034,
+            "repository_id": 1157333365,
+            "head_repository_id": 1157333365,
+            "head_branch": "test/story-arc-memory-native",
+            "head_sha": "a90ce8d2a4c5885c3daad1adf45de5ac87d11c31"
+          }
+        }
+      ]
+    }
+  },
+  "failed_official_ci_metadata": {
+    "first": {
+      "run": 37555601615,
+      "artifacts": {
+        "artifacts": [
+          {
+            "id": 11454756554,
+            "name": "eidetic-story-arc-memory-native-292630b",
+            "size_in_bytes": 583879,
+            "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11454756554",
+            "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11454756554/zip",
+            "expired": false,
+            "created_at": "2026-10-07T01:20:36Z",
+            "expires_at": "2026-10-10T01:20:34Z",
+            "updated_at": "2026-10-07T01:20:36Z",
+            "digest": "sha256:95f39107564d8df6769ff682c480b1b8ff1d5ac19a5d6c6db604d5e05b1cb79b",
+            "workflow_run": {
+              "id": 37555601615,
+              "repository_id": 1157333365,
+              "head_repository_id": 1157333365,
+              "head_branch": "test/story-arc-memory-native",
+              "head_sha": "bbfa423b500a029bbc950d8241c911c6b27836b3"
+            }
+          }
+        ]
+      }
+    },
+    "second": {
+      "run": 37556882759,
+      "jobs": {
+        "jobs": [
+          {
+            "id": 112585050361,
+            "name": "capture",
+            "status": "completed",
+            "conclusion": "failure",
+            "run_id": 37556882759,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Verify unchanged application source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Install standard Linux and display dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Prepare pinned dependency and UI assets",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 7
+              },
+              {
+                "name": "Check resource floors and build actual native runtime",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Run actual server regressions",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Qualify typed arc edit, stale refusal, targeted review and explicit acceptance",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Upload only reviewed capture outputs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 21
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 22
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 23
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
