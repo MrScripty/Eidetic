@@ -1,0 +1,2051 @@
+{
+  "application_source_sha": "f05fa888245db0fff1dad5a3165b0c1d3e07539c",
+  "application_source_tree": "f096352611b570f9c31617fcc4a97887874fac0d",
+  "predecessor": "5ac9eb99ffb155878d5dcfda77baa01d60ef24f7",
+  "qualification_sha": "e78a38c63b5b1961532c8c69b7ef7b5451ccdb57",
+  "qualification_tree": "2dc7cfd22ec2f2563b7697cda61b5edec79dd74d",
+  "native_evidence": {
+    "status": "native_last_train_authoring_passed_with_labelled_synthetic_http_fixture",
+    "application_source_sha": "f05fa888245db0fff1dad5a3165b0c1d3e07539c",
+    "qualification_sha": "e78a38c63b5b1961532c8c69b7ef7b5451ccdb57",
+    "application_binary_sha256": "4a51fac11fee64f7d1b9e926a11145afe6cb5391b66387af2f31b34012553d80",
+    "capture_label": "prototype views",
+    "setup_route": "public native services; four supporting blocks, empty A and ungenerated B",
+    "gui_route": "actual Tauri AT-SPI/X11 Write screenplay, Generate, manual Save, Bible Save, retained unrelated draft, placement, visible preview and explicit acceptance",
+    "provider": "synthetic localhost HTTP/SSE fixture through production client",
+    "real_model_quality_qualified": false,
+    "checkpoints": [
+      {
+        "stage": "public services prepare fresh Last Train project with empty A and ungenerated B",
+        "elapsed_seconds": 0.172
+      },
+      {
+        "stage": "launch actual desktop and begin writing",
+        "elapsed_seconds": 0.325
+      },
+      {
+        "stage": "exact original screenplay typed in actual Write screenplay area",
+        "elapsed_seconds": 17.919
+      },
+      {
+        "stage": "native generation and exact manual B saved; begin upstream C edit",
+        "elapsed_seconds": 21.518
+      },
+      {
+        "stage": "native exact manual edits save B and change C from midnight to morning",
+        "elapsed_seconds": 23.937
+      },
+      {
+        "stage": "native E placement crosses neighbors with F draft open",
+        "elapsed_seconds": 26.871
+      },
+      {
+        "stage": "Bible, manual-source and placement changes visibly identify affected B",
+        "elapsed_seconds": 31.056
+      },
+      {
+        "stage": "complete proposal paragraph and explicit pending controls visible before acceptance",
+        "elapsed_seconds": 32.982
+      },
+      {
+        "stage": "explicit native acceptance replaces only B with unrelated F draft still open",
+        "elapsed_seconds": 34.883
+      }
+    ],
+    "stage": "explicit native acceptance replaces only B with unrelated F draft still open",
+    "project": {
+      "name": "Last_Train_Authoring_QA",
+      "initial_scene_order": [
+        "A",
+        "F",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "setup_route": "public services only; A empty and B ungenerated",
+      "A_and_B_initially_empty": true
+    },
+    "window_id": 2097155,
+    "window_pid": 21958,
+    "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+    "writing_area": {
+      "exact_draft": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n",
+      "selected_scene": "884abbfb-b107-4f19-9699-a8d4495f3b79",
+      "not_saved_before_capture": true
+    },
+    "captures": [
+      {
+        "file": "eidetic-story-authoring-writing.png",
+        "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13",
+        "window_id": 2097155,
+        "pid": 21958
+      },
+      {
+        "file": "eidetic-inspector-generation.png",
+        "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+        "window_id": 2097155,
+        "pid": 21958
+      },
+      {
+        "file": "eidetic-story-authoring-manual-edit.png",
+        "sha256": "5e749576d4d87095d13630a17487649c865625406a452a2f2e26f5a1fc6318b9",
+        "window_id": 2097155,
+        "pid": 21958
+      },
+      {
+        "file": "eidetic-story-authoring-placement.png",
+        "sha256": "fecd46b637afa5dd35fb0f782fe7b7e02f517e00dd6144b3705eda3e7769bd72",
+        "window_id": 2097155,
+        "pid": 21958
+      },
+      {
+        "file": "eidetic-story-authoring-review.png",
+        "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903",
+        "window_id": 2097155,
+        "pid": 21958
+      },
+      {
+        "file": "eidetic-story-authoring-preview.png",
+        "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05",
+        "window_id": 2097155,
+        "pid": 21958
+      },
+      {
+        "file": "eidetic-story-authoring-accepted.png",
+        "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+        "window_id": 2097155,
+        "pid": 21958
+      },
+      {
+        "file": "eidetic-story-authoring-retained-draft.png",
+        "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+        "window_id": 2097155,
+        "pid": 21958
+      }
+    ],
+    "manual_creation": {
+      "block_id": "script.block.6f41e736-774e-414e-8823-3162083d69f9.user",
+      "revision_event_id": "6308dc61-a3e5-4aa7-83c7-a68f2a3bfa49",
+      "exact_text": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n"
+    },
+    "generation": {
+      "block_id": "script.block.83c1d6b0-d6fa-4887-8f02-79e507fbb83e.generated",
+      "revision_event_id": "11538536-188c-4204-90b8-cd1ba660d608",
+      "real_model": false,
+      "actual_GUI_Generate": true,
+      "exact_original_A_consumed": true,
+      "canonical_node_status": "HasContent",
+      "expected_visual_caption": "Has content",
+      "visible_inspector": {
+        "selected_scene": "SCENE B",
+        "heading_bounds": [
+          296,
+          34,
+          71,
+          23
+        ],
+        "exact_native_control": "Generate",
+        "role": "push button",
+        "bounds": [
+          1821,
+          35,
+          75,
+          21
+        ],
+        "inspector_bounds": [
+          280,
+          0,
+          1640,
+          178
+        ],
+        "caption_machine_verified": false,
+        "placement_summary_machine_verified": false,
+        "caption_verification": "visual review of untouched native capture required"
+      }
+    },
+    "manual_B_save": {
+      "exact_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+      "revision_event_id": "1a0dd576-febd-4a03-9a78-34681780c1c1"
+    },
+    "manual_edit": {
+      "target_B_exact_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+      "target_B_revision": "1a0dd576-febd-4a03-9a78-34681780c1c1",
+      "upstream_C_before": "INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+      "upstream_C_after": "INT. TICKET OFFICE - DAWN\n\nThe departure board reads morning.\n\n",
+      "upstream_C_revision": "262673ff-3b58-4ba1-96f3-e523cf038ee3",
+      "visible_review_label": {
+        "expected_label": "Source screenplay text changed.",
+        "native_name": "Source screenplay text changed. INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.",
+        "native_text": "Source screenplay text changed.\nINT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+        "role": "list item",
+        "bounds": [
+          301,
+          690,
+          368,
+          85
+        ],
+        "viewport": [
+          280,
+          208,
+          1640,
+          836
+        ]
+      },
+      "expected_visual_caption": "Has content",
+      "visible_inspector": {
+        "selected_scene": "SCENE B",
+        "heading_bounds": [
+          296,
+          34,
+          71,
+          23
+        ],
+        "exact_native_control": "Generate",
+        "role": "push button",
+        "bounds": [
+          1821,
+          35,
+          75,
+          21
+        ],
+        "inspector_bounds": [
+          280,
+          0,
+          1640,
+          178
+        ],
+        "caption_machine_verified": false,
+        "placement_summary_machine_verified": false,
+        "caption_verification": "visual review of untouched native capture required"
+      }
+    },
+    "unrelated_draft": {
+      "source_scene_id": "71c95244-7ce8-4ae3-9eda-ab16c60f4adb",
+      "saved_text": "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n",
+      "exact_draft": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+      "saved_revision": "337c5eac-1d1b-4185-bf77-44fa323952e6",
+      "not_saved": true
+    },
+    "placement": {
+      "before_ms": [
+        540000,
+        570000
+      ],
+      "after_ms": [
+        180000,
+        210000
+      ],
+      "after_order": [
+        "A",
+        "F",
+        "E",
+        "B",
+        "C",
+        "D"
+      ],
+      "command_id": "cad31789-dcb6-44c7-85ff-44c505887fb8",
+      "change_event_id": "1fe25537-e336-4371-b4d3-dd652e7cbc23",
+      "expected_read": {
+        "start_ms": 540000,
+        "end_ms": 570000,
+        "node_revision_event_id": "ba347764-1c7d-41c0-944b-85337e2ec03b"
+      },
+      "all_saved_screenplay_and_F_draft_preserved": true,
+      "visible_inspector": {
+        "selected_scene": "SCENE E",
+        "heading_bounds": [
+          296,
+          34,
+          70,
+          23
+        ],
+        "exact_native_control": "Placement: 180\u2013210 seconds",
+        "role": "unknown",
+        "bounds": [
+          296,
+          76,
+          1600,
+          16
+        ],
+        "inspector_bounds": [
+          280,
+          0,
+          1640,
+          178
+        ],
+        "caption_machine_verified": false,
+        "placement_summary_machine_verified": true,
+        "caption_verification": "visual review of untouched native capture required"
+      }
+    },
+    "fact_edit": {
+      "before": "Mara's umbrella is blue.",
+      "after": "Mara's umbrella is amber.",
+      "revision_event_id": "791feec5-470e-43ab-b576-b3da187ca1c4",
+      "saved_screenplay_and_unrelated_draft_preserved": true
+    },
+    "review_labels": [
+      {
+        "expected_label": "Source screenplay text changed.",
+        "native_name": "Source screenplay text changed. INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.",
+        "native_text": "Source screenplay text changed.\nINT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+        "role": "list item",
+        "bounds": [
+          739,
+          356,
+          396,
+          84
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      },
+      {
+        "expected_label": "Bible fact profile.tagline changed.",
+        "native_name": "Bible fact profile.tagline changed. Mara's umbrella is blue.",
+        "native_text": "Bible fact profile.tagline changed.\nMara's umbrella is blue.\n",
+        "role": "list item",
+        "bounds": [
+          739,
+          276,
+          396,
+          36
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      },
+      {
+        "expected_label": "Entered: SCENE E. Left: SCENE A.",
+        "native_name": "Screenplay context changed. Entered: SCENE E. Left: SCENE A.",
+        "native_text": "Screenplay context changed.\nEntered: SCENE E. Left: SCENE A.\n",
+        "role": "list item",
+        "bounds": [
+          739,
+          316,
+          396,
+          36
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      }
+    ],
+    "preview": {
+      "proposal_id": "script.review.37ba30ef-0370-45da-9e06-f6dc727dccf8",
+      "target_B_unchanged": true,
+      "unrelated_F_draft_open": true,
+      "exact_updated_C_and_Bible_and_FECD_window_consumed": true,
+      "unsaved_F_draft_excluded_from_context": true,
+      "visible_proposal": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            739,
+            589,
+            8,
+            12
+          ],
+          [
+            746,
+            589,
+            8,
+            12
+          ],
+          [
+            753,
+            589,
+            8,
+            12
+          ],
+          [
+            760,
+            589,
+            8,
+            12
+          ],
+          [
+            767,
+            589,
+            8,
+            12
+          ],
+          [
+            774,
+            589,
+            8,
+            12
+          ],
+          [
+            781,
+            589,
+            8,
+            12
+          ],
+          [
+            788,
+            589,
+            8,
+            12
+          ],
+          [
+            795,
+            589,
+            8,
+            12
+          ],
+          [
+            809,
+            589,
+            8,
+            12
+          ],
+          [
+            816,
+            589,
+            8,
+            12
+          ],
+          [
+            823,
+            589,
+            8,
+            12
+          ],
+          [
+            830,
+            589,
+            8,
+            12
+          ],
+          [
+            837,
+            589,
+            8,
+            12
+          ],
+          [
+            844,
+            589,
+            8,
+            12
+          ],
+          [
+            851,
+            589,
+            8,
+            12
+          ],
+          [
+            858,
+            589,
+            8,
+            12
+          ],
+          [
+            872,
+            589,
+            8,
+            12
+          ],
+          [
+            879,
+            589,
+            8,
+            12
+          ],
+          [
+            886,
+            589,
+            8,
+            12
+          ],
+          [
+            893,
+            589,
+            8,
+            12
+          ],
+          [
+            900,
+            589,
+            8,
+            12
+          ],
+          [
+            914,
+            589,
+            8,
+            12
+          ],
+          [
+            921,
+            589,
+            8,
+            12
+          ],
+          [
+            928,
+            589,
+            8,
+            12
+          ],
+          [
+            935,
+            589,
+            8,
+            12
+          ],
+          [
+            942,
+            589,
+            8,
+            12
+          ],
+          [
+            949,
+            589,
+            8,
+            12
+          ],
+          [
+            956,
+            589,
+            8,
+            12
+          ],
+          [
+            970,
+            589,
+            8,
+            12
+          ],
+          [
+            977,
+            589,
+            8,
+            12
+          ],
+          [
+            984,
+            589,
+            8,
+            12
+          ],
+          [
+            998,
+            589,
+            8,
+            12
+          ],
+          [
+            1005,
+            589,
+            8,
+            12
+          ],
+          [
+            1012,
+            589,
+            8,
+            12
+          ],
+          [
+            1019,
+            589,
+            8,
+            12
+          ],
+          [
+            1026,
+            589,
+            8,
+            12
+          ],
+          [
+            1033,
+            589,
+            8,
+            12
+          ],
+          [
+            1040,
+            589,
+            8,
+            12
+          ],
+          [
+            1054,
+            589,
+            8,
+            12
+          ],
+          [
+            1061,
+            589,
+            8,
+            12
+          ],
+          [
+            1068,
+            589,
+            8,
+            12
+          ],
+          [
+            1075,
+            589,
+            8,
+            12
+          ],
+          [
+            739,
+            601,
+            8,
+            16
+          ],
+          [
+            746,
+            601,
+            8,
+            16
+          ],
+          [
+            753,
+            601,
+            8,
+            16
+          ],
+          [
+            760,
+            601,
+            8,
+            16
+          ],
+          [
+            767,
+            601,
+            8,
+            16
+          ],
+          [
+            774,
+            601,
+            8,
+            16
+          ],
+          [
+            781,
+            601,
+            8,
+            16
+          ],
+          [
+            795,
+            601,
+            8,
+            16
+          ],
+          [
+            802,
+            601,
+            8,
+            16
+          ],
+          [
+            809,
+            601,
+            8,
+            16
+          ],
+          [
+            816,
+            601,
+            8,
+            16
+          ],
+          [
+            830,
+            601,
+            8,
+            16
+          ],
+          [
+            837,
+            601,
+            8,
+            16
+          ],
+          [
+            844,
+            601,
+            8,
+            16
+          ],
+          [
+            858,
+            601,
+            8,
+            16
+          ],
+          [
+            865,
+            601,
+            8,
+            16
+          ],
+          [
+            872,
+            601,
+            8,
+            16
+          ],
+          [
+            879,
+            601,
+            8,
+            16
+          ],
+          [
+            886,
+            601,
+            8,
+            16
+          ],
+          [
+            900,
+            601,
+            8,
+            16
+          ],
+          [
+            907,
+            601,
+            8,
+            16
+          ],
+          [
+            914,
+            601,
+            8,
+            16
+          ],
+          [
+            921,
+            601,
+            8,
+            16
+          ],
+          [
+            928,
+            601,
+            8,
+            16
+          ],
+          [
+            935,
+            601,
+            8,
+            16
+          ],
+          [
+            942,
+            601,
+            8,
+            16
+          ],
+          [
+            949,
+            601,
+            8,
+            16
+          ],
+          [
+            963,
+            601,
+            8,
+            16
+          ],
+          [
+            970,
+            601,
+            8,
+            16
+          ],
+          [
+            977,
+            601,
+            8,
+            16
+          ],
+          [
+            991,
+            601,
+            8,
+            16
+          ],
+          [
+            998,
+            601,
+            8,
+            16
+          ],
+          [
+            1005,
+            601,
+            8,
+            16
+          ],
+          [
+            1019,
+            601,
+            8,
+            16
+          ],
+          [
+            1026,
+            601,
+            8,
+            16
+          ],
+          [
+            1033,
+            601,
+            8,
+            16
+          ],
+          [
+            1040,
+            601,
+            8,
+            16
+          ],
+          [
+            1047,
+            601,
+            8,
+            16
+          ],
+          [
+            1054,
+            601,
+            8,
+            16
+          ],
+          [
+            1061,
+            601,
+            8,
+            16
+          ],
+          [
+            1075,
+            601,
+            8,
+            16
+          ],
+          [
+            1082,
+            601,
+            8,
+            16
+          ],
+          [
+            1089,
+            601,
+            8,
+            16
+          ],
+          [
+            1096,
+            601,
+            8,
+            16
+          ],
+          [
+            1103,
+            601,
+            8,
+            16
+          ],
+          [
+            1110,
+            601,
+            8,
+            16
+          ]
+        ],
+        "exact_text": "Synthetic preview: After finding her ticket, Mara arrives with her amber umbrella for the morning train.\n\n",
+        "native_text_geometry_inside_script": true,
+        "pending_controls": [
+          {
+            "name": "Reject",
+            "bounds": [
+              739,
+              651,
+              35,
+              16
+            ]
+          },
+          {
+            "name": "Accept update",
+            "bounds": [
+              783,
+              651,
+              82,
+              16
+            ]
+          }
+        ]
+      }
+    },
+    "acceptance": {
+      "revision_event_id": "60bf934f-ac4a-4711-bc85-65db85f99dc1",
+      "only_B_changed": true,
+      "Bible_revision_refreshed": "791feec5-470e-43ab-b576-b3da187ca1c4",
+      "accepted_proposal_visible": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            301,
+            900,
+            8,
+            13
+          ],
+          [
+            308,
+            900,
+            8,
+            13
+          ],
+          [
+            315,
+            900,
+            8,
+            13
+          ],
+          [
+            322,
+            900,
+            8,
+            13
+          ],
+          [
+            329,
+            900,
+            8,
+            13
+          ],
+          [
+            336,
+            900,
+            8,
+            13
+          ],
+          [
+            343,
+            900,
+            8,
+            13
+          ],
+          [
+            350,
+            900,
+            8,
+            13
+          ],
+          [
+            357,
+            900,
+            8,
+            13
+          ],
+          [
+            371,
+            900,
+            8,
+            13
+          ],
+          [
+            378,
+            900,
+            8,
+            13
+          ],
+          [
+            385,
+            900,
+            8,
+            13
+          ],
+          [
+            392,
+            900,
+            8,
+            13
+          ],
+          [
+            399,
+            900,
+            8,
+            13
+          ],
+          [
+            406,
+            900,
+            8,
+            13
+          ],
+          [
+            413,
+            900,
+            8,
+            13
+          ],
+          [
+            420,
+            900,
+            8,
+            13
+          ],
+          [
+            434,
+            900,
+            8,
+            13
+          ],
+          [
+            441,
+            900,
+            8,
+            13
+          ],
+          [
+            448,
+            900,
+            8,
+            13
+          ],
+          [
+            455,
+            900,
+            8,
+            13
+          ],
+          [
+            462,
+            900,
+            8,
+            13
+          ],
+          [
+            476,
+            900,
+            8,
+            13
+          ],
+          [
+            483,
+            900,
+            8,
+            13
+          ],
+          [
+            490,
+            900,
+            8,
+            13
+          ],
+          [
+            497,
+            900,
+            8,
+            13
+          ],
+          [
+            504,
+            900,
+            8,
+            13
+          ],
+          [
+            511,
+            900,
+            8,
+            13
+          ],
+          [
+            518,
+            900,
+            8,
+            13
+          ],
+          [
+            532,
+            900,
+            8,
+            13
+          ],
+          [
+            539,
+            900,
+            8,
+            13
+          ],
+          [
+            546,
+            900,
+            8,
+            13
+          ],
+          [
+            560,
+            900,
+            8,
+            13
+          ],
+          [
+            567,
+            900,
+            8,
+            13
+          ],
+          [
+            574,
+            900,
+            8,
+            13
+          ],
+          [
+            581,
+            900,
+            8,
+            13
+          ],
+          [
+            588,
+            900,
+            8,
+            13
+          ],
+          [
+            595,
+            900,
+            8,
+            13
+          ],
+          [
+            602,
+            900,
+            8,
+            13
+          ],
+          [
+            616,
+            900,
+            8,
+            13
+          ],
+          [
+            623,
+            900,
+            8,
+            13
+          ],
+          [
+            630,
+            900,
+            8,
+            13
+          ],
+          [
+            637,
+            900,
+            8,
+            13
+          ],
+          [
+            301,
+            912,
+            8,
+            17
+          ],
+          [
+            308,
+            912,
+            8,
+            17
+          ],
+          [
+            315,
+            912,
+            8,
+            17
+          ],
+          [
+            322,
+            912,
+            8,
+            17
+          ],
+          [
+            329,
+            912,
+            8,
+            17
+          ],
+          [
+            336,
+            912,
+            8,
+            17
+          ],
+          [
+            343,
+            912,
+            8,
+            17
+          ],
+          [
+            357,
+            912,
+            8,
+            17
+          ],
+          [
+            364,
+            912,
+            8,
+            17
+          ],
+          [
+            371,
+            912,
+            8,
+            17
+          ],
+          [
+            378,
+            912,
+            8,
+            17
+          ],
+          [
+            392,
+            912,
+            8,
+            17
+          ],
+          [
+            399,
+            912,
+            8,
+            17
+          ],
+          [
+            406,
+            912,
+            8,
+            17
+          ],
+          [
+            420,
+            912,
+            8,
+            17
+          ],
+          [
+            427,
+            912,
+            8,
+            17
+          ],
+          [
+            434,
+            912,
+            8,
+            17
+          ],
+          [
+            441,
+            912,
+            8,
+            17
+          ],
+          [
+            448,
+            912,
+            8,
+            17
+          ],
+          [
+            462,
+            912,
+            8,
+            17
+          ],
+          [
+            469,
+            912,
+            8,
+            17
+          ],
+          [
+            476,
+            912,
+            8,
+            17
+          ],
+          [
+            483,
+            912,
+            8,
+            17
+          ],
+          [
+            490,
+            912,
+            8,
+            17
+          ],
+          [
+            497,
+            912,
+            8,
+            17
+          ],
+          [
+            504,
+            912,
+            8,
+            17
+          ],
+          [
+            511,
+            912,
+            8,
+            17
+          ],
+          [
+            525,
+            912,
+            8,
+            17
+          ],
+          [
+            532,
+            912,
+            8,
+            17
+          ],
+          [
+            539,
+            912,
+            8,
+            17
+          ],
+          [
+            553,
+            912,
+            8,
+            17
+          ],
+          [
+            560,
+            912,
+            8,
+            17
+          ],
+          [
+            567,
+            912,
+            8,
+            17
+          ],
+          [
+            581,
+            912,
+            8,
+            17
+          ],
+          [
+            588,
+            912,
+            8,
+            17
+          ],
+          [
+            595,
+            912,
+            8,
+            17
+          ],
+          [
+            602,
+            912,
+            8,
+            17
+          ],
+          [
+            609,
+            912,
+            8,
+            17
+          ],
+          [
+            616,
+            912,
+            8,
+            17
+          ],
+          [
+            623,
+            912,
+            8,
+            17
+          ],
+          [
+            637,
+            912,
+            8,
+            17
+          ],
+          [
+            644,
+            912,
+            8,
+            17
+          ],
+          [
+            651,
+            912,
+            8,
+            17
+          ],
+          [
+            658,
+            912,
+            8,
+            17
+          ],
+          [
+            665,
+            912,
+            8,
+            17
+          ],
+          [
+            672,
+            912,
+            8,
+            17
+          ]
+        ],
+        "exact_text": "Synthetic preview: After finding her ticket, Mara arrives with her amber umbrella for the morning train.\n\n",
+        "native_text_geometry_inside_script": true
+      },
+      "unrelated_F_draft_still_open": true,
+      "review_cleared": true
+    },
+    "provider_calls": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      }
+    ],
+    "accessibility_retired_object_polls": 0,
+    "typed_text_observations": [
+      {
+        "field": "New screenplay text",
+        "expected_length": 84,
+        "actual_text": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 74,
+        "actual_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 63,
+        "actual_text": "INT. TICKET OFFICE - DAWN\n\nThe departure board reads morning.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 47,
+        "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Placement start seconds",
+        "expected_length": 3,
+        "actual_text": "180",
+        "exact": true
+      },
+      {
+        "field": "Placement end seconds",
+        "expected_length": 3,
+        "actual_text": "210",
+        "exact": true
+      },
+      {
+        "field": "TAGLINE Mara's umbrella is amber.",
+        "expected_length": 25,
+        "actual_text": "Mara's umbrella is amber.",
+        "exact": true
+      }
+    ],
+    "timeline_locator_observations": [
+      {
+        "name": "",
+        "text": "SCENE E",
+        "role": "unknown",
+        "bounds": [
+          702,
+          579,
+          53,
+          17
+        ]
+      },
+      {
+        "name": "",
+        "text": "SCENE A\nSCENE F\nSCENE B\nSCENE C\nSCENE D\nSCENE E\n+\n+\n+\n+\n+\n+\n",
+        "role": "section",
+        "bounds": [
+          80,
+          1296,
+          3594,
+          48
+        ]
+      },
+      {
+        "name": "SCENE E",
+        "text": "SCENE E",
+        "role": "native-text-range",
+        "bounds": [
+          1569,
+          1314,
+          31,
+          11
+        ]
+      }
+    ]
+  },
+  "hosted_metadata": {
+    "successful_run_id": 37554492625,
+    "successful_job_id": 112577527433,
+    "successful_jobs": [
+      {
+        "id": 112577527433,
+        "name": "capture",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 37554492625,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Verify unchanged application source",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Install standard Linux and display dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Prepare pinned dependency and UI assets",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Check resource floors and build actual native runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run actual server regressions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Qualify writing, manual edits, Bible, placement, visible review and retained draft",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Upload only reviewed capture outputs",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          }
+        ]
+      }
+    ],
+    "successful_artifacts": {
+      "artifacts": [
+        {
+          "id": 11454550450,
+          "name": "eidetic-selected-inspector-completion-native-f05fa88",
+          "size_in_bytes": 1060448,
+          "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11454550450",
+          "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11454550450/zip",
+          "expired": false,
+          "created_at": "2026-10-07T01:03:43Z",
+          "expires_at": "2026-10-10T01:03:42Z",
+          "updated_at": "2026-10-07T01:03:43Z",
+          "digest": "sha256:9718801f66d048986160cbac52ae687c1097ef15ca736c266fd5d4c12392b573",
+          "workflow_run": {
+            "id": 37554492625,
+            "repository_id": 1157333365,
+            "head_repository_id": 1157333365,
+            "head_branch": "test/selected-inspector-completion-native",
+            "head_sha": "e78a38c63b5b1961532c8c69b7ef7b5451ccdb57"
+          }
+        }
+      ]
+    },
+    "first_run_id": 37553719957,
+    "first_job_id": 112574955338,
+    "first_jobs": [
+      {
+        "id": 112574955338,
+        "name": "capture",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "run_id": 37553719957,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Verify unchanged application source",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Install standard Linux and display dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Prepare pinned dependency and UI assets",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Check resource floors and build actual native runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run actual server regressions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Qualify writing, manual edits, Bible, placement, visible review and retained draft",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Upload only reviewed capture outputs",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          }
+        ]
+      }
+    ],
+    "first_artifacts": {
+      "artifacts": [
+        {
+          "id": 11453383367,
+          "name": "eidetic-selected-inspector-completion-native-5ac9eb9",
+          "size_in_bytes": 1060424,
+          "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11453383367",
+          "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11453383367/zip",
+          "expired": false,
+          "created_at": "2026-10-07T00:55:48Z",
+          "expires_at": "2026-10-10T00:55:47Z",
+          "updated_at": "2026-10-07T00:55:48Z",
+          "digest": "sha256:f7065795519458f576ec4b16adcb381a222f6ef7b7edce5dda4f68829919b74e",
+          "workflow_run": {
+            "id": 37553719957,
+            "repository_id": 1157333365,
+            "head_repository_id": 1157333365,
+            "head_branch": "test/selected-inspector-completion-native",
+            "head_sha": "4b0059c27b01516e40623c364b071a2fde17ebd8"
+          }
+        }
+      ]
+    }
+  },
+  "receipt_files": [
+    {
+      "path": "/workspace/attachments/2dbaaed1-1365-4ab6-8c84-0e76b9be2d0e/eidetic-inspector-completion-first-attempt.zip",
+      "size_bytes": 1060424,
+      "sha256": "f7065795519458f576ec4b16adcb381a222f6ef7b7edce5dda4f68829919b74e"
+    },
+    {
+      "path": "/workspace/attachments/e1587688-d460-43f1-8f6f-4e63d9b31d7e/eidetic-inspector-completion-success.zip",
+      "size_bytes": 1060448,
+      "sha256": "9718801f66d048986160cbac52ae687c1097ef15ca736c266fd5d4c12392b573"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-baseline.log",
+      "size_bytes": 7011,
+      "sha256": "2318f5ef98f7ff7d8b9ef53d0de214116f075c4d480e36874d2aa0bfbd4da24f"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-build.log",
+      "size_bytes": 3628,
+      "sha256": "2ac76cc6fbbd7b00c10136eef3c8a498cc5f1762f2e392a5ff06577ae237bac5"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-ci-metadata.json",
+      "size_bytes": 7269,
+      "sha256": "7cef8d31cb9ba2f1f648e9fece432ed039ffa8fb80597d97867d891cbe422152"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-first-job.log",
+      "size_bytes": 451349,
+      "sha256": "41c9180849beb92bbf5f9292e5bc291e7019aa10b4b8fe25d75fda4964978b22"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-focused.log",
+      "size_bytes": 670,
+      "sha256": "f92b598e0136dc4b8fb0ca78dead1af73a703f6ca5eab045d01021013401771b"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-format.log",
+      "size_bytes": 114,
+      "sha256": "4f75322be46af95fd1ce8910abd0b83835b9e5a9c6bb9354d699af6a2d9d3d94"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-formatcheck.log",
+      "size_bytes": 374,
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-full-ui.log",
+      "size_bytes": 6910,
+      "sha256": "051127368f0ac8f851bf8bb18e2931ee16b47b213510c4746251600575ac5689"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-lint.log",
+      "size_bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/app-sanitized.log",
+      "size_bytes": 947,
+      "sha256": "37cb42abb13aa3fa56a901152c4071401d947e4fdac8f2ecbc0f626196205ac2"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/capture-evidence.json",
+      "size_bytes": 27989,
+      "sha256": "37d767211eee872b437626f97afbbca233938a36a6c2b5f649c5f49895f43fd7"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-inspector-generation.png",
+      "size_bytes": 107558,
+      "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-story-authoring-accepted.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-story-authoring-manual-edit.png",
+      "size_bytes": 124068,
+      "sha256": "5e749576d4d87095d13630a17487649c865625406a452a2f2e26f5a1fc6318b9"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-story-authoring-placement.png",
+      "size_bytes": 136176,
+      "sha256": "fecd46b637afa5dd35fb0f782fe7b7e02f517e00dd6144b3705eda3e7769bd72"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-story-authoring-preview.png",
+      "size_bytes": 185306,
+      "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-story-authoring-retained-draft.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-story-authoring-review.png",
+      "size_bytes": 175397,
+      "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-first-37553719957/eidetic-story-authoring-writing.png",
+      "size_bytes": 96105,
+      "sha256": "4dbebeeccaf388ddd057e80a19ddfa1f4e53b12121830b2d71e134f69eb72e8f"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-job.log",
+      "size_bytes": 451215,
+      "sha256": "82de5945aca3159d2b7ed0434c09e919b353a31d137b6d4462c714ec9d575fc0"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/app-sanitized.log",
+      "size_bytes": 946,
+      "sha256": "a73748d704fad11ded5ed962281c199f125aeea52e161603ce8cc7e53ee82ae6"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/capture-evidence.json",
+      "size_bytes": 27990,
+      "sha256": "5fd87c583bbc2c555f627cb7973130c1fa75e4a5166f496b036d758ed0942264"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-inspector-generation.png",
+      "size_bytes": 107558,
+      "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-story-authoring-accepted.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-story-authoring-manual-edit.png",
+      "size_bytes": 124068,
+      "sha256": "5e749576d4d87095d13630a17487649c865625406a452a2f2e26f5a1fc6318b9"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-story-authoring-placement.png",
+      "size_bytes": 136176,
+      "sha256": "fecd46b637afa5dd35fb0f782fe7b7e02f517e00dd6144b3705eda3e7769bd72"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-story-authoring-preview.png",
+      "size_bytes": 185306,
+      "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-story-authoring-retained-draft.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-story-authoring-review.png",
+      "size_bytes": 175397,
+      "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-native-success-37554492625/eidetic-story-authoring-writing.png",
+      "size_bytes": 96104,
+      "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-precommit.log",
+      "size_bytes": 15808,
+      "sha256": "c9085b071fac3422d5ce84eaabfb723d75dfb65cc5d643f8e56dcb295364f318"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-qa-precommit.log",
+      "size_bytes": 16371,
+      "sha256": "a765d9e85681b7dd40d665c06e57df35ccc1efdd7c85424d8512e75f50e92e3e"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-qa-source-precommit.log",
+      "size_bytes": 15808,
+      "sha256": "9a2ae8e29dbd346d28dd4960a2677dffeab3aea4dd5dd872fd3da5e4feb4319e"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-qa-source-tests.log",
+      "size_bytes": 10856,
+      "sha256": "0e9426745266326d06d7ae3436feeb931e09d04c9de1956649e24c703b6c2540"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-qa-tests.log",
+      "size_bytes": 10856,
+      "sha256": "2aea568f0070f79159d91bfc5c1ed9c779d98392997256e7d83776bc647b8175"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-traceability.log",
+      "size_bytes": 36,
+      "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf"
+    },
+    {
+      "path": "/workspace/scratch/inspector-completion-typecheck.log",
+      "size_bytes": 750,
+      "sha256": "d22316542102a9d8f421497468ca95daf0d224f7254c10b798e6821a4ea68789"
+    }
+  ],
+  "real_model_quality_qualified": false,
+  "visual_review": {
+    "all_eight_original_images_byte_identical_to_individually_inspected_37550726323": true,
+    "caption_machine_verified": false
+  },
+  "first_attempt": {
+    "run_id": 37553719957,
+    "job_conclusion": "cancelled",
+    "native_step_conclusion": "success",
+    "advertised_source_incorrect": "5ac9eb99ffb155878d5dcfda77baa01d60ef24f7",
+    "workflow_pinned_source": "f05fa888245db0fff1dad5a3165b0c1d3e07539c",
+    "used_as_final_qualification": false
+  },
+  "tests": {
+    "baseline_new_tests_failed": 7,
+    "baseline_existing_tests_passed": 13,
+    "focused_tests": 20,
+    "ui_tests": 487,
+    "ui_files": 82,
+    "hosted_core_tests": 120,
+    "hosted_server_tests": 486,
+    "native_driver_tests": 52,
+    "no_download_tests": 5
+  },
+  "source_files": [
+    {
+      "path": "ui/src/lib/stores/serverEventHandlers.ts",
+      "git_blob": "5dd509566f3426f6172e89999601561486a40797",
+      "sha256": "7554e7707d1430733094d4120994e9bd1d0226fdabfa659b4c6d46709d92e379"
+    },
+    {
+      "path": "ui/src/lib/stores/selectedInspectorEvents.svelte.test.ts",
+      "git_blob": "a64735ddc14e25ca397bd153a4ca2e023e41357a",
+      "sha256": "6ff32f580db5bcab58fb4c783fb1149c5589059e6a83c539d55e6b014032f1cc"
+    }
+  ]
+}

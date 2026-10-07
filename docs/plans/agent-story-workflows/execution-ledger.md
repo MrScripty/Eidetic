@@ -1911,3 +1911,21 @@ accept proposals. Regression covers unrelated screenplay and placement drafts,
 pending proposals, selection changes, late responses/errors, reopened same IDs
 and event coalescing. Native qualification is pending. Original walkthrough
 captures and synthetic labels remain intact; parent retains PR/review/merge.
+
+
+### PR17 stalled inspector completion repair — 7 October 2026
+
+Independent review found generation_complete awaited a selected inspector read
+before completeGeneration. Sourcef05fa888 (treef0963526), direct child of frozen
+5ac9eb99, schedules that nonessential read independently while retaining existing
+canonical refresh gates and session/handler/selection/request/version/error custody.
+Seven regressions fail on the original source and pass on the successor; current
+inspector failures remain visible. Focused20/fullUI487/82, typecheck0/0, lint,
+format/build/traceability/precommit pass. Native run37554492625/job112577527433
+succeeds on exact source with core120/server486/UI487/driver52/no-download5 and
+eight unchanged original screenshots, all hashes verified. Three production
+HTTP/SSE calls are explicitly synthetic. The earlier cancelled run37553719957
+succeeded in its native step but had a stale source label; both receipts/logs
+remain sealed separately. See selected-inspector-completion.md and manifest.
+The independent arc implementation remains preserved, based on this source.
+Parent owns review/thread resolution/merge; no reviewer request was made.
