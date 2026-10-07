@@ -2,9 +2,10 @@
 
 ## Source and bounded scope
 
-Branch `feat/screenplay-arc-memory` starts at PR17's frozen source
-`5ac9eb99ffb155878d5dcfda77baa01d60ef24f7`, tree
-`ba5c1d15e3ce002511190936441d7b322164ccf4`. Its parent is verified main
+Branch `feat/screenplay-arc-memory` starts at PR17's completion repair
+`f05fa888245db0fff1dad5a3165b0c1d3e07539c`, tree
+`f096352611b570f9c31617fcc4a97887874fac0d`, on frozen predecessor
+`5ac9eb99ffb155878d5dcfda77baa01d60ef24f7`. That predecessor's parent is verified main
 `25895e7bcf215e5a013dd7c4a98873e9b7412b8a`. PR17's source and evidence remain
 separate and untouched. Parent owns review, PRs and merges.
 

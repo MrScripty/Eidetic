@@ -1,3 +1,4 @@
+import type { StoryArcFieldInput } from './storyArcTypes.js';
 import type {
   BibleGraphFieldKey,
   BibleGraphNodeId,
@@ -61,6 +62,9 @@ export interface PropagationProposal {
   rationale?: string | null;
   created_at_ms: number;
   script_review_binding?: {
+    arc_inputs?: StoryArcFieldInput[] | null;
+    arc_previous_inputs?: StoryArcFieldInput[] | null;
+    arc_absence_revisions?: [string, string][] | null;
     request: RequestScriptImpactProposalCommand;
     cause: ScriptImpactCause;
     target_segment_revision_event_id: string;

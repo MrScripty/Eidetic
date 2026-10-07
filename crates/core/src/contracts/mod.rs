@@ -111,8 +111,8 @@ pub use semantic_proposal::{
     SemanticProposalStatus,
 };
 pub use story_arc::{
-    CreateStoryArcCommand, DeleteStoryArcCommand, SetStoryArcMetadataCommand,
-    StoryArcListProjection, StoryArcProgressionProjection,
+    CreateStoryArcCommand, DeleteStoryArcCommand, SetStoryArcMetadataCommand, StoryArcFieldInput,
+    StoryArcListProjection, StoryArcProgressionProjection, StoryArcPromptField,
 };
 pub use timeline_command::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineChildFromParentCommand,

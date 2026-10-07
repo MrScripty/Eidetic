@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ScriptArcEvidence from './ScriptArcEvidence.svelte';
   import type { ScriptSegmentProjection } from '$lib/scriptTypes.js';
   import {
     propagationProposalProjectionState,
@@ -115,6 +116,11 @@
               )?.block.text ?? 'Block no longer available'}</pre>
           </details>
         {/if}
+        <ScriptArcEvidence
+          previous={proposal.script_review_binding?.arc_previous_inputs}
+          current={proposal.script_review_binding?.arc_inputs}
+          absent={proposal.script_review_binding?.arc_absence_revisions}
+        />
         <pre aria-label="Proposed text">{proposal.proposed_text}</pre>
         {#if proposal.script_review_binding?.bible_node_name_inputs?.length}
           <details aria-label="Recorded screenplay name evidence">

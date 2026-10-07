@@ -46,6 +46,7 @@ fn generate(
     script_document_command::apply_generated_script_block(
         conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
+            arc_inputs: None,
             block: b.clone(),
             script_inputs: Some(vec![]),
             bible_inputs: Some(vec![]),

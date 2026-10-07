@@ -10,6 +10,7 @@ use crate::history_store::HistoryStoreError;
 use crate::semantic_dependency_store;
 
 pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> {
+    crate::story_arc_store::create_schema(conn)?;
     crate::bible_graph_store::create_schema(conn)?;
     semantic_dependency_store::create_schema(conn)
         .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
@@ -78,6 +79,38 @@ pub(crate) fn dependencies(
             })
         })
         .collect::<Result<Vec<_>, HistoryStoreError>>()?;
+    let mut arc_seen = std::collections::BTreeSet::new();
+    for input in command.arc_inputs.iter().flatten() {
+        if !arc_seen.insert((input.arc_id.0.to_string(), input.field)) {
+            return Err(HistoryStoreError::InvalidValue(
+                "duplicate story arc input".into(),
+            ));
+        }
+        let Some(revision) = input.revision_event_id else {
+            continue;
+        };
+        dependencies.push(SemanticDependency {
+            id: SemanticDependencyId::new(format!(
+                "generation.{}.arc.{}.{}",
+                event.0,
+                input.arc_id.0,
+                input.field.as_str()
+            ))
+            .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?,
+            source: SemanticDependencyEndpoint::ScriptSegment {
+                segment_id: command.block.segment_id.clone(),
+            },
+            target: crate::story_arc_lineage::endpoint(input),
+            kind: SemanticDependencyKind::DerivesFrom,
+            rationale: Some("Tagged story arc field supplied to generation".into()),
+            confidence: None,
+            created_at_ms,
+            revision_binding: Some(SemanticDependencyRevisionBinding {
+                source_revision_event_id: event,
+                target_revision_event_id: revision,
+            }),
+        });
+    }
     let mut seen = std::collections::BTreeSet::new();
     for input in command.bible_inputs.iter().flatten() {
         if !seen.insert(input.field_id.as_str()) {
@@ -212,6 +245,9 @@ pub(crate) fn record_in_transaction(
                 "generation input does not match canonical revision history".into(),
             ));
         }
+    }
+    for input in command.arc_inputs.iter().flatten() {
+        crate::story_arc_lineage::validate_history(tx, input)?;
     }
     for input in command.bible_inputs.iter().flatten() {
         crate::bible_field_lineage::validate_history(tx, input)?;

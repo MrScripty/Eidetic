@@ -75,6 +75,9 @@ pub(crate) fn load_impact(
                 "SELECT s.updated_event_id, s.deleted_event_id IS NOT NULL OR d.deleted_event_id IS NOT NULL, s.id
                  FROM script_segments s JOIN script_documents d ON d.id = s.document_id WHERE s.id = ?1", [segment_id.as_str()],
                 |row| Ok((row.get::<_, String>(0)?, row.get::<_, bool>(1)?, row.get::<_, String>(2)?))).optional()?,
+            SemanticDependencyEndpoint::StoryArcField { .. } =>
+                crate::story_arc_lineage::current_revision(conn, &dependency.target)?
+                    .map(|revision| (revision.0.to_string(), false, String::new())),
             SemanticDependencyEndpoint::BibleField { field_id: Some(_), .. } =>
                 crate::bible_field_lineage::current_revision(conn, &dependency.target)?
                     .map(|revision| (revision.0.to_string(), false, String::new())),
@@ -110,6 +113,8 @@ pub(crate) fn load_impact(
                  WHERE r.object_kind = 'script_block' AND r.object_id = ?1 AND r.change_event_id = ?2 AND f.field_key = 'text'",
                 params![block_id.as_str(), binding.target_revision_event_id.0.to_string()], |row| row.get::<_, Option<String>>(0)).optional()?.flatten()
                 .map(|text| text.chars().take(120).collect()),
+            SemanticDependencyEndpoint::StoryArcField { .. } => crate::story_arc_lineage::excerpt(
+                conn, &dependency.target, binding.target_revision_event_id)?,
             SemanticDependencyEndpoint::BibleField { .. } => crate::bible_field_lineage::excerpt(
                 conn, &dependency.target, binding.target_revision_event_id)?,
             SemanticDependencyEndpoint::BibleNode { .. } => crate::bible_node_name_lineage::excerpt(
