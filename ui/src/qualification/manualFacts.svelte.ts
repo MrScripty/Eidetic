@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 import * as production from '../lib/commandApi.js';
 import { getScriptDocumentProjection } from '../lib/projectionApi.js';
 import * as projections from '../lib/projectionApi.js';
@@ -43,13 +44,15 @@ export async function setBibleGraphField(payload: SetBibleGraphFieldCommand, com
   return response;
 }
 export async function getBibleGraphNodeProjection(key: { node_id: string }) {
+  // Fault instrumentation must not become an input of the production owner effect.
+  const mode = untrack(() => factQA.detailMode);
   if (key.node_id === 'qualification.mara') {
-    if (factQA.detailMode === 'fail') {
-      factQA.detailFailures++;
+    if (mode === 'fail') {
+      untrack(() => factQA.detailFailures++);
       throw new Error('SYNTHETIC QA transport: Bible detail unavailable.');
     }
-    if (factQA.detailMode === 'hold') {
-      factQA.detailReadsHeld++;
+    if (mode === 'hold') {
+      untrack(() => factQA.detailReadsHeld++);
       await new Promise<void>((resolve) => {
         releaseReads.push(resolve);
       });
