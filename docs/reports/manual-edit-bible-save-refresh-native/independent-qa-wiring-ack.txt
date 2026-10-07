@@ -1,0 +1,12 @@
+Independent scoped QA ACK from /root/review_manual_edit_fact_reconciliation, 2026-10-07.
+QA ff8f822f299745479b3f7d514824a54b2922c75d, tree ace591d196cf27554ff520aa3b8c79f963f159ec.
+Exact two QA-file forward delta from a23166c; exact nine QA files differ from e5a09ede.
+Resolved projection import routing matches the command routing pattern and importer
+scope leaves wrapper production calls unredirected. Served module independently read:
+import { getBibleGraphNodeProjection } from '/src/qualification/manualFacts.svelte.ts'.
+Served-routing admission and detailFailures counter prevent unexercised-fault claims.
+Original partial-run 37642126432 capture 11 and failure independently inspected and
+hash-matched: late Save preserves exact draft, original blue base, current green and
+disabled Save. Nineteen nonwhite glyph rectangles fit textarea and Bible pane.
+Failure shows Recovery draft without Bible error and QA expected-failure-not-exercised.
+Overall partial run remains failed; this is not a final native ACK.

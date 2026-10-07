@@ -1,0 +1,5391 @@
+{
+  "status": "failed",
+  "application_source_sha": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+  "application_tree": "be0acb7d8db1402a57939dda16820ac7558126a5",
+  "qualification_sha": "a23166c0d585c1287e7eb71485eed7441f1420fd",
+  "application_binary_sha256": "dc9884e9096e5fa34c942d8b0d0984b6a30a006e5c587b036f1740d563ad8949",
+  "provider": "labelled synthetic localhost HTTP/SSE through production client",
+  "real_model_quality_qualified": false,
+  "DOM_or_IPC_injection": false,
+  "direct_database_writes": false,
+  "stale_checks": [
+    {
+      "label": "native screenplay edit/restore ABA",
+      "proposal_id": "script.fact.6eaf392c-31ac-4f2c-80b4-6281c8a7a6aa",
+      "ordinary_visible_refusal": "Saved edit, consumed fact or relationship changed; analyze the saved edit again.",
+      "native_role": "notification",
+      "history_pending_material_fact_unchanged": true,
+      "before_revision": "178b0826-3c73-42ce-ad78-467444c87a75",
+      "restored_revision": "c59202e0-fa7c-464a-8617-b748c24388dc"
+    },
+    {
+      "label": "ordinary Bible field edit/restore ABA",
+      "proposal_id": "script.fact.de4ca808-c4e9-40e5-8126-1151cd872f3a",
+      "ordinary_visible_refusal": "Saved edit, consumed fact or relationship changed; analyze the saved edit again.",
+      "native_role": "notification",
+      "history_pending_material_fact_unchanged": true,
+      "before_fact": [
+        "Mara's umbrella is red.",
+        "88a3efcb-58e7-4e33-9b11-32363167ebf7"
+      ],
+      "restored_fact": [
+        "Mara's umbrella is red.",
+        "9818835b-4a3a-4422-8c96-96bc43a381ba"
+      ]
+    },
+    {
+      "label": "labelled public association edit/restore ABA",
+      "proposal_id": "script.fact.39d9b2bc-7a22-488f-8e6f-961215f9c0bb",
+      "ordinary_visible_refusal": "Saved edit, consumed fact or relationship changed; analyze the saved edit again.",
+      "native_role": "notification",
+      "history_pending_material_fact_unchanged": true
+    }
+  ],
+  "checkpoints": [
+    "public services seed two actual consumers, unconsumed fields and unrelated saved scene",
+    "one consumed-field analysis pending; exact manual text and draft preserved",
+    "ordinary Reject preserves all authored material",
+    "ordinary source edit/restore keeps same bytes but stale Accept refuses",
+    "ordinary fact edit/restore keeps same value but stale Accept refuses",
+    "fresh pending review plus native unsaved Bible drafts; clean right editor still red",
+    "ordinary Accept updates only selected Bible field; both consumers Need review; no screenplay or placement rewrite",
+    "consumed association ABA refuses pending acceptance, accepted fact and all screenplay remain intact",
+    "held Save acknowledgement cannot erase exact submitted draft or newer canonical conflict"
+  ],
+  "qualification_config_sha256": "f1d3b900de236addec4d5458e82ba33bdf0992f3c1c1724192f867c713ca5fba",
+  "served_source_receipts": [
+    {
+      "module": "src/lib/components/editor/ScriptFactReconciliation.svelte",
+      "source_sha256": "4d90708131a2f41c57acfe7670f27038a7d4426050566b2311e32459fbd3f7ac",
+      "served_transformed_sha256": "cb74631ec8722d114646d3f774139a14524ab8068db424328c429a7cd8d9ba7b",
+      "marker": "Analyze saved edit",
+      "observed": true
+    },
+    {
+      "module": "src/lib/stores/propagationProposalProjection.svelte.ts",
+      "source_sha256": "9f014396fb723fcecf3c331b4202a353cfc0f2f6e85dae44059c48e7623bb8dc",
+      "served_transformed_sha256": "1cc587cbbb1abc7ac27bc81716d8a845e9a0822ba45fe35564e2e578764d05b5",
+      "marker": "project changed during proposal refresh",
+      "observed": true
+    },
+    {
+      "module": "src/qualification/ManualFactControls.svelte",
+      "source_sha256": "1315b7ea9e11e05edf1c36acd9e62cd6f44eee7fd67d42359f3b7966f80811c2",
+      "served_transformed_sha256": "510d9b2740be2a55ec3c9545eea830b0ab873d7bf38665a2f0bb2d0d7ae9dd44",
+      "marker": "SYNTHETIC HTTP replies",
+      "observed": true
+    },
+    {
+      "module": "src/qualification/manualFacts.svelte.ts",
+      "source_sha256": "8d82ca3572f43ac239eb391d91c152abc0f1740a8a4a77f97e2f942f0aa55157",
+      "served_transformed_sha256": "399e16b6083ddd7e2b2b9c8ed83ec1583bec22b9f6522af3132260e4f73eead7",
+      "marker": "SYNTHETIC QA transport: Bible detail unavailable.",
+      "observed": true
+    },
+    {
+      "module": "src/lib/stores/bibleGraphNodeProjection.svelte.ts",
+      "source_sha256": "48b2e1ea037fd380e0b6876da82546a34d7a8da455abec8510094b7589bb817a",
+      "served_transformed_sha256": "a7132c146e70e96dea38a31502d0f07bba33f75878dd8ef1c56ab663b1ae57a5",
+      "marker": "setBibleGraphFieldProjection",
+      "observed": true
+    },
+    {
+      "module": "src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts",
+      "source_sha256": "191253d4eeec0819181a748e82ef3d4d36c85de0e381e6859c902eba4a7aa7fd",
+      "served_transformed_sha256": "07f84dc9d65ecd25c180a7607a1e637797a07da9d89e687f7f7fa36368a6e973",
+      "marker": "refreshOwnedBibleGraphNodeProjections",
+      "observed": true
+    },
+    {
+      "module": "src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts",
+      "source_sha256": "0b1b79923e9a02ca295cf9bd913e38b70072b65a9b295c9c9c3eff95325da169",
+      "served_transformed_sha256": "7d64ac6fa22e8338a263e0942f329089545c3315ca4c9ec491d5608018a349f4",
+      "marker": "Saved fact changed while editing",
+      "observed": true
+    },
+    {
+      "module": "src/lib/components/sidebar/bible/BibleGraphPartFields.svelte",
+      "source_sha256": "979a5277a9fca60d30cd58385c0e3c7170e8d4553c5cebb3a686d5b8435e2a4c",
+      "served_transformed_sha256": "b05b499763ca2dea1813ffcd79d69fda7ebc7e82208f4b77c5786004a8d345bd",
+      "marker": "Committed Bible fact",
+      "observed": true
+    }
+  ],
+  "public_fixture": {
+    "a": {
+      "end_ms": 60000,
+      "id": "2c3b8e29-d467-44ca-9b55-6451cc1cd1f1",
+      "letter": "A",
+      "name": "SCENE A",
+      "start_ms": 0
+    },
+    "b": {
+      "end_ms": 180000,
+      "id": "ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+      "letter": "B",
+      "name": "SCENE B",
+      "start_ms": 120000
+    },
+    "f": {
+      "end_ms": 120000,
+      "id": "c2cf1c47-78c8-4b3b-ae3d-ef478aa6ffd8",
+      "letter": "F",
+      "name": "SCENE F",
+      "start_ms": 60000
+    },
+    "generations": [
+      {
+        "blocks": [
+          {
+            "block": {
+              "block_kind": "action",
+              "id": "script.block.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1.generated",
+              "segment_id": "script.segment.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1",
+              "sort_order": 0,
+              "text": "Synthetic A: Mara checks her red umbrella.\n\n"
+            },
+            "locks": [],
+            "revision_event_id": "0e92d1f8-0e6a-4a99-b985-23a047340579",
+            "spans": [
+              {
+                "block_id": "script.block.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1.generated",
+                "end_byte": 44,
+                "id": "script.block.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1.generated.span.main",
+                "provenance": "ai_generated",
+                "start_byte": 0
+              }
+            ]
+          }
+        ],
+        "impact": {
+          "causes": [],
+          "generation_event_id": "0e92d1f8-0e6a-4a99-b985-23a047340579",
+          "lineage_available": true,
+          "needs_review": false,
+          "output_block_id": "script.block.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1.generated"
+        },
+        "segment": {
+          "document_id": "script.document.main",
+          "end_ms": 60000,
+          "id": "script.segment.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1",
+          "sort_order": 0,
+          "source_node_id": "2c3b8e29-d467-44ca-9b55-6451cc1cd1f1",
+          "start_ms": 0,
+          "status": "current"
+        }
+      },
+      {
+        "blocks": [
+          {
+            "block": {
+              "block_kind": "action",
+              "id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+              "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+              "sort_order": 0,
+              "text": "Synthetic B: Mara carries her red umbrella.\n\n"
+            },
+            "locks": [],
+            "revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+            "spans": [
+              {
+                "block_id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+                "end_byte": 45,
+                "id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated.span.main",
+                "provenance": "ai_generated",
+                "start_byte": 0
+              }
+            ]
+          }
+        ],
+        "impact": {
+          "causes": [],
+          "generation_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+          "lineage_available": true,
+          "needs_review": false,
+          "output_block_id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated"
+        },
+        "segment": {
+          "document_id": "script.document.main",
+          "end_ms": 180000,
+          "id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+          "sort_order": 0,
+          "source_node_id": "ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+          "start_ms": 120000,
+          "status": "current"
+        }
+      }
+    ],
+    "project_path": "<fresh qualification project>",
+    "setup_route": "unchanged public services; two labelled synthetic HTTP generations/recaps, no real model; unconsumed fields added after generation"
+  },
+  "stage": "held Save acknowledgement cannot erase exact submitted draft or newer canonical conflict",
+  "window_id": 2097155,
+  "window_pid": 25006,
+  "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+  "ordinary_saved_edit": {
+    "before": [
+      "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+      "Synthetic B: Mara carries her red umbrella.\n\n",
+      "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+      120000,
+      180000
+    ],
+    "after": [
+      "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+      "  Mara carries a blue umbrella \u2014 \u96e8.\n\n  ",
+      "178b0826-3c73-42ce-ad78-467444c87a75",
+      120000,
+      180000
+    ],
+    "exact_whitespace_and_unicode": true
+  },
+  "unsaved_draft": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+  "consumed_selection": {
+    "name": "Consumed baseline fact qualification.mara \u00b7 profile.tagline",
+    "route": "native combo Home/Down/Return"
+  },
+  "captures": [
+    {
+      "file": "manual-fact-01-saved-edit.png",
+      "sha256": "b69efd74ba8ce3b0cb8c953efcf4650b40bbbfce5134f932b9b08b4852d545cc",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-02-pending.png",
+      "sha256": "b1d0596178ce0bace7f8219b1834adf31eaba8cbc261860baeda625e806223eb",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-03-rejected.png",
+      "sha256": "9dcd80e2cb73a5345c1c11a89bce77c0ae01f75b91c8f243f603127dd1901a46",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-04-source-stale.png",
+      "sha256": "c8f6c96f71a3a5919446f2a147b100325676da6c078bb6328b35ce6ac67e76d0",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-05-fact-stale.png",
+      "sha256": "4a3037a1944acf770974feb0300db465faf452558656063e0a220b3a4d57702f",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-06-fresh-pending.png",
+      "sha256": "13acaed65e9fe4144422e465a70b401ae4115938dbd7def9bbe3fb8d4a9ab334",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-06b-bible-drafts-pending.png",
+      "sha256": "95422093906943aa3578bc976fe2db5d13403b34c7eec772b86ae6b309f41e86",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-07-accepted.png",
+      "sha256": "064a607adbf5f0a9c31833b9b1cc1411c088a83a443054accfe32d4624ceb5fa",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-08-needs-review.png",
+      "sha256": "9164c0cc318ba3c935e9aa9b0e9677cdefcb7405bafdf7bfaac29b7879f15209",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-09-relationship-stale.png",
+      "sha256": "9a9995c719dec69a1651b15473930fe06252dfe992a263b795615529f7e09a1f",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-09b-preserved-bible-drafts.png",
+      "sha256": "19e87e3cd5a3ec15af0fef72fed758f1a6db21d8d7a7329d685259302a8b015e",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-11-late-save-conflict.png",
+      "sha256": "07ba5ffc735572a7238ff87e491404482c65a858e71764e470f2d55f55b72c88",
+      "window_id": 2097155,
+      "pid": 25006
+    },
+    {
+      "file": "manual-fact-failure.png",
+      "sha256": "c3dda146e7d2799cf25a97cff7338d246ad74221710d5a1851481781eaa2bb39",
+      "window_id": 2097155,
+      "pid": 25006
+    }
+  ],
+  "first_proposal": {
+    "id": "script.fact.a993c699-5b62-45e1-b349-85705130363c",
+    "binding": {
+      "request": {
+        "proposal_id": "script.fact.a993c699-5b62-45e1-b349-85705130363c",
+        "document_id": "script.document.main",
+        "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+        "block_id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+        "expected_block_revision_event_id": "178b0826-3c73-42ce-ad78-467444c87a75",
+        "expected_field_revision_event_id": "88a3efcb-58e7-4e33-9b11-32363167ebf7",
+        "generation_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+        "dependency_id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4"
+      },
+      "edit": {
+        "document_id": "script.document.main",
+        "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+        "block_id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+        "before_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+        "revision_event_id": "178b0826-3c73-42ce-ad78-467444c87a75",
+        "segment_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+        "before_text": "Synthetic B: Mara carries her red umbrella.\n\n",
+        "text": "  Mara carries a blue umbrella \u2014 \u96e8.\n\n  ",
+        "start_ms": 120000,
+        "end_ms": 180000,
+        "generation_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+        "facts": [
+          {
+            "dependency_id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4",
+            "node_id": "qualification.mara",
+            "part_key": "profile",
+            "field_key": "tagline",
+            "field_id": "qualification.mara.tagline",
+            "consumed_revision_event_id": "88a3efcb-58e7-4e33-9b11-32363167ebf7",
+            "consumed_text": "Mara's umbrella is red.",
+            "revision_event_id": "88a3efcb-58e7-4e33-9b11-32363167ebf7",
+            "text": "Mara's umbrella is red."
+          }
+        ]
+      },
+      "context_dependencies": [
+        {
+          "id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.name.5",
+          "source": {
+            "kind": "script_segment",
+            "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b"
+          },
+          "target": {
+            "kind": "bible_node",
+            "node_id": "qualification.eli"
+          },
+          "kind": "uses_fact",
+          "rationale": "Authored Bible name supplied to generation",
+          "created_at_ms": 0,
+          "revision_binding": {
+            "source_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+            "target_revision_event_id": "2dc7847d-8e74-4cf9-80f9-948aed407065"
+          }
+        },
+        {
+          "id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.name.6",
+          "source": {
+            "kind": "script_segment",
+            "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b"
+          },
+          "target": {
+            "kind": "bible_node",
+            "node_id": "qualification.mara"
+          },
+          "kind": "uses_fact",
+          "rationale": "Authored Bible name supplied to generation",
+          "created_at_ms": 0,
+          "revision_binding": {
+            "source_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+            "target_revision_event_id": "db39fe00-9400-4a0e-9287-e5e8daad63e9"
+          }
+        },
+        {
+          "id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.relationship.7",
+          "source": {
+            "kind": "script_segment",
+            "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b"
+          },
+          "target": {
+            "kind": "bible_edge",
+            "edge_id": "qualification.mara.eli"
+          },
+          "kind": "uses_fact",
+          "rationale": "Bible relationship supplied to generation",
+          "created_at_ms": 0,
+          "revision_binding": {
+            "source_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+            "target_revision_event_id": "ed8119ca-70c4-43ba-bfd5-735623532c99"
+          }
+        }
+      ]
+    },
+    "visible": {
+      "viewport": [
+        280,
+        208,
+        1314,
+        836
+      ],
+      "character_bounds": [
+        [
+          739,
+          547,
+          8,
+          12
+        ],
+        [
+          746,
+          547,
+          8,
+          12
+        ],
+        [
+          753,
+          547,
+          8,
+          12
+        ],
+        [
+          760,
+          547,
+          8,
+          12
+        ],
+        [
+          767,
+          547,
+          8,
+          12
+        ],
+        [
+          774,
+          547,
+          8,
+          12
+        ],
+        [
+          788,
+          547,
+          8,
+          12
+        ],
+        [
+          795,
+          547,
+          8,
+          12
+        ],
+        [
+          802,
+          547,
+          8,
+          12
+        ],
+        [
+          809,
+          547,
+          8,
+          12
+        ],
+        [
+          816,
+          547,
+          8,
+          12
+        ],
+        [
+          823,
+          547,
+          8,
+          12
+        ],
+        [
+          830,
+          547,
+          8,
+          12
+        ],
+        [
+          837,
+          547,
+          8,
+          12
+        ],
+        [
+          851,
+          547,
+          8,
+          12
+        ],
+        [
+          858,
+          547,
+          8,
+          12
+        ],
+        [
+          872,
+          547,
+          8,
+          12
+        ],
+        [
+          879,
+          547,
+          8,
+          12
+        ],
+        [
+          886,
+          547,
+          8,
+          12
+        ],
+        [
+          893,
+          547,
+          8,
+          12
+        ],
+        [
+          907,
+          547,
+          8,
+          12
+        ],
+        [
+          921,
+          547,
+          12,
+          12
+        ],
+        [
+          932,
+          547,
+          8,
+          12
+        ]
+      ],
+      "exact_text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "ordinary_controls": [
+        {
+          "name": "Accept fact update",
+          "bounds": [
+            739,
+            625,
+            106,
+            16
+          ]
+        },
+        {
+          "name": "Reject fact update",
+          "bounds": [
+            848,
+            625,
+            104,
+            16
+          ]
+        }
+      ]
+    }
+  },
+  "analysis_replay": {
+    "fixture": "qualifier-only public commands and read-only impacts; synthetic replies",
+    "busy": false,
+    "error": "",
+    "request": "{\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"block_id\":\"script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated\",\"expected_block_revision_event_id\":\"178b0826-3c73-42ce-ad78-467444c87a75\",\"expected_field_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"generation_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"proposal_id\":\"script.fact.a993c699-5b62-45e1-b349-85705130363c\"}",
+    "requestId": "9236b601-4146-4fc1-be1f-b8dcad723168",
+    "decision": "",
+    "decisionId": "",
+    "accept": false,
+    "replay": "{\"outcome\":\"already_recorded\",\"proposalIds\":[\"script.fact.a993c699-5b62-45e1-b349-85705130363c\"]}",
+    "edgeMutations": 0,
+    "impacts": "",
+    "savePauseArmed": false,
+    "saveAcknowledgementHeld": false,
+    "detailMode": "normal",
+    "detailReadsHeld": 0,
+    "detailFailures": 0,
+    "newerFactWrites": 0
+  },
+  "rejected_proposal_id": "script.fact.a993c699-5b62-45e1-b349-85705130363c",
+  "fresh_proposal": {
+    "id": "script.fact.758945b2-34b7-4395-94c3-d4e5414f898d",
+    "binding": {
+      "request": {
+        "proposal_id": "script.fact.758945b2-34b7-4395-94c3-d4e5414f898d",
+        "document_id": "script.document.main",
+        "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+        "block_id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+        "expected_block_revision_event_id": "c59202e0-fa7c-464a-8617-b748c24388dc",
+        "expected_field_revision_event_id": "9818835b-4a3a-4422-8c96-96bc43a381ba",
+        "generation_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+        "dependency_id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4"
+      },
+      "edit": {
+        "document_id": "script.document.main",
+        "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+        "block_id": "script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated",
+        "before_revision_event_id": "e7eec4aa-e34a-471b-b269-01161e373392",
+        "revision_event_id": "c59202e0-fa7c-464a-8617-b748c24388dc",
+        "segment_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+        "before_text": "Temporary manual source change \u2014 \u96e8.\n\n",
+        "text": "  Mara carries a blue umbrella \u2014 \u96e8.\n\n  ",
+        "start_ms": 120000,
+        "end_ms": 180000,
+        "generation_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+        "facts": [
+          {
+            "dependency_id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4",
+            "node_id": "qualification.mara",
+            "part_key": "profile",
+            "field_key": "tagline",
+            "field_id": "qualification.mara.tagline",
+            "consumed_revision_event_id": "88a3efcb-58e7-4e33-9b11-32363167ebf7",
+            "consumed_text": "Mara's umbrella is red.",
+            "revision_event_id": "9818835b-4a3a-4422-8c96-96bc43a381ba",
+            "text": "Mara's umbrella is red."
+          }
+        ]
+      },
+      "context_dependencies": [
+        {
+          "id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.name.5",
+          "source": {
+            "kind": "script_segment",
+            "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b"
+          },
+          "target": {
+            "kind": "bible_node",
+            "node_id": "qualification.eli"
+          },
+          "kind": "uses_fact",
+          "rationale": "Authored Bible name supplied to generation",
+          "created_at_ms": 0,
+          "revision_binding": {
+            "source_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+            "target_revision_event_id": "2dc7847d-8e74-4cf9-80f9-948aed407065"
+          }
+        },
+        {
+          "id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.name.6",
+          "source": {
+            "kind": "script_segment",
+            "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b"
+          },
+          "target": {
+            "kind": "bible_node",
+            "node_id": "qualification.mara"
+          },
+          "kind": "uses_fact",
+          "rationale": "Authored Bible name supplied to generation",
+          "created_at_ms": 0,
+          "revision_binding": {
+            "source_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+            "target_revision_event_id": "db39fe00-9400-4a0e-9287-e5e8daad63e9"
+          }
+        },
+        {
+          "id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.relationship.7",
+          "source": {
+            "kind": "script_segment",
+            "segment_id": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b"
+          },
+          "target": {
+            "kind": "bible_edge",
+            "edge_id": "qualification.mara.eli"
+          },
+          "kind": "uses_fact",
+          "rationale": "Bible relationship supplied to generation",
+          "created_at_ms": 0,
+          "revision_binding": {
+            "source_revision_event_id": "9c584cd8-c0a1-4572-8346-c220c861a6fc",
+            "target_revision_event_id": "ed8119ca-70c4-43ba-bfd5-735623532c99"
+          }
+        }
+      ]
+    },
+    "visible": {
+      "viewport": [
+        280,
+        208,
+        1314,
+        836
+      ],
+      "character_bounds": [
+        [
+          1177,
+          213,
+          8,
+          12
+        ],
+        [
+          1184,
+          213,
+          8,
+          12
+        ],
+        [
+          1191,
+          213,
+          8,
+          12
+        ],
+        [
+          1198,
+          213,
+          8,
+          12
+        ],
+        [
+          1205,
+          213,
+          8,
+          12
+        ],
+        [
+          1212,
+          213,
+          8,
+          12
+        ],
+        [
+          1226,
+          213,
+          8,
+          12
+        ],
+        [
+          1233,
+          213,
+          8,
+          12
+        ],
+        [
+          1240,
+          213,
+          8,
+          12
+        ],
+        [
+          1247,
+          213,
+          8,
+          12
+        ],
+        [
+          1254,
+          213,
+          8,
+          12
+        ],
+        [
+          1261,
+          213,
+          8,
+          12
+        ],
+        [
+          1268,
+          213,
+          8,
+          12
+        ],
+        [
+          1275,
+          213,
+          8,
+          12
+        ],
+        [
+          1289,
+          213,
+          8,
+          12
+        ],
+        [
+          1296,
+          213,
+          8,
+          12
+        ],
+        [
+          1310,
+          213,
+          8,
+          12
+        ],
+        [
+          1317,
+          213,
+          8,
+          12
+        ],
+        [
+          1324,
+          213,
+          8,
+          12
+        ],
+        [
+          1331,
+          213,
+          8,
+          12
+        ],
+        [
+          1345,
+          213,
+          8,
+          12
+        ],
+        [
+          1359,
+          213,
+          12,
+          12
+        ],
+        [
+          1370,
+          213,
+          8,
+          12
+        ]
+      ],
+      "exact_text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "ordinary_controls": [
+        {
+          "name": "Accept fact update",
+          "bounds": [
+            1177,
+            291,
+            106,
+            16
+          ]
+        },
+        {
+          "name": "Reject fact update",
+          "bounds": [
+            1286,
+            291,
+            104,
+            16
+          ]
+        }
+      ]
+    }
+  },
+  "bible_drafts_before_acceptance": {
+    "selected_field_draft": {
+      "side": "left",
+      "native_name": "TAGLINE Unaccepted local Bible draft \u2014 \u96e8.",
+      "exact_text": "  Unaccepted local Bible draft \u2014 \u96e8.\n\n  ",
+      "native_bounds": [
+        1,
+        405,
+        247,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        0,
+        0,
+        280,
+        1044
+      ],
+      "character_bounds": [
+        [
+          16,
+          406,
+          9,
+          14
+        ],
+        [
+          24,
+          406,
+          8,
+          14
+        ],
+        [
+          31,
+          406,
+          8,
+          14
+        ],
+        [
+          38,
+          406,
+          7,
+          14
+        ],
+        [
+          44,
+          406,
+          7,
+          14
+        ],
+        [
+          50,
+          406,
+          8,
+          14
+        ],
+        [
+          57,
+          406,
+          8,
+          14
+        ],
+        [
+          64,
+          406,
+          5,
+          14
+        ],
+        [
+          68,
+          406,
+          8,
+          14
+        ],
+        [
+          75,
+          406,
+          8,
+          14
+        ],
+        [
+          86,
+          406,
+          4,
+          14
+        ],
+        [
+          89,
+          406,
+          8,
+          14
+        ],
+        [
+          96,
+          406,
+          7,
+          14
+        ],
+        [
+          102,
+          406,
+          8,
+          14
+        ],
+        [
+          109,
+          406,
+          4,
+          14
+        ],
+        [
+          116,
+          406,
+          9,
+          14
+        ],
+        [
+          124,
+          406,
+          4,
+          14
+        ],
+        [
+          127,
+          406,
+          8,
+          14
+        ],
+        [
+          134,
+          406,
+          4,
+          14
+        ],
+        [
+          137,
+          406,
+          8,
+          14
+        ],
+        [
+          148,
+          406,
+          8,
+          14
+        ],
+        [
+          155,
+          406,
+          6,
+          14
+        ],
+        [
+          160,
+          406,
+          8,
+          14
+        ],
+        [
+          167,
+          406,
+          5,
+          14
+        ],
+        [
+          171,
+          406,
+          5,
+          14
+        ],
+        [
+          179,
+          406,
+          12,
+          14
+        ],
+        [
+          194,
+          406,
+          12,
+          14
+        ],
+        [
+          205,
+          406,
+          5,
+          14
+        ]
+      ]
+    },
+    "unselected_field_draft": {
+      "side": "left",
+      "native_name": "MOTIVATION Unaccepted motivation: protect Eli \u2014 \u96e8.",
+      "exact_text": "  Unaccepted motivation: protect Eli \u2014 \u96e8.\n\n  ",
+      "native_bounds": [
+        1,
+        507,
+        247,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        0,
+        0,
+        280,
+        1044
+      ],
+      "character_bounds": [
+        [
+          16,
+          508,
+          9,
+          14
+        ],
+        [
+          24,
+          508,
+          8,
+          14
+        ],
+        [
+          31,
+          508,
+          8,
+          14
+        ],
+        [
+          38,
+          508,
+          7,
+          14
+        ],
+        [
+          44,
+          508,
+          7,
+          14
+        ],
+        [
+          50,
+          508,
+          8,
+          14
+        ],
+        [
+          57,
+          508,
+          8,
+          14
+        ],
+        [
+          64,
+          508,
+          5,
+          14
+        ],
+        [
+          68,
+          508,
+          8,
+          14
+        ],
+        [
+          75,
+          508,
+          8,
+          14
+        ],
+        [
+          86,
+          508,
+          12,
+          14
+        ],
+        [
+          97,
+          508,
+          8,
+          14
+        ],
+        [
+          104,
+          508,
+          5,
+          14
+        ],
+        [
+          108,
+          508,
+          4,
+          14
+        ],
+        [
+          111,
+          508,
+          8,
+          14
+        ],
+        [
+          118,
+          508,
+          8,
+          14
+        ],
+        [
+          125,
+          508,
+          5,
+          14
+        ],
+        [
+          129,
+          508,
+          4,
+          14
+        ],
+        [
+          132,
+          508,
+          8,
+          14
+        ],
+        [
+          139,
+          508,
+          8,
+          14
+        ],
+        [
+          146,
+          508,
+          5,
+          14
+        ],
+        [
+          154,
+          508,
+          8,
+          14
+        ],
+        [
+          161,
+          508,
+          6,
+          14
+        ],
+        [
+          166,
+          508,
+          8,
+          14
+        ],
+        [
+          173,
+          508,
+          5,
+          14
+        ],
+        [
+          177,
+          508,
+          8,
+          14
+        ],
+        [
+          184,
+          508,
+          7,
+          14
+        ],
+        [
+          190,
+          508,
+          5,
+          14
+        ],
+        [
+          198,
+          508,
+          8,
+          14
+        ],
+        [
+          205,
+          508,
+          4,
+          14
+        ],
+        [
+          208,
+          508,
+          4,
+          14
+        ],
+        [
+          215,
+          508,
+          12,
+          14
+        ],
+        [
+          8,
+          521,
+          12,
+          16
+        ],
+        [
+          19,
+          521,
+          5,
+          16
+        ]
+      ]
+    }
+  },
+  "accepted_bible_display": {
+    "clean_committed_editor": {
+      "side": "right",
+      "native_name": "TAGLINE Mara's umbrella is blue \u2014 \u96e8.",
+      "exact_text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "native_bounds": [
+        1613,
+        42,
+        287,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        1594,
+        0,
+        326,
+        1044
+      ],
+      "character_bounds": [
+        [
+          1620,
+          50,
+          10,
+          14
+        ],
+        [
+          1629,
+          50,
+          8,
+          14
+        ],
+        [
+          1636,
+          50,
+          6,
+          14
+        ],
+        [
+          1641,
+          50,
+          8,
+          14
+        ],
+        [
+          1648,
+          50,
+          4,
+          14
+        ],
+        [
+          1651,
+          50,
+          7,
+          14
+        ],
+        [
+          1661,
+          50,
+          8,
+          14
+        ],
+        [
+          1668,
+          50,
+          12,
+          14
+        ],
+        [
+          1679,
+          50,
+          8,
+          14
+        ],
+        [
+          1686,
+          50,
+          6,
+          14
+        ],
+        [
+          1691,
+          50,
+          8,
+          14
+        ],
+        [
+          1698,
+          50,
+          4,
+          14
+        ],
+        [
+          1701,
+          50,
+          4,
+          14
+        ],
+        [
+          1704,
+          50,
+          8,
+          14
+        ],
+        [
+          1715,
+          50,
+          4,
+          14
+        ],
+        [
+          1718,
+          50,
+          7,
+          14
+        ],
+        [
+          1728,
+          50,
+          8,
+          14
+        ],
+        [
+          1735,
+          50,
+          4,
+          14
+        ],
+        [
+          1738,
+          50,
+          8,
+          14
+        ],
+        [
+          1745,
+          50,
+          8,
+          14
+        ],
+        [
+          1756,
+          50,
+          12,
+          14
+        ],
+        [
+          1771,
+          50,
+          12,
+          14
+        ],
+        [
+          1782,
+          50,
+          5,
+          14
+        ]
+      ]
+    },
+    "selected_field_draft": {
+      "side": "left",
+      "native_name": "TAGLINE Unaccepted local Bible draft \u2014 \u96e8.",
+      "exact_text": "  Unaccepted local Bible draft \u2014 \u96e8.\n\n  ",
+      "native_bounds": [
+        1,
+        405,
+        247,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        0,
+        0,
+        280,
+        1044
+      ],
+      "character_bounds": [
+        [
+          16,
+          407,
+          9,
+          14
+        ],
+        [
+          24,
+          407,
+          8,
+          14
+        ],
+        [
+          31,
+          407,
+          8,
+          14
+        ],
+        [
+          38,
+          407,
+          7,
+          14
+        ],
+        [
+          44,
+          407,
+          7,
+          14
+        ],
+        [
+          50,
+          407,
+          8,
+          14
+        ],
+        [
+          57,
+          407,
+          8,
+          14
+        ],
+        [
+          64,
+          407,
+          5,
+          14
+        ],
+        [
+          68,
+          407,
+          8,
+          14
+        ],
+        [
+          75,
+          407,
+          8,
+          14
+        ],
+        [
+          86,
+          407,
+          4,
+          14
+        ],
+        [
+          89,
+          407,
+          8,
+          14
+        ],
+        [
+          96,
+          407,
+          7,
+          14
+        ],
+        [
+          102,
+          407,
+          8,
+          14
+        ],
+        [
+          109,
+          407,
+          4,
+          14
+        ],
+        [
+          116,
+          407,
+          9,
+          14
+        ],
+        [
+          124,
+          407,
+          4,
+          14
+        ],
+        [
+          127,
+          407,
+          8,
+          14
+        ],
+        [
+          134,
+          407,
+          4,
+          14
+        ],
+        [
+          137,
+          407,
+          8,
+          14
+        ],
+        [
+          148,
+          407,
+          8,
+          14
+        ],
+        [
+          155,
+          407,
+          6,
+          14
+        ],
+        [
+          160,
+          407,
+          8,
+          14
+        ],
+        [
+          167,
+          407,
+          5,
+          14
+        ],
+        [
+          171,
+          407,
+          5,
+          14
+        ],
+        [
+          179,
+          407,
+          12,
+          14
+        ],
+        [
+          194,
+          407,
+          12,
+          14
+        ],
+        [
+          205,
+          407,
+          5,
+          14
+        ]
+      ]
+    },
+    "unselected_field_draft": {
+      "side": "left",
+      "native_name": "MOTIVATION Unaccepted motivation: protect Eli \u2014 \u96e8.",
+      "exact_text": "  Unaccepted motivation: protect Eli \u2014 \u96e8.\n\n  ",
+      "native_bounds": [
+        1,
+        694,
+        247,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        0,
+        0,
+        280,
+        1044
+      ],
+      "character_bounds": [
+        [
+          16,
+          695,
+          9,
+          14
+        ],
+        [
+          24,
+          695,
+          8,
+          14
+        ],
+        [
+          31,
+          695,
+          8,
+          14
+        ],
+        [
+          38,
+          695,
+          7,
+          14
+        ],
+        [
+          44,
+          695,
+          7,
+          14
+        ],
+        [
+          50,
+          695,
+          8,
+          14
+        ],
+        [
+          57,
+          695,
+          8,
+          14
+        ],
+        [
+          64,
+          695,
+          5,
+          14
+        ],
+        [
+          68,
+          695,
+          8,
+          14
+        ],
+        [
+          75,
+          695,
+          8,
+          14
+        ],
+        [
+          86,
+          695,
+          12,
+          14
+        ],
+        [
+          97,
+          695,
+          8,
+          14
+        ],
+        [
+          104,
+          695,
+          5,
+          14
+        ],
+        [
+          108,
+          695,
+          4,
+          14
+        ],
+        [
+          111,
+          695,
+          8,
+          14
+        ],
+        [
+          118,
+          695,
+          8,
+          14
+        ],
+        [
+          125,
+          695,
+          5,
+          14
+        ],
+        [
+          129,
+          695,
+          4,
+          14
+        ],
+        [
+          132,
+          695,
+          8,
+          14
+        ],
+        [
+          139,
+          695,
+          8,
+          14
+        ],
+        [
+          146,
+          695,
+          5,
+          14
+        ],
+        [
+          154,
+          695,
+          8,
+          14
+        ],
+        [
+          161,
+          695,
+          6,
+          14
+        ],
+        [
+          166,
+          695,
+          8,
+          14
+        ],
+        [
+          173,
+          695,
+          5,
+          14
+        ],
+        [
+          177,
+          695,
+          8,
+          14
+        ],
+        [
+          184,
+          695,
+          7,
+          14
+        ],
+        [
+          190,
+          695,
+          5,
+          14
+        ],
+        [
+          198,
+          695,
+          8,
+          14
+        ],
+        [
+          205,
+          695,
+          4,
+          14
+        ],
+        [
+          208,
+          695,
+          4,
+          14
+        ],
+        [
+          215,
+          695,
+          12,
+          14
+        ],
+        [
+          8,
+          708,
+          12,
+          16
+        ],
+        [
+          19,
+          708,
+          5,
+          16
+        ]
+      ]
+    },
+    "original_base": "Mara's umbrella is red.",
+    "conflict_status": "Saved fact changed while editing. Your draft is preserved.",
+    "committed_value_beside_draft": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+    "conflicted_save_disabled": true,
+    "explicit_discard_available": true,
+    "committed_character_bounds": [
+      [
+        1,
+        596,
+        9,
+        17
+      ],
+      [
+        9,
+        596,
+        9,
+        17
+      ],
+      [
+        17,
+        596,
+        9,
+        17
+      ],
+      [
+        25,
+        596,
+        9,
+        17
+      ],
+      [
+        33,
+        596,
+        9,
+        17
+      ],
+      [
+        41,
+        596,
+        9,
+        17
+      ],
+      [
+        57,
+        596,
+        9,
+        17
+      ],
+      [
+        65,
+        596,
+        9,
+        17
+      ],
+      [
+        73,
+        596,
+        9,
+        17
+      ],
+      [
+        81,
+        596,
+        9,
+        17
+      ],
+      [
+        89,
+        596,
+        9,
+        17
+      ],
+      [
+        97,
+        596,
+        9,
+        17
+      ],
+      [
+        105,
+        596,
+        9,
+        17
+      ],
+      [
+        113,
+        596,
+        9,
+        17
+      ],
+      [
+        129,
+        596,
+        9,
+        17
+      ],
+      [
+        137,
+        596,
+        9,
+        17
+      ],
+      [
+        153,
+        596,
+        9,
+        17
+      ],
+      [
+        161,
+        596,
+        9,
+        17
+      ],
+      [
+        169,
+        596,
+        9,
+        17
+      ],
+      [
+        177,
+        596,
+        9,
+        17
+      ],
+      [
+        193,
+        596,
+        9,
+        17
+      ],
+      [
+        209,
+        596,
+        15,
+        17
+      ],
+      [
+        223,
+        596,
+        9,
+        17
+      ]
+    ]
+  },
+  "explicit_acceptance": {
+    "proposal_id": "script.fact.758945b2-34b7-4395-94c3-d4e5414f898d",
+    "before_fact": [
+      "Mara's umbrella is red.",
+      "9818835b-4a3a-4422-8c96-96bc43a381ba"
+    ],
+    "after_fact": [
+      "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "fadeb774-6fab-4b5e-a5da-763e85b15a83"
+    ],
+    "affected_consumers": [
+      {
+        "source": "2c3b8e29-d467-44ca-9b55-6451cc1cd1f1",
+        "segment": "script.segment.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1",
+        "needsReview": true,
+        "causes": [
+          {
+            "dependency_id": "generation.0e92d1f8-0e6a-4a99-b985-23a047340579.bible.2",
+            "input": {
+              "kind": "bible_field",
+              "node_id": "qualification.mara",
+              "part_key": "profile",
+              "field_key": "tagline",
+              "field_id": "qualification.mara.tagline"
+            },
+            "consumed_revision_event_id": "88a3efcb-58e7-4e33-9b11-32363167ebf7",
+            "current_revision_event_id": "fadeb774-6fab-4b5e-a5da-763e85b15a83",
+            "reason": "changed",
+            "input_excerpt": "Mara's umbrella is red."
+          }
+        ]
+      },
+      {
+        "source": "ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+        "segment": "script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b",
+        "needsReview": true,
+        "causes": [
+          {
+            "dependency_id": "generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4",
+            "input": {
+              "kind": "bible_field",
+              "node_id": "qualification.mara",
+              "part_key": "profile",
+              "field_key": "tagline",
+              "field_id": "qualification.mara.tagline"
+            },
+            "consumed_revision_event_id": "88a3efcb-58e7-4e33-9b11-32363167ebf7",
+            "current_revision_event_id": "fadeb774-6fab-4b5e-a5da-763e85b15a83",
+            "reason": "changed",
+            "input_excerpt": "Mara's umbrella is red."
+          }
+        ]
+      }
+    ],
+    "all_script_tables_preserved": true,
+    "unselected_fields_preserved": true,
+    "draft_preserved": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+    "exact_decision_replay": {
+      "fixture": "qualifier-only public commands and read-only impacts; synthetic replies",
+      "busy": false,
+      "error": "",
+      "request": "{\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"block_id\":\"script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated\",\"expected_block_revision_event_id\":\"c59202e0-fa7c-464a-8617-b748c24388dc\",\"expected_field_revision_event_id\":\"9818835b-4a3a-4422-8c96-96bc43a381ba\",\"generation_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"proposal_id\":\"script.fact.758945b2-34b7-4395-94c3-d4e5414f898d\"}",
+      "requestId": "eda901bf-ab22-44fa-b5ad-43ae853b1727",
+      "decision": "{\"proposal_id\":\"script.fact.758945b2-34b7-4395-94c3-d4e5414f898d\"}",
+      "decisionId": "e0f18b61-1a14-42d1-aa56-622314e974d8",
+      "accept": true,
+      "replay": "{\"outcome\":\"already_recorded\"}",
+      "edgeMutations": 0,
+      "impacts": "[{\"source\":\"2c3b8e29-d467-44ca-9b55-6451cc1cd1f1\",\"segment\":\"script.segment.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1\",\"needsReview\":true,\"causes\":[{\"dependency_id\":\"generation.0e92d1f8-0e6a-4a99-b985-23a047340579.bible.2\",\"input\":{\"kind\":\"bible_field\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\"},\"consumed_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"current_revision_event_id\":\"fadeb774-6fab-4b5e-a5da-763e85b15a83\",\"reason\":\"changed\",\"input_excerpt\":\"Mara's umbrella is red.\"}]},{\"source\":\"c2cf1c47-78c8-4b3b-ae3d-ef478aa6ffd8\",\"segment\":\"script.segment.c2cf1c47-78c8-4b3b-ae3d-ef478aa6ffd8\"},{\"source\":\"ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"segment\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"needsReview\":true,\"causes\":[{\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"input\":{\"kind\":\"bible_field\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\"},\"consumed_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"current_revision_event_id\":\"fadeb774-6fab-4b5e-a5da-763e85b15a83\",\"reason\":\"changed\",\"input_excerpt\":\"Mara's umbrella is red.\"}]}]",
+      "savePauseArmed": false,
+      "saveAcknowledgementHeld": false,
+      "detailMode": "normal",
+      "detailReadsHeld": 0,
+      "detailFailures": 0,
+      "newerFactWrites": 0
+    }
+  },
+  "visible_impact": {
+    "expected_label": "Bible fact profile.tagline changed.",
+    "native_name": "Bible fact profile.tagline changed. Mara's umbrella is red.",
+    "native_text": "Bible fact profile.tagline changed.\nMara's umbrella is red.\n",
+    "role": "list item",
+    "bounds": [
+      301,
+      371,
+      396,
+      36
+    ],
+    "viewport": [
+      280,
+      208,
+      1314,
+      836
+    ]
+  },
+  "final_bible_display": {
+    "clean_committed_editor": {
+      "side": "right",
+      "native_name": "TAGLINE Mara's umbrella is blue \u2014 \u96e8.",
+      "exact_text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "native_bounds": [
+        1613,
+        42,
+        287,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        1594,
+        0,
+        326,
+        1044
+      ],
+      "character_bounds": [
+        [
+          1620,
+          50,
+          10,
+          14
+        ],
+        [
+          1629,
+          50,
+          8,
+          14
+        ],
+        [
+          1636,
+          50,
+          6,
+          14
+        ],
+        [
+          1641,
+          50,
+          8,
+          14
+        ],
+        [
+          1648,
+          50,
+          4,
+          14
+        ],
+        [
+          1651,
+          50,
+          7,
+          14
+        ],
+        [
+          1661,
+          50,
+          8,
+          14
+        ],
+        [
+          1668,
+          50,
+          12,
+          14
+        ],
+        [
+          1679,
+          50,
+          8,
+          14
+        ],
+        [
+          1686,
+          50,
+          6,
+          14
+        ],
+        [
+          1691,
+          50,
+          8,
+          14
+        ],
+        [
+          1698,
+          50,
+          4,
+          14
+        ],
+        [
+          1701,
+          50,
+          4,
+          14
+        ],
+        [
+          1704,
+          50,
+          8,
+          14
+        ],
+        [
+          1715,
+          50,
+          4,
+          14
+        ],
+        [
+          1718,
+          50,
+          7,
+          14
+        ],
+        [
+          1728,
+          50,
+          8,
+          14
+        ],
+        [
+          1735,
+          50,
+          4,
+          14
+        ],
+        [
+          1738,
+          50,
+          8,
+          14
+        ],
+        [
+          1745,
+          50,
+          8,
+          14
+        ],
+        [
+          1756,
+          50,
+          12,
+          14
+        ],
+        [
+          1771,
+          50,
+          12,
+          14
+        ],
+        [
+          1782,
+          50,
+          5,
+          14
+        ]
+      ]
+    },
+    "selected_field_draft": {
+      "side": "left",
+      "native_name": "TAGLINE Unaccepted local Bible draft \u2014 \u96e8.",
+      "exact_text": "  Unaccepted local Bible draft \u2014 \u96e8.\n\n  ",
+      "native_bounds": [
+        1,
+        405,
+        247,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        0,
+        0,
+        280,
+        1044
+      ],
+      "character_bounds": [
+        [
+          16,
+          408,
+          9,
+          14
+        ],
+        [
+          24,
+          408,
+          8,
+          14
+        ],
+        [
+          31,
+          408,
+          8,
+          14
+        ],
+        [
+          38,
+          408,
+          7,
+          14
+        ],
+        [
+          44,
+          408,
+          7,
+          14
+        ],
+        [
+          50,
+          408,
+          8,
+          14
+        ],
+        [
+          57,
+          408,
+          8,
+          14
+        ],
+        [
+          64,
+          408,
+          5,
+          14
+        ],
+        [
+          68,
+          408,
+          8,
+          14
+        ],
+        [
+          75,
+          408,
+          8,
+          14
+        ],
+        [
+          86,
+          408,
+          4,
+          14
+        ],
+        [
+          89,
+          408,
+          8,
+          14
+        ],
+        [
+          96,
+          408,
+          7,
+          14
+        ],
+        [
+          102,
+          408,
+          8,
+          14
+        ],
+        [
+          109,
+          408,
+          4,
+          14
+        ],
+        [
+          116,
+          408,
+          9,
+          14
+        ],
+        [
+          124,
+          408,
+          4,
+          14
+        ],
+        [
+          127,
+          408,
+          8,
+          14
+        ],
+        [
+          134,
+          408,
+          4,
+          14
+        ],
+        [
+          137,
+          408,
+          8,
+          14
+        ],
+        [
+          148,
+          408,
+          8,
+          14
+        ],
+        [
+          155,
+          408,
+          6,
+          14
+        ],
+        [
+          160,
+          408,
+          8,
+          14
+        ],
+        [
+          167,
+          408,
+          5,
+          14
+        ],
+        [
+          171,
+          408,
+          5,
+          14
+        ],
+        [
+          179,
+          408,
+          12,
+          14
+        ],
+        [
+          194,
+          408,
+          12,
+          14
+        ],
+        [
+          205,
+          408,
+          5,
+          14
+        ]
+      ]
+    },
+    "unselected_field_draft": {
+      "side": "left",
+      "native_name": "MOTIVATION Unaccepted motivation: protect Eli \u2014 \u96e8.",
+      "exact_text": "  Unaccepted motivation: protect Eli \u2014 \u96e8.\n\n  ",
+      "native_bounds": [
+        1,
+        694,
+        247,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        0,
+        0,
+        280,
+        1044
+      ],
+      "character_bounds": [
+        [
+          16,
+          695,
+          9,
+          14
+        ],
+        [
+          24,
+          695,
+          8,
+          14
+        ],
+        [
+          31,
+          695,
+          8,
+          14
+        ],
+        [
+          38,
+          695,
+          7,
+          14
+        ],
+        [
+          44,
+          695,
+          7,
+          14
+        ],
+        [
+          50,
+          695,
+          8,
+          14
+        ],
+        [
+          57,
+          695,
+          8,
+          14
+        ],
+        [
+          64,
+          695,
+          5,
+          14
+        ],
+        [
+          68,
+          695,
+          8,
+          14
+        ],
+        [
+          75,
+          695,
+          8,
+          14
+        ],
+        [
+          86,
+          695,
+          12,
+          14
+        ],
+        [
+          97,
+          695,
+          8,
+          14
+        ],
+        [
+          104,
+          695,
+          5,
+          14
+        ],
+        [
+          108,
+          695,
+          4,
+          14
+        ],
+        [
+          111,
+          695,
+          8,
+          14
+        ],
+        [
+          118,
+          695,
+          8,
+          14
+        ],
+        [
+          125,
+          695,
+          5,
+          14
+        ],
+        [
+          129,
+          695,
+          4,
+          14
+        ],
+        [
+          132,
+          695,
+          8,
+          14
+        ],
+        [
+          139,
+          695,
+          8,
+          14
+        ],
+        [
+          146,
+          695,
+          5,
+          14
+        ],
+        [
+          154,
+          695,
+          8,
+          14
+        ],
+        [
+          161,
+          695,
+          6,
+          14
+        ],
+        [
+          166,
+          695,
+          8,
+          14
+        ],
+        [
+          173,
+          695,
+          5,
+          14
+        ],
+        [
+          177,
+          695,
+          8,
+          14
+        ],
+        [
+          184,
+          695,
+          7,
+          14
+        ],
+        [
+          190,
+          695,
+          5,
+          14
+        ],
+        [
+          198,
+          695,
+          8,
+          14
+        ],
+        [
+          205,
+          695,
+          4,
+          14
+        ],
+        [
+          208,
+          695,
+          4,
+          14
+        ],
+        [
+          215,
+          695,
+          12,
+          14
+        ],
+        [
+          8,
+          708,
+          12,
+          16
+        ],
+        [
+          19,
+          708,
+          5,
+          16
+        ]
+      ]
+    },
+    "original_base": "Mara's umbrella is red.",
+    "conflict_status": "Saved fact changed while editing. Your draft is preserved.",
+    "committed_value_beside_draft": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+    "conflicted_save_disabled": true,
+    "explicit_discard_available": true,
+    "committed_character_bounds": [
+      [
+        1,
+        596,
+        9,
+        17
+      ],
+      [
+        9,
+        596,
+        9,
+        17
+      ],
+      [
+        17,
+        596,
+        9,
+        17
+      ],
+      [
+        25,
+        596,
+        9,
+        17
+      ],
+      [
+        33,
+        596,
+        9,
+        17
+      ],
+      [
+        41,
+        596,
+        9,
+        17
+      ],
+      [
+        57,
+        596,
+        9,
+        17
+      ],
+      [
+        65,
+        596,
+        9,
+        17
+      ],
+      [
+        73,
+        596,
+        9,
+        17
+      ],
+      [
+        81,
+        596,
+        9,
+        17
+      ],
+      [
+        89,
+        596,
+        9,
+        17
+      ],
+      [
+        97,
+        596,
+        9,
+        17
+      ],
+      [
+        105,
+        596,
+        9,
+        17
+      ],
+      [
+        113,
+        596,
+        9,
+        17
+      ],
+      [
+        129,
+        596,
+        9,
+        17
+      ],
+      [
+        137,
+        596,
+        9,
+        17
+      ],
+      [
+        153,
+        596,
+        9,
+        17
+      ],
+      [
+        161,
+        596,
+        9,
+        17
+      ],
+      [
+        169,
+        596,
+        9,
+        17
+      ],
+      [
+        177,
+        596,
+        9,
+        17
+      ],
+      [
+        193,
+        596,
+        9,
+        17
+      ],
+      [
+        209,
+        596,
+        15,
+        17
+      ],
+      [
+        223,
+        596,
+        9,
+        17
+      ]
+    ]
+  },
+  "pending_save_conflict": {
+    "before_fact": [
+      "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "fadeb774-6fab-4b5e-a5da-763e85b15a83"
+    ],
+    "acknowledged_fact": [
+      "Pending blue draft \u2014 \u96e8.",
+      "bf0606b8-354e-4f5a-9415-4a679156dd4f"
+    ],
+    "newer_fact": [
+      "Green saved fact \u2014 \u96e8.",
+      "5340e506-a684-429c-8b00-b3d014b1eca7"
+    ],
+    "ordinary_submitted_draft": {
+      "side": "right",
+      "native_name": "TAGLINE Pending blue draft \u2014 \u96e8.",
+      "exact_text": "  Pending blue draft \u2014 \u96e8.\n\n  ",
+      "native_bounds": [
+        1613,
+        42,
+        287,
+        45
+      ],
+      "native_caret_navigation": "Ctrl+Home; no text mutation",
+      "viewport": [
+        1594,
+        0,
+        326,
+        1044
+      ],
+      "character_bounds": [
+        [
+          1628,
+          43,
+          8,
+          14
+        ],
+        [
+          1635,
+          43,
+          8,
+          14
+        ],
+        [
+          1642,
+          43,
+          8,
+          14
+        ],
+        [
+          1649,
+          43,
+          8,
+          14
+        ],
+        [
+          1656,
+          43,
+          4,
+          14
+        ],
+        [
+          1659,
+          43,
+          8,
+          14
+        ],
+        [
+          1666,
+          43,
+          8,
+          14
+        ],
+        [
+          1677,
+          43,
+          8,
+          14
+        ],
+        [
+          1684,
+          43,
+          4,
+          14
+        ],
+        [
+          1687,
+          43,
+          8,
+          14
+        ],
+        [
+          1694,
+          43,
+          8,
+          14
+        ],
+        [
+          1705,
+          43,
+          8,
+          14
+        ],
+        [
+          1712,
+          43,
+          6,
+          14
+        ],
+        [
+          1717,
+          43,
+          8,
+          14
+        ],
+        [
+          1724,
+          43,
+          4,
+          14
+        ],
+        [
+          1727,
+          43,
+          5,
+          14
+        ],
+        [
+          1735,
+          43,
+          12,
+          14
+        ],
+        [
+          1750,
+          43,
+          12,
+          14
+        ],
+        [
+          1761,
+          43,
+          5,
+          14
+        ]
+      ]
+    },
+    "source": "ordinary native field Save with labelled delayed acknowledgement; newer public canonical write",
+    "exact_original_base": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+    "save_disabled": true,
+    "base_native_text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+    "committed_native_text": "Green saved fact \u2014 \u96e8."
+  },
+  "failure": "Timed out waiting for visible cached-detail failure",
+  "native_diagnostics": [
+    {
+      "role": "frame",
+      "name": "Eidetic",
+      "text": "Eidetic",
+      "bounds": [
+        0,
+        0,
+        1920,
+        1440
+      ]
+    },
+    {
+      "role": "filler",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        0,
+        1920,
+        1440
+      ]
+    },
+    {
+      "role": "document web",
+      "name": "Eidetic",
+      "text": "Eidetic",
+      "bounds": [
+        0,
+        0,
+        1920,
+        1440
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        0,
+        280,
+        1044
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Arcs",
+      "text": "Arcs",
+      "bounds": [
+        2,
+        8,
+        50,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Bible",
+      "text": "Bible",
+      "bounds": [
+        55,
+        8,
+        54,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Review",
+      "text": "Review",
+      "bounds": [
+        112,
+        8,
+        66,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "AI",
+      "text": "AI",
+      "bounds": [
+        182,
+        8,
+        37,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Refs",
+      "text": "Refs",
+      "bounds": [
+        222,
+        8,
+        49,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Close sidebar",
+      "text": "Close sidebar",
+      "bounds": [
+        270,
+        8,
+        23,
+        25
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        -10,
+        42,
+        279,
+        44
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "Search entities...",
+      "text": "Mara",
+      "bounds": [
+        2,
+        50,
+        255,
+        32
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "ALL",
+      "text": "ALL",
+      "bounds": [
+        2,
+        91,
+        38,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "CHARACTER",
+      "text": "CHARACTER",
+      "bounds": [
+        44,
+        91,
+        84,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "LOCATION",
+      "text": "LOCATION",
+      "bounds": [
+        131,
+        91,
+        73,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "PROP",
+      "text": "PROP",
+      "bounds": [
+        207,
+        91,
+        48,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "CULTURE",
+      "text": "CULTURE",
+      "bounds": [
+        2,
+        115,
+        65,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "EVENT",
+      "text": "EVENT",
+      "bounds": [
+        71,
+        115,
+        53,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "THEME",
+      "text": "THEME",
+      "bounds": [
+        127,
+        115,
+        56,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "RULE",
+      "text": "RULE",
+      "bounds": [
+        186,
+        115,
+        47,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "REFERENCE",
+      "text": "REFERENCE",
+      "bounds": [
+        2,
+        139,
+        80,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add CHR",
+      "text": "Add CHR",
+      "bounds": [
+        -2,
+        172,
+        66,
+        30
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add LOC",
+      "text": "Add LOC",
+      "bounds": [
+        67,
+        172,
+        65,
+        30
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add PRP",
+      "text": "Add PRP",
+      "bounds": [
+        136,
+        172,
+        65,
+        30
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add CUL",
+      "text": "Add CUL",
+      "bounds": [
+        -2,
+        205,
+        64,
+        30
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add EVT",
+      "text": "Add EVT",
+      "bounds": [
+        65,
+        205,
+        65,
+        30
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add THM",
+      "text": "Add THM",
+      "bounds": [
+        133,
+        205,
+        67,
+        30
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add RUL",
+      "text": "Add RUL",
+      "bounds": [
+        -2,
+        238,
+        64,
+        30
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add REF",
+      "text": "Add REF",
+      "bounds": [
+        65,
+        238,
+        64,
+        30
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Bible graph",
+      "text": "Bible graph",
+      "bounds": [
+        -10,
+        274,
+        279,
+        39
+      ]
+    },
+    {
+      "role": "list",
+      "name": "",
+      "text": "",
+      "bounds": [
+        -10,
+        275,
+        279,
+        37
+      ]
+    },
+    {
+      "role": "list item",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        -10,
+        279,
+        279,
+        29
+      ]
+    },
+    {
+      "role": "toggle button",
+      "name": "Mara 0 connected nodes, 0 edges",
+      "text": "Mara 0 connected nodes, 0 edges",
+      "bounds": [
+        -10,
+        279,
+        279,
+        29
+      ]
+    },
+    {
+      "role": "panel",
+      "name": "",
+      "text": "",
+      "bounds": [
+        -10,
+        312,
+        279,
+        36
+      ]
+    },
+    {
+      "role": "list item",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        -10,
+        312,
+        279,
+        35
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Mara CHR",
+      "text": "Mara CHR",
+      "bounds": [
+        -10,
+        312,
+        279,
+        35
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "\u00d7 Close",
+      "text": "\u00d7 Close",
+      "bounds": [
+        2,
+        359,
+        41,
+        33
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Add Child",
+      "text": "Add Child",
+      "bounds": [
+        50,
+        355,
+        69,
+        41
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Delete",
+      "text": "Delete",
+      "bounds": [
+        127,
+        363,
+        54,
+        26
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1,
+        388,
+        247,
+        62
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "TAGLINE Unaccepted local Bible draft \u2014 \u96e8.",
+      "text": "  Unaccepted local Bible draft \u2014 \u96e8.\n\n  ",
+      "bounds": [
+        1,
+        405,
+        247,
+        45
+      ]
+    },
+    {
+      "role": "status bar",
+      "name": "",
+      "text": "Saved fact changed while editing. Your draft is preserved.",
+      "bounds": [
+        1,
+        457,
+        247,
+        43
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Draft started from",
+      "bounds": [
+        1,
+        507,
+        247,
+        22
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Mara's umbrella is red.",
+      "bounds": [
+        1,
+        536,
+        247,
+        22
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Saved fact",
+      "bounds": [
+        1,
+        565,
+        247,
+        22
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Committed Bible fact",
+      "text": "Green saved fact \u2014 \u96e8.",
+      "bounds": [
+        1,
+        594,
+        247,
+        22
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Discard draft",
+      "text": "Discard draft",
+      "bounds": [
+        103,
+        623,
+        92,
+        26
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        202,
+        623,
+        46,
+        26
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1,
+        656,
+        247,
+        62
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "MOTIVATION Unaccepted motivation: protect Eli \u2014 \u96e8.",
+      "text": "  Unaccepted motivation: protect Eli \u2014 \u96e8.\n\n  ",
+      "bounds": [
+        1,
+        673,
+        247,
+        45
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Discard draft",
+      "text": "Discard draft",
+      "bounds": [
+        103,
+        725,
+        92,
+        26
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        202,
+        725,
+        46,
+        26
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "Appearance",
+      "text": "Appearance",
+      "bounds": [
+        1,
+        779,
+        247,
+        18
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1,
+        808,
+        247,
+        62
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "DESCRIPTION",
+      "text": "",
+      "bounds": [
+        1,
+        825,
+        247,
+        45
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        202,
+        877,
+        46,
+        26
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1,
+        910,
+        247,
+        62
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "COSTUME",
+      "text": "",
+      "bounds": [
+        1,
+        927,
+        247,
+        45
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        202,
+        979,
+        46,
+        26
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "New Snapshot",
+      "text": "New Snapshot",
+      "bounds": [
+        1,
+        1033,
+        247,
+        18
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Select target",
+      "text": "Select target",
+      "bounds": [
+        1,
+        1471,
+        260,
+        38
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "references",
+      "text": "references",
+      "bounds": [
+        1,
+        1533,
+        260,
+        38
+      ]
+    },
+    {
+      "role": "panel",
+      "name": "Workspace mode",
+      "text": "\ufffc\ufffc\ufffc",
+      "bounds": [
+        288,
+        2,
+        146,
+        17
+      ]
+    },
+    {
+      "role": "toggle button",
+      "name": "Script",
+      "text": "Script",
+      "bounds": [
+        288,
+        2,
+        50,
+        17
+      ]
+    },
+    {
+      "role": "toggle button",
+      "name": "Graph",
+      "text": "Graph",
+      "bounds": [
+        340,
+        2,
+        51,
+        17
+      ]
+    },
+    {
+      "role": "toggle button",
+      "name": "Split",
+      "text": "Split",
+      "bounds": [
+        393,
+        2,
+        41,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        1518,
+        2,
+        30,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "PDF",
+      "text": "PDF",
+      "bounds": [
+        1549,
+        2,
+        37,
+        17
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Select a node on the timeline to edit",
+      "bounds": [
+        808,
+        86,
+        258,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Resize panels",
+      "text": "Resize panels",
+      "bounds": [
+        280,
+        172,
+        1314,
+        6
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Write screenplay",
+      "text": "Write screenplay",
+      "bounds": [
+        292,
+        211,
+        414,
+        55
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        301,
+        220,
+        396,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Write screenplay",
+      "text": "Write screenplay",
+      "bounds": [
+        301,
+        220,
+        119,
+        21
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Select a timeline clip to start writing.",
+      "bounds": [
+        301,
+        241,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay source clip",
+      "text": "Screenplay source clip",
+      "bounds": [
+        292,
+        278,
+        414,
+        28
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "SCENE A",
+      "bounds": [
+        292,
+        284,
+        54,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Go to clip",
+      "text": "Go to clip",
+      "bounds": [
+        426,
+        284,
+        54,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay needs review",
+      "text": "Screenplay needs review",
+      "bounds": [
+        292,
+        306,
+        414,
+        250
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Needs review",
+      "bounds": [
+        301,
+        315,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Story inputs have changed since this text was generated.",
+      "bounds": [
+        301,
+        335,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        355,
+        396,
+        188
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "What changed",
+      "text": "\ufffcWhat changed",
+      "bounds": [
+        301,
+        355,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "panel",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        371,
+        396,
+        172
+      ]
+    },
+    {
+      "role": "list item",
+      "name": "Bible fact profile.tagline changed. Mara's umbrella is red.",
+      "text": "Bible fact profile.tagline changed.\nMara's umbrella is red.\n",
+      "bounds": [
+        301,
+        371,
+        396,
+        36
+      ]
+    },
+    {
+      "role": "block quote",
+      "name": "",
+      "text": "Mara's umbrella is red.",
+      "bounds": [
+        301,
+        391,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "list item",
+      "name": "Screenplay context changed. Entered: SCENE B.",
+      "text": "Screenplay context changed.\nEntered: SCENE B.\n",
+      "bounds": [
+        301,
+        411,
+        396,
+        36
+      ]
+    },
+    {
+      "role": "block quote",
+      "name": "",
+      "text": "Entered: SCENE B.",
+      "bounds": [
+        301,
+        431,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "list item",
+      "name": "Bible relationship changed. Mara trusts Eli",
+      "text": "Bible relationship changed.\nMara trusts Eli\n",
+      "bounds": [
+        301,
+        451,
+        396,
+        36
+      ]
+    },
+    {
+      "role": "block quote",
+      "name": "",
+      "text": "Mara trusts Eli",
+      "bounds": [
+        301,
+        471,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "list item",
+      "name": "Bible context membership changed. Untimed Bible fields entered: Mara.profile.motivation; removed:",
+      "text": "Bible context membership changed.\nUntimed Bible fields entered: Mara.profile.motivation; removed: \n",
+      "bounds": [
+        301,
+        491,
+        396,
+        52
+      ]
+    },
+    {
+      "role": "block quote",
+      "name": "",
+      "text": "Untimed Bible fields entered: Mara.profile.motivation; removed: ",
+      "bounds": [
+        301,
+        511,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay update proposals",
+      "text": "Screenplay update proposals",
+      "bounds": [
+        292,
+        564,
+        414,
+        111
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Preview an update to the affected generated block.",
+      "bounds": [
+        301,
+        573,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        589,
+        396,
+        39
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Input change",
+      "bounds": [
+        301,
+        589,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "combo box",
+      "name": "Input change Bible fact profile.tagline changed.",
+      "text": "Input change Bible fact profile.tagline changed.",
+      "bounds": [
+        301,
+        605,
+        396,
+        23
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Bible fact profile.tagline changed.",
+      "text": "Bible fact profile.tagline changed.",
+      "bounds": [
+        301,
+        605,
+        396,
+        23
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Bible context membership changed. Untimed Bible fields entered: Mara.profile.motivation; remov",
+      "text": "Bible context membership changed. Untimed Bible fields entered: Mara.profile.motivation; remov",
+      "bounds": [
+        301,
+        605,
+        396,
+        23
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        634,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Use recalled facts for this preview (0/8 selected)",
+      "text": "\ufffcUse recalled facts for this preview (0/8 selected)",
+      "bounds": [
+        301,
+        634,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        301,
+        650,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Preview update",
+      "text": "Preview update",
+      "bounds": [
+        301,
+        650,
+        88,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay block",
+      "text": "Screenplay block",
+      "bounds": [
+        292,
+        687,
+        414,
+        74
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Synthetic A: Mara checks her red umbrella.",
+      "bounds": [
+        309,
+        711,
+        380,
+        17
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        292,
+        740,
+        414,
+        22
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Edit",
+      "text": "Edit",
+      "bounds": [
+        292,
+        740,
+        27,
+        22
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay source clip",
+      "text": "Screenplay source clip",
+      "bounds": [
+        292,
+        773,
+        414,
+        29
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "SCENE F",
+      "bounds": [
+        292,
+        779,
+        53,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Go to clip",
+      "text": "Go to clip",
+      "bounds": [
+        425,
+        779,
+        54,
+        17
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay block",
+      "text": "Screenplay block",
+      "bounds": [
+        292,
+        801,
+        414,
+        217
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Edit screenplay text \ufffc",
+      "bounds": [
+        292,
+        801,
+        414,
+        196
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "Edit screenplay text",
+      "bounds": [
+        292,
+        806,
+        113,
+        14
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "Edit screenplay text",
+      "text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+      "bounds": [
+        292,
+        822,
+        414,
+        169
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Compare saved text",
+      "text": "Compare saved text",
+      "bounds": [
+        292,
+        996,
+        142,
+        22
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        442,
+        996,
+        36,
+        22
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Cancel",
+      "text": "Cancel",
+      "bounds": [
+        485,
+        996,
+        50,
+        22
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay source clip",
+      "text": "Screenplay source clip",
+      "bounds": [
+        730,
+        211,
+        414,
+        28
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "SCENE B",
+      "bounds": [
+        730,
+        217,
+        53,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Go to clip",
+      "text": "Go to clip",
+      "bounds": [
+        863,
+        217,
+        54,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay needs review",
+      "text": "Screenplay needs review",
+      "bounds": [
+        730,
+        239,
+        414,
+        74
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Needs review",
+      "bounds": [
+        739,
+        248,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Story inputs have changed since this text was generated.",
+      "bounds": [
+        739,
+        268,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        739,
+        288,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "What changed",
+      "text": "\ufffcWhat changed",
+      "bounds": [
+        739,
+        288,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay update proposals",
+      "text": "Screenplay update proposals",
+      "bounds": [
+        730,
+        321,
+        414,
+        111
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Preview an update to the affected generated block.",
+      "bounds": [
+        739,
+        330,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        739,
+        346,
+        396,
+        39
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Input change",
+      "bounds": [
+        739,
+        346,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "combo box",
+      "name": "Input change Bible fact profile.tagline changed.",
+      "text": "Input change Bible fact profile.tagline changed.",
+      "bounds": [
+        739,
+        362,
+        396,
+        23
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Bible fact profile.tagline changed.",
+      "text": "Bible fact profile.tagline changed.",
+      "bounds": [
+        739,
+        362,
+        396,
+        23
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        739,
+        391,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Use recalled facts for this preview (0/8 selected)",
+      "text": "\ufffcUse recalled facts for this preview (0/8 selected)",
+      "bounds": [
+        739,
+        391,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        739,
+        407,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Preview update",
+      "text": "Preview update",
+      "bounds": [
+        739,
+        407,
+        88,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Saved edit and Bible fact reconciliation",
+      "text": "Saved edit and Bible fact reconciliation",
+      "bounds": [
+        730,
+        212,
+        843,
+        1191
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Analyze saved screenplay against one Bible fact this scene consumed. Drafts remain separate.",
+      "bounds": [
+        739,
+        453,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Consumed baseline fact \ufffc",
+      "bounds": [
+        739,
+        485,
+        396,
+        23
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "Consumed baseline fact \ufffc",
+      "bounds": [
+        739,
+        485,
+        358,
+        23
+      ]
+    },
+    {
+      "role": "combo box",
+      "name": "Consumed baseline fact qualification.mara \u00b7 profile.tagline",
+      "text": "Consumed baseline fact qualification.mara \u00b7 profile.tagline",
+      "bounds": [
+        879,
+        485,
+        218,
+        23
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Choose a consumed fact",
+      "text": "Choose a consumed fact",
+      "bounds": [
+        879,
+        485,
+        218,
+        23
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "qualification.mara \u00b7 profile.tagline",
+      "text": "qualification.mara \u00b7 profile.tagline",
+      "bounds": [
+        879,
+        485,
+        218,
+        23
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Current fact",
+      "bounds": [
+        739,
+        508,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Green saved fact \u2014 \u96e8.",
+      "bounds": [
+        739,
+        524,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        739,
+        540,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Saved screenplay edit used for analysis",
+      "text": "\ufffcSaved screenplay edit used for analysis",
+      "bounds": [
+        739,
+        540,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        739,
+        556,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Analyze saved edit",
+      "text": "Analyze saved edit",
+      "bounds": [
+        739,
+        556,
+        108,
+        16
+      ]
+    },
+    {
+      "role": "article",
+      "name": "Bible fact proposal",
+      "text": "Bible fact proposal",
+      "bounds": [
+        739,
+        582,
+        396,
+        153
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "qualification.mara \u00b7 profile.tagline \u00b7 rejected",
+      "bounds": [
+        739,
+        591,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Before \u00b7 fact revision 88a3efcb-58e7-4e33-9b11-32363167ebf7",
+      "bounds": [
+        739,
+        607,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Fact before analysis",
+      "text": "Mara's umbrella is red.",
+      "bounds": [
+        739,
+        623,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Proposed fact",
+      "bounds": [
+        739,
+        639,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Proposed Bible fact",
+      "text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "bounds": [
+        739,
+        655,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "SYNTHETIC QA response: human acceptance required; no model quality claim.",
+      "bounds": [
+        739,
+        687,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        739,
+        719,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Saved edit provenance",
+      "text": "\ufffcSaved edit provenance",
+      "bounds": [
+        739,
+        719,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "article",
+      "name": "Bible fact proposal",
+      "text": "Bible fact proposal",
+      "bounds": [
+        739,
+        745,
+        396,
+        153
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "qualification.mara \u00b7 profile.tagline \u00b7 rejected",
+      "bounds": [
+        739,
+        754,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Before \u00b7 fact revision 88a3efcb-58e7-4e33-9b11-32363167ebf7",
+      "bounds": [
+        739,
+        770,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Fact before analysis",
+      "text": "Mara's umbrella is red.",
+      "bounds": [
+        739,
+        786,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Proposed fact",
+      "bounds": [
+        739,
+        802,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Proposed Bible fact",
+      "text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "bounds": [
+        739,
+        818,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "SYNTHETIC QA response: human acceptance required; no model quality claim.",
+      "bounds": [
+        739,
+        850,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        739,
+        882,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Saved edit provenance",
+      "text": "\ufffcSaved edit provenance",
+      "bounds": [
+        739,
+        882,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "article",
+      "name": "Bible fact proposal",
+      "text": "Bible fact proposal",
+      "bounds": [
+        739,
+        212,
+        834,
+        856
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "qualification.mara \u00b7 profile.tagline \u00b7 rejected",
+      "bounds": [
+        739,
+        917,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Before \u00b7 fact revision 88a3efcb-58e7-4e33-9b11-32363167ebf7",
+      "bounds": [
+        739,
+        933,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Fact before analysis",
+      "text": "Mara's umbrella is red.",
+      "bounds": [
+        739,
+        949,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Proposed fact",
+      "bounds": [
+        739,
+        965,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Proposed Bible fact",
+      "text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "bounds": [
+        739,
+        981,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "SYNTHETIC QA response: human acceptance required; no model quality claim.",
+      "bounds": [
+        739,
+        212,
+        514,
+        840
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1177,
+        227,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Saved edit provenance",
+      "text": "\ufffcSaved edit provenance",
+      "bounds": [
+        1177,
+        227,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "article",
+      "name": "Bible fact proposal",
+      "text": "Bible fact proposal",
+      "bounds": [
+        1177,
+        253,
+        396,
+        153
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "qualification.mara \u00b7 profile.tagline \u00b7 accepted",
+      "bounds": [
+        1177,
+        262,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Before \u00b7 fact revision 9818835b-4a3a-4422-8c96-96bc43a381ba",
+      "bounds": [
+        1177,
+        278,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Fact before analysis",
+      "text": "Mara's umbrella is red.",
+      "bounds": [
+        1177,
+        294,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Proposed fact",
+      "bounds": [
+        1177,
+        310,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Proposed Bible fact",
+      "text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "bounds": [
+        1177,
+        326,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "SYNTHETIC QA response: human acceptance required; no model quality claim.",
+      "bounds": [
+        1177,
+        358,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1177,
+        390,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Saved edit provenance",
+      "text": "\ufffcSaved edit provenance",
+      "bounds": [
+        1177,
+        390,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "article",
+      "name": "Bible fact proposal",
+      "text": "Bible fact proposal",
+      "bounds": [
+        1177,
+        416,
+        396,
+        153
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "qualification.mara \u00b7 profile.tagline \u00b7 rejected",
+      "bounds": [
+        1177,
+        425,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Before \u00b7 fact revision fadeb774-6fab-4b5e-a5da-763e85b15a83",
+      "bounds": [
+        1177,
+        441,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Fact before analysis",
+      "text": "Mara's umbrella is blue \u2014 \u96e8.\n\n",
+      "bounds": [
+        1177,
+        457,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Proposed fact",
+      "bounds": [
+        1177,
+        489,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Proposed Bible fact",
+      "text": "Synthetic later proposal: Mara's umbrella is green.",
+      "bounds": [
+        1177,
+        505,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "SYNTHETIC QA response: human acceptance required; no model quality claim.",
+      "bounds": [
+        1177,
+        521,
+        396,
+        32
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1177,
+        553,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Saved edit provenance",
+      "text": "\ufffcSaved edit provenance",
+      "bounds": [
+        1177,
+        553,
+        396,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay block",
+      "text": "Screenplay block",
+      "bounds": [
+        1168,
+        586,
+        414,
+        74
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Mara carries a blue umbrella \u2014 \u96e8.",
+      "bounds": [
+        1185,
+        610,
+        380,
+        17
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        1168,
+        639,
+        414,
+        22
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Edit",
+      "text": "Edit",
+      "bounds": [
+        1168,
+        639,
+        27,
+        22
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        292,
+        211,
+        1290,
+        825
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Resize panels",
+      "text": "Resize panels",
+      "bounds": [
+        1594,
+        0,
+        6,
+        1044
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1600,
+        0,
+        320,
+        1044
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "\u00d7 Close",
+      "text": "\u00d7 Close",
+      "bounds": [
+        1613,
+        12,
+        44,
+        17
+      ]
+    }
+  ],
+  "provider_records": [
+    {
+      "kind": "generation",
+      "phase": 0,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are an experienced TV story editor working on a 30-minute comedy/drama episode. Write a structural outline for this Scene node.\n\nFORMAT RULES:\n- Write in clear prose, not screenplay format.\n- Describe what happens narratively \u2014 key events, character dynamics, emotional beats.\n- Focus on story structure and dramatic progression.\n- Be specific about character actions and motivations.\n",
+      "exact_user_prompt": "Write a structural outline for the following scene:\n\nSCENE: SCENE A\nSCENE NOTES:\nSynthetic fixture scene A: Mara carries her red umbrella.\n\nCONTEXT HIERARCHY:\n- Mara's umbrella (Sequence): [no notes]\n- FACT RECONCILIATION (Act): [no notes]\n- Episode Premise (Premise): [no notes]\n\nSIBLING SCENES (other scenes at this level \u2014 you are writing one of these):\n- SCENE F: \n- SCENE B: Synthetic fixture scene B: Mara carries her red umbrella.\n\nWrite ONLY the scene marked above. Stay focused.\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is red.\n  -> qualification.eli [references]: Mara trusts Eli\n- Eli [character] (qualification.eli)\n  <- qualification.mara [references]: Mara trusts Eli\n\nCANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.c2cf1c47-78c8-4b3b-ae3d-ef478aa6ffd8 block=script.block.1a27ad98-2b81-4022-bba8-50b9f30f0fbb.user block_revision=f024010d-6852-462c-8441-431cdf441d2f segment_revision=f024010d-6852-462c-8441-431cdf441d2f presentation=60000..120000ms ---\nUnrelated saved scene: Eli guards the station.\n\n\n\nWrite ONLY the structural outline for this scene. Do not include metadata, comments, or explanations.",
+      "synthetic_response": "Synthetic A: Mara checks her red umbrella.\n\n"
+    },
+    {
+      "kind": "recap",
+      "phase": 0,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are a script continuity analyst. Given a screenplay scene, produce a compact structured recap that captures the scene's end state. This recap will be used as context for writing subsequent scenes to maintain continuity.\n\nFORMAT (use this exact structure):\nSCENE END STATE:\n- Location: [INT/EXT. LOCATION - TIME]\n- Characters present: [list]\n- [Brief physical/emotional state of each character]\n\nKEY ESTABLISHED FACTS:\n- [Relationships, names, details that must remain consistent]\n\nWHAT JUST HAPPENED:\n- [3-5 bullet points summarizing key events in order]\n\nRULES:\n- Keep the total recap under 200 tokens.\n- Focus on FACTS that downstream scenes must respect.\n- Include character locations and physical states at scene end.\n- Carry forward any still-relevant facts from the preceding recap.\n- Do NOT include analysis or suggestions \u2014 only factual statements.\n- Return ONLY the recap text, no commentary.",
+      "exact_user_prompt": "Generate a scene recap for this screenplay beat:\n\nSCRIPT:\nSynthetic A: Mara checks her red umbrella.\n\n\n\nProduce the scene recap now. Use the exact format specified. Be concise \u2014 aim for 100-150 tokens.",
+      "synthetic_response": "Synthetic recap: Mara carries red."
+    },
+    {
+      "kind": "generation",
+      "phase": 1,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are an experienced TV story editor working on a 30-minute comedy/drama episode. Write a structural outline for this Scene node.\n\nFORMAT RULES:\n- Write in clear prose, not screenplay format.\n- Describe what happens narratively \u2014 key events, character dynamics, emotional beats.\n- Focus on story structure and dramatic progression.\n- Be specific about character actions and motivations.\n",
+      "exact_user_prompt": "Write a structural outline for the following scene:\n\nSCENE: SCENE B\nSCENE NOTES:\nSynthetic fixture scene B: Mara carries her red umbrella.\n\nCONTEXT HIERARCHY:\n- Mara's umbrella (Sequence): [no notes]\n- FACT RECONCILIATION (Act): [no notes]\n- Episode Premise (Premise): [no notes]\n\nSIBLING SCENES (other scenes at this level \u2014 you are writing one of these):\n- SCENE A: Synthetic fixture scene A: Mara carries her red umbrella.\n- SCENE F: \n\nWrite ONLY the scene marked above. Stay focused.\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is red.\n  -> qualification.eli [references]: Mara trusts Eli\n- Eli [character] (qualification.eli)\n  <- qualification.mara [references]: Mara trusts Eli\n\nCANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1 block=script.block.2c3b8e29-d467-44ca-9b55-6451cc1cd1f1.generated block_revision=0e92d1f8-0e6a-4a99-b985-23a047340579 segment_revision=0e92d1f8-0e6a-4a99-b985-23a047340579 presentation=0..60000ms ---\nSynthetic A: Mara checks her red umbrella.\n\n\n\n--- document=script.document.main segment=script.segment.c2cf1c47-78c8-4b3b-ae3d-ef478aa6ffd8 block=script.block.1a27ad98-2b81-4022-bba8-50b9f30f0fbb.user block_revision=f024010d-6852-462c-8441-431cdf441d2f segment_revision=f024010d-6852-462c-8441-431cdf441d2f presentation=60000..120000ms ---\nUnrelated saved scene: Eli guards the station.\n\n\n\nWrite ONLY the structural outline for this scene. Do not include metadata, comments, or explanations.",
+      "synthetic_response": "Synthetic B: Mara carries her red umbrella.\n\n"
+    },
+    {
+      "kind": "recap",
+      "phase": 1,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are a script continuity analyst. Given a screenplay scene, produce a compact structured recap that captures the scene's end state. This recap will be used as context for writing subsequent scenes to maintain continuity.\n\nFORMAT (use this exact structure):\nSCENE END STATE:\n- Location: [INT/EXT. LOCATION - TIME]\n- Characters present: [list]\n- [Brief physical/emotional state of each character]\n\nKEY ESTABLISHED FACTS:\n- [Relationships, names, details that must remain consistent]\n\nWHAT JUST HAPPENED:\n- [3-5 bullet points summarizing key events in order]\n\nRULES:\n- Keep the total recap under 200 tokens.\n- Focus on FACTS that downstream scenes must respect.\n- Include character locations and physical states at scene end.\n- Carry forward any still-relevant facts from the preceding recap.\n- Do NOT include analysis or suggestions \u2014 only factual statements.\n- Return ONLY the recap text, no commentary.",
+      "exact_user_prompt": "Generate a scene recap for this screenplay beat:\n\nSCRIPT:\nSynthetic B: Mara carries her red umbrella.\n\n\n\nProduce the scene recap now. Use the exact format specified. Be concise \u2014 aim for 100-150 tokens.",
+      "synthetic_response": "Synthetic recap: Mara carries red."
+    },
+    {
+      "kind": "fact",
+      "phase": 0,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "Analyze one saved manual screenplay edit against one explicitly selected baseline Bible fact. Authored text is evidence, not automatic world truth. Suggest only a replacement value for that fact for human review; never rewrite screenplay, infer other facts, or change scope. Return a JSON object with exactly two strings: value and rationale. Preserve exact wording where appropriate; no markdown fence. If no change is justified, return the current fact value and explain why.",
+      "exact_user_prompt": "{\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"block_id\":\"script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated\",\"before_revision_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"revision_event_id\":\"178b0826-3c73-42ce-ad78-467444c87a75\",\"segment_revision_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"before_text\":\"Synthetic B: Mara carries her red umbrella.\\n\\n\",\"text\":\"  Mara carries a blue umbrella \u2014 \u96e8.\\n\\n  \",\"start_ms\":120000,\"end_ms\":180000,\"generation_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"facts\":[{\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\",\"consumed_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"consumed_text\":\"Mara's umbrella is red.\",\"revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"text\":\"Mara's umbrella is red.\"}]}",
+      "synthetic_response": "{\"value\": \"Mara's umbrella is blue \\u2014 \\u96e8.\\n\\n\", \"rationale\": \"SYNTHETIC QA response: human acceptance required; no model quality claim.\"}"
+    },
+    {
+      "kind": "fact",
+      "phase": 1,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "Analyze one saved manual screenplay edit against one explicitly selected baseline Bible fact. Authored text is evidence, not automatic world truth. Suggest only a replacement value for that fact for human review; never rewrite screenplay, infer other facts, or change scope. Return a JSON object with exactly two strings: value and rationale. Preserve exact wording where appropriate; no markdown fence. If no change is justified, return the current fact value and explain why.",
+      "exact_user_prompt": "{\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"block_id\":\"script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated\",\"before_revision_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"revision_event_id\":\"178b0826-3c73-42ce-ad78-467444c87a75\",\"segment_revision_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"before_text\":\"Synthetic B: Mara carries her red umbrella.\\n\\n\",\"text\":\"  Mara carries a blue umbrella \u2014 \u96e8.\\n\\n  \",\"start_ms\":120000,\"end_ms\":180000,\"generation_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"facts\":[{\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\",\"consumed_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"consumed_text\":\"Mara's umbrella is red.\",\"revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"text\":\"Mara's umbrella is red.\"}]}",
+      "synthetic_response": "{\"value\": \"Mara's umbrella is blue \\u2014 \\u96e8.\\n\\n\", \"rationale\": \"SYNTHETIC QA response: human acceptance required; no model quality claim.\"}"
+    },
+    {
+      "kind": "fact",
+      "phase": 2,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "Analyze one saved manual screenplay edit against one explicitly selected baseline Bible fact. Authored text is evidence, not automatic world truth. Suggest only a replacement value for that fact for human review; never rewrite screenplay, infer other facts, or change scope. Return a JSON object with exactly two strings: value and rationale. Preserve exact wording where appropriate; no markdown fence. If no change is justified, return the current fact value and explain why.",
+      "exact_user_prompt": "{\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"block_id\":\"script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated\",\"before_revision_event_id\":\"e7eec4aa-e34a-471b-b269-01161e373392\",\"revision_event_id\":\"c59202e0-fa7c-464a-8617-b748c24388dc\",\"segment_revision_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"before_text\":\"Temporary manual source change \u2014 \u96e8.\\n\\n\",\"text\":\"  Mara carries a blue umbrella \u2014 \u96e8.\\n\\n  \",\"start_ms\":120000,\"end_ms\":180000,\"generation_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"facts\":[{\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\",\"consumed_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"consumed_text\":\"Mara's umbrella is red.\",\"revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"text\":\"Mara's umbrella is red.\"}]}",
+      "synthetic_response": "{\"value\": \"Mara's umbrella is blue \\u2014 \\u96e8.\\n\\n\", \"rationale\": \"SYNTHETIC QA response: human acceptance required; no model quality claim.\"}"
+    },
+    {
+      "kind": "fact",
+      "phase": 3,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "Analyze one saved manual screenplay edit against one explicitly selected baseline Bible fact. Authored text is evidence, not automatic world truth. Suggest only a replacement value for that fact for human review; never rewrite screenplay, infer other facts, or change scope. Return a JSON object with exactly two strings: value and rationale. Preserve exact wording where appropriate; no markdown fence. If no change is justified, return the current fact value and explain why.",
+      "exact_user_prompt": "{\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"block_id\":\"script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated\",\"before_revision_event_id\":\"e7eec4aa-e34a-471b-b269-01161e373392\",\"revision_event_id\":\"c59202e0-fa7c-464a-8617-b748c24388dc\",\"segment_revision_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"before_text\":\"Temporary manual source change \u2014 \u96e8.\\n\\n\",\"text\":\"  Mara carries a blue umbrella \u2014 \u96e8.\\n\\n  \",\"start_ms\":120000,\"end_ms\":180000,\"generation_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"facts\":[{\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\",\"consumed_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"consumed_text\":\"Mara's umbrella is red.\",\"revision_event_id\":\"9818835b-4a3a-4422-8c96-96bc43a381ba\",\"text\":\"Mara's umbrella is red.\"}]}",
+      "synthetic_response": "{\"value\": \"Mara's umbrella is blue \\u2014 \\u96e8.\\n\\n\", \"rationale\": \"SYNTHETIC QA response: human acceptance required; no model quality claim.\"}"
+    },
+    {
+      "kind": "fact",
+      "phase": 4,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "Analyze one saved manual screenplay edit against one explicitly selected baseline Bible fact. Authored text is evidence, not automatic world truth. Suggest only a replacement value for that fact for human review; never rewrite screenplay, infer other facts, or change scope. Return a JSON object with exactly two strings: value and rationale. Preserve exact wording where appropriate; no markdown fence. If no change is justified, return the current fact value and explain why.",
+      "exact_user_prompt": "{\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.ab973e0a-8df3-45aa-91aa-0b5b3236040b\",\"block_id\":\"script.block.ab973e0a-8df3-45aa-91aa-0b5b3236040b.generated\",\"before_revision_event_id\":\"e7eec4aa-e34a-471b-b269-01161e373392\",\"revision_event_id\":\"c59202e0-fa7c-464a-8617-b748c24388dc\",\"segment_revision_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"before_text\":\"Temporary manual source change \u2014 \u96e8.\\n\\n\",\"text\":\"  Mara carries a blue umbrella \u2014 \u96e8.\\n\\n  \",\"start_ms\":120000,\"end_ms\":180000,\"generation_event_id\":\"9c584cd8-c0a1-4572-8346-c220c861a6fc\",\"facts\":[{\"dependency_id\":\"generation.9c584cd8-c0a1-4572-8346-c220c861a6fc.bible.4\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\",\"consumed_revision_event_id\":\"88a3efcb-58e7-4e33-9b11-32363167ebf7\",\"consumed_text\":\"Mara's umbrella is red.\",\"revision_event_id\":\"fadeb774-6fab-4b5e-a5da-763e85b15a83\",\"text\":\"Mara's umbrella is blue \u2014 \u96e8.\\n\\n\"}]}",
+      "synthetic_response": "{\"value\": \"Synthetic later proposal: Mara's umbrella is green.\", \"rationale\": \"SYNTHETIC QA response: human acceptance required; no model quality claim.\"}"
+    }
+  ],
+  "typed_text_observations": [
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 39,
+      "actual_text": "  Mara carries a blue umbrella \u2014 \u96e8.\n\n  ",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 47,
+      "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "Search entities...",
+      "expected_length": 4,
+      "actual_text": "Mara",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 37,
+      "actual_text": "Temporary manual source change \u2014 \u96e8",
+      "exact": false,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 37,
+      "actual_text": "Temporary manual source change \u2014 \u96e8.\n\n",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 39,
+      "actual_text": "  Mara carries a blue umbrella \u2014 \u96e8.\n\n  ",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "TAGLINE Mara's umbrella is",
+      "expected_length": 25,
+      "actual_text": "Mara's umbrella is",
+      "exact": false,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "TAGLINE Mara's umbrella is amber.",
+      "expected_length": 25,
+      "actual_text": "Mara's umbrella is amber.",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "TAGLINE Mara's umbrella is red.",
+      "expected_length": 23,
+      "actual_text": "Mara's umbrella is red.",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "TAGLINE Unaccepted local Bible draft \u2014 u96e8",
+      "expected_length": 39,
+      "actual_text": "  Unaccepted local Bible draft \u2014 u96",
+      "exact": false,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "TAGLINE Unaccepted local Bible draft \u2014 \u96e8.",
+      "expected_length": 39,
+      "actual_text": "  Unaccepted local Bible draft \u2014 \u96e8.\n\n  ",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "MOTIVATION Unaccepted motivation: protect Eli \u2014 u96e",
+      "expected_length": 45,
+      "actual_text": "  Unaccepted motivation: protect Eli \u2014 u96",
+      "exact": false,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "MOTIVATION Unaccepted motivation: protect Eli \u2014 \u96e8.",
+      "expected_length": 45,
+      "actual_text": "  Unaccepted motivation: protect Eli \u2014 \u96e8.\n\n  ",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "TAGLINE Pending blue draft \u2014 \u96e8.",
+      "expected_length": 29,
+      "actual_text": "  Pending blue draft \u2014 \u96e8.\n\n",
+      "exact": false,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "TAGLINE Pending blue draft \u2014 \u96e8.",
+      "expected_length": 29,
+      "actual_text": "  Pending blue draft \u2014 \u96e8.\n\n  ",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "MOTIVATION Recovery draft \u2014 \u96e8.",
+      "expected_length": 25,
+      "actual_text": "  Recovery draft \u2014 \u96e8.\n\n",
+      "exact": false,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    },
+    {
+      "field": "MOTIVATION Recovery draft \u2014 \u96e8.",
+      "expected_length": 25,
+      "actual_text": "  Recovery draft \u2014 \u96e8.\n\n  ",
+      "exact": true,
+      "route": "native ASCII/Return and GTK Unicode composition"
+    }
+  ]
+}

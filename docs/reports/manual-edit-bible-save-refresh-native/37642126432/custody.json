@@ -1,0 +1,31 @@
+{
+  "run_id": 37642126432,
+  "job_id": 112863567732,
+  "conclusion": "failure",
+  "source": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+  "qa": "a23166c0d585c1287e7eb71485eed7441f1420fd",
+  "artifact_id": 11492928312,
+  "artifact_bytes": 3192131,
+  "zip_sha256": "8b01c5a37772c0ed3c06ae49966a6382cb90ac2e1c1bc45569298bd1888a53b1",
+  "scope": "Established native flow and late-save conflict exercised; read failure was not exercised. Overall failed.",
+  "file_sha256": {
+    "manual-fact-11-late-save-conflict.png": "07ba5ffc735572a7238ff87e491404482c65a858e71764e470f2d55f55b72c88",
+    "manual-fact-04-source-stale.png": "c8f6c96f71a3a5919446f2a147b100325676da6c078bb6328b35ce6ac67e76d0",
+    "manual-fact-05-fact-stale.png": "4a3037a1944acf770974feb0300db465faf452558656063e0a220b3a4d57702f",
+    "manual-fact-09-relationship-stale.png": "9a9995c719dec69a1651b15473930fe06252dfe992a263b795615529f7e09a1f",
+    "original-artifact.zip": "8b01c5a37772c0ed3c06ae49966a6382cb90ac2e1c1bc45569298bd1888a53b1",
+    "manual-fact-01-saved-edit.png": "b69efd74ba8ce3b0cb8c953efcf4650b40bbbfce5134f932b9b08b4852d545cc",
+    "manual-fact-03-rejected.png": "9dcd80e2cb73a5345c1c11a89bce77c0ae01f75b91c8f243f603127dd1901a46",
+    "manual-fact-06b-bible-drafts-pending.png": "95422093906943aa3578bc976fe2db5d13403b34c7eec772b86ae6b309f41e86",
+    "manual-fact-09b-preserved-bible-drafts.png": "19e87e3cd5a3ec15af0fef72fed758f1a6db21d8d7a7329d685259302a8b015e",
+    "manual-fact-failure.png": "c3dda146e7d2799cf25a97cff7338d246ad74221710d5a1851481781eaa2bb39",
+    "app-sanitized.log": "a4f56dfc11ccda19cbfccd391aa11c3cc3eabb3779697f3a39978250babd8732",
+    "manual-fact-08-needs-review.png": "9164c0cc318ba3c935e9aa9b0e9677cdefcb7405bafdf7bfaac29b7879f15209",
+    "manual-fact-02-pending.png": "b1d0596178ce0bace7f8219b1834adf31eaba8cbc261860baeda625e806223eb",
+    "hosted-job-decoded.log": "246cd3ff4cd560d120216666677594c44e3218dbdc2b1169b2c3c32ca4391140",
+    "qualification-host-sanitized.log": "8e620deb513ad4836a2e6ecc8d7b0d9a6206e5b472d0d6d2411e37f6e4b48e84",
+    "capture-evidence.json": "45dff9429f959e38af3509bf6af72f463cf6ba0bf6c04b8b32ab95bd64254131",
+    "manual-fact-07-accepted.png": "064a607adbf5f0a9c31833b9b1cc1411c088a83a443054accfe32d4624ceb5fa",
+    "manual-fact-06-fresh-pending.png": "13acaed65e9fe4144422e465a70b401ae4115938dbd7def9bbe3fb8d4a9ab334"
+  }
+}

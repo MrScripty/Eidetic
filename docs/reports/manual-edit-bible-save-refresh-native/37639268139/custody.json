@@ -1,0 +1,13 @@
+{
+  "status": "failed",
+  "run_id": 37639268139,
+  "job_id": 112853951922,
+  "artifact_id": 11492346303,
+  "artifact_bytes": 1061913,
+  "original_artifact_sha256": "a49dc0d5a9b798ada8d14622c93a96d486374a4973286c2ccac9d7a065d31513",
+  "application_source": "1aab490a7518faf89285c72404f429e63d1e0d4e",
+  "qa_source": "03d2f3931aa7b03819fbbdd5f65809db7bed8453",
+  "failure": "Timed out waiting for associated verified Bible Save",
+  "scope": "Existing Amber->Red manual Bible roundtrip refused because a matching own acknowledgement retained a draft during pending verification. New delayed acknowledgement/failure/recovery sequence was not reached. No native pass claimed.",
+  "captures": 5
+}

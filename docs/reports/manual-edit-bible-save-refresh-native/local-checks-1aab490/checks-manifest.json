@@ -1,0 +1,70 @@
+{
+  "eidetic-repair-ui-tests.log": {
+    "bytes": 9020,
+    "sha256": "29d4fe83a47a68654a644a0e19896ac424669f01cfbdb4d26268615778f91123"
+  },
+  "eidetic-repair-typecheck.log": {
+    "bytes": 751,
+    "sha256": "1a09baeee13f3662b98cad9374dba58dd9ccd75ed4e9a7ce92e2e52c0a0e96f3"
+  },
+  "eidetic-repair-lint.log": {
+    "bytes": 248,
+    "sha256": "e1265423f6f76ee55354d742fc5bbd819039de0673889212009c558389cfcf53"
+  },
+  "eidetic-repair-format.log": {
+    "bytes": 371,
+    "sha256": "0cd63920e58a7e1e43cda2fa9c575281eec7d679736a8ed593cbfe5297d2a004"
+  },
+  "eidetic-repair-build.log": {
+    "bytes": 3625,
+    "sha256": "4c33336934bb227e2de6cc1054dd7c6c03106fe9ca740ec962615ad582437319"
+  },
+  "eidetic-repair-rust-tests.log": {
+    "bytes": 595,
+    "sha256": "7c19d9c991cdd0d185b7af41cdbb37e86ddde4285f7d32e99d291f63459ba489"
+  },
+  "eidetic-repair-rust-aggregate.log": {
+    "bytes": 68446,
+    "sha256": "1294f4db222a98b7a70523189aaac62022648b9624e45b19f2751779b451453c"
+  },
+  "eidetic-repair-clippy.log": {
+    "bytes": 335,
+    "sha256": "a2d6249c5238244c806ae7119ff56c0141fc26fe40fb4914888c93eb4cd994f9"
+  },
+  "eidetic-repair-commit.log": {
+    "bytes": 17332,
+    "sha256": "7bc02ca065d30bf305fb0fc7f16d9cbe101115d9856c17f99c31998c675071a4"
+  },
+  "eidetic-repair-native-typecheck.log": {
+    "bytes": 764,
+    "sha256": "692f1c8e056c19638b4fb3f375e1936cf2b787a3b0e75dd50d38eab35b67f8db"
+  },
+  "eidetic-repair-native-lint.log": {
+    "bytes": 248,
+    "sha256": "e1265423f6f76ee55354d742fc5bbd819039de0673889212009c558389cfcf53"
+  },
+  "eidetic-repair-native-build.log": {
+    "bytes": 3665,
+    "sha256": "272ceb973613acd8966805d43583fac2310bfe4c45b9783d9f951f8bfe989ea9"
+  },
+  "eidetic-repair-native-format.log": {
+    "bytes": 371,
+    "sha256": "0cd63920e58a7e1e43cda2fa9c575281eec7d679736a8ed593cbfe5297d2a004"
+  },
+  "eidetic-repair-native-ui-tests.log": {
+    "bytes": 9034,
+    "sha256": "f1d9e4496bde78bcfca682e56492d162579f1100473544e18e0c7444e83e31e4"
+  },
+  "eidetic-repair-native-python-all.log": {
+    "bytes": 9352,
+    "sha256": "5931721bb729582505128f525c68c29d9f9f1e7c3321ae15295d168b2a1b22fc"
+  },
+  "eidetic-repair-native-commit.log": {
+    "bytes": 17992,
+    "sha256": "d3cc1006463b12ea9989b72c7e3b048d21e5173f51170a6c229ccae4df1bbba0"
+  },
+  "eidetic-repair-native-custody-commit.log": {
+    "bytes": 17436,
+    "sha256": "f533b14c3410527b1bfef31f780b43b0fd67ec307a7443a59db49a7f17a80c2d"
+  }
+}

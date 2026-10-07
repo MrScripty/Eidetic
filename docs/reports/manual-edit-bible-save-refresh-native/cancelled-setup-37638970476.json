@@ -1,0 +1,8 @@
+{
+  "run_id": 37638970476,
+  "status": "completed",
+  "conclusion": "cancelled",
+  "head_sha": "bcbb13e523a27ed0ab8bfab473365de0319ab47b",
+  "html_url": "https://github.com/MrScripty/Eidetic/actions/runs/37638970476",
+  "reason": "Superseded during setup by the forward qualifier custody/precondition update. No native pass claimed."
+}

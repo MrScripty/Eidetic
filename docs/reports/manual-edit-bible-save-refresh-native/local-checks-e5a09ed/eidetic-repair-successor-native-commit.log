@@ -1,0 +1,90 @@
+╭────────────────────────────────────╮
+│ lefthook v1.13.6  hook: pre-commit │
+╰────────────────────────────────────╯
+┃  decision-traceability ❯ 
+
+Decision traceability check passed.
+
+┃  rustfmt ❯ 
+
+
+┃  ui-format-check ❯ 
+
+
+> eidetic-ui@0.1.0 format:check
+> prettier --check "src/**/*.{js,ts,svelte,css}" "*.{js,json}"
+
+Checking formatting...
+src/app.css[2K[1Gsrc/lib/affectTypes.ts[2K[1Gsrc/lib/aiTypes.ts[2K[1Gsrc/lib/api.test.ts[2K[1Gsrc/lib/api.ts[2K[1Gsrc/lib/bibleGraphSchemaTypes.ts[2K[1Gsrc/lib/bibleGraphTypes.ts[2K[1Gsrc/lib/bibleRecallTypes.ts[2K[1Gsrc/lib/changeReviewProjectionApi.test.ts[2K[1Gsrc/lib/changeReviewTypes.ts[2K[1Gsrc/lib/childPlanningTypes.ts[2K[1Gsrc/lib/commandApi.test.ts[2K[1Gsrc/lib/commandApi.ts[2K[1Gsrc/lib/commandTransport.ts[2K[1Gsrc/lib/components/editor/AiPromptPreview.svelte[2K[1Gsrc/lib/components/editor/BeatChildContext.svelte[2K[1Gsrc/lib/components/editor/beatEditor.css[2K[1Gsrc/lib/components/editor/BeatEditor.svelte[2K[1Gsrc/lib/components/editor/BeatEditorHeader.svelte[2K[1Gsrc/lib/components/editor/beatEditorStatus.ts[2K[1Gsrc/lib/components/editor/BeatNotesPanel.svelte[2K[1Gsrc/lib/components/editor/BeatPlanningActions.svelte[2K[1Gsrc/lib/components/editor/ChildPlanBibleEvidence.ssr.test.ts[2K[1Gsrc/lib/components/editor/ChildPlanBibleEvidence.svelte[2K[1Gsrc/lib/components/editor/childPlanReview.client.test.ts[2K[1Gsrc/lib/components/editor/ChildPlanReview.ssr.test.ts[2K[1Gsrc/lib/components/editor/ChildPlanReview.svelte[2K[1Gsrc/lib/components/editor/childPlanReview.svelte.test.ts[2K[1Gsrc/lib/components/editor/childPlanReview.svelte.ts[2K[1Gsrc/lib/components/editor/contextRequestLifecycle.test.ts[2K[1Gsrc/lib/components/editor/contextRequestLifecycle.ts[2K[1Gsrc/lib/components/editor/createSelectedTimelineChild.svelte.test.ts[2K[1Gsrc/lib/components/editor/createSelectedTimelineChild.ts[2K[1Gsrc/lib/components/editor/debouncedNodeNotesSave.test.ts[2K[1Gsrc/lib/components/editor/debouncedNodeNotesSave.ts[2K[1Gsrc/lib/components/editor/ScriptArcEvidence.ssr.test.ts[2K[1Gsrc/lib/components/editor/ScriptArcEvidence.svelte[2K[1Gsrc/lib/components/editor/ScriptBlockComposer.retry.ssr.test.ts[2K[1Gsrc/lib/components/editor/ScriptBlockComposer.ssr.test.ts[2K[1Gsrc/lib/components/editor/ScriptBlockComposer.svelte[2K[1Gsrc/lib/components/editor/scriptBlockCreationDraft.svelte.test.ts[2K[1Gsrc/lib/components/editor/scriptBlockCreationDraft.svelte.ts[2K[1Gsrc/lib/components/editor/scriptBlockCreationRetry.svelte.test.ts[2K[1Gsrc/lib/components/editor/scriptBlockEditComparison.svelte.test.ts[2K[1Gsrc/lib/components/editor/scriptBlockEditDraft.svelte.ts[2K[1Gsrc/lib/components/editor/scriptBlockEditLifetime.ssr.test.ts[2K[1Gsrc/lib/components/editor/ScriptBlockEditor.svelte[2K[1Gsrc/lib/components/editor/scriptCreationSource.svelte.test.ts[2K[1Gsrc/lib/components/editor/scriptCreationSource.ts[2K[1Gsrc/lib/components/editor/ScriptFactReconciliation.svelte[2K[1Gsrc/lib/components/editor/scriptFactReview.client.test.ts[2K[1Gsrc/lib/components/editor/scriptFactReview.svelte.test.ts[2K[1Gsrc/lib/components/editor/scriptFactReview.svelte.ts[2K[1Gsrc/lib/components/editor/ScriptImpactNotice.svelte[2K[1Gsrc/lib/components/editor/scriptImpactNotice.ts[2K[1Gsrc/lib/components/editor/ScriptImpactReview.ssr.test.ts[2K[1Gsrc/lib/components/editor/ScriptImpactReview.svelte[2K[1Gsrc/lib/components/editor/ScriptPanel.svelte[2K[1Gsrc/lib/components/editor/scriptRecallDraft.client.test.ts[2K[1Gsrc/lib/components/editor/scriptRecallDraft.svelte.ts[2K[1Gsrc/lib/components/editor/ScriptRecallFacts.ssr.test.ts[2K[1Gsrc/lib/components/editor/ScriptRecallFacts.svelte[2K[1Gsrc/lib/components/editor/scriptRecallPreview.svelte.test.ts[2K[1Gsrc/lib/components/editor/scriptRecallSelection.fixture.ts[2K[1Gsrc/lib/components/editor/scriptRecallSelection.test.ts[2K[1Gsrc/lib/components/editor/scriptRecallSelection.ts[2K[1Gsrc/lib/components/editor/ScriptSegmentSource.svelte[2K[1Gsrc/lib/components/editor/scriptSourceNavigation.svelte.test.ts[2K[1Gsrc/lib/components/editor/scriptSourceNavigation.ts[2K[1Gsrc/lib/components/editor/ScriptView.svelte[2K[1Gsrc/lib/components/editor/timelinePlacementDraft.client.test.ts[2K[1Gsrc/lib/components/editor/timelinePlacementDraft.svelte.test.ts[2K[1Gsrc/lib/components/editor/timelinePlacementDraft.svelte.ts[2K[1Gsrc/lib/components/editor/TimelinePlacementEditor.ssr.test.ts[2K[1Gsrc/lib/components/editor/TimelinePlacementEditor.svelte[2K[1Gsrc/lib/components/layout/AiStatusIndicator.svelte[2K[1Gsrc/lib/components/layout/AppShell.svelte[2K[1Gsrc/lib/components/layout/AppToolbar.svelte[2K[1Gsrc/lib/components/layout/AppWorkspace.creationLifetime.ssr.test.ts[2K[1Gsrc/lib/components/layout/AppWorkspace.svelte[2K[1Gsrc/lib/components/layout/BottomTimelineStack.svelte[2K[1Gsrc/lib/components/layout/GraphRendererWindowControls.svelte[2K[1Gsrc/lib/components/layout/graphRendererWindowStatus.test.ts[2K[1Gsrc/lib/components/layout/graphRendererWindowStatus.ts[2K[1Gsrc/lib/components/layout/GraphRightInspector.svelte[2K[1Gsrc/lib/components/layout/GraphSelectionDetail.ssr.test.ts[2K[1Gsrc/lib/components/layout/GraphSelectionDetail.svelte[2K[1Gsrc/lib/components/layout/graphSelectionDetails.test.ts[2K[1Gsrc/lib/components/layout/graphSelectionDetails.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceBootstrap.test.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceBootstrap.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceEdgeKindFilters.test.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceEdgeKindFilters.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceItems.test.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceItems.ts[2K[1Gsrc/lib/components/layout/GraphWorkspacePanel.svelte[2K[1Gsrc/lib/components/layout/graphWorkspaceProjectionRequest.test.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceProjectionRequest.ts[2K[1Gsrc/lib/components/layout/GraphWorkspaceSideLists.svelte[2K[1Gsrc/lib/components/layout/graphWorkspaceTimelineCrossLink.test.ts[2K[1Gsrc/lib/components/layout/graphWorkspaceTimelineCrossLink.ts[2K[1Gsrc/lib/components/layout/PanelResizer.svelte[2K[1Gsrc/lib/components/layout/Sidebar.svelte[2K[1Gsrc/lib/components/layout/SplashScreen.svelte[2K[1Gsrc/lib/components/layout/ToastContainer.svelte[2K[1Gsrc/lib/components/sidebar/AiConfigPanel.svelte[2K[1Gsrc/lib/components/sidebar/ArcDetail.svelte[2K[1Gsrc/lib/components/sidebar/ArcList.svelte[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphAddControls.svelte[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphCategories.test.ts[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphCategories.ts[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphCategoryFilters.svelte[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphEdgeEditor.svelte[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphEdgeLabelEditor.client.test.ts[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphEdgeLabelEditor.svelte.ts[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphEdgeList.svelte[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphEdgeTargetOptions.test.ts[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphEdgeTargetOptions.ts[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphNodeCard.svelte[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphNodeCreateFlow.test.ts[2K[1Gsrc/lib/components/sidebar/bible/bibleGraphNodeCreateFlow.ts[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphPartFields.svelte[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphSnapshotEditor.svelte[2K[1Gsrc/lib/components/sidebar/bible/BibleGraphSnapshotList.svelte[2K[1Gsrc/lib/components/sidebar/bible/BibleRecall.ssr.test.ts[2K[1Gsrc/lib/components/sidebar/bible/BibleRecall.svelte[2K[1Gsrc/lib/components/sidebar/bible/BibleRenderGraphOutline.svelte[2K[1Gsrc/lib/components/sidebar/bible/bibleRenderGraphOutline.test.ts[2K[1Gsrc/lib/components/sidebar/bible/bibleRenderGraphOutline.ts[2K[1Gsrc/lib/components/sidebar/bible/StoryBibleTab.svelte[2K[1Gsrc/lib/components/sidebar/changeReviewPanel.css[2K[1Gsrc/lib/components/sidebar/ChangeReviewPanel.svelte[2K[1Gsrc/lib/components/sidebar/debouncedStoryArcMetadataSave.test.ts[2K[1Gsrc/lib/components/sidebar/debouncedStoryArcMetadataSave.ts[2K[1Gsrc/lib/components/sidebar/ProgressionPanel.svelte[2K[1Gsrc/lib/components/sidebar/ReferencePanel.svelte[2K[1Gsrc/lib/components/timeline/LevelTrack.svelte[2K[1Gsrc/lib/components/timeline/Playhead.svelte[2K[1Gsrc/lib/components/timeline/RelationshipArc.svelte[2K[1Gsrc/lib/components/timeline/RelationshipLayer.svelte[2K[1Gsrc/lib/components/timeline/StoryNodeClip.svelte[2K[1Gsrc/lib/components/timeline/StructureBar.svelte[2K[1Gsrc/lib/components/timeline/Timeline.svelte[2K[1Gsrc/lib/components/timeline/TimelineRendererWindowControls.svelte[2K[1Gsrc/lib/components/timeline/timelineRendererWindowControls.test.ts[2K[1Gsrc/lib/components/timeline/timelineRendererWindowControls.ts[2K[1Gsrc/lib/components/timeline/TimelineToolbar.svelte[2K[1Gsrc/lib/components/timeline/TimeRuler.svelte[2K[1Gsrc/lib/contextInfluenceTypes.ts[2K[1Gsrc/lib/desktopTransport.ts[2K[1Gsrc/lib/graphRendererApi.test.ts[2K[1Gsrc/lib/graphRendererApi.ts[2K[1Gsrc/lib/graphRendererTypes.ts[2K[1Gsrc/lib/projectionApi.test.ts[2K[1Gsrc/lib/projectionApi.ts[2K[1Gsrc/lib/projectionOnlyGuards.test.ts[2K[1Gsrc/lib/projectionTypes.ts[2K[1Gsrc/lib/projectTypes.ts[2K[1Gsrc/lib/propagationProposalCommandApi.test.ts[2K[1Gsrc/lib/propagationProposalProjectionApi.test.ts[2K[1Gsrc/lib/propagationProposalTypes.ts[2K[1Gsrc/lib/scriptCommandApi.test.ts[2K[1Gsrc/lib/scriptDocumentFormat.test.ts[2K[1Gsrc/lib/scriptDocumentFormat.ts[2K[1Gsrc/lib/scriptFactTypes.ts[2K[1Gsrc/lib/scriptProjectionApi.test.ts[2K[1Gsrc/lib/scriptTypes.ts[2K[1Gsrc/lib/selectedNodeEditorTypes.ts[2K[1Gsrc/lib/semanticProposalCommandApi.test.ts[2K[1Gsrc/lib/semanticProposalProjectionApi.test.ts[2K[1Gsrc/lib/semanticProposalTypes.ts[2K[1Gsrc/lib/serverEventClient.test.ts[2K[1Gsrc/lib/serverEventClient.ts[2K[1Gsrc/lib/serverEventTypes.ts[2K[1Gsrc/lib/stores/affectProposalProjection.svelte.test.ts[2K[1Gsrc/lib/stores/affectProposalProjection.svelte.ts[2K[1Gsrc/lib/stores/aiStatus.svelte.test.ts[2K[1Gsrc/lib/stores/aiStatus.svelte.ts[2K[1Gsrc/lib/stores/bible.svelte.test.ts[2K[1Gsrc/lib/stores/bible.svelte.ts[2K[1Gsrc/lib/stores/bibleGraphNodeDetailProjection.client.test.ts[2K[1Gsrc/lib/stores/bibleGraphNodeDetailProjection.svelte.ts[2K[1Gsrc/lib/stores/bibleGraphNodeProjection.commands.svelte.test.ts[2K[1Gsrc/lib/stores/bibleGraphNodeProjection.svelte.test.ts[2K[1Gsrc/lib/stores/bibleGraphNodeProjection.svelte.ts[2K[1Gsrc/lib/stores/bibleGraphNodeReadOwners.ts[2K[1Gsrc/lib/stores/bibleGraphSchemaProjection.svelte.test.ts[2K[1Gsrc/lib/stores/bibleGraphSchemaProjection.svelte.ts[2K[1Gsrc/lib/stores/bibleRecallProjection.svelte.test.ts[2K[1Gsrc/lib/stores/bibleRecallProjection.svelte.ts[2K[1Gsrc/lib/stores/bibleRenderGraphProjection.svelte.test.ts[2K[1Gsrc/lib/stores/bibleRenderGraphProjection.svelte.ts[2K[1Gsrc/lib/stores/changeReviewProjection.svelte.test.ts[2K[1Gsrc/lib/stores/changeReviewProjection.svelte.ts[2K[1Gsrc/lib/stores/contextStackProjection.svelte.test.ts[2K[1Gsrc/lib/stores/contextStackProjection.svelte.ts[2K[1Gsrc/lib/stores/editor.svelte.ts[2K[1Gsrc/lib/stores/graphRendererCommands.test.ts[2K[1Gsrc/lib/stores/graphRendererCommands.ts[2K[1Gsrc/lib/stores/graphRendererWindow.svelte.test.ts[2K[1Gsrc/lib/stores/graphRendererWindow.svelte.ts[2K[1Gsrc/lib/stores/notifications.svelte.ts[2K[1Gsrc/lib/stores/objectFieldProjection.svelte.test.ts[2K[1Gsrc/lib/stores/objectFieldProjection.svelte.ts[2K[1Gsrc/lib/stores/project.svelte.ts[2K[1Gsrc/lib/stores/projectionCacheGuards.test.ts[2K[1Gsrc/lib/stores/projectionCacheGuards.ts[2K[1Gsrc/lib/stores/projectionRefreshQueue.test.ts[2K[1Gsrc/lib/stores/projectionRefreshQueue.ts[2K[1Gsrc/lib/stores/projectSession.test.ts[2K[1Gsrc/lib/stores/projectSession.ts[2K[1Gsrc/lib/stores/propagationProposalProjection.client.test.ts[2K[1Gsrc/lib/stores/propagationProposalProjection.svelte.test.ts[2K[1Gsrc/lib/stores/propagationProposalProjection.svelte.ts[2K[1Gsrc/lib/stores/scriptBlockCreationSession.svelte.ts[2K[1Gsrc/lib/stores/scriptBlockEditSession.svelte.ts[2K[1Gsrc/lib/stores/scriptDocumentProjection.svelte.test.ts[2K[1Gsrc/lib/stores/scriptDocumentProjection.svelte.ts[2K[1Gsrc/lib/stores/scriptDocumentProjectionLifecycle.test.ts[2K[1Gsrc/lib/stores/selectedInspectorEvents.svelte.test.ts[2K[1Gsrc/lib/stores/selectedNodeEditorProjection.svelte.test.ts[2K[1Gsrc/lib/stores/selectedNodeEditorProjection.svelte.ts[2K[1Gsrc/lib/stores/semanticProposalProjection.svelte.test.ts[2K[1Gsrc/lib/stores/semanticProposalProjection.svelte.ts[2K[1Gsrc/lib/stores/serverEventHandlers.test.ts[2K[1Gsrc/lib/stores/serverEventHandlers.ts[2K[1Gsrc/lib/stores/shortcuts.svelte.ts[2K[1Gsrc/lib/stores/storyArcProjection.svelte.test.ts[2K[1Gsrc/lib/stores/storyArcProjection.svelte.ts[2K[1Gsrc/lib/stores/timeline.svelte.ts[2K[1Gsrc/lib/stores/timelineCommandFlow.test.ts[2K[1Gsrc/lib/stores/timelineKeyboardCommands.test.ts[2K[1Gsrc/lib/stores/timelineKeyboardCommands.ts[2K[1Gsrc/lib/stores/timelinePlacementSession.svelte.test.ts[2K[1Gsrc/lib/stores/timelinePlacementSession.svelte.ts[2K[1Gsrc/lib/stores/timelineProjectionLifecycle.test.ts[2K[1Gsrc/lib/stores/timelineRendererWindow.svelte.test.ts[2K[1Gsrc/lib/stores/timelineRendererWindow.svelte.ts[2K[1Gsrc/lib/stores/timelineRenderProjection.svelte.test.ts[2K[1Gsrc/lib/stores/timelineRenderProjection.svelte.ts[2K[1Gsrc/lib/stores/workspaceMode.svelte.test.ts[2K[1Gsrc/lib/stores/workspaceMode.svelte.ts[2K[1Gsrc/lib/storyArcTypes.ts[2K[1Gsrc/lib/timelineCommandApi.ts[2K[1Gsrc/lib/timelineCommandTypes.ts[2K[1Gsrc/lib/timelineRendererApi.test.ts[2K[1Gsrc/lib/timelineRendererApi.ts[2K[1Gsrc/lib/timelineRendererTypes.ts[2K[1Gsrc/lib/timelineRenderModel.test.ts[2K[1Gsrc/lib/timelineRenderModel.ts[2K[1Gsrc/lib/timelineRenderTypes.ts[2K[1Gsrc/lib/timelineTypes.ts[2K[1Gsrc/lib/types.ts[2K[1Gsrc/qualification/ManualFactControls.svelte[2K[1Gsrc/qualification/manualFacts.svelte.ts[2K[1Gsrc/routes/+layout.svelte[2K[1Gsrc/routes/+page.svelte[2K[1Gsrc/routes/page.ssr.test.ts[2K[1G.prettierrc.json[2K[1Geslint.config.js[2K[1Gpackage-lock.json[2K[1Gpackage.json[2K[1Gsvelte.config.js[2K[1Gtsconfig.json[2K[1GAll matched files use Prettier code style!
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
+
+┃  ui-lint ❯ 
+
+
+> eidetic-ui@0.1.0 lint
+> eslint src/
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
+
+┃  ui-typecheck ❯ 
+
+
+> eidetic-ui@0.1.0 typecheck
+> npm run check
+
+
+> eidetic-ui@0.1.0 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /workspace/scratch/relationship-lineage/creative-media/Eidetic-manual-edit-bible-save-refresh-successor-native/ui
+Getting Svelte diagnostics...
+
+svelte-check found 0 errors and 0 warnings
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
+
+                                      
+  ────────────────────────────────────
+summary: (done in 12.05 seconds)      
+✓ decision-traceability (2.05 seconds)
+✓ rustfmt (5.83 seconds)
+✓ ui-format-check (7.35 seconds)
+✓ ui-lint (9.31 seconds)
+✓ ui-typecheck (12.04 seconds)
+╭────────────────────────────────────╮
+│ lefthook v1.13.6  hook: commit-msg │
+╰────────────────────────────────────╯
+┃  conventional ❯ 
+
+
+                                      
+  ────────────────────────────────────
+summary: (done in 0.00 seconds)       
+✓ conventional (0.00 seconds)
+[test/manual-edit-bible-save-refresh-successor-native a23166c] test(bible): qualify acknowledged save and refresh recovery successor
+ 9 files changed, 1580 insertions(+)
+ create mode 100644 .github/workflows/manual-fact-native.yml
+ create mode 100644 crates/server/examples/manual_fact_capture_fixture.rs
+ create mode 100644 scripts/manual-fact-native-helpers.py
+ create mode 100644 scripts/manual-facts-vite.config.mts
+ create mode 100644 scripts/qualify-manual-fact-reconciliation.py
+ create mode 100644 scripts/test_qualify_manual_fact_reconciliation.py
+ create mode 100644 ui/src/qualification/ManualFactControls.svelte
+ create mode 100644 ui/src/qualification/README.md
+ create mode 100644 ui/src/qualification/manualFacts.svelte.ts

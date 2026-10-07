@@ -1,0 +1,10 @@
+    Blocking waiting for file lock on build directory
+   Compiling eidetic-server v0.1.0 (/workspace/scratch/relationship-lineage/creative-media/Eidetic-manual-edit-bible-review/crates/server)
+    Finished `test` profile [unoptimized] target(s) in 19.65s
+     Running unittests src/lib.rs (/workspace/creative-media/Eidetic/target/debug/deps/eidetic_server-597be0fe3d9e46ae)
+
+running 1 test
+test script_fact_proposal::tests::malformed_optional_edit_receipt_keeps_impact_and_refuses_capture ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 528 filtered out; finished in 0.35s
+

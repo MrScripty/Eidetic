@@ -1,0 +1,48 @@
+{
+  "source_sha": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+  "source_tree": "be0acb7d8db1402a57939dda16820ac7558126a5",
+  "source_parent": "1aab490a7518faf89285c72404f429e63d1e0d4e",
+  "published_parent": "17e234b2d260ce2b520c696e6456d8e4fd7fb9e3",
+  "qa_sha": "ff8f822f299745479b3f7d514824a54b2922c75d",
+  "qa_tree": "ace591d196cf27554ff520aa3b8c79f963f159ec",
+  "qa_parent": "a23166c0d585c1287e7eb71485eed7441f1420fd",
+  "source_unchanged_after_partial_native": true,
+  "qa_delta_from_product": [
+    ".github/workflows/manual-fact-native.yml",
+    "crates/server/examples/manual_fact_capture_fixture.rs",
+    "scripts/manual-fact-native-helpers.py",
+    "scripts/manual-facts-vite.config.mts",
+    "scripts/qualify-manual-fact-reconciliation.py",
+    "scripts/test_qualify_manual_fact_reconciliation.py",
+    "ui/src/qualification/ManualFactControls.svelte",
+    "ui/src/qualification/README.md",
+    "ui/src/qualification/manualFacts.svelte.ts"
+  ],
+  "local_ui": {
+    "tests": 543,
+    "files": 93,
+    "typecheck_errors": 0,
+    "typecheck_warnings": 0,
+    "lint": "pass",
+    "format": "pass",
+    "build": "pass"
+  },
+  "rust_checks_on_1aab": {
+    "core": 123,
+    "server": 529,
+    "all_targets": true,
+    "strict_clippy_all_features": "pass"
+  },
+  "backend_unchanged_in_e5a": true,
+  "qa_python": 46,
+  "normal_commit_hooks": "pass",
+  "no_local_native_attempt": true,
+  "local_served_import_preflight": {
+    "scope": "Vite routing only; no native UI/model execution",
+    "file": "local-checks-e5a09ed/local-vite-served-detail.js",
+    "sha256": "1af4e95ceab92aebd5621ab121e3049a9160fb78845db482035a9bef1a9d2752",
+    "wrapper_import": "/src/qualification/manualFacts.svelte.ts"
+  },
+  "native_run_pending": 37644276528,
+  "real_model_quality_qualified": false
+}

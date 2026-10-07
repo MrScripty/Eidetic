@@ -1,0 +1,22 @@
+
+> eidetic-ui@0.1.0 typecheck
+> npm run check
+
+
+> eidetic-ui@0.1.0 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /workspace/scratch/relationship-lineage/creative-media/Eidetic-manual-edit-bible-save-refresh-native/ui
+Getting Svelte diagnostics...
+
+svelte-check found 0 errors and 0 warnings
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

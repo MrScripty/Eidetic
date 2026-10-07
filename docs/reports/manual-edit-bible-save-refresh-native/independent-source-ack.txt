@@ -1,0 +1,10 @@
+Independent source ACK from /root/review_manual_edit_fact_reconciliation, 2026-10-07.
+Source e5a09ede159a6511694896fdb5d4382e51f4418d, tree be0acb7d8db1402a57939dda16820ac7558126a5.
+Independently reran ten compiled-client UI tests and seven server fact-proposal tests.
+Committed hashes match reviewed bytes. Save completion requires the same owner/request,
+matching acknowledged/current field and no latched conflict; failed or pending reads
+still gate subsequent Save. Malformed optional edit receipts preserve normal impact
+while strict capture refuses. No source blockers remain.
+Limits: synthetic faults/model responses do not qualify real-model quality, backend CAS,
+draft persistence across restart or general project-switch recovery. Final native ACK
+requires originals from hosted run 37644276528.
