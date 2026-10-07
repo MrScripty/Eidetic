@@ -1,0 +1,27 @@
+Independent scoped provenance/report integrity review: ACK
+Reviewer: /root/review_manual_edit_fact_reconciliation
+Product source/tree: c09db543f10b663381379f0532ab0d34ad939b62 / 016da4f54d34faa384b9744d5e071e72c23ea8c6
+QA source/tree: 981d9d94b8c371351bc00136f25ea6b7ee433397 / c1569f75bd5d588b6df28cadcef60a1cecfd9bb7
+Small provenance head/tree: 1108344201819318456d1b5b2434fb1725cfe80d / a2cd65a35505594dac7873503c28323fe1b53261
+Report SHA256: 9af7b1617b38f7aff312cbc4b8eea41c3edd069aeb575d5f85eca0cf95cf1ba9
+Manifest SHA256: 8f45637a2fc1cd15e10fdfc1625e6f28c9a25a63bb41866ab0672bf644457bfb
+Reviewed report/manifest paths: docs/reports/bible-owner-metadata-initial-retry-native.md and docs/reports/bible-owner-metadata-initial-retry-native-manifest.json in Eidetic-bible-initial-retry-provenance.
+
+No remaining reporting-integrity blocker found in this proposed eight-file delivery (six committed small provenance files plus the report and manifest). The earlier raw-asset report is local-only and is not the approved publication report.
+
+Independent checks:
+- Recomputed report and manifest SHA256; matched exact identities above and manifest report hash.
+- All six small provenance files match frozen Git blobs, local bytes, manifest sizes and SHA256; exact total 23,173 bytes. Source, QA and native ACKs match this reviewer's authoritative standalone files byte-for-byte.
+- All six immutable report links target existing blobs at exact 1108344201819318456d1b5b2434fb1725cfe80d.
+- That commit is directly based on historical public seal 1c1f240d61ee2331b188aff01b41fc5ccf4e3bdb. Its complete delta adds only the six small provenance files, with no historical file changed or deleted. No new PNG, JPEG, ZIP, PDF or log is introduced by this provenance delta. Raw 96/02 local asset history is excluded from its ancestry.
+- All historical report/evidence Git blobs at seal 1c remain identical in the new provenance head. No historical public evidence migration or deletion is part of this delivery.
+- All 29 external-originals inventory paths match preserved raw02 Git blobs AND local original bytes, sizes and SHA256, including all 17 logs. Inventory is complete for raw asset commit 02f2047056d8d6f2df9badee1abf709fe5db3ab4. Local protected branch preserve/bible-initial-retry-local-originals-02f2047 resolves to that exact commit. No locally observed remote ref contains raw02. This is not a fresh remote GitHub publication audit.
+- Report matches scoped source/test/native ACKs: generic/manual-bound custom owner metadata is server-regression qualified only; native interaction is initial failure, one left ordinary Retry, shared pending Loading in BOTH inspectors, admitted recovery and an exact unsubmitted left motivation draft with enabled Save. Public fixture setup writes are explicit; Retry/draft sequence changes no canonical saved state.
+- Four synthetic fixture HTTP/SSE calls only; no extra analysis/model/provider call, stale/replay/full-flow/restart/project-switch or native custom-owner authoring claim. Prior full e5a09ed walkthrough remains source-bound and unchanged.
+- Raw executable, transformed-module bytes and SQL snapshots are absent from the archive and are correctly described as runtime driver/receipt evidence, not independently redigested offline artifacts.
+
+Repository-size constraint is accurately documented. Exact lossless native qualification PNGs and original ZIP remain preserved outside newly published source Git; their integrity-bound hashes/glyph evidence are retained. Ordinary display derivatives use JPEG quality 85; no derivative is introduced here. No history rewrite or deletion was performed by this reviewer.
+
+Remaining delivery dependency, explicitly disclosed: hosted artifact 11503180647 for run 37662915335 expires at 2026-10-10T18:16:31Z. Parent-owned durable Library/external delivery is pending and must preserve original bytes/hashes before expiry. This ACK does not claim permanent external upload, publicly published new provenance/report, or migration of historical artifacts. Original source and native ACKs remain valid independently of this pending delivery.
+
+Only this requested standalone report ACK was written. No product, QA, original evidence, report, manifest or public state was modified by this reviewer; no publication or external reviewer request was performed.
