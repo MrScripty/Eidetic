@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { getBibleRecallProjection } from '$lib/projectionApi.js';
 import type { BibleRecallRequest, BibleRecallProjection } from '$lib/bibleRecallTypes.js';
 import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
@@ -7,6 +7,8 @@ import {
   clearBibleRecall,
   invalidateBibleRecall,
   recallBibleFacts,
+  retainBibleRecallInspector,
+  revokeBibleRecall,
   selectBibleRecallAnchor,
 } from './bibleRecallProjection.svelte.js';
 import { editorState, resetEditorState } from './editor.svelte.js';
@@ -71,6 +73,159 @@ beforeEach(() => {
   read.mockReset();
   clearBibleRecall();
   resetEditorState();
+});
+const mountedInspectors: (() => void)[] = [];
+function mountInspector(anchor = query.anchor_node_id): () => void {
+  const unmount = retainBibleRecallInspector(anchor);
+  mountedInspectors.push(unmount);
+  return unmount;
+}
+afterEach(() => {
+  for (const unmount of mountedInspectors.splice(0)) unmount();
+});
+
+it('remounts the same anchor after a completed read without fabricating a fact change or losing its revision floor', async () => {
+  const unmount = mountInspector();
+  read.mockResolvedValueOnce(evidence(query, 10));
+  await recallBibleFacts(query);
+  unmount();
+  expect(bibleRecallState.anchor).toBe('Mara');
+  expect(bibleRecallState.projection).toBeNull();
+  mountInspector();
+  expect(bibleRecallState.invalidated).toBe(false);
+  expect(read).toHaveBeenCalledTimes(1);
+  read.mockResolvedValueOnce(evidence(query, 9));
+  await recallBibleFacts(query);
+  expect(bibleRecallState.error).toContain('stale');
+  expect(bibleRecallState.invalidated).toBe(false);
+});
+
+it.each([false, true])(
+  'revokes a last-inspector pending read across remount (failure=%s)',
+  async (failure) => {
+    const unmount = mountInspector();
+    const old = deferred();
+    const current = deferred();
+    read.mockReturnValueOnce(old.promise).mockReturnValueOnce(current.promise);
+    const one = recallBibleFacts(query);
+    unmount();
+    expect(bibleRecallState.pending).toBe(false);
+    mountInspector();
+    expect(bibleRecallState.invalidated).toBe(false);
+    const two = recallBibleFacts(query);
+    if (failure) old.reject(new Error('disposed inspector failure'));
+    else old.resolve(evidence(query, 8));
+    await one;
+    expect(bibleRecallState.pending).toBe(true);
+    expect(bibleRecallState.projection).toBeNull();
+    expect(bibleRecallState.error).toBeNull();
+    current.resolve(evidence(query, 9));
+    await two;
+    expect(bibleRecallState.projection).toEqual(evidence(query, 9));
+  },
+);
+
+it('keeps a shared pending read when either of two concurrent inspectors unmounts', async () => {
+  const sidebar = mountInspector();
+  const selectedInspector = mountInspector();
+  const pending = deferred();
+  read.mockReturnValueOnce(pending.promise);
+  const work = recallBibleFacts(query);
+  sidebar();
+  expect(bibleRecallState.pending).toBe(true);
+  pending.resolve(evidence());
+  await work;
+  expect(bibleRecallState.projection).toEqual(evidence());
+  expect(bibleRecallState.invalidated).toBe(false);
+  selectedInspector();
+  expect(bibleRecallState.projection).toBeNull();
+  expect(bibleRecallState.invalidated).toBe(false);
+});
+
+it('preserves shared displayed evidence and makes duplicate releases harmless to the remaining inspector', async () => {
+  const sidebar = mountInspector();
+  const selectedInspector = mountInspector();
+  read.mockResolvedValueOnce(evidence());
+  await recallBibleFacts(query);
+  selectedInspector();
+  expect(bibleRecallState.projection).toEqual(evidence());
+  const pending = deferred();
+  read.mockReturnValueOnce(pending.promise);
+  const work = recallBibleFacts(query);
+  selectedInspector();
+  expect(bibleRecallState.pending).toBe(true);
+  sidebar();
+  pending.resolve(evidence(query, 9));
+  await work;
+  expect(bibleRecallState.projection).toBeNull();
+  expect(bibleRecallState.invalidated).toBe(false);
+});
+
+it('retains a genuine fact-change notice across cleanup and remount until a fresh explicit read', async () => {
+  const unmount = mountInspector();
+  read.mockResolvedValueOnce(evidence(query, 10));
+  await recallBibleFacts(query);
+  invalidateBibleRecall(11);
+  unmount();
+  mountInspector();
+  expect(bibleRecallState.invalidated).toBe(true);
+  read.mockResolvedValueOnce(evidence(query, 10));
+  await recallBibleFacts(query);
+  expect(bibleRecallState.error).toContain('stale');
+  expect(bibleRecallState.invalidated).toBe(true);
+  read.mockResolvedValueOnce(evidence(query, 11));
+  await recallBibleFacts(query);
+  expect(bibleRecallState.invalidated).toBe(false);
+});
+
+it('does not let an obsolete session owner revoke or retain a new session read', async () => {
+  const old = mountInspector();
+  const anotherOld = mountInspector();
+  clearBibleRecall();
+  resetEditorState();
+  const current = mountInspector();
+  const pending = deferred();
+  read.mockReturnValueOnce(pending.promise);
+  const work = recallBibleFacts(query);
+  old();
+  expect(bibleRecallState.pending).toBe(true);
+  current();
+  expect(bibleRecallState.pending).toBe(false);
+  pending.resolve(evidence());
+  await work;
+  anotherOld();
+  expect(bibleRecallState.projection).toBeNull();
+  expect(bibleRecallState.invalidated).toBe(false);
+});
+
+it('does not let an old anchor cleanup revoke the current inspector read', async () => {
+  const old = mountInspector();
+  mountInspector('BeachHouse');
+  const other = { ...query, anchor_node_id: 'BeachHouse' };
+  const pending = deferred();
+  read.mockReturnValueOnce(pending.promise);
+  const work = recallBibleFacts(other);
+  old();
+  expect(bibleRecallState.pending).toBe(true);
+  pending.resolve(evidence(other, 9));
+  await work;
+  expect(bibleRecallState.projection).toEqual(evidence(other, 9));
+});
+
+it('query-control changes revoke pending evidence without claiming a canonical fact change', async () => {
+  mountInspector();
+  read.mockResolvedValueOnce(evidence());
+  await recallBibleFacts(query);
+  const pending = deferred();
+  read.mockReturnValueOnce(pending.promise);
+  const work = recallBibleFacts(query);
+  revokeBibleRecall();
+  pending.reject(new Error('old control query'));
+  await work;
+  expect(bibleRecallState.projection).toBeNull();
+  expect(bibleRecallState.pending).toBe(false);
+  expect(bibleRecallState.error).toBeNull();
+  expect(bibleRecallState.invalidated).toBe(false);
 });
 
 it('requires an explicit read and displays only the requested evidence without changing generation context', async () => {

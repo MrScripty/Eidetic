@@ -1,7 +1,11 @@
 import { beforeEach, expect, it } from 'vitest';
 import { render } from 'svelte/server';
 import BibleRecall from './BibleRecall.svelte';
-import { bibleRecallState, clearBibleRecall } from '$lib/stores/bibleRecallProjection.svelte.js';
+import {
+  bibleRecallState,
+  clearBibleRecall,
+  retainBibleRecallInspector,
+} from '$lib/stores/bibleRecallProjection.svelte.js';
 
 beforeEach(clearBibleRecall);
 it('shows typed path, exact field sources, fictional-time qualifications and whole-record omissions', () => {
@@ -103,4 +107,19 @@ it('labels unspecified fictional time and an invalidated read without stale valu
   expect(body).toContain('Unspecified');
   expect(body).toContain('Facts changed. Recall again');
   expect(body).not.toContain('Rain — 雨');
+});
+it('renders a same-anchor remount without a false fact-change notice or automatic recall', () => {
+  const unmount = retainBibleRecallInspector('Mara');
+  bibleRecallState.pending = true;
+  unmount();
+  const remounted = retainBibleRecallInspector('Mara');
+  try {
+    const { body } = render(BibleRecall, { props: { nodeId: 'Mara' } });
+    expect(body).toContain('Recall related story facts');
+    expect(body).not.toContain('Facts changed');
+    expect(body).not.toContain('Recalling…');
+    expect(body).not.toContain('revision ');
+  } finally {
+    remounted();
+  }
 });

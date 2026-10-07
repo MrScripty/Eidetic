@@ -87,8 +87,10 @@ selected Bible entity detail, with optional fictional time and direction/kind
 filters. It displays named neighbors, typed stored orientation, exact field and
 relationship source revisions, unresolved fields and whole-record omissions.
 Untimed associations are qualified as connectedness evidence, not truth. Input
-changes and component disposal revoke evidence; no graph view or generation
-change is required. SSR and asynchronous read tests cover the visible evidence
+changes revoke evidence without a fact-change notice; component disposal releases
+the shared inspector owner, revoking only when no current inspector remains.
+The effect tracks only its node ID, so projection updates do not retrigger cleanup.
+No graph view or generation change is required. SSR and asynchronous read tests cover the visible evidence
 and stale-result guards alongside preserved screenplay work.
 
 Recall relationship paths render as one text expression, keeping the native

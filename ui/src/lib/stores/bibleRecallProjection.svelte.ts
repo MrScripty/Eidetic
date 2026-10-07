@@ -13,6 +13,35 @@ export const bibleRecallState = $state<{
 
 let requestGeneration = 0;
 let versionFloor = 0;
+const inspectors: { anchor: string; session: number }[] = [];
+
+/** Revoke inspection work without claiming that canonical facts changed. */
+export function revokeBibleRecall(): void {
+  requestGeneration += 1;
+  versionFloor = Math.max(versionFloor, bibleRecallState.projection?.version ?? 0);
+  bibleRecallState.projection = null;
+  bibleRecallState.pending = false;
+  bibleRecallState.error = null;
+}
+
+/** Shared inspectors retain evidence until the last current owner leaves. */
+export function retainBibleRecallInspector(anchor: string): () => void {
+  selectBibleRecallAnchor(anchor);
+  const owner = { anchor, session: getEditorSessionGeneration() };
+  inspectors.push(owner);
+  return () => {
+    const index = inspectors.indexOf(owner);
+    if (index < 0) return;
+    inspectors.splice(index, 1);
+    if (
+      bibleRecallState.anchor === owner.anchor &&
+      getEditorSessionGeneration() === owner.session &&
+      !inspectors.some((other) => other.anchor === owner.anchor && other.session === owner.session)
+    ) {
+      revokeBibleRecall();
+    }
+  };
+}
 
 export function clearBibleRecall(): void {
   requestGeneration += 1;
@@ -32,12 +61,9 @@ export function selectBibleRecallAnchor(anchor: string | null): void {
 
 /** Bible writes/events revoke outstanding reads as well as displayed evidence. */
 export function invalidateBibleRecall(version?: number): void {
-  requestGeneration += 1;
   versionFloor = Math.max(versionFloor, version ?? 0, bibleRecallState.projection?.version ?? 0);
   bibleRecallState.invalidated ||= bibleRecallState.projection !== null || bibleRecallState.pending;
-  bibleRecallState.projection = null;
-  bibleRecallState.pending = false;
-  bibleRecallState.error = null;
+  revokeBibleRecall();
 }
 
 export async function recallBibleFacts(query: BibleRecallRequest): Promise<void> {

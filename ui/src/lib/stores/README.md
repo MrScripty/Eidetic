@@ -14,7 +14,7 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `project.svelte.ts`                       | Active project session metadata.                                                     |
 | `bibleGraphNodeProjection.svelte.ts`      | Focused cache/action layer for backend-owned bible graph node and field projections. |
 | `bible.svelte.ts`                         | Typed transient graph selection state.                                               |
-| `bibleRecallProjection.svelte.ts` | Disposable inspection projection cache | Holds only explicitly recalled backend evidence; request, query, selection, session and revision guards revoke stale reads. | Keep read-only; Bible writes/events invalidate evidence while existing drafts and proposals retain their owners. |
+| `bibleRecallProjection.svelte.ts` | Disposable inspection cache with request, query, selection, session and revision guards. |
 | `bibleRenderGraphProjection.svelte.ts`    | Focused cache layer for backend-owned bible render graph projections.                |
 | `contextStackProjection.svelte.ts`        | Focused cache layer for backend-owned selected timeline context stack projections.   |
 | `graphRendererCommands.ts`                | Applies validated transient Bevy graph renderer commands to UI selection state.      |
@@ -246,3 +246,12 @@ and displayed evidence synchronously. Selection and project-session cleanup
 revoke reads; late successes/errors cannot publish into a newer inspector.
 Existing screenplay drafts, placement intents and proposal caches remain owned
 by their current stores and are preserved during recall and Bible invalidation.
+
+Mounted recall inspectors retain the shared read by anchor and editor session.
+Disposing one inspector preserves another current inspector's pending/displayed
+evidence; disposing the last revokes responses without setting the fact-change
+notice or resetting the revision floor. Query changes also revoke without
+claiming a canonical change. Bible writes/events alone set the invalidation
+notice. Releases are idempotent, and obsolete session/anchor owners cannot revoke
+a current inspector. A per-component cache was rejected because both visible
+inspectors consume the same projection; revisit if selection becomes independent.

@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { BibleGraphEdgeKind } from '$lib/bibleGraphTypes.js';
   import type { FieldValue } from '$lib/projectionTypes.js';
   import {
     bibleRecallState,
-    invalidateBibleRecall,
+    revokeBibleRecall,
     recallBibleFacts,
-    selectBibleRecallAnchor,
+    retainBibleRecallInspector,
   } from '$lib/stores/bibleRecallProjection.svelte.js';
 
   let { nodeId }: { nodeId: string } = $props();
@@ -26,13 +27,13 @@
   ];
 
   $effect(() => {
-    selectBibleRecallAnchor(nodeId);
-    return () => invalidateBibleRecall();
+    const anchor = nodeId;
+    return untrack(() => retainBibleRecallInspector(anchor));
   });
 
   function changed(): void {
     inputError = '';
-    invalidateBibleRecall();
+    revokeBibleRecall();
   }
   async function recall(): Promise<void> {
     const at = time.trim() === '' ? null : Number(time);
