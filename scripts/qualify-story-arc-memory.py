@@ -77,6 +77,11 @@ class ArcProvider(ui.FixtureProvider):
         self.wfile.write(data)
 
 
+def pending_proposal(database, block_id):
+    rows = ui.query(database, "SELECT id,proposed_text FROM propagation_proposals WHERE target_kind='script_block' AND target_id=? AND status='pending' ORDER BY rowid DESC LIMIT 1", (block_id,))
+    return rows[0] if rows else None
+
+
 def arc_value(database):
     rows = ui.query(database, "SELECT a.description,r.change_event_id FROM arcs a JOIN object_revisions r ON r.object_id=a.id JOIN object_revision_fields f ON f.revision_id=r.id JOIN change_events e ON e.id=r.change_event_id WHERE a.id=? AND r.object_kind='story_arc' AND f.field_key='description' ORDER BY e.rowid DESC,r.rowid DESC LIMIT 1", (ArcProvider.arc_id,))
     return rows[0] if rows else None
@@ -124,7 +129,7 @@ def main():
     evidence = {'status': 'failed', 'application_source_sha': SOURCE,
                 'qualification_sha': ui.command('git', 'rev-parse', 'HEAD'),
                 'application_binary_sha256': ui.file_hash(repo / 'target/debug/eidetic-desktop'),
-                'capture_label': 'prototype views',
+                'capture_label': 'actual native application with labelled synthetic provider',
                 'setup_route': 'public services; tagged B ungenerated and unconsumed F manually authored',
                 'gui_route': 'actual Tauri AT-SPI/X11 Generate, manual screenplay Save, typed arc edit, retained draft, stale refusal, preview and explicit acceptance',
                 'provider': 'synthetic localhost HTTP/SSE fixture through production client',
@@ -147,7 +152,7 @@ def main():
         evidence.setdefault('captures', []).append({'file': name, 'sha256': digest, 'window_id': int(window), 'pid': pid})
 
     try:
-        checkpoint('public services prepare fresh Last Train project with empty A and ungenerated B')
+        checkpoint('public services prepare tagged Witness arc, manual support and ungenerated scene')
         fixture = json.loads(subprocess.check_output([str(repo / 'target/debug/examples/story_arc_memory_fixture')],
                                                     env=environment, text=True, timeout=60))
         database = Path(fixture['project_path']).resolve()
@@ -231,7 +236,7 @@ def main():
         checkpoint('exact typed arc edit identifies affected saved B without changing manual screenplay or Bible')
         capture('eidetic-story-arc-review.png')
         ui.reveal_button(application, 'Preview update', window)
-        pending = ui.wait_for('first pending native arc preview', lambda: ui.proposal(database, b_id))
+        pending = ui.wait_for('first pending native arc preview', lambda: pending_proposal(database, saved[0]))
         if pending[1] != STALE:
             raise RuntimeError('First synthetic preview differs')
         walk.PROPOSED = STALE
@@ -256,7 +261,7 @@ def main():
         ui.reveal_button(application, 'Reject', window)
         ui.wait_for('old preview explicitly rejected', lambda: ui.query(database, "SELECT status FROM propagation_proposals WHERE id=?", (pending[0],))[0][0] == 'rejected')
         ui.reveal_button(application, 'Preview update', window)
-        fresh = ui.wait_for('fresh pending native preview', lambda: ui.proposal(database, b_id))
+        fresh = ui.wait_for('fresh pending native preview', lambda: pending_proposal(database, saved[0]))
         if fresh[1] != PROPOSED or fresh[0] == pending[0]:
             raise RuntimeError('Fresh synthetic proposal differs')
         walk.PROPOSED = PROPOSED

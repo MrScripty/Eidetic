@@ -5,6 +5,8 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import sqlite3
+import tempfile
 import threading
 from types import ModuleType
 import unittest
@@ -17,6 +19,25 @@ spec = importlib.util.spec_from_file_location('arc_memory_capture', Path(__file_
 driver = importlib.util.module_from_spec(spec)
 with patch.dict(sys.modules, {'pyatspi': ModuleType('pyatspi'), 'gi': ModuleType('gi'), 'gi.repository': repository}):
     spec.loader.exec_module(driver)
+
+
+class PendingProposalTests(unittest.TestCase):
+    def test_read_only_pending_lookup_uses_selected_block_and_excludes_old_decisions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / 'project.eidetic'
+            with sqlite3.connect(database) as conn:
+                conn.execute('CREATE TABLE propagation_proposals(id TEXT,target_kind TEXT,target_id TEXT,status TEXT,proposed_text TEXT)')
+                conn.executemany('INSERT INTO propagation_proposals VALUES (?,?,?,?,?)', [
+                    ('old', 'script_block', 'block.B', 'rejected', driver.STALE),
+                    ('accepted', 'script_block', 'block.B', 'accepted', 'Old accepted text'),
+                    ('wrong', 'script_block', 'block.F', 'pending', 'Unrelated proposal'),
+                    ('current', 'script_block', 'block.B', 'pending', driver.PROPOSED),
+                ])
+            self.assertEqual(driver.pending_proposal(database, 'block.B'), ('current', driver.PROPOSED))
+            self.assertIsNone(driver.pending_proposal(database, 'scene.B'))
+            with sqlite3.connect(database) as conn:
+                conn.execute("UPDATE propagation_proposals SET status='accepted' WHERE id='current'")
+            self.assertIsNone(driver.pending_proposal(database, 'block.B'))
 
 
 class ArcProviderTests(unittest.TestCase):
