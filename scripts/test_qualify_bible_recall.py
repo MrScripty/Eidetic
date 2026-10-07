@@ -17,6 +17,15 @@ with patch.dict(sys.modules,{'pyatspi':ModuleType('pyatspi'),'gi':ModuleType('gi
 
 
 class RecallCaptureTests(unittest.TestCase):
+    def test_result_text_is_scrolled_into_view_and_normalizes_native_line_wrapping(self):
+        class Node:
+            def getRole(self):return 1
+        paragraph=Node()
+        with patch.object(driver.ui.pyatspi,'ROLE_COMBO_BOX',2,create=True), patch.object(driver.ui,'text_of',return_value='Unresolved:\n environment.weather — no established value'):
+            with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:paragraph if predicate(paragraph) else None) as reveal:
+                self.assertIs(driver.visible_text(None,'Unresolved: environment.weather'),paragraph)
+                reveal.assert_called_once()
+
     def test_synthetic_context_requires_saved_inputs_and_exact_current_fact_excludes_draft_and_unrecalled_neighbor(self):
         provider=object.__new__(driver.RecallProvider)
         before=driver.A_TEXT+driver.F_TEXT+'profile.tagline: '+driver.BLUE

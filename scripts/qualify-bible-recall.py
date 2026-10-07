@@ -244,7 +244,11 @@ def fact(database):
 
 
 def visible_text(application, label):
-    return ui.find(application, lambda n: label in ui.text_of(n) and n.getRole() not in (ui.pyatspi.ROLE_COMBO_BOX,))
+    # Recall results extend below the nested Bible sidebar viewport. Native
+    # scrolling must expose the exact paragraph before claiming it visible.
+    expected = ' '.join(label.split())
+    return ui.reveal(application, lambda n: expected in ' '.join(ui.text_of(n).split())
+        and n.getRole() not in (ui.pyatspi.ROLE_COMBO_BOX,))
 
 
 def recall_disclosure(application):
