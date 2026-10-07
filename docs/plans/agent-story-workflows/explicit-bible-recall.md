@@ -7,6 +7,11 @@ Branch `feat/explicit-bible-recall` starts from verified merged main
 `f096352611b570f9c31617fcc4a97887874fac0d`. PR17 and PR18 source, qualifier
 and evidence branches remain separate. Parent owns review, PRs and merges.
 
+Integration preserves normal ancestry from accepted main
+`c4587c11911af355c2446d0befa5ac1cbde8f3e3` (parents8000f29 and aa142712),
+retaining consumed arc memory alongside this explicit recall read. Conflicting
+README additions are both retained; the application merges without conflicts.
+
 The authoring plan requests relevance-based slices and relationship paths
 (`story-bible-worldbuilding/plan.md`, AI Context Behavior). Current
 ReadBibleNeighborhood calls the renderer query: selected IDs are required,

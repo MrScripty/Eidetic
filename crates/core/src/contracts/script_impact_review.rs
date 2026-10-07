@@ -24,6 +24,13 @@ pub struct RequestScriptImpactProposalCommand {
 /// Canonical evidence captured before provider I/O and rechecked at acceptance.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScriptImpactProposalBinding {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_previous_inputs: Option<Vec<super::StoryArcFieldInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_inputs: Option<Vec<super::StoryArcFieldInput>>,
+    /// Deletion custody for previously bound arc fields; not consumed values.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_absence_revisions: Option<Vec<(crate::story::arc::ArcId, ChangeEventId)>>,
     pub request: RequestScriptImpactProposalCommand,
     pub cause: ScriptImpactCause,
     pub target_segment_revision_event_id: ChangeEventId,

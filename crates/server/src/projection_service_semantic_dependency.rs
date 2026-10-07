@@ -112,6 +112,16 @@ fn validate_endpoint_filter(
     part_key: Option<&str>,
     field_key: Option<&str>,
 ) -> Result<(), BackendError> {
+    if kind == "story_arc_field" {
+        if part_key.is_some()
+            || field_key.is_some_and(|field| !matches!(field, "name" | "description" | "arc_type"))
+        {
+            return Err(BackendError::bad_request(
+                "invalid story arc prompt field filter",
+            ));
+        }
+        return Ok(());
+    }
     if !matches!(
         kind,
         "timeline_node" | "bible_node" | "bible_field" | "script_segment" | "script_block"
@@ -153,5 +163,21 @@ fn map_history_error(error: HistoryStoreError) -> BackendError {
         HistoryStoreError::MissingColumn(message) => BackendError::internal(message),
         HistoryStoreError::Sqlite(error) => BackendError::internal(error.to_string()),
         HistoryStoreError::Json(error) => BackendError::bad_request(error.to_string()),
+    }
+}
+
+#[cfg(test)]
+mod arc_filter_tests {
+    use super::*;
+
+    #[test]
+    fn canonical_arc_field_queries_accept_prompt_fields_and_reject_presentation_fields() {
+        for field in [None, Some("name"), Some("description"), Some("arc_type")] {
+            assert!(validate_endpoint_filter("story_arc_field", None, field).is_ok());
+        }
+        assert!(validate_endpoint_filter("story_arc_field", None, Some("color")).is_err());
+        assert!(
+            validate_endpoint_filter("story_arc_field", Some("part"), Some("description")).is_err()
+        );
     }
 }

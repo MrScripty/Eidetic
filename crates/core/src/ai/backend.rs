@@ -87,6 +87,8 @@ pub trait AiBackend: Send + Sync {
 /// Everything the AI needs to generate content for a single story node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerateRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_inputs: Option<Vec<crate::contracts::StoryArcFieldInput>>,
     /// The node to generate content for (at any level).
     pub target_node: StoryNode,
     /// Arcs tagged on this node.

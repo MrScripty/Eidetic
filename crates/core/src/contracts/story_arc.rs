@@ -3,6 +3,36 @@ use serde::{Deserialize, Serialize};
 use crate::story::arc::{ArcId, ArcType, Color, StoryArc};
 use crate::story::progression::ArcProgression;
 
+/// A field actually supplied in the tagged story-arc prompt. Presentation
+/// metadata deliberately has no endpoint or input receipt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StoryArcPromptField {
+    Name,
+    Description,
+    ArcType,
+}
+
+impl StoryArcPromptField {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Name => "name",
+            Self::Description => "description",
+            Self::ArcType => "arc_type",
+        }
+    }
+}
+
+/// Exact consumed value; missing owned history remains explicitly unbound.
+/// Arc type retains its canonical serialized value, not a display label.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StoryArcFieldInput {
+    pub arc_id: ArcId,
+    pub field: StoryArcPromptField,
+    pub value: String,
+    pub revision_event_id: Option<super::ChangeEventId>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoryArcListProjection {
     pub arcs: Vec<StoryArc>,

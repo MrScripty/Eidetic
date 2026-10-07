@@ -83,6 +83,7 @@ fn generation(
     )
     .unwrap();
     CommandEnvelope::new(GenerateScriptBlockCommand {
+        arc_inputs: None,
         target_binding: None,
         block: block.clone(),
         script_inputs: Some(inputs),

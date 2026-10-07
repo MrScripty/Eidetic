@@ -44,6 +44,10 @@ impl From<SemanticDependencyId> for String {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum SemanticDependencyEndpoint {
+    StoryArcField {
+        arc_id: crate::story::arc::ArcId,
+        field: super::StoryArcPromptField,
+    },
     TimelineNode {
         node_id: NodeId,
     },

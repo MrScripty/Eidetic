@@ -377,6 +377,13 @@ struct SqlEndpoint {
 impl SqlEndpoint {
     fn from_endpoint(endpoint: &SemanticDependencyEndpoint) -> Self {
         match endpoint {
+            SemanticDependencyEndpoint::StoryArcField { arc_id, field } => Self {
+                kind: "story_arc_field".into(),
+                id: arc_id.0.to_string(),
+                part_key: None,
+                field_key: Some(field.as_str().into()),
+                field_id: None,
+            },
             SemanticDependencyEndpoint::BibleEdge { edge_id } => Self {
                 kind: "bible_edge".into(),
                 id: edge_id.as_str().into(),
@@ -452,6 +459,19 @@ impl SqlEndpoint {
                     .field_id
                     .map(eidetic_core::contracts::BibleGraphFieldId::new)
                     .transpose()?,
+            }),
+            "story_arc_field" => Ok(SemanticDependencyEndpoint::StoryArcField {
+                arc_id: eidetic_core::story::arc::ArcId(parse_uuid(&self.id)?),
+                field: match required(self.field_key, "field_key")?.as_str() {
+                    "name" => eidetic_core::contracts::StoryArcPromptField::Name,
+                    "description" => eidetic_core::contracts::StoryArcPromptField::Description,
+                    "arc_type" => eidetic_core::contracts::StoryArcPromptField::ArcType,
+                    field => {
+                        return Err(SemanticDependencyStoreError::InvalidCommand(format!(
+                            "unknown arc field: {field}"
+                        )));
+                    }
+                },
             }),
             "script_segment" => Ok(SemanticDependencyEndpoint::ScriptSegment {
                 segment_id: eidetic_core::contracts::ScriptSegmentId::new(self.id)?,

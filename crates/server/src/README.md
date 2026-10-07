@@ -577,3 +577,27 @@ proposals or semantic dependencies. Regression fixtures cover >205 entities,
 typed direction/cycles/bounds, temporal source custody, deletion and WAL atomicity.
 The temporal resolver additionally returns the exact selected assertion identity;
 existing generation values and temporal choices retain their prior behavior.
+
+## Consumed story-arc screenplay context
+
+`story_arc_lineage` reads canonical node tags, prompt fields and field history in
+one snapshot with generation target custody. `arc_inputs` in existing generation
+and targeted-review command JSON retain exact tagged name/type/nonempty description
+values. Each field clock uses owned sparse StoryArc history; color/parent metadata
+and unconsumed arcs cannot advance it. Template fields without owned revisions
+remain explicitly unbound, and absent legacy receipts remain unknown.
+
+The existing semantic store represents `story_arc_field` endpoints using its
+existing field-key column. Impact projects original consumed revisions and
+historical excerpts. Targeted review reads the original durable receipt, supplies
+current arc values, retains cleared descriptions and binds deleted arcs to owned
+deletion history. Live consumed arcs leaving current tags refuse preview. Writer
+recapture detects field ABA, deletion/restore and late preview results; target
+edits/locks remain governed by the existing block custody. Explicit acceptance
+alone replaces the selected block and installs actual current consumption.
+
+Decision: per-field sparse history avoids making presentation color a story
+change. Extending existing command/proposal/dependency owners avoids a second
+revision store; reconstructing legacy consumption from today's tags is rejected.
+New tag-membership detection, recap arc labels, affect and child-plan arc binding
+remain separate scope. Synthetic/native qualification does not assert model quality.

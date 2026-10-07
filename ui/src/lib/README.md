@@ -164,3 +164,14 @@ Timeline range commands optionally carry a canonical TimelineNodeRangeRead captu
 paths, baseline/snapshot source clocks and unresolved/omitted evidence.
 `projectionApi.ts` exposes `getBibleRecallProjection` through the existing typed
 desktop transport; recall does not extend generation context automatically.
+
+## Typed arc screenplay review
+
+`storyArcTypes.StoryArcFieldInput` mirrors exact consumed prompt values, with a
+nullable revision for unbound template history. Existing `ScriptImpactCause`
+and targeted proposal types carry per-field arc causes and original/current
+evidence. The editor displays exact changes and optional full revision details;
+`story_changed` rereads canonical impact instead of patching saved screenplay.
+
+Decision: keep Preview update and Accept update as the existing explicit review
+boundary, preserving unrelated author drafts and backend source/version custody.

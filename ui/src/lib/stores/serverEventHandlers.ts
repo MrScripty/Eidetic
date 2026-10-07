@@ -119,7 +119,8 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('story_changed', async () => {
-      await refreshStoryArcs();
+      invalidateScriptContext();
+      await Promise.all([refreshStoryArcs(), refreshMainScriptDocument(), refreshContextStack()]);
     }),
 
     events.on('node_updated', async (data) => {

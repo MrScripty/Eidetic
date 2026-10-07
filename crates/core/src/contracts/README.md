@@ -154,3 +154,15 @@ typed directed paths, resolved fields with baseline/snapshot source revisions,
 unresolved timed identities and explicit omissions. Limits are eight neighbors,
 32 paths and 32 KiB; this evidence grants no generation or replacement authority.
 `ReadBibleRecall` shares that contract within existing agent graph-read budgets.
+
+## Consumed arc field contracts
+
+`StoryArcPromptField` restricts dependency identity to name, description and
+arc_type. `StoryArcFieldInput` preserves exact supplied values and optional owned
+field revisions; missing template history is explicitly unbound. Generation and
+targeted-review receipts add optional arc inputs, original consumed evidence and
+deleted-arc revision custody. Absent legacy JSON remains unknown. Existing
+semantic endpoints extend with `story_arc_field`; no parallel store is added.
+
+Decision: per-field revision ownership makes color-only edits irrelevant while
+retaining semantic ABA, historical late consumption and explicit acceptance.

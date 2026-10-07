@@ -77,3 +77,11 @@ export function colorToHex(c: Color): string {
   const b = c.b.toString(16).padStart(2, '0');
   return `#${r}${g}${b}`;
 }
+
+/** Exact prompt value; null revision retains unbound template history. */
+export interface StoryArcFieldInput {
+  arc_id: string;
+  field: 'name' | 'description' | 'arc_type';
+  value: string;
+  revision_event_id: string | null;
+}

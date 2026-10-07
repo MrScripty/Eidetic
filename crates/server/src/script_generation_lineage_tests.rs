@@ -62,6 +62,7 @@ fn generation(
     block.text = text.into();
     block.span_provenance = ScriptSpanProvenance::AiGenerated;
     CommandEnvelope::new(GenerateScriptBlockCommand {
+        arc_inputs: None,
         target_binding: None,
         script_context_scope: None,
         bible_node_name_inputs: None,
