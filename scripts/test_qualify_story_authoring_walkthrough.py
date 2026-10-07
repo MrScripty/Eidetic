@@ -116,48 +116,49 @@ class VisibleProposalGeometryTests(unittest.TestCase):
 
 
 class InspectorFeedbackTests(unittest.TestCase):
-    def test_feedback_uses_exact_glyphs_in_top_inspector_and_excludes_saved_scene_heading(self):
+    def test_idle_control_read_never_claims_caption_glyph_verification(self):
         class State:
-            def __init__(self, showing): self.showing=showing
-            def contains(self, _): return self.showing
+            def __init__(self, node): self.node=node
+            def contains(self, kind): return self.node.enabled if kind == 3 else self.node.showing
         class Node:
-            def __init__(self, name, rect, heading=False, showing=True, text=None):
-                self.name=name; self.rect=rect; self.heading=heading; self.showing=showing; self.text=text
+            def __init__(self, name, rect, heading=False, showing=True, enabled=True):
+                self.name=name; self.rect=rect; self.heading=heading; self.showing=showing; self.enabled=enabled
             def getRole(self): return 1 if self.heading else 2
-            def getRoleName(self): return 'heading' if self.heading else 'section'
-            def getState(self): return State(self.showing)
+            def getRoleName(self): return 'heading' if self.heading else 'push button'
+            def getState(self): return State(self)
             def queryComponent(self):
                 if self.rect is None: raise NotImplementedError('No component on unrelated root')
                 return self
             def getExtents(self, _): return self.rect
-            def queryText(self):
-                if self.text is None: raise NotImplementedError('No native Text')
-                return self
-            def getText(self, start, end): return self.text[start:end]
-            def getRangeExtents(self, start, end, _):
-                assert self.text[start:end] == 'Has content'
-                return self.rect
-            def getCharacterExtents(self, offset, _):
-                return (self.rect[0] + offset % 10, self.rect[1], 1, self.rect[3])
         class Root:
             def clear_cache(self): pass
-        caption=Node('',(425,40,100,20),text='SCENE B\nScene\nHas content\nLock')
         heading=Node('SCENE B',(295,40,80,20),heading=True)
+        control=Node('Generate',(1821,35,75,21))
         nodes=[Node('Application',None), Node('SCENE B',(295,600,80,20),heading=True),
-               heading, Node('Has content',(0,0,0,0),showing=False),
-               Node('Has content',(300,400,100,20)), caption]
-        with patch.object(driver.ui,'walk',side_effect=lambda _:iter(nodes)),patch.object(driver.ui,'text_of',side_effect=lambda n:n.text if n.text is not None else n.name),patch.object(driver,'script_viewport',return_value=(280,208,1314,836)),patch.object(driver.ui,'command',return_value='X=0\nY=0\nWIDTH=1920\nHEIGHT=1440\n'),patch.object(driver.ui.pyatspi,'STATE_SHOWING',1,create=True),patch.object(driver.ui.pyatspi,'ROLE_HEADING',1,create=True),patch.object(driver.ui.pyatspi,'XY_SCREEN',0,create=True):
-            shown=driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Has content')
-            self.assertEqual(shown['bounds'],[425,40,100,20])
-            self.assertEqual(shown['route'],'native-text-range')
-            self.assertEqual(shown['exact_native_label'],'Has content')
-            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE F','Has content'))
-            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Notes written'))
+               heading, Node('Generate',(0,0,0,0),showing=False),
+               Node('Generate',(300,400,100,20)), control]
+        with patch.object(driver.ui,'walk',side_effect=lambda _:iter(nodes)),patch.object(driver,'script_viewport',return_value=(280,208,1314,836)),patch.object(driver.ui,'command',return_value='X=0\nY=0\nWIDTH=1920\nHEIGHT=1440\n'),patch.object(driver.ui.pyatspi,'STATE_SHOWING',1,create=True),patch.object(driver.ui.pyatspi,'ROLE_HEADING',1,create=True),patch.object(driver.ui.pyatspi,'ROLE_PUSH_BUTTON',2,create=True),patch.object(driver.ui.pyatspi,'STATE_ENABLED',3,create=True),patch.object(driver.ui.pyatspi,'XY_SCREEN',0,create=True):
+            shown=driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Generate')
+            self.assertEqual(shown['bounds'],[1821,35,75,21])
+            self.assertFalse(shown['caption_machine_verified'])
+            self.assertIn('visual review',shown['caption_verification'])
+            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE F','Generate'))
+            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Has content'))
+            control.enabled=False
+            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Generate'))
+            control.enabled=True
             nodes.remove(heading)
-            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Has content'))
+            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Generate'))
             nodes.insert(0,heading)
-            caption.rect=(425,400,100,20)
-            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Has content'))
+            control.rect=(425,400,100,20)
+            self.assertIsNone(driver.visible_inspector_feedback(Root(),'owned-window','SCENE B','Generate'))
+
+    def test_canonical_status_read_preserves_exact_node_identity_and_absence(self):
+        with patch.object(driver.ui,'query',return_value=[('{"status":"HasContent"}',)]) as query:
+            self.assertEqual(driver.canonical_node_status('readonly-db','B'),'HasContent')
+            query.assert_called_once_with('readonly-db','SELECT content_json FROM nodes WHERE id=?',('B',))
+        with patch.object(driver.ui,'query',return_value=[]):
+            self.assertIsNone(driver.canonical_node_status('readonly-db','missing'))
 
 
 if __name__=='__main__':

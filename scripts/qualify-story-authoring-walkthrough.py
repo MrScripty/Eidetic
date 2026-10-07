@@ -109,12 +109,10 @@ def contained(rect, viewport):
     return width > 0 and height > 0 and left <= x and top <= y and x + width <= left + vw and y + height <= top + vh
 
 
-def visible_inspector_feedback(application, window, scene_name, exact_label):
+def visible_inspector_feedback(application, window, scene_name, exact_control):
     geometry = {key: int(value) for key, value in (line.split('=', 1) for line in
         ui.command('xdotool', 'getwindowgeometry', '--shell', window).splitlines())}
     script = script_viewport(application, window)
-    # In Script mode the selected inspector is above the Script splitter.
-    # A scene heading in the saved screenplay cannot establish editor selection.
     viewport = (script[0], geometry['Y'], geometry['WIDTH'] - script[0] + geometry['X'],
                 script[1] - geometry['Y'] - 30)
     heading = ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_HEADING
@@ -122,36 +120,29 @@ def visible_inspector_feedback(application, window, scene_name, exact_label):
         and contained(tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)), viewport))
     if heading is None:
         return None
-    application.clear_cache()
-    for node in ui.walk(application):
-        if not ui.visible(node):
-            continue
-        text = ui.text_of(node)
-        if text.count(exact_label) != 1:
-            continue
-        offset = text.index(exact_label)
-        try:
-            native_text = node.queryText()
-        except NotImplementedError:
-            if text != exact_label:
-                continue
-            bounds = tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
-            rectangles = [bounds]
-            route = 'native-control'
-        else:
-            if native_text.getText(offset, offset + len(exact_label)) != exact_label:
-                continue
-            bounds = tuple(native_text.getRangeExtents(offset, offset + len(exact_label), ui.pyatspi.XY_SCREEN))
-            rectangles = [tuple(native_text.getCharacterExtents(offset + i, ui.pyatspi.XY_SCREEN))
-                          for i, char in enumerate(exact_label) if not char.isspace()]
-            route = 'native-text-range'
-        if rectangles and contained(bounds, viewport) and all(contained(r, viewport) for r in rectangles):
-            return {'selected_scene': scene_name,
-                    'heading_bounds': list(heading.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
-                    'exact_native_label': exact_label, 'native_text': text, 'native_name': node.name,
-                    'role': node.getRoleName(), 'route': route, 'bounds': list(bounds),
-                    'character_bounds': [list(r) for r in rectangles], 'inspector_bounds': list(viewport)}
-    return None
+    def matches(node):
+        if node.name != exact_control or not contained(tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)), viewport):
+            return False
+        if exact_control == 'Generate':
+            return node.getRole() == ui.pyatspi.ROLE_PUSH_BUTTON and node.getState().contains(ui.pyatspi.STATE_ENABLED)
+        return True
+    control = ui.find(application, matches)
+    if control is None:
+        return None
+    # The visual badge is omitted by WebKit's AT-SPI Text interfaces in two
+    # preserved attempts. Do not pretend this control read verifies its glyphs.
+    return {'selected_scene': scene_name,
+            'heading_bounds': list(heading.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
+            'exact_native_control': control.name, 'role': control.getRoleName(),
+            'bounds': list(control.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
+            'inspector_bounds': list(viewport), 'caption_machine_verified': False,
+            'placement_summary_machine_verified': exact_control.startswith('Placement: '),
+            'caption_verification': 'visual review of untouched native capture required'}
+
+
+def canonical_node_status(database, node_id):
+    rows = ui.query(database, 'SELECT content_json FROM nodes WHERE id=?', (node_id,))
+    return json.loads(rows[0][0]).get('status') if len(rows) == 1 else None
 
 
 def script_viewport(application, window):
@@ -342,8 +333,13 @@ def main():
         generated = ui.wait_for('native generation canonical B',lambda:next((row for row in ui.blocks(database,b_id) if row[1]==GENERATED),None))
         evidence['generation'] = {'block_id':generated[0], 'revision_event_id':generated[2], 'real_model':False,
                                   'actual_GUI_Generate':True, 'exact_original_A_consumed':True}
-        evidence['generation']['visible_inspector'] = ui.wait_for('selected B canonical Has content caption after generation',
-            lambda: visible_inspector_feedback(application, window, fixture['b']['name'], 'Has content'))
+        if canonical_node_status(database, b_id) != 'HasContent':
+            raise RuntimeError('Generated B canonical node status is not HasContent')
+        evidence['generation']['canonical_node_status'] = 'HasContent'
+        evidence['generation']['expected_visual_caption'] = 'Has content'
+        evidence['generation']['visible_inspector'] = ui.wait_for('selected B idle Generate after canonical generation',
+            lambda: visible_inspector_feedback(application, window, fixture['b']['name'], 'Generate'))
+        ui.wait_for('generated B visible before caption capture',lambda:ui.screenplay_block(application,screenplay_anchor(GENERATED)))
         capture('eidetic-inspector-generation.png')
         original[b_id] = ui.blocks(database,b_id)
         block = ui.wait_for('generated B native block',lambda:ui.screenplay_block(application,screenplay_anchor(GENERATED)))
@@ -370,8 +366,9 @@ def main():
         ui.click_control(disclosure,window)
         manual_label=ui.wait_for('visible manual source edit cause',lambda:visible_review_label(application,window,'Source screenplay text changed.'))
         evidence['manual_edit']['visible_review_label']=manual_label
-        evidence['manual_edit']['visible_inspector'] = ui.wait_for('selected B Has content caption after manual Save',
-            lambda: visible_inspector_feedback(application, window, fixture['b']['name'], 'Has content'))
+        evidence['manual_edit']['expected_visual_caption'] = 'Has content'
+        evidence['manual_edit']['visible_inspector'] = ui.wait_for('selected B idle inspector after manual Save',
+            lambda: visible_inspector_feedback(application, window, fixture['b']['name'], 'Generate'))
         checkpoint('native exact manual edits save B and change C from midnight to morning')
         capture('eidetic-story-authoring-manual-edit.png')
         block = ui.wait_for('unrelated F saved block',lambda:ui.screenplay_block(application,screenplay_anchor(F_TEXT)))
