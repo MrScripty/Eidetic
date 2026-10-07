@@ -118,6 +118,16 @@ def fact(database):
     return rows[0] if len(rows) == 1 else None
 
 
+def stale_acceptance_error(application):
+    # WebKit exposes this role=alert paragraph as a native paragraph, rather
+    # than ROLE_ALERT. Match the actual refusal text, excluding the QA receipt.
+    def matches(node):
+        return node.getRole() in (ui.pyatspi.ROLE_ALERT, ui.pyatspi.ROLE_PARAGRAPH,
+                                  ui.pyatspi.ROLE_STATUS_BAR, ui.pyatspi.ROLE_TEXT) and \
+            ' '.join(ui.text_of(node).split()).startswith('Selected recall evidence is stale or unavailable.')
+    return ui.find(application, matches)
+
+
 def require_selection_binding(value, expected_fact):
     selection = value['request']['recall_selection']
     if selection['query']['story_time_ms'] is not None or len(selection['facts']) != 1:
@@ -246,14 +256,18 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     driver.require_preserved(database, original, before_history)
     if proposal_rows(database, selected[0]) != frozen:
         raise RuntimeError('Stale selector replay amended pending proposal')
+    if stale_acceptance_error(application):
+        raise RuntimeError('Acceptance refusal already visible before the ordinary Accept action')
     ui.reveal_button(application, 'Accept update', window)
-    ui.wait_for('ordinary failed acceptance alert', lambda: ui.find(application, lambda n: n.getRole() == ui.pyatspi.ROLE_ALERT and bool(ui.text_of(n))))
+    acceptance_error = ui.wait_for('ordinary failed acceptance refusal', lambda: stale_acceptance_error(application))
     if proposal_rows(database, selected[0]) != frozen:
         raise RuntimeError('Stale acceptance changed proposal')
     driver.require_preserved(database, original, before_history)
     require_draft(application)
     checks.append({'label': 'stale selection and acceptance refused', 'before_fact': old_fact, 'after_fact': changed, 'selection_counter': counter.name,
-                   'actual_QA_receipt': refused, 'provider_calls_unchanged': True, 'pending_columns_unchanged': True})
+                   'actual_QA_receipt': refused, 'ordinary_acceptance_error': ui.text_of(acceptance_error),
+                   'ordinary_acceptance_error_role': acceptance_error.getRoleName(),
+                   'provider_calls_unchanged': True, 'pending_columns_unchanged': True})
     checkpoint('canonical far-peer mutation clears selection; exact old selection and stale acceptance refuse')
     capture('eidetic-recalled-facts-stale-refused.png')
 
