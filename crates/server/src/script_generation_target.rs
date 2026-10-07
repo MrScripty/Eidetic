@@ -145,4 +145,4 @@ fn stale() -> HistoryStoreError {
 
 #[cfg(test)]
 #[path = "script_generation_target_tests.rs"]
-mod tests;
+pub(crate) mod tests;

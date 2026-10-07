@@ -167,6 +167,14 @@ unresolved timed identities and explicit omissions. Limits are eight neighbors,
 
 ## Consumed arc field contracts
 
+`TimelineNotesInput` retains exact selected-clip Notes and an optional owned sparse
+field revision in the existing impact proposal binding. Original/current reads
+remain separate; absent legacy consumption and unowned history are explicit.
+Normal generation reuses `ScriptGenerationTarget`, without a new generation field
+or persistent schema. A distinct Notes dependency on the existing TimelineNode
+endpoint is independent of the screenplay-window selection epoch. Notes do not
+infer fictional time; existing explicit targeted acceptance owns replacement.
+
 `StoryArcPromptField` restricts dependency identity to name, description and
 arc_type. `StoryArcFieldInput` preserves exact supplied values and optional owned
 field revisions; missing template history is explicitly unbound. Generation and

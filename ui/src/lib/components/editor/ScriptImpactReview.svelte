@@ -1,5 +1,6 @@
 <script lang="ts">
   import ScriptArcEvidence from './ScriptArcEvidence.svelte';
+  import ScriptTimelineNotesEvidence from './ScriptTimelineNotesEvidence.svelte';
   import ScriptRecallFacts from './ScriptRecallFacts.svelte';
   import type { ScriptSegmentProjection } from '$lib/scriptTypes.js';
   import {
@@ -130,6 +131,10 @@
               )?.block.text ?? 'Block no longer available'}</pre>
           </details>
         {/if}
+        <ScriptTimelineNotesEvidence
+          previous={proposal.script_review_binding?.timeline_notes_previous}
+          current={proposal.script_review_binding?.timeline_notes_current}
+        />
         <ScriptArcEvidence
           previous={proposal.script_review_binding?.arc_previous_inputs}
           current={proposal.script_review_binding?.arc_inputs}

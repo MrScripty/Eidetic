@@ -602,6 +602,23 @@ existing generation values and temporal choices retain their prior behavior.
 
 ## Consumed story-arc screenplay context
 
+Selected clip Notes consumption is owned by `timeline_notes_lineage`. It resolves
+the exact supplied Notes field clock at the existing captured generation target
+event. New generation records a distinct TimelineNode dependency in the existing
+graph; older actual target receipts can derive the same cause without rewriting
+history. Absent target receipts and unowned Notes history stay unknown. Range,
+status, recap, lock and unrelated node changes do not advance this field clock.
+Targeted proposals retain original/current Notes, supply exact current text and
+recapture before storage/acceptance, including ABA. Explicit acceptance alone
+replaces the chosen block and installs current Notes consumption alongside other
+lineage. Existing Notes writes publish NodeUpdated to refresh impact/agent context
+through established owners while preserving transient author drafts.
+
+Decision: reuse existing receipts, sparse history and dependencies rather than a
+new memory store or whole-node semantic clock. Ancestor/sibling Notes, other
+timeline fields, arc membership and project switching remain separate. Revisit
+when those sources or unowned legacy history receive explicit scope.
+
 `story_arc_lineage` reads canonical node tags, prompt fields and field history in
 one snapshot with generation target custody. `arc_inputs` in existing generation
 and targeted-review command JSON retain exact tagged name/type/nonempty description

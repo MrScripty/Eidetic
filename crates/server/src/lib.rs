@@ -112,6 +112,7 @@ pub(crate) mod timeline_create_intent;
 pub(crate) mod timeline_node_delete_history;
 pub(crate) mod timeline_node_split_history;
 pub(crate) mod timeline_node_store;
+mod timeline_notes_lineage;
 pub(crate) mod timeline_relationship_store;
 pub mod validation;
 pub(crate) mod vector_store;

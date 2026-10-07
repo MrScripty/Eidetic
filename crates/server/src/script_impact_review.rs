@@ -183,6 +183,11 @@ fn capture_in_snapshot(
         &request.segment_id,
     )?;
     Ok(ScriptImpactProposalBinding {
+        timeline_notes_previous: crate::timeline_notes_lineage::recorded(
+            conn,
+            request.generation_event_id,
+        )?,
+        timeline_notes_current: Some(crate::timeline_notes_lineage::capture(conn, node_id)?),
         arc_previous_inputs: arcs.previous,
         arc_inputs: Some(arcs.current),
         arc_absence_revisions: Some(arcs.absent),
@@ -381,8 +386,18 @@ pub(crate) fn accept_bound_proposal(
         &new_block,
         ScriptSpanProvenance::AiGenerated,
     )?;
-    let dependencies =
-        script_generation_lineage::dependencies(&generated, event.id, created_at_ms)?;
+    let mut dependencies =
+        script_generation_lineage::dependencies(conn, &generated, event.id, created_at_ms)?;
+    if let Some(input) = &binding.timeline_notes_current
+        && let Some(dependency) = crate::timeline_notes_lineage::dependency(
+            input,
+            &write.segment_id,
+            event.id,
+            created_at_ms,
+        )
+    {
+        dependencies.push(dependency);
+    }
     let mut revisions = vec![
         propagation_proposal_review::proposal_status_revision(
             proposal,
