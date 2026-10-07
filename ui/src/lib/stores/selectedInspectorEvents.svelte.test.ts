@@ -157,6 +157,94 @@ async function retainedWork() {
 }
 
 describe('canonical selected inspector event freshness', () => {
+  it.each(['selection', 'session', 'teardown'] as const)(
+    'completes generation while inspector is stalled, then discards late success after %s changes',
+    async (change) => {
+      const assertRetained = await retainedWork();
+      let resolve!: (projection: typeof updated) => void;
+      read.mockReturnValueOnce(
+        new Promise((done) => {
+          resolve = done;
+        }),
+      );
+      startGeneration('B');
+      const completion = events.emit({ type: 'generation_complete', node_id: 'B' });
+      try {
+        await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(1));
+        await vi.waitFor(() => expect(editorState.streamingNodeId).toBeNull());
+        expect(selectedNodeEditorProjectionState.pending).toBe(true);
+        assertRetained();
+        if (change === 'selection') editorState.selectedNodeId = 'F';
+        if (change === 'session') {
+          resetEditorState();
+          editorState.selectedNodeId = 'B';
+          startGeneration('B');
+        }
+        if (change === 'teardown') teardown();
+      } finally {
+        resolve(updated);
+      }
+      await completion;
+      await vi.waitFor(() => expect(selectedNodeEditorProjectionState.pending).toBe(false));
+      expect(selectedNodeEditorProjectionState.projection).toEqual(initial);
+      if (change === 'session') expect(editorState.streamingNodeId).toBe('B');
+    },
+  );
+
+  it.each(['selection', 'session', 'teardown'] as const)(
+    'completes generation while inspector is stalled, then discards late failure after %s changes',
+    async (change) => {
+      let reject!: (error: Error) => void;
+      read.mockReturnValueOnce(
+        new Promise((_, fail) => {
+          reject = fail;
+        }),
+      );
+      startGeneration('B');
+      const completion = events.emit({ type: 'generation_complete', node_id: 'B' });
+      try {
+        await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(1));
+        await vi.waitFor(() => expect(editorState.streamingNodeId).toBeNull());
+        if (change === 'selection') editorState.selectedNodeId = 'F';
+        if (change === 'session') {
+          resetEditorState();
+          editorState.selectedNodeId = 'B';
+          startGeneration('B');
+        }
+        if (change === 'teardown') teardown();
+      } finally {
+        reject(new Error('Old selected read failed'));
+      }
+      await completion;
+      await vi.waitFor(() => expect(selectedNodeEditorProjectionState.pending).toBe(false));
+      expect(selectedNodeEditorProjectionState.error).toBeUndefined();
+      expect(selectedNodeEditorProjectionState.projection).toEqual(initial);
+      if (change === 'session') expect(editorState.streamingNodeId).toBe('B');
+    },
+  );
+
+  it('reports a current inspector failure after generation has completed', async () => {
+    let reject!: (error: Error) => void;
+    read.mockReturnValueOnce(
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+    );
+    startGeneration('B');
+    const completion = events.emit({ type: 'generation_complete', node_id: 'B' });
+    try {
+      await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(1));
+      await vi.waitFor(() => expect(editorState.streamingNodeId).toBeNull());
+    } finally {
+      reject(new Error('Canonical selected read failed'));
+    }
+    await completion;
+    await vi.waitFor(() =>
+      expect(selectedNodeEditorProjectionState.error).toBe('Canonical selected read failed'),
+    );
+    expect(selectedNodeEditorProjectionState.pending).toBe(false);
+  });
+
   it.each(['generation_complete', 'node_updated'] as const)(
     'refreshes the selected caption on %s while retaining an unrelated draft and pending proposal',
     async (type) => {

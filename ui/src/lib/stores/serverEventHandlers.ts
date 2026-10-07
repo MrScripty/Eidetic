@@ -140,11 +140,13 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
 
     events.on('generation_complete', async (data) => {
       const session = getEditorSessionGeneration();
+      // Inspector freshness has its own ownership/error state. Its read must not
+      // hold a completed generation in the streaming state.
+      void refreshSelectedInspector(data.node_id);
       await Promise.all([
         refreshTimelineRender(),
         refreshMainScriptDocument(),
         refreshContextStack(),
-        refreshSelectedInspector(data.node_id),
       ]);
       if (active && session === getEditorSessionGeneration()) completeGeneration(data.node_id);
     }),
