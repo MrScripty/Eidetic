@@ -135,27 +135,27 @@ def analyze(application,window,database):
     return result
 
 
-def pending_article(application):
+def fact_article(application,status='pending'):
     return ui.reveal(application,lambda n:n.name=='Bible fact proposal' and any(
-        'qualification.mara · profile.tagline · pending' in ' '.join(ui.text_of(child).split())
+        ('qualification.mara · profile.tagline · '+status) in ' '.join(ui.text_of(child).split())
         for child in ui.walk(n)))
 
 
-def visible_proposal(application,window,value):
-    article=ui.wait_for('pending native fact article',lambda:pending_article(application))
+def visible_proposal(application,window,value,status='pending'):
+    article=ui.wait_for('pending native fact article',lambda:fact_article(application,status))
     node=ui.wait_for('native pending proposed Bible fact',lambda:ui.reveal(article,lambda n:n.name=='Proposed Bible fact' and ui.text_of(n)==value))
     node.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
     for _ in range(24):
         viewport=driver.script_viewport(application,window)
         rects=driver.text_rectangles(node,value)
         controls=[n for n in ui.walk(article) if n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and n.name in ('Accept fact update','Reject fact update') and ui.visible(n)]
-        if rects and all(driver.contained(r,viewport) for r in rects) and len(controls)==2 and all(driver.contained(tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),viewport) for n in controls):
+        if rects and all(driver.contained(r,viewport) for r in rects) and (status!='pending' or len(controls)==2 and all(driver.contained(tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),viewport) for n in controls)):
             return {'viewport':list(viewport),'character_bounds':[list(r) for r in rects],'exact_text':value,'ordinary_controls':[{'name':n.name,'bounds':list(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))} for n in controls]}
         direction='6' if rects and min(r[0] for r in rects)<viewport[0] else '7'
         ui.command('xdotool','mousemove',str(viewport[0]+viewport[2]//2),str(viewport[1]+viewport[3]//2))
         ui.command('xdotool','click','--repeat','2','--delay','50',direction)
         time.sleep(.1);application.clear_cache()
-        article=ui.wait_for('fresh pending article',lambda:pending_article(application))
+        article=ui.wait_for('fresh pending article',lambda:fact_article(application,status))
         node=ui.wait_for('fresh proposed fact object',lambda:next((n for n in ui.walk(article) if n.name=='Proposed Bible fact' and ui.text_of(n)==value),None))
     raise RuntimeError('Fact proposal and ordinary controls not bounded inside Script viewport')
 
@@ -334,6 +334,30 @@ def main():
         ui.click_button(application,'AI',window);ui.click_button(application,'Save & Connect',window)
         ui.wait_for('connected synthetic provider',lambda:driver.visible_text(application,'Connected'))
         qualify(application,window,database,fixture,capture,checkpoint,evidence)
+        # The draft-preservation action sequence has completed. A fresh native
+        # process now checks saved material/proposal reconstruction only; this
+        # does not qualify unsaved draft lifetime or project-switch recovery.
+        saved_before_reopen=material(database)
+        proposals_before_reopen=ui.query(database,'SELECT * FROM propagation_proposals ORDER BY rowid')
+        history_before_reopen=driver.canonical_state(database)
+        os.killpg(process.pid,signal.SIGTERM)
+        try:process.wait(timeout=10)
+        except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait(timeout=5)
+        ui.NATIVE_WINDOW_PID=None
+        with app_log.open('a') as stream:process=subprocess.Popen(['./launcher.sh','--run'],env=environment,stdout=stream,stderr=subprocess.STDOUT,start_new_session=True)
+        window,pid=ui.wait_for('reopened owned native window',owned_window);ui.NATIVE_WINDOW_PID=pid
+        if ui.file_hash(Path('/proc/'+str(pid)+'/exe'))!=evidence['application_binary_sha256']:raise RuntimeError('Reopen changed native binary custody')
+        ui.command('xdotool','windowsize','--sync',window,'1920','1440')
+        application=ui.wait_for('reopened native accessibility app',lambda:next((a for a in ui.pyatspi.Registry.getDesktop(0) if a.get_process_id()==pid),None))
+        ui.open_project_chooser(application,window);ui.click_button(application,database.parent.name,window,prefix=True);ui.choose_mode(application,'Script',window)
+        driver.enlarge_script_pane(application,window)
+        ui.click_button(application,'Bible',window)
+        reconstructed=ui.wait_for('reconstructed accepted fact article',lambda:fact_article(application,'accepted'))
+        reconstructed_view=visible_proposal(application,window,BLUE,status='accepted')
+        if saved_before_reopen!=material(database) or proposals_before_reopen!=ui.query(database,'SELECT * FROM propagation_proposals ORDER BY rowid') or history_before_reopen!=driver.canonical_state(database):raise RuntimeError('Reopen changed saved material, immutable proposal/binding or history')
+        evidence['reopened_persisted_review']={'same_project':True,'native_process_restarted':True,'saved_material_and_proposal_binding_columns_unchanged':True,'canonical_history_unchanged':True,'accepted_proposal_visible':reconstructed_view,'scope':'saved material/proposal reconstruction after draft-preservation sequence; unsaved draft lifetime and project-switch recovery unqualified'}
+        checkpoint('same project reopened; persisted accepted/rejected fact review and saved material reconstruct unchanged')
+        capture('manual-fact-10-reopened.png')
         if len(Provider.records)!=9 or not all(r['accepted'] and not r['real_model'] for r in Provider.records):raise RuntimeError('Missing exact synthetic HTTP phases')
         evidence['status']='passed';checkpoint('complete frozen-source native saved edit to Bible reconciliation')
     except Exception as error:

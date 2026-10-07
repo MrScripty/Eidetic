@@ -50,7 +50,9 @@ requires fresh admission and qualification evidence.
 ## Dependencies
 
 Existing command/projection APIs, the Svelte runtime, the qualifier Vite config
-and the established hosted Linux native/no-download setup.
+and the established hosted Linux native/no-download setup. A bounded restart
+checks saved proposal/binding reconstruction after the draft-preservation action
+sequence; it does not qualify unsaved draft lifetime or project-switch recovery.
 
 ## Related ADRs
 
