@@ -1,0 +1,1959 @@
+{
+  "source": "4c468d6386bcad44117fe7e4439202cdde52a0f7",
+  "source_tree": "6f546f9d75bffe6baef70912f7635996f6acb244",
+  "qualifier": "3cccc2b683903e5ec45531fa990a45043adb524e",
+  "qualifier_tree": "135725a8746492d23c2d15bff38afc2aae2ad8c8",
+  "QA_only_delta": [
+    ".github/workflows/bible-recall-native.yml",
+    "crates/server/examples/bible_recall_capture_fixture.rs",
+    "scripts/qualify-bible-recall-lifecycle.py",
+    "scripts/qualify-bible-recall.py",
+    "scripts/recall-lifecycle-vite.config.mts",
+    "scripts/test_qualify_bible_recall.py",
+    "scripts/test_qualify_bible_recall_lifecycle.py",
+    "ui/src/qualification/README.md",
+    "ui/src/qualification/RecallLifecycleControls.svelte",
+    "ui/src/qualification/RecallLifecycleInspector.svelte",
+    "ui/src/qualification/recallLifecycle.svelte.ts"
+  ],
+  "official_metadata": {
+    "run": {
+      "id": 37573408905,
+      "name": "Bible recall native lifecycle addendum",
+      "node_id": "WFR_kwLORPuBdc8AAAAIv4y4iQ",
+      "head_branch": "test/bible-recall-lifecycle-native",
+      "head_sha": "3cccc2b683903e5ec45531fa990a45043adb524e",
+      "path": ".github/workflows/bible-recall-native.yml",
+      "display_title": "test(memory): qualify recall inspector lifecycles in native UI",
+      "run_number": 8,
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "workflow_id": 377001837,
+      "check_suite_id": 101781841310,
+      "check_suite_node_id": "CS_kwDORPuBdc8AAAAXsqulng",
+      "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/runs/37573408905",
+      "html_url": "https://github.com/MrScripty/Eidetic/actions/runs/37573408905",
+      "pull_requests": [],
+      "created_at": "2026-10-07T04:50:46Z",
+      "updated_at": "2026-10-07T05:04:16Z",
+      "actor": {
+        "login": "MrScripty",
+        "id": 10446793,
+        "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+        "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/MrScripty",
+        "html_url": "https://github.com/MrScripty",
+        "followers_url": "https://api.github.com/users/MrScripty/followers",
+        "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+        "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+        "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+        "repos_url": "https://api.github.com/users/MrScripty/repos",
+        "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "run_attempt": 1,
+      "referenced_workflows": [],
+      "run_started_at": "2026-10-07T04:50:46Z",
+      "triggering_actor": {
+        "login": "MrScripty",
+        "id": 10446793,
+        "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+        "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/MrScripty",
+        "html_url": "https://github.com/MrScripty",
+        "followers_url": "https://api.github.com/users/MrScripty/followers",
+        "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+        "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+        "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+        "repos_url": "https://api.github.com/users/MrScripty/repos",
+        "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "jobs_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/runs/37573408905/jobs",
+      "logs_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/runs/37573408905/logs",
+      "check_suite_url": "https://api.github.com/repos/MrScripty/Eidetic/check-suites/101781841310",
+      "artifacts_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/runs/37573408905/artifacts",
+      "cancel_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/runs/37573408905/cancel",
+      "rerun_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/runs/37573408905/rerun",
+      "previous_attempt_url": null,
+      "workflow_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/workflows/377001837",
+      "head_commit": {
+        "id": "3cccc2b683903e5ec45531fa990a45043adb524e",
+        "tree_id": "135725a8746492d23c2d15bff38afc2aae2ad8c8",
+        "message": "test(memory): qualify recall inspector lifecycles in native UI",
+        "timestamp": "2026-10-07T04:50:18Z",
+        "author": {
+          "name": "MrScripty",
+          "email": "TheEnvironmentGuy@protonmail.com"
+        },
+        "committer": {
+          "name": "MrScripty",
+          "email": "TheEnvironmentGuy@protonmail.com"
+        }
+      },
+      "repository": {
+        "id": 1157333365,
+        "node_id": "R_kgDORPuBdQ",
+        "name": "Eidetic",
+        "full_name": "MrScripty/Eidetic",
+        "private": false,
+        "owner": {
+          "login": "MrScripty",
+          "id": 10446793,
+          "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+          "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/MrScripty",
+          "html_url": "https://github.com/MrScripty",
+          "followers_url": "https://api.github.com/users/MrScripty/followers",
+          "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+          "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+          "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+          "repos_url": "https://api.github.com/users/MrScripty/repos",
+          "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "html_url": "https://github.com/MrScripty/Eidetic",
+        "description": "Clip based smart screenwriting for film",
+        "fork": false,
+        "url": "https://api.github.com/repos/MrScripty/Eidetic",
+        "forks_url": "https://api.github.com/repos/MrScripty/Eidetic/forks",
+        "keys_url": "https://api.github.com/repos/MrScripty/Eidetic/keys{/key_id}",
+        "collaborators_url": "https://api.github.com/repos/MrScripty/Eidetic/collaborators{/collaborator}",
+        "teams_url": "https://api.github.com/repos/MrScripty/Eidetic/teams",
+        "hooks_url": "https://api.github.com/repos/MrScripty/Eidetic/hooks",
+        "issue_events_url": "https://api.github.com/repos/MrScripty/Eidetic/issues/events{/number}",
+        "events_url": "https://api.github.com/repos/MrScripty/Eidetic/events",
+        "assignees_url": "https://api.github.com/repos/MrScripty/Eidetic/assignees{/user}",
+        "branches_url": "https://api.github.com/repos/MrScripty/Eidetic/branches{/branch}",
+        "tags_url": "https://api.github.com/repos/MrScripty/Eidetic/tags",
+        "blobs_url": "https://api.github.com/repos/MrScripty/Eidetic/git/blobs{/sha}",
+        "git_tags_url": "https://api.github.com/repos/MrScripty/Eidetic/git/tags{/sha}",
+        "git_refs_url": "https://api.github.com/repos/MrScripty/Eidetic/git/refs{/sha}",
+        "trees_url": "https://api.github.com/repos/MrScripty/Eidetic/git/trees{/sha}",
+        "statuses_url": "https://api.github.com/repos/MrScripty/Eidetic/statuses/{sha}",
+        "languages_url": "https://api.github.com/repos/MrScripty/Eidetic/languages",
+        "stargazers_url": "https://api.github.com/repos/MrScripty/Eidetic/stargazers",
+        "contributors_url": "https://api.github.com/repos/MrScripty/Eidetic/contributors",
+        "subscribers_url": "https://api.github.com/repos/MrScripty/Eidetic/subscribers",
+        "subscription_url": "https://api.github.com/repos/MrScripty/Eidetic/subscription",
+        "commits_url": "https://api.github.com/repos/MrScripty/Eidetic/commits{/sha}",
+        "git_commits_url": "https://api.github.com/repos/MrScripty/Eidetic/git/commits{/sha}",
+        "comments_url": "https://api.github.com/repos/MrScripty/Eidetic/comments{/number}",
+        "issue_comment_url": "https://api.github.com/repos/MrScripty/Eidetic/issues/comments{/number}",
+        "contents_url": "https://api.github.com/repos/MrScripty/Eidetic/contents/{+path}",
+        "compare_url": "https://api.github.com/repos/MrScripty/Eidetic/compare/{base}...{head}",
+        "merges_url": "https://api.github.com/repos/MrScripty/Eidetic/merges",
+        "archive_url": "https://api.github.com/repos/MrScripty/Eidetic/{archive_format}{/ref}",
+        "downloads_url": "https://api.github.com/repos/MrScripty/Eidetic/downloads",
+        "issues_url": "https://api.github.com/repos/MrScripty/Eidetic/issues{/number}",
+        "pulls_url": "https://api.github.com/repos/MrScripty/Eidetic/pulls{/number}",
+        "milestones_url": "https://api.github.com/repos/MrScripty/Eidetic/milestones{/number}",
+        "notifications_url": "https://api.github.com/repos/MrScripty/Eidetic/notifications{?since,all,participating}",
+        "labels_url": "https://api.github.com/repos/MrScripty/Eidetic/labels{/name}",
+        "releases_url": "https://api.github.com/repos/MrScripty/Eidetic/releases{/id}",
+        "deployments_url": "https://api.github.com/repos/MrScripty/Eidetic/deployments"
+      },
+      "head_repository": {
+        "id": 1157333365,
+        "node_id": "R_kgDORPuBdQ",
+        "name": "Eidetic",
+        "full_name": "MrScripty/Eidetic",
+        "private": false,
+        "owner": {
+          "login": "MrScripty",
+          "id": 10446793,
+          "node_id": "MDQ6VXNlcjEwNDQ2Nzkz",
+          "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/MrScripty",
+          "html_url": "https://github.com/MrScripty",
+          "followers_url": "https://api.github.com/users/MrScripty/followers",
+          "following_url": "https://api.github.com/users/MrScripty/following{/other_user}",
+          "gists_url": "https://api.github.com/users/MrScripty/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/MrScripty/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/MrScripty/subscriptions",
+          "organizations_url": "https://api.github.com/users/MrScripty/orgs",
+          "repos_url": "https://api.github.com/users/MrScripty/repos",
+          "events_url": "https://api.github.com/users/MrScripty/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/MrScripty/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "html_url": "https://github.com/MrScripty/Eidetic",
+        "description": "Clip based smart screenwriting for film",
+        "fork": false,
+        "url": "https://api.github.com/repos/MrScripty/Eidetic",
+        "forks_url": "https://api.github.com/repos/MrScripty/Eidetic/forks",
+        "keys_url": "https://api.github.com/repos/MrScripty/Eidetic/keys{/key_id}",
+        "collaborators_url": "https://api.github.com/repos/MrScripty/Eidetic/collaborators{/collaborator}",
+        "teams_url": "https://api.github.com/repos/MrScripty/Eidetic/teams",
+        "hooks_url": "https://api.github.com/repos/MrScripty/Eidetic/hooks",
+        "issue_events_url": "https://api.github.com/repos/MrScripty/Eidetic/issues/events{/number}",
+        "events_url": "https://api.github.com/repos/MrScripty/Eidetic/events",
+        "assignees_url": "https://api.github.com/repos/MrScripty/Eidetic/assignees{/user}",
+        "branches_url": "https://api.github.com/repos/MrScripty/Eidetic/branches{/branch}",
+        "tags_url": "https://api.github.com/repos/MrScripty/Eidetic/tags",
+        "blobs_url": "https://api.github.com/repos/MrScripty/Eidetic/git/blobs{/sha}",
+        "git_tags_url": "https://api.github.com/repos/MrScripty/Eidetic/git/tags{/sha}",
+        "git_refs_url": "https://api.github.com/repos/MrScripty/Eidetic/git/refs{/sha}",
+        "trees_url": "https://api.github.com/repos/MrScripty/Eidetic/git/trees{/sha}",
+        "statuses_url": "https://api.github.com/repos/MrScripty/Eidetic/statuses/{sha}",
+        "languages_url": "https://api.github.com/repos/MrScripty/Eidetic/languages",
+        "stargazers_url": "https://api.github.com/repos/MrScripty/Eidetic/stargazers",
+        "contributors_url": "https://api.github.com/repos/MrScripty/Eidetic/contributors",
+        "subscribers_url": "https://api.github.com/repos/MrScripty/Eidetic/subscribers",
+        "subscription_url": "https://api.github.com/repos/MrScripty/Eidetic/subscription",
+        "commits_url": "https://api.github.com/repos/MrScripty/Eidetic/commits{/sha}",
+        "git_commits_url": "https://api.github.com/repos/MrScripty/Eidetic/git/commits{/sha}",
+        "comments_url": "https://api.github.com/repos/MrScripty/Eidetic/comments{/number}",
+        "issue_comment_url": "https://api.github.com/repos/MrScripty/Eidetic/issues/comments{/number}",
+        "contents_url": "https://api.github.com/repos/MrScripty/Eidetic/contents/{+path}",
+        "compare_url": "https://api.github.com/repos/MrScripty/Eidetic/compare/{base}...{head}",
+        "merges_url": "https://api.github.com/repos/MrScripty/Eidetic/merges",
+        "archive_url": "https://api.github.com/repos/MrScripty/Eidetic/{archive_format}{/ref}",
+        "downloads_url": "https://api.github.com/repos/MrScripty/Eidetic/downloads",
+        "issues_url": "https://api.github.com/repos/MrScripty/Eidetic/issues{/number}",
+        "pulls_url": "https://api.github.com/repos/MrScripty/Eidetic/pulls{/number}",
+        "milestones_url": "https://api.github.com/repos/MrScripty/Eidetic/milestones{/number}",
+        "notifications_url": "https://api.github.com/repos/MrScripty/Eidetic/notifications{?since,all,participating}",
+        "labels_url": "https://api.github.com/repos/MrScripty/Eidetic/labels{/name}",
+        "releases_url": "https://api.github.com/repos/MrScripty/Eidetic/releases{/id}",
+        "deployments_url": "https://api.github.com/repos/MrScripty/Eidetic/deployments"
+      }
+    },
+    "jobs": [
+      {
+        "id": 112636877757,
+        "name": "capture",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 37573408905,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Verify unchanged application source",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Install standard Linux and display dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Prepare pinned dependency and UI assets",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Build labelled native lifecycle test host",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Check resource floors and build actual native runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Run actual server regressions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Qualify real client inspector effects with labelled lifecycle seams",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Upload only reviewed capture outputs",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          }
+        ]
+      }
+    ],
+    "artifact": {
+      "id": 11461888724,
+      "name": "eidetic-bible-recall-lifecycle-native-4c468d6",
+      "size_in_bytes": 1200498,
+      "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11461888724",
+      "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11461888724/zip",
+      "expired": false,
+      "created_at": "2026-10-07T05:04:13Z",
+      "expires_at": "2026-10-10T05:04:13Z",
+      "updated_at": "2026-10-07T05:04:13Z",
+      "digest": "sha256:6fd0edf201c76c46c6fff85513c09dccadb8d82665725271464daae87478fb51",
+      "workflow_run": {
+        "id": 37573408905,
+        "repository_id": 1157333365,
+        "head_repository_id": 1157333365,
+        "head_branch": "test/bible-recall-lifecycle-native",
+        "head_sha": "3cccc2b683903e5ec45531fa990a45043adb524e"
+      }
+    }
+  },
+  "metadata_seal": {
+    "path": "/workspace/scratch/bible-recall-lifecycle-native-final-metadata.json",
+    "sha256": "4149a1c9565ae6da0c7576ab8b793cd02e5dce182503d83f4cc0e1419a304f47",
+    "size_bytes": 17424
+  },
+  "original_zip": {
+    "path": "/workspace/attachments/9e85f531-a358-46bc-b927-62073de3bb4e/eidetic-bible-recall-lifecycle-success.zip",
+    "sha256": "6fd0edf201c76c46c6fff85513c09dccadb8d82665725271464daae87478fb51",
+    "size_bytes": 1200498,
+    "file_id": "file_0000000000248230b9ea3f8a7633bd81"
+  },
+  "original_files": [
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/app-sanitized.log",
+      "sha256": "dee95dcb524fddf150a794860dfe2d6ee4a445742dbdf19242cd3f3c429aa4b6",
+      "size_bytes": 716
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/capture-evidence.json",
+      "sha256": "5cac9f4c1ff561e518d4e61c9cc327675dde973e25ce1d75fd7d026ac8c20c42",
+      "size_bytes": 30243
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/eidetic-bible-recall-lifecycle-concurrent.png",
+      "sha256": "a1b15629d5430284ecf4b3f8aab6f2612e72080dfc1a58c83c57062445f2ef9f",
+      "size_bytes": 223432,
+      "width": 1920,
+      "height": 1440
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/eidetic-bible-recall-lifecycle-delayed-error.png",
+      "sha256": "2f6376e9596b27b2e989bc43ca686e7d9894e1d0b20d87c4afb1e9860978f712",
+      "size_bytes": 202869,
+      "width": 1920,
+      "height": 1440
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/eidetic-bible-recall-lifecycle-delayed-success.png",
+      "sha256": "38824c184fe5b7dce92425d45c6ea5bc1806f3101b9383aee76464d3bfb0231e",
+      "size_bytes": 202701,
+      "width": 1920,
+      "height": 1440
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/eidetic-bible-recall-lifecycle-fresh.png",
+      "sha256": "28d083fcca4e587604244482e89972922ecf462a9859ee865ab1d68cc8581459",
+      "size_bytes": 223095,
+      "width": 1920,
+      "height": 1440
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/eidetic-bible-recall-lifecycle-genuine-invalidation.png",
+      "sha256": "da8926883d9914a5ee696d0d081c760086360b0a9f4e1d0a190f7e9b7830c0a9",
+      "size_bytes": 204905,
+      "width": 1920,
+      "height": 1440
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/eidetic-bible-recall-pending-review.png",
+      "sha256": "6b6e07a41faee7718937a7a56b05384f9070199ea03b7ccfdef82971d2c4e46c",
+      "size_bytes": 207025,
+      "width": 1920,
+      "height": 1440
+    },
+    {
+      "path": "/workspace/scratch/bible-recall-lifecycle-native-success-37573408905/qualification-host-sanitized.log",
+      "sha256": "63abf1b3704569b0a6bfe00dc4a4ad7b87ec1828358b7e3be8c1b9dbd0bbf399",
+      "size_bytes": 97
+    }
+  ],
+  "raw_capture_evidence": {
+    "status": "native_bible_recall_lifecycle_passed_with_labelled_test_build_seams",
+    "application_source_sha": "4c468d6386bcad44117fe7e4439202cdde52a0f7",
+    "qualification_sha": "3cccc2b683903e5ec45531fa990a45043adb524e",
+    "application_binary_sha256": "9fbfffdd76197adce8240ab9d9cd8530fd3e94f7ecce2acbb621d9bf22a3ec3b",
+    "capture_label": "actual native prototype views",
+    "setup_route": "public services only; no model execution in setup",
+    "gui_route": "AT-SPI/X11; graph closed; Bible, timeline and screenplay visible",
+    "provider": "labelled synthetic localhost HTTP/SSE through production client",
+    "recall_model_execution": "none",
+    "real_model_quality_qualified": false,
+    "checkpoints": [
+      {
+        "stage": "public services prepare three scenes and 205 unrelated entities",
+        "elapsed_seconds": 0.205
+      },
+      {
+        "stage": "exact manual B saved and unrelated F draft retained",
+        "elapsed_seconds": 25.446
+      },
+      {
+        "stage": "explicit untimed recall reaches linked Beach House beyond renderer prefix",
+        "elapsed_seconds": 28.856
+      },
+      {
+        "stage": "explicit 999ms recall resolves whole baseline without future assertion",
+        "elapsed_seconds": 30.979
+      },
+      {
+        "stage": "explicit 1000ms recall resolves exact assertion with typed untimed path",
+        "elapsed_seconds": 33.715
+      },
+      {
+        "stage": "native exact fact Save identifies affected screenplay without replacing manual text",
+        "elapsed_seconds": 40.403
+      },
+      {
+        "stage": "Bible mutation revokes prior recall evidence",
+        "elapsed_seconds": 43.314
+      },
+      {
+        "stage": "explicit fresh recall reflects edited canon and leaves existing work unchanged",
+        "elapsed_seconds": 45.358
+      },
+      {
+        "stage": "targeted synthetic proposal visible with explicit acceptance and saved manual B retained",
+        "elapsed_seconds": 51.201
+      },
+      {
+        "stage": "ordinary concurrent inspector removal/remount preserves shared read and manual work",
+        "elapsed_seconds": 60.733
+      },
+      {
+        "stage": "actual last-inspector effects revoke delayed actual read success",
+        "elapsed_seconds": 82.086
+      },
+      {
+        "stage": "actual last-inspector effects revoke delayed labelled synthetic error",
+        "elapsed_seconds": 103.323
+      },
+      {
+        "stage": "genuine canonical mutation survives final disposal/remount and keeps pending manual work",
+        "elapsed_seconds": 129.464
+      },
+      {
+        "stage": "native lifecycle addendum complete; exact screenplay, draft and pending proposal preserved",
+        "elapsed_seconds": 140.65
+      },
+      {
+        "stage": "qualified; saved screenplay, draft and pending review preserved",
+        "elapsed_seconds": 140.87
+      }
+    ],
+    "qualification_host": {
+      "label": "explicit qualifier-only Vite host reused by unchanged desktop launcher",
+      "pid": 24236,
+      "args": [
+        "vite",
+        "dev",
+        "--config",
+        "scripts/recall-lifecycle-vite.config.mts",
+        "--port",
+        "5173",
+        "--host",
+        "127.0.0.1",
+        "--strictPort"
+      ],
+      "config_sha256": "b463e938a57396278c8c72bde4a70dcf8d9700191708b10b1c2842ff60d41dd0",
+      "cwd": "<repo>/ui",
+      "bind_url": "http://127.0.0.1:5173",
+      "no_alternate_runtime_or_dependency": true
+    },
+    "stage": "qualified; saved screenplay, draft and pending review preserved",
+    "public_fixture": {
+      "a": {
+        "end_ms": 60000,
+        "id": "5adfa800-0147-4c5f-b97c-75bb604b6598",
+        "letter": "A",
+        "name": "SCENE A",
+        "start_ms": 0
+      },
+      "b": {
+        "end_ms": 180000,
+        "id": "61ea91cb-05e7-43cb-983c-ebe9e6baea1a",
+        "letter": "B",
+        "name": "SCENE B",
+        "start_ms": 120000
+      },
+      "f": {
+        "end_ms": 120000,
+        "id": "3c14fdb5-3995-47a9-acdf-83db62b44e28",
+        "letter": "F",
+        "name": "SCENE F",
+        "start_ms": 60000
+      },
+      "filler_count": 205,
+      "mara": "qualification.mara",
+      "model_execution_in_setup": "none",
+      "neighbor": "qualification.beach-house",
+      "project_path": "<fresh qualification project>",
+      "public_recall": {
+        "change_event_id": "c86f677e-86a3-456d-b247-9161ad87aff1",
+        "payload": {
+          "nodes": [
+            {
+              "fields": [
+                {
+                  "field_key": "tagline",
+                  "part_key": "profile",
+                  "source": {
+                    "field_id": "qualification.mara.tagline",
+                    "kind": "baseline",
+                    "revision_event_id": "2c350deb-d5f3-4e3a-89db-fc4a5edacaf0"
+                  },
+                  "value": {
+                    "type": "text",
+                    "value": "Mara's umbrella is blue."
+                  }
+                }
+              ],
+              "name": "Mara",
+              "name_revision_event_id": "0d3bec14-1e34-4233-bc31-2a1e55d9e956",
+              "node_id": "qualification.mara",
+              "omitted_fields": 0,
+              "schema_key": "character",
+              "unresolved_timed_fields": []
+            },
+            {
+              "fields": [
+                {
+                  "field_key": "weather",
+                  "part_key": "environment",
+                  "source": {
+                    "at_ms": 1000,
+                    "field_revision_event_id": "5fda1724-6701-4890-b841-e7639a900f39",
+                    "kind": "snapshot",
+                    "label": "Opening",
+                    "snapshot_field_id": "qualification.house.opening.weather",
+                    "snapshot_id": "qualification.house.opening",
+                    "snapshot_revision_event_id": "5fda1724-6701-4890-b841-e7639a900f39"
+                  },
+                  "value": {
+                    "type": "text",
+                    "value": "Rain"
+                  }
+                }
+              ],
+              "name": "Beach House",
+              "name_revision_event_id": "f1ce9ad2-2458-4e57-b22e-f1b569b06c34",
+              "node_id": "qualification.beach-house",
+              "omitted_fields": 0,
+              "schema_key": "location",
+              "unresolved_timed_fields": [
+                {
+                  "field_key": "description",
+                  "part_key": "environment"
+                }
+              ]
+            }
+          ],
+          "omitted_edges": 0,
+          "omitted_neighbors": 0,
+          "paths": [
+            {
+              "neighbor_node_id": "qualification.beach-house",
+              "relationship": {
+                "edge": {
+                  "directed": true,
+                  "edge_id": "qualification.mara.home",
+                  "edge_kind": "located_in",
+                  "from_node_id": "qualification.mara",
+                  "label": "Mara's home",
+                  "to_node_id": "qualification.beach-house"
+                },
+                "revision_event_id": "8b137037-f3a1-40a8-a58b-a820aae7346d"
+              }
+            }
+          ],
+          "relationships_untimed": true,
+          "request": {
+            "anchor_node_id": "qualification.mara",
+            "direction": "both",
+            "edge_kinds": [],
+            "neighbor_limit": 8,
+            "story_time_ms": 1000
+          }
+        },
+        "version": 221
+      },
+      "scenes": [
+        {
+          "end_ms": 60000,
+          "id": "5adfa800-0147-4c5f-b97c-75bb604b6598",
+          "letter": "A",
+          "name": "SCENE A",
+          "start_ms": 0
+        },
+        {
+          "end_ms": 120000,
+          "id": "3c14fdb5-3995-47a9-acdf-83db62b44e28",
+          "letter": "F",
+          "name": "SCENE F",
+          "start_ms": 60000
+        },
+        {
+          "end_ms": 180000,
+          "id": "61ea91cb-05e7-43cb-983c-ebe9e6baea1a",
+          "letter": "B",
+          "name": "SCENE B",
+          "start_ms": 120000
+        }
+      ],
+      "setup_route": "public services only; exact manual A/F supporting text, native B generation/edit after launch"
+    },
+    "window_id": 2097155,
+    "window_pid": 24278,
+    "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+    "generation": {
+      "actual_GUI_Generate": true,
+      "real_model": false,
+      "block_id": "script.block.61ea91cb-05e7-43cb-983c-ebe9e6baea1a.generated",
+      "revision_event_id": "4247482d-711b-4eba-8a17-0e518e4a7095"
+    },
+    "saved_manual_B": {
+      "exact_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+      "block_id": "script.block.61ea91cb-05e7-43cb-983c-ebe9e6baea1a.generated",
+      "revision_event_id": "8cda6f97-864c-4d4b-9084-da6178235558"
+    },
+    "retained_F_draft": {
+      "exact_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+      "not_saved": true,
+      "saved_F_text": "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n"
+    },
+    "untimed_recall": {
+      "anchor": "qualification.mara",
+      "neighbor": "qualification.beach-house",
+      "exact_UI_unresolved": "Unresolved: environment.weather",
+      "story_time_ms": null,
+      "canonical_history_unchanged": true
+    },
+    "timed_recall": {
+      "story_time_ms": 1000,
+      "exact_UI_value": "environment.weather: Rain",
+      "typed_path": "Mara \u2192 Beach House \u00b7 located in",
+      "relationships_untimed": true,
+      "canonical_history_unchanged": true,
+      "source_disclosure_visible": true
+    },
+    "manual_fact_edit": {
+      "before": "Mara's umbrella is blue.",
+      "after": "Mara's umbrella is amber.",
+      "original_revision_event_id": "2c350deb-d5f3-4e3a-89db-fc4a5edacaf0",
+      "current_revision_event_id": "46d1fb8a-b170-4595-b5bd-c228ca6687a2",
+      "saved_screenplay_unchanged": true,
+      "unrelated_draft_retained": true,
+      "visible_review": {
+        "expected_label": "Bible fact profile.tagline changed.",
+        "native_name": "Bible fact profile.tagline changed. Mara's umbrella is blue.",
+        "native_text": "Bible fact profile.tagline changed.\nMara's umbrella is blue.\n",
+        "role": "list item",
+        "bounds": [
+          301,
+          757,
+          396,
+          37
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      }
+    },
+    "refreshed_recall": {
+      "exact_anchor_value": "Mara's umbrella is amber.",
+      "story_time_ms": 1000,
+      "canonical_history_unchanged": true
+    },
+    "pending_preview": {
+      "proposal_id": "script.review.aa3e1650-a557-40b4-81bf-ecdccd77fee5",
+      "proposed_text": "Synthetic preview: Mara waits for Eli with her amber umbrella. Preserve this station beat.\n\n",
+      "status": "pending",
+      "real_model": false,
+      "visible_proposal": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            301,
+            942,
+            8,
+            13
+          ],
+          [
+            308,
+            942,
+            8,
+            13
+          ],
+          [
+            315,
+            942,
+            8,
+            13
+          ],
+          [
+            322,
+            942,
+            8,
+            13
+          ],
+          [
+            329,
+            942,
+            8,
+            13
+          ],
+          [
+            336,
+            942,
+            8,
+            13
+          ],
+          [
+            343,
+            942,
+            8,
+            13
+          ],
+          [
+            350,
+            942,
+            8,
+            13
+          ],
+          [
+            357,
+            942,
+            8,
+            13
+          ],
+          [
+            371,
+            942,
+            8,
+            13
+          ],
+          [
+            378,
+            942,
+            8,
+            13
+          ],
+          [
+            385,
+            942,
+            8,
+            13
+          ],
+          [
+            392,
+            942,
+            8,
+            13
+          ],
+          [
+            399,
+            942,
+            8,
+            13
+          ],
+          [
+            406,
+            942,
+            8,
+            13
+          ],
+          [
+            413,
+            942,
+            8,
+            13
+          ],
+          [
+            420,
+            942,
+            8,
+            13
+          ],
+          [
+            434,
+            942,
+            8,
+            13
+          ],
+          [
+            441,
+            942,
+            8,
+            13
+          ],
+          [
+            448,
+            942,
+            8,
+            13
+          ],
+          [
+            455,
+            942,
+            8,
+            13
+          ],
+          [
+            469,
+            942,
+            8,
+            13
+          ],
+          [
+            476,
+            942,
+            8,
+            13
+          ],
+          [
+            483,
+            942,
+            8,
+            13
+          ],
+          [
+            490,
+            942,
+            8,
+            13
+          ],
+          [
+            497,
+            942,
+            8,
+            13
+          ],
+          [
+            511,
+            942,
+            8,
+            13
+          ],
+          [
+            518,
+            942,
+            8,
+            13
+          ],
+          [
+            525,
+            942,
+            8,
+            13
+          ],
+          [
+            539,
+            942,
+            8,
+            13
+          ],
+          [
+            546,
+            942,
+            8,
+            13
+          ],
+          [
+            553,
+            942,
+            8,
+            13
+          ],
+          [
+            567,
+            942,
+            8,
+            13
+          ],
+          [
+            574,
+            942,
+            8,
+            13
+          ],
+          [
+            581,
+            942,
+            8,
+            13
+          ],
+          [
+            588,
+            942,
+            8,
+            13
+          ],
+          [
+            602,
+            942,
+            8,
+            13
+          ],
+          [
+            609,
+            942,
+            8,
+            13
+          ],
+          [
+            616,
+            942,
+            8,
+            13
+          ],
+          [
+            630,
+            942,
+            8,
+            13
+          ],
+          [
+            637,
+            942,
+            8,
+            13
+          ],
+          [
+            644,
+            942,
+            8,
+            13
+          ],
+          [
+            651,
+            942,
+            8,
+            13
+          ],
+          [
+            658,
+            942,
+            8,
+            13
+          ],
+          [
+            301,
+            954,
+            8,
+            17
+          ],
+          [
+            308,
+            954,
+            8,
+            17
+          ],
+          [
+            315,
+            954,
+            8,
+            17
+          ],
+          [
+            322,
+            954,
+            8,
+            17
+          ],
+          [
+            329,
+            954,
+            8,
+            17
+          ],
+          [
+            336,
+            954,
+            8,
+            17
+          ],
+          [
+            343,
+            954,
+            8,
+            17
+          ],
+          [
+            350,
+            954,
+            8,
+            17
+          ],
+          [
+            357,
+            954,
+            8,
+            17
+          ],
+          [
+            371,
+            954,
+            8,
+            17
+          ],
+          [
+            378,
+            954,
+            8,
+            17
+          ],
+          [
+            385,
+            954,
+            8,
+            17
+          ],
+          [
+            392,
+            954,
+            8,
+            17
+          ],
+          [
+            399,
+            954,
+            8,
+            17
+          ],
+          [
+            406,
+            954,
+            8,
+            17
+          ],
+          [
+            413,
+            954,
+            8,
+            17
+          ],
+          [
+            420,
+            954,
+            8,
+            17
+          ],
+          [
+            434,
+            954,
+            8,
+            17
+          ],
+          [
+            441,
+            954,
+            8,
+            17
+          ],
+          [
+            448,
+            954,
+            8,
+            17
+          ],
+          [
+            455,
+            954,
+            8,
+            17
+          ],
+          [
+            469,
+            954,
+            8,
+            17
+          ],
+          [
+            476,
+            954,
+            8,
+            17
+          ],
+          [
+            483,
+            954,
+            8,
+            17
+          ],
+          [
+            490,
+            954,
+            8,
+            17
+          ],
+          [
+            497,
+            954,
+            8,
+            17
+          ],
+          [
+            504,
+            954,
+            8,
+            17
+          ],
+          [
+            511,
+            954,
+            8,
+            17
+          ],
+          [
+            525,
+            954,
+            8,
+            17
+          ],
+          [
+            532,
+            954,
+            8,
+            17
+          ],
+          [
+            539,
+            954,
+            8,
+            17
+          ],
+          [
+            546,
+            954,
+            8,
+            17
+          ],
+          [
+            553,
+            954,
+            8,
+            17
+          ]
+        ],
+        "exact_text": "Synthetic preview: Mara waits for Eli with her amber umbrella. Preserve this station beat.\n\n",
+        "native_text_geometry_inside_script": true,
+        "pending_controls": [
+          {
+            "name": "Reject",
+            "bounds": [
+              301,
+              1004,
+              35,
+              17
+            ]
+          },
+          {
+            "name": "Accept update",
+            "bounds": [
+              345,
+              1004,
+              82,
+              17
+            ]
+          }
+        ]
+      }
+    },
+    "captures": [
+      {
+        "file": "eidetic-bible-recall-pending-review.png",
+        "sha256": "6b6e07a41faee7718937a7a56b05384f9070199ea03b7ccfdef82971d2c4e46c",
+        "window_id": 2097155,
+        "pid": 24278
+      },
+      {
+        "file": "eidetic-bible-recall-lifecycle-concurrent.png",
+        "sha256": "a1b15629d5430284ecf4b3f8aab6f2612e72080dfc1a58c83c57062445f2ef9f",
+        "window_id": 2097155,
+        "pid": 24278
+      },
+      {
+        "file": "eidetic-bible-recall-lifecycle-delayed-success.png",
+        "sha256": "38824c184fe5b7dce92425d45c6ea5bc1806f3101b9383aee76464d3bfb0231e",
+        "window_id": 2097155,
+        "pid": 24278
+      },
+      {
+        "file": "eidetic-bible-recall-lifecycle-delayed-error.png",
+        "sha256": "2f6376e9596b27b2e989bc43ca686e7d9894e1d0b20d87c4afb1e9860978f712",
+        "window_id": 2097155,
+        "pid": 24278
+      },
+      {
+        "file": "eidetic-bible-recall-lifecycle-genuine-invalidation.png",
+        "sha256": "da8926883d9914a5ee696d0d081c760086360b0a9f4e1d0a190f7e9b7830c0a9",
+        "window_id": 2097155,
+        "pid": 24278
+      },
+      {
+        "file": "eidetic-bible-recall-lifecycle-fresh.png",
+        "sha256": "28d083fcca4e587604244482e89972922ecf462a9859ee865ab1d68cc8581459",
+        "window_id": 2097155,
+        "pid": 24278
+      }
+    ],
+    "lifecycle_test_build": {
+      "label": "qualifier-only compiled lifecycle wrappers; exact production BibleRecall/store/transport",
+      "seams": [
+        "wrap production inspector with native show/dispose controls",
+        "hold completion after actual production domain read",
+        "labelled synthetic delayed completion error"
+      ],
+      "DOM_or_IPC_injection": false,
+      "database_writes": false,
+      "synthetic_recall_values": false,
+      "original_evidence_source": "8bd0da0daa22897996b8e60976bf2de63fffe4eb"
+    },
+    "native_lifecycle_checks": [
+      {
+        "label": "ordinary sidebar removal preserves the other inspector",
+        "duration_seconds": 0.75,
+        "samples": [
+          {
+            "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+            "inspectorsVisible": true,
+            "hosts": 1,
+            "holdNext": false,
+            "held": false,
+            "reads": 4,
+            "completions": 0,
+            "lastCompletion": "none",
+            "actualReadVersion": 0,
+            "actualReadQuery": "",
+            "productionState": {
+              "anchor": "qualification.mara",
+              "pending": false,
+              "invalidated": false,
+              "error": null,
+              "projectionVersion": 222
+            }
+          },
+          {
+            "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+            "inspectorsVisible": true,
+            "hosts": 1,
+            "holdNext": false,
+            "held": false,
+            "reads": 4,
+            "completions": 0,
+            "lastCompletion": "none",
+            "actualReadVersion": 0,
+            "actualReadQuery": "",
+            "productionState": {
+              "anchor": "qualification.mara",
+              "pending": false,
+              "invalidated": false,
+              "error": null,
+              "projectionVersion": 222
+            }
+          }
+        ]
+      },
+      {
+        "label": "ordinary same-anchor sidebar remount has no false notice",
+        "duration_seconds": 0.75,
+        "samples": [
+          {
+            "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+            "inspectorsVisible": true,
+            "hosts": 2,
+            "holdNext": false,
+            "held": false,
+            "reads": 4,
+            "completions": 0,
+            "lastCompletion": "none",
+            "actualReadVersion": 0,
+            "actualReadQuery": "",
+            "productionState": {
+              "anchor": "qualification.mara",
+              "pending": false,
+              "invalidated": false,
+              "error": null,
+              "projectionVersion": 222
+            }
+          }
+        ]
+      },
+      {
+        "label": "held actual read before final disposal",
+        "failure": false,
+        "receipt": {
+          "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+          "inspectorsVisible": true,
+          "hosts": 2,
+          "holdNext": false,
+          "held": true,
+          "reads": 5,
+          "completions": 0,
+          "lastCompletion": "none",
+          "actualReadVersion": 222,
+          "actualReadQuery": "{\"anchor_node_id\":\"qualification.mara\",\"story_time_ms\":1000,\"direction\":\"both\",\"edge_kinds\":[],\"neighbor_limit\":8}",
+          "productionState": {
+            "anchor": "qualification.mara",
+            "pending": true,
+            "invalidated": false,
+            "error": null,
+            "projectionVersion": null
+          }
+        }
+      },
+      {
+        "label": "final disposal/remount rejects delayed actual success",
+        "duration_seconds": 0.75,
+        "samples": [
+          {
+            "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+            "inspectorsVisible": true,
+            "hosts": 2,
+            "holdNext": false,
+            "held": false,
+            "reads": 5,
+            "completions": 1,
+            "lastCompletion": "actual read success",
+            "actualReadVersion": 222,
+            "actualReadQuery": "{\"anchor_node_id\":\"qualification.mara\",\"story_time_ms\":1000,\"direction\":\"both\",\"edge_kinds\":[],\"neighbor_limit\":8}",
+            "productionState": {
+              "anchor": "qualification.mara",
+              "pending": false,
+              "invalidated": false,
+              "error": null,
+              "projectionVersion": null
+            }
+          }
+        ]
+      },
+      {
+        "label": "held actual read before final disposal",
+        "failure": true,
+        "receipt": {
+          "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+          "inspectorsVisible": true,
+          "hosts": 2,
+          "holdNext": false,
+          "held": true,
+          "reads": 6,
+          "completions": 1,
+          "lastCompletion": "actual read success",
+          "actualReadVersion": 222,
+          "actualReadQuery": "{\"anchor_node_id\":\"qualification.mara\",\"story_time_ms\":null,\"direction\":\"both\",\"edge_kinds\":[],\"neighbor_limit\":8}",
+          "productionState": {
+            "anchor": "qualification.mara",
+            "pending": true,
+            "invalidated": false,
+            "error": null,
+            "projectionVersion": null
+          }
+        }
+      },
+      {
+        "label": "final disposal/remount rejects delayed synthetic error",
+        "duration_seconds": 0.75,
+        "samples": [
+          {
+            "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+            "inspectorsVisible": true,
+            "hosts": 2,
+            "holdNext": false,
+            "held": false,
+            "reads": 6,
+            "completions": 2,
+            "lastCompletion": "labelled synthetic completion error",
+            "actualReadVersion": 222,
+            "actualReadQuery": "{\"anchor_node_id\":\"qualification.mara\",\"story_time_ms\":null,\"direction\":\"both\",\"edge_kinds\":[],\"neighbor_limit\":8}",
+            "productionState": {
+              "anchor": "qualification.mara",
+              "pending": false,
+              "invalidated": false,
+              "error": null,
+              "projectionVersion": null
+            }
+          }
+        ]
+      },
+      {
+        "label": "genuine mutation survives actual final disposal/remount",
+        "duration_seconds": 0.75,
+        "samples": [
+          {
+            "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+            "inspectorsVisible": true,
+            "hosts": 2,
+            "holdNext": false,
+            "held": false,
+            "reads": 7,
+            "completions": 2,
+            "lastCompletion": "labelled synthetic completion error",
+            "actualReadVersion": 222,
+            "actualReadQuery": "{\"anchor_node_id\":\"qualification.mara\",\"story_time_ms\":null,\"direction\":\"both\",\"edge_kinds\":[],\"neighbor_limit\":8}",
+            "productionState": {
+              "anchor": "qualification.mara",
+              "pending": false,
+              "invalidated": true,
+              "error": null,
+              "projectionVersion": null
+            }
+          }
+        ]
+      },
+      {
+        "label": "explicit real fresh recall alone clears mutation notice",
+        "duration_seconds": 0.75,
+        "samples": [
+          {
+            "fixture": "qualifier-only native lifecycle controls; actual domain reads; synthetic error",
+            "inspectorsVisible": true,
+            "hosts": 2,
+            "holdNext": false,
+            "held": false,
+            "reads": 8,
+            "completions": 2,
+            "lastCompletion": "labelled synthetic completion error",
+            "actualReadVersion": 222,
+            "actualReadQuery": "{\"anchor_node_id\":\"qualification.mara\",\"story_time_ms\":null,\"direction\":\"both\",\"edge_kinds\":[],\"neighbor_limit\":8}",
+            "productionState": {
+              "anchor": "qualification.mara",
+              "pending": false,
+              "invalidated": false,
+              "error": null,
+              "projectionVersion": 223
+            }
+          }
+        ]
+      }
+    ],
+    "lifecycle_canonical_fact_edit": {
+      "before": [
+        "Mara's umbrella is amber.",
+        "46d1fb8a-b170-4595-b5bd-c228ca6687a2"
+      ],
+      "after": [
+        "Mara's umbrella is copper.",
+        "1eb58322-f514-4abb-966a-61a12eab354b"
+      ],
+      "exact_before": "Mara's umbrella is amber.",
+      "exact_after": "Mara's umbrella is copper."
+    },
+    "pending_proposal_rows_before_and_after": [
+      [
+        "script.review.aa3e1650-a557-40b4-81bf-ecdccd77fee5",
+        "patch_script_block",
+        "script_block",
+        "script.block.61ea91cb-05e7-43cb-983c-ebe9e6baea1a.generated",
+        null,
+        null,
+        null,
+        null,
+        "pending",
+        "Update screenplay for a changed input",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "Synthetic preview: Mara waits for Eli with her amber umbrella. Preserve this station beat.\n\n",
+        null,
+        "generation.4247482d-711b-4eba-8a17-0e518e4a7095.bible.4",
+        "46d1fb8a-b170-4595-b5bd-c228ca6687a2",
+        "Reviewable screenplay update; inferred world assertions require separate proposals.",
+        1791349359420,
+        "eda69528-b0a8-441c-b0f9-636bce8ac90f"
+      ]
+    ],
+    "retained_pending_proposal_unchanged": true,
+    "provider_records": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      }
+    ],
+    "saved_screenplay_after": {
+      "5adfa800-0147-4c5f-b97c-75bb604b6598": [
+        [
+          "script.block.e69fe6b8-2b30-422c-9916-7021beaa8236.user",
+          "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\n",
+          "19816aa4-1896-4dd5-86dc-54e39596247a",
+          0,
+          60000
+        ]
+      ],
+      "3c14fdb5-3995-47a9-acdf-83db62b44e28": [
+        [
+          "script.block.9a07c45a-19fc-4591-8709-7e1f00afab34.user",
+          "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n",
+          "45cdd99c-4085-4509-9933-f2e5b455a10d",
+          60000,
+          120000
+        ]
+      ],
+      "61ea91cb-05e7-43cb-983c-ebe9e6baea1a": [
+        [
+          "script.block.61ea91cb-05e7-43cb-983c-ebe9e6baea1a.generated",
+          "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+          "8cda6f97-864c-4d4b-9084-da6178235558",
+          120000,
+          180000
+        ]
+      ]
+    },
+    "accessibility_retirements": 0,
+    "typed_text_observations": [
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 82,
+        "actual_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 47,
+        "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Search entities...",
+        "expected_length": 4,
+        "actual_text": "Ma",
+        "exact": false
+      },
+      {
+        "field": "Search entities...",
+        "expected_length": 4,
+        "actual_text": "Mara",
+        "exact": true
+      },
+      {
+        "field": "Recall story time (ms)",
+        "expected_length": 3,
+        "actual_text": "999",
+        "exact": true
+      },
+      {
+        "field": "Recall story time (ms)",
+        "expected_length": 4,
+        "actual_text": "1000",
+        "exact": true
+      },
+      {
+        "field": "TAGLINE Mara's umbrella is amber.",
+        "expected_length": 25,
+        "actual_text": "Mara's umbrella is amber.",
+        "exact": true
+      },
+      {
+        "field": "Recall story time (ms)",
+        "expected_length": 4,
+        "actual_text": "1000",
+        "exact": true
+      },
+      {
+        "field": "TAGLINE Mara's umbrella is copper.",
+        "expected_length": 26,
+        "actual_text": "Mara's umbrella is copper.",
+        "exact": true
+      },
+      {
+        "field": "Recall story time (ms)",
+        "expected_length": 4,
+        "actual_text": "1000",
+        "exact": true
+      }
+    ]
+  },
+  "all_original_pngs_individually_viewed": true,
+  "local_successor_receipts": {
+    "source": "4c468d6386bcad44117fe7e4439202cdde52a0f7",
+    "tree": "6f546f9d75bffe6baef70912f7635996f6acb244",
+    "base": "8bd0da0daa22897996b8e60976bf2de63fffe4eb",
+    "branch": "fix/bible-recall-inspector-lifecycle",
+    "published": false,
+    "changed_files": [
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-successor/ui/src/lib/components/sidebar/bible/BibleRecall.ssr.test.ts",
+        "sha256": "58c1620cbbd37d1f8bdb7c4fd69cb453cf753a7031245d8da70512fefda42246",
+        "bytes": 3934
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-successor/ui/src/lib/components/sidebar/bible/BibleRecall.svelte",
+        "sha256": "57a3b0bf1b805d18368ecc85b5073dfdf4924c86e7020e4623c03d9c870f43cd",
+        "bytes": 7851
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-successor/ui/src/lib/components/sidebar/bible/README.md",
+        "sha256": "b1ea19da4b0044efd93314693e58d2c7f7f09288d331c92b516be8a1502e968a",
+        "bytes": 5350
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-successor/ui/src/lib/stores/README.md",
+        "sha256": "716c691443bb9aed625b34ddd56de102bb9394cd98714eecc0113a1dad371708",
+        "bytes": 26382
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-successor/ui/src/lib/stores/bibleRecallProjection.svelte.test.ts",
+        "sha256": "0a5ddedebeb89215baa0b6262681e0962ba0427b595868eb999be15b4be36e42",
+        "bytes": 13063
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-successor/ui/src/lib/stores/bibleRecallProjection.svelte.ts",
+        "sha256": "5e442834cb8a0bc85da3fd4c8ab8d5bb12cb5b7cf1fec0dcd02ca73fbf3d1506",
+        "bytes": 3994
+      }
+    ],
+    "tests": {
+      "affected_initial": 20,
+      "affected_independent_final": 21,
+      "ui_total": 513,
+      "ui_files": 85,
+      "added_regressions": 10
+    },
+    "gates": [
+      "UI tests",
+      "UI lint",
+      "UI format",
+      "UI typecheck 0 errors/0 warnings",
+      "UI production build",
+      "Rust formatting",
+      "decision traceability",
+      "commit message"
+    ],
+    "logs": [
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-affected.log",
+        "sha256": "079a9a835b370fa3e289c8a6f5c5fa3b67ac070491031e343d471606bcf56a9b",
+        "bytes": 1023
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-ui-tests-final.log",
+        "sha256": "0b7640145c396c8b037d3c1fb93cce6cb4c0fac4b5355167d3769c953aee927d",
+        "bytes": 7124
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-precommit-final.log",
+        "sha256": "bc93c6a25eaa82a9807a98fda560647b539a3b949aa3b38b59f13c36715365ec",
+        "bytes": 15519
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-rustfmt.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-build.log",
+        "sha256": "8e1b3201d178e751db0c955b59d90fad0763754a61fb3a7de7d6b5317feb7c72",
+        "bytes": 3628
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-commit-final.log",
+        "sha256": "3eb607e7d51b74012b8756e68079189d6741de800a85e079e546e3ea75291666",
+        "bytes": 16201
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-committed-traceability.log",
+        "sha256": "20171cb4d4f27c8ca3ee2ec15e6fa85aa07a81afa0d2f2e945d2e1bd111969bf",
+        "bytes": 36
+      }
+    ],
+    "prior_failed_or_skipped_gate_logs": [
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-precommit.log",
+        "sha256": "13a3cd7600b7738ec338ba0e4593661780ecad380a4739f2ace3ce5749922a4e",
+        "bytes": 714
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-precommit-staged.log",
+        "sha256": "da440d677fe8e47ce3118677b8e3cbc12832f1d2a5186702af23d4d93679f6c8",
+        "bytes": 15837
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-commit.log",
+        "sha256": "e0eaccccb24be7dbe6387503d01f50d88e18e90cb9eece356d7e0a089c40e060",
+        "bytes": 25
+      }
+    ],
+    "independent_review": {
+      "agent": "/root/review_recall_lifecycle_successor",
+      "blocking_findings": [],
+      "final_array_bookkeeping_reviewed": true,
+      "affected_tests_passed": 21
+    },
+    "native": {
+      "successor_executed": false,
+      "narrow_lifecycle_addendum_needed": true,
+      "coverage_limit": "Retain/release lifecycle tests exercise shared ownership directly; SSR does not run client effects. Independent compiled-client inspection confirms the effect tracks only nodeId.",
+      "addendum": [
+        "Recall with both inspectors; switch sidebar away and back while right inspector remains; preserve shared evidence and no false Facts changed notice",
+        "Remove the final inspector and remount the same anchor; old evidence absent, no invented mutation notice and late responses withheld",
+        "Preserve a genuine mutation notice through disposal/remount until explicit fresh recall"
+      ],
+      "original_source": "8bd0da0daa22897996b8e60976bf2de63fffe4eb",
+      "original_qualifier": "cf9830b6b5df3dc56cd01ab6f8384039a33a0729",
+      "original_evidence": "12a3fa980dd01a389cc11d1c22b7c23cde8092c8",
+      "original_run": 37568916076,
+      "original_artifact": 11459778402,
+      "unchanged_manifest": {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-evidence/docs/reports/explicit-bible-recall-manifest.json",
+        "sha256": "45663c0118f1111d71e83e5a45b2847e89810a94975d05f8c3fe55eb0bbae60b",
+        "bytes": 294788
+      },
+      "unchanged_artifact": {
+        "path": "/workspace/attachments/3a28beff-0d15-4ba0-ad40-574f19da872d/eidetic-explicit-bible-recall-success.zip",
+        "sha256": "aebef0fdb00ef2a842201676f22320739f7f2621eb3fc3349a917fdf116f12e5",
+        "bytes": 1066965
+      }
+    },
+    "restrictions_preserved": [
+      "No publication",
+      "No bot-thread resolution",
+      "No external review request",
+      "No canon/draft/backend changes",
+      "No altered or relabelled original screenshots"
+    ]
+  },
+  "local_qualifier_receipts": {
+    "source": "4c468d6386bcad44117fe7e4439202cdde52a0f7",
+    "qualifier": "3cccc2b683903e5ec45531fa990a45043adb524e",
+    "qualifier_tree": "135725a8746492d23c2d15bff38afc2aae2ad8c8",
+    "delta": [
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/.github/workflows/bible-recall-native.yml",
+        "sha256": "447cb5b99fb1844f61705ae85bc0beccb7b20c93dd57e624ce1d669c9126d6be",
+        "bytes": 5952
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/crates/server/examples/bible_recall_capture_fixture.rs",
+        "sha256": "ad55493a4d9dc77ce60025f948e12b70851c2ba8a78eb24d3462db59a6345e65",
+        "bytes": 8892
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/scripts/qualify-bible-recall-lifecycle.py",
+        "sha256": "a1d7ad7be9fde2d7d9984027be8965fe355d8b68b0f5c47f54a6e532994bd210",
+        "bytes": 12069
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/scripts/qualify-bible-recall.py",
+        "sha256": "257566070d8a6855613b5256ff7a124b3185a8035702fcb932d4d7f4e8d4158a",
+        "bytes": 31543
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/scripts/recall-lifecycle-vite.config.mts",
+        "sha256": "b463e938a57396278c8c72bde4a70dcf8d9700191708b10b1c2842ff60d41dd0",
+        "bytes": 1416
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/scripts/test_qualify_bible_recall.py",
+        "sha256": "dcaca22d2181fbd2884bc63958d4f65c5a28720106f48ccc1cb8d1286d2432a8",
+        "bytes": 6724
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/scripts/test_qualify_bible_recall_lifecycle.py",
+        "sha256": "28bff7b3216472d81f2e86372e0cdaf1ee62fbab1b5b7b09523f398cdc9ca6a5",
+        "bytes": 2417
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/ui/src/qualification/README.md",
+        "sha256": "561964e5cafeed21ad91588a5d8df885103d099946b73303995ee41ad88637cd",
+        "bytes": 2250
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/ui/src/qualification/RecallLifecycleControls.svelte",
+        "sha256": "19c78a7a16be1794462926a8b6b9568c49559c0d7866c236bf610d80edf40c31",
+        "bytes": 1864
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/ui/src/qualification/RecallLifecycleInspector.svelte",
+        "sha256": "0f3b102c146c7b50f80e1aa3bdda73a9768b1e016396e6390665b7d93536f3f3",
+        "bytes": 429
+      },
+      {
+        "path": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/ui/src/qualification/recallLifecycle.svelte.ts",
+        "sha256": "c4c5b71deac6f397a7e31e91200a9ba67ac55a8de7f4fd0e9858bac0d390c510",
+        "bytes": 2474
+      }
+    ],
+    "logs": [
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-driver-tests-final.log",
+        "sha256": "ee1660d73c853c41e4e04fa0831eb0a6b3ff9019a7c83d36d0bd1a5f1a5096dc",
+        "bytes": 10329
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-format-final.log",
+        "sha256": "5e77910b6e100e5f30dedf280d2436084bd2ba87f1a6371d44f04e61265ea82d",
+        "bytes": 381
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-lint-final.log",
+        "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42",
+        "bytes": 251
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-build-admitted.log",
+        "sha256": "3d1d59c235569fb3648b608fe2d63bda732519c1db3e405387a10fcf9b89f899",
+        "bytes": 3669
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-dev-admission.log",
+        "sha256": "9abe966a0e3ccb461d569696efade4b8a6a518e635b18c5b63655ee5d7992198",
+        "bytes": 966
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-precommit.log",
+        "sha256": "ed08ee08c1aeb3b02febc91dba30f668905c0e6a3ddeb36ed2fd1eb9c02fb29b",
+        "bytes": 15692
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-commit.log",
+        "sha256": "9f112f44b794bcfa79dfafd406a9dd25ad0f102286d27df6244ad1f98d128cc0",
+        "bytes": 17055
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-push.log",
+        "sha256": "aeb056f6c7d1f53549d2ff493c2655dccf5ba11bdfb4e55340d37aa7b052be1c",
+        "bytes": 465
+      }
+    ],
+    "served_module_admission": {
+      "host_pid": 321319,
+      "custom_config": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-bible-recall-lifecycle-native/scripts/recall-lifecycle-vite.config.mts",
+      "SSR_overlay": true,
+      "served_module_admission": {
+        "/src/lib/stores/bibleRecallProjection.svelte.ts": "/src/qualification/recallLifecycle.svelte.ts",
+        "/src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte": "RecallLifecycleInspector.svelte",
+        "/src/qualification/recallLifecycle.svelte.ts": "QA labelled synthetic delayed recall error",
+        "/src/qualification/RecallLifecycleInspector.svelte": "/src/lib/components/sidebar/bible/BibleRecall.svelte"
+      }
+    },
+    "local_result": "49 driver tests; QA lint/format/typecheck/build and traceability/rustfmt/precommit pass; no native pass claimed",
+    "independent_review": "Both initial qualifier defects corrected and independently reviewed; final startup and 3 lifecycle driver regressions pass",
+    "run": 37573408905,
+    "job": 112636877757,
+    "failed_local_admission_logs": [
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-format.log",
+        "sha256": "51aeb52272d7b70ce7c69d7a896b83a5829422bc44249c7e17c8c9dcafd24e02",
+        "bytes": 379
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-build.log",
+        "sha256": "293644d3330d3ea3c8ad822e26bfc22c746051705fa927341401790cff8ce383",
+        "bytes": 4220
+      },
+      {
+        "path": "/workspace/scratch/bible-recall-lifecycle-native-lint.log",
+        "sha256": "da8f311a978b458f8ca328031369a7de514b69d33756112073af588dfee7ebcf",
+        "bytes": 687
+      }
+    ]
+  },
+  "limits": [
+    "Instrumented native lifecycle host; original production component/store/transport bytes unchanged",
+    "Final disposal and completion delay use labelled compiled QA controls",
+    "Error completion and three authoring provider replies are synthetic; successful recall values are actual domain reads",
+    "No real-model narrative quality or acceptance claim",
+    "Original8bd native evidence retains its original source binding",
+    "URL-bearing launcher reuse line is removed by inherited log sanitization; host binding uses frozen startup code, strictPort/config/PID receipts and actual native controlled-read behavior, not independent socket-owner enumeration",
+    "Rust desktop binary matches original8bd because production changes are UI-only; UI binding uses source/qualifier/config and native lifecycle evidence"
+  ],
+  "sealer": {
+    "path": "/workspace/scratch/bible-recall-lifecycle-verify.py",
+    "sha256": "81d12eee520aa258622b9f0d441fb101e8ac76a0bf7fd2424846168efb6f4b1b",
+    "size_bytes": 7492
+  }
+}

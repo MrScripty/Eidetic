@@ -1935,3 +1935,30 @@ clear/deletion/ABA, writer recapture, target edits, both locks and failed stream
 five added UI cases cover exact source evidence and event refresh/draft retention.
 Hosted native qualification is prepared separately, not yet claimed. Synthetic
 HTTP fixtures establish workflow behavior, not real-model narrative quality.
+
+### Bible recall inspector lifecycle successor — 7 October 2026
+
+Frozen source `4c468d6386bcad44117fe7e4439202cdde52a0f7`, tree
+`6f546f9d75bffe6baef70912f7635996f6acb244`, separates cleanup/query revocation
+from fact invalidation and retains shared inspector owners. Same-anchor remount
+has no invented notice; genuine mutation and revision floor persist. README
+contents row17 now has two cells. Local513UI/85files and required gates pass;
+independent review passes21affected tests with no blocking findings.
+
+Separate qualifier `3cccc2b683903e5ec45531fa990a45043adb524e`, tree
+`135725a8746492d23c2d15bff38afc2aae2ad8c8`, uses11QA-only files. Native run
+37573408905/job112636877757 passes core122/server511/UI513, strict Clippy,
+49drivers and5no-download checks. Ordinary sidebar removal/remount preserves
+revision222. Labelled compiled controls isolate final component disposal and
+hold actual domain-read completion; success and synthetic error cannot publish
+into remount. Exact amber→copper GUI Save survives final disposal/remount as
+genuine invalidation; explicit recall alone clears it at revision223.
+
+All six original screenshots are individually inspected and hash-bound to
+artifact11461888724, ZIP6fd0edf201c76c46c6fff85513c09dccadb8d82665725271464daae87478fb51.
+Saved manual B, exact unsaved F draft and all pending proposal columns/status
+remain unchanged. The pending synthetic amber preview predates copper; acceptance
+is not qualified or clicked. Selector contrast and instrumented-host limitations
+are explicit in docs/reports/bible-recall-lifecycle-native.md and its manifest.
+Original8bd/cf983/12a evidence remains unchanged; PR19 still points to8bd.
+No PR update, merge, bot-thread resolution or manual CodeRabbit request.
