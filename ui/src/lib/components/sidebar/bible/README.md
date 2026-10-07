@@ -114,11 +114,13 @@ Part components are keyed by node and part identity. Local save completion/error
 may clear only the same admitted owner, and input is disabled during that save.
 Late acknowledgement after a selection change cannot clear another field draft.
 Completion additionally requires the same save request, the submitted typed value
-in both the acknowledgement and current verified field, and no observed conflict.
-A newer or unverified committed value retains exact submitted text and its base
+in both the acknowledgement and current committed field, and no observed conflict.
+A newer or mismatched committed value retains exact submitted text and its base
 for explicit discard. Observed conflicts remain latched even if a later value
 matches the submitted value. The expected pending save value alone is not
 treated as an external conflict.
+An owned matching acknowledgement may clear its submitted draft while a detail
+read is pending; that read still gates the next Save until verified recovery.
 No canonical text is optimistically changed. Existing trimming at explicit field
 Save remains unchanged; unsaved input is retained exactly. Dirty draft persistence
 across inspector destruction/project switching is not added.

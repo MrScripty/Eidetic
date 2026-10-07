@@ -142,16 +142,17 @@ assert.equal(editor.value(fields('Mara')[0]),'  Local draft — 雨.\\n\\n  '); 
 editor.discard(fields('Mara')[0]); await editor.save(fields('Mara')[0]); assert.equal(calls,1); release();
 `));
 
-it('retains a draft when acknowledgement arrives during delayed refresh and refuses stale recovery', () =>
+it('reconciles a matching acknowledgement during delayed refresh while keeping Save gated until recovery', () =>
   run(`
 globalThis.read=async()=>projection('Mara','Red',1);const release=store.retainBibleGraphNodeDetail(key('Mara'));await settle();
 let acknowledge,refresh;const editor=createBibleGraphFieldDrafts({owner:()=> 'Mara',fields:()=>fields('Mara'),verified:()=>store.isBibleGraphNodeProjectionVerified(key('Mara')),save:()=>new Promise(resolve=>acknowledge=resolve)});
 editor.update(fields('Mara')[0],'  Blue draft — 雨.  ');const saving=editor.save(fields('Mara')[0]);
 globalThis.read=()=>new Promise(resolve=>refresh=resolve);const reading=store.refreshOwnedBibleGraphNodeProjections();
 const ack=projection('Mara','Blue draft — 雨.',2);store.cacheNodeProjection(store.cacheKey(key('Mara')),ack);acknowledge(ack.payload.parts[0].fields[0]);await saving;
-assert.equal(editor.value(fields('Mara')[0]),'  Blue draft — 雨.  ');assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
+assert.equal(editor.state.drafts['Mara.tagline'],undefined);assert.equal(editor.value(fields('Mara')[0]),'Blue draft — 雨.');assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
+await editor.save(fields('Mara')[0]);assert.match(editor.state.errors['Mara.tagline'],/Verify saved facts/);
 refresh(projection('Mara','Red',1));await assert.rejects(reading,/older revision/);assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);assert.equal(fields('Mara')[0].value.value,'Blue draft — 雨.');
-globalThis.read=async()=>projection('Mara','Green',3);await store.refreshOwnedBibleGraphNodeProjections();editor.observe();assert.equal(editor.changed(fields('Mara')[0]),true);assert.equal(editor.state.drafts['Mara.tagline'].baseText,'Red');release();
+globalThis.read=async()=>projection('Mara','Green',3);await store.refreshOwnedBibleGraphNodeProjections();editor.observe();assert.equal(editor.changed(fields('Mara')[0]),false);assert.equal(editor.value(fields('Mara')[0]),'Green');release();
 `));
 
 it('does not let an old save complete a new same-name owner after selection ABA', () =>

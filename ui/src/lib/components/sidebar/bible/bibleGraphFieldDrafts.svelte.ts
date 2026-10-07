@@ -108,7 +108,6 @@ export function createBibleGraphFieldDrafts(options: {
       observe();
       const committed = options.fields().find((current) => current.id === field.id);
       if (
-        options.verified() &&
         acknowledged &&
         committed &&
         acknowledged.id === field.id &&
