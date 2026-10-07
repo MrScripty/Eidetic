@@ -365,6 +365,7 @@ def qualify_save_refresh(application,window,database,capture,checkpoint,evidence
 
     motivation=ui.wait_for('right unconflicted motivation editor',lambda:driver.find_bible_editor(application,window,MOTIVATION,'right'))
     ui.type_text(motivation,window,RECOVERY_DRAFT)
+    ui.wait_for('unconflicted motivation Save enabled before induced failure',lambda:(control if control and control.getState().contains(ui.pyatspi.STATE_ENABLED) else None) if (control:=driver.save_fact_control(application,motivation)) else None)
     ui.click_button(application,'QA fail Bible detail refresh',window)
     error=ui.wait_for('visible cached-detail failure',lambda:right_node('SYNTHETIC QA transport: Bible detail unavailable.'))
     motivation=ui.wait_for('exact recovery draft during failed refresh',lambda:driver.find_bible_editor(application,window,RECOVERY_DRAFT,'right'))
@@ -372,7 +373,7 @@ def qualify_save_refresh(application,window,database,capture,checkpoint,evidence
     if save.getState().contains(ui.pyatspi.STATE_ENABLED):raise RuntimeError('Failed cached refresh permits stale field Save')
     evidence['detail_failure']={'visible_error':ui.text_of(error),'cached_fact':field(database),
         'exact_draft':driver.bible_field(application,window,RECOVERY_DRAFT,'right',align=True),
-        'unconflicted_save_disabled':True,'synthetic_transport_failure':True}
+        'unconflicted_save_enabled_before_failure':True,'unconflicted_save_disabled':True,'synthetic_transport_failure':True}
     checkpoint('cached details expose refresh failure and disable unconflicted field Save')
     capture('manual-fact-12-detail-error.png')
 
@@ -433,7 +434,7 @@ def main():
             except OSError:return False
         ui.wait_for('labelled native Vite host',ready)
         evidence['served_source_receipts']=[]
-        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact')]:
+        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/qualification/manualFacts.svelte.ts','SYNTHETIC QA transport: Bible detail unavailable.'),('src/lib/stores/bibleGraphNodeProjection.svelte.ts','setBibleGraphFieldProjection'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact')]:
             source_file=repo/'ui'/relative
             with urlopen('http://127.0.0.1:5173/'+relative,timeout=10) as response:served=response.read()
             import hashlib

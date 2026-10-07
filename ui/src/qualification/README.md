@@ -66,7 +66,8 @@ boundaries; the saved-edit reconciliation plan defines this bounded acceptance f
 
 Build with `npx vite build --config ../scripts/manual-facts-vite.config.mts` from
 `ui`. In the native fixture, use ordinary Analyze and review controls; use the
-labelled QA buttons only for exact replay, association ABA and canonical impact reads.
+labelled QA buttons for exact replay, association ABA, canonical impact reads and
+the explicitly synthetic held-acknowledgement/failed-read recovery sequence.
 
 
 The separate save/refresh native successor admits product `1aab490` and only
