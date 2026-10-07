@@ -116,7 +116,8 @@ def save_script(application,window,database,node_id,current,new):
 
 
 def select_consumed(application,window):
-    node=ui.wait_for('ordinary consumed fact dropdown',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and n.name=='Consumed baseline fact'))
+    # WebKit appends the current option to this control's accessible label.
+    node=ui.wait_for('ordinary consumed fact dropdown',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and ui.button_label_matches(n.name,'Consumed baseline fact',prefix=True)))
     ui.click_control(node,window)
     ui.command('xdotool','key','--clearmodifiers','Home','Down','Return')
     ui.wait_for('ordinary Analyze enabled after selection',lambda:ui.reveal(application,lambda n:n.name=='Analyze saved edit' and n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and n.getState().contains(ui.pyatspi.STATE_ENABLED)))
