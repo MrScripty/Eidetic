@@ -51,21 +51,24 @@ export function getCachedPropagationProposalListProjection(): ProjectionEnvelope
 export async function refreshPropagationProposalListProjection(): Promise<
   ProjectionEnvelope<PropagationProposalListProjection>
 > {
+  const admitted = sessionEpoch;
   propagationProposalProjectionState.pending = true;
   propagationProposalProjectionState.error = undefined;
 
   try {
     const projection = await getPropagationProposalListProjection();
+    if (admitted !== sessionEpoch) throw new Error('The project changed during proposal refresh.');
     cacheProjection(projection);
     return projection;
   } catch (error) {
-    propagationProposalProjectionState.error = errorMessage(
-      error,
-      'Failed to load propagation proposals',
-    );
+    if (admitted === sessionEpoch)
+      propagationProposalProjectionState.error = errorMessage(
+        error,
+        'Failed to load propagation proposals',
+      );
     throw error;
   } finally {
-    propagationProposalProjectionState.pending = false;
+    if (admitted === sessionEpoch) propagationProposalProjectionState.pending = false;
   }
 }
 
