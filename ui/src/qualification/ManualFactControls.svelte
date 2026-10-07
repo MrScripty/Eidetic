@@ -1,0 +1,62 @@
+<script lang="ts">
+  import {
+    factQA,
+    replayRequest,
+    replayDecision,
+    relationshipABA,
+    readImpacts,
+    receipt,
+  } from './manualFacts.svelte.js';
+</script>
+
+<aside class="qa" aria-label="Qualifier-only saved edit controls">
+  <strong>QA saved-edit fixture · public commands · SYNTHETIC HTTP replies</strong>
+  <button onclick={replayRequest} disabled={factQA.busy || !factQA.requestId}
+    >QA replay exact analysis</button
+  >
+  <button onclick={replayDecision} disabled={factQA.busy || !factQA.decisionId}
+    >QA replay exact decision</button
+  >
+  <button onclick={relationshipABA} disabled={factQA.busy}>QA relationship edit and restore</button>
+  <button onclick={readImpacts} disabled={factQA.busy}>QA read canonical impacts</button>
+  <label
+    >QA saved-edit receipt<textarea aria-label="QA saved-edit receipt" readonly value={receipt()}
+    ></textarea></label
+  >
+  {#if factQA.error}<p role="alert">{factQA.error}</p>{/if}
+</aside>
+
+<style>
+  .qa {
+    position: fixed;
+    bottom: 8px;
+    right: 8px;
+    z-index: 100;
+    width: 570px;
+    padding: 8px;
+    border: 2px solid #eab308;
+    background: #121826;
+    color: #fff;
+    font-size: 11px;
+  }
+  button {
+    margin: 3px;
+    padding: 4px;
+    border: 1px solid #aab;
+    background: #273248;
+    color: white;
+  }
+  button:disabled {
+    opacity: 0.4;
+  }
+  label {
+    display: block;
+  }
+  textarea {
+    height: 40px;
+    width: 100%;
+    color: #fff;
+    background: #121826;
+    font-size: 10px;
+  }
+</style>
