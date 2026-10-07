@@ -10,6 +10,17 @@ module=ast.parse(source)
 selected=[n for n in module.body if isinstance(n,ast.Assign) and all(isinstance(t,ast.Name) and t.id in {'RED','BLUE','SAVED','DRAFT'} for t in n.targets) or isinstance(n,ast.FunctionDef) and n.name=='fact_prompt']
 namespace={'json':json};exec(compile(ast.Module(body=selected,type_ignores=[]),'<pure qualifier>','exec'),namespace)
 
+class NativeInputTests(unittest.TestCase):
+    def test_native_key_steps_preserve_exact_unicode_whitespace_and_newlines(self):
+        helper=ast.parse(Path(__file__).with_name('manual-fact-native-helpers.py').read_text())
+        function=next(n for n in helper.body if isinstance(n,ast.FunctionDef) and n.name=='native_input_steps')
+        local={};exec(compile(ast.Module(body=[function],type_ignores=[]),'<native input>','exec'),local)
+        text=namespace['SAVED'];steps=local['native_input_steps'](text)
+        restored=''.join(value if kind=='type' else '\n' if kind=='newline' else chr(int(value,16)) for kind,value in steps)
+        self.assertEqual(restored,text)
+        self.assertIn(('unicode','2014'),steps)
+        self.assertIn(('unicode','96e8'),steps)
+
 class PromptTests(unittest.TestCase):
     def evidence(self):
         return {'text':namespace['SAVED'],'before_revision_event_id':'before','revision_event_id':'saved','facts':[{'field_id':'qualification.mara.tagline','text':namespace['RED'],'consumed_text':namespace['RED']}]}

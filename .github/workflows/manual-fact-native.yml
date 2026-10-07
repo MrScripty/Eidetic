@@ -52,6 +52,7 @@ jobs:
           if changed != allowed:
               raise SystemExit('Qualification delta differs from exact enumerated nine files: ' + repr(sorted(changed)))
           PY
+          scripts/check-decision-traceability.sh
       - name: Install standard Linux and display dependencies
         timeout-minutes: 5
         run: |
@@ -125,7 +126,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eidetic-manual-fact-native-e140290
+          name: eidetic-manual-fact-native-6e3bad3
           retention-days: 3
           if-no-files-found: warn
           path: |

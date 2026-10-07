@@ -176,3 +176,37 @@ def visible_text(application, label):
         ui.pyatspi.ROLE_PARAGRAPH, ui.pyatspi.ROLE_STATUS_BAR, ui.pyatspi.ROLE_TEXT) and matches(n))
 
 ui.walk = walk_live
+
+def native_input_steps(text):
+    """Native keys preserve LF and Unicode that xdotool type can omit."""
+    steps=[];ascii_text=''
+    for character in text:
+        if character!='\n' and ord(character)<128:
+            ascii_text+=character;continue
+        if ascii_text:steps.append(('type',ascii_text));ascii_text=''
+        steps.append(('newline','') if character=='\n' else ('unicode',format(ord(character),'x')))
+    if ascii_text:steps.append(('type',ascii_text))
+    return steps
+
+
+def type_text(node,window,text):
+    import subprocess
+    ui.click_control(node,window)
+    ui.wait_for('native text focus',lambda:node.getState().contains(ui.pyatspi.STATE_FOCUSED))
+    ui.command('xdotool','key','--clearmodifiers','ctrl+a')
+    for kind,value in native_input_steps(text):
+        if kind=='type':subprocess.run(['xdotool','type','--clearmodifiers','--delay','10',value],check=True,timeout=20)
+        elif kind=='newline':ui.command('xdotool','key','--clearmodifiers','Return')
+        else:
+            # Ordinary GTK Unicode composition, driven entirely with native keys.
+            ui.command('xdotool','key','--clearmodifiers','ctrl+shift+u')
+            ui.command('xdotool','type','--clearmodifiers',value)
+            ui.command('xdotool','key','--clearmodifiers','Return')
+    def exact():
+        node.clear_cache();actual=ui.text_of(node)
+        observation={'field':node.name,'expected_length':len(text),'actual_text':actual,'exact':actual==text,'route':'native ASCII/Return and GTK Unicode composition'}
+        if not ui.TYPED_TEXT_OBSERVATIONS or ui.TYPED_TEXT_OBSERVATIONS[-1]!=observation:ui.TYPED_TEXT_OBSERVATIONS.append(observation)
+        return actual==text
+    ui.wait_for('exact native typed text including Unicode/whitespace',exact)
+
+ui.type_text=type_text
