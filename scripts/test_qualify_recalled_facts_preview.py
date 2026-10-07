@@ -64,6 +64,27 @@ class SelectedCaptureTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'Consumed'):
             driver.require_selection_binding(value, (driver.SELECTED, 'source'))
 
+    def test_unspecified_story_time_uses_native_deletion_before_recall(self):
+        class Field:
+            name = 'Recall story time (ms)'
+            text = '1000'
+            def clear_cache(self): pass
+            def getState(self): return self
+            def contains(self, state): return True
+            def queryComponent(self): return self
+            def getExtents(self, coordinates): return (1600, 200, 280, 28)
+        field = Field()
+        events = []
+        def command(*args):
+            events.append(args)
+            if args[-1] == 'BackSpace': field.text = ''
+        with patch.object(driver.ui.pyatspi, 'STATE_EDITABLE', 1, create=True), patch.object(driver.ui.pyatspi, 'STATE_FOCUSED', 2, create=True), patch.object(driver.ui.pyatspi, 'XY_SCREEN', 0, create=True):
+            with patch.object(driver.ui, 'wait_for', side_effect=lambda label, check: check()), patch.object(driver.ui, 'reveal', side_effect=lambda app, check: field if check(field) else None), patch.object(driver.ui, 'click_control'), patch.object(driver.ui, 'command', side_effect=command), patch.object(driver.ui, 'text_of', side_effect=lambda node: node.text), patch.object(driver.ui, 'reveal_button') as recall:
+                driver.recall_unspecified(None, 'window')
+                self.assertEqual(field.text, '')
+                self.assertEqual([e[-1] for e in events], ['ctrl+a', 'BackSpace'])
+                recall.assert_called_once_with(None, 'Recall related story facts', 'window')
+
     def test_native_disclosure_click_admits_unknown_summary_and_excludes_landmark(self):
         class Node:
             name = 'Author-selected recalled facts used for this preview'

@@ -136,6 +136,25 @@ def require_selection_binding(value, expected_fact):
     return {'selection': selection, 'canonical_consumed_field': canonical}
 
 
+def recall_unspecified(application, window):
+    field = ui.wait_for('right inspector story-time field', lambda: ui.reveal(application,
+        lambda n: n.name == 'Recall story time (ms)' and n.getState().contains(ui.pyatspi.STATE_EDITABLE)
+        and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0] > 1000))
+    ui.click_control(field, window)
+    def focused():
+        field.clear_cache()
+        return field.getState().contains(ui.pyatspi.STATE_FOCUSED)
+    ui.wait_for('native story-time focus', focused)
+    ui.command('xdotool', 'key', '--clearmodifiers', 'ctrl+a')
+    ui.command('xdotool', 'key', '--clearmodifiers', 'BackSpace')
+    def empty():
+        field.clear_cache()
+        return ui.text_of(field) == ''
+    ui.wait_for('actual empty native story-time value', empty)
+    ui.TYPED_TEXT_OBSERVATIONS.append({'field': field.name, 'expected_length': 0, 'actual_text': '', 'exact': True, 'route': 'native ctrl+a and BackSpace'})
+    ui.reveal_button(application, 'Recall related story facts', window)
+
+
 def click_disclosure(application, window, label):
     node = ui.wait_for('actual native disclosure '+label, lambda: ui.reveal(application,
         lambda n: n.name == label and n.getRole() in (ui.pyatspi.ROLE_UNKNOWN, ui.pyatspi.ROLE_PUSH_BUTTON, ui.pyatspi.ROLE_TOGGLE_BUTTON)))
@@ -188,7 +207,7 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     ui.wait_for('explicitly rejected initial nonselected proposal', lambda: ui.query(database, "SELECT id FROM propagation_proposals WHERE id=? AND status='rejected'", (previous[0],)))
     retired = proposal_rows(database, previous[0])
     driver.require_preserved(database, original)
-    driver.recall_time(application, window, '')
+    recall_unspecified(application, window)
     ui.wait_for('real far-peer resolved baseline recall', lambda: driver.visible_text(application, 'profile.tagline: ' + SELECTED))
     history = driver.canonical_state(database)
     checks.append({'label': 'normal native baseline selection', 'control': select_fact(application, window, SELECTED, first=True)})
@@ -240,7 +259,7 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
 
     ui.reveal_button(application, 'Reject', window)
     ui.wait_for('explicit rejection of stale proposal', lambda: ui.query(database, "SELECT id FROM propagation_proposals WHERE id=? AND status='rejected'", (selected[0],)))
-    driver.recall_time(application, window, '')
+    recall_unspecified(application, window)
     ui.wait_for('fresh real baseline recall after mutation', lambda: driver.visible_text(application, 'profile.tagline: ' + FRESH))
     checks.append({'label': 'fresh explicit selection', 'control': select_fact(application, window, FRESH, first=True)})
     capture('eidetic-recalled-facts-fresh-selected.png')
