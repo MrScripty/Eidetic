@@ -1,0 +1,34 @@
+{
+  "source": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+  "source_tree": "be0acb7d8db1402a57939dda16820ac7558126a5",
+  "product_changes_from_published_parent": {
+    "crates/core/src/contracts/README.md": "ddd36068e0c4336b81058e0027b505a3155d484997856d4750d8a1503d5217b2",
+    "crates/server/src/README.md": "24cf3a4976493ad35bc369dac48f925db8b62409d244b7f6e67b90e6fe56a919",
+    "crates/server/src/script_fact_evidence.rs": "cbdf2387429df026277c6710a951dccf243f6c44e1b1b68df018313505792796",
+    "crates/server/src/script_fact_proposal_tests.rs": "8530dcdea15a0b3a2daf5cf03e10b4213c6728b45c62b642604aa116b1daeb70",
+    "ui/src/lib/README.md": "5a6acdfab4f35e1af61ed8da4249621be974b06093486118365000303aaa3a7e",
+    "ui/src/lib/components/editor/README.md": "a0db0915433b03f66b8498a6e2166a1bf8a6f31401a7a312e1e4ffc1f11a5f9c",
+    "ui/src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte": "7091e1ee23d717d9dc9fb21d89143f9620ff388750d28e35172dd4c6d06d338c",
+    "ui/src/lib/components/sidebar/bible/BibleGraphPartFields.svelte": "979a5277a9fca60d30cd58385c0e3c7170e8d4553c5cebb3a686d5b8435e2a4c",
+    "ui/src/lib/components/sidebar/bible/README.md": "67dfde7b47769e16405a5c834792addb5f4d4b4fec0ed2497b428f63c51ba8dc",
+    "ui/src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts": "0b1b79923e9a02ca295cf9bd913e38b70072b65a9b295c9c9c3eff95325da169",
+    "ui/src/lib/stores/README.md": "c668273d3ef9b122ab71064b1d1519be6540f708b812b4472150c650bfaf14fa",
+    "ui/src/lib/stores/bibleGraphNodeDetailProjection.client.test.ts": "684b949ca7f06564e2a49089bf306a51741bda0a3125a6a22c47b73880f0bfff",
+    "ui/src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts": "191253d4eeec0819181a748e82ef3d4d36c85de0e381e6859c902eba4a7aa7fd",
+    "ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts": "a42b1b7c9e5482da185207ee527cbc6b8e734f1f8c33f3b18b941f6674fe0ad9",
+    "ui/src/lib/stores/bibleGraphNodeProjection.svelte.ts": "48b2e1ea037fd380e0b6876da82546a34d7a8da455abec8510094b7589bb817a"
+  },
+  "qa": "dabf0206c10c6552e7061fc18f8deb9c69c99062",
+  "qa_tree": "c213a8703b78050bc62f87b7491512b32e79237b",
+  "exact_nine_qa_files": {
+    ".github/workflows/manual-fact-native.yml": "fc4fd47d5c304437695e5ce766f6bff27396b1b05976d3dde911f99e2af1c513",
+    "crates/server/examples/manual_fact_capture_fixture.rs": "30ff73cd2b896905913de88565180a333c820e8a85bc11195d2cc917c4d6e62d",
+    "scripts/manual-fact-native-helpers.py": "2662eef35566d7eb5314a149a1464f209b241a3ca85ebad0c9a6b25fc3700622",
+    "scripts/manual-facts-vite.config.mts": "ccbaea113d140e0db463502db4429645cdf4c6c2decf148f2e283158ce122639",
+    "scripts/qualify-manual-fact-reconciliation.py": "1ecb538b155da8553991462c1944e18cea451cb7707b439af73cc6c8474a1085",
+    "scripts/test_qualify_manual_fact_reconciliation.py": "3c82022fec413a225c7d890d7db99f4c9a600320b53059e2ec0ec67efa71f91a",
+    "ui/src/qualification/ManualFactControls.svelte": "1315b7ea9e11e05edf1c36acd9e62cd6f44eee7fd67d42359f3b7966f80811c2",
+    "ui/src/qualification/README.md": "69ce1c2f872c43604da14e561b2bbdd10ae377bd514cb3d957a051364ebdceb4",
+    "ui/src/qualification/manualFacts.svelte.ts": "e71ea368b3e912c6c716c24abd9df8783e3d54f5d9492c21c4fc59b162a46dd0"
+  }
+}

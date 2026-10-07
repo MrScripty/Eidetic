@@ -1,0 +1,15 @@
+Independent scoped QA ACK from /root/review_manual_edit_fact_reconciliation, 2026-10-07.
+QA dabf0206c10c6552e7061fc18f8deb9c69c99062, tree c213a8703b78050bc62f87b7491512b32e79237b.
+Exact one QA-file forward delta from ff8f822; exact nine files relative to e5a09ede.
+Actual client-compiled QA wrapper plus production detail store, actual two Svelte
+owner effects with retain/release, synthetic backend replies. Old ff8 normal-to-fail
+re-enters both owners four times and releases each three times with six failed reads.
+Corrected dabf normal/fail/hold keeps each owner at one entry and zero releases until
+explicit stop. Failure admits error, pending=false and verified=false. Held reads
+count two and public GET calls occur only after release. Explicit fail/held recovery
+keeps verification gated before successful recovery restores it. Mode and counter
+reads/writes are untracked; awaits and public GET remain outside isolation.
+Repro SHA256 7ad8ea39bee3c2d2efe582349e8cd99abd3fcc701aeb6129b0ee08f57ceac3d8.
+Log SHA256 7d7719ddca9f8be968b70838ac28358c52d4e95aad0955f3a550a6459acfdc3d.
+This reproduces QA owner interference, not identical hosted stuck-pending timing;
+the old harness eventually admits an error. Final native behavior remains pending.
