@@ -27,6 +27,10 @@ where
         user: String::new(),
     };
     append_script_context(&mut prompt.user, &binding.script_inputs);
+    crate::story_arc_lineage::append_prompt(
+        &mut prompt.user,
+        binding.arc_inputs.as_deref().unwrap_or_default(),
+    );
     crate::ai_bible_context_prompt::append_bible_context(&mut prompt.user, &binding.bible_context);
     prompt.user.push_str(&format!(
         "\nTARGET BLOCK TO UPDATE:\n{}\n\nPROVEN INPUT CHANGE:\n{}\nReturn only the complete replacement text for this block; no explanation or code fence.\n",

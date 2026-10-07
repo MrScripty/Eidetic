@@ -186,3 +186,17 @@ shows the exact captured names and revision IDs under “Names used for this
 preview”; saved blocks and manual drafts are preserved until explicit acceptance.
 
 TimelinePlacementEditor exposes exact start/end seconds and explicit Apply placement. Its transient per-node session draft retains entered times through selection/panel changes. It captures only canonical range_read receipts, refuses imprecise input, keeps immutable payload/ID on uncertain acknowledgement and requires explicit discard/reload to adopt a fresh base. Known native pre-commit refusals retain editable input. Existing screenplay drafts, targeted preview and explicit acceptance remain unchanged; presentation time never infers fictional time.
+
+
+## Consumed arc review evidence
+
+`ScriptArcEvidence.svelte` presents exact original/current tagged arc prompt
+fields from the existing targeted proposal receipt. Changed fields, explicit
+clearing, deletion authority and unbound history remain distinct. Details retain
+full values and source revision IDs. `scriptImpactNotice` labels per-field arc
+causes; `story_changed` invalidates prompt context and rereads canonical screenplay
+impact/context projections without patching saved text or author drafts.
+
+Decision: reuse the existing Preview update / Accept update flow, with explicit
+acceptance as the sole replacement action. A new proposal store or inferred arc
+consumption is unnecessary and would weaken existing source custody.

@@ -97,6 +97,7 @@ export interface ScriptImpactCause {
     | { kind: 'timeline_node'; node_id: string }
     | { kind: 'bible_node'; node_id: string }
     | { kind: 'bible_edge'; edge_id: string }
+    | { kind: 'story_arc_field'; arc_id: string; field: 'name' | 'description' | 'arc_type' }
     | {
         kind: 'bible_field';
         node_id: string;

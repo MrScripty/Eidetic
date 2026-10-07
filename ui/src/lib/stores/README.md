@@ -219,6 +219,12 @@ the existing editor session generation to refuse late selection side effects.
 
 Context influence changes invalidate cached prompt context and refresh canonical screenplay/review projections alongside the active Bible graph. They reuse backend context revision clocks and never patch durable text locally.
 
+Story arc changes use the same event ownership: invalidate cached prompt context
+and refresh canonical arc, screenplay and context-stack projections. The backend
+captures consumed arc fields and identifies affected saved blocks. Event refresh
+preserves per-block manual drafts, pending proposals and placement intent; it
+never accepts a targeted update or rewrites saved screenplay in the frontend.
+
 Bible relationship label writes forward the editor's original expected edge
 revision and label-only payload. Node detail caches include owned edge revision
 IDs. Delayed responses still pass existing projection version guards; failed

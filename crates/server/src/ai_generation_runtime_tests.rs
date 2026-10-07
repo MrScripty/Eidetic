@@ -38,6 +38,7 @@ async fn public_consumed_bible_name_edit_marks_saved_screenplay_for_review() {
         fixture.node_id.0,
         "Synthetic screenplay starring Mara.".into(),
         GenerationInputs {
+            arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
             bible_node_name_inputs: request.bible_node_name_inputs,
@@ -143,6 +144,7 @@ async fn public_relationship_edit_publishes_affected_review_from_original_genera
             "Synthetic screenplay: Mara trusts Eli.".into()
         )])),
         GenerationInputs {
+            arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
             bible_node_name_inputs: request.bible_node_name_inputs,
@@ -259,6 +261,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
             "Synthetic fixture screenplay: Mara carries red.".into(),
         )])),
         GenerationInputs {
+            arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_node_name_inputs: request.bible_node_name_inputs,
             bible_relationship_inputs: request.bible_relationship_inputs,

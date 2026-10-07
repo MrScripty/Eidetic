@@ -175,7 +175,16 @@ fn capture_in_snapshot(
         node_id,
         &bible_inputs,
     )?);
+    let arcs = crate::story_arc_lineage::preview_inputs(
+        conn,
+        node_id,
+        request.generation_event_id,
+        &request.segment_id,
+    )?;
     Ok(ScriptImpactProposalBinding {
+        arc_previous_inputs: arcs.previous,
+        arc_inputs: Some(arcs.current),
+        arc_absence_revisions: Some(arcs.absent),
         request: request.clone(),
         cause,
         target_segment_revision_event_id: segment_revision,
@@ -349,6 +358,7 @@ pub(crate) fn accept_bound_proposal(
     };
     script_document_command::validate_locked_spans(Some(&document), &write)?;
     let generated = GenerateScriptBlockCommand {
+        arc_inputs: binding.arc_inputs.clone(),
         target_binding: None,
         block: write.clone(),
         script_inputs: Some(binding.script_inputs.clone()),

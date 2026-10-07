@@ -7,6 +7,11 @@ import type { ProjectionEnvelope } from '$lib/projectionTypes.js';
 import type { SelectedNodeEditorProjection } from '$lib/selectedNodeEditorTypes.js';
 import type { ServerMessage } from '$lib/serverEventTypes.js';
 import type { ScriptBlockProjection } from '$lib/scriptTypes.js';
+import {
+  invalidateScriptContext,
+  refreshScriptDocumentProjection,
+} from './scriptDocumentProjection.svelte.js';
+import { refreshCurrentContextStackProjection } from './contextStackProjection.svelte.js';
 import { beatContentStatusLabel } from '$lib/components/editor/beatEditorStatus.js';
 import { setupServerEventHandlers } from './serverEventHandlers.js';
 import { editorState, resetEditorState, startGeneration } from './editor.svelte.js';
@@ -157,6 +162,27 @@ async function retainedWork() {
 }
 
 describe('canonical selected inspector event freshness', () => {
+  it('rereads screenplay impact after an arc event without rebasing retained work', async () => {
+    const assertRetained = await retainedWork();
+    const draft = getSessionTimelinePlacementDraft(initial.payload.node!);
+    draft.initialize(initial.payload.node!.range_read);
+    draft.state.start = '600';
+    draft.state.end = '630';
+    vi.mocked(invalidateScriptContext).mockClear();
+    vi.mocked(refreshScriptDocumentProjection).mockClear();
+    vi.mocked(refreshCurrentContextStackProjection).mockClear();
+    await events.emit({ type: 'story_changed' });
+    expect(invalidateScriptContext).toHaveBeenCalledTimes(1);
+    expect(refreshScriptDocumentProjection).toHaveBeenCalledWith({
+      document_id: 'script.document.main',
+    });
+    expect(refreshCurrentContextStackProjection).toHaveBeenCalledTimes(1);
+    expect(draft.state.base?.node_revision_event_id).toBe('range-1');
+    expect([draft.state.start, draft.state.end]).toEqual(['600', '630']);
+    expect(editorState.selectedNodeId).toBe('B');
+    assertRetained();
+  });
+
   it.each(['selection', 'session', 'teardown'] as const)(
     'completes generation while inspector is stalled, then discards late success after %s changes',
     async (change) => {

@@ -49,6 +49,7 @@ pub(crate) fn fixture() -> (
     script_document_command::apply_generated_script_block(
         &mut conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
+            arc_inputs: None,
             target_binding: None,
             script_context_scope: None,
             bible_node_name_inputs: None,
