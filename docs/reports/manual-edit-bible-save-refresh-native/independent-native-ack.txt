@@ -1,0 +1,28 @@
+Independent final scoped native ACK from /root/review_manual_edit_fact_reconciliation, 2026-10-07.
+Product e5a09ede159a6511694896fdb5d4382e51f4418d / tree be0acb7d8db1402a57939dda16820ac7558126a5.
+QA 633ac221341efbcc95717233d65bc3057965e003 / tree b2871c1efbf4ceb811a97faeed0e55adda89fe35.
+Run 37648481844 / job 112885340502; binary SHA256
+dc9884e9096e5fa34c942d8b0d0984b6a30a006e5c587b036f1740d563ad8949.
+Individually viewed all 16 original 1920x1440 PNGs at original detail. Independently
+verified original 4012232-byte ZIP/SHA256
+ef8b929dc5eab02032fca5961e06862a1f2d9c5514b3b623745c2a1b1408ba69,
+all PNG hashes/archive byte equality/custody hashes, eight served source hashes,
+config hash, detail fault import routing, exact nine QA files, hosted 543 UI tests
+in 93 files / 123 core / 529 server / 46 Python / five no-download tests.
+Recomputed every accepted/final Bible-display glyph and new late Save 19 / error 16 /
+pending 16 / recovery 16 glyph rectangles inside each textarea AND its Bible pane.
+Exact saved Unicode/whitespace and 120000..180000 placement verified. Ordinary Reject,
+three ABA refusals, Blue acceptance at 7bb735a1-322e-4737-9134-bc34df70687f with two
+consumer causes, exact replays, saved script/other fields and unrelated draft preserved.
+Late acknowledgement preserves exact right draft/original blue base/current green,
+conflict and disabled Save. Cached synthetic error and Retry are visible. Unconflicted
+motivation Save enabled before failure, disabled during error/pending retry, enabled
+only after admitted recovery; exact Recovery draft never submitted. Canonical motivation,
+script, placement and provider count unchanged. Restart PIDs 24930->26012 use same binary;
+accepted historical Blue article reconstructs while intentional later Green canonical
+write remains; saved material/proposals/bindings/history unchanged. No evidence blocker.
+Limits: nine synthetic streams and synthetic fault seams; no real-model quality or
+backend CAS. Consumers already needed review. Right pending draft visually qualified
+at late-ack stage; Recovery draft through the read sequence. Restart qualifies saved
+material/accepted article and SQL rejected persistence, not unsaved drafts, project
+switch recovery or each rejected native interaction. Historical attempts remain failed.

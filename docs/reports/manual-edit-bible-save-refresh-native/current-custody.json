@@ -1,5 +1,5 @@
 {
-  "status": "native_pending",
+  "status": "passed_with_independent_native_ack",
   "source_sha": "e5a09ede159a6511694896fdb5d4382e51f4418d",
   "source_tree": "be0acb7d8db1402a57939dda16820ac7558126a5",
   "qa_sha": "633ac221341efbcc95717233d65bc3057965e003",
@@ -21,5 +21,11 @@
     "37644276528": "Thirteen originals; pre-reopen stages and late-save conflict; routed fault caused QA owner-effect interference; error/recovery and restart not reached.",
     "37647301200": "Setup-only dependency download timeout; no native execution/capture/artifact."
   },
-  "historical_scope_text_is_superseded_by_these_limits": true
+  "historical_scope_text_is_superseded_by_these_limits": true,
+  "artifact_id": 11496666041,
+  "artifact_bytes": 4012232,
+  "zip_sha256": "ef8b929dc5eab02032fca5961e06862a1f2d9c5514b3b623745c2a1b1408ba69",
+  "native_binary_sha256": "dc9884e9096e5fa34c942d8b0d0984b6a30a006e5c587b036f1740d563ad8949",
+  "original_captures": 16,
+  "independent_native_ack": "independent-native-ack.txt"
 }
