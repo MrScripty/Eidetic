@@ -15,7 +15,10 @@ import {
 } from './scriptDocumentProjection.svelte.js';
 import { refreshStoryArcListProjection } from './storyArcProjection.svelte.js';
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
-import { refreshBibleGraphNodeListProjection } from './bibleGraphNodeProjection.svelte.js';
+import {
+  refreshBibleGraphNodeListProjection,
+  refreshOwnedBibleGraphNodeProjections,
+} from './bibleGraphNodeProjection.svelte.js';
 import {
   getActiveBibleRenderGraphProjectionRequest,
   refreshBibleRenderGraphProjection,
@@ -162,6 +165,7 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
       invalidateScriptContext();
       await Promise.all([
         refreshBibleNodeList(),
+        requestProjectionRefresh('bible-node-details', refreshOwnedBibleGraphNodeProjections),
         refreshBibleRenderGraph(),
         refreshChangeReview(),
         refreshMainScriptDocument(),

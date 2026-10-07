@@ -11,6 +11,7 @@
     isBibleGraphNodeProjectionPending,
     refreshBibleGraphNodeListProjection,
     refreshBibleGraphNodeProjection,
+    retainBibleGraphNodeDetail,
     setBibleGraphNodeNameProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import { createConnectedBibleGraphChildNode } from './bibleGraphNodeCreateFlow.js';
@@ -89,7 +90,7 @@
   });
 
   $effect(() => {
-    void refreshBibleGraphNodeProjection({ node_id: nodeId }).catch(() => {});
+    return retainBibleGraphNodeDetail({ node_id: nodeId });
   });
 
   $effect(() => {
@@ -301,7 +302,7 @@
         {/if}
       </section>
 
-      {#each projection.payload.parts as partProjection (partProjection.part.id)}
+      {#each projection.payload.parts as partProjection (nodeId + ':' + partProjection.part.id)}
         <BibleGraphPartFields nodeId={projection.payload.node.id} {partProjection} />
       {/each}
 

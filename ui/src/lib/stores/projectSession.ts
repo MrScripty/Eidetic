@@ -6,6 +6,7 @@ import {
 } from './scriptDocumentProjection.svelte.js';
 import {
   clearBibleGraphNodeListProjection,
+  clearBibleGraphNodeDetailProjections,
   refreshBibleGraphNodeListProjection,
 } from './bibleGraphNodeProjection.svelte.js';
 import {
@@ -72,6 +73,7 @@ const defaultProjectSessionLifecycle: ProjectSessionLifecycle = {
     clearStoryArcListProjection();
     clearSelectedNodeEditorProjection();
     clearScriptDocumentProjection(mainScriptDocumentKey);
+    clearBibleGraphNodeDetailProjections();
     clearBibleGraphNodeListProjection();
     clearBibleGraphSchemaListProjection();
     clearBibleRenderGraphProjection();

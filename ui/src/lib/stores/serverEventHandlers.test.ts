@@ -9,6 +9,7 @@ import {
 import { refreshTimelineRenderProjection } from './timelineRenderProjection.svelte.js';
 import { refreshBibleRenderGraphProjection } from './bibleRenderGraphProjection.svelte.js';
 import { refreshChangeReviewProjection } from './changeReviewProjection.svelte.js';
+import { refreshOwnedBibleGraphNodeProjections } from './bibleGraphNodeProjection.svelte.js';
 import { clearProjectionRefreshQueue } from './projectionRefreshQueue.js';
 import { completeGeneration, editorState } from './editor.svelte.js';
 import { applyGraphRendererCommand } from './graphRendererCommands.js';
@@ -35,6 +36,7 @@ vi.mock('./storyArcProjection.svelte.js', () => ({
 
 vi.mock('./bibleGraphNodeProjection.svelte.js', () => ({
   refreshBibleGraphNodeListProjection: vi.fn(),
+  refreshOwnedBibleGraphNodeProjections: vi.fn(),
 }));
 
 vi.mock('./bibleRenderGraphProjection.svelte.js', () => ({
@@ -317,5 +319,15 @@ it('coalesces screenplay and context assignment refreshes into the existing cont
   events.emit({ type: 'script_changed' });
   events.emit({ type: 'context_influence_changed', target_node_id: 'node.scene.beach' });
   await vi.waitFor(() => expect(refreshCurrentContextStackProjection).toHaveBeenCalledTimes(1));
+  dispose();
+});
+
+it('coalesces Bible changes into the existing owned detail refresh without clearing editor forms', async () => {
+  vi.mocked(refreshOwnedBibleGraphNodeProjections).mockClear();
+  const events = new MockServerEventClient();
+  const dispose = setupServerEventHandlers(events);
+  events.emit({ type: 'bible_changed' });
+  events.emit({ type: 'bible_changed' });
+  await vi.waitFor(() => expect(refreshOwnedBibleGraphNodeProjections).toHaveBeenCalledTimes(1));
   dispose();
 });
