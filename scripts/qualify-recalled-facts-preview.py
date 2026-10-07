@@ -118,6 +118,17 @@ def fact(database):
     return rows[0] if len(rows) == 1 else None
 
 
+def selected_dependencies(database, segment_id):
+    # Existing lineage points from the consuming screenplay segment to its
+    # Bible input; the target revision is the exact consumed fact revision.
+    return ui.query(database, """SELECT d.id,d.target_field_id,r.target_revision_event_id,r.source_revision_event_id
+        FROM semantic_dependencies d JOIN semantic_dependency_revisions r ON r.dependency_id=d.id
+        WHERE d.source_kind='script_segment' AND d.source_id=? AND d.target_kind='bible_field'
+          AND d.target_field_id='qualification.keeper.tagline' AND d.dependency_kind='uses_fact'
+          AND d.deleted_event_id IS NULL AND r.source_revision_event_id=(
+            SELECT event_id FROM script_generations WHERE segment_id=? ORDER BY rowid DESC LIMIT 1)""", (segment_id, segment_id))
+
+
 def stale_acceptance_error(application):
     # ARIA alerts do not consistently map to an AT-SPI text role in WebKit.
     # Require the actual visible refusal text, excluding the QA receipt, and
@@ -280,7 +291,8 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     ui.click_control(selector_summary(application), window)
     ui.reveal_button(application, 'Preview update', window)
     fresh = ui.wait_for('fresh pending selected proposal', lambda: pending(database, FRESH_PREVIEW))
-    checks.append({'label': 'fresh canonical selected custody', 'proposal_id': fresh[0], **require_selection_binding(binding(database, fresh[0]), changed)})
+    fresh_binding = binding(database, fresh[0])
+    checks.append({'label': 'fresh canonical selected custody', 'proposal_id': fresh[0], **require_selection_binding(fresh_binding, changed)})
     driver.PROPOSED = FRESH_PREVIEW
     checks[-1]['visible_proposal'] = driver.reveal_visible_proposal(application, window)
     driver.require_preserved(database, original)
@@ -301,7 +313,8 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     require_draft(application)
     if proposal_rows(database, previous[0]) != retired:
         raise RuntimeError('Prior rejected proposal changed')
-    dependencies = ui.query(database, "SELECT d.id,d.source_field_id,r.source_revision_event_id FROM semantic_dependencies d JOIN semantic_dependency_revisions r ON r.dependency_id=d.id WHERE d.source_field_id='qualification.keeper.tagline' AND d.deleted_event_id IS NULL")
+    dependencies = selected_dependencies(database, fresh_binding['request']['segment_id'])
+    evidence['acceptance_dependency_observation'] = {'rows': dependencies, 'expected_target_fact_revision': changed[1]}
     if not dependencies or not all(row[2] == changed[1] for row in dependencies):
         raise RuntimeError('Acceptance did not record selected-fact dependency revision')
     checks.append({'label': 'explicit native fresh acceptance', 'proposal_id': fresh[0], 'accepted_block': accepted[0], 'selected_dependencies': dependencies,

@@ -2,6 +2,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import sqlite3
 from types import ModuleType
 import unittest
 from unittest.mock import patch
@@ -119,6 +120,26 @@ class SelectedCaptureTests(unittest.TestCase):
             self.assertIs(driver.stale_acceptance_error(None), nodes[-1])
             nodes.pop()
             self.assertIsNone(driver.stale_acceptance_error(None))
+
+    def test_selected_dependency_receipt_uses_bible_target_revision_and_current_consuming_generation(self):
+        conn = sqlite3.connect(':memory:')
+        self.addCleanup(conn.close)
+        conn.executescript('''
+            CREATE TABLE semantic_dependencies(id,source_kind,source_id,target_kind,target_field_id,dependency_kind,deleted_event_id);
+            CREATE TABLE semantic_dependency_revisions(dependency_id,source_revision_event_id,target_revision_event_id);
+            CREATE TABLE script_generations(segment_id,event_id);
+            INSERT INTO script_generations VALUES ('B','old-generation'),('B','accepted-generation');
+            INSERT INTO semantic_dependencies VALUES
+                ('old','script_segment','B','bible_field','qualification.keeper.tagline','uses_fact',NULL),
+                ('chosen','script_segment','B','bible_field','qualification.keeper.tagline','uses_fact',NULL),
+                ('other-scene','script_segment','A','bible_field','qualification.keeper.tagline','uses_fact',NULL),
+                ('unselected','script_segment','B','bible_field','qualification.keeper.motivation','uses_fact',NULL);
+            INSERT INTO semantic_dependency_revisions VALUES
+                ('old','old-generation','old-fact'),('chosen','accepted-generation','copper-fact'),
+                ('other-scene','accepted-generation','copper-fact'),('unselected','accepted-generation','other-fact');
+        ''')
+        with patch.object(driver.ui, 'query', side_effect=lambda db, sql, params: conn.execute(sql, params).fetchall()):
+            self.assertEqual(driver.selected_dependencies(None, 'B'), [('chosen','qualification.keeper.tagline','copper-fact','accepted-generation')])
 
 
 if __name__ == '__main__':
