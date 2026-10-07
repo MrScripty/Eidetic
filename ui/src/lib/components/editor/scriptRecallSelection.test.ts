@@ -40,8 +40,30 @@ it('copies custom and builtin directed/undirected path kinds and query kinds wit
   expect(selected.paths[0]!.relationship.edge.directed).toBe(false);
 });
 
-it('refuses timed, unresolved, omitted, unknown-name, duplicate and oversized selection instead of inferring truth', () => {
-  for (const id of ['snapshot.field', 'unresolved', 'omitted']) {
+it('refuses a recalled snapshot-backed field at unspecified story time', () => {
+  const recalled = packet();
+  recalled.nodes[1]!.fields.push({
+    part_key: 'profile',
+    field_key: 'weather',
+    value: { type: 'text', value: 'Rain' },
+    source: {
+      kind: 'snapshot',
+      snapshot_id: 'rain.snapshot',
+      snapshot_field_id: 'rain.weather',
+      snapshot_revision_event_id: 'snapshot.revision',
+      field_revision_event_id: 'field.revision',
+      at_ms: 1000,
+      label: 'Rain',
+    },
+  });
+  expect(() => buildScriptRecallSelection(recalled, ['rain.weather'])).toThrow(
+    /cannot be selected/,
+  );
+  expect(buildScriptRecallSelection(recalled, ['house.0'])!.facts).toHaveLength(1);
+});
+
+it('refuses unknown IDs, timed recalls, unknown names, duplicates and oversized selections instead of inferring truth', () => {
+  for (const id of ['unknown.field', 'unresolved', 'omitted']) {
     expect(() => buildScriptRecallSelection(packet(), [id])).toThrow(/cannot be selected/);
   }
   const timed = packet();
