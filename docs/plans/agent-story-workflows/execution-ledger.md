@@ -1911,3 +1911,29 @@ accept proposals. Regression covers unrelated screenplay and placement drafts,
 pending proposals, selection changes, late responses/errors, reopened same IDs
 and event coalescing. Native qualification is pending. Original walkthrough
 captures and synthetic labels remain intact; parent retains PR/review/merge.
+
+### Selected inspector source and native evidence complete
+
+Separate fix5ac9eb9 (treeba5c1d15) descends directly from main25895e7. Only two
+production stores change: canonical selected-read invalidation and event read
+ownership. Full UI480, source frontend0/0/lint/format/build and traceability pass.
+Regressions preserve unrelated screenplay draft, pending proposal, placement
+intent/receipt, version ordering and selection/session/teardown custody.
+
+Qualificationa8eea349 (tree7d171bfa) passes normal native
+run37550726323/job112565288553/artifact11452044400 with core120/server486/UI480,
+driver52/no-download5 and standard locked GTK/WebKit builds. Actual native B
+Generate/manual Save show Has content; E's first placement frame shows180–210
+and retains F draft. Exact blue-to-amber Bible edit, complete visible pending
+proposal, explicit target-only acceptance and retained F draft all pass. Eight
+untouched captures have verified hashes/dimensions/window/PID and were viewed.
+Five match prior37545170522 images; generated B matches two preserved badge-reader
+failure frames. That badge is visually verified; AT-SPI caption_machine_verified
+remains false. Its exact label/Text observers timed out on qualification9d064fd
+and ab180802 while both images visibly show correct Has content. Both original
+failures are preserved; only QA observation changed, never application5ac9eb9.
+
+Details and45 sealed file receipts: selected-inspector-freshness.md and companion
+manifest. Three production HTTP/SSE responses remain labelled synthetic; no
+real-model quality, embeddings or project-switch recovery claim. Parent retains
+PR/review/merge/Library. No source or native qualification blocker remains.

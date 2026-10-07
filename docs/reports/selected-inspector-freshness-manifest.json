@@ -1,0 +1,2226 @@
+{
+  "application_source_sha": "5ac9eb99ffb155878d5dcfda77baa01d60ef24f7",
+  "application_tree": "ba5c1d15e3ce002511190936441d7b322164ccf4",
+  "base_sha": "25895e7bcf215e5a013dd7c4a98873e9b7412b8a",
+  "base_tree": "21f9432d2f14b104ab90bcfe0b4c7e87be201b63",
+  "qualification_sha": "a8eea3490abc0bc0457357a11fa49b39f4eb9547",
+  "qualification_tree": "7d171bfa6faf8f3dbd04e67a20adc8c34eaeb315",
+  "production_files": [
+    {
+      "path": "ui/src/lib/stores/serverEventHandlers.ts",
+      "git_blob_sha": "5735fb9e9cf733874412177971c358c5bccb900c",
+      "sha256": "62c50613cbce6e4a24cf0757ce1c44495a358b7026d01bab89075ea03d9d62a2"
+    },
+    {
+      "path": "ui/src/lib/stores/selectedNodeEditorProjection.svelte.ts",
+      "git_blob_sha": "499ef0a01d06a990ee55ad84a3addb24eb376b1e",
+      "sha256": "f653ba9c2bd58db2ed786c638de8f408c2e70caa03dbd4b91f5e4882c6598d1b"
+    }
+  ],
+  "hosted_ci": {
+    "run": {
+      "id": 37550726323,
+      "head_sha": "a8eea3490abc0bc0457357a11fa49b39f4eb9547",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/MrScripty/Eidetic/actions/runs/37550726323",
+      "created_at": "2026-10-07T00:12:22Z",
+      "updated_at": "2026-10-07T00:22:38Z"
+    },
+    "job": {
+      "id": 112565288553,
+      "name": "capture",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37550726323,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify unchanged application source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install standard Linux and display dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare pinned dependency and UI assets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Check resource floors and build actual native runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actual server regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Qualify writing, manual edits, Bible, placement, visible review and retained draft",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload only reviewed capture outputs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    "artifacts": [
+      {
+        "id": 11452044400,
+        "name": "eidetic-selected-inspector-freshness-native-5ac9eb9",
+        "size_in_bytes": 1060445,
+        "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11452044400",
+        "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11452044400/zip",
+        "expired": false,
+        "created_at": "2026-10-07T00:22:35Z",
+        "expires_at": "2026-10-10T00:22:34Z",
+        "updated_at": "2026-10-07T00:22:35Z",
+        "digest": "sha256:7904f1960845c8cada10c2cbfd637e0dd3cac5aa62f54f017b574190038d6646",
+        "workflow_run": {
+          "id": 37550726323,
+          "repository_id": 1157333365,
+          "head_repository_id": 1157333365,
+          "head_branch": "test/selected-inspector-freshness-native",
+          "head_sha": "a8eea3490abc0bc0457357a11fa49b39f4eb9547"
+        }
+      }
+    ],
+    "selected_log_lines": [
+      "2026-10-07T00:13:11.1798213Z python3 scripts/check-onnx-no-download.py /tmp/eidetic-onnx-metadata.json",
+      "2026-10-07T00:13:11.1798780Z python3 -m unittest discover -s scripts -p 'test_check_onnx_no_download.py' -v",
+      "2026-10-07T00:13:34.9111612Z  Test Files  82 passed (82)",
+      "2026-10-07T00:13:34.9112515Z       Tests  480 passed (480)",
+      "2026-10-07T00:13:43.0955772Z svelte-check found 0 errors and 0 warnings",
+      "2026-10-07T00:13:52.3671383Z All matched files use Prettier code style!",
+      "2026-10-07T00:14:08.4030848Z test_additive_download_feature_is_refused_even_with_disabled_linking (test_check_onnx_no_download.NoDownloadTests.test_additive_download_feature_is_refused_even_with_disabled_linking) ... ok",
+      "2026-10-07T00:14:08.4043997Z test_cli_reads_non_ascii_cargo_json_as_utf8_under_windows_default_encoding (test_check_onnx_no_download.NoDownloadTests.test_cli_reads_non_ascii_cargo_json_as_utf8_under_windows_default_encoding) ... ok",
+      "2026-10-07T00:14:08.4045884Z test_missing_dynamic_loading_cannot_qualify (test_check_onnx_no_download.NoDownloadTests.test_missing_dynamic_loading_cannot_qualify) ... ok",
+      "2026-10-07T00:14:08.4046959Z test_old_pumas_download_graph_is_refused (test_check_onnx_no_download.NoDownloadTests.test_old_pumas_download_graph_is_refused) ... ok",
+      "2026-10-07T00:14:08.4048012Z test_qualified_dynamic_loading_is_allowed (test_check_onnx_no_download.NoDownloadTests.test_qualified_dynamic_loading_is_allowed) ... ok",
+      "2026-10-07T00:14:08.4049397Z Ran 5 tests in 0.002s",
+      "2026-10-07T00:14:08.5921773Z test_readonly_fact_checkpoint_works_before_screenplay_schema_exists (test_qualify_bible_fact_propagation.BibleFactProviderTests.test_readonly_fact_checkpoint_works_before_screenplay_schema_exists) ... ok",
+      "2026-10-07T00:14:11.2126965Z test_duplicate_pending_checkpoint_fails_instead_of_repeating_native_input (test_qualify_child_plan_recovery.MaintainedDriverExtensionTests.test_duplicate_pending_checkpoint_fails_instead_of_repeating_native_input) ... ok",
+      "2026-10-07T00:14:11.3199048Z Ran 52 tests in 2.746s",
+      "2026-10-07T00:21:13.3055781Z test result: ok. 120 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+      "2026-10-07T00:21:45.4996599Z test result: ok. 486 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.50s",
+      "2026-10-07T00:21:49.4273524Z Authoring walkthrough checkpoint: public services prepare fresh Last Train project with empty A and ungenerated B",
+      "2026-10-07T00:21:49.5864643Z Authoring walkthrough checkpoint: launch actual desktop and begin writing",
+      "2026-10-07T00:22:12.8076079Z Authoring walkthrough checkpoint: exact original screenplay typed in actual Write screenplay area",
+      "2026-10-07T00:22:17.3225186Z Authoring walkthrough checkpoint: native generation and exact manual B saved; begin upstream C edit",
+      "2026-10-07T00:22:20.0044600Z Authoring walkthrough checkpoint: native exact manual edits save B and change C from midnight to morning",
+      "2026-10-07T00:22:23.5812536Z Authoring walkthrough checkpoint: native E placement crosses neighbors with F draft open",
+      "2026-10-07T00:22:28.5030782Z Authoring walkthrough checkpoint: Bible, manual-source and placement changes visibly identify affected B",
+      "2026-10-07T00:22:30.7428034Z Authoring walkthrough checkpoint: complete proposal paragraph and explicit pending controls visible before acceptance",
+      "2026-10-07T00:22:31.2282739Z Native pointer input: control='Accept update', bounds=(783, 651, 82, 16), point=(824, 659)",
+      "2026-10-07T00:22:33.1089931Z Authoring walkthrough checkpoint: explicit native acceptance replaces only B with unrelated F draft still open"
+    ]
+  },
+  "native_capture_evidence_unmodified": {
+    "status": "native_last_train_authoring_passed_with_labelled_synthetic_http_fixture",
+    "application_source_sha": "5ac9eb99ffb155878d5dcfda77baa01d60ef24f7",
+    "qualification_sha": "a8eea3490abc0bc0457357a11fa49b39f4eb9547",
+    "application_binary_sha256": "4a51fac11fee64f7d1b9e926a11145afe6cb5391b66387af2f31b34012553d80",
+    "capture_label": "prototype views",
+    "setup_route": "public native services; four supporting blocks, empty A and ungenerated B",
+    "gui_route": "actual Tauri AT-SPI/X11 Write screenplay, Generate, manual Save, Bible Save, retained unrelated draft, placement, visible preview and explicit acceptance",
+    "provider": "synthetic localhost HTTP/SSE fixture through production client",
+    "real_model_quality_qualified": false,
+    "checkpoints": [
+      {
+        "stage": "public services prepare fresh Last Train project with empty A and ungenerated B",
+        "elapsed_seconds": 0.235
+      },
+      {
+        "stage": "launch actual desktop and begin writing",
+        "elapsed_seconds": 0.394
+      },
+      {
+        "stage": "exact original screenplay typed in actual Write screenplay area",
+        "elapsed_seconds": 23.615
+      },
+      {
+        "stage": "native generation and exact manual B saved; begin upstream C edit",
+        "elapsed_seconds": 28.13
+      },
+      {
+        "stage": "native exact manual edits save B and change C from midnight to morning",
+        "elapsed_seconds": 30.812
+      },
+      {
+        "stage": "native E placement crosses neighbors with F draft open",
+        "elapsed_seconds": 34.388
+      },
+      {
+        "stage": "Bible, manual-source and placement changes visibly identify affected B",
+        "elapsed_seconds": 39.31
+      },
+      {
+        "stage": "complete proposal paragraph and explicit pending controls visible before acceptance",
+        "elapsed_seconds": 41.549
+      },
+      {
+        "stage": "explicit native acceptance replaces only B with unrelated F draft still open",
+        "elapsed_seconds": 43.915
+      }
+    ],
+    "stage": "explicit native acceptance replaces only B with unrelated F draft still open",
+    "project": {
+      "name": "Last_Train_Authoring_QA",
+      "initial_scene_order": [
+        "A",
+        "F",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "setup_route": "public services only; A empty and B ungenerated",
+      "A_and_B_initially_empty": true
+    },
+    "window_id": 2097155,
+    "window_pid": 22187,
+    "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+    "writing_area": {
+      "exact_draft": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n",
+      "selected_scene": "8bd4d83c-fb62-4895-aaba-d9e366daeeb8",
+      "not_saved_before_capture": true
+    },
+    "captures": [
+      {
+        "file": "eidetic-story-authoring-writing.png",
+        "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13",
+        "window_id": 2097155,
+        "pid": 22187
+      },
+      {
+        "file": "eidetic-inspector-generation.png",
+        "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+        "window_id": 2097155,
+        "pid": 22187
+      },
+      {
+        "file": "eidetic-story-authoring-manual-edit.png",
+        "sha256": "5e749576d4d87095d13630a17487649c865625406a452a2f2e26f5a1fc6318b9",
+        "window_id": 2097155,
+        "pid": 22187
+      },
+      {
+        "file": "eidetic-story-authoring-placement.png",
+        "sha256": "fecd46b637afa5dd35fb0f782fe7b7e02f517e00dd6144b3705eda3e7769bd72",
+        "window_id": 2097155,
+        "pid": 22187
+      },
+      {
+        "file": "eidetic-story-authoring-review.png",
+        "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903",
+        "window_id": 2097155,
+        "pid": 22187
+      },
+      {
+        "file": "eidetic-story-authoring-preview.png",
+        "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05",
+        "window_id": 2097155,
+        "pid": 22187
+      },
+      {
+        "file": "eidetic-story-authoring-accepted.png",
+        "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+        "window_id": 2097155,
+        "pid": 22187
+      },
+      {
+        "file": "eidetic-story-authoring-retained-draft.png",
+        "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+        "window_id": 2097155,
+        "pid": 22187
+      }
+    ],
+    "manual_creation": {
+      "block_id": "script.block.5348701f-f3b4-4eee-9b30-6bf2e6f9e46d.user",
+      "revision_event_id": "944816c4-929b-4ed4-bca5-878e47552419",
+      "exact_text": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n"
+    },
+    "generation": {
+      "block_id": "script.block.d0577ee8-444b-40e4-80f8-93f3780adbc1.generated",
+      "revision_event_id": "ef836cea-ec54-4e26-808f-265680a83582",
+      "real_model": false,
+      "actual_GUI_Generate": true,
+      "exact_original_A_consumed": true,
+      "canonical_node_status": "HasContent",
+      "expected_visual_caption": "Has content",
+      "visible_inspector": {
+        "selected_scene": "SCENE B",
+        "heading_bounds": [
+          296,
+          34,
+          71,
+          23
+        ],
+        "exact_native_control": "Generate",
+        "role": "push button",
+        "bounds": [
+          1821,
+          35,
+          75,
+          21
+        ],
+        "inspector_bounds": [
+          280,
+          0,
+          1640,
+          178
+        ],
+        "caption_machine_verified": false,
+        "placement_summary_machine_verified": false,
+        "caption_verification": "visual review of untouched native capture required"
+      }
+    },
+    "manual_B_save": {
+      "exact_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+      "revision_event_id": "2736641a-7db4-4fe5-b8f8-f50f4b306301"
+    },
+    "manual_edit": {
+      "target_B_exact_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+      "target_B_revision": "2736641a-7db4-4fe5-b8f8-f50f4b306301",
+      "upstream_C_before": "INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+      "upstream_C_after": "INT. TICKET OFFICE - DAWN\n\nThe departure board reads morning.\n\n",
+      "upstream_C_revision": "9d5f1aa5-0f44-41a2-8263-6193276ab298",
+      "visible_review_label": {
+        "expected_label": "Source screenplay text changed.",
+        "native_name": "Source screenplay text changed. INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.",
+        "native_text": "Source screenplay text changed.\nINT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+        "role": "list item",
+        "bounds": [
+          301,
+          690,
+          368,
+          85
+        ],
+        "viewport": [
+          280,
+          208,
+          1640,
+          836
+        ]
+      },
+      "expected_visual_caption": "Has content",
+      "visible_inspector": {
+        "selected_scene": "SCENE B",
+        "heading_bounds": [
+          296,
+          34,
+          71,
+          23
+        ],
+        "exact_native_control": "Generate",
+        "role": "push button",
+        "bounds": [
+          1821,
+          35,
+          75,
+          21
+        ],
+        "inspector_bounds": [
+          280,
+          0,
+          1640,
+          178
+        ],
+        "caption_machine_verified": false,
+        "placement_summary_machine_verified": false,
+        "caption_verification": "visual review of untouched native capture required"
+      }
+    },
+    "unrelated_draft": {
+      "source_scene_id": "9fe965dc-a1b1-447a-9887-50a2fc08f118",
+      "saved_text": "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n",
+      "exact_draft": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+      "saved_revision": "c8e32a4e-84b2-4f69-956a-9181f654895a",
+      "not_saved": true
+    },
+    "placement": {
+      "before_ms": [
+        540000,
+        570000
+      ],
+      "after_ms": [
+        180000,
+        210000
+      ],
+      "after_order": [
+        "A",
+        "F",
+        "E",
+        "B",
+        "C",
+        "D"
+      ],
+      "command_id": "f647314d-d184-47b6-a78c-6e2e7622a0a7",
+      "change_event_id": "3ad567b7-d19f-42d5-a44f-83f487d12120",
+      "expected_read": {
+        "start_ms": 540000,
+        "end_ms": 570000,
+        "node_revision_event_id": "cf2a7623-1943-4eb5-9cfd-723ff9817d08"
+      },
+      "all_saved_screenplay_and_F_draft_preserved": true,
+      "visible_inspector": {
+        "selected_scene": "SCENE E",
+        "heading_bounds": [
+          296,
+          34,
+          70,
+          23
+        ],
+        "exact_native_control": "Placement: 180\u2013210 seconds",
+        "role": "unknown",
+        "bounds": [
+          296,
+          76,
+          1600,
+          16
+        ],
+        "inspector_bounds": [
+          280,
+          0,
+          1640,
+          178
+        ],
+        "caption_machine_verified": false,
+        "placement_summary_machine_verified": true,
+        "caption_verification": "visual review of untouched native capture required"
+      }
+    },
+    "fact_edit": {
+      "before": "Mara's umbrella is blue.",
+      "after": "Mara's umbrella is amber.",
+      "revision_event_id": "0c95bb2e-54d3-413a-be70-3b521b853e44",
+      "saved_screenplay_and_unrelated_draft_preserved": true
+    },
+    "review_labels": [
+      {
+        "expected_label": "Source screenplay text changed.",
+        "native_name": "Source screenplay text changed. INT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.",
+        "native_text": "Source screenplay text changed.\nINT. TICKET OFFICE - NIGHT\n\nThe departure board reads midnight.\n\n",
+        "role": "list item",
+        "bounds": [
+          739,
+          356,
+          396,
+          84
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      },
+      {
+        "expected_label": "Bible fact profile.tagline changed.",
+        "native_name": "Bible fact profile.tagline changed. Mara's umbrella is blue.",
+        "native_text": "Bible fact profile.tagline changed.\nMara's umbrella is blue.\n",
+        "role": "list item",
+        "bounds": [
+          739,
+          276,
+          396,
+          36
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      },
+      {
+        "expected_label": "Entered: SCENE E. Left: SCENE A.",
+        "native_name": "Screenplay context changed. Entered: SCENE E. Left: SCENE A.",
+        "native_text": "Screenplay context changed.\nEntered: SCENE E. Left: SCENE A.\n",
+        "role": "list item",
+        "bounds": [
+          739,
+          316,
+          396,
+          36
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      }
+    ],
+    "preview": {
+      "proposal_id": "script.review.3fd7dcf4-ab36-4a1f-93a6-c305670bb7b6",
+      "target_B_unchanged": true,
+      "unrelated_F_draft_open": true,
+      "exact_updated_C_and_Bible_and_FECD_window_consumed": true,
+      "unsaved_F_draft_excluded_from_context": true,
+      "visible_proposal": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            739,
+            589,
+            8,
+            12
+          ],
+          [
+            746,
+            589,
+            8,
+            12
+          ],
+          [
+            753,
+            589,
+            8,
+            12
+          ],
+          [
+            760,
+            589,
+            8,
+            12
+          ],
+          [
+            767,
+            589,
+            8,
+            12
+          ],
+          [
+            774,
+            589,
+            8,
+            12
+          ],
+          [
+            781,
+            589,
+            8,
+            12
+          ],
+          [
+            788,
+            589,
+            8,
+            12
+          ],
+          [
+            795,
+            589,
+            8,
+            12
+          ],
+          [
+            809,
+            589,
+            8,
+            12
+          ],
+          [
+            816,
+            589,
+            8,
+            12
+          ],
+          [
+            823,
+            589,
+            8,
+            12
+          ],
+          [
+            830,
+            589,
+            8,
+            12
+          ],
+          [
+            837,
+            589,
+            8,
+            12
+          ],
+          [
+            844,
+            589,
+            8,
+            12
+          ],
+          [
+            851,
+            589,
+            8,
+            12
+          ],
+          [
+            858,
+            589,
+            8,
+            12
+          ],
+          [
+            872,
+            589,
+            8,
+            12
+          ],
+          [
+            879,
+            589,
+            8,
+            12
+          ],
+          [
+            886,
+            589,
+            8,
+            12
+          ],
+          [
+            893,
+            589,
+            8,
+            12
+          ],
+          [
+            900,
+            589,
+            8,
+            12
+          ],
+          [
+            914,
+            589,
+            8,
+            12
+          ],
+          [
+            921,
+            589,
+            8,
+            12
+          ],
+          [
+            928,
+            589,
+            8,
+            12
+          ],
+          [
+            935,
+            589,
+            8,
+            12
+          ],
+          [
+            942,
+            589,
+            8,
+            12
+          ],
+          [
+            949,
+            589,
+            8,
+            12
+          ],
+          [
+            956,
+            589,
+            8,
+            12
+          ],
+          [
+            970,
+            589,
+            8,
+            12
+          ],
+          [
+            977,
+            589,
+            8,
+            12
+          ],
+          [
+            984,
+            589,
+            8,
+            12
+          ],
+          [
+            998,
+            589,
+            8,
+            12
+          ],
+          [
+            1005,
+            589,
+            8,
+            12
+          ],
+          [
+            1012,
+            589,
+            8,
+            12
+          ],
+          [
+            1019,
+            589,
+            8,
+            12
+          ],
+          [
+            1026,
+            589,
+            8,
+            12
+          ],
+          [
+            1033,
+            589,
+            8,
+            12
+          ],
+          [
+            1040,
+            589,
+            8,
+            12
+          ],
+          [
+            1054,
+            589,
+            8,
+            12
+          ],
+          [
+            1061,
+            589,
+            8,
+            12
+          ],
+          [
+            1068,
+            589,
+            8,
+            12
+          ],
+          [
+            1075,
+            589,
+            8,
+            12
+          ],
+          [
+            739,
+            601,
+            8,
+            16
+          ],
+          [
+            746,
+            601,
+            8,
+            16
+          ],
+          [
+            753,
+            601,
+            8,
+            16
+          ],
+          [
+            760,
+            601,
+            8,
+            16
+          ],
+          [
+            767,
+            601,
+            8,
+            16
+          ],
+          [
+            774,
+            601,
+            8,
+            16
+          ],
+          [
+            781,
+            601,
+            8,
+            16
+          ],
+          [
+            795,
+            601,
+            8,
+            16
+          ],
+          [
+            802,
+            601,
+            8,
+            16
+          ],
+          [
+            809,
+            601,
+            8,
+            16
+          ],
+          [
+            816,
+            601,
+            8,
+            16
+          ],
+          [
+            830,
+            601,
+            8,
+            16
+          ],
+          [
+            837,
+            601,
+            8,
+            16
+          ],
+          [
+            844,
+            601,
+            8,
+            16
+          ],
+          [
+            858,
+            601,
+            8,
+            16
+          ],
+          [
+            865,
+            601,
+            8,
+            16
+          ],
+          [
+            872,
+            601,
+            8,
+            16
+          ],
+          [
+            879,
+            601,
+            8,
+            16
+          ],
+          [
+            886,
+            601,
+            8,
+            16
+          ],
+          [
+            900,
+            601,
+            8,
+            16
+          ],
+          [
+            907,
+            601,
+            8,
+            16
+          ],
+          [
+            914,
+            601,
+            8,
+            16
+          ],
+          [
+            921,
+            601,
+            8,
+            16
+          ],
+          [
+            928,
+            601,
+            8,
+            16
+          ],
+          [
+            935,
+            601,
+            8,
+            16
+          ],
+          [
+            942,
+            601,
+            8,
+            16
+          ],
+          [
+            949,
+            601,
+            8,
+            16
+          ],
+          [
+            963,
+            601,
+            8,
+            16
+          ],
+          [
+            970,
+            601,
+            8,
+            16
+          ],
+          [
+            977,
+            601,
+            8,
+            16
+          ],
+          [
+            991,
+            601,
+            8,
+            16
+          ],
+          [
+            998,
+            601,
+            8,
+            16
+          ],
+          [
+            1005,
+            601,
+            8,
+            16
+          ],
+          [
+            1019,
+            601,
+            8,
+            16
+          ],
+          [
+            1026,
+            601,
+            8,
+            16
+          ],
+          [
+            1033,
+            601,
+            8,
+            16
+          ],
+          [
+            1040,
+            601,
+            8,
+            16
+          ],
+          [
+            1047,
+            601,
+            8,
+            16
+          ],
+          [
+            1054,
+            601,
+            8,
+            16
+          ],
+          [
+            1061,
+            601,
+            8,
+            16
+          ],
+          [
+            1075,
+            601,
+            8,
+            16
+          ],
+          [
+            1082,
+            601,
+            8,
+            16
+          ],
+          [
+            1089,
+            601,
+            8,
+            16
+          ],
+          [
+            1096,
+            601,
+            8,
+            16
+          ],
+          [
+            1103,
+            601,
+            8,
+            16
+          ],
+          [
+            1110,
+            601,
+            8,
+            16
+          ]
+        ],
+        "exact_text": "Synthetic preview: After finding her ticket, Mara arrives with her amber umbrella for the morning train.\n\n",
+        "native_text_geometry_inside_script": true,
+        "pending_controls": [
+          {
+            "name": "Reject",
+            "bounds": [
+              739,
+              651,
+              35,
+              16
+            ]
+          },
+          {
+            "name": "Accept update",
+            "bounds": [
+              783,
+              651,
+              82,
+              16
+            ]
+          }
+        ]
+      }
+    },
+    "acceptance": {
+      "revision_event_id": "68054743-617a-414a-8dfa-c05f743dc532",
+      "only_B_changed": true,
+      "Bible_revision_refreshed": "0c95bb2e-54d3-413a-be70-3b521b853e44",
+      "accepted_proposal_visible": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            301,
+            900,
+            8,
+            13
+          ],
+          [
+            308,
+            900,
+            8,
+            13
+          ],
+          [
+            315,
+            900,
+            8,
+            13
+          ],
+          [
+            322,
+            900,
+            8,
+            13
+          ],
+          [
+            329,
+            900,
+            8,
+            13
+          ],
+          [
+            336,
+            900,
+            8,
+            13
+          ],
+          [
+            343,
+            900,
+            8,
+            13
+          ],
+          [
+            350,
+            900,
+            8,
+            13
+          ],
+          [
+            357,
+            900,
+            8,
+            13
+          ],
+          [
+            371,
+            900,
+            8,
+            13
+          ],
+          [
+            378,
+            900,
+            8,
+            13
+          ],
+          [
+            385,
+            900,
+            8,
+            13
+          ],
+          [
+            392,
+            900,
+            8,
+            13
+          ],
+          [
+            399,
+            900,
+            8,
+            13
+          ],
+          [
+            406,
+            900,
+            8,
+            13
+          ],
+          [
+            413,
+            900,
+            8,
+            13
+          ],
+          [
+            420,
+            900,
+            8,
+            13
+          ],
+          [
+            434,
+            900,
+            8,
+            13
+          ],
+          [
+            441,
+            900,
+            8,
+            13
+          ],
+          [
+            448,
+            900,
+            8,
+            13
+          ],
+          [
+            455,
+            900,
+            8,
+            13
+          ],
+          [
+            462,
+            900,
+            8,
+            13
+          ],
+          [
+            476,
+            900,
+            8,
+            13
+          ],
+          [
+            483,
+            900,
+            8,
+            13
+          ],
+          [
+            490,
+            900,
+            8,
+            13
+          ],
+          [
+            497,
+            900,
+            8,
+            13
+          ],
+          [
+            504,
+            900,
+            8,
+            13
+          ],
+          [
+            511,
+            900,
+            8,
+            13
+          ],
+          [
+            518,
+            900,
+            8,
+            13
+          ],
+          [
+            532,
+            900,
+            8,
+            13
+          ],
+          [
+            539,
+            900,
+            8,
+            13
+          ],
+          [
+            546,
+            900,
+            8,
+            13
+          ],
+          [
+            560,
+            900,
+            8,
+            13
+          ],
+          [
+            567,
+            900,
+            8,
+            13
+          ],
+          [
+            574,
+            900,
+            8,
+            13
+          ],
+          [
+            581,
+            900,
+            8,
+            13
+          ],
+          [
+            588,
+            900,
+            8,
+            13
+          ],
+          [
+            595,
+            900,
+            8,
+            13
+          ],
+          [
+            602,
+            900,
+            8,
+            13
+          ],
+          [
+            616,
+            900,
+            8,
+            13
+          ],
+          [
+            623,
+            900,
+            8,
+            13
+          ],
+          [
+            630,
+            900,
+            8,
+            13
+          ],
+          [
+            637,
+            900,
+            8,
+            13
+          ],
+          [
+            301,
+            912,
+            8,
+            17
+          ],
+          [
+            308,
+            912,
+            8,
+            17
+          ],
+          [
+            315,
+            912,
+            8,
+            17
+          ],
+          [
+            322,
+            912,
+            8,
+            17
+          ],
+          [
+            329,
+            912,
+            8,
+            17
+          ],
+          [
+            336,
+            912,
+            8,
+            17
+          ],
+          [
+            343,
+            912,
+            8,
+            17
+          ],
+          [
+            357,
+            912,
+            8,
+            17
+          ],
+          [
+            364,
+            912,
+            8,
+            17
+          ],
+          [
+            371,
+            912,
+            8,
+            17
+          ],
+          [
+            378,
+            912,
+            8,
+            17
+          ],
+          [
+            392,
+            912,
+            8,
+            17
+          ],
+          [
+            399,
+            912,
+            8,
+            17
+          ],
+          [
+            406,
+            912,
+            8,
+            17
+          ],
+          [
+            420,
+            912,
+            8,
+            17
+          ],
+          [
+            427,
+            912,
+            8,
+            17
+          ],
+          [
+            434,
+            912,
+            8,
+            17
+          ],
+          [
+            441,
+            912,
+            8,
+            17
+          ],
+          [
+            448,
+            912,
+            8,
+            17
+          ],
+          [
+            462,
+            912,
+            8,
+            17
+          ],
+          [
+            469,
+            912,
+            8,
+            17
+          ],
+          [
+            476,
+            912,
+            8,
+            17
+          ],
+          [
+            483,
+            912,
+            8,
+            17
+          ],
+          [
+            490,
+            912,
+            8,
+            17
+          ],
+          [
+            497,
+            912,
+            8,
+            17
+          ],
+          [
+            504,
+            912,
+            8,
+            17
+          ],
+          [
+            511,
+            912,
+            8,
+            17
+          ],
+          [
+            525,
+            912,
+            8,
+            17
+          ],
+          [
+            532,
+            912,
+            8,
+            17
+          ],
+          [
+            539,
+            912,
+            8,
+            17
+          ],
+          [
+            553,
+            912,
+            8,
+            17
+          ],
+          [
+            560,
+            912,
+            8,
+            17
+          ],
+          [
+            567,
+            912,
+            8,
+            17
+          ],
+          [
+            581,
+            912,
+            8,
+            17
+          ],
+          [
+            588,
+            912,
+            8,
+            17
+          ],
+          [
+            595,
+            912,
+            8,
+            17
+          ],
+          [
+            602,
+            912,
+            8,
+            17
+          ],
+          [
+            609,
+            912,
+            8,
+            17
+          ],
+          [
+            616,
+            912,
+            8,
+            17
+          ],
+          [
+            623,
+            912,
+            8,
+            17
+          ],
+          [
+            637,
+            912,
+            8,
+            17
+          ],
+          [
+            644,
+            912,
+            8,
+            17
+          ],
+          [
+            651,
+            912,
+            8,
+            17
+          ],
+          [
+            658,
+            912,
+            8,
+            17
+          ],
+          [
+            665,
+            912,
+            8,
+            17
+          ],
+          [
+            672,
+            912,
+            8,
+            17
+          ]
+        ],
+        "exact_text": "Synthetic preview: After finding her ticket, Mara arrives with her amber umbrella for the morning train.\n\n",
+        "native_text_geometry_inside_script": true
+      },
+      "unrelated_F_draft_still_open": true,
+      "review_cleared": true
+    },
+    "provider_calls": [
+      {
+        "kind": "generation",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "recap",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      },
+      {
+        "kind": "preview",
+        "contains_exact_expected_context": true,
+        "stream": true,
+        "real_model": false,
+        "accepted": true
+      }
+    ],
+    "accessibility_retired_object_polls": 0,
+    "typed_text_observations": [
+      {
+        "field": "New screenplay text",
+        "expected_length": 84,
+        "actual_text": "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\nMARA\nKeep the last train for us.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 74,
+        "actual_text": "EXT. STATION - NIGHT\n\nMara waits beside Eli. Preserve this station beat.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 63,
+        "actual_text": "INT. TICKET OFFICE - DAWN\n\nThe departure board reads morning.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Edit screenplay text",
+        "expected_length": 47,
+        "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+        "exact": true
+      },
+      {
+        "field": "Placement start seconds",
+        "expected_length": 3,
+        "actual_text": "180",
+        "exact": true
+      },
+      {
+        "field": "Placement end seconds",
+        "expected_length": 3,
+        "actual_text": "210",
+        "exact": true
+      },
+      {
+        "field": "TAGLINE Mara's umbrella is amber.",
+        "expected_length": 25,
+        "actual_text": "Mara's umbrella is amber.",
+        "exact": true
+      }
+    ],
+    "timeline_locator_observations": [
+      {
+        "name": "",
+        "text": "SCENE E",
+        "role": "unknown",
+        "bounds": [
+          702,
+          579,
+          53,
+          17
+        ]
+      },
+      {
+        "name": "",
+        "text": "SCENE A\nSCENE F\nSCENE B\nSCENE C\nSCENE D\nSCENE E\n+\n+\n+\n+\n+\n+\n",
+        "role": "section",
+        "bounds": [
+          80,
+          1296,
+          3594,
+          48
+        ]
+      },
+      {
+        "name": "SCENE E",
+        "text": "SCENE E",
+        "role": "native-text-range",
+        "bounds": [
+          1569,
+          1314,
+          31,
+          11
+        ]
+      }
+    ]
+  },
+  "visual_review": {
+    "all_eight_original_captures_viewed": true,
+    "generated_B_caption": "Has content",
+    "manual_saved_B_caption": "Has content",
+    "selected_E_summary": "Placement: 180\u2013210 seconds",
+    "full_pending_proposal_and_Bible_amber_and_F_draft_visible": true,
+    "badge_AT_SPI_machine_verification": false,
+    "badge_verified_by_untouched_original_images": true,
+    "PNG_editing": false,
+    "real_model_quality_qualified": false
+  },
+  "preserved_attempts": [
+    {
+      "run_id": 37547569746,
+      "job_id": 112555124863,
+      "artifact_id": 11452040838,
+      "zip_sha256": "5fb15710ae6e86c69d651e984ffc3939aeb9817eee5dcb3d029d81f05ac4b00c",
+      "files": [
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/app-sanitized.log",
+          "sha256": "aa3aa5230972c5614d2e8c7bec4a78327b397ff40b7eedbd976579ce9675ecc7",
+          "size_bytes": 948
+        },
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/capture-evidence.json",
+          "sha256": "8ce92ff98313aaa8110c9f8297136d464620b02612af6c6d41a8f6c41d4b822f",
+          "size_bytes": 11026
+        },
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/eidetic-story-authoring-failure.png",
+          "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+          "size_bytes": 107558,
+          "dimensions": [
+            1920,
+            1440
+          ]
+        },
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/eidetic-story-authoring-writing.png",
+          "sha256": "1ae18e80a664e3309fe23e33447e05816254c613cc3dd707458498a33258b304",
+          "size_bytes": 96106,
+          "dimensions": [
+            1920,
+            1440
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 37549233841,
+      "job_id": 112560485346,
+      "artifact_id": 11452910720,
+      "zip_sha256": "789a0f52c3ce8a51ed11984c7be0a9d6c366de0f1942346440ebf2f75430e509",
+      "files": [
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/app-sanitized.log",
+          "sha256": "ad091c49091f4d8c4cb37f34d782aae1ea57f4dd274be69fa3445829dee5028a",
+          "size_bytes": 947
+        },
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/capture-evidence.json",
+          "sha256": "6d3153945d053efab65cbf95f0754566794a4de56845520bc3222673febdefa5",
+          "size_bytes": 11026
+        },
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/eidetic-story-authoring-failure.png",
+          "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+          "size_bytes": 107558,
+          "dimensions": [
+            1920,
+            1440
+          ]
+        },
+        {
+          "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/eidetic-story-authoring-writing.png",
+          "sha256": "58839c12d3bf992e204ff8b935f73686ac5dab67a6780ba9d90991c6a50baa35",
+          "size_bytes": 96104,
+          "dimensions": [
+            1920,
+            1440
+          ]
+        }
+      ]
+    }
+  ],
+  "local_receipts": {
+    "application_source": "5ac9eb99ffb155878d5dcfda77baa01d60ef24f7",
+    "application_tree": "ba5c1d15e3ce002511190936441d7b322164ccf4",
+    "qualification_source": "9d064fd1d74dab54e7c3bdc8ac94cf0917d3b858",
+    "logs": [
+      {
+        "path": "/workspace/scratch/inspector-caption-baseline.log",
+        "size_bytes": 5946,
+        "sha256": "b897ff9a66f1aee43565bc0e842b341520dda31744bcad198091020db548ed79"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-focused.log",
+        "size_bytes": 916,
+        "sha256": "43b3cf437e191242693033bade3cbcf270118744e1cc9724ab54e105b69cdfc8"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-ui-tests.log",
+        "size_bytes": 6888,
+        "sha256": "94c99a784bae52e1a0aae529e6762d0b769a6dd98a198cf40b62c417932d559a"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-typecheck.log",
+        "size_bytes": 1127,
+        "sha256": "d13cf7afd1d8b6fd5be4450e1fe5c66999162f6190d97cecc678f76205d8a8bc"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-lint.log",
+        "size_bytes": 251,
+        "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-format.log",
+        "size_bytes": 374,
+        "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-build.log",
+        "size_bytes": 3628,
+        "sha256": "2ee49201d975b462839363ef8f4e124dc0d9a4ba4d64f5e43fb88edde66affe2"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-commit.log",
+        "size_bytes": 15890,
+        "sha256": "c092342c1ac46adefd51dc49b825aea608f4e1f5c8b412abaaa0eabd7476b78a"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-drivers.log",
+        "size_bytes": 10683,
+        "sha256": "0a8b4359192b7a3bd3e876c9100f050b0cfc76545fd222aaaa7638fdcabaf30b"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-drivers-final.log",
+        "size_bytes": 10683,
+        "sha256": "41c97ea0edacb98d195951ffae7a9a8a4dc9e964b16132c8ab21339caeb1e635"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-commit.log",
+        "size_bytes": 16412,
+        "sha256": "1bb4b83ed2aaa4b8b80c667145789cafb9d5f915168c02b8b7b2dd1b1a382253"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-label-commit.log",
+        "size_bytes": 15846,
+        "sha256": "0fe88e0ea047e4216062f944907bf9c5e7b9bcc175a5527e25649f5de158811b"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-range-drivers.log",
+        "size_bytes": 10683,
+        "sha256": "f05eaa1f17fc9d461942339bb8b85ea47f859caab8bf21f66963b95559a38d1a"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-range-commit.log",
+        "size_bytes": 15849,
+        "sha256": "f008ec0f02a3b084a6a566a00ecfb9c814f051535fa0f3b882d9dcc16040832e"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-visual-drivers.log",
+        "size_bytes": 10856,
+        "sha256": "6f35986c47f4a0f47d2c847bfab0d62eb676334db8a505982f6acab5202fa58a"
+      },
+      {
+        "path": "/workspace/scratch/inspector-caption-native-visual-commit.log",
+        "size_bytes": 15855,
+        "sha256": "44358c6673247a47aba785277f13973c01bc863d7e6582c4daa46dc078a8821b"
+      }
+    ],
+    "typecheck_note": "Initial test fixture had one undefined-array-access diagnostic; corrected before source commit. Source precommit typecheck passed 0 errors/0 warnings.",
+    "prepush_note": "Unavailable local desktop prepush hook skipped with LEFTHOOK=0; normal hosted native locked build/test route required.",
+    "latest_qualification_source": "a8eea3490abc0bc0457357a11fa49b39f4eb9547"
+  },
+  "file_receipts": [
+    {
+      "path": "/workspace/scratch/inspector-caption-baseline.log",
+      "size_bytes": 5946,
+      "sha256": "b897ff9a66f1aee43565bc0e842b341520dda31744bcad198091020db548ed79"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-focused.log",
+      "size_bytes": 916,
+      "sha256": "43b3cf437e191242693033bade3cbcf270118744e1cc9724ab54e105b69cdfc8"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-ui-tests.log",
+      "size_bytes": 6888,
+      "sha256": "94c99a784bae52e1a0aae529e6762d0b769a6dd98a198cf40b62c417932d559a"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-typecheck.log",
+      "size_bytes": 1127,
+      "sha256": "d13cf7afd1d8b6fd5be4450e1fe5c66999162f6190d97cecc678f76205d8a8bc"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-lint.log",
+      "size_bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-format.log",
+      "size_bytes": 374,
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-build.log",
+      "size_bytes": 3628,
+      "sha256": "2ee49201d975b462839363ef8f4e124dc0d9a4ba4d64f5e43fb88edde66affe2"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-commit.log",
+      "size_bytes": 15890,
+      "sha256": "c092342c1ac46adefd51dc49b825aea608f4e1f5c8b412abaaa0eabd7476b78a"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-drivers.log",
+      "size_bytes": 10683,
+      "sha256": "0a8b4359192b7a3bd3e876c9100f050b0cfc76545fd222aaaa7638fdcabaf30b"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-drivers-final.log",
+      "size_bytes": 10683,
+      "sha256": "41c97ea0edacb98d195951ffae7a9a8a4dc9e964b16132c8ab21339caeb1e635"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-commit.log",
+      "size_bytes": 16412,
+      "sha256": "1bb4b83ed2aaa4b8b80c667145789cafb9d5f915168c02b8b7b2dd1b1a382253"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-label-commit.log",
+      "size_bytes": 15846,
+      "sha256": "0fe88e0ea047e4216062f944907bf9c5e7b9bcc175a5527e25649f5de158811b"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-range-drivers.log",
+      "size_bytes": 10683,
+      "sha256": "f05eaa1f17fc9d461942339bb8b85ea47f859caab8bf21f66963b95559a38d1a"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-range-commit.log",
+      "size_bytes": 15849,
+      "sha256": "f008ec0f02a3b084a6a566a00ecfb9c814f051535fa0f3b882d9dcc16040832e"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-visual-drivers.log",
+      "size_bytes": 10856,
+      "sha256": "6f35986c47f4a0f47d2c847bfab0d62eb676334db8a505982f6acab5202fa58a"
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-native-visual-commit.log",
+      "size_bytes": 15855,
+      "sha256": "44358c6673247a47aba785277f13973c01bc863d7e6582c4daa46dc078a8821b"
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/app-sanitized.log",
+      "size_bytes": 948,
+      "sha256": "aa3aa5230972c5614d2e8c7bec4a78327b397ff40b7eedbd976579ce9675ecc7"
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/capture-evidence.json",
+      "size_bytes": 11026,
+      "sha256": "8ce92ff98313aaa8110c9f8297136d464620b02612af6c6d41a8f6c41d4b822f"
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/eidetic-story-authoring-failure.png",
+      "size_bytes": 107558,
+      "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37547569746/eidetic-story-authoring-writing.png",
+      "size_bytes": 96106,
+      "sha256": "1ae18e80a664e3309fe23e33447e05816254c613cc3dd707458498a33258b304",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/app-sanitized.log",
+      "size_bytes": 947,
+      "sha256": "ad091c49091f4d8c4cb37f34d782aae1ea57f4dd274be69fa3445829dee5028a"
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/capture-evidence.json",
+      "size_bytes": 11026,
+      "sha256": "6d3153945d053efab65cbf95f0754566794a4de56845520bc3222673febdefa5"
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/eidetic-story-authoring-failure.png",
+      "size_bytes": 107558,
+      "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-failed-37549233841/eidetic-story-authoring-writing.png",
+      "size_bytes": 96104,
+      "sha256": "58839c12d3bf992e204ff8b935f73686ac5dab67a6780ba9d90991c6a50baa35",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/app-sanitized.log",
+      "size_bytes": 948,
+      "sha256": "f5ceeeb27dce72053b09d34e8992eba25d0f6f7e31fb12773e0de35f25d37028"
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/capture-evidence.json",
+      "size_bytes": 27988,
+      "sha256": "a1de9f29e713fbb48fe24cefec49f732348b23803b9cba76c134784baa948db9"
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-inspector-generation.png",
+      "size_bytes": 107558,
+      "sha256": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-story-authoring-accepted.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-story-authoring-manual-edit.png",
+      "size_bytes": 124068,
+      "sha256": "5e749576d4d87095d13630a17487649c865625406a452a2f2e26f5a1fc6318b9",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-story-authoring-placement.png",
+      "size_bytes": 136176,
+      "sha256": "fecd46b637afa5dd35fb0f782fe7b7e02f517e00dd6144b3705eda3e7769bd72",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-story-authoring-preview.png",
+      "size_bytes": 185306,
+      "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-story-authoring-retained-draft.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-story-authoring-review.png",
+      "size_bytes": 175397,
+      "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-freshness-native-success-37550726323/eidetic-story-authoring-writing.png",
+      "size_bytes": 96104,
+      "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/inspector-caption-hosted-ci-evidence.json",
+      "size_bytes": 7377,
+      "sha256": "24422e33db23c2c8abe0db74c155981da237fe8d720b9ad220db2ca80c542a98"
+    },
+    {
+      "path": "/workspace/attachments/1de5b8ec-d892-431e-8d69-fd29630d8afa/eidetic-inspector-freshness-first-attempt.zip",
+      "size_bytes": 183092,
+      "sha256": "5fb15710ae6e86c69d651e984ffc3939aeb9817eee5dcb3d029d81f05ac4b00c"
+    },
+    {
+      "path": "/workspace/attachments/3553045a-e6f6-4d3a-bc10-a0fda747eab7/eidetic-inspector-freshness-second-attempt.zip",
+      "size_bytes": 183093,
+      "sha256": "789a0f52c3ce8a51ed11984c7be0a9d6c366de0f1942346440ebf2f75430e509"
+    },
+    {
+      "path": "/workspace/attachments/fdd79535-bab9-4277-b1ed-901ed822ce00/eidetic-inspector-freshness-success.zip",
+      "size_bytes": 1060445,
+      "sha256": "7904f1960845c8cada10c2cbfd637e0dd3cac5aa62f54f017b574190038d6646"
+    },
+    {
+      "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-writing.png",
+      "size_bytes": 96104,
+      "sha256": "925f5935de629dcbaed5c8f5115dda3b5ac16c849aef9675c21ac58fd9c33a13",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-manual-edit.png",
+      "size_bytes": 124151,
+      "sha256": "44fed0f6bdb829f4403a1c2c31f281a296bf59aa25fd4f0b186474372ba6a451",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-placement.png",
+      "size_bytes": 132498,
+      "sha256": "d3e28f112bec24db7aa9a547688bf5f7fd5309ba40f6d2f59c01f2c4e0a1d71b",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-review.png",
+      "size_bytes": 175397,
+      "sha256": "edd6d33b875e5aee91cc662d5ef749ace25994b9d5c74c22875d973cd76fc903",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-preview.png",
+      "size_bytes": 185306,
+      "sha256": "7451a5b5835b919f607acc077bf347d7de3d52d749aa76b3abd9b51c15f16a05",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-accepted.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    },
+    {
+      "path": "/workspace/scratch/story-authoring-native-success-37545170522/eidetic-story-authoring-retained-draft.png",
+      "size_bytes": 161553,
+      "sha256": "1892390ed1b61f01e93f37eb0cea1933a37f8f9999135eee892dbedb607b92ce",
+      "dimensions": [
+        1920,
+        1440
+      ]
+    }
+  ],
+  "identical_capture_accounting": {
+    "new_generation_matches_both_preserved_failure_images": "6bd218ccdcd801064ff4089324be1e4dd88901fd5e57b87ed96fad678f00dc77",
+    "new_writing_review_preview_accepted_retained_match_original_37545170522": true,
+    "new_accepted_and_retained_are_identical": true,
+    "manual_edit_and_placement_are_new_bytes": true
+  }
+}
