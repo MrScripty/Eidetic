@@ -1,0 +1,25 @@
+{
+  "status": "native_pending",
+  "source_sha": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+  "source_tree": "be0acb7d8db1402a57939dda16820ac7558126a5",
+  "qa_sha": "633ac221341efbcc95717233d65bc3057965e003",
+  "qa_tree": "b2871c1efbf4ceb811a97faeed0e55adda89fe35",
+  "native_run": 37648481844,
+  "native_job": 112885340502,
+  "superseded_historical_checkpoint": "source-custody.json",
+  "failed_runs": [
+    37639268139,
+    37642126432,
+    37644276528,
+    37647301200
+  ],
+  "cancelled_setup": 37638970476,
+  "real_model_quality_qualified": false,
+  "failed_attempt_limits": {
+    "37639268139": "Five originals; failure before ordinary fact ABA completes; no late-ack/fault/recovery/restart qualification.",
+    "37642126432": "Thirteen originals; pre-reopen stages and late-save conflict; failure seam not routed; error/recovery and restart not reached.",
+    "37644276528": "Thirteen originals; pre-reopen stages and late-save conflict; routed fault caused QA owner-effect interference; error/recovery and restart not reached.",
+    "37647301200": "Setup-only dependency download timeout; no native execution/capture/artifact."
+  },
+  "historical_scope_text_is_superseded_by_these_limits": true
+}

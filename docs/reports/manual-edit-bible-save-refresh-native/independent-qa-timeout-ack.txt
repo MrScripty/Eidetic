@@ -1,0 +1,7 @@
+Independent scoped QA ACK from /root/review_manual_edit_fact_reconciliation, 2026-10-07.
+QA 633ac221341efbcc95717233d65bc3057965e003, tree b2871c1efbf4ceb811a97faeed0e55adda89fe35.
+One workflow file and one timeout line changes five to ten minutes relative to dabf.
+No install commands, routes, dependencies, no-download checks or production changes.
+Decoded run 37647301200 log explicitly times out apt/display installation after five
+minutes. Upload reports no files or artifacts. Native build, tests and capture were
+not reached. Wrapper compiled-effect ACK remains unchanged. No forward retry blocker.

@@ -18,10 +18,10 @@
     "ui/src/lib/stores/bibleGraphNodeProjection.svelte.test.ts": "a42b1b7c9e5482da185207ee527cbc6b8e734f1f8c33f3b18b941f6674fe0ad9",
     "ui/src/lib/stores/bibleGraphNodeProjection.svelte.ts": "48b2e1ea037fd380e0b6876da82546a34d7a8da455abec8510094b7589bb817a"
   },
-  "qa": "dabf0206c10c6552e7061fc18f8deb9c69c99062",
-  "qa_tree": "c213a8703b78050bc62f87b7491512b32e79237b",
+  "qa": "633ac221341efbcc95717233d65bc3057965e003",
+  "qa_tree": "b2871c1efbf4ceb811a97faeed0e55adda89fe35",
   "exact_nine_qa_files": {
-    ".github/workflows/manual-fact-native.yml": "fc4fd47d5c304437695e5ce766f6bff27396b1b05976d3dde911f99e2af1c513",
+    ".github/workflows/manual-fact-native.yml": "f7c61280aa80dd10b4eb7ac2039665b6286b515add20e0cd07d06b3ace2234a6",
     "crates/server/examples/manual_fact_capture_fixture.rs": "30ff73cd2b896905913de88565180a333c820e8a85bc11195d2cc917c4d6e62d",
     "scripts/manual-fact-native-helpers.py": "2662eef35566d7eb5314a149a1464f209b241a3ca85ebad0c9a6b25fc3700622",
     "scripts/manual-facts-vite.config.mts": "ccbaea113d140e0db463502db4429645cdf4c6c2decf148f2e283158ce122639",

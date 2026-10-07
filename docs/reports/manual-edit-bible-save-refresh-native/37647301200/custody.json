@@ -1,0 +1,13 @@
+{
+  "run": 37647301200,
+  "job": 112881305603,
+  "qa": "dabf0206c10c6552e7061fc18f8deb9c69c99062",
+  "source": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+  "status": "failure",
+  "stage": "Install standard Linux and display dependencies",
+  "failure": "Five minute timeout while downloading standard Ubuntu display dependencies",
+  "native_executed": false,
+  "artifacts": [],
+  "captures": 0,
+  "log_sha256": "21c0fa36d92ce9ecbe636326498e1a0237d183287c674ab3d7b96db858f15578"
+}
