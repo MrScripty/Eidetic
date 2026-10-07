@@ -53,6 +53,16 @@ class RecallCaptureTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'screenplay'):
                 driver.require_preserved(path,original)
 
+    def test_disclosure_locator_excludes_the_same_named_noninteractive_section(self):
+        class Node:
+            name = 'Related story facts'
+            def __init__(self,role):self.role=role
+            def getRole(self):return self.role
+        region,summary=Node(0),Node(2)
+        with patch.object(driver.ui.pyatspi,'ROLE_PUSH_BUTTON',1,create=True), patch.object(driver.ui.pyatspi,'ROLE_TOGGLE_BUTTON',2,create=True):
+            with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:next(n for n in [region,summary] if predicate(n))):
+                self.assertIs(driver.recall_disclosure(None),summary)
+
     def test_proposed_text_must_be_wholly_visible_inside_the_script_viewport(self):
         self.assertTrue(driver.contained((10,10,20,20),(0,0,50,50)))
         self.assertFalse(driver.contained((10,10,60,20),(0,0,50,50)))

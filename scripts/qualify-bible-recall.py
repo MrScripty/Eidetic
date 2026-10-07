@@ -247,6 +247,13 @@ def visible_text(application, label):
     return ui.find(application, lambda n: label in ui.text_of(n) and n.getRole() not in (ui.pyatspi.ROLE_COMBO_BOX,))
 
 
+def recall_disclosure(application):
+    # The labelled section and its summary share text. Only the actual
+    # expandable control is a valid X11 click target, including after opening.
+    return ui.reveal(application, lambda n: n.name == 'Related story facts'
+        and n.getRole() in (ui.pyatspi.ROLE_PUSH_BUTTON, ui.pyatspi.ROLE_TOGGLE_BUTTON))
+
+
 def recall_time(application, window, text):
     field = ui.wait_for('explicit fictional-time input', lambda: ui.reveal(application,
         lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE) and n.name == 'Recall story time (ms)'))
@@ -369,7 +376,7 @@ def main():
         mara=ui.wait_for('exact Mara entity control',lambda:ui.reveal(application,lambda n:
             n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and ui.button_label_matches(n.name,'Mara',prefix=True)))
         ui.click_control(mara,window)
-        disclosure=ui.wait_for('related-fact disclosure',lambda:ui.reveal(application,lambda n:n.name=='Related story facts'))
+        disclosure=ui.wait_for('related-fact disclosure',lambda:recall_disclosure(application))
         ui.click_control(disclosure,window)
         before_history=canonical_state(database)
         ui.reveal_button(application,'Recall related story facts',window)
@@ -393,7 +400,7 @@ def main():
         checkpoint('explicit 1000ms recall resolves exact assertion with typed untimed path')
         capture('eidetic-bible-recall-at.png')
         # Close only the normal recall disclosure to reach the existing authored profile editor.
-        disclosure=ui.wait_for('open recall disclosure',lambda:ui.reveal(application,lambda n:n.name=='Related story facts'))
+        disclosure=ui.wait_for('open recall disclosure',lambda:recall_disclosure(application))
         ui.click_control(disclosure,window)
         field=ui.wait_for('exact blue authored Bible field',lambda:ui.reveal(application,lambda n:
             n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)==BLUE))
@@ -410,7 +417,7 @@ def main():
         evidence['manual_fact_edit']['visible_review']=ui.wait_for('visible Bible fact cause',lambda:visible_review_label(application,window,'Bible fact profile.tagline changed.'))
         checkpoint('native exact fact Save identifies affected screenplay without replacing manual text')
         capture('eidetic-bible-recall-fact-review.png')
-        disclosure=ui.wait_for('reopen recall disclosure',lambda:ui.reveal(application,lambda n:n.name=='Related story facts'))
+        disclosure=ui.wait_for('reopen recall disclosure',lambda:recall_disclosure(application))
         ui.click_control(disclosure,window)
         ui.wait_for('old recall evidence revoked',lambda:visible_text(application,'Facts changed. Recall again'))
         if visible_text(application,'environment.weather: Rain'):
