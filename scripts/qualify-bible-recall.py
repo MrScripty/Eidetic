@@ -248,7 +248,9 @@ def visible_text(application, label):
     # scrolling must expose the exact paragraph before claiming it visible.
     expected = ' '.join(label.split())
     def matches(node):
-        return expected in ' '.join(ui.text_of(node).split()) and node.getRole() != ui.pyatspi.ROLE_COMBO_BOX
+        role = node.getRole()
+        allowed = role != ui.pyatspi.ROLE_COMBO_BOX if label == 'Connected' else role == ui.pyatspi.ROLE_PARAGRAPH
+        return allowed and expected in ' '.join(ui.text_of(node).split())
     found = ui.find(application, matches)
     if found:
         return found
@@ -264,12 +266,14 @@ def recall_disclosure(application):
     # same-named section is ROLE_LANDMARK and must never receive this click.
     return ui.reveal(application, lambda n: n.name == 'Related story facts'
         and n.getRole() in (ui.pyatspi.ROLE_UNKNOWN, ui.pyatspi.ROLE_PUSH_BUTTON,
-            ui.pyatspi.ROLE_TOGGLE_BUTTON))
+            ui.pyatspi.ROLE_TOGGLE_BUTTON)
+        and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0] > 1000)
 
 
 def recall_time(application, window, text):
     field = ui.wait_for('explicit fictional-time input', lambda: ui.reveal(application,
-        lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE) and n.name == 'Recall story time (ms)'))
+        lambda n: n.getState().contains(ui.pyatspi.STATE_EDITABLE) and n.name == 'Recall story time (ms)'
+        and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0] > 1000))
     ui.type_text(field, window, text)
     ui.reveal_button(application, 'Recall related story facts', window)
 
@@ -411,6 +415,13 @@ def main():
         evidence['timed_recall']={'story_time_ms':1000,'exact_UI_value':'environment.weather: Rain',
             'typed_path':'Mara → Beach House · located in','relationships_untimed':True,'canonical_history_unchanged':True}
         checkpoint('explicit 1000ms recall resolves exact assertion with typed untimed path')
+        house=ui.wait_for('related Beach House article',lambda:ui.find(application,lambda n:
+            n.name=='Beach House (related)' and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0] > 1000))
+        source=ui.wait_for('timed neighbor fact source disclosure',lambda:ui.reveal(house,lambda n:n.name=='Fact source'))
+        ui.click_control(source,window)
+        ui.wait_for('exact snapshot source identity',lambda:visible_text(application,'snapshot qualification.house.opening'))
+        ui.wait_for('exact snapshot field source identity',lambda:visible_text(application,'Field qualification.house.opening.weather'))
+        evidence['timed_recall']['source_disclosure_visible']=True
         capture('eidetic-bible-recall-at.png')
         # Close only the normal recall disclosure to reach the existing authored profile editor.
         disclosure=ui.wait_for('open recall disclosure',lambda:recall_disclosure(application))
@@ -466,6 +477,11 @@ def main():
         evidence['error']=str(error)[:2000]
         if application is not None:
             evidence['accessibility']=ui.accessibility_snapshot(application)
+            # Plain paragraph diagnostics expose native text segmentation and
+            # clipping without DOM access or any project/model mutation.
+            evidence['paragraph_observations']=[{'text':ui.text_of(n),'showing':ui.visible(n),
+                'bounds':tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))}
+                for n in ui.walk(application) if n.getRole()==ui.pyatspi.ROLE_PARAGRAPH][:160]
         if window is not None:
             try: capture('eidetic-bible-recall-failure.png')
             except Exception as capture_error: evidence['failure_capture_error']=str(capture_error)[:500]

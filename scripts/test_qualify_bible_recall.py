@@ -19,10 +19,11 @@ with patch.dict(sys.modules,{'pyatspi':ModuleType('pyatspi'),'gi':ModuleType('gi
 class RecallCaptureTests(unittest.TestCase):
     def test_result_text_is_scrolled_into_view_and_normalizes_native_line_wrapping(self):
         class Node:
-            def getRole(self):return 1
-        paragraph=Node()
+            def __init__(self,role):self.role=role
+            def getRole(self):return self.role
+        paragraph,hidden_section=Node(1),Node(0)
         with patch.object(driver.ui.pyatspi,'ROLE_COMBO_BOX',2,create=True), patch.object(driver.ui.pyatspi,'ROLE_PARAGRAPH',1,create=True), patch.object(driver.ui,'text_of',return_value='Unresolved:\n environment.weather — no established value'), patch.object(driver.ui,'find',return_value=None):
-            with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:paragraph if predicate(paragraph) else None) as reveal:
+            with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:next((n for n in [hidden_section,paragraph] if predicate(n)),None)) as reveal:
                 self.assertIs(driver.visible_text(None,'Unresolved: environment.weather'),paragraph)
                 reveal.assert_called_once()
 
@@ -71,13 +72,15 @@ class RecallCaptureTests(unittest.TestCase):
     def test_disclosure_locator_excludes_the_same_named_noninteractive_section(self):
         class Node:
             name = 'Related story facts'
-            def __init__(self,role):self.role=role
+            def __init__(self,role,x=1600):self.role,self.x=role,x
             def getRole(self):return self.role
+            def queryComponent(self):return self
+            def getExtents(self,coordinates):return (self.x,140,250,20)
         region=Node(0)
-        with patch.object(driver.ui.pyatspi,'ROLE_PUSH_BUTTON',1,create=True), patch.object(driver.ui.pyatspi,'ROLE_TOGGLE_BUTTON',2,create=True), patch.object(driver.ui.pyatspi,'ROLE_UNKNOWN',3,create=True):
+        with patch.object(driver.ui.pyatspi,'ROLE_PUSH_BUTTON',1,create=True), patch.object(driver.ui.pyatspi,'ROLE_TOGGLE_BUTTON',2,create=True), patch.object(driver.ui.pyatspi,'ROLE_UNKNOWN',3,create=True), patch.object(driver.ui.pyatspi,'XY_SCREEN',0,create=True):
             for role in (1,2,3):
-                summary=Node(role)
-                with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:next(n for n in [region,summary] if predicate(n))):
+                summary,left_summary=Node(role),Node(role,x=12)
+                with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:next(n for n in [region,left_summary,summary] if predicate(n))):
                     self.assertIs(driver.recall_disclosure(None),summary)
 
     def test_proposed_text_must_be_wholly_visible_inside_the_script_viewport(self):
