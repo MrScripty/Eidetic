@@ -625,3 +625,9 @@ New tag-membership detection, recap arc labels, affect and child-plan arc bindin
 remain separate scope. Synthetic/native qualification does not assert model quality.
 
 Saved-edit reconciliation is opt-in and baseline text only. `script.edit_block` history supplies the exact before/after revisions; the current generation supplies eligibility and consumed association/name custody. Fact binding JSON is stored on the existing propagation proposal and in its sparse creation revision. Analysis and rejection never write facts or screenplay. Acceptance rechecks the binding and pending status under the writer lock, reloads actual field ownership/metadata, and writes only the selected value through the existing writer. Existing dependency projections derive Needs review. No entity inference, automatic analysis, embeddings, new history owner or replacement screenplay is introduced.
+
+Generic SetBibleField acceptance also preserves the stored owner's authored name
+and order when a built-in detail projection supplies schema-default part metadata.
+Projected defaults may materialize only genuinely unpersisted ordinary fields.
+Missing bound owners, deleted owners and mismatched owner identities refuse
+acceptance rather than recreating or renaming them.

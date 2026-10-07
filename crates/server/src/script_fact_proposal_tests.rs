@@ -430,6 +430,68 @@ fn stale_edit_fact_and_relationship_aba_refuse_atomically_and_keep_pending_propo
 }
 
 #[test]
+fn missing_bound_part_owner_refuses_acceptance_without_materializing_defaults() {
+    let (mut conn, _, _, field, _, command) = fixture();
+    propose(&mut conn, &command);
+    let pending = proposal(&conn, &command);
+    conn.execute(
+        "UPDATE bible_graph_parts SET deleted_event_id=created_event_id WHERE id=?1",
+        [field.part_id.as_str()],
+    )
+    .unwrap();
+    let before = count(&conn);
+    let result = crate::propagation_proposal_accept::record_accept_propagation_proposal(
+        &mut conn,
+        &decision(&command),
+        60,
+    );
+    assert!(result.is_err());
+    assert_eq!(count(&conn), before);
+    assert_eq!(proposal(&conn, &command), pending);
+    let deleted: bool = conn
+        .query_row(
+            "SELECT deleted_event_id IS NOT NULL FROM bible_graph_parts WHERE id=?1",
+            [field.part_id.as_str()],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert!(deleted);
+}
+
+#[test]
+fn bound_bible_accept_preserves_custom_owner_name_and_order() {
+    let (mut conn, _, block, mut field, _, _) = fixture();
+    field.part_name = "Mara's authored profile — 雨".into();
+    field.part_sort_order = 29;
+    // Existing stored owner metadata can differ from merged schema defaults.
+    conn.execute(
+        "UPDATE bible_graph_parts SET name=?1,sort_order=?2 WHERE id=?3",
+        params![
+            field.part_name,
+            field.part_sort_order,
+            field.part_id.as_str()
+        ],
+    )
+    .unwrap();
+    let command = request(&conn, &block);
+    propose(&mut conn, &command);
+    crate::propagation_proposal_accept::record_accept_propagation_proposal(
+        &mut conn,
+        &decision(&command),
+        60,
+    )
+    .unwrap();
+    let metadata: (String, u32) = conn
+        .query_row(
+            "SELECT name,sort_order FROM bible_graph_parts WHERE id=?1",
+            [field.part_id.as_str()],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(metadata, (field.part_name, field.part_sort_order));
+}
+
+#[test]
 fn delayed_analysis_refuses_drift_and_repeated_request_is_idempotent() {
     let (mut conn, _, b, field, _, command) = fixture();
     let binding = crate::script_fact_evidence::capture(&conn, &command.payload).unwrap();

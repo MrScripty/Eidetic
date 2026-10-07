@@ -17,7 +17,7 @@ from urllib.request import urlopen
 spec=importlib.util.spec_from_file_location('native_helpers',Path(__file__).with_name('manual-fact-native-helpers.py'))
 driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
 ui=driver.ui
-SOURCE='e5a09ede159a6511694896fdb5d4382e51f4418d'
+SOURCE='c09db543f10b663381379f0532ab0d34ad939b62'
 RED="Mara's umbrella is red."
 BLUE="Mara's umbrella is blue — 雨.\n\n"
 GREEN="Synthetic later proposal: Mara's umbrella is green."
@@ -402,6 +402,51 @@ def qualify_save_refresh(application,window,database,capture,checkpoint,evidence
     capture('manual-fact-14-detail-recovered.png')
 
 
+def qualify_initial_detail_retry(application,window,database,capture,checkpoint,evidence):
+    """Uncached ordinary selection/Retry; only read-fault transport is synthetic."""
+    before={'material':material(database),'fields':bible_fields(database),'history':driver.canonical_state(database)}
+    ui.click_button(application,'QA arm initial Bible detail failure',window)
+    ui.click_button(application,'Bible',window)
+    search=ui.wait_for('Bible entity search',lambda:ui.find(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and 0<=n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]<400 and ui.text_of(n)==''))
+    ui.type_text(search,window,'Mara')
+    ui.click_control(ui.wait_for('Mara entity',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and ui.button_label_matches(n.name,'Mara',prefix=True))),window)
+    def left_node(text):
+        viewport=driver.bible_viewport(application,window,'left')
+        return ui.reveal(application,lambda n:(ui.text_of(n)==text or n.name==text) and driver.contained(tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),viewport))
+    error=ui.wait_for('visible uncached initial detail error',lambda:left_node('SYNTHETIC QA transport: Bible detail unavailable.'))
+    retry=ui.wait_for('enabled ordinary uncached Retry',lambda:left_node('Retry saved facts'))
+    if not retry.getState().contains(ui.pyatspi.STATE_ENABLED):raise RuntimeError('Initial detail Retry disabled')
+    if driver.find_bible_editor(application,window,RED,'left'):raise RuntimeError('Initial fault unexpectedly retained cached fields')
+    evidence['initial_detail_error']={'ordinary_entity_selection':True,'no_cached_field_editor':True,'error':ui.text_of(error),'retry_enabled':True,'failures':receipt(application)['detailFailures']}
+    checkpoint('uncached initial read failure exposes ordinary Retry in place')
+    capture('manual-fact-15-initial-detail-error.png')
+    ui.click_button(application,'QA hold Bible detail recovery',window)
+    ui.click_control(retry,window)
+    ui.wait_for('ordinary initial retry held',lambda:receipt(application)['detailReadsHeld']>0)
+    ui.wait_for('uncached initial retry Loading',lambda:left_node('Loading'))
+    if left_node('SYNTHETIC QA transport: Bible detail unavailable.') or left_node('Retry saved facts'):raise RuntimeError('Pending initial retry kept stale error or duplicate retry')
+    evidence['initial_detail_pending']={'ordinary_retry':True,'loading_visible':True,'error_cleared':True,'held_reads':receipt(application)['detailReadsHeld']}
+    checkpoint('same inspector ordinary retry pending; Loading and no editable fields')
+    capture('manual-fact-16-initial-detail-pending.png')
+    ui.click_button(application,'QA release Bible detail recovery',window)
+    field_view=driver.bible_field(application,window,RED,'left',align=True)
+    if left_node('SYNTHETIC QA transport: Bible detail unavailable.'):raise RuntimeError('Recovered initial detail still displays error')
+    evidence['initial_detail_recovered']={'same_inspector':True,'actual_public_read':True,'canonical_editor':field_view}
+    checkpoint('same inspector verified initial detail recovery displays actual saved fact')
+    capture('manual-fact-17-initial-detail-recovered.png')
+    editor=ui.wait_for('recovered motivation editor',lambda:driver.find_bible_editor(application,window,MOTIVATION,'left'))
+    ui.type_text(editor,window,RECOVERY_DRAFT)
+    draft=driver.bible_field(application,window,RECOVERY_DRAFT,'left',align=True)
+    editor=ui.wait_for('exact unsubmitted draft after initial recovery',lambda:driver.find_bible_editor(application,window,RECOVERY_DRAFT,'left'))
+    save=ui.wait_for('verified recovered field Save',lambda:driver.save_fact_control(application,editor))
+    if not save.getState().contains(ui.pyatspi.STATE_ENABLED):raise RuntimeError('Verified initial recovery did not enable field Save')
+    if before!={'material':material(database),'fields':bible_fields(database),'history':driver.canonical_state(database)}:raise RuntimeError('Read-only initial failure/retry or unsubmitted draft changed canonical material/history')
+    if len(Provider.records)!=4:raise RuntimeError('Initial read retry invoked provider')
+    evidence['initial_detail_draft']={'exact_unsubmitted_draft':draft,'save_enabled_after_verification':True,'saved_material_facts_history_unchanged':True,'provider_calls_unchanged':True}
+    checkpoint('verified recovery permits exact manual draft; no Save submitted or canonical changes')
+    capture('manual-fact-18-initial-detail-draft.png')
+
+
 def main():
     repo=Path.cwd();output=Path(os.environ['EIDETIC_CAPTURE_DIR']);output.mkdir(parents=True,exist_ok=True)
     state_root=Path(os.environ['RUNNER_TEMP'])/'eidetic-manual-fact-state';state_root.mkdir(parents=True,exist_ok=True)
@@ -419,7 +464,7 @@ def main():
     config=repo/'scripts/manual-facts-vite.config.mts';host_log=state_root/'host-private.log';app_log=state_root/'app-private.log'
     host=process=application=window=None
     provider=ThreadingHTTPServer(('127.0.0.1',18080),Provider);threading.Thread(target=provider.serve_forever,daemon=True).start()
-    evidence={'status':'failed','application_source_sha':SOURCE,'application_tree':'be0acb7d8db1402a57939dda16820ac7558126a5','qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
+    evidence={'status':'failed','application_source_sha':SOURCE,'application_tree':'016da4f54d34faa384b9744d5e071e72c23ea8c6','qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
     def checkpoint(stage):
         evidence['stage']=stage;evidence['checkpoints'].append(stage);(output/'capture-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n');print('Manual fact checkpoint: '+stage,flush=True)
     def capture(name):
@@ -435,7 +480,7 @@ def main():
             except OSError:return False
         ui.wait_for('labelled native Vite host',ready)
         evidence['served_source_receipts']=[]
-        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/qualification/manualFacts.svelte.ts','SYNTHETIC QA transport: Bible detail unavailable.'),('src/lib/stores/bibleGraphNodeProjection.svelte.ts','setBibleGraphFieldProjection'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact')]:
+        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/qualification/manualFacts.svelte.ts','SYNTHETIC QA transport: Bible detail unavailable.'),('src/lib/stores/bibleGraphNodeProjection.svelte.ts','setBibleGraphFieldProjection'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact'),('src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte','Retry saved facts')]:
             source_file=repo/'ui'/relative
             with urlopen('http://127.0.0.1:5173/'+relative,timeout=10) as response:served=response.read()
             import hashlib
@@ -461,6 +506,11 @@ def main():
         ui.open_project_chooser(application,window);ui.click_button(application,database.parent.name,window,prefix=True);ui.choose_mode(application,'Script',window)
         driver.enlarge_script_pane(application,window);ui.reveal_button(application,'Zoom to Fit (Ctrl+0)',window)
         for _ in range(3):ui.reveal_button(application,'+',window)
+        if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='initial-detail-retry':
+            evidence['qualification_scope']='targeted uncached initial detail failure, ordinary Retry, pending read and verified recovery only; predecessor full reconciliation qualification remains separately source-bound'
+            qualify_initial_detail_retry(application,window,database,capture,checkpoint,evidence)
+            evidence['status']='passed';checkpoint('complete frozen-source targeted initial detail Retry')
+            return
         ui.click_button(application,'AI',window);ui.click_button(application,'Save & Connect',window)
         ui.wait_for('connected synthetic provider',lambda:driver.visible_text(application,'Connected'))
         qualify(application,window,database,fixture,capture,checkpoint,evidence)

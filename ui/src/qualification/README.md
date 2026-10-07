@@ -2,8 +2,11 @@
 
 ## Purpose
 
-Qualify exact application source `e5a09ede159a6511694896fdb5d4382e51f4418d`
-through ordinary native editing and explicit fact review, with labelled synthetic replies.
+Qualify exact application source `c09db543f10b663381379f0532ab0d34ad939b62`
+through ordinary initial Bible detail selection and in-place Retry. The current
+hosted scope is `initial-detail-retry`; its only fault is explicitly synthetic.
+The earlier full edit/review/save-refresh run remains qualified separately at
+`e5a09ed`, with its original sealed evidence unchanged.
 
 ## Contents
 
@@ -68,6 +71,16 @@ Build with `npx vite build --config ../scripts/manual-facts-vite.config.mts` fro
 `ui`. In the native fixture, use ordinary Analyze and review controls; use the
 labelled QA buttons for exact replay, association ABA, canonical impact reads and
 the explicitly synthetic held-acknowledgement/failed-read recovery sequence.
+
+The current hosted target arms a read failure before ordinary Mara selection,
+captures the uncached error and enabled Retry, holds the ordinary retry to show
+Loading, and releases the actual public read. It then types an exact motivation
+draft and verifies Save is enabled without submitting it. Saved facts, screenplay,
+timeline placement and canonical history must remain byte-identical. Four synthetic
+HTTP fixture setup calls create the existing scene material; this target initiates
+no analysis or further provider calls. It does not repeat the predecessor's full
+reconciliation/acceptance/restart workflow or claim native custom-owner metadata
+authoring; the generic and bound metadata paths are covered by server regressions.
 
 
 The separate save/refresh native successor admits product `e5a09ed` and only

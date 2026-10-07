@@ -24,7 +24,8 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: e5a09ede159a6511694896fdb5d4382e51f4418d
+      EIDETIC_CAPTURE_SOURCE: c09db543f10b663381379f0532ab0d34ad939b62
+      EIDETIC_CAPTURE_SCOPE: initial-detail-retry
     steps:
       - uses: actions/checkout@v4
         with:
@@ -115,7 +116,7 @@ jobs:
         run: |
           cargo clippy --locked -p eidetic-core -p eidetic-server --all-targets --all-features -- -D warnings
           cargo test --locked -p eidetic-core -p eidetic-server --all-targets
-      - name: Qualify ordinary native saved edit and explicit fact review with labelled synthetic responses
+      - name: Qualify ordinary native uncached Bible detail Retry with labelled transport faults
         timeout-minutes: 10
         env:
           EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
@@ -126,7 +127,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eidetic-manual-fact-save-refresh-successor-native-e5a09ed
+          name: eidetic-bible-initial-detail-retry-native-c09db54
           retention-days: 3
           if-no-files-found: warn
           path: |

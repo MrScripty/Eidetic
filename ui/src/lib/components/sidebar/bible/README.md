@@ -136,3 +136,7 @@ failure and an ordinary Retry saved facts action. Field Save is gated in both it
 button and handler until an owned, version-admitted read succeeds; clearing the
 error at retry start does not restore permission. Drafts remain editable during
 verification and failure, and recovery does not rebase them.
+
+An initial uncached detail failure also exposes Retry saved facts in place.
+Retry uses the same owned refresh, shows Loading while pending, and admits only
+the current node/session response; selecting another node retires the old read.

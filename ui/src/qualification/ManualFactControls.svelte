@@ -10,6 +10,7 @@
     releaseSaveAcknowledgement,
     newerFact,
     failDetailRefresh,
+    armInitialDetailFailure,
     holdDetailRecovery,
     releaseDetailRecovery,
   } from './manualFacts.svelte.js';
@@ -32,6 +33,7 @@
     >QA release Bible Save acknowledgement</button
   >
   <button onclick={failDetailRefresh} disabled={factQA.busy}>QA fail Bible detail refresh</button>
+  <button onclick={armInitialDetailFailure}>QA arm initial Bible detail failure</button>
   <button onclick={holdDetailRecovery}>QA hold Bible detail recovery</button>
   <button onclick={releaseDetailRecovery}>QA release Bible detail recovery</button>
   <label

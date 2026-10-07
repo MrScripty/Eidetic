@@ -95,6 +95,10 @@ export function failDetailRefresh() {
     throw new Error('Expected labelled detail failure was not exercised');
   });
 }
+export function armInitialDetailFailure() {
+  // Arm only: the ordinary entity selection must cause the first failed read.
+  factQA.detailMode = 'fail';
+}
 export function holdDetailRecovery() {
   factQA.detailMode = 'hold';
 }
