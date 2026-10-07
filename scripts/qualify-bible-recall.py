@@ -250,8 +250,11 @@ def visible_text(application, label):
 def recall_disclosure(application):
     # The labelled section and its summary share text. Only the actual
     # expandable control is a valid X11 click target, including after opening.
+    # Native WebKit exposes HTML summary as ROLE_UNKNOWN; its enclosing
+    # same-named section is ROLE_LANDMARK and must never receive this click.
     return ui.reveal(application, lambda n: n.name == 'Related story facts'
-        and n.getRole() in (ui.pyatspi.ROLE_PUSH_BUTTON, ui.pyatspi.ROLE_TOGGLE_BUTTON))
+        and n.getRole() in (ui.pyatspi.ROLE_UNKNOWN, ui.pyatspi.ROLE_PUSH_BUTTON,
+            ui.pyatspi.ROLE_TOGGLE_BUTTON))
 
 
 def recall_time(application, window, text):
@@ -473,4 +476,3 @@ def main():
 
 if __name__=='__main__':
     main()
-
