@@ -26,6 +26,7 @@ class PendingProposalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / 'project.eidetic'
             with sqlite3.connect(database) as conn:
+                conn.execute('CREATE TABLE script_blocks(id TEXT)')
                 conn.execute('CREATE TABLE propagation_proposals(id TEXT,target_kind TEXT,target_id TEXT,status TEXT,proposed_text TEXT)')
                 conn.executemany('INSERT INTO propagation_proposals VALUES (?,?,?,?,?)', [
                     ('old', 'script_block', 'block.B', 'rejected', driver.STALE),
