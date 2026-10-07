@@ -367,6 +367,7 @@ def qualify_save_refresh(application,window,database,capture,checkpoint,evidence
     ui.type_text(motivation,window,RECOVERY_DRAFT)
     ui.wait_for('unconflicted motivation Save enabled before induced failure',lambda:(control if control and control.getState().contains(ui.pyatspi.STATE_ENABLED) else None) if (control:=driver.save_fact_control(application,motivation)) else None)
     ui.click_button(application,'QA fail Bible detail refresh',window)
+    ui.wait_for('labelled failure actually reached the production detail read seam',lambda:receipt(application)['detailFailures']>0)
     error=ui.wait_for('visible cached-detail failure',lambda:right_node('SYNTHETIC QA transport: Bible detail unavailable.'))
     motivation=ui.wait_for('exact recovery draft during failed refresh',lambda:driver.find_bible_editor(application,window,RECOVERY_DRAFT,'right'))
     save=ui.wait_for('unconflicted field Save during failed refresh',lambda:driver.save_fact_control(application,motivation))
@@ -439,7 +440,9 @@ def main():
             with urlopen('http://127.0.0.1:5173/'+relative,timeout=10) as response:served=response.read()
             import hashlib
             if marker.encode() not in served:raise RuntimeError('Actual served module lacks admitted marker: '+relative)
-            evidence['served_source_receipts'].append({'module':relative,'source_sha256':ui.file_hash(source_file),'served_transformed_sha256':hashlib.sha256(served).hexdigest(),'marker':marker,'observed':True})
+            if relative=='src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts' and b'/src/qualification/manualFacts.svelte.ts' not in served:
+                raise RuntimeError('Actual served Bible detail read is not routed through labelled fault seam')
+            evidence['served_source_receipts'].append({'module':relative,'source_sha256':ui.file_hash(source_file),'served_transformed_sha256':hashlib.sha256(served).hexdigest(),'marker':marker,'observed':True,'fault_wrapper_routed':b'/src/qualification/manualFacts.svelte.ts' in served if relative=='src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts' else None})
         fixture=json.loads(subprocess.check_output([str(repo/'target/debug/examples/manual_fact_capture_fixture')],env=environment,text=True,timeout=90))
         database=Path(fixture['project_path']).resolve();evidence['public_fixture']=dict(fixture,project_path='<fresh qualification project>')
         if len(Provider.records)!=4 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Fixture did not create two genuine synthetic consumer generations')

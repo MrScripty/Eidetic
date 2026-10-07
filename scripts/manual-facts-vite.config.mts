@@ -20,7 +20,7 @@ const manualFacts: Plugin = {
                 ),
             );
         }
-        if (source === "$lib/projectionApi.js" && importer?.endsWith("/bibleGraphNodeDetailProjection.svelte.ts")) {
+        if ((source === "$lib/projectionApi.js" || source.endsWith("/lib/projectionApi.js")) && importer?.endsWith("/bibleGraphNodeDetailProjection.svelte.ts")) {
             return fileURLToPath(new URL("../ui/src/qualification/manualFacts.svelte.ts", import.meta.url));
         }
         return null;
