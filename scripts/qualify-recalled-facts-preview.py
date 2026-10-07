@@ -33,7 +33,7 @@ def prompt_checks(user, kind, phase):
     common = absent and driver.A_TEXT in user and driver.F_TEXT in user
     if kind == 'generation':
         return common and driver.BLUE in user and SELECTED not in user and FRESH not in user
-    common = common and driver.MANUAL in user and driver.AMBER in user and driver.BLUE not in user
+    common = common and driver.MANUAL in user and driver.AMBER in user and f'profile.tagline: {driver.BLUE}' not in user
     if phase == 2:
         return common and SELECTED not in user and FRESH not in user
     chosen = SELECTED if phase == 3 else FRESH
@@ -136,6 +136,13 @@ def require_selection_binding(value, expected_fact):
     return {'selection': selection, 'canonical_consumed_field': canonical}
 
 
+def click_disclosure(application, window, label):
+    node = ui.wait_for('actual native disclosure '+label, lambda: ui.reveal(application,
+        lambda n: n.name == label and n.getRole() in (ui.pyatspi.ROLE_UNKNOWN, ui.pyatspi.ROLE_PUSH_BUTTON, ui.pyatspi.ROLE_TOGGLE_BUTTON)))
+    ui.click_control(node, window)
+    return node
+
+
 def selector_summary(application):
     return ui.reveal(application, lambda n: n.name.startswith('Use recalled facts for this preview (')
                      and n.getRole() in (ui.pyatspi.ROLE_UNKNOWN, ui.pyatspi.ROLE_PUSH_BUTTON, ui.pyatspi.ROLE_TOGGLE_BUTTON))
@@ -185,6 +192,8 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     ui.wait_for('real far-peer resolved baseline recall', lambda: driver.visible_text(application, 'profile.tagline: ' + SELECTED))
     history = driver.canonical_state(database)
     checks.append({'label': 'normal native baseline selection', 'control': select_fact(application, window, SELECTED, first=True)})
+    capture('eidetic-recalled-facts-baseline-selected.png')
+    ui.click_control(selector_summary(application), window)
     driver.require_preserved(database, original, history)
     old_fact = fact(database)
     ui.reveal_button(application, 'Preview update', window)
@@ -196,7 +205,8 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     checks[-1]['visible_proposal'] = driver.reveal_visible_proposal(application, window)
     driver.require_preserved(database, original)
     require_draft(application)
-    ui.reveal_button(application, 'Author-selected recalled facts used for this preview', window)
+    click_disclosure(application, window, 'Author-selected recalled facts used for this preview')
+    checks[-1]['visible_proposal_after_receipt_open'] = driver.reveal_visible_proposal(application, window)
     checkpoint('selected far baseline reaches pending proposal; unselected sibling absent from exact HTTP prompt')
     capture('eidetic-recalled-facts-selected-pending.png')
 
@@ -232,7 +242,9 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     ui.wait_for('explicit rejection of stale proposal', lambda: ui.query(database, "SELECT id FROM propagation_proposals WHERE id=? AND status='rejected'", (selected[0],)))
     driver.recall_time(application, window, '')
     ui.wait_for('fresh real baseline recall after mutation', lambda: driver.visible_text(application, 'profile.tagline: ' + FRESH))
-    checks.append({'label': 'fresh explicit selection', 'control': select_fact(application, window, FRESH)})
+    checks.append({'label': 'fresh explicit selection', 'control': select_fact(application, window, FRESH, first=True)})
+    capture('eidetic-recalled-facts-fresh-selected.png')
+    ui.click_control(selector_summary(application), window)
     ui.reveal_button(application, 'Preview update', window)
     fresh = ui.wait_for('fresh pending selected proposal', lambda: pending(database, FRESH_PREVIEW))
     checks.append({'label': 'fresh canonical selected custody', 'proposal_id': fresh[0], **require_selection_binding(binding(database, fresh[0]), changed)})
@@ -266,7 +278,7 @@ def qualify(application, window, database, original, capture, checkpoint, eviden
     capture('eidetic-recalled-facts-accepted.png')
     ui.click_button(application, 'QA mutate selected Keeper fact', window)
     ui.wait_for('subsequent accepted-fact mutation', lambda: fact(database) if fact(database)[0] == FINAL else None)
-    ui.reveal_button(application, 'What changed', window)
+    click_disclosure(application, window, 'What changed')
     cause = ui.wait_for('visible subsequent selected-fact impact', lambda: driver.visible_review_label(application, window, 'Bible fact profile.tagline changed.'))
     if ui.blocks(database, b_id) != accepted:
         raise RuntimeError('Later fact mutation replaced accepted screenplay')
@@ -298,6 +310,15 @@ def main():
                 return False
         ui.DEADLINE = time.monotonic() + 480
         ui.wait_for('labelled qualifier Vite host', ready)
+        original_wait = ui.wait_for
+        def bounded_wait(label, check):
+            overall = ui.DEADLINE
+            ui.DEADLINE = min(overall, time.monotonic()+45)
+            try:
+                return original_wait(label, check)
+            finally:
+                ui.DEADLINE = overall
+        ui.wait_for = bounded_wait
         driver.RecallProvider = SelectedProvider
         driver.main(after_pending=qualify, qualification_host={'pid': process.pid, 'arguments': args, 'cwd': str(repo/'ui'), 'config_sha256': ui.file_hash(config), 'instrumented_native_host': True})
     finally:

@@ -22,7 +22,8 @@ class SelectedCaptureTests(unittest.TestCase):
     def test_selected_prompt_accepts_exact_value_and_refuses_unselected_or_unsaved_text(self):
         prompt = self.prompt(driver.SELECTED)
         self.assertTrue(driver.prompt_checks(prompt, 'preview', 3))
-        for contaminant in (driver.UNSELECTED, driver.driver.DRAFT, driver.driver.BLUE, 'environment.weather: Rain'):
+        self.assertTrue(driver.prompt_checks(prompt+'PROVEN INPUT CHANGE: '+driver.driver.BLUE, 'preview', 3))
+        for contaminant in (driver.UNSELECTED, driver.driver.DRAFT, 'profile.tagline: '+driver.driver.BLUE, 'environment.weather: Rain'):
             self.assertFalse(driver.prompt_checks(prompt + contaminant, 'preview', 3))
 
     def test_fresh_prompt_rejects_old_selected_value_and_missing_path(self):
@@ -62,6 +63,17 @@ class SelectedCaptureTests(unittest.TestCase):
         value['bible_inputs'][0]['value']['value'] = driver.FRESH
         with self.assertRaisesRegex(RuntimeError, 'Consumed'):
             driver.require_selection_binding(value, (driver.SELECTED, 'source'))
+
+    def test_native_disclosure_click_admits_unknown_summary_and_excludes_landmark(self):
+        class Node:
+            name = 'Author-selected recalled facts used for this preview'
+            def __init__(self, role): self.role = role
+            def getRole(self): return self.role
+        landmark, summary = Node(9), Node(1)
+        with patch.object(driver.ui.pyatspi, 'ROLE_UNKNOWN', 1, create=True), patch.object(driver.ui.pyatspi, 'ROLE_PUSH_BUTTON', 2, create=True), patch.object(driver.ui.pyatspi, 'ROLE_TOGGLE_BUTTON', 3, create=True):
+            with patch.object(driver.ui, 'wait_for', side_effect=lambda label, check: check()), patch.object(driver.ui, 'reveal', side_effect=lambda app, check: next(n for n in [landmark, summary] if check(n))), patch.object(driver.ui, 'click_control') as click:
+                self.assertIs(driver.click_disclosure(None, 'window', summary.name), summary)
+                click.assert_called_once_with(summary, 'window')
 
     def test_workflow_freezes_source_and_limits_delta_to_qualification_files(self):
         root = Path(__file__).resolve().parent.parent

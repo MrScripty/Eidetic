@@ -464,8 +464,11 @@ def main(after_pending=None,qualification_host=None):
         capture('eidetic-bible-recall-refreshed.png')
         scroll_script_start(application,window,screenplay_anchor(A_TEXT))
         ui.reveal_button(application,'Preview update',window)
-        pending=ui.wait_for('saved pending targeted proposal',lambda:ui.query(database,
-            "SELECT id,proposed_text,status FROM propagation_proposals WHERE status='pending' AND proposed_text=?", (PROPOSED,)))
+        def pending_or_provider_failure():
+            if RecallProvider.records and RecallProvider.records[-1]['kind']=='preview' and not RecallProvider.records[-1].get('accepted'):
+                raise RuntimeError('Synthetic HTTP fixture rejected the actual preview prompt; inspect provider receipt')
+            return ui.query(database, "SELECT id,proposed_text,status FROM propagation_proposals WHERE status='pending' AND proposed_text=?", (PROPOSED,))
+        pending=ui.wait_for('saved pending targeted proposal',pending_or_provider_failure)
         ui.require_accepted_preview(RecallProvider.records)
         evidence['pending_preview']={'proposal_id':pending[0][0],'proposed_text':PROPOSED,'status':'pending','real_model':False}
         evidence['pending_preview']['visible_proposal']=reveal_visible_proposal(application,window)
