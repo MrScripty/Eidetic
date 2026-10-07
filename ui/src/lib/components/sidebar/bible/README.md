@@ -90,3 +90,7 @@ Untimed associations are qualified as connectedness evidence, not truth. Input
 changes and component disposal revoke evidence; no graph view or generation
 change is required. SSR and asynchronous read tests cover the visible evidence
 and stale-result guards alongside preserved screenplay work.
+
+Recall relationship paths render as one text expression, keeping the native
+accessible label stable when source formatting wraps markup. The exact-path SSR
+assertion runs after formatting and remains part of hosted qualification.
