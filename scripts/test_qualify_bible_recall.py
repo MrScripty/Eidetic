@@ -22,7 +22,7 @@ class RecallCaptureTests(unittest.TestCase):
             def __init__(self,role):self.role=role
             def getRole(self):return self.role
         paragraph,hidden_section=Node(1),Node(0)
-        with patch.object(driver.ui.pyatspi,'ROLE_COMBO_BOX',2,create=True), patch.object(driver.ui.pyatspi,'ROLE_PARAGRAPH',1,create=True), patch.object(driver.ui,'text_of',return_value='Unresolved:\n environment.weather — no established value'), patch.object(driver.ui,'find',return_value=None):
+        with patch.object(driver.ui.pyatspi,'ROLE_COMBO_BOX',2,create=True), patch.object(driver.ui.pyatspi,'ROLE_PARAGRAPH',1,create=True), patch.object(driver.ui.pyatspi,'ROLE_STATUS_BAR',3,create=True), patch.object(driver.ui.pyatspi,'ROLE_TEXT',4,create=True), patch.object(driver.ui,'text_of',return_value='Unresolved:\n environment.weather — no established value'), patch.object(driver.ui,'find',return_value=None):
             with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:next((n for n in [hidden_section,paragraph] if predicate(n)),None)) as reveal:
                 self.assertIs(driver.visible_text(None,'Unresolved: environment.weather'),paragraph)
                 reveal.assert_called_once()
@@ -32,6 +32,16 @@ class RecallCaptureTests(unittest.TestCase):
         with patch.object(driver.ui,'find',return_value=status), patch.object(driver.ui,'reveal') as reveal:
             self.assertIs(driver.visible_text(None,'Connected'),status)
             reveal.assert_not_called()
+
+    def test_aria_invalidation_status_is_actual_text_evidence(self):
+        class Node:
+            def __init__(self,role):self.role=role
+            def getRole(self):return self.role
+        hidden_section,status=Node(0),Node(3)
+        with patch.object(driver.ui.pyatspi,'ROLE_COMBO_BOX',2,create=True), patch.object(driver.ui.pyatspi,'ROLE_PARAGRAPH',1,create=True), patch.object(driver.ui.pyatspi,'ROLE_STATUS_BAR',3,create=True), patch.object(driver.ui.pyatspi,'ROLE_TEXT',4,create=True), patch.object(driver.ui,'text_of',return_value='Facts changed. Recall again to inspect current evidence.'):
+            with patch.object(driver.ui,'find',side_effect=lambda app,predicate:next((n for n in [hidden_section,status] if predicate(n)),None)), patch.object(driver.ui,'reveal') as reveal:
+                self.assertIs(driver.visible_text(None,'Facts changed. Recall again'),status)
+                reveal.assert_not_called()
 
     def test_synthetic_context_requires_saved_inputs_and_exact_current_fact_excludes_draft_and_unrecalled_neighbor(self):
         provider=object.__new__(driver.RecallProvider)

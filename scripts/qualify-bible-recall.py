@@ -249,14 +249,16 @@ def visible_text(application, label):
     expected = ' '.join(label.split())
     def matches(node):
         role = node.getRole()
-        allowed = role != ui.pyatspi.ROLE_COMBO_BOX if label == 'Connected' else role == ui.pyatspi.ROLE_PARAGRAPH
+        allowed = role != ui.pyatspi.ROLE_COMBO_BOX if label == 'Connected' else role in (
+            ui.pyatspi.ROLE_PARAGRAPH, ui.pyatspi.ROLE_STATUS_BAR, ui.pyatspi.ROLE_TEXT)
         return allowed and expected in ' '.join(ui.text_of(node).split())
     found = ui.find(application, matches)
     if found:
         return found
     # An enclosing hidden section can expose descendant text but cannot be
     # scrolled into view. Reveal only the actual offscreen result paragraph.
-    return ui.reveal(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PARAGRAPH and matches(n))
+    return ui.reveal(application, lambda n: n.getRole() in (
+        ui.pyatspi.ROLE_PARAGRAPH, ui.pyatspi.ROLE_STATUS_BAR, ui.pyatspi.ROLE_TEXT) and matches(n))
 
 
 def recall_disclosure(application):
