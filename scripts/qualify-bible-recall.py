@@ -19,7 +19,7 @@ spec = importlib.util.spec_from_file_location('authoring_capture', Path(__file__
 ui = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ui)
 
-SOURCE = os.environ.get('EIDETIC_CAPTURE_SOURCE', '975113011699f7d1596aebf38fee3c11173b8028')
+SOURCE = os.environ.get('EIDETIC_CAPTURE_SOURCE', '14f757561be5cc833b408d4355386afc41a92255')
 A_TEXT = 'INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\n'
 F_TEXT = 'EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n'
 GENERATED = 'EXT. STATION - NIGHT\n\nSynthetic generation: Mara waits for Eli with her blue umbrella.\n\n'

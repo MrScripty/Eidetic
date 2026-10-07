@@ -24,7 +24,7 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: 975113011699f7d1596aebf38fee3c11173b8028
+      EIDETIC_CAPTURE_SOURCE: 14f757561be5cc833b408d4355386afc41a92255
     steps:
       - uses: actions/checkout@v4
         with:
@@ -109,7 +109,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eidetic-explicit-bible-recall-native-9751130
+          name: eidetic-explicit-bible-recall-native-14f7575
           retention-days: 3
           if-no-files-found: warn
           path: |
