@@ -1,0 +1,24 @@
+{
+  "status": "Scoped native ACK with explicit open Bible editor convergence limit",
+  "reviewer": "/root/review_manual_edit_fact_reconciliation",
+  "run": 37616923862,
+  "job": 112777396561,
+  "application_source": "6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0",
+  "qa_head": "18f1f78fecdc62e9df4c57e8df0f42c673fe90ec",
+  "checks": [
+    "Independently inspected all ten original screenshots at original detail.",
+    "Verified ZIP byte count, all original capture hashes and extracted ZIP contents.",
+    "Verified served-source/config hashes, frozen product tree and exact nine-file QA delta.",
+    "Verified hosted green gates and nine labelled synthetic production HTTP streams.",
+    "Acknowledged exact saved editing, consumed-fact review, explicit rejection/acceptance, three stale ABA refusals, preservation checks, exact replay and persisted saved review reconstruction."
+  ],
+  "accepted_field_revision": "993605c3-6dc6-47d6-876c-cc65858a98e8",
+  "limits": [
+    "Clean Bible TAGLINE editors remain red after canonical acceptance becomes blue; existing cached node-detail convergence gap.",
+    "No live Bible editor convergence claim.",
+    "Consumers already Needs review; evidence establishes accepted field new dependency cause.",
+    "All nine HTTP responses synthetic; no real-model quality claim.",
+    "Unsaved draft lifetime after restart and project switching unqualified.",
+    "Reopened accepted article visually checked; rejected rows preserved through canonical SQL checks."
+  ]
+}

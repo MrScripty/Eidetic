@@ -1,0 +1,216 @@
+{
+  "application_source": "6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0",
+  "application_tree": "da9ca62c02eb207532a03b32f9710c6105f56691",
+  "qa_head": "18f1f78fecdc62e9df4c57e8df0f42c673fe90ec",
+  "qa_tree": "7a2e5a7202c6f920fcd126bb2b9506356362030d",
+  "qa_branch": "test/manual-edit-bible-reconciliation-native",
+  "qa_delta": {
+    ".github/workflows/manual-fact-native.yml": "dcb151c5651ca9754abaa8b33c15106f89483b3285c3180f86d49a0fdd4521d3",
+    "crates/server/examples/manual_fact_capture_fixture.rs": "30ff73cd2b896905913de88565180a333c820e8a85bc11195d2cc917c4d6e62d",
+    "scripts/manual-fact-native-helpers.py": "e13b4df76f2a76499ae2be30e7e846c77057e58af530e601250aeb6995d7a13c",
+    "scripts/manual-facts-vite.config.mts": "03478a4b140156a888d39490cf1c2cb6ec5969abf8a1137ffff7564a5faf214a",
+    "scripts/qualify-manual-fact-reconciliation.py": "48a0f56f0a95aba8aad4bbffe798dd8cbb1e1b2f4eed76e885ee8f400cad3038",
+    "scripts/test_qualify_manual_fact_reconciliation.py": "d663cea338f754ae786aea7c97409ee418882de979e8d2b5a8e1dfee83d524a1",
+    "ui/src/qualification/ManualFactControls.svelte": "f921915c9728ccfc92666bcb6aae885fea13b4739e4cf2ffbc42605c11ec0c5e",
+    "ui/src/qualification/README.md": "e0775006bd3d02f3edf9317f0fb071625429a0264c75174ba5c36ab095e2c4c4",
+    "ui/src/qualification/manualFacts.svelte.ts": "77b8ec319a8790a131c48b82b587c8c6203fe225d15490403d7464808bbd3fbc"
+  },
+  "historical_manifest_sha256": "cd815b99ef3b7c9dd1e164d7a070221a16cd604314b4f477f47dd482810658eb",
+  "historical_evidence_head": "3bff5cb5167ac7df729cf17719833e1d44821723",
+  "prior_PR20_native_manifest_sha256": "906a25b21b22c8e39938825a3a970387aecad2b9e8e736385122ecb8f6c6b09b",
+  "status": "Scoped native qualification passed; clean Bible editor convergence gap remains",
+  "attempts": [
+    {
+      "run": 37615232169,
+      "head": "38a6bb3928051f432bf212d24a8a8f002c03ee45",
+      "job": 112771845370,
+      "conclusion": "failure",
+      "failure": "Native exact Unicode Save succeeded; consumed fact dropdown accessible-name mismatch refused before fact analysis.",
+      "artifact": 11480750979,
+      "artifact_zip_sha256": "a6fa10797f2adac024d295c41ba11571f28c861789d2e5081305ce8192a79227",
+      "artifact_size_bytes": 174240
+    },
+    {
+      "run": 37616923862,
+      "head": "18f1f78fecdc62e9df4c57e8df0f42c673fe90ec",
+      "job": 112777396561,
+      "conclusion": "success",
+      "artifact": 11480633781,
+      "artifact_size_bytes": 2140811,
+      "artifact_zip_sha256": "e5858fa1536372d2b903ef18d70f5db23c82abe0761d29e5d52a0ac15e33ca7c"
+    }
+  ],
+  "qualification": {
+    "core_tests": 123,
+    "server_tests": 528,
+    "UI_tests": 532,
+    "UI_files": 92,
+    "strict_Clippy": "all targets/all features; warnings denied",
+    "typecheck": "0 errors,0 warnings",
+    "UI_lint_format_build": "passed",
+    "source_admission_traceability_native_fixture_build": "passed",
+    "no_download_gate": "passed; load-dynamic/disable-linking; five regression tests",
+    "qualifier_tests": 45,
+    "native_saved_edit_review_stale_refusal_accept_reopen": "passed",
+    "provider_streams": 9,
+    "real_model_quality_qualified": false,
+    "accepted_field_revision": "993605c3-6dc6-47d6-876c-cc65858a98e8",
+    "actual_consumers": 2,
+    "captures": [
+      {
+        "file": "manual-fact-01-saved-edit.png",
+        "sha256": "7bd2ce796a58e0ecf6d2213e8ab5db18966a600c25c06b4df8c6380693976a70",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-02-pending.png",
+        "sha256": "f3dfa3210933b87e40742fc8671b0199f9233684433484a9ea086a0a8dc4cb33",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-03-rejected.png",
+        "sha256": "a4ac33702532946316c2a51acc1beec03cbdf89a87fc9e2dc38cc7503454dd51",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-04-source-stale.png",
+        "sha256": "0b88a9ac4363656e9de8e1596c97c57c8d88988c3d100c76c092dafceedc9ba8",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-05-fact-stale.png",
+        "sha256": "532b9d49a3445f23c8edc168832199d44ab8ea2ae4b25ed057dc85549327d529",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-06-fresh-pending.png",
+        "sha256": "c3a8f0779083a6507d23f644ffc0d2a6cd01d234584e0cb96e13a27ae42f5fee",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-07-accepted.png",
+        "sha256": "035c403a6505f255e11046c93f29fae8d3a68d15a5716e5b140fa9ff27f26d76",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-08-needs-review.png",
+        "sha256": "3849ac97d9cb1609de01def75d150f1a7e6daa357deaad778764828732469033",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-09-relationship-stale.png",
+        "sha256": "1bc77fbc1ac701fbcaabbfacc80e121d866668ee92fbae8028ceefe844174141",
+        "window_id": 2097155,
+        "pid": 24740
+      },
+      {
+        "file": "manual-fact-10-reopened.png",
+        "sha256": "758002ca04e7d8e221a058166762204f019b2f228ad5395e8013bc990df12fcd",
+        "window_id": 2097155,
+        "pid": 25465
+      }
+    ],
+    "served_source_receipts": [
+      {
+        "module": "src/lib/components/editor/ScriptFactReconciliation.svelte",
+        "source_sha256": "4d90708131a2f41c57acfe7670f27038a7d4426050566b2311e32459fbd3f7ac",
+        "served_transformed_sha256": "ff479085a17db442cb1cf15191c0cf3973e7d6c86bbf81cc62614ba9db48f96f",
+        "marker": "Analyze saved edit",
+        "observed": true
+      },
+      {
+        "module": "src/lib/stores/propagationProposalProjection.svelte.ts",
+        "source_sha256": "9f014396fb723fcecf3c331b4202a353cfc0f2f6e85dae44059c48e7623bb8dc",
+        "served_transformed_sha256": "8d7c603870aa5d9b1b2740bf662ffb1268060760d4de9a140ba8e584e54994b7",
+        "marker": "project changed during proposal refresh",
+        "observed": true
+      },
+      {
+        "module": "src/qualification/ManualFactControls.svelte",
+        "source_sha256": "f921915c9728ccfc92666bcb6aae885fea13b4739e4cf2ffbc42605c11ec0c5e",
+        "served_transformed_sha256": "0977ed7b2035d5b37fb7d259f8857d78140118d80d57f4b3389f59e20299c8fa",
+        "marker": "SYNTHETIC HTTP replies",
+        "observed": true
+      }
+    ],
+    "application_binary_sha256": "3ac3618f3a5fb5d7f73cd816b16a699e4a134dd54189fe8adf08f7aca25e1987",
+    "qualification_config_sha256": "03478a4b140156a888d39490cf1c2cb6ec5969abf8a1137ffff7564a5faf214a"
+  },
+  "known_UI_gap": {
+    "observed": "Original07\u201309: clean right Bible TAGLINE editor remains red while canonical accepted field, Current fact and accepted article are blue.",
+    "classification": "Existing Bible node-detail cache convergence gap; not proof of retained dirty field draft.",
+    "source": "BibleGraphNodeDetail reads cached node detail; bible_changed refreshes list/render graph/review/script but not node details.",
+    "product_fix_included": false,
+    "constraint": "Frozen product6e3bad3 remains unchanged.",
+    "next_scope": "Refresh/invalidate existing cached Bible node details after fact changes, preserve real dirty drafts and project owner/stale-result guards; qualify clean editor and unrelated dirty draft natively."
+  },
+  "limits": [
+    "No clean Bible editor live-convergence qualification.",
+    "Needs review already existed; qualifies exact chosen-field cause at newly accepted revision.",
+    "Unsaved draft preserved through action sequence; restart qualifies saved material/proposals only.",
+    "Project switching deferred.",
+    "Reopened accepted article visible; rejected rows checked for saved persistence, not all individually interacted with.",
+    "All provider responses synthetic; no real-model quality qualification."
+  ],
+  "independent_review": {
+    "status": "Scoped native ACK with explicit open Bible editor convergence limit",
+    "reviewer": "/root/review_manual_edit_fact_reconciliation",
+    "run": 37616923862,
+    "job": 112777396561,
+    "application_source": "6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0",
+    "qa_head": "18f1f78fecdc62e9df4c57e8df0f42c673fe90ec",
+    "checks": [
+      "Independently inspected all ten original screenshots at original detail.",
+      "Verified ZIP byte count, all original capture hashes and extracted ZIP contents.",
+      "Verified served-source/config hashes, frozen product tree and exact nine-file QA delta.",
+      "Verified hosted green gates and nine labelled synthetic production HTTP streams.",
+      "Acknowledged exact saved editing, consumed-fact review, explicit rejection/acceptance, three stale ABA refusals, preservation checks, exact replay and persisted saved review reconstruction."
+    ],
+    "accepted_field_revision": "993605c3-6dc6-47d6-876c-cc65858a98e8",
+    "limits": [
+      "Clean Bible TAGLINE editors remain red after canonical acceptance becomes blue; existing cached node-detail convergence gap.",
+      "No live Bible editor convergence claim.",
+      "Consumers already Needs review; evidence establishes accepted field new dependency cause.",
+      "All nine HTTP responses synthetic; no real-model quality claim.",
+      "Unsaved draft lifetime after restart and project switching unqualified.",
+      "Reopened accepted article visually checked; rejected rows preserved through canonical SQL checks."
+    ]
+  },
+  "original_files": {
+    "docs/reports/manual-edit-bible-native/37615232169/app-sanitized.log": "9401eebaa86db1602b7c963a9ab52058bec53547b240d2473481e527faac4486",
+    "docs/reports/manual-edit-bible-native/37615232169/capture-evidence.json": "e6c8737d1a696fcabbf70923795c738a3475c84a62d8ce437728f75feba66760",
+    "docs/reports/manual-edit-bible-native/37615232169/manual-fact-failure.png": "0294b7d8988b7362c64742e5ee2338da139706f2ae4563d9b0d851d27c7ea17b",
+    "docs/reports/manual-edit-bible-native/37615232169/original-artifact.zip": "a6fa10797f2adac024d295c41ba11571f28c861789d2e5081305ce8192a79227",
+    "docs/reports/manual-edit-bible-native/37615232169/publication-receipt.json": "f42487ffff297c4d793dcad47433ee1f4ff3d2fa023d57216ac521100945bba4",
+    "docs/reports/manual-edit-bible-native/37615232169/qualification-host-sanitized.log": "2baeb50b2a34dc829e379cc1f6b2dc21836f42a1447e905d8e470bb44a7a6d27",
+    "docs/reports/manual-edit-bible-native/37615232169/workflow-job-summary.json": "44ccc7b60453968312ca77c3492818a383aef062722298880e472a41fd6dfd5e",
+    "docs/reports/manual-edit-bible-native/37615232169/workflow-job.log": "b0c44cc3e8c8a2aa229425ca98604d8fd4b33ae150b144cac91dac5d00e814e2",
+    "docs/reports/manual-edit-bible-native/37616923862/app-sanitized.log": "12507834180439c256ce753f242981ef490a0ba48e2d0c2973ec44190db39a81",
+    "docs/reports/manual-edit-bible-native/37616923862/capture-evidence.json": "0da1b2a95c53a8b1b1f8eb7bd06c595d80635425acb81e565db81a0cd65650e5",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-01-saved-edit.png": "7bd2ce796a58e0ecf6d2213e8ab5db18966a600c25c06b4df8c6380693976a70",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-02-pending.png": "f3dfa3210933b87e40742fc8671b0199f9233684433484a9ea086a0a8dc4cb33",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-03-rejected.png": "a4ac33702532946316c2a51acc1beec03cbdf89a87fc9e2dc38cc7503454dd51",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-04-source-stale.png": "0b88a9ac4363656e9de8e1596c97c57c8d88988c3d100c76c092dafceedc9ba8",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-05-fact-stale.png": "532b9d49a3445f23c8edc168832199d44ab8ea2ae4b25ed057dc85549327d529",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-06-fresh-pending.png": "c3a8f0779083a6507d23f644ffc0d2a6cd01d234584e0cb96e13a27ae42f5fee",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-07-accepted.png": "035c403a6505f255e11046c93f29fae8d3a68d15a5716e5b140fa9ff27f26d76",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-08-needs-review.png": "3849ac97d9cb1609de01def75d150f1a7e6daa357deaad778764828732469033",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-09-relationship-stale.png": "1bc77fbc1ac701fbcaabbfacc80e121d866668ee92fbae8028ceefe844174141",
+    "docs/reports/manual-edit-bible-native/37616923862/manual-fact-10-reopened.png": "758002ca04e7d8e221a058166762204f019b2f228ad5395e8013bc990df12fcd",
+    "docs/reports/manual-edit-bible-native/37616923862/native-review-ack.json": "c179a9f79078841430e0c224f42ceebd0351f47eed0af2a72626e3627f1b9522",
+    "docs/reports/manual-edit-bible-native/37616923862/original-artifact.zip": "e5858fa1536372d2b903ef18d70f5db23c82abe0761d29e5d52a0ac15e33ca7c",
+    "docs/reports/manual-edit-bible-native/37616923862/publication-receipt.json": "055a487ddf6c512e0c651f1eb440be01de2b1d5cb5732f19b4a44ce3a1ec0a90",
+    "docs/reports/manual-edit-bible-native/37616923862/qualification-host-sanitized.log": "09db874a62024ea35e9b0bf8a0e2a933c6dcd40bcebe75e31b0ece6d62dc84e6",
+    "docs/reports/manual-edit-bible-native/37616923862/workflow-job-summary.json": "a7623e930ec1cb63c0228bedfd82300537cdfe1c836a2b334bd1792ca47a36c8",
+    "docs/reports/manual-edit-bible-native/37616923862/workflow-job.log": "9ad2c4f683905220a18ad546cc45a6475376daf9401bdf0d8c168935d433a30c"
+  },
+  "report_sha256": "a79f29b08ee9b59e5a2f2d5a27a056f3d2b05032f6e0a9da1a82f1ce6a4e7562"
+}
