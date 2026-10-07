@@ -1,0 +1,9 @@
+{
+  "scoped_store_import": true,
+  "wrapper_imports_production_commands": true,
+  "store_module_sha256": "df16dede25ee63a5a5e580eb2a5d003baeed432a96b3c6f6aaca4f8bbc36375e",
+  "wrapper_module_sha256": "bad8e6758adc0f85135b2367019f23fbe60407b00bd1327ca8f22565fbe17689",
+  "config_sha256": "190c0236ffaba6d66930d2027f12e0795bea83018b87460c1f2e86292b3ff561",
+  "native_execution": false,
+  "purpose": "build/served import admission only"
+}
