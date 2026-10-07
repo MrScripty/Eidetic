@@ -47,6 +47,7 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
     let time_budget_ms = target_node.time_range.duration_ms();
 
     Ok(GenerateRequest {
+        arc_inputs: None,
         target_node,
         tagged_arcs,
         ancestor_chain,

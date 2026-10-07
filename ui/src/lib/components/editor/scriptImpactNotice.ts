@@ -6,6 +6,9 @@ export function scriptImpactCauseLabel(cause: ScriptImpactCause): string {
       ? 'Bible context membership changed.'
       : 'Screenplay context changed.';
   }
+  if (cause.input.kind === 'story_arc_field') {
+    return `Story arc ${cause.input.field.replaceAll('_', ' ')} ${cause.reason === 'deleted' ? 'was removed.' : 'changed.'}`;
+  }
   const source =
     cause.input.kind === 'script_block'
       ? 'Source screenplay text'

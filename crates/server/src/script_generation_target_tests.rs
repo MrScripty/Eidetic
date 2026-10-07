@@ -16,6 +16,7 @@ fn fixture() -> (
     block.span_provenance = ScriptSpanProvenance::AiGenerated;
     block.text = "Synthetic new canonical scene.\n\n".into();
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        arc_inputs: None,
         block,
         script_inputs: None,
         bible_node_name_inputs: None,

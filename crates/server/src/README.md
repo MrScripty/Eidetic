@@ -562,3 +562,28 @@ The actual autosave/public-edit barrier regression retains manual text, refuses
 late generation and proves canonical preview still reads the manual edit.
 
 The selected-node editor reads canonical placement and its existing committed-order node event in one SQLite read transaction. The guarded range command rechecks both under the history writer, excluding only its own in-flight event. Range/notes/lock ABA refuses before upsert; replay remains first. Domain/receipt refusals from this pre-commit path carry the Placement edit refused marker; post-commit projection failures stay uncertain. Existing atomic segment placement, text preservation and TimelineChanged/ScriptChanged publication remain the owners.
+
+
+## Consumed story-arc screenplay context
+
+`story_arc_lineage` reads canonical node tags, prompt fields and field history in
+one snapshot with generation target custody. `arc_inputs` in existing generation
+and targeted-review command JSON retain exact tagged name/type/nonempty description
+values. Each field clock uses owned sparse StoryArc history; color/parent metadata
+and unconsumed arcs cannot advance it. Template fields without owned revisions
+remain explicitly unbound, and absent legacy receipts remain unknown.
+
+The existing semantic store represents `story_arc_field` endpoints using its
+existing field-key column. Impact projects original consumed revisions and
+historical excerpts. Targeted review reads the original durable receipt, supplies
+current arc values, retains cleared descriptions and binds deleted arcs to owned
+deletion history. Live consumed arcs leaving current tags refuse preview. Writer
+recapture detects field ABA, deletion/restore and late preview results; target
+edits/locks remain governed by the existing block custody. Explicit acceptance
+alone replaces the selected block and installs actual current consumption.
+
+Decision: per-field sparse history avoids making presentation color a story
+change. Extending existing command/proposal/dependency owners avoids a second
+revision store; reconstructing legacy consumption from today's tags is rejected.
+New tag-membership detection, recap arc labels, affect and child-plan arc binding
+remain separate scope. Synthetic/native qualification does not assert model quality.

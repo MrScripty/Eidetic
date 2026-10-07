@@ -147,3 +147,16 @@ node metadata-only edits do not advance the name clock. Proposal absence receipt
 retain deleted-node history, without inventing a consumed name.
 
 Exact timeline placement uses optional TimelineNodeRangeRead expected custody in the existing range command. Omission preserves legacy command JSON signatures. A present receipt records exact start/end and a known optional node history event; absent receipt is not inferred from fallback projections.
+
+
+## Consumed arc field contracts
+
+`StoryArcPromptField` restricts dependency identity to name, description and
+arc_type. `StoryArcFieldInput` preserves exact supplied values and optional owned
+field revisions; missing template history is explicitly unbound. Generation and
+targeted-review receipts add optional arc inputs, original consumed evidence and
+deleted-arc revision custody. Absent legacy JSON remains unknown. Existing
+semantic endpoints extend with `story_arc_field`; no parallel store is added.
+
+Decision: per-field revision ownership makes color-only edits irrelevant while
+retaining semantic ABA, historical late consumption and explicit acceptance.

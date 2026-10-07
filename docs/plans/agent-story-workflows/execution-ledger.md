@@ -1911,3 +1911,27 @@ accept proposals. Regression covers unrelated screenplay and placement drafts,
 pending proposals, selection changes, late responses/errors, reopened same IDs
 and event coalescing. Native qualification is pending. Original walkthrough
 captures and synthetic labels remain intact; parent retains PR/review/merge.
+
+
+### Consumed story-arc screenplay propagation — 7 October 2026
+
+Source `d0967efabc9ef908dccf5626b0dd9ef7b5811a67`, tree
+`039e1da68c05ce9b647ea8f2a67ad1479098b1ca`, starts on PR17 completion repair
+`f05fa888245db0fff1dad5a3165b0c1d3e07539c`; verified main remains `25895e7b`.
+The separate `feat/screenplay-arc-memory` branch binds canonical tagged prompt
+fields with per-field sparse StoryArc history in the existing generation JSON
+and semantic dependency storage. Color, unconsumed fields and legacy missing
+receipts remain distinct. Targeted review retains exact original/current values,
+cleared descriptions and owned deletion custody. Acceptance alone replaces the
+selected block and refreshes consumed lineage. Live consumed arcs outside current
+tags refuse preview. New tag membership, recap labels, affect and child-plan arc
+binding are separate scope. No new model/embedding dependency or project-switch work.
+
+Local exact-source qualification: core120/server504/UI492 (83 files), strict
+all-target server Clippy, typecheck0/0, lint/format/build, rustfmt/traceability and
+precommit passed. Eighteen added server cases cover affected-scene selection,
+per-field clocks, late historical consumption/replay, legacy/unbound receipts,
+clear/deletion/ABA, writer recapture, target edits, both locks and failed streams;
+five added UI cases cover exact source evidence and event refresh/draft retention.
+Hosted native qualification is prepared separately, not yet claimed. Synthetic
+HTTP fixtures establish workflow behavior, not real-model narrative quality.

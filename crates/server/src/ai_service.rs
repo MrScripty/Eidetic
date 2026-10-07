@@ -155,7 +155,7 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     let range = request.target_node.time_range;
     let script_path = path.clone();
     let expected_node = request.target_node.clone();
-    let (blocks, scope, target) = tokio::task::spawn_blocking(move || {
+    let (blocks, scope, target, arcs, arc_inputs) = tokio::task::spawn_blocking(move || {
         let conn = crate::sqlite::open_write_connection(&script_path)
             .map_err(|error| BackendError::internal(error.to_string()))?;
         crate::script_store::create_schema(&conn)
@@ -180,13 +180,17 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
             &blocks,
         )
         .map_err(|error| BackendError::internal(error.to_string()))?;
+        let (arcs, arc_inputs) = crate::story_arc_lineage::capture(&tx, node_id, &[])
+            .map_err(|error| BackendError::bad_request(error.to_string()))?;
         tx.commit()
             .map_err(|error| BackendError::internal(error.to_string()))?;
-        Ok::<_, BackendError>((blocks, scope, target))
+        Ok::<_, BackendError>((blocks, scope, target, arcs, arc_inputs))
     })
     .await
     .map_err(|error| BackendError::internal(format!("script context task failed: {error}")))??;
     crate::ai_script_context::attach_script_context(request, blocks);
+    request.tagged_arcs = arcs;
+    request.arc_inputs = Some(arc_inputs);
     request.script_context_scope = Some(scope);
     request.generation_target = Some(target);
     let (
