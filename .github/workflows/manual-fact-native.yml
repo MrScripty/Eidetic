@@ -1,14 +1,14 @@
-name: Saved manual edit to consumed Bible fact native qualification
+name: Authored timeline Notes targeted screenplay review native qualification
 
 on:
   push:
-    branches: [test/manual-edit-bible-save-refresh-successor-native]
+    branches: [test/timeline-notes-review-native]
 
 permissions:
   contents: read
 
 concurrency:
-  group: eidetic-manual-fact-save-refresh-successor-native
+  group: eidetic-timeline-notes-review-native
   cancel-in-progress: true
 
 defaults:
@@ -24,8 +24,8 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: c09db543f10b663381379f0532ab0d34ad939b62
-      EIDETIC_CAPTURE_SCOPE: initial-detail-retry
+      EIDETIC_CAPTURE_SOURCE: a31f2a650fdf5f87cc27985b63f47310e2b34758
+      EIDETIC_CAPTURE_SCOPE: timeline-notes
     steps:
       - uses: actions/checkout@v4
         with:
@@ -116,7 +116,7 @@ jobs:
         run: |
           cargo clippy --locked -p eidetic-core -p eidetic-server --all-targets --all-features -- -D warnings
           cargo test --locked -p eidetic-core -p eidetic-server --all-targets
-      - name: Qualify ordinary native uncached Bible detail Retry with labelled transport faults
+      - name: Qualify ordinary authored Notes edit and explicit targeted acceptance
         timeout-minutes: 10
         env:
           EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
@@ -127,11 +127,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eidetic-bible-initial-detail-retry-native-c09db54
+          name: eidetic-timeline-notes-review-native-a31f2a6
           retention-days: 3
           if-no-files-found: warn
           path: |
             ${{ runner.temp }}/eidetic-capture-artifact/*.png
+            ${{ runner.temp }}/eidetic-capture-artifact/*.jpg
             ${{ runner.temp }}/eidetic-capture-artifact/app-sanitized.log
             ${{ runner.temp }}/eidetic-capture-artifact/qualification-host-sanitized.log
             ${{ runner.temp }}/eidetic-capture-artifact/capture-evidence.json

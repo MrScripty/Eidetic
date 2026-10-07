@@ -191,7 +191,10 @@ export function readImpacts() {
         segment: s.segment.id,
         needsReview: s.impact?.needs_review,
         causes: s.impact?.causes.filter(
-          (c) => c.input.kind === 'bible_field' || c.input.kind === 'bible_edge',
+          (c) =>
+            c.input.kind === 'bible_field' ||
+            c.input.kind === 'bible_edge' ||
+            c.dependency_id.endsWith('.timeline_notes'),
         ),
       })),
     );

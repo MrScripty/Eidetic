@@ -107,3 +107,5 @@ failure, ordinary pending Retry saved facts and verified recovery. Save must sta
 disabled through failure and pending retry and become available only after the
 owned recovery read; that draft is never submitted. All screenplay/placement and
 provider call counts remain unchanged through this bounded fault sequence.
+
+Selected timeline Notes qualification pins a31f2a6 on the separate test/timeline-notes-review-native branch. Ordinary native Notes typing commits through the production debounced writer, with explicit Notes cause selection, pending preview, Notes ABA refusal, rejection and fresh explicit acceptance. Original/current Notes evidence is shown by maintained components. The read-only QA impact receipt includes the Notes dependency alongside existing Bible causes. Two fresh targeted responses plus four fixture generation/recap streams are labelled synthetic. Saved unrelated material and drafts remain exact; no real-model quality or ancestor/sibling Notes claim. Capture originals, JPEG85 display derivatives and logs remain ignored/external, never source Git.

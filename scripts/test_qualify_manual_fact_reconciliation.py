@@ -7,7 +7,7 @@ import unittest
 source=Path(__file__).with_name('qualify-manual-fact-reconciliation.py').read_text()
 module=ast.parse(source)
 # Load only constants and the pure prompt predicate, without pyatspi/native imports.
-selected=[n for n in module.body if isinstance(n,ast.Assign) and all(isinstance(t,ast.Name) and t.id in {'RED','BLUE','SAVED','DRAFT','BIBLE_DRAFT','MOTIVATION_DRAFT'} for t in n.targets) or isinstance(n,ast.FunctionDef) and n.name=='fact_prompt']
+selected=[n for n in module.body if isinstance(n,ast.Assign) and all(isinstance(t,ast.Name) and t.id in {'RED','BLUE','SAVED','DRAFT','BIBLE_DRAFT','MOTIVATION_DRAFT','NOTES','GENERATED_B'} for t in n.targets) or isinstance(n,ast.FunctionDef) and n.name in ('fact_prompt','notes_prompt')]
 namespace={'json':json};exec(compile(ast.Module(body=selected,type_ignores=[]),'<pure qualifier>','exec'),namespace)
 
 class NativeInputTests(unittest.TestCase):
@@ -46,5 +46,15 @@ class PromptTests(unittest.TestCase):
     def test_saved_whitespace_is_not_normalized(self):
         e=self.evidence();e['text']=e['text'].strip()
         self.assertFalse(namespace['fact_prompt'](json.dumps(e),0))
+
+class NotesPromptTests(unittest.TestCase):
+    def prompt(self):
+        return 'CURRENT SELECTED CLIP NOTES:\n'+namespace['NOTES']+'\n'+namespace['GENERATED_B']+namespace['RED']
+    def test_targeted_preview_receives_exact_saved_notes_and_original_target(self):
+        self.assertTrue(namespace['notes_prompt']('Draft a targeted screenplay update',self.prompt()))
+        self.assertFalse(namespace['notes_prompt']('ordinary generation',self.prompt()))
+    def test_normalized_notes_missing_target_and_unsaved_draft_leaks_refuse(self):
+        for text in [self.prompt().replace(namespace['NOTES'],namespace['NOTES'].strip()),self.prompt().replace(namespace['GENERATED_B'],''),self.prompt()+namespace['DRAFT']]:
+            self.assertFalse(namespace['notes_prompt']('Draft a targeted screenplay update',text))
 
 if __name__=='__main__':unittest.main()
