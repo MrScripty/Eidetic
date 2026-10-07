@@ -1,0 +1,100 @@
+{
+  "reviewer": "/root/review_manual_edit_fact_reconciliation",
+  "application_source": "d1763f0cf380f4a206262eff4ea08a9b60727a52",
+  "application_tree": "825deda13bae648f4194ea833f96278e6b671a34",
+  "qualification_source": "bded1deb5ae31c568453ac307c2ac03bb8288356",
+  "run": 37623010403,
+  "status": "Scoped historical native ACK; stricter successor qualification remains separate",
+  "original_archive_sha256": "2c31670670f2ede5435e8e12417839eed981d6ae6bb0fcd8463099a266af8d01",
+  "all_originals_individually_inspected_at_original_detail": true,
+  "captures": [
+    {
+      "file": "manual-fact-01-saved-edit.png",
+      "sha256": "07f09b7e7112900cfccafd9fd6f0dc11409f265fbdca831205d26917ab48ff39",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-02-pending.png",
+      "sha256": "d96212e395cecf10ef467b9b64f66c7d9fe1b3ee50aa8197c56dddc9a464e0c6",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-03-rejected.png",
+      "sha256": "9775d84d2c94a6a25c247cba9f659e4f217936f6a7c551a34786ebf309645ca6",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-04-source-stale.png",
+      "sha256": "02ae0d4a80ff593404a6330328ab9e1f052029ea569305b4e33fe5c2c000b3ab",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-05-fact-stale.png",
+      "sha256": "c9bf4ce5cf66c67cb3902d2cd8320710912f69f672d000d6e4a0ecd0c3a359f4",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-06-fresh-pending.png",
+      "sha256": "a0179dacbf2c4544ee9db49d40c03bd2f4bcb4b5a72739e0d52de2e578c8b26c",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-06b-bible-drafts-pending.png",
+      "sha256": "77949db5f47b2dbc852a782c25412c4869e7f082d5c5736b87256b3a644b67ac",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-07-accepted.png",
+      "sha256": "5897eabc535a7d1cb80b8e2c5d6bea4ab3e798e05a384874812d7152e01a3654",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-08-needs-review.png",
+      "sha256": "6d02d47356cf4167ee22dde0856b914e6f21ae96ef059dc4de4ea9418844dc64",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-09-relationship-stale.png",
+      "sha256": "cb2b419d6463a2d250306eebcf950c6b248d271e4ed185708f9f80bb1d0ed828",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-09b-preserved-bible-drafts.png",
+      "sha256": "64f7fd6d1fa41e90941273d90b5a18a93727b3435504970431670b24ed332f8f",
+      "window_id": 2097155,
+      "pid": 24555
+    },
+    {
+      "file": "manual-fact-10-reopened.png",
+      "sha256": "4675d5d46f544afc6c83ce03c09e656a32af21e43a7b73d2ee5aeb1fdb4eeb43",
+      "window_id": 2097155,
+      "pid": 25349
+    }
+  ],
+  "qualified": [
+    "Clean right Bible refresh to committed blue",
+    "Selected-field exact local draft with original red base, current blue, conflict warning and disabled Save",
+    "Only selected canonical field accepted, with exact revision causes for two actual consumers",
+    "All saved script tables/placement preserved, unrelated screenplay draft exact",
+    "Three stale ABA refusals and exact analysis/decision replay",
+    "Same-project new-native-process saved review reconstruction",
+    "Nine labelled synthetic HTTP streams through actual client"
+  ],
+  "visual_limit": "Unselected motivation draft retained exactly via accessibility but only final rain glyph visible in screenshots; all34nonwhitespace recorded character rectangles outside its own textarea in accepted/final receipts. Full motivation text visual qualification not claimed.",
+  "unqualified": [
+    "Real-model quality",
+    "Unsaved draft lifetime after native restart",
+    "Project switching/general delayed command recovery",
+    "Backend CAS semantics"
+  ]
+}

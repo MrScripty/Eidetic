@@ -1,0 +1,120 @@
+{
+  "reviewer": "/root/review_manual_edit_fact_reconciliation",
+  "application_source": "d1763f0cf380f4a206262eff4ea08a9b60727a52",
+  "application_tree": "825deda13bae648f4194ea833f96278e6b671a34",
+  "qualification_source": "0b26225024ac7a4c66ccb134b0c0d53c2752863e",
+  "qualification_tree": "9635b5fe82cc1436b50b5c6865546aedb8b140c2",
+  "run": 37624143085,
+  "job": 112801499098,
+  "status": "Scoped native ACK; no remaining evidence blockers",
+  "original_archive_sha256": "de5312a3b39bc40a3cab653b28aea1abccfea6dd6d581a1d692a2595149d60a7",
+  "artifact_size_bytes": 2658047,
+  "all_originals_individually_inspected_at_original_detail": true,
+  "native_dimensions": [
+    1920,
+    1440
+  ],
+  "captures": [
+    {
+      "file": "manual-fact-01-saved-edit.png",
+      "sha256": "4a4bf82fff8b91a8fbaf06e5db581ee752c1636da125eecf98379464cccd5257",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-02-pending.png",
+      "sha256": "3a9c11a57a01d3bd71d3973357b118065e9414d6f866d9106040ec910823d989",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-03-rejected.png",
+      "sha256": "d393e7aa962c4bbdc46b7d1d682c385f4b90a222e8cc040cbf7daa30b6030ced",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-04-source-stale.png",
+      "sha256": "0739df5837fa4080794c874f114b34ed1bb74a6da6781762c17a8bc76a2501d6",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-05-fact-stale.png",
+      "sha256": "d2838bfd0436ff61e02509ea8f7324f1d02de50c3f1067b3c8473cc7e829dbdf",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-06-fresh-pending.png",
+      "sha256": "c2c70a2e40537f82d057aa20b6aec92bfb42a0d8e6dd407cb9f02b0ee94bb111",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-06b-bible-drafts-pending.png",
+      "sha256": "c616e253f89fc98e9c5ed1006650ea28d52ed97564bbc858fdad82a429506c76",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-07-accepted.png",
+      "sha256": "c921ba69773c1f54cf40321afdd5742648b11cdaca7530e1e194e8d44b9246f2",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-08-needs-review.png",
+      "sha256": "50a1562d433f7112c698750d494cabae70017b5decef76d2022f003152d15eb9",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-09-relationship-stale.png",
+      "sha256": "c64c9223366ad2a34d44a87734a9cc691b23192fdfb668a4dc5a8e49e9788e4b",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-09b-preserved-bible-drafts.png",
+      "sha256": "0d68d037e6e34bd673ef67be209199cee682fd8e525bd2cc52afb3753b62f838",
+      "window_id": 2097155,
+      "pid": 24888
+    },
+    {
+      "file": "manual-fact-10-reopened.png",
+      "sha256": "a7138fbf135825a6e7635a997e287aa1f60920928264845301d0004d91c42b87",
+      "window_id": 2097155,
+      "pid": 25797
+    }
+  ],
+  "served_module_hashes": 6,
+  "exact_qa_delta_files": 9,
+  "hosted_tests": {
+    "UI": 538,
+    "UI_files": 93,
+    "core": 123,
+    "server": 528,
+    "qualifier_python": 46
+  },
+  "qualified": [
+    "Clean right Bible refresh to exact committed blue",
+    "Selected-field exact local draft and original red base; current blue, conflict warning, disabled Save and explicit discard",
+    "Full unselected motivation draft plus Unicode rain visible; accepted/final nonwhite glyph rectangles fit both textarea and Bible pane",
+    "Only chosen canonical field accepted at exact revision; both actual consumer chosen-field revision causes",
+    "All script blocks/spans/segments/locks and node timeline placement preserved, other Bible fields unchanged, exact F draft preserved",
+    "Three stale ABA refusals preserve canonical history, pending proposals, facts and material",
+    "Analysis/decision exact replay already_recorded without extra history/provider calls",
+    "New owned native PID 24888 to 25797, same binary custody, visible accepted review and read-only saved material/history/binding reconstruction"
+  ],
+  "accepted_field_revision": "54a47756-c5ce-4339-ad00-028da51e8182",
+  "native_binary_sha256": "3ac3618f3a5fb5d7f73cd816b16a699e4a134dd54189fe8adf08f7aca25e1987",
+  "limits": [
+    "All nine provider streams labelled synthetic; real-model quality unqualified.",
+    "Consumers already Needs review; qualify the new chosen-field cause, not overall transition.",
+    "Drafts preserved through actions; unsaved draft restart/project-switch lifetime unqualified.",
+    "Rejected/history persistence read-only SQL; not each rejected native article interacted after reopen.",
+    "Frontend observed typed-value conflict guard; backend CAS and general delayed-command recovery outside scope.",
+    "Historical first successor bded motivation clipping remains separately limited."
+  ]
+}

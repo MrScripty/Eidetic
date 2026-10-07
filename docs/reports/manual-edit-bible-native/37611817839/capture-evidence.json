@@ -1,0 +1,2235 @@
+{
+  "status": "failed",
+  "application_source_sha": "6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0",
+  "application_tree": "da9ca62c02eb207532a03b32f9710c6105f56691",
+  "qualification_sha": "8e8cab316a86d4e0a8e252828f8c59aeb3c8d83a",
+  "application_binary_sha256": "3ac3618f3a5fb5d7f73cd816b16a699e4a134dd54189fe8adf08f7aca25e1987",
+  "provider": "labelled synthetic localhost HTTP/SSE through production client",
+  "real_model_quality_qualified": false,
+  "DOM_or_IPC_injection": false,
+  "direct_database_writes": false,
+  "stale_checks": [],
+  "checkpoints": [
+    "public services seed two actual consumers, unconsumed fields and unrelated saved scene"
+  ],
+  "qualification_config_sha256": "03478a4b140156a888d39490cf1c2cb6ec5969abf8a1137ffff7564a5faf214a",
+  "served_source_receipts": [
+    {
+      "module": "src/lib/components/editor/ScriptFactReconciliation.svelte",
+      "source_sha256": "4d90708131a2f41c57acfe7670f27038a7d4426050566b2311e32459fbd3f7ac",
+      "served_transformed_sha256": "ddb5dd252760cda50a5f03bf983a41676ac53e4261a10da17d87386418cd3b98",
+      "marker": "Analyze saved edit",
+      "observed": true
+    },
+    {
+      "module": "src/lib/stores/propagationProposalProjection.svelte.ts",
+      "source_sha256": "9f014396fb723fcecf3c331b4202a353cfc0f2f6e85dae44059c48e7623bb8dc",
+      "served_transformed_sha256": "325593f19a7cd27828e05e1a0952d4a31ffbe6e1fadf96c1a55e80153f1e1bd1",
+      "marker": "project changed during proposal refresh",
+      "observed": true
+    },
+    {
+      "module": "src/qualification/ManualFactControls.svelte",
+      "source_sha256": "f921915c9728ccfc92666bcb6aae885fea13b4739e4cf2ffbc42605c11ec0c5e",
+      "served_transformed_sha256": "7b31925c1d96f5ea38b6af5f664c4cb78fc9ed00b2a77dd7a70d2ae5d3e171b9",
+      "marker": "SYNTHETIC HTTP replies",
+      "observed": true
+    }
+  ],
+  "public_fixture": {
+    "a": {
+      "end_ms": 60000,
+      "id": "3493f0ee-3368-4f45-ad40-3cabd309dcc3",
+      "letter": "A",
+      "name": "SCENE A",
+      "start_ms": 0
+    },
+    "b": {
+      "end_ms": 180000,
+      "id": "8b8549ea-273f-4085-9614-fcbb5395e2eb",
+      "letter": "B",
+      "name": "SCENE B",
+      "start_ms": 120000
+    },
+    "f": {
+      "end_ms": 120000,
+      "id": "27f514ee-0292-437a-a0be-1b1d88650d73",
+      "letter": "F",
+      "name": "SCENE F",
+      "start_ms": 60000
+    },
+    "generations": [
+      {
+        "blocks": [
+          {
+            "block": {
+              "block_kind": "action",
+              "id": "script.block.3493f0ee-3368-4f45-ad40-3cabd309dcc3.generated",
+              "segment_id": "script.segment.3493f0ee-3368-4f45-ad40-3cabd309dcc3",
+              "sort_order": 0,
+              "text": "Synthetic A: Mara checks her red umbrella.\n\n"
+            },
+            "locks": [],
+            "revision_event_id": "a52e2533-9867-46e6-a81d-4ca860ed8ee9",
+            "spans": [
+              {
+                "block_id": "script.block.3493f0ee-3368-4f45-ad40-3cabd309dcc3.generated",
+                "end_byte": 44,
+                "id": "script.block.3493f0ee-3368-4f45-ad40-3cabd309dcc3.generated.span.main",
+                "provenance": "ai_generated",
+                "start_byte": 0
+              }
+            ]
+          }
+        ],
+        "impact": {
+          "causes": [],
+          "generation_event_id": "a52e2533-9867-46e6-a81d-4ca860ed8ee9",
+          "lineage_available": true,
+          "needs_review": false,
+          "output_block_id": "script.block.3493f0ee-3368-4f45-ad40-3cabd309dcc3.generated"
+        },
+        "segment": {
+          "document_id": "script.document.main",
+          "end_ms": 60000,
+          "id": "script.segment.3493f0ee-3368-4f45-ad40-3cabd309dcc3",
+          "sort_order": 0,
+          "source_node_id": "3493f0ee-3368-4f45-ad40-3cabd309dcc3",
+          "start_ms": 0,
+          "status": "current"
+        }
+      },
+      {
+        "blocks": [
+          {
+            "block": {
+              "block_kind": "action",
+              "id": "script.block.8b8549ea-273f-4085-9614-fcbb5395e2eb.generated",
+              "segment_id": "script.segment.8b8549ea-273f-4085-9614-fcbb5395e2eb",
+              "sort_order": 0,
+              "text": "Synthetic B: Mara carries her red umbrella.\n\n"
+            },
+            "locks": [],
+            "revision_event_id": "fefc88da-7437-4525-b051-e8e6e8188ae1",
+            "spans": [
+              {
+                "block_id": "script.block.8b8549ea-273f-4085-9614-fcbb5395e2eb.generated",
+                "end_byte": 45,
+                "id": "script.block.8b8549ea-273f-4085-9614-fcbb5395e2eb.generated.span.main",
+                "provenance": "ai_generated",
+                "start_byte": 0
+              }
+            ]
+          }
+        ],
+        "impact": {
+          "causes": [],
+          "generation_event_id": "fefc88da-7437-4525-b051-e8e6e8188ae1",
+          "lineage_available": true,
+          "needs_review": false,
+          "output_block_id": "script.block.8b8549ea-273f-4085-9614-fcbb5395e2eb.generated"
+        },
+        "segment": {
+          "document_id": "script.document.main",
+          "end_ms": 180000,
+          "id": "script.segment.8b8549ea-273f-4085-9614-fcbb5395e2eb",
+          "sort_order": 0,
+          "source_node_id": "8b8549ea-273f-4085-9614-fcbb5395e2eb",
+          "start_ms": 120000,
+          "status": "current"
+        }
+      }
+    ],
+    "project_path": "<fresh qualification project>",
+    "setup_route": "unchanged public services; two labelled synthetic HTTP generations/recaps, no real model; unconsumed fields added after generation"
+  },
+  "stage": "public services seed two actual consumers, unconsumed fields and unrelated saved scene",
+  "window_id": 2097155,
+  "window_pid": 24059,
+  "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+  "failure": "Timed out waiting for exact typed text",
+  "native_diagnostics": [
+    {
+      "role": "frame",
+      "name": "Eidetic",
+      "text": "Eidetic",
+      "bounds": [
+        0,
+        0,
+        1920,
+        1440
+      ]
+    },
+    {
+      "role": "filler",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        0,
+        1920,
+        1440
+      ]
+    },
+    {
+      "role": "document web",
+      "name": "Eidetic",
+      "text": "Eidetic",
+      "bounds": [
+        0,
+        0,
+        1920,
+        1440
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        0,
+        280,
+        1044
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Arcs",
+      "text": "Arcs",
+      "bounds": [
+        12,
+        8,
+        50,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Bible",
+      "text": "Bible",
+      "bounds": [
+        65,
+        8,
+        54,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Review",
+      "text": "Review",
+      "bounds": [
+        122,
+        8,
+        66,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "AI",
+      "text": "AI",
+      "bounds": [
+        192,
+        8,
+        37,
+        25
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Refs",
+      "text": "Refs",
+      "bounds": [
+        232,
+        8,
+        49,
+        25
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        12,
+        99,
+        255,
+        55
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "BACKEND",
+      "bounds": [
+        12,
+        99,
+        52,
+        14
+      ]
+    },
+    {
+      "role": "combo box",
+      "name": "BACKEND llama.cpp (Local)",
+      "text": "BACKEND llama.cpp (Local)",
+      "bounds": [
+        12,
+        117,
+        255,
+        37
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "llama.cpp (Local)",
+      "text": "llama.cpp (Local)",
+      "bounds": [
+        12,
+        117,
+        255,
+        37
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "OpenRouter (Cloud)",
+      "text": "OpenRouter (Cloud)",
+      "bounds": [
+        12,
+        117,
+        255,
+        37
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        12,
+        166,
+        255,
+        49
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "MODEL",
+      "bounds": [
+        12,
+        166,
+        39,
+        14
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "MODEL auto",
+      "text": "auto",
+      "bounds": [
+        12,
+        184,
+        255,
+        31
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        12,
+        226,
+        255,
+        50
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "BASE URL",
+      "bounds": [
+        12,
+        226,
+        53,
+        15
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "BASE URL http://127.0.0.1:18080/v1",
+      "text": "http://127.0.0.1:18080/v1",
+      "bounds": [
+        12,
+        244,
+        255,
+        32
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        12,
+        287,
+        255,
+        39
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "TEMPERATURE",
+      "bounds": [
+        12,
+        287,
+        77,
+        15
+      ]
+    },
+    {
+      "role": "slider",
+      "name": "TEMPERATURE 0.7 0.7",
+      "text": "TEMPERATURE 0.7 0.7",
+      "bounds": [
+        12,
+        305,
+        255,
+        21
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        12,
+        337,
+        255,
+        50
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "MAX TOKENS",
+      "bounds": [
+        12,
+        337,
+        71,
+        15
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "MAX TOKENS 4096",
+      "text": "4096",
+      "bounds": [
+        12,
+        355,
+        255,
+        32
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        242,
+        365,
+        16,
+        12
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save & Connect",
+      "text": "Save & Connect",
+      "bounds": [
+        12,
+        398,
+        255,
+        33
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Connected",
+      "bounds": [
+        12,
+        442,
+        255,
+        16
+      ]
+    },
+    {
+      "role": "panel",
+      "name": "Workspace mode",
+      "text": "\ufffc\ufffc\ufffc",
+      "bounds": [
+        288,
+        2,
+        146,
+        17
+      ]
+    },
+    {
+      "role": "toggle button",
+      "name": "Script",
+      "text": "Script",
+      "bounds": [
+        288,
+        2,
+        50,
+        17
+      ]
+    },
+    {
+      "role": "toggle button",
+      "name": "Graph",
+      "text": "Graph",
+      "bounds": [
+        340,
+        2,
+        51,
+        17
+      ]
+    },
+    {
+      "role": "toggle button",
+      "name": "Split",
+      "text": "Split",
+      "bounds": [
+        393,
+        2,
+        41,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        1844,
+        2,
+        30,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "PDF",
+      "text": "PDF",
+      "bounds": [
+        1875,
+        2,
+        37,
+        17
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Select a node on the timeline to edit",
+      "bounds": [
+        971,
+        86,
+        258,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Resize panels",
+      "text": "Resize panels",
+      "bounds": [
+        280,
+        172,
+        1640,
+        6
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Write screenplay",
+      "text": "Write screenplay",
+      "bounds": [
+        292,
+        211,
+        386,
+        55
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        301,
+        220,
+        368,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Write screenplay",
+      "text": "Write screenplay",
+      "bounds": [
+        301,
+        220,
+        119,
+        21
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Select a timeline clip to start writing.",
+      "bounds": [
+        301,
+        241,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay source clip",
+      "text": "Screenplay source clip",
+      "bounds": [
+        292,
+        278,
+        386,
+        28
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "SCENE A",
+      "bounds": [
+        292,
+        284,
+        54,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Go to clip",
+      "text": "Go to clip",
+      "bounds": [
+        426,
+        284,
+        54,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay needs review",
+      "text": "Screenplay needs review",
+      "bounds": [
+        292,
+        306,
+        386,
+        74
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Needs review",
+      "bounds": [
+        301,
+        315,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Story inputs have changed since this text was generated.",
+      "bounds": [
+        301,
+        335,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        355,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "What changed",
+      "text": "\ufffcWhat changed",
+      "bounds": [
+        301,
+        355,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay update proposals",
+      "text": "Screenplay update proposals",
+      "bounds": [
+        292,
+        388,
+        386,
+        111
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Preview an update to the affected generated block.",
+      "bounds": [
+        301,
+        397,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        413,
+        368,
+        39
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Input change",
+      "bounds": [
+        301,
+        413,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "combo box",
+      "name": "Input change Screenplay context changed.",
+      "text": "Input change Screenplay context changed.",
+      "bounds": [
+        301,
+        429,
+        368,
+        23
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Screenplay context changed.",
+      "text": "Screenplay context changed.",
+      "bounds": [
+        301,
+        429,
+        368,
+        23
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Bible context membership changed. Untimed Bible fields entered: Mara.profile.motivation; remov",
+      "text": "Bible context membership changed. Untimed Bible fields entered: Mara.profile.motivation; remov",
+      "bounds": [
+        301,
+        429,
+        368,
+        23
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        458,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Use recalled facts for this preview (0/8 selected)",
+      "text": "\ufffcUse recalled facts for this preview (0/8 selected)",
+      "bounds": [
+        301,
+        458,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        301,
+        474,
+        368,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Preview update",
+      "text": "Preview update",
+      "bounds": [
+        301,
+        474,
+        88,
+        16
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay block",
+      "text": "Screenplay block",
+      "bounds": [
+        292,
+        511,
+        386,
+        74
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Synthetic A: Mara checks her red umbrella.",
+      "bounds": [
+        309,
+        535,
+        352,
+        17
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        292,
+        564,
+        386,
+        22
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Edit",
+      "text": "Edit",
+      "bounds": [
+        292,
+        564,
+        27,
+        22
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay source clip",
+      "text": "Screenplay source clip",
+      "bounds": [
+        292,
+        597,
+        386,
+        29
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "SCENE F",
+      "bounds": [
+        292,
+        603,
+        53,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Go to clip",
+      "text": "Go to clip",
+      "bounds": [
+        425,
+        603,
+        54,
+        17
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay block",
+      "text": "Screenplay block",
+      "bounds": [
+        292,
+        625,
+        386,
+        75
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Unrelated saved scene: Eli guards the station.",
+      "bounds": [
+        309,
+        649,
+        352,
+        17
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        292,
+        678,
+        386,
+        22
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Edit",
+      "text": "Edit",
+      "bounds": [
+        292,
+        678,
+        27,
+        22
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay source clip",
+      "text": "Screenplay source clip",
+      "bounds": [
+        292,
+        711,
+        386,
+        29
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "SCENE B",
+      "bounds": [
+        292,
+        717,
+        53,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Go to clip",
+      "text": "Go to clip",
+      "bounds": [
+        425,
+        717,
+        54,
+        17
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay needs review",
+      "text": "Screenplay needs review",
+      "bounds": [
+        292,
+        739,
+        386,
+        75
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Needs review",
+      "bounds": [
+        301,
+        748,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Story inputs have changed since this text was generated.",
+      "bounds": [
+        301,
+        768,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        788,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "What changed",
+      "text": "\ufffcWhat changed",
+      "bounds": [
+        301,
+        788,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay update proposals",
+      "text": "Screenplay update proposals",
+      "bounds": [
+        292,
+        821,
+        386,
+        112
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "text": "Preview an update to the affected generated block.",
+      "bounds": [
+        301,
+        830,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        846,
+        368,
+        40
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Input change",
+      "bounds": [
+        301,
+        846,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "combo box",
+      "name": "Input change Bible context membership changed.",
+      "text": "Input change Bible context membership changed.",
+      "bounds": [
+        301,
+        862,
+        368,
+        24
+      ]
+    },
+    {
+      "role": "menu item",
+      "name": "Bible context membership changed.",
+      "text": "Bible context membership changed.",
+      "bounds": [
+        301,
+        862,
+        368,
+        24
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "",
+      "text": "",
+      "bounds": [
+        301,
+        891,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "unknown",
+      "name": "Use recalled facts for this preview (0/8 selected)",
+      "text": "\ufffcUse recalled facts for this preview (0/8 selected)",
+      "bounds": [
+        301,
+        891,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "\ufffc",
+      "bounds": [
+        301,
+        907,
+        368,
+        17
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Preview update",
+      "text": "Preview update",
+      "bounds": [
+        301,
+        907,
+        88,
+        17
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Screenplay block",
+      "text": "Screenplay block",
+      "bounds": [
+        702,
+        211,
+        386,
+        216
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Edit screenplay text \ufffc",
+      "bounds": [
+        702,
+        211,
+        386,
+        195
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "Edit screenplay text",
+      "bounds": [
+        702,
+        216,
+        113,
+        13
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "Edit screenplay text",
+      "text": "  Mara carries a blue umbrella  \u96e8.\n\n  ",
+      "bounds": [
+        702,
+        232,
+        386,
+        168
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Compare saved text",
+      "text": "Compare saved text",
+      "bounds": [
+        702,
+        406,
+        142,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Save",
+      "text": "Save",
+      "bounds": [
+        852,
+        406,
+        36,
+        21
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Cancel",
+      "text": "Cancel",
+      "bounds": [
+        895,
+        406,
+        50,
+        21
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        292,
+        211,
+        1616,
+        825
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Resize panels",
+      "text": "Resize panels",
+      "bounds": [
+        0,
+        1044,
+        1920,
+        6
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Selection Tool (A)",
+      "text": "Selection Tool (A)",
+      "bounds": [
+        8,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Blade Tool (B)",
+      "text": "Blade Tool (B)",
+      "bounds": [
+        38,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        72,
+        1056,
+        1,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Snapping (N)",
+      "text": "Snapping (N)",
+      "bounds": [
+        79,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        113,
+        1056,
+        1,
+        16
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "\u2212",
+      "text": "\u2212",
+      "bounds": [
+        120,
+        1052,
+        24,
+        24
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Zoom to Fit (Ctrl+0)",
+      "text": "Zoom to Fit (Ctrl+0)",
+      "bounds": [
+        146,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "+",
+      "text": "+",
+      "bounds": [
+        176,
+        1052,
+        24,
+        24
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        206,
+        1056,
+        1,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "0:00",
+      "bounds": [
+        213,
+        1056,
+        48,
+        16
+      ]
+    },
+    {
+      "role": "section",
+      "name": "Timeline renderer window",
+      "text": "floating timeline renderer window is closed\n\ufffc\ufffc\ufffc\ufffc\n",
+      "bounds": [
+        1634,
+        1052,
+        278,
+        24
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Open timeline renderer",
+      "text": "Open timeline renderer",
+      "bounds": [
+        1788,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Refresh timeline renderer status",
+      "text": "Refresh timeline renderer status",
+      "bounds": [
+        1820,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Focus timeline renderer",
+      "text": "Focus timeline renderer",
+      "bounds": [
+        1852,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "Close timeline renderer",
+      "text": "Close timeline renderer",
+      "bounds": [
+        1884,
+        1052,
+        28,
+        24
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        1079,
+        80,
+        29
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "0:00\n2:30\n5:00\n7:30\n10:00\n12:30\n15:00\n17:30\n20:00\n",
+      "bounds": [
+        80,
+        1079,
+        3594,
+        28
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        90,
+        1079,
+        1,
+        10
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        161,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        243,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        325,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        406,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        498,
+        1079,
+        2,
+        10
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        570,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        651,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        733,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        815,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        906,
+        1079,
+        2,
+        10
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        978,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1060,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1141,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1223,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1315,
+        1079,
+        2,
+        10
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1386,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1468,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1550,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1631,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1726,
+        1079,
+        2,
+        10
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1795,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1876,
+        1079,
+        2,
+        6
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        1108,
+        79,
+        41
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        1394,
+        79,
+        33
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        80,
+        1108,
+        12,
+        8
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        85,
+        1116,
+        2,
+        311
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Episode Premise\n",
+      "bounds": [
+        80,
+        1149,
+        3594,
+        48
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        81,
+        1154,
+        5,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "FACT RECONCILIATION\n+\n",
+      "bounds": [
+        80,
+        1198,
+        3594,
+        48
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        81,
+        1203,
+        5,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        553,
+        1218,
+        9,
+        8
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        564,
+        1203,
+        6,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "+\n",
+      "bounds": [
+        570,
+        1202,
+        3105,
+        40
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Mara's umbrella\n+\n",
+      "bounds": [
+        80,
+        1247,
+        3594,
+        48
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        81,
+        1252,
+        5,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        553,
+        1267,
+        9,
+        8
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        564,
+        1252,
+        6,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "+\n",
+      "bounds": [
+        570,
+        1251,
+        3105,
+        40
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "SCENE A\nSCENE F\nSCENE B\n+\n",
+      "bounds": [
+        80,
+        1296,
+        3594,
+        48
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        81,
+        1301,
+        5,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        226,
+        1316,
+        9,
+        8
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        237,
+        1301,
+        6,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        244,
+        1301,
+        6,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        389,
+        1316,
+        9,
+        8
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        400,
+        1301,
+        6,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        407,
+        1301,
+        6,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        553,
+        1316,
+        9,
+        8
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        564,
+        1301,
+        6,
+        38
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "+\n",
+      "bounds": [
+        570,
+        1300,
+        3105,
+        40
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "+\n",
+      "bounds": [
+        80,
+        1345,
+        3594,
+        48
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "+\n",
+      "bounds": [
+        80,
+        1349,
+        3594,
+        40
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Cold Open\nMain Titles\nAct One\nAct Two\nAct Three\nTag\n",
+      "bounds": [
+        80,
+        1395,
+        3594,
+        32
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Cold Open\n",
+      "bounds": [
+        80,
+        1395,
+        327,
+        32
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Main Titles\n",
+      "bounds": [
+        406,
+        1395,
+        83,
+        32
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Act One\n",
+      "bounds": [
+        488,
+        1395,
+        1144,
+        32
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "Act Two\n",
+      "bounds": [
+        1631,
+        1395,
+        1144,
+        32
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        1427,
+        80,
+        13
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        80,
+        1428,
+        3594,
+        1
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        1882,
+        1414,
+        26,
+        18
+      ]
+    },
+    {
+      "role": "landmark",
+      "name": "Qualifier-only saved edit controls",
+      "text": "Qualifier-only saved edit controls",
+      "bounds": [
+        1342,
+        1271,
+        570,
+        161
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "QA saved-edit fixture \u00b7 public commands \u00b7 SYNTHETIC HTTP replies \ufffc \ufffc \ufffc \ufffc",
+      "bounds": [
+        1352,
+        1281,
+        550,
+        80
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "QA replay exact analysis",
+      "text": "QA replay exact analysis",
+      "bounds": [
+        1355,
+        1300,
+        152,
+        26
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "QA replay exact decision",
+      "text": "QA replay exact decision",
+      "bounds": [
+        1516,
+        1300,
+        153,
+        26
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "QA relationship edit and restore",
+      "text": "QA relationship edit and restore",
+      "bounds": [
+        1678,
+        1300,
+        192,
+        26
+      ]
+    },
+    {
+      "role": "push button",
+      "name": "QA read canonical impacts",
+      "text": "QA read canonical impacts",
+      "bounds": [
+        1355,
+        1332,
+        162,
+        26
+      ]
+    },
+    {
+      "role": "label",
+      "name": "",
+      "text": "QA saved-edit receipt\ufffc",
+      "bounds": [
+        1352,
+        1361,
+        550,
+        61
+      ]
+    },
+    {
+      "role": "entry",
+      "name": "QA saved-edit receipt",
+      "text": "{\"fixture\":\"qualifier-only public commands and read-only impacts; synthetic replies\",\"busy\":false,\"error\":\"\",\"request\":\"\",\"requestId\":\"\",\"decision\":\"\",\"decisionId\":\"\",\"accept\":false,\"replay\":\"\",\"edgeMutations\":0,\"impacts\":\"\"}",
+      "bounds": [
+        1352,
+        1377,
+        550,
+        40
+      ]
+    },
+    {
+      "role": "section",
+      "name": "",
+      "text": "",
+      "bounds": [
+        0,
+        0,
+        1,
+        1
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "file": "manual-fact-failure.png",
+      "sha256": "7cd1f7e421d5a4451c290b6d67a21775fe53c3101e7dcc7dbfd61fa80c90f4c0",
+      "window_id": 2097155,
+      "pid": 24059
+    }
+  ],
+  "provider_records": [
+    {
+      "kind": "generation",
+      "phase": 0,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are an experienced TV story editor working on a 30-minute comedy/drama episode. Write a structural outline for this Scene node.\n\nFORMAT RULES:\n- Write in clear prose, not screenplay format.\n- Describe what happens narratively \u2014 key events, character dynamics, emotional beats.\n- Focus on story structure and dramatic progression.\n- Be specific about character actions and motivations.\n",
+      "exact_user_prompt": "Write a structural outline for the following scene:\n\nSCENE: SCENE A\nSCENE NOTES:\nSynthetic fixture scene A: Mara carries her red umbrella.\n\nCONTEXT HIERARCHY:\n- Mara's umbrella (Sequence): [no notes]\n- FACT RECONCILIATION (Act): [no notes]\n- Episode Premise (Premise): [no notes]\n\nSIBLING SCENES (other scenes at this level \u2014 you are writing one of these):\n- SCENE F: \n- SCENE B: Synthetic fixture scene B: Mara carries her red umbrella.\n\nWrite ONLY the scene marked above. Stay focused.\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is red.\n  -> qualification.eli [references]: Mara trusts Eli\n- Eli [character] (qualification.eli)\n  <- qualification.mara [references]: Mara trusts Eli\n\nCANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.27f514ee-0292-437a-a0be-1b1d88650d73 block=script.block.add710d5-2e17-45a5-a413-68726235d7d5.user block_revision=fa3bdeee-96f7-476a-b902-c7b2835244f8 segment_revision=fa3bdeee-96f7-476a-b902-c7b2835244f8 presentation=60000..120000ms ---\nUnrelated saved scene: Eli guards the station.\n\n\n\nWrite ONLY the structural outline for this scene. Do not include metadata, comments, or explanations.",
+      "synthetic_response": "Synthetic A: Mara checks her red umbrella.\n\n"
+    },
+    {
+      "kind": "recap",
+      "phase": 0,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are a script continuity analyst. Given a screenplay scene, produce a compact structured recap that captures the scene's end state. This recap will be used as context for writing subsequent scenes to maintain continuity.\n\nFORMAT (use this exact structure):\nSCENE END STATE:\n- Location: [INT/EXT. LOCATION - TIME]\n- Characters present: [list]\n- [Brief physical/emotional state of each character]\n\nKEY ESTABLISHED FACTS:\n- [Relationships, names, details that must remain consistent]\n\nWHAT JUST HAPPENED:\n- [3-5 bullet points summarizing key events in order]\n\nRULES:\n- Keep the total recap under 200 tokens.\n- Focus on FACTS that downstream scenes must respect.\n- Include character locations and physical states at scene end.\n- Carry forward any still-relevant facts from the preceding recap.\n- Do NOT include analysis or suggestions \u2014 only factual statements.\n- Return ONLY the recap text, no commentary.",
+      "exact_user_prompt": "Generate a scene recap for this screenplay beat:\n\nSCRIPT:\nSynthetic A: Mara checks her red umbrella.\n\n\n\nProduce the scene recap now. Use the exact format specified. Be concise \u2014 aim for 100-150 tokens.",
+      "synthetic_response": "Synthetic recap: Mara carries red."
+    },
+    {
+      "kind": "generation",
+      "phase": 1,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are an experienced TV story editor working on a 30-minute comedy/drama episode. Write a structural outline for this Scene node.\n\nFORMAT RULES:\n- Write in clear prose, not screenplay format.\n- Describe what happens narratively \u2014 key events, character dynamics, emotional beats.\n- Focus on story structure and dramatic progression.\n- Be specific about character actions and motivations.\n",
+      "exact_user_prompt": "Write a structural outline for the following scene:\n\nSCENE: SCENE B\nSCENE NOTES:\nSynthetic fixture scene B: Mara carries her red umbrella.\n\nCONTEXT HIERARCHY:\n- Mara's umbrella (Sequence): [no notes]\n- FACT RECONCILIATION (Act): [no notes]\n- Episode Premise (Premise): [no notes]\n\nSIBLING SCENES (other scenes at this level \u2014 you are writing one of these):\n- SCENE A: Synthetic fixture scene A: Mara carries her red umbrella.\n- SCENE F: \n\nWrite ONLY the scene marked above. Stay focused.\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is red.\n  -> qualification.eli [references]: Mara trusts Eli\n- Eli [character] (qualification.eli)\n  <- qualification.mara [references]: Mara trusts Eli\n\nCANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.3493f0ee-3368-4f45-ad40-3cabd309dcc3 block=script.block.3493f0ee-3368-4f45-ad40-3cabd309dcc3.generated block_revision=a52e2533-9867-46e6-a81d-4ca860ed8ee9 segment_revision=a52e2533-9867-46e6-a81d-4ca860ed8ee9 presentation=0..60000ms ---\nSynthetic A: Mara checks her red umbrella.\n\n\n\n--- document=script.document.main segment=script.segment.27f514ee-0292-437a-a0be-1b1d88650d73 block=script.block.add710d5-2e17-45a5-a413-68726235d7d5.user block_revision=fa3bdeee-96f7-476a-b902-c7b2835244f8 segment_revision=fa3bdeee-96f7-476a-b902-c7b2835244f8 presentation=60000..120000ms ---\nUnrelated saved scene: Eli guards the station.\n\n\n\nWrite ONLY the structural outline for this scene. Do not include metadata, comments, or explanations.",
+      "synthetic_response": "Synthetic B: Mara carries her red umbrella.\n\n"
+    },
+    {
+      "kind": "recap",
+      "phase": 1,
+      "accepted": true,
+      "real_model": false,
+      "synthetic": true,
+      "exact_system_prompt": "You are a script continuity analyst. Given a screenplay scene, produce a compact structured recap that captures the scene's end state. This recap will be used as context for writing subsequent scenes to maintain continuity.\n\nFORMAT (use this exact structure):\nSCENE END STATE:\n- Location: [INT/EXT. LOCATION - TIME]\n- Characters present: [list]\n- [Brief physical/emotional state of each character]\n\nKEY ESTABLISHED FACTS:\n- [Relationships, names, details that must remain consistent]\n\nWHAT JUST HAPPENED:\n- [3-5 bullet points summarizing key events in order]\n\nRULES:\n- Keep the total recap under 200 tokens.\n- Focus on FACTS that downstream scenes must respect.\n- Include character locations and physical states at scene end.\n- Carry forward any still-relevant facts from the preceding recap.\n- Do NOT include analysis or suggestions \u2014 only factual statements.\n- Return ONLY the recap text, no commentary.",
+      "exact_user_prompt": "Generate a scene recap for this screenplay beat:\n\nSCRIPT:\nSynthetic B: Mara carries her red umbrella.\n\n\n\nProduce the scene recap now. Use the exact format specified. Be concise \u2014 aim for 100-150 tokens.",
+      "synthetic_response": "Synthetic recap: Mara carries red."
+    }
+  ],
+  "typed_text_observations": [
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 39,
+      "actual_text": "  Mara carries a blue umbrella  \u96e8.\n\n  ",
+      "exact": false
+    }
+  ]
+}

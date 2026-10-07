@@ -1,0 +1,22 @@
+{
+  "application_source": "d1763f0cf380f4a206262eff4ea08a9b60727a52",
+  "application_tree": "825deda13bae648f4194ea833f96278e6b671a34",
+  "reviewer": "/root/review_manual_edit_fact_reconciliation",
+  "status": "scoped local exact-source ACK; native original review pending",
+  "independent_tests": {
+    "client": 5,
+    "event": 15,
+    "projection_cache": 2
+  },
+  "UI_aggregate": {
+    "tests": 538,
+    "files": 93,
+    "status": "passed"
+  },
+  "typecheck": "0 errors, 0 warnings",
+  "lint_format_build_traceability": "passed",
+  "limits": [
+    "Observed typed-value draft-base conflict guard; unchanged backend field contract and no CAS guarantee.",
+    "General delayed-command/project-switch recovery remains deferred."
+  ]
+}

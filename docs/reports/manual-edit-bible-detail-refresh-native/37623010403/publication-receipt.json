@@ -1,0 +1,18 @@
+{
+  "qualified_run_head": "bded1deb5ae31c568453ac307c2ac03bb8288356",
+  "qualified_run": 37623010403,
+  "qualification_branch": "test/manual-edit-bible-detail-refresh-native",
+  "current_remote_heads": {
+    "refs/heads/docs/manual-edit-bible-native": "ea3f7eb71ee439abfe0d33f1219cbf438ff0d11b",
+    "refs/heads/feat/manual-edit-bible-detail-refresh": "d1763f0cf380f4a206262eff4ea08a9b60727a52",
+    "refs/heads/feat/manual-edit-bible-reconciliation": "6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0",
+    "refs/heads/test/manual-edit-bible-detail-refresh-native": "0b26225024ac7a4c66ccb134b0c0d53c2752863e",
+    "refs/heads/test/manual-edit-bible-reconciliation-native": "18f1f78fecdc62e9df4c57e8df0f42c673fe90ec"
+  },
+  "frozen_historical_heads_unchanged": true,
+  "normal_existing_git_transport": true,
+  "force_push": false,
+  "credential_change": false,
+  "PR_or_merge_created": false,
+  "qualification_source_ancestry_verified": true
+}

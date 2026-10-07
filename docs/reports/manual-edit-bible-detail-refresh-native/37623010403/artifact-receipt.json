@@ -1,0 +1,24 @@
+{
+  "artifacts": [
+    {
+      "id": 11483028920,
+      "name": "eidetic-manual-fact-detail-refresh-native-d1763f0",
+      "size_in_bytes": 2648100,
+      "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11483028920",
+      "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11483028920/zip",
+      "expired": false,
+      "created_at": "2026-10-07T12:51:50Z",
+      "expires_at": "2026-10-10T12:51:49Z",
+      "updated_at": "2026-10-07T12:51:50Z",
+      "digest": "sha256:2c31670670f2ede5435e8e12417839eed981d6ae6bb0fcd8463099a266af8d01",
+      "workflow_run": {
+        "id": 37623010403,
+        "repository_id": 1157333365,
+        "head_repository_id": 1157333365,
+        "head_branch": "test/manual-edit-bible-detail-refresh-native",
+        "head_sha": "bded1deb5ae31c568453ac307c2ac03bb8288356"
+      }
+    }
+  ]
+}
+

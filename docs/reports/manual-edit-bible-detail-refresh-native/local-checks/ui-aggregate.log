@@ -1,0 +1,123 @@
+
+> eidetic-ui@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.4 /workspace/scratch/relationship-lineage/creative-media/Eidetic-manual-edit-bible-detail-refresh/ui
+
+ ✓ src/lib/components/editor/scriptRecallDraft.client.test.ts (1 test) 1283ms
+   ✓ keeps bounded selections and exact receipts with actual browser rune proxies  1281ms
+ ✓ src/lib/components/sidebar/bible/bibleGraphEdgeLabelEditor.client.test.ts (1 test) 1524ms
+   ✓ keeps interrupted relationship drafts and serializes label/delete actions with actual client proxies  1523ms
+ ✓ src/lib/components/layout/AppWorkspace.creationLifetime.ssr.test.ts (3 tests) 3310ms
+   ✓ restores the exact uncertain submission when a fresh Script panel consumer returns from Graph and Split  2940ms
+ ✓ src/lib/components/editor/childPlanReview.client.test.ts (1 test) 1049ms
+   ✓ reopens and accepts durable material with actual Svelte client proxies  1048ms
+ ✓ src/lib/stores/propagationProposalProjection.client.test.ts (1 test) 1126ms
+   ✓ retires old project refreshes with the actual client proposal store  1125ms
+ ✓ src/lib/components/editor/timelinePlacementDraft.client.test.ts (1 test) 1042ms
+   ✓ uses browser rune proxies without sending a proxy or mutating an uncertain placement  1040ms
+ ✓ src/lib/stores/bibleGraphNodeDetailProjection.client.test.ts (5 tests) 5932ms
+   ✓ refreshes clean committed fields while dirty same-field and unrelated drafts retain their bases  1280ms
+   ✓ retires delayed success and failure across rapid selection ABA without changing the new owner  1252ms
+   ✓ rejects old project and superseded reads and refuses a mismatched node payload  1192ms
+   ✓ keeps interrupted field drafts and prevents late saves from clearing a different selection  1002ms
+   ✓ keeps the shared latest read owned when one of two Bible inspectors closes  1203ms
+ ✓ src/lib/components/editor/scriptFactReview.client.test.ts (1 test) 1139ms
+   ✓ retains exact retry and retires late results with actual client rune state  1138ms
+ ✓ src/lib/stores/projectionRefreshQueue.test.ts (4 tests) 58ms
+ ✓ src/lib/components/editor/scriptCreationSource.svelte.test.ts (6 tests) 17ms
+ ✓ src/lib/stores/serverEventHandlers.test.ts (15 tests) 576ms
+ ✓ src/lib/stores/selectedInspectorEvents.svelte.test.ts (21 tests) 630ms
+ ✓ src/lib/components/editor/scriptRecallSelection.test.ts (5 tests) 18ms
+ ✓ src/lib/stores/selectedNodeEditorProjection.svelte.test.ts (5 tests) 13ms
+ ✓ src/lib/components/editor/scriptBlockEditLifetime.ssr.test.ts (9 tests) 23ms
+ ✓ src/lib/projectionApi.test.ts (21 tests) 17ms
+ ✓ src/lib/commandApi.test.ts (32 tests) 34ms
+ ✓ src/lib/api.test.ts (13 tests) 18ms
+ ✓ src/lib/components/editor/timelinePlacementDraft.svelte.test.ts (5 tests) 9ms
+ ✓ src/lib/stores/timelineProjectionLifecycle.test.ts (26 tests) 16ms
+ ✓ src/lib/components/editor/scriptFactReview.svelte.test.ts (5 tests) 12ms
+ ✓ src/lib/stores/bibleRecallProjection.svelte.test.ts (18 tests) 13ms
+ ✓ src/lib/stores/scriptDocumentProjection.svelte.test.ts (13 tests) 14ms
+ ✓ src/lib/components/editor/childPlanReview.svelte.test.ts (28 tests) 21ms
+ ✓ src/lib/stores/projectionCacheGuards.test.ts (2 tests) 3ms
+ ✓ src/lib/components/editor/scriptRecallPreview.svelte.test.ts (1 test) 15ms
+ ✓ src/lib/stores/timelineRenderProjection.svelte.test.ts (24 tests) 20ms
+ ✓ src/lib/projectionOnlyGuards.test.ts (3 tests) 18ms
+ ✓ src/lib/stores/scriptDocumentProjectionLifecycle.test.ts (16 tests) 12ms
+ ✓ src/lib/stores/bibleGraphNodeProjection.commands.svelte.test.ts (19 tests) 18ms
+ ✓ src/lib/components/editor/scriptSourceNavigation.svelte.test.ts (7 tests) 17ms
+ ✓ src/lib/components/editor/debouncedNodeNotesSave.test.ts (3 tests) 9ms
+ ✓ src/lib/stores/timelineKeyboardCommands.test.ts (12 tests) 17ms
+ ✓ src/lib/components/editor/scriptBlockEditComparison.svelte.test.ts (9 tests) 35ms
+ ✓ src/lib/serverEventClient.test.ts (4 tests) 8ms
+ ✓ src/lib/graphRendererApi.test.ts (8 tests) 10ms
+ ✓ src/routes/page.ssr.test.ts (1 test) 7ms
+ ✓ src/lib/components/editor/scriptBlockCreationRetry.svelte.test.ts (4 tests) 8ms
+ ✓ src/lib/components/editor/contextRequestLifecycle.test.ts (7 tests) 10ms
+ ✓ src/lib/changeReviewProjectionApi.test.ts (2 tests) 7ms
+ ✓ src/lib/stores/propagationProposalProjection.svelte.test.ts (9 tests) 11ms
+ ✓ src/lib/stores/aiStatus.svelte.test.ts (4 tests) 8ms
+ ✓ src/lib/components/editor/createSelectedTimelineChild.svelte.test.ts (4 tests) 6ms
+ ✓ src/lib/stores/bibleGraphNodeProjection.svelte.test.ts (11 tests) 13ms
+ ✓ src/lib/components/sidebar/bible/bibleGraphNodeCreateFlow.test.ts (6 tests) 10ms
+ ✓ src/lib/components/editor/ChildPlanReview.ssr.test.ts (4 tests) 9ms
+ ✓ src/lib/stores/graphRendererCommands.test.ts (3 tests) 7ms
+ ✓ src/lib/components/editor/ChildPlanBibleEvidence.ssr.test.ts (7 tests) 13ms
+ ✓ src/lib/stores/objectFieldProjection.svelte.test.ts (7 tests) 10ms
+ ✓ src/lib/components/editor/ScriptImpactReview.ssr.test.ts (7 tests) 12ms
+ ✓ src/lib/semanticProposalCommandApi.test.ts (1 test) 6ms
+ ✓ src/lib/stores/bibleGraphSchemaProjection.svelte.test.ts (4 tests) 8ms
+ ✓ src/lib/stores/storyArcProjection.svelte.test.ts (6 tests) 11ms
+ ✓ src/lib/components/layout/GraphSelectionDetail.ssr.test.ts (2 tests) 6ms
+ ✓ src/lib/stores/timelineCommandFlow.test.ts (3 tests) 15ms
+ ✓ src/lib/timelineRenderModel.test.ts (3 tests) 6ms
+ ✓ src/lib/components/sidebar/bible/BibleRecall.ssr.test.ts (3 tests) 8ms
+ ✓ src/lib/scriptProjectionApi.test.ts (2 tests) 7ms
+ ✓ src/lib/components/sidebar/debouncedStoryArcMetadataSave.test.ts (3 tests) 10ms
+ ✓ src/lib/scriptCommandApi.test.ts (1 test) 5ms
+ ✓ src/lib/components/editor/TimelinePlacementEditor.ssr.test.ts (1 test) 5ms
+ ✓ src/lib/stores/semanticProposalProjection.svelte.test.ts (5 tests) 9ms
+ ✓ src/lib/stores/bibleRenderGraphProjection.svelte.test.ts (7 tests) 9ms
+ ✓ src/lib/propagationProposalCommandApi.test.ts (2 tests) 8ms
+ ✓ src/lib/stores/contextStackProjection.svelte.test.ts (5 tests) 9ms
+ ✓ src/lib/components/editor/ScriptRecallFacts.ssr.test.ts (3 tests) 9ms
+ ✓ src/lib/propagationProposalProjectionApi.test.ts (2 tests) 8ms
+ ✓ src/lib/timelineRendererApi.test.ts (1 test) 5ms
+ ✓ src/lib/stores/affectProposalProjection.svelte.test.ts (4 tests) 8ms
+ ✓ src/lib/components/editor/scriptBlockCreationDraft.svelte.test.ts (2 tests) 8ms
+ ✓ src/lib/stores/changeReviewProjection.svelte.test.ts (3 tests) 6ms
+ ✓ src/lib/semanticProposalProjectionApi.test.ts (2 tests) 7ms
+ ✓ src/lib/components/editor/ScriptArcEvidence.ssr.test.ts (4 tests) 6ms
+ ✓ src/lib/scriptDocumentFormat.test.ts (2 tests) 3ms
+ ✓ src/lib/components/editor/ScriptBlockComposer.retry.ssr.test.ts (2 tests) 9ms
+ ✓ src/lib/components/layout/graphWorkspaceBootstrap.test.ts (2 tests) 6ms
+ ✓ src/lib/components/layout/graphWorkspaceItems.test.ts (2 tests) 3ms
+ ✓ src/lib/stores/projectSession.test.ts (1 test) 6ms
+ ✓ src/lib/components/editor/ScriptBlockComposer.ssr.test.ts (2 tests) 5ms
+ ✓ src/lib/components/layout/graphWorkspaceProjectionRequest.test.ts (5 tests) 5ms
+ ✓ src/lib/components/sidebar/bible/bibleGraphCategories.test.ts (4 tests) 6ms
+ ✓ src/lib/stores/bible.svelte.test.ts (3 tests) 5ms
+ ✓ src/lib/components/layout/graphWorkspaceEdgeKindFilters.test.ts (2 tests) 7ms
+ ✓ src/lib/stores/timelinePlacementSession.svelte.test.ts (1 test) 5ms
+ ✓ src/lib/components/sidebar/bible/bibleRenderGraphOutline.test.ts (3 tests) 4ms
+ ✓ src/lib/components/timeline/timelineRendererWindowControls.test.ts (2 tests) 4ms
+ ✓ src/lib/components/layout/graphSelectionDetails.test.ts (4 tests) 4ms
+ ✓ src/lib/components/layout/graphRendererWindowStatus.test.ts (3 tests) 4ms
+ ✓ src/lib/components/sidebar/bible/bibleGraphEdgeTargetOptions.test.ts (2 tests) 3ms
+ ✓ src/lib/components/layout/graphWorkspaceTimelineCrossLink.test.ts (2 tests) 3ms
+ ✓ src/lib/stores/graphRendererWindow.svelte.test.ts (1 test) 4ms
+ ✓ src/lib/stores/workspaceMode.svelte.test.ts (1 test) 3ms
+ ✓ src/lib/stores/timelineRendererWindow.svelte.test.ts (1 test) 3ms
+
+ Test Files  93 passed (93)
+      Tests  538 passed (538)
+   Start at  12:36:33
+   Duration  16.65s (transform 4.68s, setup 0ms, collect 10.46s, tests 18.48s, environment 17ms, prepare 6.65s)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice

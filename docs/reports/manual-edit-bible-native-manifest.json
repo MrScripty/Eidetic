@@ -1,0 +1,99 @@
+{
+  "status": "blocked; native qualification not completed",
+  "application_source": "6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0",
+  "application_tree": "da9ca62c02eb207532a03b32f9710c6105f56691",
+  "last_published_qa_head": "db327900d7b110f975c37bed4bab05ee9fa343c4",
+  "local_qa_head": "38a6bb3928051f432bf212d24a8a8f002c03ee45",
+  "local_qa_tree": "358f3d9459a5cbf689095f407b79b8d899af4651",
+  "qa_branch": "test/manual-edit-bible-reconciliation-native",
+  "qa_delta": {
+    ".github/workflows/manual-fact-native.yml": "dcb151c5651ca9754abaa8b33c15106f89483b3285c3180f86d49a0fdd4521d3",
+    "crates/server/examples/manual_fact_capture_fixture.rs": "30ff73cd2b896905913de88565180a333c820e8a85bc11195d2cc917c4d6e62d",
+    "scripts/manual-fact-native-helpers.py": "e13b4df76f2a76499ae2be30e7e846c77057e58af530e601250aeb6995d7a13c",
+    "scripts/manual-facts-vite.config.mts": "03478a4b140156a888d39490cf1c2cb6ec5969abf8a1137ffff7564a5faf214a",
+    "scripts/qualify-manual-fact-reconciliation.py": "417b03b315e00a765872b554a56c1c38b1d3dc483b475b4ab364122ef35ca426",
+    "scripts/test_qualify_manual_fact_reconciliation.py": "d663cea338f754ae786aea7c97409ee418882de979e8d2b5a8e1dfee83d524a1",
+    "ui/src/qualification/ManualFactControls.svelte": "f921915c9728ccfc92666bcb6aae885fea13b4739e4cf2ffbc42605c11ec0c5e",
+    "ui/src/qualification/README.md": "e0775006bd3d02f3edf9317f0fb071625429a0264c75174ba5c36ab095e2c4c4",
+    "ui/src/qualification/manualFacts.svelte.ts": "77b8ec319a8790a131c48b82b587c8c6203fe225d15490403d7464808bbd3fbc"
+  },
+  "attempts": [
+    {
+      "run": 37611817839,
+      "head": "8e8cab316a86d4e0a8e252828f8c59aeb3c8d83a",
+      "job": 112760596331,
+      "conclusion": "failure",
+      "native_failure": "xdotool omitted em dash before ordinary Save; exact-text guard refused; no fact analysis/review/accept executed",
+      "artifact_id": 11479555308,
+      "artifact_size_bytes": 120031,
+      "artifact_zip_sha256": "c042b627adf0d73f9475cd172d9124557c2799a696645b5d27aa0ec945fa2492",
+      "original_capture": [
+        {
+          "file": "manual-fact-failure.png",
+          "sha256": "7cd1f7e421d5a4451c290b6d67a21775fe53c3101e7dcc7dbfd61fa80c90f4c0",
+          "window_id": 2097155,
+          "pid": 24059
+        }
+      ],
+      "provider_streams": 4,
+      "real_model": false
+    },
+    {
+      "run": 37613552433,
+      "head": "db327900d7b110f975c37bed4bab05ee9fa343c4",
+      "job": 112766368577,
+      "conclusion": "failure",
+      "failure": "traceability requires ripgrep; workflow ran gate before prerequisite installation",
+      "artifacts": [],
+      "native_executed": false
+    }
+  ],
+  "publication_blocker": {
+    "target": "https://github.com/MrScripty/Eidetic.git refs/heads/test/manual-edit-bible-reconciliation-native",
+    "attempted_local_head": "900b0057671ac763d7ea112128d93ef4a6979480",
+    "error": "fatal: could not read Username for 'https://github.com': No such device or address",
+    "action_stopped": true,
+    "credentials_changed": false
+  },
+  "local_qualifier_checks": {
+    "fixture_check": "passed",
+    "fixture_strict_clippy": "passed",
+    "qualifier_python_tests": 45,
+    "Python_compile": "passed",
+    "UI_typecheck": "0 errors,0 warnings",
+    "UI_lint_format_build": "passed",
+    "normal_commit_hooks": "passed",
+    "post_commit_traceability": "passed"
+  },
+  "first_hosted_checks_before_failed_walkthrough": {
+    "core_tests": 123,
+    "server_tests": 528,
+    "UI_tests": 532,
+    "strict_clippy": "passed",
+    "no_download_gate": "passed (load-dynamic/disable-linking)",
+    "typecheck": "0 errors,0 warnings",
+    "UI_lint_format_build": "passed",
+    "native_and_fixture_build": "passed"
+  },
+  "limits": [
+    "No successful saved edit/review/accept native qualification.",
+    "GTK Unicode fix and bounded reopen remain unexecuted natively.",
+    "Fixture context changes already put consumers in Needs review; successful acceptance should qualify the specific new field cause, not a fresh overall status transition.",
+    "Unsaved drafts must be preserved through analysis/review/accept actions; bounded restart checks saved material/proposals only, not draft lifetime/project-switch recovery.",
+    "Provider streams are synthetic; no real-model quality claim."
+  ],
+  "independent_review": "Scoped local recheck of38a6bb3/tree358f3d9 passed: exact9 QA files,45 tests,AST/whitespace; original failure PNG/hash and second prerequisite log independently read. No native ACK; corrected walkthrough/reopen unexecuted. Report limits accepted cause vs status, rejected persistence vs rendered articles.",
+  "original_files": {
+    "docs/reports/manual-edit-bible-native/37611817839/app-sanitized.log": "8edf7009e6da65ca10b11faaced8879c65b58f5484dfc7c669ca33dcc3c96b6e",
+    "docs/reports/manual-edit-bible-native/37611817839/capture-evidence.json": "1e43c680fa003a79846cc25ab8ac2d80618838426fffaec20bb136bcdd35c34b",
+    "docs/reports/manual-edit-bible-native/37611817839/manual-fact-failure.png": "7cd1f7e421d5a4451c290b6d67a21775fe53c3101e7dcc7dbfd61fa80c90f4c0",
+    "docs/reports/manual-edit-bible-native/37611817839/original-artifact.zip": "c042b627adf0d73f9475cd172d9124557c2799a696645b5d27aa0ec945fa2492",
+    "docs/reports/manual-edit-bible-native/37611817839/qualification-host-sanitized.log": "ca888afdce42796c57b9d1f12db073452217e27bc69d3d6514c0089f81332749",
+    "docs/reports/manual-edit-bible-native/37611817839/workflow-job-summary.json": "2b76744b6d60c732fcd4b497dce60d90f811e9bb14301e068fd0556627b611ba",
+    "docs/reports/manual-edit-bible-native/37611817839/workflow-job.log": "599e83a89227d3492bb7c3182df919b4fc76f76d89bd5bd1730f131628be8699",
+    "docs/reports/manual-edit-bible-native/37613552433/workflow-job-summary.json": "d047ff8991169d69ac6fd0c79ad7e14bc942b20ad9c15cff1dbcb0630e742958",
+    "docs/reports/manual-edit-bible-native/37613552433/workflow-job.log": "fca15125e5c8f11a54553f23001e3d18fe542e6b860794ba9beaf05f755a6b94"
+  },
+  "prior_PR20_native_manifest_sha256": "906a25b21b22c8e39938825a3a970387aecad2b9e8e736385122ecb8f6c6b09b",
+  "report_sha256": "8089a503f5ae0c8751caaf95f22960186e70f0a6b84c269e98c0c13714df1cbb"
+}

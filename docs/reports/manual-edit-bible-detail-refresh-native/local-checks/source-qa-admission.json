@@ -1,0 +1,25 @@
+{
+  "application_source": "d1763f0cf380f4a206262eff4ea08a9b60727a52",
+  "application_tree": "825deda13bae648f4194ea833f96278e6b671a34",
+  "qualification_source": "0b26225024ac7a4c66ccb134b0c0d53c2752863e",
+  "qualification_tree": "9635b5fe82cc1436b50b5c6865546aedb8b140c2",
+  "qualification_delta": {
+    ".github/workflows/manual-fact-native.yml": "2261905f13dcc8cb2857e2c963884d7b05a104225b43e89306d8da5af7d69138",
+    "crates/server/examples/manual_fact_capture_fixture.rs": "30ff73cd2b896905913de88565180a333c820e8a85bc11195d2cc917c4d6e62d",
+    "scripts/manual-fact-native-helpers.py": "2662eef35566d7eb5314a149a1464f209b241a3ca85ebad0c9a6b25fc3700622",
+    "scripts/manual-facts-vite.config.mts": "03478a4b140156a888d39490cf1c2cb6ec5969abf8a1137ffff7564a5faf214a",
+    "scripts/qualify-manual-fact-reconciliation.py": "ab13c7b1beea16176c604f3a8f45b3dc24202461e1729912619f74e79a3dba5e",
+    "scripts/test_qualify_manual_fact_reconciliation.py": "3c82022fec413a225c7d890d7db99f4c9a600320b53059e2ec0ec67efa71f91a",
+    "ui/src/qualification/ManualFactControls.svelte": "f921915c9728ccfc92666bcb6aae885fea13b4739e4cf2ffbc42605c11ec0c5e",
+    "ui/src/qualification/README.md": "eea4ef2242e011639f2dfe6f519e542a305fbae2e9499f047fce5943acba2f4f",
+    "ui/src/qualification/manualFacts.svelte.ts": "77b8ec319a8790a131c48b82b587c8c6203fe225d15490403d7464808bbd3fbc"
+  },
+  "independent_review": "Scoped QA source/ownership ACK;46Python tests independently passed; actual native original evidence pending",
+  "product_branch": "feat/manual-edit-bible-detail-refresh",
+  "qualification_branch": "test/manual-edit-bible-detail-refresh-native",
+  "initial_attempt": {
+    "run": 37623010403,
+    "head": "bded1deb5ae31c568453ac307c2ac03bb8288356",
+    "status": "completed success; pane-only glyph guard; full motivation visual qualification excluded"
+  }
+}

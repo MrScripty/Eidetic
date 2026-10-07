@@ -1,0 +1,21 @@
+{
+  "run_id": 37616923862,
+  "url": "https://github.com/MrScripty/Eidetic/actions/runs/37616923862",
+  "event": "push",
+  "branch": "test/manual-edit-bible-reconciliation-native",
+  "qa_head": "18f1f78fecdc62e9df4c57e8df0f42c673fe90ec",
+  "qa_tree": "7a2e5a7202c6f920fcd126bb2b9506356362030d",
+  "created_at": "2026-10-07T11:51:23Z",
+  "application_source": "6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0",
+  "application_tree": "da9ca62c02eb207532a03b32f9710c6105f56691",
+  "previous_remote_head": "38a6bb3928051f432bf212d24a8a8f002c03ee45",
+  "publication": {
+    "route": "existing normal Git transport; exact-object non-force fast-forward push",
+    "credential_changes": false,
+    "commit_reconstruction": false,
+    "remote_head_verified_before_push": true
+  },
+  "qa_only_change": "Observed WebKit combo accessible label includes selected option; reuse existing normalized label-prefix matcher.",
+  "status_at_receipt": "in_progress",
+  "conclusion_at_receipt": null
+}

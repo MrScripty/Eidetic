@@ -1,0 +1,60 @@
+
+> eidetic-ui@0.1.0 build
+> vite build
+
+vite v6.4.2 building SSR bundle for production...
+transforming...
+✓ 337 modules transformed.
+rendering chunks...
+vite v6.4.2 building for production...
+transforming...
+✓ 356 modules transformed.
+rendering chunks...
+computing gzip size...
+.svelte-kit/output/client/_app/version.json                         0.03 kB │ gzip:  0.05 kB
+.svelte-kit/output/client/.vite/manifest.json                       3.17 kB │ gzip:  0.63 kB
+.svelte-kit/output/client/_app/immutable/assets/0._9ytKbrA.css      9.55 kB │ gzip:  2.83 kB
+.svelte-kit/output/client/_app/immutable/assets/2.DaYubxXQ.css     69.69 kB │ gzip: 10.54 kB
+.svelte-kit/output/client/_app/immutable/entry/start.3zB3v8s_.js    0.08 kB │ gzip:  0.09 kB
+.svelte-kit/output/client/_app/immutable/nodes/0.CPKvTq9C.js        0.33 kB │ gzip:  0.24 kB
+.svelte-kit/output/client/_app/immutable/chunks/DY1PI5r1.js         0.38 kB │ gzip:  0.27 kB
+.svelte-kit/output/client/_app/immutable/nodes/1.B3RXQw5W.js        0.55 kB │ gzip:  0.35 kB
+.svelte-kit/output/client/_app/immutable/chunks/BMZf9QWp.js         1.56 kB │ gzip:  0.82 kB
+.svelte-kit/output/client/_app/immutable/chunks/BqKqCbIY.js         1.84 kB │ gzip:  1.00 kB
+.svelte-kit/output/client/_app/immutable/chunks/CqB33THj.js         2.25 kB │ gzip:  1.00 kB
+.svelte-kit/output/client/_app/immutable/entry/app.DDciEb87.js      6.26 kB │ gzip:  2.90 kB
+.svelte-kit/output/client/_app/immutable/chunks/nwYdZ4hK.js         8.37 kB │ gzip:  3.57 kB
+.svelte-kit/output/client/_app/immutable/chunks/DTLJZQfz.js        28.33 kB │ gzip: 10.93 kB
+.svelte-kit/output/client/_app/immutable/chunks/DjOEKLlh.js        28.69 kB │ gzip: 11.09 kB
+.svelte-kit/output/client/_app/immutable/nodes/2.BkXKExJf.js      253.70 kB │ gzip: 77.12 kB
+✓ built in 2.22s
+.svelte-kit/output/server/.vite/manifest.json                           3.17 kB
+.svelte-kit/output/server/_app/immutable/assets/_layout.DUdLrqlQ.css    9.44 kB
+.svelte-kit/output/server/_app/immutable/assets/_page.DotSpWc-.css     15.91 kB
+.svelte-kit/output/server/chunks/false.js                               0.04 kB
+.svelte-kit/output/server/entries/pages/_layout.svelte.js               0.17 kB
+.svelte-kit/output/server/internal.js                                   0.35 kB
+.svelte-kit/output/server/chunks/environment.js                         0.62 kB
+.svelte-kit/output/server/chunks/utils.js                               1.09 kB
+.svelte-kit/output/server/entries/fallbacks/error.svelte.js             1.38 kB
+.svelte-kit/output/server/chunks/render-context.js                      1.93 kB
+.svelte-kit/output/server/chunks/internal.js                            3.25 kB
+.svelte-kit/output/server/entries/pages/_page.svelte.js                 3.59 kB
+.svelte-kit/output/server/chunks/exports.js                             6.97 kB
+.svelte-kit/output/server/chunks/shared.js                             34.89 kB
+.svelte-kit/output/server/chunks/renderer.js                           37.66 kB
+.svelte-kit/output/server/remote-entry.js                              37.84 kB
+.svelte-kit/output/server/chunks/root.js                               86.27 kB
+.svelte-kit/output/server/index.js                                    130.53 kB
+✓ built in 5.18s
+
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-static
+  Wrote site to "../dist/ui"
+  ✔ done
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice

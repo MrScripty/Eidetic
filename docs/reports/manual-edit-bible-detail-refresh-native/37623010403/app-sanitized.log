@@ -1,0 +1,19 @@
+[launcher] [state] using isolated dev state at <qualification state>/dev
+   Compiling eidetic-desktop v0.1.0 (<repo>/src-tauri)
+    Finished `dev` profile [unoptimized] target(s) in 9.20s
+     Running `target/debug/eidetic-desktop`
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+2026-10-07T12:50:58.793753Z  INFO eidetic_server::state: No Pumas model library found (set PUMAS_MODELS_DIR to enable)
+2026-10-07T12:50:58.793918Z  INFO eidetic_server::ydoc: Y.Doc manager started
+Terminated
+[launcher] [state] using isolated dev state at <qualification state>/dev
+[launcher] [state] cleared dev webview cache: <qualification state>/dev/xdg-data/dev.eidetic.app/CacheStorage
+[launcher] [state] cleared dev webview cache: <qualification state>/dev/xdg-data/dev.eidetic.app/WebKitCache
+    Finished `dev` profile [unoptimized] target(s) in 0.36s
+     Running `target/debug/eidetic-desktop`
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+2026-10-07T12:51:44.328464Z  INFO eidetic_server::state: No Pumas model library found (set PUMAS_MODELS_DIR to enable)
+2026-10-07T12:51:44.328605Z  INFO eidetic_server::ydoc: Y.Doc manager started
+Terminated
