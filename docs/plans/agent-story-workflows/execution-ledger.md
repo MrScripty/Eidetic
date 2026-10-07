@@ -1896,3 +1896,18 @@ Inspection on provisional ab25029 and then identical-tree main74fd438f found the
 Application8c1956f (tree764ae1c5) descends from verified main74fd438f, separate from PR15. Exact start/end seconds and Apply placement reuse the range command, canonical snapshot and existing node history receipt. Optional omission preserves legacy signatures; writer admission checks original range/history including ABA, replay remains first and unknown acknowledgements keep immutable retry. Local/hosted core120/server486/UI467, frontend0/0/lint/format/build, strict server all-target Clippy and no-download gates pass.
 
 Qualification443ddc2 (tree5335f1c1) passes native run37538195351/job112524966283/artifact11447317950. Actual native Save types exact manual B, retains another draft and applies E180–210 seconds across neighbors without changing saved text or draft. Existing review explains enteredE/leftA. Preview preserves saved B and consumes the new window; only explicit acceptance replaces B and clears review. Four original1440x960 captures were verified/viewed. Three responses are labelled synthetic. The preview-named image does not show its proposed paragraph within the constrained pane; the durable/native receipt establishes pending custody and the accepted image visibly shows canonical replacement. Source and functional UI are qualified; no model-quality or native ABA sequence claim. Initial qualifier945c4e3/run37537216165 is cancelled, preserved, and corrected only for observation tuple ranges. Full receipts: exact-timeline-placement-qualification.md and manifest. Parent retains PR/review/merge/Library; no new models, credentials, embedding dependency, hierarchy or project-switch work.
+
+### Selected inspector freshness after PR16 merge
+
+Verified main25895e7 (tree21f9432d) has correct canonical generation and placement,
+but native run37545170522 visibly retains B's Notes written caption and a
+transient E540–570 placement summary. The selected editor cache is not refreshed
+by generation/node/timeline events. A baseline event/store regression reproduces
+both feedback defects before implementation. The separate fix rereads the
+canonical selected inspector through the existing coalescing queue, preserving
+request/version guards and adding event selection/session/teardown custody.
+It does not patch durable fields, alter context selection, rebase drafts or
+accept proposals. Regression covers unrelated screenplay and placement drafts,
+pending proposals, selection changes, late responses/errors, reopened same IDs
+and event coalescing. Native qualification is pending. Original walkthrough
+captures and synthetic labels remain intact; parent retains PR/review/merge.

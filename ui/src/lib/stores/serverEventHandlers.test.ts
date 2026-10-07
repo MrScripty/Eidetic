@@ -64,6 +64,7 @@ vi.mock('./editor.svelte.js', () => ({
   appendStreamingToken: vi.fn(),
   completeGeneration: vi.fn(),
   editorState: { selectedNodeId: null },
+  getEditorSessionGeneration: vi.fn(() => 0),
   setGenerationContext: vi.fn(),
   setGenerationError: vi.fn(),
 }));
