@@ -22,6 +22,7 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | `stores/`                  | Reactive Svelte state used to coordinate the UI around backend-driven data.                      |
 | `components/`              | Feature UI modules for layout, timeline editing, sidebars, and relationship views.               |
 | `scriptFactTypes.ts` | Saved manual-edit and consumed-fact projection/request/review binding shapes. |
+| `propagationProposalTypes.ts` | Existing review/acceptance shapes, including separate original/current selected timeline Notes receipts. |
 
 ## Problem
 

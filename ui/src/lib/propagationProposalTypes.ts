@@ -64,6 +64,8 @@ export interface PropagationProposal {
   created_at_ms: number;
   script_fact_binding?: import('./scriptFactTypes.js').ScriptFactProposalBinding | null;
   script_review_binding?: {
+    timeline_notes_previous?: TimelineNotesInput | null;
+    timeline_notes_current?: TimelineNotesInput | null;
     arc_inputs?: StoryArcFieldInput[] | null;
     arc_previous_inputs?: StoryArcFieldInput[] | null;
     arc_absence_revisions?: [string, string][] | null;
@@ -83,6 +85,12 @@ export interface PropagationProposal {
       | null;
     bible_relationship_absence_revisions?: [string, string][] | null;
   } | null;
+}
+
+export interface TimelineNotesInput {
+  node_id: string;
+  notes: string;
+  revision_event_id: ChangeEventId | null;
 }
 
 export interface RequestScriptImpactProposalCommand {

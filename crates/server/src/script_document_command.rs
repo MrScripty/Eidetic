@@ -96,7 +96,12 @@ fn apply_script_block<T: serde::Serialize>(
 
     let dependencies = generation
         .map(|generation| {
-            crate::script_generation_lineage::dependencies(generation, event.id, created_at_ms)
+            crate::script_generation_lineage::dependencies(
+                conn,
+                generation,
+                event.id,
+                created_at_ms,
+            )
         })
         .transpose()?
         .unwrap_or_default();

@@ -48,6 +48,11 @@ pub struct ScriptRecallFactSelection {
 /// Canonical evidence captured before provider I/O and rechecked at acceptance.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScriptImpactProposalBinding {
+    /// Selected clip Notes actually supplied; absent legacy consumption stays unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeline_notes_previous: Option<TimelineNotesInput>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeline_notes_current: Option<TimelineNotesInput>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arc_previous_inputs: Option<Vec<super::StoryArcFieldInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -79,6 +84,14 @@ pub struct ScriptImpactProposalBinding {
     pub bible_context_scope: Option<super::BibleContextScope>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub script_context_scope: Option<super::ScriptContextScope>,
+}
+
+/// Exact Notes evidence, using the existing owned sparse timeline field history.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineNotesInput {
+    pub node_id: crate::timeline::node::NodeId,
+    pub notes: String,
+    pub revision_event_id: Option<ChangeEventId>,
 }
 
 #[cfg(test)]
