@@ -159,3 +159,15 @@ labels name causes and discloses recorded names/revisions; proposal acceptance
 continues through the guarded server command, without client replacement text.
 
 Timeline range commands optionally carry a canonical TimelineNodeRangeRead captured by the selected-node editor. Exact start/end milliseconds and the optional owned node event preserve placement intent across UI edits; omitted receipts keep existing legacy command signatures and renderer callers. Screen placement remains distinct from fictional time, and range acknowledgements use existing projection/session guards.
+
+
+## Typed arc screenplay review
+
+`storyArcTypes.StoryArcFieldInput` mirrors exact consumed prompt values, with a
+nullable revision for unbound template history. Existing `ScriptImpactCause`
+and targeted proposal types carry per-field arc causes and original/current
+evidence. The editor displays exact changes and optional full revision details;
+`story_changed` rereads canonical impact instead of patching saved screenplay.
+
+Decision: keep Preview update and Accept update as the existing explicit review
+boundary, preserving unrelated author drafts and backend source/version custody.

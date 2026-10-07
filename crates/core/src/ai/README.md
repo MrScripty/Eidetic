@@ -96,3 +96,16 @@ Canonical screenplay generation requests also carry optional
 These accompany existing field and relationship inputs; downstream persistence
 retains the captured name revision rather than rebinding late output to latest.
 Legacy requests omit receipts and do not infer past name consumption.
+
+
+## Tagged arc consumption
+
+`GenerateRequest.arc_inputs` retains the exact tagged-arc prompt fields read by
+the backend in one SQLite snapshot with target custody. Domain construction
+leaves this optional receipt unknown; canonical server attachment supplies the
+same arc values to `tagged_arcs` and their field history to the receipt. Name,
+type and nonempty description are prompt inputs. Presentation color and recap
+arc labels are outside this bounded receipt. Child-plan arc binding is separate.
+
+Decision: carry evidence through the existing request/generation command rather
+than rereading arc metadata when output finishes or inventing legacy history.
