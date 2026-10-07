@@ -121,11 +121,7 @@
           {#each projection.payload.paths.filter((path) => path.neighbor_node_id === node.node_id) as path (path.relationship.edge.edge_id)}
             {@const edge = path.relationship.edge}
             <p class="path">
-              {name(edge.from_node_id)}
-              {edge.directed ? '→' : '↔'}
-              {name(edge.to_node_id)} · {edgeKind(edge.edge_kind)}{edge.label
-                ? ` · ${edge.label}`
-                : ''}
+              {`${name(edge.from_node_id)} ${edge.directed ? '→' : '↔'} ${name(edge.to_node_id)} · ${edgeKind(edge.edge_kind)}${edge.label ? ` · ${edge.label}` : ''}`}
             </p>
             <details class="sources">
               <summary>Relationship source</summary>
