@@ -234,10 +234,17 @@ def bible_field(application,window,value,side,align=False):
         node.queryComponent().scrollTo(ui.pyatspi.SCROLL_TOP_LEFT)
         application.clear_cache()
         node=ui.wait_for('aligned '+side+' Bible editor',lambda:find_bible_editor(application,window,value,side))
+    # Native navigation exposes the first glyph after typing trailing blank lines.
+    # Ctrl+Home changes caret/scroll only; exact input remains unchanged.
+    ui.click_control(node,window)
+    ui.wait_for('Bible textarea focus',lambda:node.getState().contains(ui.pyatspi.STATE_FOCUSED))
+    ui.command('xdotool','key','--clearmodifiers','ctrl+Home')
+    node.clear_cache()
     viewport=bible_viewport(application,window,side)
+    editor_bounds=tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
     rectangles=text_rectangles(node,value)
-    if not rectangles or not all(contained(r,viewport) for r in rectangles):
+    if not rectangles or not all(contained(r,viewport) and contained(r,editor_bounds) for r in rectangles):
         raise RuntimeError('Exact Bible text not bounded in '+side+' native inspector')
     return {'side':side,'native_name':node.name,'exact_text':value,
-        'native_bounds':list(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)),
+        'native_bounds':list(editor_bounds),'native_caret_navigation':'Ctrl+Home; no text mutation',
         'viewport':list(viewport),'character_bounds':[list(r) for r in rectangles]}

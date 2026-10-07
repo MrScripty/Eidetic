@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Qualify exact application source `6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0`
+Qualify exact application source `d1763f0cf380f4a206262eff4ea08a9b60727a52`
 through ordinary native editing and explicit fact review, with labelled synthetic replies.
 
 ## Contents
@@ -73,6 +73,9 @@ the right inspector remains clean. Acceptance must visibly refresh the right Bib
 to canonical blue, preserve both left drafts and original red base, show the local
 conflict and disabled Save/explicit discard, and retain all screenplay/placement.
 Native text/character geometry receipts identify left versus right inspectors.
+Non-whitespace glyph bounds must fit both each textarea and its Bible pane.
+Ordinary Ctrl+Home navigation exposes the start after trailing blank lines without
+changing text. Exact accessibility values retain every whitespace character.
 Synthetic provider guards reject either unsaved Bible draft in analysis input.
 No new runtime injection or fixture-only product state is added. Frozen `6e3bad3`
 and its historical qualification/evidence branches remain unchanged.
