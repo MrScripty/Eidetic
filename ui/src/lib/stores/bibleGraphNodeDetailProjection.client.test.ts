@@ -142,6 +142,33 @@ assert.equal(editor.value(fields('Mara')[0]),'  Local draft — 雨.\\n\\n  '); 
 editor.discard(fields('Mara')[0]); await editor.save(fields('Mara')[0]); assert.equal(calls,1); release();
 `));
 
+it('recovers an uncached initial failure in place and retires its retry on selection ABA', () =>
+  run(`
+for (const retire of [false,true]) {
+  store.clearBibleGraphNodeDetailProjections();
+  globalThis.read=async()=>{throw Error('Initial detail read failed');};
+  const release=store.retainBibleGraphNodeDetail(key('Mara'));await settle();
+  assert.equal(store.getCachedBibleGraphNodeProjection(key('Mara')),undefined);
+  assert.equal(store.getBibleGraphNodeProjectionError(key('Mara')),'Initial detail read failed');
+  assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
+  let finish;globalThis.read=()=>new Promise(resolve=>finish=resolve);
+  const retry=store.refreshBibleGraphNodeProjection(key('Mara'));
+  const refusal=retire ? assert.rejects(retry,/owner changed/) : undefined;
+  assert.equal(store.getBibleGraphNodeProjectionError(key('Mara')),undefined);
+  assert.equal(store.isBibleGraphNodeProjectionPending(key('Mara')),true);
+  assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
+  if(retire) {
+    release();globalThis.read=async()=>projection('Eli','Eli saved');const other=store.retainBibleGraphNodeDetail(key('Eli'));await settle();other();
+    globalThis.read=async()=>projection('Mara','Current owner',2);const current=store.retainBibleGraphNodeDetail(key('Mara'));await settle();
+    finish(projection('Mara','Retired retry',99));await refusal;
+    assert.equal(fields('Mara')[0].value.value,'Current owner');assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),true);current();
+  } else {
+    finish(projection('Mara','Recovered initial read'));await retry;
+    assert.equal(fields('Mara')[0].value.value,'Recovered initial read');assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),true);release();
+  }
+}
+`));
+
 it('reconciles a matching acknowledgement during delayed refresh while keeping Save gated until recovery', () =>
   run(`
 globalThis.read=async()=>projection('Mara','Red',1);const release=store.retainBibleGraphNodeDetail(key('Mara'));await settle();

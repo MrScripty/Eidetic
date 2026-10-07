@@ -354,9 +354,12 @@
       />
     </div>
   {:else if pending}
-    <p class="status">Loading</p>
+    <p class="status" role="status">Loading</p>
   {:else if error}
-    <p class="status error">{error}</p>
+    <p class="status error" role="alert">{error}</p>
+    <button type="button" onclick={() => void refreshBibleGraphNodeProjection(key).catch(() => {})}
+      >Retry saved facts</button
+    >
   {:else}
     <p class="status">No projection</p>
   {/if}

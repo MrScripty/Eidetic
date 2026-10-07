@@ -6,7 +6,7 @@ use eidetic_core::contracts::{
     ScriptDocumentProjection, ScriptSegment, ScriptSpan, SemanticProposalStatus,
     SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand,
 };
-use rusqlite::Transaction;
+use rusqlite::{OptionalExtension, Transaction};
 
 use crate::bible_graph_command;
 use crate::bible_graph_store;
@@ -353,14 +353,32 @@ fn bible_field_command_for_proposal(
     let mut command = set_bible_field_command(node_id.clone(), part, field, value);
     // Detail projections can merge stored fields into schema-default parts.
     // Preserve the stored owner and its author-edited metadata when changing value.
-    if proposal.script_fact_binding.is_some() {
-        let (name, sort_order): (String, u32) = conn.query_row(
-        "SELECT name, sort_order FROM bible_graph_parts WHERE id=?1 AND deleted_event_id IS NULL",
-        [field.part_id.as_str()],
-        |row| Ok((row.get(0)?, row.get(1)?)),
-    )?;
-        command.part_name = name;
-        command.part_sort_order = sort_order;
+    let owner: Option<(String, String, String, u32, Option<String>)> = conn
+        .query_row(
+            "SELECT node_id, part_key, name, sort_order, deleted_event_id FROM bible_graph_parts WHERE id=?1",
+            [field.part_id.as_str()],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+        )
+        .optional()?;
+    match owner {
+        Some((owner_node, owner_key, name, sort_order, None))
+            if owner_node == node_id.as_str() && owner_key == part_key.as_str() =>
+        {
+            command.part_name = name;
+            command.part_sort_order = sort_order;
+        }
+        None if proposal.script_fact_binding.is_none() && field.part_id == part.id => {
+            // Ordinary proposals may materialize an unpersisted schema field.
+            let persisted: bool = conn.query_row(
+                "SELECT EXISTS(SELECT 1 FROM bible_graph_fields WHERE id=?1)",
+                [field.id.as_str()],
+                |row| row.get(0),
+            )?;
+            if persisted {
+                return Err(crate::script_fact_evidence::stale().into());
+            }
+        }
+        _ => return Err(crate::script_fact_evidence::stale().into()),
     }
     Ok(command)
 }
