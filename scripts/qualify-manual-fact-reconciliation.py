@@ -496,12 +496,17 @@ def qualify_timeline_notes(application,window,database,fixture,capture,checkpoin
     impacts=ui.wait_for('canonical selected Notes review cause',impacted)
     if any(any(c['dependency_id'].endswith('.timeline_notes') for c in r.get('causes') or []) for r in impacts if r['source']!=b_id):raise RuntimeError('Unrelated scene acquired Notes cause')
     evidence['notes_impacts_before_acceptance']=impacts
+    # Both generated scenes already have independent review causes. Their
+    # ordinary cause disclosures are closed initially; open them natively
+    # before asking for a visibly rendered Notes label. A multicolumn break
+    # can place the selected scene's notice and chooser in different columns.
+    notices=[n for n in ui.walk(application) if n.name=='Screenplay needs review']
+    if len(notices)!=2:raise RuntimeError('Expected exactly the two generated scene notices')
+    for node in notices:disclosure(node,window,'What changed')
     notice=ui.wait_for('ordinary Notes review notice visible',lambda:driver.visible_review_label(application,window,'Timeline Notes changed.'))
-    nx,ny,_,_=notice['bounds']
-    combo=ui.wait_for('Notes source review chooser',lambda:ui.find(application,lambda n:
+    combo=ui.wait_for('Notes source review chooser',lambda:ui.reveal(application,lambda n:
         n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and ui.button_label_matches(n.name,'Input change',prefix=True)
-        and abs(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]-nx)<60
-        and ny<=n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[1]<ny+500))
+        and any('Timeline Notes changed.' in ui.text_of(child) for child in ui.walk(n))))
     ui.click_control(combo,window);ui.command('xdotool','key','--clearmodifiers','End','Return')
     review=ui.wait_for('ordinary explicitly selected Notes cause',lambda:notes_review(application))
     evidence['ordinary_selected_notes_cause']={'native_combo_name':combo.name,'route':'native source chooser End/Return; canonical pending binding checked'}
