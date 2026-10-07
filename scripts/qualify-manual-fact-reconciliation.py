@@ -59,6 +59,19 @@ def notes_review(application):
         for child in ui.walk(n)))
 
 
+def review_for_source(application,clip_name):
+    # Follow the native accessibility document order from the ordinary source
+    # clip landmark. Multicolumn rendering can separate adjacent components.
+    application.clear_cache();selected=False
+    for node in ui.walk(application):
+        if node.name=='Screenplay source clip':
+            selected=any(ui.text_of(child)==clip_name for child in ui.walk(node))
+        elif selected and node.name=='Screenplay update proposals':
+            node.queryComponent().scrollTo(ui.pyatspi.SCROLL_ANYWHERE)
+            return node if ui.visible(node) else None
+    return None
+
+
 class Provider(ui.FixtureProvider):
     records=[]
     allow_fresh_notes=False
@@ -504,9 +517,10 @@ def qualify_timeline_notes(application,window,database,fixture,capture,checkpoin
     if len(notices)!=2:raise RuntimeError('Expected exactly the two generated scene notices')
     for node in notices:disclosure(node,window,'What changed')
     notice=ui.wait_for('ordinary Notes review notice visible',lambda:driver.visible_review_label(application,window,'Timeline Notes changed.'))
-    combo=ui.wait_for('Notes source review chooser',lambda:ui.reveal(application,lambda n:
-        n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and ui.button_label_matches(n.name,'Input change',prefix=True)
-        and any('Timeline Notes changed.' in ui.text_of(child) for child in ui.walk(n))))
+    evidence['visible_notes_impact']=notice
+    source_review=ui.wait_for('ordinary B source review',lambda:review_for_source(application,fixture['b']['name']))
+    combo=ui.wait_for('Notes source review chooser',lambda:ui.reveal(source_review,lambda n:
+        n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and ui.button_label_matches(n.name,'Input change',prefix=True)))
     ui.click_control(combo,window);ui.command('xdotool','key','--clearmodifiers','End','Return')
     review=ui.wait_for('ordinary explicitly selected Notes cause',lambda:notes_review(application))
     evidence['ordinary_selected_notes_cause']={'native_combo_name':combo.name,'route':'native source chooser End/Return; canonical pending binding checked'}
