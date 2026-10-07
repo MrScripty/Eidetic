@@ -1,0 +1,26 @@
+Independent scoped source review: ACK
+Reviewer: /root/review_manual_edit_fact_reconciliation
+Exact product commit: c09db543f10b663381379f0532ab0d34ad939b62
+Exact product tree: 016da4f54d34faa384b9744d5e071e72c23ea8c6
+Compared against: 322be2607ab4206410667ca48d4b6d22cd96394a
+
+Reviewed generic SetBibleField acceptance owner resolution and uncached initial Bible detail Retry. No actionable source blocker remains.
+Acceptance resolves the stored field.part_id, requires a live owner matching node and part key, and preserves stored authored part name/order and field identity/order. Ordinary fallback requires a schema-default owner identity and a genuinely unpersisted field ID; persisted or tombstoned IDs cannot use that fallback. Missing bound owners refuse acceptance. Existing writer/schema validation is unchanged.
+Uncached initial detail failure exposes Retry in place through the existing refresh. Pending retry shows Loading; admitted recovery verifies saved fields. Request/session/node and inspector lifetime guards remain unchanged. Selection ABA retires a delayed retry.
+
+Independent exact-head tests passed:
+- cargo test -p eidetic-server propagation_proposal_accept::tests:: --lib: 7 passed.
+- cargo test -p eidetic-server script_fact_proposal::tests:: --lib: 9 passed.
+- npm test -- src/lib/stores/bibleGraphNodeDetailProjection.client.test.ts src/lib/components/sidebar/bible/BibleGraphNodeDetail.retry.ssr.test.ts: 13 passed (11 actual compiled client regressions and 2 SSR render checks).
+Toolchain: source /workspace/.toolchains/eidetic-env.sh; CARGO_TARGET_DIR=/workspace/creative-media/Eidetic/target; XDG_DATA_HOME=/workspace/scratch/manual-edit-fact-review-data.
+The first pre-freeze backend run exposed two invalid fixture seeds: custom built-in part names were rejected by the public schema-validating writer. Corrected tests seed persisted metadata explicitly with SQL; production validation was not relaxed. All corrected frozen-head tests passed.
+
+Reviewed committed file SHA256:
+b3aba8c36239e9ea1ca4d49827064d62aa68daa457d0406543a904c4bc243d07  crates/server/src/propagation_proposal_accept.rs
+09c02dcaf3b950666c0d1f3f423f28c40b41ae401cf03fcb62f85f39f65d79f0  crates/server/src/propagation_proposal_accept_tests.rs
+62ae492f4e2a930a5b103604b2bd94ded79b636862ba3c2c5c0be4d7da272779  crates/server/src/script_fact_proposal_tests.rs
+0a4f4868e44d8c394e9d1e09ae43f186640339eb6aec62b07fa91b839749c82b  ui/src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte
+bdbe8ace70e16c098a5a77521dbd728d129dcadb7d77efe03d9ca808561d0ba7  ui/src/lib/components/sidebar/bible/BibleGraphNodeDetail.retry.ssr.test.ts
+c174e1cd6f42911393790e483111c08f813fa208ad84842fd3b708d05795a04f  ui/src/lib/stores/bibleGraphNodeDetailProjection.client.test.ts
+
+Limits: this is source/test review only, not native ACK for c09. Prior e5a09ed native captures/reports remain separately bound historical evidence. Generic metadata preservation is server-regression qualified only. Synthetic providers do not establish real-model quality. No backend CAS, unsaved-draft restart, or project-switch recovery claim is added. No production edits, publication, external reviewer requests, or native execution were performed by this reviewer.

@@ -1,0 +1,19 @@
+Independent scoped QA admission review: ACK
+Reviewer: /root/review_manual_edit_fact_reconciliation
+Exact QA commit: 981d9d94b8c371351bc00136f25ea6b7ee433397
+Exact QA tree: c1569f75bd5d588b6df28cadcef60a1cecfd9bb7
+Exact product commit: c09db543f10b663381379f0532ab0d34ad939b62
+Exact product tree: 016da4f54d34faa384b9744d5e071e72c23ea8c6
+
+No scoped admission/native assertion blocker found. Verified product ancestry, matching source/tree constants, exact enumerated nine QA file delta, unchanged product modules, and the served-module receipt gate for BibleGraphNodeDetail, whose source hash matches the product. This review does not claim an observed hosted served module. Untracked ui/node_modules is the local dependency symlink, outside the committed nine-file delta.
+The resolved detail-projection import still routes through the labelled QA wrapper. Mode/counter accesses retain Svelte untrack, so this instrumentation does not become an input of the production owner effect. Normal and released reads call the actual public projection GET.
+The initial-detail-retry scope arms a synthetic failure before ordinary Mara entity selection. It captures uncached error/enabled ordinary Retry; arms a held read before ordinary Retry; captures Loading with old error cleared; releases the actual public read; then types an exact motivation draft and requires enabled Save without submitting it. Native geometry/glyph checks require text inside its textarea and left pane. Saved screenplay/placement, Bible fields, and canonical history are compared before/after. Four synthetic fixture generation/recap calls are required, and no further provider call is allowed. The target exits after captures 15-18 before AI connection, full reconciliation, or restart.
+
+Independent Python qualifier suite: 46 tests passed.
+git diff --check passed; c09 product ancestry and exact nine changed paths verified.
+Selected admitted SHA256:
+0a4f4868e44d8c394e9d1e09ae43f186640339eb6aec62b07fa91b839749c82b  ui/src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte
+8b2e0396eb706a2cbce1acfefc34031271b194e8a9b5f89400aea85517e6b47d  ui/src/qualification/manualFacts.svelte.ts
+0d9bec813576dbc69c3b5678d6a842b5a00268f3c79c25348bbe209288ceb1a3  scripts/qualify-manual-fact-reconciliation.py
+
+Limits: QA admission only; no final native success ACK until hosted run originals, receipts, hashes and glyph bounds are independently inspected. The initial read fault and four fixture model responses are synthetic. Generic owner metadata remains server-regression qualified, not native custom-owner authoring. No prior full e5a09ed native evidence is relabelled as c09, and no unsaved draft restart or project-switch claim is added. No product edits, publication, model execution, or external reviewer requests were performed by this reviewer.
