@@ -108,18 +108,17 @@ class SelectedCaptureTests(unittest.TestCase):
         self.assertIn('recalledFacts.svelte.ts', config)
         self.assertNotIn('invokeDesktop', config)
 
-    def test_stale_acceptance_matches_native_paragraph_refusal_not_unrelated_alert_or_qa_receipt(self):
+    def test_stale_acceptance_requires_exact_visible_refusal_without_assuming_native_role(self):
         class Node:
-            def __init__(self, role, text): self.role, self.text = role, text
+            def __init__(self, role, text, name=''): self.role, self.text, self.name = role, text, name
             def getRole(self): return self.role
         expected = 'Selected recall evidence is stale or unavailable. Recall again.'
-        nodes = [Node(1, 'Another alert'), Node(5, expected),
-                 Node(4, 'Actual backend refusal: ' + expected), Node(2, expected)]
-        with patch.object(driver.ui.pyatspi, 'ROLE_ALERT', 1, create=True), patch.object(driver.ui.pyatspi, 'ROLE_PARAGRAPH', 2, create=True), patch.object(driver.ui.pyatspi, 'ROLE_STATUS_BAR', 3, create=True), patch.object(driver.ui.pyatspi, 'ROLE_TEXT', 4, create=True):
-            with patch.object(driver.ui, 'text_of', side_effect=lambda node: node.text), patch.object(driver.ui, 'find', side_effect=lambda app, check: next((n for n in nodes if check(n)), None)):
-                self.assertIs(driver.stale_acceptance_error(None), nodes[-1])
-                nodes.pop()
-                self.assertIsNone(driver.stale_acceptance_error(None))
+        nodes = [Node(1, 'Another alert'), Node(5, expected, 'QA selected-fact receipt'),
+                 Node(4, 'Actual backend refusal: ' + expected), Node(99, expected)]
+        with patch.object(driver.ui, 'text_of', side_effect=lambda node: node.text), patch.object(driver.ui, 'find', side_effect=lambda app, check: next((n for n in nodes if check(n)), None)):
+            self.assertIs(driver.stale_acceptance_error(None), nodes[-1])
+            nodes.pop()
+            self.assertIsNone(driver.stale_acceptance_error(None))
 
 
 if __name__ == '__main__':

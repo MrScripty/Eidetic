@@ -119,11 +119,11 @@ def fact(database):
 
 
 def stale_acceptance_error(application):
-    # WebKit exposes this role=alert paragraph as a native paragraph, rather
-    # than ROLE_ALERT. Match the actual refusal text, excluding the QA receipt.
+    # ARIA alerts do not consistently map to an AT-SPI text role in WebKit.
+    # Require the actual visible refusal text, excluding the QA receipt, and
+    # record the observed native role after the ordinary Accept action.
     def matches(node):
-        return node.getRole() in (ui.pyatspi.ROLE_ALERT, ui.pyatspi.ROLE_PARAGRAPH,
-                                  ui.pyatspi.ROLE_STATUS_BAR, ui.pyatspi.ROLE_TEXT) and \
+        return node.name != 'QA selected-fact receipt' and \
             ' '.join(ui.text_of(node).split()).startswith('Selected recall evidence is stale or unavailable.')
     return ui.find(application, matches)
 

@@ -488,6 +488,12 @@ def main(after_pending=None,qualification_host=None):
         evidence['error']=str(error)[:2000]
         if application is not None:
             evidence['accessibility']=ui.accessibility_snapshot(application)
+            try:
+                evidence['refusal_text_observations']=[{'role':n.getRoleName(),'name':n.name,'text':ui.text_of(n),'showing':ui.visible(n),
+                    'bounds':tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))}
+                    for n in ui.walk(application) if 'stale or unavailable' in ui.text_of(n)][:30]
+            except Exception as diagnostic_error:
+                evidence['refusal_diagnostic_error']=str(diagnostic_error)[:500]
             # Plain paragraph diagnostics expose native text segmentation and
             # clipping without DOM access or any project/model mutation.
             try:
