@@ -52,7 +52,6 @@ jobs:
           if changed != allowed:
               raise SystemExit('Qualification delta differs from exact enumerated nine files: ' + repr(sorted(changed)))
           PY
-          scripts/check-decision-traceability.sh
       - name: Install standard Linux and display dependencies
         timeout-minutes: 5
         run: |
@@ -61,7 +60,8 @@ jobs:
             libgtk-3-dev libwebkit2gtk-4.1-dev \
             libayatana-appindicator3-dev librsvg2-dev \
             xvfb xauth xdotool imagemagick dbus-x11 \
-            at-spi2-core python3-pyatspi
+            at-spi2-core python3-pyatspi ripgrep
+          scripts/check-decision-traceability.sh
       - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
         with:
           toolchain: 1.92.0
