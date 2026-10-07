@@ -1,0 +1,40 @@
+{
+  "product_source": "c09db543f10b663381379f0532ab0d34ad939b62",
+  "product_tree": "016da4f54d34faa384b9744d5e071e72c23ea8c6",
+  "qa_head": "981d9d94b8c371351bc00136f25ea6b7ee433397",
+  "qa_tree": "c1569f75bd5d588b6df28cadcef60a1cecfd9bb7",
+  "run_id": 37662915335,
+  "job_id": 112934698095,
+  "status": "completed",
+  "conclusion": "success",
+  "run_attempt": 1,
+  "artifact": {
+    "id": 11503180647,
+    "name": "eidetic-bible-initial-detail-retry-native-c09db54",
+    "size_in_bytes": 610177,
+    "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11503180647",
+    "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11503180647/zip",
+    "expired": false,
+    "created_at": "2026-10-07T18:16:32Z",
+    "expires_at": "2026-10-10T18:16:31Z",
+    "updated_at": "2026-10-07T18:16:32Z",
+    "digest": "sha256:05ce91b6fa227661df142f304072b45fe96989770c39959727f4d2193556c528",
+    "workflow_run": {
+      "id": 37662915335,
+      "repository_id": 1157333365,
+      "head_repository_id": 1157333365,
+      "head_branch": "test/manual-edit-bible-save-refresh-successor-native",
+      "head_sha": "981d9d94b8c371351bc00136f25ea6b7ee433397"
+    }
+  },
+  "zip_sha256": "05ce91b6fa227661df142f304072b45fe96989770c39959727f4d2193556c528",
+  "native_binary_sha256": "4221a84a8a897470c1260feb60a6407f3050cb9c381e0ae3c77852d831846480",
+  "original_png_count": 4,
+  "scope": "targeted uncached initial detail failure, left ordinary Retry, pending Loading and verified recovery only",
+  "prior_full_workflow_source": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+  "prior_full_workflow_seal_unchanged": "1c1f240d61ee2331b188aff01b41fc5ccf4e3bdb",
+  "synthetic_fixture_http_calls": 4,
+  "real_model_quality_qualified": false,
+  "DOM_or_IPC_injection": false,
+  "direct_database_writes": false
+}

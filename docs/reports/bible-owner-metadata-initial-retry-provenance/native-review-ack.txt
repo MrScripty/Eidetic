@@ -1,0 +1,40 @@
+Independent scoped native evidence review: ACK
+Reviewer: /root/review_manual_edit_fact_reconciliation
+Product: c09db543f10b663381379f0532ab0d34ad939b62
+Product tree: 016da4f54d34faa384b9744d5e071e72c23ea8c6
+QA: 981d9d94b8c371351bc00136f25ea6b7ee433397
+QA tree: c1569f75bd5d588b6df28cadcef60a1cecfd9bb7
+Hosted run: 37662915335
+Hosted job: 112934698095
+Artifact: 11503180647
+Artifact ZIP size: 610177 bytes
+Artifact ZIP SHA256: 05ce91b6fa227661df142f304072b45fe96989770c39959727f4d2193556c528
+Native binary SHA256 reported by original runtime custody receipt: 4221a84a8a897470c1260feb60a6407f3050cb9c381e0ae3c77852d831846480
+Native PID/window: 25021 / 2097155
+Original extraction: /workspace/scratch/bible-initial-retry-native-37662915335
+
+Personally inspected all four original PNGs individually at original detail. Each is 1920x1440 and hash-matches capture-evidence.json. Independently recomputed ZIP size/hash and byte-compared all seven archive members with their extracted originals (four PNGs, capture receipt and two sanitized logs). Decoded hosted job log records the exact QA checkout and artifact ID/size; source/tree match the previous exact-source and QA admission ACKs.
+
+Original PNG SHA256:
+f23194c7965b5c1498956a8e4318fec16520c195a96f15a9fd12ba7aed42197b  manual-fact-15-initial-detail-error.png
+95a3e7272bb32e1441e64b044a8577783d796563adbf135325aa548bafce241d  manual-fact-16-initial-detail-pending.png
+2c51f36a6f8f7235dab79da874141e6bf5060da0c49376883d8991fc770b0869  manual-fact-17-initial-detail-recovered.png
+3b077d7dbe0a2283197bdf35671ff680de2dc00151273e2343e0e4f92b663a26  manual-fact-18-initial-detail-draft.png
+
+Qualified behavior:
+- Original 15: ordinary Mara entity selection has produced the labelled synthetic uncached detail failure; both inspectors display that error and Retry saved facts. No field editor is rendered. Receipt records two failed initial reads.
+- Original 16: a single ordinary Retry in the left inspector is held by the labelled fault seam. BOTH inspectors show Loading, with no old error/Retry or field editor. The right inspector does not retain an error in this original. This is the shared pending/error state, not two separately clicked retries. Receipt records one held read.
+- Original 17: releasing the held read invokes the public production GET. The same mounted inspectors both display the saved Red tagline and canonical motivation; errors have cleared. This is admission into the shared detail cache, not a second right-side Retry.
+- Original 18: the left motivation editor retains exact unsubmitted text "  Recovery draft — 雨.\n\n  ". Its Save is enabled according to the native control assertion, and Save is never clicked. Right motivation remains "UNCONSUMED sibling: preserve the witness." Screenplay and timeline remain visible.
+- The passing qualifier's before/after canonical read assertions cover unchanged saved screenplay/placement, Bible fields and history through the read/retry/draft sequence. No canonical database snapshot is retained for a separate SQL rerun by this reviewer; this assertion is supported by the reviewed driver and original passing receipt.
+
+Independently recomputed all nine original served-source receipt hashes against committed QA source bytes. Detail-projection routing admission is true. BibleGraphNodeDetail source SHA256 is 0a4f4868e44d8c394e9d1e09ae43f186640339eb6aec62b07fa91b839749c82b. Config SHA256 ccbaea113d140e0db463502db4429645cdf4c6c2decf148f2e283158ce122639 matches committed QA config bytes. Runtime transformed-module digests and binary identity are original receipt/launch-check evidence; transformed module bytes and native executable are not included in the archive for independent digest recomputation.
+
+Independently recomputed containment of all nonwhite glyph rectangles inside BOTH their respective textarea bounds and left-pane viewport: 20 glyphs for "Mara's umbrella is red." in recovered capture and 16 glyphs for the exact draft in final capture. Original input observations show eventual exact Unicode/whitespace/newline equality; the earlier intermediate incomplete observation is retained and does not qualify input by itself.
+
+Exactly four accepted provider records: generation, recap, generation, recap. All are labelled synthetic, real_model=false. No analysis or additional provider call occurs in this target. Full hosted checks are recorded as 546 UI/94 files, 123 core, 532 server, 46 Python qualifier tests, with strict all-target/all-feature Clippy and UI gates passing. Local independent source/QA test counts remain separately recorded in the source and QA ACK files.
+
+Scope/limits: targeted uncached initial detail failure, ordinary Retry, shared pending Loading, verified recovery and exact unsubmitted draft only. The read failure/hold and fixture responses are synthetic; no natural outage or real-model quality is qualified. Generic authored-owner metadata is qualified by server regressions only. No new screenplay edit, fact proposal analysis/acceptance/rejection, stale check, replay, full reconciliation walkthrough, restart or project-switch sequence is performed. Existing Needs review labels precede the retry and do not establish a new propagation transition. Prior full e5a09ed native evidence remains separately source-bound and unchanged. No raw evidence, product, QA source or public state was modified by this reviewer; only this requested standalone ACK was written. No remaining blocker found for this scoped native qualification.
+
+Capture receipt SHA256: 1336af81b584c536dbd07991fc28be0da0e7b4dd64fee5657000fe40c97ab923
+Decoded hosted job log SHA256: d2b17241897266d95e085dd174fa70359035fd10b07f6625ef1bf112c6264997
