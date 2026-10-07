@@ -285,6 +285,8 @@ pub struct ScriptImpactProjection {
     pub lineage_available: bool,
     pub needs_review: bool,
     pub causes: Vec<ScriptImpactCause>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fact_edit: Option<super::ScriptFactEditEvidence>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -387,6 +389,7 @@ mod tests {
             output_block_id: Some(ScriptBlockId::new("script.block.heading-1").unwrap()),
             lineage_available: true,
             needs_review: true,
+            fact_edit: None,
             causes: vec![ScriptImpactCause {
                 dependency_id: super::super::SemanticDependencyId::new("generation.input").unwrap(),
                 input: super::super::SemanticDependencyEndpoint::ScriptBlock {

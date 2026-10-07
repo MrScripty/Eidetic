@@ -41,6 +41,7 @@ pub(crate) fn record_accept_propagation_proposal(
             created_at_ms,
         );
     }
+    crate::script_fact_proposal::validate_proposal(conn, &proposal)?;
     let accepted_target = accepted_target(conn, &proposal)?;
 
     let event = ChangeEvent::new(
@@ -61,12 +62,24 @@ pub(crate) fn record_accept_propagation_proposal(
         &event,
         &revisions,
         |tx| {
+            if proposal.script_fact_binding.is_some() {
+                let current = load_pending_proposal(tx, &proposal.id)
+                    .map_err(|e| HistoryStoreError::InvalidValue(e.to_string()))?;
+                if current != proposal {
+                    return Err(crate::script_fact_evidence::stale());
+                }
+                crate::script_fact_proposal::validate_proposal(tx, &proposal)?;
+            }
             update_proposal_status_in_transaction(
                 tx,
                 &proposal.id,
                 SemanticProposalStatus::Accepted,
             )?;
-            accepted_target.apply(tx, event.id)
+            if proposal.script_fact_binding.is_some() {
+                accepted_target_for_fact(tx, &proposal, event.id)
+            } else {
+                accepted_target.apply(tx, event.id)
+            }
         },
     )?)
 }
@@ -337,7 +350,19 @@ fn bible_field_command_for_proposal(
         )));
     };
 
-    Ok(set_bible_field_command(node_id.clone(), part, field, value))
+    let mut command = set_bible_field_command(node_id.clone(), part, field, value);
+    // Detail projections can merge stored fields into schema-default parts.
+    // Preserve the stored owner and its author-edited metadata when changing value.
+    if proposal.script_fact_binding.is_some() {
+        let (name, sort_order): (String, u32) = conn.query_row(
+        "SELECT name, sort_order FROM bible_graph_parts WHERE id=?1 AND deleted_event_id IS NULL",
+        [field.part_id.as_str()],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
+        command.part_name = name;
+        command.part_sort_order = sort_order;
+    }
+    Ok(command)
 }
 
 fn bible_snapshot_field_target_for_proposal(
@@ -451,7 +476,7 @@ fn set_bible_field_command(
 ) -> SetBibleGraphFieldCommand {
     SetBibleGraphFieldCommand {
         node_id,
-        part_id: part.id.clone(),
+        part_id: field.part_id.clone(),
         part_key: part.part_key.clone(),
         part_name: part.name.clone(),
         part_sort_order: part.sort_order,
@@ -484,3 +509,13 @@ fn field_old_value(
 #[cfg(test)]
 #[path = "propagation_proposal_accept_tests.rs"]
 mod tests;
+
+fn accepted_target_for_fact(
+    tx: &Transaction<'_>,
+    proposal: &PropagationProposal,
+    event: eidetic_core::contracts::ChangeEventId,
+) -> Result<(), HistoryStoreError> {
+    let current = accepted_target(tx, proposal)
+        .map_err(|e| HistoryStoreError::InvalidValue(e.to_string()))?;
+    current.apply(tx, event)
+}

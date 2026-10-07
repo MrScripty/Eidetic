@@ -11,6 +11,7 @@ mod context_influence;
 mod graph_proposal;
 mod propagation_proposal;
 mod script_document;
+mod script_fact_reconciliation;
 mod script_impact_review;
 mod selected_node_editor;
 mod semantic_dependency;
@@ -99,6 +100,10 @@ pub use script_document::{
     ScriptImpactReason, ScriptLock, ScriptLockId, ScriptPatch, ScriptPatchId, ScriptSegment,
     ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan, ScriptSpanId,
     ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
+};
+pub use script_fact_reconciliation::{
+    RequestScriptFactProposalCommand, ScriptFactEditEvidence, ScriptFactField,
+    ScriptFactProposalBinding,
 };
 pub use script_impact_review::{
     RequestScriptImpactProposalCommand, ScriptImpactProposalBinding, ScriptRecallFactSelection,

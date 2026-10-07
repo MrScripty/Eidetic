@@ -161,4 +161,4 @@ fn parse_event(value: &str) -> Result<ChangeEventId, HistoryStoreError> {
 
 #[cfg(test)]
 #[path = "bible_field_lineage_tests.rs"]
-mod tests;
+pub(crate) mod tests;

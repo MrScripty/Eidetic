@@ -50,6 +50,11 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `childPlanReview.client.test.ts` | Actual client-compiled controller recovery of reactive proposals, original evidence and explicit immutable acceptance. |
 | `ChildPlanReview.ssr.test.ts` | Explicit acceptance and saved evidence presentation with safe text rendering. |
 
+| `ScriptFactReconciliation.svelte` | Explicit saved-edit analysis and existing fact-proposal before/after review with accept/reject. |
+| `scriptFactReview.svelte.ts` | Transient fact-analysis retry identities and scoped decision commands without changing saved text or drafts. |
+| `scriptFactReview.svelte.test.ts` | Rendered fact/source evidence, exact retries, draft preservation and retired-owner responses. |
+| `scriptFactReview.client.test.ts` | Actual client rune state, exact retry and late saved-edit refusal regression. |
+
 ## Problem
 The app needs focused editing surfaces where timeline selection, AI generation, and projection-backed script review stay coordinated.
 

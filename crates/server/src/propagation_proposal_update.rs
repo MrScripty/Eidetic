@@ -30,6 +30,12 @@ pub(crate) fn record_update_propagation_proposal(
             "revision-bound screenplay proposals require a fresh preview; reject this proposal first".into(),
         ));
     }
+    if existing.script_fact_binding.is_some() {
+        return Err(PropagationProposalStoreError::InvalidCommand(
+            "Revision-bound fact proposals require a fresh analysis; reject this proposal first"
+                .into(),
+        ));
+    }
     let updated = updated_proposal(&existing, &command.payload);
     propagation_proposal_store::validate_proposal_shape(
         &updated.action,
@@ -81,6 +87,7 @@ fn updated_proposal(
         rationale: command.rationale.clone(),
         created_at_ms: existing.created_at_ms,
         script_review_binding: existing.script_review_binding.clone(),
+        script_fact_binding: existing.script_fact_binding.clone(),
     }
 }
 

@@ -98,3 +98,5 @@ server. The desktop boundary adds no cached graph preimage or replacement state.
 Its label-only response returns `projection: null` for `already_recorded` replay,
 so a deleted source need not be projected. Fresh writes still return source node
 detail. The adapter forwards this optional projection without inventing one.
+
+The explicit `command_script_fact_proposal_analyze` command delegates one saved manual edit and one actually consumed baseline text fact to the canonical capture/provider/proposal service. It returns pending proposals only; existing explicit propagation acceptance is the sole fact write.

@@ -46,6 +46,13 @@ pub(crate) fn load_impact(
     .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?
     .payload
     .dependencies;
+    let fact_edit = crate::script_fact_evidence::evidence(
+        conn,
+        segment,
+        generation_event_id,
+        &block,
+        &dependencies,
+    )?;
     let mut causes = Vec::new();
     for dependency in dependencies {
         let Some(ref binding) = dependency.revision_binding else {
@@ -142,6 +149,7 @@ pub(crate) fn load_impact(
                 .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?,
         ),
         lineage_available,
+        fact_edit,
         needs_review: !causes.is_empty(),
         causes,
     }))

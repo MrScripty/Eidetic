@@ -20,6 +20,8 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `semantic_dependency.rs` | Typed semantic relationships with optional source/target revision bindings for generation lineage. |
 | `timeline_render.rs` | Timeline renderer projections, including core-derived gaps filtered by the renderer's minimum duration. |
 
+| `script_fact_reconciliation.rs` | Canonical saved-edit receipts and identity-only request for one consumed baseline fact proposal. |
+
 ## Problem
 The new architecture needs stable types for backend-owned commands, event history, sparse object revisions, and read projections before persistence, routes, Svelte, or Bevy can implement their slices safely.
 

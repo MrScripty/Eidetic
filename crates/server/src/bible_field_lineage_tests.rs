@@ -5,7 +5,7 @@ use crate::{bible_graph_command, script_document_command, script_impact_review, 
 const RED: &str = "Mara carries a red umbrella.";
 const BLUE: &str = "Mara carries a blue umbrella — 雨.\nKeep the train waiting.";
 
-fn fact(conn: &mut Connection, id: &str) -> SetBibleGraphFieldCommand {
+pub(crate) fn fact(conn: &mut Connection, id: &str) -> SetBibleGraphFieldCommand {
     let node_id = BibleGraphNodeId::new(id).unwrap();
     bible_graph_command::apply_create_bible_graph_node(
         conn,
@@ -34,14 +34,17 @@ fn fact(conn: &mut Connection, id: &str) -> SetBibleGraphFieldCommand {
     command
 }
 
-fn set(conn: &mut Connection, field: &SetBibleGraphFieldCommand, value: Option<&str>) {
+pub(crate) fn set(conn: &mut Connection, field: &SetBibleGraphFieldCommand, value: Option<&str>) {
     let mut field = field.clone();
     field.value = value.map(|value| FieldValue::Text(value.into()));
     bible_graph_command::apply_set_bible_graph_field(conn, &CommandEnvelope::new(field), 20)
         .unwrap();
 }
 
-fn capture_for(conn: &Connection, block: &SetScriptBlockCommand) -> Vec<BibleFieldInput> {
+pub(crate) fn capture_for(
+    conn: &Connection,
+    block: &SetScriptBlockCommand,
+) -> Vec<BibleFieldInput> {
     let context = crate::ai_context_projection::load_ai_bible_context_projection(
         conn,
         eidetic_core::timeline::node::NodeId(

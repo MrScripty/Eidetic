@@ -473,3 +473,12 @@ export function createScriptBlock(
   const command: CommandEnvelope<CreateScriptBlockCommand> = { id: commandId, payload };
   return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block_create', { command });
 }
+
+export function requestScriptFactProposal(
+  payload: import('./scriptFactTypes.js').RequestScriptFactProposalCommand,
+  commandId?: string,
+): Promise<PropagationProposalCommandResponse> {
+  return invokeDesktop<PropagationProposalCommandResponse>('command_script_fact_proposal_analyze', {
+    command: { id: commandId ?? createCommandId(), payload },
+  });
+}

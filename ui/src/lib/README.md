@@ -22,6 +22,8 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | `stores/`                  | Reactive Svelte state used to coordinate the UI around backend-driven data.                      |
 | `components/`              | Feature UI modules for layout, timeline editing, sidebars, and relationship views.               |
 
+| `scriptFactTypes.ts` | Saved manual-edit and consumed-fact projection/request/review binding shapes. |
+
 ## Problem
 
 The UI needs one place where backend-backed shapes, local UI constants, and shared rendering behavior stay consistent. Without a common `lib/` boundary, the app would drift into per-component contract copies and fragile ad hoc wiring.
