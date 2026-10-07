@@ -247,8 +247,14 @@ def visible_text(application, label):
     # Recall results extend below the nested Bible sidebar viewport. Native
     # scrolling must expose the exact paragraph before claiming it visible.
     expected = ' '.join(label.split())
-    return ui.reveal(application, lambda n: expected in ' '.join(ui.text_of(n).split())
-        and n.getRole() not in (ui.pyatspi.ROLE_COMBO_BOX,))
+    def matches(node):
+        return expected in ' '.join(ui.text_of(node).split()) and node.getRole() != ui.pyatspi.ROLE_COMBO_BOX
+    found = ui.find(application, matches)
+    if found:
+        return found
+    # An enclosing hidden section can expose descendant text but cannot be
+    # scrolled into view. Reveal only the actual offscreen result paragraph.
+    return ui.reveal(application, lambda n: n.getRole() == ui.pyatspi.ROLE_PARAGRAPH and matches(n))
 
 
 def recall_disclosure(application):

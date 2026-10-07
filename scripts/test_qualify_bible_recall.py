@@ -21,10 +21,16 @@ class RecallCaptureTests(unittest.TestCase):
         class Node:
             def getRole(self):return 1
         paragraph=Node()
-        with patch.object(driver.ui.pyatspi,'ROLE_COMBO_BOX',2,create=True), patch.object(driver.ui,'text_of',return_value='Unresolved:\n environment.weather — no established value'):
+        with patch.object(driver.ui.pyatspi,'ROLE_COMBO_BOX',2,create=True), patch.object(driver.ui.pyatspi,'ROLE_PARAGRAPH',1,create=True), patch.object(driver.ui,'text_of',return_value='Unresolved:\n environment.weather — no established value'), patch.object(driver.ui,'find',return_value=None):
             with patch.object(driver.ui,'reveal',side_effect=lambda app,predicate:paragraph if predicate(paragraph) else None) as reveal:
                 self.assertIs(driver.visible_text(None,'Unresolved: environment.weather'),paragraph)
                 reveal.assert_called_once()
+
+    def test_visible_connection_status_is_preferred_without_scrolling_hidden_ancestors(self):
+        status=object()
+        with patch.object(driver.ui,'find',return_value=status), patch.object(driver.ui,'reveal') as reveal:
+            self.assertIs(driver.visible_text(None,'Connected'),status)
+            reveal.assert_not_called()
 
     def test_synthetic_context_requires_saved_inputs_and_exact_current_fact_excludes_draft_and_unrecalled_neighbor(self):
         provider=object.__new__(driver.RecallProvider)
