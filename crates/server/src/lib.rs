@@ -85,6 +85,7 @@ pub(crate) mod script_impact_projection;
 pub(crate) mod script_impact_prompt;
 pub(crate) mod script_impact_review;
 pub mod script_impact_review_service;
+pub(crate) mod script_recall_selection;
 pub(crate) mod script_segment_replace;
 pub(crate) mod script_store;
 pub(crate) mod script_store_codec;

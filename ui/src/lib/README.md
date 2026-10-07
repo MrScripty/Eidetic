@@ -125,6 +125,13 @@ async function openTimeline() {
 ```
 
 ## API Consumer Contract
+Targeted-preview types mirror optional `recall_selection` with exact baseline
+selectors and displayed name/path receipts. `ScriptRecallFacts` stages author
+intent for one existing Needs review block; it never changes generation defaults,
+world data, context links or existing proposals. Canonical selected values appear
+only in the backend proposal's existing `bible_inputs` receipt. The server
+revalidates source revisions at capture, recording and atomic acceptance.
+
 
 - Internal consumers import typed shapes and helpers from `$lib/*`.
 - Store consumers should treat backend-backed entities as read-through state and mutate them through API/store actions, not local object surgery.

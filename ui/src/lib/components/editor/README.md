@@ -34,6 +34,12 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `scriptBlockEditLifetime.ssr.test.ts` | Fresh workspace consumers, independent Unicode drafts, delayed acknowledgement, exact command replay, refusal/reload and retired-session fixture regressions. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
+| `ScriptRecallFacts.svelte` | Explicit up-to-eight baseline fact selection for one new targeted preview, with visible temporal/unknown/omitted limitations. |
+| `scriptRecallSelection.ts` | Plain copied field selectors and exact endpoint-name/path receipts; no client prompt values. |
+| `scriptRecallDraft.svelte.ts` | Transient target/session/packet-owned selection, bounded toggles and stale-submit refusal. |
+| `scriptRecallSelection.fixture.ts` | Synthetic test-only recalled evidence fixture. |
+| `scriptRecallSelection.test.ts`, `scriptRecallDraft.client.test.ts` | Selector validation, exact copied custody, target/session retirement and actual browser rune proxy coverage. |
+| `ScriptRecallFacts.ssr.test.ts`, `scriptRecallPreview.svelte.test.ts` | Unsupported-evidence rendering and actual command/store draft/pending preservation with labelled fixture data. |
 | `scriptImpactNotice.ts` | Human-readable labels for the typed input review causes. |
 | `ScriptView.svelte` | Read-only screenplay rendering. |
 | `ChildPlanReview.svelte` | Explicit timeline-plan preview, proposed outlines and exact saved screenplay/Bible evidence. |
@@ -59,6 +65,17 @@ Keep `BeatEditor.svelte` as the orchestration entrypoint and split header, conte
 - Splitting the editor during the standards pass: rejected because behavior correctness and accessibility fixes had higher priority.
 
 ## Invariants
+Optional recalled facts belong to a new preview of its explicit target block.
+The selector uses the shared displayed recall packet and retires selection on
+packet/target changes; submit also reads the current editor session before use.
+At most eight resolved baseline facts from unspecified-time recall are eligible.
+Snapshot-backed, unresolved, omitted and unknown-name evidence is visibly
+unavailable. Paths supplied with related facts remain untimed associations.
+Requests carry identities/expected revisions and copied name/path receipts, not
+client values. Existing scene context remains unchanged, and no normal generation
+or batch action receives recall automatically. Existing saved-text, per-block
+draft, proposal and acceptance owners remain authoritative.
+
 
 - Plan actions are available on selected clips with a child level. Generation presents the durable pending plan without applying it. Only Accept timeline plan calls the existing validated children command; saved screenplay and author drafts are untouched. Refused plans retain their preview and error. Review saved timeline plans reads the existing child-plan projection, lists every pending plan for the selected clip, and reopens only the plan the writer chooses. Applied/rejected plans are excluded. Recovery never generates or applies material, infers a newest plan from timestamps, or replaces an active preview or uncertain acceptance. Retired selection/session/read continuations cannot repopulate the review surface. Project-switch recovery remains deferred.
 

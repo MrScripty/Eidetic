@@ -16,7 +16,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `context_influence.rs` | Timeline context stack with optional exact saved screenplay evidence and recorded evaluation/influence contracts. |
 | `graph_proposal.rs` | Generic reviewable graph proposal contracts for agent-proposed bible nodes, fields, edges, and timeline-context links. |
 | `script_document.rs` | Canonical script document, segment, block, span, lock, patch, and script projection contracts. |
-| `script_impact_review.rs` | Explicit targeted preview request and captured screenplay/world-context evidence for revision-bound propagation proposals. |
+| `script_impact_review.rs` | Explicit targeted preview request, bounded author-selected recall identities and captured screenplay/world-context evidence for revision-bound propagation proposals. |
 | `semantic_dependency.rs` | Typed semantic relationships with optional source/target revision bindings for generation lineage. |
 | `timeline_render.rs` | Timeline renderer projections, including core-derived gaps filtered by the renderer's minimum duration. |
 
@@ -103,6 +103,15 @@ assert_eq!(event.summary, "edit script");
 ```
 
 ## API Consumer Contract
+Targeted-preview requests optionally carry `recall_selection`: the existing recall
+query, up to eight baseline field identities/expected revisions, and exact
+displayed endpoint-name/path receipts. Nonempty selections require unspecified
+story time in both recall and preview. The backend re-reads canonical recall;
+selectors do not authorize client values or replacement text. Unknown sources,
+snapshot-backed, unresolved and omitted facts refuse. Empty facts preserve the
+existing no-selection behavior. Existing request, proposal and acceptance owners
+retain replay, immutable binding and replacement authority.
+
 - These types are stable internal Rust contracts for command/event/projection slices.
 - External API exposure must add explicit boundary validation and serialization round-trip tests in the consuming layer.
 - Compatibility is not required for pre-refactor project data.
