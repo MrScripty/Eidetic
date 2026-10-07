@@ -479,9 +479,12 @@ def main():
             evidence['accessibility']=ui.accessibility_snapshot(application)
             # Plain paragraph diagnostics expose native text segmentation and
             # clipping without DOM access or any project/model mutation.
-            evidence['paragraph_observations']=[{'text':ui.text_of(n),'showing':ui.visible(n),
-                'bounds':tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))}
-                for n in ui.walk(application) if n.getRole()==ui.pyatspi.ROLE_PARAGRAPH][:160]
+            try:
+                evidence['paragraph_observations']=[{'text':ui.text_of(n),'showing':ui.visible(n),
+                    'bounds':tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))}
+                    for n in ui.walk(application) if n.getRole()==ui.pyatspi.ROLE_PARAGRAPH][:160]
+            except Exception as diagnostic_error:
+                evidence['paragraph_diagnostic_error']=str(diagnostic_error)[:500]
         if window is not None:
             try: capture('eidetic-bible-recall-failure.png')
             except Exception as capture_error: evidence['failure_capture_error']=str(capture_error)[:500]
