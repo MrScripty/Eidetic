@@ -620,6 +620,12 @@ timeline fields, arc membership and project switching remain separate. Revisit
 when those sources or unowned legacy history receive explicit scope.
 
 `story_arc_lineage` reads canonical node tags, prompt fields and field history in
+
+The separate known-empty Description applicability boundary is reproduced in
+`ai_generation_runtime_tests`: a public edit adds actually applicable prompt
+information without a Scene review cause; clear/unrelated controls pass. The
+baseline positive is explicitly run as a known failure until the bounded receipt
+is implemented. See `docs/plans/agent-story-workflows/arc-description-applicability.md`.
 one snapshot with generation target custody. `arc_inputs` in existing generation
 and targeted-review command JSON retain exact tagged name/type/nonempty description
 values. Each field clock uses owned sparse StoryArc history; color/parent metadata
