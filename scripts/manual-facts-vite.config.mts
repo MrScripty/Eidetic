@@ -7,6 +7,9 @@ const manualFacts: Plugin = {
     name: "qualifier-only-manual-facts",
     enforce: "pre",
     resolveId(source, importer) {
+        if ((source === "$lib/api.js" || source.endsWith("/lib/api.js")) && importer?.endsWith("/BeatEditor.svelte")) {
+            return fileURLToPath(new URL("../ui/src/qualification/notesPrompt.svelte.ts", import.meta.url));
+        }
         if (
             (source === "$lib/commandApi.js" ||
                 source.endsWith("/lib/commandApi.js")) &&

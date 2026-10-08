@@ -1,14 +1,14 @@
-name: Authored timeline Notes targeted screenplay review native qualification
+name: Committed Notes raw prompt refresh native qualification
 
 on:
   push:
-    branches: [test/timeline-notes-review-native]
+    branches: [test/notes-prompt-preview-native]
 
 permissions:
   contents: read
 
 concurrency:
-  group: eidetic-timeline-notes-review-native
+  group: eidetic-notes-prompt-native
   cancel-in-progress: true
 
 defaults:
@@ -24,8 +24,8 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: a31f2a650fdf5f87cc27985b63f47310e2b34758
-      EIDETIC_CAPTURE_SCOPE: timeline-notes
+      EIDETIC_CAPTURE_SOURCE: c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4
+      EIDETIC_CAPTURE_SCOPE: notes-prompt
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,12 +46,13 @@ jobs:
               'ui/src/qualification/manualFacts.svelte.ts',
               'ui/src/qualification/ManualFactControls.svelte',
               'ui/src/qualification/README.md',
+              'ui/src/qualification/notesPrompt.svelte.ts',
           }
           changed = set(subprocess.check_output([
               'git', 'diff', '--name-only', os.environ['EIDETIC_CAPTURE_SOURCE'], 'HEAD'
           ], text=True).splitlines())
           if changed != allowed:
-              raise SystemExit('Qualification delta differs from exact enumerated nine files: ' + repr(sorted(changed)))
+              raise SystemExit('Qualification delta differs from exact enumerated ten QA files: ' + repr(sorted(changed)))
           PY
       - name: Install standard Linux and display dependencies
         timeout-minutes: 10
@@ -91,7 +92,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           chunks = '\n'.join(p.read_text() for p in Path('../dist/ui/_app/immutable').rglob('*.js'))
-          for marker in ('QA replay exact analysis', 'QA relationship edit and restore', 'Analyze saved edit', 'command_script_fact_proposal_analyze'):
+          for marker in ('QA replay exact analysis', 'QA relationship edit and restore', 'Analyze saved edit', 'command_script_fact_proposal_analyze', 'QA hold next real context response'):
               if marker not in chunks:
                   raise SystemExit('Missing compiled selected-fact seam: ' + marker)
           PY
@@ -116,7 +117,7 @@ jobs:
         run: |
           cargo clippy --locked -p eidetic-core -p eidetic-server --all-targets --all-features -- -D warnings
           cargo test --locked -p eidetic-core -p eidetic-server --all-targets
-      - name: Qualify ordinary authored Notes edit and explicit targeted acceptance
+      - name: Qualify exact Notes refresh and late real-context return refusal
         timeout-minutes: 10
         env:
           EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
@@ -127,7 +128,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eidetic-timeline-notes-review-native-a31f2a6
+          name: eidetic-notes-prompt-native-c5fad5c
           retention-days: 3
           if-no-files-found: warn
           path: |

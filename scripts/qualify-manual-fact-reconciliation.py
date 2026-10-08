@@ -17,7 +17,7 @@ from urllib.request import urlopen
 spec=importlib.util.spec_from_file_location('native_helpers',Path(__file__).with_name('manual-fact-native-helpers.py'))
 driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
 ui=driver.ui
-SOURCE='a31f2a650fdf5f87cc27985b63f47310e2b34758'
+SOURCE='c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4'
 NOTES='  Mara reveals the witness — 雨.\n\n  '
 NOTES_PREVIEW='  Synthetic Notes update: Mara identifies the witness — 雨.\n\n  '
 RED="Mara's umbrella is red."
@@ -577,6 +577,102 @@ def qualify_timeline_notes(application,window,database,fixture,capture,checkpoin
     if len(Provider.records)!=6 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Expected four fixture and two targeted synthetic provider calls')
     checkpoint('explicit fresh acceptance updates only chosen screenplay and refreshes Notes lineage');capture('timeline-notes-04-accepted.png')
 
+def context_prompt_matches(user,notes):
+    return ('SCENE NOTES:\n'+notes+'\n\n' in user and DRAFT not in user)
+
+
+def context_receipt(application):
+    node=ui.find(application,lambda n:n.name=='QA context receipt' and n.getRole() in (ui.pyatspi.ROLE_TEXT,ui.pyatspi.ROLE_ENTRY))
+    if node is None:return None
+    text=node.queryText();value=json.loads(text.getText(0,text.characterCount))
+    if value['seam']!='QA held real public context return; no fabricated prompt':raise RuntimeError('Unlabelled context seam')
+    return value
+
+
+def raw_prompt_visible(application,window,exact,notes):
+    # Compare the real native User Prompt text, excluding the JSON receipt.
+    # Read complete text: prompts legitimately exceed the diagnostic helper's 4K cap.
+    application.clear_cache()
+    for node in ui.walk(application):
+        try:text=node.queryText();actual=text.getText(0,text.characterCount)
+        except NotImplementedError:continue
+        if actual!=exact or not ui.visible(node):continue
+        rect=tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+        offset=actual.index('SCENE NOTES:\n')+len('SCENE NOTES:\n')
+        glyphs=[tuple(text.getCharacterExtents(offset+i,ui.pyatspi.XY_SCREEN)) for i,char in enumerate(notes) if not char.isspace()]
+        top=[tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)) for n in ui.walk(application) if n.name=='Resize panels' and ui.visible(n) and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[2]>900 and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[1]<720]
+        if len(top)!=1:raise RuntimeError('Ambiguous actual editor viewport')
+        x,y,width,height=top[0];viewport=(x,0,width,y)
+        if glyphs and all(driver.contained(g,rect) and driver.contained(g,viewport) for g in glyphs):
+            return {'exact_user_prompt':actual,'exact_notes':notes,'native_prompt_bounds':list(rect),'editor_viewport':list(viewport),'notes_character_bounds':[list(g) for g in glyphs],'native_notes_glyphs_visible':True}
+    return None
+
+
+def qualify_notes_prompt(application,window,database,fixture,capture,checkpoint,evidence):
+    b_id=fixture['b']['id'];original=material(database);original_bible=bible_fields(database)
+    def saved_notes():return json.loads(ui.query(database,'SELECT content_json FROM nodes WHERE id=?',(b_id,))[0][0])['notes']
+    old=saved_notes()
+    block=ui.wait_for('unrelated saved F block',lambda:ui.screenplay_block(application,driver.screenplay_anchor(F_TEXT)))
+    ui.reveal_button(block,'Edit',window)
+    ui.type_text(ui.wait_for('unrelated F editor',lambda:ui.editable(application,F_TEXT)),window,DRAFT)
+    ui.click_button(application,'Bible',window)
+    search=ui.wait_for('Bible search',lambda:ui.find(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and 0<=n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]<400 and ui.text_of(n)==''))
+    ui.type_text(search,window,'Mara')
+    ui.click_control(ui.wait_for('Mara entity',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and ui.button_label_matches(n.name,'Mara',prefix=True))),window)
+    driver.bible_field(application,window,RED,'left',align=True)
+    clip=ui.wait_for('ordinary B timeline clip',lambda:ui.native_timeline_clip(application,fixture['b']['name'],window));ui.click_control(clip[0],window,clip[1])
+    splitter=ui.wait_for('existing editor splitter',lambda:ui.find(application,lambda n:n.name=='Resize panels' and ui.visible(n) and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[2]>900 and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[1]<720))
+    ui.click_control(splitter,window)
+    ui.wait_for('editor splitter native focus',lambda:splitter.getState().contains(ui.pyatspi.STATE_FOCUSED))
+    ui.command('xdotool','key','--clearmodifiers','--repeat','16','--delay','40','Down')
+    def open_raw():
+        panel=ui.wait_for('ordinary Raw AI Prompt disclosure',lambda:ui.reveal(application,lambda n:n.name.upper().startswith('RAW AI PROMPT') and n.getRole() in (ui.pyatspi.ROLE_UNKNOWN,ui.pyatspi.ROLE_PUSH_BUTTON,ui.pyatspi.ROLE_TOGGLE_BUTTON)))
+        ui.click_control(panel,window)
+    def returned(notes,after=0):
+        value=context_receipt(application)
+        if value is None:return None
+        return next((call for call in reversed(value['calls']) if call['node_id']==b_id and call['id']>after and call['stage']=='returned' and context_prompt_matches(call.get('actual_user',''),notes)),None)
+    def preserved():
+        if material(database)!=original or bible_fields(database)!=original_bible:raise RuntimeError('Context reads/Notes edit changed saved screenplay, placement, or Bible')
+        require_draft(application)
+    first=ui.wait_for('real original committed Notes context',lambda:returned(old));open_raw()
+    evidence['original_context']=ui.wait_for('original Notes glyphs visible in actual User Prompt',lambda:raw_prompt_visible(application,window,first['actual_user'],old))
+    preserved();checkpoint('original real public context with Bible timeline and saved screenplay');capture('notes-prompt-01-original.png')
+    ui.click_button(application,'QA hold next real context response',window)
+    refresh=ui.wait_for('ordinary Raw Prompt Refresh',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and n.name in ('Refresh','REFRESH')))
+    ui.click_control(refresh,window)
+    def held():
+        value=context_receipt(application)
+        if value is None or not value['held']:return None
+        return next((call for call in value['calls'] if call['node_id']==b_id and call['stage']=='held' and context_prompt_matches(call.get('actual_user',''),old)),None)
+    old_read=ui.wait_for('held unmodified older actual context return',held)
+    field_node=ui.wait_for('ordinary selected Notes editor',lambda:ui.reveal(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)==old))
+    ui.type_text(field_node,window,NOTES);ui.wait_for('exact public debounced Notes commit',lambda:saved_notes()==NOTES)
+    fresh=ui.wait_for('new exact Notes public context while older read remains held',lambda:returned(NOTES,old_read['id']))
+    evidence['fresh_context']=ui.wait_for('fresh Notes glyphs visible in actual User Prompt',lambda:raw_prompt_visible(application,window,fresh['actual_user'],NOTES))
+    if not context_receipt(application)['held']:raise RuntimeError('Older context was not still held')
+    evidence['older_held_real_read']=old_read;evidence['ordinary_notes_edit']={'original':old,'exact_saved_notes':NOTES,'native_keys_and_public_debounced_commit':True}
+    preserved();checkpoint('new committed exact Notes refreshes prompt while original real response remains held');capture('notes-prompt-02-fresh-old-held.png')
+    history=driver.canonical_state(database)
+    ui.click_button(application,'QA release real context response',window)
+    ui.wait_for('older actual response returned',lambda:not context_receipt(application)['held'] and any(c['id']==old_read['id'] and c['stage']=='returned' for c in context_receipt(application)['calls']))
+    evidence['after_late_return']=ui.wait_for('late older response refused by production context owner',lambda:raw_prompt_visible(application,window,fresh['actual_user'],NOTES))
+    if driver.canonical_state(database)!=history:raise RuntimeError('Read-only delayed return wrote canonical history')
+    preserved();evidence['stale_checks'].append('held older real context success cannot replace fresh same-node Notes context')
+    checkpoint('released older real response cannot replace latest authored Notes prompt');capture('notes-prompt-03-late-return-refused.png')
+    field_node=ui.wait_for('Notes editor before clear',lambda:ui.editable(application,NOTES));ui.type_text(field_node,window,'')
+    ui.wait_for('ordinary Notes clear saved',lambda:saved_notes()=='')
+    ui.wait_for('empty Notes remove Raw Prompt panel',lambda:not ui.find(application,lambda n:n.name.upper().startswith('RAW AI PROMPT')))
+    field_node=ui.wait_for('empty selected Notes editor',lambda:ui.find(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)=='' and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]>400 and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[1]<600))
+    ui.type_text(field_node,window,NOTES);ui.wait_for('exact restored Notes public commit',lambda:saved_notes()==NOTES)
+    restored=ui.wait_for('restored Notes owns new actual context read',lambda:returned(NOTES,fresh['id']));open_raw()
+    evidence['restored_context']=ui.wait_for('restored exact Notes glyphs visible',lambda:raw_prompt_visible(application,window,restored['actual_user'],NOTES))
+    preserved()
+    if len(Provider.records)!=4 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Context preview unexpectedly requested inference beyond four synthetic fixture calls')
+    evidence['context_reads']=context_receipt(application)['calls'];evidence['saved_screenplay_placement_bible_and_unrelated_draft_preserved']=True
+    checkpoint('clear and exact restore request fresh context; four labelled synthetic fixture calls only');capture('notes-prompt-04-restored.png')
+
+
 def main():
     repo=Path.cwd();output=Path(os.environ['EIDETIC_CAPTURE_DIR']);output.mkdir(parents=True,exist_ok=True)
     state_root=Path(os.environ['RUNNER_TEMP'])/'eidetic-manual-fact-state';state_root.mkdir(parents=True,exist_ok=True)
@@ -594,7 +690,7 @@ def main():
     config=repo/'scripts/manual-facts-vite.config.mts';host_log=state_root/'host-private.log';app_log=state_root/'app-private.log'
     host=process=application=window=None
     provider=ThreadingHTTPServer(('127.0.0.1',18080),Provider);threading.Thread(target=provider.serve_forever,daemon=True).start()
-    evidence={'status':'failed','application_source_sha':SOURCE,'application_tree':'55e63d0e16e21373bf6ba597c48227590d12ecec','qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
+    evidence={'status':'failed','application_source_sha':SOURCE,'application_tree':'ade8c69ff296285c3b60bc4bdd3f0dfcbde2ec6a','qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
     def checkpoint(stage):
         evidence['stage']=stage;evidence['checkpoints'].append(stage);(output/'capture-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n');print('Manual fact checkpoint: '+stage,flush=True)
     def capture(name):
@@ -612,13 +708,15 @@ def main():
             except OSError:return False
         ui.wait_for('labelled native Vite host',ready)
         evidence['served_source_receipts']=[]
-        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/qualification/manualFacts.svelte.ts','SYNTHETIC QA transport: Bible detail unavailable.'),('src/lib/stores/bibleGraphNodeProjection.svelte.ts','setBibleGraphFieldProjection'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact'),('src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte','Retry saved facts'),('src/lib/components/editor/ScriptTimelineNotesEvidence.svelte','Timeline Notes used for this update'),('src/lib/components/editor/ScriptImpactReview.svelte','ScriptTimelineNotesEvidence'),('src/lib/components/editor/scriptImpactNotice.ts','Timeline Notes')]:
+        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/qualification/manualFacts.svelte.ts','SYNTHETIC QA transport: Bible detail unavailable.'),('src/lib/stores/bibleGraphNodeProjection.svelte.ts','setBibleGraphFieldProjection'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact'),('src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte','Retry saved facts'),('src/lib/components/editor/ScriptTimelineNotesEvidence.svelte','Timeline Notes used for this update'),('src/lib/components/editor/ScriptImpactReview.svelte','ScriptTimelineNotesEvidence'),('src/lib/components/editor/scriptImpactNotice.ts','Timeline Notes'),('src/lib/components/editor/contextRequestLifecycle.ts','contextNotes'),('src/lib/components/editor/BeatEditor.svelte','contextRequestLifecycle'),('src/qualification/notesPrompt.svelte.ts','QA held real public context return')]:
             source_file=repo/'ui'/relative
             with urlopen('http://127.0.0.1:5173/'+relative,timeout=10) as response:served=response.read()
             import hashlib
             if marker.encode() not in served:raise RuntimeError('Actual served module lacks admitted marker: '+relative)
             if relative=='src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts' and b'/src/qualification/manualFacts.svelte.ts' not in served:
                 raise RuntimeError('Actual served Bible detail read is not routed through labelled fault seam')
+            if relative=='src/lib/components/editor/BeatEditor.svelte' and b'/src/qualification/notesPrompt.svelte.ts' not in served:
+                raise RuntimeError('Actual selected editor is not routed through labelled real context return seam')
             evidence['served_source_receipts'].append({'module':relative,'source_sha256':ui.file_hash(source_file),'served_transformed_sha256':hashlib.sha256(served).hexdigest(),'marker':marker,'observed':True,'fault_wrapper_routed':b'/src/qualification/manualFacts.svelte.ts' in served if relative=='src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts' else None})
         fixture=json.loads(subprocess.check_output([str(repo/'target/debug/examples/manual_fact_capture_fixture')],env=environment,text=True,timeout=90))
         database=Path(fixture['project_path']).resolve();evidence['public_fixture']=dict(fixture,project_path='<fresh qualification project>')
@@ -645,6 +743,11 @@ def main():
             return
         ui.click_button(application,'AI',window);ui.click_button(application,'Save & Connect',window)
         ui.wait_for('connected synthetic provider',lambda:driver.visible_text(application,'Connected'))
+        if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='notes-prompt':
+            evidence['qualification_scope']='exact same-node Notes prompt refresh and held older actual public context return refusal, ordinary clear/restore, saved text and unrelated draft preservation; no new inference or real-model quality claim'
+            qualify_notes_prompt(application,window,database,fixture,capture,checkpoint,evidence)
+            evidence['status']='passed';checkpoint('complete frozen-source exact Notes prompt custody')
+            return
         if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='timeline-notes':
             evidence['qualification_scope']='ordinary selected clip Notes edit, explicit Notes cause selection, pending synthetic preview, Notes ABA refusal and explicit fresh selected-block acceptance; ancestor/sibling Notes and real-model quality unqualified'
             qualify_timeline_notes(application,window,database,fixture,capture,checkpoint,evidence)

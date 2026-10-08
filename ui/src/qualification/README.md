@@ -109,3 +109,21 @@ owned recovery read; that draft is never submitted. All screenplay/placement and
 provider call counts remain unchanged through this bounded fault sequence.
 
 Selected timeline Notes qualification pins a31f2a6 on the separate test/timeline-notes-review-native branch. Ordinary native Notes typing commits through the production debounced writer, with explicit Notes cause selection, pending preview, Notes ABA refusal, rejection and fresh explicit acceptance. Original/current Notes evidence is shown by maintained components. The read-only QA impact receipt includes the Notes dependency alongside existing Bible causes. Two fresh targeted responses plus four fixture generation/recap streams are labelled synthetic. Saved unrelated material and drafts remain exact; no real-model quality or ancestor/sibling Notes claim. Capture originals, JPEG85 display derivatives and logs remain ignored/external, never source Git.
+The Notes prompt successor wraps only `BeatEditor`'s existing `getAiContext` read.
+It forwards the real public `ai_context_preview` response without altering either
+prompt string. Explicit QA controls hold one completed return and later release
+it after ordinary committed Notes edits produce a newer real read. The visible
+receipt labels this synthetic transport timing seam; it fabricates no prompt,
+performs no story/script writes, and initiates no model inference. Exact product
+source stays byte-identical; ordinary Notes and Refresh remain production controls.
+
+`test/notes-prompt-preview-native` freezes application source
+`c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4` (tree
+`ade8c69ff296285c3b60bc4bdd3f0dfcbde2ec6a`). Its workflow admits exactly ten
+QA files and checks that every application file is unchanged. Native captures
+show original context, fresh exact Unicode/whitespace Notes while an older real
+context return is held, refusal of that released return, and ordinary clear /
+exact restore. The receipt and glyph bounds refer to the actual User Prompt,
+not the QA receipt textarea. Four HTTP/SSE fixture calls seed two synthetic
+saved consumer generations; context preview invokes no new inference. Lossless
+PNGs, JPEG85 derivatives and logs are uploaded outside Git.

@@ -1,5 +1,11 @@
 <script lang="ts">
   import {
+    notesPromptQA,
+    armContextHold,
+    releaseContext,
+    contextReceipt,
+  } from './notesPrompt.svelte.js';
+  import {
     factQA,
     replayRequest,
     replayDecision,
@@ -17,6 +23,15 @@
 </script>
 
 <aside class="qa" aria-label="Qualifier-only saved edit controls">
+  <strong>QA context delay · actual public context read · no fabricated prompt</strong>
+  <button onclick={armContextHold}>QA hold next real context response</button>
+  <button onclick={releaseContext} disabled={!notesPromptQA.held}
+    >QA release real context response</button
+  >
+  <label
+    >QA context receipt<textarea aria-label="QA context receipt" readonly value={contextReceipt()}
+    ></textarea></label
+  >
   <strong>QA saved-edit fixture · public commands · SYNTHETIC HTTP replies</strong>
   <button onclick={replayRequest} disabled={factQA.busy || !factQA.requestId}
     >QA replay exact analysis</button
