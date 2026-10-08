@@ -1218,6 +1218,11 @@ def qualify_notes_prompt(application,window,database,fixture,capture,checkpoint,
     checkpoint('clear and exact restore request fresh context; four labelled synthetic fixture calls only');capture('notes-prompt-04-restored.png')
 
 
+def pending_script_review(database):
+    rows=ui.query(database,"SELECT p.id,b.binding_json,p.proposed_text FROM propagation_proposals p JOIN script_impact_proposal_bindings b ON b.proposal_id=p.id WHERE p.status='pending' ORDER BY p.rowid DESC")
+    return (rows[0][0],json.loads(rows[0][1]),rows[0][2]) if rows else None
+
+
 def qualify_screenplay_removal(application,window,database,fixture,capture,checkpoint,evidence):
     a_id=fixture['a']['id'];b_id=fixture['b']['id'];f_id=fixture['f']['id']
     placement=material(database)['timeline_placement'];world=bible_fields(database)
@@ -1251,9 +1256,7 @@ def qualify_screenplay_removal(application,window,database,fixture,capture,check
         dropdown=ui.wait_for('B input change selector',lambda:ui.reveal(review,lambda n:n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and n.name.startswith('Input change')))
         ui.click_control(dropdown,window);keys=['Home']+['Down']*index+['Return'];ui.command('xdotool','key','--clearmodifiers',*keys)
         return rows
-    def pending():
-        rows=ui.query(database,"SELECT id,script_review_binding_json,proposed_text FROM propagation_proposals WHERE status='pending' AND script_review_binding_json IS NOT NULL ORDER BY rowid DESC")
-        return (rows[0][0],json.loads(rows[0][1]),rows[0][2]) if rows else None
+    def pending():return pending_script_review(database)
     evidence['impacts_before_removal']=select_source()
     ui.reveal_button(ui.wait_for('B preview control',lambda:review_for_source(application,fixture['b']['name'])),'Preview update',window)
     old=ui.wait_for('original pending targeted preview',pending)

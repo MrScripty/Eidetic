@@ -440,3 +440,24 @@ class RemovalActualProviderTests(unittest.TestCase):
                 self.assertEqual(sum(r['accepted'] for r in provider.records),2)
                 self.assertTrue(all(r['synthetic'] and not r['real_model'] for r in provider.records))
         finally:server.shutdown();server.server_close();thread.join(timeout=5)
+
+
+class RemovalPendingStorageTests(unittest.TestCase):
+    def test_actual_application_schema_selects_latest_bound_pending_review_without_writes(self):
+        import re,sqlite3,types
+        root=Path(__file__).resolve().parents[1]
+        store=(root/'crates/server/src/propagation_proposal_store.rs').read_text()
+        schema=re.search(r'const PROPAGATION_PROPOSAL_SCHEMA_SQL: &str = r#"(.*?)"#;',store,re.S).group(1)
+        conn=sqlite3.connect(':memory:');conn.executescript(schema)
+        helper=next(n for n in module.body if isinstance(n,ast.FunctionDef) and n.name=='pending_script_review')
+        local={'json':json,'ui':types.SimpleNamespace(query=lambda db,sql:db.execute(sql).fetchall())}
+        exec(compile(ast.Module(body=[helper],type_ignores=[]),'<actual pending review read>','exec'),local)
+        read=local['pending_script_review'];self.assertIsNone(read(conn))
+        for pid,status,bound,text in [('old','pending',True,'Old preview'),('latest','pending',True,'  Exact synthetic preview — 雨\n\n  '),('fact','pending',False,'Unbound fact proposal'),('accepted','accepted',True,'Accepted preview')]:
+            conn.execute("INSERT INTO propagation_proposals(id,action,target_kind,target_id,status,summary,proposed_text,created_at_ms,created_event_id) VALUES (?,'update','script_block','B',?,'Fixture',?,1,'fixture.event')",(pid,status,text))
+            if bound:conn.execute('INSERT INTO script_impact_proposal_bindings VALUES (?,?)',(pid,json.dumps({'request':{'block_id':'B'},'fixture_id':pid})))
+        before='\n'.join(conn.iterdump());conn.execute('PRAGMA query_only=ON')
+        selected=read(conn)
+        self.assertEqual(selected,('latest',{'request':{'block_id':'B'},'fixture_id':'latest'},'  Exact synthetic preview — 雨\n\n  '))
+        self.assertEqual('\n'.join(conn.iterdump()),before)
+        conn.close()
