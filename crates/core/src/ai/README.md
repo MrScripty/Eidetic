@@ -109,3 +109,22 @@ arc labels are outside this bounded receipt. Child-plan arc binding is separate.
 
 Decision: carry evidence through the existing request/generation command rather
 than rereading arc metadata when output finishes or inventing legacy history.
+
+## Consumed ancestor Notes
+
+`GenerateRequest.ancestor_notes_inputs` optionally carries exact nonempty Notes
+from the ancestor chain actually supplied in the generation prompt. Canonical
+server attachment validates the prompt chain and captures the owned sparse Notes
+field clocks in the same snapshot as the target. Runtime forwards these original
+receipts through provider I/O to existing generation command history; it never
+rebinds delayed output to today's Notes. Core-only and legacy requests leave the
+receipt absent. A supplied empty list is a known read without authored ancestor
+Notes, while missing history remains unknown.
+
+Decision: reuse `TimelineNotesInput`, existing command/proposal JSON and graph
+revision bindings rather than introduce another memory owner. An authored Notes
+change identifies exact saved Scene consumers and supplies original/current
+ancestor evidence to the existing targeted review. Saved/manual/locked screenplay
+requires explicit acceptance; writer-lock stale/ABA checks preserve drafts and
+refuse changed generation reads. Sibling prose and new ancestor membership are
+separate follow-ups. See `docs/plans/agent-story-workflows/ancestor-notes-review-gap.md`.

@@ -238,3 +238,10 @@ NodeUpdated queue refreshes impact/context while preserving edit/placement draft
 No preview, notes save or evidence display replaces saved screenplay. Only explicit
 Accept update installs the selected block and its current consumed lineage.
 Ancestor/sibling prose and other timeline fields remain separate scope.
+
+Ancestor Notes review reuses `ScriptTimelineNotesEvidence` in the existing selected
+screenplay update proposals. Each proven consumed ancestor displays its exact
+original/current Notes and owned revisions, with explicit removal evidence when
+available. The impact notice distinguishes ancestor Notes from selected clip Notes
+and context membership. Preview, rejection, acceptance and manual draft ownership
+retain the existing controllers; displaying evidence never writes saved text.
