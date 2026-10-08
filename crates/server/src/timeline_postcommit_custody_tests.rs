@@ -342,6 +342,128 @@ async fn queued_command_rejects_save_as_without_writing_either_database() {
 }
 
 #[tokio::test]
+async fn project_load_sqlite_with_json_suffix_keeps_selected_save_target() {
+    let fixture = Fixture::new().await;
+    let selected = fixture.directory.join("selected.json");
+    let sibling = fixture.directory.join("project.db");
+    std::fs::copy(&fixture.path_b, &selected).unwrap();
+    std::fs::copy(&fixture.path_a, &sibling).unwrap();
+    let sibling_before = std::fs::read(&sibling).unwrap();
+    let selected_history = history(&selected);
+    let (autosave_tx, mut autosave_rx) = tokio::sync::mpsc::unbounded_channel();
+    let _autosave = crate::write_concurrency_probe::autosave(selected.clone(), autosave_tx);
+
+    let loaded = load_project(
+        &fixture.state,
+        LoadProjectRequest {
+            path: selected.display().to_string(),
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(loaded["name"], "B");
+    assert_eq!(
+        fixture.state.project_database.active_path(),
+        Some(selected.clone())
+    );
+    crate::project_service::update_project(
+        &fixture.state,
+        crate::project_service::UpdateProjectRequest {
+            name: None,
+            premise: Some("Autosaved to the selected SQLite file".into()),
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+            .await
+            .unwrap()
+            .notes,
+        "B existing revision"
+    );
+    tokio::time::timeout(std::time::Duration::from_secs(10), async {
+        loop {
+            match autosave_rx
+                .recv()
+                .await
+                .expect("autosave probe remains open")
+            {
+                crate::write_concurrency_probe::AutosaveStage::BeforePersistence => {}
+                crate::write_concurrency_probe::AutosaveStage::Persisted(result) => {
+                    result.unwrap();
+                    break;
+                }
+            }
+        }
+    })
+    .await
+    .expect("selected SQLite file is autosaved");
+    let (saved, blob) = crate::persistence::load_project(&selected).await.unwrap();
+    assert_eq!(saved.name, "B");
+    assert_eq!(saved.premise, "Autosaved to the selected SQLite file");
+    assert!(blob.is_some());
+    assert_eq!(history(&selected), selected_history);
+
+    let saved = save_project(&fixture.state, SaveProjectRequest { path: None })
+        .await
+        .unwrap();
+    assert_eq!(saved["saved"], selected.display().to_string());
+    assert_eq!(std::fs::read(&sibling).unwrap(), sibling_before);
+    fixture.finish().await;
+}
+
+#[tokio::test]
+async fn project_load_rejects_json_without_creating_or_changing_sibling() {
+    let fixture = Fixture::new().await;
+    let selected = fixture.directory.join("selected.json");
+    let sibling = fixture.directory.join("project.db");
+    let session_id = *fixture.state.project_session_id.lock();
+    let before_history = history(&fixture.path_a);
+    let mut events = fixture.state.events_tx.subscribe();
+
+    for sibling_exists in [false, true] {
+        if sibling_exists {
+            std::fs::copy(&fixture.path_b, &sibling).unwrap();
+        }
+        let sibling_before = std::fs::read(&sibling).ok();
+        for json in [r#"{"name":"Legacy JSON"}"#, "{ malformed JSON"] {
+            std::fs::write(&selected, json).unwrap();
+            let error = load_project(
+                &fixture.state,
+                LoadProjectRequest {
+                    path: selected.display().to_string(),
+                },
+            )
+            .await
+            .unwrap_err();
+            assert!(matches!(error, BackendError::BadRequest(_)));
+            assert!(error.message().contains("unsupported project schema"));
+            assert_eq!(std::fs::read_to_string(&selected).unwrap(), json);
+            assert_eq!(std::fs::read(&sibling).ok(), sibling_before);
+            assert_eq!(*fixture.state.project_session_id.lock(), session_id);
+            assert_eq!(fixture.state.project.lock().as_ref().unwrap().name, "A");
+            assert_eq!(
+                fixture.state.project_database.active_path(),
+                Some(fixture.path_a.clone())
+            );
+            assert_eq!(history(&fixture.path_a), before_history);
+            assert_eq!(
+                ydoc::read_content(&fixture.state.doc_tx, fixture.node)
+                    .await
+                    .unwrap()
+                    .notes,
+                "A existing revision"
+            );
+            assert!(matches!(
+                events.try_recv(),
+                Err(tokio::sync::broadcast::error::TryRecvError::Empty)
+            ));
+        }
+    }
+    fixture.finish().await;
+}
+
+#[tokio::test]
 async fn failed_document_population_returns_error_without_publishing_project() {
     let fixture = Fixture::new().await;
     fixture.state.task_supervisor.shutdown_all().await;
