@@ -1,7 +1,7 @@
 use eidetic_core::contracts::{
     CommandEnvelope, DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand,
-    SetTimelineNodeLockCommand, SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand,
-    SetTimelineNodeRangeCommand,
+    SetTimelineNodeArcsCommand, SetTimelineNodeLockCommand, SetTimelineNodeNameCommand,
+    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
 };
 use eidetic_server::command_service;
 use eidetic_server::projection_service;
@@ -33,6 +33,17 @@ pub async fn command_timeline_create_child_from_parent(
 ) -> Result<command_service::TimelineCommandResponse, CommandError> {
     let state = app.state::<AppState>().inner().clone();
     command_service::create_timeline_child_from_parent(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub async fn command_timeline_node_arcs(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<SetTimelineNodeArcsCommand>,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::set_timeline_node_arcs(&state, command)
         .await
         .map_err(CommandError::from)
 }

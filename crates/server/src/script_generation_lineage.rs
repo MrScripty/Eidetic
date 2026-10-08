@@ -81,6 +81,14 @@ pub(crate) fn dependencies(
         })
         .collect::<Result<Vec<_>, HistoryStoreError>>()?;
     if let Some(target) = &command.target_binding {
+        if let Some(input) = &target.arc_membership {
+            dependencies.push(crate::timeline_arc_membership::dependency(
+                input,
+                &command.block.segment_id,
+                event,
+                created_at_ms,
+            ));
+        }
         let input = crate::timeline_notes_lineage::from_target(conn, target)?;
         if let Some(dependency) = crate::timeline_notes_lineage::dependency(
             &input,

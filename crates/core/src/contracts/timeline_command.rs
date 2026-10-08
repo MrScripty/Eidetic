@@ -1,6 +1,25 @@
 use serde::{Deserialize, Serialize};
 
 use crate::ai::backend::ChildPlanId;
+use crate::story::arc::ArcId;
+
+/// Exact selected-clip membership. None is a known history-free baseline.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TimelineArcMembershipInput {
+    pub node_id: NodeId,
+    pub arc_ids: Vec<ArcId>,
+    pub revision_event_id: Option<super::ChangeEventId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SetTimelineNodeArcsCommand {
+    pub node_id: NodeId,
+    pub arc_ids: Vec<ArcId>,
+    pub expected: TimelineArcMembershipInput,
+}
+
 use crate::timeline::node::{BeatType, NodeId, StoryLevel};
 use crate::timeline::relationship::{RelationshipId, RelationshipType};
 

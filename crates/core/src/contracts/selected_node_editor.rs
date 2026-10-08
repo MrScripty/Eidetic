@@ -45,6 +45,8 @@ pub struct SelectedNodeEditorNode {
     pub name_read: Option<super::TimelineNodeNameRead>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub notes_read: Option<super::TimelineNotesInput>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_read: Option<super::TimelineArcMembershipInput>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -146,6 +148,7 @@ impl From<&StoryNode> for SelectedNodeEditorNode {
             range_read: None,
             name_read: None,
             notes_read: None,
+            arc_read: None,
         }
     }
 }

@@ -28,6 +28,7 @@
   import BeatEditorHeader from './BeatEditorHeader.svelte';
   import TimelinePlacementEditor from './TimelinePlacementEditor.svelte';
   import TimelineTitleEditor from './TimelineTitleEditor.svelte';
+  import TimelineArcAssignmentEditor from './TimelineArcAssignmentEditor.svelte';
   import BeatNotesPanel from './BeatNotesPanel.svelte';
   import BeatPlanningActions from './BeatPlanningActions.svelte';
   import ChildPlanReview from './ChildPlanReview.svelte';
@@ -333,6 +334,7 @@
     {#if selectedProjectionNode}
       <TimelineTitleEditor node={selectedProjectionNode} />
       <TimelinePlacementEditor node={selectedProjectionNode} />
+      <TimelineArcAssignmentEditor node={selectedProjectionNode} />
     {/if}
 
     {#if childCreateError}<p role="alert">{childCreateError}</p>{/if}

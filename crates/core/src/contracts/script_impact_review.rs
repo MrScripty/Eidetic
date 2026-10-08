@@ -49,6 +49,10 @@ pub struct ScriptRecallFactSelection {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScriptImpactProposalBinding {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_membership_previous: Option<super::TimelineArcMembershipInput>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_membership_current: Option<super::TimelineArcMembershipInput>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arc_description_applicability_previous: Option<Vec<super::StoryArcFieldInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arc_description_applicability_current: Option<Vec<super::StoryArcFieldInput>>,

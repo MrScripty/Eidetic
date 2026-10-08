@@ -1,6 +1,8 @@
 import type { ScriptImpactCause } from '$lib/scriptTypes.js';
 
 export function scriptImpactCauseLabel(cause: ScriptImpactCause): string {
+  if (cause.input.kind === 'timeline_node' && cause.dependency_id.endsWith('.arc_membership'))
+    return 'Story arc assignment changed.';
   if (
     cause.input.kind === 'timeline_node' &&
     cause.dependency_id.endsWith(`.timeline_title.${cause.input.node_id}`)

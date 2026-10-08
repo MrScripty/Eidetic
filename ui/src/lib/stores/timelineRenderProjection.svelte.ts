@@ -6,6 +6,7 @@ import {
   deleteTimelineNode,
   deleteTimelineRelationship,
   setTimelineNodeLock,
+  setTimelineNodeArcs,
   setTimelineNodeNotes,
   setTimelineNodeName,
   setTimelineNodeRange,
@@ -24,6 +25,7 @@ import type {
   DeleteTimelineNodeCommand,
   DeleteTimelineRelationshipCommand,
   SetTimelineNodeLockCommand,
+  SetTimelineNodeArcsCommand,
   SetTimelineNodeNotesCommand,
   SetTimelineNodeNameCommand,
   SetTimelineNodeRangeCommand,
@@ -194,6 +196,17 @@ export async function applyTimelineNodeLockCommand(
     () => setTimelineNodeLock(payload, commandId),
     (result) => result.projection,
     'Failed to apply timeline node lock command',
+  );
+}
+
+export async function applyTimelineNodeArcsCommand(
+  payload: SetTimelineNodeArcsCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  return runTimelineProjectionRequest(
+    () => setTimelineNodeArcs(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline arc assignment command',
   );
 }
 

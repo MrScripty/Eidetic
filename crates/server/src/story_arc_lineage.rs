@@ -243,7 +243,11 @@ pub(crate) fn preview_inputs(
         if crate::story_arc_store::load_arc(conn, &arc_id)?.is_some() {
             // Known-empty applicability has a dependency but supplies no prose.
             // Check actual tags, independently of which fields capture supplied.
-            if !arcs.iter().any(|arc| arc.id == arc_id) {
+            if !arcs.iter().any(|arc| arc.id == arc_id)
+                && !crate::timeline_arc_membership::permits_withdrawal(
+                    conn, node, generation, arc_id,
+                )?
+            {
                 return Err(HistoryStoreError::InvalidValue("Story arc review source is outside current tags; restore its context before previewing".into()));
             }
         } else if seen.insert(arc_id.0.to_string()) {

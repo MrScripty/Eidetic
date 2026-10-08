@@ -1,3 +1,14 @@
+export interface TimelineArcMembershipInput {
+  node_id: string;
+  arc_ids: string[];
+  revision_event_id: string | null;
+}
+export interface SetTimelineNodeArcsCommand {
+  node_id: string;
+  arc_ids: string[];
+  expected: TimelineArcMembershipInput;
+}
+
 import type { TimelineNotesInput } from './propagationProposalTypes.js';
 import type { BeatType, RelationshipId, RelationshipType, StoryLevel } from './timelineTypes.js';
 import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
@@ -92,6 +103,7 @@ export interface DeleteTimelineRelationshipCommand {
 }
 
 export interface TimelineCommandResponse {
+  arc_read?: TimelineArcMembershipInput | null;
   notes_read?: TimelineNotesInput | null;
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<TimelineRenderProjection>;

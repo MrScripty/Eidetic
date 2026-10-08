@@ -383,6 +383,10 @@ fn load_selected_node_editor_at_path(
         .as_mut()
         .filter(|node| canonical_node_ids.contains(&node.node_id))
     {
+        node.arc_read = Some(
+            crate::timeline_arc_membership::capture(&tx, node.node_id)
+                .map_err(map_history_error)?,
+        );
         node.notes_read = Some(
             crate::timeline_notes_lineage::capture(&tx, node.node_id).map_err(map_history_error)?,
         );

@@ -35,7 +35,9 @@ Bible and screenplay review flows. A source regression proves public authored
 Notes changed after generation has no review cause. The bounded successor reuses
 the generation target receipt and owned Notes field history for original/current
 review and explicit selected-block acceptance. See `timeline-notes-review.md`.
-Ancestor/sibling prose, arc membership and project switching remain separate.
+Ancestor/sibling prose and project switching remain separate. The independent
+manual timeline arc-assignment successor adds canonical membership authoring and
+original/current targeted screenplay review; see `timeline-arc-assignment.md`.
 **Current phase:** Authored Bible fact propagation is merged in main
 `302851dbb5bf67cda922b4d79f70623e444891dc`; scene-order continuity is qualified
 at frozen predecessor `441c2a29af6199b53b92f718df43d0ca916b1ce5`.

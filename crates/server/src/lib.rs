@@ -105,6 +105,8 @@ pub(crate) mod story_arc_command;
 pub(crate) mod story_arc_lineage;
 pub(crate) mod story_arc_store;
 pub(crate) mod timeline_affect_overlay;
+mod timeline_arc_assignment_history;
+mod timeline_arc_membership;
 pub(crate) mod timeline_child_plan_apply;
 pub(crate) mod timeline_children_history;
 pub(crate) mod timeline_command;

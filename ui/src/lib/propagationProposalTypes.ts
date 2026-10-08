@@ -1,3 +1,4 @@
+import type { TimelineArcMembershipInput } from './timelineCommandTypes.js';
 import type { StoryArcFieldInput } from './storyArcTypes.js';
 import type {
   BibleGraphFieldKey,
@@ -72,6 +73,8 @@ export interface PropagationProposal {
     ancestor_notes_previous?: TimelineNotesInput[] | null;
     ancestor_notes_current?: TimelineNotesInput[] | null;
     ancestor_notes_absence_revisions?: [string, string][] | null;
+    arc_membership_previous?: TimelineArcMembershipInput | null;
+    arc_membership_current?: TimelineArcMembershipInput | null;
     timeline_notes_previous?: TimelineNotesInput | null;
     timeline_notes_current?: TimelineNotesInput | null;
     arc_inputs?: StoryArcFieldInput[] | null;

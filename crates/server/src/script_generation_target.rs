@@ -34,6 +34,7 @@ fn current(
     let segment_id = format!("script.segment.{}", node.id.0);
     let block_id = format!("script.block.{}.generated", node.id.0);
     Ok(ScriptGenerationTarget {
+        arc_membership: Some(crate::timeline_arc_membership::capture(conn, node.id)?),
         node_id: node.id,
         start_ms: node.time_range.start_ms,
         end_ms: node.time_range.end_ms,
