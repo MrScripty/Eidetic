@@ -42,6 +42,17 @@ pub async fn command_script_block_create(
 }
 
 #[tauri::command]
+pub async fn command_script_block_remove(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<eidetic_core::contracts::RemoveScriptBlockCommand>,
+) -> Result<command_service::ScriptDocumentCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::remove_script_block(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 pub async fn command_script_lock(
     app: tauri::AppHandle,
     command: CommandEnvelope<SetScriptLockCommand>,

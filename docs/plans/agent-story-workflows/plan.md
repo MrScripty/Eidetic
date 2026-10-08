@@ -1133,3 +1133,21 @@ UI aggregate and independent review, then actual hosted native acceptance with
 clean blue Bible, dirty draft, screenplay and placement preserved. All model
 responses are labelled synthetic. Source and QA deltas/evidence remain separate;
 no PR/merge or real-model download belongs to this stage.
+
+
+## M5 follow-on: explicit saved screenplay block removal
+
+Admitted from verified public PR25c5f3587 above PR24b17bfbc. The current writer
+can append/edit saved blocks but cannot remove one through the application.
+Expose explicit confirmation for one exact unlocked block; retain historical
+text, timeline placement, all other blocks and manual drafts. Reuse the existing
+soft-deletion/history and deleted-input impact review, with immutable retry
+receipts that remain visible after canonical disappearance. Old downstream
+previews must refuse; fresh targeted preview preserves saved text until explicit
+acceptance. See `screenplay-removal-audit.md` for the pre-edit evidence/write set.
+Native functional qualification passes run37787616709 on frozen product D025/E1f
+with QA10dd3cd: both fresh isolated native scenarios verify exact replay, stale
+refusal without writes and separate fresh acceptance. Final successful pixel
+inspection and Library delivery require the parent's working transfer route.
+See `screenplay-removal-qualification.md`; synthetic replies do not establish
+real-model writing quality.

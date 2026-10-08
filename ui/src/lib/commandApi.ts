@@ -46,6 +46,7 @@ import type {
   CreateScriptBlockCommand,
   SetScriptBlockCommand,
   EditScriptBlockCommand,
+  RemoveScriptBlockCommand,
   SetScriptLockCommand,
 } from './scriptTypes.js';
 import type {
@@ -420,6 +421,14 @@ export function setScriptLock(
   };
 
   return invokeDesktop<ScriptDocumentCommandResponse>('command_script_lock', { command });
+}
+
+export function removeScriptBlock(
+  payload: RemoveScriptBlockCommand,
+  commandId = createCommandId(),
+): Promise<ScriptDocumentCommandResponse> {
+  const command: CommandEnvelope<RemoveScriptBlockCommand> = { id: commandId, payload };
+  return invokeDesktop<ScriptDocumentCommandResponse>('command_script_block_remove', { command });
 }
 
 export function editScriptBlock(

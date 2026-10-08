@@ -199,3 +199,6 @@ current vectors plus owned absence revisions. Missing legacy fields remain
 unknown; Some(empty) records a known empty set. Clearing a previously consumed
 ancestor is an exact empty current input. Accepted updates refresh receipts through
 existing command/proposal/dependency history, with no alternate persistent owner.
+
+
+`RemoveScriptBlockCommand` captures one saved block revision for explicit manual removal. Ownership and timeline placement stay canonical; no client-authored replacement metadata is admitted.

@@ -1,5 +1,9 @@
 import { createCommandId } from '$lib/commandTransport.js';
-import type { EditScriptBlockCommand, ScriptBlockProjection } from '$lib/scriptTypes.js';
+import type {
+  EditScriptBlockCommand,
+  RemoveScriptBlockCommand,
+  ScriptBlockProjection,
+} from '$lib/scriptTypes.js';
 
 interface SavedComparison {
   text: string;
@@ -10,10 +14,18 @@ export function createScriptBlockEditDraft(options: {
   documentId: string;
   blockId: string;
   save: (payload: EditScriptBlockCommand, commandId: string) => Promise<unknown>;
+  remove?: (payload: RemoveScriptBlockCommand, commandId: string) => Promise<unknown>;
   reload: () => Promise<unknown>;
   readCurrent: () => Promise<ScriptBlockProjection | null>;
 }) {
   const state = $state({
+    removal: {
+      active: false,
+      text: '',
+      saving: false,
+      uncertain: false,
+      error: null as string | null,
+    },
     editing: false,
     text: '',
     baseRevision: null as string | null,
@@ -26,8 +38,64 @@ export function createScriptBlockEditDraft(options: {
   let compared: SavedComparison | null = null;
   let submitted: { payload: EditScriptBlockCommand; commandId: string } | null = null;
 
+  let removalCapture: RemoveScriptBlockCommand | null = null;
+  let submittedRemoval: { payload: RemoveScriptBlockCommand; commandId: string } | null = null;
+
+  function beginRemoval(block: ScriptBlockProjection): void {
+    if (
+      !options.remove ||
+      state.editing ||
+      state.saving ||
+      state.comparing ||
+      submitted ||
+      state.removal.active ||
+      block.block.id !== options.blockId ||
+      !block.revision_event_id ||
+      block.locks.length
+    )
+      return;
+    removalCapture = {
+      document_id: options.documentId,
+      block_id: options.blockId,
+      expected_revision_event_id: block.revision_event_id,
+    };
+    state.removal.text = block.block.text;
+    state.removal.error = null;
+    state.removal.active = true;
+  }
+  function cancelRemoval(): void {
+    if (state.removal.saving || submittedRemoval) return;
+    removalCapture = null;
+    state.removal.active = false;
+    state.removal.text = '';
+    state.removal.error = null;
+  }
+  async function remove(): Promise<void> {
+    if (!options.remove || !state.removal.active || !removalCapture || state.removal.saving) return;
+    if (!submittedRemoval)
+      submittedRemoval = { payload: { ...removalCapture }, commandId: createCommandId() };
+    state.removal.saving = true;
+    state.removal.error = null;
+    try {
+      await options.remove({ ...submittedRemoval.payload }, submittedRemoval.commandId);
+      submittedRemoval = null;
+      state.removal.uncertain = false;
+      removalCapture = null;
+      state.removal.active = false;
+      state.removal.text = '';
+    } catch (failure) {
+      state.removal.error =
+        failure instanceof Error ? failure.message : 'Could not remove script block';
+      state.removal.uncertain = !isRemovalRefusal(failure);
+      if (!state.removal.uncertain) submittedRemoval = null;
+    } finally {
+      state.removal.saving = false;
+    }
+  }
+
   function begin(block: ScriptBlockProjection): void {
     if (
+      state.removal.active ||
       state.editing ||
       state.saving ||
       state.comparing ||
@@ -43,7 +111,7 @@ export function createScriptBlockEditDraft(options: {
     state.editing = true;
   }
   function cancel(): void {
-    if (state.saving || state.comparing || submitted) return;
+    if (state.removal.active || state.saving || state.comparing || submitted) return;
     compared = null;
     state.comparison = null;
     state.editing = false;
@@ -84,7 +152,7 @@ export function createScriptBlockEditDraft(options: {
     }
   }
   async function reload(): Promise<void> {
-    if (state.saving || state.comparing || submitted) return;
+    if (state.removal.active || state.saving || state.comparing || submitted) return;
     state.saving = true;
     state.error = null;
     try {
@@ -136,7 +204,18 @@ export function createScriptBlockEditDraft(options: {
     compared = null;
     state.comparison = null;
   }
-  return { state, begin, cancel, save, reload, compare, useComparedRevision };
+  return {
+    state,
+    begin,
+    cancel,
+    save,
+    reload,
+    compare,
+    useComparedRevision,
+    beginRemoval,
+    cancelRemoval,
+    remove,
+  };
 }
 
 function isEditRefusal(failure: unknown): boolean {
@@ -154,6 +233,21 @@ function isEditRefusal(failure: unknown): boolean {
       'script document not found',
       'invalid command: script block update would remove locked span text',
       'invalid command: script block update would modify locked span text',
+    ].includes(failure.message)
+  );
+}
+
+function isRemovalRefusal(failure: unknown): boolean {
+  if (!(failure instanceof Error)) return false;
+  const native = failure.cause;
+  if (typeof native !== 'object' || native === null || !('kind' in native)) return false;
+  return (
+    (native.kind === 'bad_request' || native.kind === 'conflict') &&
+    [
+      'script block changed; reload before removing',
+      'script block not found',
+      'script document not found',
+      'cannot remove a locked script block',
     ].includes(failure.message)
   );
 }

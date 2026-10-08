@@ -207,6 +207,15 @@ pub struct EditScriptBlockCommand {
     pub text: String,
 }
 
+/// Remove one exact saved block without changing its timeline placement.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RemoveScriptBlockCommand {
+    pub document_id: ScriptDocumentId,
+    pub block_id: ScriptBlockId,
+    pub expected_revision_event_id: super::ChangeEventId,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScriptContextBlock {
     pub document_id: ScriptDocumentId,

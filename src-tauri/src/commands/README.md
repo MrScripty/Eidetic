@@ -100,3 +100,6 @@ so a deleted source need not be projected. Fresh writes still return source node
 detail. The adapter forwards this optional projection without inventing one.
 
 The explicit `command_script_fact_proposal_analyze` command delegates one saved manual edit and one actually consumed baseline text fact to the canonical capture/provider/proposal service. It returns pending proposals only; existing explicit propagation acceptance is the sole fact write.
+
+
+`command_script_block_remove` forwards exact manual screenplay removal to the backend project-session owner and existing document projection response.

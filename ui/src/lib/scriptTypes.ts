@@ -149,6 +149,12 @@ export interface SetScriptLockCommand {
   reason: string;
 }
 
+export interface RemoveScriptBlockCommand {
+  document_id: ScriptDocumentId;
+  block_id: ScriptBlockId;
+  expected_revision_event_id: string;
+}
+
 export interface EditScriptBlockCommand {
   document_id: ScriptDocumentId;
   block_id: ScriptBlockId;

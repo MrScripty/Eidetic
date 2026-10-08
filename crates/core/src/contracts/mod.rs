@@ -94,12 +94,13 @@ pub use propagation_proposal::{
 };
 pub use script_document::{
     BibleContextScope, CreateScriptBlockCommand, EditScriptBlockCommand,
-    GenerateScriptBlockCommand, ScriptBlock, ScriptBlockId, ScriptBlockKind, ScriptBlockProjection,
-    ScriptContextBlock, ScriptContextScope, ScriptContractError, ScriptDocument, ScriptDocumentId,
-    ScriptDocumentProjection, ScriptGenerationTarget, ScriptImpactCause, ScriptImpactProjection,
-    ScriptImpactReason, ScriptLock, ScriptLockId, ScriptPatch, ScriptPatchId, ScriptSegment,
-    ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan, ScriptSpanId,
-    ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
+    GenerateScriptBlockCommand, RemoveScriptBlockCommand, ScriptBlock, ScriptBlockId,
+    ScriptBlockKind, ScriptBlockProjection, ScriptContextBlock, ScriptContextScope,
+    ScriptContractError, ScriptDocument, ScriptDocumentId, ScriptDocumentProjection,
+    ScriptGenerationTarget, ScriptImpactCause, ScriptImpactProjection, ScriptImpactReason,
+    ScriptLock, ScriptLockId, ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId,
+    ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance,
+    SetScriptBlockCommand, SetScriptLockCommand,
 };
 pub use script_fact_reconciliation::{
     RequestScriptFactProposalCommand, ScriptFactEditEvidence, ScriptFactField,

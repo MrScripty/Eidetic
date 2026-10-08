@@ -2,6 +2,7 @@
   import type { ScriptBlockProjection } from '$lib/scriptTypes.js';
   import { getSessionScriptBlockEditDraft } from '$lib/stores/scriptBlockEditSession.svelte.js';
   import ScriptView from './ScriptView.svelte';
+  import ScriptBlockRemoval from './ScriptBlockRemoval.svelte';
 
   let { documentId, block }: { documentId: string; block: ScriptBlockProjection } = $props();
   let editor = $derived(getSessionScriptBlockEditDraft(documentId, block.block.id));
@@ -9,7 +10,9 @@
 </script>
 
 <section class="script-block" aria-label="Screenplay block">
-  {#if draft.editing}
+  {#if draft.removal.active}
+    <ScriptBlockRemoval {editor} />
+  {:else if draft.editing}
     <label for={`script-edit-${block.block.id}`}>Edit screenplay text</label>
     <textarea
       id={`script-edit-${block.block.id}`}
@@ -69,6 +72,11 @@
     <ScriptView text={block.block.text} />
     <button type="button" onclick={() => editor.begin(block)} disabled={!block.revision_event_id}
       >Edit</button
+    >
+    <button
+      type="button"
+      onclick={() => editor.beginRemoval(block)}
+      disabled={!block.revision_event_id || block.locks.length > 0}>Remove block</button
     >
   {/if}
 </section>
