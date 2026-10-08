@@ -18,7 +18,7 @@ defaults:
 jobs:
   capture:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 50
     env:
       EIDETIC_FETCH_PUMAS: "1"
       CARGO_BUILD_JOBS: "2"
@@ -55,7 +55,9 @@ jobs:
               raise SystemExit('Qualification delta differs from exact enumerated ten QA files: ' + repr(sorted(changed)))
           PY
       - name: Install standard Linux and display dependencies
-        timeout-minutes: 10
+        # Run37717759278 exhausted 10m while Azure was still delivering packages.
+        # Keep the same package/dependency route and allow its measured slow transfer.
+        timeout-minutes: 20
         run: |
           sudo apt-get update
           sudo apt-get install -y \
