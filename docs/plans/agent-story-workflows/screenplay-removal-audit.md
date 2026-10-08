@@ -66,3 +66,14 @@ separate explicit acceptance. Old previews refuse after source removal. Fresh
 current memory excludes removed prose while impact causes retain consumed text.
 Unrelated material and timeline placement remain intact. Synthetic responses
 qualify mechanics only, never real-model writing quality.
+
+## Client-runtime qualification repair
+
+The initial product milestone34260ac passed SSR/full static checks, but a direct
+client-compiled probe demonstrated `state_unsafe_mutation` when a block component
+first registered its reactive session owner inside `$derived`. Registration now
+runs through Svelte `untrack`; the reactive map continues to drive orphan removal
+receipts. A regression compiles the actual session module for the client and
+creates/reuses its owner inside a real client derived reaction. The initial QA
+run37778991927 is retained as superseded evidence; it cannot qualify the repaired
+source. Source/QA bindings are frozen again after the repair checks.

@@ -1,3 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
+import { compileModule } from 'svelte/compiler';
+import ts from 'typescript';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { render } from 'svelte/server';
 import AppWorkspace from '../layout/AppWorkspace.svelte';
@@ -191,4 +197,44 @@ it('isolates late removal responses and retired retries from replacement project
   await old.remove();
   expect(invoke).toHaveBeenCalledTimes(1);
   expect(old.state.removal.error).toBe('The project changed before this screenplay edit.');
+});
+
+it('registers and reuses the actual session owner inside a client derived read', () => {
+  // SSR erases client mutation guards. Compile the real owner for the client,
+  // stubbing only transport/draft construction to isolate owner registration.
+  let source = readFileSync(
+    new URL('../../stores/scriptBlockEditSession.svelte.ts', import.meta.url),
+    'utf8',
+  );
+  source = source.replace(/import[\s\S]*?from [^;]+;/g, '');
+  source =
+    'const untrack = runtime.untrack; function createScriptBlockEditDraft() { return { state: { removal: { active: false } } }; } const applyScriptBlockEditCommand=()=>{}; const applyScriptBlockRemovalCommand=()=>{}; const refreshScriptDocumentProjection=()=>{};\n' +
+    source;
+  const javascript = ts.transpileModule(source, {
+    compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
+  }).outputText;
+  const compiled = compileModule(javascript, {
+    generate: 'client',
+    filename: 'scriptBlockEditSession.svelte.js',
+    dev: true,
+  }).js.code;
+  const body =
+    compiled
+      .replace(/import \* as \$ from ['"]svelte\/internal\/client['"];?/, 'const $ = runtime;')
+      .replace(/export function /g, 'function ') + '\nreturn { getSessionScriptBlockEditDraft };';
+  const require = createRequire(import.meta.url);
+  const script = `import * as runtime from ${JSON.stringify(pathToFileURL(require.resolve('svelte/internal/client')).href)};
+    const owner = new Function('runtime', ${JSON.stringify(body)})(runtime);
+    runtime.push({}, true);
+    try {
+      const first = runtime.get(runtime.derived(() => owner.getSessionScriptBlockEditDraft('document','block')));
+      const second = runtime.get(runtime.derived(() => owner.getSessionScriptBlockEditDraft('document','block')));
+      if (first !== second) throw new Error('client consumer replaced the persistent owner');
+    } finally { runtime.pop(); }`;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', script], {
+    encoding: 'utf8',
+    timeout: 10_000,
+  });
+  expect(result.stderr).toBe('');
+  expect(result.status).toBe(0);
 });
