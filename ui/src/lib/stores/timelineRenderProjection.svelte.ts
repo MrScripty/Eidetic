@@ -6,6 +6,7 @@ import {
   deleteTimelineNode,
   deleteTimelineRelationship,
   setTimelineNodeLock,
+  reorderTimelineSibling,
   setTimelineNodeArcs,
   setTimelineNodeNotes,
   setTimelineNodeName,
@@ -25,6 +26,7 @@ import type {
   DeleteTimelineNodeCommand,
   DeleteTimelineRelationshipCommand,
   SetTimelineNodeLockCommand,
+  ReorderTimelineSiblingCommand,
   SetTimelineNodeArcsCommand,
   SetTimelineNodeNotesCommand,
   SetTimelineNodeNameCommand,
@@ -249,4 +251,15 @@ export function clearTimelineRenderProjection(): void {
   timelineRenderProjectionState.projection = null;
   timelineRenderProjectionState.pending = false;
   timelineRenderProjectionState.error = undefined;
+}
+
+export async function applyTimelineSiblingReorderCommand(
+  payload: ReorderTimelineSiblingCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  return runTimelineProjectionRequest(
+    () => reorderTimelineSibling(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline sibling reorder command',
+  );
 }

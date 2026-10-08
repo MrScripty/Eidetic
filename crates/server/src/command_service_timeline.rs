@@ -1,9 +1,10 @@
 use eidetic_core::contracts::{
     ApplyTimelineChildCommand, CommandEnvelope, CreateTimelineChildFromParentCommand,
     CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeArcsCommand,
-    SetTimelineNodeLockCommand, SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineRenderProjection,
+    DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope,
+    ReorderTimelineSiblingCommand, SetTimelineNodeArcsCommand, SetTimelineNodeLockCommand,
+    SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use rusqlite::Connection;
@@ -30,6 +31,8 @@ pub struct TimelineCommandResponse {
     notes_read: Option<eidetic_core::contracts::TimelineNotesInput>,
     #[serde(skip_serializing_if = "Option::is_none")]
     arc_read: Option<eidetic_core::contracts::TimelineArcMembershipInput>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    order_read: Option<eidetic_core::contracts::TimelineSiblingOrderRead>,
     projection: ProjectionEnvelope<TimelineRenderProjection>,
 }
 
@@ -93,6 +96,7 @@ async fn create_timeline_node_at_admission(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -158,6 +162,7 @@ pub async fn set_timeline_node_name(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -213,6 +218,7 @@ pub async fn set_timeline_node_range(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -255,6 +261,7 @@ pub async fn set_timeline_node_lock(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -313,6 +320,7 @@ pub async fn set_timeline_node_arcs(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: Some(arc_read),
                 notes_read: None,
                 projection,
@@ -371,6 +379,7 @@ pub async fn set_timeline_node_notes(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: Some(notes_read),
                 projection,
@@ -429,6 +438,7 @@ pub async fn delete_timeline_node(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -481,6 +491,7 @@ pub async fn delete_timeline_relationship(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -531,6 +542,7 @@ pub async fn create_timeline_relationship_from_core_command(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -576,6 +588,7 @@ pub async fn apply_timeline_children(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -677,6 +690,7 @@ pub async fn split_timeline_node_from_core_command(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                order_read: None,
                 arc_read: None,
                 notes_read: None,
                 projection,
@@ -785,3 +799,63 @@ fn map_timeline_command_error(error: TimelineCommandError) -> BackendError {
 #[cfg(test)]
 #[path = "timeline_command_admission_tests.rs"]
 mod admission_tests;
+
+pub async fn reorder_timeline_sibling(
+    state: &AppState,
+    command: CommandEnvelope<ReorderTimelineSiblingCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
+    let (_session, path, project) = timeline_command_project(state).await?;
+    let worker = state.clone();
+    crate::state::complete_project_session_work(state, _session, async move {
+        let state = &worker;
+        let response = tokio::task::spawn_blocking(move || {
+            let mut conn = crate::sqlite::open_write_connection(&path)
+                .map_err(|e| BackendError::internal(e.to_string()))?;
+            history_store::create_schema(&conn).map_err(map_history_error)?;
+            let outcome = timeline_command::record_reorder_timeline_sibling_history(
+                &mut conn, &project, &command, 0,
+            )
+            .map_err(|error| {
+                let error = map_timeline_command_error(error);
+                // Only pre-commit domain/receipt refusals carry this marker.
+                // Projection/publication failures after commit remain uncertain.
+                match error {
+                    BackendError::BadRequest(message) => {
+                        BackendError::bad_request(format!("Reorder refused: {message}"))
+                    }
+                    BackendError::Conflict(message) => {
+                        BackendError::conflict(format!("Reorder refused: {message}"))
+                    }
+                    other => other,
+                }
+            })?;
+            let order_read = crate::timeline_sibling_order::command_receipt(&conn, &command)
+                .map_err(map_history_error)?;
+            let projection =
+                timeline_render_projection_from_current_state(&conn, &project.timeline)
+                    .map_err(map_timeline_command_error)?;
+            Ok::<_, BackendError>(TimelineCommandResponse {
+                outcome,
+                order_read: Some(order_read),
+                arc_read: None,
+                notes_read: None,
+                projection,
+            })
+        })
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!(
+                "timeline sibling reorder command task failed: {error}"
+            ))
+        })??;
+
+        if response.outcome == RecordChangeOutcome::Recorded {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+            let _ = state.events_tx.send(ServerEvent::ScriptChanged);
+            state.trigger_save();
+        }
+        Ok(response)
+    })
+    .await
+}

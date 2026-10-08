@@ -1,7 +1,7 @@
 use eidetic_core::contracts::{
     CommandEnvelope, DeleteTimelineNodeCommand, DeleteTimelineRelationshipCommand,
-    SetTimelineNodeArcsCommand, SetTimelineNodeLockCommand, SetTimelineNodeNameCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    ReorderTimelineSiblingCommand, SetTimelineNodeArcsCommand, SetTimelineNodeLockCommand,
+    SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
 };
 use eidetic_server::command_service;
 use eidetic_server::projection_service;
@@ -184,4 +184,15 @@ mod tests {
         assert_eq!(super::clamp_timeline_playhead(42_500, 120_000), 42_500);
         assert_eq!(super::clamp_timeline_playhead(240_000, 120_000), 120_000);
     }
+}
+
+#[tauri::command]
+pub async fn command_timeline_sibling_reorder(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<ReorderTimelineSiblingCommand>,
+) -> Result<command_service::TimelineCommandResponse, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    command_service::reorder_timeline_sibling(&state, command)
+        .await
+        .map_err(CommandError::from)
 }

@@ -27,6 +27,7 @@ pub(crate) use crate::timeline_command_history::{
 };
 pub(crate) use crate::timeline_node_delete_history::record_delete_timeline_node_history;
 pub(crate) use crate::timeline_node_split_history::record_split_timeline_node_history;
+pub(crate) use crate::timeline_sibling_reorder_history::record_reorder_timeline_sibling_history;
 
 #[cfg(test)]
 pub(crate) fn apply_set_timeline_node_range(

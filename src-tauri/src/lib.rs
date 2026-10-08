@@ -156,6 +156,7 @@ pub fn run() {
             commands::timeline::command_timeline_create_node,
             commands::timeline::command_timeline_create_child_from_parent,
             commands::timeline::command_timeline_node_arcs,
+            commands::timeline::command_timeline_sibling_reorder,
             commands::timeline::command_timeline_node_name,
             commands::timeline::command_timeline_node_range,
             commands::timeline::command_timeline_node_lock,

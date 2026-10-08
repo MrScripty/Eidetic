@@ -75,6 +75,7 @@ export {
   setTimelinePlayhead,
   setTimelineNodeLock,
   setTimelineNodeNotes,
+  reorderTimelineSibling,
   setTimelineNodeArcs,
   setTimelineNodeName,
   setTimelineNodeRange,

@@ -132,10 +132,11 @@ pub use story_arc::{
 pub use timeline_command::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineChildFromParentCommand,
     CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, SetTimelineNodeArcsCommand, SetTimelineNodeLockCommand,
-    SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
-    SplitTimelineNodeCommand, TimelineArcMembershipInput, TimelineNodeNameRead,
-    TimelineNodeRangeRead,
+    DeleteTimelineRelationshipCommand, ReorderTimelineSiblingCommand, SetTimelineNodeArcsCommand,
+    SetTimelineNodeLockCommand, SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand,
+    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineArcMembershipInput,
+    TimelineNodeNameRead, TimelineNodeRangeRead, TimelineSiblingOrderRead,
+    TimelineSiblingPlacementRead,
 };
 pub use timeline_render::{
     TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderGap, TimelineRenderProjection,

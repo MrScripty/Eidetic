@@ -8,6 +8,7 @@ import type {
   DeleteTimelineRelationshipCommand,
   SetTimelineNodeLockCommand,
   SetTimelineNodeNotesCommand,
+  ReorderTimelineSiblingCommand,
   SetTimelineNodeArcsCommand,
   SetTimelineNodeNameCommand,
   SetTimelineNodeRangeCommand,
@@ -170,4 +171,12 @@ export function deleteTimelineNode(
   };
 
   return invokeDesktop<TimelineCommandResponse>('command_timeline_delete_node', { command });
+}
+
+export function reorderTimelineSibling(
+  payload: ReorderTimelineSiblingCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<ReorderTimelineSiblingCommand> = { id: commandId, payload };
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_sibling_reorder', { command });
 }

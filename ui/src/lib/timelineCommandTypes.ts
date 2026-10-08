@@ -1,3 +1,23 @@
+export interface TimelineSiblingPlacementRead {
+  node_id: string;
+  name: string;
+  start_ms: number;
+  end_ms: number;
+  sort_order: number;
+  revision_event_id: string | null;
+}
+export interface TimelineSiblingOrderRead {
+  node_id: string;
+  parent_id: string | null;
+  level: StoryLevel;
+  membership_revision_event_id: string | null;
+  siblings: TimelineSiblingPlacementRead[];
+}
+export interface ReorderTimelineSiblingCommand {
+  node_id: string;
+  neighbor_id: string;
+  expected: TimelineSiblingOrderRead;
+}
 export interface TimelineArcMembershipInput {
   node_id: string;
   arc_ids: string[];
@@ -103,6 +123,7 @@ export interface DeleteTimelineRelationshipCommand {
 }
 
 export interface TimelineCommandResponse {
+  order_read?: TimelineSiblingOrderRead | null;
   arc_read?: TimelineArcMembershipInput | null;
   notes_read?: TimelineNotesInput | null;
   outcome: CommandOutcome;

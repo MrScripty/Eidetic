@@ -1,5 +1,6 @@
 import type { TimelineNotesInput } from './propagationProposalTypes.js';
 import type {
+  TimelineSiblingOrderRead,
   TimelineArcMembershipInput,
   TimelineNodeNameRead,
   TimelineNodeRangeRead,
@@ -31,6 +32,7 @@ export interface SelectedNodeEditorNode {
   locked: boolean;
   range_read?: TimelineNodeRangeRead | null;
   name_read?: TimelineNodeNameRead | null;
+  order_read?: TimelineSiblingOrderRead | null;
   arc_read?: TimelineArcMembershipInput | null;
   notes_read?: TimelineNotesInput | null;
 }

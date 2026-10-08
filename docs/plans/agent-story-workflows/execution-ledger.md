@@ -2082,3 +2082,11 @@ ZIP-byte verification are not claimed. Parent retains independent source/visual
 review and PR/merge/Library delivery. No new PR, external reviewer, credential or
 paid service. See arc-description-qualification.md for complete source/hash/test
 receipts. This successor changes documentation only; PR19–23/main stay unmerged.
+
+### Timeline sibling reorder milestone
+
+- Base: accepted arc assignment `1f45e152fe68b9dd34d8058a8c1064ba6de3437f`, preserving Notes, exact Bible text and missing-screenplay draft recovery checkpoints.
+- Evidence before implementation: single-node drag/exact placement existed, but no atomic neighboring move authored both subtrees and hierarchy order. Child/hierarchy ordering uses `sort_order` before placement; screenplay context is chronological. Existing scene-order memory was already working and reused.
+- Adds explicit adjacent **Move earlier/later → named pair preview → Apply reorder**, canonical two-subtree checked translation/order revisions, atomic source-bound screenplay placement, backend sibling/membership ABA reads and original immutable replay receipts. Existing continuity review/targeted acceptance handles downstream material; manual text and draft custody remain intact. Structural moves preserve content locks under the documented M4 policy.
+- Local rendered qualification: real AppShell/Bible/timeline/screenplay plus public SQLite services, six final screenshots, labelled synthetic provider. Does not establish native runtime or real-model quality. Source/module receipts are post-run; earlier probes are explicitly retained separately. Independent final review and exact source/test/evidence seals are in the parent handoff.
+- See `docs/reports/timeline-sibling-reorder-qualification.md`; external evidence `/workspace/scratch/timeline-sibling-reorder-evidence`. No paid CI, PR/merge, ONNX403 bypass or Pumas guard weakening. Split-containment policy remains open; this milestone does not complete M4 generally.

@@ -119,6 +119,8 @@ pub(crate) mod timeline_node_split_history;
 pub(crate) mod timeline_node_store;
 mod timeline_notes_lineage;
 pub(crate) mod timeline_relationship_store;
+mod timeline_sibling_order;
+mod timeline_sibling_reorder_history;
 pub(crate) mod timeline_title_lineage;
 pub mod validation;
 pub(crate) mod vector_store;

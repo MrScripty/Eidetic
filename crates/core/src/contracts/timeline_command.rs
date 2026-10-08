@@ -23,6 +23,36 @@ pub struct SetTimelineNodeArcsCommand {
 use crate::timeline::node::{BeatType, NodeId, StoryLevel};
 use crate::timeline::relationship::{RelationshipId, RelationshipType};
 
+/// Canonical sibling order/geometry read, including structural membership ABA.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TimelineSiblingOrderRead {
+    pub node_id: NodeId,
+    pub parent_id: Option<NodeId>,
+    pub level: StoryLevel,
+    pub membership_revision_event_id: Option<super::ChangeEventId>,
+    pub siblings: Vec<TimelineSiblingPlacementRead>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TimelineSiblingPlacementRead {
+    pub node_id: NodeId,
+    pub name: String,
+    pub start_ms: u64,
+    pub end_ms: u64,
+    pub sort_order: u32,
+    pub revision_event_id: Option<super::ChangeEventId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReorderTimelineSiblingCommand {
+    pub node_id: NodeId,
+    pub neighbor_id: NodeId,
+    pub expected: TimelineSiblingOrderRead,
+}
+
 /// Exact canonical title and its owned field clock; None is a known baseline.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
