@@ -194,6 +194,7 @@ def type_text(node,window,text):
     ui.click_control(node,window)
     ui.wait_for('native text focus',lambda:node.getState().contains(ui.pyatspi.STATE_FOCUSED))
     ui.command('xdotool','key','--clearmodifiers','ctrl+a')
+    if not text:ui.command('xdotool','key','--clearmodifiers','BackSpace')
     for kind,value in native_input_steps(text):
         if kind=='type':subprocess.run(['xdotool','type','--clearmodifiers','--delay','10',value],check=True,timeout=20)
         elif kind=='newline':ui.command('xdotool','key','--clearmodifiers','Return')
