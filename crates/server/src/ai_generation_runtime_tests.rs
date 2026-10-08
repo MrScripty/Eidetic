@@ -6,6 +6,173 @@ use futures::stream;
 const CONSUMED_ANCESTOR_NOTES: &str = "  Mara conceals the witness — 雨.\n\n  ";
 const UNCONSUMED_ACT_NOTES: &str = "Eli keeps a brass whistle in the unrelated Act.";
 
+const ENTERED_ARC_DESCRIPTION: &str = "  Mara chooses exile — 雨.\n\n  ";
+
+async fn empty_arc_description_fixture() -> (
+    Fixture,
+    eidetic_core::story::arc::ArcId,
+    eidetic_core::story::arc::ArcId,
+) {
+    use eidetic_core::timeline::node::StoryLevel;
+    let mut fixture = fixture().await;
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    fixture.node_id = project.timeline.nodes_at_level(StoryLevel::Scene)[0].id;
+    let arc = project.timeline.arcs_for_node(fixture.node_id)[0];
+    let unrelated = project
+        .arcs
+        .iter()
+        .find(|candidate| candidate.id != arc)
+        .unwrap()
+        .id;
+    // Publicly commit a known-empty field; imported/unowned absence is distinct.
+    set_fixture_arc_description(&fixture, arc, "").await;
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    let mut request =
+        eidetic_core::ai::prompt::build_generate_request(&project, fixture.node_id).unwrap();
+    crate::ai_service::attach_ai_generation_context(
+        &mut request,
+        fixture.path.clone(),
+        fixture.node_id,
+    )
+    .await
+    .unwrap();
+    assert!(
+        request
+            .tagged_arcs
+            .iter()
+            .any(|value| value.id == arc && value.description.is_empty())
+    );
+    assert!(
+        !request
+            .arc_inputs
+            .as_ref()
+            .unwrap()
+            .iter()
+            .any(|input| input.arc_id == arc
+                && input.field == eidetic_core::contracts::StoryArcPromptField::Description)
+    );
+    assert!(
+        !crate::prompt_format::build_chat_prompt(&request)
+            .user
+            .contains(ENTERED_ARC_DESCRIPTION)
+    );
+    persist_generated_script_block(
+        fixture.path.clone(),
+        fixture.node_id.0,
+        "Synthetic saved screenplay without arc description.".into(),
+        GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
+            arc_inputs: request.arc_inputs,
+            script_inputs: request.script_context,
+            bible_inputs: request.bible_inputs,
+            bible_node_name_inputs: request.bible_node_name_inputs,
+            bible_relationship_inputs: request.bible_relationship_inputs,
+            bible_context_scope: request.bible_context_scope,
+            script_context_scope: request.script_context_scope,
+            target_binding: request.generation_target,
+            ..GenerationInputs::default()
+        },
+    )
+    .await
+    .unwrap();
+    (fixture, arc, unrelated)
+}
+
+async fn set_fixture_arc_description(
+    fixture: &Fixture,
+    arc_id: eidetic_core::story::arc::ArcId,
+    text: &str,
+) {
+    use eidetic_core::contracts::*;
+    crate::command_service::update_story_arc(
+        &fixture.state,
+        CommandEnvelope::new(SetStoryArcMetadataCommand {
+            arc_id,
+            name: None,
+            description: Some(text.into()),
+            arc_type: None,
+            color: None,
+        }),
+    )
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn public_known_empty_arc_description_entry_marks_saved_scene_for_review() {
+    use eidetic_core::contracts::*;
+    let (fixture, arc, _) = empty_arc_description_fixture().await;
+    let before = script(&fixture);
+    set_fixture_arc_description(&fixture, arc, ENTERED_ARC_DESCRIPTION).await;
+    let after = script(&fixture);
+    assert_saved_material_unchanged(&before.payload, &after.payload);
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    let mut fresh =
+        eidetic_core::ai::prompt::build_generate_request(&project, fixture.node_id).unwrap();
+    crate::ai_service::attach_ai_generation_context(
+        &mut fresh,
+        fixture.path.clone(),
+        fixture.node_id,
+    )
+    .await
+    .unwrap();
+    assert!(
+        crate::prompt_format::build_chat_prompt(&fresh)
+            .user
+            .contains(ENTERED_ARC_DESCRIPTION)
+    );
+    let changed = after
+        .payload
+        .segments
+        .iter()
+        .find(|row| {
+            row.segment.source_node_id.as_deref() == Some(fixture.node_id.0.to_string().as_str())
+        })
+        .unwrap()
+        .impact
+        .as_ref()
+        .unwrap();
+    fixture.state.shutdown_tasks_async().await;
+    assert!(
+        changed.causes.iter().any(|cause| cause.input
+            == SemanticDependencyEndpoint::StoryArcField {
+                arc_id: arc,
+                field: StoryArcPromptField::Description
+            }
+            && cause
+                .dependency_id
+                .as_str()
+                .ends_with(&format!(".arc_description_applicability.{}", arc.0))),
+        "Known-empty tagged arc description became supplied without precise downstream Scene review"
+    );
+}
+
+#[tokio::test]
+async fn public_known_empty_arc_clear_and_untagged_description_preserve_saved_scene() {
+    let (fixture, arc, unrelated) = empty_arc_description_fixture().await;
+    let before = script(&fixture);
+    set_fixture_arc_description(&fixture, arc, "").await;
+    set_fixture_arc_description(&fixture, unrelated, ENTERED_ARC_DESCRIPTION).await;
+    let after = script(&fixture);
+    assert_saved_material_unchanged(&before.payload, &after.payload);
+    assert_eq!(
+        before
+            .payload
+            .segments
+            .iter()
+            .map(|row| &row.impact)
+            .collect::<Vec<_>>(),
+        after
+            .payload
+            .segments
+            .iter()
+            .map(|row| &row.impact)
+            .collect::<Vec<_>>()
+    );
+    fixture.state.shutdown_tasks_async().await;
+}
+
 async fn ancestor_notes_fixture() -> (Fixture, NodeId, NodeId) {
     use eidetic_core::timeline::node::StoryLevel;
     let mut fixture = fixture().await;
@@ -48,6 +215,7 @@ async fn ancestor_notes_fixture() -> (Fixture, NodeId, NodeId) {
         fixture.node_id.0,
         "Synthetic screenplay: Mara conceals the witness.".into(),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -190,6 +358,7 @@ async fn public_consumed_bible_name_edit_marks_saved_screenplay_for_review() {
         fixture.node_id.0,
         "Synthetic screenplay starring Mara.".into(),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -297,6 +466,7 @@ async fn public_relationship_edit_publishes_affected_review_from_original_genera
             "Synthetic screenplay: Mara trusts Eli.".into()
         )])),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -415,6 +585,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
             "Synthetic fixture screenplay: Mara carries red.".into(),
         )])),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,

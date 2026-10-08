@@ -118,6 +118,14 @@ retain replay, immutable binding and replacement authority.
 - Compatibility is not required for pre-refactor project data.
 
 ## Structured Producer Contract
+
+Optional `arc_description_applicability` generation inputs and proposal
+`arc_description_applicability_previous/current` retain known-empty tagged
+Description reads using `StoryArcFieldInput`. Empty applicability is separate
+from consumed nonempty prose; absence remains legacy unknown. Existing commands,
+proposal bindings and revision-bound dependencies remain the durable owners.
+Consumers must not infer replacement authority or past applicability from
+current tags. Explicit acceptance alone installs the chosen screenplay update.
 - `ChangeEvent`, `ObjectRevision`, and `ObjectRevisionField` are intended to map directly to SQLite command/event/revision rows.
 - `ProjectionEnvelope<T>` is a versioned read model wrapper for Svelte, Bevy, AI, and export projections.
 - Field value variants define typed persistence semantics; adding variants requires persistence and wire round-trip tests.

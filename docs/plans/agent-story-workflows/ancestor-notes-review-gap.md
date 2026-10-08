@@ -1,6 +1,6 @@
 # Consumed ancestor Notes review gap
 
-Status: implemented and source-tested; separate native qualification pending. Based on qualified Notes prompt
+Status: implemented, source-tested and independently accepted for the bounded synthetic native gate. Based on qualified Notes prompt
 source `c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4` and provenance head
 `840f459cf34ea1856c5eaf127698663ff07d22ff`, on separate
 `test/ancestor-notes-review-gap`. Baseline reproduction is preserved at
@@ -80,8 +80,4 @@ storage/acceptance ABA refusal, unrelated and non-Notes changes, locked manual
 text, legacy absence, deletion and provider failure. Existing read-model schema
 and acceptance flow are retained; there is no automatic regeneration.
 
-Actual application qualification is the next gate, using the established separate
-hosted native QA route. Real-model quality remains unqualified. The already
-passing selected Notes prompt run37713651568 and its source-bound artifacts stay
-closed and preserved. Parent owns independent review, qualification acceptance,
-a later source-only draft, and PR19-22/main merge decisions.
+Actual native run37721620953 passes at frozen product10a2b43 / QAc09b992. Root independently reviewed the source, visually inspected all five captures and verified artifact/UI source hashes, with no blocking finding for this bounded synthetic gate. The unrelated Act control gains no new ancestor-Notes cause; pre-existing causes remain. See `ancestor-notes-qualification.md` for exact identities, tests, captures and preserved attempts. Real-model quality remains unqualified. Selected Notes prompt run37713651568 and its source-bound artifacts stay preserved. Publication is a source-only stacked draft; parent retains PR19-22/main merge decisions.

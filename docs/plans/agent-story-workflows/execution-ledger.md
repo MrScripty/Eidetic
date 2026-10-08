@@ -2018,3 +2018,49 @@ unrelated/non-Notes events, deletion, legacy absence and synthetic provider fail
 Locked core123/server556 (zero ignored), full UI558/96, strict Clippy and production
 build pass. Source review is followed by separate hosted native qualification;
 prior Notes closure evidence and PR19-22/main remain preserved and unmerged.
+
+
+## 2026-10-08 — Independent ancestor Notes native acceptance
+
+Frozen product10a2b43/tree06a0d52 (implementatione5fc355) and QAc09b992/treea2bea55
+pass native run37721620953/job113130335009 without a restart. Hosted core123/server556
+(zero ignored), UI558/96, strict Clippy, typecheck0/0, lint/format/build, driver53
+and policy5 pass. Exact ordinary Act Notes edit, two precise consuming Scene
+causes, original/current pending evidence, manual text/draft preservation,
+edit/restore ABA refusal and fresh explicit acceptance pass. Only B updates;
+A retains its cause. The unrelated Act gains no new ancestor-Notes cause, while
+pre-existing review flags from other causes remain. Six labelled synthetic
+HTTP/SSE calls; real-model quality is unqualified.
+
+Root independently accepted exact source and visually inspected all five native
+captures, verifying PNG/JPEG/ZIP and UI source hashes. No blocking source finding
+for this bounded gate. Root transfer worked despite the executor's preserved
+proxy403; author audit is separate and no author visual claim is made.
+Artifact11526418204/ZIPb068ff3aba6556eac820fac2495638e67c17d82ccfaa73d0bb53f89ee71625f6
+expires2026-10-11T03:24:58Z; pending-preview JPEG delivered by root. Three failed/
+partial attempts and prior selected Notes closure evidence stay preserved.
+See ancestor-notes-qualification.md. This successor changes documentation only;
+application source stays byte-identical to qualified10a2b43. Source-only stacked
+draft publication is authorized; no main/PR19-22 merge or external reviewer request.
+
+
+## 2026-10-08 — Known-empty tagged arc Description applicability
+
+Separate `feat/arc-description-applicability` starts at accepted PR23 documentation
+head e9abf3e. Baseline1feeee8 reproduces public owned-empty Description entry with
+no downstream review while fresh prompt inclusion and saved material remain exact;
+public clear/untagged control passes. The positive is now an ordinary passing test.
+Optional applicability receipts reuse StoryArcFieldInput, generation/proposal JSON,
+owned field revisions and existing graph dependency rows. Omitted prose is labelled
+separately from consumption. Filling identifies precise Scene consumers; clearing
+withdraws the entry cause. Writer stale/ABA checks preserve saved manual material
+and locks. Explicit acceptance refreshes only the chosen consumer's normal
+Description lineage; legacy missing/unowned history remains unknown.
+
+Maintained checks pass core123/server566 with zero ignored tests, UI562/96,
+strict core/server all-target/all-feature Clippy, typecheck0/0, lint/build and
+ONNX policy5. A first Rust run failed17 existing filesystem tests because host
+application data is read-only; the ordinary isolated XDG application-state route
+passes the full unchanged suite. Logs remain outside Git. No inference or ONNX403
+bypass. Native ArcDetail typing, screenshots and independent review remain pending;
+PR19–23/main remain unmerged. See arc-description-applicability.md.

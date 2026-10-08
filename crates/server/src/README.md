@@ -602,6 +602,19 @@ existing generation values and temporal choices retain their prior behavior.
 
 ## Consumed story-arc screenplay context
 
+`arc_description_applicability` captures omitted empty Description fields on
+actual selected arc tags with their owned field clocks before provider I/O.
+Existing generation command/proposal JSON and semantic dependency rows retain
+the receipt; this is an applicability read, not consumed prose. Filling a known
+empty field adds a precise Scene review cause. Clearing it withdraws that cause;
+legacy absent receipts, unowned clocks and unrelated arcs remain unknown or
+unaffected. Writer admission and proposal recapture refuse stale/ABA reads.
+Preview preserves authored text, spans, locks and placement. Explicit acceptance
+updates only its chosen block and records the now-supplied Description through
+ordinary arc lineage. Tests cover graph rows, public writer entry/clear controls,
+forged receipts, multiple consumers, locks, failed providers and manual text.
+See `docs/plans/agent-story-workflows/arc-description-applicability.md`.
+
 Selected clip Notes consumption is owned by `timeline_notes_lineage`. It resolves
 the exact supplied Notes field clock at the existing captured generation target
 event. New generation records a distinct TimelineNode dependency in the existing

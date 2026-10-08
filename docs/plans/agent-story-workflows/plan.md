@@ -1,14 +1,22 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Ancestor Notes propagation implemented; native gate pending:** Generation now
+**Separate known-empty arc Description implementation:** A public metadata edit
+reproduction on template-tagged Scenes established missing downstream review.
+`feat/arc-description-applicability` now captures owned empty-field applicability
+beside consumed arc inputs in existing history/graph receipts. Filling identifies
+precise Scene consumers; clearing withdraws that cause; stale/ABA admission,
+manual text, locked spans and explicit acceptance remain guarded. Legacy unknown
+reads are not backfilled. Native qualification and independent review are pending.
+See `arc-description-applicability.md`; PR19–23/main remain unmerged.
+**Ancestor Notes propagation independently accepted:** Generation now
 records exact consumed nonempty ancestor Notes with owned field revisions and
 precise graph dependency identities. Existing review shows original/current
 ancestor evidence; pending generation, preview and acceptance reject stale/ABA
 reads, and saved/manual/locked material stays intact until explicit acceptance.
 The c2659fa failing reproduction is now an ordinary passing test. Locked
 core123/server556, UI558/96 and strict Clippy pass. See
-`ancestor-notes-review-gap.md`; separate hosted native qualification is next.
+`ancestor-notes-review-gap.md` and `ancestor-notes-qualification.md`. Frozen product10a2b43 / QAc09b992 passes native run37721620953, core123/server556/UI558/96 and maintained gates. Root independently reviewed exact source and all five native images, verifying artifact/source hashes. Review applies to the bounded synthetic gate; real-model quality remains unqualified. The unrelated Act gains no new ancestor-Notes cause and retains pre-existing causes.
 **Selected Notes prompt follow-up qualified:** Frozen product `c5fad5c` / QA
 `11b60a9` passes native run37713651568: exact committed Notes refresh, older real
 return refusal, clear and exact restoration, saved material and unrelated draft
