@@ -1160,3 +1160,11 @@ real-model writing quality.
 - Focused history tests pass 3; title draft/session/client tests pass 7; Svelte
   check passes with zero errors/warnings. Consumed-title review and native
   qualification remain pending. No title publication or Undo UI is claimed.
+
+Consumed-title implementation now uses existing generation/proposal/dependency
+history for exact selected/ancestor/sibling/recap names. Targeted review preserves
+manual text until explicit acceptance and refreshes title consumption afterward.
+Focused checks cover baseline and owned clocks, Unicode, stale/ABA generation and
+acceptance, deleted-source absence ABA, legacy unknown history and untouched
+material. Independent source review and native title qualification remain pending;
+PR26/removal source and evidence are unchanged.

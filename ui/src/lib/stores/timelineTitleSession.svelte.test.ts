@@ -6,13 +6,21 @@ import { compileModule } from 'svelte/compiler';
 import ts from 'typescript';
 import { expect, it, vi } from 'vitest';
 import { getSessionTimelineTitleDraft } from './timelineTitleSession.svelte.js';
-import { resetEditorState } from './editor.svelte.js';
+import { editorState, resetEditorState } from './editor.svelte.js';
 import { applyTimelineNodeNameCommand } from './timelineRenderProjection.svelte.js';
+import { refreshSelectedNodeEditorProjection } from './selectedNodeEditorProjection.svelte.js';
+import { invalidateScriptContext } from './scriptDocumentProjection.svelte.js';
 import type { SelectedNodeEditorNode } from '$lib/selectedNodeEditorTypes.js';
 
 vi.mock('./timelineRenderProjection.svelte.js', () => ({
   applyTimelineNodeNameCommand: vi.fn().mockResolvedValue({}),
 }));
+vi.mock('./selectedNodeEditorProjection.svelte.js', () => ({
+  refreshSelectedNodeEditorProjection: vi.fn().mockResolvedValue({
+    payload: { node: { node_id: 'A', name_read: { name: 'Saved', revision_event_id: 'new' } } },
+  }),
+}));
+vi.mock('./scriptDocumentProjection.svelte.js', () => ({ invalidateScriptContext: vi.fn() }));
 const node: SelectedNodeEditorNode = {
   node_id: 'A',
   name: 'A',
@@ -47,7 +55,7 @@ it('registers and reuses the actual session owner inside a client derived read',
   let source = readFileSync(new URL('./timelineTitleSession.svelte.ts', import.meta.url), 'utf8');
   source = source.replace(/import[\s\S]*?from [^;]+;/g, '');
   source =
-    'const untrack = runtime.untrack; function createTimelineTitleDraft() { const state=runtime.state({name:""}); return {state}; } const applyTimelineNodeNameCommand=()=>{}; const refreshSelectedNodeEditorProjection=()=>{}; const getEditorSessionGeneration=()=>1; const createCommandId=()=>"title";\n' +
+    'const untrack = runtime.untrack; function createTimelineTitleDraft() { const state=runtime.state({name:""}); return {state}; } const applyTimelineNodeNameCommand=()=>{}; const refreshSelectedNodeEditorProjection=()=>{}; const getEditorSessionGeneration=()=>1; const editorState={selectedNodeId:"A"}; const invalidateScriptContext=()=>{}; const createCommandId=()=>"title";\n' +
     source;
   const javascript = ts.transpileModule(source, {
     compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
@@ -76,4 +84,22 @@ it('registers and reuses the actual session owner inside a client derived read',
   });
   expect(result.stderr).toBe('');
   expect(result.status).toBe(0);
+});
+
+it('acknowledgement directly invalidates context and refreshes only the current selected owner', async () => {
+  resetEditorState();
+  editorState.selectedNodeId = 'A';
+  const draft = getSessionTimelineTitleDraft(node);
+  draft.initialize(node.name_read);
+  draft.state.name = 'Saved';
+  await draft.apply();
+  expect(draft.state.saved).toBe(true);
+  expect(invalidateScriptContext).toHaveBeenCalled();
+  const guard = vi.mocked(refreshSelectedNodeEditorProjection).mock.calls.at(-1)?.[1];
+  expect(guard?.()).toBe(true);
+  editorState.selectedNodeId = 'B';
+  expect(guard?.()).toBe(false);
+  resetEditorState();
+  editorState.selectedNodeId = 'A';
+  expect(guard?.()).toBe(false);
 });

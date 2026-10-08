@@ -2,8 +2,9 @@ import { untrack } from 'svelte';
 import type { SelectedNodeEditorNode } from '$lib/selectedNodeEditorTypes.js';
 import { createCommandId } from '$lib/commandTransport.js';
 import { createTimelineTitleDraft } from '$lib/components/editor/timelineTitleDraft.svelte.js';
-import { getEditorSessionGeneration } from './editor.svelte.js';
+import { editorState, getEditorSessionGeneration } from './editor.svelte.js';
 import { refreshSelectedNodeEditorProjection } from './selectedNodeEditorProjection.svelte.js';
+import { invalidateScriptContext } from './scriptDocumentProjection.svelte.js';
 import { applyTimelineNodeNameCommand } from './timelineRenderProjection.svelte.js';
 
 let session = -1;
@@ -32,14 +33,29 @@ function getDraft(node: SelectedNodeEditorNode) {
       commandId: createCommandId,
       async read() {
         assertCurrent();
-        const projection = await refreshSelectedNodeEditorProjection(node.node_id);
+        const projection = await refreshSelectedNodeEditorProjection(
+          node.node_id,
+          () =>
+            admitted === getEditorSessionGeneration() &&
+            editorState.selectedNodeId === node.node_id,
+        );
         assertCurrent();
         const read = projection.payload.node;
         return read?.node_id === node.node_id ? (read.name_read ?? null) : null;
       },
       async apply(payload, commandId) {
         assertCurrent();
-        return applyTimelineNodeNameCommand(payload, commandId);
+        const response = await applyTimelineNodeNameCommand(payload, commandId);
+        assertCurrent();
+        invalidateScriptContext();
+        await refreshSelectedNodeEditorProjection(
+          node.node_id,
+          () =>
+            admitted === getEditorSessionGeneration() &&
+            editorState.selectedNodeId === node.node_id,
+        );
+        assertCurrent();
+        return response;
       },
     });
     drafts[node.node_id] = draft;

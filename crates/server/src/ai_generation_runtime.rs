@@ -22,6 +22,7 @@ use crate::ai_service::active_sqlite_project;
 #[derive(Default)]
 struct GenerationInputs {
     arc_description_applicability: Option<Vec<eidetic_core::contracts::StoryArcFieldInput>>,
+    timeline_title_inputs: Option<Vec<eidetic_core::contracts::TimelineTitleInput>>,
     ancestor_notes_inputs: Option<Vec<eidetic_core::contracts::TimelineNotesInput>>,
     arc_inputs: Option<Vec<eidetic_core::contracts::StoryArcFieldInput>>,
     script_inputs: Option<Vec<ScriptContextBlock>>,
@@ -102,6 +103,7 @@ pub(crate) async fn run_generation(
         stream,
         GenerationInputs {
             arc_description_applicability: request.arc_description_applicability,
+            timeline_title_inputs: request.timeline_title_inputs,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -384,6 +386,7 @@ async fn persist_generated_script_block(
                 id: command.id,
                 payload: GenerateScriptBlockCommand {
                     arc_description_applicability: inputs.arc_description_applicability,
+                    timeline_title_inputs: inputs.timeline_title_inputs,
                     ancestor_notes_inputs: inputs.ancestor_notes_inputs,
                     arc_inputs: inputs.arc_inputs,
                     target_binding: inputs.target_binding,

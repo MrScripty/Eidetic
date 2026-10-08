@@ -153,6 +153,10 @@ pub(crate) fn load_impact(
     {
         causes.push(cause);
     }
+    causes.extend(crate::timeline_title_lineage::impact(
+        conn,
+        generation_event_id,
+    )?);
     causes.extend(crate::ancestor_notes_lineage::impact(
         conn,
         generation_event_id,

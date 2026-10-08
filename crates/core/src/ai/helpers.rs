@@ -128,6 +128,7 @@ pub fn gather_recap_context(
                 .unwrap_or("Untagged");
 
             entries.push(RecapEntry {
+                node_id: Some(node.id),
                 arc_name: arc_name.to_string(),
                 node_name: node.name.clone(),
                 end_time_ms: node.time_range.end_ms,

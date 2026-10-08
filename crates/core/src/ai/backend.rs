@@ -92,6 +92,8 @@ pub struct GenerateRequest {
     pub arc_description_applicability: Option<Vec<crate::contracts::StoryArcFieldInput>>,
     /// Exact nonempty ancestor Notes supplied in the generation prompt.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeline_title_inputs: Option<Vec<crate::contracts::TimelineTitleInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ancestor_notes_inputs: Option<Vec<crate::contracts::TimelineNotesInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arc_inputs: Option<Vec<crate::contracts::StoryArcFieldInput>>,
@@ -152,6 +154,8 @@ pub struct SurroundingContext {
 /// A scene recap from a preceding node, including source identification.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecapEntry {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub node_id: Option<NodeId>,
     pub arc_name: String,
     pub node_name: String,
     /// End time of the source node (ms), for ordering.

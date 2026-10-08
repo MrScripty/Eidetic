@@ -691,3 +691,8 @@ rejection with absent and existing sibling databases.
 
 Canonical clip title saving records the exact old/new name through existing
 UserEdit history and rejects stale/ABA reads under the shared timeline writer guard.
+
+`timeline_title_lineage` captures precisely the selected, ancestor, sibling and
+recap titles actually supplied before provider I/O. Existing graph edges and
+proposal bindings support exact impact, stale/ABA refusal, historical/current or
+owned-deletion evidence, and explicit acceptance with refreshed consumed lineage.

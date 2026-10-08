@@ -384,6 +384,31 @@ pub(crate) fn latest_node_event(
         .transpose()
 }
 
+/// Owned title clock, excluding the command currently being recorded.
+pub(crate) fn latest_name_event(
+    conn: &Connection,
+    node_id: NodeId,
+    exclude: Option<eidetic_core::contracts::ChangeEventId>,
+) -> Result<Option<eidetic_core::contracts::ChangeEventId>, HistoryStoreError> {
+    let event: Option<String> = conn.query_row(
+        "SELECT r.change_event_id FROM object_revisions r JOIN change_events e ON e.id=r.change_event_id
+         WHERE r.object_kind='timeline_node' AND r.object_id=?1
+         AND (?2 IS NULL OR r.change_event_id != ?2)
+         AND (r.operation='delete' OR EXISTS(SELECT 1 FROM object_revision_fields f
+             WHERE f.revision_id=r.id AND f.field_key='name'))
+         ORDER BY e.rowid DESC,r.rowid DESC LIMIT 1",
+        params![node_id.0.to_string(), exclude.map(|event| event.0.to_string())],
+        |row| row.get(0),
+    ).optional()?;
+    event
+        .map(|event| {
+            Uuid::parse_str(&event)
+                .map(eidetic_core::contracts::ChangeEventId)
+                .map_err(|error| HistoryStoreError::InvalidId(error.to_string()))
+        })
+        .transpose()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -465,29 +490,4 @@ mod tests {
         assert_eq!(stack[1].level, StoryLevel::Act);
         assert_eq!(stack[2].id, scene_id);
     }
-}
-
-/// Owned title clock, excluding the command currently being recorded.
-pub(crate) fn latest_name_event(
-    conn: &Connection,
-    node_id: NodeId,
-    exclude: Option<eidetic_core::contracts::ChangeEventId>,
-) -> Result<Option<eidetic_core::contracts::ChangeEventId>, HistoryStoreError> {
-    let event: Option<String> = conn.query_row(
-        "SELECT r.change_event_id FROM object_revisions r JOIN change_events e ON e.id=r.change_event_id
-         WHERE r.object_kind='timeline_node' AND r.object_id=?1
-         AND (?2 IS NULL OR r.change_event_id != ?2)
-         AND (r.operation='delete' OR EXISTS(SELECT 1 FROM object_revision_fields f
-             WHERE f.revision_id=r.id AND f.field_key='name'))
-         ORDER BY e.rowid DESC,r.rowid DESC LIMIT 1",
-        params![node_id.0.to_string(), exclude.map(|event| event.0.to_string())],
-        |row| row.get(0),
-    ).optional()?;
-    event
-        .map(|event| {
-            Uuid::parse_str(&event)
-                .map(eidetic_core::contracts::ChangeEventId)
-                .map_err(|error| HistoryStoreError::InvalidId(error.to_string()))
-        })
-        .transpose()
 }

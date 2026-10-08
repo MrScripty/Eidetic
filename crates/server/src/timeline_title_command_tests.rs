@@ -155,3 +155,116 @@ fn non_title_edit_keeps_name_clock_and_invalid_title_never_records() {
         assert_eq!(count(&conn), n);
     }
 }
+
+#[tokio::test]
+async fn public_title_command_refreshes_native_projection_prompt_and_survives_save_reload() {
+    use crate::{
+        command_service, persistence, project_service, projection_service, state::AppState,
+    };
+    use eidetic_core::timeline::node::StoryLevel;
+    let state = AppState::new().await;
+    let project = Template::MultiCam.build_project("Title service custody");
+    let node = project.timeline.nodes_at_level(StoryLevel::Scene)[0].id;
+    let path = persistence::default_project_dir()
+        .join(format!("title-service-{}.db", uuid::Uuid::new_v4()));
+    persistence::save_project(&project, &path, None)
+        .await
+        .unwrap();
+    project_service::replace_active_project(&state, project, path.clone());
+    let original = projection_service::selected_node_editor_projection(
+        &state,
+        projection_service::SelectedNodeEditorProjectionRequest {
+            node_id: Some(node),
+        },
+    )
+    .await
+    .unwrap();
+    let expected = original.payload.node.unwrap().name_read.unwrap();
+    let command = CommandEnvelope::new(SetTimelineNodeNameCommand {
+        node_id: node,
+        name: "  Station departure — 雨.  ".into(),
+        expected,
+    });
+    let response = command_service::set_timeline_node_name(&state, command.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        serde_json::to_value(&response).unwrap()["outcome"],
+        "recorded"
+    );
+    let rendered = serde_json::to_value(&response).unwrap();
+    assert!(
+        rendered["projection"]["payload"]["clips"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|clip| clip["node_id"] == node.0.to_string()
+                && clip["name"] == "  Station departure — 雨.  ")
+    );
+    let after = projection_service::selected_node_editor_projection(
+        &state,
+        projection_service::SelectedNodeEditorProjectionRequest {
+            node_id: Some(node),
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        after.payload.node.as_ref().unwrap().name,
+        command.payload.name
+    );
+    assert_eq!(
+        after
+            .payload
+            .node
+            .as_ref()
+            .unwrap()
+            .name_read
+            .as_ref()
+            .unwrap()
+            .name,
+        command.payload.name
+    );
+    let (current, _) = crate::ai_service::active_sqlite_project(&state)
+        .await
+        .unwrap();
+    let mut request = eidetic_core::ai::prompt::build_generate_request(&current, node).unwrap();
+    crate::ai_service::attach_ai_generation_context(&mut request, path.clone(), node)
+        .await
+        .unwrap();
+    assert!(
+        crate::prompt_format::build_chat_prompt(&request)
+            .user
+            .contains(&command.payload.name)
+    );
+    assert!(
+        request
+            .timeline_title_inputs
+            .as_ref()
+            .unwrap()
+            .iter()
+            .any(|input| input.node_id == node
+                && input.name == command.payload.name
+                && input.revision_event_id.is_some())
+    );
+    let before = crate::timeline_postcommit_custody_tests::history(&path);
+    command_service::set_timeline_node_name(&state, command)
+        .await
+        .unwrap();
+    assert_eq!(
+        crate::timeline_postcommit_custody_tests::history(&path),
+        before
+    );
+    project_service::save_project(&state, project_service::SaveProjectRequest { path: None })
+        .await
+        .unwrap();
+    let (reopened, _) = persistence::load_project(&path).await.unwrap();
+    assert_eq!(
+        reopened.timeline.node(node).unwrap().name,
+        "  Station departure — 雨.  "
+    );
+    state.shutdown_tasks();
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{}{suffix}", path.display()));
+    }
+}

@@ -259,3 +259,7 @@ Saved screenplay blocks expose Remove block, followed by exact-text confirmation
 
 `TimelineTitleEditor` provides ordinary canonical title saving. Its editor-session
 owner preserves drafts through navigation and retries immutable uncertain writes.
+
+`ScriptTimelineTitleEvidence` shows original/current changed consumed names or
+owned removal. Unchanged supplied titles remain bound to the proposal. Existing
+Preview update and Accept update remain separate replacement actions.

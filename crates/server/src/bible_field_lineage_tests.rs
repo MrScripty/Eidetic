@@ -63,6 +63,7 @@ fn generate(
 ) -> CommandEnvelope<GenerateScriptBlockCommand> {
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
         arc_description_applicability: None,
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         arc_inputs: None,
         target_binding: None,
@@ -272,6 +273,7 @@ fn forged_consumed_field_value_rolls_back_output_history_and_dependencies() {
     inputs[0].value = FieldValue::Text("Forged canon".into());
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
         arc_description_applicability: None,
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         arc_inputs: None,
         target_binding: None,

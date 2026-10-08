@@ -60,6 +60,7 @@ fn setup(
     let command = GenerateScriptBlockCommand {
         arc_description_applicability: Some(capture(&conn, node, &fields).unwrap()),
         arc_inputs: Some(fields),
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         block: b,
         script_inputs: Some(vec![]),

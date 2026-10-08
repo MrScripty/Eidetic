@@ -124,6 +124,7 @@ fn apply_script_block<T: serde::Serialize>(
             if let Some(generation) = generation {
                 crate::script_generation_target::validate(tx, generation)?;
                 crate::ancestor_notes_lineage::validate_admission(tx, generation)?;
+                crate::timeline_title_lineage::validate_admission(tx, generation)?;
                 crate::arc_description_applicability::validate_admission(tx, generation)?;
                 let current = script_store::load_document_projection(tx, &payload.document_id)?;
                 validate_locked_spans(current.as_ref(), payload)

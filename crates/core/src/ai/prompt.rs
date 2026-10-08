@@ -48,6 +48,7 @@ pub fn build_generate_request(project: &Project, node_id: NodeId) -> Result<Gene
 
     Ok(GenerateRequest {
         arc_description_applicability: None,
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         arc_inputs: None,
         target_node,

@@ -91,6 +91,13 @@ pub(crate) fn dependencies(
             dependencies.push(dependency);
         }
     }
+    dependencies.extend(crate::timeline_title_lineage::dependencies(
+        conn,
+        command.timeline_title_inputs.as_deref(),
+        &command.block.segment_id,
+        event,
+        created_at_ms,
+    )?);
     dependencies.extend(crate::ancestor_notes_lineage::dependencies(
         conn,
         command.ancestor_notes_inputs.as_deref(),
@@ -239,6 +246,10 @@ pub(crate) fn record_in_transaction(
     dependencies: &[SemanticDependency],
 ) -> Result<(), HistoryStoreError> {
     crate::script_context_scope::validate(tx, command)?;
+    crate::timeline_title_lineage::validate_inputs(
+        tx,
+        command.timeline_title_inputs.as_deref().unwrap_or_default(),
+    )?;
     crate::arc_description_applicability::validate_inputs(
         tx,
         command

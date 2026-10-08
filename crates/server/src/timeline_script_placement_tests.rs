@@ -83,6 +83,7 @@ pub(crate) fn fixture() -> (
         &mut conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
             arc_description_applicability: None,
+            timeline_title_inputs: None,
             ancestor_notes_inputs: None,
             arc_inputs: None,
             target_binding: None,
@@ -445,6 +446,7 @@ fn historical_sparse_placement_validates_captured_input_after_later_move_and_rej
         }
         let generation = CommandEnvelope::new(GenerateScriptBlockCommand {
             arc_description_applicability: None,
+            timeline_title_inputs: None,
             ancestor_notes_inputs: None,
             arc_inputs: None,
             target_binding: None,

@@ -108,7 +108,7 @@ pub use script_fact_reconciliation::{
 };
 pub use script_impact_review::{
     RequestScriptImpactProposalCommand, ScriptImpactProposalBinding, ScriptRecallFactSelection,
-    ScriptRecallSelection, TimelineNotesInput,
+    ScriptRecallSelection, TimelineNotesInput, TimelineTitleInput,
 };
 pub use selected_node_editor::{
     SelectedNodeEditorAdjacentParents, SelectedNodeEditorNode, SelectedNodeEditorProjection,

@@ -84,6 +84,7 @@ fn generation(
     .unwrap();
     CommandEnvelope::new(GenerateScriptBlockCommand {
         arc_description_applicability: None,
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         arc_inputs: None,
         target_binding: None,

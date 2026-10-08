@@ -205,3 +205,7 @@ existing command/proposal/dependency history, with no alternate persistent owner
 
 Timeline title authoring uses `SetTimelineNodeNameCommand` with a required exact
 `TimelineNodeNameRead`. Known baseline titles have no fabricated field revision.
+
+Optional `TimelineTitleInput` receipts record exact consumed names and owned clocks
+in generation/proposal JSON. Legacy absence remains unknown; baseline clock None
+is a known canonical read. Recap source IDs avoid ambiguous name-based resolution.
