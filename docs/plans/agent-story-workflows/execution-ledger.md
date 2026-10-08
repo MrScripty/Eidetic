@@ -1982,3 +1982,19 @@ machine receipts and full logs are outside Git. Personal visual inspection remai
 blocked by executor transfer proxyHTTP403; retain that gap and exact artifact
 identity. See notes-prompt-preview-qualification.md. No PR19-22/main merge, no
 external reviewer request, credential change or paid model/service call.
+
+## 2026-10-08 — Consumed ancestor Notes boundary reproduced
+
+After closing exact Notes prompt provenance at840f459, selected the documented
+ancestor prose follow-up. Separate test/ancestor-notes-review-gap retains qualified
+application code and adds two actual runtime regressions. Canonical public Notes
+writes and the real formatted generation prompt prove consumption of exact Act
+Notes and exclusion of unrelated Act Notes. The positive reproduction fails at
+missing downstream Scene review; the negative control passes. Both preserve saved
+text/spans/locks/placement/revisions. Output is explicitly synthetic, no model call.
+The known positive is marked ignored for ordinary CI and run explicitly for the
+baseline; this is a test milestone, not a completed feature. Existing locally
+prepared locked Rust dependencies compile without a new ONNX bypass. See
+ancestor-notes-review-gap.md for commands, evidence and bounded reuse contract.
+Locked all-target core123/server543 pass with the one known reproduction ignored;
+strict all-target/all-feature Clippy, Rust format, traceability and policy5 pass.
