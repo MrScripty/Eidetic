@@ -669,7 +669,11 @@ def qualify_notes_prompt(application,window,database,fixture,capture,checkpoint,
     field_node=ui.wait_for('Notes editor before clear',lambda:ui.editable(application,NOTES));ui.type_text(field_node,window,'')
     ui.wait_for('ordinary Notes clear saved',lambda:saved_notes()=='')
     ui.wait_for('empty Notes remove Raw Prompt panel',lambda:not ui.find(application,lambda n:n.name.upper().startswith('RAW AI PROMPT')))
-    field_node=ui.wait_for('empty selected Notes editor',lambda:ui.find(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)=='' and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]>400 and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[1]<600))
+    preserved();evidence['ordinary_notes_clear']={'exact_saved_notes':'','raw_prompt_panel_absent':True,'saved_material_and_draft_preserved':True}
+    checkpoint('ordinary Notes clear commits empty text and removes Raw Prompt without saved material changes');capture('notes-prompt-03b-cleared.png')
+    # The observed native label is NOTES at x296; a broad x>400 selector
+    # can instead reach the empty right-hand Bible SUMMARY draft.
+    field_node=ui.wait_for('empty selected Notes editor',lambda:ui.reveal(application,lambda n:n.name.upper()=='NOTES' and n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)==''))
     ui.type_text(field_node,window,NOTES);ui.wait_for('exact restored Notes public commit',lambda:saved_notes()==NOTES)
     restored=ui.wait_for('restored Notes owns new actual context read',lambda:returned(NOTES,fresh['id']));open_raw()
     evidence['restored_context']=ui.wait_for('restored exact Notes glyphs visible',lambda:raw_prompt_visible(application,window,restored['actual_user'],NOTES))
@@ -801,7 +805,7 @@ def main():
         (output/'capture-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n')
         # Readable receipt survives artifact-transfer restrictions; fixtures
         # contain only authored QA text. Originals remain the uploaded PNGs.
-        keys=('status','application_source_sha','application_tree','qualification_sha','application_binary_sha256','failure','checkpoints','captures','display_derivatives','stale_checks','saved_screenplay_placement_bible_and_unrelated_draft_preserved','ordinary_notes_edit')
+        keys=('status','application_source_sha','application_tree','qualification_sha','application_binary_sha256','failure','checkpoints','captures','display_derivatives','stale_checks','saved_screenplay_placement_bible_and_unrelated_draft_preserved','ordinary_notes_edit','ordinary_notes_clear')
         summary={key:evidence[key] for key in keys if key in evidence}
         summary['synthetic_fixture_calls']=len(Provider.records)
         summary['synthetic_calls_accepted']=all(r['accepted'] for r in Provider.records)
