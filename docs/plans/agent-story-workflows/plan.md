@@ -1168,3 +1168,17 @@ Focused checks cover baseline and owned clocks, Unicode, stale/ABA generation an
 acceptance, deleted-source absence ABA, legacy unknown history and untouched
 material. Independent source review and native title qualification remain pending;
 PR26/removal source and evidence are unchanged.
+
+### Timeline Notes draft custody (separate admitted successor)
+
+After reviewed PR27 repair integration515b4b17, preserve block-type57b0/ee167.
+The existing Notes writer and selected/ancestor propagation work, but its
+component-local debounce discards pending text on panel destruction or a second
+clip edit and owns no retry draft. The actual helper reproduction issues zero
+commands for exact Notes disposed before500ms, while existing cancellation tests
+pass. Begin independent `feat/timeline-notes-draft-custody`; see
+[timeline-notes-draft-custody-audit.md](timeline-notes-draft-custody-audit.md).
+Reuse current editor-session ownership, Notes commands and owned field history,
+preserving exact dirty/queued/uncertain input and existing downstream acceptance.
+This checkpoint admits the feature; runtime implementation and qualification are
+pending. No new hosted job, schema, embedding or project-switch scope.
