@@ -42,8 +42,10 @@ generation/agent reads or the existing downstream review machinery.
 
 - Own exact Notes text, original read and save status in the existing editor
   session, separately per clip; reuse the title/edit session lifetime patterns.
-  Retain the current Notes command and autosave cadence. Leaving a panel must
-  neither discard an intent nor retarget it to the newly selected clip.
+  Retain the current Notes command with explicit Save Notes. The latest owner
+  instruction prohibits silently saving unaccepted text and supersedes the audit
+  checkpoint's proposed autosave cadence. Leaving a panel must neither save nor
+  discard an intent nor retarget it to the newly selected clip.
 - Carry an optional exact author read using existing owned Notes field history;
   compare it inside the current writer transaction. Keep legacy wire behavior and
   command replay. Notes edit/restore ABA must refuse a stale read without writes.
@@ -62,10 +64,45 @@ generation/agent reads or the existing downstream review machinery.
 
 ## Current milestone and proof limits
 
-This checkpoint begins the separate feature with inspected source, a reproducible
-missing-custody receipt and an admitted plan. Runtime implementation remains
-pending; no draft-preservation fix, writer guard, screenshot or native acceptance
-is claimed. The owner paused new hosted CI spending. Continue local qualification
-without changing required main merge gates. No new durable store/schema, model or
-embedding dependency, project-switch recovery or real-model quality claim belongs
-to this slice.
+Implemented on the separate Notes branch: a session-owned per-clip draft replaces
+BeatEditor's component-local debounce. Save Notes captures an immutable command
+ID, exact text and existing `TimelineNotesInput`. The existing writer compares the
+original author read in its transaction, excluding its tentative Notes event;
+stale/ABA, wrong-node, locked and unchanged guarded edits roll back all rows.
+Legacy clients omit the guard and keep their existing wire behavior.
+
+The existing command response adds optional `notes_read`: the original historical
+receipt of that exact command, including a replay after newer Notes or a late
+lock. Missing/uncertain receipts retain retry custody. Only a proven precommit
+refusal releases it. Failed postcommit publication/refresh cannot be labelled a
+precommit refusal; independent projection refresh does not invalidate a received
+owned acknowledgement. Later queued text remains unsaved. Agent reads and raw
+prompt preview continue to use committed Notes; downstream screenplay replacement
+still uses the existing explicit acceptance flow.
+
+Local qualification passes 123 core and 597 server tests, including the public
+SQLite guarded-write/replay/save-reopen path and a guarded Notes edit that updates
+existing impact history while preserving all saved screenplay material. Nineteen
+focused UI tests cover custody, concurrency, immutable retries, failed reads,
+rendered controls and the late-lock recovery case. The full UI suite and static
+checks are recorded in the external evidence logs at publication.
+
+A local Chromium run uses real AppShell, Bible, BeatEditor, ScriptPanel and timeline
+components through a labelled IPC test adapter to public Rust/SQLite services.
+Seven screenshots and DOM receipts show exact unsaved input, panel remount,
+uncertain acknowledgement after a real commit, retry despite a late lock,
+acknowledged save, explicit B save, canonical conflict and session reopen.
+The entire saved screenplay payload is identical before/after; the projection
+version is allowed to advance with Notes history. No runtime exceptions occur.
+The fixtures contain manually authored screenplay; downstream generated-consumer
+impact is qualified by the separate SQLite test, not claimed from those pixels.
+The adapter and transformed module bytes are retained outside Git for inspection.
+
+Unsaved custody is transient within an open project session. Reset/reopen expires
+unsaved intents and reads committed Notes; project-switch/hard-reload recovery is
+still deferred. No new schema, durable draft store, dependency, embedding or model
+call is introduced. This is instrumented local browser/public-service evidence,
+not native runtime, uninstrumented release, new hosted qualification or real-model
+quality. Native renderer status is unavailable in this browser adapter. No hosted
+jobs were started and main merge gates remain unchanged. Independent acceptance,
+exact source IDs and evidence hashes are recorded in the publication handoff.

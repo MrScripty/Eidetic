@@ -1,3 +1,4 @@
+import type { TimelineNotesInput } from './propagationProposalTypes.js';
 import type { TimelineNodeNameRead, TimelineNodeRangeRead } from './timelineCommandTypes.js';
 import type { BeatType, ContentStatus, NodeId, StoryLevel } from './timelineTypes.js';
 
@@ -26,6 +27,7 @@ export interface SelectedNodeEditorNode {
   locked: boolean;
   range_read?: TimelineNodeRangeRead | null;
   name_read?: TimelineNodeNameRead | null;
+  notes_read?: TimelineNotesInput | null;
 }
 
 export interface SelectedNodeEditorSummary {

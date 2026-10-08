@@ -238,6 +238,7 @@ async fn set_fixture_notes(fixture: &Fixture, node_id: NodeId, notes: &str) {
     crate::command_service::set_timeline_node_notes(
         &fixture.state,
         CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id,
             notes: notes.into(),
         }),

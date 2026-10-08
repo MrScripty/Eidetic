@@ -457,6 +457,7 @@ async fn descendant_notes_aba_refuses_a_pending_plan_without_overwriting_manual_
     crate::command_service::set_timeline_node_notes(
         &fixture.state,
         CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: child,
             notes: "Original manual beat notes".into(),
         }),
@@ -473,6 +474,7 @@ async fn descendant_notes_aba_refuses_a_pending_plan_without_overwriting_manual_
         crate::command_service::set_timeline_node_notes(
             &fixture.state,
             CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                expected: None,
                 node_id: child,
                 notes,
             }),

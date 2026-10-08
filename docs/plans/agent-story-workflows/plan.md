@@ -1180,5 +1180,10 @@ pass. Begin independent `feat/timeline-notes-draft-custody`; see
 [timeline-notes-draft-custody-audit.md](timeline-notes-draft-custody-audit.md).
 Reuse current editor-session ownership, Notes commands and owned field history,
 preserving exact dirty/queued/uncertain input and existing downstream acceptance.
-This checkpoint admits the feature; runtime implementation and qualification are
-pending. No new hosted job, schema, embedding or project-switch scope.
+The implementation now uses explicit Save Notes and per-session/per-clip custody;
+unsaved input never auto-commits on disposal. Optional existing Notes receipts
+protect the canonical writer and immutable acknowledgement retry. Local public
+SQLite and rendered Chromium checks cover interruptions, two clips, lock-after-
+lost-ack recovery, save/discard/reload and canonical conflict. See the audit for
+exact proof boundaries and external source/evidence handoff. No new hosted job,
+schema, embedding or project-switch recovery scope.

@@ -183,6 +183,17 @@ or persistent schema. A distinct Notes dependency on the existing TimelineNode
 endpoint is independent of the screenplay-window selection epoch. Notes do not
 infer fictional time; existing explicit targeted acceptance owns replacement.
 
+Manual Notes saving reuses this same `TimelineNotesInput` as optional
+`SetTimelineNodeNotesCommand.expected` and selected editor `notes_read`. Baseline
+`revision_event_id: null` is a known canonical read; missing editor receipt is
+unknown. The guarded writer checks exact node/text/owned clock atomically, including
+edit/restore ABA, before changing current rows. Guardless legacy JSON is unchanged.
+The optional command-response `notes_read` is the original command's owned
+historical receipt, so an acknowledgement retry cannot adopt a later writer's
+Notes or replace newer current text. Session drafts never enter prompt inputs
+before explicit Save Notes; existing targeted acceptance still owns screenplay
+replacement. No schema or second revision clock is introduced.
+
 `StoryArcPromptField` restricts dependency identity to name, description and
 arc_type. `StoryArcFieldInput` preserves exact supplied values and optional owned
 field revisions; missing template history is explicitly unbound. Generation and

@@ -176,6 +176,7 @@ fn non_title_edit_keeps_name_clock_and_invalid_title_never_records() {
     let (mut conn, mut project) = fixture();
     let intent = command(&conn, &project, "Author title");
     let notes = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: intent.payload.node_id,
         notes: "Authored notes".into(),
     });

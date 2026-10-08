@@ -286,6 +286,25 @@ pub(crate) fn record_set_timeline_node_notes_history(
         &[revision],
         |tx| {
             crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            if let Some(expected) = &command.payload.expected {
+                let current =
+                    crate::timeline_notes_lineage::capture_excluding(tx, node.id, Some(event.id))?;
+                if expected != &current {
+                    return Err(crate::history_store::HistoryStoreError::InvalidValue(
+                        "Notes changed since this draft was read; keep the draft and read current Notes".into(),
+                    ));
+                }
+                if node.locked {
+                    return Err(crate::history_store::HistoryStoreError::InvalidValue(
+                        "Notes are locked".into(),
+                    ));
+                }
+                if command.payload.notes == current.notes {
+                    return Err(crate::history_store::HistoryStoreError::InvalidValue(
+                        "Notes are unchanged".into(),
+                    ));
+                }
+            }
             timeline_node_store::upsert_nodes_in_transaction(tx, &next_timeline.nodes)
         },
     )?)
@@ -618,3 +637,7 @@ mod range_tests;
 #[cfg(test)]
 #[path = "timeline_title_command_tests.rs"]
 mod title_tests;
+
+#[cfg(test)]
+#[path = "timeline_notes_draft_command_tests.rs"]
+mod timeline_notes_draft_command_tests;

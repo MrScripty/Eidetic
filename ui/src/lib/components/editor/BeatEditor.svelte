@@ -19,7 +19,6 @@
   import {
     applyTimelineChildrenCommand,
     applyTimelineNodeLockCommand,
-    applyTimelineNodeNotesCommand,
   } from '$lib/stores/timelineRenderProjection.svelte.js';
   import {
     refreshSelectedNodeEditorProjection,
@@ -34,24 +33,11 @@
   import ChildPlanReview from './ChildPlanReview.svelte';
   import { createChildPlanReview } from './childPlanReview.svelte.js';
   import { beatContentStatusLabel } from './beatEditorStatus.js';
-  import { createDebouncedNodeNotesSave } from './debouncedNodeNotesSave.js';
   import { createContextRequestLifecycle } from './contextRequestLifecycle.js';
   import './beatEditor.css';
   import { createSelectedTimelineChild } from './createSelectedTimelineChild.js';
   import { scriptDocumentProjectionState } from '$lib/stores/scriptDocumentProjection.svelte.js';
 
-  const debouncedNotesSave = createDebouncedNodeNotesSave({
-    delayMs: 500,
-    async save(nodeId, notes) {
-      await applyTimelineNodeNotesCommand({
-        node_id: nodeId,
-        notes,
-      });
-      if (editorState.selectedNodeId === nodeId) {
-        await refreshSelectedProjection();
-      }
-    },
-  });
   const childPlanReview = createChildPlanReview({
     owner: () => ({ nodeId: editorState.selectedNodeId, session: getEditorSessionGeneration() }),
     mounted: () => editorMounted,
@@ -257,16 +243,8 @@
     if (editorState.selectedNodeId) loadContext(editorState.selectedNodeId);
   }
 
-  function handleNotesInput(event: Event) {
-    const nodeId = editorState.selectedNodeId;
-    if (!nodeId) return;
-    const value = (event.target as HTMLTextAreaElement).value;
-    debouncedNotesSave.schedule(nodeId, value);
-  }
-
   onDestroy(() => {
     editorMounted = false;
-    debouncedNotesSave.dispose();
     contextRequests.invalidate();
   });
 
@@ -403,7 +381,7 @@
       generationError={editorState.generationError}
       {nodeContext}
       {contextLoading}
-      onnotesinput={handleNotesInput}
+      editorNode={selectedProjection!.node!}
       onrefreshcontext={refreshContext}
     />
   {:else}
