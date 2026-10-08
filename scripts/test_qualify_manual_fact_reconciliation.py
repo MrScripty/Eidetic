@@ -341,4 +341,53 @@ class NativeReceiptRetirementTests(unittest.TestCase):
             self.assertEqual(len(reads),1)
 
 
+class OwnedArcDeletionReceiptTests(unittest.TestCase):
+    def setUp(self):
+        import sqlite3,types
+        self.conn=sqlite3.connect(':memory:')
+        self.conn.executescript('''
+            CREATE TABLE arcs(id TEXT PRIMARY KEY);
+            CREATE TABLE node_arcs(node_id TEXT,arc_id TEXT);
+            CREATE TABLE commands(id TEXT,payload_type TEXT,payload_json TEXT);
+            CREATE TABLE change_events(id TEXT,command_id TEXT);
+            CREATE TABLE object_revisions(id TEXT,change_event_id TEXT,operation TEXT,object_kind TEXT,object_id TEXT);
+            CREATE TABLE object_revision_fields(revision_id TEXT,field_key TEXT,old_type TEXT,old_text TEXT,new_type TEXT);
+            INSERT INTO node_arcs VALUES ('consumer','primary');
+            INSERT INTO commands VALUES ('delete-command','story_arc.delete','{"arc_id":"primary"}');
+            INSERT INTO change_events VALUES ('delete-event','delete-command');
+            INSERT INTO object_revisions VALUES ('delete-revision','delete-event','delete','story_arc','primary');
+        ''')
+        self.conn.executemany('INSERT INTO object_revision_fields VALUES (?,?,?,?,?)',[('delete-revision','description','text','',None),('delete-revision','name','text',namespace['KNOWN_EMPTY_NAME'],None)])
+        node=next(n for n in module.body if isinstance(n,ast.FunctionDef) and n.name=='owned_arc_deletion_receipt')
+        local={'json':json,'KNOWN_EMPTY_NAME':namespace['KNOWN_EMPTY_NAME'],'ui':types.SimpleNamespace(query=lambda _,sql,args=():self.conn.execute(sql,args).fetchall())}
+        exec(compile(ast.Module(body=[node],type_ignores=[]),'<actual deletion read>','exec'),local);self.read=local['owned_arc_deletion_receipt']
+    def tearDown(self):self.conn.close()
+    def test_owned_delete_with_retained_raw_reference_has_no_live_context(self):
+        before='\n'.join(self.conn.iterdump());receipt=self.read(None,'primary')
+        self.assertEqual(receipt['change_event_id'],'delete-event')
+        self.assertEqual(receipt['retained_raw_references'],[('consumer','primary')])
+        self.assertEqual(receipt['live_tag_context'],[])
+        self.assertEqual('\n'.join(self.conn.iterdump()),before)
+    def test_live_arc_or_missing_owned_history_is_not_deletion(self):
+        self.conn.execute("INSERT INTO arcs VALUES ('primary')")
+        self.assertIsNone(self.read(None,'primary'))
+        self.conn.execute('DELETE FROM arcs');self.conn.execute('DELETE FROM object_revisions')
+        self.assertIsNone(self.read(None,'primary'))
+    def test_other_arc_or_other_command_cannot_prove_deletion(self):
+        self.conn.execute('UPDATE commands SET payload_json=?',(json.dumps({'arc_id':'other'}),))
+        self.assertIsNone(self.read(None,'primary'))
+        self.conn.execute('UPDATE commands SET payload_json=?,payload_type=?',(json.dumps({'arc_id':'primary'}),'story_arc.set_metadata'))
+        self.assertIsNone(self.read(None,'primary'))
+    def test_latest_non_delete_revision_and_wrong_deleted_values_refuse(self):
+        self.conn.execute("UPDATE object_revision_fields SET old_text='other name' WHERE field_key='name'")
+        self.assertIsNone(self.read(None,'primary'))
+        self.conn.execute("UPDATE object_revision_fields SET old_text=? WHERE field_key='name'",(namespace['KNOWN_EMPTY_NAME'],))
+        self.conn.execute("UPDATE object_revisions SET operation='update'")
+        self.assertIsNone(self.read(None,'primary'))
+    def test_native_fresh_absence_binding_must_equal_the_actual_delete_clock(self):
+        self.assertIn("proof['absence_revisions']!=[[primary,deletion['change_event_id']]]",source)
+        self.assertIn("Deleted known-empty stale acceptance wrote canonical state",source)
+        self.assertIn("exact chosen-block known-empty acceptance",source)
+
+
 if __name__=='__main__':unittest.main()

@@ -977,6 +977,21 @@ def validate_known_empty_binding(binding,fixture,mode,deleted=False):
     return {'original_omissions':previous,'current_omissions':current,'current_arc_inputs':inputs,'absence_revisions':absent,'cause':cause}
 
 
+def owned_arc_deletion_receipt(database,arc):
+    # Arc deletion removes the live arc and records history. Historical raw
+    # node_arcs references may remain; they are not live prompt context.
+    if ui.query(database,'SELECT id FROM arcs WHERE id=?',(arc,)):return None
+    rows=ui.query(database,"SELECT r.id,r.change_event_id,r.operation,c.id,c.payload_type,c.payload_json FROM object_revisions r JOIN change_events e ON e.id=r.change_event_id JOIN commands c ON c.id=e.command_id WHERE r.object_kind='story_arc' AND r.object_id=? ORDER BY r.rowid DESC LIMIT 1",(arc,))
+    if not rows:return None
+    revision,event,operation,command,kind,payload=rows[0]
+    if operation!='delete' or kind!='story_arc.delete' or json.loads(payload)!={'arc_id':arc}:return None
+    fields=ui.query(database,"SELECT field_key,old_type,old_text,new_type FROM object_revision_fields WHERE revision_id=? AND field_key IN ('name','description') ORDER BY field_key",(revision,))
+    if fields!=[('description','text','',None),('name','text',KNOWN_EMPTY_NAME,None)]:return None
+    live=ui.query(database,'SELECT n.node_id,n.arc_id FROM node_arcs n JOIN arcs a ON a.id=n.arc_id WHERE n.arc_id=?',(arc,))
+    if live:return None
+    return {'arc_id':arc,'revision_id':revision,'change_event_id':event,'command_id':command,'owned_deleted_fields':fields,'live_tag_context':live,'retained_raw_references':ui.query(database,'SELECT node_id,arc_id FROM node_arcs WHERE arc_id=? ORDER BY node_id',(arc,))}
+
+
 def qualify_known_empty_arc_preview(application,window,database,fixture,capture,checkpoint,evidence):
     mode=os.environ['EIDETIC_CAPTURE_SCOPE'];primary=fixture['arc']['id'];b_id=fixture['b']['id']
     save_script(application,window,database,b_id,GENERATED_B,ANCESTOR_MANUAL)
@@ -1042,7 +1057,8 @@ def qualify_known_empty_arc_preview(application,window,database,fixture,capture,
     if mode=='known-empty-deletion':
         delete=ui.wait_for('ordinary ArcDetail Delete button',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and n.name=='Delete' and 0<=n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]<400))
         ui.click_control(delete,window)
-        ui.wait_for('public arc deletion and removed tag',lambda:not ui.query(database,'SELECT id FROM arcs WHERE id=?',(primary,)) and not ui.query(database,'SELECT arc_id FROM node_arcs WHERE arc_id=?',(primary,)))
+        deletion=ui.wait_for('live arc absent with exact owned deletion revision',lambda:owned_arc_deletion_receipt(database,primary))
+        evidence['ordinary_arc_deletion']=deletion
         before=driver.canonical_state(database)
         ui.reveal_button(ui.wait_for('retained old known-empty preview',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
         error=ui.wait_for('visible deleted-arc stale refusal',lambda:ui.find(application,lambda n:'proposal' in ui.text_of(n) and ('stale' in ui.text_of(n) or 'changed' in ui.text_of(n))))
@@ -1054,6 +1070,7 @@ def qualify_known_empty_arc_preview(application,window,database,fixture,capture,
         Provider.allow_fresh_notes=True
         fresh,proof=preview(deleted=True)
         if fresh[0]==proposed[0]:raise RuntimeError('Fresh absence preview reused old proposal')
+        if proof['absence_revisions']!=[[primary,deletion['change_event_id']]]:raise RuntimeError('Fresh absence preview does not bind the exact ordinary deletion event')
         proposed=fresh;evidence['fresh_absence_preview']={'id':fresh[0],**proof}
         ui.wait_for('native removed-context evidence',lambda:ui.reveal(application,lambda n:n.name=='Current available arc description' and ui.text_of(n)=='(removed from current context)'))
         evidence['removed_context_visible']=ui.wait_for('removed-context glyphs inside Script pane',lambda:driver.visible_paragraph(application,window,'(removed from current context)','Current available arc description'))
