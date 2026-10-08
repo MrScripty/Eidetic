@@ -227,6 +227,8 @@ class KnownEmptyWorkflowTests(unittest.TestCase):
         self.assertIn('project.timeline.tag_node(consumer, second)',fixture)
         self.assertIn('project_service::save_project(',fixture)
         self.assertIn('two-tag fixture requires a fresh application state',fixture)
+        self.assertIn('state.project_database.active_path().is_some()',fixture)
+        self.assertNotIn('state.project_path',fixture)
         self.assertNotIn('eidetic_server::persistence::',fixture)
         self.assertIn('project_service::load_project(',fixture)
         self.assertNotIn('INSERT INTO',fixture)

@@ -19,7 +19,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         // Explicit synthetic fixture construction, not an ordinary tagging UI.
         // Seed a fresh AppState through the public core model/document manager,
         // then use the public project save/load services. No direct SQL writes.
-        if state.project.lock().is_some() || state.project_path.lock().is_some() {
+        if state.project.lock().is_some() || state.project_database.active_path().is_some() {
             return Err("two-tag fixture requires a fresh application state".into());
         }
         let mut project = eidetic_core::Template::MultiCam.build_project("Known Empty Two Tags QA");
