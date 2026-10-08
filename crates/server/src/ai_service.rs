@@ -155,44 +155,55 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     let range = request.target_node.time_range;
     let script_path = path.clone();
     let expected_node = request.target_node.clone();
-    let (blocks, scope, target, arcs, arc_inputs) = tokio::task::spawn_blocking(move || {
-        let conn = crate::sqlite::open_write_connection(&script_path)
-            .map_err(|error| BackendError::internal(error.to_string()))?;
-        crate::script_store::create_schema(&conn)
-            .map_err(|error| BackendError::internal(error.to_string()))?;
-        let tx = conn
-            .unchecked_transaction()
-            .map_err(|error| BackendError::internal(error.to_string()))?;
-        let target = crate::script_generation_target::capture(&tx, &expected_node)
+    let expected_ancestors = request.ancestor_chain.clone();
+    let (blocks, scope, target, arcs, arc_inputs, ancestor_notes) =
+        tokio::task::spawn_blocking(move || {
+            let conn = crate::sqlite::open_write_connection(&script_path)
+                .map_err(|error| BackendError::internal(error.to_string()))?;
+            crate::script_store::create_schema(&conn)
+                .map_err(|error| BackendError::internal(error.to_string()))?;
+            let tx = conn
+                .unchecked_transaction()
+                .map_err(|error| BackendError::internal(error.to_string()))?;
+            let target = crate::script_generation_target::capture(&tx, &expected_node)
+                .map_err(|error| BackendError::bad_request(error.to_string()))?;
+            let ancestor_notes = crate::ancestor_notes_lineage::capture_generation(
+                &tx,
+                node_id,
+                &expected_ancestors,
+            )
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
-        let blocks = crate::ai_script_context::load_script_context(
-            &tx,
-            node_id,
-            range.start_ms,
-            range.end_ms,
-        )
-        .map_err(|error| BackendError::internal(error.to_string()))?;
-        let scope = crate::script_context_scope::capture(
-            &tx,
-            node_id,
-            range.start_ms,
-            range.end_ms,
-            &blocks,
-        )
-        .map_err(|error| BackendError::internal(error.to_string()))?;
-        let (arcs, arc_inputs) = crate::story_arc_lineage::capture(&tx, node_id, &[])
-            .map_err(|error| BackendError::bad_request(error.to_string()))?;
-        tx.commit()
+            let blocks = crate::ai_script_context::load_script_context(
+                &tx,
+                node_id,
+                range.start_ms,
+                range.end_ms,
+            )
             .map_err(|error| BackendError::internal(error.to_string()))?;
-        Ok::<_, BackendError>((blocks, scope, target, arcs, arc_inputs))
-    })
-    .await
-    .map_err(|error| BackendError::internal(format!("script context task failed: {error}")))??;
+            let scope = crate::script_context_scope::capture(
+                &tx,
+                node_id,
+                range.start_ms,
+                range.end_ms,
+                &blocks,
+            )
+            .map_err(|error| BackendError::internal(error.to_string()))?;
+            let (arcs, arc_inputs) = crate::story_arc_lineage::capture(&tx, node_id, &[])
+                .map_err(|error| BackendError::bad_request(error.to_string()))?;
+            tx.commit()
+                .map_err(|error| BackendError::internal(error.to_string()))?;
+            Ok::<_, BackendError>((blocks, scope, target, arcs, arc_inputs, ancestor_notes))
+        })
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("script context task failed: {error}"))
+        })??;
     crate::ai_script_context::attach_script_context(request, blocks);
     request.tagged_arcs = arcs;
     request.arc_inputs = Some(arc_inputs);
     request.script_context_scope = Some(scope);
     request.generation_target = Some(target);
+    request.ancestor_notes_inputs = Some(ancestor_notes);
     let (
         bible_context,
         bible_inputs,

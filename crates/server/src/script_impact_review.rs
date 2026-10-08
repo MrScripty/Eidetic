@@ -182,7 +182,12 @@ fn capture_in_snapshot(
         request.generation_event_id,
         &request.segment_id,
     )?;
+    let ancestors =
+        crate::ancestor_notes_lineage::preview_inputs(conn, request.generation_event_id)?;
     Ok(ScriptImpactProposalBinding {
+        ancestor_notes_previous: ancestors.previous,
+        ancestor_notes_current: ancestors.current,
+        ancestor_notes_absence_revisions: ancestors.absent,
         timeline_notes_previous: crate::timeline_notes_lineage::recorded(
             conn,
             request.generation_event_id,
@@ -365,6 +370,7 @@ pub(crate) fn accept_bound_proposal(
     };
     script_document_command::validate_locked_spans(Some(&document), &write)?;
     let generated = GenerateScriptBlockCommand {
+        ancestor_notes_inputs: binding.ancestor_notes_current.clone(),
         arc_inputs: binding.arc_inputs.clone(),
         target_binding: None,
         block: write.clone(),

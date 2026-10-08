@@ -48,6 +48,7 @@ async fn ancestor_notes_fixture() -> (Fixture, NodeId, NodeId) {
         fixture.node_id.0,
         "Synthetic screenplay: Mara conceals the witness.".into(),
         GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
@@ -90,7 +91,6 @@ fn assert_saved_material_unchanged(
 }
 
 #[tokio::test]
-#[ignore = "Known ancestor Notes consumption gap; run explicitly to reproduce before implementation"]
 async fn public_consumed_ancestor_notes_edit_marks_saved_scene_for_review() {
     use eidetic_core::contracts::SemanticDependencyEndpoint;
     let (fixture, ancestor, _) = ancestor_notes_fixture().await;
@@ -190,6 +190,7 @@ async fn public_consumed_bible_name_edit_marks_saved_screenplay_for_review() {
         fixture.node_id.0,
         "Synthetic screenplay starring Mara.".into(),
         GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
@@ -296,6 +297,7 @@ async fn public_relationship_edit_publishes_affected_review_from_original_genera
             "Synthetic screenplay: Mara trusts Eli.".into()
         )])),
         GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
@@ -413,6 +415,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
             "Synthetic fixture screenplay: Mara carries red.".into(),
         )])),
         GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_node_name_inputs: request.bible_node_name_inputs,

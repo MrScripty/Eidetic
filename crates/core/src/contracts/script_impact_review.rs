@@ -48,6 +48,14 @@ pub struct ScriptRecallFactSelection {
 /// Canonical evidence captured before provider I/O and rechecked at acceptance.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScriptImpactProposalBinding {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ancestor_notes_previous: Option<Vec<TimelineNotesInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ancestor_notes_current: Option<Vec<TimelineNotesInput>>,
+    /// Owned deletion clocks for previously consumed ancestors, never prompt prose.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ancestor_notes_absence_revisions:
+        Option<Vec<(crate::timeline::node::NodeId, ChangeEventId)>>,
     /// Selected clip Notes actually supplied; absent legacy consumption stays unknown.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeline_notes_previous: Option<TimelineNotesInput>,

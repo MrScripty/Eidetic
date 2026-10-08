@@ -1,12 +1,14 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Next bounded test milestone:** A real canonical/public-command regression proves
-that exact consumed ancestor Notes can change without downstream Scene review;
-the unrelated Act edit control passes and saved material is preserved. Separate
-`test/ancestor-notes-review-gap` contains tests and evidence only, with the known
-positive reproduction explicitly ignored in ordinary CI until implementation.
-See `ancestor-notes-review-gap.md`. No source/QA-host or existing review flow changes.
+**Ancestor Notes propagation implemented; native gate pending:** Generation now
+records exact consumed nonempty ancestor Notes with owned field revisions and
+precise graph dependency identities. Existing review shows original/current
+ancestor evidence; pending generation, preview and acceptance reject stale/ABA
+reads, and saved/manual/locked material stays intact until explicit acceptance.
+The c2659fa failing reproduction is now an ordinary passing test. Locked
+core123/server556, UI558/96 and strict Clippy pass. See
+`ancestor-notes-review-gap.md`; separate hosted native qualification is next.
 **Selected Notes prompt follow-up qualified:** Frozen product `c5fad5c` / QA
 `11b60a9` passes native run37713651568: exact committed Notes refresh, older real
 return refusal, clear and exact restoration, saved material and unrelated draft

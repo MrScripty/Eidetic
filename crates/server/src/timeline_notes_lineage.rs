@@ -11,7 +11,7 @@ fn invalid() -> HistoryStoreError {
     )
 }
 
-fn owned_revision(
+pub(crate) fn owned_revision(
     conn: &Connection,
     node: NodeId,
     through: Option<ChangeEventId>,
@@ -34,7 +34,7 @@ fn owned_revision(
         .transpose()
 }
 
-fn validate_history(
+pub(crate) fn validate_history(
     conn: &Connection,
     input: &TimelineNotesInput,
 ) -> Result<(), HistoryStoreError> {
@@ -190,6 +190,15 @@ pub(crate) fn cause(
     {
         return Err(invalid());
     }
+    input_cause(conn, &input, dependency.id.clone())
+}
+
+/// Shared Notes field comparison; callers establish exact recorded consumption.
+pub(crate) fn input_cause(
+    conn: &Connection,
+    input: &TimelineNotesInput,
+    dependency_id: SemanticDependencyId,
+) -> Result<Option<ScriptImpactCause>, HistoryStoreError> {
     let live: bool = conn.query_row(
         "SELECT EXISTS(SELECT 1 FROM nodes WHERE id=?1)",
         [input.node_id.0.to_string()],
@@ -197,7 +206,7 @@ pub(crate) fn cause(
     )?;
     let (current_revision_event_id, reason) = if live {
         let current = capture(conn, input.node_id)?;
-        if current == input {
+        if current == *input {
             return Ok(None);
         }
         (current.revision_event_id, ScriptImpactReason::Changed)
@@ -205,8 +214,10 @@ pub(crate) fn cause(
         (None, ScriptImpactReason::Deleted)
     };
     Ok(Some(ScriptImpactCause {
-        dependency_id: dependency.id.clone(),
-        input: dependency.target.clone(),
+        dependency_id,
+        input: SemanticDependencyEndpoint::TimelineNode {
+            node_id: input.node_id,
+        },
         consumed_revision_event_id: input.revision_event_id.ok_or_else(invalid)?,
         current_revision_event_id,
         reason,
@@ -232,4 +243,4 @@ pub(crate) fn impact(
 
 #[cfg(test)]
 #[path = "timeline_notes_lineage_tests.rs"]
-mod tests;
+pub(crate) mod tests;

@@ -9,7 +9,7 @@ const OLD: &str = "  Mara conceals the witness — 雨.\n\n  ";
 const NEW: &str = "  Mara reveals the witness — 雨.\n\n  ";
 const PREVIEW: &str = "  Synthetic preview: Mara identifies the witness — 雨.\n\n  ";
 
-fn notes(conn: &mut Connection, project: &mut Project, node: NodeId, text: &str) {
+pub(crate) fn notes(conn: &mut Connection, project: &mut Project, node: NodeId, text: &str) {
     project.timeline.nodes = timeline_node_store::load_nodes(conn).unwrap();
     timeline_command_history::record_set_timeline_node_notes_history(
         conn,
@@ -49,7 +49,7 @@ fn impact(
         .unwrap()
 }
 
-fn materials(conn: &Connection) -> String {
+pub(crate) fn materials(conn: &Connection) -> String {
     let doc = crate::script_store::load_document_projection(
         conn,
         &ScriptDocumentId::new("script.document.main").unwrap(),
@@ -66,7 +66,7 @@ fn materials(conn: &Connection) -> String {
     .unwrap()
 }
 
-fn logical_rows(conn: &Connection) -> Vec<(String, Vec<String>)> {
+pub(crate) fn logical_rows(conn: &Connection) -> Vec<(String, Vec<String>)> {
     let mut tables = conn.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").unwrap();
     let names = tables
         .query_map([], |row| row.get::<_, String>(0))

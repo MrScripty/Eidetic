@@ -123,6 +123,7 @@ fn apply_script_block<T: serde::Serialize>(
         |tx| {
             if let Some(generation) = generation {
                 crate::script_generation_target::validate(tx, generation)?;
+                crate::ancestor_notes_lineage::validate_admission(tx, generation)?;
                 let current = script_store::load_document_projection(tx, &payload.document_id)?;
                 validate_locked_spans(current.as_ref(), payload)
                     .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;

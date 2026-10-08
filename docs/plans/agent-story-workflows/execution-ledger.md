@@ -1998,3 +1998,23 @@ prepared locked Rust dependencies compile without a new ONNX bypass. See
 ancestor-notes-review-gap.md for commands, evidence and bounded reuse contract.
 Locked all-target core123/server543 pass with the one known reproduction ignored;
 strict all-target/all-feature Clippy, Rust format, traceability and policy5 pass.
+
+
+## 2026-10-08 — Owned ancestor Notes propagation implementation
+
+Continued the verified c2659fa boundary on its separate branch. Canonical prompt
+capture now binds nonempty consumed ancestor Notes and owned field clocks before
+provider I/O. Existing generation command JSON, semantic graph dependencies and
+proposal bindings retain exact node identities and original/current evidence.
+Review uses the existing preview/explicit acceptance path; writer-lock checks
+reject changed/cleared/ABA or forged generation evidence. Acceptance refreshes
+ancestor lineage without touching unrelated material. Missing legacy consumption
+remains unknown. No separate store, endpoint, model or embedding dependency.
+
+The executed failing public edit regression is an ordinary passing test. Twelve
+lineage cases cover distinct identities, stale read, forgery, delayed generation,
+manual/locked text, explicit acceptance refresh, clearing, preview/acceptance ABA,
+unrelated/non-Notes events, deletion, legacy absence and synthetic provider failure.
+Locked core123/server556 (zero ignored), full UI558/96, strict Clippy and production
+build pass. Source review is followed by separate hosted native qualification;
+prior Notes closure evidence and PR19-22/main remain preserved and unmerged.

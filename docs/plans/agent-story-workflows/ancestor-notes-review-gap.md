@@ -1,9 +1,10 @@
 # Consumed ancestor Notes review gap
 
-Status: reproduced; bounded test milestone only. Based on qualified Notes prompt
+Status: implemented and source-tested; separate native qualification pending. Based on qualified Notes prompt
 source `c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4` and provenance head
 `840f459cf34ea1856c5eaf127698663ff07d22ff`, on separate
-`test/ancestor-notes-review-gap`. No production or QA-host change.
+`test/ancestor-notes-review-gap`. Baseline reproduction is preserved at
+`c2659fa409c7043d9a831f0b1b03ed92d49b9e74`; QA-host changes remain separate.
 
 ## Evidence before implementation
 
@@ -24,8 +25,8 @@ actual formatted prompt, and proves distinct unrelated Act Notes do not appear.
 The saved screenplay output is explicitly synthetic. There is no model call or
 claim about narrative quality.
 
-- Changing the consumed Act Notes to
-  `  Mara reveals the witness — 雨.\n\n  ` fails precisely at
+- Before implementation, changing the consumed Act Notes to
+  `  Mara reveals the witness — 雨.\n\n  ` failed precisely at
   **“Exact ancestor Notes supplied to generation changed without downstream scene review”**.
   Prompt consumption, fresh-before-edit review state and saved-material
   preservation assertions pass first. The test also requires the eventual review
@@ -39,40 +40,48 @@ setup. No ONNX download bypass, alternative library, new cache, embedding
 dependency or credential/configuration change was introduced. Raw baseline logs
 stay outside Git under `/workspace/scratch/notes-prompt-preview/`.
 
-Maintained locked all-target suite: **123 core / 543 server pass**, with the one
-known positive reproduction ignored. Strict all-target/all-feature core/server
+Current locked all-target suite: **123 core / 556 server pass**, with **zero ignored**
+cases. Full UI **558 tests / 96 files** and production build pass. Strict
+all-target/all-feature core/server
 Clippy, Rust format, decision traceability and **5 ONNX policy tests** pass.
 
 ## Reproduce and maintain
 
-The positive regression has an explicit `#[ignore]` naming this known gap, so this
-test-only milestone does not turn ordinary CI red. It was executed explicitly and
-failed as described; ignoring it is not implementation or qualification. Remove
-that annotation when the feature passes.
+The baseline commit marked the positive known-gap regression ignored in ordinary
+CI and executed it explicitly to prove failure. The implementation removes that
+annotation: the same public-command regression is now an ordinary passing test.
 
 ```sh
 cargo test --locked -p eidetic-server \
   ai_generation_runtime::runtime_tests::public_consumed_ancestor_notes_edit_marks_saved_scene_for_review \
-  -- --exact --ignored --nocapture
+  -- --exact --nocapture
 cargo test --locked -p eidetic-server \
   ai_generation_runtime::runtime_tests::public_unconsumed_act_notes_edit_preserves_saved_scene_review_state \
   -- --exact --nocapture
 ```
 
-## Bounded implementation contract
+## Implemented bounded propagation
 
-Retain only nonempty ancestor Notes actually supplied to generation, with their
-owned field revision captured before provider I/O. Reuse command/proposal JSON,
+The generation read retains only nonempty ancestor Notes actually supplied to generation, with their
+owned field revision captured before provider I/O. It reuses command/proposal JSON,
 existing semantic dependencies, field-history validation and impact projection.
-Use original/current ancestor evidence in the existing targeted review, preserve
-all saved/manual text until explicit acceptance, and keep stale/ABA and draft
-guards. Accepted proposals must carry the newly consumed receipts through the
+Original/current ancestor evidence is shown in the existing targeted review, preserving
+all saved/manual text until explicit acceptance, with stale/ABA and draft guards.
+Accepted proposals carry the newly consumed receipts through the
 existing lineage mechanism. Legacy missing receipts remain unknown; never
 backfill consumption from current prose.
 
 Do not broaden this slice to sibling prose, names, beat types, new hierarchy or
 membership, project switching, Pumas publication or model-quality evaluation.
-Before calling it complete, add receipt ownership/forgery, ancestor deletion,
-original-versus-current and delayed generation/preview/acceptance tests, then
-qualify the real application UI using the established separate hosted native QA
-route. The already passing selected Notes prompt run37713651568 remains closed.
+Twelve lineage regressions plus the two runtime boundary cases exercise exact
+identity, equal Notes on distinct ancestors, stale initial reads, duplicate/forged
+evidence, delayed generation, acceptance lineage refresh, clearing, pending
+storage/acceptance ABA refusal, unrelated and non-Notes changes, locked manual
+text, legacy absence, deletion and provider failure. Existing read-model schema
+and acceptance flow are retained; there is no automatic regeneration.
+
+Actual application qualification is the next gate, using the established separate
+hosted native QA route. Real-model quality remains unqualified. The already
+passing selected Notes prompt run37713651568 and its source-bound artifacts stay
+closed and preserved. Parent owns independent review, qualification acceptance,
+a later source-only draft, and PR19-22/main merge decisions.
