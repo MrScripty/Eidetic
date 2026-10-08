@@ -71,6 +71,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
     }
     let ancestor_scope = std::env::var("EIDETIC_CAPTURE_SCOPE").as_deref() == Ok("ancestor-notes");
     let unrelated_act = NodeId::new();
+    let unrelated_sequence = NodeId::new();
     if ancestor_scope {
         command_service::create_timeline_node_from_core_command(
             state,
@@ -79,6 +80,19 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
                 parent_id: Some(root),
                 level: StoryLevel::Act,
                 name: "UNRELATED ACT".into(),
+                start_ms: 180_000,
+                end_ms: 240_000,
+                beat_type: None,
+            }),
+        )
+        .await?;
+        command_service::create_timeline_node_from_core_command(
+            state,
+            CommandEnvelope::new(CreateTimelineNodeCommand {
+                node_id: unrelated_sequence,
+                parent_id: Some(unrelated_act),
+                level: StoryLevel::Sequence,
+                name: "Unrelated station sequence".into(),
                 start_ms: 180_000,
                 end_ms: 240_000,
                 beat_type: None,
@@ -107,7 +121,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
     ] {
         let id = NodeId::new();
         let (start, end, parent) = if ancestor_scope && letter == "F" {
-            (180_000, 240_000, unrelated_act)
+            (180_000, 240_000, unrelated_sequence)
         } else {
             (start, end, sequence)
         };
@@ -170,6 +184,21 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         "Mara's umbrella is red.",
     )
     .await?;
+    // Test-only public setup qualification; stop before any provider I/O.
+    if std::env::var("EIDETIC_CAPTURE_SETUP_ONLY").as_deref() == Ok("1") {
+        let saved = project_service::save_project(
+            state,
+            project_service::SaveProjectRequest { path: None },
+        )
+        .await?;
+        return Ok(serde_json::json!({
+            "setup_only": true, "provider_calls": 0, "project_path": saved["saved"],
+            "a": scenes[0], "f": scenes[1], "b": scenes[2],
+            "ancestor": {"id": act.0}, "unrelated_act": {"id": unrelated_act.0},
+            "unrelated_sequence": {"id": unrelated_sequence.0},
+            "setup_route": "ordinary public command services; real canonical hierarchy and owned Notes; no inference"
+        }));
+    }
     let mut generations = Vec::new();
     for index in [0, 2] {
         let id: uuid::Uuid = serde_json::from_value(scenes[index]["id"].clone())?;
@@ -226,7 +255,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         project_service::save_project(state, project_service::SaveProjectRequest { path: None })
             .await?;
     Ok(
-        serde_json::json!({"project_path":saved["saved"],"a":scenes[0],"f":scenes[1],"b":scenes[2],"generations":generations,"ancestor":{"id":act.0,"name":"FACT RECONCILIATION"},"unrelated_act":{"id":unrelated_act.0,"name":"UNRELATED ACT"},"setup_route":"unchanged public services; two labelled synthetic HTTP generations/recaps, no real model; unconsumed fields added after generation"}),
+        serde_json::json!({"project_path":saved["saved"],"a":scenes[0],"f":scenes[1],"b":scenes[2],"generations":generations,"ancestor":{"id":act.0,"name":"FACT RECONCILIATION"},"unrelated_act":{"id":unrelated_act.0,"name":"UNRELATED ACT"},"unrelated_sequence":{"id":unrelated_sequence.0},"setup_route":"unchanged public services; two labelled synthetic HTTP generations/recaps, no real model; unconsumed fields added after generation"}),
     )
 }
 async fn field(

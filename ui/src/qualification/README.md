@@ -136,3 +136,9 @@ Ordinary review previews show original/current ancestor evidence, ABA refuses
 stale acceptance, and explicit fresh acceptance updates only B. Actual native
 accessibility controls and canonical public services are used; synthetic HTTP
 responses are labelled. No model-quality or prior-capture visual claim is made.
+
+The unrelated F fixture uses the required Act/Sequence/Scene public hierarchy.
+A setup-only public-service run and read-only canonical guard qualify that hierarchy
+and the ancestor's owned Notes history before inference, including refusal of a
+wrong ancestor identity. Hosted qualification reruns the canonical hierarchy guard
+on its actual full fixture; the local setup-only flag is not used for UI capture.

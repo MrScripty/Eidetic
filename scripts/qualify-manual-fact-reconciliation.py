@@ -589,6 +589,28 @@ def qualify_timeline_notes(application,window,database,fixture,capture,checkpoin
     if len(Provider.records)!=6 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Expected four fixture and two targeted synthetic provider calls')
     checkpoint('explicit fresh acceptance updates only chosen screenplay and refreshes Notes lineage');capture('timeline-notes-04-accepted.png')
 
+def verify_ancestor_fixture_hierarchy(database,fixture):
+    def row(node):
+        rows=ui.query(database,'SELECT parent_id,level,content_json FROM nodes WHERE id=?',(node,))
+        if len(rows)!=1:raise RuntimeError('Missing actual public fixture node: '+node)
+        return rows[0]
+    f_parent,f_level,_=row(fixture['f']['id'])
+    seq_parent,seq_level,_=row(f_parent)
+    _,act_level,_=row(seq_parent)
+    if (f_level,seq_level,act_level)!=('Scene','Sequence','Act') or f_parent!=fixture['unrelated_sequence']['id'] or seq_parent!=fixture['unrelated_act']['id']:
+        raise RuntimeError('Unrelated F does not use the required public Act/Sequence/Scene hierarchy')
+    ancestor_id=fixture['ancestor']['id']
+    for source in ('a','b'):
+        parent,level,_=row(fixture[source]['id'])
+        act,seq_level,_=row(parent)
+        if (level,seq_level)!=('Scene','Sequence') or act!=ancestor_id:raise RuntimeError('Consumer is outside the declared ancestor hierarchy')
+    _,level,content=row(ancestor_id)
+    if level!='Act' or json.loads(content)['notes']!=ANCESTOR_OLD:raise RuntimeError('Actual ancestor Notes differ')
+    revisions=ui.query(database,"SELECT r.change_event_id FROM object_revisions r JOIN object_revision_fields f ON f.revision_id=r.id WHERE r.object_kind='timeline_node' AND r.object_id=? AND f.field_key='notes' AND f.new_type='text' AND f.new_text=?",(ancestor_id,ANCESTOR_OLD))
+    if not revisions:raise RuntimeError('Fixture ancestor Notes lack owned public field history')
+    return {'public_hierarchy_verified':True,'unrelated_sequence':f_parent,'unrelated_act':seq_parent,'consumed_act':ancestor_id,'owned_notes_revision':revisions[-1][0]}
+
+
 def qualify_ancestor_notes(application,window,database,fixture,capture,checkpoint,evidence):
     b_id=fixture['b']['id'];a_id=fixture['a']['id'];f_id=fixture['f']['id'];ancestor_id=fixture['ancestor']['id']
     save_script(application,window,database,b_id,GENERATED_B,ANCESTOR_MANUAL)
@@ -875,6 +897,7 @@ def main():
             evidence['served_source_receipts'].append({'module':relative,'source_sha256':ui.file_hash(source_file),'served_transformed_sha256':hashlib.sha256(served).hexdigest(),'marker':marker,'observed':True,'fault_wrapper_routed':b'/src/qualification/manualFacts.svelte.ts' in served if relative=='src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts' else None})
         fixture=json.loads(subprocess.check_output([str(repo/'target/debug/examples/manual_fact_capture_fixture')],env=environment,text=True,timeout=90))
         database=Path(fixture['project_path']).resolve();evidence['public_fixture']=dict(fixture,project_path='<fresh qualification project>')
+        if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes':evidence['verified_fixture_hierarchy']=verify_ancestor_fixture_hierarchy(database,fixture)
         if len(Provider.records)!=4 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Fixture did not create two genuine synthetic consumer generations')
         checkpoint('public services seed two actual consumers, unconsumed fields and unrelated saved scene')
         with app_log.open('w') as stream:process=subprocess.Popen(['./launcher.sh','--run'],env=environment,stdout=stream,stderr=subprocess.STDOUT,start_new_session=True)
