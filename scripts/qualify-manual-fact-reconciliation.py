@@ -1251,7 +1251,7 @@ def qualify_screenplay_removal(application,window,database,fixture,capture,check
         return ui.wait_for('fresh public impacts',lambda:(json.loads(v['impacts']) if not v['busy'] and v['impactReads']>previous and v['impacts'] else None) if (v:=receipt(application)) else None)
     def select_source():
         rows=impacts();row=next(r for r in rows if r['source']==b_id)
-        index=next(i for i,c in enumerate(row['causes']) if c['input']=={'kind':'script_block','block_id':source_id})
+        index=next(i for i,c in enumerate(row['allCauses']) if c['input']=={'kind':'script_block','block_id':source_id})
         review=ui.wait_for('B review owner',lambda:review_for_source(application,fixture['b']['name']))
         dropdown=ui.wait_for('B input change selector',lambda:ui.reveal(review,lambda n:n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and n.name.startswith('Input change')))
         ui.click_control(dropdown,window);keys=['Home']+['Down']*index+['Return'];ui.command('xdotool','key','--clearmodifiers',*keys)
@@ -1298,9 +1298,9 @@ def qualify_screenplay_removal(application,window,database,fixture,capture,check
     evidence['retained_history']=deleted_revision
     before_refusal=driver.canonical_state(database)
     ui.reveal_button(ui.wait_for('old proposal review',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
-    ui.wait_for('ordinary stale acceptance error',lambda:ui.find(review,lambda n:'screenplay proposal is stale' in ui.text_of(n)) if (review:=review_for_source(application,fixture['b']['name'])) else None)
+    refusal=ui.wait_for('ordinary stale acceptance error',lambda:ui.find(review,lambda n:'screenplay proposal is stale' in ui.text_of(n)) if (review:=review_for_source(application,fixture['b']['name'])) else None)
     if driver.canonical_state(database)!=before_refusal:raise RuntimeError('Old preview acceptance wrote canon')
-    preserved();evidence['stale_checks'].append({'source_removed':True,'old_proposal_id':old[0],'refusal_without_any_recorded_write':True})
+    preserved();evidence['stale_checks'].append({'source_removed':True,'old_proposal_id':old[0],'refusal_without_any_recorded_write':True,'visible_refusal':{'text':ui.text_of(refusal),'native_role':refusal.getRoleName(),'native_bounds':list(refusal.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))}})
     ui.reveal_button(ui.wait_for('old proposal before rejection',lambda:review_for_source(application,fixture['b']['name'])),'Reject',window)
     ui.wait_for('old preview rejected',lambda:ui.query(database,"SELECT id FROM propagation_proposals WHERE id=? AND status='rejected'",(old[0],)))
     evidence['impacts_after_removal']=select_source();Provider.allow_fresh_notes=True

@@ -116,6 +116,9 @@ exports.readImpacts().then(()=>process.stdout.write(exports.receipt())).catch(er
             'generation.event.field','generation.event.edge','generation.event.arc'])
         self.assertEqual(row['causes'][0]['input'],{'kind':'timeline_node','node_id':'owned-act'})
         self.assertEqual(row['causes'][0]['input_excerpt'],'  exact — 雨.\n\n  ')
+        self.assertEqual([c['dependency_id'] for c in row['allCauses']],[
+            'generation.event.ancestor_notes.owned-act','generation.event.timeline_notes',
+            'generation.event.field','generation.event.edge','generation.event.arc','generation.event.node'])
 
 
 class ArcDescriptionPromptTests(unittest.TestCase):
@@ -501,3 +504,22 @@ class RemovalVisibleRefusalTests(unittest.TestCase):
     def test_absent_intended_review_does_not_qualify_an_unrelated_error(self):
         predicate,_=self.harness([('screenplay proposal is stale; request a fresh preview',True)],owner_available=False)
         self.assertIsNone(predicate())
+
+
+class RemovalCausePositionTests(unittest.TestCase):
+    def index(self,all_causes):
+        qualifier=next(n for n in module.body if isinstance(n,ast.FunctionDef) and n.name=='qualify_screenplay_removal')
+        select=next(n for n in qualifier.body if isinstance(n,ast.FunctionDef) and n.name=='select_source')
+        assignment=next(n for n in select.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='index' for t in n.targets))
+        row={'allCauses':all_causes,'causes':[c for c in all_causes if c['input']['kind']=='script_block']}
+        return eval(compile(ast.Expression(assignment.value),'<actual removal cause position>','eval'),{'row':row,'source_id':'source'})
+    def test_new_continuity_cause_before_deleted_block_uses_full_native_option_position(self):
+        causes=[{'input':{'kind':'timeline_node','node_id':'B'}},
+            {'input':{'kind':'script_block','block_id':'source'}}]
+        self.assertEqual(self.index(causes),1)
+    def test_unfiltered_positions_preserve_other_unselected_dependencies(self):
+        causes=[{'input':{'kind':'bible_node','node_id':'Mara'}},
+            {'input':{'kind':'timeline_node','node_id':'B'}},
+            {'input':{'kind':'script_block','block_id':'source'}},
+            {'input':{'kind':'script_block','block_id':'other'}}]
+        self.assertEqual(self.index(causes),2)

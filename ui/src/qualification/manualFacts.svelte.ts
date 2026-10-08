@@ -199,6 +199,7 @@ export function readImpacts() {
         source: s.segment.source_node_id,
         segment: s.segment.id,
         needsReview: s.impact?.needs_review,
+        allCauses: s.impact?.causes ?? [],
         causes: s.impact?.causes.filter(
           (c) =>
             c.input.kind === 'script_block' ||
