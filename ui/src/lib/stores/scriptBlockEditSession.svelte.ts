@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 import { createScriptBlockEditDraft } from '$lib/components/editor/scriptBlockEditDraft.svelte.js';
 import {
   applyScriptBlockEditCommand,
@@ -45,7 +46,11 @@ export function getSessionScriptBlockEditDraft(documentId: string, blockId: stri
         return refreshScriptDocumentProjection({ document_id: documentId });
       },
     });
-    drafts = { ...drafts, [key]: draft };
+    // Consumers obtain this persistent owner in a derived read. Registration
+    // must not become a forbidden mutation of that consuming reaction.
+    untrack(() => {
+      drafts = { ...drafts, [key]: draft };
+    });
   }
   return draft;
 }
