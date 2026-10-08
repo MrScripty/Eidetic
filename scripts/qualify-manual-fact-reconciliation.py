@@ -1298,7 +1298,7 @@ def qualify_screenplay_removal(application,window,database,fixture,capture,check
     evidence['retained_history']=deleted_revision
     before_refusal=driver.canonical_state(database)
     ui.reveal_button(ui.wait_for('old proposal review',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
-    ui.wait_for('ordinary stale acceptance error',lambda:ui.reveal(application,lambda n:'screenplay proposal is stale' in ui.text_of(n)))
+    ui.wait_for('ordinary stale acceptance error',lambda:ui.find(review,lambda n:'screenplay proposal is stale' in ui.text_of(n)) if (review:=review_for_source(application,fixture['b']['name'])) else None)
     if driver.canonical_state(database)!=before_refusal:raise RuntimeError('Old preview acceptance wrote canon')
     preserved();evidence['stale_checks'].append({'source_removed':True,'old_proposal_id':old[0],'refusal_without_any_recorded_write':True})
     ui.reveal_button(ui.wait_for('old proposal before rejection',lambda:review_for_source(application,fixture['b']['name'])),'Reject',window)

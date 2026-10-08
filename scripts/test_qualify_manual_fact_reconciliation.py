@@ -461,3 +461,43 @@ class RemovalPendingStorageTests(unittest.TestCase):
         self.assertEqual(selected,('latest',{'request':{'block_id':'B'},'fixture_id':'latest'},'  Exact synthetic preview — 雨\n\n  '))
         self.assertEqual('\n'.join(conn.iterdump()),before)
         conn.close()
+
+
+class RemovalVisibleRefusalTests(unittest.TestCase):
+    def harness(self, showing, owner_available=True):
+        import types
+        native=ast.parse(Path(__file__).with_name('qualify-screenplay-authoring.py').read_text())
+        functions=[n for n in native.body if isinstance(n,ast.FunctionDef) and n.name in ('find','reveal','visible','text_of')]
+        class Node:
+            def __init__(self,text,visible):
+                self.name=text;self.showing=visible;self.scrolls=[]
+            def getState(self):return types.SimpleNamespace(contains=lambda _:self.showing)
+            def queryText(self):raise NotImplementedError()
+            def queryComponent(self):return types.SimpleNamespace(scrollTo=self.scrolls.append)
+        nodes=[Node(text,visible) for text,visible in showing]
+        root=types.SimpleNamespace(clear_cache=lambda:None)
+        local={'walk':lambda _:iter(nodes),'pyatspi':types.SimpleNamespace(STATE_SHOWING='showing',SCROLL_ANYWHERE='anywhere')}
+        exec(compile(ast.Module(body=functions,type_ignores=[]),'<actual native helpers>','exec'),local)
+        # Run the actual removal gate's predicate, not a duplicate selector.
+        qualifier=next(n for n in module.body if isinstance(n,ast.FunctionDef) and n.name=='qualify_screenplay_removal')
+        gate=next(n for n in ast.walk(qualifier) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr=='wait_for' and n.args and isinstance(n.args[0],ast.Constant) and n.args[0].value=='ordinary stale acceptance error')
+        def review_for_source(application,clip_name):
+            self.assertIs(application,root)
+            self.assertEqual(clip_name,'intended B owner')
+            return root if owner_available else None
+        predicate=eval(compile(ast.Expression(gate.args[1]),'<actual removal refusal predicate>','eval'),{'ui':types.SimpleNamespace(**local),'application':root,'review_for_source':review_for_source,'fixture':{'b':{'name':'intended B owner'}}})
+        return predicate,nodes
+    def test_hidden_duplicate_does_not_mask_the_visible_actual_refusal(self):
+        message='screenplay proposal is stale; request a fresh preview'
+        predicate,nodes=self.harness([(message,False),(message,True)])
+        self.assertIs(predicate(),nodes[1])
+        self.assertEqual(nodes[0].scrolls,[])
+    def test_hidden_only_refusal_does_not_qualify_visible_error(self):
+        predicate,_=self.harness([('screenplay proposal is stale; request a fresh preview',False)])
+        self.assertIsNone(predicate())
+    def test_other_visible_error_does_not_qualify_stale_acceptance(self):
+        predicate,_=self.harness([('Review failed',True),('Some unrelated stale read',True)])
+        self.assertIsNone(predicate())
+    def test_absent_intended_review_does_not_qualify_an_unrelated_error(self):
+        predicate,_=self.harness([('screenplay proposal is stale; request a fresh preview',True)],owner_available=False)
+        self.assertIsNone(predicate())
