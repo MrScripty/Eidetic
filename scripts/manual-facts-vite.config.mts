@@ -2,7 +2,7 @@ import { type Plugin } from "../ui/node_modules/vite/dist/node/index.js";
 import { fileURLToPath } from "node:url";
 import base from "../ui/vite.config.js";
 
-/** Explicit qualifier imports; production application files remain byte-identical. */
+/** Arc Description qualifier uses existing public read/decision seams; application source is frozen. */
 const manualFacts: Plugin = {
     name: "qualifier-only-manual-facts",
     enforce: "pre",

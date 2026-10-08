@@ -24,6 +24,9 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
     .await?;
     project_service::save_project(state, project_service::SaveProjectRequest { path: None })
         .await?;
+    if std::env::var("EIDETIC_CAPTURE_SCOPE").as_deref() == Ok("arc-description") {
+        return prepare_arc_description(state).await;
+    }
     let project = state
         .project
         .lock()
@@ -280,4 +283,195 @@ async fn field(
     )
     .await?;
     Ok(())
+}
+
+/// Keep the template's real tags: no tag command exists in this bounded UI.
+async fn prepare_arc_description(
+    state: &AppState,
+) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    let project = state
+        .project
+        .lock()
+        .as_ref()
+        .ok_or("missing template")?
+        .clone();
+    let arc = project
+        .arcs
+        .iter()
+        .find(|a| a.name == "A-Plot")
+        .ok_or("missing A arc")?
+        .id;
+    let unrelated_arc = project
+        .arcs
+        .iter()
+        .find(|a| a.name == "C-Runner")
+        .ok_or("missing C arc")?
+        .id;
+    let mut consumers: Vec<_> = project
+        .timeline
+        .nodes
+        .iter()
+        .filter(|n| {
+            n.level == StoryLevel::Scene
+                && project
+                    .timeline
+                    .node_arcs
+                    .iter()
+                    .any(|t| t.node_id == n.id && t.arc_id == arc)
+        })
+        .cloned()
+        .collect();
+    consumers.sort_by_key(|n| n.time_range.start_ms);
+    let a = consumers
+        .first()
+        .ok_or("missing first tagged consumer")?
+        .clone();
+    let b = consumers
+        .get(1)
+        .ok_or("missing second tagged consumer")?
+        .clone();
+    let f = project
+        .timeline
+        .nodes
+        .iter()
+        .find(|n| {
+            n.level == StoryLevel::Scene
+                && project
+                    .timeline
+                    .node_arcs
+                    .iter()
+                    .any(|t| t.node_id == n.id && t.arc_id == unrelated_arc)
+        })
+        .ok_or("missing unrelated tagged scene")?
+        .clone();
+    for node in project
+        .timeline
+        .nodes
+        .iter()
+        .filter(|n| n.level == StoryLevel::Scene && ![a.id, b.id, f.id].contains(&n.id))
+    {
+        command_service::delete_timeline_node(
+            state,
+            CommandEnvelope::new(DeleteTimelineNodeCommand { node_id: node.id }),
+        )
+        .await?;
+    }
+    for act in project.timeline.nodes.iter().filter(|n| {
+        n.level == StoryLevel::Act && ![a.parent_id, b.parent_id, f.parent_id].contains(&Some(n.id))
+    }) {
+        command_service::delete_timeline_node(
+            state,
+            CommandEnvelope::new(DeleteTimelineNodeCommand { node_id: act.id }),
+        )
+        .await?;
+    }
+    // Explicit public empty write gives the omitted Description an owned clock.
+    command_service::update_story_arc(
+        state,
+        CommandEnvelope::new(SetStoryArcMetadataCommand {
+            arc_id: arc,
+            name: Some("Mara's choice".into()),
+            description: Some(String::new()),
+            arc_type: None,
+            color: None,
+        }),
+    )
+    .await?;
+    command_service::update_story_arc(
+        state,
+        CommandEnvelope::new(SetStoryArcMetadataCommand {
+            arc_id: unrelated_arc,
+            name: Some("Unrelated direction".into()),
+            description: Some(String::new()),
+            arc_type: None,
+            color: None,
+        }),
+    )
+    .await?;
+    command_service::ensure_canonical_bible_roots(
+        state,
+        CommandEnvelope::new(EnsureCanonicalBibleRootsCommand {}),
+    )
+    .await?;
+    for (id, name, order) in [
+        ("qualification.mara", "Mara", 0),
+        ("qualification.eli", "Eli", 1),
+    ] {
+        command_service::create_bible_graph_node(state,serde_json::from_value(serde_json::json!({"id":uuid::Uuid::new_v4(),"payload":{"node_id":id,"schema_key":"character","name":name,"sort_order":order}}))?).await?;
+    }
+    command_service::set_bible_graph_edge(state,serde_json::from_value(serde_json::json!({"id":uuid::Uuid::new_v4(),"payload":{"edge_id":"qualification.mara.eli","from_node_id":"qualification.mara","to_node_id":"qualification.eli","edge_kind":"references","label":"Mara trusts Eli","directed":true,"sort_order":0}}))?).await?;
+    field(
+        state,
+        "qualification.mara",
+        "tagline",
+        "Mara's umbrella is red.",
+    )
+    .await?;
+    command_service::create_script_block(
+        state,
+        CommandEnvelope::new(CreateScriptBlockCommand {
+            document_id: ScriptDocumentId::new("script.document.main")?,
+            source_node_id: f.id,
+            expected_start_ms: f.time_range.start_ms,
+            expected_end_ms: f.time_range.end_ms,
+            block_kind: ScriptBlockKind::Action,
+            text: "Unrelated saved scene: Eli guards the station.\n\n".into(),
+        }),
+    )
+    .await?;
+    for node in [&a, &b] {
+        command_service::set_timeline_node_notes(
+            state,
+            CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                node_id: node.id,
+                notes: "Synthetic fixture: Mara carries her red umbrella.".into(),
+            }),
+        )
+        .await?;
+    }
+    let mut generations = Vec::new();
+    let setup_only = std::env::var("EIDETIC_CAPTURE_SETUP_ONLY").as_deref() == Ok("1");
+    if !setup_only {
+        for node in [&a, &b] {
+            ai_generation_service::start_generation(
+                state,
+                ai_generation_service::AiGenerateRequest {
+                    node_id: node.id.0,
+                    story_time_ms: None,
+                },
+            )
+            .await?;
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+            loop {
+                let projection = projection_service::script_document_projection(
+                    state,
+                    projection_service::ScriptDocumentProjectionRequest {
+                        document_id: ScriptDocumentId::new("script.document.main")?,
+                    },
+                )
+                .await?;
+                if let Some(segment) =
+                    projection.payload.segments.iter().find(|s| {
+                        s.segment.source_node_id.as_deref() == Some(&node.id.0.to_string())
+                    })
+                {
+                    if !segment.blocks.is_empty() && !state.generating.lock().contains(&node.id.0) {
+                        generations.push(serde_json::to_value(segment)?);
+                        break;
+                    }
+                }
+                if std::time::Instant::now() > deadline {
+                    return Err("public arc synthetic generation timed out".into());
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+            }
+        }
+    }
+    let saved =
+        project_service::save_project(state, project_service::SaveProjectRequest { path: None })
+            .await?;
+    let scene = |node: &eidetic_core::timeline::node::StoryNode| serde_json::json!({"id":node.id.0,"name":node.name,"start_ms":node.time_range.start_ms,"end_ms":node.time_range.end_ms});
+    Ok(
+        serde_json::json!({"project_path":saved["saved"],"a":scene(&a),"b":scene(&b),"f":scene(&f),"arc":{"id":arc.0,"name":"Mara's choice"},"unrelated_arc":{"id":unrelated_arc.0,"name":"Unrelated direction"},"generations":generations,"setup_only":setup_only,"provider_calls":if setup_only {0}else{4},"setup_route":"ordinary public services preserve actual template Scene tags; owned empty Description write; labelled synthetic HTTP generations only"}),
+    )
 }

@@ -144,7 +144,9 @@ def enlarge_script_pane(application, window):
 
 def canonical_state(database):
     tables = ['commands', 'change_events', 'object_revisions', 'object_revision_fields',
-              'semantic_dependencies', 'semantic_dependency_revisions', 'propagation_proposals']
+              'semantic_dependencies', 'semantic_dependency_revisions', 'propagation_proposals',
+              'script_impact_proposal_bindings', 'script_generations', 'script_documents',
+              'script_segments', 'script_blocks', 'script_spans', 'script_locks']
     result = {}
     for table in tables:
         if ui.query(database, "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)):

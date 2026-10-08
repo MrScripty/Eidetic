@@ -22,6 +22,7 @@ export const factQA = $state({
   replay: '',
   edgeMutations: 0,
   impacts: '',
+  impactReads: 0,
   savePauseArmed: false,
   saveAcknowledgementHeld: false,
   detailMode: 'normal',
@@ -183,6 +184,7 @@ export function relationshipABA() {
   });
 }
 export function readImpacts() {
+  factQA.impacts = '';
   return action(async () => {
     const projection = await getScriptDocumentProjection({ document_id: 'script.document.main' });
     factQA.impacts = JSON.stringify(
@@ -194,11 +196,13 @@ export function readImpacts() {
           (c) =>
             c.input.kind === 'bible_field' ||
             c.input.kind === 'bible_edge' ||
+            c.input.kind === 'story_arc_field' ||
             c.dependency_id.endsWith('.timeline_notes') ||
             c.dependency_id.includes('.ancestor_notes.'),
         ),
       })),
     );
+    factQA.impactReads++;
     return { readOnlyCanonicalImpacts: true };
   });
 }

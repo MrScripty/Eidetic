@@ -32,7 +32,7 @@
     >QA context receipt<textarea aria-label="QA context receipt" readonly value={contextReceipt()}
     ></textarea></label
   >
-  <strong>QA saved-edit fixture · public commands · SYNTHETIC HTTP replies</strong>
+  <strong>QA story-memory fixture · public commands · SYNTHETIC HTTP replies</strong>
   <button onclick={replayRequest} disabled={factQA.busy || !factQA.requestId}
     >QA replay exact analysis</button
   >

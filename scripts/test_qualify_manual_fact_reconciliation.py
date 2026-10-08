@@ -8,7 +8,7 @@ import unittest
 source=Path(__file__).with_name('qualify-manual-fact-reconciliation.py').read_text()
 module=ast.parse(source)
 # Load only constants and the pure prompt predicate, without pyatspi/native imports.
-selected=[n for n in module.body if isinstance(n,ast.Assign) and all(isinstance(t,ast.Name) and t.id in {'RED','BLUE','SAVED','DRAFT','BIBLE_DRAFT','MOTIVATION_DRAFT','NOTES','GENERATED_B','ANCESTOR_OLD','ANCESTOR_MANUAL','UNRELATED_ACT_OLD'} for t in n.targets) or isinstance(n,ast.FunctionDef) and n.name in ('fact_prompt','notes_prompt','context_prompt_matches','ancestor_notes_prompt')]
+selected=[n for n in module.body if isinstance(n,ast.Assign) and all(isinstance(t,ast.Name) and t.id in {'RED','BLUE','SAVED','DRAFT','BIBLE_DRAFT','MOTIVATION_DRAFT','NOTES','GENERATED_B','ANCESTOR_OLD','ANCESTOR_MANUAL','UNRELATED_ACT_OLD','ARC_NEW','ARC_PREVIEW','ARC_UNRELATED'} for t in n.targets) or isinstance(n,ast.FunctionDef) and n.name in ('fact_prompt','notes_prompt','context_prompt_matches','ancestor_notes_prompt','arc_description_prompt')]
 namespace={'json':json};exec(compile(ast.Module(body=selected,type_ignores=[]),'<pure qualifier>','exec'),namespace)
 
 class NativeInputTests(unittest.TestCase):
@@ -113,8 +113,22 @@ exports.readImpacts().then(()=>process.stdout.write(exports.receipt())).catch(er
         self.assertTrue(row['needsReview'])
         self.assertEqual([c['dependency_id'] for c in row['causes']],[
             'generation.event.ancestor_notes.owned-act','generation.event.timeline_notes',
-            'generation.event.field','generation.event.edge'])
+            'generation.event.field','generation.event.edge','generation.event.arc'])
         self.assertEqual(row['causes'][0]['input'],{'kind':'timeline_node','node_id':'owned-act'})
         self.assertEqual(row['causes'][0]['input_excerpt'],'  exact — 雨.\n\n  ')
+
+
+class ArcDescriptionPromptTests(unittest.TestCase):
+    def prompt(self):
+        return ('ORIGINAL KNOWN-EMPTY ARC DESCRIPTION APPLICABILITY (arc): description prose was not supplied; field revision owned\n'
+            +namespace['ARC_NEW']+'TARGET BLOCK TO UPDATE:\n'+namespace['ANCESTOR_MANUAL']+namespace['RED'])
+    def test_exact_new_direction_original_omission_and_manual_target(self):
+        self.assertTrue(namespace['arc_description_prompt']('targeted screenplay update',self.prompt()))
+    def test_missing_omission_trimmed_description_or_draft_or_unrelated_leaks_refuse(self):
+        for text in [self.prompt().replace('description prose was not supplied; field revision ','unknown '),
+            self.prompt().replace(namespace['ARC_NEW'],namespace['ARC_NEW'].strip()),
+            self.prompt().replace(namespace['ANCESTOR_MANUAL'],namespace['GENERATED_B']),
+            self.prompt()+namespace['ARC_UNRELATED'],self.prompt()+namespace['DRAFT']]:
+            self.assertFalse(namespace['arc_description_prompt']('targeted screenplay update',text))
 
 if __name__=='__main__':unittest.main()

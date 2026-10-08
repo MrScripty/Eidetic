@@ -17,7 +17,11 @@ from urllib.request import urlopen
 spec=importlib.util.spec_from_file_location('native_helpers',Path(__file__).with_name('manual-fact-native-helpers.py'))
 driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
 ui=driver.ui
-SOURCE='10a2b43ef2554799b92b155e3c49c63813c67d7a'
+SOURCE='cac013fa85a890d5113399e0ce626aeb03c9457d'
+SOURCE_TREE='170341fdeccdeb4654bbe279b1787c8cf0660f46'
+ARC_NEW='  Mara chooses exile — 雨.\n\n  '
+ARC_UNRELATED='Unrelated direction: Eli stays at the station.\n\n'
+ARC_PREVIEW='  Synthetic arc update: Mara chooses exile — 雨.\n\n  '
 NOTES='  Mara reveals the witness — 雨.\n\n  '
 ANCESTOR_OLD='  Mara conceals the witness — 雨.\n\n  '
 ANCESTOR_MANUAL='  Exact authored B: Eli keeps his whistle — 雨.\n\n  '
@@ -63,6 +67,14 @@ def ancestor_notes_prompt(system,user):
         and RED in user and DRAFT not in user and UNRELATED_ACT_OLD not in user)
 
 
+def arc_description_prompt(system,user):
+    return ('targeted screenplay update' in system and ARC_NEW in user
+        and 'ORIGINAL KNOWN-EMPTY ARC DESCRIPTION APPLICABILITY (' in user
+        and 'description prose was not supplied; field revision ' in user
+        and 'TARGET BLOCK TO UPDATE:\n'+ANCESTOR_MANUAL in user
+        and RED in user and DRAFT not in user and ARC_UNRELATED not in user)
+
+
 def notes_review(application):
     return ui.reveal(application,lambda n:n.name=='Screenplay update proposals' and any(
         child.name=='Current preview Notes' or child.getRole()==ui.pyatspi.ROLE_COMBO_BOX and 'Timeline Notes changed.' in child.name
@@ -99,13 +111,14 @@ class Provider(ui.FixtureProvider):
             if kind=='generation':
                 valid=valid and phase<2 and RED in user and 'UNCONSUMED' not in user
                 if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes':valid=valid and ANCESTOR_OLD in user and UNRELATED_ACT_OLD not in user
+                if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='arc-description':valid=valid and ARC_NEW not in user and ARC_UNRELATED not in user and "Mara's choice" in user
             elif kind=='recap':valid=valid and phase<2 and (GENERATED_A if phase==0 else GENERATED_B).strip() in user
-            elif kind=='notes_preview':valid=valid and (phase==0 or phase==1 and self.allow_fresh_notes) and (ancestor_notes_prompt(system,user) if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes' else notes_prompt(system,user))
+            elif kind=='notes_preview':valid=valid and (phase==0 or phase==1 and self.allow_fresh_notes) and (arc_description_prompt(system,user) if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='arc-description' else ancestor_notes_prompt(system,user) if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes' else notes_prompt(system,user))
             else:valid=valid and phase<5 and fact_prompt(user,phase)
             record={'kind':kind,'phase':phase,'accepted':valid,'real_model':False,'synthetic':True,'exact_system_prompt':system,'exact_user_prompt':user}
             self.records.append(record)
         if not valid:self.send_error(422,'Synthetic qualification prompt/phase mismatch');return
-        text=(GENERATED_A if phase==0 else GENERATED_B) if kind=='generation' else 'Synthetic recap: Mara carries red.' if kind=='recap' else NOTES_PREVIEW if kind=='notes_preview' else json.dumps({'value':GREEN if phase==4 else BLUE,'rationale':'SYNTHETIC QA response: human acceptance required; no model quality claim.'})
+        text=(GENERATED_A if phase==0 else GENERATED_B) if kind=='generation' else 'Synthetic recap: Mara carries red.' if kind=='recap' else (ARC_PREVIEW if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='arc-description' else NOTES_PREVIEW) if kind=='notes_preview' else json.dumps({'value':GREEN if phase==4 else BLUE,'rationale':'SYNTHETIC QA response: human acceptance required; no model quality claim.'})
         record['synthetic_response']=text
         parts=[text[:len(text)//2],text[len(text)//2:]]
         data=''.join('data: '+json.dumps({'choices':[{'delta':{'content':p}}]})+'\n\n' for p in parts).encode()+b'data: [DONE]\n\n'
@@ -744,6 +757,148 @@ def qualify_ancestor_notes(application,window,database,fixture,capture,checkpoin
     if len(Provider.records)!=6 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Expected four fixture and two targeted synthetic provider calls')
     checkpoint('explicit fresh acceptance updates only chosen screenplay and refreshes Notes lineage');capture('ancestor-notes-04-accepted.png')
 
+
+def verify_arc_fixture(database,fixture):
+    arc=fixture['arc']['id'];other=fixture['unrelated_arc']['id']
+    for key,expected in [('a',arc),('b',arc),('f',other)]:
+        tags=ui.query(database,'SELECT arc_id FROM node_arcs WHERE node_id=?',(fixture[key]['id'],))
+        if tags!=[(expected,)]:raise RuntimeError('Fixture does not retain the actual declared template tag')
+    if ui.query(database,'SELECT description FROM arcs WHERE id=?',(arc,))!=[('',)]:raise RuntimeError('Fixture description is not empty')
+    revisions=ui.query(database,"SELECT r.change_event_id FROM object_revisions r JOIN object_revision_fields f ON f.revision_id=r.id WHERE r.object_kind='story_arc' AND r.object_id=? AND f.field_key='description' AND f.new_type='text' AND f.new_text='' ORDER BY r.rowid",(arc,))
+    if not revisions:raise RuntimeError('Fixture empty Description lacks public owned history')
+    if fixture.get('setup_only'):return {'template_tags_verified':True,'owned_empty_revision':revisions[-1][0],'provider_calls':0}
+    receipts=[]
+    for key in ('a','b'):
+        rows=ui.query(database,"SELECT c.payload_json,e.id FROM commands c JOIN change_events e ON e.command_id=c.id WHERE c.payload_type='script.generate_block' ORDER BY e.rowid")
+        command,event=next((json.loads(raw),event) for raw,event in rows if json.loads(raw)['block']['source_node_id']==fixture[key]['id'])
+        expected={'arc_id':arc,'field':'description','value':'','revision_event_id':revisions[-1][0]}
+        if command.get('arc_description_applicability')!=[expected] or any(i['field']=='description' for i in command['arc_inputs']):raise RuntimeError('Generation omitted description is not an honest applicability read')
+        dep='generation.'+event+'.arc_description_applicability.'+arc
+        if ui.query(database,'SELECT count(*) FROM semantic_dependencies WHERE id=?',(dep,))!=[(1,)]:raise RuntimeError('Applicability receipt lacks actual graph dependency')
+        receipts.append({'source':fixture[key]['id'],'generation_event':event,'applicability':expected,'dependency_id':dep})
+    return {'template_tags_verified':True,'owned_empty_revision':revisions[-1][0],'generation_receipts':receipts}
+
+
+def arc_editor(application,window,old):
+    return ui.wait_for('ordinary left ArcDetail Description textarea',lambda:ui.reveal(application,lambda n:
+        n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)==old
+        and 0<=n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]<400
+        and (n.name=='Description' or n.getRole() in (ui.pyatspi.ROLE_TEXT,ui.pyatspi.ROLE_ENTRY))))
+
+
+def open_arc(application,window,name):
+    ui.click_button(application,'Arcs',window)
+    node=ui.wait_for('ordinary named ArcList button',lambda:ui.reveal(application,lambda n:
+        n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and ui.button_label_matches(n.name,name,prefix=True)))
+    ui.click_control(node,window)
+
+
+def qualify_arc_description(application,window,database,fixture,capture,checkpoint,evidence):
+    a_id=fixture['a']['id'];b_id=fixture['b']['id'];f_id=fixture['f']['id'];arc=fixture['arc']['id']
+    suffix='.arc_description_applicability.'+arc
+    save_script(application,window,database,b_id,GENERATED_B,ANCESTOR_MANUAL)
+    original={node:ui.blocks(database,node) for node in (a_id,b_id,f_id)}
+    original_material=material(database);original_bible=bible_fields(database)
+    block=ui.wait_for('unrelated saved F block',lambda:ui.screenplay_block(application,driver.screenplay_anchor(F_TEXT)))
+    ui.reveal_button(block,'Edit',window)
+    ui.type_text(ui.wait_for('unrelated screenplay editor',lambda:ui.editable(application,F_TEXT)),window,DRAFT)
+    # Ordinary Bible entity selection leaves its real right inspector visible
+    # while the left sidebar switches to Arcs. No layout/source injection.
+    ui.click_button(application,'Bible',window)
+    search=ui.wait_for('Bible search',lambda:ui.find(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and 0<=n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]<400 and ui.text_of(n)==''))
+    ui.type_text(search,window,'Mara')
+    ui.click_control(ui.wait_for('Mara entity',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and ui.button_label_matches(n.name,'Mara',prefix=True))),window)
+    driver.bible_field(application,window,RED,'right',align=True)
+    def preserved():
+        if material(database)!=original_material or bible_fields(database)!=original_bible:raise RuntimeError('Arc action changed saved screenplay, spans, locks, placement or Bible')
+        require_draft(application)
+    def impacts():
+        previous=receipt(application)['impactReads']
+        ui.click_button(application,'QA read canonical impacts',window)
+        return ui.wait_for('actual public canonical impacts',lambda:(json.loads(v['impacts']) if not v['busy'] and v['impactReads']>previous and v['impacts'] else None) if (v:=receipt(application)) else None)
+    def scoped(rows):return [c for row in rows for c in row.get('causes') or [] if c['dependency_id'].endswith(suffix)]
+    open_arc(application,window,fixture['unrelated_arc']['name'])
+    ui.type_text(arc_editor(application,window,''),window,ARC_UNRELATED)
+    ui.wait_for('exact unrelated public Description write',lambda:ui.query(database,'SELECT description FROM arcs WHERE id=?',(fixture['unrelated_arc']['id'],))==[(ARC_UNRELATED,)])
+    control=impacts()
+    if scoped(control):raise RuntimeError('Unrelated arc fill created target applicability cause')
+    preserved();driver.bible_field(application,window,RED,'right',align=True)
+    evidence['ordinary_unrelated_arc_control']={'exact_description':ARC_UNRELATED,'impacts':control,'saved_material_and_draft_preserved':True}
+    checkpoint('ordinary unrelated Arc Description fill preserves consumers and draft');capture('arc-description-00-unrelated.png')
+    open_arc(application,window,fixture['arc']['name'])
+    ui.type_text(arc_editor(application,window,''),window,ARC_NEW)
+    ui.wait_for('exact owned public ArcDetail Description commit',lambda:ui.query(database,'SELECT description FROM arcs WHERE id=?',(arc,))==[(ARC_NEW,)])
+    preserved();rows=impacts()
+    for source in (a_id,b_id):
+        row=next(r for r in rows if r['source']==source)
+        cause=next((c for c in row.get('causes') or [] if c['dependency_id'].endswith(suffix)),None)
+        if not cause or cause['input']!={'kind':'story_arc_field','arc_id':arc,'field':'description'} or cause['reason']!='context_changed':raise RuntimeError('Actual tagged consumer lacks precise Description applicability cause')
+    if len(scoped(rows))!=2:raise RuntimeError('Applicability escaped its two actual consumers')
+    evidence['ordinary_arc_edit']={'arc_id':arc,'original_omitted_description':'','exact_saved_description':ARC_NEW,'input_route':'ordinary ArcDetail textarea/native keys/public debounced metadata command','saved_manual_text':ANCESTOR_MANUAL,'saved_material_and_draft_preserved':True,'impacts':rows}
+    notices=[n for n in ui.walk(application) if n.name=='Screenplay needs review']
+    if len(notices)!=2:raise RuntimeError('Expected two generated consumer notices')
+    for node in notices:disclosure(node,window,'What changed')
+    evidence['visible_applicability_impact']=ui.wait_for('ordinary new Description notice visible',lambda:driver.visible_review_label(application,window,'Story arc description became available.'))
+    review=ui.wait_for('ordinary B source review',lambda:review_for_source(application,fixture['b']['name']))
+    combo=ui.wait_for('ordinary applicability cause chooser',lambda:ui.reveal(review,lambda n:n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and ui.button_label_matches(n.name,'Input change',prefix=True)))
+    ui.click_control(combo,window);ui.command('xdotool','key','--clearmodifiers','End','Return')
+    checkpoint('exact ArcDetail entry identifies two consumers without screenplay replacement');capture('arc-description-01-needs-review.png')
+    count=len(Provider.records)
+    ui.reveal_button(ui.wait_for('chosen B applicability review',lambda:review_for_source(application,fixture['b']['name'])),'Preview update',window)
+    def pending():
+        if len(Provider.records)>count and not Provider.records[-1]['accepted']:raise RuntimeError('Synthetic applicability provider refused actual prompt')
+        rows=ui.query(database,"SELECT p.id,p.proposed_text,b.binding_json FROM propagation_proposals p JOIN script_impact_proposal_bindings b ON b.proposal_id=p.id WHERE p.status='pending' ORDER BY p.rowid DESC")
+        return rows[0] if rows else None
+    proposed=ui.wait_for('actual canonical pending applicability preview',pending);binding=json.loads(proposed[2])
+    expected={'arc_id':arc,'field':'description','value':'','revision_event_id':binding['cause']['consumed_revision_event_id']}
+    if proposed[1]!=ARC_PREVIEW or binding.get('arc_description_applicability_previous')!=[expected] or binding.get('arc_description_applicability_current')!=[] or not binding['request']['dependency_id'].endswith(suffix):raise RuntimeError('Pending original omission/source receipt differs')
+    if not any(i['arc_id']==arc and i['field']=='description' and i['value']==ARC_NEW for i in binding['arc_inputs']):raise RuntimeError('Pending current supplied Description differs')
+    preserved()
+    ui.wait_for('reachable exact current Description evidence',lambda:ui.reveal(application,lambda n:n.name=='Current available arc description' and ui.text_of(n)==ARC_NEW))
+    evidence['exact_current_description_visible']=ui.wait_for('exact current Description glyphs inside Script pane',lambda:driver.visible_paragraph(application,window,ARC_NEW,'Current available arc description'))
+    evidence['original_omission_visible']=ui.wait_for('original omitted prose label inside Script pane',lambda:driver.visible_review_label(application,window,'Description prose was not supplied: the field was empty.'))
+    evidence['pending_arc_preview']={'id':proposed[0],'binding':binding,'proposed_text':proposed[1],'saved_material_unchanged':True}
+    driver.bible_field(application,window,RED,'right',align=True)
+    checkpoint('pending synthetic review shows original omission/current exact Description and awaits acceptance');capture('arc-description-02-pending.png')
+    ui.type_text(arc_editor(application,window,ARC_NEW),window,'')
+    ui.wait_for('ordinary public Description clear',lambda:ui.query(database,'SELECT description FROM arcs WHERE id=?',(arc,))==[('',)])
+    cleared=impacts()
+    if scoped(cleared):raise RuntimeError('Clear did not withdraw newly supplied prose cause')
+    preserved();before=driver.canonical_state(database)
+    ui.reveal_button(ui.wait_for('retained pending proposal after clear',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
+    error=ui.wait_for('visible cleared-source refusal',lambda:ui.find(application,lambda n:'proposal' in ui.text_of(n) and ('stale' in ui.text_of(n) or 'changed' in ui.text_of(n))))
+    if driver.canonical_state(database)!=before:raise RuntimeError('Cleared-source refusal wrote state')
+    preserved();evidence['clear_refusal']={'visible_error':ui.text_of(error),'cause_withdrawn':True,'all_recorded_tables_unchanged':True}
+    checkpoint('ordinary clear withdraws applicability cause and refuses old pending acceptance');capture('arc-description-03-cleared-refused.png')
+    ui.type_text(arc_editor(application,window,''),window,ARC_NEW)
+    ui.wait_for('ordinary public exact Description restore',lambda:ui.query(database,'SELECT description FROM arcs WHERE id=?',(arc,))==[(ARC_NEW,)])
+    before=driver.canonical_state(database)
+    ui.reveal_button(ui.wait_for('retained old proposal after restore',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
+    error=ui.wait_for('visible exact text ABA refusal',lambda:ui.find(application,lambda n:'screenplay proposal is stale' in ui.text_of(n)))
+    if driver.canonical_state(database)!=before:raise RuntimeError('Restored-source stale refusal wrote state')
+    preserved();evidence['restore_aba_refusal']={'visible_error':ui.text_of(error),'exact_restored_description':ARC_NEW,'all_recorded_tables_unchanged':True}
+    checkpoint('ordinary exact clear/restore ABA refuses old preview without writes');capture('arc-description-04-stale.png')
+    ui.reveal_button(ui.wait_for('old B review before Reject',lambda:review_for_source(application,fixture['b']['name'])),'Reject',window)
+    ui.wait_for('ordinary rejection',lambda:ui.query(database,"SELECT id FROM propagation_proposals WHERE id=? AND status='rejected'",(proposed[0],)))
+    Provider.allow_fresh_notes=True
+    ui.reveal_button(ui.wait_for('fresh B review',lambda:review_for_source(application,fixture['b']['name'])),'Preview update',window)
+    fresh=ui.wait_for('fresh pending applicability preview',pending)
+    if fresh[0]==proposed[0]:raise RuntimeError('Fresh review reused old proposal')
+    ui.reveal_button(ui.wait_for('fresh B proposal before Accept',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
+    accepted=ui.wait_for('explicit chosen-block update',lambda:next((r for r in ui.blocks(database,b_id) if r[1]==ARC_PREVIEW and r[2]!=original[b_id][0][2]),None))
+    for node in (a_id,f_id):
+        if ui.blocks(database,node)!=original[node]:raise RuntimeError('Acceptance changed unselected saved material')
+    if accepted[3:]!=original[b_id][0][3:] or bible_fields(database)!=original_bible:raise RuntimeError('Acceptance changed placement or Bible')
+    final=impacts()
+    if any(c['dependency_id'].endswith(suffix) for r in final if r['source']==b_id for c in r.get('causes') or []):raise RuntimeError('Accepted B keeps original omission cause')
+    if not any(c['dependency_id'].endswith(suffix) for r in final if r['source']==a_id for c in r.get('causes') or []):raise RuntimeError('Acceptance cleared unaccepted A cause')
+    evidence['explicit_arc_acceptance']={'proposal_id':fresh[0],'saved_selected_block':accepted,'unselected_material_preserved':True,'placement_and_bible_preserved':True,'impacts':final}
+    require_draft(application);driver.bible_field(application,window,RED,'right',align=True)
+    ui.wait_for('visible saved synthetic arc update',lambda:ui.screenplay_block(application,driver.screenplay_anchor(ARC_PREVIEW)))
+    if len(Provider.records)!=6 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Expected four fixture/two targeted labelled synthetic calls')
+    checkpoint('explicit fresh acceptance updates B alone and refreshes consumed Description lineage');capture('arc-description-05-accepted.png')
+
+
 def context_prompt_matches(user,notes):
     return ('SCENE NOTES:\n'+notes+'\n\n' in user and DRAFT not in user)
 
@@ -867,7 +1022,7 @@ def main():
     config=repo/'scripts/manual-facts-vite.config.mts';host_log=state_root/'host-private.log';app_log=state_root/'app-private.log'
     host=process=application=window=None
     provider=ThreadingHTTPServer(('127.0.0.1',18080),Provider);threading.Thread(target=provider.serve_forever,daemon=True).start()
-    evidence={'status':'failed','application_source_sha':SOURCE,'implementation_source_sha':'e5fc35502a72c3e6f09b08f9c491ca8ecc0ad549','application_tree':'06a0d52deefe2c946ebfc3da5d7b96523739ac5f','qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
+    evidence={'status':'failed','application_source_sha':SOURCE,'implementation_source_sha':SOURCE,'application_tree':SOURCE_TREE,'qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
     def checkpoint(stage):
         evidence['stage']=stage;evidence['checkpoints'].append(stage);(output/'capture-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n');print('Manual fact checkpoint: '+stage,flush=True)
     def capture(name):
@@ -885,7 +1040,7 @@ def main():
             except OSError:return False
         ui.wait_for('labelled native Vite host',ready)
         evidence['served_source_receipts']=[]
-        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/qualification/manualFacts.svelte.ts','SYNTHETIC QA transport: Bible detail unavailable.'),('src/lib/stores/bibleGraphNodeProjection.svelte.ts','setBibleGraphFieldProjection'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact'),('src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte','Retry saved facts'),('src/lib/components/editor/ScriptTimelineNotesEvidence.svelte','Timeline Notes used for this update'),('src/lib/components/editor/ScriptImpactReview.svelte','ScriptTimelineNotesEvidence'),('src/lib/components/editor/scriptImpactNotice.ts','Timeline Notes'),('src/lib/components/editor/contextRequestLifecycle.ts','contextNotes'),('src/lib/components/editor/BeatEditor.svelte','contextRequestLifecycle'),('src/qualification/notesPrompt.svelte.ts','QA held real public context return')]:
+        for relative,marker in [('src/lib/components/editor/ScriptFactReconciliation.svelte','Analyze saved edit'),('src/lib/stores/propagationProposalProjection.svelte.ts','project changed during proposal refresh'),('src/qualification/ManualFactControls.svelte','SYNTHETIC HTTP replies'),('src/qualification/manualFacts.svelte.ts','SYNTHETIC QA transport: Bible detail unavailable.'),('src/lib/stores/bibleGraphNodeProjection.svelte.ts','setBibleGraphFieldProjection'),('src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts','refreshOwnedBibleGraphNodeProjections'),('src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts','Saved fact changed while editing'),('src/lib/components/sidebar/bible/BibleGraphPartFields.svelte','Committed Bible fact'),('src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte','Retry saved facts'),('src/lib/components/sidebar/ArcDetail.svelte','Describe this story arc'),('src/lib/components/editor/ScriptArcEvidence.svelte','Originally omitted arc description'),('src/lib/components/editor/ScriptTimelineNotesEvidence.svelte','Timeline Notes used for this update'),('src/lib/components/editor/ScriptImpactReview.svelte','ScriptTimelineNotesEvidence'),('src/lib/components/editor/scriptImpactNotice.ts','Timeline Notes'),('src/lib/components/editor/contextRequestLifecycle.ts','contextNotes'),('src/lib/components/editor/BeatEditor.svelte','contextRequestLifecycle'),('src/qualification/notesPrompt.svelte.ts','QA held real public context return')]:
             source_file=repo/'ui'/relative
             with urlopen('http://127.0.0.1:5173/'+relative,timeout=10) as response:served=response.read()
             import hashlib
@@ -897,6 +1052,7 @@ def main():
             evidence['served_source_receipts'].append({'module':relative,'source_sha256':ui.file_hash(source_file),'served_transformed_sha256':hashlib.sha256(served).hexdigest(),'marker':marker,'observed':True,'fault_wrapper_routed':b'/src/qualification/manualFacts.svelte.ts' in served if relative=='src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts' else None})
         fixture=json.loads(subprocess.check_output([str(repo/'target/debug/examples/manual_fact_capture_fixture')],env=environment,text=True,timeout=90))
         database=Path(fixture['project_path']).resolve();evidence['public_fixture']=dict(fixture,project_path='<fresh qualification project>')
+        if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='arc-description':evidence['verified_fixture_applicability']=verify_arc_fixture(database,fixture)
         if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes':evidence['verified_fixture_hierarchy']=verify_ancestor_fixture_hierarchy(database,fixture)
         if len(Provider.records)!=4 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Fixture did not create two genuine synthetic consumer generations')
         checkpoint('public services seed two actual consumers, unconsumed fields and unrelated saved scene')
@@ -925,6 +1081,11 @@ def main():
             evidence['qualification_scope']='exact same-node Notes prompt refresh and held older actual public context return refusal, ordinary clear/restore, saved text and unrelated draft preservation; no new inference or real-model quality claim'
             qualify_notes_prompt(application,window,database,fixture,capture,checkpoint,evidence)
             evidence['status']='passed';checkpoint('complete frozen-source exact Notes prompt custody')
+            return
+        if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='arc-description':
+            evidence['qualification_scope']='ordinary ArcDetail exact Description entry on actual tagged Scenes; known-empty applicability, unrelated control, manual saved text and draft preservation, pending synthetic review, clear/restore refusal and explicit chosen-block acceptance'
+            qualify_arc_description(application,window,database,fixture,capture,checkpoint,evidence)
+            evidence['status']='passed';checkpoint('complete frozen-source arc Description applicability review')
             return
         if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes':
             evidence['qualification_scope']='ordinary consumed ancestor Notes edit; two exact dependent Scenes, unrelated Act saved text/draft preservation, pending synthetic review, stale ABA refusal and explicit selected-block acceptance only'

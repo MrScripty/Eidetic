@@ -151,3 +151,18 @@ wrapper against a mixed projection and proves both ancestor/selected Notes and
 Bible causes survive while unrelated arc causes stay outside this scoped receipt.
 The executed regression fails before the QA-only repair. Product source10a2b43
 and all native cause, evidence, stale acceptance and preservation checks are unchanged.
+
+
+## Known-empty tagged arc Description qualification
+
+The separate arc-description scope freezes product cac013f/tree170341fd and
+retains actual template Scene tags through unchanged public services. A public
+empty metadata write establishes owned Description applicability before labelled
+synthetic generation. Native ArcDetail keys fill exact Unicode/whitespace prose,
+while ordinary Bible selection leaves the right inspector visible with timeline
+and screenplay. Read-only SQL verifies graph dependencies, generation receipts,
+precise two-consumer review, manual text/spans/locks/placement and an unrelated
+draft. Clear withdraws the entry cause; old pending acceptance and clear/restore
+ABA refuse without writes. Fresh explicit acceptance updates B alone. No native
+claim is valid until the hosted run passes; real-model quality is unqualified.
+All raw captures/logs live in uploaded run artifacts, outside source Git.

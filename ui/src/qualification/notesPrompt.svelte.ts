@@ -1,3 +1,4 @@
+// Arc Description qualification retains this actual-context read seam; no fabricated prompt.
 import { untrack } from 'svelte';
 import * as production from '../lib/api.js';
 export * from '../lib/api.js';
