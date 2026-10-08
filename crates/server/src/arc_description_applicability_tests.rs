@@ -144,6 +144,213 @@ fn preview(
 }
 
 #[test]
+fn known_empty_description_allows_name_preview_and_preserves_applicability_after_acceptance() {
+    let (mut conn, arc, command, _) = setup(true);
+    edit(&mut conn, &command.block, HUMAN);
+    story_arc_command::record_set_story_arc_metadata_history(
+        &mut conn,
+        &CommandEnvelope::new(SetStoryArcMetadataCommand {
+            arc_id: arc,
+            name: Some("Chosen exile".into()),
+            description: None,
+            arc_type: None,
+            color: None,
+        }),
+        30,
+    )
+    .unwrap();
+    let changed = impact(&conn, &command);
+    assert_eq!(changed.causes.len(), 1);
+    assert_eq!(
+        changed.causes[0].input,
+        SemanticDependencyEndpoint::StoryArcField {
+            arc_id: arc,
+            field: StoryArcPromptField::Name,
+        }
+    );
+    let request = request(&conn, &command.block);
+    conn.execute(
+        "DELETE FROM node_arcs WHERE node_id=?1 AND arc_id=?2",
+        params![command.block.source_node_id, arc.0.to_string()],
+    )
+    .unwrap();
+    let before = rows(&conn);
+    assert!(script_impact_review::capture(&conn, &request.payload).is_err());
+    assert_eq!(rows(&conn), before);
+    conn.execute(
+        "INSERT INTO node_arcs(node_id,arc_id) VALUES (?1,?2)",
+        params![command.block.source_node_id, arc.0.to_string()],
+    )
+    .unwrap();
+    let before = rows(&conn);
+    let binding = script_impact_review::capture(&conn, &request.payload).unwrap();
+    assert_eq!(
+        rows(&conn),
+        before,
+        "Capturing preview must remain read-only"
+    );
+    assert!(
+        !binding
+            .arc_inputs
+            .as_ref()
+            .unwrap()
+            .iter()
+            .any(|input| input.field == StoryArcPromptField::Description)
+    );
+    assert_eq!(
+        binding.arc_description_applicability_current,
+        command.arc_description_applicability
+    );
+    let request = preview(&mut conn, &command);
+    assert_eq!(text(&conn, &command.block), HUMAN);
+    accept(&mut conn, &request).unwrap();
+    assert_eq!(text(&conn, &command.block), PREVIEW);
+    assert!(!impact(&conn, &command).needs_review);
+    metadata(&mut conn, arc, Some(NEW), None);
+    let changed = impact(&conn, &command);
+    assert_eq!(changed.causes.len(), 1);
+    let omission = &command.arc_description_applicability.as_ref().unwrap()[0];
+    assert_eq!(
+        changed.causes[0].dependency_id,
+        dependency_id(changed.generation_event_id, omission)
+    );
+}
+
+#[test]
+fn known_empty_second_tag_allows_description_preview_and_keeps_separate_lineage() {
+    let (mut conn, arc, mut command, _) = setup(false);
+    let other = create(&mut conn);
+    conn.execute(
+        "INSERT INTO node_arcs(node_id,arc_id) VALUES (?1,?2)",
+        params![command.block.source_node_id, other.0.to_string()],
+    )
+    .unwrap();
+    let node =
+        NodeId(uuid::Uuid::parse_str(command.block.source_node_id.as_ref().unwrap()).unwrap());
+    let (_, fields) = arcs::capture(&conn, node, &[]).unwrap();
+    command.arc_description_applicability = Some(capture(&conn, node, &fields).unwrap());
+    command.arc_inputs = Some(fields);
+    assert_eq!(
+        command
+            .arc_description_applicability
+            .as_ref()
+            .unwrap()
+            .len(),
+        2
+    );
+    script_document_command::apply_generated_script_block(
+        &mut conn,
+        &CommandEnvelope::new(command.clone()),
+        25,
+    )
+    .unwrap();
+    edit(&mut conn, &command.block, HUMAN);
+    metadata(&mut conn, arc, Some(NEW), None);
+    let changed = impact(&conn, &command);
+    assert_eq!(changed.causes.len(), 1);
+    assert_eq!(
+        changed.causes[0].input,
+        SemanticDependencyEndpoint::StoryArcField {
+            arc_id: arc,
+            field: StoryArcPromptField::Description,
+        }
+    );
+    let request = preview(&mut conn, &command);
+    let binding = script_impact_review::capture(&conn, &request.payload).unwrap();
+    let descriptions = binding
+        .arc_inputs
+        .as_ref()
+        .unwrap()
+        .iter()
+        .filter(|input| input.field == StoryArcPromptField::Description)
+        .collect::<Vec<_>>();
+    assert_eq!(descriptions.len(), 1);
+    assert_eq!(descriptions[0].arc_id, arc);
+    assert_eq!(descriptions[0].value, NEW);
+    let omission = command
+        .arc_description_applicability
+        .as_ref()
+        .unwrap()
+        .iter()
+        .find(|input| input.arc_id == other)
+        .unwrap();
+    assert_eq!(
+        binding.arc_description_applicability_current.as_deref(),
+        Some(std::slice::from_ref(omission))
+    );
+    assert_eq!(text(&conn, &command.block), HUMAN);
+    accept(&mut conn, &request).unwrap();
+    assert_eq!(text(&conn, &command.block), PREVIEW);
+    assert!(!impact(&conn, &command).needs_review);
+    metadata(
+        &mut conn,
+        other,
+        Some("The other arc gains direction"),
+        None,
+    );
+    let changed = impact(&conn, &command);
+    assert_eq!(changed.causes.len(), 1);
+    assert_eq!(
+        changed.causes[0].dependency_id,
+        dependency_id(changed.generation_event_id, omission)
+    );
+}
+
+#[test]
+fn known_empty_tag_deletion_refuses_stale_preview_and_fresh_preview_binds_absence() {
+    let (mut conn, arc, command, _) = setup(true);
+    edit(&mut conn, &command.block, HUMAN);
+    story_arc_command::record_set_story_arc_metadata_history(
+        &mut conn,
+        &CommandEnvelope::new(SetStoryArcMetadataCommand {
+            arc_id: arc,
+            name: None,
+            description: None,
+            arc_type: Some(ArcType::BPlot),
+            color: None,
+        }),
+        30,
+    )
+    .unwrap();
+    let old = preview(&mut conn, &command);
+    let delayed_request = request(&conn, &command.block);
+    let delayed = script_impact_review::capture(&conn, &delayed_request.payload).unwrap();
+    story_arc_command::record_delete_story_arc_history(
+        &mut conn,
+        &CommandEnvelope::new(DeleteStoryArcCommand { arc_id: arc }),
+        50,
+    )
+    .unwrap();
+    let before = rows(&conn);
+    assert!(accept(&mut conn, &old).is_err());
+    assert!(
+        script_impact_review::record_proposal(
+            &mut conn,
+            &delayed_request,
+            delayed,
+            PREVIEW.into(),
+            60,
+        )
+        .is_err()
+    );
+    assert_eq!(rows(&conn), before);
+    assert_eq!(text(&conn, &command.block), HUMAN);
+    let fresh = preview(&mut conn, &command);
+    let binding = script_impact_review::capture(&conn, &fresh.payload).unwrap();
+    assert!(binding.arc_inputs.as_ref().unwrap().is_empty());
+    assert!(
+        binding
+            .arc_description_applicability_current
+            .as_ref()
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(binding.arc_absence_revisions.as_ref().unwrap().len(), 1);
+    accept(&mut conn, &fresh).unwrap();
+    assert!(!impact(&conn, &command).needs_review);
+}
+
+#[test]
 fn owned_omission_entry_reviews_manual_material_and_acceptance_installs_actual_description() {
     let (mut conn, arc, command, c) = setup(true);
     edit(&mut conn, &command.block, HUMAN);

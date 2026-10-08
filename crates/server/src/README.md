@@ -613,6 +613,12 @@ Preview preserves authored text, spans, locks and placement. Explicit acceptance
 updates only its chosen block and records the now-supplied Description through
 ordinary arc lineage. Tests cover graph rows, public writer entry/clear controls,
 forged receipts, multiple consumers, locks, failed providers and manual text.
+Preview validates arc membership against the selected tags, independently of
+supplied prompt fields: known-empty applicability edges must not require omitted
+Description prose. Name/type review and one-of-multiple-tag Description review
+retain the other empty applicability receipts through acceptance. Removed live
+tags still refuse preview; stale deleted-source work refuses without writes,
+while fresh deletion review keeps its owned absence receipt.
 See `docs/plans/agent-story-workflows/arc-description-applicability.md`.
 
 Selected clip Notes consumption is owned by `timeline_notes_lineage`. It resolves
