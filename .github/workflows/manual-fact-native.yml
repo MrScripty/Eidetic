@@ -25,7 +25,7 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: 34260ac264e7b1b2c17c414274a211baf2dc1ca2
+      EIDETIC_CAPTURE_SOURCE: d025abc67cbd82413c2ec896fb6ab01b1ea13402
       EIDETIC_CAPTURE_SCOPE: screenplay-removal
     steps:
       - uses: actions/checkout@v4

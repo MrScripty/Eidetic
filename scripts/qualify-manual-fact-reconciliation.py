@@ -17,8 +17,8 @@ from urllib.request import urlopen
 spec=importlib.util.spec_from_file_location('native_helpers',Path(__file__).with_name('manual-fact-native-helpers.py'))
 driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
 ui=driver.ui
-SOURCE='34260ac264e7b1b2c17c414274a211baf2dc1ca2'
-SOURCE_TREE='648cf0a8cdc4c8ac39b0d4559788d2050634a28c'
+SOURCE='d025abc67cbd82413c2ec896fb6ab01b1ea13402'
+SOURCE_TREE='9d2a598cde7b3efd9f6e522ae5c7c362659a44ce'
 KNOWN_EMPTY_MODES=('known-empty-name','known-empty-second-tag','known-empty-deletion')
 KNOWN_EMPTY_NAME='Mara chooses the road — 雨.'
 KNOWN_EMPTY_PREVIEW='  Synthetic known-empty preview: Mara considers the road — 雨.\n\n  '

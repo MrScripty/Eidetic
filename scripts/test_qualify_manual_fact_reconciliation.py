@@ -214,7 +214,7 @@ class RemovalWorkflowTests(unittest.TestCase):
         root=Path(__file__).resolve().parents[1]
         workflow=(root/'.github/workflows/manual-fact-native.yml').read_text()
         self.assertIn('branches: [test/screenplay-removal-native]',workflow)
-        self.assertIn('EIDETIC_CAPTURE_SOURCE: 34260ac264e7b1b2c17c414274a211baf2dc1ca2',workflow)
+        self.assertIn('EIDETIC_CAPTURE_SOURCE: d025abc67cbd82413c2ec896fb6ab01b1ea13402',workflow)
         self.assertIn('if changed != allowed:',workflow)
         self.assertIn('EIDETIC_CAPTURE_SCOPE: screenplay-removal-repeat',workflow)
         self.assertIn('eidetic-capture-artifact/screenplay-removal-repeat',workflow)
