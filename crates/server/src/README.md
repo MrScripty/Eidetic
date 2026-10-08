@@ -676,3 +676,12 @@ the existing targeted binding; current rereads never fabricate legacy consumptio
 Writer-lock generation and existing preview/acceptance checks refuse stale/ABA or
 forged reads. Editing Notes/previewing preserve canonical screenplay and locks;
 only explicit acceptance can replace the selected block. No new endpoint or store.
+
+Project loading accepts the current SQLite schema and keeps the validated file
+as the active save target regardless of its suffix. A `.json` filename does not
+request conversion or authorize writes to a sibling `project.db`. Legacy JSON
+content remains unsupported. Invalid-format rejection preserves the selected
+file, sibling database and active session; the established outgoing-project flush
+still runs.
+The project lifecycle custody tests cover exact-path autosave/Save and JSON
+rejection with absent and existing sibling databases.
