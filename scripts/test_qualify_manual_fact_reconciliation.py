@@ -282,4 +282,63 @@ class KnownEmptyActualProviderTests(unittest.TestCase):
                     server.shutdown();server.server_close();thread.join(timeout=5)
 
 
+class NativeReceiptRetirementTests(unittest.TestCase):
+    def harness(self,sequence,process_alive=True):
+        import types
+        class Error(Exception):
+            def __init__(self,code=0):
+                self.domain='atspi_error';self.code=code;self.message='The application no longer exists'
+        class Clock:
+            now=0
+            def monotonic(self):return self.now
+            def sleep(self,seconds):self.now+=seconds
+        class NativeText:
+            def __init__(self,value):self.raw=value;self.characterCount=len(value)
+            def getText(self,start,end):return self.raw[start:end]
+        class Node:
+            def __init__(self,value):self.value=value
+            def queryText(self):return NativeText(self.value)
+        reads=[];items=list(sequence)
+        def find(root,predicate):
+            reads.append(root)
+            value=items.pop(0) if items else None
+            if value=='retired':raise Error()
+            if value=='unexpected':raise Error(9)
+            if isinstance(value,Exception):raise value
+            return Node(value) if value is not None else None
+        wait_source=ast.parse(Path(__file__).with_name('qualify-screenplay-authoring.py').read_text())
+        wait_node=next(n for n in wait_source.body if isinstance(n,ast.FunctionDef) and n.name=='wait_for')
+        wait_namespace={'GLib':types.SimpleNamespace(Error=Error),'time':Clock(),'DEADLINE':1,'NATIVE_WINDOW_PID':None if process_alive else 123,'ACCESSIBILITY_RETIREMENTS':0,'Path':lambda _:types.SimpleNamespace(exists=lambda:False)}
+        exec(compile(ast.Module(body=[wait_node],type_ignores=[]),'<existing native wait>','exec'),wait_namespace)
+        actual_ui=types.SimpleNamespace(find=find,wait_for=wait_namespace['wait_for'])
+        receipt_node=next(n for n in module.body if isinstance(n,ast.FunctionDef) and n.name=='receipt')
+        receipt_namespace={'ui':actual_ui,'json':json}
+        exec(compile(ast.Module(body=[receipt_node],type_ignores=[]),'<actual receipt>','exec'),receipt_namespace)
+        return receipt_namespace['receipt'],reads,wait_namespace,Error
+    def valid(self,**overrides):
+        return json.dumps({'fixture':'qualifier-only public commands and read-only impacts; synthetic replies','error':'','impactReads':7,**overrides})
+    def test_actual_receipt_reacquires_retired_node_without_replaying_action(self):
+        receipt,reads,wait,_=self.harness(['retired',self.valid()])
+        self.assertEqual(receipt('same-native-root')['impactReads'],7)
+        self.assertEqual(reads,['same-native-root','same-native-root'])
+        self.assertEqual(wait['ACCESSIBILITY_RETIREMENTS'],1)
+    def test_other_accessibility_errors_are_not_swallowed(self):
+        receipt,reads,_,Error=self.harness(['unexpected',self.valid()])
+        with self.assertRaises(Error):receipt('root')
+        self.assertEqual(len(reads),1)
+    def test_missing_receipt_fails_at_existing_deadline(self):
+        receipt,reads,_,_=self.harness([None])
+        with self.assertRaisesRegex(RuntimeError,'Timed out waiting'):receipt('root')
+        self.assertEqual(len(reads),4)
+    def test_dead_native_process_is_not_mistaken_for_retired_child(self):
+        receipt,reads,_,_=self.harness([self.valid()],process_alive=False)
+        with self.assertRaisesRegex(RuntimeError,'Native application exited'):receipt('root')
+        self.assertEqual(reads,[])
+    def test_malformed_or_failed_receipt_still_refuses(self):
+        for value,error in [('not JSON',ValueError),(self.valid(error='actual public command failed'),RuntimeError),(self.valid(fixture='unlabelled'),RuntimeError)]:
+            receipt,reads,_,_=self.harness([value,self.valid()])
+            with self.assertRaises(error):receipt('root')
+            self.assertEqual(len(reads),1)
+
+
 if __name__=='__main__':unittest.main()

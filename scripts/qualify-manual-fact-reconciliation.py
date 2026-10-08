@@ -148,13 +148,18 @@ class Provider(ui.FixtureProvider):
 
 
 def receipt(application):
-    node=ui.find(application,lambda n:n.name=='QA saved-edit receipt' and n.getRole() in (ui.pyatspi.ROLE_TEXT,ui.pyatspi.ROLE_ENTRY))
-    if not node:return None
-    # The receipt can exceed the generic text helper's short diagnostic bound.
-    text=node.queryText();value=json.loads(text.getText(0,text.characterCount))
-    if not value['fixture'].startswith('qualifier-only public commands'):raise RuntimeError('Missing explicit QA label')
-    if value['error']:raise RuntimeError('Public QA command failure: '+value['error'])
-    return value
+    def read():
+        node=ui.find(application,lambda n:n.name=='QA saved-edit receipt' and n.getRole() in (ui.pyatspi.ROLE_TEXT,ui.pyatspi.ROLE_ENTRY))
+        if not node:return None
+        # The receipt can exceed the generic text helper's short diagnostic bound.
+        text=node.queryText();value=json.loads(text.getText(0,text.characterCount))
+        if not value['fixture'].startswith('qualifier-only public commands'):raise RuntimeError('Missing explicit QA label')
+        if value['error']:raise RuntimeError('Public QA command failure: '+value['error'])
+        return value
+    # Rerendering can retire a child during traversal after an ordinary edit.
+    # Reacquire only this read through the existing deadline/liveness guard;
+    # never replay the action, swallow arbitrary failures, or relax assertions.
+    return ui.wait_for('live labelled public QA receipt',read)
 
 
 def disclosure(application,window,label):
@@ -1321,6 +1326,7 @@ def main():
         raise
     finally:
         evidence['provider_records']=Provider.records;evidence['typed_text_observations']=ui.TYPED_TEXT_OBSERVATIONS
+        evidence['accessibility_retirements']=ui.ACCESSIBILITY_RETIREMENTS
         (output/'capture-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n')
         # Readable receipt survives artifact-transfer restrictions; fixtures
         # contain only authored QA text. Originals remain the uploaded PNGs.
