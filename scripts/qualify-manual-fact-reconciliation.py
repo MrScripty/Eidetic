@@ -596,9 +596,15 @@ def raw_prompt_visible(application,window,exact,notes):
     for node in ui.walk(application):
         try:text=node.queryText();actual=text.getText(0,text.characterCount)
         except NotImplementedError:continue
-        if actual!=exact or not ui.visible(node):continue
-        rect=tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
+        if actual!=exact:continue
         offset=actual.index('SCENE NOTES:\n')+len('SCENE NOTES:\n')
+        # The ordinary disclosure begins near the editor's lower edge. Scroll
+        # its real text range through AT-SPI before requiring visible glyphs.
+        # This changes viewport position only, never rendered text or app state.
+        text.scrollSubstringTo(offset,offset+len(notes),ui.pyatspi.SCROLL_ANYWHERE)
+        node.clear_cache()
+        if not ui.visible(node):continue
+        rect=tuple(node.queryComponent().getExtents(ui.pyatspi.XY_SCREEN))
         glyphs=[tuple(text.getCharacterExtents(offset+i,ui.pyatspi.XY_SCREEN)) for i,char in enumerate(notes) if not char.isspace()]
         top=[tuple(n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)) for n in ui.walk(application) if n.name=='Resize panels' and ui.visible(n) and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[2]>900 and n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[1]<720]
         if len(top)!=1:raise RuntimeError('Ambiguous actual editor viewport')
@@ -793,6 +799,16 @@ def main():
     finally:
         evidence['provider_records']=Provider.records;evidence['typed_text_observations']=ui.TYPED_TEXT_OBSERVATIONS
         (output/'capture-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n')
+        # Readable receipt survives artifact-transfer restrictions; fixtures
+        # contain only authored QA text. Originals remain the uploaded PNGs.
+        keys=('status','application_source_sha','application_tree','qualification_sha','application_binary_sha256','failure','checkpoints','captures','display_derivatives','stale_checks','saved_screenplay_placement_bible_and_unrelated_draft_preserved','ordinary_notes_edit')
+        summary={key:evidence[key] for key in keys if key in evidence}
+        summary['synthetic_fixture_calls']=len(Provider.records)
+        summary['synthetic_calls_accepted']=all(r['accepted'] for r in Provider.records)
+        summary['real_model_quality_qualified']=False
+        for key in ('original_context','fresh_context','after_late_return','restored_context'):
+            if key in evidence:summary[key]=evidence[key]
+        print('NATIVE_CAPTURE_RECEIPT '+json.dumps(summary,ensure_ascii=False),flush=True)
         for p in (process,host):
             if p and p.poll() is None:
                 os.killpg(p.pid,signal.SIGTERM)
