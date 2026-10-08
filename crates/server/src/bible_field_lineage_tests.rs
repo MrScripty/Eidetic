@@ -62,6 +62,7 @@ fn generate(
     inputs: Vec<BibleFieldInput>,
 ) -> CommandEnvelope<GenerateScriptBlockCommand> {
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        arc_description_applicability: None,
         ancestor_notes_inputs: None,
         arc_inputs: None,
         target_binding: None,
@@ -270,6 +271,7 @@ fn forged_consumed_field_value_rolls_back_output_history_and_dependencies() {
     let mut inputs = capture_for(&conn, &b);
     inputs[0].value = FieldValue::Text("Forged canon".into());
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        arc_description_applicability: None,
         ancestor_notes_inputs: None,
         arc_inputs: None,
         target_binding: None,

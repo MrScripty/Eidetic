@@ -98,6 +98,13 @@ pub(crate) fn dependencies(
         event,
         created_at_ms,
     )?);
+    dependencies.extend(crate::arc_description_applicability::dependencies(
+        conn,
+        command.arc_description_applicability.as_deref(),
+        &command.block.segment_id,
+        event,
+        created_at_ms,
+    )?);
     let mut arc_seen = std::collections::BTreeSet::new();
     for input in command.arc_inputs.iter().flatten() {
         if !arc_seen.insert((input.arc_id.0.to_string(), input.field)) {
@@ -232,6 +239,13 @@ pub(crate) fn record_in_transaction(
     dependencies: &[SemanticDependency],
 ) -> Result<(), HistoryStoreError> {
     crate::script_context_scope::validate(tx, command)?;
+    crate::arc_description_applicability::validate_inputs(
+        tx,
+        command
+            .arc_description_applicability
+            .as_deref()
+            .unwrap_or_default(),
+    )?;
     crate::bible_context_scope::validate(tx, command)?;
     crate::ancestor_notes_lineage::validate_inputs(
         tx,

@@ -100,6 +100,14 @@ Legacy requests omit receipts and do not infer past name consumption.
 
 ## Tagged arc consumption
 
+`GenerateRequest.arc_description_applicability` optionally records empty
+Description fields on the actual selected arc tags in that same snapshot.
+These `StoryArcFieldInput` values describe an applicability read, not supplied
+description prose. Runtime forwards them unchanged; missing receipts and missing
+owned field clocks remain unknown. Newly entered prose can identify those exact
+saved Scene consumers through existing graph dependencies and targeted review.
+No new provider, store or embedding dependency is introduced.
+
 `GenerateRequest.arc_inputs` retains the exact tagged-arc prompt fields read by
 the backend in one SQLite snapshot with target custody. Domain construction
 leaves this optional receipt unknown; canonical server attachment supplies the

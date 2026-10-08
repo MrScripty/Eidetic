@@ -1,6 +1,14 @@
 # Agent-assisted story workflows
 
 **Status:** Active
+**Separate known-empty arc Description implementation:** A public metadata edit
+reproduction on template-tagged Scenes established missing downstream review.
+`feat/arc-description-applicability` now captures owned empty-field applicability
+beside consumed arc inputs in existing history/graph receipts. Filling identifies
+precise Scene consumers; clearing withdraws that cause; stale/ABA admission,
+manual text, locked spans and explicit acceptance remain guarded. Legacy unknown
+reads are not backfilled. Native qualification and independent review are pending.
+See `arc-description-applicability.md`; PR19–23/main remain unmerged.
 **Ancestor Notes propagation independently accepted:** Generation now
 records exact consumed nonempty ancestor Notes with owned field revisions and
 precise graph dependency identities. Existing review shows original/current

@@ -2,7 +2,10 @@
 
 Separate `feat/arc-description-applicability`, based on accepted PR23 provenance
 `e9abf3efae6f6dc9e9d4b610cb4e01f817d487f7`. PR19–23/main remain unmerged.
-This is a reproduced boundary, not yet implemented or native-qualified.
+Baseline `1feeee8cbd79fce71b90aed78f5d95caeb504d44` reproduces the boundary.
+Implementation now retains applicability through existing generation/proposal
+history and graph dependencies. Native UI qualification and independent source
+review remain pending; real-model quality is unqualified.
 
 The consumed-arc roadmap explicitly leaves previously unconsumed empty
 descriptions separate. ArcDetail already commits exact typed descriptions through
@@ -21,14 +24,14 @@ precise downstream Scene review”**. A control publicly repeats empty clearing 
 fills an untagged arc; it passes and preserves saved material/review state.
 Raw logs remain outside source Git. No model call or local ONNX403 bypass.
 
-The positive is temporarily ignored in ordinary baseline CI and executed
-explicitly below; implementation must remove that annotation and make the same
-case an ordinary passing test.
+The positive was temporarily ignored only in baseline CI and executed explicitly
+with `--ignored --exact`; implementation removes that annotation. The same case
+now passes as an ordinary test. The legacy no-backfill test remains unchanged.
 
 ```sh
 cargo test --locked -p eidetic-server \
   ai_generation_runtime::runtime_tests::public_known_empty_arc_description_entry_marks_saved_scene_for_review \
-  -- --ignored --exact --nocapture
+  -- --exact --nocapture
 cargo test --locked -p eidetic-server \
   ai_generation_runtime::runtime_tests::public_known_empty_arc_clear_and_untagged_description_preserve_saved_scene \
   -- --exact --nocapture
@@ -55,3 +58,29 @@ must remain labelled; real-model quality is unqualified.
 No new canonical store, schema, provider or embedding dependency. Arc assignment
 editing, broader tag membership, hierarchy inheritance, fictional-time inference,
 automatic Bible extraction and project switching stay outside this slice.
+
+## Implemented source contract
+
+`arc_description_applicability` uses optional `StoryArcFieldInput` collections,
+empty Description values and owned history. Missing receipts and unowned reads
+remain unknown. Generation admission validates the selected tag identities and
+omitted fields under the writer before saving. Each owned applicability receipt
+creates an existing revision-bound ScriptSegment-to-StoryArcField dependency,
+with an explicit omitted-prose rationale. Impact checks that original applicability,
+current assignment and newly available nonempty prose; no broad current-state
+backfill is performed.
+
+Targeted review captures original omission and fresh current fields. The provider
+receives exact new description and manual target text. Proposal storage and
+acceptance recapture the same receipt; clear/restore ABA refuses old work without
+writes. Clearing withdraws the entry cause. Explicit acceptance refreshes the
+chosen block's ordinary consumed Description lineage; another consumer keeps its
+own precise cause and exact text.
+
+Maintained regression coverage includes real graph-row assertions, public
+Arc metadata entry/clear/untagged controls, forged/duplicate/missing receipts,
+legacy unknown history, unrelated metadata, multiple consumers, locked manual
+spans and partial provider failure. UI evidence distinguishes omitted prose from
+consumed fields and renders exact Unicode/whitespace and revisions. Synthetic
+test outputs are labelled. Native qualification must exercise ordinary ArcDetail
+typing with Bible, timeline and screenplay visible before publication.

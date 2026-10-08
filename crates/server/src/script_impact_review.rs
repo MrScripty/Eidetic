@@ -184,7 +184,14 @@ fn capture_in_snapshot(
     )?;
     let ancestors =
         crate::ancestor_notes_lineage::preview_inputs(conn, request.generation_event_id)?;
+    let arc_description_applicability_previous =
+        crate::arc_description_applicability::recorded(conn, request.generation_event_id)?;
+    let arc_description_applicability_current = Some(
+        crate::arc_description_applicability::capture(conn, node_id, &arcs.current)?,
+    );
     Ok(ScriptImpactProposalBinding {
+        arc_description_applicability_previous,
+        arc_description_applicability_current,
         ancestor_notes_previous: ancestors.previous,
         ancestor_notes_current: ancestors.current,
         ancestor_notes_absence_revisions: ancestors.absent,
@@ -370,6 +377,7 @@ pub(crate) fn accept_bound_proposal(
     };
     script_document_command::validate_locked_spans(Some(&document), &write)?;
     let generated = GenerateScriptBlockCommand {
+        arc_description_applicability: binding.arc_description_applicability_current.clone(),
         ancestor_notes_inputs: binding.ancestor_notes_current.clone(),
         arc_inputs: binding.arc_inputs.clone(),
         target_binding: None,

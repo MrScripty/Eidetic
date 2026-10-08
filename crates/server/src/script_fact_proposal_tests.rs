@@ -112,6 +112,7 @@ pub(crate) fn fixture() -> (
         crate::script_document_command::apply_generated_script_block(
             &mut conn,
             &CommandEnvelope::new(GenerateScriptBlockCommand {
+                arc_description_applicability: None,
                 ancestor_notes_inputs: None,
                 block: block.clone(),
                 script_inputs: Some(vec![]),

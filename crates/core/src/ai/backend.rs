@@ -87,6 +87,9 @@ pub trait AiBackend: Send + Sync {
 /// Everything the AI needs to generate content for a single story node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerateRequest {
+    /// Known-empty applicability reads; never description prose consumption.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_description_applicability: Option<Vec<crate::contracts::StoryArcFieldInput>>,
     /// Exact nonempty ancestor Notes supplied in the generation prompt.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ancestor_notes_inputs: Option<Vec<crate::contracts::TimelineNotesInput>>,

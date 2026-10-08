@@ -61,6 +61,7 @@ async fn empty_arc_description_fixture() -> (
         fixture.node_id.0,
         "Synthetic saved screenplay without arc description.".into(),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -99,7 +100,6 @@ async fn set_fixture_arc_description(
 }
 
 #[tokio::test]
-#[ignore = "Known-empty arc applicability gap; executed failing baseline, remove when implemented"]
 async fn public_known_empty_arc_description_entry_marks_saved_scene_for_review() {
     use eidetic_core::contracts::*;
     let (fixture, arc, _) = empty_arc_description_fixture().await;
@@ -215,6 +215,7 @@ async fn ancestor_notes_fixture() -> (Fixture, NodeId, NodeId) {
         fixture.node_id.0,
         "Synthetic screenplay: Mara conceals the witness.".into(),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -357,6 +358,7 @@ async fn public_consumed_bible_name_edit_marks_saved_screenplay_for_review() {
         fixture.node_id.0,
         "Synthetic screenplay starring Mara.".into(),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -464,6 +466,7 @@ async fn public_relationship_edit_publishes_affected_review_from_original_genera
             "Synthetic screenplay: Mara trusts Eli.".into()
         )])),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
@@ -582,6 +585,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
             "Synthetic fixture screenplay: Mara carries red.".into(),
         )])),
         GenerationInputs {
+            arc_description_applicability: request.arc_description_applicability,
             ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,

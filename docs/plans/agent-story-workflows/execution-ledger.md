@@ -2042,3 +2042,25 @@ partial attempts and prior selected Notes closure evidence stay preserved.
 See ancestor-notes-qualification.md. This successor changes documentation only;
 application source stays byte-identical to qualified10a2b43. Source-only stacked
 draft publication is authorized; no main/PR19-22 merge or external reviewer request.
+
+
+## 2026-10-08 — Known-empty tagged arc Description applicability
+
+Separate `feat/arc-description-applicability` starts at accepted PR23 documentation
+head e9abf3e. Baseline1feeee8 reproduces public owned-empty Description entry with
+no downstream review while fresh prompt inclusion and saved material remain exact;
+public clear/untagged control passes. The positive is now an ordinary passing test.
+Optional applicability receipts reuse StoryArcFieldInput, generation/proposal JSON,
+owned field revisions and existing graph dependency rows. Omitted prose is labelled
+separately from consumption. Filling identifies precise Scene consumers; clearing
+withdraws the entry cause. Writer stale/ABA checks preserve saved manual material
+and locks. Explicit acceptance refreshes only the chosen consumer's normal
+Description lineage; legacy missing/unowned history remains unknown.
+
+Maintained checks pass core123/server566 with zero ignored tests, UI562/96,
+strict core/server all-target/all-feature Clippy, typecheck0/0, lint/build and
+ONNX policy5. A first Rust run failed17 existing filesystem tests because host
+application data is read-only; the ordinary isolated XDG application-state route
+passes the full unchanged suite. Logs remain outside Git. No inference or ONNX403
+bypass. Native ArcDetail typing, screenshots and independent review remain pending;
+PR19–23/main remain unmerged. See arc-description-applicability.md.
