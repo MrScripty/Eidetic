@@ -294,3 +294,8 @@ Session-owner registration runs untracked because block components obtain it thr
 
 `timelineTitleSession` owns transient clip title intents in the current editor
 session; live projection refresh never silently rebases an authored pending title.
+
+The existing scriptBlockEditSession exposes active owners absent from the current
+document projection, preserving exact text and original save retry. This is a
+read of current session drafts, not a new recovery store or canonical ownership.
+Session reset retires the collection as before; unrelated drafts stay independent.

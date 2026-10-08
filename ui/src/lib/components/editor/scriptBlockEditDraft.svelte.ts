@@ -3,6 +3,7 @@ import type {
   EditScriptBlockCommand,
   RemoveScriptBlockCommand,
   ScriptBlockProjection,
+  ScriptBlockKind,
 } from '$lib/scriptTypes.js';
 
 interface SavedComparison {
@@ -35,6 +36,7 @@ export function createScriptBlockEditDraft(options: {
     error: null as string | null,
     uncertain: false,
   });
+  let originalKind: ScriptBlockKind = 'action';
   let compared: SavedComparison | null = null;
   let submitted: { payload: EditScriptBlockCommand; commandId: string } | null = null;
 
@@ -103,6 +105,7 @@ export function createScriptBlockEditDraft(options: {
       block.block.id !== options.blockId
     )
       return;
+    originalKind = block.block.block_kind;
     state.text = block.block.text;
     state.baseRevision = block.revision_event_id ?? null;
     state.error = null;
@@ -205,6 +208,11 @@ export function createScriptBlockEditDraft(options: {
     state.comparison = null;
   }
   return {
+    documentId: options.documentId,
+    blockId: options.blockId,
+    get originalKind() {
+      return originalKind;
+    },
     state,
     begin,
     cancel,

@@ -1197,3 +1197,16 @@ Reuse the current field writer and owned before/after graph memory, preserving
 submitted freeform text exactly while retaining explicit empty clear. Existing
 Bible proposals and screenplay review/acceptance are not duplicated. No new
 schema, embedding, project-switch or hosted spending scope.
+
+### Missing saved-block draft recovery (separate successor)
+
+Accepted Notes c703ebb and Bible exact-text 9998e15 remain preserved. A rendered
+ScriptPanel reproduction proves an active draft becomes inaccessible when its
+canonical block disappears: only orphaned removal requests were displayed.
+Reuse the existing per-block edit owner and single creation composer for visible
+retention, immutable original retry, explicit discard and explicit copy into a
+new selected-clip draft. Ordinary Save retains canonical UserEdited provenance,
+history and downstream review; copying neither writes nor retires the original.
+See [missing-screenplay-draft-recovery.md](missing-screenplay-draft-recovery.md).
+No project-switch, block-type duplication, new store/schema, Pumas identity
+mapping, hosted job or main merge scope.
