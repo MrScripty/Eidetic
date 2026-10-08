@@ -1151,3 +1151,12 @@ refusal without writes and separate fresh acceptance. Final successful pixel
 inspection and Library delivery require the parent's working transfer route.
 See `screenplay-removal-qualification.md`; synthetic replies do not establish
 real-model writing quality.
+
+### Canonical timeline clip titles (separate successor)
+
+- Verified gap and admitted scope: [timeline-title-memory-audit.md](timeline-title-memory-audit.md).
+- Local milestone: ordinary title Save, exact old/new history, stale/ABA guards,
+  immutable unknown acknowledgement retry and session-owned draft preservation.
+- Focused history tests pass 3; title draft/session/client tests pass 7; Svelte
+  check passes with zero errors/warnings. Consumed-title review and native
+  qualification remain pending. No title publication or Undo UI is claimed.

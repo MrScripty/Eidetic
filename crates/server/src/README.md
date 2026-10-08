@@ -688,3 +688,6 @@ rejection with absent and existing sibling databases.
 
 
 `script_block_remove` removes one exact unlocked saved screenplay block through existing command history and soft-deletion. It records preserved text and sparse segment membership, recaptures canonical blocks/locks under the writer, preserves other blocks and timeline placement, and replays before checking a now-missing block. Existing dependency review exposes deleted consumed material; replacement still requires separate acceptance.
+
+Canonical clip title saving records the exact old/new name through existing
+UserEdit history and rejects stale/ABA reads under the shared timeline writer guard.

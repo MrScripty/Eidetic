@@ -132,8 +132,9 @@ pub use story_arc::{
 pub use timeline_command::{
     ApplyTimelineChildCommand, ApplyTimelineChildrenCommand, CreateTimelineChildFromParentCommand,
     CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
-    DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeNotesCommand,
-    SetTimelineNodeRangeCommand, SplitTimelineNodeCommand, TimelineNodeRangeRead,
+    DeleteTimelineRelationshipCommand, SetTimelineNodeLockCommand, SetTimelineNodeNameCommand,
+    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
+    TimelineNodeNameRead, TimelineNodeRangeRead,
 };
 pub use timeline_render::{
     TimelineRenderAffectSample, TimelineRenderClip, TimelineRenderGap, TimelineRenderProjection,

@@ -289,3 +289,6 @@ and failure, project reset, wrong-node payloads and newer request ownership.
 The existing per-block authoring session also owns saved-block removal confirmation and immutable retries. Orphaned removal receipts remain reachable in ScriptPanel after canonical refresh removes their blocks. Removing a block refreshes the document and invalidates derived screenplay context; project retirement clears session ownership.
 
 Session-owner registration runs untracked because block components obtain it through a client derived read; the reactive map still publishes orphan receipt membership to ScriptPanel. A client-compiled regression complements SSR lifetime tests.
+
+`timelineTitleSession` owns transient clip title intents in the current editor
+session; live projection refresh never silently rebases an authored pending title.

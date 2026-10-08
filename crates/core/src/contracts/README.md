@@ -202,3 +202,6 @@ existing command/proposal/dependency history, with no alternate persistent owner
 
 
 `RemoveScriptBlockCommand` captures one saved block revision for explicit manual removal. Ownership and timeline placement stay canonical; no client-authored replacement metadata is admitted.
+
+Timeline title authoring uses `SetTimelineNodeNameCommand` with a required exact
+`TimelineNodeNameRead`. Known baseline titles have no fabricated field revision.

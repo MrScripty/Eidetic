@@ -383,6 +383,11 @@ fn load_selected_node_editor_at_path(
         .as_mut()
         .filter(|node| canonical_node_ids.contains(&node.node_id))
     {
+        node.name_read = Some(eidetic_core::contracts::TimelineNodeNameRead {
+            name: node.name.clone(),
+            revision_event_id: timeline_node_store::latest_name_event(&tx, node.node_id, None)
+                .map_err(map_history_error)?,
+        });
         node.range_read = Some(eidetic_core::contracts::TimelineNodeRangeRead {
             start_ms: node.start_ms,
             end_ms: node.end_ms,

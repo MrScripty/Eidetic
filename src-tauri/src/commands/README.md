@@ -103,3 +103,6 @@ The explicit `command_script_fact_proposal_analyze` command delegates one saved 
 
 
 `command_script_block_remove` forwards exact manual screenplay removal to the backend project-session owner and existing document projection response.
+
+`command_timeline_node_name` saves a canonical clip title using the required exact
+title read receipt and existing timeline command publication.

@@ -2,8 +2,8 @@ use eidetic_core::contracts::{
     ApplyTimelineChildCommand, CommandEnvelope, CreateTimelineChildFromParentCommand,
     CreateTimelineNodeCommand, CreateTimelineRelationshipCommand, DeleteTimelineNodeCommand,
     DeleteTimelineRelationshipCommand, ObjectKind, ProjectionEnvelope, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand, SplitTimelineNodeCommand,
-    TimelineRenderProjection,
+    SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    SplitTimelineNodeCommand, TimelineRenderProjection,
 };
 use eidetic_core::timeline::Timeline;
 use rusqlite::Connection;
@@ -111,6 +111,58 @@ async fn create_timeline_node_at_admission(
                 })?;
             let _ = state.events_tx.send(ServerEvent::TimelineChanged);
             let _ = state.events_tx.send(ServerEvent::HierarchyChanged);
+            state.trigger_save();
+        }
+        Ok(response)
+    })
+    .await
+}
+
+pub async fn set_timeline_node_name(
+    state: &AppState,
+    command: CommandEnvelope<SetTimelineNodeNameCommand>,
+) -> Result<TimelineCommandResponse, BackendError> {
+    let (_session, path, project) = timeline_command_project(state).await?;
+    let worker = state.clone();
+    crate::state::complete_project_session_work(state, _session, async move {
+        let state = &worker;
+        let response = tokio::task::spawn_blocking(move || {
+            let mut conn = crate::sqlite::open_write_connection(&path)
+                .map_err(|e| BackendError::internal(e.to_string()))?;
+            history_store::create_schema(&conn).map_err(map_history_error)?;
+            let outcome = timeline_command::record_set_timeline_node_name_history(
+                &mut conn, &project, &command, 0,
+            )
+            .map_err(|error| {
+                let error = map_timeline_command_error(error);
+                // Only pre-commit domain/receipt refusals carry this marker.
+                // Projection/publication failures after commit remain uncertain.
+                match error {
+                    BackendError::BadRequest(message) => {
+                        BackendError::bad_request(format!("Title edit refused: {message}"))
+                    }
+                    BackendError::Conflict(message) => {
+                        BackendError::conflict(format!("Title edit refused: {message}"))
+                    }
+                    other => other,
+                }
+            })?;
+            let projection =
+                timeline_render_projection_from_current_state(&conn, &project.timeline)
+                    .map_err(map_timeline_command_error)?;
+            Ok::<_, BackendError>(TimelineCommandResponse {
+                outcome,
+                projection,
+            })
+        })
+        .await
+        .map_err(|error| {
+            BackendError::internal(format!("timeline node name command task failed: {error}"))
+        })??;
+
+        if response.outcome == RecordChangeOutcome::Recorded {
+            let _ = state.events_tx.send(ServerEvent::TimelineChanged);
+            let _ = state.events_tx.send(ServerEvent::ScriptChanged);
             state.trigger_save();
         }
         Ok(response)

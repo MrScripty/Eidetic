@@ -7,6 +7,7 @@ import {
   deleteTimelineRelationship,
   setTimelineNodeLock,
   setTimelineNodeNotes,
+  setTimelineNodeName,
   setTimelineNodeRange,
   splitTimelineNode,
 } from '$lib/commandApi.js';
@@ -24,6 +25,7 @@ import type {
   DeleteTimelineRelationshipCommand,
   SetTimelineNodeLockCommand,
   SetTimelineNodeNotesCommand,
+  SetTimelineNodeNameCommand,
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
@@ -108,6 +110,16 @@ export async function refreshTimelineRenderProjection(): Promise<
   );
 }
 
+export async function applyTimelineNodeNameCommand(
+  payload: SetTimelineNodeNameCommand,
+  commandId?: CommandId,
+): Promise<TimelineCommandResponse> {
+  return runTimelineProjectionRequest(
+    () => setTimelineNodeName(payload, commandId),
+    (result) => result.projection,
+    'Failed to apply timeline node name command',
+  );
+}
 export async function applyTimelineNodeRangeCommand(
   payload: SetTimelineNodeRangeCommand,
   commandId?: CommandId,

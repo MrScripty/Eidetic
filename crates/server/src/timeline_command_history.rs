@@ -3,7 +3,8 @@ use eidetic_core::contracts::{
     ChangeEvent, ChangeEventId, ChangeEventKind, CommandEnvelope, CreateTimelineNodeCommand,
     CreateTimelineRelationshipCommand, DeleteTimelineRelationshipCommand, FieldDelta, FieldValue,
     ObjectKind, ObjectRevision, RevisionOperation, SetTimelineNodeLockCommand,
-    SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    SetTimelineNodeNameCommand, SetTimelineNodeNotesCommand, SetTimelineNodeRangeCommand,
+    TimelineNodeNameRead,
 };
 use eidetic_core::timeline::node::{ContentStatus, StoryLevel, StoryNode};
 use eidetic_core::timeline::timing::TimeRange;
@@ -16,6 +17,71 @@ use crate::timeline_command_history_codec::{
 };
 use crate::timeline_node_store;
 use crate::timeline_relationship_store;
+
+pub(crate) fn record_set_timeline_node_name_history(
+    conn: &mut Connection,
+    project: &Project,
+    command: &CommandEnvelope<SetTimelineNodeNameCommand>,
+    created_at_ms: u64,
+) -> Result<RecordChangeOutcome, TimelineCommandError> {
+    if let Some(outcome) =
+        history_store::check_recorded_command(conn, command, "timeline.node_name")?
+    {
+        return Ok(outcome);
+    }
+    let name = &command.payload.name;
+    if name.trim().is_empty() || name.chars().count() > 1024 || name.chars().any(|c| c.is_control())
+    {
+        return Err(crate::history_store::HistoryStoreError::InvalidValue(
+            "Enter a title of 1–1024 characters without control characters".into(),
+        )
+        .into());
+    }
+    let node = project.timeline.node(command.payload.node_id)?;
+    let event = ChangeEvent::new(
+        command.id,
+        ChangeEventKind::UserEdit,
+        format!("rename timeline node {}", node.name),
+    )
+    .with_created_at_ms(created_at_ms);
+    let revision = ObjectRevision::new(
+        ObjectKind::TimelineNode,
+        node.id.0.to_string(),
+        event.id,
+        RevisionOperation::Update,
+    )
+    .with_field(FieldDelta::new(
+        "name",
+        Some(FieldValue::Text(node.name.clone())),
+        Some(FieldValue::Text(name.clone())),
+    ));
+    let mut next = project.timeline.clone();
+    next.node_mut(node.id)?.name = name.clone();
+    Ok(history_store::record_change_with(
+        conn,
+        command,
+        "timeline.node_name",
+        &event,
+        &[revision],
+        |tx| {
+            crate::timeline_command_guard::validate_current_timeline(tx, &project.timeline)?;
+            let current = TimelineNodeNameRead {
+                name: node.name.clone(),
+                revision_event_id: timeline_node_store::latest_name_event(
+                    tx,
+                    node.id,
+                    Some(event.id),
+                )?,
+            };
+            if current != command.payload.expected {
+                return Err(history_store::HistoryStoreError::InvalidValue(
+                    "title changed; reload the current title before saving".into(),
+                ));
+            }
+            timeline_node_store::upsert_nodes_in_transaction(tx, &next.nodes)
+        },
+    )?)
+}
 
 pub(crate) fn record_set_timeline_node_range_history(
     conn: &mut Connection,
@@ -543,3 +609,7 @@ fn validate_create_timeline_node(
 #[cfg(test)]
 #[path = "timeline_range_history_tests.rs"]
 mod range_tests;
+
+#[cfg(test)]
+#[path = "timeline_title_command_tests.rs"]
+mod title_tests;
