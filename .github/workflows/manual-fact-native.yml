@@ -139,7 +139,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eidetic-screenplay-removal-native-b17bfbc
+          name: eidetic-screenplay-removal-native-d025abc
           retention-days: 3
           if-no-files-found: warn
           path: |
