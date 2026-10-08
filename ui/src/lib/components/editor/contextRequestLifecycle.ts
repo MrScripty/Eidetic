@@ -14,10 +14,12 @@ export function createContextRequestLifecycle(options: Options) {
   let requestId = 0;
   let contextNodeId: string | null = null;
   let contextRevision = -1;
+  let contextNotes: string | undefined;
 
   function invalidate() {
     requestId += 1;
     contextNodeId = null;
+    contextNotes = undefined;
     options.setContext(null);
     options.setLoading(false);
   }
@@ -43,8 +45,9 @@ export function createContextRequestLifecycle(options: Options) {
       invalidate();
       return;
     }
-    if (nodeId === contextNodeId && revision === contextRevision) return;
+    if (nodeId === contextNodeId && revision === contextRevision && notes === contextNotes) return;
     contextRevision = revision;
+    contextNotes = notes;
     void load(nodeId);
   }
 
