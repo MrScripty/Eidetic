@@ -103,7 +103,7 @@ for (const ordering of ['refresh-before-ack','ack-before-refresh']) {
   const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara',fields:()=>current,save:()=>new Promise(resolve=>finish=resolve)});
   const exact='  Blue draft — 雨.\\n\\n  ';
   editor.update(current[0],exact); const base=editor.state.drafts.fact.base;
-  const saving=editor.save(current[0]); const ack={...current[0],value:{type:'text',value:exact.trim()}};
+  const saving=editor.save(current[0]); const ack={...current[0],value:{type:'text',value:exact}};
   if(ordering==='refresh-before-ack') { current=[{...current[0],value:{type:'text',value:'Green'}}]; editor.observe(); }
   finish(ack); await saving;
   if(ordering==='ack-before-refresh') { current=[{...current[0],value:{type:'text',value:'Green'}}]; editor.observe(); }
@@ -119,9 +119,9 @@ for(const conflict of [false,true]) {
   const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara',fields:()=>current,save:()=>new Promise(resolve=>finish=resolve)});
   editor.update(current[0],'  Blue — 雨.  '); const saving=editor.save(current[0]);
   if(conflict) { current=[{...current[0],value:{type:'text',value:'Green'}}]; editor.observe(); }
-  current=[{...current[0],value:{type:'text',value:'Blue — 雨.'}}]; editor.observe(); finish(current[0]); await saving;
+  current=[{...current[0],value:{type:'text',value:'  Blue — 雨.  '}}]; editor.observe(); finish(current[0]); await saving;
   if(conflict) { assert.equal(editor.value(current[0]),'  Blue — 雨.  '); assert.equal(editor.changed(current[0]),true); }
-  else { assert.equal(editor.state.drafts.fact,undefined); assert.equal(editor.value(current[0]),'Blue — 雨.'); }
+  else { assert.equal(editor.state.drafts.fact,undefined); assert.equal(editor.value(current[0]),'  Blue — 雨.  '); }
 }
 `));
 
@@ -175,10 +175,10 @@ globalThis.read=async()=>projection('Mara','Red',1);const release=store.retainBi
 let acknowledge,refresh;const editor=createBibleGraphFieldDrafts({owner:()=> 'Mara',fields:()=>fields('Mara'),verified:()=>store.isBibleGraphNodeProjectionVerified(key('Mara')),save:()=>new Promise(resolve=>acknowledge=resolve)});
 editor.update(fields('Mara')[0],'  Blue draft — 雨.  ');const saving=editor.save(fields('Mara')[0]);
 globalThis.read=()=>new Promise(resolve=>refresh=resolve);const reading=store.refreshOwnedBibleGraphNodeProjections();
-const ack=projection('Mara','Blue draft — 雨.',2);store.cacheNodeProjection(store.cacheKey(key('Mara')),ack);acknowledge(ack.payload.parts[0].fields[0]);await saving;
-assert.equal(editor.state.drafts['Mara.tagline'],undefined);assert.equal(editor.value(fields('Mara')[0]),'Blue draft — 雨.');assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
+const ack=projection('Mara','  Blue draft — 雨.  ',2);store.cacheNodeProjection(store.cacheKey(key('Mara')),ack);acknowledge(ack.payload.parts[0].fields[0]);await saving;
+assert.equal(editor.state.drafts['Mara.tagline'],undefined);assert.equal(editor.value(fields('Mara')[0]),'  Blue draft — 雨.  ');assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);
 await editor.save(fields('Mara')[0]);assert.match(editor.state.errors['Mara.tagline'],/Verify saved facts/);
-refresh(projection('Mara','Red',1));await assert.rejects(reading,/older revision/);assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);assert.equal(fields('Mara')[0].value.value,'Blue draft — 雨.');
+refresh(projection('Mara','Red',1));await assert.rejects(reading,/older revision/);assert.equal(store.isBibleGraphNodeProjectionVerified(key('Mara')),false);assert.equal(fields('Mara')[0].value.value,'  Blue draft — 雨.  ');
 globalThis.read=async()=>projection('Mara','Green',3);await store.refreshOwnedBibleGraphNodeProjections();editor.observe();assert.equal(editor.changed(fields('Mara')[0]),false);assert.equal(editor.value(fields('Mara')[0]),'Green');release();
 `));
 
@@ -189,4 +189,30 @@ const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=>owner,fiel
 editor.update(current[0],'Old blue');const old=editor.save(current[0]);owner='Eli';editor.observe();owner='Mara';editor.observe();editor.update(current[0],'New exact draft — 雨.');const fresh=editor.save(current[0]);
 completions[0]({...current[0],value:{type:'text',value:'Old blue'}});await old;assert.equal(editor.value(current[0]),'New exact draft — 雨.');assert.equal(editor.state.saving.fact,true);
 current=[{...current[0],value:{type:'text',value:'New exact draft — 雨.'}}];completions[1](current[0]);await fresh;assert.equal(editor.state.drafts.fact,undefined);assert.equal(editor.state.saving.fact,false);
+`));
+
+it('saves exactly entered freeform Bible text including whitespace and distinguishes empty clear', () =>
+  run(`
+for (const entered of ['  Mara reveals the witness — 雨.\\n\\n  ', ' \\n ', '']) {
+  let submitted;
+  let current=[{id:'exact.field',part_id:'profile',field_key:'tagline',value:{type:'text',value:'Original saved fact'}}];
+  const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara',fields:()=>current,
+    save:async(field,text)=>{submitted=text;current=[{...field,value:text?{type:'text',value:text}:null}];return current[0];}});
+  editor.update(current[0],entered);
+  await editor.save(current[0]);
+  assert.equal(submitted,entered,'Save must preserve the exact authored text');
+  assert.deepEqual(current[0].value,entered?{type:'text',value:entered}:null);
+  assert.equal(editor.value(current[0]),entered);
+  assert.equal(editor.state.drafts['exact.field'],undefined,'acknowledged exact draft retires');
+}
+`));
+
+it('retains exact author text when a transport acknowledges a trimmed different fact', () =>
+  run(`
+let current=[{id:'exact.field',part_id:'profile',field_key:'tagline',value:{type:'text',value:'Red'}}];
+const entered='  Blue — 雨.  ';
+const editor=createBibleGraphFieldDrafts({verified:()=>true,owner:()=> 'Mara',fields:()=>current,
+  save:async(field,text)=>{assert.equal(text,entered);current=[{...field,value:{type:'text',value:text.trim()}}];return current[0];}});
+editor.update(current[0],entered);await editor.save(current[0]);
+assert.equal(editor.value(current[0]),entered);assert.equal(editor.state.drafts['exact.field'].baseText,'Red');assert.equal(editor.changed(current[0]),true);
 `));

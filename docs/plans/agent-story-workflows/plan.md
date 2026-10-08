@@ -1187,3 +1187,13 @@ SQLite and rendered Chromium checks cover interruptions, two clips, lock-after-
 lost-ack recovery, save/discard/reload and canonical conflict. See the audit for
 exact proof boundaries and external source/evidence handoff. No new hosted job,
 schema, embedding or project-switch recovery scope.
+
+### Exact authored Bible freeform text (separate successor)
+
+After independently accepted Notes c703ebb, the actual Bible field draft owner
+reproduction proves that `submitted.trim()` silently removes authored whitespace
+before canonical Save. See [bible-fact-text-custody.md](bible-fact-text-custody.md).
+Reuse the current field writer and owned before/after graph memory, preserving
+submitted freeform text exactly while retaining explicit empty clear. Existing
+Bible proposals and screenplay review/acceptance are not duplicated. No new
+schema, embedding, project-switch or hosted spending scope.
