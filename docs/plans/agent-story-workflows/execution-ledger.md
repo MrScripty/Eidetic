@@ -1935,3 +1935,28 @@ clear/deletion/ABA, writer recapture, target edits, both locks and failed stream
 five added UI cases cover exact source evidence and event refresh/draft retention.
 Hosted native qualification is prepared separately, not yet claimed. Synthetic
 HTTP fixtures establish workflow behavior, not real-model narrative quality.
+# 2026-10-08 — Exact committed Notes prompt preview successor
+
+Turn startup was verified at 00:27 UTC against public state before writes.
+Reviewed Notes/report branch remained `5a8670d`; PR19/20/21 were open drafts with
+their original heads and no equivalent Notes draft existed. Published PR22 as a
+draft stacked on `feat/manual-edit-bible-reconciliation-review` (PR21), without
+merging or changing those PRs. Root independently verified a31/QA950 source hashes
+and all four native37688763677 review/pending/stale/accepted captures and delivered
+the pending-view JPEG; the earlier executor download blocker is historical.
+
+The next bounded documented Memory read / Projection propagation gap is the
+selected raw AI prompt. `BeatEditor` supplies canonical Notes, but its existing
+request owner deduplicated only node/script revision. The backend public
+`ai_context_preview` already reads canonical SQLite. On exact5a, all six new
+Notes-only regressions failed while seven maintained cases passed. Separate
+`fix/notes-prompt-preview-custody` adds exact committed Notes to that cache identity,
+retaining request-ID stale/ABA/loading guards and ordinary Refresh. No saved
+script/story, draft, proposal, acceptance, backend or Pumas endpoint changes.
+
+New focused lifecycle cases and full557 UI/96-file tests pass, typecheck zero
+errors/warnings, lint/build pass. Native qualification remains the next gate;
+context responses must be real public reads with an explicitly labelled held
+return, never fabricated prompt text. Generated originals/JPEG85/logs stay outside
+Git. Pumas modality publication and project-switch recovery remain separate.
+

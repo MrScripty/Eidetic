@@ -33,6 +33,79 @@ async function settle() {
 }
 
 describe('context request lifecycle', () => {
+  it.each([
+    ['Mara waits.', '  Mara reveals the witness — 雨.\n\n  '],
+    ['Mara waits.', '  Mara waits.\n\n  '],
+  ])(
+    'refreshes exact same-node Notes %j -> %j without a script revision',
+    async (before, after) => {
+      const { state, pending, lifecycle, fetchContext } = fixture();
+      lifecycle.update('A', before, 1);
+      pending(0).resolve({ system: 'same instructions', user: before });
+      await settle();
+      lifecycle.update('A', after, 1);
+      expect(fetchContext).toHaveBeenCalledTimes(2);
+      expect(state.context).toBeNull();
+      expect(state.loading).toBe(true);
+      pending(1).resolve({ system: 'same instructions', user: after });
+      await settle();
+      expect(state.context).toEqual({ system: 'same instructions', user: after });
+      expect(state.loading).toBe(false);
+      lifecycle.update('A', after, 1);
+      expect(fetchContext).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it.each([false, true])(
+    'refuses old same-node Notes ABA completion (failure=%j)',
+    async (reject) => {
+      const { state, pending, lifecycle, fetchContext } = fixture();
+      lifecycle.update('A', '  Original — 雨.\n\n', 1);
+      lifecycle.update('A', 'Edited Notes', 1);
+      lifecycle.update('A', '  Original — 雨.\n\n', 1);
+      expect(fetchContext).toHaveBeenCalledTimes(3);
+      if (reject) pending(0).reject(new Error('late original failure'));
+      else pending(0).resolve({ system: 'old', user: 'old original' });
+      pending(1).resolve({ system: 'old', user: 'intervening Notes' });
+      await settle();
+      expect(state.context).toBeNull();
+      expect(state.loading).toBe(true);
+      pending(2).resolve({ system: 'fresh', user: '  Original — 雨.\n\n' });
+      await settle();
+      expect(state.context).toEqual({ system: 'fresh', user: '  Original — 雨.\n\n' });
+      expect(state.loading).toBe(false);
+    },
+  );
+
+  it('a manual Refresh pending before Notes edit cannot replace the newer prompt', async () => {
+    const { state, pending, lifecycle } = fixture();
+    lifecycle.update('A', 'Original Notes', 1);
+    pending(0).resolve({ system: 'first', user: 'Original Notes' });
+    await settle();
+    const refresh = lifecycle.load('A');
+    lifecycle.update('A', 'New Notes', 1);
+    pending(2).resolve({ system: 'fresh', user: 'New Notes' });
+    await settle();
+    pending(1).resolve({ system: 'old refresh', user: 'Original Notes' });
+    await refresh;
+    expect(state.context).toEqual({ system: 'fresh', user: 'New Notes' });
+    expect(state.loading).toBe(false);
+  });
+
+  it('a failed fresh Notes read keeps old context unavailable even after an older success', async () => {
+    const { state, pending, lifecycle } = fixture();
+    lifecycle.update('A', 'Original Notes', 1);
+    lifecycle.update('A', 'New Notes', 1);
+    pending(1).reject(new Error('current read unavailable'));
+    await settle();
+    expect(state.context).toBeNull();
+    expect(state.loading).toBe(false);
+    pending(0).resolve({ system: 'old', user: 'Original Notes' });
+    await settle();
+    expect(state.context).toBeNull();
+    expect(state.loading).toBe(false);
+  });
+
   it.each(['', '   '])(
     'clearing notes to %j clears loading and rejects stale same-node completion',
     async (notes) => {
