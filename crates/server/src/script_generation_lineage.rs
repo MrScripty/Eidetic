@@ -91,6 +91,13 @@ pub(crate) fn dependencies(
             dependencies.push(dependency);
         }
     }
+    dependencies.extend(crate::ancestor_notes_lineage::dependencies(
+        conn,
+        command.ancestor_notes_inputs.as_deref(),
+        &command.block.segment_id,
+        event,
+        created_at_ms,
+    )?);
     let mut arc_seen = std::collections::BTreeSet::new();
     for input in command.arc_inputs.iter().flatten() {
         if !arc_seen.insert((input.arc_id.0.to_string(), input.field)) {
@@ -226,6 +233,10 @@ pub(crate) fn record_in_transaction(
 ) -> Result<(), HistoryStoreError> {
     crate::script_context_scope::validate(tx, command)?;
     crate::bible_context_scope::validate(tx, command)?;
+    crate::ancestor_notes_lineage::validate_inputs(
+        tx,
+        command.ancestor_notes_inputs.as_deref().unwrap_or_default(),
+    )?;
     for input in command.script_inputs.iter().flatten() {
         if input.document_id != command.block.document_id {
             return Err(HistoryStoreError::InvalidValue(

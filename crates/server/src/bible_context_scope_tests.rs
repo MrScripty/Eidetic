@@ -57,6 +57,7 @@ fn generation(
 ) -> CommandEnvelope<GenerateScriptBlockCommand> {
     let inputs = inputs(conn, block);
     CommandEnvelope::new(GenerateScriptBlockCommand {
+        ancestor_notes_inputs: None,
         arc_inputs: None,
         block: block.clone(),
         script_inputs: Some(vec![]),

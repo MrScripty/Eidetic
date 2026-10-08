@@ -1,17 +1,24 @@
 # Agent-assisted story workflows
 
 **Status:** Active
-**Selected Notes prompt follow-up:** Reviewed timeline Notes source `a31f2a6`
-and report `5a8670d` are PR22, draft stacked on PR21. Root independently verified
-the four actual Linux review/pending/stale/accepted captures from run37688763677;
-the report's earlier executor download blocker is historical. Existing
-`getAiContext` reads canonical SQLite, but the selected raw prompt cache ignores
-nonempty Notes changes when node/script revision stay equal. Six new regressions
-fail on exact `5a8670d` while seven existing cases pass. The separate successor
-extends that same request owner's identity with exact committed Notes and retains
-late-response/ABA protection, without altering saved text or proposal acceptance.
-See `notes-prompt-preview.md`. Pumas modality publication is separate; this slice
-uses the documented `ai_context_preview` read and adds no endpoint/model dependency.
+**Ancestor Notes propagation implemented; native gate pending:** Generation now
+records exact consumed nonempty ancestor Notes with owned field revisions and
+precise graph dependency identities. Existing review shows original/current
+ancestor evidence; pending generation, preview and acceptance reject stale/ABA
+reads, and saved/manual/locked material stays intact until explicit acceptance.
+The c2659fa failing reproduction is now an ordinary passing test. Locked
+core123/server556, UI558/96 and strict Clippy pass. See
+`ancestor-notes-review-gap.md`; separate hosted native qualification is next.
+**Selected Notes prompt follow-up qualified:** Frozen product `c5fad5c` / QA
+`11b60a9` passes native run37713651568: exact committed Notes refresh, older real
+return refusal, clear and exact restoration, saved material and unrelated draft
+preservation. Hosted core123/server542/UI557/96 and maintained gates pass. Five
+source-bound PNG originals/JPEG85 derivatives are artifact11523381856. Personal
+visual inspection remains blocked by executor transfer HTTP403; parent retains
+inspection/durable delivery. See `notes-prompt-preview-qualification.md`.
+PR22 remains a draft on reviewed Notes/report head `5a8670d`; PR19-22/main are
+untouched. This uses the existing public read and request owner, with no new
+model, embedding dependency or acceptance behavior. Pumas publication stays separate.
 **Separate timeline Notes successor:** PR21 `1bf7873` preserves exact placement,
 Bible and screenplay review flows. A source regression proves public authored
 Notes changed after generation has no review cause. The bounded successor reuses

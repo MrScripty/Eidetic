@@ -43,3 +43,14 @@ ownership. Reuse the public read and request-ID guards. Other metadata/context
 membership, unobserved history-only changes, project switching and modality
 publication remain separate; this is exact committed Notes propagation, not
 real-model quality qualification.
+
+## Qualification closure
+
+Frozen product `c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4` and separate QA
+`11b60a92c6fed0040f34c3a153329b3f8c7af826` pass hosted run37713651568,
+including exact Notes refresh, held older real return refusal, ordinary clear and
+exact restoration. Core123/server542/UI557/96, driver50/policy5 and maintained
+gates pass. See `notes-prompt-preview-qualification.md` for exact sources, five
+PNG/JPEG85 hashes and preserved qualifier failures. Personal visual inspection
+remains blocked by executor archive transfer HTTP403; source-only provenance
+closure does not claim seeing those images. Parent handles inspection/delivery.

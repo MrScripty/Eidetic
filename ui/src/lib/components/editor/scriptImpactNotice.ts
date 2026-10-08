@@ -1,6 +1,12 @@
 import type { ScriptImpactCause } from '$lib/scriptTypes.js';
 
 export function scriptImpactCauseLabel(cause: ScriptImpactCause): string {
+  if (
+    cause.input.kind === 'timeline_node' &&
+    cause.dependency_id.endsWith(`.ancestor_notes.${cause.input.node_id}`)
+  ) {
+    return `Ancestor timeline Notes ${cause.reason === 'deleted' ? 'were removed.' : 'changed.'}`;
+  }
   if (cause.input.kind === 'timeline_node' && cause.dependency_id.endsWith('.timeline_notes')) {
     return `Timeline Notes ${cause.reason === 'deleted' ? 'were removed.' : 'changed.'}`;
   }

@@ -11,6 +11,28 @@ const previous: TimelineNotesInput = {
 };
 
 describe('timeline Notes review evidence', () => {
+  it('shows exact consumed ancestor evidence and owned removal without relabelling selected Notes', () => {
+    const body = render(ScriptTimelineNotesEvidence, {
+      props: { ancestor: true, previous, absentRevision: 'ancestor.deleted' },
+    }).body;
+    expect(body).toContain('Recorded ancestor Notes evidence');
+    expect(body).toContain('Ancestor Notes used for this update');
+    expect(body).toContain(previous.notes);
+    expect(body).toContain('Ancestor removed · Revision ancestor.deleted');
+    expect(body).not.toContain('Current preview Notes');
+    const cause = {
+      dependency_id: 'generation.B.ancestor_notes.act.A',
+      input: { kind: 'timeline_node' as const, node_id: 'act.A' },
+      consumed_revision_event_id: 'old',
+      current_revision_event_id: 'new',
+      reason: 'changed' as const,
+      input_excerpt: previous.notes,
+    };
+    expect(scriptImpactCauseLabel(cause)).toBe('Ancestor timeline Notes changed.');
+    expect(scriptImpactCauseLabel({ ...cause, reason: 'deleted' })).toBe(
+      'Ancestor timeline Notes were removed.',
+    );
+  });
   it('shows exact original/current text and separate owned revisions in the existing review', () => {
     const current = {
       ...previous,

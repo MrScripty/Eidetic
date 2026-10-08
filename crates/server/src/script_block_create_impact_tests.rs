@@ -38,6 +38,7 @@ fn linked_fixture() -> (
     script_document_command::apply_generated_script_block(
         &mut conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
+            ancestor_notes_inputs: None,
             arc_inputs: None,
             target_binding: None,
             script_context_scope: None,
@@ -63,6 +64,7 @@ fn linked_fixture() -> (
     script_document_command::apply_generated_script_block(
         &mut conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
+            ancestor_notes_inputs: None,
             arc_inputs: None,
             target_binding: None,
             script_context_scope: None,
@@ -341,6 +343,7 @@ fn captured_append_membership_remains_valid_after_source_retimes_during_generati
     script_document_command::apply_generated_script_block(
         &mut conn,
         &CommandEnvelope::new(GenerateScriptBlockCommand {
+            ancestor_notes_inputs: None,
             arc_inputs: None,
             target_binding: None,
             script_context_scope: None,
