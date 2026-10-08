@@ -253,3 +253,6 @@ original/current Notes and owned revisions, with explicit removal evidence when
 available. The impact notice distinguishes ancestor Notes from selected clip Notes
 and context membership. Preview, rejection, acceptance and manual draft ownership
 retain the existing controllers; displaying evidence never writes saved text.
+
+
+Saved screenplay blocks expose Remove block, followed by exact-text confirmation and Remove saved block. Editing drafts cannot enter removal; locked blocks disable the entry point. Unknown acknowledgements retain Retry same removal and disable cancellation, including after a canonical refresh removes the block. Other saved screenplay stays unchanged until the existing downstream review and explicit acceptance workflow.

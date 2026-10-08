@@ -184,3 +184,6 @@ evidence. The editor displays exact changes and optional full revision details;
 
 Decision: keep Preview update and Accept update as the existing explicit review
 boundary, preserving unrelated author drafts and backend source/version custody.
+
+
+`removeScriptBlock` carries the captured block revision and stable command ID through native transport. It shares the screenplay projection response with create/edit commands.

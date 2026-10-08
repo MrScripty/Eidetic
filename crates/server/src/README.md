@@ -685,3 +685,6 @@ file, sibling database and active session; the established outgoing-project flus
 still runs.
 The project lifecycle custody tests cover exact-path autosave/Save and JSON
 rejection with absent and existing sibling databases.
+
+
+`script_block_remove` removes one exact unlocked saved screenplay block through existing command history and soft-deletion. It records preserved text and sparse segment membership, recaptures canonical blocks/locks under the writer, preserves other blocks and timeline placement, and replays before checking a now-missing block. Existing dependency review exposes deleted consumed material; replacement still requires separate acceptance.

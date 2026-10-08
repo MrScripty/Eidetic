@@ -284,3 +284,6 @@ parallel fact store. Command/list behavior remains in the original facade;
 existing version guards still apply to command responses. Actual client tests
 qualify shared inspectors, clean/dirty forms, selection ABA, delayed read success
 and failure, project reset, wrong-node payloads and newer request ownership.
+
+
+The existing per-block authoring session also owns saved-block removal confirmation and immutable retries. Orphaned removal receipts remain reachable in ScriptPanel after canonical refresh removes their blocks. Removing a block refreshes the document and invalidates derived screenplay context; project retirement clears session ownership.

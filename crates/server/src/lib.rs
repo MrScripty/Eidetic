@@ -79,6 +79,7 @@ pub mod reference_service;
 pub(crate) mod revision_projection;
 pub(crate) mod script_block_create;
 pub(crate) mod script_block_edit;
+pub(crate) mod script_block_remove;
 mod script_context_scope;
 pub(crate) mod script_document_command;
 pub(crate) mod script_fact_evidence;
