@@ -551,6 +551,12 @@ class TitlePromptTests(unittest.TestCase):
         self.assertIn("'.timeline_title.' + a_id",ast.unparse(chooser))
 
 class TypePromptTests(unittest.TestCase):
+    def test_type_provider_uses_actual_driver_imports_without_test_supplied_modules(self):
+        imports=[n for n in module.body if isinstance(n,ast.Import) and all(a.name in {'json','re'} for a in n.names)]
+        actual={};exec(compile(ast.Module(body=imports+selected,type_ignores=[]),'<actual provider imports>','exec'),actual)
+        for phase in (0,1):
+            self.assertTrue(actual['type_prompt']('Draft a targeted screenplay update',self.prompt(phase),phase))
+            self.assertFalse(actual['type_prompt']('Draft a targeted screenplay update',self.prompt(1-phase),phase))
     def prompt(self,phase=0):
         kind='dialogue' if phase==0 else 'note'
         cause={'input':{'kind':'script_block','block_id':'A'},'reason':'changed','input_excerpt':namespace['GENERATED_A']}

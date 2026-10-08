@@ -6,6 +6,7 @@ Synthetic HTTP only. No DOM/IPC injection, direct DB writes or real inference.
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
