@@ -7,7 +7,7 @@ import unittest
 source=Path(__file__).with_name('qualify-manual-fact-reconciliation.py').read_text()
 module=ast.parse(source)
 # Load only constants and the pure prompt predicate, without pyatspi/native imports.
-selected=[n for n in module.body if isinstance(n,ast.Assign) and all(isinstance(t,ast.Name) and t.id in {'RED','BLUE','SAVED','DRAFT','BIBLE_DRAFT','MOTIVATION_DRAFT','NOTES','GENERATED_B'} for t in n.targets) or isinstance(n,ast.FunctionDef) and n.name in ('fact_prompt','notes_prompt','context_prompt_matches')]
+selected=[n for n in module.body if isinstance(n,ast.Assign) and all(isinstance(t,ast.Name) and t.id in {'RED','BLUE','SAVED','DRAFT','BIBLE_DRAFT','MOTIVATION_DRAFT','NOTES','GENERATED_B','ANCESTOR_OLD','ANCESTOR_MANUAL','UNRELATED_ACT_OLD'} for t in n.targets) or isinstance(n,ast.FunctionDef) and n.name in ('fact_prompt','notes_prompt','context_prompt_matches','ancestor_notes_prompt')]
 namespace={'json':json};exec(compile(ast.Module(body=selected,type_ignores=[]),'<pure qualifier>','exec'),namespace)
 
 class NativeInputTests(unittest.TestCase):
@@ -66,5 +66,19 @@ class ActualContextPromptTests(unittest.TestCase):
         user='SCENE NOTES:\nold saved notes\n\n'
         self.assertFalse(namespace['context_prompt_matches'](user,namespace['NOTES']))
         self.assertFalse(namespace['context_prompt_matches'](user+namespace['DRAFT'],'old saved notes'))
+
+
+
+class AncestorNotesPromptTests(unittest.TestCase):
+    def prompt(self):
+        return ('CURRENT CONSUMED ANCESTOR NOTES (owned.act):\n'+namespace['NOTES']+'\n'
+            +'TARGET BLOCK TO UPDATE:\n'+namespace['ANCESTOR_MANUAL']+namespace['RED'])
+    def test_exact_ancestor_and_saved_manual_target_are_admitted(self):
+        self.assertTrue(namespace['ancestor_notes_prompt']('targeted screenplay update',self.prompt()))
+    def test_trimmed_notes_missing_manual_target_and_unrelated_or_draft_leak_are_refused(self):
+        for text in [self.prompt().replace(namespace['NOTES'],namespace['NOTES'].strip()),
+            self.prompt().replace(namespace['ANCESTOR_MANUAL'],namespace['GENERATED_B']),
+            self.prompt()+namespace['UNRELATED_ACT_OLD'],self.prompt()+namespace['DRAFT']]:
+            self.assertFalse(namespace['ancestor_notes_prompt']('targeted screenplay update',text))
 
 if __name__=='__main__':unittest.main()

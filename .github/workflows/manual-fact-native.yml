@@ -1,14 +1,14 @@
-name: Committed Notes raw prompt refresh native qualification
+name: Consumed ancestor Notes propagation native qualification
 
 on:
   push:
-    branches: [test/notes-prompt-preview-native]
+    branches: [test/ancestor-notes-native]
 
 permissions:
   contents: read
 
 concurrency:
-  group: eidetic-notes-prompt-native
+  group: eidetic-ancestor-notes-native
   cancel-in-progress: true
 
 defaults:
@@ -24,8 +24,8 @@ jobs:
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_INCREMENTAL: "0"
-      EIDETIC_CAPTURE_SOURCE: c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4
-      EIDETIC_CAPTURE_SCOPE: notes-prompt
+      EIDETIC_CAPTURE_SOURCE: 10a2b43ef2554799b92b155e3c49c63813c67d7a
+      EIDETIC_CAPTURE_SCOPE: ancestor-notes
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,7 +117,7 @@ jobs:
         run: |
           cargo clippy --locked -p eidetic-core -p eidetic-server --all-targets --all-features -- -D warnings
           cargo test --locked -p eidetic-core -p eidetic-server --all-targets
-      - name: Qualify exact Notes refresh and late real-context return refusal
+      - name: Qualify ordinary ancestor Notes edit and explicit downstream review
         timeout-minutes: 10
         env:
           EIDETIC_CAPTURE_DIR: ${{ runner.temp }}/eidetic-capture-artifact
@@ -128,7 +128,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eidetic-notes-prompt-native-c5fad5c
+          name: eidetic-ancestor-notes-native-e5fc355
           retention-days: 3
           if-no-files-found: warn
           path: |

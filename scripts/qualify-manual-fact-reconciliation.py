@@ -17,8 +17,11 @@ from urllib.request import urlopen
 spec=importlib.util.spec_from_file_location('native_helpers',Path(__file__).with_name('manual-fact-native-helpers.py'))
 driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
 ui=driver.ui
-SOURCE='c5fad5cbca6f1d3ba42bcdb66c833ac1d513dbf4'
+SOURCE='10a2b43ef2554799b92b155e3c49c63813c67d7a'
 NOTES='  Mara reveals the witness — 雨.\n\n  '
+ANCESTOR_OLD='  Mara conceals the witness — 雨.\n\n  '
+ANCESTOR_MANUAL='  Exact authored B: Eli keeps his whistle — 雨.\n\n  '
+UNRELATED_ACT_OLD='Unrelated Act: Eli guards the station.'
 NOTES_PREVIEW='  Synthetic Notes update: Mara identifies the witness — 雨.\n\n  '
 RED="Mara's umbrella is red."
 BLUE="Mara's umbrella is blue — 雨.\n\n"
@@ -53,6 +56,13 @@ def notes_prompt(system,user):
         'CURRENT SELECTED CLIP NOTES:\n'+NOTES in user and GENERATED_B.strip() in user
         and RED in user and DRAFT not in user)
 
+def ancestor_notes_prompt(system,user):
+    return ('targeted screenplay update' in system and
+        'CURRENT CONSUMED ANCESTOR NOTES (' in user and '):\n'+NOTES+'\n' in user
+        and 'TARGET BLOCK TO UPDATE:\n'+ANCESTOR_MANUAL in user
+        and RED in user and DRAFT not in user and UNRELATED_ACT_OLD not in user)
+
+
 def notes_review(application):
     return ui.reveal(application,lambda n:n.name=='Screenplay update proposals' and any(
         child.name=='Current preview Notes' or child.getRole()==ui.pyatspi.ROLE_COMBO_BOX and 'Timeline Notes changed.' in child.name
@@ -86,9 +96,11 @@ class Provider(ui.FixtureProvider):
         with self.records_lock:
             phase=sum(r.get('accepted') and r['kind']==kind for r in self.records)
             valid=body.get('stream') is True
-            if kind=='generation':valid=valid and phase<2 and RED in user and 'UNCONSUMED' not in user
+            if kind=='generation':
+                valid=valid and phase<2 and RED in user and 'UNCONSUMED' not in user
+                if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes':valid=valid and ANCESTOR_OLD in user and UNRELATED_ACT_OLD not in user
             elif kind=='recap':valid=valid and phase<2 and (GENERATED_A if phase==0 else GENERATED_B).strip() in user
-            elif kind=='notes_preview':valid=valid and (phase==0 or phase==1 and self.allow_fresh_notes) and notes_prompt(system,user)
+            elif kind=='notes_preview':valid=valid and (phase==0 or phase==1 and self.allow_fresh_notes) and (ancestor_notes_prompt(system,user) if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes' else notes_prompt(system,user))
             else:valid=valid and phase<5 and fact_prompt(user,phase)
             record={'kind':kind,'phase':phase,'accepted':valid,'real_model':False,'synthetic':True,'exact_system_prompt':system,'exact_user_prompt':user}
             self.records.append(record)
@@ -577,6 +589,139 @@ def qualify_timeline_notes(application,window,database,fixture,capture,checkpoin
     if len(Provider.records)!=6 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Expected four fixture and two targeted synthetic provider calls')
     checkpoint('explicit fresh acceptance updates only chosen screenplay and refreshes Notes lineage');capture('timeline-notes-04-accepted.png')
 
+def qualify_ancestor_notes(application,window,database,fixture,capture,checkpoint,evidence):
+    b_id=fixture['b']['id'];a_id=fixture['a']['id'];f_id=fixture['f']['id'];ancestor_id=fixture['ancestor']['id']
+    save_script(application,window,database,b_id,GENERATED_B,ANCESTOR_MANUAL)
+    original={node:ui.blocks(database,node) for node in (a_id,b_id,f_id)}
+    original_bible=bible_fields(database)
+    old=json.loads(ui.query(database,'SELECT content_json FROM nodes WHERE id=?',(ancestor_id,))[0][0])['notes']
+    if old!=ANCESTOR_OLD:raise RuntimeError('Public fixture ancestor Notes differs')
+    original_material=material(database)
+    block=ui.wait_for('unrelated F block',lambda:ui.screenplay_block(application,driver.screenplay_anchor(F_TEXT)))
+    ui.reveal_button(block,'Edit',window)
+    ui.type_text(ui.wait_for('unrelated editor',lambda:ui.editable(application,F_TEXT)),window,DRAFT)
+    ui.click_button(application,'Bible',window)
+    search=ui.wait_for('Bible search',lambda:ui.find(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and 0<=n.queryComponent().getExtents(ui.pyatspi.XY_SCREEN)[0]<400 and ui.text_of(n)==''))
+    ui.type_text(search,window,'Mara')
+    ui.click_control(ui.wait_for('Mara entity',lambda:ui.reveal(application,lambda n:n.getRole()==ui.pyatspi.ROLE_PUSH_BUTTON and ui.button_label_matches(n.name,'Mara',prefix=True))),window)
+    driver.bible_field(application,window,RED,'left',align=True)
+    unrelated_id=fixture['unrelated_act']['id']
+    clip=ui.wait_for('ordinary unrelated Act timeline clip',lambda:ui.native_timeline_clip(application,fixture['unrelated_act']['name'],window))
+    ui.click_control(clip[0],window,clip[1])
+    editor=ui.wait_for('ordinary unrelated Act Notes editor',lambda:ui.reveal(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)==UNRELATED_ACT_OLD))
+    unrelated_new='Unrelated Act: Eli keeps his brass whistle.\n\n'
+    ui.type_text(editor,window,unrelated_new)
+    ui.wait_for('exact unrelated Act public Notes write',lambda:json.loads(ui.query(database,'SELECT content_json FROM nodes WHERE id=?',(unrelated_id,))[0][0])['notes']==unrelated_new)
+    ui.click_button(application,'QA read canonical impacts',window)
+    def no_unrelated_impacts():
+        value=receipt(application)
+        if not value or not value['impacts']:return None
+        rows=json.loads(value['impacts'])
+        if any('.ancestor_notes.' in c['dependency_id'] for row in rows for c in row.get('causes') or []):raise RuntimeError('Unconsumed Act Notes created a consumer cause')
+        return rows
+    control_impacts=ui.wait_for('unrelated Act edit has no ancestor consumer cause',no_unrelated_impacts)
+    if material(database)!=original_material or bible_fields(database)!=original_bible:raise RuntimeError('Unrelated Notes edit changed saved material')
+    require_draft(application)
+    evidence['ordinary_unrelated_act_control']={'node_id':unrelated_id,'exact_notes':unrelated_new,'impacts':control_impacts,'saved_material_and_unrelated_draft_preserved':True}
+    checkpoint('ordinary unrelated Act Notes edit preserves consumers and saved material');capture('ancestor-notes-00-unrelated.png')
+    clip=ui.wait_for('ordinary consumed Act timeline clip',lambda:ui.native_timeline_clip(application,fixture['ancestor']['name'],window))
+    ui.click_control(clip[0],window,clip[1])
+    field_node=ui.wait_for('selected clip ordinary Notes editor',lambda:ui.reveal(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)==old))
+    ui.type_text(field_node,window,NOTES)
+    def saved_notes():
+        actual=json.loads(ui.query(database,'SELECT content_json FROM nodes WHERE id=?',(ancestor_id,))[0][0])['notes']
+        return actual if actual==NOTES else None
+    ui.wait_for('exact public debounced Notes commit',saved_notes)
+    for node,rows in original.items():
+        if ui.blocks(database,node)!=rows:raise RuntimeError('Notes edit changed saved screenplay/placement')
+    if bible_fields(database)!=original_bible:raise RuntimeError('Notes edit changed Bible facts')
+    if material(database)!=original_material:raise RuntimeError('Ancestor edit changed saved blocks/spans/locks/placement')
+    require_draft(application)
+    evidence['ordinary_notes_edit']={'node_id':ancestor_id,'original':old,'exact_saved_notes':NOTES,'input_route':'ordinary Notes textarea/native keys/public debounced command','saved_screenplay_and_placement_unchanged':True,'bible_unchanged':True,'unrelated_draft':DRAFT}
+    ui.click_button(application,'QA read canonical impacts',window)
+    def impacted():
+        value=receipt(application)
+        if not value or not value['impacts']:return None
+        rows=json.loads(value['impacts']);target=next((r for r in rows if r['source']==b_id),None)
+        if target and any(c['dependency_id'].endswith('.ancestor_notes.'+ancestor_id) for c in target.get('causes') or []):return rows
+    impacts=ui.wait_for('canonical selected Notes review cause',impacted)
+    for source in (a_id,b_id):
+        row=next((r for r in impacts if r['source']==source),None)
+        if not row or not any(c['dependency_id'].endswith('.ancestor_notes.'+ancestor_id) and c['input']['node_id']==ancestor_id for c in row.get('causes') or []):raise RuntimeError('Actual ancestor consumer lacks exact owned Notes cause')
+    if any(any(c['dependency_id'].endswith('.ancestor_notes.'+ancestor_id) for c in r.get('causes') or []) for r in impacts if r['source'] not in (a_id,b_id)):raise RuntimeError('Unrelated Act material acquired ancestor Notes cause')
+    evidence['notes_impacts_before_acceptance']=impacts
+    # Both generated scenes already have independent review causes. Their
+    # ordinary cause disclosures are closed initially; open them natively
+    # before asking for a visibly rendered Notes label. A multicolumn break
+    # can place the selected scene's notice and chooser in different columns.
+    notices=[n for n in ui.walk(application) if n.name=='Screenplay needs review']
+    if len(notices)!=2:raise RuntimeError('Expected exactly the two generated scene notices')
+    for node in notices:disclosure(node,window,'What changed')
+    notice=ui.wait_for('ordinary Notes review notice visible',lambda:driver.visible_review_label(application,window,'Ancestor timeline Notes changed.'))
+    evidence['visible_notes_impact']=notice
+    source_review=ui.wait_for('ordinary B source review',lambda:review_for_source(application,fixture['b']['name']))
+    combo=ui.wait_for('Notes source review chooser',lambda:ui.reveal(source_review,lambda n:
+        n.getRole()==ui.pyatspi.ROLE_COMBO_BOX and ui.button_label_matches(n.name,'Input change',prefix=True)))
+    ui.click_control(combo,window);ui.command('xdotool','key','--clearmodifiers','End','Return')
+    review=ui.wait_for('ordinary explicitly selected Notes cause',lambda:review_for_source(application,fixture['b']['name']))
+    evidence['ordinary_selected_notes_cause']={'native_combo_name':combo.name,'route':'native source chooser End/Return; canonical pending binding checked'}
+    checkpoint('ordinary Notes edit preserved saved material and exposed selected review cause');capture('ancestor-notes-01-needs-review.png')
+    count=len(Provider.records)
+    ui.reveal_button(review,'Preview update',window)
+    def pending():
+        if len(Provider.records)>count and not Provider.records[-1]['accepted']:raise RuntimeError('Synthetic Notes provider refused prompt')
+        rows=ui.query(database,"SELECT p.id,p.proposed_text,b.binding_json FROM propagation_proposals p JOIN script_impact_proposal_bindings b ON b.proposal_id=p.id WHERE p.status='pending' ORDER BY p.rowid DESC")
+        return rows[0] if rows else None
+    proposed=ui.wait_for('canonical pending Notes preview',pending)
+    binding=json.loads(proposed[2])
+    if proposed[1]!=NOTES_PREVIEW or binding['ancestor_notes_previous']!=[{'node_id':ancestor_id,'notes':old,'revision_event_id':binding['cause']['consumed_revision_event_id']}] or binding['ancestor_notes_current'][0]['notes']!=NOTES or not binding['request']['dependency_id'].endswith('.ancestor_notes.'+ancestor_id):raise RuntimeError('Notes preview receipt/text/cause differs')
+    if {node:ui.blocks(database,node) for node in original}!=original or material(database)!=original_material:raise RuntimeError('Preview replaced exact saved manual material')
+    ui.wait_for('reachable exact current Notes evidence',lambda:ui.reveal(application,lambda n:n.name=='Current preview Notes' and ui.text_of(n)==NOTES))
+    ui.wait_for('exact current Notes glyphs in Script pane',lambda:driver.visible_paragraph(application,window,NOTES,'Current preview Notes'))
+    evidence['ancestor_original_visible']=ui.wait_for('exact original ancestor Notes glyphs',lambda:driver.visible_paragraph(application,window,old,'Originally consumed Notes'))
+    evidence['ancestor_current_visible']=ui.wait_for('exact current ancestor Notes glyphs',lambda:driver.visible_paragraph(application,window,NOTES,'Current preview Notes'))
+    evidence['pending_notes_preview']={'id':proposed[0],'binding':binding,'proposed_text':proposed[1],'saved_material_unchanged':True}
+    require_draft(application)
+    checkpoint('synthetic targeted preview retains exact original/current Notes and requires acceptance');capture('ancestor-notes-02-pending.png')
+    # An ordinary second edit/restore retains identical text while advancing its clock.
+    for text in ['Intervening timeline Notes decision',NOTES]:
+        before_text=json.loads(ui.query(database,'SELECT content_json FROM nodes WHERE id=?',(ancestor_id,))[0][0])['notes']
+        field_node=ui.wait_for('ordinary Notes editor before ABA',lambda:ui.reveal(application,lambda n:n.getState().contains(ui.pyatspi.STATE_EDITABLE) and ui.text_of(n)==before_text))
+        ui.type_text(field_node,window,text)
+        ui.wait_for('public Notes ABA write',lambda:json.loads(ui.query(database,'SELECT content_json FROM nodes WHERE id=?',(ancestor_id,))[0][0])['notes']==text)
+    before=driver.canonical_state(database)
+    ui.reveal_button(ui.wait_for('selected Notes review before stale accept',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
+    error=ui.wait_for('ordinary stale Notes acceptance refusal',lambda:ui.find(application,lambda n:'screenplay proposal is stale' in ui.text_of(n)))
+    if driver.canonical_state(database)!=before:raise RuntimeError('Stale Notes refusal changed canonical state')
+    evidence['notes_aba_refusal']={'exact_restored_notes':NOTES,'visible_error':ui.text_of(error),'all_recorded_tables_unchanged':True}
+    require_draft(application);checkpoint('ordinary Notes ABA refuses old acceptance without saved writes');capture('ancestor-notes-03-stale.png')
+    ui.reveal_button(ui.wait_for('selected Notes review before reject',lambda:review_for_source(application,fixture['b']['name'])),'Reject',window)
+    ui.wait_for('ordinary reject stale Notes preview',lambda:ui.query(database,"SELECT id FROM propagation_proposals WHERE id=? AND status='rejected'",(proposed[0],)))
+    # Allow one explicitly requested fresh synthetic response after the first is rejected.
+    Provider.allow_fresh_notes=True
+    ui.reveal_button(ui.wait_for('selected Notes review before fresh preview',lambda:review_for_source(application,fixture['b']['name'])),'Preview update',window)
+    fresh=ui.wait_for('fresh canonical pending Notes preview',pending)
+    if fresh[0]==proposed[0]:raise RuntimeError('Fresh review reused rejected proposal')
+    ui.reveal_button(ui.wait_for('selected Notes review before fresh accept',lambda:review_for_source(application,fixture['b']['name'])),'Accept update',window)
+    accepted=ui.wait_for('explicit targeted Notes update',lambda:next((r for r in ui.blocks(database,b_id) if r[1]==NOTES_PREVIEW and r[2]!=original[b_id][0][2]),None))
+    for node in (a_id,f_id):
+        if ui.blocks(database,node)!=original[node]:raise RuntimeError('Acceptance changed unrelated saved material')
+    if accepted[3:]!=original[b_id][0][3:] or bible_fields(database)!=original_bible:raise RuntimeError('Acceptance changed placement or Bible')
+    ui.click_button(application,'QA read canonical impacts',window)
+    def clean():
+        value=receipt(application)
+        if not value or not value['impacts']:return None
+        rows=json.loads(value['impacts']);target=next((r for r in rows if r['source']==b_id),None)
+        return rows if target and not any(c['dependency_id'].endswith('.ancestor_notes.'+ancestor_id) for c in target.get('causes') or []) else None
+    evidence['notes_impacts_after_acceptance']=ui.wait_for('fresh Notes consumption clears its cause',clean)
+    other=next(r for r in evidence['notes_impacts_after_acceptance'] if r['source']==a_id)
+    if not any(c['dependency_id'].endswith('.ancestor_notes.'+ancestor_id) for c in other.get('causes') or []):raise RuntimeError('Chosen-block acceptance cleared an unaccepted consumer')
+    evidence['explicit_notes_acceptance']={'proposal_id':fresh[0],'saved_selected_block':accepted,'unrelated_saved_material_preserved':True,'placement_and_bible_preserved':True}
+    require_draft(application)
+    ui.wait_for('visible saved synthetic Notes update',lambda:ui.screenplay_block(application,driver.screenplay_anchor(NOTES_PREVIEW)))
+    if len(Provider.records)!=6 or not all(r['accepted'] for r in Provider.records):raise RuntimeError('Expected four fixture and two targeted synthetic provider calls')
+    checkpoint('explicit fresh acceptance updates only chosen screenplay and refreshes Notes lineage');capture('ancestor-notes-04-accepted.png')
+
 def context_prompt_matches(user,notes):
     return ('SCENE NOTES:\n'+notes+'\n\n' in user and DRAFT not in user)
 
@@ -700,7 +845,7 @@ def main():
     config=repo/'scripts/manual-facts-vite.config.mts';host_log=state_root/'host-private.log';app_log=state_root/'app-private.log'
     host=process=application=window=None
     provider=ThreadingHTTPServer(('127.0.0.1',18080),Provider);threading.Thread(target=provider.serve_forever,daemon=True).start()
-    evidence={'status':'failed','application_source_sha':SOURCE,'application_tree':'ade8c69ff296285c3b60bc4bdd3f0dfcbde2ec6a','qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
+    evidence={'status':'failed','application_source_sha':SOURCE,'implementation_source_sha':'e5fc35502a72c3e6f09b08f9c491ca8ecc0ad549','application_tree':'06a0d52deefe2c946ebfc3da5d7b96523739ac5f','qualification_sha':ui.command('git','rev-parse','HEAD'),'application_binary_sha256':ui.file_hash(repo/'target/debug/eidetic-desktop'),'provider':'labelled synthetic localhost HTTP/SSE through production client','real_model_quality_qualified':False,'DOM_or_IPC_injection':False,'direct_database_writes':False,'stale_checks':[],'checkpoints':[],'qualification_config_sha256':ui.file_hash(config)}
     def checkpoint(stage):
         evidence['stage']=stage;evidence['checkpoints'].append(stage);(output/'capture-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n');print('Manual fact checkpoint: '+stage,flush=True)
     def capture(name):
@@ -757,6 +902,11 @@ def main():
             evidence['qualification_scope']='exact same-node Notes prompt refresh and held older actual public context return refusal, ordinary clear/restore, saved text and unrelated draft preservation; no new inference or real-model quality claim'
             qualify_notes_prompt(application,window,database,fixture,capture,checkpoint,evidence)
             evidence['status']='passed';checkpoint('complete frozen-source exact Notes prompt custody')
+            return
+        if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='ancestor-notes':
+            evidence['qualification_scope']='ordinary consumed ancestor Notes edit; two exact dependent Scenes, unrelated Act saved text/draft preservation, pending synthetic review, stale ABA refusal and explicit selected-block acceptance only'
+            qualify_ancestor_notes(application,window,database,fixture,capture,checkpoint,evidence)
+            evidence['status']='passed';checkpoint('complete frozen-source ancestor Notes targeted review')
             return
         if os.environ.get('EIDETIC_CAPTURE_SCOPE')=='timeline-notes':
             evidence['qualification_scope']='ordinary selected clip Notes edit, explicit Notes cause selection, pending synthetic preview, Notes ABA refusal and explicit fresh selected-block acceptance; ancestor/sibling Notes and real-model quality unqualified'

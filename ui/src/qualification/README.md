@@ -127,3 +127,12 @@ exact restore. The receipt and glyph bounds refer to the actual User Prompt,
 not the QA receipt textarea. Four HTTP/SSE fixture calls seed two synthetic
 saved consumer generations; context preview invokes no new inference. Lossless
 PNGs, JPEG85 derivatives and logs are uploaded outside Git.
+
+
+Consumed ancestor Notes qualification freezes product e5fc355 on separate
+`test/ancestor-notes-native`. Ordinary Act Notes edit marks both actual synthetic
+Scene consumers; unrelated Act F saved text and an unsaved F draft remain exact.
+Ordinary review previews show original/current ancestor evidence, ABA refuses
+stale acceptance, and explicit fresh acceptance updates only B. Actual native
+accessibility controls and canonical public services are used; synthetic HTTP
+responses are labelled. No model-quality or prior-capture visual claim is made.

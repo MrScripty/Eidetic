@@ -69,6 +69,36 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         )
         .await?;
     }
+    let ancestor_scope = std::env::var("EIDETIC_CAPTURE_SCOPE").as_deref() == Ok("ancestor-notes");
+    let unrelated_act = NodeId::new();
+    if ancestor_scope {
+        command_service::create_timeline_node_from_core_command(
+            state,
+            CommandEnvelope::new(CreateTimelineNodeCommand {
+                node_id: unrelated_act,
+                parent_id: Some(root),
+                level: StoryLevel::Act,
+                name: "UNRELATED ACT".into(),
+                start_ms: 180_000,
+                end_ms: 240_000,
+                beat_type: None,
+            }),
+        )
+        .await?;
+        for (id, text) in [
+            (act, "  Mara conceals the witness — 雨.\n\n  "),
+            (unrelated_act, "Unrelated Act: Eli guards the station."),
+        ] {
+            command_service::set_timeline_node_notes(
+                state,
+                CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                    node_id: id,
+                    notes: text.into(),
+                }),
+            )
+            .await?;
+        }
+    }
     let mut scenes = Vec::new();
     for (letter, start, end) in [
         ("A", 0, 60_000),
@@ -76,11 +106,16 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         ("B", 120_000, 180_000),
     ] {
         let id = NodeId::new();
+        let (start, end, parent) = if ancestor_scope && letter == "F" {
+            (180_000, 240_000, unrelated_act)
+        } else {
+            (start, end, sequence)
+        };
         command_service::create_timeline_node_from_core_command(
             state,
             CommandEnvelope::new(CreateTimelineNodeCommand {
                 node_id: id,
-                parent_id: Some(sequence),
+                parent_id: Some(parent),
                 level: StoryLevel::Scene,
                 name: format!("SCENE {letter}"),
                 start_ms: start,
@@ -191,7 +226,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
         project_service::save_project(state, project_service::SaveProjectRequest { path: None })
             .await?;
     Ok(
-        serde_json::json!({"project_path":saved["saved"],"a":scenes[0],"f":scenes[1],"b":scenes[2],"generations":generations,"setup_route":"unchanged public services; two labelled synthetic HTTP generations/recaps, no real model; unconsumed fields added after generation"}),
+        serde_json::json!({"project_path":saved["saved"],"a":scenes[0],"f":scenes[1],"b":scenes[2],"generations":generations,"ancestor":{"id":act.0,"name":"FACT RECONCILIATION"},"unrelated_act":{"id":unrelated_act.0,"name":"UNRELATED ACT"},"setup_route":"unchanged public services; two labelled synthetic HTTP generations/recaps, no real model; unconsumed fields added after generation"}),
     )
 }
 async fn field(
