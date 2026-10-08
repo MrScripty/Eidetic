@@ -64,6 +64,183 @@ fn preview(
 }
 
 #[test]
+fn review_identical_consumed_title_cannot_create_a_screenplay_review_cause() {
+    let (mut conn, mut project, generation) = setup(true);
+    project.timeline.nodes = timeline_node_store::load_nodes(&conn).unwrap();
+    let target = generation.payload.target_binding.as_ref().unwrap().node_id;
+    let read = capture(&conn, target).unwrap();
+    let before = logical_rows(&conn);
+    let before_impact = impact(&conn, &generation);
+    assert!(!before_impact.needs_review);
+    let error = timeline_command_history::record_set_timeline_node_name_history(
+        &mut conn,
+        &project,
+        &CommandEnvelope::new(SetTimelineNodeNameCommand {
+            node_id: target,
+            name: read.name.clone(),
+            expected: TimelineNodeNameRead {
+                name: read.name,
+                revision_event_id: read.revision_event_id,
+            },
+        }),
+        230,
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("title is unchanged"));
+    assert_eq!(logical_rows(&conn), before);
+    assert_eq!(
+        serde_json::to_value(impact(&conn, &generation)).unwrap(),
+        serde_json::to_value(before_impact).unwrap()
+    );
+}
+
+#[tokio::test]
+async fn review_final_prompt_excludes_recap_title_receipts_and_recaps_cannot_refuse_or_flag_generation()
+ {
+    use eidetic_core::timeline::{
+        node::{StoryLevel, StoryNode},
+        timing::TimeRange,
+    };
+    for late_rename in [false, true] {
+        let (_, mut project, mut generation) = setup(false);
+        let target = generation.payload.target_binding.as_ref().unwrap().node_id;
+        let preceding = project
+            .timeline
+            .siblings_of(target)
+            .iter()
+            .find(|node| {
+                node.id != target
+                    && node.time_range.end_ms
+                        < project.timeline.node(target).unwrap().time_range.start_ms
+            })
+            .unwrap()
+            .id;
+        let mut recap = StoryNode::new_child(
+            "  Recap-only title — 雨.  ",
+            StoryLevel::Beat,
+            TimeRange::new(1100, 1200).unwrap(),
+            preceding,
+        );
+        recap.content.scene_recap =
+            Some("Synthetic legacy recap that canonical screenplay replaces.".into());
+        let recap_id = recap.id;
+        let recap_name = recap.name.clone();
+        project.timeline.add_node(recap).unwrap();
+        let path = std::env::temp_dir().join(format!(
+            "eidetic-title-final-prompt-{}.db",
+            uuid::Uuid::new_v4()
+        ));
+        crate::persistence::save_project(&project, &path, None)
+            .await
+            .unwrap();
+        let mut conn = crate::sqlite::open_write_connection(&path).unwrap();
+        let mut source = generation.payload.block.clone();
+        source.segment_id = ScriptSegmentId::new("script.segment.canonical-a").unwrap();
+        source.block_id = ScriptBlockId::new("script.block.canonical-a").unwrap();
+        source.source_node_id = Some(preceding.0.to_string());
+        source.segment_start_ms = project
+            .timeline
+            .node(preceding)
+            .unwrap()
+            .time_range
+            .start_ms;
+        source.segment_end_ms = project.timeline.node(preceding).unwrap().time_range.end_ms;
+        source.text = "  Exact authored source A — 雨.\n\n  ".into();
+        source.span_provenance = ScriptSpanProvenance::UserEdited;
+        script_document_command::apply_set_script_block(
+            &mut conn,
+            &CommandEnvelope::new(source.clone()),
+            205,
+        )
+        .unwrap();
+        drop(conn);
+        let mut request =
+            eidetic_core::ai::prompt::build_generate_request(&project, target).unwrap();
+        assert!(
+            request
+                .surrounding_context
+                .preceding_recaps
+                .iter()
+                .any(|r| r.node_id == Some(recap_id))
+        );
+        assert!(
+            crate::prompt_format::build_chat_prompt(&request)
+                .user
+                .contains(&recap_name)
+        );
+        crate::ai_service::attach_ai_generation_context(&mut request, path.clone(), target)
+            .await
+            .unwrap();
+        let prompt = crate::prompt_format::build_chat_prompt(&request);
+        let inputs = request.timeline_title_inputs.as_ref().unwrap();
+        assert!(prompt.user.contains(&source.text));
+        assert!(
+            request
+                .script_context
+                .as_ref()
+                .unwrap()
+                .iter()
+                .any(|input| input.block_id == source.block_id && input.text == source.text)
+        );
+        println!(
+            "TITLE_PROMPT_RECEIPT {}",
+            serde_json::json!({"late_recap_rename":late_rename,"final_user_prompt":prompt.user,"timeline_title_inputs":inputs,"script_inputs":request.script_context,"omitted_recap_node":recap_id,"omitted_recap_name":recap_name,"synthetic_saved_output":true,"real_model_execution":false})
+        );
+        assert!(request.surrounding_context.preceding_recaps.is_empty());
+        assert!(!prompt.user.contains(&recap_name));
+        assert!(
+            !inputs.iter().any(|input| input.node_id == recap_id),
+            "recap title absent from actual final prompt must not become consumed evidence"
+        );
+        assert_eq!(
+            inputs
+                .iter()
+                .map(|input| (input.node_id, input.name.clone()))
+                .collect::<Vec<_>>(),
+            supplied_titles(&request).unwrap()
+        );
+        assert!(inputs.iter().all(|input| prompt.user.contains(&input.name)));
+        generation.payload.timeline_title_inputs = request.timeline_title_inputs;
+        generation.payload.script_inputs = request.script_context;
+        generation.payload.script_context_scope = request.script_context_scope;
+        generation.payload.target_binding = request.generation_target;
+        generation.payload.ancestor_notes_inputs = request.ancestor_notes_inputs;
+        generation.payload.arc_inputs = request.arc_inputs;
+        generation.payload.arc_description_applicability = request.arc_description_applicability;
+        generation.payload.bible_inputs = request.bible_inputs;
+        generation.payload.bible_context_scope = request.bible_context_scope;
+        generation.payload.bible_relationship_inputs = request.bible_relationship_inputs;
+        generation.payload.bible_node_name_inputs = request.bible_node_name_inputs;
+        let mut conn = crate::sqlite::open_write_connection(&path).unwrap();
+        if late_rename {
+            rename(&mut conn, &mut project, recap_id, NEW);
+        }
+        script_document_command::apply_generated_script_block(&mut conn, &generation, 210).unwrap();
+        assert!(!impact(&conn, &generation).needs_review);
+        let before = materials(&conn);
+        if !late_rename {
+            rename(&mut conn, &mut project, recap_id, NEW);
+        }
+        assert!(
+            !impact(&conn, &generation).needs_review,
+            "an omitted recap rename cannot flag saved screenplay"
+        );
+        assert_eq!(materials(&conn), before);
+        let recorded = crate::timeline_title_lineage::recorded(
+            &conn,
+            impact(&conn, &generation).generation_event_id,
+        )
+        .unwrap()
+        .unwrap();
+        assert!(!recorded.iter().any(|input| input.node_id == recap_id));
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{}{suffix}", path.display()));
+        }
+    }
+}
+
+#[test]
 fn baseline_selected_ancestor_and_sibling_title_changes_have_exact_distinct_causes() {
     for role in ["selected", "ancestor", "sibling"] {
         let (mut conn, mut project, generation) = setup(true);

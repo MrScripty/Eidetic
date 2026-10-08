@@ -38,3 +38,19 @@ Synthetic replies must be labelled. No local ONNX403 bypass, external reviewer
 request, main merge/release, screenshot/archive Git tracking or Library success
 without confirmed upload. Independent review and affected full gates precede
 publication; parent owns PRs/reviews and durable delivery.
+
+PR27 review successor on separate fix/timeline-title-prompt-receipts: the actual
+canonical screenplay attachment removes legacy recaps before prompt formatting.
+Capture title receipts after that same transformation inside the existing read
+transaction. Recap titles supplied only to a raw legacy request are not consumed
+by canonical generation; the raw-recap unit test is not production qualification.
+Actual service regressions preserve exact canonical source text/receipts, exclude
+the removed recap title, admit generation after its rename and leave saved output
+unflagged after a subsequent rename. Identical titles refuse after the expected
+read check without advancing history/name clocks; the client avoids sending such
+commands while immutable uncertain retries remain authoritative.
+
+Owner paused new hosted CI spending. This successor uses local regression/full
+checks and independent source review; original D20/F573 native screenshots do not
+qualify its changed source. Existing main merge gates remain unchanged. No real
+model execution or fresh successor native screenshots are claimed.

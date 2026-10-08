@@ -156,10 +156,9 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     let script_path = path.clone();
     let expected_node = request.target_node.clone();
     let expected_ancestors = request.ancestor_chain.clone();
-    let supplied_titles = crate::timeline_title_lineage::supplied_titles(request)
-        .map_err(|error| BackendError::bad_request(error.to_string()))?;
+    let mut script_request = request.clone();
     let (
-        blocks,
+        script_request,
         scope,
         target,
         arcs,
@@ -176,8 +175,6 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
             .unchecked_transaction()
             .map_err(|error| BackendError::internal(error.to_string()))?;
         let target = crate::script_generation_target::capture(&tx, &expected_node)
-            .map_err(|error| BackendError::bad_request(error.to_string()))?;
-        let titles = crate::timeline_title_lineage::capture_generation(&tx, &supplied_titles)
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
         let ancestor_notes =
             crate::ancestor_notes_lineage::capture_generation(&tx, node_id, &expected_ancestors)
@@ -197,6 +194,13 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
             &blocks,
         )
         .map_err(|error| BackendError::internal(error.to_string()))?;
+        // Capture only names retained by the actual canonical prompt transform.
+        // Legacy recaps are removed here, so their titles were never consumed.
+        crate::ai_script_context::attach_script_context(&mut script_request, blocks);
+        let supplied_titles = crate::timeline_title_lineage::supplied_titles(&script_request)
+            .map_err(|error| BackendError::bad_request(error.to_string()))?;
+        let titles = crate::timeline_title_lineage::capture_generation(&tx, &supplied_titles)
+            .map_err(|error| BackendError::bad_request(error.to_string()))?;
         let (arcs, arc_inputs) = crate::story_arc_lineage::capture(&tx, node_id, &[])
             .map_err(|error| BackendError::bad_request(error.to_string()))?;
         let arc_description_applicability =
@@ -205,7 +209,7 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
         tx.commit()
             .map_err(|error| BackendError::internal(error.to_string()))?;
         Ok::<_, BackendError>((
-            blocks,
+            script_request,
             scope,
             target,
             arcs,
@@ -217,7 +221,7 @@ pub(crate) async fn attach_ai_generation_context_at_story_time(
     })
     .await
     .map_err(|error| BackendError::internal(format!("script context task failed: {error}")))??;
-    crate::ai_script_context::attach_script_context(request, blocks);
+    *request = script_request;
     request.tagged_arcs = arcs;
     request.arc_inputs = Some(arc_inputs);
     request.arc_description_applicability = Some(arc_description_applicability);
