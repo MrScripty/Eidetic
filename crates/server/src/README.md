@@ -648,3 +648,12 @@ and order when a built-in detail projection supplies schema-default part metadat
 Projected defaults may materialize only genuinely unpersisted ordinary fields.
 Missing bound owners, deleted owners and mismatched owner identities refuse
 acceptance rather than recreating or renaming them.
+
+Consumed ancestor Notes use existing `TimelineNotesInput` receipts and generation
+or accepted proposal history. `ancestor_notes_lineage` captures actual nonempty
+prompt inputs before provider I/O and records exact generation-event/node-ID
+semantic dependencies. Original/current evidence and owned deletion clocks enter
+the existing targeted binding; current rereads never fabricate legacy consumption.
+Writer-lock generation and existing preview/acceptance checks refuse stale/ABA or
+forged reads. Editing Notes/previewing preserve canonical screenplay and locks;
+only explicit acceptance can replace the selected block. No new endpoint or store.

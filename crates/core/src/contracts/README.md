@@ -184,3 +184,10 @@ semantic endpoints extend with `story_arc_field`; no parallel store is added.
 
 Decision: per-field revision ownership makes color-only edits irrelevant while
 retaining semantic ABA, historical late consumption and explicit acceptance.
+
+`GenerateScriptBlockCommand.ancestor_notes_inputs` retains optional exact consumed
+ancestor Notes receipts. `ScriptImpactProposalBinding` retains their previous and
+current vectors plus owned absence revisions. Missing legacy fields remain
+unknown; Some(empty) records a known empty set. Clearing a previously consumed
+ancestor is an exact empty current input. Accepted updates refresh receipts through
+existing command/proposal/dependency history, with no alternate persistent owner.
