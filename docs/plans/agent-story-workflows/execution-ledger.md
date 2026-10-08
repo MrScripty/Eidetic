@@ -1935,7 +1935,8 @@ clear/deletion/ABA, writer recapture, target edits, both locks and failed stream
 five added UI cases cover exact source evidence and event refresh/draft retention.
 Hosted native qualification is prepared separately, not yet claimed. Synthetic
 HTTP fixtures establish workflow behavior, not real-model narrative quality.
-# 2026-10-08 — Exact committed Notes prompt preview successor
+
+## 2026-10-08 — Exact committed Notes prompt preview successor
 
 Turn startup was verified at 00:27 UTC against public state before writes.
 Reviewed Notes/report branch remained `5a8670d`; PR19/20/21 were open drafts with
@@ -1960,3 +1961,24 @@ context responses must be real public reads with an explicitly labelled held
 return, never fabricated prompt text. Generated originals/JPEG85/logs stay outside
 Git. Pumas modality publication and project-switch recovery remain separate.
 
+
+## 2026-10-08 — Exact Notes clear/restore qualification closure
+
+Continued existing run37713651568 without restart. Frozen productc5/treeade8 and
+separate QA11b/tree35f pass all hosted source-admission/UI/dependency/build and
+core123/server542/strict-Clippy gates, driver50/policy5 and native exact Notes
+refresh/held real return refusal/clear/exact restoration. Five native PNGs and
+JPEG85 displays are artifact11523381856, ZIP SHA-256
+b4f95daaf9f11d3bcd5043c85249384079f884dcefc4d19c40cd1560bc07e6ff,
+expires2026-10-11T01:44:58Z. Four labelled synthetic fixture calls only; real
+public context reads make no new inference call. Saved screenplay/placement/
+Bible and the unrelated F draft stay intact. Independent c5 source/test/integration
+review found no issue within the selected Notes request-owner scope.
+
+Preserved three qualifier failures: clipped original glyphs, empty input lacking
+BackSpace, and broad restore selector reaching an unsaved Bible Summary draft.
+Only separate QA files changed; exact application files stayed frozen. Native
+machine receipts and full logs are outside Git. Personal visual inspection remains
+blocked by executor transfer proxyHTTP403; retain that gap and exact artifact
+identity. See notes-prompt-preview-qualification.md. No PR19-22/main merge, no
+external reviewer request, credential change or paid model/service call.
