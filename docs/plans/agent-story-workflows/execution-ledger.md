@@ -2064,3 +2064,21 @@ application data is read-only; the ordinary isolated XDG application-state route
 passes the full unchanged suite. Logs remain outside Git. No inference or ONNX403
 bypass. Native ArcDetail typing, screenshots and independent review remain pending;
 PR19–23/main remain unmerged. See arc-description-applicability.md.
+
+
+## 2026-10-08 — Arc Description native functional gate passed
+
+Frozen application cac013f/tree170341fd and QA1989909/tree1acc67cc pass hosted
+run37726307798/job113145156499 on the first attempt. Standard locked native build,
+core123/server566 zero ignored, UI562/96, Clippy/typecheck0/0/lint/format/build,
+driver55 and ONNX policy5 pass. Ordinary ArcDetail keys commit exact Unicode and
+whitespace direction, expose two precise Scene consumers, preserve manual B and
+unrelated F draft, show original omission/current prose in pending review, refuse
+clear/restore stale acceptance and explicitly update B alone. Six actual native
+PNG captures and JPEG derivatives remain artifact11527798897, outside source Git.
+All six provider calls are labelled synthetic; real-model quality is unqualified.
+Executor artifact transfer hits proxy CONNECT403, so author visual inspection and
+ZIP-byte verification are not claimed. Parent retains independent source/visual
+review and PR/merge/Library delivery. No new PR, external reviewer, credential or
+paid service. See arc-description-qualification.md for complete source/hash/test
+receipts. This successor changes documentation only; PR19–23/main stay unmerged.

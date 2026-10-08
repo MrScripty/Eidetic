@@ -4,8 +4,9 @@ Separate `feat/arc-description-applicability`, based on accepted PR23 provenance
 `e9abf3efae6f6dc9e9d4b610cb4e01f817d487f7`. PR19–23/main remain unmerged.
 Baseline `1feeee8cbd79fce71b90aed78f5d95caeb504d44` reproduces the boundary.
 Implementation now retains applicability through existing generation/proposal
-history and graph dependencies. Native UI qualification and independent source
-review remain pending; real-model quality is unqualified.
+history and graph dependencies. Native functional qualification passes run37726307798 against product cac013f /
+QA1989909. Independent source/visual review remains for the parent; real-model
+quality is unqualified. See `arc-description-qualification.md`.
 
 The consumed-arc roadmap explicitly leaves previously unconsumed empty
 descriptions separate. ArcDetail already commits exact typed descriptions through

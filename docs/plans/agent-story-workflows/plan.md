@@ -7,8 +7,11 @@ reproduction on template-tagged Scenes established missing downstream review.
 beside consumed arc inputs in existing history/graph receipts. Filling identifies
 precise Scene consumers; clearing withdraws that cause; stale/ABA admission,
 manual text, locked spans and explicit acceptance remain guarded. Legacy unknown
-reads are not backfilled. Native qualification and independent review are pending.
-See `arc-description-applicability.md`; PR19–23/main remain unmerged.
+reads are not backfilled. Native functional qualification passes run37726307798 (product cac013f /
+QA1989909), core123/server566/UI562/96 and all maintained gates. Independent
+source/visual review remains for the parent; synthetic replies qualify function,
+not real-model quality. See `arc-description-applicability.md` and
+`arc-description-qualification.md`; PR19–23/main remain unmerged.
 **Ancestor Notes propagation independently accepted:** Generation now
 records exact consumed nonempty ancestor Notes with owned field revisions and
 precise graph dependency identities. Existing review shows original/current
