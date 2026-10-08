@@ -219,5 +219,20 @@ Graph/Script navigation retains the type draft; Dialogue then Note saves feed
 original/current consumed-type evidence, stale no-write refusal and separate B
 acceptance. Source A span/provenance rows, unrelated saved/draft material, Bible
 and placement are checked specifically. No blanket acceptance span/lock claim
-or real-model quality claim is made. Two isolated runs each use six labelled
-synthetic HTTP replies. This candidate is prepared; native execution is pending.
+or real-model quality claim is made. The same scenario ran twice in isolated projects, using six labelled synthetic
+HTTP replies each (12 total). Native execution succeeded in run
+[37806613917](https://github.com/MrScripty/Eidetic/actions/runs/37806613917), on
+product `57b0d2ec4562017513f03d38698d93a17f87f43e` (tree
+`afaf64e55dc396b0d99deacdb911e901ea6359d1`) and qualifier
+`ee167a4e39f360e6e6191ed864eebb7874931e7e`.
+
+The parent independently accepted all ten images and verified all twenty image
+hashes, twenty-eight pinned source hashes and the QA configuration against artifact
+ZIP SHA256 `2bafa3055e492bed766d4a3da296349a5723705dcdefceb82d9de8f946581b1b`.
+This establishes instrumented native integration with visible QA controls and Vite
+wrappers for the bounded scenario. Binary and transformed-module bytes are not
+included for independent rehash, and this scope does not reopen after acceptance.
+It does not establish uninstrumented release behavior or real-model quality.
+The earlier failed run `37804638648` remains retained as failed evidence. This
+separate documentation checkpoint changes neither accepted product nor qualifier
+runtime behavior and starts no workflow.
