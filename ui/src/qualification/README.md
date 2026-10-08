@@ -142,3 +142,12 @@ A setup-only public-service run and read-only canonical guard qualify that hiera
 and the ancestor's owned Notes history before inference, including refusal of a
 wrong ancestor identity. Hosted qualification reruns the canonical hierarchy guard
 on its actual full fixture; the local setup-only flag is not used for UI capture.
+
+Run37720332948 completed the exact public ancestor Notes edit and preservation
+checks, then its QA receipt omitted ancestor causes through an old selected-Notes
+filter. The receipt now retains timeline Notes inputs with their untouched precise
+dependency identities. A no-display regression executes the actual public-read
+wrapper against a mixed projection and proves both ancestor/selected Notes and
+Bible causes survive while unrelated arc causes stay outside this scoped receipt.
+The executed regression fails before the QA-only repair. Product source10a2b43
+and all native cause, evidence, stale acceptance and preservation checks are unchanged.

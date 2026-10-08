@@ -194,7 +194,8 @@ export function readImpacts() {
           (c) =>
             c.input.kind === 'bible_field' ||
             c.input.kind === 'bible_edge' ||
-            c.dependency_id.endsWith('.timeline_notes'),
+            c.dependency_id.endsWith('.timeline_notes') ||
+            c.dependency_id.includes('.ancestor_notes.'),
         ),
       })),
     );

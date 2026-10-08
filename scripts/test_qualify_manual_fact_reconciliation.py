@@ -1,6 +1,7 @@
 """No-display regression checks for the synthetic provider's exact fact custody."""
 import ast
 import json
+import subprocess
 from pathlib import Path
 import unittest
 
@@ -80,5 +81,40 @@ class AncestorNotesPromptTests(unittest.TestCase):
             self.prompt().replace(namespace['ANCESTOR_MANUAL'],namespace['GENERATED_B']),
             self.prompt()+namespace['UNRELATED_ACT_OLD'],self.prompt()+namespace['DRAFT']]:
             self.assertFalse(namespace['ancestor_notes_prompt']('targeted screenplay update',text))
+
+class CanonicalImpactReceiptTests(unittest.TestCase):
+    def test_actual_read_seam_retains_exact_ancestor_and_existing_review_causes(self):
+        # Execute the actual QA public-read wrapper with a mixed projection. Only
+        # the transport/state primitives are replaced; its filtering is unchanged.
+        root=Path(__file__).resolve().parents[1]
+        script=r'''
+const fs=require('node:fs'),vm=require('node:vm');
+const ts=require('./ui/node_modules/typescript');
+const causes=[
+  {dependency_id:'generation.event.ancestor_notes.owned-act',input:{kind:'timeline_node',node_id:'owned-act'},input_excerpt:'  exact — 雨.\n\n  '},
+  {dependency_id:'generation.event.timeline_notes',input:{kind:'timeline_node',node_id:'scene'}},
+  {dependency_id:'generation.event.field',input:{kind:'bible_field'}},
+  {dependency_id:'generation.event.edge',input:{kind:'bible_edge'}},
+  {dependency_id:'generation.event.arc',input:{kind:'story_arc_field'}},
+  {dependency_id:'generation.event.node',input:{kind:'timeline_node',node_id:'other'}}
+];
+const projection={payload:{segments:[{segment:{source_node_id:'scene',id:'segment'},impact:{needs_review:true,causes}}]}};
+const exports={};
+const context={exports,$state:x=>x,require:name=>name==='svelte'?{untrack:f=>f()}:name.endsWith('projectionApi.js')?{getScriptDocumentProjection:async()=>projection}:{}};
+const source=fs.readFileSync('ui/src/qualification/manualFacts.svelte.ts','utf8');
+vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,context);
+exports.readImpacts().then(()=>process.stdout.write(exports.receipt())).catch(error=>{console.error(error);process.exitCode=1;});
+'''
+        result=subprocess.run(['node','-e',script],cwd=root,text=True,capture_output=True,check=True)
+        receipt=json.loads(result.stdout)
+        self.assertEqual(receipt['error'],'')
+        row=json.loads(receipt['impacts'])[0]
+        self.assertEqual(row['source'],'scene')
+        self.assertTrue(row['needsReview'])
+        self.assertEqual([c['dependency_id'] for c in row['causes']],[
+            'generation.event.ancestor_notes.owned-act','generation.event.timeline_notes',
+            'generation.event.field','generation.event.edge'])
+        self.assertEqual(row['causes'][0]['input'],{'kind':'timeline_node','node_id':'owned-act'})
+        self.assertEqual(row['causes'][0]['input_excerpt'],'  exact — 雨.\n\n  ')
 
 if __name__=='__main__':unittest.main()
