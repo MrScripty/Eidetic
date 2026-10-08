@@ -19,9 +19,11 @@ const draft = createTimelineTitleDraft({ nodeId: 'A', commandId: () => 'fixed', 
   apply: async (payload, id) => { calls.push(structuredClone({payload,id})); if (reject) { reject = false; throw new Error('Lost acknowledgement'); } }
 });
 draft.initialize({ name: 'SCENE A', revision_event_id: null });
+await draft.apply(); assert.equal(calls.length, 0); assert.equal(draft.state.error, 'Title is unchanged.');
+assert.equal(draft.state.base.name, 'SCENE A'); assert.equal(draft.state.saved, false);
 draft.state.name = '  Station departure — 雨.  ';
 await draft.apply(); assert.equal(draft.state.uncertain, true);
-draft.state.name = 'Later draft'; await draft.apply();
+draft.state.name = 'SCENE A'; await draft.apply();
 assert.deepEqual(calls[0], calls[1]);
 assert.equal(calls[1].payload.name, '  Station departure — 雨.  '); assert.equal(calls[1].payload.expected.revision_event_id, null);
 assert.equal(draft.state.saved, true); assert.equal(draft.state.base, null);

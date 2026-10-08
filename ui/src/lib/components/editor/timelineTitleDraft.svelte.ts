@@ -46,6 +46,10 @@ export function createTimelineTitleDraft(options: {
   async function apply() {
     if (state.busy || !state.base) return;
     if (!submission) {
+      if (state.name === state.base.name) {
+        state.error = 'Title is unchanged.';
+        return;
+      }
       if (
         !state.name.trim() ||
         [...state.name].length > 1024 ||

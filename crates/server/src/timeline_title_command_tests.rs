@@ -62,6 +62,42 @@ fn count(conn: &Connection) -> i64 {
         .unwrap()
 }
 #[test]
+fn review_identical_title_refuses_without_advancing_name_clock_or_any_rows() {
+    let (mut conn, mut project) = fixture();
+    let original = command(&conn, &project, &project.timeline.nodes[0].name);
+    let before = crate::timeline_notes_lineage::tests::logical_rows(&conn);
+    let error =
+        record_set_timeline_node_name_history(&mut conn, &project, &original, 1).unwrap_err();
+    assert!(error.to_string().contains("title is unchanged"));
+    assert_eq!(
+        crate::timeline_notes_lineage::tests::logical_rows(&conn),
+        before
+    );
+    assert_eq!(
+        timeline_node_store::latest_name_event(&conn, original.payload.node_id, None).unwrap(),
+        None
+    );
+
+    let changed = command(&conn, &project, "Other writer");
+    record_set_timeline_node_name_history(&mut conn, &project, &changed, 2).unwrap();
+    reload(&conn, &mut project);
+    let restore = command(&conn, &project, &original.payload.name);
+    record_set_timeline_node_name_history(&mut conn, &project, &restore, 3).unwrap();
+    reload(&conn, &mut project);
+    let before = crate::timeline_notes_lineage::tests::logical_rows(&conn);
+    let error =
+        record_set_timeline_node_name_history(&mut conn, &project, &original, 4).unwrap_err();
+    assert!(
+        error.to_string().contains("title changed; reload"),
+        "expected-read validation precedes unchanged refusal: {error}"
+    );
+    assert_eq!(
+        crate::timeline_notes_lineage::tests::logical_rows(&conn),
+        before
+    );
+}
+
+#[test]
 fn exact_title_persists_with_old_new_history_and_replays_before_stale_read() {
     let (mut conn, mut project) = fixture();
     let before = project.timeline.clone();
@@ -255,6 +291,32 @@ async fn public_title_command_refreshes_native_projection_prompt_and_survives_sa
         crate::timeline_postcommit_custody_tests::history(&path),
         before
     );
+    let mut events = state.events_tx.subscribe();
+    let unchanged = CommandEnvelope::new(SetTimelineNodeNameCommand {
+        node_id: node,
+        name: "  Station departure — 雨.  ".into(),
+        expected: after.payload.node.unwrap().name_read.unwrap(),
+    });
+    let error = command_service::set_timeline_node_name(&state, unchanged)
+        .await
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("Title edit refused: title is unchanged")
+    );
+    assert_eq!(
+        crate::timeline_postcommit_custody_tests::history(&path),
+        before
+    );
+    while let Ok(event) = events.try_recv() {
+        assert!(!matches!(
+            event,
+            crate::state::ServerEvent::TimelineChanged
+                | crate::state::ServerEvent::HierarchyChanged
+                | crate::state::ServerEvent::ScriptChanged
+        ));
+    }
     project_service::save_project(&state, project_service::SaveProjectRequest { path: None })
         .await
         .unwrap();

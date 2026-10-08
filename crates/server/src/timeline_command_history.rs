@@ -78,6 +78,11 @@ pub(crate) fn record_set_timeline_node_name_history(
                     "title changed; reload the current title before saving".into(),
                 ));
             }
+            if node.name == *name {
+                return Err(history_store::HistoryStoreError::InvalidValue(
+                    "title is unchanged".into(),
+                ));
+            }
             timeline_node_store::upsert_nodes_in_transaction(tx, &next.nodes)
         },
     )?)

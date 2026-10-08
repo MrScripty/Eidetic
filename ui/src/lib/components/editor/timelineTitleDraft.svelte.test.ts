@@ -28,6 +28,23 @@ it('saves exact Unicode/whitespace only explicitly, with its original read', asy
   draft.initialize(read);
   expect(draft.state.base).toBeNull();
 });
+it('refuses an unchanged title locally while preserving the captured read and draft', async () => {
+  const { draft, apply, load } = fixture();
+  await draft.apply();
+  expect(apply).not.toHaveBeenCalled();
+  expect(load).not.toHaveBeenCalled();
+  expect(draft.state.name).toBe(read.name);
+  expect(draft.state.base).toEqual(read);
+  expect(draft.state.error).toBe('Title is unchanged.');
+  expect(draft.state.saved).toBe(false);
+  expect(draft.state.uncertain).toBe(false);
+  draft.state.name = ` ${read.name} `;
+  await draft.apply();
+  expect(apply).toHaveBeenCalledWith(
+    { node_id: 'A', name: ` ${read.name} `, expected: read },
+    'rename',
+  );
+});
 it('retains immutable retry and blocks reload after unknown acknowledgement', async () => {
   const { draft, apply, load } = fixture();
   draft.state.name = 'Saved';
@@ -35,7 +52,7 @@ it('retains immutable retry and blocks reload after unknown acknowledgement', as
   await draft.apply();
   const first = structuredClone(apply.mock.calls[0]);
   expect(draft.state.uncertain).toBe(true);
-  draft.state.name = 'Amended by stale caller';
+  draft.state.name = read.name;
   await draft.reload();
   expect(load).not.toHaveBeenCalled();
   await draft.apply();
@@ -59,6 +76,7 @@ it('preserves refused draft and failed reload; uses new receipt only after expli
 });
 it('does not treat an unproven message as a native refusal', async () => {
   const { draft, apply } = fixture();
+  draft.state.name = 'Changed title';
   apply.mockRejectedValueOnce(new Error('Title edit refused: invented'));
   await draft.apply();
   expect(draft.state.uncertain).toBe(true);
