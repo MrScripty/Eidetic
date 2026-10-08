@@ -3,6 +3,79 @@ use crate::{command_service, project_service, projection_service, script_store, 
 use eidetic_core::contracts::*;
 
 #[tokio::test]
+async fn public_type_only_edit_publishes_exact_canonical_prompt_memory_and_replays_without_events()
+{
+    let (project, first, second) = crate::script_block_create::tests::story_project();
+    let directory = crate::persistence::default_project_dir()
+        .join(format!("manual-type-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let path = directory.join("project.db");
+    crate::persistence::save_project(&project, &path, None)
+        .await
+        .unwrap();
+    let state = AppState::new().await;
+    project_service::replace_active_project(&state, project, path.clone());
+    let exact = "  Exact authored line — 雨.\n\n  ";
+    let created = command_service::create_script_block(
+        &state,
+        CommandEnvelope::new(CreateScriptBlockCommand {
+            document_id: ScriptDocumentId::new("script.document.main").unwrap(),
+            source_node_id: first,
+            expected_start_ms: 1000,
+            expected_end_ms: 2000,
+            block_kind: ScriptBlockKind::Action,
+            text: exact.into(),
+        }),
+    )
+    .await
+    .unwrap();
+    let block = &created.projection.payload.segments[0].blocks[0];
+    let edit = CommandEnvelope::new(EditScriptBlockCommand {
+        document_id: created.projection.payload.document.id.clone(),
+        block_id: block.block.id.clone(),
+        expected_revision_event_id: block.revision_event_id.unwrap(),
+        text: exact.into(),
+        block_kind: Some(ScriptBlockKind::Dialogue),
+    });
+    let mut events = state.events_tx.subscribe();
+    let changed = command_service::edit_script_block(&state, edit.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        changed.projection.payload.segments[0].blocks[0].block.text,
+        exact
+    );
+    assert_eq!(
+        changed.projection.payload.segments[0].blocks[0]
+            .block
+            .block_kind,
+        ScriptBlockKind::Dialogue
+    );
+    assert_eq!(
+        changed.projection.payload.segments[0].blocks[0].spans,
+        block.spans
+    );
+    assert!(matches!(
+        events.try_recv().unwrap(),
+        ServerEvent::ScriptChanged
+    ));
+    let preview = crate::ai_service::preview_ai_context(&state, second.0)
+        .await
+        .unwrap();
+    assert!(preview.user.contains("block_type=dialogue"));
+    assert!(preview.user.contains(exact));
+    assert_eq!(
+        command_service::edit_script_block(&state, edit)
+            .await
+            .unwrap()
+            .outcome,
+        crate::history_store::RecordChangeOutcome::AlreadyRecorded
+    );
+    assert!(events.try_recv().is_err());
+    std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[tokio::test]
 async fn native_manual_creation_edit_save_reopen_and_retime_reach_exact_prompt_memory() {
     let (project, first, second) = crate::script_block_create::tests::story_project();
     let directory = crate::persistence::default_project_dir()
@@ -43,6 +116,7 @@ async fn native_manual_creation_edit_save_reopen_and_retime_reach_exact_prompt_m
     command_service::edit_script_block(
         &state,
         CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: command.payload.document_id.clone(),
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),

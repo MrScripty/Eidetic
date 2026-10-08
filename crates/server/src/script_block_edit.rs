@@ -52,6 +52,11 @@ pub(crate) fn apply_edit_script_block(
     }
     let mut block = existing.block.clone();
     block.text = command.payload.text.clone();
+    if let Some(kind) = &command.payload.block_kind {
+        block.block_kind = kind.clone();
+    }
+    let type_changed = block.block_kind != existing.block.block_kind;
+    let text_changed = block.text != existing.block.text;
     let span = script_document_command::generated_span_for_block(
         &block,
         ScriptSpanProvenance::UserEdited,
@@ -62,14 +67,23 @@ pub(crate) fn apply_edit_script_block(
         format!("edit script block {}", block.id.as_str()),
     )
     .with_created_at_ms(created_at_ms);
-    let revisions = vec![
-        script_document_command::block_revision(
-            &block,
-            Some(FieldValue::Text(existing.block.text.clone())),
-            event.id,
-        ),
-        script_document_command::span_revision(&span, event.id),
-    ];
+    let mut revision = script_document_command::block_revision(
+        &block,
+        Some(FieldValue::Text(existing.block.text.clone())),
+        event.id,
+    );
+    revision
+        .fields
+        .iter_mut()
+        .find(|field| field.field_key == "block_kind")
+        .expect("block snapshot owns type")
+        .old_value = Some(FieldValue::Text(
+        crate::script_store_codec::encode_block_kind(&existing.block.block_kind).into(),
+    ));
+    let mut revisions = vec![revision];
+    if text_changed {
+        revisions.push(script_document_command::span_revision(&span, event.id));
+    }
     let outcome = history_store::record_change_with(
         conn,
         command,
@@ -95,6 +109,11 @@ pub(crate) fn apply_edit_script_block(
                     "script block changed; reload before saving".into(),
                 ));
             }
+            if type_changed && !current_block.locks.is_empty() {
+                return Err(HistoryStoreError::InvalidValue(
+                    "cannot change the type of a locked script block".into(),
+                ));
+            }
             // Reuse the existing UTF-8 locked-span validation with server-owned metadata.
             let payload = SetScriptBlockCommand {
                 document_id: current.document.id.clone(),
@@ -115,7 +134,10 @@ pub(crate) fn apply_edit_script_block(
             script_document_command::validate_locked_spans(Some(&current), &payload)
                 .map_err(|error| HistoryStoreError::InvalidValue(error.to_string()))?;
             script_store::upsert_block_in_transaction(tx, &block, event.id)?;
-            script_store::upsert_span_in_transaction(tx, &span, event.id)
+            if text_changed {
+                script_store::upsert_span_in_transaction(tx, &span, event.id)?;
+            }
+            Ok(())
         },
     )?;
     Ok((outcome, projection(conn, command)?))

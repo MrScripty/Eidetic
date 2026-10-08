@@ -27,6 +27,26 @@ where
         user: String::new(),
     };
     append_script_context(&mut prompt.user, &binding.script_inputs);
+    if let eidetic_core::contracts::SemanticDependencyEndpoint::ScriptBlock { block_id } =
+        &binding.cause.input
+    {
+        for previous in binding
+            .script_previous_inputs
+            .iter()
+            .flatten()
+            .filter(|input| input.block_id == *block_id)
+        {
+            if let Some(kind) = &previous.block_kind {
+                prompt.user.push_str(&format!(
+                    "\nORIGINAL CONSUMED SCREENPLAY TYPE ({}, block_revision={}): {}\n{}\n",
+                    previous.block_id.as_str(),
+                    previous.revision_event_id.0,
+                    crate::script_store_codec::encode_block_kind(kind),
+                    previous.text
+                ));
+            }
+        }
+    }
     crate::timeline_title_lineage::append_prompt(&mut prompt.user, binding);
     if let Some(input) = &binding.timeline_notes_current {
         prompt.user.push_str(&format!(

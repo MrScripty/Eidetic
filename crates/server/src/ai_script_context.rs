@@ -29,7 +29,10 @@ pub(crate) fn load_script_context(
                 ORDER BY start_ms, sort_order, id LIMIT 2)
         )
         SELECT s.document_id, s.id, b.id, s.source_node_id, b.updated_event_id,
-               s.updated_event_id, s.start_ms, s.end_ms, b.text
+               s.updated_event_id, s.start_ms, s.end_ms, b.text,
+               (SELECT f.new_text FROM object_revisions r JOIN object_revision_fields f ON f.revision_id=r.id
+                WHERE r.object_kind='script_block' AND r.object_id=b.id AND r.change_event_id=b.updated_event_id
+                  AND f.field_key='block_kind' AND f.new_type='text' AND f.new_text=b.block_kind LIMIT 1)
         FROM script_segments s JOIN script_blocks b ON b.segment_id = s.id
         JOIN script_documents d ON d.id = s.document_id
         WHERE s.id IN (SELECT id FROM selected) AND b.deleted_event_id IS NULL AND d.deleted_event_id IS NULL
@@ -56,6 +59,7 @@ pub(crate) fn load_script_context(
                 row.get::<_, u64>(6)?,
                 row.get::<_, u64>(7)?,
                 row.get::<_, String>(8)?,
+                row.get::<_, Option<String>>(9)?,
             ))
         },
     )?;
@@ -70,6 +74,7 @@ pub(crate) fn load_script_context(
             start_ms,
             end_ms,
             text,
+            block_kind,
         ) = row?;
         Ok(ScriptContextBlock {
             document_id: ScriptDocumentId::new(document)
@@ -90,6 +95,9 @@ pub(crate) fn load_script_context(
             start_ms,
             end_ms,
             text,
+            block_kind: block_kind
+                .map(|kind| crate::script_store_codec::decode_block_kind(&kind))
+                .transpose()?,
         })
     })
     .collect()

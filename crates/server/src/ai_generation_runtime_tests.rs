@@ -846,6 +846,7 @@ async fn successful_persistence_keeps_captured_input_lineage_after_an_intervenin
     crate::script_block_edit::apply_edit_script_block(
         &mut conn,
         &CommandEnvelope::new(eidetic_core::contracts::EditScriptBlockCommand {
+            block_kind: None,
             document_id: captured.document_id.clone(),
             block_id: captured.block_id.clone(),
             expected_revision_event_id: captured.revision_event_id,

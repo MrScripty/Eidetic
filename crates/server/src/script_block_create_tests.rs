@@ -122,6 +122,7 @@ fn first_manual_block_persists_exact_text_authorship_and_neighbor_memory_on_reop
     script_block_edit::apply_edit_script_block(
         &mut reopened,
         &CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: payload.document_id,
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),
@@ -276,6 +277,7 @@ fn replay_after_edit_and_append_preserves_latest_text_and_rejects_payload_reuse(
     crate::script_block_edit::apply_edit_script_block(
         &mut conn,
         &CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: payload.document_id.clone(),
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),

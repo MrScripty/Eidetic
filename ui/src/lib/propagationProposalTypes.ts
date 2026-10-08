@@ -81,6 +81,7 @@ export interface PropagationProposal {
     cause: ScriptImpactCause;
     target_segment_revision_event_id: string;
     script_inputs: ScriptContextBlock[];
+    script_previous_inputs?: ScriptContextBlock[] | null;
     bible_context: ProjectionEnvelope<unknown>;
     bible_inputs?: BibleFieldInput[];
     bible_node_name_inputs?: { node_id: string; name: string; revision_event_id: string }[] | null;

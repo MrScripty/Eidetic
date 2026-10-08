@@ -211,6 +211,10 @@ fn capture_in_snapshot(
         cause,
         target_segment_revision_event_id: segment_revision,
         script_inputs,
+        script_previous_inputs: crate::script_context_scope::recorded_inputs(
+            conn,
+            request.generation_event_id,
+        )?,
         bible_context,
         bible_inputs,
         bible_node_name_inputs,

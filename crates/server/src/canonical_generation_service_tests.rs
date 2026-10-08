@@ -529,6 +529,7 @@ async fn delayed_regeneration_refuses_a_saved_human_edit_and_canonical_preview_s
     command_service::edit_script_block(
         &f.state,
         CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: doc.document.id,
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),
@@ -601,6 +602,7 @@ async fn autosave_interleaving_after_public_edit_signature_read_preserves_manual
         .unwrap();
     let manual = "Exact human edit across an autosave commit.\n\n";
     let command = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         document_id: doc.document.id,
         block_id: block.block.id.clone(),
         expected_revision_event_id: block.revision_event_id.unwrap(),

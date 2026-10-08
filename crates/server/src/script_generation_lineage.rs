@@ -293,6 +293,14 @@ pub(crate) fn record_in_transaction(
                 "generation input does not match canonical revision history".into(),
             ));
         }
+        if let Some(kind) = &input.block_kind {
+            let valid: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM object_revisions r JOIN object_revision_fields f ON f.revision_id=r.id WHERE r.object_kind='script_block' AND r.object_id=?1 AND r.change_event_id=?2 AND f.field_key='block_kind' AND f.new_type='text' AND f.new_text=?3)", params![input.block_id.as_str(),input.revision_event_id.0.to_string(),crate::script_store_codec::encode_block_kind(kind)], |row| row.get(0))?;
+            if !valid {
+                return Err(HistoryStoreError::InvalidValue(
+                    "generation input type does not match canonical revision history".into(),
+                ));
+            }
+        }
     }
     for input in command.arc_inputs.iter().flatten() {
         crate::story_arc_lineage::validate_history(tx, input)?;

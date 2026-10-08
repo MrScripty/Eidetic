@@ -67,6 +67,7 @@ async fn fixture() -> Fixture {
     crate::command_service::edit_script_block(
         &state,
         CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: ScriptDocumentId::new("script.document.main").unwrap(),
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),
@@ -126,6 +127,7 @@ async fn edit(fixture: &Fixture, text: &str) {
     crate::command_service::edit_script_block(
         &fixture.state,
         CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: ScriptDocumentId::new("script.document.main").unwrap(),
             block_id: fixture.block.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),
@@ -570,6 +572,7 @@ async fn unselected_distant_screenplay_text_edit_does_not_stale_the_pending_plan
     crate::command_service::edit_script_block(
         &fixture.state,
         CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: ScriptDocumentId::new("script.document.main").unwrap(),
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),

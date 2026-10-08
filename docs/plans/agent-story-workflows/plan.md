@@ -1168,3 +1168,16 @@ Focused checks cover baseline and owned clocks, Unicode, stale/ABA generation an
 acceptance, deleted-source absence ABA, legacy unknown history and untouched
 material. Independent source review and native title qualification remain pending;
 PR26/removal source and evidence are unchanged.
+
+### Saved screenplay block types (separate successor)
+
+Admitted from frozen title D20 on feat/screenplay-block-type-memory. Creation
+already exposes type, but the guarded saved-block Edit accepts only text and
+screenplay prompt receipts omit type. The pre-implementation wire regression
+fails against D20. Extend that existing Edit with optional type, exact history,
+draft/immutable retry/comparison ownership, owned type receipts and visible
+original/current downstream evidence. Preserve text/spans on type-only saves;
+late locks and stale/ABA edits refuse without writes. Existing preview and
+explicit acceptance remain the downstream replacement authority. Legacy missing
+type history stays unknown, without backfill. See screenplay-block-type-memory-audit.md;
+independent review and source-bound native qualification remain required.

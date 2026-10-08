@@ -2,6 +2,7 @@
   import ScriptArcEvidence from './ScriptArcEvidence.svelte';
   import ScriptTimelineNotesEvidence from './ScriptTimelineNotesEvidence.svelte';
   import ScriptTimelineTitleEvidence from './ScriptTimelineTitleEvidence.svelte';
+  import ScriptBlockTypeEvidence from './ScriptBlockTypeEvidence.svelte';
   import ScriptRecallFacts from './ScriptRecallFacts.svelte';
   import type { ScriptSegmentProjection } from '$lib/scriptTypes.js';
   import {
@@ -136,6 +137,10 @@
           previous={proposal.script_review_binding?.timeline_title_previous}
           current={proposal.script_review_binding?.timeline_title_current}
           absent={proposal.script_review_binding?.timeline_title_absence_revisions}
+        />
+        <ScriptBlockTypeEvidence
+          previous={proposal.script_review_binding?.script_previous_inputs}
+          current={proposal.script_review_binding?.script_inputs ?? []}
         />
         <ScriptTimelineNotesEvidence
           previous={proposal.script_review_binding?.timeline_notes_previous}

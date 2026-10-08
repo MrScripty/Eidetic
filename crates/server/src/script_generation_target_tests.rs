@@ -176,6 +176,7 @@ fn delayed_generation_refuses_intervening_human_output_even_after_text_aba() {
         crate::script_block_edit::apply_edit_script_block(
             &mut conn,
             &CommandEnvelope::new(EditScriptBlockCommand {
+                block_kind: None,
                 document_id: first.payload.block.document_id.clone(),
                 block_id: block.block.id.clone(),
                 expected_revision_event_id: block.revision_event_id.unwrap(),

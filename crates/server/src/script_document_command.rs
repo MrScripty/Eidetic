@@ -496,6 +496,13 @@ pub(crate) fn block_revision(
         old_text,
         Some(FieldValue::Text(block.text.clone())),
     ))
+    .with_field(FieldDelta::new(
+        "block_kind",
+        None,
+        Some(FieldValue::Text(
+            crate::script_store_codec::encode_block_kind(&block.block_kind).into(),
+        )),
+    ))
 }
 
 pub(crate) fn span_revision(

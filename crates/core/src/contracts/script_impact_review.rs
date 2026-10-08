@@ -83,6 +83,9 @@ pub struct ScriptImpactProposalBinding {
     pub cause: ScriptImpactCause,
     pub target_segment_revision_event_id: ChangeEventId,
     pub script_inputs: Vec<ScriptContextBlock>,
+    /// Original consumed context from existing generation/accepted-preview receipts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub script_previous_inputs: Option<Vec<ScriptContextBlock>>,
     pub bible_context: ProjectionEnvelope<AiBibleContextProjection>,
     #[serde(default)]
     pub bible_inputs: Vec<super::BibleFieldInput>,
