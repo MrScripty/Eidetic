@@ -1,5 +1,6 @@
 import type { ServerEventClient } from '$lib/serverEventClient.js';
 import { invalidateScriptContext } from './scriptDocumentProjection.svelte.js';
+import { invalidateBibleRecall } from './bibleRecallProjection.svelte.js';
 import {
   appendStreamingToken,
   completeGeneration,
@@ -157,6 +158,7 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
     }),
 
     events.on('bible_changed', async () => {
+      invalidateBibleRecall();
       invalidateScriptContext();
       await Promise.all([
         refreshBibleNodeList(),

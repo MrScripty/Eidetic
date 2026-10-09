@@ -11,8 +11,15 @@ pub(crate) fn capture(
     conn: &Connection,
     context: &AiBibleContextProjection,
 ) -> Result<Vec<BibleFieldInput>, HistoryStoreError> {
+    capture_nodes(conn, &context.nodes)
+}
+
+pub(crate) fn capture_nodes(
+    conn: &Connection,
+    nodes: &[AiBibleContextNode],
+) -> Result<Vec<BibleFieldInput>, HistoryStoreError> {
     let mut inputs = Vec::new();
-    for node in &context.nodes {
+    for node in nodes {
         let detail = crate::bible_graph_store::load_node_detail_projection(conn, &node.node_id)?
             .ok_or_else(invalid)?;
         for field in &node.fields {

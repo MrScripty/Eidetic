@@ -28,6 +28,13 @@ import type { StoryArcListProjection, StoryArcProgressionProjection } from './st
 import type { NodeId } from './timelineTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 import { invokeDesktop } from './desktopTransport.js';
+import type { BibleRecallProjection, BibleRecallRequest } from './bibleRecallTypes.js';
+
+export function getBibleRecallProjection(
+  query: BibleRecallRequest,
+): Promise<ProjectionEnvelope<BibleRecallProjection>> {
+  return invokeDesktop('projection_bible_recall', { query });
+}
 
 export interface ObjectFieldProjectionKey {
   object_kind: ObjectKind;

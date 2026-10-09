@@ -20,6 +20,7 @@
   import BibleGraphPartFields from './BibleGraphPartFields.svelte';
   import BibleGraphSnapshotEditor from './BibleGraphSnapshotEditor.svelte';
   import BibleGraphSnapshotList from './BibleGraphSnapshotList.svelte';
+  import BibleRecall from './BibleRecall.svelte';
 
   let {
     nodeId,
@@ -280,6 +281,8 @@
           </div>
         {/if}
       </dl>
+
+      <BibleRecall {nodeId} />
 
       <section class="child-section">
         <h3>Children</h3>

@@ -88,6 +88,21 @@ pub(crate) fn current_revision(
     conn: &Connection,
     endpoint: &SemanticDependencyEndpoint,
 ) -> Result<Option<ChangeEventId>, HistoryStoreError> {
+    let revision = known_revision(conn, endpoint)?;
+    if revision.is_none()
+        && let SemanticDependencyEndpoint::BibleNode { node_id } = endpoint
+        && crate::bible_graph_store::load_node(conn, node_id)?.is_some()
+    {
+        return Err(invalid());
+    }
+    Ok(revision)
+}
+
+/// Inspection may explicitly report unknown lineage for imported names.
+pub(crate) fn known_revision(
+    conn: &Connection,
+    endpoint: &SemanticDependencyEndpoint,
+) -> Result<Option<ChangeEventId>, HistoryStoreError> {
     let SemanticDependencyEndpoint::BibleNode { node_id } = endpoint else {
         return Ok(None);
     };
@@ -106,10 +121,13 @@ pub(crate) fn current_revision(
             |row| row.get(0),
         )
         .optional()?;
-    let event = event.ok_or_else(invalid)?;
-    Ok(Some(ChangeEventId(uuid::Uuid::parse_str(&event).map_err(
-        |error| HistoryStoreError::InvalidId(error.to_string()),
-    )?)))
+    event
+        .map(|event| {
+            uuid::Uuid::parse_str(&event)
+                .map(ChangeEventId)
+                .map_err(|error| HistoryStoreError::InvalidId(error.to_string()))
+        })
+        .transpose()
 }
 
 pub(crate) fn excerpt(

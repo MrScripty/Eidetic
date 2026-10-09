@@ -14,6 +14,7 @@ This directory contains the shared reactive frontend state used to coordinate th
 | `project.svelte.ts`                       | Active project session metadata.                                                     |
 | `bibleGraphNodeProjection.svelte.ts`      | Focused cache/action layer for backend-owned bible graph node and field projections. |
 | `bible.svelte.ts`                         | Typed transient graph selection state.                                               |
+| `bibleRecallProjection.svelte.ts` | Disposable inspection cache with request, query, selection, session and revision guards. |
 | `bibleRenderGraphProjection.svelte.ts`    | Focused cache layer for backend-owned bible render graph projections.                |
 | `contextStackProjection.svelte.ts`        | Focused cache layer for backend-owned selected timeline context stack projections.   |
 | `graphRendererCommands.ts`                | Applies validated transient Bevy graph renderer commands to UI selection state.      |
@@ -69,6 +70,7 @@ continues.
 | `bible.svelte.ts`                         | Transient UI state                  | Stores typed graph selection for nodes, edges, influences, context layers, and neighborhoods.                                              | Keep; do not use graph selection as durable graph state.                                                       |
 | `bibleGraphNodeProjection.svelte.ts`      | Projection cache and command bridge | Caches backend projection envelopes and replaces cache from command responses with stale-response guards.                                 | Keep; later share common projection command helpers if useful.                                                |
 | `bibleGraphSchemaProjection.svelte.ts`    | Projection cache                    | Caches backend schema projection with stale-response guards.                                                                              | Keep.                                                                                                         |
+| `bibleRecallProjection.svelte.ts` | Disposable inspection projection cache | Holds only explicitly recalled backend evidence; request, query, selection, session and revision guards revoke stale reads. | Keep read-only; Bible writes/events invalidate evidence while existing drafts and proposals retain their owners. |
 | `bibleRenderGraphProjection.svelte.ts`    | Projection cache                    | Caches backend render graph projection with stale-response guards.                                                                        | Keep.                                                                                                         |
 | `changeReviewProjection.svelte.ts`        | Projection cache                    | Caches backend change review projection with stale-response guards.                                                                       | Keep.                                                                                                         |
 | `contextStackProjection.svelte.ts`        | Projection cache                    | Caches the backend context stack for the selected timeline node with stale-response guards.                                               | Keep; graph context layer UI should read this cache rather than deriving hierarchy in Svelte.                 |
@@ -235,3 +237,21 @@ the target cache. Ordinary projected responses still use the existing version
 guard, and interrupted/stale failures still preserve cached material.
 
 The timelinePlacementSession owner retains transient placement intents per node within the existing editor session generation. Old project callers cannot issue commands, and new sessions get independent drafts. Canonical ranges and downstream memory remain in the existing timeline/script projections and range writer; this store is not a parallel story authority.
+
+Explicit Bible recall is a disposable inspection cache in
+`bibleRecallProjection.svelte.ts`. Reads require a user action and guard the
+request, exact query, selected entity, editor session and prior revision floor.
+Bible command admission/completion and `bible_changed` invalidate pending reads
+and displayed evidence synchronously. Selection and project-session cleanup
+revoke reads; late successes/errors cannot publish into a newer inspector.
+Existing screenplay drafts, placement intents and proposal caches remain owned
+by their current stores and are preserved during recall and Bible invalidation.
+
+Mounted recall inspectors retain the shared read by anchor and editor session.
+Disposing one inspector preserves another current inspector's pending/displayed
+evidence; disposing the last revokes responses without setting the fact-change
+notice or resetting the revision floor. Query changes also revoke without
+claiming a canonical change. Bible writes/events alone set the invalidation
+notice. Releases are idempotent, and obsolete session/anchor owners cannot revoke
+a current inspector. A per-component cache was rejected because both visible
+inspectors consume the same projection; revisit if selection becomes independent.

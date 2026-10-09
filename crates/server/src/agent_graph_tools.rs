@@ -27,6 +27,10 @@ impl AgentWorkflowToolExecutor for AgentGraphReadTools<'_> {
         request: &AgentToolRequest,
     ) -> Result<AgentToolResultPayload, AgentHarnessError> {
         match &request.arguments {
+            AgentToolArguments::ReadBibleRecall { query } => {
+                bible_graph_store::create_schema(self.conn)?;
+                json_payload(&crate::bible_recall_projection::load(self.conn, query)?)
+            }
             AgentToolArguments::SearchBibleNodes { query, limit } => {
                 let projection = search_bible_nodes(self.conn, query, *limit)?;
                 json_payload(&projection)
@@ -203,6 +207,7 @@ impl AgentWorkflowToolExecutor for AgentGraphProposalTools<'_> {
             AgentToolArguments::SearchBibleNodes { .. }
             | AgentToolArguments::ReadBibleNode { .. }
             | AgentToolArguments::ReadBibleNeighborhood { .. }
+            | AgentToolArguments::ReadBibleRecall { .. }
             | AgentToolArguments::ReadContextStack { .. }
             | AgentToolArguments::ReadActiveGraphContext { .. }
             | AgentToolArguments::ReadInfluencePaths { .. }
@@ -293,6 +298,7 @@ fn request_command_id(arguments: &AgentToolArguments) -> eidetic_core::contracts
         AgentToolArguments::SearchBibleNodes { .. }
         | AgentToolArguments::ReadBibleNode { .. }
         | AgentToolArguments::ReadBibleNeighborhood { .. }
+        | AgentToolArguments::ReadBibleRecall { .. }
         | AgentToolArguments::ReadContextStack { .. }
         | AgentToolArguments::ReadActiveGraphContext { .. }
         | AgentToolArguments::ReadInfluencePaths { .. } => {

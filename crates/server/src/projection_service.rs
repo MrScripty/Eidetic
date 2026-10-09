@@ -395,7 +395,7 @@ fn load_selected_node_editor_at_path(
     Ok(ProjectionEnvelope::initial(projection))
 }
 
-fn map_history_error(error: HistoryStoreError) -> BackendError {
+pub(crate) fn map_history_error(error: HistoryStoreError) -> BackendError {
     match error {
         HistoryStoreError::InvalidValue(message) => BackendError::conflict(message),
         HistoryStoreError::InvalidId(message) => BackendError::bad_request(message),

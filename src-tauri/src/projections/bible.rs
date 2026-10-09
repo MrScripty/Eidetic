@@ -10,6 +10,17 @@ use tauri::Manager;
 use crate::error::CommandError;
 
 #[tauri::command]
+pub async fn projection_bible_recall(
+    app: tauri::AppHandle,
+    query: eidetic_core::contracts::BibleRecallRequest,
+) -> Result<ProjectionEnvelope<eidetic_core::contracts::BibleRecallProjection>, CommandError> {
+    let state = app.state::<AppState>().inner().clone();
+    eidetic_server::bible_recall_service::recall(&state, query)
+        .await
+        .map_err(CommandError::from)
+}
+
+#[tauri::command]
 pub async fn projection_bible_graph_node(
     app: tauri::AppHandle,
     query: BibleGraphNodeProjectionRequest,

@@ -96,3 +96,7 @@ transaction through the existing Bible IPC/service boundary, keeping label
 editing and screenplay dependency invalidation on normal desktop transport.
 
 The Bevy timeline bridge continues submitting legacy range commands with no expected receipt. Exact placement form custody is optional on the shared command and does not alter renderer gesture ownership.
+
+The command registry includes `projection_bible_recall` for explicit selected
+Bible entity inspection; screenplay replacement remains behind existing review
+and acceptance commands.

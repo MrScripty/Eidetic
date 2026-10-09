@@ -1,3 +1,4 @@
+import { selectBibleRecallAnchor } from './bibleRecallProjection.svelte.js';
 import type { BibleGraphEdgeId, BibleGraphNodeId } from '../bibleGraphTypes.js';
 
 export type BibleGraphSelection =
@@ -18,28 +19,34 @@ export const bibleState = $state<{
 });
 
 export function selectBibleGraphNode(id: BibleGraphNodeId | null): void {
+  selectBibleRecallAnchor(id);
   bibleState.graphSelection = id ? { kind: 'node', nodeId: id } : { kind: 'none' };
 }
 
 export function selectBibleGraphEdge(id: BibleGraphEdgeId | null): void {
+  selectBibleRecallAnchor(null);
   bibleState.graphSelection = id ? { kind: 'edge', edgeId: id } : { kind: 'none' };
 }
 
 export function selectBibleGraphInfluence(id: string | null): void {
+  selectBibleRecallAnchor(null);
   bibleState.graphSelection = id ? { kind: 'influence', influenceId: id } : { kind: 'none' };
 }
 
 export function selectBibleGraphContextLayer(timelineNodeId: string | null): void {
+  selectBibleRecallAnchor(null);
   bibleState.graphSelection = timelineNodeId
     ? { kind: 'context_layer', timelineNodeId }
     : { kind: 'none' };
 }
 
 export function selectBibleGraphNeighborhood(id: BibleGraphNodeId | null): void {
+  selectBibleRecallAnchor(null);
   bibleState.graphSelection = id ? { kind: 'neighborhood', nodeId: id } : { kind: 'none' };
 }
 
 export function focusBibleGraphNeighborhood(id: BibleGraphNodeId | null): void {
+  selectBibleRecallAnchor(null);
   bibleState.graphFocusedNeighborhoodNodeId = id;
   if (id) {
     bibleState.graphSelection = { kind: 'neighborhood', nodeId: id };
@@ -51,6 +58,7 @@ export function clearBibleGraphFocusedNeighborhood(): void {
 }
 
 export function clearBibleGraphSelection(): void {
+  selectBibleRecallAnchor(null);
   bibleState.graphSelection = { kind: 'none' };
 }
 

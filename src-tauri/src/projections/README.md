@@ -79,3 +79,7 @@ backend projection services.
 - Projection payloads are JSON-compatible Rust structures consumed by Svelte
   stores and renderer command bridges.
 - Envelope versioning must remain meaningful for cache invalidation.
+
+`projection_bible_recall` accepts the exact entity/time/direction/kind/neighbor
+request and returns the host-neutral related-fact evidence envelope. It delegates
+to the shared server read and never changes graph selection or generation inputs.
