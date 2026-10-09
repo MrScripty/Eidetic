@@ -22,6 +22,20 @@ pub async fn command_script_impact_proposal_preview(
         .map_err(CommandError::from)
 }
 
+#[tauri::command]
+pub async fn command_script_fact_proposal_analyze(
+    app: tauri::AppHandle,
+    command: CommandEnvelope<eidetic_core::contracts::RequestScriptFactProposalCommand>,
+) -> Result<
+    eidetic_server::script_fact_proposal_service::ScriptFactProposalCommandResponse,
+    CommandError,
+> {
+    let state = app.state::<AppState>().inner().clone();
+    eidetic_server::script_fact_proposal_service::request_script_fact_proposal(&state, command)
+        .await
+        .map_err(CommandError::from)
+}
+
 use crate::error::CommandError;
 
 #[tauri::command]

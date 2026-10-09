@@ -1,11 +1,14 @@
 <script lang="ts">
-  import { setBibleGraphFieldProjection } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
-  import type {
-    BibleGraphField,
-    BibleGraphNodeId,
-    BibleGraphPartProjection,
-  } from '$lib/bibleGraphTypes.js';
-  import type { FieldValue } from '$lib/projectionTypes.js';
+  import {
+    isBibleGraphNodeProjectionVerified,
+    setBibleGraphFieldProjection,
+  } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
+  import type { BibleGraphNodeId, BibleGraphPartProjection } from '$lib/bibleGraphTypes.js';
+  import { getEditorSessionGeneration } from '$lib/stores/editor.svelte.js';
+  import {
+    createBibleGraphFieldDrafts,
+    formatBibleFieldValue,
+  } from './bibleGraphFieldDrafts.svelte.js';
 
   let {
     nodeId,
@@ -15,43 +18,12 @@
     partProjection: BibleGraphPartProjection;
   } = $props();
 
-  let drafts = $state<Record<string, string>>({});
-  let saving = $state<Record<string, boolean>>({});
-  let errors = $state<Record<string, string | undefined>>({});
-
-  function fieldInputValue(field: BibleGraphField): string {
-    if (field.id in drafts) return drafts[field.id] ?? '';
-    return formatFieldValue(field.value);
-  }
-
-  function formatFieldValue(value: FieldValue | null | undefined): string {
-    if (!value) return '';
-    switch (value.type) {
-      case 'text':
-        return value.value;
-      case 'integer':
-      case 'number':
-        return value.value.toString();
-      case 'bool':
-        return value.value ? 'True' : 'False';
-      case 'object_ref':
-        return `${value.value.kind}: ${value.value.id}`;
-      case 'asset_ref':
-        return value.value;
-    }
-  }
-
-  function updateDraft(field: BibleGraphField, event: Event): void {
-    drafts[field.id] = (event.currentTarget as HTMLTextAreaElement).value;
-  }
-
-  async function saveField(field: BibleGraphField): Promise<void> {
-    saving[field.id] = true;
-    errors[field.id] = undefined;
-    const draft = fieldInputValue(field).trim();
-
-    try {
-      await setBibleGraphFieldProjection({
+  const editor = createBibleGraphFieldDrafts({
+    owner: () => JSON.stringify([getEditorSessionGeneration(), nodeId, partProjection.part.id]),
+    fields: () => partProjection.fields,
+    verified: () => isBibleGraphNodeProjectionVerified({ node_id: nodeId }),
+    save: async (field, text) => {
+      const response = await setBibleGraphFieldProjection({
         node_id: nodeId,
         part_id: partProjection.part.id,
         part_key: partProjection.part.part_key,
@@ -59,16 +31,17 @@
         part_sort_order: partProjection.part.sort_order,
         field_id: field.id,
         field_key: field.field_key,
-        value: draft ? { type: 'text', value: draft } : null,
+        value: text ? { type: 'text', value: text } : null,
         field_sort_order: field.sort_order,
       });
-      delete drafts[field.id];
-    } catch (error) {
-      errors[field.id] = error instanceof Error ? error.message : 'Failed to save field';
-    } finally {
-      saving[field.id] = false;
-    }
-  }
+      return response.projection.payload.parts
+        .flatMap((part) => part.fields)
+        .find((saved) => saved.id === field.id);
+    },
+  });
+  $effect(() => {
+    editor.observe();
+  });
 </script>
 
 <section class="part-section">
@@ -80,16 +53,37 @@
           <span>{field.field_key}</span>
           <textarea
             rows="2"
-            value={fieldInputValue(field)}
-            oninput={(event) => updateDraft(field, event)}
+            value={editor.value(field)}
+            disabled={editor.state.saving[field.id]}
+            oninput={(event) => editor.update(field, event.currentTarget.value)}
           ></textarea>
         </label>
+        {#if editor.changed(field)}
+          <p role="status">Saved fact changed while editing. Your draft is preserved.</p>
+          <p>Draft started from</p>
+          <pre>{editor.state.drafts[field.id]?.baseText}</pre>
+          <p>Saved fact</p>
+          <pre aria-label="Committed Bible fact">{formatBibleFieldValue(field.value)}</pre>
+        {/if}
         <div class="field-actions">
-          {#if errors[field.id]}
-            <p class="field-error">{errors[field.id]}</p>
+          {#if editor.state.errors[field.id]}
+            <p class="field-error">{editor.state.errors[field.id]}</p>
           {/if}
-          <button type="button" disabled={saving[field.id]} onclick={() => saveField(field)}>
-            {saving[field.id] ? 'Saving' : 'Save'}
+          {#if editor.state.drafts[field.id]}
+            <button
+              type="button"
+              disabled={editor.state.saving[field.id]}
+              onclick={() => editor.discard(field)}>Discard draft</button
+            >
+          {/if}
+          <button
+            type="button"
+            disabled={editor.state.saving[field.id] ||
+              editor.changed(field) ||
+              !isBibleGraphNodeProjectionVerified({ node_id: nodeId })}
+            onclick={() => editor.save(field)}
+          >
+            {editor.state.saving[field.id] ? 'Saving' : 'Save'}
           </button>
         </div>
       {/each}

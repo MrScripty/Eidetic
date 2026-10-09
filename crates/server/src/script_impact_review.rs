@@ -294,6 +294,7 @@ pub(crate) fn record_proposal(
         ),
         created_at_ms,
         script_review_binding: Some(binding.clone()),
+        script_fact_binding: None,
     };
     let event = ChangeEvent::new(
         command.id,

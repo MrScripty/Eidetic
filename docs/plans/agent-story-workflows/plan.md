@@ -1075,3 +1075,26 @@ embedding dependency or timed name semantics belong to this slice.
 ## Exact placement authoring: bounded M4 successor
 
 After verified merged main74fd438f (tree30a7b0f7), manual screenplay memory and range-to-script propagation already work. The selected editor lacks exact placement inputs and timeline gestures cannot pass adjacent clips. Expose exact screen-time start/end and Apply placement through the existing range command. Capture canonical range and existing node history event in one read snapshot; recheck under the writer, including ABA, while preserving legacy/replay behavior. Existing text/drafts and downstream preview/explicit acceptance remain intact. Separate branch feat/timeline-story-memory; no hierarchy, fictional-time inference, extraction, embedding or project-switch scope. See exact-timeline-placement-audit.md for pre-implementation evidence.
+
+
+## Clean Bible detail convergence after accepted saved-edit facts
+
+Frozen product `6e3bad3cdd780e8a66bcaffabb7baf6ff6c782f0` and evidence
+`ea3f7eb71ee439abfe0d33f1219cbf438ff0d11b` remain preserved. Original native
+run37616923862 qualifies canonical acceptance and downstream causes but shows
+clean Bible TAGLINE editors at red while accepted fact/current fact are blue.
+Inspection confirms `bible_changed` refreshes list/render/review/script but not
+cached node details. A separate `feat/manual-edit-bible-detail-refresh` successor
+refreshes only owned mounted detail caches through the existing queue, with
+request/node/project/mounted-owner admission and shared inspector retention.
+Live projections stay present during reads so dirty forms retain exact input.
+
+Local field drafts keep their original typed-value base. Conflicting refreshed
+values are visible and require explicit discard; no silent rebase or overwrite.
+The existing field command contract and writer semantics remain unchanged.
+Qualify clean value, dirty same-field conflict/unrelated drafts, rapid selection,
+delayed successes/errors and save ownership using actual client code. Run the
+UI aggregate and independent review, then actual hosted native acceptance with
+clean blue Bible, dirty draft, screenplay and placement preserved. All model
+responses are labelled synthetic. Source and QA deltas/evidence remain separate;
+no PR/merge or real-model download belongs to this stage.

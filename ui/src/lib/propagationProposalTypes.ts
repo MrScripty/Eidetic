@@ -62,6 +62,7 @@ export interface PropagationProposal {
   source_event_id?: ChangeEventId | null;
   rationale?: string | null;
   created_at_ms: number;
+  script_fact_binding?: import('./scriptFactTypes.js').ScriptFactProposalBinding | null;
   script_review_binding?: {
     arc_inputs?: StoryArcFieldInput[] | null;
     arc_previous_inputs?: StoryArcFieldInput[] | null;

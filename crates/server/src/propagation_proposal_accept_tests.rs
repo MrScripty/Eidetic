@@ -1,12 +1,13 @@
 use eidetic_core::contracts::{
-    AcceptPropagationProposalCommand, BibleGraphFieldKey, BibleGraphNodeId, BibleGraphPartKey,
-    BibleGraphSchemaKey, BibleGraphSnapshotFieldId, BibleGraphSnapshotId, CommandEnvelope,
-    CreateBibleGraphNodeCommand, CreatePropagationProposalCommand, FieldValue, ObjectKind,
-    PropagationProposalAction, PropagationProposalId, PropagationProposalTarget, ScriptBlock,
-    ScriptBlockId, ScriptBlockKind, ScriptBlockProjection, ScriptDocumentId, ScriptLockId,
-    ScriptPatch, ScriptPatchId, ScriptSegment, ScriptSegmentId, ScriptSegmentProjection,
-    ScriptSegmentStatus, ScriptSpan, ScriptSpanId, ScriptSpanProvenance, SemanticDependencyId,
-    SemanticProposalStatus, SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand,
+    AcceptPropagationProposalCommand, BibleGraphFieldId, BibleGraphFieldKey, BibleGraphNodeId,
+    BibleGraphPartId, BibleGraphPartKey, BibleGraphSchemaKey, BibleGraphSnapshotFieldId,
+    BibleGraphSnapshotId, CommandEnvelope, CreateBibleGraphNodeCommand,
+    CreatePropagationProposalCommand, FieldValue, ObjectKind, PropagationProposalAction,
+    PropagationProposalId, PropagationProposalTarget, ScriptBlock, ScriptBlockId, ScriptBlockKind,
+    ScriptBlockProjection, ScriptDocumentId, ScriptLockId, ScriptPatch, ScriptPatchId,
+    ScriptSegment, ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan,
+    ScriptSpanId, ScriptSpanProvenance, SemanticDependencyId, SemanticProposalStatus,
+    SetBibleGraphFieldCommand, SetBibleGraphSnapshotFieldCommand, SetScriptBlockCommand,
     SetScriptLockCommand,
 };
 
@@ -75,6 +76,109 @@ fn accept_replays_without_second_field_update() {
 
     assert_eq!(first, RecordChangeOutcome::Recorded);
     assert_eq!(second, RecordChangeOutcome::AlreadyRecorded);
+}
+
+#[test]
+fn generic_bible_accept_preserves_authored_owner_under_builtin_part_key() {
+    let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+    seed_location_node(&mut conn);
+    let authored = SetBibleGraphFieldCommand {
+        node_id: BibleGraphNodeId::new("node.location.harbor").unwrap(),
+        part_id: BibleGraphPartId::new("authored.harbor.environment").unwrap(),
+        part_key: BibleGraphPartKey::new("environment").unwrap(),
+        part_name: "Harbor weather notes — 雨".into(),
+        part_sort_order: 37,
+        field_id: BibleGraphFieldId::new("authored.harbor.weather").unwrap(),
+        field_key: BibleGraphFieldKey::new("weather").unwrap(),
+        value: Some(FieldValue::Text("clear".into())),
+        field_sort_order: 9,
+    };
+    // Seed persisted authored metadata differing from schema defaults.
+    let mut initial = authored.clone();
+    initial.part_name = "Environment".into();
+    crate::bible_graph_command::apply_set_bible_graph_field(
+        &mut conn,
+        &CommandEnvelope::new(initial),
+        90,
+    )
+    .unwrap();
+    conn.execute(
+        "UPDATE bible_graph_parts SET name=?1,sort_order=?2 WHERE id=?3",
+        rusqlite::params![
+            authored.part_name,
+            authored.part_sort_order,
+            authored.part_id.as_str()
+        ],
+    )
+    .unwrap();
+    let projected = crate::bible_graph_store::load_node_detail_projection(&conn, &authored.node_id)
+        .unwrap()
+        .unwrap();
+    let projected = projected
+        .parts
+        .iter()
+        .find(|p| p.part.part_key == authored.part_key)
+        .unwrap();
+    assert_ne!(projected.part.id, authored.part_id);
+    assert_ne!(projected.part.name, authored.part_name);
+    assert_ne!(projected.part.sort_order, authored.part_sort_order);
+    for explicit_id in [false, true] {
+        let mut create = create_field_proposal_command(if explicit_id {
+            "proposal.authored.explicit"
+        } else {
+            "proposal.authored.generic"
+        });
+        if let PropagationProposalTarget::BibleField { field_id, .. } = &mut create.payload.target {
+            *field_id = explicit_id.then(|| authored.field_id.clone());
+        }
+        record_create_propagation_proposal(&mut conn, &create, 100).unwrap();
+        record_accept_propagation_proposal(
+            &mut conn,
+            &CommandEnvelope::new(AcceptPropagationProposalCommand {
+                proposal_id: create.payload.proposal_id.clone(),
+            }),
+            101,
+        )
+        .unwrap();
+        let stored: (String, String, u32) = conn
+            .query_row(
+                "SELECT id,name,sort_order FROM bible_graph_parts WHERE id=?1",
+                [authored.part_id.as_str()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(
+            stored,
+            (
+                authored.part_id.as_str().into(),
+                authored.part_name.clone(),
+                authored.part_sort_order
+            )
+        );
+        let field: (String, String, u32) = conn
+            .query_row(
+                "SELECT part_id,text_value,sort_order FROM bible_graph_fields WHERE id=?1",
+                [authored.field_id.as_str()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(
+            field,
+            (
+                authored.part_id.as_str().into(),
+                "rainy".into(),
+                authored.field_sort_order
+            )
+        );
+        let count: u32 = conn
+            .query_row(
+                "SELECT count(*) FROM bible_graph_parts WHERE node_id=?1 AND part_key=?2",
+                rusqlite::params![authored.node_id.as_str(), authored.part_key.as_str()],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 1);
+    }
 }
 
 #[test]

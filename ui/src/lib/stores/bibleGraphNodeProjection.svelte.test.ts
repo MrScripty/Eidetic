@@ -16,6 +16,7 @@ import {
   getBibleGraphNodeProjectionError,
   getCachedBibleGraphNodeProjection,
   isBibleGraphNodeProjectionPending,
+  isBibleGraphNodeProjectionVerified,
   refreshBibleGraphNodeListProjection,
   refreshBibleGraphNodeProjection,
   setBibleGraphEdgeLabelProjection,
@@ -262,11 +263,12 @@ describe('bible graph node projection store', () => {
     await refreshBibleGraphNodeProjection(key);
     getBibleGraphNodeProjectionMock.mockResolvedValueOnce(olderProjection);
 
-    await expect(refreshBibleGraphNodeProjection(key)).resolves.toEqual(olderProjection);
+    await expect(refreshBibleGraphNodeProjection(key)).rejects.toThrow('older revision');
 
     expect(getCachedBibleGraphNodeProjection(key)).toEqual(newerProjection);
     expect(isBibleGraphNodeProjectionPending(key)).toBe(false);
-    expect(getBibleGraphNodeProjectionError(key)).toBeUndefined();
+    expect(getBibleGraphNodeProjectionError(key)).toContain('older revision');
+    expect(isBibleGraphNodeProjectionVerified(key)).toBe(false);
   });
 
   it('does not replace cached graph node lists with stale refresh results', async () => {

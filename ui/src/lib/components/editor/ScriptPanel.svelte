@@ -11,6 +11,7 @@
   } from '$lib/stores/selectedNodeEditorProjection.svelte.js';
   import ScriptImpactNotice from './ScriptImpactNotice.svelte';
   import ScriptImpactReview from './ScriptImpactReview.svelte';
+  import ScriptFactReconciliation from './ScriptFactReconciliation.svelte';
   import { scriptDocumentBlockCount } from '$lib/scriptDocumentFormat.js';
   import {
     getCachedScriptDocumentProjection,
@@ -83,6 +84,7 @@
         <ScriptSegmentSource sourceNodeId={segment.segment.source_node_id} />
         {#if segment.impact}<ScriptImpactNotice impact={segment.impact} />{/if}
         <ScriptImpactReview documentId={MAIN_SCRIPT_DOCUMENT_ID} {segment} />
+        <ScriptFactReconciliation documentId={MAIN_SCRIPT_DOCUMENT_ID} {segment} />
         {#each segment.blocks as block (block.block.id)}
           <ScriptBlockEditor documentId={MAIN_SCRIPT_DOCUMENT_ID} {block} />
         {/each}

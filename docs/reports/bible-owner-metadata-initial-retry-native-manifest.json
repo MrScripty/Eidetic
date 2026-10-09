@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "product_source": "c09db543f10b663381379f0532ab0d34ad939b62",
+  "product_tree": "016da4f54d34faa384b9744d5e071e72c23ea8c6",
+  "qa_head": "981d9d94b8c371351bc00136f25ea6b7ee433397",
+  "qa_tree": "c1569f75bd5d588b6df28cadcef60a1cecfd9bb7",
+  "native": {
+    "run": 37662915335,
+    "job": 112934698095,
+    "artifact": 11503180647,
+    "conclusion": "success",
+    "original_pngs": 4,
+    "zip_bytes": 610177,
+    "zip_sha256": "05ce91b6fa227661df142f304072b45fe96989770c39959727f4d2193556c528",
+    "runtime_binary_receipt_sha256": "4221a84a8a897470c1260feb60a6407f3050cb9c381e0ae3c77852d831846480",
+    "scope": "uncached initial detail failure, ordinary Retry, pending Loading, verified recovery and exact unsubmitted draft only",
+    "synthetic_fixture_provider_calls": 4
+  },
+  "aggregate_tests": {
+    "ui": 546,
+    "ui_files": 94,
+    "core": 123,
+    "server": 532,
+    "qualifier_python": 46
+  },
+  "prior_full_walkthrough": {
+    "source": "e5a09ede159a6511694896fdb5d4382e51f4418d",
+    "seal": "1c1f240d61ee2331b188aff01b41fc5ccf4e3bdb",
+    "raw_evidence_unchanged": true
+  },
+  "limits": [
+    "Generic/manual-bound custom owner metadata covered by server tests; no native custom-owner authoring claim.",
+    "New native scope does not repeat full reconciliation/stale/replay/restart; predecessor full evidence remains source-bound.",
+    "Runtime executable/transformed served modules/SQL snapshots are not archived; runtime hashes/state comparisons are original driver receipt evidence.",
+    "Synthetic provider/read-fault seams; no real-model quality, backend CAS, unsaved-draft restart or project-switch recovery claim."
+  ],
+  "small_provenance_head": "1108344201819318456d1b5b2434fb1725cfe80d",
+  "small_provenance_tree": "a2cd65a35505594dac7873503c28323fe1b53261",
+  "small_provenance_count": 6,
+  "small_provenance_bytes": 23173,
+  "small_provenance": [
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-provenance/custody.json",
+      "bytes": 1841,
+      "sha256": "a87a3ce515c1b2c0bb76e123e153a5d8428722df35e263e963201c7f801de053"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-provenance/external-originals.json",
+      "bytes": 7768,
+      "sha256": "26d561b8f49404a9d7438577da862d238768d8ded70d4f2d88870f9fb8ba991e"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-provenance/native-review-ack.txt",
+      "bytes": 5683,
+      "sha256": "866f7783de561ddd3df53d2caf18b7b1af84917e5fc160df016c67b50473780c"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-provenance/qa-review-ack.txt",
+      "bytes": 2818,
+      "sha256": "f862ed69f108d801012a5cbe931ee9e6d8a1033807877a9b3b8b7aabf9b22241"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-provenance/source-hashes.json",
+      "bytes": 1832,
+      "sha256": "493d6f80407c70b000bed21a02119a4a77c8a86d99638ab77f769e9c129f05c9"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-provenance/source-review-ack.txt",
+      "bytes": 3231,
+      "sha256": "aa854ca8fc5da7bb9fcfe5876a9e1f9afeceb488bcf55d84d2a75ae21e289147"
+    }
+  ],
+  "report_sha256": "9af7b1617b38f7aff312cbc4b8eea41c3edd069aeb575d5f85eca0cf95cf1ba9",
+  "external_originals": {
+    "inventory_path": "docs/reports/bible-owner-metadata-initial-retry-provenance/external-originals.json",
+    "count": 29,
+    "raw_commits_newly_published": false,
+    "local_preservation_commit": "02f2047056d8d6f2df9badee1abf709fe5db3ab4",
+    "local_preservation_branch": "preserve/bible-initial-retry-local-originals-02f2047",
+    "hosted_artifact_expires_at": "2026-10-10T18:16:31Z",
+    "delivery_owner": "parent",
+    "durable_external_delivery": "pending",
+    "lossless_exception": "Integrity-bound original native PNG qualification evidence remains external/local; ordinary display derivatives use JPEG quality85."
+  },
+  "repository_hygiene": {
+    "new_raw_screenshots": 0,
+    "new_portable_zip_files": 0,
+    "new_generated_pdfs": 0,
+    "new_bulky_replay_or_log_outputs": 0,
+    "history_rewritten": false,
+    "old_public_evidence_deleted_or_moved": false,
+    "historical_tracked_generated_evidence_dependency": "Original source-bound full walkthrough reports still reference their already public raw artifacts; unchanged."
+  }
+}

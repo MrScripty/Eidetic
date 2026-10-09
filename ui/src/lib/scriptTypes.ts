@@ -89,6 +89,7 @@ export interface ScriptImpactProjection {
   lineage_available: boolean;
   needs_review: boolean;
   causes: ScriptImpactCause[];
+  fact_edit?: import('./scriptFactTypes.js').ScriptFactEditEvidence | null;
 }
 
 export interface ScriptImpactCause {

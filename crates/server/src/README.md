@@ -98,6 +98,11 @@ domain model in `eidetic-core`.
 | `child_plan_bible_memory.rs` | Original resolved Bible evidence plus scoped source history, target context and metadata-only bounded node-selection custody; ignores unrelated global value clocks. |
 | `child_plan_bible_service_tests.rs` | Public synthetic HTTP/manual Bible edits, pending and delayed source admission, historical review evidence, explicit acceptance and scoped refusal/replay regressions. |
 | `child_plan_memory_service_tests.rs` | Actual public manual edits, synthetic HTTP pending plans, explicit acceptance, ABA/membership refusal, unchanged screenplay and exact durable public-projection recovery in a fresh AppState. |
+| `script_fact_evidence.rs` | Read-only exact manual edit and consumed-fact eligibility with generation/name/relationship revision custody. |
+| `script_fact_proposal.rs` | Strict labelled-provider analysis and immutable bound proposal creation on the existing proposal/history owner. |
+| `script_fact_proposal_service.rs` | Explicit canonical capture/provider/store lifecycle and exact command replay for saved-edit fact reconciliation. |
+| `script_fact_proposal_tests.rs` | Exact source revisions, real consumption, stale/ABA refusal, explicit acceptance/rejection and existing review propagation. |
+| `script_fact_proposal_service_tests.rs` | Synthetic split/incomplete local HTTP outputs, forbidden targets and no-provider exact replay. |
 
 ## Problem
 The application needs backend-owned services that expose core behavior to the
@@ -618,3 +623,11 @@ change. Extending existing command/proposal/dependency owners avoids a second
 revision store; reconstructing legacy consumption from today's tags is rejected.
 New tag-membership detection, recap arc labels, affect and child-plan arc binding
 remain separate scope. Synthetic/native qualification does not assert model quality.
+
+Saved-edit reconciliation is opt-in and baseline text only. `script.edit_block` history supplies the exact before/after revisions; the current generation supplies eligibility and consumed association/name custody. Fact binding JSON is stored on the existing propagation proposal and in its sparse creation revision. Analysis and rejection never write facts or screenplay. Acceptance rechecks the binding and pending status under the writer lock, reloads actual field ownership/metadata, and writes only the selected value through the existing writer. Existing dependency projections derive Needs review. No entity inference, automatic analysis, embeddings, new history owner or replacement screenplay is introduced.
+
+Generic SetBibleField acceptance also preserves the stored owner's authored name
+and order when a built-in detail projection supplies schema-default part metadata.
+Projected defaults may materialize only genuinely unpersisted ordinary fields.
+Missing bound owners, deleted owners and mismatched owner identities refuse
+acceptance rather than recreating or renaming them.

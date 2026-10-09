@@ -126,6 +126,46 @@ beforeEach(() => {
 });
 
 describe('propagation proposal projection store', () => {
+  it.each(['success', 'failure'] as const)(
+    'retires a delayed refresh %s without changing the next project owner',
+    async (outcome) => {
+      let resolveOld!: (value: typeof projection) => void;
+      let rejectOld!: (error: Error) => void;
+      let resolveCurrent!: (value: typeof projection) => void;
+      getPropagationProposalListProjectionMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve, reject) => {
+            resolveOld = resolve;
+            rejectOld = reject;
+          }),
+      );
+      const oldRead = refreshPropagationProposalListProjection();
+      const oldRefusal = expect(oldRead).rejects.toThrow(
+        outcome === 'success' ? 'project changed' : 'Old project unavailable',
+      );
+      clearPropagationProposalListProjection();
+      getPropagationProposalListProjectionMock.mockResolvedValueOnce(projection);
+      await refreshPropagationProposalListProjection();
+      getPropagationProposalListProjectionMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveCurrent = resolve;
+          }),
+      );
+      const currentRead = refreshPropagationProposalListProjection();
+      if (outcome === 'success') resolveOld({ ...newerProjection, version: 99 });
+      else rejectOld(new Error('Old project unavailable'));
+      await oldRefusal;
+      expect(getCachedPropagationProposalListProjection()).toEqual(projection);
+      expect(propagationProposalProjectionState.pending).toBe(true);
+      expect(propagationProposalProjectionState.error).toBeUndefined();
+      resolveCurrent(newerProjection);
+      await currentRead;
+      expect(getCachedPropagationProposalListProjection()).toEqual(newerProjection);
+      expect(propagationProposalProjectionState.pending).toBe(false);
+    },
+  );
+
   it('previews a bound screenplay proposal without accepting or rejecting it', async () => {
     const payload = {
       proposal_id: 'review.B',

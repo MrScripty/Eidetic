@@ -148,6 +148,7 @@ pub fn run() {
             commands::semantic::command_bible_reference_proposal_accept,
             commands::semantic::command_propagation_proposal_create,
             commands::semantic::command_script_impact_proposal_preview,
+            commands::semantic::command_script_fact_proposal_analyze,
             commands::semantic::command_propagation_proposal_reject,
             commands::semantic::command_propagation_proposal_update,
             commands::semantic::command_propagation_proposal_accept,

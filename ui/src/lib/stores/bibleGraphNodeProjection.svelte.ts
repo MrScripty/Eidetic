@@ -1,4 +1,22 @@
 import {
+  bibleGraphNodeProjectionState,
+  cacheKey,
+  cacheNodeProjection,
+} from './bibleGraphNodeDetailProjection.svelte.js';
+export {
+  bibleGraphNodeProjectionState,
+  getCachedBibleGraphNodeProjection,
+  isBibleGraphNodeProjectionPending,
+  getBibleGraphNodeProjectionError,
+  isBibleGraphNodeProjectionVerified,
+  refreshBibleGraphNodeProjection,
+  retainBibleGraphNodeDetail,
+  refreshOwnedBibleGraphNodeProjections,
+  clearBibleGraphNodeProjection,
+  clearBibleGraphNodeDetailProjections,
+} from './bibleGraphNodeDetailProjection.svelte.js';
+export type { BibleGraphNodeProjectionKey } from './bibleGraphNodeDetailProjection.svelte.js';
+import {
   createConnectedBibleGraphNode,
   createBibleGraphNode,
   deleteBibleGraphEdge,
@@ -10,10 +28,7 @@ import {
   setBibleGraphField,
   setBibleGraphSnapshotField,
 } from '$lib/commandApi.js';
-import {
-  getBibleGraphNodeListProjection,
-  getBibleGraphNodeProjection,
-} from '$lib/projectionApi.js';
+import { getBibleGraphNodeListProjection } from '$lib/projectionApi.js';
 import type {
   BibleGraphEdgeLabelCommandResponse,
   BibleGraphNodeCommandResponse,
@@ -33,49 +48,8 @@ import type { CommandId, ProjectionEnvelope } from '../projectionTypes.js';
 import { invalidateBibleRecall } from './bibleRecallProjection.svelte.js';
 import { shouldReplaceProjection } from './projectionCacheGuards.js';
 
-export interface BibleGraphNodeProjectionKey {
-  node_id: BibleGraphNodeId;
-}
-
-export const bibleGraphNodeProjectionState = $state<{
-  projections: Record<string, ProjectionEnvelope<BibleNodeDetailProjection>>;
-  pending: Record<string, boolean>;
-  errors: Record<string, string | undefined>;
-  nodeList: ProjectionEnvelope<BibleGraphNodeListProjection> | null;
-  nodeListPending: boolean;
-  nodeListError?: string;
-}>({
-  projections: {},
-  pending: {},
-  errors: {},
-  nodeList: null,
-  nodeListPending: false,
-  nodeListError: undefined,
-});
-
-function cacheKey({ node_id }: BibleGraphNodeProjectionKey): string {
-  return encodeURIComponent(node_id);
-}
-
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
-}
-
-function cacheNodeProjection(
-  keyString: string,
-  projection: ProjectionEnvelope<BibleNodeDetailProjection>,
-): boolean {
-  if (
-    !shouldReplaceProjection(
-      bibleGraphNodeProjectionState.projections[keyString] ?? null,
-      projection,
-    )
-  ) {
-    return false;
-  }
-
-  bibleGraphNodeProjectionState.projections[keyString] = projection;
-  return true;
 }
 
 function cacheNodeListProjection(
@@ -95,46 +69,8 @@ function shouldInvalidateNodeListForNodeProjection(
   );
 }
 
-export function getCachedBibleGraphNodeProjection(
-  key: BibleGraphNodeProjectionKey,
-): ProjectionEnvelope<BibleNodeDetailProjection> | undefined {
-  return bibleGraphNodeProjectionState.projections[cacheKey(key)];
-}
-
-export function isBibleGraphNodeProjectionPending(key: BibleGraphNodeProjectionKey): boolean {
-  return bibleGraphNodeProjectionState.pending[cacheKey(key)] === true;
-}
-
-export function getBibleGraphNodeProjectionError(
-  key: BibleGraphNodeProjectionKey,
-): string | undefined {
-  return bibleGraphNodeProjectionState.errors[cacheKey(key)];
-}
-
 export function getCachedBibleGraphNodeListProjection(): ProjectionEnvelope<BibleGraphNodeListProjection> | null {
   return bibleGraphNodeProjectionState.nodeList;
-}
-
-export async function refreshBibleGraphNodeProjection(
-  key: BibleGraphNodeProjectionKey,
-): Promise<ProjectionEnvelope<BibleNodeDetailProjection>> {
-  const keyString = cacheKey(key);
-  bibleGraphNodeProjectionState.pending[keyString] = true;
-  bibleGraphNodeProjectionState.errors[keyString] = undefined;
-
-  try {
-    const projection = await getBibleGraphNodeProjection(key);
-    cacheNodeProjection(keyString, projection);
-    return projection;
-  } catch (error) {
-    bibleGraphNodeProjectionState.errors[keyString] = errorMessage(
-      error,
-      'Failed to load bible graph node',
-    );
-    throw error;
-  } finally {
-    bibleGraphNodeProjectionState.pending[keyString] = false;
-  }
 }
 
 export async function refreshBibleGraphNodeListProjection(): Promise<
@@ -444,13 +380,6 @@ export async function setBibleGraphSnapshotFieldProjection(
   } finally {
     bibleGraphNodeProjectionState.pending[keyString] = false;
   }
-}
-
-export function clearBibleGraphNodeProjection(key: BibleGraphNodeProjectionKey): void {
-  const keyString = cacheKey(key);
-  delete bibleGraphNodeProjectionState.projections[keyString];
-  delete bibleGraphNodeProjectionState.pending[keyString];
-  delete bibleGraphNodeProjectionState.errors[keyString];
 }
 
 export function clearBibleGraphNodeListProjection(): void {

@@ -9,8 +9,10 @@
     getBibleGraphNodeProjectionError,
     getCachedBibleGraphNodeProjection,
     isBibleGraphNodeProjectionPending,
+    isBibleGraphNodeProjectionVerified,
     refreshBibleGraphNodeListProjection,
     refreshBibleGraphNodeProjection,
+    retainBibleGraphNodeDetail,
     setBibleGraphNodeNameProjection,
   } from '$lib/stores/bibleGraphNodeProjection.svelte.js';
   import { createConnectedBibleGraphChildNode } from './bibleGraphNodeCreateFlow.js';
@@ -56,6 +58,7 @@
   const projection = $derived(getCachedBibleGraphNodeProjection(key));
   const pending = $derived(isBibleGraphNodeProjectionPending(key));
   const error = $derived(getBibleGraphNodeProjectionError(key));
+  const verified = $derived(isBibleGraphNodeProjectionVerified(key));
   const edgeTargetOptions = $derived(bibleGraphEdgeTargetOptions(edgeTargetNodes, nodeId));
   const childNodes = $derived(
     graphNodes
@@ -89,7 +92,7 @@
   });
 
   $effect(() => {
-    void refreshBibleGraphNodeProjection({ node_id: nodeId }).catch(() => {});
+    return retainBibleGraphNodeDetail({ node_id: nodeId });
   });
 
   $effect(() => {
@@ -226,6 +229,20 @@
   </div>
 
   {#if projection}
+    {#if !verified}
+      <div role="status">
+        <p class="status">
+          Saved facts need verification. Your drafts are preserved; Save is disabled.
+        </p>
+        {#if error}<p class="status error" role="alert">{error}</p>{/if}
+        <button
+          type="button"
+          disabled={pending}
+          onclick={() => void refreshBibleGraphNodeProjection(key).catch(() => {})}
+          >{pending ? 'Verifying saved facts' : 'Retry saved facts'}</button
+        >
+      </div>
+    {/if}
     <div class="detail-body">
       <form class="name-editor" onsubmit={handleNameFormSubmit}>
         {#if editingName}
@@ -301,7 +318,7 @@
         {/if}
       </section>
 
-      {#each projection.payload.parts as partProjection (partProjection.part.id)}
+      {#each projection.payload.parts as partProjection (nodeId + ':' + partProjection.part.id)}
         <BibleGraphPartFields nodeId={projection.payload.node.id} {partProjection} />
       {/each}
 
@@ -337,9 +354,12 @@
       />
     </div>
   {:else if pending}
-    <p class="status">Loading</p>
+    <p class="status" role="status">Loading</p>
   {:else if error}
-    <p class="status error">{error}</p>
+    <p class="status error" role="alert">{error}</p>
+    <button type="button" onclick={() => void refreshBibleGraphNodeProjection(key).catch(() => {})}
+      >Retry saved facts</button
+    >
   {:else}
     <p class="status">No projection</p>
   {/if}

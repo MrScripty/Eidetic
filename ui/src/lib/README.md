@@ -21,6 +21,7 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | `projectionApi.test.ts`    | Tests for projection helper command shape and transport error handling.                          |
 | `stores/`                  | Reactive Svelte state used to coordinate the UI around backend-driven data.                      |
 | `components/`              | Feature UI modules for layout, timeline editing, sidebars, and relationship views.               |
+| `scriptFactTypes.ts` | Saved manual-edit and consumed-fact projection/request/review binding shapes. |
 
 ## Problem
 

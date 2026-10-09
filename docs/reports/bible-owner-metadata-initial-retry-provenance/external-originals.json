@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "local_originals_root": "/workspace/scratch/relationship-lineage/creative-media/Eidetic-manual-edit-bible-save-refresh-evidence/docs/reports/bible-owner-metadata-initial-retry-native",
+  "local_preservation_branch": "preserve/bible-initial-retry-local-originals-02f2047",
+  "local_originals_commit": "02f2047056d8d6f2df9badee1abf709fe5db3ab4",
+  "local_raw_commits_published": false,
+  "github_actions_run": "https://github.com/MrScripty/Eidetic/actions/runs/37662915335",
+  "artifact_id": 11503180647,
+  "artifact_expires_at": "2026-10-10T18:16:31Z",
+  "archive_local_path": "/workspace/scratch/bible-initial-retry-native-37662915335/bible-initial-retry-native-37662915335.zip",
+  "archive_sha256": "05ce91b6fa227661df142f304072b45fe96989770c39959727f4d2193556c528",
+  "raw_inventory": [
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/app-sanitized.log",
+      "bytes": 575,
+      "sha256": "58be4bdbf78e32dd97bfac0b97147fcc1731d5b0a98998025d7e3da1270ddfe4"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/bible-initial-retry-native-37662915335.zip",
+      "bytes": 610177,
+      "sha256": "05ce91b6fa227661df142f304072b45fe96989770c39959727f4d2193556c528"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/capture-evidence.json",
+      "bytes": 22393,
+      "sha256": "1336af81b584c536dbd07991fc28be0da0e7b4dd64fee5657000fe40c97ab923"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/custody.json",
+      "bytes": 1841,
+      "sha256": "a87a3ce515c1b2c0bb76e123e153a5d8428722df35e263e963201c7f801de053"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/hosted-native-job112934698095.log",
+      "bytes": 491803,
+      "sha256": "d2b17241897266d95e085dd174fa70359035fd10b07f6625ef1bf112c6264997"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/manual-fact-15-initial-detail-error.png",
+      "bytes": 149662,
+      "sha256": "f23194c7965b5c1498956a8e4318fec16520c195a96f15a9fd12ba7aed42197b"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/manual-fact-16-initial-detail-pending.png",
+      "bytes": 142311,
+      "sha256": "95a3e7272bb32e1441e64b044a8577783d796563adbf135325aa548bafce241d"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/manual-fact-17-initial-detail-recovered.png",
+      "bytes": 180962,
+      "sha256": "2c51f36a6f8f7235dab79da874141e6bf5060da0c49376883d8991fc770b0869"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/manual-fact-18-initial-detail-draft.png",
+      "bytes": 178452,
+      "sha256": "3b077d7dbe0a2283197bdf35671ff680de2dc00151273e2343e0e4f92b663a26"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/native-review-ack.txt",
+      "bytes": 5683,
+      "sha256": "866f7783de561ddd3df53d2caf18b7b1af84917e5fc160df016c67b50473780c"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/qualification-host-sanitized.log",
+      "bytes": 97,
+      "sha256": "e7b4199cb27fe52b404dcf030a869a6de5a84d01cb0a8d0fc4fced2131fba268"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/37662915335/workflow-steps.json",
+      "bytes": 2563,
+      "sha256": "c25dc5ceeb9fe15c8f55b8c2267b6234d8ddff08826846174192a291a4745c33"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/product-commit.log",
+      "bytes": 17504,
+      "sha256": "8dd5e6b734911214d8d4497f695ef54be8d535c82cf921d642b196bcc7849ebb"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/qa-build.log",
+      "bytes": 3668,
+      "sha256": "d0845c283ba2e5847735967fdbc68e568dba9cc5173d8f77c77d113353de1e61"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/qa-commit.log",
+      "bytes": 17467,
+      "sha256": "021614ecfc61c321050ffa1001ae2c4e1f05826070b2160c488f17b41ec88571"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/qa-format.log",
+      "bytes": 374,
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/qa-lint.log",
+      "bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/qa-python.log",
+      "bytes": 9352,
+      "sha256": "015d85babe2a783f734d13734204784f08593a6d7223e19089fbe40167a1c53a"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/qa-review-ack.txt",
+      "bytes": 2818,
+      "sha256": "f862ed69f108d801012a5cbe931ee9e6d8a1033807877a9b3b8b7aabf9b22241"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/qa-typecheck.log",
+      "bytes": 780,
+      "sha256": "4c3956d467db0c221b111def8caf21097b83067357a8eaaa8049829fef2485c5"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/rust-clippy.log",
+      "bytes": 199,
+      "sha256": "e3d8823d2a35d66095d8832516c6f139d08a9e98988b9cc1ab91b027617ccc9d"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/rust-test.log",
+      "bytes": 68641,
+      "sha256": "636fd5613f392d093be4ea3eb35553660069a0b7926f38c990095b54d7707cb3"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/source-hashes.json",
+      "bytes": 1832,
+      "sha256": "493d6f80407c70b000bed21a02119a4a77c8a86d99638ab77f769e9c129f05c9"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/source-review-ack.txt",
+      "bytes": 3231,
+      "sha256": "aa854ca8fc5da7bb9fcfe5876a9e1f9afeceb488bcf55d84d2a75ae21e289147"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/ui-build.log",
+      "bytes": 3628,
+      "sha256": "6a541819afadb5c62c82e78efd40af3c721755e21b56f45011492e18205d5112"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/ui-format.log",
+      "bytes": 374,
+      "sha256": "61209ca54b1ce5fd892041221b15fb7cacc5e121a3dada064659faf37b30fe57"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/ui-lint.log",
+      "bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/ui-test.log",
+      "bytes": 9266,
+      "sha256": "e9589343f50919e3f4b7e539273ec828de89c5c10bc817f2e54424370568e673"
+    },
+    {
+      "path": "docs/reports/bible-owner-metadata-initial-retry-native/source-tests/ui-typecheck.log",
+      "bytes": 757,
+      "sha256": "caaf50073c8b246ef0567036b0e09ef8a8f3bebe283328da57a49c656f411817"
+    }
+  ],
+  "repository_constraint": "Only small provenance/hash/ACK files are newly committed; no raw images, portable ZIPs, PDFs or bulky replay/log outputs. Existing public evidence is unchanged. Exact lossless native PNGs remain external/local qualification originals; no JPEG conversion of integrity-bound originals.",
+  "delivery_dependency": "Parent must provide durable external delivery before hosted artifact expiry; no public-artifact migration or deletion attempted."
+}

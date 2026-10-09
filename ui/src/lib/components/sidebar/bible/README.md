@@ -12,11 +12,12 @@ This directory contains the story-bible UI backed by backend-owned bible graph p
 | `BibleGraphAddControls.svelte`     | Category-aware graph-node creation controls.                                   |
 | `BibleGraphCategoryFilters.svelte` | Category filter controls for the graph-node list.                              |
 | `BibleGraphEdgeEditor.svelte`      | Projection-backed edge creation form that writes through graph edge commands.  |
-| `BibleGraphEdgeList.svelte`        | Incoming/outgoing edges with revision-guarded label editing and deletion.       |
+| `BibleGraphEdgeList.svelte`        | Incoming/outgoing edges with revision-guarded label editing and deletion.      |
 | `BibleGraphNodeCard.svelte`        | List-card summary for backend-owned bible graph nodes.                         |
 | `BibleGraphNodeDetail.svelte`      | Detail panel for backend-owned bible graph node projections and commands.      |
 | `BibleGraphPartFields.svelte`      | Projection-backed bible graph field editor that writes through graph commands. |
 | `BibleRenderGraphOutline.svelte`   | Keyboard-accessible graph-node outline from bible render graph projections.    |
+| `bibleGraphFieldDrafts.svelte.ts`  | Local field draft bases, observed conflicts and owned save state.              |
 | `bibleGraphCategories.ts`          | Category/root mapping helpers for graph-node list and creation UI.             |
 
 ## Problem
@@ -96,3 +97,46 @@ and stale-result guards alongside preserved screenplay work.
 Recall relationship paths render as one text expression, keeping the native
 accessible label stable when source formatting wraps markup. The exact-path SSR
 assertion runs after formatting and remains part of hosted qualification.
+
+### Field drafts during accepted fact changes
+
+`bibleGraphFieldDrafts.svelte.ts` owns only local field text, its original typed
+value/identity base and save/error state, extracted from `BibleGraphPartFields`.
+Clean inputs follow refreshed committed fields. Dirty inputs retain exact text
+and original bases through shared node-detail refresh; an observed conflicting
+saved value latches conflict even if a later value returns to the original.
+The field shows its original base and current saved value and disables Save until
+the writer explicitly discards the draft. Unrelated field drafts remain separate.
+This is a frontend observed-value conflict guard; the existing field command
+contract is unchanged, with no new claim of a revision/CAS writer guarantee.
+
+Part components are keyed by node and part identity. Local save completion/error
+may clear only the same admitted owner, and input is disabled during that save.
+Late acknowledgement after a selection change cannot clear another field draft.
+Completion additionally requires the same save request, the submitted typed value
+in both the acknowledgement and current committed field, and no observed conflict.
+A newer or mismatched committed value retains exact submitted text and its base
+for explicit discard. Observed conflicts remain latched even if a later value
+matches the submitted value. The expected pending save value alone is not
+treated as an external conflict.
+An owned matching acknowledgement may clear its submitted draft while a detail
+read is pending; that read still gates the next Save until verified recovery.
+No canonical text is optimistically changed. Existing trimming at explicit field
+Save remains unchanged; unsaved input is retained exactly. Dirty draft persistence
+across inspector destruction/project switching is not added.
+
+The existing oversized node-detail component only delegates its read lifecycle;
+new ownership and field state live in the extracted small modules. Tests exercise
+actual client rune state, canonical refresh versus dirty bases, explicit discard,
+interruption and rapid selection/delayed ownership. Native qualification must show
+the clean accepted fact and a preserved dirty draft simultaneously.
+
+Cached details remain visible during a failed refresh. The inspector displays the
+failure and an ordinary Retry saved facts action. Field Save is gated in both its
+button and handler until an owned, version-admitted read succeeds; clearing the
+error at retry start does not restore permission. Drafts remain editable during
+verification and failure, and recovery does not rebase them.
+
+An initial uncached detail failure also exposes Retry saved facts in place.
+Retry uses the same owned refresh, shows Loading while pending, and admits only
+the current node/session response; selecting another node retires the old read.

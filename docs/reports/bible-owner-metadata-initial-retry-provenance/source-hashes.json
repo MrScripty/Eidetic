@@ -1,0 +1,22 @@
+{
+  "source": "c09db543f10b663381379f0532ab0d34ad939b62",
+  "tree": "016da4f54d34faa384b9744d5e071e72c23ea8c6",
+  "predecessor": "322be2607ab4206410667ca48d4b6d22cd96394a",
+  "changed_files": {
+    "crates/server/src/README.md": "10e078a514ab85d464235af9a2448e3f09b082a8a9b92b559e4ee24ff2a8b4ba",
+    "crates/server/src/propagation_proposal_accept.rs": "b3aba8c36239e9ea1ca4d49827064d62aa68daa457d0406543a904c4bc243d07",
+    "crates/server/src/propagation_proposal_accept_tests.rs": "09c02dcaf3b950666c0d1f3f423f28c40b41ae401cf03fcb62f85f39f65d79f0",
+    "crates/server/src/script_fact_proposal_tests.rs": "62ae492f4e2a930a5b103604b2bd94ded79b636862ba3c2c5c0be4d7da272779",
+    "ui/src/lib/components/sidebar/bible/BibleGraphNodeDetail.retry.ssr.test.ts": "bdbe8ace70e16c098a5a77521dbd728d129dcadb7d77efe03d9ca808561d0ba7",
+    "ui/src/lib/components/sidebar/bible/BibleGraphNodeDetail.svelte": "0a4f4868e44d8c394e9d1e09ae43f186640339eb6aec62b07fa91b839749c82b",
+    "ui/src/lib/components/sidebar/bible/README.md": "028a6302d35da6d6240cb517e32d5e2a7b3b3932ff9c41207684981b74d079d0",
+    "ui/src/lib/stores/bibleGraphNodeDetailProjection.client.test.ts": "c174e1cd6f42911393790e483111c08f813fa208ad84842fd3b708d05795a04f"
+  },
+  "prior_guard_hashes": {
+    "ui/src/lib/stores/bibleGraphNodeDetailProjection.svelte.ts": "191253d4eeec0819181a748e82ef3d4d36c85de0e381e6859c902eba4a7aa7fd",
+    "ui/src/lib/components/sidebar/bible/bibleGraphFieldDrafts.svelte.ts": "0b1b79923e9a02ca295cf9bd913e38b70072b65a9b295c9c9c3eff95325da169",
+    "ui/src/lib/components/sidebar/bible/BibleGraphPartFields.svelte": "979a5277a9fca60d30cd58385c0e3c7170e8d4553c5cebb3a686d5b8435e2a4c",
+    "ui/src/lib/stores/bibleGraphNodeReadOwners.ts": "d2c2dd1cd13f0ab1d68c37dc0f57a1059c3323805f0f3cd22430595e9fcf4525"
+  },
+  "old_raw_evidence_changed": false
+}
