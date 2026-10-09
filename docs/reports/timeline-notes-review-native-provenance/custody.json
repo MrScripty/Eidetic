@@ -1,0 +1,226 @@
+{
+  "product_source": "a31f2a650fdf5f87cc27985b63f47310e2b34758",
+  "product_tree": "55e63d0e16e21373bf6ba597c48227590d12ecec",
+  "base_source": "1bf7873579705a824ad45a1c95435e700cb09eda",
+  "base_tree": "21c329291edbb06997748eecd79f156dc2628d26",
+  "feature_branch": "feat/timeline-notes-screenplay-review",
+  "qa_head": "9501a1fa8d60ede96cedbedd235d0ed07a6d9de8",
+  "qa_tree": "dfd9873e7937df4dd9b97d4881ed1c216b405e5e",
+  "run_id": 37688763677,
+  "job_id": 113023267024,
+  "run_attempt": 1,
+  "status": "completed",
+  "conclusion": "success",
+  "artifact": {
+    "id": 11513301158,
+    "name": "eidetic-timeline-notes-review-native-a31f2a6",
+    "size_in_bytes": 1697365,
+    "url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11513301158",
+    "archive_download_url": "https://api.github.com/repos/MrScripty/Eidetic/actions/artifacts/11513301158/zip",
+    "expired": false,
+    "created_at": "2026-10-07T21:36:55Z",
+    "expires_at": "2026-10-10T21:36:54Z",
+    "updated_at": "2026-10-07T21:36:55Z",
+    "digest": "sha256:b70165deb35dbf1bf44c2a90d4db28237c4aa6cb1224cb4381865f1812ad7751",
+    "workflow_run": {
+      "id": 37688763677,
+      "repository_id": 1157333365,
+      "head_repository_id": 1157333365,
+      "head_branch": "test/timeline-notes-review-native",
+      "head_sha": "9501a1fa8d60ede96cedbedd235d0ed07a6d9de8"
+    }
+  },
+  "qualification_route": "Hosted actual Linux native application, ordinary X11/AT-SPI UI actions, explicitly labelled public fixture and synthetic HTTP",
+  "synthetic_provider_calls_asserted": 6,
+  "real_model_quality_qualified": false,
+  "DOM_or_IPC_injection": false,
+  "direct_database_writes": false,
+  "source_admission_qa_only_delta_files": 9,
+  "uploaded_artifact_files": 11,
+  "declared_original_pngs": [
+    "timeline-notes-01-needs-review.png",
+    "timeline-notes-02-pending.png",
+    "timeline-notes-03-stale.png",
+    "timeline-notes-04-accepted.png"
+  ],
+  "display_derivatives_driver_quality": 85,
+  "local_passed_archive_downloaded": false,
+  "local_passed_archive_sha256_verified": false,
+  "passed_capture_visual_inspection_complete": false,
+  "remaining_blocker": "After executor reconnect, download_file is unavailable; proxy returns HTTP403 for authorised cloud-file and GitHub CLI artifact reads. Passed archive and four new captures still need parent-side materialisation, hash verification and visual inspection.",
+  "observed_visual_evidence": {
+    "run_id": 37687254794,
+    "qa_head": "ed1b74840c7273986f3c8660f9e3a15230589d4d",
+    "file": "manual-fact-failure.png",
+    "sha256": "55c44ec6c42119d8cf5d6c38869d937ea6452393a3b281dce947b213ba9a15dc",
+    "scope": "Exact Notes and downstream Notes cause visible with Bible/timeline/screenplay; driver then failed closed-option chooser observation. Not a passed preview/acceptance capture."
+  },
+  "tests": {
+    "core": 123,
+    "server": 542,
+    "UI": 551,
+    "UI_files": 96,
+    "Notes_backend": 10,
+    "new_UI": 5,
+    "QA_Python": 48,
+    "no_download": 5
+  },
+  "gates": [
+    "strict core/server all-target/all-feature Clippy",
+    "rustfmt",
+    "UI typecheck zero errors/warnings",
+    "UI lint",
+    "UI format",
+    "UI build",
+    "decision traceability",
+    "normal pre-commit/conventional hooks",
+    "hosted locked native build",
+    "hosted UI Notes edit/preview/ABA stale refusal/reject/fresh acceptance"
+  ],
+  "exact_notes": "  Mara reveals the witness — 雨.\n\n  ",
+  "synthetic_proposed_and_accepted_text": "  Synthetic Notes update: Mara identifies the witness — 雨.\n\n  ",
+  "unrelated_retained_draft": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+  "assertion_scope": {
+    "backend_failed_acceptance_replay": "Every SQLite user table snapshot unchanged",
+    "native_stale_refusal": "Existing recorded-table snapshot unchanged",
+    "native_acceptance": "Only chosen block replaced; unrelated saved blocks/draft, Bible fields and placement preserved; Notes cause clears",
+    "initial_review_state": "Fixture already had other review causes; added Notes cause is the transition qualified"
+  },
+  "raw_outputs_newly_committed": false,
+  "binary_and_transformed_module_bytes_archived": false,
+  "parent_durable_delivery_pending": true,
+  "older_originals": {
+    "artifact_id": 11503180647,
+    "run_id": 37662915335,
+    "sha256": "05ce91b6fa227661df142f304072b45fe96989770c39959727f4d2193556c528",
+    "expires_at": "2026-10-10T18:16:31Z",
+    "local_originals_preserve_ref": "preserve/bible-initial-retry-local-originals-02f2047"
+  },
+  "scope_limits": [
+    "Selected clip owned Notes only",
+    "Ancestor/sibling Notes and other timeline fields remain separate",
+    "Unowned/missing legacy Notes history remains unknown",
+    "Project-switch recovery deferred",
+    "Windows desktop and real-model quality not newly qualified",
+    "Raw AI prompt cache refresh not separately qualified",
+    "Runtime binary/module hashes are driver receipts, not offline archived byte verification"
+  ],
+  "product_source_files": [
+    {
+      "path": "crates/core/src/contracts/README.md",
+      "sha256": "4d0f90a486ef444d06a21f00305ad3dab6bbc9c2e305ede157872f20906a3070"
+    },
+    {
+      "path": "crates/core/src/contracts/mod.rs",
+      "sha256": "04fb2d7414cc6d8e56620951be8e4c4dfee7411558bec46ee51dab0da6b25cb7"
+    },
+    {
+      "path": "crates/core/src/contracts/script_impact_review.rs",
+      "sha256": "1252a70b75c8b9373410d1c3cd074430bfca44286ca8880550d87b98fbcfbea8"
+    },
+    {
+      "path": "crates/server/src/README.md",
+      "sha256": "3080cd890b197f4bbf7c94bace1509fa3f5beb4e7c7f9b353da17fcf809ec353"
+    },
+    {
+      "path": "crates/server/src/lib.rs",
+      "sha256": "170efbacd030773a243e074cef289d62ff13b5a108964352a7575515b69534a8"
+    },
+    {
+      "path": "crates/server/src/script_document_command.rs",
+      "sha256": "9d4e34333d9e7bf8be214729d2bcfce183316bd74edc47c9a7cb77f44c550b43"
+    },
+    {
+      "path": "crates/server/src/script_generation_lineage.rs",
+      "sha256": "84a6b57cb19d5e619a5e860c9cd7c7e91aca86cf9f31a3a6bf6bdc8d0c343719"
+    },
+    {
+      "path": "crates/server/src/script_generation_target.rs",
+      "sha256": "227912fc4f2de234f4b7d5fa9a027e5e87334f3b8ef1e3a5cc0d718afcced543"
+    },
+    {
+      "path": "crates/server/src/script_generation_target_tests.rs",
+      "sha256": "77ec3cf0fc3ac3999a5007d92c587fc699064c76f5ab186886f6aae1130a4eb8"
+    },
+    {
+      "path": "crates/server/src/script_impact_projection.rs",
+      "sha256": "abd06fe60d8c5e8c2cad3726d8c4cc590869bd44e52cb784f27c6760778d4cb9"
+    },
+    {
+      "path": "crates/server/src/script_impact_prompt.rs",
+      "sha256": "4fb9a90dc374aa0795eae9f4c601e0534524eccb6c5b4f94d7c252e496500d77"
+    },
+    {
+      "path": "crates/server/src/script_impact_review.rs",
+      "sha256": "ad9dac2d708db02552eb0e49864ca990134cb28a4e3834c8bc3c8d99091f95b7"
+    },
+    {
+      "path": "crates/server/src/timeline_notes_lineage.rs",
+      "sha256": "e86a51be9208396ad0d5676bf977c10f378acfc6185363527f03476137990589"
+    },
+    {
+      "path": "crates/server/src/timeline_notes_lineage_tests.rs",
+      "sha256": "cb9f595e5d44fd0d1f19969af78829e0297a47228d0bc1e720f24c2cf75d5091"
+    },
+    {
+      "path": "docs/plans/agent-story-workflows/plan.md",
+      "sha256": "35723e3b36d405c91691bb24860e7c6115d963d11f974091a5be580038aed0f5"
+    },
+    {
+      "path": "docs/plans/agent-story-workflows/timeline-notes-review.md",
+      "sha256": "33c252c310bcccb4428840bb99908d99240e172501cd92d715ca3dec66c2b7e9"
+    },
+    {
+      "path": "ui/src/lib/README.md",
+      "sha256": "f19c3134cc854f17de0248ef2e39554477849e348f8218e77a36479861270a00"
+    },
+    {
+      "path": "ui/src/lib/components/editor/README.md",
+      "sha256": "9c1a3af5ac48d267032e59bd8043c5fb7f024261469fd3287cf1cf60afec0bf8"
+    },
+    {
+      "path": "ui/src/lib/components/editor/ScriptImpactReview.svelte",
+      "sha256": "213585eba67e3945dd7df321372e99d6522d13fa2a3874ddd2fe782c3f550639"
+    },
+    {
+      "path": "ui/src/lib/components/editor/ScriptTimelineNotesEvidence.ssr.test.ts",
+      "sha256": "961518bb7906df9b691d4262d181364f8b69a463498d16dbb16ce916e4142f96"
+    },
+    {
+      "path": "ui/src/lib/components/editor/ScriptTimelineNotesEvidence.svelte",
+      "sha256": "8555f0c78d3beb9071c516e16b18ce5883d9739c8c5cc53fceaa25e0b39732c2"
+    },
+    {
+      "path": "ui/src/lib/components/editor/ScriptTimelineNotesReview.ssr.test.ts",
+      "sha256": "f97f4a3bf080c1281f51b21cd946980d1bd0f8a68813000d7714694587f311df"
+    },
+    {
+      "path": "ui/src/lib/components/editor/scriptImpactNotice.ts",
+      "sha256": "2bb6ec0f55aeb625d484e25785d3c982deb0bc72490d6982c1a0a19b652c50ff"
+    },
+    {
+      "path": "ui/src/lib/propagationProposalTypes.ts",
+      "sha256": "7093cf789ce9dd33c9355bc3e2a6f694783913006bc94b6236020b85a166d64a"
+    }
+  ],
+  "failed_attempts": [
+    {
+      "run_id": 37684720147,
+      "qa_head": "6954aa3308ed56d4b77d4da0c2b0a0c3b41c6676",
+      "conclusion": "failure",
+      "failure": "Timed out waiting for ordinary Notes review notice visible",
+      "artifact_id": 11511401410,
+      "zip_sha256": "7d992de3378fd3a17d6c45afb02734f29cfd6dce3846ac48e1c2825d02cb1338",
+      "expires_at": "2026-10-10T21:03:01Z"
+    },
+    {
+      "run_id": 37687254794,
+      "qa_head": "ed1b74840c7273986f3c8660f9e3a15230589d4d",
+      "conclusion": "failure",
+      "failure": "Timed out waiting for Notes source review chooser",
+      "artifact_id": 11512187716,
+      "zip_sha256": "d76075982753590072106c4014e9314ad3ee3cf6b40ade174c82b0047d7d1200",
+      "expires_at": "2026-10-10T21:18:13Z"
+    }
+  ]
+}

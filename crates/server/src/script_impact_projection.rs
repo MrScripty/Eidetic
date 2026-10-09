@@ -142,6 +142,10 @@ pub(crate) fn load_impact(
     if let Some(cause) = crate::bible_context_scope::cause(conn, generation_event_id, segment)? {
         causes.push(cause);
     }
+    if let Some(cause) = crate::timeline_notes_lineage::impact(conn, generation_event_id, segment)?
+    {
+        causes.push(cause);
+    }
     Ok(Some(ScriptImpactProjection {
         generation_event_id,
         output_block_id: Some(

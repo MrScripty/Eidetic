@@ -34,6 +34,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `scriptBlockEditLifetime.ssr.test.ts` | Fresh workspace consumers, independent Unicode drafts, delayed acknowledgement, exact command replay, refusal/reload and retired-session fixture regressions. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
 | `ScriptImpactReview.svelte` | Targeted provider preview and existing propagation proposal text review with explicit accept/reject actions. |
+| `ScriptTimelineNotesEvidence.svelte` | Exact original/current selected clip Notes and owned revision disclosure in targeted review. |
+| `ScriptTimelineNotesEvidence.ssr.test.ts` | Exact Unicode/whitespace, clearing, ABA, unknown receipt and Notes cause rendering. |
 | `ScriptRecallFacts.svelte` | Explicit up-to-eight baseline fact selection for one new targeted preview, with visible temporal/unknown/omitted limitations. |
 | `scriptRecallSelection.ts` | Plain copied field selectors and exact endpoint-name/path receipts; no client prompt values. |
 | `scriptRecallDraft.svelte.ts` | Transient target/session/packet-owned selection, bounded toggles and stale-submit refusal. |
@@ -221,3 +223,12 @@ impact/context projections without patching saved text or author drafts.
 Decision: reuse the existing Preview update / Accept update flow, with explicit
 acceptance as the sole replacement action. A new proposal store or inferred arc
 consumption is unnecessary and would weaken existing source custody.
+
+Selected timeline Notes use this same review/acceptance owner.
+`ScriptTimelineNotesEvidence` displays original/current exact text and revisions,
+distinguishing cleared Notes, unbound history and missing original consumption.
+Notes-specific causes select the ordinary Preview update path; the existing
+NodeUpdated queue refreshes impact/context while preserving edit/placement drafts.
+No preview, notes save or evidence display replaces saved screenplay. Only explicit
+Accept update installs the selected block and its current consumed lineage.
+Ancestor/sibling prose and other timeline fields remain separate scope.

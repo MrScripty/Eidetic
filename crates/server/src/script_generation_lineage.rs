@@ -24,6 +24,7 @@ pub(crate) fn create_schema(conn: &Connection) -> Result<(), HistoryStoreError> 
 }
 
 pub(crate) fn dependencies(
+    conn: &Connection,
     command: &GenerateScriptBlockCommand,
     event: ChangeEventId,
     created_at_ms: u64,
@@ -79,6 +80,17 @@ pub(crate) fn dependencies(
             })
         })
         .collect::<Result<Vec<_>, HistoryStoreError>>()?;
+    if let Some(target) = &command.target_binding {
+        let input = crate::timeline_notes_lineage::from_target(conn, target)?;
+        if let Some(dependency) = crate::timeline_notes_lineage::dependency(
+            &input,
+            &command.block.segment_id,
+            event,
+            created_at_ms,
+        ) {
+            dependencies.push(dependency);
+        }
+    }
     let mut arc_seen = std::collections::BTreeSet::new();
     for input in command.arc_inputs.iter().flatten() {
         if !arc_seen.insert((input.arc_id.0.to_string(), input.field)) {

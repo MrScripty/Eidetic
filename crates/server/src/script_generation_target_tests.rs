@@ -2,7 +2,7 @@ use super::*;
 use crate::{script_document_command, timeline_command_history};
 use eidetic_core::Project;
 
-fn fixture() -> (
+pub(crate) fn fixture() -> (
     Connection,
     Project,
     CommandEnvelope<GenerateScriptBlockCommand>,
@@ -61,6 +61,45 @@ fn refuse(conn: &mut Connection, command: &CommandEnvelope<GenerateScriptBlockCo
         snapshot(conn),
         before,
         "refusal cannot write screenplay or history"
+    );
+}
+
+#[test]
+fn manual_timeline_notes_edit_marks_its_saved_generated_screenplay_for_review() {
+    let (mut conn, mut project, mut command) = fixture();
+    let node_id = command.payload.target_binding.as_ref().unwrap().node_id;
+    for (index, notes) in [
+        "Mara conceals the witness.",
+        "  Mara reveals the witness — 雨.\n\n  ",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        project.timeline.nodes = timeline_node_store::load_nodes(&conn).unwrap();
+        timeline_command_history::record_set_timeline_node_notes_history(
+            &mut conn,
+            &project,
+            &CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                node_id,
+                notes: notes.into(),
+            }),
+            110 + index as u64,
+        )
+        .unwrap();
+        if index == 0 {
+            project.timeline.nodes = timeline_node_store::load_nodes(&conn).unwrap();
+            command.payload.target_binding =
+                Some(capture(&conn, project.timeline.node(node_id).unwrap()).unwrap());
+            apply(&mut conn, &command);
+        }
+    }
+    let review =
+        crate::script_impact_projection::load_impact(&conn, &command.payload.block.segment_id)
+            .unwrap()
+            .unwrap();
+    assert!(
+        review.needs_review,
+        "authored timeline Notes changed after generation, but saved screenplay has no review cause"
     );
 }
 
