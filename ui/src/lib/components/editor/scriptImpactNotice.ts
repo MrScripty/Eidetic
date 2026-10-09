@@ -10,6 +10,12 @@ export function scriptImpactCauseLabel(cause: ScriptImpactCause): string {
   if (cause.input.kind === 'timeline_node' && cause.dependency_id.endsWith('.timeline_notes')) {
     return `Timeline Notes ${cause.reason === 'deleted' ? 'were removed.' : 'changed.'}`;
   }
+  if (
+    cause.input.kind === 'story_arc_field' &&
+    cause.dependency_id.endsWith(`.arc_description_applicability.${cause.input.arc_id}`)
+  ) {
+    return 'Story arc description became available.';
+  }
   if (cause.reason === 'context_changed') {
     return cause.dependency_id.endsWith('.bible_context')
       ? 'Bible context membership changed.'

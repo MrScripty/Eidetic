@@ -2042,3 +2042,43 @@ partial attempts and prior selected Notes closure evidence stay preserved.
 See ancestor-notes-qualification.md. This successor changes documentation only;
 application source stays byte-identical to qualified10a2b43. Source-only stacked
 draft publication is authorized; no main/PR19-22 merge or external reviewer request.
+
+
+## 2026-10-08 — Known-empty tagged arc Description applicability
+
+Separate `feat/arc-description-applicability` starts at accepted PR23 documentation
+head e9abf3e. Baseline1feeee8 reproduces public owned-empty Description entry with
+no downstream review while fresh prompt inclusion and saved material remain exact;
+public clear/untagged control passes. The positive is now an ordinary passing test.
+Optional applicability receipts reuse StoryArcFieldInput, generation/proposal JSON,
+owned field revisions and existing graph dependency rows. Omitted prose is labelled
+separately from consumption. Filling identifies precise Scene consumers; clearing
+withdraws the entry cause. Writer stale/ABA checks preserve saved manual material
+and locks. Explicit acceptance refreshes only the chosen consumer's normal
+Description lineage; legacy missing/unowned history remains unknown.
+
+Maintained checks pass core123/server566 with zero ignored tests, UI562/96,
+strict core/server all-target/all-feature Clippy, typecheck0/0, lint/build and
+ONNX policy5. A first Rust run failed17 existing filesystem tests because host
+application data is read-only; the ordinary isolated XDG application-state route
+passes the full unchanged suite. Logs remain outside Git. No inference or ONNX403
+bypass. Native ArcDetail typing, screenshots and independent review remain pending;
+PR19–23/main remain unmerged. See arc-description-applicability.md.
+
+
+## 2026-10-08 — Arc Description native functional gate passed
+
+Frozen application cac013f/tree170341fd and QA1989909/tree1acc67cc pass hosted
+run37726307798/job113145156499 on the first attempt. Standard locked native build,
+core123/server566 zero ignored, UI562/96, Clippy/typecheck0/0/lint/format/build,
+driver55 and ONNX policy5 pass. Ordinary ArcDetail keys commit exact Unicode and
+whitespace direction, expose two precise Scene consumers, preserve manual B and
+unrelated F draft, show original omission/current prose in pending review, refuse
+clear/restore stale acceptance and explicitly update B alone. Six actual native
+PNG captures and JPEG derivatives remain artifact11527798897, outside source Git.
+All six provider calls are labelled synthetic; real-model quality is unqualified.
+Executor artifact transfer hits proxy CONNECT403, so author visual inspection and
+ZIP-byte verification are not claimed. Parent retains independent source/visual
+review and PR/merge/Library delivery. No new PR, external reviewer, credential or
+paid service. See arc-description-qualification.md for complete source/hash/test
+receipts. This successor changes documentation only; PR19–23/main stay unmerged.

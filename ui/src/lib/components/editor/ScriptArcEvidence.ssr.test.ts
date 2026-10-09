@@ -12,6 +12,58 @@ const before: StoryArcFieldInput = {
 };
 
 describe('recorded screenplay arc evidence', () => {
+  it('shows an owned omitted description separately from newly available exact prose', () => {
+    const value = '  Mara chooses exile — 雨.\n\n  ';
+    const { body } = render(ScriptArcEvidence, {
+      props: {
+        previous: [],
+        current: [{ ...before, value, revision_event_id: 'entered' }],
+        applicabilityPrevious: [{ ...before, value: '', revision_event_id: 'known-empty' }],
+        applicabilityCurrent: [],
+      },
+    });
+    expect(body).toContain('Originally omitted arc description');
+    expect(body).toContain('Description prose was not supplied: the field was empty.');
+    expect(body).toContain(value);
+    expect(body).toContain('known-empty');
+    expect(body).toContain('entered');
+    expect(body).not.toContain('Arc input change');
+  });
+
+  it('shows still-empty applicability without inventing supplied prose or a known legacy revision', () => {
+    const { body } = render(ScriptArcEvidence, {
+      props: {
+        previous: [],
+        current: [],
+        applicabilityPrevious: [{ ...before, value: '', revision_event_id: null }],
+        applicabilityCurrent: [{ ...before, value: '', revision_event_id: 'current-empty' }],
+      },
+    });
+    expect(body).toContain('unknown; unbound history');
+    expect(body).toContain('(still empty; not supplied)');
+    expect(body).toContain('current-empty');
+  });
+
+  it('does not reconstruct omitted-description evidence for legacy missing receipts', () => {
+    const { body } = render(ScriptArcEvidence, {
+      props: { previous: null, current: [before], applicabilityPrevious: null },
+    });
+    expect(body).toContain('Original arc consumption is unknown.');
+    expect(body).not.toContain('Originally omitted arc description');
+  });
+
+  it('labels the exact applicability cause before generic context-change labels', () => {
+    expect(
+      scriptImpactCauseLabel({
+        dependency_id: 'generation.event.arc_description_applicability.arc.witness',
+        input: { kind: 'story_arc_field', arc_id: 'arc.witness', field: 'description' },
+        consumed_revision_event_id: 'empty',
+        current_revision_event_id: 'entered',
+        reason: 'context_changed',
+        input_excerpt: 'Description was not supplied (known empty).',
+      }),
+    ).toBe('Story arc description became available.');
+  });
   it('shows exact original and changed description with their separate source revisions', () => {
     const current = {
       ...before,

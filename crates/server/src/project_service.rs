@@ -183,15 +183,9 @@ pub async fn load_project(
             populate_ydoc_from_project(state, &project).await?;
         }
 
-        let save_path = if path
-            .extension()
-            .is_some_and(|extension| extension == "json")
-        {
-            path.with_file_name("project.db")
-        } else {
-            path
-        };
-        replace_active_project(state, project, save_path);
+        // Persistence accepts SQLite content only; the filename is not an import
+        // instruction and must not redirect future writes to a sibling database.
+        replace_active_project(state, project, path);
         state.trigger_save();
         Ok(json)
     })

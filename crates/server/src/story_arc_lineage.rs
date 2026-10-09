@@ -213,7 +213,7 @@ pub(crate) fn preview_inputs(
     segment: &ScriptSegmentId,
 ) -> Result<ArcPreviewInputs, HistoryStoreError> {
     let previous = recorded(conn, generation)?;
-    let (_, inputs) = capture(conn, node, previous.as_deref().unwrap_or_default())?;
+    let (arcs, inputs) = capture(conn, node, previous.as_deref().unwrap_or_default())?;
     let dependencies = crate::semantic_dependency_store::load_semantic_dependency_projection(
         conn,
         &SemanticDependencyFilter {
@@ -241,10 +241,9 @@ pub(crate) fn preview_inputs(
             continue;
         };
         if crate::story_arc_store::load_arc(conn, &arc_id)?.is_some() {
-            if !inputs
-                .iter()
-                .any(|input| input.arc_id == arc_id && input.field == field)
-            {
+            // Known-empty applicability has a dependency but supplies no prose.
+            // Check actual tags, independently of which fields capture supplied.
+            if !arcs.iter().any(|arc| arc.id == arc_id) {
                 return Err(HistoryStoreError::InvalidValue("Story arc review source is outside current tags; restore its context before previewing".into()));
             }
         } else if seen.insert(arc_id.0.to_string()) {

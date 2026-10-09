@@ -55,6 +55,13 @@ pub(crate) fn load_impact(
     )?;
     let mut causes = Vec::new();
     for dependency in dependencies {
+        if dependency
+            .id
+            .as_str()
+            .contains(".arc_description_applicability.")
+        {
+            continue;
+        }
         let Some(ref binding) = dependency.revision_binding else {
             continue;
         };
@@ -149,6 +156,11 @@ pub(crate) fn load_impact(
     causes.extend(crate::ancestor_notes_lineage::impact(
         conn,
         generation_event_id,
+    )?);
+    causes.extend(crate::arc_description_applicability::impact(
+        conn,
+        generation_event_id,
+        segment,
     )?);
     Ok(Some(ScriptImpactProjection {
         generation_event_id,

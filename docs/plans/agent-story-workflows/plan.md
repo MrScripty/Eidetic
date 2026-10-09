@@ -1,6 +1,17 @@
 # Agent-assisted story workflows
 
 **Status:** Active
+**Separate known-empty arc Description implementation:** A public metadata edit
+reproduction on template-tagged Scenes established missing downstream review.
+`feat/arc-description-applicability` now captures owned empty-field applicability
+beside consumed arc inputs in existing history/graph receipts. Filling identifies
+precise Scene consumers; clearing withdraws that cause; stale/ABA admission,
+manual text, locked spans and explicit acceptance remain guarded. Legacy unknown
+reads are not backfilled. Native functional qualification passes run37726307798 (product cac013f /
+QA1989909), core123/server566/UI562/96 and all maintained gates. Independent
+source/visual review remains for the parent; synthetic replies qualify function,
+not real-model quality. See `arc-description-applicability.md` and
+`arc-description-qualification.md`; PR19–23/main remain unmerged.
 **Ancestor Notes propagation independently accepted:** Generation now
 records exact consumed nonempty ancestor Notes with owned field revisions and
 precise graph dependency identities. Existing review shows original/current
@@ -1122,3 +1133,21 @@ UI aggregate and independent review, then actual hosted native acceptance with
 clean blue Bible, dirty draft, screenplay and placement preserved. All model
 responses are labelled synthetic. Source and QA deltas/evidence remain separate;
 no PR/merge or real-model download belongs to this stage.
+
+
+## M5 follow-on: explicit saved screenplay block removal
+
+Admitted from verified public PR25c5f3587 above PR24b17bfbc. The current writer
+can append/edit saved blocks but cannot remove one through the application.
+Expose explicit confirmation for one exact unlocked block; retain historical
+text, timeline placement, all other blocks and manual drafts. Reuse the existing
+soft-deletion/history and deleted-input impact review, with immutable retry
+receipts that remain visible after canonical disappearance. Old downstream
+previews must refuse; fresh targeted preview preserves saved text until explicit
+acceptance. See `screenplay-removal-audit.md` for the pre-edit evidence/write set.
+Native functional qualification passes run37787616709 on frozen product D025/E1f
+with QA10dd3cd: both fresh isolated native scenarios verify exact replay, stale
+refusal without writes and separate fresh acceptance. Final successful pixel
+inspection and Library delivery require the parent's working transfer route.
+See `screenplay-removal-qualification.md`; synthetic replies do not establish
+real-model writing quality.

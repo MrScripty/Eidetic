@@ -219,6 +219,14 @@ TimelinePlacementEditor exposes exact start/end seconds and explicit Apply place
 
 ## Consumed arc review evidence
 
+Known-empty Description applicability uses the same review surface.
+`ScriptArcEvidence` labels original omitted prose separately from consumed arc
+fields and shows the exact current description and both field clocks. Missing
+owned history is visibly unknown. The notice says “Story arc description became
+available.” Existing Preview update / Reject / Accept update controls retain
+manual draft ownership and explicit replacement authority. Clearing/ABA refusal
+does not discard the proposal or authored screenplay.
+
 `ScriptArcEvidence.svelte` presents exact original/current tagged arc prompt
 fields from the existing targeted proposal receipt. Changed fields, explicit
 clearing, deletion authority and unbound history remain distinct. Details retain
@@ -245,3 +253,6 @@ original/current Notes and owned revisions, with explicit removal evidence when
 available. The impact notice distinguishes ancestor Notes from selected clip Notes
 and context membership. Preview, rejection, acceptance and manual draft ownership
 retain the existing controllers; displaying evidence never writes saved text.
+
+
+Saved screenplay blocks expose Remove block, followed by exact-text confirmation and Remove saved block. Editing drafts cannot enter removal; locked blocks disable the entry point. Unknown acknowledgements retain Retry same removal and disable cancellation, including after a canonical refresh removes the block. Other saved screenplay stays unchanged until the existing downstream review and explicit acceptance workflow.

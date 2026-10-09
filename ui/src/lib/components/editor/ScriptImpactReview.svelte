@@ -148,6 +148,10 @@
           />
         {/each}
         <ScriptArcEvidence
+          applicabilityPrevious={proposal.script_review_binding
+            ?.arc_description_applicability_previous}
+          applicabilityCurrent={proposal.script_review_binding
+            ?.arc_description_applicability_current}
           previous={proposal.script_review_binding?.arc_previous_inputs}
           current={proposal.script_review_binding?.arc_inputs}
           absent={proposal.script_review_binding?.arc_absence_revisions}

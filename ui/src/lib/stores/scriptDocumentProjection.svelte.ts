@@ -1,6 +1,7 @@
 import {
   createScriptBlock,
   editScriptBlock,
+  removeScriptBlock,
   setScriptBlock,
   setScriptLock,
 } from '$lib/commandApi.js';
@@ -14,6 +15,7 @@ import type {
   SetScriptBlockCommand,
   SetScriptLockCommand,
   EditScriptBlockCommand,
+  RemoveScriptBlockCommand,
   CreateScriptBlockCommand,
 } from '../scriptTypes.js';
 
@@ -159,6 +161,20 @@ export function clearScriptDocumentProjection(key: ScriptDocumentProjectionKey):
 
 export function invalidateScriptContext(): void {
   scriptDocumentProjectionState.contextRevision += 1;
+}
+
+export async function applyScriptBlockRemovalCommand(
+  payload: RemoveScriptBlockCommand,
+  commandId?: CommandId,
+): Promise<ScriptDocumentCommandResponse> {
+  const response = await runScriptProjectionRequest(
+    projectionKey({ document_id: payload.document_id }),
+    () => removeScriptBlock(payload, commandId),
+    (result) => result.projection,
+    'Failed to remove script block',
+  );
+  invalidateScriptContext();
+  return response;
 }
 
 export async function applyScriptBlockEditCommand(

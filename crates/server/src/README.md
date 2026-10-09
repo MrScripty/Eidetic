@@ -602,6 +602,25 @@ existing generation values and temporal choices retain their prior behavior.
 
 ## Consumed story-arc screenplay context
 
+`arc_description_applicability` captures omitted empty Description fields on
+actual selected arc tags with their owned field clocks before provider I/O.
+Existing generation command/proposal JSON and semantic dependency rows retain
+the receipt; this is an applicability read, not consumed prose. Filling a known
+empty field adds a precise Scene review cause. Clearing it withdraws that cause;
+legacy absent receipts, unowned clocks and unrelated arcs remain unknown or
+unaffected. Writer admission and proposal recapture refuse stale/ABA reads.
+Preview preserves authored text, spans, locks and placement. Explicit acceptance
+updates only its chosen block and records the now-supplied Description through
+ordinary arc lineage. Tests cover graph rows, public writer entry/clear controls,
+forged receipts, multiple consumers, locks, failed providers and manual text.
+Preview validates arc membership against the selected tags, independently of
+supplied prompt fields: known-empty applicability edges must not require omitted
+Description prose. Name/type review and one-of-multiple-tag Description review
+retain the other empty applicability receipts through acceptance. Removed live
+tags still refuse preview; stale deleted-source work refuses without writes,
+while fresh deletion review keeps its owned absence receipt.
+See `docs/plans/agent-story-workflows/arc-description-applicability.md`.
+
 Selected clip Notes consumption is owned by `timeline_notes_lineage`. It resolves
 the exact supplied Notes field clock at the existing captured generation target
 event. New generation records a distinct TimelineNode dependency in the existing
@@ -657,3 +676,15 @@ the existing targeted binding; current rereads never fabricate legacy consumptio
 Writer-lock generation and existing preview/acceptance checks refuse stale/ABA or
 forged reads. Editing Notes/previewing preserve canonical screenplay and locks;
 only explicit acceptance can replace the selected block. No new endpoint or store.
+
+Project loading accepts the current SQLite schema and keeps the validated file
+as the active save target regardless of its suffix. A `.json` filename does not
+request conversion or authorize writes to a sibling `project.db`. Legacy JSON
+content remains unsupported. Invalid-format rejection preserves the selected
+file, sibling database and active session; the established outgoing-project flush
+still runs.
+The project lifecycle custody tests cover exact-path autosave/Save and JSON
+rejection with absent and existing sibling databases.
+
+
+`script_block_remove` removes one exact unlocked saved screenplay block through existing command history and soft-deletion. It records preserved text and sparse segment membership, recaptures canonical blocks/locks under the writer, preserves other blocks and timeline placement, and replays before checking a now-missing block. Existing dependency review exposes deleted consumed material; replacement still requires separate acceptance.
